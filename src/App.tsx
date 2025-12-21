@@ -19,6 +19,14 @@ import {
   AdminTournaments,
   AdminModeration,
 } from "./pages/admin";
+import {
+  CreatorOverview,
+  CreatorVideos,
+  CreatorVideoForm,
+  CreatorLivestreams,
+  CreatorLivestreamForm,
+  CreatorSettings,
+} from "./pages/creator";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +51,15 @@ const App = () => (
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/tournaments" element={<AdminTournaments />} />
               <Route path="/admin/moderation" element={<AdminModeration />} />
+              {/* Creator routes */}
+              <Route path="/creator" element={<CreatorOverview />} />
+              <Route path="/creator/videos" element={<CreatorVideos />} />
+              <Route path="/creator/videos/new" element={<CreatorVideoForm />} />
+              <Route path="/creator/videos/:id/edit" element={<CreatorVideoForm />} />
+              <Route path="/creator/livestreams" element={<CreatorLivestreams />} />
+              <Route path="/creator/livestreams/new" element={<CreatorLivestreamForm />} />
+              <Route path="/creator/livestreams/:id/edit" element={<CreatorLivestreamForm />} />
+              <Route path="/creator/settings" element={<CreatorSettings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
