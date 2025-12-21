@@ -1,12 +1,21 @@
 import { Link, useLocation } from "react-router-dom";
-import { useI18n, Language } from "@/i18n";
-import { Menu, X, Search, User, LogIn } from "lucide-react";
+import { useI18n } from "@/i18n";
+import { useAuth } from "@/hooks/useAuth";
+import { Menu, X, Search, LogIn, LogOut, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const AppHeader = () => {
   const { t, language, setLanguage } = useI18n();
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -25,6 +34,10 @@ const AppHeader = () => {
 
   const toggleLanguage = () => {
     setLanguage(language === "vi" ? "en" : "vi");
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   const navLinks = [
@@ -98,13 +111,41 @@ const AppHeader = () => {
                 <Search className="w-5 h-5" />
               </Link>
 
-              {/* Login Button - Desktop */}
-              <Link to="/login" className="hidden md:block">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <LogIn className="w-4 h-4" />
-                  {t.nav.login}
-                </Button>
-              </Link>
+              {/* User Menu / Login Button - Desktop */}
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="hidden md:flex gap-2">
+                      <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                        <User className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="max-w-[100px] truncate text-sm">
+                        {user.email?.split("@")[0]}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        {t.nav.profile}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      {t.nav.logout}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/login" className="hidden md:block">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <LogIn className="w-4 h-4" />
+                    {t.nav.login}
+                  </Button>
+                </Link>
+              )}
 
               {/* Mobile Menu Toggle */}
               <button
@@ -145,13 +186,28 @@ const AppHeader = () => {
                 );
               })}
               <div className="pt-4 border-t border-border-subtle mt-4">
-                <Link
-                  to="/login"
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-foreground-secondary hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
-                >
-                  <LogIn className="w-4 h-4" />
-                  {t.nav.login}
-                </Link>
+                {user ? (
+                  <>
+                    <div className="px-4 py-2 text-sm text-foreground-muted">
+                      {user.email}
+                    </div>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2 w-full px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-muted/50 transition-colors duration-200"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      {t.nav.logout}
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-foreground-secondary hover:text-foreground hover:bg-muted/50 transition-colors duration-200"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    {t.nav.login}
+                  </Link>
+                )}
               </div>
             </div>
           </div>

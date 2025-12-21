@@ -1,21 +1,89 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, ArrowLeft } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 
 const Login = () => {
   const { t } = useI18n();
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signIn, signUp } = useAuth();
+  
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate("/", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Auth will be implemented with Supabase
+    
+    if (!email || !password) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: t.auth.invalidCredentials,
+            description: error.message,
+          });
+        } else {
+          toast({
+            title: t.auth.loginSuccess,
+          });
+          navigate("/", { replace: true });
+        }
+      } else {
+        const { error } = await signUp(email, password);
+        if (error) {
+          // Handle "User already registered" error
+          if (error.message.includes("already registered")) {
+            toast({
+              variant: "destructive",
+              title: "Email đã được sử dụng",
+              description: "Vui lòng đăng nhập hoặc sử dụng email khác.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: t.common.error,
+              description: error.message,
+            });
+          }
+        } else {
+          toast({
+            title: t.auth.signupSuccess,
+          });
+          // Auto-confirm is enabled, so user will be logged in automatically
+        }
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -54,6 +122,7 @@ const Login = () => {
                   className="pl-10"
                   placeholder="email@example.com"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -70,6 +139,8 @@ const Login = () => {
                   className="pl-10"
                   placeholder="••••••••"
                   required
+                  minLength={6}
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -82,8 +153,15 @@ const Login = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full" size="lg">
-              {isLogin ? t.auth.login : t.auth.signup}
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {t.common.loading}
+                </>
+              ) : (
+                isLogin ? t.auth.login : t.auth.signup
+              )}
             </Button>
           </form>
 
@@ -94,6 +172,7 @@ const Login = () => {
               type="button"
               onClick={() => setIsLogin(!isLogin)}
               className="text-primary hover:underline font-medium"
+              disabled={isSubmitting}
             >
               {isLogin ? t.nav.signup : t.nav.login}
             </button>
