@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,8 @@ import Index from "./pages/Index";
 import Live from "./pages/Live";
 import Videos from "./pages/Videos";
 import Login from "./pages/Login";
+import WatchVideo from "./pages/WatchVideo";
+import WatchLive from "./pages/WatchLive";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -15,19 +18,23 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <I18nProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/live" element={<Live />} />
-            <Route path="/videos" element={<Videos />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/live" element={<Live />} />
+              <Route path="/live/:id" element={<WatchLive />} />
+              <Route path="/videos" element={<Videos />} />
+              <Route path="/watch/:id" element={<WatchVideo />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </I18nProvider>
   </QueryClientProvider>
 );

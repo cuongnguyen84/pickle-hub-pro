@@ -1,19 +1,15 @@
 import { MainLayout } from "@/components/layout";
 import { LiveCard, SectionHeader, EmptyState } from "@/components/content";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
+import { useLivestreams } from "@/hooks/useSupabaseData";
 import { Radio } from "lucide-react";
-
-const mockLivestreams = [
-  { id: "1", title: "Vietnam Pickleball Open 2024 - Chung kết nam đơn", viewerCount: 1234, organizationName: "VN Pickleball", status: "live" as const },
-  { id: "2", title: "Giải Pickleball Hà Nội mở rộng - Bán kết", viewerCount: 856, organizationName: "Hanoi PB Club", status: "live" as const },
-  { id: "3", title: "Giải đấu Đà Nẵng Open", scheduledAt: "20:00 hôm nay", organizationName: "DN Sports", status: "scheduled" as const },
-];
 
 const Live = () => {
   const { t } = useI18n();
 
-  const liveNow = mockLivestreams.filter((s) => s.status === "live");
-  const scheduled = mockLivestreams.filter((s) => s.status === "scheduled");
+  const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
+  const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
 
   return (
     <MainLayout>
@@ -22,10 +18,28 @@ const Live = () => {
 
         <section className="mb-12">
           <SectionHeader title={t.home.sections.liveNow} />
-          {liveNow.length > 0 ? (
+          {liveLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {liveNow.map((stream) => (
-                <LiveCard key={stream.id} {...stream} />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-video rounded-xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : liveStreams.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {liveStreams.map((stream) => (
+                <LiveCard
+                  key={stream.id}
+                  id={stream.id}
+                  title={stream.title}
+                  viewerCount={0}
+                  organizationName={stream.organization?.name ?? ""}
+                  status={stream.status as "live" | "scheduled" | "ended"}
+                  thumbnail={stream.thumbnail_url ?? undefined}
+                />
               ))}
             </div>
           ) : (
@@ -33,14 +47,33 @@ const Live = () => {
           )}
         </section>
 
-        {scheduled.length > 0 && (
+        {(scheduledLoading || scheduledStreams.length > 0) && (
           <section>
             <SectionHeader title={t.live.scheduled} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {scheduled.map((stream) => (
-                <LiveCard key={stream.id} {...stream} />
-              ))}
-            </div>
+            {scheduledLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2].map((i) => (
+                  <div key={i} className="space-y-3">
+                    <Skeleton className="aspect-video rounded-xl" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {scheduledStreams.map((stream) => (
+                  <LiveCard
+                    key={stream.id}
+                    id={stream.id}
+                    title={stream.title}
+                    organizationName={stream.organization?.name ?? ""}
+                    status={stream.status as "live" | "scheduled" | "ended"}
+                    thumbnail={stream.thumbnail_url ?? undefined}
+                  />
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>

@@ -1,25 +1,17 @@
 import { MainLayout } from "@/components/layout";
 import { SectionHeader, LiveCard, ContentCard, EmptyState, AdSlot } from "@/components/content";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
+import { useLivestreams, useVideos } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio } from "lucide-react";
 
-// Mock data for demo
-const mockLivestreams = [
-  { id: "1", title: "Vietnam Pickleball Open 2024 - Chung kết nam đơn", viewerCount: 1234, organizationName: "VN Pickleball", status: "live" as const },
-  { id: "2", title: "Giải Pickleball Hà Nội mở rộng - Bán kết", viewerCount: 856, organizationName: "Hanoi PB Club", status: "live" as const },
-];
-
-const mockVideos = [
-  { id: "1", title: "Hướng dẫn kỹ thuật dink cơ bản cho người mới", duration: 845, views: 12500, organizationName: "PB Academy" },
-  { id: "2", title: "Top 10 pha rally đỉnh cao tháng 12/2024", duration: 623, views: 8900, organizationName: "VN Pickleball" },
-  { id: "3", title: "Phỏng vấn nhà vô địch Nguyễn Văn A", duration: 1245, views: 5600, organizationName: "Sports TV" },
-  { id: "4", title: "Chiến thuật đôi nam: Stacking và Switching", duration: 1890, views: 4200, organizationName: "PB Academy" },
-];
-
 const Index = () => {
   const { t } = useI18n();
+  
+  const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
+  const { data: videos = [], isLoading: videosLoading } = useVideos({ limit: 8 });
 
   return (
     <MainLayout>
@@ -65,10 +57,28 @@ const Index = () => {
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.liveNow} href="/live" />
         
-        {mockLivestreams.length > 0 ? (
+        {liveLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {mockLivestreams.map((stream) => (
-              <LiveCard key={stream.id} {...stream} />
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="aspect-video rounded-xl" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : liveStreams.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {liveStreams.slice(0, 3).map((stream) => (
+              <LiveCard
+                key={stream.id}
+                id={stream.id}
+                title={stream.title}
+                viewerCount={0}
+                organizationName={stream.organization?.name ?? ""}
+                status={stream.status as "live" | "scheduled" | "ended"}
+                thumbnail={stream.thumbnail_url ?? undefined}
+              />
             ))}
           </div>
         ) : (
@@ -85,22 +95,64 @@ const Index = () => {
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.latestVideos} href="/videos" />
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {mockVideos.map((video) => (
-            <ContentCard key={video.id} {...video} />
-          ))}
-        </div>
+        {videosLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="aspect-video rounded-xl" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : videos.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {videos.slice(0, 4).map((video) => (
+              <ContentCard
+                key={video.id}
+                id={video.id}
+                title={video.title}
+                duration={video.duration_seconds ?? 0}
+                views={0}
+                organizationName={video.organization?.name ?? ""}
+                thumbnail={video.thumbnail_url ?? undefined}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Play} title={t.home.noVideos} />
+        )}
       </section>
 
       {/* Popular This Week */}
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.popularThisWeek} href="/videos?sort=popular" />
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {mockVideos.slice().reverse().map((video) => (
-            <ContentCard key={video.id} {...video} />
-          ))}
-        </div>
+        {videosLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="aspect-video rounded-xl" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : videos.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {videos.slice().reverse().slice(0, 4).map((video) => (
+              <ContentCard
+                key={video.id}
+                id={video.id}
+                title={video.title}
+                duration={video.duration_seconds ?? 0}
+                views={0}
+                organizationName={video.organization?.name ?? ""}
+                thumbnail={video.thumbnail_url ?? undefined}
+              />
+            ))}
+          </div>
+        ) : null}
       </section>
     </MainLayout>
   );
