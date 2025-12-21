@@ -14,16 +14,360 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type"]
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type"]
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["target_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      likes: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["target_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      livestreams: {
+        Row: {
+          created_at: string
+          description: string | null
+          ended_at: string | null
+          id: string
+          mux_live_stream_id: string | null
+          mux_playback_id: string | null
+          mux_stream_key: string | null
+          organization_id: string
+          scheduled_start_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["livestream_status"]
+          thumbnail_url: string | null
+          title: string
+          tournament_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          mux_live_stream_id?: string | null
+          mux_playback_id?: string | null
+          mux_stream_key?: string | null
+          organization_id: string
+          scheduled_start_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["livestream_status"]
+          thumbnail_url?: string | null
+          title: string
+          tournament_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          mux_live_stream_id?: string | null
+          mux_playback_id?: string | null
+          mux_stream_key?: string | null
+          organization_id?: string
+          scheduled_start_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["livestream_status"]
+          thumbnail_url?: string | null
+          title?: string
+          tournament_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livestreams_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "livestreams_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string
+          id: string
+          organization_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email: string
+          id: string
+          organization_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          id?: string
+          organization_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          slug: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["tournament_status"]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          slug: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["tournament_status"]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["tournament_status"]
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          id: string
+          mux_asset_id: string | null
+          mux_playback_id: string | null
+          organization_id: string
+          published_at: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          tournament_id: string | null
+          type: Database["public"]["Enums"]["video_type"]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          mux_asset_id?: string | null
+          mux_playback_id?: string | null
+          organization_id: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["content_status"]
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          tournament_id?: string | null
+          type?: Database["public"]["Enums"]["video_type"]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          id?: string
+          mux_asset_id?: string | null
+          mux_playback_id?: string | null
+          organization_id?: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["content_status"]
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          tournament_id?: string | null
+          type?: Database["public"]["Enums"]["video_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      view_events: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string | null
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type"]
+          viewer_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type"]
+          viewer_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["target_type"]
+          viewer_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "view_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_organization_id: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
+      is_creator: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "viewer" | "creator" | "admin"
+      content_status: "draft" | "published" | "hidden"
+      livestream_status: "scheduled" | "live" | "ended"
+      target_type: "video" | "livestream"
+      tournament_status: "upcoming" | "ongoing" | "ended"
+      video_type: "short" | "long"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +494,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["viewer", "creator", "admin"],
+      content_status: ["draft", "published", "hidden"],
+      livestream_status: ["scheduled", "live", "ended"],
+      target_type: ["video", "livestream"],
+      tournament_status: ["upcoming", "ongoing", "ended"],
+      video_type: ["short", "long"],
+    },
   },
 } as const
