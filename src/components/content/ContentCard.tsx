@@ -1,0 +1,128 @@
+import { Link } from "react-router-dom";
+import { Play, Clock, Eye } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
+
+interface ContentCardProps {
+  id: string;
+  title: string;
+  thumbnail?: string;
+  duration?: number;
+  views?: number;
+  organizationName?: string;
+  organizationLogo?: string;
+  type?: "short" | "long";
+  publishedAt?: string;
+  className?: string;
+}
+
+const formatDuration = (seconds: number): string => {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  if (hrs > 0) {
+    return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
+const formatViews = (views: number): string => {
+  if (views >= 1000000) {
+    return `${(views / 1000000).toFixed(1)}M`;
+  }
+  if (views >= 1000) {
+    return `${(views / 1000).toFixed(1)}K`;
+  }
+  return views.toString();
+};
+
+const ContentCard = ({
+  id,
+  title,
+  thumbnail,
+  duration,
+  views,
+  organizationName,
+  organizationLogo,
+  type = "long",
+  publishedAt,
+  className,
+}: ContentCardProps) => {
+  const { t } = useI18n();
+
+  return (
+    <Link
+      to={`/watch/${id}`}
+      className={cn(
+        "group block rounded-xl overflow-hidden card-interactive",
+        className
+      )}
+    >
+      {/* Thumbnail */}
+      <div className={cn(
+        "relative overflow-hidden rounded-xl bg-background-surface",
+        type === "short" ? "aspect-[9/16]" : "aspect-video"
+      )}>
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Play className="w-12 h-12 text-foreground-muted" />
+          </div>
+        )}
+        
+        {/* Duration badge */}
+        {duration && (
+          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground">
+            {formatDuration(duration)}
+          </div>
+        )}
+        
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-background/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+            <Play className="w-5 h-5 text-primary-foreground ml-0.5" fill="currentColor" />
+          </div>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="pt-3 space-y-1">
+        <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-200">
+          {title}
+        </h3>
+        
+        <div className="flex items-center gap-2 text-xs text-foreground-muted">
+          {organizationName && (
+            <div className="flex items-center gap-1.5">
+              {organizationLogo ? (
+                <img
+                  src={organizationLogo}
+                  alt={organizationName}
+                  className="w-4 h-4 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-4 h-4 rounded-full bg-muted" />
+              )}
+              <span className="line-clamp-1">{organizationName}</span>
+            </div>
+          )}
+          
+          {views !== undefined && (
+            <div className="flex items-center gap-1">
+              <Eye className="w-3 h-3" />
+              <span>{formatViews(views)} {t.video.views}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+export default ContentCard;
