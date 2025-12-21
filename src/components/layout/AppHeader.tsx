@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
-import { Menu, X, Search, LogIn, LogOut, User } from "lucide-react";
+import { useCreatorAuth } from "@/hooks/useCreatorAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Menu, X, Search, LogIn, LogOut, User, Palette, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,8 @@ import {
 const AppHeader = () => {
   const { t, language, setLanguage } = useI18n();
   const { user, signOut } = useAuth();
+  const { isCreator } = useCreatorAuth();
+  const { isAdmin } = useAdminAuth();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -125,6 +129,22 @@ const AppHeader = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
+                    {isCreator && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/creator" className="flex items-center gap-2">
+                          <Palette className="w-4 h-4" />
+                          Creator Studio
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center gap-2">
+                          <Shield className="w-4 h-4" />
+                          Admin
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link to="/profile" className="flex items-center gap-2">
                         <User className="w-4 h-4" />
