@@ -26,10 +26,22 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
 
   const { data: comments = [], isLoading } = useComments(targetType, targetId);
 
+  const MAX_COMMENT_LENGTH = 2000;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !content.trim()) return;
+    const trimmedContent = content.trim();
+    
+    if (!user || !trimmedContent) return;
+
+    if (trimmedContent.length > MAX_COMMENT_LENGTH) {
+      toast({
+        variant: "destructive",
+        title: `Comment too long (max ${MAX_COMMENT_LENGTH} characters)`,
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -38,7 +50,7 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
         target_type: targetType,
         target_id: targetId,
         user_id: user.id,
-        content: content.trim(),
+        content: trimmedContent,
       });
 
       if (error) throw error;
@@ -91,8 +103,14 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
             onChange={(e) => setContent(e.target.value)}
             placeholder={t.comments.placeholder}
             rows={3}
+            maxLength={MAX_COMMENT_LENGTH}
             disabled={isSubmitting}
           />
+          {content.length > 0 && (
+            <p className={`text-xs ${content.length > MAX_COMMENT_LENGTH * 0.9 ? 'text-destructive' : 'text-foreground-muted'}`}>
+              {content.length}/{MAX_COMMENT_LENGTH}
+            </p>
+          )}
           <Button type="submit" disabled={isSubmitting || !content.trim()}>
             {isSubmitting ? (
               <>
