@@ -12,6 +12,13 @@ import Login from "./pages/Login";
 import WatchVideo from "./pages/WatchVideo";
 import WatchLive from "./pages/WatchLive";
 import NotFound from "./pages/NotFound";
+import {
+  AdminOverview,
+  AdminOrganizations,
+  AdminUsers,
+  AdminTournaments,
+  AdminModeration,
+} from "./pages/admin";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +37,12 @@ const App = () => (
               <Route path="/videos" element={<Videos />} />
               <Route path="/watch/:id" element={<WatchVideo />} />
               <Route path="/login" element={<Login />} />
+              {/* Admin routes */}
+              <Route path="/admin" element={<AdminOverview />} />
+              <Route path="/admin/organizations" element={<AdminOrganizations />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/tournaments" element={<AdminTournaments />} />
+              <Route path="/admin/moderation" element={<AdminModeration />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
