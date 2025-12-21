@@ -137,11 +137,16 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
-                  placeholder="••••••••"
+                  placeholder="••••••••••••"
                   required
-                  minLength={6}
+                  minLength={8}
                   disabled={isSubmitting}
                 />
+                {!isLogin && password.length > 0 && password.length < 8 && (
+                  <p className="text-xs text-destructive mt-1">
+                    Password must be at least 8 characters
+                  </p>
+                )}
               </div>
             </div>
 
