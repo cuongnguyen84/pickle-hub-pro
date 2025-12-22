@@ -5,7 +5,7 @@ import { useVideo, useVideos, useViewCount } from "@/hooks/useSupabaseData";
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { ContentCard } from "@/components/content";
-import { MuxPlayer } from "@/components/video";
+import { MuxPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo } from "react";
@@ -117,28 +117,28 @@ const WatchVideo = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Video Player */}
-            <div className="aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
+            {/* Video Player - Auto aspect ratio */}
+            <div className="bg-black rounded-xl overflow-hidden">
               {hasStorageVideo ? (
-                // Storage-based HTML5 video player
-                <video
+                // Storage-based video with adaptive aspect ratio
+                <AdaptiveVideoPlayer
                   src={storageVideoUrl!}
-                  controls
-                  playsInline
                   poster={video.thumbnail_url ?? undefined}
-                  className="w-full h-full object-contain bg-black"
+                  className="rounded-xl"
                 />
               ) : hasPlayback ? (
                 // Mux player fallback
-                <MuxPlayer
-                  playbackId={video.mux_playback_id!}
-                  title={video.title}
-                  poster={video.thumbnail_url ?? undefined}
-                  streamType="on-demand"
-                  type="video"
-                />
+                <div className="aspect-video">
+                  <MuxPlayer
+                    playbackId={video.mux_playback_id!}
+                    title={video.title}
+                    poster={video.thumbnail_url ?? undefined}
+                    streamType="on-demand"
+                    type="video"
+                  />
+                </div>
               ) : video.thumbnail_url ? (
-                <div className="relative w-full h-full">
+                <div className="relative aspect-video">
                   <img
                     src={video.thumbnail_url}
                     alt={video.title}
@@ -149,17 +149,16 @@ const WatchVideo = () => {
                       <Play className="w-8 h-8 text-foreground fill-foreground ml-1" />
                     </div>
                   </div>
+                  {/* Duration badge */}
+                  {video.duration_seconds && (
+                    <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 rounded text-white text-sm font-medium">
+                      {formatDuration(video.duration_seconds)}
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-muted">
+                <div className="aspect-video flex items-center justify-center bg-muted">
                   <span className="text-foreground-muted">{t.player.notReady}</span>
-                </div>
-              )}
-              
-              {/* Duration badge */}
-              {video.duration_seconds && !hasPlayback && !hasStorageVideo && (
-                <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 rounded text-white text-sm font-medium">
-                  {formatDuration(video.duration_seconds)}
                 </div>
               )}
             </div>
