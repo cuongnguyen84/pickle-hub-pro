@@ -1,6 +1,9 @@
-import { useState, useRef, useEffect, FormEvent } from "react";
+import { useState, useRef, useEffect, useCallback, forwardRef, KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
-import { Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle } from "lucide-react";
+import { 
+  Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
+  MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,89 +21,132 @@ import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { EmojiPicker } from "./EmojiPicker";
 
 interface ChatPanelProps {
   livestreamId: string;
   className?: string;
 }
 
-const ChatMessageItem = ({
-  message,
-  isModerator,
-  onDelete,
-  onMute,
-}: {
+interface ChatMessageItemProps {
   message: ChatMessage;
   isModerator: boolean;
   onDelete: (id: string) => void;
   onMute: (userId: string, duration: number) => void;
-}) => {
+  onRetry?: (tempId: string, message: string) => void;
+  onCopy: (text: string) => void;
+}
+
+const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
+  message,
+  isModerator,
+  onDelete,
+  onMute,
+  onRetry,
+  onCopy,
+}, ref) => {
   const { t } = useI18n();
-  const [showActions, setShowActions] = useState(false);
+  const isPending = message._pending;
+  const isFailed = message._failed;
 
   return (
     <div
+      ref={ref}
       className={cn(
         "group flex gap-2 px-3 py-1.5 hover:bg-muted/50 rounded transition-colors",
-        message._pending && "opacity-60"
+        isPending && "opacity-70",
+        isFailed && "opacity-80 bg-destructive/5"
       )}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
     >
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 flex-wrap">
           <span className="font-medium text-sm text-primary truncate max-w-[120px]">
             {message.display_name}
           </span>
           <span className="text-[10px] text-foreground-muted">
             {format(new Date(message.created_at), "HH:mm")}
           </span>
-          {message._pending && (
-            <span className="text-[10px] text-foreground-muted italic">sending...</span>
+          {isPending && (
+            <span className="text-[10px] text-foreground-muted italic flex items-center gap-1">
+              <RefreshCw className="h-2.5 w-2.5 animate-spin" />
+              {t.chat.sending}
+            </span>
+          )}
+          {isFailed && (
+            <span className="text-[10px] text-destructive flex items-center gap-1">
+              <AlertCircle className="h-2.5 w-2.5" />
+              {t.chat.sendFailed}
+            </span>
           )}
         </div>
-        <p className="text-sm text-foreground break-words">{message.message}</p>
+        <p className="text-sm text-foreground break-words whitespace-pre-wrap">{message.message}</p>
+        
+        {/* Retry button for failed messages */}
+        {isFailed && onRetry && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 mt-1 text-xs text-primary hover:text-primary"
+            onClick={() => onRetry(message._tempId || message.id, message.message)}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            {t.chat.retry}
+          </Button>
+        )}
       </div>
       
-      {isModerator && showActions && (
-        <div className="flex items-start gap-1 shrink-0">
+      {/* Actions dropdown - only for confirmed messages */}
+      {!isPending && !isFailed && (
+        <div className="flex items-start shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-6 w-6">
-                <VolumeX className="h-3 w-3" />
+                <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t.chat.mute}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onMute(message.user_id, 10)}>
-                10 {t.chat.minutes}
+            <DropdownMenuContent align="end" className="min-w-[140px]">
+              <DropdownMenuItem onClick={() => onCopy(message.message)}>
+                <Copy className="h-3 w-3 mr-2" />
+                {t.chat.copy}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onMute(message.user_id, 60)}>
-                1 {t.chat.hour}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onMute(message.user_id, 1440)}>
-                24 {t.chat.hours}
-              </DropdownMenuItem>
+              
+              {isModerator && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs">{t.chat.mute}</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => onMute(message.user_id, 10)}>
+                    10 {t.chat.minutes}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onMute(message.user_id, 60)}>
+                    1 {t.chat.hour}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onMute(message.user_id, 1440)}>
+                    24 {t.chat.hours}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => onDelete(message.id)}
+                  >
+                    <Trash2 className="h-3 w-3 mr-2" />
+                    {t.chat.delete}
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-destructive hover:text-destructive"
-            onClick={() => onDelete(message.id)}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
         </div>
       )}
     </div>
   );
-};
+});
+ChatMessageItem.displayName = "ChatMessageItem";
 
 export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   const { t } = useI18n();
+  const { toast } = useToast();
   const { user } = useAuth();
   const {
     messages,
@@ -108,48 +154,153 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
     userMute,
     isLoading,
     isModerator,
+    hasOlderMessages,
     sendMessage,
+    retryMessage,
     deleteMessage,
     updateSettings,
     muteUser,
+    loadOlderMessages,
   } = useLiveChat(livestreamId);
 
   const [inputValue, setInputValue] = useState("");
-  const [isSending, setIsSending] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const prevMessagesLengthRef = useRef(messages.length);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (autoScroll && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+  // Check if user is near bottom of scroll
+  const isNearBottom = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return true;
+    return container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+  }, []);
+
+  // Scroll to bottom smoothly
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior
+      });
     }
-  }, [messages, autoScroll]);
+  }, []);
 
-  // Detect if user scrolls up
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement;
-    const isAtBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50;
-    setAutoScroll(isAtBottom);
+  // Handle new messages
+  useEffect(() => {
+    const newCount = messages.length - prevMessagesLengthRef.current;
+    
+    if (newCount > 0) {
+      if (autoScroll || isNearBottom()) {
+        // User is at bottom, scroll to new message
+        requestAnimationFrame(() => scrollToBottom());
+        setNewMessagesCount(0);
+      } else {
+        // User scrolled up, show badge
+        setNewMessagesCount(prev => prev + newCount);
+      }
+    }
+    
+    prevMessagesLengthRef.current = messages.length;
+  }, [messages.length, autoScroll, isNearBottom, scrollToBottom]);
+
+  // Initial scroll to bottom
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      scrollToBottom("instant");
+    }
+  }, [isLoading]);
+
+  // Detect scroll position
+  const handleScroll = useCallback(() => {
+    const nearBottom = isNearBottom();
+    setAutoScroll(nearBottom);
+    if (nearBottom) {
+      setNewMessagesCount(0);
+    }
+  }, [isNearBottom]);
+
+  // Handle form submit
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    const value = inputValue.trim();
+    if (!value) return;
+
+    // Clear input immediately (optimistic)
+    setInputValue("");
+    setAutoScroll(true);
+    
+    // Scroll to bottom when user sends
+    requestAnimationFrame(() => scrollToBottom());
+    
+    await sendMessage(value);
+    
+    // Refocus input
+    inputRef.current?.focus();
+  }, [inputValue, sendMessage, scrollToBottom]);
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isSending) return;
-
-    setIsSending(true);
-    const success = await sendMessage(inputValue);
-    if (success) {
-      setInputValue("");
-      setAutoScroll(true);
+  // Insert emoji at cursor position
+  const handleEmojiSelect = useCallback((emoji: string) => {
+    const input = inputRef.current;
+    if (!input) {
+      setInputValue(prev => prev + emoji);
+      return;
     }
-    setIsSending(false);
+
+    const start = input.selectionStart || 0;
+    const end = input.selectionEnd || 0;
+    const newValue = inputValue.slice(0, start) + emoji + inputValue.slice(end);
+    
+    setInputValue(newValue);
+    
+    // Set cursor position after emoji
+    requestAnimationFrame(() => {
+      const newPos = start + emoji.length;
+      input.setSelectionRange(newPos, newPos);
+      input.focus();
+    });
+  }, [inputValue]);
+
+  // Copy message to clipboard
+  const handleCopy = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: t.common.copied });
+    } catch {
+      toast({ title: t.common.error, variant: "destructive" });
+    }
+  }, [toast, t]);
+
+  // Load older messages
+  const handleLoadOlder = useCallback(async () => {
+    setIsLoadingOlder(true);
+    await loadOlderMessages();
+    setIsLoadingOlder(false);
+  }, [loadOlderMessages]);
+
+  // Click new messages badge
+  const handleNewMessagesBadgeClick = () => {
+    scrollToBottom();
+    setNewMessagesCount(0);
+    setAutoScroll(true);
   };
 
   const isMuted = userMute && new Date(userMute.muted_until) > new Date();
   const chatDisabled = settings && !settings.is_chat_enabled;
+  const inputDisabled = !!chatDisabled || !!isMuted;
 
   if (isLoading) {
     return (
@@ -170,12 +321,13 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   }
 
   return (
-    <div className={cn("flex flex-col h-full bg-surface rounded-xl border border-border", className)}>
+    <div className={cn("flex flex-col h-full bg-surface rounded-xl border border-border overflow-hidden", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border">
+      <div className="flex items-center justify-between p-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-4 w-4 text-primary" />
           <span className="font-medium text-sm">{t.chat.title}</span>
+          <span className="text-xs text-foreground-muted">{messages.filter(m => !m._pending && !m._failed).length}</span>
           {settings?.slow_mode_seconds && settings.slow_mode_seconds > 0 && (
             <span className="text-xs text-foreground-muted flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -215,43 +367,85 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
 
       {/* Status Messages */}
       {chatDisabled && (
-        <div className="px-3 py-2 bg-muted/50 text-sm text-foreground-muted flex items-center gap-2">
+        <div className="px-3 py-2 bg-muted/50 text-sm text-foreground-muted flex items-center gap-2 shrink-0">
           <AlertCircle className="h-4 w-4" />
           {t.chat.chatDisabled}
         </div>
       )}
       
       {isMuted && (
-        <div className="px-3 py-2 bg-destructive/10 text-sm text-destructive flex items-center gap-2">
+        <div className="px-3 py-2 bg-destructive/10 text-sm text-destructive flex items-center gap-2 shrink-0">
           <VolumeX className="h-4 w-4" />
           {t.chat.youAreMuted} ({format(new Date(userMute!.muted_until), "HH:mm")})
         </div>
       )}
 
-      {/* Messages */}
-      <ScrollArea className="flex-1" onScrollCapture={handleScroll}>
-        <div ref={scrollRef} className="py-2">
-          {messages.length === 0 ? (
-            <div className="text-center text-sm text-foreground-muted py-8">
-              {t.chat.noMessages}
-            </div>
-          ) : (
-            messages.map((message) => (
-              <ChatMessageItem
-                key={message.id}
-                message={message}
-                isModerator={isModerator}
-                onDelete={deleteMessage}
-                onMute={muteUser}
-              />
-            ))
-          )}
-          <div ref={bottomRef} />
+      {/* Messages container - fixed height with internal scroll */}
+      <div className="flex-1 relative min-h-0 overflow-hidden">
+        <div 
+          ref={scrollContainerRef}
+          className="absolute inset-0 overflow-y-auto overscroll-contain"
+          onScroll={handleScroll}
+        >
+          <div className="py-2">
+            {/* Load older button */}
+            {hasOlderMessages && (
+              <div className="px-3 py-2 text-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={handleLoadOlder}
+                  disabled={isLoadingOlder}
+                >
+                  {isLoadingOlder ? (
+                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <ChevronUp className="h-3 w-3 mr-1" />
+                  )}
+                  {t.chat.loadOlder}
+                </Button>
+              </div>
+            )}
+            
+            {messages.length === 0 ? (
+              <div className="text-center text-sm text-foreground-muted py-8">
+                {t.chat.noMessages}
+              </div>
+            ) : (
+              messages.map((message) => (
+                <ChatMessageItem
+                  key={message.id}
+                  message={message}
+                  isModerator={isModerator}
+                  onDelete={deleteMessage}
+                  onMute={muteUser}
+                  onRetry={retryMessage}
+                  onCopy={handleCopy}
+                />
+              ))
+            )}
+            <div ref={bottomRef} />
+          </div>
         </div>
-      </ScrollArea>
+
+        {/* New messages badge */}
+        {newMessagesCount > 0 && (
+          <Button
+            type="button"
+            size="sm"
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 h-7 text-xs shadow-lg z-10"
+            onClick={handleNewMessagesBadgeClick}
+          >
+            <ChevronDown className="h-3 w-3 mr-1" />
+            {newMessagesCount} {t.chat.newMessages}
+          </Button>
+        )}
+      </div>
 
       {/* Input */}
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-border shrink-0">
         {!user ? (
           <Link
             to="/login"
@@ -261,19 +455,27 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
           </Link>
         ) : (
           <form onSubmit={handleSubmit} className="flex gap-2">
+            <EmojiPicker 
+              onEmojiSelect={handleEmojiSelect} 
+              disabled={inputDisabled}
+            />
             <Input
+              ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={t.chat.placeholder}
-              disabled={isSending || !!chatDisabled || !!isMuted}
+              disabled={inputDisabled}
               maxLength={500}
               className="flex-1 h-9 text-sm"
+              autoComplete="off"
             />
             <Button
-              type="submit"
+              type="button"
               size="icon"
               className="h-9 w-9 shrink-0"
-              disabled={!inputValue.trim() || isSending || !!chatDisabled || !!isMuted}
+              disabled={!inputValue.trim() || inputDisabled}
+              onClick={() => handleSubmit()}
             >
               <Send className="h-4 w-4" />
             </Button>

@@ -310,5 +310,11 @@ export const en: Translations = {
     hour: "hour",
     hours: "hours",
     sendError: "Unable to send message",
+    sending: "Sending...",
+    sendFailed: "Failed to send",
+    retry: "Retry",
+    copy: "Copy",
+    loadOlder: "Load older messages",
+    newMessages: "new messages",
   },
 };
