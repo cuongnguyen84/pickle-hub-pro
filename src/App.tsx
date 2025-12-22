@@ -11,6 +11,7 @@ import Videos from "./pages/Videos";
 import Login from "./pages/Login";
 import WatchVideo from "./pages/WatchVideo";
 import WatchLive from "./pages/WatchLive";
+import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 import {
   AdminOverview,
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/videos" element={<Videos />} />
               <Route path="/watch/:id" element={<WatchVideo />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/account" element={<Account />} />
               {/* Admin routes */}
               <Route path="/admin" element={<AdminOverview />} />
               <Route path="/admin/organizations" element={<AdminOrganizations />} />

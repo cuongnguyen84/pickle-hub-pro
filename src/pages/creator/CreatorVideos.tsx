@@ -39,16 +39,16 @@ export default function CreatorVideos() {
 
   return (
     <CreatorLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Videos</h1>
-            <p className="text-foreground-secondary mt-1">
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Videos</h1>
+            <p className="text-foreground-secondary mt-1 text-sm lg:text-base">
               Manage your video content
             </p>
           </div>
-          <Button asChild>
+          <Button asChild className="w-full sm:w-auto">
             <Link to="/creator/videos/new">
               <Plus className="w-4 h-4 mr-2" />
               New Video
@@ -57,8 +57,8 @@ export default function CreatorVideos() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-3">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
             <Input
               placeholder="Search by title or tags..."
@@ -67,31 +67,98 @@ export default function CreatorVideos() {
               className="pl-9"
             />
           </div>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-full sm:w-32">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="short">Short</SelectItem>
-              <SelectItem value="long">Long</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-32">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-              <SelectItem value="hidden">Hidden</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="flex-1 sm:w-32 sm:flex-none">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="short">Short</SelectItem>
+                <SelectItem value="long">Long</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="flex-1 sm:w-32 sm:flex-none">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All status</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="hidden">Hidden</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Videos Table */}
-        <div className="rounded-lg border border-border-subtle bg-surface overflow-hidden">
+        {/* Videos - Mobile Cards / Desktop Table */}
+        {/* Mobile View */}
+        <div className="lg:hidden space-y-3">
+          {isLoading ? (
+            [...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            ))
+          ) : videos && videos.length > 0 ? (
+            videos.map((video) => (
+              <Link
+                key={video.id}
+                to={`/creator/videos/${video.id}/edit`}
+                className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-border-subtle hover:bg-muted transition-colors"
+              >
+                <div className="w-20 h-14 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {video.thumbnail_url ? (
+                    <img
+                      src={video.thumbnail_url}
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Video className="w-5 h-5 text-foreground-muted" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground text-sm truncate">
+                    {video.title}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline" className="text-[10px]">
+                      {video.type}
+                    </Badge>
+                    <Badge
+                      variant={
+                        video.status === "published"
+                          ? "default"
+                          : video.status === "hidden"
+                          ? "destructive"
+                          : "secondary"
+                      }
+                      className="text-[10px]"
+                    >
+                      {video.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-foreground-secondary mt-1">
+                    {video.published_at
+                      ? format(new Date(video.published_at), "MMM d, yyyy")
+                      : "Draft"}
+                  </p>
+                </div>
+                <Edit className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+              </Link>
+            ))
+          ) : (
+            <div className="text-center py-8 bg-surface rounded-lg border border-border-subtle">
+              <p className="text-foreground-secondary">No videos found</p>
+              <Button asChild variant="link" className="mt-2">
+                <Link to="/creator/videos/new">Create your first video</Link>
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden lg:block rounded-lg border border-border-subtle bg-surface overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
