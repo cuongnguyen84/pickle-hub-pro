@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 
 interface CreatorLayoutProps {
   children: ReactNode;
+  title?: string;
+  actions?: ReactNode;
 }
 
 const sidebarLinks = [
@@ -26,7 +28,7 @@ const sidebarLinks = [
   { path: "/creator/settings", label: "Settings", icon: Settings },
 ];
 
-export function CreatorLayout({ children }: CreatorLayoutProps) {
+export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) {
   const { isCreator, isLoading, isAuthenticated, hasOrganization } = useCreatorAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -97,16 +99,59 @@ export function CreatorLayout({ children }: CreatorLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex w-full">
-      {/* Mobile sidebar toggle */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-surface border border-border-subtle lg:hidden"
-      >
-        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row w-full">
+      {/* Mobile Header with menu toggle */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border-subtle pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center justify-between h-14 px-4">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 -ml-2 rounded-lg text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors"
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+          <Link to="/" className="flex items-center gap-2 text-foreground font-semibold">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-xs">PH</span>
+            </div>
+            <span className="text-sm">Creator Studio</span>
+          </Link>
+          <div className="w-9" /> {/* Spacer for centering */}
+        </div>
+      </div>
 
-      {/* Sidebar overlay for mobile */}
+      {/* Mobile spacer for fixed header */}
+      <div className="lg:hidden h-14 flex-shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
+
+      {/* Mobile Tab Navigation */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 glass-strong border-t border-border-subtle pb-safe">
+        <div className="flex items-center justify-around h-14">
+          {sidebarLinks.map((link) => {
+            const isActive = link.exact
+              ? location.pathname === link.path
+              : location.pathname.startsWith(link.path);
+            const Icon = link.icon;
+            
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px]",
+                  "transition-colors duration-200",
+                  isActive
+                    ? "text-primary"
+                    : "text-foreground-muted hover:text-foreground-secondary"
+                )}
+              >
+                <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[10px] font-medium">{link.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sidebar overlay for mobile (when hamburger menu is open) */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -114,11 +159,12 @@ export function CreatorLayout({ children }: CreatorLayoutProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Desktop always visible, Mobile as drawer */}
       <aside
         className={cn(
-          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-surface border-r border-border-subtle flex flex-col transition-transform duration-300",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-surface border-r border-border-subtle flex-col transition-transform duration-300",
+          "hidden lg:flex",
+          sidebarOpen ? "flex translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Header */}
@@ -169,9 +215,85 @@ export function CreatorLayout({ children }: CreatorLayoutProps) {
         </div>
       </aside>
 
+      {/* Mobile Drawer Menu */}
+      {sidebarOpen && (
+        <aside className="fixed top-0 left-0 z-50 h-screen w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden pt-[env(safe-area-inset-top)]">
+          {/* Header */}
+          <div className="p-4 border-b border-border-subtle flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2 text-foreground font-semibold">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">PH</span>
+              </div>
+              <span>Creator Studio</span>
+            </Link>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-2 rounded-lg text-foreground-secondary hover:text-foreground hover:bg-muted"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-1">
+            {sidebarLinks.map((link) => {
+              const isActive = link.exact
+                ? location.pathname === link.path
+                : location.pathname.startsWith(link.path);
+
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-foreground-secondary hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <link.icon className="w-5 h-5" />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Back to site */}
+          <div className="p-4 border-t border-border-subtle">
+            <Link
+              to="/"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Về trang chủ
+            </Link>
+          </div>
+        </aside>
+      )}
+
       {/* Main content */}
-      <main className="flex-1 min-h-screen">
-        <div className="p-4 lg:p-8">{children}</div>
+      <main className="flex-1 min-h-screen pb-20 lg:pb-0">
+        <div className="p-4 lg:p-8">
+          {/* Page Header - Mobile friendly */}
+          {(title || actions) && (
+            <div className="mb-6">
+              {title && (
+                <h1 className="text-xl lg:text-2xl font-bold text-foreground mb-4 lg:mb-0">
+                  {title}
+                </h1>
+              )}
+              {actions && (
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 lg:mt-0 lg:absolute lg:top-8 lg:right-8">
+                  {actions}
+                </div>
+              )}
+            </div>
+          )}
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -56,13 +56,14 @@ const AppHeader = () => {
       <header
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+          "pt-[env(safe-area-inset-top)]",
           isScrolled || isMobileMenuOpen
             ? "glass-strong"
             : "bg-transparent"
         )}
       >
         <div className="container-wide">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14 md:h-16">
             {/* Logo */}
             <Link 
               to="/" 
@@ -146,7 +147,7 @@ const AppHeader = () => {
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem asChild>
-                      <Link to="/profile" className="flex items-center gap-2">
+                      <Link to="/account" className="flex items-center gap-2">
                         <User className="w-4 h-4" />
                         {t.nav.profile}
                       </Link>
@@ -234,8 +235,8 @@ const AppHeader = () => {
         )}
       </header>
       
-      {/* Spacer for fixed header */}
-      <div className="h-16" />
+      {/* Spacer for fixed header - includes safe area */}
+      <div className="h-14 md:h-16" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
     </>
   );
 };

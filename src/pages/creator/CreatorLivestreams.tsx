@@ -34,16 +34,16 @@ export default function CreatorLivestreams() {
 
   return (
     <CreatorLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Livestreams</h1>
-            <p className="text-foreground-secondary mt-1">
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Livestreams</h1>
+            <p className="text-foreground-secondary mt-1 text-sm lg:text-base">
               Manage your live broadcasts
             </p>
           </div>
-          <Button asChild>
+          <Button asChild className="w-full sm:w-auto">
             <Link to="/creator/livestreams/new">
               <Plus className="w-4 h-4 mr-2" />
               New Livestream
@@ -54,7 +54,7 @@ export default function CreatorLivestreams() {
         {/* Filters */}
         <div className="flex gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -66,8 +66,72 @@ export default function CreatorLivestreams() {
           </Select>
         </div>
 
-        {/* Livestreams Table */}
-        <div className="rounded-lg border border-border-subtle bg-surface overflow-hidden">
+        {/* Mobile Cards */}
+        <div className="lg:hidden space-y-3">
+          {isLoading ? (
+            [...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            ))
+          ) : livestreams && livestreams.length > 0 ? (
+            livestreams.map((stream) => (
+              <Link
+                key={stream.id}
+                to={`/creator/livestreams/${stream.id}/edit`}
+                className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-border-subtle hover:bg-muted transition-colors"
+              >
+                <div className="w-20 h-14 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {stream.thumbnail_url ? (
+                    <img
+                      src={stream.thumbnail_url}
+                      alt={stream.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Radio className="w-5 h-5 text-foreground-muted" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground text-sm truncate">
+                    {stream.title}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge
+                      variant={
+                        stream.status === "live"
+                          ? "destructive"
+                          : stream.status === "scheduled"
+                          ? "default"
+                          : "secondary"
+                      }
+                      className="text-[10px]"
+                    >
+                      {stream.status === "live" && (
+                        <span className="w-1.5 h-1.5 bg-current rounded-full mr-1 animate-pulse" />
+                      )}
+                      {stream.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-foreground-secondary mt-1">
+                    {stream.scheduled_start_at
+                      ? format(new Date(stream.scheduled_start_at), "MMM d, HH:mm")
+                      : "-"}
+                  </p>
+                </div>
+                <Edit className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+              </Link>
+            ))
+          ) : (
+            <div className="text-center py-8 bg-surface rounded-lg border border-border-subtle">
+              <p className="text-foreground-secondary">No livestreams found</p>
+              <Button asChild variant="link" className="mt-2">
+                <Link to="/creator/livestreams/new">Schedule your first livestream</Link>
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden lg:block rounded-lg border border-border-subtle bg-surface overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">

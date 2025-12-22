@@ -66,23 +66,23 @@ export default function CreatorOverview() {
 
   return (
     <CreatorLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 lg:space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Creator Dashboard</h1>
-            <p className="text-foreground-secondary mt-1">
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Creator Dashboard</h1>
+            <p className="text-foreground-secondary mt-1 text-sm lg:text-base">
               Manage your videos and livestreams
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button asChild>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button asChild className="w-full sm:w-auto">
               <Link to="/creator/videos/new">
                 <Plus className="w-4 h-4 mr-2" />
                 New Video
               </Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link to="/creator/livestreams/new">
                 <Plus className="w-4 h-4 mr-2" />
                 New Livestream
