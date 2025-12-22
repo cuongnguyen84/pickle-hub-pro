@@ -253,6 +253,28 @@ export interface Translations {
     advertisement: string;
     skip: string;
   };
+  search: {
+    placeholder: string;
+    filterAll: string;
+    allTournaments: string;
+    sortNewest: string;
+    sortUpcoming: string;
+    noResults: string;
+  };
+  follow: {
+    follow: string;
+    following: string;
+    unfollow: string;
+  };
+  notifications: {
+    title: string;
+    noNotifications: string;
+    noNotificationsDesc: string;
+    unread: string;
+    markAllRead: string;
+    livestreamScheduled: string;
+    livestreamLive: string;
+  };
 }
 
 // Vietnamese translations
@@ -509,5 +531,27 @@ export const vi: Translations = {
   ads: {
     advertisement: "Quảng cáo",
     skip: "Bỏ qua",
+  },
+  search: {
+    placeholder: "Tìm video, livestream hoặc giải đấu...",
+    filterAll: "Tất cả",
+    allTournaments: "Tất cả giải đấu",
+    sortNewest: "Mới nhất",
+    sortUpcoming: "Sắp diễn ra",
+    noResults: "Không tìm thấy kết quả",
+  },
+  follow: {
+    follow: "Theo dõi",
+    following: "Đang theo dõi",
+    unfollow: "Bỏ theo dõi",
+  },
+  notifications: {
+    title: "Thông báo",
+    noNotifications: "Không có thông báo",
+    noNotificationsDesc: "Theo dõi creator hoặc giải đấu để nhận thông báo khi có livestream mới",
+    unread: "chưa đọc",
+    markAllRead: "Đánh dấu tất cả đã đọc",
+    livestreamScheduled: "đã lên lịch livestream mới",
+    livestreamLive: "đang phát trực tiếp!",
   },
 };

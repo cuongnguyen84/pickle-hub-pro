@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/notifications";
 const AppHeader = () => {
   const {
     t,
@@ -84,6 +85,9 @@ const AppHeader = () => {
               <button onClick={toggleLanguage} className="px-2 py-1 rounded-md text-xs font-medium text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors duration-200">
                 {language === "vi" ? "EN" : "VN"}
               </button>
+
+              {/* Notification Bell - Desktop */}
+              <NotificationBell className="hidden md:block" />
 
               {/* Search - Desktop */}
               <Link to="/search" className="hidden md:flex p-2 rounded-lg text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors duration-200">
