@@ -98,6 +98,20 @@ export interface Translations {
     endDate: string;
     viewTournament: string;
     relatedContent: string;
+    follow: string;
+    remindMe: string;
+    liveNow: string;
+    scheduled: string;
+    replays: string;
+    videos: string;
+    allVideos: string;
+    shortVideos: string;
+    longVideos: string;
+    noLive: string;
+    noScheduled: string;
+    noReplays: string;
+    noVideos: string;
+    checkBackLater: string;
   };
   organization: {
     title: string;
@@ -341,6 +355,20 @@ export const vi: Translations = {
     endDate: "Ngày kết thúc",
     viewTournament: "Xem giải đấu",
     relatedContent: "Nội dung liên quan",
+    follow: "Theo dõi",
+    remindMe: "Nhắc tôi",
+    liveNow: "Đang trực tiếp",
+    scheduled: "Sắp diễn ra",
+    replays: "Xem lại",
+    videos: "Video",
+    allVideos: "Tất cả",
+    shortVideos: "Ngắn",
+    longVideos: "Dài",
+    noLive: "Không có livestream đang phát",
+    noScheduled: "Chưa có lịch phát sóng",
+    noReplays: "Chưa có video xem lại",
+    noVideos: "Chưa có video",
+    checkBackLater: "Quay lại sau để xem nội dung mới",
   },
   organization: {
     title: "Tổ chức",
