@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      follows: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["follow_target_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["follow_target_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["follow_target_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string
@@ -130,6 +154,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["follow_target_type"]
+          id: string
+          is_read: boolean
+          message: string | null
+          related_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["follow_target_type"]
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          related_id?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["follow_target_type"]
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          related_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: []
       }
       organizations: {
         Row: {
@@ -426,7 +489,9 @@ export type Database = {
     Enums: {
       app_role: "viewer" | "creator" | "admin"
       content_status: "draft" | "published" | "hidden"
+      follow_target_type: "organization" | "tournament"
       livestream_status: "scheduled" | "live" | "ended"
+      notification_type: "livestream_scheduled" | "livestream_live"
       target_type: "video" | "livestream"
       tournament_status: "upcoming" | "ongoing" | "ended"
       video_type: "short" | "long"
@@ -559,7 +624,9 @@ export const Constants = {
     Enums: {
       app_role: ["viewer", "creator", "admin"],
       content_status: ["draft", "published", "hidden"],
+      follow_target_type: ["organization", "tournament"],
       livestream_status: ["scheduled", "live", "ended"],
+      notification_type: ["livestream_scheduled", "livestream_live"],
       target_type: ["video", "livestream"],
       tournament_status: ["upcoming", "ongoing", "ended"],
       video_type: ["short", "long"],

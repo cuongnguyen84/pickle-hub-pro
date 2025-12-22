@@ -255,4 +255,26 @@ export const en: Translations = {
     advertisement: "Advertisement",
     skip: "Skip",
   },
+  search: {
+    placeholder: "Search videos, livestreams or tournaments...",
+    filterAll: "All",
+    allTournaments: "All tournaments",
+    sortNewest: "Newest",
+    sortUpcoming: "Upcoming",
+    noResults: "No results found",
+  },
+  follow: {
+    follow: "Follow",
+    following: "Following",
+    unfollow: "Unfollow",
+  },
+  notifications: {
+    title: "Notifications",
+    noNotifications: "No notifications",
+    noNotificationsDesc: "Follow creators or tournaments to get notified of new livestreams",
+    unread: "unread",
+    markAllRead: "Mark all as read",
+    livestreamScheduled: "scheduled a new livestream",
+    livestreamLive: "is now live!",
+  },
 };

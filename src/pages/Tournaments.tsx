@@ -1,22 +1,41 @@
+import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout";
 import { EmptyState } from "@/components/content";
+import { SearchBar } from "@/components/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
 import { useTournaments } from "@/hooks/useSupabaseData";
-import { Trophy, Calendar, ChevronRight } from "lucide-react";
+import { useDebounce } from "@/hooks/useSearch";
+import { Trophy, Calendar, ChevronRight, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 const Tournaments = () => {
   const { t } = useI18n();
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
+
   const { data: tournaments = [], isLoading } = useTournaments();
 
-  const ongoingTournaments = tournaments.filter((t) => t.status === "ongoing");
-  const upcomingTournaments = tournaments.filter((t) => t.status === "upcoming");
-  const endedTournaments = tournaments.filter((t) => t.status === "ended");
+  // Filter tournaments by search
+  const filteredTournaments = useMemo(() => {
+    if (!debouncedSearch) return tournaments;
+    return tournaments.filter((tournament) => {
+      const name = tournament.name?.toLowerCase() ?? "";
+      const description = tournament.description?.toLowerCase() ?? "";
+      return name.includes(debouncedSearch) || description.includes(debouncedSearch);
+    });
+  }, [tournaments, debouncedSearch]);
+
+  const ongoingTournaments = filteredTournaments.filter((t) => t.status === "ongoing");
+  const upcomingTournaments = filteredTournaments.filter((t) => t.status === "upcoming");
+  const endedTournaments = filteredTournaments.filter((t) => t.status === "ended");
+
+  const hasSearch = debouncedSearch.length > 0;
+  const hasResults = filteredTournaments.length > 0;
 
   const TournamentCard = ({ tournament }: { tournament: typeof tournaments[0] }) => {
     const statusConfig = {
@@ -123,13 +142,22 @@ const Tournaments = () => {
     <MainLayout>
       <div className="container-wide py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
             {t.nav.tournaments}
           </h1>
           <p className="text-foreground-muted">
             {t.home.hero.description}
           </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-8">
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            className="max-w-md"
+          />
         </div>
 
         {isLoading ? (
@@ -139,6 +167,8 @@ const Tournaments = () => {
               <Skeleton key={i} className="h-36 rounded-xl" />
             ))}
           </div>
+        ) : !hasResults && hasSearch ? (
+          <EmptyState icon={Search} title={t.search.noResults} />
         ) : (
           <Tabs defaultValue="ongoing" className="w-full">
             <TabsList className="mb-6 h-auto p-1 bg-background-surface">

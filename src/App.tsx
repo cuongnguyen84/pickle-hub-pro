@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import WatchVideo from "./pages/WatchVideo";
 import WatchLive from "./pages/WatchLive";
 import Account from "./pages/Account";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import {
   AdminOverview,
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="/tournament/:slug" element={<TournamentDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/account" element={<Account />} />
+              <Route path="/notifications" element={<Notifications />} />
               {/* Admin routes */}
               <Route path="/admin" element={<AdminOverview />} />
               <Route path="/admin/organizations" element={<AdminOrganizations />} />
