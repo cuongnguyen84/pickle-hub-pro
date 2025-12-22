@@ -15,6 +15,11 @@ interface VideoUploaderProps {
   existingUrl?: string;
   existingSource?: "storage" | "mux";
   disabled?: boolean;
+  // Thumbnail generation
+  onThumbnailGenerated?: (url: string) => void;
+  isGeneratingThumbnail?: boolean;
+  organizationId?: string | null;
+  videoId?: string;
 }
 
 export function VideoUploader({
@@ -28,6 +33,10 @@ export function VideoUploader({
   existingUrl,
   existingSource,
   disabled,
+  onThumbnailGenerated,
+  isGeneratingThumbnail,
+  organizationId,
+  videoId,
 }: VideoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -115,12 +124,18 @@ export function VideoUploader({
             {selectedFile && (
               <p className="text-xs text-foreground-muted">{formatSize(selectedFile.size)}</p>
             )}
+            {isGeneratingThumbnail && (
+              <p className="text-xs text-primary flex items-center gap-1 mt-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Generating thumbnail...
+              </p>
+            )}
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleRemove}
-            disabled={disabled}
+            disabled={disabled || isGeneratingThumbnail}
             className="text-foreground-secondary hover:text-destructive"
           >
             <X className="w-5 h-5" />
