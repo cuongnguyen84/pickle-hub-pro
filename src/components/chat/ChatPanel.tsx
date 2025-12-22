@@ -224,12 +224,20 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
     }
   }, [isNearBottom]);
 
+  // Prevent double-submit with ref
+  const isSubmittingRef = useRef(false);
+
   // Handle form submit
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
     
+    // Prevent double submission
+    if (isSubmittingRef.current) return;
+    
     const value = inputValue.trim();
     if (!value) return;
+
+    isSubmittingRef.current = true;
 
     // Clear input immediately (optimistic)
     setInputValue("");
@@ -242,6 +250,11 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
     
     // Refocus input
     inputRef.current?.focus();
+    
+    // Reset after a short delay to allow for next message
+    setTimeout(() => {
+      isSubmittingRef.current = false;
+    }, 100);
   }, [inputValue, sendMessage, scrollToBottom]);
 
   // Handle keyboard shortcuts
