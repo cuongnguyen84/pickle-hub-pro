@@ -5,11 +5,12 @@ import { useVideo, useVideos, useViewCount } from "@/hooks/useSupabaseData";
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { ContentCard } from "@/components/content";
+import { MuxPlayer } from "@/components/video";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
-import { ArrowLeft, Eye, Calendar, Clock } from "lucide-react";
+import { ArrowLeft, Eye, Calendar, Clock, Play } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 
@@ -79,6 +80,8 @@ const WatchVideo = () => {
     );
   }
 
+  const hasPlayback = !!video.mux_playback_id;
+
   return (
     <MainLayout>
       <div className="container-wide section-spacing">
@@ -94,21 +97,36 @@ const WatchVideo = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Video Player Placeholder */}
+            {/* Video Player */}
             <div className="aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
-              {video.thumbnail_url ? (
-                <img
-                  src={video.thumbnail_url}
-                  alt={video.title}
-                  className="w-full h-full object-cover"
+              {hasPlayback ? (
+                <MuxPlayer
+                  playbackId={video.mux_playback_id!}
+                  title={video.title}
+                  poster={video.thumbnail_url ?? undefined}
+                  streamType="on-demand"
                 />
+              ) : video.thumbnail_url ? (
+                <div className="relative w-full h-full">
+                  <img
+                    src={video.thumbnail_url}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                    <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
+                      <Play className="w-8 h-8 text-foreground fill-foreground ml-1" />
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-muted">
-                  <span className="text-foreground-muted">Video Player</span>
+                  <span className="text-foreground-muted">Video not available</span>
                 </div>
               )}
+              
               {/* Duration badge */}
-              {video.duration_seconds && (
+              {video.duration_seconds && !hasPlayback && (
                 <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 rounded text-white text-sm font-medium">
                   {formatDuration(video.duration_seconds)}
                 </div>

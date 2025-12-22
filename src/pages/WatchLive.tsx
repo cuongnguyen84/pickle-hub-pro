@@ -5,11 +5,12 @@ import { useLivestream, useLivestreams, useViewCount } from "@/hooks/useSupabase
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { LiveCard } from "@/components/content";
+import { MuxPlayer } from "@/components/video";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
-import { ArrowLeft, Radio, Calendar, Users } from "lucide-react";
+import { ArrowLeft, Radio, Calendar, Users, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,10 @@ const WatchLive = () => {
     ended: t.live.ended,
   };
 
+  const hasPlayback = !!livestream.mux_playback_id;
+  const isLive = livestream.status === "live";
+  const isScheduled = livestream.status === "scheduled";
+
   return (
     <MainLayout>
       <div className="container-wide section-spacing">
@@ -100,21 +105,47 @@ const WatchLive = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Video Player Placeholder */}
+            {/* Video Player */}
             <div className="aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
-              {livestream.thumbnail_url ? (
-                <img
-                  src={livestream.thumbnail_url}
-                  alt={livestream.title}
-                  className="w-full h-full object-cover"
+              {hasPlayback ? (
+                <MuxPlayer
+                  playbackId={livestream.mux_playback_id!}
+                  title={livestream.title}
+                  poster={livestream.thumbnail_url ?? undefined}
+                  streamType={isLive ? "live" : "on-demand"}
+                  autoPlay={isLive}
+                  muted={false}
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-muted">
+              ) : isScheduled ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
                   <Radio className="w-12 h-12 text-foreground-muted" />
+                  <p className="text-foreground-secondary text-center px-4">
+                    {t.live.scheduled} - {livestream.scheduled_start_at && format(
+                      new Date(livestream.scheduled_start_at),
+                      "dd MMM yyyy, HH:mm",
+                      { locale: dateLocale }
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
+                  {livestream.thumbnail_url ? (
+                    <img
+                      src={livestream.thumbnail_url}
+                      alt={livestream.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <>
+                      <AlertCircle className="w-12 h-12 text-foreground-muted" />
+                      <p className="text-foreground-secondary">Livestream not available</p>
+                    </>
+                  )}
                 </div>
               )}
-              {/* Live badge */}
-              {livestream.status === "live" && (
+              
+              {/* Live badge overlay */}
+              {isLive && hasPlayback && (
                 <div className="absolute top-3 left-3 px-3 py-1 bg-red-600 rounded text-white text-sm font-bold flex items-center gap-2 animate-pulse">
                   <Radio className="w-4 h-4" />
                   {t.live.live}

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -21,8 +21,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Save, Loader2, Copy, Radio, ExternalLink } from "lucide-react";
+import { ChevronLeft, Save, Loader2, Copy, Radio, ExternalLink, Eye, EyeOff, Zap, AlertCircle } from "lucide-react";
 import type { Enums } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CreatorLivestreamForm() {
   const { id } = useParams();
@@ -47,6 +48,10 @@ export default function CreatorLivestreamForm() {
     thumbnail_url: "",
   });
 
+  const [showStreamKey, setShowStreamKey] = useState(false);
+  const [isCreatingMux, setIsCreatingMux] = useState(false);
+  const [muxError, setMuxError] = useState<string | null>(null);
+
   useEffect(() => {
     if (livestream) {
       setFormData({
@@ -64,6 +69,64 @@ export default function CreatorLivestreamForm() {
       });
     }
   }, [livestream]);
+
+  const handleCreateMuxLivestream = async () => {
+    if (!formData.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a title before creating a Mux livestream",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingMux(true);
+    setMuxError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await supabase.functions.invoke("mux-create-livestream", {
+        body: { title: formData.title, playback_policy: "public" },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to create Mux livestream");
+      }
+
+      const data = response.data;
+      
+      if (data.error) {
+        throw new Error(data.message || data.error);
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        mux_live_stream_id: data.mux_live_stream_id || "",
+        mux_playback_id: data.mux_playback_id || "",
+        mux_stream_key: data.mux_stream_key || "",
+      }));
+
+      toast({
+        title: "Mux Livestream Created",
+        description: "Your streaming credentials are ready. Configure OBS with the details below.",
+      });
+    } catch (error) {
+      console.error("Mux creation error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create Mux livestream";
+      setMuxError(errorMessage);
+      toast({
+        title: "Error Creating Livestream",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingMux(false);
+    }
+  };
 
   const handleSubmit = async () => {
     const payload = {
@@ -96,6 +159,7 @@ export default function CreatorLivestreamForm() {
   };
 
   const isSubmitting = createLivestream.isPending || updateLivestream.isPending;
+  const hasMuxCredentials = formData.mux_stream_key && formData.mux_playback_id;
 
   if (isEditing && livestreamLoading) {
     return (
@@ -228,78 +292,90 @@ export default function CreatorLivestreamForm() {
           </CardContent>
         </Card>
 
-        {/* Mux Settings */}
+        {/* Mux Integration */}
         <Card className="bg-surface border-border-subtle">
           <CardHeader>
-            <CardTitle>Mux Settings (MVP)</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              Mux Livestream
+            </CardTitle>
+            <CardDescription>
+              Create a real Mux livestream to broadcast via OBS or other streaming software.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-foreground-secondary">
-              Enter Mux IDs manually for MVP. Real integration coming soon.
-            </p>
+            {!hasMuxCredentials ? (
+              <div className="space-y-4">
+                <Button
+                  type="button"
+                  onClick={handleCreateMuxLivestream}
+                  disabled={isCreatingMux || !formData.title.trim()}
+                  className="w-full sm:w-auto"
+                >
+                  {isCreatingMux && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  <Zap className="w-4 h-4 mr-2" />
+                  Create Mux Livestream
+                </Button>
+                
+                {!formData.title.trim() && (
+                  <p className="text-sm text-foreground-secondary">
+                    Enter a title first to create a Mux livestream.
+                  </p>
+                )}
 
-            <div className="space-y-2">
-              <Label htmlFor="mux_live_stream_id">Mux Live Stream ID</Label>
-              <Input
-                id="mux_live_stream_id"
-                value={formData.mux_live_stream_id}
-                onChange={(e) => setFormData({ ...formData, mux_live_stream_id: e.target.value })}
-                placeholder="live_stream_id..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mux_playback_id">Mux Playback ID</Label>
-              <Input
-                id="mux_playback_id"
-                value={formData.mux_playback_id}
-                onChange={(e) => setFormData({ ...formData, mux_playback_id: e.target.value })}
-                placeholder="playback_id..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="mux_stream_key">Mux Stream Key (SENSITIVE)</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="mux_stream_key"
-                  type="password"
-                  value={formData.mux_stream_key}
-                  onChange={(e) => setFormData({ ...formData, mux_stream_key: e.target.value })}
-                  placeholder="stream_key..."
-                />
-                {formData.mux_stream_key && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => copyToClipboard(formData.mux_stream_key, "Stream Key")}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
+                {muxError && (
+                  <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                    <div className="text-sm text-destructive">{muxError}</div>
+                  </div>
                 )}
               </div>
-              <p className="text-xs text-destructive">
-                ⚠️ This key is sensitive. Never share it publicly.
-              </p>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                  <p className="text-sm text-primary font-medium">
+                    ✓ Mux livestream ready! Configure your streaming software with the details below.
+                  </p>
+                </div>
+
+                {/* Mux IDs (read-only display) */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-foreground-secondary">Live Stream ID</Label>
+                    <Input value={formData.mux_live_stream_id} readOnly className="font-mono text-sm" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-foreground-secondary">Playback ID</Label>
+                    <Input value={formData.mux_playback_id} readOnly className="font-mono text-sm" />
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Streaming Guide */}
-        {(formData.mux_stream_key || formData.mux_playback_id) && (
+        {/* Streaming Guide - Only show when we have credentials */}
+        {hasMuxCredentials && (
           <Card className="bg-surface border-border-subtle">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Radio className="w-5 h-5 text-primary" />
-                Streaming Guide
+                Streaming Guide (OBS)
               </CardTitle>
+              <CardDescription>
+                Use these settings in OBS or your preferred streaming software.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* RTMP URL */}
               <div className="space-y-2">
-                <Label>RTMP URL</Label>
+                <Label>RTMP Server URL</Label>
                 <div className="flex items-center gap-2">
-                  <Input value="rtmps://global-live.mux.com:443/app" readOnly />
+                  <Input 
+                    value="rtmps://global-live.mux.com:443/app" 
+                    readOnly 
+                    className="font-mono text-sm"
+                  />
                   <Button
                     type="button"
                     variant="outline"
@@ -313,61 +389,79 @@ export default function CreatorLivestreamForm() {
                 </div>
               </div>
 
-              {formData.mux_stream_key && (
-                <div className="space-y-2">
-                  <Label>Stream Key</Label>
-                  <div className="flex items-center gap-2">
-                    <Input type="password" value={formData.mux_stream_key} readOnly />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => copyToClipboard(formData.mux_stream_key, "Stream Key")}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
+              {/* Stream Key */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  Stream Key
+                  <span className="text-xs text-destructive font-normal">SENSITIVE</span>
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type={showStreamKey ? "text" : "password"} 
+                    value={formData.mux_stream_key} 
+                    readOnly 
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowStreamKey(!showStreamKey)}
+                  >
+                    {showStreamKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(formData.mux_stream_key, "Stream Key")}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
                 </div>
-              )}
+                <p className="text-xs text-destructive">
+                  ⚠️ Never share this key publicly. Anyone with this key can stream to your channel.
+                </p>
+              </div>
 
-              {formData.mux_playback_id && (
-                <div className="space-y-2">
-                  <Label>Playback URL</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={`https://stream.mux.com/${formData.mux_playback_id}.m3u8`}
-                      readOnly
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() =>
-                        copyToClipboard(
-                          `https://stream.mux.com/${formData.mux_playback_id}.m3u8`,
-                          "Playback URL"
-                        )
-                      }
+              {/* Playback URL */}
+              <div className="space-y-2">
+                <Label>Playback URL (HLS)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={`https://stream.mux.com/${formData.mux_playback_id}.m3u8`}
+                    readOnly
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      copyToClipboard(
+                        `https://stream.mux.com/${formData.mux_playback_id}.m3u8`,
+                        "Playback URL"
+                      )
+                    }
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    asChild
+                  >
+                    <a
+                      href={`https://stream.mux.com/${formData.mux_playback_id}.m3u8`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      asChild
-                    >
-                      <a
-                        href={`https://stream.mux.com/${formData.mux_playback_id}.m3u8`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </Button>
-                  </div>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </Button>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         )}
