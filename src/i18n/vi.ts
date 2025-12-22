@@ -218,6 +218,13 @@ export interface Translations {
       reportedContent: string;
     };
   };
+  player: {
+    tapToPlayVideo: string;
+    tapToWatchLive: string;
+    notReady: string;
+    playbackError: string;
+    playbackErrorDesc: string;
+  };
   errors: {
     notFound: string;
     notFoundDesc: string;
@@ -452,6 +459,13 @@ export const vi: Translations = {
       hide: "Ẩn nội dung",
       reportedContent: "Nội dung bị báo cáo",
     },
+  },
+  player: {
+    tapToPlayVideo: "Chạm để xem video",
+    tapToWatchLive: "Chạm để xem trực tiếp",
+    notReady: "Video chưa sẵn sàng",
+    playbackError: "Không thể phát",
+    playbackErrorDesc: "Không thể phát trên trình duyệt này. Hãy thử reload hoặc đổi mạng.",
   },
   errors: {
     notFound: "Không tìm thấy trang",
