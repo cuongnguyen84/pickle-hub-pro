@@ -13,6 +13,8 @@ import { useEffect, useRef } from "react";
 import { ArrowLeft, Eye, Calendar, Clock, Play } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
+import { ShareDialog } from "@/components/share";
+import { DynamicMeta } from "@/components/seo";
 
 const WatchVideo = () => {
   const { id } = useParams<{ id: string }>();
@@ -84,6 +86,13 @@ const WatchVideo = () => {
 
   return (
     <MainLayout>
+      {/* Dynamic OG tags for sharing */}
+      <DynamicMeta
+        title={video.title}
+        description={video.description ?? `Watch ${video.title} on The Pickle Hub`}
+        image={video.thumbnail_url ?? undefined}
+        type="video.other"
+      />
       <div className="container-wide section-spacing">
         {/* Back Button */}
         <Link
@@ -165,9 +174,15 @@ const WatchVideo = () => {
                 )}
               </div>
 
-              {/* Like Button */}
+              {/* Like & Share Buttons */}
               <div className="flex items-center gap-4 py-2 border-t border-b border-border">
                 <LikeButton targetType="video" targetId={video.id} />
+                <ShareDialog
+                  type="video"
+                  id={video.id}
+                  title={video.title}
+                  thumbnail={video.thumbnail_url ?? undefined}
+                />
               </div>
 
               {/* Description */}

@@ -252,6 +252,7 @@ export const en: Translations = {
     networkError: "Network error",
     networkErrorDesc: "Unable to connect to the server.",
     goHome: "Go home",
+    error: "Error",
   },
   ads: {
     advertisement: "Advertisement",
@@ -335,5 +336,19 @@ export const en: Translations = {
     noDataDesc: "Start your first livestream or upload a video to track performance!",
     noViewData: "No views in this period",
     noContent: "No content yet",
+  },
+  share: {
+    share: "Share",
+    shareTitle: "Share content",
+    copied: "Copied!",
+    copiedDesc: "Link copied to clipboard",
+    linkDesc: "Share this link so others can view the content",
+    embedDesc: "Copy the iframe code to embed the video in your website",
+    withTitle: "With title bar",
+    withoutTitle: "Without title",
+    qrDesc: "Scan the QR code to open on mobile or print for offline events",
+    downloadQR: "Download QR",
+    qrDownloaded: "Downloaded!",
+    qrDownloadedDesc: "QR code saved to your device",
   },
 };

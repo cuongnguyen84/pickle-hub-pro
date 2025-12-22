@@ -250,6 +250,7 @@ export interface Translations {
     networkError: string;
     networkErrorDesc: string;
     goHome: string;
+    error: string;
   };
   ads: {
     advertisement: string;
@@ -333,6 +334,20 @@ export interface Translations {
     noDataDesc: string;
     noViewData: string;
     noContent: string;
+  };
+  share: {
+    share: string;
+    shareTitle: string;
+    copied: string;
+    copiedDesc: string;
+    linkDesc: string;
+    embedDesc: string;
+    withTitle: string;
+    withoutTitle: string;
+    qrDesc: string;
+    downloadQR: string;
+    qrDownloaded: string;
+    qrDownloadedDesc: string;
   };
 }
 
@@ -588,6 +603,7 @@ export const vi: Translations = {
     networkError: "Lỗi kết nối",
     networkErrorDesc: "Không thể kết nối đến máy chủ.",
     goHome: "Về trang chủ",
+    error: "Lỗi",
   },
   ads: {
     advertisement: "Quảng cáo",
@@ -671,5 +687,19 @@ export const vi: Translations = {
     noDataDesc: "Hãy bắt đầu livestream hoặc đăng video đầu tiên để theo dõi hiệu suất!",
     noViewData: "Chưa có lượt xem trong khoảng thời gian này",
     noContent: "Chưa có nội dung",
+  },
+  share: {
+    share: "Chia sẻ",
+    shareTitle: "Chia sẻ nội dung",
+    copied: "Đã sao chép!",
+    copiedDesc: "Link đã được sao chép vào clipboard",
+    linkDesc: "Chia sẻ link này để mọi người có thể xem nội dung",
+    embedDesc: "Sao chép mã iframe để nhúng video vào website của bạn",
+    withTitle: "Có hiển thị tiêu đề",
+    withoutTitle: "Không có tiêu đề",
+    qrDesc: "Quét mã QR để mở nội dung trên điện thoại hoặc in ra cho sự kiện offline",
+    downloadQR: "Tải mã QR",
+    qrDownloaded: "Đã tải xuống!",
+    qrDownloadedDesc: "Mã QR đã được lưu vào máy của bạn",
   },
 };
