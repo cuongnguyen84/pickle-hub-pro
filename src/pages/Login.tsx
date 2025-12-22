@@ -7,12 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
-
 const Login = () => {
-  const { t } = useI18n();
+  const {
+    t
+  } = useI18n();
   const navigate = useNavigate();
-  const { user, loading: authLoading, signIn, signUp } = useAuth();
-  
+  const {
+    user,
+    loading: authLoading,
+    signIn,
+    signUp
+  } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,52 +26,56 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/", { replace: true });
+      navigate("/", {
+        replace: true
+      });
     }
   }, [user, authLoading, navigate]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!email || !password) return;
-    
     setIsSubmitting(true);
-    
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        const {
+          error
+        } = await signIn(email, password);
         if (error) {
           toast({
             variant: "destructive",
             title: t.auth.invalidCredentials,
-            description: error.message,
+            description: error.message
           });
         } else {
           toast({
-            title: t.auth.loginSuccess,
+            title: t.auth.loginSuccess
           });
-          navigate("/", { replace: true });
+          navigate("/", {
+            replace: true
+          });
         }
       } else {
-        const { error } = await signUp(email, password);
+        const {
+          error
+        } = await signUp(email, password);
         if (error) {
           // Handle "User already registered" error
           if (error.message.includes("already registered")) {
             toast({
               variant: "destructive",
               title: "Email đã được sử dụng",
-              description: "Vui lòng đăng nhập hoặc sử dụng email khác.",
+              description: "Vui lòng đăng nhập hoặc sử dụng email khác."
             });
           } else {
             toast({
               variant: "destructive",
               title: t.common.error,
-              description: error.message,
+              description: error.message
             });
           }
         } else {
           toast({
-            title: t.auth.signupSuccess,
+            title: t.auth.signupSuccess
           });
           // Auto-confirm is enabled, so user will be logged in automatically
         }
@@ -78,15 +87,11 @@ const Login = () => {
 
   // Show loading while checking auth state
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
+  return <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="p-4">
         <Link to="/" className="inline-flex items-center gap-2 text-foreground-secondary hover:text-foreground transition-colors">
@@ -101,7 +106,7 @@ const Login = () => {
           {/* Logo */}
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4">
-              <span className="text-primary-foreground font-bold text-lg">PH</span>
+              <span className="text-primary-foreground font-bold text-lg">TPH</span>
             </div>
             <h1 className="text-2xl font-semibold text-foreground">
               {isLogin ? t.auth.login : t.auth.signup}
@@ -114,16 +119,7 @@ const Login = () => {
               <Label htmlFor="email">{t.auth.email}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  placeholder="email@example.com"
-                  required
-                  disabled={isSubmitting}
-                />
+                <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" placeholder="email@example.com" required disabled={isSubmitting} />
               </div>
             </div>
 
@@ -131,61 +127,36 @@ const Login = () => {
               <Label htmlFor="password">{t.auth.password}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  placeholder="••••••••••••"
-                  required
-                  minLength={8}
-                  disabled={isSubmitting}
-                />
-                {!isLogin && password.length > 0 && password.length < 8 && (
-                  <p className="text-xs text-destructive mt-1">
+                <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="pl-10" placeholder="••••••••••••" required minLength={8} disabled={isSubmitting} />
+                {!isLogin && password.length > 0 && password.length < 8 && <p className="text-xs text-destructive mt-1">
                     Password must be at least 8 characters
-                  </p>
-                )}
+                  </p>}
               </div>
             </div>
 
-            {isLogin && (
-              <div className="text-right">
+            {isLogin && <div className="text-right">
                 <button type="button" className="text-sm text-primary hover:underline">
                   {t.auth.forgotPassword}
                 </button>
-              </div>
-            )}
+              </div>}
 
             <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
+              {isSubmitting ? <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {t.common.loading}
-                </>
-              ) : (
-                isLogin ? t.auth.login : t.auth.signup
-              )}
+                </> : isLogin ? t.auth.login : t.auth.signup}
             </Button>
           </form>
 
           {/* Toggle login/signup */}
           <p className="text-center text-sm text-foreground-secondary">
             {isLogin ? t.auth.noAccount : t.auth.hasAccount}{" "}
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline font-medium"
-              disabled={isSubmitting}
-            >
+            <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-primary hover:underline font-medium" disabled={isSubmitting}>
               {isLogin ? t.nav.signup : t.nav.login}
             </button>
           </p>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Login;
