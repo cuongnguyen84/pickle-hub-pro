@@ -8,6 +8,7 @@ import {
   useCreatorTournaments,
 } from "@/hooks/useCreatorData";
 import { useVideoUpload } from "@/hooks/useVideoUpload";
+import { useThumbnailGenerator } from "@/hooks/useThumbnailGenerator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,20 +23,23 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoUploader } from "@/components/video/VideoUploader";
-import { ChevronLeft, Save, Upload, Loader2 } from "lucide-react";
+import { ChevronLeft, Save, Upload, Loader2, ImageIcon, RefreshCw } from "lucide-react";
 import type { Enums } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CreatorVideoForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { organizationId } = useCreatorAuth();
+  const { toast } = useToast();
   const isEditing = !!id;
 
   const { data: video, isLoading: videoLoading } = useCreatorVideo(id, organizationId);
   const { data: tournaments } = useCreatorTournaments();
   const { createVideo, updateVideo } = useVideoMutations(organizationId);
   const uploadHook = useVideoUpload(organizationId);
+  const thumbnailHook = useThumbnailGenerator(organizationId);
 
   const [formData, setFormData] = useState({
     type: "long" as Enums<"video_type">,
@@ -67,13 +71,27 @@ export default function CreatorVideoForm() {
     }
   }, [video]);
 
-  // Sync upload hook results to local state
+  // Sync upload hook results to local state and trigger thumbnail generation
   useEffect(() => {
     if (uploadHook.storagePath && uploadHook.videoUrl) {
       setUploadedData({
         storagePath: uploadHook.storagePath,
         videoUrl: uploadHook.videoUrl,
       });
+      
+      // Auto-generate thumbnail if not already set
+      if (!formData.thumbnail_url) {
+        const videoId = id || uploadHook.storagePath.split("/").pop()?.split(".")[0] || Date.now().toString();
+        thumbnailHook.generateThumbnail(uploadHook.videoUrl, videoId).then((url) => {
+          if (url) {
+            setFormData((prev) => ({ ...prev, thumbnail_url: url }));
+            toast({
+              title: "Thumbnail generated",
+              description: "Thumbnail đã được tạo tự động từ video",
+            });
+          }
+        });
+      }
     }
   }, [uploadHook.storagePath, uploadHook.videoUrl]);
 
@@ -92,6 +110,21 @@ export default function CreatorVideoForm() {
       uploadHook.reset();
     }
     return success;
+  };
+
+  const handleRegenerateThumbnail = async () => {
+    const videoUrl = uploadedData.videoUrl || getExistingVideoUrl();
+    if (!videoUrl) return;
+    
+    const videoId = id || uploadedData.storagePath?.split("/").pop()?.split(".")[0] || Date.now().toString();
+    const url = await thumbnailHook.generateThumbnail(videoUrl, videoId);
+    if (url) {
+      setFormData((prev) => ({ ...prev, thumbnail_url: url }));
+      toast({
+        title: "Thumbnail regenerated",
+        description: "Thumbnail mới đã được tạo",
+      });
+    }
   };
 
   const handleSubmit = async (publish: boolean = false) => {
@@ -299,15 +332,55 @@ export default function CreatorVideoForm() {
               </Select>
             </div>
 
-            {/* Thumbnail URL */}
+            {/* Thumbnail */}
             <div className="space-y-2">
-              <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-              <Input
-                id="thumbnail_url"
-                value={formData.thumbnail_url}
-                onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                placeholder="https://..."
-              />
+              <Label htmlFor="thumbnail_url">Thumbnail</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="thumbnail_url"
+                  value={formData.thumbnail_url}
+                  onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
+                  placeholder="https://..."
+                  className="flex-1"
+                />
+                {(uploadedData.videoUrl || getExistingVideoUrl()) && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleRegenerateThumbnail}
+                    disabled={thumbnailHook.isGenerating}
+                    title="Regenerate thumbnail"
+                  >
+                    {thumbnailHook.isGenerating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
+              {thumbnailHook.isGenerating && (
+                <p className="text-xs text-primary flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Generating thumbnail...
+                </p>
+              )}
+              {formData.thumbnail_url && (
+                <div className="mt-2">
+                  <p className="text-xs text-foreground-muted mb-1">Preview:</p>
+                  <div className="relative w-40 aspect-video rounded-lg overflow-hidden bg-black border border-border">
+                    <img
+                      src={formData.thumbnail_url}
+                      alt="Thumbnail preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Status */}

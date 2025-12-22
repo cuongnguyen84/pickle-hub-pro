@@ -167,6 +167,10 @@ export const en: Translations = {
       uploadError: "Upload failed",
       selectFile: "Select video file",
       dragDrop: "or drag and drop here",
+      generatingThumbnail: "Generating thumbnail...",
+      thumbnailGenerated: "Thumbnail generated",
+      regenerateThumbnail: "Regenerate thumbnail",
+      thumbnailPreview: "Thumbnail preview",
     },
     livestream: {
       title: "Title",

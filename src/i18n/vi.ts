@@ -165,6 +165,10 @@ export interface Translations {
       uploadError: string;
       selectFile: string;
       dragDrop: string;
+      generatingThumbnail: string;
+      thumbnailGenerated: string;
+      regenerateThumbnail: string;
+      thumbnailPreview: string;
     };
     livestream: {
       title: string;
@@ -518,6 +522,10 @@ export const vi: Translations = {
       uploadError: "Tải lên thất bại",
       selectFile: "Chọn file video",
       dragDrop: "hoặc kéo thả file vào đây",
+      generatingThumbnail: "Đang tạo thumbnail...",
+      thumbnailGenerated: "Đã tạo thumbnail",
+      regenerateThumbnail: "Tạo lại thumbnail",
+      thumbnailPreview: "Xem trước thumbnail",
     },
     livestream: {
       title: "Tiêu đề",
