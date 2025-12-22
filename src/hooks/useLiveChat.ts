@@ -12,6 +12,7 @@ export interface ChatMessage {
   avatar_url: string | null;
   message: string;
   created_at: string;
+  _pending?: boolean; // Local optimistic flag
 }
 
 export interface ChatSettings {
@@ -55,6 +56,8 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   const [isModerator, setIsModerator] = useState(false);
   
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const messageIdsRef = useRef<Set<string>>(new Set());
+  const pendingMessagesRef = useRef<Map<string, { text: string; userId: string; timestamp: number }>>(new Map());
 
   // Check if user is moderator
   useEffect(() => {
@@ -89,6 +92,8 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         .limit(50);
       
       if (messagesData) {
+        // Initialize message IDs set
+        messageIdsRef.current = new Set(messagesData.map(m => m.id));
         setMessages(messagesData);
       }
       
@@ -130,6 +135,8 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
 
   // Subscribe to realtime updates
   useEffect(() => {
+    console.log('[Chat] Setting up realtime subscription for:', livestreamId);
+    
     channelRef.current = supabase
       .channel(`chat-${livestreamId}`)
       .on(
@@ -142,7 +149,49 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         },
         (payload) => {
           const newMessage = payload.new as ChatMessage;
-          setMessages(prev => [...prev, newMessage]);
+          console.log('[Chat] Received new message via realtime:', newMessage.id);
+          
+          // Check if we already have this message (dedupe)
+          if (messageIdsRef.current.has(newMessage.id)) {
+            console.log('[Chat] Message already exists, skipping:', newMessage.id);
+            return;
+          }
+          
+          // Check if this message matches a pending message (optimistic update)
+          let matchedPendingId: string | null = null;
+          const now = Date.now();
+          
+          for (const [pendingId, pendingData] of pendingMessagesRef.current.entries()) {
+            // Match by user_id, message text, and within 10 seconds
+            if (
+              pendingData.userId === newMessage.user_id &&
+              pendingData.text === newMessage.message &&
+              now - pendingData.timestamp < 10000
+            ) {
+              matchedPendingId = pendingId;
+              break;
+            }
+          }
+          
+          if (matchedPendingId) {
+            console.log('[Chat] Replacing pending message:', matchedPendingId, 'with real:', newMessage.id);
+            // Remove from pending tracking
+            pendingMessagesRef.current.delete(matchedPendingId);
+            
+            // Replace pending with real message
+            setMessages(prev => {
+              const updated = prev.map(m => 
+                m.id === matchedPendingId ? { ...newMessage, _pending: false } : m
+              );
+              messageIdsRef.current.add(newMessage.id);
+              return updated;
+            });
+          } else {
+            // New message from another user or system
+            console.log('[Chat] Adding new message from realtime:', newMessage.id);
+            messageIdsRef.current.add(newMessage.id);
+            setMessages(prev => [...prev, newMessage]);
+          }
         }
       )
       .on(
@@ -155,6 +204,8 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         },
         (payload) => {
           const deletedId = (payload.old as { id: string }).id;
+          console.log('[Chat] Message deleted via realtime:', deletedId);
+          messageIdsRef.current.delete(deletedId);
           setMessages(prev => prev.filter(m => m.id !== deletedId));
         }
       )
@@ -172,9 +223,12 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Chat] Subscription status:', status);
+      });
 
     return () => {
+      console.log('[Chat] Cleaning up realtime subscription');
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
@@ -229,6 +283,32 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     const profile = await getUserProfile();
     const displayName = profile?.display_name || user.email?.split('@')[0] || 'User';
 
+    // Create optimistic message with temporary ID
+    const tempId = `pending-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
+      livestream_id: livestreamId,
+      user_id: user.id,
+      display_name: displayName,
+      avatar_url: null,
+      message: trimmedMessage,
+      created_at: new Date().toISOString(),
+      _pending: true
+    };
+
+    console.log('[Chat] Adding optimistic message:', tempId);
+    
+    // Track pending message for reconciliation
+    pendingMessagesRef.current.set(tempId, {
+      text: trimmedMessage,
+      userId: user.id,
+      timestamp: Date.now()
+    });
+    
+    // Immediately add to UI
+    setMessages(prev => [...prev, optimisticMessage]);
+
+    // Send to server
     const { error } = await supabase
       .from('chat_messages')
       .insert({
@@ -239,9 +319,13 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       });
 
     if (error) {
-      console.error('Error sending message:', error);
+      console.error('[Chat] Error sending message:', error);
       
-      // Check for slow mode
+      // Remove optimistic message on failure
+      pendingMessagesRef.current.delete(tempId);
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      
+      // Show error toast
       if (error.message.includes('can_send_chat_message')) {
         toast({
           title: t.chat.slowModeWait,
@@ -256,21 +340,27 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       return false;
     }
 
+    console.log('[Chat] Message sent successfully, waiting for realtime to confirm');
     return true;
   }, [user, userMute, settings, livestreamId, toast, t]);
 
   const deleteMessage = useCallback(async (messageId: string): Promise<boolean> => {
+    // Optimistic delete
+    setMessages(prev => prev.filter(m => m.id !== messageId));
+    messageIdsRef.current.delete(messageId);
+    
     const { error } = await supabase
       .from('chat_messages')
       .delete()
       .eq('id', messageId);
 
     if (error) {
-      console.error('Error deleting message:', error);
+      console.error('[Chat] Error deleting message:', error);
       toast({
         title: t.common.error,
         variant: "destructive"
       });
+      // Note: Could refetch messages here to restore, but realtime should handle it
       return false;
     }
 
@@ -289,7 +379,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       });
 
     if (error) {
-      console.error('Error updating settings:', error);
+      console.error('[Chat] Error updating settings:', error);
       toast({
         title: t.common.error,
         variant: "destructive"
@@ -318,7 +408,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       });
 
     if (error) {
-      console.error('Error muting user:', error);
+      console.error('[Chat] Error muting user:', error);
       toast({
         title: t.common.error,
         variant: "destructive"
@@ -339,7 +429,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       .eq('id', muteId);
 
     if (error) {
-      console.error('Error unmuting user:', error);
+      console.error('[Chat] Error unmuting user:', error);
       return false;
     }
 
