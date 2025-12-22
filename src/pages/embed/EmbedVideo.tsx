@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useVideo } from "@/hooks/useSupabaseData";
 import { MuxPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,15 @@ const EmbedVideo = () => {
   const showTitle = searchParams.get("title") !== "0";
 
   const { data: video, isLoading } = useVideo(id!);
+
+  // Get video URL for storage-based videos
+  const storageVideoUrl = useMemo(() => {
+    if (video?.source === "storage" && video?.storage_path) {
+      const { data } = supabase.storage.from("videos").getPublicUrl(video.storage_path);
+      return data.publicUrl;
+    }
+    return null;
+  }, [video?.source, video?.storage_path]);
 
   // Record view event with embed source
   useEffect(() => {
@@ -33,6 +42,9 @@ const EmbedVideo = () => {
     return () => clearTimeout(timer);
   }, [id, video?.organization_id]);
 
+  const hasStorageVideo = video?.source === "storage" && !!storageVideoUrl;
+  const hasMuxPlayback = !!video?.mux_playback_id;
+
   if (isLoading) {
     return (
       <div className="w-full h-full min-h-screen bg-black flex items-center justify-center">
@@ -41,7 +53,7 @@ const EmbedVideo = () => {
     );
   }
 
-  if (!video || !video.mux_playback_id) {
+  if (!video || (!hasStorageVideo && !hasMuxPlayback)) {
     return (
       <div className="w-full h-full min-h-screen bg-black flex items-center justify-center">
         <p className="text-white/70 text-sm">Video not available</p>
@@ -53,14 +65,24 @@ const EmbedVideo = () => {
     <div className="w-full h-full min-h-screen bg-black flex flex-col">
       {/* Video Player - Full screen */}
       <div className="flex-1 relative">
-        <MuxPlayer
-          playbackId={video.mux_playback_id}
-          title={video.title}
-          poster={video.thumbnail_url ?? undefined}
-          streamType="on-demand"
-          type="video"
-          className="w-full h-full absolute inset-0"
-        />
+        {hasStorageVideo ? (
+          <video
+            src={storageVideoUrl!}
+            controls
+            playsInline
+            poster={video.thumbnail_url ?? undefined}
+            className="w-full h-full absolute inset-0 object-contain bg-black"
+          />
+        ) : (
+          <MuxPlayer
+            playbackId={video.mux_playback_id!}
+            title={video.title}
+            poster={video.thumbnail_url ?? undefined}
+            streamType="on-demand"
+            type="video"
+            className="w-full h-full absolute inset-0"
+          />
+        )}
       </div>
 
       {/* Title bar - optional */}
