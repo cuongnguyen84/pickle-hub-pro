@@ -53,7 +53,7 @@ export const en: Translations = {
   },
   home: {
     hero: {
-      title: "Pickleball Hub",
+      title: "The Pickle Hub",
       subtitle: "Professional Pickleball Media Platform",
       description: "Live streaming and on-demand videos from top tournaments",
       cta: "Explore now",
