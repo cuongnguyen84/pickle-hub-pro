@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
-import { Radio, Calendar, Trash2, Check } from "lucide-react";
+import { Radio, Calendar, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,20 +9,46 @@ import {
   useNotifications,
   useMarkAsRead,
   useDeleteNotification,
+  useNotificationRealtime,
   type Notification,
 } from "@/hooks/useNotifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/content";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef } from "react";
 
 export const NotificationList = () => {
   const { t, language } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const prevNotificationIdsRef = useRef<Set<string>>(new Set());
+  const newNotificationIdsRef = useRef<Set<string>>(new Set());
 
   const { data: notifications = [], isLoading } = useNotifications(user?.id);
   const markAsRead = useMarkAsRead();
   const deleteNotification = useDeleteNotification();
+
+  // Enable realtime subscription
+  useNotificationRealtime(user?.id);
+
+  // Track new notifications for highlight effect
+  useEffect(() => {
+    const currentIds = new Set(notifications.map((n) => n.id));
+    const prevIds = prevNotificationIdsRef.current;
+
+    // Find new notification IDs
+    currentIds.forEach((id) => {
+      if (!prevIds.has(id)) {
+        newNotificationIdsRef.current.add(id);
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          newNotificationIdsRef.current.delete(id);
+        }, 3000);
+      }
+    });
+
+    prevNotificationIdsRef.current = currentIds;
+  }, [notifications]);
 
   const handleNotificationClick = (notification: Notification) => {
     // Mark as read

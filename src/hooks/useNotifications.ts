@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Notification {
@@ -53,6 +54,108 @@ export function useUnreadNotificationCount(userId?: string) {
     },
     enabled: !!userId,
   });
+}
+
+// Realtime subscription for notifications
+export function useNotificationRealtime(userId?: string) {
+  const queryClient = useQueryClient();
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    console.log("[Notifications] Setting up realtime for user:", userId);
+
+    const channel = supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log("[Notifications] New notification received:", payload.new);
+          const newNotification = payload.new as Notification;
+
+          // Update notifications list
+          queryClient.setQueryData<Notification[]>(
+            ["notifications", userId],
+            (old) => {
+              if (!old) return [newNotification];
+              // Avoid duplicates
+              if (old.some((n) => n.id === newNotification.id)) return old;
+              return [newNotification, ...old];
+            }
+          );
+
+          // Update unread count
+          queryClient.setQueryData<number>(
+            ["notifications-unread-count", userId],
+            (old) => (old ?? 0) + 1
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log("[Notifications] Notification updated:", payload.new);
+          const updated = payload.new as Notification;
+
+          queryClient.setQueryData<Notification[]>(
+            ["notifications", userId],
+            (old) => old?.map((n) => (n.id === updated.id ? updated : n)) ?? []
+          );
+
+          // Recalculate unread count
+          queryClient.invalidateQueries({
+            queryKey: ["notifications-unread-count", userId],
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log("[Notifications] Notification deleted:", payload.old);
+          const deleted = payload.old as Notification;
+
+          queryClient.setQueryData<Notification[]>(
+            ["notifications", userId],
+            (old) => old?.filter((n) => n.id !== deleted.id) ?? []
+          );
+
+          // Recalculate unread count
+          queryClient.invalidateQueries({
+            queryKey: ["notifications-unread-count", userId],
+          });
+        }
+      )
+      .subscribe((status) => {
+        console.log("[Notifications] Channel status:", status);
+      });
+
+    channelRef.current = channel;
+
+    return () => {
+      console.log("[Notifications] Cleaning up realtime channel");
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [userId, queryClient]);
 }
 
 // Mark notification as read
