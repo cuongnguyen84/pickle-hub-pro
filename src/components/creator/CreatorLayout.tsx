@@ -12,6 +12,7 @@ import {
   X,
   AlertTriangle,
   Loader2,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -23,6 +24,7 @@ interface CreatorLayoutProps {
 
 const sidebarLinks = [
   { path: "/creator", label: "Overview", icon: LayoutDashboard, exact: true },
+  { path: "/creator/analytics", label: "Analytics", icon: BarChart3 },
   { path: "/creator/videos", label: "Videos", icon: Video },
   { path: "/creator/livestreams", label: "Livestreams", icon: Radio },
   { path: "/creator/settings", label: "Settings", icon: Settings },

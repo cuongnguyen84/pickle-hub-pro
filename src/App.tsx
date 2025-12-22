@@ -32,6 +32,7 @@ import {
   CreatorLivestreams,
   CreatorLivestreamForm,
   CreatorSettings,
+  CreatorAnalytics,
 } from "./pages/creator";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/admin/moderation" element={<AdminModeration />} />
               {/* Creator routes */}
               <Route path="/creator" element={<CreatorOverview />} />
+              <Route path="/creator/analytics" element={<CreatorAnalytics />} />
               <Route path="/creator/videos" element={<CreatorVideos />} />
               <Route path="/creator/videos/new" element={<CreatorVideoForm />} />
               <Route path="/creator/videos/:id/edit" element={<CreatorVideoForm />} />

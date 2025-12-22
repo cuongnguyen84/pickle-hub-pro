@@ -609,6 +609,22 @@ export type Database = {
         Args: { _livestream_id: string; _user_id: string }
         Returns: boolean
       }
+      get_org_analytics_summary: {
+        Args: { _days?: number; _org_id: string }
+        Returns: Json
+      }
+      get_org_top_content: {
+        Args: { _days?: number; _limit?: number; _org_id: string }
+        Returns: Json
+      }
+      get_org_views_by_type: {
+        Args: { _days?: number; _org_id: string }
+        Returns: Json
+      }
+      get_org_views_over_time: {
+        Args: { _days?: number; _org_id: string }
+        Returns: Json
+      }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {

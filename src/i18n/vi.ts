@@ -315,6 +315,25 @@ export interface Translations {
     loadOlder: string;
     newMessages: string;
   };
+  analytics: {
+    title: string;
+    description: string;
+    totalViews: string;
+    totalLivestreams: string;
+    totalVideos: string;
+    followers: string;
+    viewsOverTime: string;
+    topContent: string;
+    viewsByType: string;
+    views: string;
+    video: string;
+    livestream: string;
+    days: string;
+    noData: string;
+    noDataDesc: string;
+    noViewData: string;
+    noContent: string;
+  };
 }
 
 // Vietnamese translations
@@ -633,5 +652,24 @@ export const vi: Translations = {
     copy: "Sao chép",
     loadOlder: "Tải tin cũ hơn",
     newMessages: "tin nhắn mới",
+  },
+  analytics: {
+    title: "Analytics",
+    description: "Theo dõi hiệu suất nội dung của bạn",
+    totalViews: "Tổng lượt xem",
+    totalLivestreams: "Tổng Livestream",
+    totalVideos: "Tổng Video",
+    followers: "Người theo dõi",
+    viewsOverTime: "Lượt xem theo thời gian",
+    topContent: "Nội dung nổi bật",
+    viewsByType: "Lượt xem theo loại",
+    views: "lượt xem",
+    video: "Video",
+    livestream: "Livestream",
+    days: "ngày",
+    noData: "Chưa có dữ liệu",
+    noDataDesc: "Hãy bắt đầu livestream hoặc đăng video đầu tiên để theo dõi hiệu suất!",
+    noViewData: "Chưa có lượt xem trong khoảng thời gian này",
+    noContent: "Chưa có nội dung",
   },
 };
