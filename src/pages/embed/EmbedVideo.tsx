@@ -1,7 +1,7 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useMemo } from "react";
 import { useVideo } from "@/hooks/useSupabaseData";
-import { MuxPlayer } from "@/components/video";
+import { MuxPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
@@ -63,25 +63,25 @@ const EmbedVideo = () => {
 
   return (
     <div className="w-full h-full min-h-screen bg-black flex flex-col">
-      {/* Video Player - Full screen */}
-      <div className="flex-1 relative">
+      {/* Video Player - Auto aspect ratio */}
+      <div className="flex-1 flex items-center justify-center">
         {hasStorageVideo ? (
-          <video
+          <AdaptiveVideoPlayer
             src={storageVideoUrl!}
-            controls
-            playsInline
             poster={video.thumbnail_url ?? undefined}
-            className="w-full h-full absolute inset-0 object-contain bg-black"
+            className="w-full h-full"
           />
         ) : (
-          <MuxPlayer
-            playbackId={video.mux_playback_id!}
-            title={video.title}
-            poster={video.thumbnail_url ?? undefined}
-            streamType="on-demand"
-            type="video"
-            className="w-full h-full absolute inset-0"
-          />
+          <div className="w-full h-full relative">
+            <MuxPlayer
+              playbackId={video.mux_playback_id!}
+              title={video.title}
+              poster={video.thumbnail_url ?? undefined}
+              streamType="on-demand"
+              type="video"
+              className="w-full h-full absolute inset-0"
+            />
+          </div>
         )}
       </div>
 
