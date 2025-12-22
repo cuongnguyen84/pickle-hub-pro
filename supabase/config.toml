@@ -1,1 +1,4 @@
 project_id = "nijiwypubmkvmjuafmgp"
+
+[functions.mux-create-livestream]
+verify_jwt = true
