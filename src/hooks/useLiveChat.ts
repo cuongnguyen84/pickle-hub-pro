@@ -12,9 +12,10 @@ export interface ChatMessage {
   avatar_url: string | null;
   message: string;
   created_at: string;
+  client_message_id?: string;
   _pending?: boolean;
   _failed?: boolean;
-  _tempId?: string; // Original temp ID for retry
+  _tempId?: string;
 }
 
 export interface ChatSettings {
@@ -52,6 +53,10 @@ interface UseLiveChatResult {
 const MESSAGES_LIMIT = 50;
 const SEND_TIMEOUT_MS = 4000;
 
+// Generate unique client message ID
+const generateClientMessageId = () => 
+  `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
 export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -65,8 +70,17 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // Track all known message IDs (real DB IDs)
   const messageIdsRef = useRef<Set<string>>(new Set());
-  const pendingMessagesRef = useRef<Map<string, { text: string; userId: string; timestamp: number }>>(new Map());
+  // Track client_message_ids we've seen (for broadcast/postgres dedupe)
+  const clientMessageIdsRef = useRef<Set<string>>(new Set());
+  // Track pending messages for reconciliation
+  const pendingMessagesRef = useRef<Map<string, { 
+    clientMessageId: string;
+    text: string; 
+    userId: string; 
+    timestamp: number 
+  }>>(new Map());
 
   // Check if user is moderator
   useEffect(() => {
@@ -101,9 +115,14 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         .limit(MESSAGES_LIMIT);
       
       if (messagesData) {
-        // Reverse to show oldest first
         const reversed = [...messagesData].reverse();
         messageIdsRef.current = new Set(reversed.map(m => m.id));
+        // Track client_message_ids from loaded messages
+        reversed.forEach(m => {
+          if (m.client_message_id) {
+            clientMessageIdsRef.current.add(m.client_message_id);
+          }
+        });
         setMessages(reversed);
         setHasOlderMessages((count || 0) > MESSAGES_LIMIT);
       }
@@ -144,103 +163,176 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     loadData();
   }, [livestreamId, user]);
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates (Broadcast + Postgres Changes)
   useEffect(() => {
-    console.log('[Chat] Setting up realtime subscription for:', livestreamId);
+    console.log('[Chat] Setting up Broadcast + Postgres subscription for:', livestreamId);
     
-    channelRef.current = supabase
-      .channel(`chat-${livestreamId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `livestream_id=eq.${livestreamId}`
-        },
-        (payload) => {
-          const newMessage = payload.new as ChatMessage;
-          console.log('[Chat] Received new message via realtime:', newMessage.id);
-          
-          // Check if we already have this message (dedupe by real ID)
-          if (messageIdsRef.current.has(newMessage.id)) {
-            console.log('[Chat] Message already exists, skipping:', newMessage.id);
-            return;
-          }
-          
-          // Check if this message matches a pending message (optimistic update)
-          let matchedPendingId: string | null = null;
-          const now = Date.now();
-          
-          for (const [pendingId, pendingData] of pendingMessagesRef.current.entries()) {
-            // Match by user_id, message text, and within 15 seconds
-            if (
-              pendingData.userId === newMessage.user_id &&
-              pendingData.text === newMessage.message &&
-              now - pendingData.timestamp < 15000
-            ) {
-              matchedPendingId = pendingId;
+    const channel = supabase.channel(`chat:${livestreamId}`);
+    
+    // 1. Listen for Broadcast messages (fast, instant delivery)
+    channel.on('broadcast', { event: 'message' }, (payload) => {
+      const broadcastMsg = payload.payload as {
+        client_message_id: string;
+        livestream_id: string;
+        user_id: string;
+        display_name: string;
+        avatar_url: string | null;
+        message: string;
+        created_at: string;
+      };
+      
+      console.log('[Chat] Received broadcast message:', broadcastMsg.client_message_id);
+      
+      // Skip if we already have this message (by client_message_id)
+      if (clientMessageIdsRef.current.has(broadcastMsg.client_message_id)) {
+        console.log('[Chat] Broadcast message already exists, skipping:', broadcastMsg.client_message_id);
+        return;
+      }
+      
+      // Skip if this is our own message (we already have optimistic version)
+      const isOwnPending = Array.from(pendingMessagesRef.current.values())
+        .some(p => p.clientMessageId === broadcastMsg.client_message_id);
+      
+      if (isOwnPending) {
+        console.log('[Chat] Broadcast is our own pending message, skipping:', broadcastMsg.client_message_id);
+        return;
+      }
+      
+      // Add to tracking and UI immediately
+      clientMessageIdsRef.current.add(broadcastMsg.client_message_id);
+      
+      const newMessage: ChatMessage = {
+        id: `broadcast-${broadcastMsg.client_message_id}`,
+        livestream_id: broadcastMsg.livestream_id,
+        user_id: broadcastMsg.user_id,
+        display_name: broadcastMsg.display_name,
+        avatar_url: broadcastMsg.avatar_url,
+        message: broadcastMsg.message,
+        created_at: broadcastMsg.created_at,
+        client_message_id: broadcastMsg.client_message_id,
+        _pending: false,
+        _failed: false
+      };
+      
+      console.log('[Chat] Adding broadcast message to UI:', newMessage.id);
+      setMessages(prev => [...prev, newMessage]);
+    });
+    
+    // 2. Listen for Postgres INSERT (for persistence reconciliation)
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `livestream_id=eq.${livestreamId}`
+      },
+      (payload) => {
+        const dbMessage = payload.new as ChatMessage & { client_message_id?: string };
+        console.log('[Chat] Received Postgres INSERT:', dbMessage.id, 'client_id:', dbMessage.client_message_id);
+        
+        // Already have this exact DB message
+        if (messageIdsRef.current.has(dbMessage.id)) {
+          console.log('[Chat] DB message already exists, skipping:', dbMessage.id);
+          return;
+        }
+        
+        // Check if we have a pending/broadcast message with matching client_message_id
+        if (dbMessage.client_message_id) {
+          // Find and replace matching pending message
+          let foundPending = false;
+          for (const [tempId, pendingData] of pendingMessagesRef.current.entries()) {
+            if (pendingData.clientMessageId === dbMessage.client_message_id) {
+              console.log('[Chat] Replacing pending message:', tempId, 'with DB:', dbMessage.id);
+              foundPending = true;
+              pendingMessagesRef.current.delete(tempId);
+              messageIdsRef.current.add(dbMessage.id);
+              
+              setMessages(prev => prev.map(m => 
+                m.id === tempId ? { ...dbMessage, _pending: false, _failed: false } : m
+              ));
               break;
             }
           }
           
-          if (matchedPendingId) {
-            console.log('[Chat] Replacing pending message:', matchedPendingId, 'with real:', newMessage.id);
-            pendingMessagesRef.current.delete(matchedPendingId);
+          // Check for broadcast message to replace
+          if (!foundPending) {
+            const broadcastId = `broadcast-${dbMessage.client_message_id}`;
             
-            // Replace pending with real message
             setMessages(prev => {
-              const updated = prev.map(m => 
-                m.id === matchedPendingId ? { ...newMessage, _pending: false, _failed: false } : m
-              );
-              messageIdsRef.current.add(newMessage.id);
-              return updated;
+              const hasBroadcast = prev.some(m => m.id === broadcastId);
+              if (hasBroadcast) {
+                console.log('[Chat] Replacing broadcast message:', broadcastId, 'with DB:', dbMessage.id);
+                messageIdsRef.current.add(dbMessage.id);
+                return prev.map(m => 
+                  m.id === broadcastId ? { ...dbMessage, _pending: false, _failed: false } : m
+                );
+              }
+              
+              // No matching pending/broadcast - add as new (edge case: missed broadcast)
+              if (!messageIdsRef.current.has(dbMessage.id)) {
+                console.log('[Chat] Adding new DB message (no prior broadcast):', dbMessage.id);
+                messageIdsRef.current.add(dbMessage.id);
+                return [...prev, { ...dbMessage, _pending: false, _failed: false }];
+              }
+              
+              return prev;
             });
-          } else {
-            // New message from another user
-            console.log('[Chat] Adding new message from realtime:', newMessage.id);
-            messageIdsRef.current.add(newMessage.id);
-            setMessages(prev => [...prev, { ...newMessage, _pending: false, _failed: false }]);
           }
+        } else {
+          // Legacy message without client_message_id - add if not duplicate
+          console.log('[Chat] Adding legacy DB message:', dbMessage.id);
+          messageIdsRef.current.add(dbMessage.id);
+          setMessages(prev => [...prev, { ...dbMessage, _pending: false, _failed: false }]);
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `livestream_id=eq.${livestreamId}`
-        },
-        (payload) => {
-          const deletedId = (payload.old as { id: string }).id;
-          console.log('[Chat] Message deleted via realtime:', deletedId);
-          messageIdsRef.current.delete(deletedId);
-          setMessages(prev => prev.filter(m => m.id !== deletedId));
+      }
+    );
+    
+    // 3. Listen for DELETE
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `livestream_id=eq.${livestreamId}`
+      },
+      (payload) => {
+        const deletedId = (payload.old as { id: string }).id;
+        console.log('[Chat] Message deleted via realtime:', deletedId);
+        messageIdsRef.current.delete(deletedId);
+        setMessages(prev => prev.filter(m => m.id !== deletedId));
+      }
+    );
+    
+    // 4. Listen for settings changes
+    channel.on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'chat_room_settings',
+        filter: `livestream_id=eq.${livestreamId}`
+      },
+      (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          setSettings(payload.new as ChatSettings);
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_room_settings',
-          filter: `livestream_id=eq.${livestreamId}`
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            setSettings(payload.new as ChatSettings);
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('[Chat] Subscription status:', status);
-      });
+      }
+    );
+    
+    // Subscribe to the channel
+    channel.subscribe((status) => {
+      console.log('[Chat] Channel subscription status:', status);
+    });
+    
+    channelRef.current = channel;
 
     return () => {
       console.log('[Chat] Cleaning up realtime subscription');
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [livestreamId]);
@@ -293,8 +385,11 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     const profile = await getUserProfile();
     const displayName = profile?.display_name || user.email?.split('@')[0] || 'User';
 
-    // Create optimistic message with temporary ID
-    const tempId = `pending-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Generate client_message_id for dedupe
+    const clientMessageId = generateClientMessageId();
+    const tempId = `pending-${clientMessageId}`;
+    const createdAt = new Date().toISOString();
+    
     const optimisticMessage: ChatMessage = {
       id: tempId,
       livestream_id: livestreamId,
@@ -302,55 +397,77 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       display_name: displayName,
       avatar_url: null,
       message: trimmedMessage,
-      created_at: new Date().toISOString(),
+      created_at: createdAt,
+      client_message_id: clientMessageId,
       _pending: true,
       _failed: false,
       _tempId: tempId
     };
 
-    console.log('[Chat] Adding optimistic message:', tempId);
+    console.log('[Chat] Adding optimistic message:', tempId, 'client_id:', clientMessageId);
     
     // Track pending message for reconciliation
     pendingMessagesRef.current.set(tempId, {
+      clientMessageId,
       text: trimmedMessage,
       userId: user.id,
       timestamp: Date.now()
     });
+    clientMessageIdsRef.current.add(clientMessageId);
     
     // Immediately add to UI
     setMessages(prev => [...prev, optimisticMessage]);
 
-    // Create timeout for "still sending" state
+    // 1. Send broadcast IMMEDIATELY (for other users to see instantly)
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'message',
+        payload: {
+          client_message_id: clientMessageId,
+          livestream_id: livestreamId,
+          user_id: user.id,
+          display_name: displayName,
+          avatar_url: null,
+          message: trimmedMessage,
+          created_at: createdAt
+        }
+      }).then(() => {
+        console.log('[Chat] Broadcast sent successfully');
+      }).catch((err) => {
+        console.error('[Chat] Broadcast error:', err);
+      });
+    }
+
+    // 2. Persist to DB (in parallel)
     let timedOut = false;
     const timeoutId = setTimeout(() => {
       timedOut = true;
-      // Mark as still pending but show retry option
       setMessages(prev => prev.map(m => 
         m.id === tempId ? { ...m, _pending: true } : m
       ));
     }, SEND_TIMEOUT_MS);
 
-    // Send to server
     const { error } = await supabase
       .from('chat_messages')
       .insert({
         livestream_id: livestreamId,
         user_id: user.id,
         display_name: displayName,
-        message: trimmedMessage
+        message: trimmedMessage,
+        client_message_id: clientMessageId
       });
 
     clearTimeout(timeoutId);
 
     if (error) {
-      console.error('[Chat] Error sending message:', error);
+      console.error('[Chat] Error persisting message:', error);
       
-      // Mark as failed, keep message for retry
+      // Mark as failed
       setMessages(prev => prev.map(m => 
         m.id === tempId ? { ...m, _pending: false, _failed: true } : m
       ));
       
-      // Show error toast
       if (error.message.includes('can_send_chat_message')) {
         toast({
           title: t.chat.slowModeWait,
@@ -365,13 +482,17 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       return false;
     }
 
-    // Success - realtime will handle replacing the optimistic message
-    console.log('[Chat] Message sent successfully, waiting for realtime to confirm');
+    console.log('[Chat] Message persisted successfully, waiting for Postgres change to confirm');
     return true;
   }, [user, userMute, settings, livestreamId, toast, t]);
 
   const retryMessage = useCallback(async (tempId: string, message: string): Promise<boolean> => {
     // Remove the failed message first
+    const pendingData = pendingMessagesRef.current.get(tempId);
+    if (pendingData) {
+      clientMessageIdsRef.current.delete(pendingData.clientMessageId);
+    }
+    
     setMessages(prev => prev.filter(m => m.id !== tempId));
     pendingMessagesRef.current.delete(tempId);
     
@@ -485,7 +606,12 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     
     if (olderData && olderData.length > 0) {
       const reversed = [...olderData].reverse();
-      reversed.forEach(m => messageIdsRef.current.add(m.id));
+      reversed.forEach(m => {
+        messageIdsRef.current.add(m.id);
+        if (m.client_message_id) {
+          clientMessageIdsRef.current.add(m.client_message_id);
+        }
+      });
       setMessages(prev => [...reversed, ...prev]);
       setHasOlderMessages((count || 0) > MESSAGES_LIMIT);
     } else {

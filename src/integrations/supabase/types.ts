@@ -17,6 +17,7 @@ export type Database = {
       chat_messages: {
         Row: {
           avatar_url: string | null
+          client_message_id: string | null
           created_at: string
           display_name: string
           id: string
@@ -26,6 +27,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          client_message_id?: string | null
           created_at?: string
           display_name: string
           id?: string
@@ -35,6 +37,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          client_message_id?: string | null
           created_at?: string
           display_name?: string
           id?: string
