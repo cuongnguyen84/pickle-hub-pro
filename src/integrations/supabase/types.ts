@@ -14,6 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+          livestream_id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          livestream_id: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          livestream_id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: false
+            referencedRelation: "livestreams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: false
+            referencedRelation: "public_livestreams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_mutes: {
+        Row: {
+          created_at: string
+          id: string
+          livestream_id: string
+          muted_until: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          livestream_id: string
+          muted_until: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          livestream_id?: string
+          muted_until?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_mutes_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: false
+            referencedRelation: "livestreams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_mutes_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: false
+            referencedRelation: "public_livestreams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_room_settings: {
+        Row: {
+          is_chat_enabled: boolean
+          livestream_id: string
+          slow_mode_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          is_chat_enabled?: boolean
+          livestream_id: string
+          slow_mode_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          is_chat_enabled?: boolean
+          livestream_id?: string
+          slow_mode_seconds?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_room_settings_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: true
+            referencedRelation: "livestreams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_room_settings_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: true
+            referencedRelation: "public_livestreams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
@@ -475,6 +598,14 @@ export type Database = {
       }
     }
     Functions: {
+      can_moderate_chat: {
+        Args: { _livestream_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_send_chat_message: {
+        Args: { _livestream_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {

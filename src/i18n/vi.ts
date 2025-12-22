@@ -287,6 +287,28 @@ export interface Translations {
     livestreamScheduled: string;
     livestreamLive: string;
   };
+  chat: {
+    title: string;
+    send: string;
+    placeholder: string;
+    signInToChat: string;
+    chatDisabled: string;
+    slowMode: string;
+    slowModeWait: string;
+    settings: string;
+    mute: string;
+    userMuted: string;
+    youAreMuted: string;
+    delete: string;
+    enableChat: string;
+    disableChat: string;
+    noMessages: string;
+    off: string;
+    minutes: string;
+    hour: string;
+    hours: string;
+    sendError: string;
+  };
 }
 
 // Vietnamese translations
@@ -577,5 +599,27 @@ export const vi: Translations = {
     markAllRead: "Đánh dấu tất cả đã đọc",
     livestreamScheduled: "đã lên lịch livestream mới",
     livestreamLive: "đang phát trực tiếp!",
+  },
+  chat: {
+    title: "Trò chuyện",
+    send: "Gửi",
+    placeholder: "Nhập tin nhắn...",
+    signInToChat: "Đăng nhập để chat",
+    chatDisabled: "Chat đang tắt",
+    slowMode: "Chế độ chậm",
+    slowModeWait: "Vui lòng chờ trước khi gửi tin nhắn tiếp",
+    settings: "Cài đặt chat",
+    mute: "Tắt tiếng",
+    userMuted: "Đã tắt tiếng người dùng",
+    youAreMuted: "Bạn đang bị tạm khóa chat đến",
+    delete: "Xóa",
+    enableChat: "Bật chat",
+    disableChat: "Tắt chat",
+    noMessages: "Chưa có tin nhắn nào",
+    off: "Tắt",
+    minutes: "phút",
+    hour: "giờ",
+    hours: "giờ",
+    sendError: "Không thể gửi tin nhắn",
   },
 };
