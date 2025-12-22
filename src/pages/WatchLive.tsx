@@ -156,9 +156,12 @@ const WatchLive = () => {
 
               <div className="flex flex-wrap items-center gap-4 text-sm text-foreground-secondary">
                 {livestream.organization && (
-                  <span className="font-medium text-primary">
+                  <Link
+                    to={`/org/${livestream.organization.slug}`}
+                    className="font-medium text-primary hover:underline"
+                  >
                     {livestream.organization.name}
-                  </span>
+                  </Link>
                 )}
                 <span className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
@@ -207,6 +210,7 @@ const WatchLive = () => {
                     title={stream.title}
                     viewerCount={0}
                     organizationName={stream.organization?.name ?? ""}
+                    organizationSlug={stream.organization?.slug}
                     status={stream.status as "live" | "scheduled" | "ended"}
                     thumbnail={stream.thumbnail_url ?? undefined}
                   />

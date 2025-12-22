@@ -8,6 +8,7 @@ interface ReplayCardProps {
   title: string;
   thumbnail?: string;
   organizationName?: string;
+  organizationSlug?: string;
   organizationLogo?: string;
   className?: string;
 }
@@ -17,6 +18,7 @@ const ReplayCard = ({
   title,
   thumbnail,
   organizationName,
+  organizationSlug,
   organizationLogo,
   className,
 }: ReplayCardProps) => {
@@ -78,7 +80,17 @@ const ReplayCard = ({
               ) : (
                 <div className="w-4 h-4 rounded-full bg-muted" />
               )}
-              <span className="line-clamp-1">{organizationName}</span>
+              {organizationSlug ? (
+                <Link
+                  to={`/org/${organizationSlug}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="line-clamp-1 hover:text-primary hover:underline"
+                >
+                  {organizationName}
+                </Link>
+              ) : (
+                <span className="line-clamp-1">{organizationName}</span>
+              )}
             </div>
           )}
         </div>

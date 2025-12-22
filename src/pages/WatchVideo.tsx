@@ -140,9 +140,12 @@ const WatchVideo = () => {
 
               <div className="flex flex-wrap items-center gap-4 text-sm text-foreground-secondary">
                 {video.organization && (
-                  <span className="font-medium text-primary">
+                  <Link
+                    to={`/org/${video.organization.slug}`}
+                    className="font-medium text-primary hover:underline"
+                  >
                     {video.organization.name}
-                  </span>
+                  </Link>
                 )}
                 <span className="flex items-center gap-1">
                   <Eye className="w-4 h-4" />
@@ -210,6 +213,7 @@ const WatchVideo = () => {
                     duration={relatedVideo.duration_seconds ?? 0}
                     views={0}
                     organizationName={relatedVideo.organization?.name ?? ""}
+                    organizationSlug={relatedVideo.organization?.slug}
                     thumbnail={relatedVideo.thumbnail_url ?? undefined}
                   />
                 ))}
