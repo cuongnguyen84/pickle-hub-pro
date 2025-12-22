@@ -12,7 +12,9 @@ export interface ChatMessage {
   avatar_url: string | null;
   message: string;
   created_at: string;
-  _pending?: boolean; // Local optimistic flag
+  _pending?: boolean;
+  _failed?: boolean;
+  _tempId?: string; // Original temp ID for retry
 }
 
 export interface ChatSettings {
@@ -37,12 +39,18 @@ interface UseLiveChatResult {
   userMute: ChatMute | null;
   isLoading: boolean;
   isModerator: boolean;
+  hasOlderMessages: boolean;
   sendMessage: (message: string) => Promise<boolean>;
+  retryMessage: (tempId: string, message: string) => Promise<boolean>;
   deleteMessage: (messageId: string) => Promise<boolean>;
   updateSettings: (updates: Partial<Pick<ChatSettings, 'is_chat_enabled' | 'slow_mode_seconds'>>) => Promise<boolean>;
   muteUser: (userId: string, durationMinutes: number, reason?: string) => Promise<boolean>;
   unmuteUser: (muteId: string) => Promise<boolean>;
+  loadOlderMessages: () => Promise<void>;
 }
+
+const MESSAGES_LIMIT = 50;
+const SEND_TIMEOUT_MS = 4000;
 
 export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   const { user } = useAuth();
@@ -54,6 +62,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   const [userMute, setUserMute] = useState<ChatMute | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModerator, setIsModerator] = useState(false);
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
   
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const messageIdsRef = useRef<Set<string>>(new Set());
@@ -83,18 +92,20 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     const loadData = async () => {
       setIsLoading(true);
       
-      // Load last 50 messages
-      const { data: messagesData } = await supabase
+      // Load last messages
+      const { data: messagesData, count } = await supabase
         .from('chat_messages')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('livestream_id', livestreamId)
-        .order('created_at', { ascending: true })
-        .limit(50);
+        .order('created_at', { ascending: false })
+        .limit(MESSAGES_LIMIT);
       
       if (messagesData) {
-        // Initialize message IDs set
-        messageIdsRef.current = new Set(messagesData.map(m => m.id));
-        setMessages(messagesData);
+        // Reverse to show oldest first
+        const reversed = [...messagesData].reverse();
+        messageIdsRef.current = new Set(reversed.map(m => m.id));
+        setMessages(reversed);
+        setHasOlderMessages((count || 0) > MESSAGES_LIMIT);
       }
       
       // Load settings
@@ -151,7 +162,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
           const newMessage = payload.new as ChatMessage;
           console.log('[Chat] Received new message via realtime:', newMessage.id);
           
-          // Check if we already have this message (dedupe)
+          // Check if we already have this message (dedupe by real ID)
           if (messageIdsRef.current.has(newMessage.id)) {
             console.log('[Chat] Message already exists, skipping:', newMessage.id);
             return;
@@ -162,11 +173,11 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
           const now = Date.now();
           
           for (const [pendingId, pendingData] of pendingMessagesRef.current.entries()) {
-            // Match by user_id, message text, and within 10 seconds
+            // Match by user_id, message text, and within 15 seconds
             if (
               pendingData.userId === newMessage.user_id &&
               pendingData.text === newMessage.message &&
-              now - pendingData.timestamp < 10000
+              now - pendingData.timestamp < 15000
             ) {
               matchedPendingId = pendingId;
               break;
@@ -175,22 +186,21 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
           
           if (matchedPendingId) {
             console.log('[Chat] Replacing pending message:', matchedPendingId, 'with real:', newMessage.id);
-            // Remove from pending tracking
             pendingMessagesRef.current.delete(matchedPendingId);
             
             // Replace pending with real message
             setMessages(prev => {
               const updated = prev.map(m => 
-                m.id === matchedPendingId ? { ...newMessage, _pending: false } : m
+                m.id === matchedPendingId ? { ...newMessage, _pending: false, _failed: false } : m
               );
               messageIdsRef.current.add(newMessage.id);
               return updated;
             });
           } else {
-            // New message from another user or system
+            // New message from another user
             console.log('[Chat] Adding new message from realtime:', newMessage.id);
             messageIdsRef.current.add(newMessage.id);
-            setMessages(prev => [...prev, newMessage]);
+            setMessages(prev => [...prev, { ...newMessage, _pending: false, _failed: false }]);
           }
         }
       )
@@ -293,7 +303,9 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       avatar_url: null,
       message: trimmedMessage,
       created_at: new Date().toISOString(),
-      _pending: true
+      _pending: true,
+      _failed: false,
+      _tempId: tempId
     };
 
     console.log('[Chat] Adding optimistic message:', tempId);
@@ -308,6 +320,16 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     // Immediately add to UI
     setMessages(prev => [...prev, optimisticMessage]);
 
+    // Create timeout for "still sending" state
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      // Mark as still pending but show retry option
+      setMessages(prev => prev.map(m => 
+        m.id === tempId ? { ...m, _pending: true } : m
+      ));
+    }, SEND_TIMEOUT_MS);
+
     // Send to server
     const { error } = await supabase
       .from('chat_messages')
@@ -318,12 +340,15 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         message: trimmedMessage
       });
 
+    clearTimeout(timeoutId);
+
     if (error) {
       console.error('[Chat] Error sending message:', error);
       
-      // Remove optimistic message on failure
-      pendingMessagesRef.current.delete(tempId);
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      // Mark as failed, keep message for retry
+      setMessages(prev => prev.map(m => 
+        m.id === tempId ? { ...m, _pending: false, _failed: true } : m
+      ));
       
       // Show error toast
       if (error.message.includes('can_send_chat_message')) {
@@ -340,9 +365,19 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       return false;
     }
 
+    // Success - realtime will handle replacing the optimistic message
     console.log('[Chat] Message sent successfully, waiting for realtime to confirm');
     return true;
   }, [user, userMute, settings, livestreamId, toast, t]);
+
+  const retryMessage = useCallback(async (tempId: string, message: string): Promise<boolean> => {
+    // Remove the failed message first
+    setMessages(prev => prev.filter(m => m.id !== tempId));
+    pendingMessagesRef.current.delete(tempId);
+    
+    // Send again
+    return sendMessage(message);
+  }, [sendMessage]);
 
   const deleteMessage = useCallback(async (messageId: string): Promise<boolean> => {
     // Optimistic delete
@@ -360,7 +395,6 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         title: t.common.error,
         variant: "destructive"
       });
-      // Note: Could refetch messages here to restore, but realtime should handle it
       return false;
     }
 
@@ -436,16 +470,42 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     return true;
   }, []);
 
+  const loadOlderMessages = useCallback(async () => {
+    if (messages.length === 0) return;
+    
+    const oldestMessage = messages[0];
+    
+    const { data: olderData, count } = await supabase
+      .from('chat_messages')
+      .select('*', { count: 'exact' })
+      .eq('livestream_id', livestreamId)
+      .lt('created_at', oldestMessage.created_at)
+      .order('created_at', { ascending: false })
+      .limit(MESSAGES_LIMIT);
+    
+    if (olderData && olderData.length > 0) {
+      const reversed = [...olderData].reverse();
+      reversed.forEach(m => messageIdsRef.current.add(m.id));
+      setMessages(prev => [...reversed, ...prev]);
+      setHasOlderMessages((count || 0) > MESSAGES_LIMIT);
+    } else {
+      setHasOlderMessages(false);
+    }
+  }, [messages, livestreamId]);
+
   return {
     messages,
     settings,
     userMute,
     isLoading,
     isModerator,
+    hasOlderMessages,
     sendMessage,
+    retryMessage,
     deleteMessage,
     updateSettings,
     muteUser,
-    unmuteUser
+    unmuteUser,
+    loadOlderMessages
   };
 };

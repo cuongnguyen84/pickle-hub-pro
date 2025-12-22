@@ -308,6 +308,12 @@ export interface Translations {
     hour: string;
     hours: string;
     sendError: string;
+    sending: string;
+    sendFailed: string;
+    retry: string;
+    copy: string;
+    loadOlder: string;
+    newMessages: string;
   };
 }
 
@@ -621,5 +627,11 @@ export const vi: Translations = {
     hour: "giờ",
     hours: "giờ",
     sendError: "Không thể gửi tin nhắn",
+    sending: "Đang gửi...",
+    sendFailed: "Gửi thất bại",
+    retry: "Thử lại",
+    copy: "Sao chép",
+    loadOlder: "Tải tin cũ hơn",
+    newMessages: "tin nhắn mới",
   },
 };
