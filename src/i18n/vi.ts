@@ -308,7 +308,7 @@ export const vi: Translations = {
   },
   home: {
     hero: {
-      title: "Pickleball Hub",
+      title: "The Pickle Hub",
       subtitle: "Nền tảng media chuyên nghiệp về Pickleball",
       description: "Livestream trực tiếp và video theo yêu cầu từ các giải đấu hàng đầu",
       cta: "Khám phá ngay",

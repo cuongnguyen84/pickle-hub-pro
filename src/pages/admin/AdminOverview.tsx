@@ -49,7 +49,7 @@ export default function AdminOverview() {
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold">{t.admin.overview}</h1>
-          <p className="text-foreground-muted mt-1">Tổng quan hệ thống Pickleball Hub</p>
+          <p className="text-foreground-muted mt-1">Tổng quan hệ thống The Pickle Hub</p>
         </div>
 
         {/* Stats Grid */}
