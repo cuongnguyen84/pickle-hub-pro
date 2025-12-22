@@ -258,7 +258,7 @@ export interface Translations {
 // Vietnamese translations
 export const vi: Translations = {
   common: {
-    appName: "Pickleball Hub",
+    appName: "The Pickle Hub",
     loading: "Đang tải...",
     error: "Có lỗi xảy ra",
     retry: "Thử lại",
