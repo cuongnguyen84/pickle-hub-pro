@@ -16,6 +16,7 @@ import WatchLive from "./pages/WatchLive";
 import Account from "./pages/Account";
 import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
+import OrganizationDetail from "./pages/OrganizationDetail";
 import NotFound from "./pages/NotFound";
 import {
   AdminOverview,
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="/watch/:id" element={<WatchVideo />} />
               <Route path="/tournaments" element={<Tournaments />} />
               <Route path="/tournament/:slug" element={<TournamentDetail />} />
+              <Route path="/org/:slug" element={<OrganizationDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/account" element={<Account />} />
               <Route path="/notifications" element={<Notifications />} />

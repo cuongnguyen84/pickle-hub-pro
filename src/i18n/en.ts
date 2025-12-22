@@ -121,6 +121,8 @@ export const en: Translations = {
     livestreams: "Livestreams",
     about: "About",
     noDescription: "No description available",
+    noContent: "No content yet",
+    followForUpdates: "Follow to get notified when new content is published",
   },
   comments: {
     title: "Comments",
