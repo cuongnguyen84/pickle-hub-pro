@@ -1,44 +1,26 @@
 import { Link } from "react-router-dom";
-import { Play, Users, RotateCcw } from "lucide-react";
+import { Play, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
 
-interface LiveCardProps {
+interface ReplayCardProps {
   id: string;
   title: string;
   thumbnail?: string;
-  viewerCount?: number;
   organizationName?: string;
   organizationLogo?: string;
-  status?: "live" | "scheduled" | "ended";
-  scheduledAt?: string;
   className?: string;
-  isReplay?: boolean;
 }
 
-const LiveCard = ({
+const ReplayCard = ({
   id,
   title,
   thumbnail,
-  viewerCount,
   organizationName,
   organizationLogo,
-  status = "live",
-  scheduledAt,
   className,
-  isReplay = false,
-}: LiveCardProps) => {
+}: ReplayCardProps) => {
   const { t } = useI18n();
-
-  const formatViewers = (count: number): string => {
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K`;
-    }
-    return count.toString();
-  };
-
-  // For ended streams with replay, show replay badge
-  const showReplayBadge = status === "ended" && isReplay;
 
   return (
     <Link
@@ -62,36 +44,13 @@ const LiveCard = ({
           </div>
         )}
         
-        {/* Status badge */}
+        {/* Replay badge */}
         <div className="absolute top-3 left-3">
-          {status === "live" ? (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-live/90 backdrop-blur-sm">
-              <span className="live-dot" />
-              <span className="text-xs font-semibold text-foreground">{t.live.live}</span>
-            </div>
-          ) : status === "scheduled" ? (
-            <div className="px-2 py-1 rounded-md bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground">
-              {t.live.scheduled}
-            </div>
-          ) : showReplayBadge ? (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/90 backdrop-blur-sm">
-              <RotateCcw className="w-3 h-3 text-primary-foreground" />
-              <span className="text-xs font-semibold text-primary-foreground">{t.live.replay}</span>
-            </div>
-          ) : (
-            <div className="px-2 py-1 rounded-md bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground-muted">
-              {t.live.ended}
-            </div>
-          )}
-        </div>
-
-        {/* Viewer count */}
-        {status === "live" && viewerCount !== undefined && (
-          <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-md bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground">
-            <Users className="w-3 h-3" />
-            <span>{formatViewers(viewerCount)} {t.live.watching}</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/90 backdrop-blur-sm">
+            <RotateCcw className="w-3 h-3 text-primary-foreground" />
+            <span className="text-xs font-semibold text-primary-foreground">{t.live.replay}</span>
           </div>
-        )}
+        </div>
         
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-background/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
@@ -122,14 +81,10 @@ const LiveCard = ({
               <span className="line-clamp-1">{organizationName}</span>
             </div>
           )}
-          
-          {status === "scheduled" && scheduledAt && (
-            <span>{t.live.scheduledFor} {scheduledAt}</span>
-          )}
         </div>
       </div>
     </Link>
   );
 };
 
-export default LiveCard;
+export default ReplayCard;

@@ -8,6 +8,8 @@ import { I18nProvider } from "@/i18n";
 import Index from "./pages/Index";
 import Live from "./pages/Live";
 import Videos from "./pages/Videos";
+import Tournaments from "./pages/Tournaments";
+import TournamentDetail from "./pages/TournamentDetail";
 import Login from "./pages/Login";
 import WatchVideo from "./pages/WatchVideo";
 import WatchLive from "./pages/WatchLive";
@@ -45,6 +47,8 @@ const App = () => (
               <Route path="/live/:id" element={<WatchLive />} />
               <Route path="/videos" element={<Videos />} />
               <Route path="/watch/:id" element={<WatchVideo />} />
+              <Route path="/tournaments" element={<Tournaments />} />
+              <Route path="/tournament/:slug" element={<TournamentDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/account" element={<Account />} />
               {/* Admin routes */}
