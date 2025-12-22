@@ -40,7 +40,10 @@ const ChatMessageItem = ({
 
   return (
     <div
-      className="group flex gap-2 px-3 py-1.5 hover:bg-muted/50 rounded transition-colors"
+      className={cn(
+        "group flex gap-2 px-3 py-1.5 hover:bg-muted/50 rounded transition-colors",
+        message._pending && "opacity-60"
+      )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -52,6 +55,9 @@ const ChatMessageItem = ({
           <span className="text-[10px] text-foreground-muted">
             {format(new Date(message.created_at), "HH:mm")}
           </span>
+          {message._pending && (
+            <span className="text-[10px] text-foreground-muted italic">sending...</span>
+          )}
         </div>
         <p className="text-sm text-foreground break-words">{message.message}</p>
       </div>
