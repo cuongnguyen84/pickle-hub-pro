@@ -6,20 +6,23 @@ import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { LiveCard } from "@/components/content";
 import { MuxPlayer } from "@/components/video";
+import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useRef } from "react";
-import { ArrowLeft, Radio, Calendar, Users, AlertCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
   const { user } = useAuth();
   const viewRecorded = useRef(false);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
 
   const { data: livestream, isLoading } = useLivestream(id!);
   const { data: viewCount = 0 } = useViewCount("livestream", id!);
@@ -102,7 +105,7 @@ const WatchLive = () => {
           <span className="text-sm">{t.nav.live}</span>
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Video Player */}
@@ -141,6 +144,30 @@ const WatchLive = () => {
                       <p className="text-foreground-secondary">{t.player.notReady}</p>
                     </>
                   )}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Chat Toggle */}
+            <div className="lg:hidden">
+              <Button
+                variant="outline"
+                className="w-full flex items-center justify-between"
+                onClick={() => setIsChatCollapsed(!isChatCollapsed)}
+              >
+                <span className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4" />
+                  {t.chat.title}
+                </span>
+                {isChatCollapsed ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronUp className="w-4 h-4" />
+                )}
+              </Button>
+              {!isChatCollapsed && (
+                <div className="mt-4">
+                  <ChatPanel livestreamId={livestream.id} className="h-[400px]" />
                 </div>
               )}
             </div>
@@ -196,25 +223,33 @@ const WatchLive = () => {
             <CommentSection targetType="livestream" targetId={livestream.id} />
           </div>
 
-          {/* Sidebar - Other Live Streams */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t.home.sections.liveNow}</h3>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Desktop Chat Panel */}
+            <div className="hidden lg:block">
+              <ChatPanel livestreamId={livestream.id} className="h-[500px]" />
+            </div>
+
+            {/* Other Live Streams */}
             <div className="space-y-4">
-              {otherLivestreams
-                .filter((s) => s.id !== livestream.id)
-                .slice(0, 4)
-                .map((stream) => (
-                  <LiveCard
-                    key={stream.id}
-                    id={stream.id}
-                    title={stream.title}
-                    viewerCount={0}
-                    organizationName={stream.organization?.name ?? ""}
-                    organizationSlug={stream.organization?.slug}
-                    status={stream.status as "live" | "scheduled" | "ended"}
-                    thumbnail={stream.thumbnail_url ?? undefined}
-                  />
-                ))}
+              <h3 className="text-lg font-semibold">{t.home.sections.liveNow}</h3>
+              <div className="space-y-4">
+                {otherLivestreams
+                  .filter((s) => s.id !== livestream.id)
+                  .slice(0, 4)
+                  .map((stream) => (
+                    <LiveCard
+                      key={stream.id}
+                      id={stream.id}
+                      title={stream.title}
+                      viewerCount={0}
+                      organizationName={stream.organization?.name ?? ""}
+                      organizationSlug={stream.organization?.slug}
+                      status={stream.status as "live" | "scheduled" | "ended"}
+                      thumbnail={stream.thumbnail_url ?? undefined}
+                    />
+                  ))}
+              </div>
             </div>
           </div>
         </div>
