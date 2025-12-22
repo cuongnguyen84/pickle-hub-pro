@@ -167,6 +167,7 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   const [autoScroll, setAutoScroll] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -257,13 +258,21 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
     }, 100);
   }, [inputValue, sendMessage, scrollToBottom]);
 
-  // Handle keyboard shortcuts
+  // Handle keyboard shortcuts - IME safe
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
+      // Don't send during IME composition (e.g., Vietnamese, Chinese, Japanese input)
+      if (isComposing || e.nativeEvent.isComposing) {
+        return;
+      }
       e.preventDefault();
       handleSubmit();
     }
   };
+
+  // IME composition handlers
+  const handleCompositionStart = () => setIsComposing(true);
+  const handleCompositionEnd = () => setIsComposing(false);
 
   // Insert emoji at cursor position
   const handleEmojiSelect = useCallback((emoji: string) => {
@@ -477,6 +486,8 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
               placeholder={t.chat.placeholder}
               disabled={inputDisabled}
               maxLength={500}
