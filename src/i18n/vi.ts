@@ -119,6 +119,8 @@ export interface Translations {
     livestreams: string;
     about: string;
     noDescription: string;
+    noContent: string;
+    followForUpdates: string;
   };
   comments: {
     title: string;
@@ -403,11 +405,13 @@ export const vi: Translations = {
     checkBackLater: "Quay lại sau để xem nội dung mới",
   },
   organization: {
-    title: "Tổ chức",
+    title: "Đơn vị",
     videos: "Video",
     livestreams: "Livestream",
     about: "Giới thiệu",
     noDescription: "Chưa có thông tin giới thiệu",
+    noContent: "Chưa có nội dung",
+    followForUpdates: "Theo dõi để nhận thông báo khi có nội dung mới",
   },
   comments: {
     title: "Bình luận",
