@@ -89,6 +89,7 @@ export const en: Translations = {
     watchLive: "Watch live",
     noLivestreams: "No livestreams",
     scheduledFor: "Scheduled for",
+    replay: "Replay",
   },
   tournament: {
     title: "Tournaments",

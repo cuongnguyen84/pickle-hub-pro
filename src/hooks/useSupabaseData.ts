@@ -139,6 +139,78 @@ export function useTournaments() {
   });
 }
 
+// Fetch single tournament by slug
+export function useTournamentBySlug(slug: string) {
+  return useQuery({
+    queryKey: ["tournament", slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournaments")
+        .select("*")
+        .eq("slug", slug)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!slug,
+  });
+}
+
+// Fetch tournament content (livestreams and videos)
+export function useTournamentContent(tournamentId: string) {
+  return useQuery({
+    queryKey: ["tournament-content", tournamentId],
+    queryFn: async () => {
+      const [livestreamsResult, videosResult] = await Promise.all([
+        supabase
+          .from("public_livestreams")
+          .select(`*, organization:organizations(*)`)
+          .eq("tournament_id", tournamentId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("videos")
+          .select(`*, organization:organizations(*)`)
+          .eq("tournament_id", tournamentId)
+          .eq("status", "published")
+          .order("published_at", { ascending: false }),
+      ]);
+
+      if (livestreamsResult.error) throw livestreamsResult.error;
+      if (videosResult.error) throw videosResult.error;
+
+      return {
+        livestreams: livestreamsResult.data as Livestream[],
+        videos: videosResult.data as Video[],
+      };
+    },
+    enabled: !!tournamentId,
+  });
+}
+
+// Fetch ended livestreams with playback (replays)
+export function useReplays(options?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["replays", options],
+    queryFn: async () => {
+      let query = supabase
+        .from("public_livestreams")
+        .select(`*, organization:organizations(*)`)
+        .eq("status", "ended")
+        .not("mux_playback_id", "is", null)
+        .order("ended_at", { ascending: false });
+
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Livestream[];
+    },
+  });
+}
+
 // Fetch likes count for a target
 export function useLikesCount(targetType: "video" | "livestream", targetId: string) {
   return useQuery({

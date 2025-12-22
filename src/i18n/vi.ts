@@ -87,6 +87,7 @@ export interface Translations {
     watchLive: string;
     noLivestreams: string;
     scheduledFor: string;
+    replay: string;
   };
   tournament: {
     title: string;
@@ -329,6 +330,7 @@ export const vi: Translations = {
     watchLive: "Xem trực tiếp",
     noLivestreams: "Không có livestream nào",
     scheduledFor: "Bắt đầu lúc",
+    replay: "Xem lại",
   },
   tournament: {
     title: "Giải đấu",
