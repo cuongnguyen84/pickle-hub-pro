@@ -105,6 +105,7 @@ const WatchVideo = () => {
                   title={video.title}
                   poster={video.thumbnail_url ?? undefined}
                   streamType="on-demand"
+                  type="video"
                 />
               ) : video.thumbnail_url ? (
                 <div className="relative w-full h-full">
@@ -121,7 +122,7 @@ const WatchVideo = () => {
                 </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-muted">
-                  <span className="text-foreground-muted">Video not available</span>
+                  <span className="text-foreground-muted">{t.player.notReady}</span>
                 </div>
               )}
               

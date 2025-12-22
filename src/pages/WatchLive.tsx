@@ -113,8 +113,8 @@ const WatchLive = () => {
                   title={livestream.title}
                   poster={livestream.thumbnail_url ?? undefined}
                   streamType={isLive ? "live" : "on-demand"}
-                  autoPlay={isLive}
-                  muted={false}
+                  type="livestream"
+                  isLive={isLive}
                 />
               ) : isScheduled ? (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
@@ -138,17 +138,9 @@ const WatchLive = () => {
                   ) : (
                     <>
                       <AlertCircle className="w-12 h-12 text-foreground-muted" />
-                      <p className="text-foreground-secondary">Livestream not available</p>
+                      <p className="text-foreground-secondary">{t.player.notReady}</p>
                     </>
                   )}
-                </div>
-              )}
-              
-              {/* Live badge overlay */}
-              {isLive && hasPlayback && (
-                <div className="absolute top-3 left-3 px-3 py-1 bg-red-600 rounded text-white text-sm font-bold flex items-center gap-2 animate-pulse">
-                  <Radio className="w-4 h-4" />
-                  {t.live.live}
                 </div>
               )}
             </div>

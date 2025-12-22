@@ -220,6 +220,13 @@ export const en: Translations = {
       reportedContent: "Reported content",
     },
   },
+  player: {
+    tapToPlayVideo: "Tap to play video",
+    tapToWatchLive: "Tap to watch live",
+    notReady: "Video not ready",
+    playbackError: "Unable to play",
+    playbackErrorDesc: "Cannot play on this browser. Try reloading or switching networks.",
+  },
   errors: {
     notFound: "Page not found",
     notFoundDesc: "The page you're looking for doesn't exist.",
