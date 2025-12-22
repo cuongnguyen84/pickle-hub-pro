@@ -443,7 +443,9 @@ export type Database = {
           mux_playback_id: string | null
           organization_id: string
           published_at: string | null
+          source: string
           status: Database["public"]["Enums"]["content_status"]
+          storage_path: string | null
           tags: string[] | null
           thumbnail_url: string | null
           title: string
@@ -459,7 +461,9 @@ export type Database = {
           mux_playback_id?: string | null
           organization_id: string
           published_at?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["content_status"]
+          storage_path?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
@@ -475,7 +479,9 @@ export type Database = {
           mux_playback_id?: string | null
           organization_id?: string
           published_at?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["content_status"]
+          storage_path?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string

@@ -8,6 +8,7 @@ import { ContentCard } from "@/components/content";
 import { MuxPlayer } from "@/components/video";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
 import { ArrowLeft, Eye, Calendar, Clock, Play } from "lucide-react";
@@ -27,6 +28,15 @@ const WatchVideo = () => {
   const { data: relatedVideos = [] } = useVideos({ limit: 4 });
 
   const dateLocale = language === "vi" ? viLocale : enUS;
+
+  // Get video URL for storage-based videos
+  const storageVideoUrl = useMemo(() => {
+    if (video?.source === "storage" && video?.storage_path) {
+      const { data } = supabase.storage.from("videos").getPublicUrl(video.storage_path);
+      return data.publicUrl;
+    }
+    return null;
+  }, [video?.source, video?.storage_path]);
 
   // Record view event (debounced - only once per session)
   useEffect(() => {
@@ -83,6 +93,7 @@ const WatchVideo = () => {
   }
 
   const hasPlayback = !!video.mux_playback_id;
+  const hasStorageVideo = video.source === "storage" && !!storageVideoUrl;
 
   return (
     <MainLayout>
@@ -108,7 +119,17 @@ const WatchVideo = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Video Player */}
             <div className="aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
-              {hasPlayback ? (
+              {hasStorageVideo ? (
+                // Storage-based HTML5 video player
+                <video
+                  src={storageVideoUrl!}
+                  controls
+                  playsInline
+                  poster={video.thumbnail_url ?? undefined}
+                  className="w-full h-full object-contain bg-black"
+                />
+              ) : hasPlayback ? (
+                // Mux player fallback
                 <MuxPlayer
                   playbackId={video.mux_playback_id!}
                   title={video.title}
@@ -136,7 +157,7 @@ const WatchVideo = () => {
               )}
               
               {/* Duration badge */}
-              {video.duration_seconds && !hasPlayback && (
+              {video.duration_seconds && !hasPlayback && !hasStorageVideo && (
                 <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 rounded text-white text-sm font-medium">
                   {formatDuration(video.duration_seconds)}
                 </div>

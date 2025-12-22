@@ -7,6 +7,7 @@ import {
   useVideoMutations,
   useCreatorTournaments,
 } from "@/hooks/useCreatorData";
+import { useVideoUpload } from "@/hooks/useVideoUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,8 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VideoUploader } from "@/components/video/VideoUploader";
 import { ChevronLeft, Save, Upload, Loader2 } from "lucide-react";
 import type { Enums } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CreatorVideoForm() {
   const { id } = useParams();
@@ -32,6 +35,7 @@ export default function CreatorVideoForm() {
   const { data: video, isLoading: videoLoading } = useCreatorVideo(id, organizationId);
   const { data: tournaments } = useCreatorTournaments();
   const { createVideo, updateVideo } = useVideoMutations(organizationId);
+  const uploadHook = useVideoUpload(organizationId);
 
   const [formData, setFormData] = useState({
     type: "long" as Enums<"video_type">,
@@ -41,9 +45,13 @@ export default function CreatorVideoForm() {
     tournament_id: "",
     thumbnail_url: "",
     status: "draft" as Enums<"content_status">,
-    mux_asset_id: "",
-    mux_playback_id: "",
   });
+
+  // Track upload state from form or hook
+  const [uploadedData, setUploadedData] = useState<{
+    storagePath: string | null;
+    videoUrl: string | null;
+  }>({ storagePath: null, videoUrl: null });
 
   useEffect(() => {
     if (video) {
@@ -55,17 +63,60 @@ export default function CreatorVideoForm() {
         tournament_id: video.tournament_id ?? "",
         thumbnail_url: video.thumbnail_url ?? "",
         status: video.status,
-        mux_asset_id: video.mux_asset_id ?? "",
-        mux_playback_id: video.mux_playback_id ?? "",
       });
     }
   }, [video]);
+
+  // Sync upload hook results to local state
+  useEffect(() => {
+    if (uploadHook.storagePath && uploadHook.videoUrl) {
+      setUploadedData({
+        storagePath: uploadHook.storagePath,
+        videoUrl: uploadHook.videoUrl,
+      });
+    }
+  }, [uploadHook.storagePath, uploadHook.videoUrl]);
+
+  const handleUpload = async (file: File) => {
+    // Delete old file if replacing
+    if (isEditing && video?.storage_path && uploadHook.deleteFile) {
+      await uploadHook.deleteFile(video.storage_path);
+    }
+    return uploadHook.upload(file, id);
+  };
+
+  const handleDeleteUpload = async (storagePath: string) => {
+    const success = await uploadHook.deleteFile(storagePath);
+    if (success) {
+      setUploadedData({ storagePath: null, videoUrl: null });
+      uploadHook.reset();
+    }
+    return success;
+  };
 
   const handleSubmit = async (publish: boolean = false) => {
     const tagsArray = formData.tags
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
+
+    // Determine source and paths
+    const hasNewUpload = !!uploadedData.storagePath;
+    const hasExistingStorage = isEditing && video?.source === "storage" && video?.storage_path;
+    const hasExistingMux = isEditing && video?.source === "mux" && video?.mux_playback_id;
+
+    let source: "storage" | "mux" = "storage";
+    let storage_path: string | null = null;
+
+    if (hasNewUpload) {
+      source = "storage";
+      storage_path = uploadedData.storagePath;
+    } else if (hasExistingStorage) {
+      source = "storage";
+      storage_path = video.storage_path;
+    } else if (hasExistingMux) {
+      source = "mux";
+    }
 
     const payload = {
       type: formData.type,
@@ -74,10 +125,13 @@ export default function CreatorVideoForm() {
       tags: tagsArray.length > 0 ? tagsArray : null,
       tournament_id: formData.tournament_id || null,
       thumbnail_url: formData.thumbnail_url || null,
-      status: publish ? "published" as const : formData.status,
-      mux_asset_id: formData.mux_asset_id || null,
-      mux_playback_id: formData.mux_playback_id || null,
+      status: publish ? ("published" as const) : formData.status,
       published_at: publish ? new Date().toISOString() : (isEditing ? video?.published_at : null),
+      source,
+      storage_path,
+      // Clear mux fields if switching to storage
+      mux_asset_id: source === "storage" ? null : video?.mux_asset_id,
+      mux_playback_id: source === "storage" ? null : video?.mux_playback_id,
     };
 
     if (isEditing && id) {
@@ -89,6 +143,24 @@ export default function CreatorVideoForm() {
   };
 
   const isSubmitting = createVideo.isPending || updateVideo.isPending;
+  
+  // Determine if we can publish
+  const hasVideo = 
+    !!uploadedData.storagePath || 
+    (isEditing && video?.storage_path) ||
+    (isEditing && video?.mux_playback_id);
+  
+  const canPublish = formData.title && hasVideo && !uploadHook.isUploading;
+
+  // Get existing video URL for preview in edit mode
+  const getExistingVideoUrl = () => {
+    if (!video) return undefined;
+    if (video.source === "storage" && video.storage_path) {
+      const { data } = supabase.storage.from("videos").getPublicUrl(video.storage_path);
+      return data.publicUrl;
+    }
+    return undefined;
+  };
 
   if (isEditing && videoLoading) {
     return (
@@ -122,6 +194,27 @@ export default function CreatorVideoForm() {
             </p>
           </div>
         </div>
+
+        {/* Video Upload Section */}
+        <Card className="bg-surface border-border-subtle">
+          <CardHeader>
+            <CardTitle>Upload Video</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <VideoUploader
+              onUpload={handleUpload}
+              onDelete={handleDeleteUpload}
+              isUploading={uploadHook.isUploading}
+              progress={uploadHook.progress}
+              error={uploadHook.error}
+              storagePath={uploadedData.storagePath}
+              videoUrl={uploadedData.videoUrl}
+              existingUrl={getExistingVideoUrl()}
+              existingSource={video?.source as "storage" | "mux" | undefined}
+              disabled={isSubmitting}
+            />
+          </CardContent>
+        </Card>
 
         {/* Form */}
         <Card className="bg-surface border-border-subtle">
@@ -238,42 +331,12 @@ export default function CreatorVideoForm() {
           </CardContent>
         </Card>
 
-        {/* Mux Settings */}
-        <Card className="bg-surface border-border-subtle">
-          <CardHeader>
-            <CardTitle>Mux Settings (MVP)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-foreground-secondary">
-              Enter Mux IDs manually for MVP. Real upload integration coming soon.
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="mux_asset_id">Mux Asset ID</Label>
-              <Input
-                id="mux_asset_id"
-                value={formData.mux_asset_id}
-                onChange={(e) => setFormData({ ...formData, mux_asset_id: e.target.value })}
-                placeholder="asset_id..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mux_playback_id">Mux Playback ID</Label>
-              <Input
-                id="mux_playback_id"
-                value={formData.mux_playback_id}
-                onChange={(e) => setFormData({ ...formData, mux_playback_id: e.target.value })}
-                placeholder="playback_id..."
-              />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
           <Button
             variant="outline"
             onClick={() => handleSubmit(false)}
-            disabled={isSubmitting || !formData.title}
+            disabled={isSubmitting || !formData.title || uploadHook.isUploading}
           >
             {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             <Save className="w-4 h-4 mr-2" />
@@ -281,7 +344,7 @@ export default function CreatorVideoForm() {
           </Button>
           <Button
             onClick={() => handleSubmit(true)}
-            disabled={isSubmitting || !formData.title}
+            disabled={isSubmitting || !canPublish}
           >
             {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             <Upload className="w-4 h-4 mr-2" />
