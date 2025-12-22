@@ -347,7 +347,69 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_livestreams: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          ended_at: string | null
+          id: string | null
+          mux_live_stream_id: string | null
+          mux_playback_id: string | null
+          organization_id: string | null
+          scheduled_start_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["livestream_status"] | null
+          thumbnail_url: string | null
+          title: string | null
+          tournament_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string | null
+          mux_live_stream_id?: string | null
+          mux_playback_id?: string | null
+          organization_id?: string | null
+          scheduled_start_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["livestream_status"] | null
+          thumbnail_url?: string | null
+          title?: string | null
+          tournament_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string | null
+          mux_live_stream_id?: string | null
+          mux_playback_id?: string | null
+          organization_id?: string | null
+          scheduled_start_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["livestream_status"] | null
+          thumbnail_url?: string | null
+          title?: string | null
+          tournament_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livestreams_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "livestreams_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
