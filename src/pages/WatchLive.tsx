@@ -16,6 +16,8 @@ import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ShareDialog } from "@/components/share";
+import { DynamicMeta } from "@/components/seo";
 
 const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
@@ -95,6 +97,13 @@ const WatchLive = () => {
 
   return (
     <MainLayout>
+      {/* Dynamic OG tags for sharing */}
+      <DynamicMeta
+        title={livestream.title ?? "Livestream"}
+        description={livestream.description ?? `Watch ${livestream.title} on The Pickle Hub`}
+        image={livestream.thumbnail_url ?? undefined}
+        type="video.other"
+      />
       <div className="container-wide section-spacing">
         {/* Back Button */}
         <Link
@@ -204,9 +213,15 @@ const WatchLive = () => {
                 )}
               </div>
 
-              {/* Like Button */}
+              {/* Like & Share Buttons */}
               <div className="flex items-center gap-4 py-2 border-t border-b border-border">
                 <LikeButton targetType="livestream" targetId={livestream.id} />
+                <ShareDialog
+                  type="live"
+                  id={livestream.id}
+                  title={livestream.title ?? "Livestream"}
+                  thumbnail={livestream.thumbnail_url ?? undefined}
+                />
               </div>
 
               {/* Description */}

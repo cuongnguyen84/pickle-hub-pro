@@ -18,6 +18,7 @@ import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
 import OrganizationDetail from "./pages/OrganizationDetail";
 import NotFound from "./pages/NotFound";
+import { EmbedLive, EmbedVideo } from "./pages/embed";
 import {
   AdminOverview,
   AdminOrganizations,
@@ -58,6 +59,9 @@ const App = () => (
               <Route path="/account" element={<Account />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/search" element={<Search />} />
+              {/* Embed routes - no layout, minimal UI */}
+              <Route path="/embed/live/:id" element={<EmbedLive />} />
+              <Route path="/embed/video/:id" element={<EmbedVideo />} />
               {/* Admin routes */}
               <Route path="/admin" element={<AdminOverview />} />
               <Route path="/admin/organizations" element={<AdminOrganizations />} />

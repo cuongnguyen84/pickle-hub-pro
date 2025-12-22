@@ -504,6 +504,7 @@ export type Database = {
           created_at: string
           id: string
           organization_id: string | null
+          source: string | null
           target_id: string
           target_type: Database["public"]["Enums"]["target_type"]
           viewer_user_id: string | null
@@ -512,6 +513,7 @@ export type Database = {
           created_at?: string
           id?: string
           organization_id?: string | null
+          source?: string | null
           target_id: string
           target_type: Database["public"]["Enums"]["target_type"]
           viewer_user_id?: string | null
@@ -520,6 +522,7 @@ export type Database = {
           created_at?: string
           id?: string
           organization_id?: string | null
+          source?: string | null
           target_id?: string
           target_type?: Database["public"]["Enums"]["target_type"]
           viewer_user_id?: string | null
