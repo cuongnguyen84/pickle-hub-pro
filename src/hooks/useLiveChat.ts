@@ -69,7 +69,10 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   const [isModerator, setIsModerator] = useState(false);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // SPLIT CHANNELS: Separate broadcast and postgres_changes to avoid binding mismatch
+  const broadcastChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const pgChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  
   // Track all known message IDs (real DB IDs)
   const messageIdsRef = useRef<Set<string>>(new Set());
   // Track client_message_ids we've seen (for broadcast/postgres dedupe)
@@ -163,46 +166,22 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     loadData();
   }, [livestreamId, user]);
 
-  // Subscribe to realtime updates (Broadcast + Postgres Changes)
-  // CRITICAL: This effect ONLY depends on livestreamId - never recreate channel on state changes
+  // ============================================
+  // CHANNEL A: BROADCAST (instant message delivery)
+  // ============================================
   useEffect(() => {
     if (!livestreamId) return;
     
-    console.log('[Chat] Setting up Broadcast + Postgres subscription for:', livestreamId);
+    console.log('[Chat] Setting up BROADCAST channel for:', livestreamId);
     
-    // Create channel with explicit config for broadcast self-receive
-    const channel = supabase.channel(`chat:${livestreamId}`, {
+    const broadcastChannel = supabase.channel(`chat:broadcast:${livestreamId}`, {
       config: {
         broadcast: { self: true }
       }
     });
     
-    // Store ref immediately to prevent GC
-    channelRef.current = channel;
-    
-    // Helper function to append message if not duplicate
-    const appendMessageIfNotExists = (msg: ChatMessage & { client_message_id?: string }) => {
-      // Skip if we already have this exact DB message
-      if (msg.id && messageIdsRef.current.has(msg.id)) {
-        console.log('[Chat] Message already exists by ID, skipping:', msg.id);
-        return;
-      }
-      
-      // Skip if we already have this client_message_id
-      if (msg.client_message_id && clientMessageIdsRef.current.has(msg.client_message_id)) {
-        console.log('[Chat] Message already exists by client_message_id, skipping:', msg.client_message_id);
-        return;
-      }
-      
-      // Track IDs
-      if (msg.id) messageIdsRef.current.add(msg.id);
-      if (msg.client_message_id) clientMessageIdsRef.current.add(msg.client_message_id);
-      
-      setMessages(prev => [...prev, { ...msg, _pending: false, _failed: false }]);
-    };
-    
-    // 1. Listen for Broadcast messages (fast, instant delivery)
-    channel.on('broadcast', { event: 'message' }, (payload) => {
+    // Listen for broadcast messages
+    broadcastChannel.on('broadcast', { event: 'message' }, (payload) => {
       const broadcastMsg = payload.payload as {
         client_message_id: string;
         livestream_id: string;
@@ -217,7 +196,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       
       // Skip if we already have this message (by client_message_id)
       if (clientMessageIdsRef.current.has(broadcastMsg.client_message_id)) {
-        console.log('[Chat] Broadcast message already exists, skipping:', broadcastMsg.client_message_id);
+        console.log('[Chat] Broadcast already exists, skipping:', broadcastMsg.client_message_id);
         return;
       }
       
@@ -226,7 +205,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         .some(p => p.clientMessageId === broadcastMsg.client_message_id);
       
       if (isOwnPending) {
-        console.log('[Chat] Broadcast is our own pending message, skipping:', broadcastMsg.client_message_id);
+        console.log('[Chat] Broadcast is own pending, skipping:', broadcastMsg.client_message_id);
         return;
       }
       
@@ -246,12 +225,41 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         _failed: false
       };
       
-      console.log('[Chat] Adding broadcast message to UI:', newMessage.id);
+      console.log('[Chat] Adding broadcast message to UI');
       setMessages(prev => [...prev, newMessage]);
     });
     
-    // 2. Listen for Postgres INSERT (for persistence reconciliation)
-    channel.on(
+    // Subscribe AFTER registering handlers
+    broadcastChannel.subscribe((status, err) => {
+      console.log('[Chat] BROADCAST channel status:', status, err ? `Error: ${err.message}` : '');
+      if (status === 'SUBSCRIBED') {
+        console.log('[Chat] ✓ BROADCAST channel ready');
+      }
+    });
+    
+    broadcastChannelRef.current = broadcastChannel;
+    
+    return () => {
+      console.log('[Chat] Cleaning up BROADCAST channel');
+      if (broadcastChannelRef.current) {
+        supabase.removeChannel(broadcastChannelRef.current);
+        broadcastChannelRef.current = null;
+      }
+    };
+  }, [livestreamId]);
+  
+  // ============================================
+  // CHANNEL B: POSTGRES CHANGES (reconciliation & persistence)
+  // ============================================
+  useEffect(() => {
+    if (!livestreamId) return;
+    
+    console.log('[Chat] Setting up POSTGRES channel for:', livestreamId);
+    
+    const pgChannel = supabase.channel(`chat:pg:${livestreamId}`);
+    
+    // Listen for INSERT (message persistence confirmation)
+    pgChannel.on(
       'postgres_changes',
       {
         event: 'INSERT',
@@ -261,21 +269,21 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       },
       (payload) => {
         const dbMessage = payload.new as ChatMessage & { client_message_id?: string };
-        console.log('[Chat] Received Postgres INSERT:', dbMessage.id, 'client_id:', dbMessage.client_message_id);
+        console.log('[Chat] PG INSERT:', dbMessage.id, 'client_id:', dbMessage.client_message_id);
         
         // Already have this exact DB message
         if (messageIdsRef.current.has(dbMessage.id)) {
-          console.log('[Chat] DB message already exists, skipping:', dbMessage.id);
+          console.log('[Chat] DB message exists, skipping:', dbMessage.id);
           return;
         }
         
-        // Check if we have a pending/broadcast message with matching client_message_id
+        // Reconcile with pending/broadcast messages
         if (dbMessage.client_message_id) {
           // Find and replace matching pending message
           let foundPending = false;
           for (const [tempId, pendingData] of pendingMessagesRef.current.entries()) {
             if (pendingData.clientMessageId === dbMessage.client_message_id) {
-              console.log('[Chat] Replacing pending message:', tempId, 'with DB:', dbMessage.id);
+              console.log('[Chat] Replacing pending:', tempId, '-> DB:', dbMessage.id);
               foundPending = true;
               pendingMessagesRef.current.delete(tempId);
               messageIdsRef.current.add(dbMessage.id);
@@ -294,16 +302,16 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
             setMessages(prev => {
               const hasBroadcast = prev.some(m => m.id === broadcastId);
               if (hasBroadcast) {
-                console.log('[Chat] Replacing broadcast message:', broadcastId, 'with DB:', dbMessage.id);
+                console.log('[Chat] Replacing broadcast:', broadcastId, '-> DB:', dbMessage.id);
                 messageIdsRef.current.add(dbMessage.id);
                 return prev.map(m => 
                   m.id === broadcastId ? { ...dbMessage, _pending: false, _failed: false } : m
                 );
               }
               
-              // No matching pending/broadcast - add as new (edge case: missed broadcast)
+              // No matching - add as new (edge case: missed broadcast)
               if (!messageIdsRef.current.has(dbMessage.id)) {
-                console.log('[Chat] Adding new DB message (no prior broadcast):', dbMessage.id);
+                console.log('[Chat] Adding DB message (no broadcast):', dbMessage.id);
                 messageIdsRef.current.add(dbMessage.id);
                 return [...prev, { ...dbMessage, _pending: false, _failed: false }];
               }
@@ -312,7 +320,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
             });
           }
         } else {
-          // Legacy message without client_message_id - add if not duplicate
+          // Legacy message without client_message_id
           console.log('[Chat] Adding legacy DB message:', dbMessage.id);
           messageIdsRef.current.add(dbMessage.id);
           setMessages(prev => [...prev, { ...dbMessage, _pending: false, _failed: false }]);
@@ -320,8 +328,8 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       }
     );
     
-    // 3. Listen for DELETE
-    channel.on(
+    // Listen for DELETE
+    pgChannel.on(
       'postgres_changes',
       {
         event: 'DELETE',
@@ -331,14 +339,14 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       },
       (payload) => {
         const deletedId = (payload.old as { id: string }).id;
-        console.log('[Chat] Message deleted via realtime:', deletedId);
+        console.log('[Chat] Message deleted:', deletedId);
         messageIdsRef.current.delete(deletedId);
         setMessages(prev => prev.filter(m => m.id !== deletedId));
       }
     );
     
-    // 4. Listen for settings changes
-    channel.on(
+    // Listen for settings changes
+    pgChannel.on(
       'postgres_changes',
       {
         event: '*',
@@ -353,32 +361,24 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       }
     );
     
-    // Subscribe to the channel with status logging
-    channel.subscribe((status, err) => {
-      console.log('[Chat] Channel subscription status:', status, err ? `Error: ${err.message}` : '');
-      
-      if (status === 'CHANNEL_ERROR') {
-        console.error('[Chat] Channel error, attempting reconnection...');
-      }
-      
-      if (status === 'TIMED_OUT') {
-        console.warn('[Chat] Channel subscription timed out');
-      }
-      
+    // IMPORTANT: Subscribe AFTER registering ALL handlers
+    pgChannel.subscribe((status, err) => {
+      console.log('[Chat] POSTGRES channel status:', status, err ? `Error: ${err.message}` : '');
       if (status === 'SUBSCRIBED') {
-        console.log('[Chat] Successfully subscribed to channel');
+        console.log('[Chat] ✓ POSTGRES channel ready');
       }
     });
-
-    // Cleanup function - ONLY runs when livestreamId changes or component unmounts
+    
+    pgChannelRef.current = pgChannel;
+    
     return () => {
-      console.log('[Chat] Cleaning up realtime subscription for:', livestreamId);
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+      console.log('[Chat] Cleaning up POSTGRES channel');
+      if (pgChannelRef.current) {
+        supabase.removeChannel(pgChannelRef.current);
+        pgChannelRef.current = null;
       }
     };
-  }, [livestreamId]); // CRITICAL: Only depend on livestreamId
+  }, [livestreamId]);
 
   // Get user profile for display name
   const getUserProfile = async () => {
@@ -461,11 +461,11 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     // Immediately add to UI
     setMessages(prev => [...prev, optimisticMessage]);
 
-    // 1. Send broadcast IMMEDIATELY (for other users to see instantly)
-    const channel = channelRef.current;
-    if (channel) {
+    // 1. Send broadcast IMMEDIATELY via BROADCAST channel
+    const broadcastChannel = broadcastChannelRef.current;
+    if (broadcastChannel) {
       console.log('[Chat] Sending broadcast via channel');
-      channel.send({
+      broadcastChannel.send({
         type: 'broadcast',
         event: 'message',
         payload: {
@@ -483,7 +483,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         console.error('[Chat] Broadcast error:', err);
       });
     } else {
-      console.warn('[Chat] Channel not available for broadcast - message will rely on Postgres changes');
+      console.warn('[Chat] Broadcast channel not available - message will rely on Postgres changes');
     }
 
     // 2. Persist to DB (in parallel)
