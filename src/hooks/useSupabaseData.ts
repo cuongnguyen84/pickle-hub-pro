@@ -7,7 +7,8 @@ export type Video = Tables<"videos"> & {
   organization?: Tables<"organizations"> | null;
 };
 
-export type Livestream = Tables<"livestreams"> & {
+// Use public_livestreams view for public access (excludes mux_stream_key)
+export type Livestream = Tables<"public_livestreams"> & {
   organization?: Tables<"organizations"> | null;
 };
 
@@ -61,13 +62,13 @@ export function useVideo(id: string) {
   });
 }
 
-// Fetch livestreams by status
+// Fetch livestreams by status (uses public_livestreams view for security)
 export function useLivestreams(status?: "live" | "scheduled" | "ended") {
   return useQuery({
     queryKey: ["livestreams", status],
     queryFn: async () => {
       let query = supabase
-        .from("livestreams")
+        .from("public_livestreams")
         .select(`
           *,
           organization:organizations(*)
@@ -85,13 +86,13 @@ export function useLivestreams(status?: "live" | "scheduled" | "ended") {
   });
 }
 
-// Fetch single livestream by ID
+// Fetch single livestream by ID (uses public_livestreams view for security)
 export function useLivestream(id: string) {
   return useQuery({
     queryKey: ["livestream", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("livestreams")
+        .from("public_livestreams")
         .select(`
           *,
           organization:organizations(*)
