@@ -15,6 +15,7 @@ import WatchVideo from "./pages/WatchVideo";
 import WatchLive from "./pages/WatchLive";
 import Account from "./pages/Account";
 import Notifications from "./pages/Notifications";
+import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 import {
   AdminOverview,
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/account" element={<Account />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/search" element={<Search />} />
               {/* Admin routes */}
               <Route path="/admin" element={<AdminOverview />} />
               <Route path="/admin/organizations" element={<AdminOrganizations />} />

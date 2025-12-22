@@ -91,6 +91,7 @@ const TournamentDetail = () => {
     <MainLayout>
       {/* Hero Section */}
       <TournamentHero
+        id={tournament.id}
         name={tournament.name}
         description={tournament.description}
         status={tournament.status}

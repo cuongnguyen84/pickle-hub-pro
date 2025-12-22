@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
-import { Trophy, Calendar, Share2, Bell } from "lucide-react";
+import { Trophy, Calendar, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -14,8 +14,10 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
+import { FollowButton } from "@/components/follow";
 
 interface TournamentHeroProps {
+  id: string;
   name: string;
   description?: string | null;
   status: "upcoming" | "ongoing" | "ended";
@@ -25,6 +27,7 @@ interface TournamentHeroProps {
 }
 
 export const TournamentHero = ({
+  id,
   name,
   description,
   status,
@@ -59,9 +62,6 @@ export const TournamentHero = ({
     toast.success(t.common.copied);
   };
 
-  const handleFollow = () => {
-    toast.info(t.common.comingSoon);
-  };
 
   return (
     <div className="relative overflow-hidden">
@@ -149,15 +149,7 @@ export const TournamentHero = ({
                 <Share2 className="w-4 h-4" />
                 {t.common.share}
               </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleFollow}
-                className="gap-2"
-              >
-                <Bell className="w-4 h-4" />
-                {t.tournament.follow}
-              </Button>
+              <FollowButton targetType="tournament" targetId={id} />
             </div>
           </div>
         </div>

@@ -256,12 +256,22 @@ export const en: Translations = {
     skip: "Skip",
   },
   search: {
+    title: "Search",
     placeholder: "Search videos, livestreams or tournaments...",
     filterAll: "All",
     allTournaments: "All tournaments",
     sortNewest: "Newest",
     sortUpcoming: "Upcoming",
     noResults: "No results found",
+    tryDifferent: "Try a different keyword",
+    resultsCount: "Found {count} results",
+    enterKeyword: "Enter a keyword to search",
+    tabs: {
+      all: "All",
+      videos: "Videos",
+      livestreams: "Livestreams",
+      tournaments: "Tournaments",
+    },
   },
   follow: {
     follow: "Follow",

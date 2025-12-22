@@ -254,12 +254,22 @@ export interface Translations {
     skip: string;
   };
   search: {
+    title: string;
     placeholder: string;
     filterAll: string;
     allTournaments: string;
     sortNewest: string;
     sortUpcoming: string;
     noResults: string;
+    tryDifferent: string;
+    resultsCount: string;
+    enterKeyword: string;
+    tabs: {
+      all: string;
+      videos: string;
+      livestreams: string;
+      tournaments: string;
+    };
   };
   follow: {
     follow: string;
@@ -533,12 +543,22 @@ export const vi: Translations = {
     skip: "Bỏ qua",
   },
   search: {
+    title: "Tìm kiếm",
     placeholder: "Tìm video, livestream hoặc giải đấu...",
     filterAll: "Tất cả",
     allTournaments: "Tất cả giải đấu",
     sortNewest: "Mới nhất",
     sortUpcoming: "Sắp diễn ra",
     noResults: "Không tìm thấy kết quả",
+    tryDifferent: "Thử từ khóa khác",
+    resultsCount: "Tìm thấy {count} kết quả",
+    enterKeyword: "Nhập từ khóa để tìm kiếm",
+    tabs: {
+      all: "Tất cả",
+      videos: "Video",
+      livestreams: "Livestream",
+      tournaments: "Giải đấu",
+    },
   },
   follow: {
     follow: "Theo dõi",
