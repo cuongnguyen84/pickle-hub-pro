@@ -149,6 +149,7 @@ const Search = () => {
                               duration={video.duration_seconds ?? undefined}
                               type={video.type}
                               organizationName={video.organization?.name}
+                              organizationSlug={video.organization?.slug}
                               organizationLogo={video.organization?.logo_url ?? undefined}
                             />
                           ))}
@@ -169,6 +170,7 @@ const Search = () => {
                               thumbnail={stream.thumbnail_url ?? undefined}
                               status={stream.status ?? "scheduled"}
                               organizationName={stream.organization?.name}
+                              organizationSlug={stream.organization?.slug}
                               organizationLogo={stream.organization?.logo_url ?? undefined}
                               isReplay={stream.status === "ended" && !!stream.mux_playback_id}
                             />
@@ -209,6 +211,7 @@ const Search = () => {
                             duration={video.duration_seconds ?? undefined}
                             type={video.type}
                             organizationName={video.organization?.name}
+                            organizationSlug={video.organization?.slug}
                             organizationLogo={video.organization?.logo_url ?? undefined}
                           />
                         ))}
@@ -232,6 +235,7 @@ const Search = () => {
                             thumbnail={stream.thumbnail_url ?? undefined}
                             status={stream.status ?? "scheduled"}
                             organizationName={stream.organization?.name}
+                            organizationSlug={stream.organization?.slug}
                             organizationLogo={stream.organization?.logo_url ?? undefined}
                             isReplay={stream.status === "ended" && !!stream.mux_playback_id}
                           />

@@ -120,6 +120,7 @@ const Videos = () => {
                       id={stream.id!}
                       title={stream.title ?? ""}
                       organizationName={stream.organization?.name ?? ""}
+                      organizationSlug={stream.organization?.slug}
                       status="ended"
                       thumbnail={stream.thumbnail_url ?? undefined}
                       isReplay
@@ -143,6 +144,7 @@ const Videos = () => {
                         duration={video.duration_seconds ?? 0}
                         views={0}
                         organizationName={video.organization?.name ?? ""}
+                        organizationSlug={video.organization?.slug}
                         thumbnail={video.thumbnail_url ?? undefined}
                       />
                     ))}

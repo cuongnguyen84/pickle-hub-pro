@@ -9,6 +9,7 @@ interface LiveCardProps {
   thumbnail?: string;
   viewerCount?: number;
   organizationName?: string;
+  organizationSlug?: string;
   organizationLogo?: string;
   status?: "live" | "scheduled" | "ended";
   scheduledAt?: string;
@@ -22,6 +23,7 @@ const LiveCard = ({
   thumbnail,
   viewerCount,
   organizationName,
+  organizationSlug,
   organizationLogo,
   status = "live",
   scheduledAt,
@@ -119,7 +121,17 @@ const LiveCard = ({
               ) : (
                 <div className="w-4 h-4 rounded-full bg-muted" />
               )}
-              <span className="line-clamp-1">{organizationName}</span>
+              {organizationSlug ? (
+                <Link
+                  to={`/org/${organizationSlug}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="line-clamp-1 hover:text-primary hover:underline"
+                >
+                  {organizationName}
+                </Link>
+              ) : (
+                <span className="line-clamp-1">{organizationName}</span>
+              )}
             </div>
           )}
           

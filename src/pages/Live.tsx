@@ -84,6 +84,7 @@ const Live = () => {
                       title={stream.title ?? ""}
                       viewerCount={0}
                       organizationName={stream.organization?.name ?? ""}
+                      organizationSlug={stream.organization?.slug}
                       status={stream.status as "live" | "scheduled" | "ended"}
                       thumbnail={stream.thumbnail_url ?? undefined}
                     />
@@ -105,6 +106,7 @@ const Live = () => {
                       id={stream.id!}
                       title={stream.title ?? ""}
                       organizationName={stream.organization?.name ?? ""}
+                      organizationSlug={stream.organization?.slug}
                       status={stream.status as "live" | "scheduled" | "ended"}
                       thumbnail={stream.thumbnail_url ?? undefined}
                     />

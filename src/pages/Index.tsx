@@ -72,10 +72,11 @@ const Index = () => {
             {liveStreams.slice(0, 3).map((stream) => (
               <LiveCard
                 key={stream.id}
-                id={stream.id}
-                title={stream.title}
+                id={stream.id!}
+                title={stream.title ?? ""}
                 viewerCount={0}
                 organizationName={stream.organization?.name ?? ""}
+                organizationSlug={stream.organization?.slug}
                 status={stream.status as "live" | "scheduled" | "ended"}
                 thumbnail={stream.thumbnail_url ?? undefined}
               />
@@ -115,6 +116,7 @@ const Index = () => {
                 duration={video.duration_seconds ?? 0}
                 views={0}
                 organizationName={video.organization?.name ?? ""}
+                organizationSlug={video.organization?.slug}
                 thumbnail={video.thumbnail_url ?? undefined}
               />
             ))}
@@ -148,6 +150,7 @@ const Index = () => {
                 duration={video.duration_seconds ?? 0}
                 views={0}
                 organizationName={video.organization?.name ?? ""}
+                organizationSlug={video.organization?.slug}
                 thumbnail={video.thumbnail_url ?? undefined}
               />
             ))}
