@@ -379,6 +379,282 @@ export type Database = {
           },
         ]
       }
+      quick_table_groups: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          table_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          table_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          table_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_table_groups_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "quick_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quick_table_matches: {
+        Row: {
+          bracket_position: string | null
+          created_at: string
+          display_order: number
+          group_id: string | null
+          id: string
+          is_playoff: boolean
+          large_playoff_round: number | null
+          next_match_id: string | null
+          next_match_slot: number | null
+          player1_id: string | null
+          player2_id: string | null
+          playoff_match_number: number | null
+          playoff_round: number | null
+          score1: number | null
+          score2: number | null
+          status: Database["public"]["Enums"]["quick_match_status"]
+          table_id: string
+          updated_at: string
+          winner_id: string | null
+        }
+        Insert: {
+          bracket_position?: string | null
+          created_at?: string
+          display_order?: number
+          group_id?: string | null
+          id?: string
+          is_playoff?: boolean
+          large_playoff_round?: number | null
+          next_match_id?: string | null
+          next_match_slot?: number | null
+          player1_id?: string | null
+          player2_id?: string | null
+          playoff_match_number?: number | null
+          playoff_round?: number | null
+          score1?: number | null
+          score2?: number | null
+          status?: Database["public"]["Enums"]["quick_match_status"]
+          table_id: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Update: {
+          bracket_position?: string | null
+          created_at?: string
+          display_order?: number
+          group_id?: string | null
+          id?: string
+          is_playoff?: boolean
+          large_playoff_round?: number | null
+          next_match_id?: string | null
+          next_match_slot?: number | null
+          player1_id?: string | null
+          player2_id?: string | null
+          playoff_match_number?: number | null
+          playoff_round?: number | null
+          score1?: number | null
+          score2?: number | null
+          status?: Database["public"]["Enums"]["quick_match_status"]
+          table_id?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_table_matches_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "quick_table_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_table_matches_next_match_id_fkey"
+            columns: ["next_match_id"]
+            isOneToOne: false
+            referencedRelation: "quick_table_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_table_matches_player1_id_fkey"
+            columns: ["player1_id"]
+            isOneToOne: false
+            referencedRelation: "quick_table_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_table_matches_player2_id_fkey"
+            columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "quick_table_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_table_matches_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "quick_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_table_matches_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "quick_table_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quick_table_players: {
+        Row: {
+          created_at: string
+          display_order: number
+          group_id: string | null
+          id: string
+          is_bye: boolean | null
+          is_qualified: boolean | null
+          is_wildcard: boolean | null
+          matches_played: number
+          matches_won: number
+          name: string
+          playoff_seed: number | null
+          point_diff: number | null
+          points_against: number
+          points_for: number
+          round1_point_diff: number | null
+          round1_result: string | null
+          round2_result: string | null
+          seed: number | null
+          table_id: string
+          team: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          group_id?: string | null
+          id?: string
+          is_bye?: boolean | null
+          is_qualified?: boolean | null
+          is_wildcard?: boolean | null
+          matches_played?: number
+          matches_won?: number
+          name: string
+          playoff_seed?: number | null
+          point_diff?: number | null
+          points_against?: number
+          points_for?: number
+          round1_point_diff?: number | null
+          round1_result?: string | null
+          round2_result?: string | null
+          seed?: number | null
+          table_id: string
+          team?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          group_id?: string | null
+          id?: string
+          is_bye?: boolean | null
+          is_qualified?: boolean | null
+          is_wildcard?: boolean | null
+          matches_played?: number
+          matches_won?: number
+          name?: string
+          playoff_seed?: number | null
+          point_diff?: number | null
+          points_against?: number
+          points_for?: number
+          round1_point_diff?: number | null
+          round1_result?: string | null
+          round2_result?: string | null
+          seed?: number | null
+          table_id?: string
+          team?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_table_players_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "quick_table_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_table_players_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "quick_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quick_tables: {
+        Row: {
+          created_at: string
+          creator_user_id: string | null
+          format: Database["public"]["Enums"]["quick_table_format"]
+          group_count: number | null
+          id: string
+          is_public: boolean
+          name: string
+          player_count: number
+          share_id: string
+          status: Database["public"]["Enums"]["quick_table_status"]
+          top_per_group: number | null
+          updated_at: string
+          use_wildcard: boolean | null
+          wildcard_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          creator_user_id?: string | null
+          format: Database["public"]["Enums"]["quick_table_format"]
+          group_count?: number | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          player_count: number
+          share_id?: string
+          status?: Database["public"]["Enums"]["quick_table_status"]
+          top_per_group?: number | null
+          updated_at?: string
+          use_wildcard?: boolean | null
+          wildcard_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          creator_user_id?: string | null
+          format?: Database["public"]["Enums"]["quick_table_format"]
+          group_count?: number | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          player_count?: number
+          share_id?: string
+          status?: Database["public"]["Enums"]["quick_table_status"]
+          top_per_group?: number | null
+          updated_at?: string
+          use_wildcard?: boolean | null
+          wildcard_count?: number | null
+        }
+        Relationships: []
+      }
       tournaments: {
         Row: {
           created_at: string
@@ -651,6 +927,9 @@ export type Database = {
       follow_target_type: "organization" | "tournament"
       livestream_status: "scheduled" | "live" | "ended"
       notification_type: "livestream_scheduled" | "livestream_live"
+      quick_match_status: "pending" | "completed"
+      quick_table_format: "round_robin" | "large_playoff"
+      quick_table_status: "setup" | "group_stage" | "playoff" | "completed"
       target_type: "video" | "livestream"
       tournament_status: "upcoming" | "ongoing" | "ended"
       video_type: "short" | "long"
@@ -786,6 +1065,9 @@ export const Constants = {
       follow_target_type: ["organization", "tournament"],
       livestream_status: ["scheduled", "live", "ended"],
       notification_type: ["livestream_scheduled", "livestream_live"],
+      quick_match_status: ["pending", "completed"],
+      quick_table_format: ["round_robin", "large_playoff"],
+      quick_table_status: ["setup", "group_stage", "playoff", "completed"],
       target_type: ["video", "livestream"],
       tournament_status: ["upcoming", "ongoing", "ended"],
       video_type: ["short", "long"],
