@@ -162,7 +162,7 @@ export function suggestGroupConfigs(playerCount: number): GroupSuggestion[] {
     });
   }
   
-  return suggestions.slice(0, 3); // Return top 3
+  return suggestions; // Return all valid options (2, 3, 4, 6, 8 groups)
 }
 
 // Generate round robin matches for a group
