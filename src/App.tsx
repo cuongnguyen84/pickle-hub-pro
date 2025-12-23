@@ -18,6 +18,9 @@ import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
 import OrganizationDetail from "./pages/OrganizationDetail";
 import NotFound from "./pages/NotFound";
+import QuickTables from "./pages/QuickTables";
+import QuickTableSetup from "./pages/QuickTableSetup";
+import QuickTableView from "./pages/QuickTableView";
 import { EmbedLive, EmbedVideo } from "./pages/embed";
 import {
   AdminOverview,
@@ -59,6 +62,10 @@ const App = () => (
               <Route path="/account" element={<Account />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/search" element={<Search />} />
+              {/* Quick Tables routes */}
+              <Route path="/quick-tables" element={<QuickTables />} />
+              <Route path="/quick-tables/:shareId" element={<QuickTableView />} />
+              <Route path="/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
               {/* Embed routes - no layout, minimal UI */}
               <Route path="/embed/live/:id" element={<EmbedLive />} />
               <Route path="/embed/video/:id" element={<EmbedVideo />} />
