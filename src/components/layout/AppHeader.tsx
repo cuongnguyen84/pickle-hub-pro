@@ -54,6 +54,9 @@ const AppHeader = () => {
     path: "/videos",
     label: t.nav.videos
   }, {
+    path: "/quick-tables",
+    label: "Chia bảng"
+  }, {
     path: "/tournaments",
     label: t.nav.tournaments
   }];

@@ -1,0 +1,538 @@
+import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+import { toast } from 'sonner';
+
+// Types
+export type QuickTableFormat = 'round_robin' | 'large_playoff';
+export type QuickTableStatus = 'setup' | 'group_stage' | 'playoff' | 'completed';
+export type QuickMatchStatus = 'pending' | 'completed';
+
+export interface QuickTable {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  creator_user_id: string | null;
+  name: string;
+  player_count: number;
+  format: QuickTableFormat;
+  status: QuickTableStatus;
+  group_count: number | null;
+  top_per_group: number | null;
+  use_wildcard: boolean | null;
+  wildcard_count: number | null;
+  share_id: string;
+  is_public: boolean;
+}
+
+export interface QuickTableGroup {
+  id: string;
+  table_id: string;
+  name: string;
+  display_order: number;
+  created_at: string;
+}
+
+export interface QuickTablePlayer {
+  id: string;
+  table_id: string;
+  group_id: string | null;
+  name: string;
+  team: string | null;
+  seed: number | null;
+  matches_played: number;
+  matches_won: number;
+  points_for: number;
+  points_against: number;
+  point_diff: number;
+  is_qualified: boolean | null;
+  is_wildcard: boolean | null;
+  playoff_seed: number | null;
+  round1_result: string | null;
+  round2_result: string | null;
+  round1_point_diff: number | null;
+  is_bye: boolean | null;
+  display_order: number;
+  created_at: string;
+}
+
+export interface QuickTableMatch {
+  id: string;
+  table_id: string;
+  group_id: string | null;
+  is_playoff: boolean;
+  playoff_round: number | null;
+  playoff_match_number: number | null;
+  bracket_position: string | null;
+  large_playoff_round: number | null;
+  player1_id: string | null;
+  player2_id: string | null;
+  score1: number | null;
+  score2: number | null;
+  winner_id: string | null;
+  status: QuickMatchStatus;
+  next_match_id: string | null;
+  next_match_slot: number | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GroupSuggestion {
+  groupCount: number;
+  playersPerGroup: number[];
+  isRecommended: boolean;
+  reason: string;
+  wildcardNeeded: number;
+  totalPlayoffSpots: number;
+}
+
+// Suggest group configurations
+export function suggestGroupConfigs(playerCount: number): GroupSuggestion[] {
+  const validGroupCounts = [2, 3, 4, 6, 8];
+  const suggestions: GroupSuggestion[] = [];
+
+  for (const k of validGroupCounts) {
+    if (k > playerCount) continue;
+    
+    const basePerGroup = Math.floor(playerCount / k);
+    const remainder = playerCount % k;
+    
+    // Check if difference is <= 1
+    if (basePerGroup < 2) continue; // Need at least 2 per group
+    
+    const playersPerGroup: number[] = [];
+    for (let i = 0; i < k; i++) {
+      playersPerGroup.push(i < remainder ? basePerGroup + 1 : basePerGroup);
+    }
+    
+    // Calculate playoff spots
+    const topPerGroup = 2;
+    const directSpots = k * topPerGroup;
+    
+    // Determine ideal playoff size (power of 2)
+    let idealPlayoffSize = 4;
+    if (directSpots >= 6) idealPlayoffSize = 8;
+    if (directSpots >= 12) idealPlayoffSize = 16;
+    if (directSpots >= 24) idealPlayoffSize = 32;
+    
+    const wildcardNeeded = Math.max(0, idealPlayoffSize - directSpots);
+    
+    // Determine if recommended
+    let isRecommended = false;
+    let reason = '';
+    
+    // Best: balanced groups and direct playoff (no wildcard)
+    if (wildcardNeeded === 0) {
+      isRecommended = true;
+      reason = 'Không cần wildcard, vào thẳng playoff';
+    } else if (wildcardNeeded <= 4) {
+      reason = `Cần ${wildcardNeeded} wildcard`;
+    } else {
+      reason = `Cần ${wildcardNeeded} wildcard (không khuyến nghị)`;
+    }
+    
+    // Prefer 4 or 8 groups for cleaner brackets
+    if ((k === 4 || k === 8) && wildcardNeeded === 0) {
+      isRecommended = true;
+    }
+    
+    suggestions.push({
+      groupCount: k,
+      playersPerGroup,
+      isRecommended,
+      reason,
+      wildcardNeeded,
+      totalPlayoffSpots: idealPlayoffSize,
+    });
+  }
+  
+  // Mark best recommendation
+  const recommended = suggestions.find(s => s.wildcardNeeded === 0);
+  if (recommended) {
+    suggestions.forEach(s => {
+      if (s !== recommended) s.isRecommended = false;
+    });
+  } else if (suggestions.length > 0) {
+    // Pick the one with least wildcards
+    const sorted = [...suggestions].sort((a, b) => a.wildcardNeeded - b.wildcardNeeded);
+    sorted[0].isRecommended = true;
+    suggestions.forEach(s => {
+      if (s !== sorted[0]) s.isRecommended = false;
+    });
+  }
+  
+  return suggestions.slice(0, 3); // Return top 3
+}
+
+// Generate round robin matches for a group
+export function generateRoundRobinMatches(playerIds: string[]): Array<{ player1: string; player2: string }> {
+  const matches: Array<{ player1: string; player2: string }> = [];
+  
+  for (let i = 0; i < playerIds.length; i++) {
+    for (let j = i + 1; j < playerIds.length; j++) {
+      matches.push({ player1: playerIds[i], player2: playerIds[j] });
+    }
+  }
+  
+  return matches;
+}
+
+// Distribute players to groups (avoiding same team, spreading seeds)
+export function distributePlayersToGroups(
+  players: Array<{ id: string; name: string; team?: string; seed?: number }>,
+  groupCount: number
+): Array<Array<{ id: string; name: string; team?: string; seed?: number }>> {
+  // Sort by seed (highest first, then randomize unseeded)
+  const sorted = [...players].sort((a, b) => {
+    if (a.seed && b.seed) return b.seed - a.seed;
+    if (a.seed) return -1;
+    if (b.seed) return 1;
+    return Math.random() - 0.5;
+  });
+  
+  const groups: Array<Array<typeof players[0]>> = Array.from({ length: groupCount }, () => []);
+  
+  // Snake draft to distribute evenly
+  let groupIndex = 0;
+  let direction = 1;
+  
+  for (const player of sorted) {
+    // Try to avoid putting same team in same group
+    let targetGroup = groupIndex;
+    let attempts = 0;
+    
+    while (attempts < groupCount) {
+      const hasTeammate = player.team && groups[targetGroup].some(p => p.team === player.team);
+      if (!hasTeammate) break;
+      targetGroup = (targetGroup + 1) % groupCount;
+      attempts++;
+    }
+    
+    // If couldn't avoid, just use original
+    if (attempts >= groupCount) {
+      targetGroup = groupIndex;
+    }
+    
+    groups[targetGroup].push(player);
+    
+    // Snake pattern
+    groupIndex += direction;
+    if (groupIndex >= groupCount) {
+      groupIndex = groupCount - 1;
+      direction = -1;
+    } else if (groupIndex < 0) {
+      groupIndex = 0;
+      direction = 1;
+    }
+  }
+  
+  return groups;
+}
+
+export function useQuickTable() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+
+  const createTable = useCallback(async (
+    name: string,
+    playerCount: number,
+    format: QuickTableFormat,
+    groupCount?: number
+  ): Promise<QuickTable | null> => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để tạo bảng đấu');
+      return null;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('quick_tables')
+        .insert({
+          name,
+          player_count: playerCount,
+          format,
+          group_count: groupCount,
+          creator_user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Cast to our type
+      return data as unknown as QuickTable;
+    } catch (error) {
+      console.error('Error creating table:', error);
+      toast.error('Không thể tạo bảng đấu');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const getTableByShareId = useCallback(async (shareId: string): Promise<{
+    table: QuickTable;
+    groups: QuickTableGroup[];
+    players: QuickTablePlayer[];
+    matches: QuickTableMatch[];
+  } | null> => {
+    try {
+      const { data: tableData, error: tableError } = await supabase
+        .from('quick_tables')
+        .select('*')
+        .eq('share_id', shareId)
+        .maybeSingle();
+
+      if (tableError) throw tableError;
+      if (!tableData) return null;
+
+      const table = tableData as unknown as QuickTable;
+
+      const [groupsRes, playersRes, matchesRes] = await Promise.all([
+        supabase.from('quick_table_groups').select('*').eq('table_id', table.id).order('display_order'),
+        supabase.from('quick_table_players').select('*').eq('table_id', table.id).order('display_order'),
+        supabase.from('quick_table_matches').select('*').eq('table_id', table.id).order('display_order'),
+      ]);
+
+      return {
+        table,
+        groups: (groupsRes.data || []) as unknown as QuickTableGroup[],
+        players: (playersRes.data || []) as unknown as QuickTablePlayer[],
+        matches: (matchesRes.data || []) as unknown as QuickTableMatch[],
+      };
+    } catch (error) {
+      console.error('Error fetching table:', error);
+      return null;
+    }
+  }, []);
+
+  const addPlayers = useCallback(async (
+    tableId: string,
+    players: Array<{ name: string; team?: string; seed?: number }>
+  ): Promise<QuickTablePlayer[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('quick_table_players')
+        .insert(
+          players.map((p, i) => ({
+            table_id: tableId,
+            name: p.name,
+            team: p.team || null,
+            seed: p.seed || null,
+            display_order: i,
+          }))
+        )
+        .select();
+
+      if (error) throw error;
+      return (data || []) as unknown as QuickTablePlayer[];
+    } catch (error) {
+      console.error('Error adding players:', error);
+      toast.error('Không thể thêm người chơi');
+      return [];
+    }
+  }, []);
+
+  const createGroups = useCallback(async (
+    tableId: string,
+    groupCount: number
+  ): Promise<QuickTableGroup[]> => {
+    try {
+      const groupNames = Array.from({ length: groupCount }, (_, i) => 
+        String.fromCharCode(65 + i) // A, B, C, ...
+      );
+
+      const { data, error } = await supabase
+        .from('quick_table_groups')
+        .insert(
+          groupNames.map((name, i) => ({
+            table_id: tableId,
+            name,
+            display_order: i,
+          }))
+        )
+        .select();
+
+      if (error) throw error;
+      return (data || []) as unknown as QuickTableGroup[];
+    } catch (error) {
+      console.error('Error creating groups:', error);
+      toast.error('Không thể tạo bảng');
+      return [];
+    }
+  }, []);
+
+  const assignPlayersToGroups = useCallback(async (
+    players: QuickTablePlayer[],
+    groups: QuickTableGroup[]
+  ): Promise<void> => {
+    const playerData = players.map(p => ({
+      id: p.id,
+      name: p.name,
+      team: p.team || undefined,
+      seed: p.seed || undefined,
+    }));
+
+    const distributed = distributePlayersToGroups(playerData, groups.length);
+
+    // Update each player with their group
+    const updates = distributed.flatMap((groupPlayers, groupIndex) =>
+      groupPlayers.map(p => ({
+        id: p.id,
+        group_id: groups[groupIndex].id,
+      }))
+    );
+
+    for (const update of updates) {
+      await supabase
+        .from('quick_table_players')
+        .update({ group_id: update.group_id })
+        .eq('id', update.id);
+    }
+  }, []);
+
+  const createGroupMatches = useCallback(async (
+    tableId: string,
+    groupId: string,
+    playerIds: string[]
+  ): Promise<QuickTableMatch[]> => {
+    const matchPairs = generateRoundRobinMatches(playerIds);
+
+    const { data, error } = await supabase
+      .from('quick_table_matches')
+      .insert(
+        matchPairs.map((pair, i) => ({
+          table_id: tableId,
+          group_id: groupId,
+          is_playoff: false,
+          player1_id: pair.player1,
+          player2_id: pair.player2,
+          display_order: i,
+        }))
+      )
+      .select();
+
+    if (error) throw error;
+    return (data || []) as unknown as QuickTableMatch[];
+  }, []);
+
+  const updateMatchScore = useCallback(async (
+    matchId: string,
+    score1: number,
+    score2: number
+  ): Promise<void> => {
+    const winnerId = score1 > score2 ? 'player1' : score1 < score2 ? 'player2' : null;
+
+    // First get the match to know player IDs
+    const { data: match } = await supabase
+      .from('quick_table_matches')
+      .select('player1_id, player2_id')
+      .eq('id', matchId)
+      .single();
+
+    if (!match) return;
+
+    const winner = winnerId === 'player1' ? match.player1_id : 
+                   winnerId === 'player2' ? match.player2_id : null;
+
+    await supabase
+      .from('quick_table_matches')
+      .update({
+        score1,
+        score2,
+        winner_id: winner,
+        status: 'completed' as QuickMatchStatus,
+      })
+      .eq('id', matchId);
+  }, []);
+
+  const updatePlayerStats = useCallback(async (
+    tableId: string,
+    groupId: string
+  ): Promise<void> => {
+    // Get all completed matches in this group
+    const { data: matches } = await supabase
+      .from('quick_table_matches')
+      .select('*')
+      .eq('group_id', groupId)
+      .eq('status', 'completed');
+
+    if (!matches) return;
+
+    // Get all players in this group
+    const { data: players } = await supabase
+      .from('quick_table_players')
+      .select('*')
+      .eq('group_id', groupId);
+
+    if (!players) return;
+
+    // Calculate stats for each player
+    const stats: Record<string, { played: number; won: number; pf: number; pa: number }> = {};
+
+    for (const player of players) {
+      stats[player.id] = { played: 0, won: 0, pf: 0, pa: 0 };
+    }
+
+    for (const match of matches) {
+      if (match.player1_id && match.player2_id && match.score1 !== null && match.score2 !== null) {
+        stats[match.player1_id].played++;
+        stats[match.player2_id].played++;
+        stats[match.player1_id].pf += match.score1;
+        stats[match.player1_id].pa += match.score2;
+        stats[match.player2_id].pf += match.score2;
+        stats[match.player2_id].pa += match.score1;
+
+        if (match.winner_id === match.player1_id) {
+          stats[match.player1_id].won++;
+        } else if (match.winner_id === match.player2_id) {
+          stats[match.player2_id].won++;
+        }
+      }
+    }
+
+    // Update all players
+    for (const [playerId, stat] of Object.entries(stats)) {
+      await supabase
+        .from('quick_table_players')
+        .update({
+          matches_played: stat.played,
+          matches_won: stat.won,
+          points_for: stat.pf,
+          points_against: stat.pa,
+        })
+        .eq('id', playerId);
+    }
+  }, []);
+
+  const updateTableStatus = useCallback(async (
+    tableId: string,
+    status: QuickTableStatus
+  ): Promise<void> => {
+    await supabase
+      .from('quick_tables')
+      .update({ status })
+      .eq('id', tableId);
+  }, []);
+
+  const isOwner = useCallback((table: QuickTable): boolean => {
+    return !!user && table.creator_user_id === user.id;
+  }, [user]);
+
+  return {
+    loading,
+    createTable,
+    getTableByShareId,
+    addPlayers,
+    createGroups,
+    assignPlayersToGroups,
+    createGroupMatches,
+    updateMatchScore,
+    updatePlayerStats,
+    updateTableStatus,
+    isOwner,
+    suggestGroupConfigs,
+  };
+}

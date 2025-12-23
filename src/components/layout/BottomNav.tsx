@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { Home, Radio, PlaySquare, Trophy, User } from "lucide-react";
+import { Home, Radio, PlaySquare, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BottomNav = () => {
@@ -10,9 +10,8 @@ const BottomNav = () => {
   const navItems = [
     { path: "/", label: t.nav.home, icon: Home },
     { path: "/live", label: t.nav.live, icon: Radio },
-    { path: "/videos", label: t.nav.videos, icon: PlaySquare },
+    { path: "/quick-tables", label: "Chia bảng", icon: Users },
     { path: "/tournaments", label: t.nav.tournaments, icon: Trophy },
-    { path: "/account", label: t.nav.profile, icon: User },
   ];
 
   return (
