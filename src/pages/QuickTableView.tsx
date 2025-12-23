@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
@@ -10,9 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Crown } from 'lucide-react';
+import { Share2, Trophy, Check, Clock, ChevronRight, Swords } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import PlayoffBracket from '@/components/tournament/PlayoffBracket';
 
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
@@ -345,9 +346,10 @@ const QuickTableView = () => {
           {/* Playoff Tab */}
           <TabsContent value="playoff" className="space-y-6">
             {hasPlayoff && (
-              <PlayoffBracket
+              <PlayoffBracketView
                 matches={playoffMatches}
                 players={players}
+                groups={groups}
                 canEdit={canEdit}
                 onScoreUpdate={(matchId, s1, s2) => handleScoreUpdate(matchId, s1, s2, true)}
               />
@@ -498,85 +500,42 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate }: Ma
   );
 };
 
-// Playoff Bracket Component
-interface PlayoffBracketProps {
+// Wrapper for new PlayoffBracket component
+interface PlayoffBracketViewProps {
   matches: QuickTableMatch[];
   players: QuickTablePlayer[];
+  groups: QuickTableGroup[];
   canEdit: boolean;
   onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
 }
 
-const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate }: PlayoffBracketProps) => {
-  const getPlayer = (id: string | null) => players.find(p => p.id === id);
+const PlayoffBracketView = ({ matches, players, groups, canEdit, onScoreUpdate }: PlayoffBracketViewProps) => {
+  // Create group name map
+  const groupNames = useMemo(() => {
+    const map = new Map<string, string>();
+    groups.forEach(g => map.set(g.id, g.name));
+    return map;
+  }, [groups]);
 
-  // Group matches by round
-  const upperMatches = matches.filter(m => m.bracket_position === 'upper').sort((a, b) => (a.playoff_match_number || 0) - (b.playoff_match_number || 0));
-  const lowerMatches = matches.filter(m => m.bracket_position === 'lower').sort((a, b) => (a.playoff_match_number || 0) - (b.playoff_match_number || 0));
-
-  // Check if we have a final
-  const completedMatches = matches.filter(m => m.status === 'completed');
-  const allFirstRoundDone = matches.length > 0 && matches.every(m => m.status === 'completed');
+  // Filter out duplicate matches (keep unique by playoff_match_number)
+  const uniqueMatches = useMemo(() => {
+    const seen = new Set<number>();
+    return matches.filter(m => {
+      const num = m.playoff_match_number || 0;
+      if (seen.has(num)) return false;
+      seen.add(num);
+      return true;
+    }).sort((a, b) => (a.playoff_match_number || 0) - (b.playoff_match_number || 0));
+  }, [matches]);
 
   return (
-    <div className="space-y-6">
-      {/* Upper Bracket */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Crown className="w-4 h-4 text-primary" />
-            Nhánh trên
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {upperMatches.map((match, idx) => (
-            <MatchRow
-              key={match.id}
-              match={match}
-              index={idx}
-              player1={getPlayer(match.player1_id)}
-              player2={getPlayer(match.player2_id)}
-              canEdit={canEdit}
-              onScoreUpdate={(s1, s2) => onScoreUpdate(match.id, s1, s2)}
-            />
-          ))}
-          {upperMatches.length === 0 && (
-            <p className="text-foreground-muted text-center py-4">Chưa có trận đấu</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Lower Bracket */}
-      {lowerMatches.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Swords className="w-4 h-4 text-foreground-secondary" />
-              Nhánh dưới
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {lowerMatches.map((match, idx) => (
-              <MatchRow
-                key={match.id}
-                match={match}
-                index={idx}
-                player1={getPlayer(match.player1_id)}
-                player2={getPlayer(match.player2_id)}
-                canEdit={canEdit}
-                onScoreUpdate={(s1, s2) => onScoreUpdate(match.id, s1, s2)}
-              />
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Info about next rounds */}
-      {!allFirstRoundDone && (
-        <div className="text-center text-foreground-muted text-sm">
-          Hoàn thành tất cả trận để tiếp tục vòng tiếp theo
-        </div>
-      )}
-    </div>
+    <PlayoffBracket
+      matches={uniqueMatches}
+      players={players}
+      canEdit={canEdit}
+      onScoreUpdate={onScoreUpdate}
+      groupNames={groupNames}
+    />
   );
 };
 
