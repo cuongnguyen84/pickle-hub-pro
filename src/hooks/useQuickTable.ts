@@ -521,6 +521,189 @@ export function useQuickTable() {
     return !!user && table.creator_user_id === user.id;
   }, [user]);
 
+  // Get qualified players from each group (top N per group)
+  const getQualifiedPlayers = useCallback((
+    groups: QuickTableGroup[],
+    players: QuickTablePlayer[],
+    topPerGroup: number = 2
+  ): { qualified: QuickTablePlayer[]; thirdPlace: QuickTablePlayer[] } => {
+    const qualified: QuickTablePlayer[] = [];
+    const thirdPlace: QuickTablePlayer[] = [];
+
+    for (const group of groups) {
+      const groupPlayers = players
+        .filter(p => p.group_id === group.id)
+        .sort((a, b) => {
+          if (b.matches_won !== a.matches_won) return b.matches_won - a.matches_won;
+          return b.point_diff - a.point_diff;
+        });
+
+      groupPlayers.slice(0, topPerGroup).forEach((p, idx) => {
+        qualified.push({ ...p, playoff_seed: idx + 1 }); // 1 = first, 2 = second
+      });
+
+      // Third place for wildcard consideration
+      if (groupPlayers[topPerGroup]) {
+        thirdPlace.push(groupPlayers[topPerGroup]);
+      }
+    }
+
+    return { qualified, thirdPlace };
+  }, []);
+
+  // Generate playoff bracket mapping based on group count
+  const generatePlayoffBracket = useCallback((
+    groupCount: number,
+    qualified: QuickTablePlayer[],
+    wildcards: QuickTablePlayer[],
+    groups: QuickTableGroup[]
+  ): Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }> => {
+    const matches: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }> = [];
+
+    // Helper to get player by group name and seed
+    const getPlayer = (groupName: string, seed: number): QuickTablePlayer | null => {
+      const group = groups.find(g => g.name === groupName);
+      if (!group) return null;
+      return qualified.find(p => p.group_id === group.id && p.playoff_seed === seed) || null;
+    };
+
+    // Get wildcard not from specific group
+    const getWildcard = (excludeGroupId: string): QuickTablePlayer | null => {
+      return wildcards.find(w => w.group_id !== excludeGroupId) || wildcards[0] || null;
+    };
+
+    switch (groupCount) {
+      case 2: // 4 players → 2 matches semifinal
+        matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
+        matches.push({ player1: getPlayer('B', 1), player2: getPlayer('A', 2), bracketPosition: 'lower', matchNumber: 2 });
+        break;
+
+      case 3: // 6 players + 2 wildcards = 8 → quarterfinal
+        matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
+        matches.push({ player1: getPlayer('C', 1), player2: wildcards[0] || null, bracketPosition: 'upper', matchNumber: 2 });
+        matches.push({ player1: getPlayer('B', 1), player2: getPlayer('A', 2), bracketPosition: 'lower', matchNumber: 3 });
+        matches.push({ player1: getPlayer('C', 2), player2: wildcards[1] || null, bracketPosition: 'lower', matchNumber: 4 });
+        break;
+
+      case 4: // 8 players → quarterfinal
+        matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
+        matches.push({ player1: getPlayer('C', 1), player2: getPlayer('D', 2), bracketPosition: 'upper', matchNumber: 2 });
+        matches.push({ player1: getPlayer('B', 1), player2: getPlayer('A', 2), bracketPosition: 'lower', matchNumber: 3 });
+        matches.push({ player1: getPlayer('D', 1), player2: getPlayer('C', 2), bracketPosition: 'lower', matchNumber: 4 });
+        break;
+
+      case 6: // 12 players + 4 wildcards = 16 → Round of 16
+        // Upper bracket
+        matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
+        matches.push({ player1: getPlayer('C', 1), player2: getPlayer('D', 2), bracketPosition: 'upper', matchNumber: 2 });
+        const groupE = groups.find(g => g.name === 'E');
+        const groupF = groups.find(g => g.name === 'F');
+        matches.push({ player1: getPlayer('E', 1), player2: getWildcard(groupE?.id || ''), bracketPosition: 'upper', matchNumber: 3 });
+        matches.push({ player1: getPlayer('F', 1), player2: getWildcard(groupF?.id || ''), bracketPosition: 'upper', matchNumber: 4 });
+        // Lower bracket
+        matches.push({ player1: getPlayer('B', 1), player2: getPlayer('A', 2), bracketPosition: 'lower', matchNumber: 5 });
+        matches.push({ player1: getPlayer('D', 1), player2: getPlayer('C', 2), bracketPosition: 'lower', matchNumber: 6 });
+        matches.push({ player1: getPlayer('E', 2), player2: getWildcard(groupE?.id || ''), bracketPosition: 'lower', matchNumber: 7 });
+        matches.push({ player1: getPlayer('F', 2), player2: getWildcard(groupF?.id || ''), bracketPosition: 'lower', matchNumber: 8 });
+        break;
+
+      case 8: // 16 players → Round of 16
+        matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
+        matches.push({ player1: getPlayer('C', 1), player2: getPlayer('D', 2), bracketPosition: 'upper', matchNumber: 2 });
+        matches.push({ player1: getPlayer('E', 1), player2: getPlayer('F', 2), bracketPosition: 'upper', matchNumber: 3 });
+        matches.push({ player1: getPlayer('G', 1), player2: getPlayer('H', 2), bracketPosition: 'upper', matchNumber: 4 });
+        matches.push({ player1: getPlayer('B', 1), player2: getPlayer('A', 2), bracketPosition: 'lower', matchNumber: 5 });
+        matches.push({ player1: getPlayer('D', 1), player2: getPlayer('C', 2), bracketPosition: 'lower', matchNumber: 6 });
+        matches.push({ player1: getPlayer('F', 1), player2: getPlayer('E', 2), bracketPosition: 'lower', matchNumber: 7 });
+        matches.push({ player1: getPlayer('H', 1), player2: getPlayer('G', 2), bracketPosition: 'lower', matchNumber: 8 });
+        break;
+    }
+
+    return matches;
+  }, []);
+
+  // Create playoff matches in database
+  const createPlayoffMatches = useCallback(async (
+    tableId: string,
+    bracketMatches: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }>
+  ): Promise<QuickTableMatch[]> => {
+    const totalMatches = bracketMatches.length;
+    const round = totalMatches <= 2 ? 2 : totalMatches <= 4 ? 1 : 0; // 0=R16, 1=QF, 2=SF
+
+    const { data, error } = await supabase
+      .from('quick_table_matches')
+      .insert(
+        bracketMatches.map((m, i) => ({
+          table_id: tableId,
+          is_playoff: true,
+          playoff_round: round,
+          playoff_match_number: m.matchNumber,
+          bracket_position: m.bracketPosition,
+          player1_id: m.player1?.id || null,
+          player2_id: m.player2?.id || null,
+          display_order: i,
+        }))
+      )
+      .select();
+
+    if (error) throw error;
+    return (data || []) as unknown as QuickTableMatch[];
+  }, []);
+
+  // Mark players as qualified/wildcard
+  const markPlayersQualified = useCallback(async (
+    qualified: QuickTablePlayer[],
+    wildcards: QuickTablePlayer[]
+  ): Promise<void> => {
+    for (const player of qualified) {
+      await supabase
+        .from('quick_table_players')
+        .update({ is_qualified: true, is_wildcard: false, playoff_seed: player.playoff_seed })
+        .eq('id', player.id);
+    }
+
+    for (let i = 0; i < wildcards.length; i++) {
+      await supabase
+        .from('quick_table_players')
+        .update({ is_qualified: true, is_wildcard: true, playoff_seed: 100 + i })
+        .eq('id', wildcards[i].id);
+    }
+  }, []);
+
+  // Advance winner to next match
+  const advanceWinner = useCallback(async (
+    matchId: string,
+    winnerId: string,
+    allMatches: QuickTableMatch[]
+  ): Promise<void> => {
+    const match = allMatches.find(m => m.id === matchId);
+    if (!match || !match.next_match_id) return;
+
+    const nextMatch = allMatches.find(m => m.id === match.next_match_id);
+    if (!nextMatch) return;
+
+    const updateField = match.next_match_slot === 1 ? 'player1_id' : 'player2_id';
+    await supabase
+      .from('quick_table_matches')
+      .update({ [updateField]: winnerId })
+      .eq('id', match.next_match_id);
+  }, []);
+
+  // Check if all group matches are completed
+  const isGroupStageComplete = useCallback((matches: QuickTableMatch[]): boolean => {
+    const groupMatches = matches.filter(m => !m.is_playoff);
+    return groupMatches.length > 0 && groupMatches.every(m => m.status === 'completed');
+  }, []);
+
+  // Get number of wildcards needed based on group count
+  const getWildcardCount = useCallback((groupCount: number): number => {
+    switch (groupCount) {
+      case 3: return 2; // 6 → 8
+      case 6: return 4; // 12 → 16
+      default: return 0;
+    }
+  }, []);
+
   return {
     loading,
     createTable,
@@ -534,5 +717,12 @@ export function useQuickTable() {
     updateTableStatus,
     isOwner,
     suggestGroupConfigs,
+    getQualifiedPlayers,
+    generatePlayoffBracket,
+    createPlayoffMatches,
+    markPlayersQualified,
+    advanceWinner,
+    isGroupStageComplete,
+    getWildcardCount,
   };
 }
