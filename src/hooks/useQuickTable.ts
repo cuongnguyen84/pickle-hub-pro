@@ -670,23 +670,85 @@ export function useQuickTable() {
     }
   }, []);
 
-  // Advance winner to next match
-  const advanceWinner = useCallback(async (
-    matchId: string,
-    winnerId: string,
-    allMatches: QuickTableMatch[]
-  ): Promise<void> => {
-    const match = allMatches.find(m => m.id === matchId);
-    if (!match || !match.next_match_id) return;
+  // Check if current playoff round is complete
+  const isPlayoffRoundComplete = useCallback((matches: QuickTableMatch[], round: number): boolean => {
+    const roundMatches = matches.filter(m => m.is_playoff && m.playoff_round === round);
+    return roundMatches.length > 0 && roundMatches.every(m => m.status === 'completed');
+  }, []);
 
-    const nextMatch = allMatches.find(m => m.id === match.next_match_id);
-    if (!nextMatch) return;
+  // Create next playoff round (Semi-finals or Finals)
+  const createNextPlayoffRound = useCallback(async (
+    tableId: string,
+    currentRound: number,
+    currentMatches: QuickTableMatch[]
+  ): Promise<QuickTableMatch[]> => {
+    // Get completed matches from current round
+    const completedMatches = currentMatches
+      .filter(m => m.is_playoff && m.playoff_round === currentRound && m.status === 'completed')
+      .sort((a, b) => (a.playoff_match_number || 0) - (b.playoff_match_number || 0));
 
-    const updateField = match.next_match_slot === 1 ? 'player1_id' : 'player2_id';
-    await supabase
+    if (completedMatches.length < 2) return [];
+
+    // Calculate next round
+    const nextRound = currentRound + 1;
+    const nextMatchCount = Math.floor(completedMatches.length / 2);
+    
+    // Determine next round name info
+    let roundName = '';
+    if (nextMatchCount === 1) roundName = 'final';
+    else if (nextMatchCount === 2) roundName = 'semi';
+    else if (nextMatchCount <= 4) roundName = 'quarter';
+
+    // Pair winners for next round matches
+    const nextRoundMatches: Array<{
+      player1_id: string | null;
+      player2_id: string | null;
+      bracket_position: string;
+      match_number: number;
+    }> = [];
+
+    // Get the highest match number from existing matches
+    const maxMatchNumber = Math.max(...currentMatches.map(m => m.playoff_match_number || 0), 0);
+
+    for (let i = 0; i < completedMatches.length; i += 2) {
+      const match1 = completedMatches[i];
+      const match2 = completedMatches[i + 1];
+      
+      if (!match2) break; // Need pairs
+
+      nextRoundMatches.push({
+        player1_id: match1.winner_id,
+        player2_id: match2.winner_id,
+        bracket_position: match1.bracket_position || 'upper',
+        match_number: maxMatchNumber + 1 + (i / 2),
+      });
+    }
+
+    if (nextRoundMatches.length === 0) return [];
+
+    // Insert next round matches
+    const { data, error } = await supabase
       .from('quick_table_matches')
-      .update({ [updateField]: winnerId })
-      .eq('id', match.next_match_id);
+      .insert(
+        nextRoundMatches.map((m, idx) => ({
+          table_id: tableId,
+          is_playoff: true,
+          playoff_round: nextRound,
+          playoff_match_number: m.match_number,
+          bracket_position: nextMatchCount === 1 ? 'final' : m.bracket_position,
+          player1_id: m.player1_id,
+          player2_id: m.player2_id,
+          display_order: 100 + idx,
+        }))
+      )
+      .select();
+
+    if (error) {
+      console.error('Error creating next round:', error);
+      return [];
+    }
+
+    return (data || []) as unknown as QuickTableMatch[];
   }, []);
 
   // Check if all group matches are completed
@@ -721,7 +783,8 @@ export function useQuickTable() {
     generatePlayoffBracket,
     createPlayoffMatches,
     markPlayersQualified,
-    advanceWinner,
+    isPlayoffRoundComplete,
+    createNextPlayoffRound,
     isGroupStageComplete,
     getWildcardCount,
   };

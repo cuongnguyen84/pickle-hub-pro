@@ -20,7 +20,8 @@ const QuickTableView = () => {
   const { 
     getTableByShareId, updateMatchScore, updatePlayerStats, isOwner,
     getQualifiedPlayers, generatePlayoffBracket, createPlayoffMatches, 
-    markPlayersQualified, updateTableStatus, isGroupStageComplete, getWildcardCount
+    markPlayersQualified, updateTableStatus, isGroupStageComplete, getWildcardCount,
+    isPlayoffRoundComplete, createNextPlayoffRound
   } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
@@ -65,6 +66,41 @@ const QuickTableView = () => {
     
     if (!isPlayoff && match.group_id) {
       await updatePlayerStats(table.id, match.group_id);
+    }
+    
+    // For playoff: check if round is complete and create next round
+    if (isPlayoff && match.playoff_round !== null) {
+      // Reload to get updated match statuses
+      const updatedData = await getTableByShareId(shareId!);
+      if (updatedData) {
+        const currentRound = match.playoff_round;
+        const updatedMatches = updatedData.matches;
+        
+        // Check if current round is complete
+        if (isPlayoffRoundComplete(updatedMatches, currentRound)) {
+          // Check if next round doesn't exist yet
+          const nextRoundExists = updatedMatches.some(m => 
+            m.is_playoff && m.playoff_round === currentRound + 1
+          );
+          
+          if (!nextRoundExists) {
+            const newMatches = await createNextPlayoffRound(table.id, currentRound, updatedMatches);
+            if (newMatches.length > 0) {
+              toast.success('Đã tạo vòng tiếp theo!');
+            } else if (currentRound > 0) {
+              // Final completed - mark as done
+              const finalMatch = updatedMatches.find(m => 
+                m.is_playoff && m.playoff_round === currentRound && m.status === 'completed'
+              );
+              const roundMatches = updatedMatches.filter(m => m.is_playoff && m.playoff_round === currentRound);
+              if (roundMatches.length === 1 && finalMatch) {
+                await updateTableStatus(table.id, 'completed');
+                toast.success('Giải đấu đã hoàn tất! 🎉');
+              }
+            }
+          }
+        }
+      }
     }
     
     await loadData();
@@ -345,6 +381,16 @@ const QuickTableView = () => {
 
           {/* Playoff Tab */}
           <TabsContent value="playoff" className="space-y-6">
+            {/* Login notice for non-owners */}
+            {hasPlayoff && !canEdit && table.status !== 'completed' && (
+              <Card className="border-border/50 bg-muted/20">
+                <CardContent className="py-3">
+                  <p className="text-sm text-foreground-muted text-center">
+                    Chỉ người tạo bảng mới có thể nhập điểm. Vui lòng đăng nhập nếu bạn là chủ bảng.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
             {hasPlayoff && (
               <PlayoffBracketView
                 matches={playoffMatches}
