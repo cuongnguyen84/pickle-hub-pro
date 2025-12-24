@@ -98,12 +98,22 @@ export function suggestGroupConfigs(playerCount: number): GroupSuggestion[] {
     const basePerGroup = Math.floor(playerCount / k);
     const remainder = playerCount % k;
     
-    // Check if difference is <= 1
-    if (basePerGroup < 2) continue; // Need at least 2 per group
+    // Calculate min and max group sizes
+    const minSize = basePerGroup;
+    const maxSize = remainder > 0 ? basePerGroup + 1 : basePerGroup;
     
+    // Only allow groups with 3-6 players and difference <= 1
+    if (minSize < 3 || maxSize > 6) continue;
+    if (maxSize - minSize > 1) continue;
+    
+    // Randomize distribution of larger/smaller groups
     const playersPerGroup: number[] = [];
+    const largerGroupIndices = new Set<number>();
+    while (largerGroupIndices.size < remainder) {
+      largerGroupIndices.add(Math.floor(Math.random() * k));
+    }
     for (let i = 0; i < k; i++) {
-      playersPerGroup.push(i < remainder ? basePerGroup + 1 : basePerGroup);
+      playersPerGroup.push(largerGroupIndices.has(i) ? basePerGroup + 1 : basePerGroup);
     }
     
     // Calculate playoff spots
@@ -162,7 +172,7 @@ export function suggestGroupConfigs(playerCount: number): GroupSuggestion[] {
     });
   }
   
-  return suggestions; // Return all valid options (2, 3, 4, 6, 8 groups)
+  return suggestions;
 }
 
 // Generate round robin matches for a group

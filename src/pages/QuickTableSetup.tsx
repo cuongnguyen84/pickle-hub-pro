@@ -4,7 +4,6 @@ import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTablePlayer, type QuickTableGroup, type QuickTable } from '@/hooks/useQuickTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, ArrowRight, Shuffle, Users } from 'lucide-react';
@@ -203,7 +202,7 @@ const QuickTableSetup = () => {
                 <div>
                   <CardTitle className="text-lg">Nhập danh sách người chơi</CardTitle>
                   <CardDescription>
-                    Nhập tên, CLB/nhóm (tùy chọn), và hạt giống (tùy chọn)
+                    Nhập tên và hạt giống (tùy chọn)
                   </CardDescription>
                 </div>
                 <Button variant="outline" size="sm" onClick={shufflePlayers}>
@@ -216,27 +215,21 @@ const QuickTableSetup = () => {
               <div className="space-y-3">
                 {players.map((player, index) => (
                   <div key={player.id} className="flex items-center gap-2">
-                    <span className="w-8 text-sm text-foreground-muted text-center">
+                    <span className="w-6 sm:w-8 text-sm text-foreground-muted text-center flex-shrink-0">
                       {index + 1}
                     </span>
                     <Input
                       value={player.name}
                       onChange={(e) => updatePlayer(index, 'name', e.target.value)}
                       placeholder="Tên người chơi *"
-                      className="flex-1"
-                    />
-                    <Input
-                      value={player.team}
-                      onChange={(e) => updatePlayer(index, 'team', e.target.value)}
-                      placeholder="CLB/Nhóm"
-                      className="w-28"
+                      className="flex-1 min-w-0 h-10 sm:h-9"
                     />
                     <Input
                       type="number"
                       value={player.seed}
                       onChange={(e) => updatePlayer(index, 'seed', e.target.value)}
                       placeholder="Seed"
-                      className="w-20"
+                      className="w-16 sm:w-20 h-10 sm:h-9 flex-shrink-0"
                       min={1}
                     />
                     <Button
@@ -244,7 +237,7 @@ const QuickTableSetup = () => {
                       size="icon"
                       onClick={() => removePlayerSlot(index)}
                       disabled={players.length <= 2}
-                      className="text-foreground-muted hover:text-destructive"
+                      className="text-foreground-muted hover:text-destructive flex-shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -261,12 +254,12 @@ const QuickTableSetup = () => {
 
               <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm">
                 <div className="flex items-start gap-2">
-                  <Users className="w-4 h-4 mt-0.5 text-primary" />
+                  <Users className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
                   <div>
                     <p className="font-medium">Mẹo chia bảng tốt:</p>
                     <ul className="text-foreground-secondary mt-1 space-y-1">
-                      <li>• Nhập CLB/Nhóm để tránh người cùng nhóm vào cùng bảng</li>
                       <li>• Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng</li>
+                      <li>• Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau</li>
                     </ul>
                   </div>
                 </div>

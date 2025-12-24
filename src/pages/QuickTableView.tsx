@@ -4,13 +4,13 @@ import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Share2, Trophy, Check, Clock, ChevronRight, Swords } from 'lucide-react';
+import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PlayoffBracket from '@/components/tournament/PlayoffBracket';
@@ -114,6 +114,15 @@ const QuickTableView = () => {
 
   const getPlayerById = (id: string | null) => players.find(p => p.id === id);
 
+  // Format player name as "Name (seed)" - hide team
+  const formatPlayerName = (player: QuickTablePlayer | undefined): string => {
+    if (!player) return 'TBD';
+    if (player.seed) {
+      return `${player.name} (${player.seed})`;
+    }
+    return player.name;
+  };
+
   const getGroupStandings = (groupId: string) => {
     return players
       .filter(p => p.group_id === groupId)
@@ -183,15 +192,6 @@ const QuickTableView = () => {
     
     setShowWildcardDialog(false);
     createPlayoffWithWildcards(qualified, wildcards);
-  };
-
-  // Get round name
-  const getRoundName = (matchCount: number): string => {
-    if (matchCount <= 1) return 'Chung kết';
-    if (matchCount <= 2) return 'Bán kết';
-    if (matchCount <= 4) return 'Tứ kết';
-    if (matchCount <= 8) return 'Vòng 16';
-    return 'Vòng loại';
   };
 
   if (loading) {
@@ -324,12 +324,7 @@ const QuickTableView = () => {
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex items-center gap-2">
-                                      <span className="font-medium">{player.name}</span>
-                                      {player.team && (
-                                        <span className="text-foreground-muted text-sm">
-                                          ({player.team})
-                                        </span>
-                                      )}
+                                      <span className="font-medium">{formatPlayerName(player)}</span>
                                       {player.is_wildcard && (
                                         <Badge variant="outline" className="text-xs">WC</Badge>
                                       )}
@@ -368,6 +363,7 @@ const QuickTableView = () => {
                               player2={getPlayerById(match.player2_id)}
                               canEdit={canEdit && !hasPlayoff}
                               onScoreUpdate={(s1, s2) => handleScoreUpdate(match.id, s1, s2)}
+                              formatPlayerName={formatPlayerName}
                             />
                           ))}
                         </CardContent>
@@ -412,39 +408,48 @@ const QuickTableView = () => {
                 Chọn {wildcardNeeded} người hạng 3 xuất sắc nhất để vào Playoff
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-3 py-4">
-              {thirdPlacePlayers.map((player, idx) => (
-                <label
-                  key={player.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                    selectedWildcards.includes(player.id)
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:bg-muted/50"
-                  )}
-                >
-                  <Checkbox
-                    checked={selectedWildcards.includes(player.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        if (selectedWildcards.length < wildcardNeeded) {
-                          setSelectedWildcards([...selectedWildcards, player.id]);
+            <div className="space-y-3 py-4 max-h-[400px] overflow-y-auto">
+              {thirdPlacePlayers.map((player, idx) => {
+                const groupName = groups.find(g => g.id === player.group_id)?.name || '';
+                // Create unique identifier using player id (short version)
+                const shortId = player.id.substring(0, 6);
+                
+                return (
+                  <label
+                    key={player.id}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                      selectedWildcards.includes(player.id)
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <Checkbox
+                      checked={selectedWildcards.includes(player.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          if (selectedWildcards.length < wildcardNeeded) {
+                            setSelectedWildcards([...selectedWildcards, player.id]);
+                          }
+                        } else {
+                          setSelectedWildcards(selectedWildcards.filter(id => id !== player.id));
                         }
-                      } else {
-                        setSelectedWildcards(selectedWildcards.filter(id => id !== player.id));
-                      }
-                    }}
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium">{player.name}</div>
-                    <div className="text-sm text-foreground-secondary">
-                      Bảng {groups.find(g => g.id === player.group_id)?.name} • 
-                      {player.matches_won} thắng • Hiệu số: {player.point_diff > 0 ? '+' : ''}{player.point_diff}
+                      }}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">
+                        {player.name}
+                        {player.seed && <span className="text-foreground-secondary"> ({player.seed})</span>}
+                        <span className="text-foreground-muted text-xs ml-2">#{shortId}</span>
+                      </div>
+                      <div className="text-sm text-foreground-secondary">
+                        Bảng {groupName} • {player.matches_won} thắng • Hiệu số: {player.point_diff > 0 ? '+' : ''}{player.point_diff}
+                      </div>
                     </div>
-                  </div>
-                  {idx === 0 && <Badge variant="secondary">Khuyến nghị</Badge>}
-                </label>
-              ))}
+                    {idx === 0 && <Badge variant="secondary">Khuyến nghị</Badge>}
+                  </label>
+                );
+              })}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowWildcardDialog(false)}>
@@ -464,7 +469,7 @@ const QuickTableView = () => {
   );
 };
 
-// Match Row Component
+// Match Row Component with View/Edit mode
 interface MatchRowProps {
   match: QuickTableMatch;
   index: number;
@@ -472,76 +477,136 @@ interface MatchRowProps {
   player2: QuickTablePlayer | undefined;
   canEdit: boolean;
   onScoreUpdate: (score1: number, score2: number) => void;
+  formatPlayerName: (player: QuickTablePlayer | undefined) => string;
 }
 
-const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate }: MatchRowProps) => {
-  const [s1, setS1] = useState<string>('');
-  const [s2, setS2] = useState<string>('');
+const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, formatPlayerName }: MatchRowProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
+  const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
   const isCompleted = match.status === 'completed';
+
+  const handleStartEdit = () => {
+    setS1(match.score1?.toString() ?? '');
+    setS2(match.score2?.toString() ?? '');
+    setIsEditing(true);
+  };
 
   const handleSubmit = () => {
     const score1 = parseInt(s1) || 0;
     const score2 = parseInt(s2) || 0;
     if (score1 > 0 || score2 > 0) {
       onScoreUpdate(score1, score2);
+      setIsEditing(false);
     }
+  };
+
+  const handleCancel = () => {
+    setS1(match.score1?.toString() ?? '');
+    setS2(match.score2?.toString() ?? '');
+    setIsEditing(false);
   };
 
   return (
     <div 
       className={cn(
-        "flex items-center gap-3 p-3 rounded-lg border",
-        isCompleted ? "bg-muted/30 border-border" : "border-border-subtle"
+        "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border",
+        isCompleted && !isEditing ? "bg-muted/30 border-border" : "border-border-subtle"
       )}
     >
-      <span className="text-sm text-foreground-muted w-6">{index + 1}</span>
-      <div className="flex-1 flex items-center gap-2">
-        <span className={cn("flex-1 text-right truncate", match.winner_id === match.player1_id && "font-semibold text-primary")}>
-          {player1?.name || 'TBD'}
+      <span className="text-sm text-foreground-muted w-5 sm:w-6 flex-shrink-0">{index + 1}</span>
+      
+      <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
+        <span className={cn(
+          "flex-1 text-right truncate text-sm",
+          match.winner_id === match.player1_id && "font-semibold text-primary"
+        )}>
+          {formatPlayerName(player1)}
         </span>
         
-        {canEdit && !isCompleted ? (
-          <div className="flex items-center gap-1">
+        {isEditing ? (
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Input
               type="number"
-              className="w-14 text-center"
+              className="w-12 sm:w-14 h-8 text-center text-sm p-1"
               min={0}
               value={s1}
               onChange={(e) => setS1(e.target.value)}
-              onBlur={handleSubmit}
+              autoFocus
             />
             <span className="text-foreground-muted">-</span>
             <Input
               type="number"
-              className="w-14 text-center"
+              className="w-12 sm:w-14 h-8 text-center text-sm p-1"
               min={0}
               value={s2}
               onChange={(e) => setS2(e.target.value)}
-              onBlur={handleSubmit}
             />
           </div>
         ) : (
-          <div className="flex items-center gap-2 px-3 py-1 rounded bg-muted min-w-[60px] justify-center">
-            <span className={cn(match.winner_id === match.player1_id && "font-bold")}>
+          <div className="flex items-center gap-2 px-2 sm:px-3 py-1 rounded bg-muted min-w-[50px] sm:min-w-[60px] justify-center flex-shrink-0">
+            <span className={cn("text-sm", match.winner_id === match.player1_id && "font-bold")}>
               {match.score1 ?? '-'}
             </span>
             <span className="text-foreground-muted">:</span>
-            <span className={cn(match.winner_id === match.player2_id && "font-bold")}>
+            <span className={cn("text-sm", match.winner_id === match.player2_id && "font-bold")}>
               {match.score2 ?? '-'}
             </span>
           </div>
         )}
         
-        <span className={cn("flex-1 truncate", match.winner_id === match.player2_id && "font-semibold text-primary")}>
-          {player2?.name || 'TBD'}
+        <span className={cn(
+          "flex-1 truncate text-sm",
+          match.winner_id === match.player2_id && "font-semibold text-primary"
+        )}>
+          {formatPlayerName(player2)}
         </span>
       </div>
       
-      {isCompleted ? (
-        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-      ) : (
-        <Clock className="w-4 h-4 text-foreground-muted flex-shrink-0" />
-      )}
+      {/* Actions */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {canEdit && (
+          <>
+            {isEditing ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 text-xs"
+                  onClick={handleCancel}
+                >
+                  Hủy
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="h-7 px-2 text-xs"
+                  onClick={handleSubmit}
+                >
+                  <Check className="w-3 h-3 mr-1" />
+                  Lưu
+                </Button>
+              </>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 px-2 text-xs"
+                onClick={handleStartEdit}
+              >
+                <Pencil className="w-3 h-3 mr-1" />
+                {isCompleted ? 'Sửa' : 'Nhập'}
+              </Button>
+            )}
+          </>
+        )}
+        {!canEdit && (
+          isCompleted ? (
+            <Check className="w-4 h-4 text-green-500" />
+          ) : (
+            <Clock className="w-4 h-4 text-foreground-muted" />
+          )
+        )}
+      </div>
     </div>
   );
 };
@@ -574,10 +639,18 @@ const PlayoffBracketView = ({ matches, players, groups, canEdit, onScoreUpdate }
     }).sort((a, b) => (a.playoff_match_number || 0) - (b.playoff_match_number || 0));
   }, [matches]);
 
+  // Add seed info to players for bracket display
+  const playersWithSeed = useMemo(() => {
+    return players.map(p => ({
+      ...p,
+      seed: p.seed ?? undefined,
+    }));
+  }, [players]);
+
   return (
     <PlayoffBracket
       matches={uniqueMatches}
-      players={players}
+      players={playersWithSeed}
       canEdit={canEdit}
       onScoreUpdate={onScoreUpdate}
       groupNames={groupNames}
