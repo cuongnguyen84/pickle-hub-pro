@@ -460,27 +460,62 @@ export function useQuickTable() {
   ): Promise<void> => {
     const winnerId = score1 > score2 ? 'player1' : score1 < score2 ? 'player2' : null;
 
-    // First get the match to know player IDs
+    // First get the match to know player IDs and playoff info
     const { data: match } = await supabase
       .from('quick_table_matches')
-      .select('player1_id, player2_id')
+      .select('player1_id, player2_id, is_playoff, playoff_round, playoff_match_number, table_id, winner_id')
       .eq('id', matchId)
       .single();
 
     if (!match) return;
 
-    const winner = winnerId === 'player1' ? match.player1_id : 
-                   winnerId === 'player2' ? match.player2_id : null;
+    const newWinner = winnerId === 'player1' ? match.player1_id : 
+                      winnerId === 'player2' ? match.player2_id : null;
+    const oldWinner = match.winner_id;
 
     await supabase
       .from('quick_table_matches')
       .update({
         score1,
         score2,
-        winner_id: winner,
+        winner_id: newWinner,
         status: 'completed' as QuickMatchStatus,
       })
       .eq('id', matchId);
+
+    // If this is a playoff match and winner changed, update next round match
+    if (match.is_playoff && match.playoff_round !== null && oldWinner !== newWinner) {
+      const nextRound = match.playoff_round + 1;
+      const matchNumber = match.playoff_match_number || 0;
+      
+      // Calculate which match in next round this feeds into
+      // Matches are paired: 1-2 -> next match 1 (slot 1-2), 3-4 -> next match 2 (slot 1-2), etc.
+      const nextMatchIndex = Math.floor((matchNumber - 1) / 2);
+      const slot = (matchNumber - 1) % 2; // 0 = player1 slot, 1 = player2 slot
+      
+      // Get next round matches
+      const { data: nextRoundMatches } = await supabase
+        .from('quick_table_matches')
+        .select('id, playoff_match_number')
+        .eq('table_id', match.table_id)
+        .eq('is_playoff', true)
+        .eq('playoff_round', nextRound)
+        .order('playoff_match_number');
+      
+      if (nextRoundMatches && nextRoundMatches.length > nextMatchIndex) {
+        const nextMatch = nextRoundMatches[nextMatchIndex];
+        
+        // Update the correct slot in next match
+        const updateData = slot === 0 
+          ? { player1_id: newWinner }
+          : { player2_id: newWinner };
+        
+        await supabase
+          .from('quick_table_matches')
+          .update(updateData)
+          .eq('id', nextMatch.id);
+      }
+    }
   }, []);
 
   const updatePlayerStats = useCallback(async (
