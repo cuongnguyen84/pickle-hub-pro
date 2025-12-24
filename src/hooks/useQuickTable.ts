@@ -715,26 +715,27 @@ export function useQuickTable() {
     return matches;
   }, []);
 
-  // Create playoff matches in database
+  // Create playoff matches in database (IDEMPOTENT: DELETE + INSERT approach)
   const createPlayoffMatches = useCallback(async (
     tableId: string,
     bracketMatches: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }>
   ): Promise<QuickTableMatch[]> => {
-    // Check if playoff matches already exist for this table
-    const { data: existingMatches } = await supabase
-      .from('quick_table_matches')
-      .select('id')
-      .eq('table_id', tableId)
-      .eq('is_playoff', true)
-      .limit(1);
-
-    if (existingMatches && existingMatches.length > 0) {
-      console.log('Playoff matches already exist, skipping creation');
-      return [];
-    }
-
     const totalMatches = bracketMatches.length;
     const round = totalMatches <= 2 ? 2 : totalMatches <= 4 ? 1 : 0; // 0=R16, 1=QF, 2=SF
+
+    // IDEMPOTENT: Delete existing playoff matches for round 0/1 (initial bracket) then re-insert
+    // This prevents duplicates even if called multiple times or race conditions occur
+    const { error: deleteError } = await supabase
+      .from('quick_table_matches')
+      .delete()
+      .eq('table_id', tableId)
+      .eq('is_playoff', true)
+      .eq('playoff_round', round);
+
+    if (deleteError) {
+      console.error('Error clearing existing playoff matches:', deleteError);
+      throw deleteError;
+    }
 
     const { data, error } = await supabase
       .from('quick_table_matches')
@@ -752,7 +753,11 @@ export function useQuickTable() {
       )
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating playoff matches:', error);
+      throw error;
+    }
+    
     return (data || []) as unknown as QuickTableMatch[];
   }, []);
 
@@ -782,27 +787,13 @@ export function useQuickTable() {
     return roundMatches.length > 0 && roundMatches.every(m => m.status === 'completed');
   }, []);
 
-  // Create next playoff round (Semi-finals or Finals)
+  // Create next playoff round (Semi-finals or Finals) - IDEMPOTENT with DELETE + INSERT
   const createNextPlayoffRound = useCallback(async (
     tableId: string,
     currentRound: number,
     currentMatches: QuickTableMatch[]
   ): Promise<QuickTableMatch[]> => {
     const nextRound = currentRound + 1;
-
-    // Check if next round already exists in database (avoid duplicates)
-    const { data: existingNextRound } = await supabase
-      .from('quick_table_matches')
-      .select('id')
-      .eq('table_id', tableId)
-      .eq('is_playoff', true)
-      .eq('playoff_round', nextRound)
-      .limit(1);
-
-    if (existingNextRound && existingNextRound.length > 0) {
-      console.log('Next round already exists, skipping creation');
-      return [];
-    }
 
     // Get completed matches from current round
     const completedMatches = currentMatches
@@ -813,12 +804,6 @@ export function useQuickTable() {
 
     // Calculate next round
     const nextMatchCount = Math.floor(completedMatches.length / 2);
-    
-    // Determine next round name info
-    let roundName = '';
-    if (nextMatchCount === 1) roundName = 'final';
-    else if (nextMatchCount === 2) roundName = 'semi';
-    else if (nextMatchCount <= 4) roundName = 'quarter';
 
     // Pair winners for next round matches
     const nextRoundMatches: Array<{
@@ -847,6 +832,19 @@ export function useQuickTable() {
 
     if (nextRoundMatches.length === 0) return [];
 
+    // IDEMPOTENT: Delete existing matches for this round then re-insert
+    const { error: deleteError } = await supabase
+      .from('quick_table_matches')
+      .delete()
+      .eq('table_id', tableId)
+      .eq('is_playoff', true)
+      .eq('playoff_round', nextRound);
+
+    if (deleteError) {
+      console.error('Error clearing existing next round matches:', deleteError);
+      throw deleteError;
+    }
+
     // Insert next round matches
     const { data, error } = await supabase
       .from('quick_table_matches')
@@ -866,7 +864,7 @@ export function useQuickTable() {
 
     if (error) {
       console.error('Error creating next round:', error);
-      return [];
+      throw error;
     }
 
     return (data || []) as unknown as QuickTableMatch[];
