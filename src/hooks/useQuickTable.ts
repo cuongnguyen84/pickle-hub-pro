@@ -483,8 +483,8 @@ export function useQuickTable() {
       })
       .eq('id', matchId);
 
-    // If this is a playoff match and winner changed, update next round match
-    if (match.is_playoff && match.playoff_round !== null && oldWinner !== newWinner) {
+    // If this is a playoff match, always update next round match (even if same winner, ensures consistency)
+    if (match.is_playoff && match.playoff_round !== null) {
       const nextRound = match.playoff_round + 1;
       const matchNumber = match.playoff_match_number || 0;
       
@@ -493,14 +493,25 @@ export function useQuickTable() {
       const nextMatchIndex = Math.floor((matchNumber - 1) / 2);
       const slot = (matchNumber - 1) % 2; // 0 = player1 slot, 1 = player2 slot
       
+      console.log('[updateMatchScore] Playoff match update:', {
+        matchNumber,
+        nextRound,
+        nextMatchIndex,
+        slot,
+        oldWinner,
+        newWinner
+      });
+      
       // Get next round matches
       const { data: nextRoundMatches } = await supabase
         .from('quick_table_matches')
-        .select('id, playoff_match_number')
+        .select('id, playoff_match_number, player1_id, player2_id')
         .eq('table_id', match.table_id)
         .eq('is_playoff', true)
         .eq('playoff_round', nextRound)
         .order('playoff_match_number');
+      
+      console.log('[updateMatchScore] Next round matches:', nextRoundMatches);
       
       if (nextRoundMatches && nextRoundMatches.length > nextMatchIndex) {
         const nextMatch = nextRoundMatches[nextMatchIndex];
@@ -510,10 +521,20 @@ export function useQuickTable() {
           ? { player1_id: newWinner }
           : { player2_id: newWinner };
         
-        await supabase
+        console.log('[updateMatchScore] Updating next match:', nextMatch.id, updateData);
+        
+        const { error: updateError } = await supabase
           .from('quick_table_matches')
           .update(updateData)
           .eq('id', nextMatch.id);
+          
+        if (updateError) {
+          console.error('[updateMatchScore] Error updating next match:', updateError);
+        } else {
+          console.log('[updateMatchScore] Successfully updated next match');
+        }
+      } else {
+        console.log('[updateMatchScore] No next match found (final round or bracket issue)');
       }
     }
   }, []);
