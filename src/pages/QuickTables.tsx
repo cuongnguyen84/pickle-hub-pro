@@ -165,63 +165,6 @@ const QuickTables = () => {
             </p>
           </div>
 
-          {/* User's Tables Section */}
-          {userTables.length > 0 && step === "count" && (
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <ListTodo className="w-4 h-4 text-primary" />
-                    Bảng đấu của tôi
-                  </CardTitle>
-                  <Badge variant="secondary">{userTables.length}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {userTables.slice(0, 5).map((table) => (
-                  <Link
-                    key={table.id}
-                    to={
-                      table.status === "setup"
-                        ? `/quick-tables/${table.share_id}/setup`
-                        : `/quick-tables/${table.share_id}`
-                    }
-                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{table.name}</div>
-                      <div className="flex items-center gap-2 text-xs text-foreground-muted">
-                        <Calendar className="w-3 h-3" />
-                        {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
-                        <span>•</span>
-                        <span>{table.player_count} người</span>
-                        <span>•</span>
-                        <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
-                      </div>
-                    </div>
-                    <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
-                    <Eye className="w-4 h-4 text-foreground-muted" />
-                  </Link>
-                ))}
-                {userTables.length > 5 && (
-                  <div className="text-center pt-2">
-                    <span className="text-sm text-foreground-muted">và {userTables.length - 5} bảng đấu khác...</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {step === "count" && userTables.length === 0 && !tablesLoading && (
-            <Card className="border-dashed">
-              <CardContent className="py-6 text-center">
-                <ListTodo className="w-8 h-8 mx-auto mb-2 text-foreground-muted opacity-50" />
-                <p className="text-foreground-muted">Bạn chưa tạo bảng đấu nào</p>
-                <p className="text-sm text-foreground-muted/70">Tạo bảng đấu đầu tiên bên dưới!</p>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Step 1: Player Count */}
           {step === "count" && (
             <Card>
@@ -421,6 +364,64 @@ const QuickTables = () => {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* User's Tables Section - displayed at bottom */}
+          {step === "count" && (
+            <>
+              {userTables.length > 0 ? (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <ListTodo className="w-4 h-4 text-primary" />
+                        Bảng đấu của tôi
+                      </CardTitle>
+                      <Badge variant="secondary">{userTables.length}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {userTables.slice(0, 5).map((table) => (
+                      <Link
+                        key={table.id}
+                        to={
+                          table.status === "setup"
+                            ? `/quick-tables/${table.share_id}/setup`
+                            : `/quick-tables/${table.share_id}`
+                        }
+                        className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{table.name}</div>
+                          <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
+                            <span>•</span>
+                            <span>{table.player_count} người</span>
+                            <span>•</span>
+                            <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
+                          </div>
+                        </div>
+                        <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
+                        <Eye className="w-4 h-4 text-foreground-muted" />
+                      </Link>
+                    ))}
+                    {userTables.length > 5 && (
+                      <div className="text-center pt-2">
+                        <span className="text-sm text-foreground-muted">và {userTables.length - 5} bảng đấu khác...</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : !tablesLoading ? (
+                <Card className="border-dashed">
+                  <CardContent className="py-6 text-center">
+                    <ListTodo className="w-8 h-8 mx-auto mb-2 text-foreground-muted opacity-50" />
+                    <p className="text-foreground-muted">Bạn chưa tạo bảng đấu nào</p>
+                  </CardContent>
+                </Card>
+              ) : null}
+            </>
           )}
         </div>
       </div>
