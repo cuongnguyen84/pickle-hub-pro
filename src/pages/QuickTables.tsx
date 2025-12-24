@@ -34,6 +34,7 @@ const QuickTables = () => {
   // User's tables
   const [userTables, setUserTables] = useState<QuickTable[]>([]);
   const [tablesLoading, setTablesLoading] = useState(true);
+  const [showAllTables, setShowAllTables] = useState(false);
 
   useEffect(() => {
     const loadUserTables = async () => {
@@ -381,7 +382,7 @@ const QuickTables = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {userTables.slice(0, 5).map((table) => (
+                    {(showAllTables ? userTables : userTables.slice(0, 5)).map((table) => (
                       <Link
                         key={table.id}
                         to={
@@ -406,11 +407,29 @@ const QuickTables = () => {
                         <Eye className="w-4 h-4 text-foreground-muted" />
                       </Link>
                     ))}
-                    {userTables.length > 5 && (
+                    {!showAllTables && userTables.length > 5 && (
+                      <div className="text-center pt-3 border-t border-border/50">
+                        <p className="text-sm text-foreground-muted mb-2">
+                          Còn {userTables.length - 5} bảng đấu khác
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowAllTables(true)}
+                        >
+                          Xem thêm
+                        </Button>
+                      </div>
+                    )}
+                    {showAllTables && userTables.length > 5 && (
                       <div className="text-center pt-2">
-                        <span className="text-sm text-foreground-muted">
-                          và {userTables.length - 5} bảng đấu khác...
-                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setShowAllTables(false)}
+                        >
+                          Thu gọn
+                        </Button>
                       </div>
                     )}
                   </CardContent>

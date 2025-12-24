@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crown, Trophy, Check, Pencil } from 'lucide-react';
@@ -217,109 +216,45 @@ const BracketMatchCard = ({
   const [localScore1, setLocalScore1] = useState<string>(match.score1?.toString() ?? '');
   const [localScore2, setLocalScore2] = useState<string>(match.score2?.toString() ?? '');
   
+  // Use refs to maintain focus
+  const score1Ref = useRef<HTMLInputElement>(null);
+  const score2Ref = useRef<HTMLInputElement>(null);
+  
   const isCompleted = match.status === 'completed';
   const isP1Winner = match.winner_id === match.player1_id && isCompleted;
   const isP2Winner = match.winner_id === match.player2_id && isCompleted;
 
-  const handleStartEdit = () => {
+  const handleStartEdit = useCallback(() => {
     setLocalScore1(match.score1?.toString() ?? '');
     setLocalScore2(match.score2?.toString() ?? '');
     setIsEditing(true);
-  };
+  }, [match.score1, match.score2]);
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     const score1 = parseInt(localScore1) || 0;
     const score2 = parseInt(localScore2) || 0;
     if ((score1 > 0 || score2 > 0) && score1 !== score2) {
       onScoreUpdate(match.id, score1, score2);
       setIsEditing(false);
     }
-  };
+  }, [localScore1, localScore2, match.id, onScoreUpdate]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setLocalScore1(match.score1?.toString() ?? '');
     setLocalScore2(match.score2?.toString() ?? '');
     setIsEditing(false);
-  };
+  }, [match.score1, match.score2]);
 
-  // Handle score change for player 1 - use stable key-based approach
-  const handleScore1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    setLocalScore1(e.target.value);
-  };
+  // Handle score changes with stable handlers that don't cause re-render loops
+  const handleScore1Change = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setLocalScore1(value);
+  }, []);
 
-  // Handle score change for player 2 - use stable key-based approach  
-  const handleScore2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    setLocalScore2(e.target.value);
-  };
-
-  const PlayerSlot = ({ 
-    player, 
-    isWinner, 
-    score, 
-    isTop,
-    inputId
-  }: { 
-    player: BracketPlayer | undefined; 
-    isWinner: boolean; 
-    score: number | null; 
-    isTop: boolean;
-    inputId: string;
-  }) => (
-    <div 
-      className={cn(
-        "flex items-center gap-2 p-2 transition-colors",
-        isWinner && "bg-primary/10 border-l-2 border-primary",
-        !player && "bg-muted/20"
-      )}
-    >
-      <div className="flex-1 min-w-0">
-        <div className={cn(
-          "font-medium text-sm truncate",
-          isWinner && "text-primary",
-          !player && "text-foreground-muted italic"
-        )}>
-          {formatPlayerName(player)}
-        </div>
-        {player && (
-          <div className="flex items-center gap-1 text-xs text-foreground-muted">
-            {getGroupName(player) && <span>Bảng {getGroupName(player)}</span>}
-            {player.is_wildcard && (
-              <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">WC</Badge>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {/* Score */}
-      <div className="w-12">
-        {isEditing && player ? (
-          <input
-            key={inputId}
-            id={inputId}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            className="w-12 h-8 text-center text-sm p-1 border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-            value={isTop ? localScore1 : localScore2}
-            onChange={isTop ? handleScore1Change : handleScore2Change}
-            onClick={(e) => e.stopPropagation()}
-            onFocus={(e) => e.target.select()}
-          />
-        ) : (
-          <div className={cn(
-            "w-10 h-8 flex items-center justify-center rounded text-sm font-bold mx-auto",
-            isWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-          )}>
-            {score ?? '-'}
-          </div>
-        )}
-      </div>
-      
-      {isWinner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
-    </div>
-  );
+  const handleScore2Change = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setLocalScore2(value);
+  }, []);
 
   return (
     <Card className={cn(
@@ -375,10 +310,111 @@ const BracketMatchCard = ({
         </div>
       </div>
       
-      {/* Players */}
+      {/* Players - Using isolated divs to prevent re-render issues */}
       <div className="divide-y divide-border/50">
-        <PlayerSlot player={player1} isWinner={isP1Winner} score={match.score1} isTop={true} inputId={`score-p1-${match.id}`} />
-        <PlayerSlot player={player2} isWinner={isP2Winner} score={match.score2} isTop={false} inputId={`score-p2-${match.id}`} />
+        {/* Player 1 Slot */}
+        <div 
+          className={cn(
+            "flex items-center gap-2 p-2 transition-colors",
+            isP1Winner && "bg-primary/10 border-l-2 border-primary",
+            !player1 && "bg-muted/20"
+          )}
+        >
+          <div className="flex-1 min-w-0">
+            <div className={cn(
+              "font-medium text-sm truncate",
+              isP1Winner && "text-primary",
+              !player1 && "text-foreground-muted italic"
+            )}>
+              {formatPlayerName(player1)}
+            </div>
+            {player1 && (
+              <div className="flex items-center gap-1 text-xs text-foreground-muted">
+                {getGroupName(player1) && <span>Bảng {getGroupName(player1)}</span>}
+                {player1.is_wildcard && (
+                  <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">WC</Badge>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Score 1 */}
+          <div className="w-12">
+            {isEditing && player1 ? (
+              <input
+                ref={score1Ref}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className="w-12 h-8 text-center text-sm p-1 border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                value={localScore1}
+                onChange={handleScore1Change}
+                onFocus={(e) => e.target.select()}
+              />
+            ) : (
+              <div className={cn(
+                "w-10 h-8 flex items-center justify-center rounded text-sm font-bold mx-auto",
+                isP1Winner ? "bg-primary text-primary-foreground" : "bg-muted"
+              )}>
+                {match.score1 ?? '-'}
+              </div>
+            )}
+          </div>
+          
+          {isP1Winner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
+        </div>
+        
+        {/* Player 2 Slot */}
+        <div 
+          className={cn(
+            "flex items-center gap-2 p-2 transition-colors",
+            isP2Winner && "bg-primary/10 border-l-2 border-primary",
+            !player2 && "bg-muted/20"
+          )}
+        >
+          <div className="flex-1 min-w-0">
+            <div className={cn(
+              "font-medium text-sm truncate",
+              isP2Winner && "text-primary",
+              !player2 && "text-foreground-muted italic"
+            )}>
+              {formatPlayerName(player2)}
+            </div>
+            {player2 && (
+              <div className="flex items-center gap-1 text-xs text-foreground-muted">
+                {getGroupName(player2) && <span>Bảng {getGroupName(player2)}</span>}
+                {player2.is_wildcard && (
+                  <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">WC</Badge>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Score 2 */}
+          <div className="w-12">
+            {isEditing && player2 ? (
+              <input
+                ref={score2Ref}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className="w-12 h-8 text-center text-sm p-1 border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                value={localScore2}
+                onChange={handleScore2Change}
+                onFocus={(e) => e.target.select()}
+              />
+            ) : (
+              <div className={cn(
+                "w-10 h-8 flex items-center justify-center rounded text-sm font-bold mx-auto",
+                isP2Winner ? "bg-primary text-primary-foreground" : "bg-muted"
+              )}>
+                {match.score2 ?? '-'}
+              </div>
+            )}
+          </div>
+          
+          {isP2Winner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
+        </div>
       </div>
     </Card>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PlayoffBracket from '@/components/tournament/PlayoffBracket';
@@ -21,7 +23,8 @@ const QuickTableView = () => {
     getTableByShareId, updateMatchScore, updatePlayerStats, isOwner,
     getQualifiedPlayers, generatePlayoffBracket, createPlayoffMatches, 
     markPlayersQualified, updateTableStatus, isGroupStageComplete, getWildcardCount,
-    isPlayoffRoundComplete, createNextPlayoffRound
+    isPlayoffRoundComplete, createNextPlayoffRound, movePlayerToGroup,
+    addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches
   } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
@@ -37,6 +40,23 @@ const QuickTableView = () => {
   const [selectedWildcards, setSelectedWildcards] = useState<string[]>([]);
   const [thirdPlacePlayers, setThirdPlacePlayers] = useState<QuickTablePlayer[]>([]);
   const [wildcardNeeded, setWildcardNeeded] = useState(0);
+
+  // Team visibility - persisted in localStorage
+  const [showTeam, setShowTeam] = useState(() => {
+    if (!shareId) return false;
+    const saved = localStorage.getItem(`quick-table-show-team-${shareId}`);
+    return saved === 'true';
+  });
+
+  // Edit groups mode
+  const [isEditingGroups, setIsEditingGroups] = useState(false);
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<QuickTablePlayer | null>(null);
+  const [targetGroupId, setTargetGroupId] = useState<string>('');
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [newPlayerTeam, setNewPlayerTeam] = useState('');
+  const [addToGroupId, setAddToGroupId] = useState<string>('');
 
   const loadData = async () => {
     if (!shareId) return;
@@ -57,6 +77,13 @@ const QuickTableView = () => {
   };
 
   useEffect(() => { loadData(); }, [shareId]);
+
+  // Persist showTeam setting
+  useEffect(() => {
+    if (shareId) {
+      localStorage.setItem(`quick-table-show-team-${shareId}`, showTeam.toString());
+    }
+  }, [showTeam, shareId]);
 
   const handleScoreUpdate = async (matchId: string, score1: number, score2: number, isPlayoff: boolean = false) => {
     const match = matches.find(m => m.id === matchId);
@@ -114,14 +141,18 @@ const QuickTableView = () => {
 
   const getPlayerById = (id: string | null) => players.find(p => p.id === id);
 
-  // Format player name as "Name (seed)" - hide team
-  const formatPlayerName = (player: QuickTablePlayer | undefined): string => {
+  // Format player name with optional team display
+  const formatPlayerName = useCallback((player: QuickTablePlayer | undefined): string => {
     if (!player) return 'TBD';
+    let name = player.name;
     if (player.seed) {
-      return `${player.name} (${player.seed})`;
+      name = `${player.name} (${player.seed})`;
     }
-    return player.name;
-  };
+    if (showTeam && player.team) {
+      name = `${name} — ${player.team}`;
+    }
+    return name;
+  }, [showTeam]);
 
   const getGroupStandings = (groupId: string) => {
     return players
@@ -192,6 +223,53 @@ const QuickTableView = () => {
     
     setShowWildcardDialog(false);
     createPlayoffWithWildcards(qualified, wildcards);
+  };
+
+  // Edit groups handlers
+  const handleMovePlayer = async () => {
+    if (!selectedPlayer || !targetGroupId || !table) return;
+    const oldGroupId = selectedPlayer.group_id;
+    const success = await movePlayerToGroup(selectedPlayer.id, targetGroupId);
+    if (success) {
+      // Regenerate matches for affected groups
+      const oldGroupPlayers = players.filter(p => p.group_id === oldGroupId && p.id !== selectedPlayer.id);
+      const newGroupPlayers = [...players.filter(p => p.group_id === targetGroupId), selectedPlayer];
+      
+      if (oldGroupId) await regenerateGroupMatches(table.id, oldGroupId, oldGroupPlayers.map(p => p.id));
+      await regenerateGroupMatches(table.id, targetGroupId, newGroupPlayers.map(p => p.id));
+      
+      toast.success('Đã chuyển VĐV');
+      await loadData();
+    }
+    setShowMoveDialog(false);
+    setSelectedPlayer(null);
+  };
+
+  const handleAddPlayer = async () => {
+    if (!newPlayerName.trim() || !addToGroupId || !table) return;
+    const newPlayer = await addPlayerToGroup(table.id, addToGroupId, { name: newPlayerName, team: newPlayerTeam });
+    if (newPlayer) {
+      const groupPlayers = [...players.filter(p => p.group_id === addToGroupId), newPlayer];
+      await regenerateGroupMatches(table.id, addToGroupId, groupPlayers.map(p => p.id));
+      toast.success('Đã thêm VĐV');
+      await loadData();
+    }
+    setShowAddDialog(false);
+    setNewPlayerName('');
+    setNewPlayerTeam('');
+  };
+
+  const handleRemovePlayer = async (player: QuickTablePlayer) => {
+    if (!table || !player.group_id) return;
+    if (!confirm(`Xóa ${player.name} khỏi bảng?`)) return;
+    
+    const success = await removePlayerFromGroup(player.id);
+    if (success) {
+      const remainingPlayers = players.filter(p => p.group_id === player.group_id && p.id !== player.id);
+      await regenerateGroupMatches(table.id, player.group_id, remainingPlayers.map(p => p.id));
+      toast.success('Đã xóa VĐV');
+      await loadData();
+    }
   };
 
   if (loading) {
@@ -276,6 +354,42 @@ const QuickTableView = () => {
 
           {/* Groups Tab */}
           <TabsContent value="groups" className="space-y-4">
+            {/* Settings Row */}
+            {canEdit && !hasPlayoff && (
+              <Card className="p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="show-team"
+                        checked={showTeam}
+                        onCheckedChange={(checked) => setShowTeam(!!checked)}
+                      />
+                      <Label htmlFor="show-team" className="text-sm cursor-pointer">Hiện Team</Label>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isEditingGroups ? (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setAddToGroupId(groups[0]?.id || ''); setShowAddDialog(true); }}>
+                          <UserPlus className="w-4 h-4 mr-1" />
+                          Thêm VĐV
+                        </Button>
+                        <Button size="sm" onClick={() => setIsEditingGroups(false)}>
+                          <Check className="w-4 h-4 mr-1" />
+                          Xong
+                        </Button>
+                      </>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingGroups(true)}>
+                        <Settings className="w-4 h-4 mr-1" />
+                        Sửa bảng
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
             {groups.length > 0 && (
               <Tabs defaultValue={groups[0]?.id} className="space-y-4">
                 <TabsList className="flex-wrap h-auto gap-1">
@@ -461,6 +575,65 @@ const QuickTableView = () => {
               >
                 Xác nhận ({selectedWildcards.length}/{wildcardNeeded})
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Move Player Dialog */}
+        <Dialog open={showMoveDialog} onOpenChange={setShowMoveDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Chuyển VĐV</DialogTitle>
+              <DialogDescription>Chuyển {selectedPlayer?.name} sang bảng khác</DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label>Chọn bảng đích</Label>
+              <Select value={targetGroupId} onValueChange={setTargetGroupId}>
+                <SelectTrigger><SelectValue placeholder="Chọn bảng" /></SelectTrigger>
+                <SelectContent>
+                  {groups.filter(g => g.id !== selectedPlayer?.group_id).map(g => (
+                    <SelectItem key={g.id} value={g.id}>Bảng {g.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowMoveDialog(false)}>Hủy</Button>
+              <Button onClick={handleMovePlayer} disabled={!targetGroupId}>Chuyển</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Player Dialog */}
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Thêm VĐV mới</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Tên VĐV</Label>
+                <Input value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} placeholder="Nhập tên" />
+              </div>
+              <div>
+                <Label>Team (không bắt buộc)</Label>
+                <Input value={newPlayerTeam} onChange={(e) => setNewPlayerTeam(e.target.value)} placeholder="Nhập team" />
+              </div>
+              <div>
+                <Label>Thêm vào bảng</Label>
+                <Select value={addToGroupId} onValueChange={setAddToGroupId}>
+                  <SelectTrigger><SelectValue placeholder="Chọn bảng" /></SelectTrigger>
+                  <SelectContent>
+                    {groups.map(g => (
+                      <SelectItem key={g.id} value={g.id}>Bảng {g.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddDialog(false)}>Hủy</Button>
+              <Button onClick={handleAddPlayer} disabled={!newPlayerName.trim() || !addToGroupId}>Thêm</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

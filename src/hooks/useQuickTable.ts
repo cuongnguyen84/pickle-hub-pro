@@ -849,6 +849,116 @@ export function useQuickTable() {
     }
   }, [user]);
 
+  // Move a player from one group to another
+  const movePlayerToGroup = useCallback(async (
+    playerId: string,
+    newGroupId: string
+  ): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('quick_table_players')
+        .update({ group_id: newGroupId })
+        .eq('id', playerId);
+      
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error moving player:', error);
+      return false;
+    }
+  }, []);
+
+  // Add a new player to a group
+  const addPlayerToGroup = useCallback(async (
+    tableId: string,
+    groupId: string,
+    playerData: { name: string; team?: string; seed?: number }
+  ): Promise<QuickTablePlayer | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('quick_table_players')
+        .insert({
+          table_id: tableId,
+          group_id: groupId,
+          name: playerData.name,
+          team: playerData.team || null,
+          seed: playerData.seed || null,
+          display_order: 999, // Will be at end
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as unknown as QuickTablePlayer;
+    } catch (error) {
+      console.error('Error adding player:', error);
+      return null;
+    }
+  }, []);
+
+  // Remove a player from the table (soft delete - just remove from group)
+  const removePlayerFromGroup = useCallback(async (
+    playerId: string
+  ): Promise<boolean> => {
+    try {
+      // First delete any matches involving this player
+      await supabase
+        .from('quick_table_matches')
+        .delete()
+        .or(`player1_id.eq.${playerId},player2_id.eq.${playerId}`);
+
+      // Then delete the player
+      const { error } = await supabase
+        .from('quick_table_players')
+        .delete()
+        .eq('id', playerId);
+      
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error removing player:', error);
+      return false;
+    }
+  }, []);
+
+  // Regenerate all matches for a group (after player changes)
+  const regenerateGroupMatches = useCallback(async (
+    tableId: string,
+    groupId: string,
+    playerIds: string[]
+  ): Promise<boolean> => {
+    try {
+      // Delete existing matches for this group
+      await supabase
+        .from('quick_table_matches')
+        .delete()
+        .eq('group_id', groupId)
+        .eq('is_playoff', false);
+
+      // Create new matches
+      const matchPairs = generateRoundRobinMatches(playerIds);
+      
+      const { error } = await supabase
+        .from('quick_table_matches')
+        .insert(
+          matchPairs.map((pair, i) => ({
+            table_id: tableId,
+            group_id: groupId,
+            is_playoff: false,
+            player1_id: pair.player1,
+            player2_id: pair.player2,
+            display_order: i,
+          }))
+        );
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error regenerating matches:', error);
+      return false;
+    }
+  }, []);
+
   return {
     loading,
     createTable,
@@ -871,5 +981,9 @@ export function useQuickTable() {
     createNextPlayoffRound,
     isGroupStageComplete,
     getWildcardCount,
+    movePlayerToGroup,
+    addPlayerToGroup,
+    removePlayerFromGroup,
+    regenerateGroupMatches,
   };
 }
