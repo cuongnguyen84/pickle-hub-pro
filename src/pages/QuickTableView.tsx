@@ -72,6 +72,33 @@ const QuickTableView = () => {
       if (data.table.status === 'playoff' || data.table.status === 'completed') {
         setActiveTab('playoff');
       }
+
+      // Auto-check and create next playoff round if current round is complete
+      if (data.table.status === 'playoff' && isOwner(data.table)) {
+        const playoffMatches = data.matches.filter(m => m.is_playoff);
+        if (playoffMatches.length > 0) {
+          // Find the highest round
+          const maxRound = Math.max(...playoffMatches.map(m => m.playoff_round || 0));
+          const roundMatches = playoffMatches.filter(m => m.playoff_round === maxRound);
+          const allCompleted = roundMatches.every(m => m.status === 'completed');
+          
+          // Check if this is not the final (final = 1 match) and all completed
+          if (allCompleted && roundMatches.length > 1) {
+            const nextRoundExists = playoffMatches.some(m => m.playoff_round === maxRound + 1);
+            if (!nextRoundExists) {
+              const newMatches = await createNextPlayoffRound(data.table.id, maxRound, data.matches);
+              if (newMatches.length > 0) {
+                toast.success('Đã tạo vòng tiếp theo!');
+                // Reload to show new matches
+                const refreshedData = await getTableByShareId(shareId);
+                if (refreshedData) {
+                  setMatches(refreshedData.matches);
+                }
+              }
+            }
+          }
+        }
+      }
     }
     setLoading(false);
   };
