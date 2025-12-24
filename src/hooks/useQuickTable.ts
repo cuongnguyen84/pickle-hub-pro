@@ -215,57 +215,51 @@ export function distributePlayersToGroups(
   
   const groups: Array<Array<typeof players[0]>> = Array.from({ length: groupCount }, () => []);
   
-  // Snake draft to distribute evenly with respect to target sizes
-  let groupIndex = 0;
-  let direction = 1;
+  // Track team distribution per group for better constraint satisfaction
+  const getTeamCount = (groupIdx: number, team: string | undefined): number => {
+    if (!team) return 0;
+    return groups[groupIdx].filter(p => p.team === team).length;
+  };
   
+  // Find best group for a player considering team constraints
+  const findBestGroup = (player: typeof players[0]): number => {
+    // Get all available groups (not full)
+    const availableGroups = targetSizes
+      .map((size, idx) => ({ idx, size, currentSize: groups[idx].length }))
+      .filter(g => g.currentSize < g.size);
+    
+    if (availableGroups.length === 0) return 0; // Shouldn't happen
+    
+    // If player has no team, just pick the group with least players (for balance)
+    if (!player.team) {
+      return availableGroups.sort((a, b) => a.currentSize - b.currentSize)[0].idx;
+    }
+    
+    // Find groups with no teammates first
+    const groupsWithoutTeammate = availableGroups.filter(
+      g => getTeamCount(g.idx, player.team) === 0
+    );
+    
+    if (groupsWithoutTeammate.length > 0) {
+      // Prefer group with fewer players for balance
+      return groupsWithoutTeammate.sort((a, b) => a.currentSize - b.currentSize)[0].idx;
+    }
+    
+    // If all groups have teammate, find group with fewest teammates
+    const sortedByTeammates = availableGroups.sort((a, b) => {
+      const teamCountA = getTeamCount(a.idx, player.team);
+      const teamCountB = getTeamCount(b.idx, player.team);
+      if (teamCountA !== teamCountB) return teamCountA - teamCountB;
+      return a.currentSize - b.currentSize; // Secondary: balance group sizes
+    });
+    
+    return sortedByTeammates[0].idx;
+  };
+  
+  // Distribute players
   for (const player of sorted) {
-    // Find target group that isn't full and preferably avoids same team
-    let targetGroup = groupIndex;
-    let attempts = 0;
-    let foundGroup = false;
-    
-    // First pass: try to find group without teammate that isn't full
-    while (attempts < groupCount) {
-      const candidateGroup = (groupIndex + attempts * direction + groupCount) % groupCount;
-      if (groups[candidateGroup].length < targetSizes[candidateGroup]) {
-        const hasTeammate = player.team && groups[candidateGroup].some(p => p.team === player.team);
-        if (!hasTeammate) {
-          targetGroup = candidateGroup;
-          foundGroup = true;
-          break;
-        }
-      }
-      attempts++;
-    }
-    
-    // Second pass: if no ideal group, find any group that isn't full
-    if (!foundGroup) {
-      for (let i = 0; i < groupCount; i++) {
-        if (groups[i].length < targetSizes[i]) {
-          targetGroup = i;
-          foundGroup = true;
-          break;
-        }
-      }
-    }
-    
-    // Fallback: just use next available (shouldn't happen if logic is correct)
-    if (!foundGroup) {
-      targetGroup = groupIndex;
-    }
-    
+    const targetGroup = findBestGroup(player);
     groups[targetGroup].push(player);
-    
-    // Snake pattern for next player
-    groupIndex += direction;
-    if (groupIndex >= groupCount) {
-      groupIndex = groupCount - 1;
-      direction = -1;
-    } else if (groupIndex < 0) {
-      groupIndex = 0;
-      direction = 1;
-    }
   }
   
   return groups;

@@ -423,6 +423,7 @@ const QuickTableView = () => {
                                 <TableHead className="text-center w-16">Thắng</TableHead>
                                 <TableHead className="text-center w-16">Trận</TableHead>
                                 <TableHead className="text-center w-20">Hiệu số</TableHead>
+                                {isEditingGroups && <TableHead className="w-24 text-center">Thao tác</TableHead>}
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -455,6 +456,34 @@ const QuickTableView = () => {
                                   )}>
                                     {player.point_diff > 0 ? '+' : ''}{player.point_diff}
                                   </TableCell>
+                                  {isEditingGroups && (
+                                    <TableCell className="text-center">
+                                      <div className="flex items-center justify-center gap-1">
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-7 w-7"
+                                          onClick={() => {
+                                            setSelectedPlayer(player);
+                                            setTargetGroupId(groups.find(g => g.id !== group.id)?.id || '');
+                                            setShowMoveDialog(true);
+                                          }}
+                                          title="Chuyển bảng"
+                                        >
+                                          <ArrowLeftRight className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-7 w-7 text-destructive hover:text-destructive"
+                                          onClick={() => handleRemovePlayer(player)}
+                                          title="Xóa VĐV"
+                                        >
+                                          <UserMinus className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  )}
                                 </TableRow>
                               ))}
                             </TableBody>
