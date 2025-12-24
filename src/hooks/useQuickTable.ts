@@ -570,6 +570,9 @@ export function useQuickTable() {
   ): Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }> => {
     const matches: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }> = [];
 
+    // Track used wildcard indices to avoid reusing same wildcard
+    let wildcardIndex = 0;
+
     // Helper to get player by group name and seed
     const getPlayer = (groupName: string, seed: number): QuickTablePlayer | null => {
       const group = groups.find(g => g.name === groupName);
@@ -577,9 +580,27 @@ export function useQuickTable() {
       return qualified.find(p => p.group_id === group.id && p.playoff_seed === seed) || null;
     };
 
-    // Get wildcard not from specific group
-    const getWildcard = (excludeGroupId: string): QuickTablePlayer | null => {
-      return wildcards.find(w => w.group_id !== excludeGroupId) || wildcards[0] || null;
+    // Get next available wildcard (not from specific group preferably)
+    const getNextWildcard = (excludeGroupId?: string): QuickTablePlayer | null => {
+      if (wildcardIndex >= wildcards.length) return null;
+      
+      // Try to find one not from excluded group
+      const preferredIdx = wildcards.findIndex((w, idx) => 
+        idx >= wildcardIndex && w.group_id !== excludeGroupId
+      );
+      
+      if (preferredIdx >= wildcardIndex) {
+        const wc = wildcards[preferredIdx];
+        // Swap to maintain order
+        [wildcards[wildcardIndex], wildcards[preferredIdx]] = [wildcards[preferredIdx], wildcards[wildcardIndex]];
+        wildcardIndex++;
+        return wc;
+      }
+      
+      // Just use the next one
+      const wc = wildcards[wildcardIndex];
+      wildcardIndex++;
+      return wc;
     };
 
     switch (groupCount) {
@@ -590,9 +611,9 @@ export function useQuickTable() {
 
       case 3: // 6 players + 2 wildcards = 8 → quarterfinal
         matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
-        matches.push({ player1: getPlayer('C', 1), player2: wildcards[0] || null, bracketPosition: 'upper', matchNumber: 2 });
+        matches.push({ player1: getPlayer('C', 1), player2: getNextWildcard(), bracketPosition: 'upper', matchNumber: 2 });
         matches.push({ player1: getPlayer('B', 1), player2: getPlayer('A', 2), bracketPosition: 'lower', matchNumber: 3 });
-        matches.push({ player1: getPlayer('C', 2), player2: wildcards[1] || null, bracketPosition: 'lower', matchNumber: 4 });
+        matches.push({ player1: getPlayer('C', 2), player2: getNextWildcard(), bracketPosition: 'lower', matchNumber: 4 });
         break;
 
       case 4: // 8 players → quarterfinal
@@ -602,20 +623,22 @@ export function useQuickTable() {
         matches.push({ player1: getPlayer('D', 1), player2: getPlayer('C', 2), bracketPosition: 'lower', matchNumber: 4 });
         break;
 
-      case 6: // 12 players + 4 wildcards = 16 → Round of 16
-        // Upper bracket
-        matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
-        matches.push({ player1: getPlayer('C', 1), player2: getPlayer('D', 2), bracketPosition: 'upper', matchNumber: 2 });
+      case 6: { // 12 players + 4 wildcards = 16 → Round of 16
         const groupE = groups.find(g => g.name === 'E');
         const groupF = groups.find(g => g.name === 'F');
-        matches.push({ player1: getPlayer('E', 1), player2: getWildcard(groupE?.id || ''), bracketPosition: 'upper', matchNumber: 3 });
-        matches.push({ player1: getPlayer('F', 1), player2: getWildcard(groupF?.id || ''), bracketPosition: 'upper', matchNumber: 4 });
+        
+        // Upper bracket - each wildcard is used only once
+        matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
+        matches.push({ player1: getPlayer('C', 1), player2: getPlayer('D', 2), bracketPosition: 'upper', matchNumber: 2 });
+        matches.push({ player1: getPlayer('E', 1), player2: getNextWildcard(groupE?.id), bracketPosition: 'upper', matchNumber: 3 });
+        matches.push({ player1: getPlayer('F', 1), player2: getNextWildcard(groupF?.id), bracketPosition: 'upper', matchNumber: 4 });
         // Lower bracket
         matches.push({ player1: getPlayer('B', 1), player2: getPlayer('A', 2), bracketPosition: 'lower', matchNumber: 5 });
         matches.push({ player1: getPlayer('D', 1), player2: getPlayer('C', 2), bracketPosition: 'lower', matchNumber: 6 });
-        matches.push({ player1: getPlayer('E', 2), player2: getWildcard(groupE?.id || ''), bracketPosition: 'lower', matchNumber: 7 });
-        matches.push({ player1: getPlayer('F', 2), player2: getWildcard(groupF?.id || ''), bracketPosition: 'lower', matchNumber: 8 });
+        matches.push({ player1: getPlayer('E', 2), player2: getNextWildcard(groupE?.id), bracketPosition: 'lower', matchNumber: 7 });
+        matches.push({ player1: getPlayer('F', 2), player2: getNextWildcard(groupF?.id), bracketPosition: 'lower', matchNumber: 8 });
         break;
+      }
 
       case 8: // 16 players → Round of 16
         matches.push({ player1: getPlayer('A', 1), player2: getPlayer('B', 2), bracketPosition: 'upper', matchNumber: 1 });
@@ -776,10 +799,30 @@ export function useQuickTable() {
     }
   }, []);
 
+  // Get all tables created by the current user
+  const getUserTables = useCallback(async (): Promise<QuickTable[]> => {
+    if (!user) return [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('quick_tables')
+        .select('*')
+        .eq('creator_user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as unknown as QuickTable[];
+    } catch (error) {
+      console.error('Error fetching user tables:', error);
+      return [];
+    }
+  }, [user]);
+
   return {
     loading,
     createTable,
     getTableByShareId,
+    getUserTables,
     addPlayers,
     createGroups,
     assignPlayersToGroups,
