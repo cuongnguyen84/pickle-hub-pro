@@ -720,6 +720,19 @@ export function useQuickTable() {
     tableId: string,
     bracketMatches: Array<{ player1: QuickTablePlayer | null; player2: QuickTablePlayer | null; bracketPosition: string; matchNumber: number }>
   ): Promise<QuickTableMatch[]> => {
+    // Check if playoff matches already exist for this table
+    const { data: existingMatches } = await supabase
+      .from('quick_table_matches')
+      .select('id')
+      .eq('table_id', tableId)
+      .eq('is_playoff', true)
+      .limit(1);
+
+    if (existingMatches && existingMatches.length > 0) {
+      console.log('Playoff matches already exist, skipping creation');
+      return [];
+    }
+
     const totalMatches = bracketMatches.length;
     const round = totalMatches <= 2 ? 2 : totalMatches <= 4 ? 1 : 0; // 0=R16, 1=QF, 2=SF
 
@@ -775,6 +788,22 @@ export function useQuickTable() {
     currentRound: number,
     currentMatches: QuickTableMatch[]
   ): Promise<QuickTableMatch[]> => {
+    const nextRound = currentRound + 1;
+
+    // Check if next round already exists in database (avoid duplicates)
+    const { data: existingNextRound } = await supabase
+      .from('quick_table_matches')
+      .select('id')
+      .eq('table_id', tableId)
+      .eq('is_playoff', true)
+      .eq('playoff_round', nextRound)
+      .limit(1);
+
+    if (existingNextRound && existingNextRound.length > 0) {
+      console.log('Next round already exists, skipping creation');
+      return [];
+    }
+
     // Get completed matches from current round
     const completedMatches = currentMatches
       .filter(m => m.is_playoff && m.playoff_round === currentRound && m.status === 'completed')
@@ -783,7 +812,6 @@ export function useQuickTable() {
     if (completedMatches.length < 2) return [];
 
     // Calculate next round
-    const nextRound = currentRound + 1;
     const nextMatchCount = Math.floor(completedMatches.length / 2);
     
     // Determine next round name info
