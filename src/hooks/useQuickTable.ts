@@ -193,6 +193,18 @@ export function distributePlayersToGroups(
   players: Array<{ id: string; name: string; team?: string; seed?: number }>,
   groupCount: number
 ): Array<Array<{ id: string; name: string; team?: string; seed?: number }>> {
+  const playerCount = players.length;
+  const basePerGroup = Math.floor(playerCount / groupCount);
+  const remainder = playerCount % groupCount;
+  
+  // Calculate target sizes for each group (randomize which groups get extra)
+  const targetSizes: number[] = Array(groupCount).fill(basePerGroup);
+  const extraIndices = new Set<number>();
+  while (extraIndices.size < remainder) {
+    extraIndices.add(Math.floor(Math.random() * groupCount));
+  }
+  extraIndices.forEach(i => { targetSizes[i]++; });
+  
   // Sort by seed (highest first, then randomize unseeded)
   const sorted = [...players].sort((a, b) => {
     if (a.seed && b.seed) return b.seed - a.seed;
@@ -203,30 +215,49 @@ export function distributePlayersToGroups(
   
   const groups: Array<Array<typeof players[0]>> = Array.from({ length: groupCount }, () => []);
   
-  // Snake draft to distribute evenly
+  // Snake draft to distribute evenly with respect to target sizes
   let groupIndex = 0;
   let direction = 1;
   
   for (const player of sorted) {
-    // Try to avoid putting same team in same group
+    // Find target group that isn't full and preferably avoids same team
     let targetGroup = groupIndex;
     let attempts = 0;
+    let foundGroup = false;
     
+    // First pass: try to find group without teammate that isn't full
     while (attempts < groupCount) {
-      const hasTeammate = player.team && groups[targetGroup].some(p => p.team === player.team);
-      if (!hasTeammate) break;
-      targetGroup = (targetGroup + 1) % groupCount;
+      const candidateGroup = (groupIndex + attempts * direction + groupCount) % groupCount;
+      if (groups[candidateGroup].length < targetSizes[candidateGroup]) {
+        const hasTeammate = player.team && groups[candidateGroup].some(p => p.team === player.team);
+        if (!hasTeammate) {
+          targetGroup = candidateGroup;
+          foundGroup = true;
+          break;
+        }
+      }
       attempts++;
     }
     
-    // If couldn't avoid, just use original
-    if (attempts >= groupCount) {
+    // Second pass: if no ideal group, find any group that isn't full
+    if (!foundGroup) {
+      for (let i = 0; i < groupCount; i++) {
+        if (groups[i].length < targetSizes[i]) {
+          targetGroup = i;
+          foundGroup = true;
+          break;
+        }
+      }
+    }
+    
+    // Fallback: just use next available (shouldn't happen if logic is correct)
+    if (!foundGroup) {
       targetGroup = groupIndex;
     }
     
     groups[targetGroup].push(player);
     
-    // Snake pattern
+    // Snake pattern for next player
     groupIndex += direction;
     if (groupIndex >= groupCount) {
       groupIndex = groupCount - 1;

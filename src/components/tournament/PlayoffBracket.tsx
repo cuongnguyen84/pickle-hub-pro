@@ -295,16 +295,17 @@ const BracketMatchCard = ({
       {/* Score */}
       <div className="w-12">
         {isEditing && player ? (
-          <Input
+          <input
+            key={inputId}
             id={inputId}
-            type="number"
-            min={0}
-            max={99}
-            className="w-12 h-8 text-center text-sm p-1"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            className="w-12 h-8 text-center text-sm p-1 border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary"
             value={isTop ? localScore1 : localScore2}
             onChange={isTop ? handleScore1Change : handleScore2Change}
             onClick={(e) => e.stopPropagation()}
-            onFocus={(e) => e.stopPropagation()}
+            onFocus={(e) => e.target.select()}
           />
         ) : (
           <div className={cn(
