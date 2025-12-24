@@ -375,7 +375,7 @@ const QuickTables = () => {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base flex items-center gap-2">
                         <ListTodo className="w-4 h-4 text-primary" />
-                        Bảng đấu của tôi
+                        Giải đấu của tôi
                       </CardTitle>
                       <Badge variant="secondary">{userTables.length}</Badge>
                     </div>
@@ -408,7 +408,9 @@ const QuickTables = () => {
                     ))}
                     {userTables.length > 5 && (
                       <div className="text-center pt-2">
-                        <span className="text-sm text-foreground-muted">và {userTables.length - 5} bảng đấu khác...</span>
+                        <span className="text-sm text-foreground-muted">
+                          và {userTables.length - 5} bảng đấu khác...
+                        </span>
                       </div>
                     )}
                   </CardContent>
