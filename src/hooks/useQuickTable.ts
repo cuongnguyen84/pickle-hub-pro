@@ -572,6 +572,7 @@ export function useQuickTable() {
           matches_won: stat.won,
           points_for: stat.pf,
           points_against: stat.pa,
+          point_diff: stat.pf - stat.pa,
         })
         .eq('id', playerId);
     }
