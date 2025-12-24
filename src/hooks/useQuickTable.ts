@@ -522,22 +522,41 @@ export function useQuickTable() {
     tableId: string,
     groupId: string
   ): Promise<void> => {
+    console.log('[updatePlayerStats] Starting for groupId:', groupId);
+    
     // Get all completed matches in this group
-    const { data: matches } = await supabase
+    const { data: matches, error: matchError } = await supabase
       .from('quick_table_matches')
       .select('*')
       .eq('group_id', groupId)
       .eq('status', 'completed');
 
-    if (!matches) return;
+    if (matchError) {
+      console.error('[updatePlayerStats] Error fetching matches:', matchError);
+      return;
+    }
+    
+    console.log('[updatePlayerStats] Found completed matches:', matches?.length);
+
+    if (!matches || matches.length === 0) {
+      console.log('[updatePlayerStats] No completed matches found');
+      return;
+    }
 
     // Get all players in this group
-    const { data: players } = await supabase
+    const { data: players, error: playerError } = await supabase
       .from('quick_table_players')
       .select('*')
       .eq('group_id', groupId);
 
-    if (!players) return;
+    if (playerError) {
+      console.error('[updatePlayerStats] Error fetching players:', playerError);
+      return;
+    }
+    
+    console.log('[updatePlayerStats] Found players:', players?.length);
+
+    if (!players || players.length === 0) return;
 
     // Calculate stats for each player
     const stats: Record<string, { played: number; won: number; pf: number; pa: number }> = {};
@@ -548,24 +567,31 @@ export function useQuickTable() {
 
     for (const match of matches) {
       if (match.player1_id && match.player2_id && match.score1 !== null && match.score2 !== null) {
-        stats[match.player1_id].played++;
-        stats[match.player2_id].played++;
-        stats[match.player1_id].pf += match.score1;
-        stats[match.player1_id].pa += match.score2;
-        stats[match.player2_id].pf += match.score2;
-        stats[match.player2_id].pa += match.score1;
-
-        if (match.winner_id === match.player1_id) {
-          stats[match.player1_id].won++;
-        } else if (match.winner_id === match.player2_id) {
-          stats[match.player2_id].won++;
+        // Only update if player exists in stats (safety check)
+        if (stats[match.player1_id]) {
+          stats[match.player1_id].played++;
+          stats[match.player1_id].pf += match.score1;
+          stats[match.player1_id].pa += match.score2;
+          if (match.winner_id === match.player1_id) {
+            stats[match.player1_id].won++;
+          }
+        }
+        if (stats[match.player2_id]) {
+          stats[match.player2_id].played++;
+          stats[match.player2_id].pf += match.score2;
+          stats[match.player2_id].pa += match.score1;
+          if (match.winner_id === match.player2_id) {
+            stats[match.player2_id].won++;
+          }
         }
       }
     }
 
+    console.log('[updatePlayerStats] Calculated stats:', stats);
+
     // Update all players
     for (const [playerId, stat] of Object.entries(stats)) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('quick_table_players')
         .update({
           matches_played: stat.played,
@@ -575,6 +601,12 @@ export function useQuickTable() {
           point_diff: stat.pf - stat.pa,
         })
         .eq('id', playerId);
+      
+      if (updateError) {
+        console.error('[updatePlayerStats] Error updating player:', playerId, updateError);
+      } else {
+        console.log('[updatePlayerStats] Updated player:', playerId, stat);
+      }
     }
   }, []);
 
