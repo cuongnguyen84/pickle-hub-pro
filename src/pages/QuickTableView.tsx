@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
 import { useRefereeManagement } from '@/hooks/useRefereeManagement';
@@ -120,6 +121,45 @@ const QuickTableView = () => {
   };
 
   useEffect(() => { loadData(); }, [shareId]);
+
+  // Realtime subscription for live updates
+  useEffect(() => {
+    if (!table?.id) return;
+
+    const channel = supabase
+      .channel(`quick-table-${table.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quick_table_matches',
+          filter: `table_id=eq.${table.id}`
+        },
+        (payload) => {
+          console.log('[Realtime] Match update:', payload);
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quick_table_players',
+          filter: `table_id=eq.${table.id}`
+        },
+        (payload) => {
+          console.log('[Realtime] Player update:', payload);
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [table?.id]);
 
   // Refresh user role when table changes
   useEffect(() => {
