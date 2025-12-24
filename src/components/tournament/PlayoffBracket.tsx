@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Trophy } from 'lucide-react';
+import { Crown, Trophy, Check, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface BracketMatch {
@@ -24,6 +25,7 @@ export interface BracketPlayer {
   id: string;
   name: string;
   team?: string | null;
+  seed?: number | null;
   is_wildcard?: boolean | null;
   group_id?: string | null;
 }
@@ -39,6 +41,15 @@ interface PlayoffBracketProps {
 const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }: PlayoffBracketProps) => {
   const getPlayer = (id: string | null): BracketPlayer | undefined => 
     id ? players.find(p => p.id === id) : undefined;
+
+  // Format player name as "Name (seed)"
+  const formatPlayerName = (player: BracketPlayer | undefined): string => {
+    if (!player) return 'TBD';
+    if (player.seed) {
+      return `${player.name} (${player.seed})`;
+    }
+    return player.name;
+  };
 
   // Organize matches into rounds
   const { rounds, champion } = useMemo(() => {
@@ -107,10 +118,7 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
               <Trophy className="w-8 h-8 text-primary" />
               <div className="text-center">
                 <div className="text-sm text-foreground-secondary">Nhà vô địch</div>
-                <div className="text-2xl font-bold text-primary">{champion.name}</div>
-                {champion.team && (
-                  <div className="text-sm text-foreground-muted">{champion.team}</div>
-                )}
+                <div className="text-2xl font-bold text-primary">{formatPlayerName(champion)}</div>
               </div>
               <Trophy className="w-8 h-8 text-primary" />
             </div>
@@ -122,7 +130,7 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
       <div className="overflow-x-auto pb-4 -mx-4 px-4">
         <div className="flex gap-6 min-w-max items-stretch">
           {rounds.map((round, roundIdx) => (
-            <div key={round.roundNumber} className="flex flex-col min-w-[260px]">
+            <div key={round.roundNumber} className="flex flex-col min-w-[280px]">
               {/* Round Header */}
               <div className="text-center mb-4">
                 <Badge 
@@ -154,6 +162,7 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
                     canEdit={canEdit && !!match.player1_id && !!match.player2_id}
                     onScoreUpdate={onScoreUpdate}
                     getGroupName={getGroupName}
+                    formatPlayerName={formatPlayerName}
                     isFinal={round.matches.length === 1}
                   />
                 ))}
@@ -163,7 +172,7 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
 
           {/* Connector lines visualization hint */}
           {rounds.length > 0 && rounds[rounds.length - 1].matches.length > 1 && (
-            <div className="flex flex-col min-w-[260px]">
+            <div className="flex flex-col min-w-[280px]">
               <div className="text-center mb-4">
                 <Badge variant="outline" className="px-4 py-1 border-dashed">
                   {rounds[rounds.length - 1].matches.length === 2 ? 'Chung kết' : 
@@ -179,54 +188,6 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
           )}
         </div>
       </div>
-
-      {/* Match List - Compact View */}
-      <Card>
-        <CardContent className="pt-4">
-          <div className="text-sm font-medium text-foreground-secondary mb-3">Danh sách trận đấu</div>
-          <div className="grid gap-2">
-            {matches.map((match) => {
-              const p1 = getPlayer(match.player1_id);
-              const p2 = getPlayer(match.player2_id);
-              const isCompleted = match.status === 'completed';
-              
-              return (
-                <div 
-                  key={match.id}
-                  className={cn(
-                    "flex items-center gap-2 py-2 px-3 rounded-lg text-sm",
-                    isCompleted ? "bg-muted/30" : "bg-muted/10"
-                  )}
-                >
-                  <span className="text-foreground-muted w-6">#{match.playoff_match_number}</span>
-                  <span className={cn(
-                    "flex-1 text-right truncate",
-                    match.winner_id === match.player1_id && "font-semibold text-primary"
-                  )}>
-                    {p1?.name || 'TBD'}
-                  </span>
-                  <div className="flex items-center gap-1 px-2 min-w-[50px] justify-center font-mono">
-                    <span className={match.winner_id === match.player1_id ? "font-bold" : ""}>
-                      {match.score1 ?? '-'}
-                    </span>
-                    <span className="text-foreground-muted">:</span>
-                    <span className={match.winner_id === match.player2_id ? "font-bold" : ""}>
-                      {match.score2 ?? '-'}
-                    </span>
-                  </div>
-                  <span className={cn(
-                    "flex-1 truncate",
-                    match.winner_id === match.player2_id && "font-semibold text-primary"
-                  )}>
-                    {p2?.name || 'TBD'}
-                  </span>
-                  {isCompleted && <Crown className="w-3 h-3 text-primary flex-shrink-0" />}
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
@@ -238,6 +199,7 @@ interface BracketMatchCardProps {
   canEdit: boolean;
   onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
   getGroupName: (player: BracketPlayer | undefined) => string;
+  formatPlayerName: (player: BracketPlayer | undefined) => string;
   isFinal: boolean;
 }
 
@@ -248,23 +210,36 @@ const BracketMatchCard = ({
   canEdit, 
   onScoreUpdate, 
   getGroupName,
+  formatPlayerName,
   isFinal 
 }: BracketMatchCardProps) => {
-  const [s1, setS1] = useState<string>('');
-  const [s2, setS2] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
+  const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
   
   const isCompleted = match.status === 'completed';
   const isP1Winner = match.winner_id === match.player1_id && isCompleted;
   const isP2Winner = match.winner_id === match.player2_id && isCompleted;
+
+  const handleStartEdit = () => {
+    setS1(match.score1?.toString() ?? '');
+    setS2(match.score2?.toString() ?? '');
+    setIsEditing(true);
+  };
 
   const handleSubmit = () => {
     const score1 = parseInt(s1) || 0;
     const score2 = parseInt(s2) || 0;
     if ((score1 > 0 || score2 > 0) && score1 !== score2) {
       onScoreUpdate(match.id, score1, score2);
-      setS1('');
-      setS2('');
+      setIsEditing(false);
     }
+  };
+
+  const handleCancel = () => {
+    setS1(match.score1?.toString() ?? '');
+    setS2(match.score2?.toString() ?? '');
+    setIsEditing(false);
   };
 
   const PlayerSlot = ({ 
@@ -291,7 +266,7 @@ const BracketMatchCard = ({
           isWinner && "text-primary",
           !player && "text-foreground-muted italic"
         )}>
-          {player?.name || 'TBD'}
+          {formatPlayerName(player)}
         </div>
         {player && (
           <div className="flex items-center gap-1 text-xs text-foreground-muted">
@@ -304,22 +279,20 @@ const BracketMatchCard = ({
       </div>
       
       {/* Score */}
-      <div className="w-10">
-        {canEdit && !isCompleted && player ? (
+      <div className="w-12">
+        {isEditing && player ? (
           <Input
             type="number"
             min={0}
             max={99}
-            className="w-10 h-7 text-center text-sm p-0"
+            className="w-12 h-8 text-center text-sm p-1"
             value={isTop ? s1 : s2}
             onChange={(e) => isTop ? setS1(e.target.value) : setS2(e.target.value)}
-            onBlur={handleSubmit}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder="-"
+            autoFocus={isTop}
           />
         ) : (
           <div className={cn(
-            "w-8 h-7 flex items-center justify-center rounded text-sm font-bold mx-auto",
+            "w-10 h-8 flex items-center justify-center rounded text-sm font-bold mx-auto",
             isWinner ? "bg-primary text-primary-foreground" : "bg-muted"
           )}>
             {score ?? '-'}
@@ -335,17 +308,54 @@ const BracketMatchCard = ({
     <Card className={cn(
       "overflow-hidden transition-shadow",
       isFinal && "border-primary/30 shadow-lg ring-2 ring-primary/10",
-      isCompleted && "opacity-90"
+      isCompleted && !isEditing && "opacity-90"
     )}>
       {/* Match header */}
       <div className="px-3 py-1.5 bg-muted/30 border-b flex items-center justify-between">
         <span className="text-xs text-foreground-muted">Trận {match.playoff_match_number}</span>
-        {isFinal && (
-          <Badge variant="default" className="text-xs py-0">
-            <Trophy className="w-3 h-3 mr-1" />
-            CK
-          </Badge>
-        )}
+        <div className="flex items-center gap-1">
+          {isFinal && (
+            <Badge variant="default" className="text-xs py-0">
+              <Trophy className="w-3 h-3 mr-1" />
+              CK
+            </Badge>
+          )}
+          {/* Edit/Update buttons */}
+          {canEdit && player1 && player2 && (
+            <>
+              {isEditing ? (
+                <div className="flex gap-1 ml-2">
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="h-6 px-2 text-xs"
+                    onClick={handleCancel}
+                  >
+                    Hủy
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className="h-6 px-2 text-xs"
+                    onClick={handleSubmit}
+                  >
+                    <Check className="w-3 h-3 mr-1" />
+                    Lưu
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-6 px-2 text-xs ml-2"
+                  onClick={handleStartEdit}
+                >
+                  <Pencil className="w-3 h-3 mr-1" />
+                  {isCompleted ? 'Sửa' : 'Nhập'}
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
       
       {/* Players */}
