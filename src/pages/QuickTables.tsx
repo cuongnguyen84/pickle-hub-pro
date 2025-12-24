@@ -4,12 +4,13 @@ import { MainLayout } from "@/components/layout";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuickTable, suggestGroupConfigs, type GroupSuggestion, type QuickTable } from "@/hooks/useQuickTable";
+import { useRefereeTables } from "@/hooks/useRefereeManagement";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo } from "lucide-react";
+import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -22,6 +23,7 @@ const QuickTables = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { createTable, getUserTables, loading } = useQuickTable();
+  const { tables: refereeTables, loading: refereeTablesLoading } = useRefereeTables();
 
   const [step, setStep] = useState<Step>("count");
   const [playerCount, setPlayerCount] = useState<number>(0);
@@ -35,6 +37,7 @@ const QuickTables = () => {
   const [userTables, setUserTables] = useState<QuickTable[]>([]);
   const [tablesLoading, setTablesLoading] = useState(true);
   const [showAllTables, setShowAllTables] = useState(false);
+  const [showAllRefereeTables, setShowAllRefereeTables] = useState(false);
 
   useEffect(() => {
     const loadUserTables = async () => {
@@ -442,6 +445,76 @@ const QuickTables = () => {
                   </CardContent>
                 </Card>
               ) : null}
+
+              {/* Referee Tables Section */}
+              {refereeTables.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-primary" />
+                        Giải đang điều hành
+                      </CardTitle>
+                      <Badge variant="secondary">{refereeTables.length}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {(showAllRefereeTables ? refereeTables : refereeTables.slice(0, 5)).map((table) => (
+                      <Link
+                        key={table.id}
+                        to={
+                          table.status === "setup"
+                            ? `/quick-tables/${table.share_id}/setup`
+                            : `/quick-tables/${table.share_id}`
+                        }
+                        className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{table.name}</div>
+                          <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
+                            <span>•</span>
+                            <span>{table.player_count} người</span>
+                            <span>•</span>
+                            <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="gap-1">
+                          <Shield className="w-3 h-3" />
+                          Trọng tài
+                        </Badge>
+                        <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
+                      </Link>
+                    ))}
+                    {!showAllRefereeTables && refereeTables.length > 5 && (
+                      <div className="text-center pt-3 border-t border-border/50">
+                        <p className="text-sm text-foreground-muted mb-2">
+                          Còn {refereeTables.length - 5} giải khác
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowAllRefereeTables(true)}
+                        >
+                          Xem thêm
+                        </Button>
+                      </div>
+                    )}
+                    {showAllRefereeTables && refereeTables.length > 5 && (
+                      <div className="text-center pt-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setShowAllRefereeTables(false)}
+                        >
+                          Thu gọn
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
         </div>
