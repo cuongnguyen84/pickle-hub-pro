@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
+import { useRefereeManagement } from '@/hooks/useRefereeManagement';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, U
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PlayoffBracket from '@/components/tournament/PlayoffBracket';
+import RefereeManagement from '@/components/quicktable/RefereeManagement';
 
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
@@ -32,8 +34,22 @@ const QuickTableView = () => {
   const [players, setPlayers] = useState<QuickTablePlayer[]>([]);
   const [matches, setMatches] = useState<QuickTableMatch[]>([]);
   const [loading, setLoading] = useState(true);
-  const [canEdit, setCanEdit] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('groups');
+
+  // Referee management hook
+  const {
+    referees,
+    loading: refereesLoading,
+    userRole,
+    addRefereeByEmail,
+    removeReferee,
+    refreshUserRole,
+  } = useRefereeManagement(table?.id, table?.creator_user_id);
+
+  // canEdit = creator only for structure changes
+  // canEditScores = creator OR referee for score changes
+  const canManageTable = userRole.canManageTable;
+  const canEditScores = userRole.canEditScores;
 
   // Wildcard selection
   const [showWildcardDialog, setShowWildcardDialog] = useState(false);
@@ -66,7 +82,6 @@ const QuickTableView = () => {
       setGroups(data.groups);
       setPlayers(data.players);
       setMatches(data.matches);
-      setCanEdit(isOwner(data.table));
       
       // Set active tab based on status
       if (data.table.status === 'playoff' || data.table.status === 'completed') {
@@ -74,7 +89,8 @@ const QuickTableView = () => {
       }
 
       // Auto-check and create next playoff round if current round is complete
-      if (data.table.status === 'playoff' && isOwner(data.table)) {
+      // Creator or referee can trigger this
+      if (data.table.status === 'playoff') {
         const playoffMatches = data.matches.filter(m => m.is_playoff);
         if (playoffMatches.length > 0) {
           // Find the highest round
@@ -104,6 +120,13 @@ const QuickTableView = () => {
   };
 
   useEffect(() => { loadData(); }, [shareId]);
+
+  // Refresh user role when table changes
+  useEffect(() => {
+    if (table) {
+      refreshUserRole();
+    }
+  }, [table?.id, refreshUserRole]);
 
   // Persist showTeam setting
   useEffect(() => {
@@ -350,7 +373,7 @@ const QuickTableView = () => {
         </div>
 
         {/* Advance to Playoff Button */}
-        {canEdit && groupStageComplete && !hasPlayoff && table.status === 'group_stage' && (
+        {canManageTable && groupStageComplete && !hasPlayoff && table.status === 'group_stage' && (
           <Card className="mb-6 border-primary/50 bg-primary/5">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
@@ -382,7 +405,7 @@ const QuickTableView = () => {
           {/* Groups Tab */}
           <TabsContent value="groups" className="space-y-4">
             {/* Settings Row */}
-            {canEdit && !hasPlayoff && (
+            {canManageTable && !hasPlayoff && (
               <Card className="p-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-4">
@@ -531,7 +554,7 @@ const QuickTableView = () => {
                               index={idx}
                               player1={getPlayerById(match.player1_id)}
                               player2={getPlayerById(match.player2_id)}
-                              canEdit={canEdit && !hasPlayoff}
+                              canEdit={canEditScores && !hasPlayoff}
                               onScoreUpdate={(s1, s2) => handleScoreUpdate(match.id, s1, s2)}
                               formatPlayerName={formatPlayerName}
                             />
@@ -547,12 +570,12 @@ const QuickTableView = () => {
 
           {/* Playoff Tab */}
           <TabsContent value="playoff" className="space-y-6">
-            {/* Login notice for non-owners */}
-            {hasPlayoff && !canEdit && table.status !== 'completed' && (
+            {/* Login notice for non-editors */}
+            {hasPlayoff && !canEditScores && table.status !== 'completed' && (
               <Card className="border-border/50 bg-muted/20">
                 <CardContent className="py-3">
                   <p className="text-sm text-foreground-muted text-center">
-                    Chỉ người tạo bảng mới có thể nhập điểm. Vui lòng đăng nhập nếu bạn là chủ bảng.
+                    Chỉ người tạo bảng hoặc trọng tài mới có thể nhập điểm.
                   </p>
                 </CardContent>
               </Card>
@@ -562,12 +585,24 @@ const QuickTableView = () => {
                 matches={playoffMatches}
                 players={players}
                 groups={groups}
-                canEdit={canEdit}
+                canEdit={canEditScores}
                 onScoreUpdate={(matchId, s1, s2) => handleScoreUpdate(matchId, s1, s2, true)}
               />
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Referee Management - Only visible to creator */}
+        {canManageTable && (
+          <div className="mt-6">
+            <RefereeManagement
+              referees={referees}
+              loading={refereesLoading}
+              onAddReferee={addRefereeByEmail}
+              onRemoveReferee={removeReferee}
+            />
+          </div>
+        )}
 
         {/* Wildcard Selection Dialog */}
         <Dialog open={showWildcardDialog} onOpenChange={setShowWildcardDialog}>

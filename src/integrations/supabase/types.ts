@@ -604,6 +604,35 @@ export type Database = {
           },
         ]
       }
+      quick_table_referees: {
+        Row: {
+          created_at: string
+          id: string
+          table_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          table_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          table_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_table_referees_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "quick_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quick_tables: {
         Row: {
           created_at: string
@@ -886,6 +915,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_edit_quick_table_scores: {
+        Args: { _table_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_moderate_chat: {
         Args: { _livestream_id: string; _user_id: string }
         Returns: boolean
@@ -920,6 +953,14 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_creator: { Args: never; Returns: boolean }
+      is_quick_table_creator: {
+        Args: { _table_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_quick_table_referee: {
+        Args: { _table_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "viewer" | "creator" | "admin"
