@@ -221,15 +221,21 @@ const QuickTableSetup = () => {
                     <Input
                       value={player.name}
                       onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                      placeholder="Tên người chơi *"
+                      placeholder="Tên VĐV *"
                       className="flex-1 min-w-0 h-10 sm:h-9"
+                    />
+                    <Input
+                      value={player.team}
+                      onChange={(e) => updatePlayer(index, 'team', e.target.value)}
+                      placeholder="Team"
+                      className="w-16 sm:w-24 h-10 sm:h-9 flex-shrink-0"
                     />
                     <Input
                       type="number"
                       value={player.seed}
                       onChange={(e) => updatePlayer(index, 'seed', e.target.value)}
                       placeholder="Seed"
-                      className="w-16 sm:w-20 h-10 sm:h-9 flex-shrink-0"
+                      className="w-14 sm:w-16 h-10 sm:h-9 flex-shrink-0"
                       min={1}
                     />
                     <Button
@@ -258,6 +264,7 @@ const QuickTableSetup = () => {
                   <div>
                     <p className="font-medium">Mẹo chia bảng tốt:</p>
                     <ul className="text-foreground-secondary mt-1 space-y-1">
+                      <li>• Nhập Team để tránh cùng team vào cùng bảng</li>
                       <li>• Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng</li>
                       <li>• Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau</li>
                     </ul>

@@ -214,22 +214,22 @@ const BracketMatchCard = ({
   isFinal 
 }: BracketMatchCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
-  const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
+  const [localScore1, setLocalScore1] = useState<string>(match.score1?.toString() ?? '');
+  const [localScore2, setLocalScore2] = useState<string>(match.score2?.toString() ?? '');
   
   const isCompleted = match.status === 'completed';
   const isP1Winner = match.winner_id === match.player1_id && isCompleted;
   const isP2Winner = match.winner_id === match.player2_id && isCompleted;
 
   const handleStartEdit = () => {
-    setS1(match.score1?.toString() ?? '');
-    setS2(match.score2?.toString() ?? '');
+    setLocalScore1(match.score1?.toString() ?? '');
+    setLocalScore2(match.score2?.toString() ?? '');
     setIsEditing(true);
   };
 
   const handleSubmit = () => {
-    const score1 = parseInt(s1) || 0;
-    const score2 = parseInt(s2) || 0;
+    const score1 = parseInt(localScore1) || 0;
+    const score2 = parseInt(localScore2) || 0;
     if ((score1 > 0 || score2 > 0) && score1 !== score2) {
       onScoreUpdate(match.id, score1, score2);
       setIsEditing(false);
@@ -237,21 +237,35 @@ const BracketMatchCard = ({
   };
 
   const handleCancel = () => {
-    setS1(match.score1?.toString() ?? '');
-    setS2(match.score2?.toString() ?? '');
+    setLocalScore1(match.score1?.toString() ?? '');
+    setLocalScore2(match.score2?.toString() ?? '');
     setIsEditing(false);
+  };
+
+  // Handle score change for player 1 - use stable key-based approach
+  const handleScore1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setLocalScore1(e.target.value);
+  };
+
+  // Handle score change for player 2 - use stable key-based approach  
+  const handleScore2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setLocalScore2(e.target.value);
   };
 
   const PlayerSlot = ({ 
     player, 
     isWinner, 
     score, 
-    isTop 
+    isTop,
+    inputId
   }: { 
     player: BracketPlayer | undefined; 
     isWinner: boolean; 
     score: number | null; 
-    isTop: boolean 
+    isTop: boolean;
+    inputId: string;
   }) => (
     <div 
       className={cn(
@@ -282,13 +296,15 @@ const BracketMatchCard = ({
       <div className="w-12">
         {isEditing && player ? (
           <Input
+            id={inputId}
             type="number"
             min={0}
             max={99}
             className="w-12 h-8 text-center text-sm p-1"
-            value={isTop ? s1 : s2}
-            onChange={(e) => isTop ? setS1(e.target.value) : setS2(e.target.value)}
-            autoFocus={isTop}
+            value={isTop ? localScore1 : localScore2}
+            onChange={isTop ? handleScore1Change : handleScore2Change}
+            onClick={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
           />
         ) : (
           <div className={cn(
@@ -360,8 +376,8 @@ const BracketMatchCard = ({
       
       {/* Players */}
       <div className="divide-y divide-border/50">
-        <PlayerSlot player={player1} isWinner={isP1Winner} score={match.score1} isTop={true} />
-        <PlayerSlot player={player2} isWinner={isP2Winner} score={match.score2} isTop={false} />
+        <PlayerSlot player={player1} isWinner={isP1Winner} score={match.score1} isTop={true} inputId={`score-p1-${match.id}`} />
+        <PlayerSlot player={player2} isWinner={isP2Winner} score={match.score2} isTop={false} inputId={`score-p2-${match.id}`} />
       </div>
     </Card>
   );
