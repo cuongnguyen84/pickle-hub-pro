@@ -485,16 +485,32 @@ export function useQuickTable() {
 
     // If this is a playoff match, always update next round match (even if same winner, ensures consistency)
     if (match.is_playoff && match.playoff_round !== null) {
-      const nextRound = match.playoff_round + 1;
-      const matchNumber = match.playoff_match_number || 0;
+      const currentRound = match.playoff_round;
+      const nextRound = currentRound + 1;
+      
+      // Get all matches in current round to calculate relative position
+      const { data: currentRoundMatches } = await supabase
+        .from('quick_table_matches')
+        .select('id, playoff_match_number')
+        .eq('table_id', match.table_id)
+        .eq('is_playoff', true)
+        .eq('playoff_round', currentRound)
+        .order('playoff_match_number');
+      
+      if (!currentRoundMatches) return;
+      
+      // Find position of this match within its round (0-indexed)
+      const positionInRound = currentRoundMatches.findIndex(m => m.id === matchId);
       
       // Calculate which match in next round this feeds into
-      // Matches are paired: 1-2 -> next match 1 (slot 1-2), 3-4 -> next match 2 (slot 1-2), etc.
-      const nextMatchIndex = Math.floor((matchNumber - 1) / 2);
-      const slot = (matchNumber - 1) % 2; // 0 = player1 slot, 1 = player2 slot
+      // Matches are paired: position 0,1 -> next match 0, position 2,3 -> next match 1, etc.
+      const nextMatchIndex = Math.floor(positionInRound / 2);
+      const slot = positionInRound % 2; // 0 = player1 slot, 1 = player2 slot
       
       console.log('[updateMatchScore] Playoff match update:', {
-        matchNumber,
+        matchId,
+        currentRound,
+        positionInRound,
         nextRound,
         nextMatchIndex,
         slot,
@@ -534,7 +550,7 @@ export function useQuickTable() {
           console.log('[updateMatchScore] Successfully updated next match');
         }
       } else {
-        console.log('[updateMatchScore] No next match found (final round or bracket issue)');
+        console.log('[updateMatchScore] No next match found (likely final match)');
       }
     }
   }, []);
