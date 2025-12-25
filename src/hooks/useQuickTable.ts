@@ -617,9 +617,12 @@ export function useQuickTable() {
           console.log('[updateMatchScore] Successfully updated next match');
         }
       } else {
-        console.log('[updateMatchScore] No next match found (likely final match)');
-        // This is the final match - check if we should mark tournament as completed
-        if (newWinner) {
+        // No next round matches found - this might be the final match
+        // Confirm it's the final by checking if current round only has 1 match
+        const isFinalMatch = currentRoundMatches.length === 1;
+        console.log('[updateMatchScore] No next match found, isFinalMatch:', isFinalMatch);
+        
+        if (isFinalMatch && newWinner) {
           console.log('[updateMatchScore] Final match completed, marking tournament as completed');
           await supabase
             .from('quick_tables')
