@@ -36,6 +36,12 @@ const QuickTableSetup = () => {
       if (data) {
         setTable(data.table);
         
+        // If requires registration, redirect to view page for registration management
+        if (data.table.requires_registration) {
+          navigate(`/quick-tables/${shareId}`);
+          return;
+        }
+        
         // If already has players, redirect to view
         if (data.players.length > 0) {
           navigate(`/quick-tables/${shareId}`);
