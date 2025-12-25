@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
@@ -27,6 +27,7 @@ import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
 
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { 
     getTableByShareId, updateMatchScore, updatePlayerStats, isOwner,
@@ -42,7 +43,7 @@ const QuickTableView = () => {
   const [players, setPlayers] = useState<QuickTablePlayer[]>([]);
   const [matches, setMatches] = useState<QuickTableMatch[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>('groups');
+  const [activeTab, setActiveTab] = useState<string>(() => searchParams.get('tab') || 'groups');
 
   // Registration state
   const [userRegistration, setUserRegistration] = useState<Registration | null>(null);

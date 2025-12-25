@@ -5,6 +5,7 @@ import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuickTable, suggestGroupConfigs, type GroupSuggestion, type QuickTable } from "@/hooks/useQuickTable";
 import { useRefereeTables } from "@/hooks/useRefereeManagement";
+import { useUserRegisteredTournaments, useUserCompletedTournaments } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield, ClipboardList, ChevronDown } from "lucide-react";
+import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield, ClipboardList, ChevronDown, UserCheck, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -27,6 +28,8 @@ const QuickTables = () => {
   const navigate = useNavigate();
   const { createTable, getUserTables, loading } = useQuickTable();
   const { tables: refereeTables, loading: refereeTablesLoading } = useRefereeTables();
+  const { data: registeredTournaments = [], isLoading: registeredLoading } = useUserRegisteredTournaments(user?.id);
+  const { data: completedTournaments = [], isLoading: completedLoading } = useUserCompletedTournaments(user?.id);
 
   const [step, setStep] = useState<Step>("count");
   const [playerCount, setPlayerCount] = useState<number>(0);
@@ -473,6 +476,78 @@ const QuickTables = () => {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* User's Registered Tournaments Section */}
+          {step === "count" && registeredTournaments.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-green-600" />
+                  Giải đấu bạn đang tham gia
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {registeredTournaments.map((tournament: any) => (
+                  <Link
+                    key={tournament.id}
+                    to={`/quick-tables/${tournament.share_id}`}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{tournament.name}</div>
+                      <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                        <Calendar className="w-3 h-3" />
+                        {format(new Date(tournament.created_at), "dd/MM/yyyy", { locale: vi })}
+                        <span>•</span>
+                        <span>{tournament.player_count} người</span>
+                      </div>
+                    </div>
+                    <Badge 
+                      variant={tournament.registrationStatus === 'approved' ? 'default' : 'outline'}
+                      className={tournament.registrationStatus === 'approved' ? 'bg-green-600' : ''}
+                    >
+                      {tournament.registrationStatus === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
+                    </Badge>
+                    <Badge variant={getStatusVariant(tournament.status)}>{getStatusLabel(tournament.status)}</Badge>
+                    <Eye className="w-4 h-4 text-foreground-muted" />
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* User's Completed Tournaments Section */}
+          {step === "count" && completedTournaments.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <History className="w-4 h-4 text-foreground-muted" />
+                  Giải đấu đã tham gia
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {completedTournaments.slice(0, 5).map((tournament: any) => (
+                  <Link
+                    key={tournament.id}
+                    to={`/quick-tables/${tournament.share_id}`}
+                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{tournament.name}</div>
+                      <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                        <Calendar className="w-3 h-3" />
+                        {format(new Date(tournament.created_at), "dd/MM/yyyy", { locale: vi })}
+                        <span>•</span>
+                        <span>{tournament.player_count} người</span>
+                      </div>
+                    </div>
+                    <Badge variant="default">{getStatusLabel(tournament.status)}</Badge>
+                    <Eye className="w-4 h-4 text-foreground-muted" />
+                  </Link>
+                ))}
               </CardContent>
             </Card>
           )}
