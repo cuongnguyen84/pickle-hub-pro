@@ -22,6 +22,8 @@ export interface Registration {
   btc_notes: string | null;
   created_at: string;
   updated_at: string;
+  // Joined from profiles
+  email?: string;
 }
 
 export interface RegistrationFormData {
@@ -38,17 +40,26 @@ export function useRegistration() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // Get all registrations for a table (for BTC/creator)
+  // Get all registrations for a table (for BTC/creator) - with email from profiles
   const getTableRegistrations = useCallback(async (tableId: string): Promise<Registration[]> => {
     try {
       const { data, error } = await supabase
         .from('quick_table_registrations')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id (email)
+        `)
         .eq('table_id', tableId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return (data || []) as unknown as Registration[];
+      
+      // Flatten the profiles join to get email directly
+      return (data || []).map((reg: any) => ({
+        ...reg,
+        email: reg.profiles?.email || null,
+        profiles: undefined, // Remove the nested object
+      })) as Registration[];
     } catch (error) {
       console.error('Error fetching registrations:', error);
       return [];
