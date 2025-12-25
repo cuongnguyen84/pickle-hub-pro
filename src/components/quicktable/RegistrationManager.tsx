@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useRegistration, type Registration } from '@/hooks/useRegistration';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,15 +11,20 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Check, X, MoreVertical, Pencil, Users, Clock, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Check, X, MoreVertical, Pencil, Users, Clock, CheckCircle2, XCircle, RefreshCw, Swords, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface RegistrationManagerProps {
   tableId: string;
+  shareId?: string;
   onPendingCountChange?: (count: number) => void;
+  onStartBracket?: (approvedPlayers: { name: string; team: string | null; skill: number | null }[]) => void;
 }
 
-export function RegistrationManager({ tableId, onPendingCountChange }: RegistrationManagerProps) {
+export function RegistrationManager({ tableId, shareId, onPendingCountChange, onStartBracket }: RegistrationManagerProps) {
+  const navigate = useNavigate();
   const {
     getTableRegistrations,
     approveRegistration,
@@ -33,6 +39,7 @@ export function RegistrationManager({ tableId, onPendingCountChange }: Registrat
   const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null);
   const [overrideSkill, setOverrideSkill] = useState('');
   const [btcNotes, setBtcNotes] = useState('');
+  const [isCreatingBracket, setIsCreatingBracket] = useState(false);
 
   const loadRegistrations = async () => {
     setLoading(true);
@@ -111,6 +118,54 @@ export function RegistrationManager({ tableId, onPendingCountChange }: Registrat
     setEditingRegistration(reg);
     setOverrideSkill(reg.btc_override_skill?.toString() || '');
     setBtcNotes(reg.btc_notes || '');
+  };
+
+  // Handle start bracket with approved players
+  const handleStartBracket = async () => {
+    if (approvedRegistrations.length < 6) {
+      toast.error('Cần ít nhất 6 VĐV được duyệt');
+      return;
+    }
+
+    setIsCreatingBracket(true);
+    try {
+      // Create players from approved registrations
+      const playersToCreate = approvedRegistrations.map((reg, idx) => ({
+        table_id: tableId,
+        name: reg.display_name,
+        team: reg.team || null,
+        seed: reg.btc_override_skill || reg.skill_level || null,
+        display_order: idx,
+      }));
+
+      // Insert players
+      const { data: createdPlayers, error: playersError } = await supabase
+        .from('quick_table_players')
+        .insert(playersToCreate)
+        .select();
+
+      if (playersError) throw playersError;
+
+      // Update table status to group_stage
+      const { error: tableError } = await supabase
+        .from('quick_tables')
+        .update({ status: 'group_stage' })
+        .eq('id', tableId);
+
+      if (tableError) throw tableError;
+
+      toast.success(`Đã import ${approvedRegistrations.length} VĐV vào bảng đấu!`);
+      
+      // Navigate to setup page to continue with group configuration
+      if (shareId) {
+        navigate(`/quick-tables/${shareId}/setup`);
+      }
+    } catch (error) {
+      console.error('Error creating bracket:', error);
+      toast.error('Có lỗi xảy ra khi tạo bảng đấu');
+    } finally {
+      setIsCreatingBracket(false);
+    }
   };
 
   const toggleSelect = (id: string) => {
@@ -207,6 +262,48 @@ export function RegistrationManager({ tableId, onPendingCountChange }: Registrat
           </div>
         </Card>
       </div>
+
+      {/* Start Bracket Button - shows when ≥6 approved */}
+      {approvedRegistrations.length >= 6 && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Swords className="w-4 h-4 text-primary" />
+                  Sẵn sàng chia bảng!
+                </h3>
+                <p className="text-sm text-foreground-secondary">
+                  Đã có {approvedRegistrations.length} VĐV được duyệt. Bạn có thể bắt đầu chia bảng.
+                </p>
+              </div>
+              <Button onClick={handleStartBracket} disabled={isCreatingBracket}>
+                {isCreatingBracket ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Đang tạo...
+                  </>
+                ) : (
+                  <>
+                    <Swords className="w-4 h-4 mr-2" />
+                    Chia bảng
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Not enough players warning */}
+      {approvedRegistrations.length > 0 && approvedRegistrations.length < 6 && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Cần ít nhất 6 VĐV được duyệt để chia bảng. Hiện có {approvedRegistrations.length}/6 VĐV.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Pending Registrations */}
       {pendingRegistrations.length > 0 && (
