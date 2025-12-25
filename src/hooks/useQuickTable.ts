@@ -197,68 +197,135 @@ export function distributePlayersToGroups(
   const basePerGroup = Math.floor(playerCount / groupCount);
   const remainder = playerCount % groupCount;
   
-  // Calculate target sizes for each group (randomize which groups get extra)
+  // Calculate target sizes for each group
   const targetSizes: number[] = Array(groupCount).fill(basePerGroup);
-  const extraIndices = new Set<number>();
-  while (extraIndices.size < remainder) {
-    extraIndices.add(Math.floor(Math.random() * groupCount));
+  for (let i = 0; i < remainder; i++) {
+    targetSizes[i]++;
   }
-  extraIndices.forEach(i => { targetSizes[i]++; });
   
-  // Sort by seed (highest first, then randomize unseeded)
-  const sorted = [...players].sort((a, b) => {
-    if (a.seed && b.seed) return b.seed - a.seed;
-    if (a.seed) return -1;
-    if (b.seed) return 1;
-    return Math.random() - 0.5;
-  });
+  // Separate seeded and unseeded players
+  // Lower seed number = stronger player (seed 1 is the best)
+  const seeded = players.filter(p => p.seed != null && p.seed > 0).sort((a, b) => a.seed! - b.seed!);
+  const unseeded = players.filter(p => p.seed == null || p.seed <= 0);
+  
+  // Shuffle unseeded players
+  for (let i = unseeded.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [unseeded[i], unseeded[j]] = [unseeded[j], unseeded[i]];
+  }
   
   const groups: Array<Array<typeof players[0]>> = Array.from({ length: groupCount }, () => []);
   
-  // Track team distribution per group for better constraint satisfaction
+  // Helper functions
   const getTeamCount = (groupIdx: number, team: string | undefined): number => {
     if (!team) return 0;
     return groups[groupIdx].filter(p => p.team === team).length;
   };
   
-  // Find best group for a player considering team constraints
-  const findBestGroup = (player: typeof players[0]): number => {
-    // Get all available groups (not full)
-    const availableGroups = targetSizes
-      .map((size, idx) => ({ idx, size, currentSize: groups[idx].length }))
-      .filter(g => g.currentSize < g.size);
-    
-    if (availableGroups.length === 0) return 0; // Shouldn't happen
-    
-    // If player has no team, just pick the group with least players (for balance)
-    if (!player.team) {
-      return availableGroups.sort((a, b) => a.currentSize - b.currentSize)[0].idx;
-    }
-    
-    // Find groups with no teammates first
-    const groupsWithoutTeammate = availableGroups.filter(
-      g => getTeamCount(g.idx, player.team) === 0
-    );
-    
-    if (groupsWithoutTeammate.length > 0) {
-      // Prefer group with fewer players for balance
-      return groupsWithoutTeammate.sort((a, b) => a.currentSize - b.currentSize)[0].idx;
-    }
-    
-    // If all groups have teammate, find group with fewest teammates
-    const sortedByTeammates = availableGroups.sort((a, b) => {
-      const teamCountA = getTeamCount(a.idx, player.team);
-      const teamCountB = getTeamCount(b.idx, player.team);
-      if (teamCountA !== teamCountB) return teamCountA - teamCountB;
-      return a.currentSize - b.currentSize; // Secondary: balance group sizes
-    });
-    
-    return sortedByTeammates[0].idx;
+  const isGroupFull = (groupIdx: number): boolean => {
+    return groups[groupIdx].length >= targetSizes[groupIdx];
   };
   
-  // Distribute players
-  for (const player of sorted) {
-    const targetGroup = findBestGroup(player);
+  // Find best group for a player, avoiding same team
+  const findBestGroupForPlayer = (player: typeof players[0], preferredGroups?: number[]): number => {
+    // Get all groups that aren't full
+    const availableIndices = Array.from({ length: groupCount }, (_, i) => i)
+      .filter(i => !isGroupFull(i));
+    
+    if (availableIndices.length === 0) {
+      // All groups full - shouldn't happen, but fallback to first available
+      return 0;
+    }
+    
+    // Use preferred groups if provided (for snake draft order)
+    const candidates = preferredGroups 
+      ? preferredGroups.filter(i => !isGroupFull(i))
+      : availableIndices;
+    
+    if (candidates.length === 0) {
+      // Fallback to any available
+      return availableIndices[0];
+    }
+    
+    if (!player.team) {
+      // No team constraint - just pick first available from candidates
+      return candidates[0];
+    }
+    
+    // Find groups with no teammates
+    const groupsWithoutTeammate = candidates.filter(i => getTeamCount(i, player.team) === 0);
+    
+    if (groupsWithoutTeammate.length > 0) {
+      return groupsWithoutTeammate[0];
+    }
+    
+    // All candidate groups have teammate - find one with fewest
+    const sortedByTeammates = candidates.sort((a, b) => {
+      return getTeamCount(a, player.team) - getTeamCount(b, player.team);
+    });
+    
+    return sortedByTeammates[0];
+  };
+  
+  // Step 1: Distribute seeded players using snake draft
+  // Round 1: group 0, 1, 2, 3 (ascending)
+  // Round 2: group 3, 2, 1, 0 (descending)
+  // This ensures balanced strength across groups
+  let snakeDirection = 1;
+  let currentGroupIndex = 0;
+  
+  for (const player of seeded) {
+    // Build preferred order based on snake position
+    const preferredOrder: number[] = [];
+    if (snakeDirection === 1) {
+      for (let i = currentGroupIndex; i < groupCount; i++) preferredOrder.push(i);
+      for (let i = currentGroupIndex - 1; i >= 0; i--) preferredOrder.push(i);
+    } else {
+      for (let i = currentGroupIndex; i >= 0; i--) preferredOrder.push(i);
+      for (let i = currentGroupIndex + 1; i < groupCount; i++) preferredOrder.push(i);
+    }
+    
+    const targetGroup = findBestGroupForPlayer(player, preferredOrder);
+    groups[targetGroup].push(player);
+    
+    // Move to next position in snake
+    currentGroupIndex += snakeDirection;
+    if (currentGroupIndex >= groupCount) {
+      currentGroupIndex = groupCount - 1;
+      snakeDirection = -1;
+    } else if (currentGroupIndex < 0) {
+      currentGroupIndex = 0;
+      snakeDirection = 1;
+    }
+  }
+  
+  // Step 2: Distribute unseeded players, prioritizing team separation
+  // Sort unseeded by team to try placing same-team players in different groups
+  const teamCounts = new Map<string, number>();
+  for (const p of unseeded) {
+    if (p.team) {
+      teamCounts.set(p.team, (teamCounts.get(p.team) || 0) + 1);
+    }
+  }
+  
+  // Sort: players from larger teams first (harder to place, so do first)
+  const sortedUnseeded = [...unseeded].sort((a, b) => {
+    const countA = a.team ? (teamCounts.get(a.team) || 0) : 0;
+    const countB = b.team ? (teamCounts.get(b.team) || 0) : 0;
+    return countB - countA;
+  });
+  
+  for (const player of sortedUnseeded) {
+    // Find groups with most room first
+    const groupsByRoom = Array.from({ length: groupCount }, (_, i) => i)
+      .filter(i => !isGroupFull(i))
+      .sort((a, b) => {
+        const roomA = targetSizes[a] - groups[a].length;
+        const roomB = targetSizes[b] - groups[b].length;
+        return roomB - roomA;
+      });
+    
+    const targetGroup = findBestGroupForPlayer(player, groupsByRoom);
     groups[targetGroup].push(player);
   }
   
