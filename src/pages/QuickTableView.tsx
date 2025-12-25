@@ -479,6 +479,7 @@ const QuickTableView = () => {
                 <RegistrationManager 
                   tableId={table.id}
                   shareId={shareId}
+                  table={table}
                   onPendingCountChange={setRegistrationCount}
                 />
               ) : (

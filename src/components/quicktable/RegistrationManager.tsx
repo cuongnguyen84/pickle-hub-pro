@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useRegistration, type Registration } from '@/hooks/useRegistration';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,16 +14,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Check, X, MoreVertical, Pencil, Users, Clock, CheckCircle2, XCircle, RefreshCw, Swords, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BracketSetupDialog } from './BracketSetupDialog';
+import type { QuickTable } from '@/hooks/useQuickTable';
 
 interface RegistrationManagerProps {
   tableId: string;
   shareId?: string;
+  table?: QuickTable;
   onPendingCountChange?: (count: number) => void;
-  onStartBracket?: (approvedPlayers: { name: string; team: string | null; skill: number | null }[]) => void;
 }
 
-export function RegistrationManager({ tableId, shareId, onPendingCountChange, onStartBracket }: RegistrationManagerProps) {
-  const navigate = useNavigate();
+export function RegistrationManager({ tableId, shareId, table, onPendingCountChange }: RegistrationManagerProps) {
   const {
     getTableRegistrations,
     approveRegistration,
@@ -39,7 +39,7 @@ export function RegistrationManager({ tableId, shareId, onPendingCountChange, on
   const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null);
   const [overrideSkill, setOverrideSkill] = useState('');
   const [btcNotes, setBtcNotes] = useState('');
-  const [isCreatingBracket, setIsCreatingBracket] = useState(false);
+  const [showBracketSetup, setShowBracketSetup] = useState(false);
 
   const loadRegistrations = async () => {
     setLoading(true);
@@ -120,53 +120,21 @@ export function RegistrationManager({ tableId, shareId, onPendingCountChange, on
     setBtcNotes(reg.btc_notes || '');
   };
 
-  // Handle start bracket with approved players
-  const handleStartBracket = async () => {
+  // Handle start bracket - open setup dialog
+  const handleStartBracket = () => {
     if (approvedRegistrations.length < 6) {
       toast.error('Cần ít nhất 6 VĐV được duyệt');
       return;
     }
-
-    setIsCreatingBracket(true);
-    try {
-      // Create players from approved registrations
-      const playersToCreate = approvedRegistrations.map((reg, idx) => ({
-        table_id: tableId,
-        name: reg.display_name,
-        team: reg.team || null,
-        seed: reg.btc_override_skill || reg.skill_level || null,
-        display_order: idx,
-      }));
-
-      // Insert players
-      const { data: createdPlayers, error: playersError } = await supabase
-        .from('quick_table_players')
-        .insert(playersToCreate)
-        .select();
-
-      if (playersError) throw playersError;
-
-      // Update table status to group_stage
-      const { error: tableError } = await supabase
-        .from('quick_tables')
-        .update({ status: 'group_stage' })
-        .eq('id', tableId);
-
-      if (tableError) throw tableError;
-
-      toast.success(`Đã import ${approvedRegistrations.length} VĐV vào bảng đấu!`);
-      
-      // Navigate to setup page to continue with group configuration
-      if (shareId) {
-        navigate(`/quick-tables/${shareId}/setup`);
-      }
-    } catch (error) {
-      console.error('Error creating bracket:', error);
-      toast.error('Có lỗi xảy ra khi tạo bảng đấu');
-    } finally {
-      setIsCreatingBracket(false);
-    }
+    setShowBracketSetup(true);
   };
+
+  // Prepare approved players data for BracketSetupDialog
+  const approvedPlayersForBracket = approvedRegistrations.map(reg => ({
+    name: reg.display_name,
+    team: reg.team,
+    skill: reg.btc_override_skill || reg.skill_level || null,
+  }));
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => 
@@ -277,18 +245,9 @@ export function RegistrationManager({ tableId, shareId, onPendingCountChange, on
                   Đã có {approvedRegistrations.length} VĐV được duyệt. Bạn có thể bắt đầu chia bảng.
                 </p>
               </div>
-              <Button onClick={handleStartBracket} disabled={isCreatingBracket}>
-                {isCreatingBracket ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Đang tạo...
-                  </>
-                ) : (
-                  <>
-                    <Swords className="w-4 h-4 mr-2" />
-                    Chia bảng
-                  </>
-                )}
+              <Button onClick={handleStartBracket}>
+                <Swords className="w-4 h-4 mr-2" />
+                Chia bảng
               </Button>
             </div>
           </CardContent>
@@ -572,6 +531,17 @@ export function RegistrationManager({ tableId, shareId, onPendingCountChange, on
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bracket Setup Dialog */}
+      {table && shareId && (
+        <BracketSetupDialog
+          open={showBracketSetup}
+          onOpenChange={setShowBracketSetup}
+          table={table}
+          shareId={shareId}
+          approvedPlayers={approvedPlayersForBracket}
+        />
+      )}
     </div>
   );
 }
