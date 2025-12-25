@@ -34,7 +34,7 @@ const QuickTableView = () => {
     isPlayoffRoundComplete, createNextPlayoffRound, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches
   } = useQuickTable();
-  const { getUserRegistration } = useRegistration();
+  const { getUserRegistration, getPendingCount } = useRegistration();
 
   const [table, setTable] = useState<QuickTable | null>(null);
   const [groups, setGroups] = useState<QuickTableGroup[]>([]);
@@ -98,6 +98,12 @@ const QuickTableView = () => {
       if (data.table.requires_registration && user) {
         const reg = await getUserRegistration(data.table.id);
         setUserRegistration(reg);
+      }
+      
+      // Load pending registration count for creators
+      if (data.table.requires_registration) {
+        const pendingCount = await getPendingCount(data.table.id);
+        setRegistrationCount(pendingCount);
       }
       
       // Set active tab based on status
@@ -471,7 +477,7 @@ const QuickTableView = () => {
               {canManageTable ? (
                 <RegistrationManager 
                   tableId={table.id} 
-                  onApprovedPlayersChange={setRegistrationCount}
+                  onPendingCountChange={setRegistrationCount}
                 />
               ) : (
                 <RegistrationForm

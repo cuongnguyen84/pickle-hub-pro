@@ -274,6 +274,23 @@ export function useRegistration() {
     }
   }, []);
 
+  // Get pending registrations count
+  const getPendingCount = useCallback(async (tableId: string): Promise<number> => {
+    try {
+      const { count, error } = await supabase
+        .from('quick_table_registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('table_id', tableId)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error getting pending count:', error);
+      return 0;
+    }
+  }, []);
+
   return {
     loading,
     getTableRegistrations,
@@ -286,5 +303,6 @@ export function useRegistration() {
     bulkApprove,
     updateBTCOverride,
     getApprovedCount,
+    getPendingCount,
   };
 }
