@@ -448,13 +448,43 @@ const QuickTableView = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1">
+            {table.requires_registration && (
+              <TabsTrigger value="registration">
+                <ClipboardList className="w-4 h-4 mr-1" />
+                Đăng ký
+                {registrationCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 text-xs">{registrationCount}</Badge>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="groups">Vòng bảng</TabsTrigger>
             <TabsTrigger value="playoff" disabled={!hasPlayoff}>
               Playoff
               {hasPlayoff && <Badge variant="secondary" className="ml-2 text-xs">{playoffMatches.length}</Badge>}
             </TabsTrigger>
           </TabsList>
+
+          {/* Registration Tab */}
+          {table.requires_registration && (
+            <TabsContent value="registration" className="space-y-4">
+              {canManageTable ? (
+                <RegistrationManager 
+                  tableId={table.id} 
+                  onApprovedPlayersChange={setRegistrationCount}
+                />
+              ) : (
+                <RegistrationForm
+                  tableId={table.id}
+                  tableName={table.name}
+                  requiresSkillLevel={table.requires_skill_level}
+                  registrationMessage={table.registration_message}
+                  existingRegistration={userRegistration}
+                  onRegistrationComplete={loadData}
+                />
+              )}
+            </TabsContent>
+          )}
 
           {/* Groups Tab */}
           <TabsContent value="groups" className="space-y-4">
