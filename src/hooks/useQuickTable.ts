@@ -671,12 +671,16 @@ export function useQuickTable() {
 
     for (const match of matches) {
       if (match.player1_id && match.player2_id && match.score1 !== null && match.score2 !== null) {
+        // Calculate winner from scores directly (more reliable than winner_id)
+        const player1Wins = match.score1 > match.score2;
+        const player2Wins = match.score2 > match.score1;
+        
         // Only update if player exists in stats (safety check)
         if (stats[match.player1_id]) {
           stats[match.player1_id].played++;
           stats[match.player1_id].pf += match.score1;
           stats[match.player1_id].pa += match.score2;
-          if (match.winner_id === match.player1_id) {
+          if (player1Wins) {
             stats[match.player1_id].won++;
           }
         }
@@ -684,7 +688,7 @@ export function useQuickTable() {
           stats[match.player2_id].played++;
           stats[match.player2_id].pf += match.score2;
           stats[match.player2_id].pa += match.score1;
-          if (match.winner_id === match.player2_id) {
+          if (player2Wins) {
             stats[match.player2_id].won++;
           }
         }
