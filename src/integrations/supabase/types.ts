@@ -636,17 +636,83 @@ export type Database = {
           },
         ]
       }
+      quick_table_registrations: {
+        Row: {
+          btc_notes: string | null
+          btc_override_skill: number | null
+          created_at: string
+          display_name: string
+          id: string
+          profile_link: string | null
+          rating_system: Database["public"]["Enums"]["skill_rating_system"]
+          skill_description: string | null
+          skill_level: number | null
+          status: Database["public"]["Enums"]["registration_status"]
+          table_id: string
+          team: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          btc_notes?: string | null
+          btc_override_skill?: number | null
+          created_at?: string
+          display_name: string
+          id?: string
+          profile_link?: string | null
+          rating_system?: Database["public"]["Enums"]["skill_rating_system"]
+          skill_description?: string | null
+          skill_level?: number | null
+          status?: Database["public"]["Enums"]["registration_status"]
+          table_id: string
+          team?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          btc_notes?: string | null
+          btc_override_skill?: number | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          profile_link?: string | null
+          rating_system?: Database["public"]["Enums"]["skill_rating_system"]
+          skill_description?: string | null
+          skill_level?: number | null
+          status?: Database["public"]["Enums"]["registration_status"]
+          table_id?: string
+          team?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_table_registrations_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "quick_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quick_tables: {
         Row: {
+          auto_approve_registrations: boolean | null
           created_at: string
           creator_user_id: string | null
           format: Database["public"]["Enums"]["quick_table_format"]
           group_count: number | null
           id: string
           is_public: boolean
+          max_skill_level: number | null
+          min_skill_level: number | null
           name: string
           player_count: number
+          registration_message: string | null
+          requires_registration: boolean | null
+          requires_skill_level: boolean | null
           share_id: string
+          skill_rating_system: string | null
           status: Database["public"]["Enums"]["quick_table_status"]
           top_per_group: number | null
           updated_at: string
@@ -654,15 +720,22 @@ export type Database = {
           wildcard_count: number | null
         }
         Insert: {
+          auto_approve_registrations?: boolean | null
           created_at?: string
           creator_user_id?: string | null
           format: Database["public"]["Enums"]["quick_table_format"]
           group_count?: number | null
           id?: string
           is_public?: boolean
+          max_skill_level?: number | null
+          min_skill_level?: number | null
           name?: string
           player_count: number
+          registration_message?: string | null
+          requires_registration?: boolean | null
+          requires_skill_level?: boolean | null
           share_id?: string
+          skill_rating_system?: string | null
           status?: Database["public"]["Enums"]["quick_table_status"]
           top_per_group?: number | null
           updated_at?: string
@@ -670,15 +743,22 @@ export type Database = {
           wildcard_count?: number | null
         }
         Update: {
+          auto_approve_registrations?: boolean | null
           created_at?: string
           creator_user_id?: string | null
           format?: Database["public"]["Enums"]["quick_table_format"]
           group_count?: number | null
           id?: string
           is_public?: boolean
+          max_skill_level?: number | null
+          min_skill_level?: number | null
           name?: string
           player_count?: number
+          registration_message?: string | null
+          requires_registration?: boolean | null
+          requires_skill_level?: boolean | null
           share_id?: string
+          skill_rating_system?: string | null
           status?: Database["public"]["Enums"]["quick_table_status"]
           top_per_group?: number | null
           updated_at?: string
@@ -974,6 +1054,8 @@ export type Database = {
       quick_match_status: "pending" | "completed"
       quick_table_format: "round_robin" | "large_playoff"
       quick_table_status: "setup" | "group_stage" | "playoff" | "completed"
+      registration_status: "pending" | "approved" | "rejected"
+      skill_rating_system: "DUPR" | "other" | "none"
       target_type: "video" | "livestream"
       tournament_status: "upcoming" | "ongoing" | "ended"
       video_type: "short" | "long"
@@ -1112,6 +1194,8 @@ export const Constants = {
       quick_match_status: ["pending", "completed"],
       quick_table_format: ["round_robin", "large_playoff"],
       quick_table_status: ["setup", "group_stage", "playoff", "completed"],
+      registration_status: ["pending", "approved", "rejected"],
+      skill_rating_system: ["DUPR", "other", "none"],
       target_type: ["video", "livestream"],
       tournament_status: ["upcoming", "ongoing", "ended"],
       video_type: ["short", "long"],

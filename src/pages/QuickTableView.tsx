@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
 import { useRefereeManagement } from '@/hooks/useRefereeManagement';
+import { useRegistration, type Registration } from '@/hooks/useRegistration';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,14 +16,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play } from 'lucide-react';
+import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PlayoffBracket from '@/components/tournament/PlayoffBracket';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
+import RegistrationForm from '@/components/quicktable/RegistrationForm';
+import RegistrationManager from '@/components/quicktable/RegistrationManager';
 
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
+  const { user } = useAuth();
   const { 
     getTableByShareId, updateMatchScore, updatePlayerStats, isOwner,
     getQualifiedPlayers, generatePlayoffBracket, createPlayoffMatches, 
@@ -29,6 +34,7 @@ const QuickTableView = () => {
     isPlayoffRoundComplete, createNextPlayoffRound, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches
   } = useQuickTable();
+  const { getUserRegistration } = useRegistration();
 
   const [table, setTable] = useState<QuickTable | null>(null);
   const [groups, setGroups] = useState<QuickTableGroup[]>([]);
@@ -36,6 +42,10 @@ const QuickTableView = () => {
   const [matches, setMatches] = useState<QuickTableMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('groups');
+
+  // Registration state
+  const [userRegistration, setUserRegistration] = useState<Registration | null>(null);
+  const [registrationCount, setRegistrationCount] = useState(0);
 
   // Referee management hook
   const {
@@ -84,29 +94,33 @@ const QuickTableView = () => {
       setPlayers(data.players);
       setMatches(data.matches);
       
+      // Load user registration if requires_registration
+      if (data.table.requires_registration && user) {
+        const reg = await getUserRegistration(data.table.id);
+        setUserRegistration(reg);
+      }
+      
       // Set active tab based on status
       if (data.table.status === 'playoff' || data.table.status === 'completed') {
         setActiveTab('playoff');
+      } else if (data.table.requires_registration && data.table.status === 'setup') {
+        setActiveTab('registration');
       }
 
       // Auto-check and create next playoff round if current round is complete
-      // Creator or referee can trigger this
       if (data.table.status === 'playoff') {
         const playoffMatches = data.matches.filter(m => m.is_playoff);
         if (playoffMatches.length > 0) {
-          // Find the highest round
           const maxRound = Math.max(...playoffMatches.map(m => m.playoff_round || 0));
           const roundMatches = playoffMatches.filter(m => m.playoff_round === maxRound);
           const allCompleted = roundMatches.every(m => m.status === 'completed');
           
-          // Check if this is not the final (final = 1 match) and all completed
           if (allCompleted && roundMatches.length > 1) {
             const nextRoundExists = playoffMatches.some(m => m.playoff_round === maxRound + 1);
             if (!nextRoundExists) {
               const newMatches = await createNextPlayoffRound(data.table.id, maxRound, data.matches);
               if (newMatches.length > 0) {
                 toast.success('Đã tạo vòng tiếp theo!');
-                // Reload to show new matches
                 const refreshedData = await getTableByShareId(shareId);
                 if (refreshedData) {
                   setMatches(refreshedData.matches);

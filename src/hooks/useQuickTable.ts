@@ -23,6 +23,14 @@ export interface QuickTable {
   wildcard_count: number | null;
   share_id: string;
   is_public: boolean;
+  // Registration settings
+  requires_registration: boolean;
+  requires_skill_level: boolean;
+  min_skill_level: number | null;
+  max_skill_level: number | null;
+  skill_rating_system: string | null;
+  auto_approve_registrations: boolean;
+  registration_message: string | null;
 }
 
 export interface QuickTableGroup {
