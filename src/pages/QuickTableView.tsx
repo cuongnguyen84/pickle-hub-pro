@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X } from 'lucide-react';
+import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PlayoffBracket from '@/components/tournament/PlayoffBracket';
@@ -785,10 +785,12 @@ interface MatchRowProps {
 }
 
 const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, formatPlayerName }: MatchRowProps) => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
   const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
   const isCompleted = match.status === 'completed';
+  const isLive = !!(match as any).live_referee_id;
 
   const handleStartEdit = () => {
     setS1(match.score1?.toString() ?? '');
@@ -811,14 +813,27 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
     setIsEditing(false);
   };
 
+  const handleOpenScoring = () => {
+    navigate(`/matches/${match.id}/score`);
+  };
+
   return (
     <div 
       className={cn(
         "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border",
-        isCompleted && !isEditing ? "bg-muted/30 border-border" : "border-border-subtle"
+        isCompleted && !isEditing ? "bg-muted/30 border-border" : "border-border-subtle",
+        isLive && !isCompleted && "border-red-500/50 bg-red-50/50 dark:bg-red-950/20"
       )}
     >
-      <span className="text-sm text-foreground-muted w-5 sm:w-6 flex-shrink-0">{index + 1}</span>
+      <div className="flex items-center gap-1 w-8 sm:w-10 flex-shrink-0">
+        <span className="text-sm text-foreground-muted">{index + 1}</span>
+        {isLive && !isCompleted && (
+          <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 animate-pulse">
+            <Radio className="w-2 h-2 mr-0.5" />
+            LIVE
+          </Badge>
+        )}
+      </div>
       
       <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
         <span className={cn(
@@ -871,6 +886,18 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
       <div className="flex items-center gap-1 flex-shrink-0">
         {canEdit && (
           <>
+            {/* Scoring button - always visible for editors */}
+            <Button 
+              variant={isLive ? "destructive" : "outline"}
+              size="sm" 
+              className="h-7 px-2 text-xs"
+              onClick={handleOpenScoring}
+              title="Mở trang chấm điểm"
+            >
+              <Play className="w-3 h-3" />
+              <span className="hidden sm:inline ml-1">Chấm</span>
+            </Button>
+            
             {isEditing ? (
               <>
                 <Button 
@@ -906,6 +933,11 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
         {!canEdit && (
           isCompleted ? (
             <Check className="w-4 h-4 text-green-500" />
+          ) : isLive ? (
+            <Badge variant="destructive" className="text-xs animate-pulse">
+              <Radio className="w-3 h-3 mr-1" />
+              LIVE
+            </Badge>
           ) : (
             <Clock className="w-4 h-4 text-foreground-muted" />
           )

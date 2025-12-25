@@ -420,6 +420,7 @@ export type Database = {
           id: string
           is_playoff: boolean
           large_playoff_round: number | null
+          live_referee_id: string | null
           next_match_id: string | null
           next_match_slot: number | null
           player1_id: string | null
@@ -441,6 +442,7 @@ export type Database = {
           id?: string
           is_playoff?: boolean
           large_playoff_round?: number | null
+          live_referee_id?: string | null
           next_match_id?: string | null
           next_match_slot?: number | null
           player1_id?: string | null
@@ -462,6 +464,7 @@ export type Database = {
           id?: string
           is_playoff?: boolean
           large_playoff_round?: number | null
+          live_referee_id?: string | null
           next_match_id?: string | null
           next_match_slot?: number | null
           player1_id?: string | null

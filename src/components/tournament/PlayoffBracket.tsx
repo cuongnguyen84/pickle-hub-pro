@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Trophy, Check, Pencil } from 'lucide-react';
+import { Crown, Trophy, Check, Pencil, Play, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface BracketMatch {
@@ -18,6 +19,7 @@ export interface BracketMatch {
   bracket_position: string | null;
   next_match_id: string | null;
   next_match_slot: number | null;
+  live_referee_id?: string | null;
 }
 
 export interface BracketPlayer {
@@ -212,6 +214,7 @@ const BracketMatchCard = ({
   formatPlayerName,
   isFinal 
 }: BracketMatchCardProps) => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [localScore1, setLocalScore1] = useState<string>(match.score1?.toString() ?? '');
   const [localScore2, setLocalScore2] = useState<string>(match.score2?.toString() ?? '');
@@ -221,6 +224,7 @@ const BracketMatchCard = ({
   const score2Ref = useRef<HTMLInputElement>(null);
   
   const isCompleted = match.status === 'completed';
+  const isLive = !!match.live_referee_id;
   const isP1Winner = match.winner_id === match.player1_id && isCompleted;
   const isP2Winner = match.winner_id === match.player2_id && isCompleted;
 
@@ -256,15 +260,31 @@ const BracketMatchCard = ({
     setLocalScore2(value);
   }, []);
 
+  const handleOpenScoring = () => {
+    navigate(`/matches/${match.id}/score`);
+  };
+
   return (
     <Card className={cn(
       "overflow-hidden transition-shadow",
       isFinal && "border-primary/30 shadow-lg ring-2 ring-primary/10",
-      isCompleted && !isEditing && "opacity-90"
+      isCompleted && !isEditing && "opacity-90",
+      isLive && !isCompleted && "border-red-500/50 ring-2 ring-red-500/20"
     )}>
       {/* Match header */}
-      <div className="px-3 py-1.5 bg-muted/30 border-b flex items-center justify-between">
-        <span className="text-xs text-foreground-muted">Trận {match.playoff_match_number}</span>
+      <div className={cn(
+        "px-3 py-1.5 border-b flex items-center justify-between",
+        isLive && !isCompleted ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/30"
+      )}>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-foreground-muted">Trận {match.playoff_match_number}</span>
+          {isLive && !isCompleted && (
+            <Badge variant="destructive" className="text-[10px] py-0 px-1 h-4 animate-pulse">
+              <Radio className="w-2 h-2 mr-0.5" />
+              LIVE
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center gap-1">
           {isFinal && (
             <Badge variant="default" className="text-xs py-0">
@@ -275,8 +295,19 @@ const BracketMatchCard = ({
           {/* Edit/Update buttons */}
           {canEdit && player1 && player2 && (
             <>
+              {/* Scoring button */}
+              <Button 
+                size="sm" 
+                variant={isLive ? "destructive" : "outline"}
+                className="h-6 px-2 text-xs ml-1"
+                onClick={handleOpenScoring}
+                title="Mở trang chấm điểm"
+              >
+                <Play className="w-3 h-3" />
+              </Button>
+              
               {isEditing ? (
-                <div className="flex gap-1 ml-2">
+                <div className="flex gap-1 ml-1">
                   <Button 
                     size="sm" 
                     variant="ghost" 
@@ -298,7 +329,7 @@ const BracketMatchCard = ({
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="h-6 px-2 text-xs ml-2"
+                  className="h-6 px-2 text-xs ml-1"
                   onClick={handleStartEdit}
                 >
                   <Pencil className="w-3 h-3 mr-1" />
