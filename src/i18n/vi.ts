@@ -353,6 +353,73 @@ export interface Translations {
     qrDownloaded: string;
     qrDownloadedDesc: string;
   };
+  quickTable: {
+    title: string;
+    description: string;
+    loginRequired: string;
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step3Title: string;
+    tournamentName: string;
+    tournamentNamePlaceholder: string;
+    playerCount: string;
+    playerCountPlaceholder: string;
+    requireRegistration: string;
+    requireRegistrationDesc: string;
+    requireSkillLevel: string;
+    requireSkillLevelDesc: string;
+    advancedSettings: string;
+    autoApprove: string;
+    autoApproveDesc: string;
+    registrationMessage: string;
+    registrationMessagePlaceholder: string;
+    continue: string;
+    back: string;
+    roundRobin: string;
+    roundRobinDesc: string;
+    largePlayoff: string;
+    largePlayoffDesc: string;
+    recommended: string;
+    notAvailableOver48: string;
+    onlyAvailableOver32: string;
+    status: {
+      setup: string;
+      groupStage: string;
+      playoff: string;
+      completed: string;
+    };
+    myTournaments: string;
+    refereeTournaments: string;
+    yourRegisteredTournaments: string;
+    yourCompletedTournaments: string;
+    openRegistrationTournaments: string;
+    players: string;
+    approved: string;
+    pending: string;
+    rejected: string;
+    showMore: string;
+    showLess: string;
+    showCompleted: string;
+    hideCompleted: string;
+    noRating: string;
+    viewProfile: string;
+    editSkillLevel: string;
+    btcNote: string;
+    actions: string;
+    approve: string;
+    reject: string;
+    cancelApproval: string;
+    pendingRegistrations: string;
+    approvedPlayers: string;
+    rejectedRegistrations: string;
+    loading: string;
+    readyToBracket: string;
+    readyToBracketDesc: string;
+    createBracket: string;
+    needMinPlayers: string;
+    approveSelected: string;
+  };
 }
 
 // Vietnamese translations
@@ -709,5 +776,72 @@ export const vi: Translations = {
     downloadQR: "Tải mã QR",
     qrDownloaded: "Đã tải xuống!",
     qrDownloadedDesc: "Mã QR đã được lưu vào máy của bạn",
+  },
+  quickTable: {
+    title: "Chia bảng nhanh",
+    description: "Công cụ miễn phí giúp chia bảng, tạo danh sách trận đấu và tổ chức thi đấu phong trào.",
+    loginRequired: "Vui lòng đăng nhập để tạo bảng đấu mới.",
+    step1Title: "Bước 1: Thông tin giải đấu",
+    step1Desc: "Nhập thông tin cơ bản về giải đấu",
+    step2Title: "Bước 2: Chọn thể thức",
+    step3Title: "Bước 3: Chia bảng",
+    tournamentName: "Tên giải / bảng đấu",
+    tournamentNamePlaceholder: "VD: Giải Pickleball Mùa Hè 2024",
+    playerCount: "Số người chơi (dự kiến)",
+    playerCountPlaceholder: "VD: 16",
+    requireRegistration: "Yêu cầu VĐV đăng ký trước",
+    requireRegistrationDesc: "VĐV phải đăng ký và được BTC duyệt trước khi vào danh sách thi đấu",
+    requireSkillLevel: "Bắt buộc khai trình độ",
+    requireSkillLevelDesc: "VĐV phải khai trình độ (DUPR hoặc tự mô tả)",
+    advancedSettings: "Cài đặt nâng cao",
+    autoApprove: "Tự động duyệt đăng ký",
+    autoApproveDesc: "VĐV được duyệt ngay khi đăng ký (không khuyến nghị)",
+    registrationMessage: "Thông báo cho VĐV khi đăng ký",
+    registrationMessagePlaceholder: "VD: BTC sẽ xác nhận trình độ dựa vào điểm tự khai và đối chiếu với các hệ điểm...",
+    continue: "Tiếp tục",
+    back: "Quay lại",
+    roundRobin: "Chia bảng (Round Robin)",
+    roundRobinDesc: "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng. Top của mỗi bảng sẽ vào vòng Playoff.",
+    largePlayoff: "Playoff đông người",
+    largePlayoffDesc: "Thể thức dành cho giải đông người. Lượt 1-2 ghi nhận thắng/thua và hiệu số, từ lượt 3 trở đi là single elimination.",
+    recommended: "Khuyến nghị",
+    notAvailableOver48: "Không khả dụng với >48 người",
+    onlyAvailableOver32: "Chỉ khả dụng với ≥32 người",
+    status: {
+      setup: "Đang thiết lập",
+      groupStage: "Vòng bảng",
+      playoff: "Playoff",
+      completed: "Hoàn thành",
+    },
+    myTournaments: "Giải của tôi",
+    refereeTournaments: "Giải bạn làm trọng tài",
+    yourRegisteredTournaments: "Giải đấu bạn đang tham gia",
+    yourCompletedTournaments: "Giải đấu đã tham gia",
+    openRegistrationTournaments: "Giải đấu đang đăng ký",
+    players: "người",
+    approved: "Đã duyệt",
+    pending: "Chờ duyệt",
+    rejected: "Từ chối",
+    showMore: "Xem thêm",
+    showLess: "Thu gọn",
+    showCompleted: "Xem giải đã hoàn thành",
+    hideCompleted: "Ẩn giải đã hoàn thành",
+    noRating: "Chưa có rating",
+    viewProfile: "Xem hồ sơ",
+    editSkillLevel: "Chỉnh sửa trình độ",
+    btcNote: "Ghi chú BTC",
+    actions: "Thao tác",
+    approve: "Duyệt",
+    reject: "Từ chối",
+    cancelApproval: "Hủy duyệt",
+    pendingRegistrations: "Đăng ký chờ duyệt",
+    approvedPlayers: "VĐV đã duyệt",
+    rejectedRegistrations: "Đã từ chối",
+    loading: "Đang tải...",
+    readyToBracket: "Sẵn sàng chia bảng!",
+    readyToBracketDesc: "Đã có {count} VĐV được duyệt. Bạn có thể bắt đầu chia bảng.",
+    createBracket: "Chia bảng",
+    needMinPlayers: "Cần ít nhất 6 VĐV được duyệt để chia bảng. Hiện có {count}/6 VĐV.",
+    approveSelected: "Duyệt {count} VĐV",
   },
 };
