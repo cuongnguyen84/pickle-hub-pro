@@ -348,7 +348,15 @@ export function useQuickTable() {
     name: string,
     playerCount: number,
     format: QuickTableFormat,
-    groupCount?: number
+    groupCount?: number,
+    registrationOptions?: {
+      requires_registration?: boolean;
+      requires_skill_level?: boolean;
+      min_skill_level?: number;
+      max_skill_level?: number;
+      auto_approve_registrations?: boolean;
+      registration_message?: string;
+    }
   ): Promise<QuickTable | null> => {
     if (!user) {
       toast.error('Vui lòng đăng nhập để tạo bảng đấu');
@@ -365,6 +373,12 @@ export function useQuickTable() {
           format,
           group_count: groupCount,
           creator_user_id: user.id,
+          requires_registration: registrationOptions?.requires_registration || false,
+          requires_skill_level: registrationOptions?.requires_skill_level || false,
+          min_skill_level: registrationOptions?.min_skill_level || null,
+          max_skill_level: registrationOptions?.max_skill_level || null,
+          auto_approve_registrations: registrationOptions?.auto_approve_registrations || false,
+          registration_message: registrationOptions?.registration_message || null,
         })
         .select()
         .single();

@@ -10,7 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield, ClipboardList, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -32,6 +35,13 @@ const QuickTables = () => {
   const [selectedFormat, setSelectedFormat] = useState<"round_robin" | "large_playoff" | null>(null);
   const [groupSuggestions, setGroupSuggestions] = useState<GroupSuggestion[]>([]);
   const [selectedGroupCount, setSelectedGroupCount] = useState<number | null>(null);
+
+  // Registration settings
+  const [requiresRegistration, setRequiresRegistration] = useState(false);
+  const [requiresSkillLevel, setRequiresSkillLevel] = useState(true);
+  const [autoApprove, setAutoApprove] = useState(false);
+  const [registrationMessage, setRegistrationMessage] = useState("");
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   // User's tables
   const [userTables, setUserTables] = useState<QuickTable[]>([]);
@@ -97,15 +107,28 @@ const QuickTables = () => {
     const finalFormat = format || selectedFormat;
     if (!finalFormat) return;
 
+    const registrationOptions = requiresRegistration ? {
+      requires_registration: true,
+      requires_skill_level: requiresSkillLevel,
+      auto_approve_registrations: autoApprove,
+      registration_message: registrationMessage || undefined,
+    } : undefined;
+
     const table = await createTable(
       tableName,
       playerCount,
       finalFormat,
       finalFormat === "round_robin" ? selectedGroupCount || undefined : undefined,
+      registrationOptions,
     );
 
     if (table) {
-      navigate(`/quick-tables/${table.share_id}/setup`);
+      // If registration required, go to view page directly; otherwise setup page
+      if (requiresRegistration) {
+        navigate(`/quick-tables/${table.share_id}`);
+      } else {
+        navigate(`/quick-tables/${table.share_id}/setup`);
+      }
     }
   };
 
@@ -181,8 +204,8 @@ const QuickTables = () => {
           {step === "count" && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Bước 1: Số người chơi</CardTitle>
-                <CardDescription>Nhập tổng số người chơi tham gia giải đấu</CardDescription>
+                <CardTitle className="text-lg">Bước 1: Thông tin giải đấu</CardTitle>
+                <CardDescription>Nhập thông tin cơ bản về giải đấu</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -195,7 +218,7 @@ const QuickTables = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Số người chơi</Label>
+                  <Label>Số người chơi (dự kiến)</Label>
                   <Input
                     type="number"
                     min={2}
@@ -204,6 +227,82 @@ const QuickTables = () => {
                     onChange={(e) => setPlayerCount(parseInt(e.target.value) || 0)}
                     placeholder="VD: 16"
                   />
+                </div>
+
+                {/* Registration Settings */}
+                <div className="border-t border-border pt-4 mt-4">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="requires-registration"
+                      checked={requiresRegistration}
+                      onCheckedChange={(checked) => setRequiresRegistration(!!checked)}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="requires-registration" className="cursor-pointer font-medium flex items-center gap-2">
+                        <ClipboardList className="w-4 h-4 text-primary" />
+                        Yêu cầu VĐV đăng ký trước
+                      </Label>
+                      <p className="text-sm text-foreground-muted mt-1">
+                        VĐV phải đăng ký và được BTC duyệt trước khi vào danh sách thi đấu
+                      </p>
+                    </div>
+                  </div>
+
+                  {requiresRegistration && (
+                    <div className="ml-6 mt-4 space-y-4 p-4 rounded-lg bg-muted/50 border border-border">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="requires-skill"
+                          checked={requiresSkillLevel}
+                          onCheckedChange={(checked) => setRequiresSkillLevel(!!checked)}
+                        />
+                        <div>
+                          <Label htmlFor="requires-skill" className="cursor-pointer">
+                            Bắt buộc khai trình độ
+                          </Label>
+                          <p className="text-xs text-foreground-muted">
+                            VĐV phải khai trình độ (DUPR hoặc tự mô tả)
+                          </p>
+                        </div>
+                      </div>
+
+                      <Collapsible open={showAdvancedSettings} onOpenChange={setShowAdvancedSettings}>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="w-full justify-between">
+                            Cài đặt nâng cao
+                            <ChevronDown className={cn("w-4 h-4 transition-transform", showAdvancedSettings && "rotate-180")} />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-4 pt-4">
+                          <div className="flex items-start space-x-3">
+                            <Checkbox
+                              id="auto-approve"
+                              checked={autoApprove}
+                              onCheckedChange={(checked) => setAutoApprove(!!checked)}
+                            />
+                            <div>
+                              <Label htmlFor="auto-approve" className="cursor-pointer">
+                                Tự động duyệt đăng ký
+                              </Label>
+                              <p className="text-xs text-foreground-muted">
+                                VĐV được duyệt ngay khi đăng ký (không khuyến nghị)
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Thông báo cho VĐV khi đăng ký</Label>
+                            <Textarea
+                              value={registrationMessage}
+                              onChange={(e) => setRegistrationMessage(e.target.value)}
+                              placeholder="VD: BTC sẽ xác nhận trình độ dựa vào điểm tự khai và đối chiếu với các hệ điểm..."
+                              rows={2}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+                  )}
                 </div>
 
                 <Button className="w-full" onClick={handlePlayerCountSubmit} disabled={playerCount < 2}>
