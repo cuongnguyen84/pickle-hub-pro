@@ -492,18 +492,52 @@ const MatchScoring = () => {
   }, []);
 
   // Format round name
+  // Calculate total playoff rounds from matches data
+  const [totalPlayoffRounds, setTotalPlayoffRounds] = useState<number>(1);
+
+  useEffect(() => {
+    if (!match?.is_playoff || !table) return;
+    
+    // Fetch max playoff_round to determine total rounds
+    const fetchTotalRounds = async () => {
+      const { data } = await supabase
+        .from('quick_table_matches')
+        .select('playoff_round')
+        .eq('table_id', table.id)
+        .eq('is_playoff', true)
+        .order('playoff_round', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (data?.playoff_round) {
+        setTotalPlayoffRounds(data.playoff_round);
+      }
+    };
+    
+    fetchTotalRounds();
+  }, [match?.is_playoff, table]);
+
   const getRoundName = () => {
     if (!match) return '';
     
     if (match.is_playoff) {
-      const roundNames: Record<number, string> = {
-        1: 'Vòng 1',
-        2: 'Vòng 2',
-        3: 'Tứ kết',
-        4: 'Bán kết',
-        5: 'Chung kết',
-      };
-      return roundNames[match.playoff_round || 1] || `Vòng ${match.playoff_round}`;
+      const currentRound = match.playoff_round || 1;
+      const roundsFromFinal = totalPlayoffRounds - currentRound;
+      
+      // Map based on distance from final
+      // roundsFromFinal = 0 → Chung kết
+      // roundsFromFinal = 1 → Bán kết  
+      // roundsFromFinal = 2 → Tứ kết
+      // roundsFromFinal >= 3 → Vòng 1, 2, ...
+      if (roundsFromFinal === 0) {
+        return 'Chung kết';
+      } else if (roundsFromFinal === 1) {
+        return 'Bán kết';
+      } else if (roundsFromFinal === 2) {
+        return 'Tứ kết';
+      } else {
+        return `Vòng ${currentRound}`;
+      }
     }
     
     return group ? `${group.name} — Trận ${match.display_order + 1}` : `Trận ${match.display_order + 1}`;
