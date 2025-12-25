@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import QuickTables from "./pages/QuickTables";
 import QuickTableSetup from "./pages/QuickTableSetup";
 import QuickTableView from "./pages/QuickTableView";
+import MatchScoring from "./pages/MatchScoring";
 import { EmbedLive, EmbedVideo } from "./pages/embed";
 import {
   AdminOverview,
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/quick-tables" element={<QuickTables />} />
               <Route path="/quick-tables/:shareId" element={<QuickTableView />} />
               <Route path="/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
+              <Route path="/matches/:matchId/score" element={<MatchScoring />} />
               {/* Embed routes - no layout, minimal UI */}
               <Route path="/embed/live/:id" element={<EmbedLive />} />
               <Route path="/embed/video/:id" element={<EmbedVideo />} />
