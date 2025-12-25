@@ -498,20 +498,24 @@ const MatchScoring = () => {
   useEffect(() => {
     if (!match?.is_playoff || !table) return;
     
-    // Fetch max playoff_round to determine total rounds
+    // Calculate total playoff rounds based on number of matches in first round
     const fetchTotalRounds = async () => {
-      const { data } = await supabase
+      // Count matches in round 1 to determine bracket size
+      const { data: round1Matches, count } = await supabase
         .from('quick_table_matches')
-        .select('playoff_round')
+        .select('id', { count: 'exact' })
         .eq('table_id', table.id)
         .eq('is_playoff', true)
-        .order('playoff_round', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('playoff_round', 1);
       
-      if (data?.playoff_round) {
-        setTotalPlayoffRounds(data.playoff_round);
-      }
+      const matchesInRound1 = count || round1Matches?.length || 1;
+      
+      // Calculate total rounds: log2(matchesInRound1 * 2)
+      // 4 matches in round 1 = 8 players = 3 rounds (quarterfinal, semifinal, final)
+      // 2 matches in round 1 = 4 players = 2 rounds (semifinal, final)
+      // 1 match in round 1 = 2 players = 1 round (final)
+      const totalRounds = Math.max(1, Math.ceil(Math.log2(matchesInRound1 * 2)));
+      setTotalPlayoffRounds(totalRounds);
     };
     
     fetchTotalRounds();
