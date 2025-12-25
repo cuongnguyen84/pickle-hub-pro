@@ -47,13 +47,13 @@ const Tournaments = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "setup":
-        return "Đang thiết lập";
+        return t.quickTable.status.setup;
       case "group_stage":
-        return "Vòng bảng";
+        return t.quickTable.status.groupStage;
       case "playoff":
-        return "Playoff";
+        return t.quickTable.status.playoff;
       case "completed":
-        return "Hoàn thành";
+        return t.quickTable.status.completed;
       default:
         return status;
     }
@@ -200,7 +200,7 @@ const Tournaments = () => {
             <div className="p-4">
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
-                <h2 className="text-lg font-semibold text-foreground">Giải đấu bạn đang tham gia</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t.quickTable.yourRegisteredTournaments}</h2>
               </div>
             </div>
             <div className="px-4 pb-4 space-y-2">
@@ -217,14 +217,14 @@ const Tournaments = () => {
                     <div className="font-medium truncate">{tournament.name}</div>
                     <div className="flex items-center gap-2 text-xs text-foreground-muted">
                       <Users className="w-3 h-3" />
-                      <span>{tournament.player_count} người</span>
+                      <span>{tournament.player_count} {t.quickTable.players}</span>
                     </div>
                   </div>
                   <Badge 
                     variant={tournament.registrationStatus === 'approved' ? 'default' : 'outline'}
                     className={tournament.registrationStatus === 'approved' ? 'bg-green-600' : ''}
                   >
-                    {tournament.registrationStatus === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
+                    {tournament.registrationStatus === 'approved' ? t.quickTable.approved : t.quickTable.pending}
                   </Badge>
                   <Badge variant={getStatusVariant(tournament.status)}>{getStatusLabel(tournament.status)}</Badge>
                   <ChevronRight className="w-4 h-4 text-foreground-muted" />
@@ -240,7 +240,7 @@ const Tournaments = () => {
             <div className="p-4">
               <div className="flex items-center gap-2 mb-4">
                 <Clock className="w-5 h-5 text-foreground-muted" />
-                <h2 className="text-lg font-semibold text-foreground">Giải đấu đã tham gia</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t.quickTable.yourCompletedTournaments}</h2>
               </div>
             </div>
             <div className="px-4 pb-4 space-y-2">
@@ -257,10 +257,10 @@ const Tournaments = () => {
                     <div className="font-medium truncate">{tournament.name}</div>
                     <div className="flex items-center gap-2 text-xs text-foreground-muted">
                       <Users className="w-3 h-3" />
-                      <span>{tournament.player_count} người</span>
+                      <span>{tournament.player_count} {t.quickTable.players}</span>
                     </div>
                   </div>
-                  <Badge variant="default">Hoàn thành</Badge>
+                  <Badge variant="default">{t.quickTable.status.completed}</Badge>
                   <ChevronRight className="w-4 h-4 text-foreground-muted" />
                 </Link>
               ))}
@@ -274,7 +274,7 @@ const Tournaments = () => {
             <div className="p-4">
               <div className="flex items-center gap-2 mb-4">
                 <ClipboardList className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">Giải đấu đang đăng ký</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t.quickTable.openRegistrationTournaments}</h2>
               </div>
             </div>
             <div className="px-4 pb-4 space-y-2">
@@ -291,11 +291,11 @@ const Tournaments = () => {
                     <div className="font-medium truncate">{table.name}</div>
                     <div className="flex items-center gap-2 text-xs text-foreground-muted">
                       <Users className="w-3 h-3" />
-                      <span>{table.player_count} người</span>
+                      <span>{table.player_count} {t.quickTable.players}</span>
                     </div>
                   </div>
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                    Đang đăng ký
+                    {t.quickTable.openRegistrationTournaments}
                   </Badge>
                   <ChevronRight className="w-4 h-4 text-foreground-muted" />
                 </Link>

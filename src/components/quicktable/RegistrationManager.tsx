@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRegistration, type Registration } from '@/hooks/useRegistration';
+import { useI18n } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,7 @@ interface RegistrationManagerProps {
 }
 
 export function RegistrationManager({ tableId, shareId, table, onPendingCountChange }: RegistrationManagerProps) {
+  const { t } = useI18n();
   const {
     getTableRegistrations,
     approveRegistration,
@@ -165,17 +167,17 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
     if (reg.rating_system === 'other') {
       return reg.skill_level?.toString() || '—';
     }
-    return reg.skill_description || 'Chưa có rating';
+    return reg.skill_description || t.quickTable.noRating;
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Chờ duyệt</Badge>;
+        return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> {t.quickTable.pending}</Badge>;
       case 'approved':
-        return <Badge variant="default" className="gap-1 bg-green-600"><CheckCircle2 className="w-3 h-3" /> Đã duyệt</Badge>;
+        return <Badge variant="default" className="gap-1 bg-green-600"><CheckCircle2 className="w-3 h-3" /> {t.quickTable.approved}</Badge>;
       case 'rejected':
-        return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Từ chối</Badge>;
+        return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> {t.quickTable.rejected}</Badge>;
       default:
         return null;
     }
@@ -186,7 +188,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
       <Card>
         <CardContent className="py-8 text-center">
           <RefreshCw className="w-6 h-6 mx-auto mb-2 animate-spin text-foreground-muted" />
-          <p className="text-foreground-muted">Đang tải...</p>
+          <p className="text-foreground-muted">{t.quickTable.loading}</p>
         </CardContent>
       </Card>
     );
@@ -203,7 +205,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
             </div>
             <div>
               <p className="text-2xl font-bold">{pendingRegistrations.length}</p>
-              <p className="text-sm text-foreground-muted">Chờ duyệt</p>
+              <p className="text-sm text-foreground-muted">{t.quickTable.pending}</p>
             </div>
           </div>
         </Card>
@@ -214,7 +216,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
             </div>
             <div>
               <p className="text-2xl font-bold">{approvedRegistrations.length}</p>
-              <p className="text-sm text-foreground-muted">Đã duyệt</p>
+              <p className="text-sm text-foreground-muted">{t.quickTable.approved}</p>
             </div>
           </div>
         </Card>
@@ -225,7 +227,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
             </div>
             <div>
               <p className="text-2xl font-bold">{rejectedRegistrations.length}</p>
-              <p className="text-sm text-foreground-muted">Từ chối</p>
+              <p className="text-sm text-foreground-muted">{t.quickTable.rejected}</p>
             </div>
           </div>
         </Card>
@@ -239,15 +241,15 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
               <div>
                 <h3 className="font-semibold flex items-center gap-2">
                   <Swords className="w-4 h-4 text-primary" />
-                  Sẵn sàng chia bảng!
+                  {t.quickTable.readyToBracket}
                 </h3>
                 <p className="text-sm text-foreground-secondary">
-                  Đã có {approvedRegistrations.length} VĐV được duyệt. Bạn có thể bắt đầu chia bảng.
+                  {t.quickTable.readyToBracketDesc.replace('{count}', approvedRegistrations.length.toString())}
                 </p>
               </div>
               <Button onClick={handleStartBracket}>
                 <Swords className="w-4 h-4 mr-2" />
-                Chia bảng
+                {t.quickTable.createBracket}
               </Button>
             </div>
           </CardContent>
@@ -259,7 +261,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Cần ít nhất 6 VĐV được duyệt để chia bảng. Hiện có {approvedRegistrations.length}/6 VĐV.
+            {t.quickTable.needMinPlayers.replace('{count}', approvedRegistrations.length.toString())}
           </AlertDescription>
         </Alert>
       )}
@@ -271,12 +273,12 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Clock className="w-4 h-4 text-yellow-600" />
-                Đăng ký chờ duyệt ({pendingRegistrations.length})
+                {t.quickTable.pendingRegistrations} ({pendingRegistrations.length})
               </CardTitle>
               {selectedIds.length > 0 && (
                 <Button size="sm" onClick={handleBulkApprove}>
                   <Check className="w-4 h-4 mr-1" />
-                  Duyệt {selectedIds.length} VĐV
+                  {t.quickTable.approveSelected.replace('{count}', selectedIds.length.toString())}
                 </Button>
               )}
             </div>
@@ -342,7 +344,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openEditDialog(reg)}>
                               <Pencil className="w-4 h-4 mr-2" />
-                              Chỉnh sửa trình độ
+                              {t.quickTable.editSkillLevel}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -362,7 +364,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-green-600" />
-              VĐV đã duyệt ({approvedRegistrations.length})
+              {t.quickTable.approvedPlayers} ({approvedRegistrations.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -374,8 +376,8 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                   <TableHead>Email</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead>Trình độ</TableHead>
-                  <TableHead>Ghi chú BTC</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
+                  <TableHead>{t.quickTable.btcNote}</TableHead>
+                  <TableHead className="text-right">{t.quickTable.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -385,7 +387,6 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                     <TableCell className="font-medium">{reg.display_name}</TableCell>
                     <TableCell className="text-foreground-muted text-sm">{reg.email || '—'}</TableCell>
                     <TableCell className="text-foreground-muted">{reg.team || '—'}</TableCell>
-                    <TableCell>{getSkillDisplay(reg)}</TableCell>
                     <TableCell>{getSkillDisplay(reg)}</TableCell>
                     <TableCell className="text-sm text-foreground-muted max-w-[200px] truncate">
                       {reg.btc_notes || '—'}
@@ -400,14 +401,14 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openEditDialog(reg)}>
                             <Pencil className="w-4 h-4 mr-2" />
-                            Chỉnh sửa
+                            {t.common.edit}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => handleReject(reg.id)}
                           >
                             <X className="w-4 h-4 mr-2" />
-                            Hủy duyệt
+                            {t.quickTable.cancelApproval}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -426,7 +427,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 text-foreground-muted">
               <XCircle className="w-4 h-4" />
-              Đã từ chối ({rejectedRegistrations.length})
+              {t.quickTable.rejectedRegistrations} ({rejectedRegistrations.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -437,7 +438,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                   <TableHead>Email</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead>Trình độ</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
+                  <TableHead className="text-right">{t.quickTable.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -447,10 +448,9 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                     <TableCell className="text-foreground-muted text-sm">{reg.email || '—'}</TableCell>
                     <TableCell className="text-foreground-muted">{reg.team || '—'}</TableCell>
                     <TableCell>{getSkillDisplay(reg)}</TableCell>
-                    <TableCell>{getSkillDisplay(reg)}</TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="ghost" onClick={() => handleApprove(reg.id)}>
-                        Duyệt lại
+                        {t.quickTable.approve}
                       </Button>
                     </TableCell>
                   </TableRow>
