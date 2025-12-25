@@ -15,10 +15,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface RegistrationManagerProps {
   tableId: string;
-  onApprovedPlayersChange?: (count: number) => void;
+  onPendingCountChange?: (count: number) => void;
 }
 
-export function RegistrationManager({ tableId, onApprovedPlayersChange }: RegistrationManagerProps) {
+export function RegistrationManager({ tableId, onPendingCountChange }: RegistrationManagerProps) {
   const {
     getTableRegistrations,
     approveRegistration,
@@ -40,8 +40,8 @@ export function RegistrationManager({ tableId, onApprovedPlayersChange }: Regist
     setRegistrations(data);
     setLoading(false);
     
-    const approvedCount = data.filter(r => r.status === 'approved').length;
-    onApprovedPlayersChange?.(approvedCount);
+    const pendingCount = data.filter(r => r.status === 'pending').length;
+    onPendingCountChange?.(pendingCount);
   };
 
   useEffect(() => {
