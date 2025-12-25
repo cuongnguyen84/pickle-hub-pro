@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
+
 const Login = () => {
-  const {
-    t
-  } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const {
     user,
     loading: authLoading,
@@ -23,14 +23,17 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Get redirect URL from query params
+  const redirectUrl = searchParams.get('redirect');
+
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/", {
-        replace: true
-      });
+      // Redirect to saved URL or home
+      const targetUrl = redirectUrl || "/";
+      navigate(targetUrl, { replace: true });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, redirectUrl]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
@@ -50,9 +53,9 @@ const Login = () => {
           toast({
             title: t.auth.loginSuccess
           });
-          navigate("/", {
-            replace: true
-          });
+          // Redirect to saved URL or home
+          const targetUrl = redirectUrl || "/";
+          navigate(targetUrl, { replace: true });
         }
       } else {
         const {

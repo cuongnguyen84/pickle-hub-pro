@@ -15,6 +15,7 @@ export interface Registration {
   rating_system: SkillRatingSystem;
   skill_level: number | null;
   skill_description: string | null;
+  skill_system_name: string | null;
   profile_link: string | null;
   status: RegistrationStatus;
   btc_override_skill: number | null;
@@ -29,6 +30,7 @@ export interface RegistrationFormData {
   rating_system: SkillRatingSystem;
   skill_level?: number;
   skill_description?: string;
+  skill_system_name?: string;
   profile_link?: string;
 }
 
@@ -95,6 +97,7 @@ export function useRegistration() {
           rating_system: formData.rating_system,
           skill_level: formData.skill_level || null,
           skill_description: formData.skill_description?.trim() || null,
+          skill_system_name: formData.skill_system_name?.trim() || null,
           profile_link: formData.profile_link?.trim() || null,
         })
         .select()
@@ -135,6 +138,7 @@ export function useRegistration() {
           rating_system: formData.rating_system,
           skill_level: formData.skill_level || null,
           skill_description: formData.skill_description?.trim() || null,
+          skill_system_name: formData.skill_system_name?.trim() || null,
           profile_link: formData.profile_link?.trim() || null,
         })
         .eq('id', registrationId);

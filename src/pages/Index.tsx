@@ -6,6 +6,7 @@ import { useLivestreams, useVideos } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio } from "lucide-react";
+import { OpenRegistrationSection } from "@/components/quicktable/OpenRegistrationSection";
 
 const Index = () => {
   const { t } = useI18n();
@@ -86,6 +87,9 @@ const Index = () => {
           <EmptyState icon={Radio} title={t.home.noLive} />
         )}
       </section>
+
+      {/* Open Registration Tournaments */}
+      <OpenRegistrationSection limit={5} showViewAll={true} />
 
       {/* Ad Slot */}
       <div className="container-wide">

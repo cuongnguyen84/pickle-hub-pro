@@ -647,6 +647,7 @@ export type Database = {
           rating_system: Database["public"]["Enums"]["skill_rating_system"]
           skill_description: string | null
           skill_level: number | null
+          skill_system_name: string | null
           status: Database["public"]["Enums"]["registration_status"]
           table_id: string
           team: string | null
@@ -663,6 +664,7 @@ export type Database = {
           rating_system?: Database["public"]["Enums"]["skill_rating_system"]
           skill_description?: string | null
           skill_level?: number | null
+          skill_system_name?: string | null
           status?: Database["public"]["Enums"]["registration_status"]
           table_id: string
           team?: string | null
@@ -679,6 +681,7 @@ export type Database = {
           rating_system?: Database["public"]["Enums"]["skill_rating_system"]
           skill_description?: string | null
           skill_level?: number | null
+          skill_system_name?: string | null
           status?: Database["public"]["Enums"]["registration_status"]
           table_id?: string
           team?: string | null
