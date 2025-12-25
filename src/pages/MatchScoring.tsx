@@ -370,18 +370,38 @@ const MatchScoring = () => {
     // Find next match info from current match
     const { data: currentMatch } = await supabase
       .from('quick_table_matches')
-      .select('next_match_id, next_match_slot')
+      .select('next_match_id, next_match_slot, playoff_round, table_id')
       .eq('id', currentMatchId)
       .maybeSingle();
 
-    if (!currentMatch?.next_match_id) return;
+    if (!currentMatch) return;
 
-    const updateField = currentMatch.next_match_slot === 1 ? 'player1_id' : 'player2_id';
+    if (currentMatch.next_match_id) {
+      const updateField = currentMatch.next_match_slot === 1 ? 'player1_id' : 'player2_id';
 
-    await supabase
-      .from('quick_table_matches')
-      .update({ [updateField]: winnerId })
-      .eq('id', currentMatch.next_match_id);
+      await supabase
+        .from('quick_table_matches')
+        .update({ [updateField]: winnerId })
+        .eq('id', currentMatch.next_match_id);
+    } else {
+      // No next match - check if this is the final match
+      // Get all matches in current round to verify it's the final
+      const { data: currentRoundMatches } = await supabase
+        .from('quick_table_matches')
+        .select('id')
+        .eq('table_id', currentMatch.table_id)
+        .eq('is_playoff', true)
+        .eq('playoff_round', currentMatch.playoff_round);
+
+      // If current round only has 1 match, this is the final
+      if (currentRoundMatches && currentRoundMatches.length === 1) {
+        console.log('[advanceWinnerToNextMatch] Final match completed, marking tournament as completed');
+        await supabase
+          .from('quick_tables')
+          .update({ status: 'completed' })
+          .eq('id', currentMatch.table_id);
+      }
+    }
   };
 
   // Navigate to next match
