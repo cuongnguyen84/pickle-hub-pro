@@ -359,7 +359,7 @@ const MatchScoring = () => {
           matches_won: matchesWon,
           points_for: pointsFor,
           points_against: pointsAgainst,
-          point_diff: pointsFor - pointsAgainst,
+          // point_diff is a generated column, don't update it directly
         })
         .eq('id', player.id);
     }
