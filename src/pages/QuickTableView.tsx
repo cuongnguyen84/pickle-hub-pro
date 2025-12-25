@@ -477,7 +477,8 @@ const QuickTableView = () => {
             <TabsContent value="registration" className="space-y-4">
               {canManageTable ? (
                 <RegistrationManager 
-                  tableId={table.id} 
+                  tableId={table.id}
+                  shareId={shareId}
                   onPendingCountChange={setRegistrationCount}
                 />
               ) : (
