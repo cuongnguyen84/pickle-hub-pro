@@ -287,3 +287,57 @@ export function useViewCount(targetType: "video" | "livestream", targetId: strin
     enabled: !!targetId,
   });
 }
+
+// Fetch public quick tables with open registration
+export type QuickTablePublic = {
+  id: string;
+  name: string;
+  share_id: string;
+  status: string;
+  format: string;
+  player_count: number;
+  requires_registration: boolean;
+  created_at: string;
+};
+
+export function useOpenRegistrationTables(options?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["open-registration-tables", options],
+    queryFn: async () => {
+      let query = supabase
+        .from("quick_tables")
+        .select("id, name, share_id, status, format, player_count, requires_registration, created_at")
+        .eq("is_public", true)
+        .eq("requires_registration", true)
+        .eq("status", "setup")
+        .order("created_at", { ascending: false });
+
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as QuickTablePublic[];
+    },
+  });
+}
+
+// Fetch approved registrations for a table (public view)
+export function useApprovedRegistrations(tableId: string) {
+  return useQuery({
+    queryKey: ["approved-registrations", tableId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("quick_table_registrations")
+        .select("id, display_name, team, rating_system, skill_level, skill_system_name, skill_description")
+        .eq("table_id", tableId)
+        .eq("status", "approved")
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tableId,
+  });
+}

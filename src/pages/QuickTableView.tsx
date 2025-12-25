@@ -23,6 +23,7 @@ import PlayoffBracket from '@/components/tournament/PlayoffBracket';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
 import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
+import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
 
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
@@ -480,14 +481,18 @@ const QuickTableView = () => {
                   onPendingCountChange={setRegistrationCount}
                 />
               ) : (
-                <RegistrationForm
-                  tableId={table.id}
-                  tableName={table.name}
-                  requiresSkillLevel={table.requires_skill_level}
-                  registrationMessage={table.registration_message}
-                  existingRegistration={userRegistration}
-                  onRegistrationComplete={loadData}
-                />
+                <div className="space-y-4">
+                  <RegistrationForm
+                    tableId={table.id}
+                    tableName={table.name}
+                    requiresSkillLevel={table.requires_skill_level}
+                    registrationMessage={table.registration_message}
+                    existingRegistration={userRegistration}
+                    onRegistrationComplete={loadData}
+                  />
+                  {/* Show approved players list for public viewers */}
+                  <ApprovedPlayersList tableId={table.id} />
+                </div>
               )}
             </TabsContent>
           )}

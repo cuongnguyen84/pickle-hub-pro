@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface RegistrationFormProps {
   tableId: string;
@@ -38,6 +38,8 @@ export function RegistrationForm({
 }: RegistrationFormProps) {
   const { user } = useAuth();
   const { submitRegistration, updateRegistration, cancelRegistration, loading } = useRegistration();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [displayName, setDisplayName] = useState(existingRegistration?.display_name || '');
   const [team, setTeam] = useState(existingRegistration?.team || '');
@@ -45,8 +47,16 @@ export function RegistrationForm({
     existingRegistration?.rating_system || 'none'
   );
   const [skillLevel, setSkillLevel] = useState(existingRegistration?.skill_level?.toString() || '');
+  const [skillSystemName, setSkillSystemName] = useState(existingRegistration?.skill_system_name || '');
   const [skillDescription, setSkillDescription] = useState(existingRegistration?.skill_description || '');
   const [profileLink, setProfileLink] = useState(existingRegistration?.profile_link || '');
+
+  // Handle login redirect with return URL
+  const handleLoginClick = () => {
+    // Save current URL to redirect back after login
+    const returnUrl = location.pathname + location.search;
+    navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+  };
 
   if (!user) {
     return (
@@ -56,37 +66,71 @@ export function RegistrationForm({
           <p className="text-foreground-secondary mb-4">
             Vui lòng đăng nhập để đăng ký tham dự giải
           </p>
-          <Link to="/login">
-            <Button>Đăng nhập</Button>
-          </Link>
+          <Button onClick={handleLoginClick}>Đăng nhập</Button>
         </CardContent>
       </Card>
     );
   }
 
-  // Show existing registration status
-  if (existingRegistration && existingRegistration.status !== 'pending') {
+  // Show approved status
+  if (existingRegistration && existingRegistration.status === 'approved') {
     return (
       <Card>
         <CardContent className="py-6">
           <div className="text-center">
-            {existingRegistration.status === 'approved' ? (
-              <>
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
-                <h3 className="font-semibold text-lg mb-1">Đăng ký đã được duyệt!</h3>
-                <p className="text-foreground-secondary">
-                  Bạn đã được xác nhận tham dự giải <strong>{tableName}</strong>
-                </p>
-              </>
-            ) : (
-              <>
-                <XCircle className="w-12 h-12 mx-auto mb-3 text-red-500" />
-                <h3 className="font-semibold text-lg mb-1">Đăng ký bị từ chối</h3>
-                <p className="text-foreground-secondary">
-                  Rất tiếc, đăng ký của bạn không được chấp nhận.
-                </p>
-              </>
-            )}
+            <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
+            <h3 className="font-semibold text-lg mb-1">Đã được phê duyệt!</h3>
+            <p className="text-foreground-secondary">
+              Bạn đã được phê duyệt tham dự giải <strong>{tableName}</strong>.
+            </p>
+            <p className="text-foreground-muted mt-2">
+              Vui lòng chờ kết quả chia bảng từ BTC.
+            </p>
+          </div>
+          
+          <div className="border-t border-border pt-4 mt-4">
+            <h4 className="font-medium mb-2">Thông tin đăng ký của bạn:</h4>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-foreground-muted">Tên:</dt>
+                <dd>{existingRegistration.display_name}</dd>
+              </div>
+              {existingRegistration.team && (
+                <div className="flex justify-between">
+                  <dt className="text-foreground-muted">Team:</dt>
+                  <dd>{existingRegistration.team}</dd>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <dt className="text-foreground-muted">Trình độ:</dt>
+                <dd>
+                  {existingRegistration.rating_system === 'DUPR' && `DUPR ${existingRegistration.skill_level}`}
+                  {existingRegistration.rating_system === 'other' && (
+                    <>
+                      {existingRegistration.skill_system_name || 'Hệ thống khác'}: {existingRegistration.skill_level}
+                    </>
+                  )}
+                  {existingRegistration.rating_system === 'none' && (existingRegistration.skill_description || 'Chưa có rating')}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show rejected status
+  if (existingRegistration && existingRegistration.status === 'rejected') {
+    return (
+      <Card>
+        <CardContent className="py-6">
+          <div className="text-center">
+            <XCircle className="w-12 h-12 mx-auto mb-3 text-red-500" />
+            <h3 className="font-semibold text-lg mb-1">Đăng ký bị từ chối</h3>
+            <p className="text-foreground-secondary">
+              Rất tiếc, đăng ký của bạn không được chấp nhận.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -100,9 +144,9 @@ export function RegistrationForm({
         <CardContent className="py-6 space-y-4">
           <div className="text-center">
             <Clock className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
-            <h3 className="font-semibold text-lg mb-1">Đang chờ duyệt</h3>
+            <h3 className="font-semibold text-lg mb-1">Đăng ký thành công!</h3>
             <p className="text-foreground-secondary">
-              Đăng ký của bạn đang được BTC xem xét.
+              Đăng ký của bạn đang chờ BTC xem xét và phê duyệt.
             </p>
           </div>
 
@@ -123,7 +167,11 @@ export function RegistrationForm({
                 <dt className="text-foreground-muted">Trình độ:</dt>
                 <dd>
                   {existingRegistration.rating_system === 'DUPR' && `DUPR ${existingRegistration.skill_level}`}
-                  {existingRegistration.rating_system === 'other' && `${existingRegistration.skill_level}`}
+                  {existingRegistration.rating_system === 'other' && (
+                    <>
+                      {existingRegistration.skill_system_name || 'Hệ thống khác'}: {existingRegistration.skill_level}
+                    </>
+                  )}
                   {existingRegistration.rating_system === 'none' && (existingRegistration.skill_description || 'Chưa có rating')}
                 </dd>
               </div>
@@ -155,6 +203,11 @@ export function RegistrationForm({
       return;
     }
 
+    // Validate skill system name for 'other' rating system
+    if (ratingSystem === 'other' && !skillSystemName.trim()) {
+      return;
+    }
+
     if (requiresSkillLevel && ratingSystem === 'none' && !skillDescription.trim()) {
       return;
     }
@@ -165,6 +218,7 @@ export function RegistrationForm({
       rating_system: ratingSystem,
       skill_level: skillLevel ? parseFloat(skillLevel) : undefined,
       skill_description: ratingSystem === 'none' ? skillDescription : undefined,
+      skill_system_name: ratingSystem === 'other' ? skillSystemName : undefined,
       profile_link: profileLink || undefined,
     };
 
@@ -252,13 +306,11 @@ export function RegistrationForm({
               </div>
             </RadioGroup>
 
-            {/* DUPR or Other rating input */}
-            {(ratingSystem === 'DUPR' || ratingSystem === 'other') && (
+            {/* DUPR rating input */}
+            {ratingSystem === 'DUPR' && (
               <div className="pl-6 space-y-3 border-l-2 border-primary/20">
                 <div className="space-y-2">
-                  <Label htmlFor="skillLevel">
-                    Điểm trình độ {ratingSystem === 'DUPR' ? '(VD: 3.25, 4.1)' : ''}
-                  </Label>
+                  <Label htmlFor="skillLevel">Điểm DUPR (VD: 3.25, 4.1)</Label>
                   <Input
                     id="skillLevel"
                     type="number"
@@ -267,18 +319,59 @@ export function RegistrationForm({
                     max="8"
                     value={skillLevel}
                     onChange={(e) => setSkillLevel(e.target.value)}
-                    placeholder={ratingSystem === 'DUPR' ? '3.50' : 'Nhập điểm'}
+                    placeholder="3.50"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="profileLink">Link hồ sơ (tùy chọn)</Label>
+                  <Label htmlFor="profileLink">Link hồ sơ DUPR (tùy chọn)</Label>
                   <Input
                     id="profileLink"
                     type="url"
                     value={profileLink}
                     onChange={(e) => setProfileLink(e.target.value)}
-                    placeholder={ratingSystem === 'DUPR' ? 'https://mydupr.com/profile/...' : 'Link hồ sơ của bạn'}
+                    placeholder="https://mydupr.com/profile/..."
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Other rating system input */}
+            {ratingSystem === 'other' && (
+              <div className="pl-6 space-y-3 border-l-2 border-primary/20">
+                <div className="space-y-2">
+                  <Label htmlFor="skillSystemName">Tên hệ thống *</Label>
+                  <Input
+                    id="skillSystemName"
+                    value={skillSystemName}
+                    onChange={(e) => setSkillSystemName(e.target.value)}
+                    placeholder="VD: UTPR, APP, nội bộ CLB..."
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="skillLevelOther">Điểm trình độ</Label>
+                  <Input
+                    id="skillLevelOther"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="10"
+                    value={skillLevel}
+                    onChange={(e) => setSkillLevel(e.target.value)}
+                    placeholder="Nhập điểm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="profileLinkOther">Link hồ sơ (tùy chọn)</Label>
+                  <Input
+                    id="profileLinkOther"
+                    type="url"
+                    value={profileLink}
+                    onChange={(e) => setProfileLink(e.target.value)}
+                    placeholder="Link hồ sơ của bạn"
                   />
                 </div>
               </div>
