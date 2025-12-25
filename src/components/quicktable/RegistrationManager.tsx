@@ -292,6 +292,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                     />
                   </TableHead>
                   <TableHead>VĐV</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead>Trình độ</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
@@ -307,6 +308,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                       />
                     </TableCell>
                     <TableCell className="font-medium">{reg.display_name}</TableCell>
+                    <TableCell className="text-foreground-muted text-sm">{reg.email || '—'}</TableCell>
                     <TableCell className="text-foreground-muted">{reg.team || '—'}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
@@ -369,6 +371,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>VĐV</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead>Trình độ</TableHead>
                   <TableHead>Ghi chú BTC</TableHead>
@@ -380,7 +383,9 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                   <TableRow key={reg.id}>
                     <TableCell className="text-foreground-muted">{idx + 1}</TableCell>
                     <TableCell className="font-medium">{reg.display_name}</TableCell>
+                    <TableCell className="text-foreground-muted text-sm">{reg.email || '—'}</TableCell>
                     <TableCell className="text-foreground-muted">{reg.team || '—'}</TableCell>
+                    <TableCell>{getSkillDisplay(reg)}</TableCell>
                     <TableCell>{getSkillDisplay(reg)}</TableCell>
                     <TableCell className="text-sm text-foreground-muted max-w-[200px] truncate">
                       {reg.btc_notes || '—'}
@@ -429,6 +434,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
               <TableHeader>
                 <TableRow>
                   <TableHead>VĐV</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead>Trình độ</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
@@ -438,7 +444,9 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
                 {rejectedRegistrations.map((reg) => (
                   <TableRow key={reg.id} className="opacity-60">
                     <TableCell className="font-medium">{reg.display_name}</TableCell>
+                    <TableCell className="text-foreground-muted text-sm">{reg.email || '—'}</TableCell>
                     <TableCell className="text-foreground-muted">{reg.team || '—'}</TableCell>
+                    <TableCell>{getSkillDisplay(reg)}</TableCell>
                     <TableCell>{getSkillDisplay(reg)}</TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="ghost" onClick={() => handleApprove(reg.id)}>
