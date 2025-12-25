@@ -38,6 +38,14 @@ const QuickTables = () => {
   const [tablesLoading, setTablesLoading] = useState(true);
   const [showAllTables, setShowAllTables] = useState(false);
   const [showAllRefereeTables, setShowAllRefereeTables] = useState(false);
+  const [showMyCompleted, setShowMyCompleted] = useState(false);
+  const [showRefereeCompleted, setShowRefereeCompleted] = useState(false);
+
+  // Filtered tables
+  const myOngoingTables = userTables.filter(t => t.status !== 'completed');
+  const myCompletedTables = userTables.filter(t => t.status === 'completed');
+  const refereeOngoingTables = refereeTables.filter(t => t.status !== 'completed');
+  const refereeCompletedTables = refereeTables.filter(t => t.status === 'completed');
 
   useEffect(() => {
     const loadUserTables = async () => {
@@ -381,60 +389,93 @@ const QuickTables = () => {
                         <ListTodo className="w-4 h-4 text-primary" />
                         Giải đấu của tôi
                       </CardTitle>
-                      <Badge variant="secondary">{userTables.length}</Badge>
+                      <div className="flex gap-1">
+                        <Button
+                          variant={showMyCompleted ? "ghost" : "secondary"}
+                          size="sm"
+                          onClick={() => setShowMyCompleted(false)}
+                          className="text-xs h-7"
+                        >
+                          Đang diễn ra ({myOngoingTables.length})
+                        </Button>
+                        <Button
+                          variant={showMyCompleted ? "secondary" : "ghost"}
+                          size="sm"
+                          onClick={() => setShowMyCompleted(true)}
+                          className="text-xs h-7"
+                        >
+                          Hoàn thành ({myCompletedTables.length})
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {(showAllTables ? userTables : userTables.slice(0, 5)).map((table) => (
-                      <Link
-                        key={table.id}
-                        to={
-                          table.status === "setup"
-                            ? `/quick-tables/${table.share_id}/setup`
-                            : `/quick-tables/${table.share_id}`
-                        }
-                        className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{table.name}</div>
-                          <div className="flex items-center gap-2 text-xs text-foreground-muted">
-                            <Calendar className="w-3 h-3" />
-                            {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
-                            <span>•</span>
-                            <span>{table.player_count} người</span>
-                            <span>•</span>
-                            <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
+                    {(() => {
+                      const displayTables = showMyCompleted ? myCompletedTables : myOngoingTables;
+                      
+                      if (displayTables.length === 0) {
+                        return (
+                          <div className="text-center py-4 text-foreground-muted">
+                            {showMyCompleted ? "Chưa có giải đấu nào hoàn thành" : "Không có giải đấu đang diễn ra"}
                           </div>
-                        </div>
-                        <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
-                        <Eye className="w-4 h-4 text-foreground-muted" />
-                      </Link>
-                    ))}
-                    {!showAllTables && userTables.length > 5 && (
-                      <div className="text-center pt-3 border-t border-border/50">
-                        <p className="text-sm text-foreground-muted mb-2">
-                          Còn {userTables.length - 5} bảng đấu khác
-                        </p>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setShowAllTables(true)}
-                        >
-                          Xem thêm
-                        </Button>
-                      </div>
-                    )}
-                    {showAllTables && userTables.length > 5 && (
-                      <div className="text-center pt-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setShowAllTables(false)}
-                        >
-                          Thu gọn
-                        </Button>
-                      </div>
-                    )}
+                        );
+                      }
+                      
+                      return (
+                        <>
+                          {(showAllTables ? displayTables : displayTables.slice(0, 5)).map((table) => (
+                            <Link
+                              key={table.id}
+                              to={
+                                table.status === "setup"
+                                  ? `/quick-tables/${table.share_id}/setup`
+                                  : `/quick-tables/${table.share_id}`
+                              }
+                              className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{table.name}</div>
+                                <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
+                                  <span>•</span>
+                                  <span>{table.player_count} người</span>
+                                  <span>•</span>
+                                  <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
+                                </div>
+                              </div>
+                              <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
+                              <Eye className="w-4 h-4 text-foreground-muted" />
+                            </Link>
+                          ))}
+                          {!showAllTables && displayTables.length > 5 && (
+                            <div className="text-center pt-3 border-t border-border/50">
+                              <p className="text-sm text-foreground-muted mb-2">
+                                Còn {displayTables.length - 5} bảng đấu khác
+                              </p>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setShowAllTables(true)}
+                              >
+                                Xem thêm
+                              </Button>
+                            </div>
+                          )}
+                          {showAllTables && displayTables.length > 5 && (
+                            <div className="text-center pt-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setShowAllTables(false)}
+                              >
+                                Thu gọn
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               ) : !tablesLoading ? (
@@ -455,63 +496,96 @@ const QuickTables = () => {
                         <Shield className="w-4 h-4 text-primary" />
                         Giải đang điều hành
                       </CardTitle>
-                      <Badge variant="secondary">{refereeTables.length}</Badge>
+                      <div className="flex gap-1">
+                        <Button
+                          variant={showRefereeCompleted ? "ghost" : "secondary"}
+                          size="sm"
+                          onClick={() => setShowRefereeCompleted(false)}
+                          className="text-xs h-7"
+                        >
+                          Đang diễn ra ({refereeOngoingTables.length})
+                        </Button>
+                        <Button
+                          variant={showRefereeCompleted ? "secondary" : "ghost"}
+                          size="sm"
+                          onClick={() => setShowRefereeCompleted(true)}
+                          className="text-xs h-7"
+                        >
+                          Hoàn thành ({refereeCompletedTables.length})
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {(showAllRefereeTables ? refereeTables : refereeTables.slice(0, 5)).map((table) => (
-                      <Link
-                        key={table.id}
-                        to={
-                          table.status === "setup"
-                            ? `/quick-tables/${table.share_id}/setup`
-                            : `/quick-tables/${table.share_id}`
-                        }
-                        className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{table.name}</div>
-                          <div className="flex items-center gap-2 text-xs text-foreground-muted">
-                            <Calendar className="w-3 h-3" />
-                            {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
-                            <span>•</span>
-                            <span>{table.player_count} người</span>
-                            <span>•</span>
-                            <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
+                    {(() => {
+                      const displayTables = showRefereeCompleted ? refereeCompletedTables : refereeOngoingTables;
+                      
+                      if (displayTables.length === 0) {
+                        return (
+                          <div className="text-center py-4 text-foreground-muted">
+                            {showRefereeCompleted ? "Chưa có giải đấu nào hoàn thành" : "Không có giải đấu đang diễn ra"}
                           </div>
-                        </div>
-                        <Badge variant="outline" className="gap-1">
-                          <Shield className="w-3 h-3" />
-                          Trọng tài
-                        </Badge>
-                        <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
-                      </Link>
-                    ))}
-                    {!showAllRefereeTables && refereeTables.length > 5 && (
-                      <div className="text-center pt-3 border-t border-border/50">
-                        <p className="text-sm text-foreground-muted mb-2">
-                          Còn {refereeTables.length - 5} giải khác
-                        </p>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setShowAllRefereeTables(true)}
-                        >
-                          Xem thêm
-                        </Button>
-                      </div>
-                    )}
-                    {showAllRefereeTables && refereeTables.length > 5 && (
-                      <div className="text-center pt-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setShowAllRefereeTables(false)}
-                        >
-                          Thu gọn
-                        </Button>
-                      </div>
-                    )}
+                        );
+                      }
+                      
+                      return (
+                        <>
+                          {(showAllRefereeTables ? displayTables : displayTables.slice(0, 5)).map((table) => (
+                            <Link
+                              key={table.id}
+                              to={
+                                table.status === "setup"
+                                  ? `/quick-tables/${table.share_id}/setup`
+                                  : `/quick-tables/${table.share_id}`
+                              }
+                              className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">{table.name}</div>
+                                <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
+                                  <span>•</span>
+                                  <span>{table.player_count} người</span>
+                                  <span>•</span>
+                                  <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className="gap-1">
+                                <Shield className="w-3 h-3" />
+                                Trọng tài
+                              </Badge>
+                              <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
+                            </Link>
+                          ))}
+                          {!showAllRefereeTables && displayTables.length > 5 && (
+                            <div className="text-center pt-3 border-t border-border/50">
+                              <p className="text-sm text-foreground-muted mb-2">
+                                Còn {displayTables.length - 5} giải khác
+                              </p>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setShowAllRefereeTables(true)}
+                              >
+                                Xem thêm
+                              </Button>
+                            </div>
+                          )}
+                          {showAllRefereeTables && displayTables.length > 5 && (
+                            <div className="text-center pt-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setShowAllRefereeTables(false)}
+                              >
+                                Thu gọn
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               )}

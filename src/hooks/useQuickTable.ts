@@ -618,6 +618,14 @@ export function useQuickTable() {
         }
       } else {
         console.log('[updateMatchScore] No next match found (likely final match)');
+        // This is the final match - check if we should mark tournament as completed
+        if (newWinner) {
+          console.log('[updateMatchScore] Final match completed, marking tournament as completed');
+          await supabase
+            .from('quick_tables')
+            .update({ status: 'completed' as QuickTableStatus })
+            .eq('id', match.table_id);
+        }
       }
     }
   }, []);
