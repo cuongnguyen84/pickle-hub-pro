@@ -5,20 +5,27 @@ import { SearchBar } from "@/components/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
-import { useTournaments } from "@/hooks/useSupabaseData";
+import { useTournaments, useOpenRegistrationTables, useUserRegisteredTournaments, useUserCompletedTournaments } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
-import { Trophy, Calendar, ChevronRight, Search } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 const Tournaments = () => {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
 
   const { data: tournaments = [], isLoading } = useTournaments();
+  const { data: openRegistrationTables = [], isLoading: openRegLoading } = useOpenRegistrationTables();
+  const { data: registeredTournaments = [], isLoading: registeredLoading } = useUserRegisteredTournaments(user?.id);
+  const { data: completedTournaments = [], isLoading: completedLoading } = useUserCompletedTournaments(user?.id);
 
   // Filter tournaments by search
   const filteredTournaments = useMemo(() => {
@@ -36,6 +43,33 @@ const Tournaments = () => {
 
   const hasSearch = debouncedSearch.length > 0;
   const hasResults = filteredTournaments.length > 0;
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "setup":
+        return "Đang thiết lập";
+      case "group_stage":
+        return "Vòng bảng";
+      case "playoff":
+        return "Playoff";
+      case "completed":
+        return "Hoàn thành";
+      default:
+        return status;
+    }
+  };
+
+  const getStatusVariant = (status: string): "default" | "secondary" | "outline" => {
+    switch (status) {
+      case "completed":
+        return "default";
+      case "playoff":
+      case "group_stage":
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
 
   const TournamentCard = ({ tournament }: { tournament: typeof tournaments[0] }) => {
     const statusConfig = {
@@ -159,6 +193,116 @@ const Tournaments = () => {
             className="max-w-md"
           />
         </div>
+
+        {/* User's Registered Tournaments Section */}
+        {user && registeredTournaments.length > 0 && (
+          <Card className="mb-6">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <h2 className="text-lg font-semibold text-foreground">Giải đấu bạn đang tham gia</h2>
+              </div>
+            </div>
+            <div className="px-4 pb-4 space-y-2">
+              {registeredTournaments.map((tournament: any) => (
+                <Link
+                  key={tournament.id}
+                  to={`/quick-tables/${tournament.share_id}`}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center flex-shrink-0">
+                    <Trophy className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{tournament.name}</div>
+                    <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                      <Users className="w-3 h-3" />
+                      <span>{tournament.player_count} người</span>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant={tournament.registrationStatus === 'approved' ? 'default' : 'outline'}
+                    className={tournament.registrationStatus === 'approved' ? 'bg-green-600' : ''}
+                  >
+                    {tournament.registrationStatus === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
+                  </Badge>
+                  <Badge variant={getStatusVariant(tournament.status)}>{getStatusLabel(tournament.status)}</Badge>
+                  <ChevronRight className="w-4 h-4 text-foreground-muted" />
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* User's Completed Tournaments Section */}
+        {user && completedTournaments.length > 0 && (
+          <Card className="mb-6">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="w-5 h-5 text-foreground-muted" />
+                <h2 className="text-lg font-semibold text-foreground">Giải đấu đã tham gia</h2>
+              </div>
+            </div>
+            <div className="px-4 pb-4 space-y-2">
+              {completedTournaments.slice(0, 5).map((tournament: any) => (
+                <Link
+                  key={tournament.id}
+                  to={`/quick-tables/${tournament.share_id}`}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                    <Trophy className="w-5 h-5 text-foreground-muted" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{tournament.name}</div>
+                    <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                      <Users className="w-3 h-3" />
+                      <span>{tournament.player_count} người</span>
+                    </div>
+                  </div>
+                  <Badge variant="default">Hoàn thành</Badge>
+                  <ChevronRight className="w-4 h-4 text-foreground-muted" />
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Open Registration Section */}
+        {openRegistrationTables.length > 0 && (
+          <Card className="mb-6">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <ClipboardList className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Giải đấu đang đăng ký</h2>
+              </div>
+            </div>
+            <div className="px-4 pb-4 space-y-2">
+              {openRegistrationTables.slice(0, 5).map((table) => (
+                <Link
+                  key={table.id}
+                  to={`/quick-tables/${table.share_id}`}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <ClipboardList className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{table.name}</div>
+                    <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                      <Users className="w-3 h-3" />
+                      <span>{table.player_count} người</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                    Đang đăng ký
+                  </Badge>
+                  <ChevronRight className="w-4 h-4 text-foreground-muted" />
+                </Link>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {isLoading ? (
           <div className="space-y-4">
