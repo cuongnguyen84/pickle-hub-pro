@@ -44,7 +44,7 @@ export function BracketSetupDialog({
       id: `approved-${idx}`,
       name: p.name,
       team: p.team || '',
-      seed: p.skill?.toString() || '',
+      seed: '', // Leave empty for BTC to fill manually
     }))
   );
 
@@ -128,7 +128,8 @@ export function BracketSetupDialog({
 
       toast.success('Đã tạo bảng đấu thành công!');
       onOpenChange(false);
-      navigate(`/quick-tables/${shareId}`);
+      // Redirect to groups tab
+      navigate(`/quick-tables/${shareId}?tab=groups`);
     } catch (error) {
       console.error('Error setting up table:', error);
       toast.error('Có lỗi xảy ra, vui lòng thử lại');

@@ -341,3 +341,86 @@ export function useApprovedRegistrations(tableId: string) {
     enabled: !!tableId,
   });
 }
+
+// Fetch tournaments user is registered for (active - not completed)
+export function useUserRegisteredTournaments(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["user-registered-tournaments", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      
+      // Get all registrations for this user with table info
+      const { data, error } = await supabase
+        .from("quick_table_registrations")
+        .select(`
+          id,
+          status,
+          table_id,
+          quick_tables:table_id (
+            id,
+            name,
+            share_id,
+            status,
+            format,
+            player_count,
+            created_at
+          )
+        `)
+        .eq("user_id", userId)
+        .in("status", ["pending", "approved"]);
+
+      if (error) throw error;
+      
+      // Filter to active tournaments (not completed)
+      return data
+        .filter(reg => reg.quick_tables && (reg.quick_tables as any).status !== 'completed')
+        .map(reg => ({
+          registrationId: reg.id,
+          registrationStatus: reg.status,
+          ...reg.quick_tables as any,
+        }));
+    },
+    enabled: !!userId,
+  });
+}
+
+// Fetch tournaments user has participated in (completed)
+export function useUserCompletedTournaments(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["user-completed-tournaments", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      
+      const { data, error } = await supabase
+        .from("quick_table_registrations")
+        .select(`
+          id,
+          status,
+          table_id,
+          quick_tables:table_id (
+            id,
+            name,
+            share_id,
+            status,
+            format,
+            player_count,
+            created_at
+          )
+        `)
+        .eq("user_id", userId)
+        .eq("status", "approved");
+
+      if (error) throw error;
+      
+      // Filter to completed tournaments only
+      return data
+        .filter(reg => reg.quick_tables && (reg.quick_tables as any).status === 'completed')
+        .map(reg => ({
+          registrationId: reg.id,
+          registrationStatus: reg.status,
+          ...reg.quick_tables as any,
+        }));
+    },
+    enabled: !!userId,
+  });
+}
