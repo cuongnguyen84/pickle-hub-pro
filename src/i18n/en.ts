@@ -421,5 +421,22 @@ export const en: Translations = {
     createBracket: "Create Brackets",
     needMinPlayers: "Need at least 6 approved players. Currently {count}/6.",
     approveSelected: "Approve {count} players",
+    // Playoff bracket
+    playoff: {
+      noMatches: "No playoff matches yet",
+      champion: "Champion",
+      match: "Match",
+      final: "Final",
+      semiFinal: "Semi-final",
+      quarterFinal: "Quarter-final",
+      round16: "Round of 16",
+      round: "Round",
+      group: "Group",
+      enterNextRound: "Enter previous round results to unlock next round",
+      inputScore: "Input",
+      editScore: "Edit",
+      openScoring: "Open scoring page",
+      tieNotAllowed: "Tie scores not allowed",
+    },
   },
 };
