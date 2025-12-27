@@ -730,8 +730,9 @@ export function useQuickTable() {
 
     console.log('[updatePlayerStats] Calculated stats:', stats);
 
-    // Update all players (point_diff is a generated column, don't update it directly)
+    // Update all players with calculated stats including point_diff
     for (const [playerId, stat] of Object.entries(stats)) {
+      const pointDiff = stat.pf - stat.pa;
       const { error: updateError } = await supabase
         .from('quick_table_players')
         .update({
@@ -739,13 +740,14 @@ export function useQuickTable() {
           matches_won: stat.won,
           points_for: stat.pf,
           points_against: stat.pa,
+          point_diff: pointDiff,
         })
         .eq('id', playerId);
       
       if (updateError) {
         console.error('[updatePlayerStats] Error updating player:', playerId, updateError);
       } else {
-        console.log('[updatePlayerStats] Updated player:', playerId, stat);
+        console.log('[updatePlayerStats] Updated player:', playerId, { ...stat, point_diff: pointDiff });
       }
     }
   }, []);
