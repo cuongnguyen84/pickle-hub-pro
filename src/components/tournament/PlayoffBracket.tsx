@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crown, Trophy, Check, Pencil, Play, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
+import { toast } from 'sonner';
 
 export interface BracketMatch {
   id: string;
@@ -40,6 +42,8 @@ interface PlayoffBracketProps {
 }
 
 const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }: PlayoffBracketProps) => {
+  const { t } = useI18n();
+  
   const getPlayer = (id: string | null): BracketPlayer | undefined => 
     id ? players.find(p => p.id === id) : undefined;
 
@@ -77,13 +81,8 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
       const roundMatches = roundMap.get(roundNum) || [];
       const matchCount = roundMatches.length;
       
-      let roundName = 'Vòng loại';
-      if (matchCount === 1) roundName = 'Chung kết';
-      else if (matchCount === 2) roundName = 'Bán kết';
-      else if (matchCount <= 4) roundName = 'Tứ kết';
-      else if (matchCount <= 8) roundName = 'Vòng 16';
-
-      return { roundName, roundNumber: roundNum, matches: roundMatches };
+      // Round names will be set dynamically using t()
+      return { roundNumber: roundNum, matches: roundMatches, matchCount };
     });
 
     // Find champion
@@ -94,16 +93,25 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
     return { rounds: roundsArray, champion };
   }, [matches, players]);
 
-  const getGroupName = (player: BracketPlayer | undefined): string => {
-    if (!player?.group_id || !groupNames) return '';
-    return groupNames.get(player.group_id) || '';
+  const getGroupName = (player: BracketPlayer | undefined): string | null => {
+    if (!player?.group_id || !groupNames) return null;
+    return groupNames.get(player.group_id) || null;
+  };
+
+  // Get round name based on match count
+  const getRoundName = (matchCount: number): string => {
+    if (matchCount === 1) return t.quickTable.playoff.final;
+    if (matchCount === 2) return t.quickTable.playoff.semiFinal;
+    if (matchCount <= 4) return t.quickTable.playoff.quarterFinal;
+    if (matchCount <= 8) return t.quickTable.playoff.round16;
+    return t.quickTable.playoff.round;
   };
 
   if (matches.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-foreground-muted">
-          Chưa có trận playoff
+          {t.quickTable.playoff.noMatches}
         </CardContent>
       </Card>
     );
@@ -118,7 +126,7 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
             <div className="flex items-center justify-center gap-3">
               <Trophy className="w-8 h-8 text-primary" />
               <div className="text-center">
-                <div className="text-sm text-foreground-secondary">Nhà vô địch</div>
+                <div className="text-sm text-foreground-secondary">{t.quickTable.playoff.champion}</div>
                 <div className="text-2xl font-bold text-primary">{formatPlayerName(champion)}</div>
               </div>
               <Trophy className="w-8 h-8 text-primary" />
@@ -135,14 +143,14 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
               {/* Round Header */}
               <div className="text-center mb-4">
                 <Badge 
-                  variant={round.matches.length === 1 ? "default" : "outline"} 
+                  variant={round.matchCount === 1 ? "default" : "outline"} 
                   className={cn(
                     "px-4 py-1",
-                    round.matches.length === 1 && "bg-primary"
+                    round.matchCount === 1 && "bg-primary"
                   )}
                 >
-                  {round.matches.length === 1 && <Trophy className="w-3 h-3 mr-1" />}
-                  {round.roundName}
+                  {round.matchCount === 1 && <Trophy className="w-3 h-3 mr-1" />}
+                  {getRoundName(round.matchCount)}
                 </Badge>
               </div>
 
@@ -164,25 +172,25 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, groupNames }
                     onScoreUpdate={onScoreUpdate}
                     getGroupName={getGroupName}
                     formatPlayerName={formatPlayerName}
-                    isFinal={round.matches.length === 1}
+                    isFinal={round.matchCount === 1}
+                    t={t}
                   />
                 ))}
               </div>
             </div>
           ))}
 
-          {/* Connector lines visualization hint */}
-          {rounds.length > 0 && rounds[rounds.length - 1].matches.length > 1 && (
+          {/* Next round placeholder */}
+          {rounds.length > 0 && rounds[rounds.length - 1].matchCount > 1 && (
             <div className="flex flex-col min-w-[280px]">
               <div className="text-center mb-4">
                 <Badge variant="outline" className="px-4 py-1 border-dashed">
-                  {rounds[rounds.length - 1].matches.length === 2 ? 'Chung kết' : 
-                   rounds[rounds.length - 1].matches.length <= 4 ? 'Bán kết' : 'Tứ kết'}
+                  {getRoundName(Math.floor(rounds[rounds.length - 1].matchCount / 2))}
                 </Badge>
               </div>
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-foreground-muted text-sm text-center p-4 border border-dashed rounded-lg">
-                  Nhập kết quả vòng trước để mở vòng tiếp theo
+                  {t.quickTable.playoff.enterNextRound}
                 </div>
               </div>
             </div>
@@ -199,9 +207,10 @@ interface BracketMatchCardProps {
   player2: BracketPlayer | undefined;
   canEdit: boolean;
   onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
-  getGroupName: (player: BracketPlayer | undefined) => string;
+  getGroupName: (player: BracketPlayer | undefined) => string | null;
   formatPlayerName: (player: BracketPlayer | undefined) => string;
   isFinal: boolean;
+  t: ReturnType<typeof useI18n>['t'];
 }
 
 const BracketMatchCard = ({ 
@@ -212,7 +221,8 @@ const BracketMatchCard = ({
   onScoreUpdate, 
   getGroupName,
   formatPlayerName,
-  isFinal 
+  isFinal,
+  t
 }: BracketMatchCardProps) => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -237,11 +247,18 @@ const BracketMatchCard = ({
   const handleSubmit = useCallback(() => {
     const score1 = parseInt(localScore1) || 0;
     const score2 = parseInt(localScore2) || 0;
-    if ((score1 > 0 || score2 > 0) && score1 !== score2) {
+    
+    // Validate: no ties allowed
+    if (score1 === score2) {
+      toast.error(t.quickTable.playoff.tieNotAllowed);
+      return;
+    }
+    
+    if (score1 > 0 || score2 > 0) {
       onScoreUpdate(match.id, score1, score2);
       setIsEditing(false);
     }
-  }, [localScore1, localScore2, match.id, onScoreUpdate]);
+  }, [localScore1, localScore2, match.id, onScoreUpdate, t]);
 
   const handleCancel = useCallback(() => {
     setLocalScore1(match.score1?.toString() ?? '');
@@ -277,7 +294,7 @@ const BracketMatchCard = ({
         isLive && !isCompleted ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/30"
       )}>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-foreground-muted">Trận {match.playoff_match_number}</span>
+          <span className="text-xs text-foreground-muted">{t.quickTable.playoff.match} {match.playoff_match_number}</span>
           {isLive && !isCompleted && (
             <Badge variant="destructive" className="text-[10px] py-0 px-1 h-4 animate-pulse">
               <Radio className="w-2 h-2 mr-0.5" />
@@ -301,7 +318,7 @@ const BracketMatchCard = ({
                 variant={isLive ? "destructive" : "outline"}
                 className="h-6 px-2 text-xs ml-1"
                 onClick={handleOpenScoring}
-                title="Mở trang chấm điểm"
+                title={t.quickTable.playoff.openScoring}
               >
                 <Play className="w-3 h-3" />
               </Button>
@@ -314,7 +331,7 @@ const BracketMatchCard = ({
                     className="h-6 px-2 text-xs"
                     onClick={handleCancel}
                   >
-                    Hủy
+                    {t.common.cancel}
                   </Button>
                   <Button 
                     size="sm" 
@@ -322,7 +339,7 @@ const BracketMatchCard = ({
                     onClick={handleSubmit}
                   >
                     <Check className="w-3 h-3 mr-1" />
-                    Lưu
+                    {t.common.save}
                   </Button>
                 </div>
               ) : (
@@ -333,7 +350,7 @@ const BracketMatchCard = ({
                   onClick={handleStartEdit}
                 >
                   <Pencil className="w-3 h-3 mr-1" />
-                  {isCompleted ? 'Sửa' : 'Nhập'}
+                  {isCompleted ? t.quickTable.playoff.editScore : t.quickTable.playoff.inputScore}
                 </Button>
               )}
             </>
@@ -361,7 +378,7 @@ const BracketMatchCard = ({
             </div>
             {player1 && (
               <div className="flex items-center gap-1 text-xs text-foreground-muted">
-                {getGroupName(player1) && <span>Bảng {getGroupName(player1)}</span>}
+                {getGroupName(player1) && <span>{t.quickTable.playoff.group} {getGroupName(player1)}</span>}
                 {player1.is_wildcard && (
                   <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">WC</Badge>
                 )}
@@ -413,7 +430,7 @@ const BracketMatchCard = ({
             </div>
             {player2 && (
               <div className="flex items-center gap-1 text-xs text-foreground-muted">
-                {getGroupName(player2) && <span>Bảng {getGroupName(player2)}</span>}
+                {getGroupName(player2) && <span>{t.quickTable.playoff.group} {getGroupName(player2)}</span>}
                 {player2.is_wildcard && (
                   <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">WC</Badge>
                 )}

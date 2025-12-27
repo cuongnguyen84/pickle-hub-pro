@@ -419,6 +419,23 @@ export interface Translations {
     createBracket: string;
     needMinPlayers: string;
     approveSelected: string;
+    // Playoff bracket
+    playoff: {
+      noMatches: string;
+      champion: string;
+      match: string;
+      final: string;
+      semiFinal: string;
+      quarterFinal: string;
+      round16: string;
+      round: string;
+      group: string;
+      enterNextRound: string;
+      inputScore: string;
+      editScore: string;
+      openScoring: string;
+      tieNotAllowed: string;
+    };
   };
 }
 
@@ -843,5 +860,22 @@ export const vi: Translations = {
     createBracket: "Chia bảng",
     needMinPlayers: "Cần ít nhất 6 VĐV được duyệt để chia bảng. Hiện có {count}/6 VĐV.",
     approveSelected: "Duyệt {count} VĐV",
+    // Playoff bracket
+    playoff: {
+      noMatches: "Chưa có trận playoff",
+      champion: "Nhà vô địch",
+      match: "Trận",
+      final: "Chung kết",
+      semiFinal: "Bán kết",
+      quarterFinal: "Tứ kết",
+      round16: "Vòng 16",
+      round: "Vòng loại",
+      group: "Bảng",
+      enterNextRound: "Nhập kết quả vòng trước để mở vòng tiếp theo",
+      inputScore: "Nhập",
+      editScore: "Sửa",
+      openScoring: "Mở trang chấm điểm",
+      tieNotAllowed: "Không cho phép tỉ số hòa",
+    },
   },
 };
