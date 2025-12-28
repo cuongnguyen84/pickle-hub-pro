@@ -20,6 +20,66 @@ export const en: Translations = {
     noResults: "No results",
     comingSoon: "Coming soon",
   },
+  privacy: {
+    title: "Privacy Policy – The Pickle Hub",
+    intro: {
+      title: "Introduction",
+      description: "The Pickle Hub is a video, livestream and Pickleball tournament organization platform.",
+      commitment: "We respect our users' privacy and are committed to protecting personal data.",
+    },
+    dataCollection: {
+      title: "Information We Collect",
+      description: "We only collect data necessary to provide our services:",
+      items: {
+        email: "Email address",
+        displayName: "Display name / username",
+        avatar: "Profile picture (if signing in with Google)",
+        usage: "Usage data related to tournaments, brackets, videos and livestreams",
+      },
+    },
+    purpose: {
+      title: "How We Use Your Data",
+      items: {
+        auth: "User account authentication",
+        tournament: "Allow creation and management of tournaments",
+        display: "Display leaderboards and match results",
+        improve: "Improve user experience",
+      },
+    },
+    sharing: {
+      title: "Data Sharing",
+      description: "We do not sell or share personal data with third parties. We only share with:",
+      items: {
+        oauth: "Authentication providers (Google) for sign-in",
+        legal: "Legal authorities when required by law",
+      },
+    },
+    security: {
+      title: "Data Security",
+      items: {
+        storage: "Data is stored securely on cloud infrastructure",
+        measures: "Industry-standard security measures are applied",
+        access: "Data access is limited to essential personnel only",
+      },
+    },
+    rights: {
+      title: "Your Rights",
+      description: "You have the right to:",
+      items: {
+        view: "View your personal information",
+        edit: "Request correction or deletion of your account",
+        stop: "Stop using the service at any time",
+      },
+    },
+    contact: {
+      title: "Contact",
+      description: "If you have questions about this privacy policy, please contact:",
+    },
+    effective: {
+      text: "This policy is effective as of {date}.",
+      update: "This policy may be updated as the platform develops new features.",
+    },
+  },
   nav: {
     home: "Home",
     live: "Live",
