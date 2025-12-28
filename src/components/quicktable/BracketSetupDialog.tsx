@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Plus, ArrowRight, Shuffle, Users } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand } from 'lucide-react';
 import { toast } from 'sonner';
+import { ManualGroupAssignment } from './ManualGroupAssignment';
 
 interface PlayerInput {
   id: string;
@@ -28,6 +30,9 @@ interface BracketSetupDialogProps {
   }[];
 }
 
+type AssignmentMode = 'auto' | 'manual';
+type Step = 'input' | 'assignment';
+
 export function BracketSetupDialog({ 
   open, 
   onOpenChange, 
@@ -39,12 +44,14 @@ export function BracketSetupDialog({
   const { addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus, getTableByShareId } = useQuickTable();
   
   const [saving, setSaving] = useState(false);
+  const [assignmentMode, setAssignmentMode] = useState<AssignmentMode>('auto');
+  const [step, setStep] = useState<Step>('input');
   const [players, setPlayers] = useState<PlayerInput[]>(() => 
     approvedPlayers.map((p, idx) => ({
       id: `approved-${idx}`,
       name: p.name,
       team: p.team || '',
-      seed: '', // Leave empty for BTC to fill manually
+      seed: '',
     }))
   );
 
@@ -79,18 +86,29 @@ export function BracketSetupDialog({
     });
   };
 
-  const handleSubmit = async () => {
-    // Validate
-    const filledPlayers = players.filter(p => p.name.trim());
+  const filledPlayers = players.filter(p => p.name.trim());
+
+  // Handle proceeding to assignment step
+  const handleProceedToAssignment = () => {
     if (filledPlayers.length < 2) {
       toast.error('Cần ít nhất 2 người chơi');
       return;
     }
 
+    // For manual mode with round robin, go to assignment step
+    if (assignmentMode === 'manual' && table.format === 'round_robin' && table.group_count) {
+      setStep('assignment');
+    } else {
+      // Auto mode - submit directly
+      handleAutoSubmit();
+    }
+  };
+
+  // Auto assignment submit (original logic)
+  const handleAutoSubmit = async () => {
     setSaving(true);
 
     try {
-      // Add players to database
       const playerData = filledPlayers.map(p => ({
         name: p.name.trim(),
         team: p.team.trim() || undefined,
@@ -100,18 +118,15 @@ export function BracketSetupDialog({
       const createdPlayers = await addPlayers(table.id, playerData);
       if (createdPlayers.length === 0) throw new Error('Failed to add players');
 
-      // If round robin, create groups and assign players
       if (table.format === 'round_robin' && table.group_count) {
         const groups = await createGroups(table.id, table.group_count);
         if (groups.length === 0) throw new Error('Failed to create groups');
 
         await assignPlayersToGroups(createdPlayers, groups);
 
-        // Refresh players with group assignments
         const refreshed = await getTableByShareId(shareId);
         if (!refreshed) throw new Error('Failed to refresh data');
 
-        // Create matches for each group
         for (const group of groups) {
           const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
           if (groupPlayers.length >= 2) {
@@ -119,16 +134,13 @@ export function BracketSetupDialog({
           }
         }
 
-        // Update table status
         await updateTableStatus(table.id, 'group_stage');
       } else {
-        // Large playoff - will be handled differently
         await updateTableStatus(table.id, 'group_stage');
       }
 
       toast.success('Đã tạo bảng đấu thành công!');
       onOpenChange(false);
-      // Redirect to groups tab
       navigate(`/quick-tables/${shareId}?tab=groups`);
     } catch (error) {
       console.error('Error setting up table:', error);
@@ -137,6 +149,105 @@ export function BracketSetupDialog({
       setSaving(false);
     }
   };
+
+  // Manual assignment complete handler
+  const handleManualAssignmentComplete = async (groupAssignments: Map<number, PlayerInput[]>) => {
+    if (!table.group_count) return;
+
+    setSaving(true);
+
+    try {
+      const playerData = filledPlayers.map(p => ({
+        name: p.name.trim(),
+        team: p.team.trim() || undefined,
+        seed: p.seed ? parseInt(p.seed) : undefined,
+      }));
+
+      const createdPlayers = await addPlayers(table.id, playerData);
+      if (createdPlayers.length === 0) throw new Error('Failed to add players');
+
+      const playerMap = new Map<string, typeof createdPlayers[0]>();
+      filledPlayers.forEach((inputPlayer, index) => {
+        playerMap.set(inputPlayer.id, createdPlayers[index]);
+      });
+
+      const groups = await createGroups(table.id, table.group_count);
+      if (groups.length === 0) throw new Error('Failed to create groups');
+
+      for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+        const group = groups[groupIndex];
+        const assignedInputPlayers = groupAssignments.get(groupIndex) || [];
+        
+        const playersToAssign = assignedInputPlayers
+          .map(ip => playerMap.get(ip.id))
+          .filter(Boolean) as typeof createdPlayers;
+
+        if (playersToAssign.length > 0) {
+          await assignPlayersToGroups(playersToAssign, [group]);
+        }
+      }
+
+      const refreshed = await getTableByShareId(shareId);
+      if (!refreshed) throw new Error('Failed to refresh data');
+
+      for (const group of groups) {
+        const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
+        if (groupPlayers.length >= 2) {
+          await createGroupMatches(table.id, group.id, groupPlayers.map(p => p.id));
+        }
+      }
+
+      await updateTableStatus(table.id, 'group_stage');
+
+      toast.success('Đã chia bảng thủ công thành công!');
+      onOpenChange(false);
+      navigate(`/quick-tables/${shareId}?tab=groups`);
+    } catch (error) {
+      console.error('Error setting up table with manual assignment:', error);
+      toast.error('Có lỗi xảy ra, vui lòng thử lại');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Render manual assignment step
+  if (step === 'assignment' && table.group_count) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Hand className="w-5 h-5" />
+              Chia bảng thủ công - {table.name}
+            </DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline">
+                  {table.format === 'round_robin' ? 'Round Robin' : 'Playoff đông người'}
+                </Badge>
+                <Badge variant="outline">{table.group_count} bảng</Badge>
+                <span>•</span>
+                <span>{filledPlayers.length} VĐV</span>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <ManualGroupAssignment
+            players={filledPlayers}
+            groupCount={table.group_count}
+            onComplete={handleManualAssignmentComplete}
+            onCancel={() => setStep('input')}
+          />
+          
+          {saving && (
+            <div className="text-center text-muted-foreground">
+              Đang xử lý...
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -166,7 +277,7 @@ export function BracketSetupDialog({
             </Button>
           </div>
 
-          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+          <div className="space-y-2 max-h-[250px] overflow-y-auto">
             {players.map((player, index) => (
               <div key={player.id} className="flex items-center gap-2">
                 <span className="w-6 text-sm text-muted-foreground text-center flex-shrink-0">
@@ -210,6 +321,57 @@ export function BracketSetupDialog({
             Thêm VĐV
           </Button>
 
+          {/* Assignment Mode Selection - Only for round robin */}
+          {table.format === 'round_robin' && table.group_count && (
+            <div className="pt-3 border-t border-border">
+              <Label className="text-sm font-medium mb-3 block">Phương thức chia bảng</Label>
+              <RadioGroup
+                value={assignmentMode}
+                onValueChange={(value) => setAssignmentMode(value as AssignmentMode)}
+                className="grid grid-cols-2 gap-3"
+              >
+                <div className="relative">
+                  <RadioGroupItem
+                    value="auto"
+                    id="dialog-mode-auto"
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor="dialog-mode-auto"
+                    className="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/50"
+                  >
+                    <Wand2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm">Tự động</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Chia đều, tránh cùng team
+                      </p>
+                    </div>
+                  </Label>
+                </div>
+                <div className="relative">
+                  <RadioGroupItem
+                    value="manual"
+                    id="dialog-mode-manual"
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor="dialog-mode-manual"
+                    className="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/50"
+                  >
+                    <Hand className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm">Thủ công</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Tự chọn VĐV vào từng bảng
+                      </p>
+                    </div>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}
+
           <div className="p-3 rounded-lg bg-muted/50 text-sm">
             <div className="flex items-start gap-2">
               <Users className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
@@ -218,7 +380,12 @@ export function BracketSetupDialog({
                 <ul className="text-muted-foreground mt-1 space-y-1">
                   <li>• Nhập Team để tránh cùng team vào cùng bảng</li>
                   <li>• Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng</li>
-                  <li>• Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau</li>
+                  {assignmentMode === 'auto' && (
+                    <li>• Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau</li>
+                  )}
+                  {assignmentMode === 'manual' && (
+                    <li>• Bạn sẽ tự phân VĐV vào từng bảng ở bước tiếp theo</li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -230,10 +397,14 @@ export function BracketSetupDialog({
             Hủy
           </Button>
           <Button
-            onClick={handleSubmit}
-            disabled={saving || players.filter(p => p.name.trim()).length < 2}
+            onClick={handleProceedToAssignment}
+            disabled={saving || filledPlayers.length < 2}
           >
-            {saving ? 'Đang xử lý...' : 'Tạo bảng đấu'}
+            {saving 
+              ? 'Đang xử lý...' 
+              : assignmentMode === 'manual' && table.format === 'round_robin' && table.group_count 
+                ? 'Tiếp tục chia bảng' 
+                : 'Tạo bảng đấu'}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </DialogFooter>
