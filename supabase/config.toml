@@ -2,3 +2,6 @@ project_id = "nijiwypubmkvmjuafmgp"
 
 [functions.mux-create-livestream]
 verify_jwt = true
+
+[functions.send-auth-email]
+verify_jwt = false
