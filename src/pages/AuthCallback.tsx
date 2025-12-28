@@ -1,0 +1,54 @@
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+
+/**
+ * Auth Callback Page
+ * 
+ * Handles OAuth callback from providers (Google, etc.)
+ * This page processes the auth tokens and redirects to the appropriate page.
+ */
+const AuthCallback = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      try {
+        // Get the session from URL hash (Supabase puts tokens there)
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error("Auth callback error:", error);
+          navigate("/login?error=auth_failed", { replace: true });
+          return;
+        }
+
+        if (session) {
+          // Successfully authenticated
+          // Get redirect path from query params or default to home
+          const redirectTo = searchParams.get("redirect") || "/";
+          navigate(redirectTo, { replace: true });
+        } else {
+          // No session, redirect to login
+          navigate("/login", { replace: true });
+        }
+      } catch (err) {
+        console.error("Auth callback exception:", err);
+        navigate("/login?error=auth_failed", { replace: true });
+      }
+    };
+
+    handleAuthCallback();
+  }, [navigate, searchParams]);
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <p className="text-foreground-muted">Đang xác thực...</p>
+    </div>
+  );
+};
+
+export default AuthCallback;

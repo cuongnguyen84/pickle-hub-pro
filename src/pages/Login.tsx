@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getOAuthRedirectUrl, getEmailRedirectUrl, AUTH_CALLBACK_ROUTE } from "@/lib/auth-config";
 
 const Login = () => {
   const { t } = useI18n();
@@ -47,7 +48,7 @@ const Login = () => {
         type: 'signup',
         email: email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: getEmailRedirectUrl(),
         }
       });
       if (error) {
@@ -70,10 +71,12 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
+      // Use centralized auth config for OAuth redirect
+      // After custom domain is set up, Google consent screen will show thepicklehub.net
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${redirectUrl || '/'}`,
+          redirectTo: getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE),
         }
       });
       if (error) {
