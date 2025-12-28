@@ -25,8 +25,9 @@ const QuickTables = () => {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { createTable, getUserTables, loading } = useQuickTable();
+  const { createTable, getUserTables, getUserQuickTableCount, loading } = useQuickTable();
   const { tables: refereeTables, loading: refereeTablesLoading } = useRefereeTables();
+  const [quotaCount, setQuotaCount] = useState<number>(0);
 
   const [step, setStep] = useState<Step>("count");
   const [playerCount, setPlayerCount] = useState<number>(0);
@@ -58,18 +59,22 @@ const QuickTables = () => {
   const refereeCompletedTables = refereeTables.filter(t => t.status === 'completed');
 
   useEffect(() => {
-    const loadUserTables = async () => {
+    const loadUserData = async () => {
       if (!user) {
         setTablesLoading(false);
         return;
       }
       setTablesLoading(true);
-      const tables = await getUserTables();
+      const [tables, count] = await Promise.all([
+        getUserTables(),
+        getUserQuickTableCount()
+      ]);
       setUserTables(tables);
+      setQuotaCount(count);
       setTablesLoading(false);
     };
-    loadUserTables();
-  }, [user, getUserTables]);
+    loadUserData();
+  }, [user, getUserTables, getUserQuickTableCount]);
 
   const handlePlayerCountSubmit = () => {
     if (playerCount < 2) return;
@@ -305,10 +310,29 @@ const QuickTables = () => {
                   )}
                 </div>
 
-                <Button className="w-full" onClick={handlePlayerCountSubmit} disabled={playerCount < 2}>
-                  Tiếp tục
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                <Button className="w-full" onClick={handlePlayerCountSubmit} disabled={playerCount < 2 || quotaCount >= 3}>
+                  {quotaCount >= 3 ? (
+                    <span className="text-destructive">{t.quickTable.quota.limitReached}</span>
+                  ) : (
+                    <>
+                      {t.quickTable.continue}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
                 </Button>
+                {quotaCount > 0 && (
+                  <p className={cn("text-sm text-center mt-2", quotaCount >= 3 ? "text-destructive" : "text-foreground-muted")}>
+                    {t.quickTable.quota.usage.replace("{count}", String(quotaCount))}
+                  </p>
+                )}
+                {quotaCount >= 3 && (
+                  <p className="text-xs text-center text-foreground-muted mt-1">
+                    {t.quickTable.quota.limitReachedDesc}{" "}
+                    <a href="mailto:tapickleballvn@gmail.com" className="text-primary hover:underline">
+                      {t.quickTable.quota.contactUs}
+                    </a>
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}

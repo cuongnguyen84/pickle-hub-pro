@@ -50,6 +50,14 @@ export const en: Translations = {
     invalidCredentials: "Invalid email or password",
     accessDenied: "You don't have permission to access this page",
     loginRequired: "Please log in to continue",
+    continueWithGoogle: "Continue with Google",
+    emailNotVerified: "Email not verified",
+    emailNotVerifiedDesc: "Please check your email to verify your account before signing in.",
+    resendVerification: "Resend verification email",
+    verificationSent: "Verification email sent",
+    verificationSentDesc: "Please check your inbox (and spam folder) to verify your account.",
+    emailAlreadyUsed: "Email already in use",
+    emailAlreadyUsedDesc: "Please sign in or use a different email.",
   },
   home: {
     hero: {
@@ -437,6 +445,13 @@ export const en: Translations = {
       editScore: "Edit",
       openScoring: "Open scoring page",
       tieNotAllowed: "Tie scores not allowed",
+    },
+    // Quota / soft launch
+    quota: {
+      usage: "You have created {count}/3 tournaments",
+      limitReached: "Soft launch limit reached",
+      limitReachedDesc: "Soft launch limit: each account can create up to 3 tournaments.",
+      contactUs: "Contact us",
     },
   },
 };

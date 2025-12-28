@@ -344,6 +344,23 @@ export function useQuickTable() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
+  // Get user's quick table count for quota display
+  const getUserQuickTableCount = useCallback(async (): Promise<number> => {
+    if (!user) return 0;
+    
+    try {
+      const { data, error } = await supabase.rpc('get_user_quick_table_count', {
+        _user_id: user.id
+      });
+      
+      if (error) throw error;
+      return data || 0;
+    } catch (error) {
+      console.error('Error getting user quick table count:', error);
+      return 0;
+    }
+  }, [user]);
+
   const createTable = useCallback(async (
     name: string,
     playerCount: number,
@@ -365,28 +382,37 @@ export function useQuickTable() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('quick_tables')
-        .insert({
-          name,
-          player_count: playerCount,
-          format,
-          group_count: groupCount,
-          creator_user_id: user.id,
-          requires_registration: registrationOptions?.requires_registration || false,
-          requires_skill_level: registrationOptions?.requires_skill_level || false,
-          min_skill_level: registrationOptions?.min_skill_level || null,
-          max_skill_level: registrationOptions?.max_skill_level || null,
-          auto_approve_registrations: registrationOptions?.auto_approve_registrations || false,
-          registration_message: registrationOptions?.registration_message || null,
-        })
-        .select()
-        .single();
+      // Use RPC with quota enforcement
+      const { data, error } = await supabase.rpc('create_quick_table_with_quota', {
+        _name: name,
+        _player_count: playerCount,
+        _format: format,
+        _group_count: groupCount || null,
+        _requires_registration: registrationOptions?.requires_registration || false,
+        _requires_skill_level: registrationOptions?.requires_skill_level || false,
+        _auto_approve_registrations: registrationOptions?.auto_approve_registrations || false,
+        _registration_message: registrationOptions?.registration_message || null,
+      });
 
       if (error) throw error;
       
+      // Parse RPC response
+      const result = data as { success: boolean; error?: string; table?: unknown; count?: number };
+      
+      if (!result.success) {
+        if (result.error === 'LIMIT_REACHED') {
+          toast.error('Đã đạt giới hạn soft launch: mỗi tài khoản chỉ được tạo tối đa 3 giải.');
+          return null;
+        }
+        if (result.error === 'AUTH_REQUIRED') {
+          toast.error('Vui lòng đăng nhập để tạo bảng đấu');
+          return null;
+        }
+        throw new Error(result.error || 'Unknown error');
+      }
+      
       // Cast to our type
-      return data as unknown as QuickTable;
+      return result.table as QuickTable;
     } catch (error) {
       console.error('Error creating table:', error);
       toast.error('Không thể tạo bảng đấu');
@@ -1194,6 +1220,7 @@ export function useQuickTable() {
     createTable,
     getTableByShareId,
     getUserTables,
+    getUserQuickTableCount,
     addPlayers,
     createGroups,
     assignPlayersToGroups,

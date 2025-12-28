@@ -1001,6 +1001,7 @@ export type Database = {
       }
     }
     Functions: {
+      can_create_quick_table: { Args: { _user_id: string }; Returns: boolean }
       can_edit_quick_table_scores: {
         Args: { _table_id: string; _user_id: string }
         Returns: boolean
@@ -1012,6 +1013,19 @@ export type Database = {
       can_send_chat_message: {
         Args: { _livestream_id: string; _user_id: string }
         Returns: boolean
+      }
+      create_quick_table_with_quota: {
+        Args: {
+          _auto_approve_registrations?: boolean
+          _format: Database["public"]["Enums"]["quick_table_format"]
+          _group_count?: number
+          _name: string
+          _player_count: number
+          _registration_message?: string
+          _requires_registration?: boolean
+          _requires_skill_level?: boolean
+        }
+        Returns: Json
       }
       get_org_analytics_summary: {
         Args: { _days?: number; _org_id: string }
@@ -1030,6 +1044,10 @@ export type Database = {
         Returns: Json
       }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
+      get_user_quick_table_count: {
+        Args: { _user_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
