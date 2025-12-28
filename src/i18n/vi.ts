@@ -48,6 +48,14 @@ export interface Translations {
     invalidCredentials: string;
     accessDenied: string;
     loginRequired: string;
+    continueWithGoogle: string;
+    emailNotVerified: string;
+    emailNotVerifiedDesc: string;
+    resendVerification: string;
+    verificationSent: string;
+    verificationSentDesc: string;
+    emailAlreadyUsed: string;
+    emailAlreadyUsedDesc: string;
   };
   home: {
     hero: {
@@ -436,6 +444,13 @@ export interface Translations {
       openScoring: string;
       tieNotAllowed: string;
     };
+    // Quota / soft launch
+    quota: {
+      usage: string;
+      limitReached: string;
+      limitReachedDesc: string;
+      contactUs: string;
+    };
   };
 }
 
@@ -489,6 +504,14 @@ export const vi: Translations = {
     invalidCredentials: "Email hoặc mật khẩu không đúng",
     accessDenied: "Bạn không có quyền truy cập trang này",
     loginRequired: "Vui lòng đăng nhập để tiếp tục",
+    continueWithGoogle: "Tiếp tục với Google",
+    emailNotVerified: "Email chưa được xác thực",
+    emailNotVerifiedDesc: "Vui lòng kiểm tra email để xác thực tài khoản trước khi đăng nhập.",
+    resendVerification: "Gửi lại email xác thực",
+    verificationSent: "Đã gửi email xác thực",
+    verificationSentDesc: "Vui lòng kiểm tra hộp thư đến (và thư rác) để xác thực tài khoản.",
+    emailAlreadyUsed: "Email đã được sử dụng",
+    emailAlreadyUsedDesc: "Vui lòng đăng nhập hoặc sử dụng email khác.",
   },
   home: {
     hero: {
@@ -876,6 +899,13 @@ export const vi: Translations = {
       editScore: "Sửa",
       openScoring: "Mở trang chấm điểm",
       tieNotAllowed: "Không cho phép tỉ số hòa",
+    },
+    // Quota / soft launch
+    quota: {
+      usage: "Bạn đã tạo {count}/3 giải",
+      limitReached: "Đã đạt giới hạn soft launch",
+      limitReachedDesc: "Giai đoạn soft launch: mỗi tài khoản chỉ được tạo tối đa 3 giải.",
+      contactUs: "Liên hệ",
     },
   },
 };
