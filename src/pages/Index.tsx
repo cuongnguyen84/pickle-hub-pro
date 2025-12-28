@@ -162,14 +162,14 @@ const Index = () => {
         ) : null}
       </section>
 
-      {/* Footer */}
+      {/* Footer - Using plain <a> tag for Google OAuth Branding Verification */}
       <footer className="container-wide py-8 border-t border-border">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-foreground-muted">
           <p>© 2024 The Pickle Hub</p>
           <div className="flex items-center gap-4">
-            <Link to="/privacy" className="hover:text-foreground transition-colors">
-              {t.privacy.title.replace(" – The Pickle Hub", "")}
-            </Link>
+            <a href="/privacy" className="hover:text-foreground transition-colors">
+              Privacy Policy
+            </a>
             <a href="mailto:tapickleballvn@gmail.com" className="hover:text-foreground transition-colors">
               tapickleballvn@gmail.com
             </a>
