@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
-import { useQuickTable, type QuickTablePlayer, type QuickTableGroup, type QuickTable } from '@/hooks/useQuickTable';
+import { useQuickTable, type QuickTable, distributePlayersToGroups } from '@/hooks/useQuickTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Plus, ArrowRight, Shuffle, Users } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand } from 'lucide-react';
 import { toast } from 'sonner';
+import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
 
 interface PlayerInput {
   id: string;
@@ -16,15 +19,20 @@ interface PlayerInput {
   seed: string;
 }
 
+type AssignmentMode = 'auto' | 'manual';
+type Step = 'input' | 'assignment';
+
 const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
-  const { getTableByShareId, addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus, isOwner } = useQuickTable();
+  const { getTableByShareId, addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [players, setPlayers] = useState<PlayerInput[]>([]);
+  const [assignmentMode, setAssignmentMode] = useState<AssignmentMode>('auto');
+  const [step, setStep] = useState<Step>('input');
 
   useEffect(() => {
     const loadTable = async () => {
@@ -98,15 +106,27 @@ const QuickTableSetup = () => {
     });
   };
 
-  const handleSubmit = async () => {
-    if (!table) return;
+  const filledPlayers = players.filter(p => p.name.trim());
 
-    // Validate
-    const filledPlayers = players.filter(p => p.name.trim());
+  // Handle proceeding to assignment step
+  const handleProceedToAssignment = () => {
     if (filledPlayers.length < 2) {
       toast.error('Cần ít nhất 2 người chơi');
       return;
     }
+
+    // For manual mode with round robin, go to assignment step
+    if (assignmentMode === 'manual' && table?.format === 'round_robin' && table.group_count) {
+      setStep('assignment');
+    } else {
+      // Auto mode - submit directly
+      handleAutoSubmit();
+    }
+  };
+
+  // Auto assignment submit (original logic)
+  const handleAutoSubmit = async () => {
+    if (!table) return;
 
     setSaving(true);
 
@@ -121,7 +141,7 @@ const QuickTableSetup = () => {
       const createdPlayers = await addPlayers(table.id, playerData);
       if (createdPlayers.length === 0) throw new Error('Failed to add players');
 
-      // If round robin, create groups and assign players
+      // If round robin, create groups and assign players automatically
       if (table.format === 'round_robin' && table.group_count) {
         const groups = await createGroups(table.id, table.group_count);
         if (groups.length === 0) throw new Error('Failed to create groups');
@@ -157,6 +177,74 @@ const QuickTableSetup = () => {
     }
   };
 
+  // Manual assignment complete handler
+  const handleManualAssignmentComplete = async (groupAssignments: Map<number, PlayerInput[]>) => {
+    if (!table || !table.group_count) return;
+
+    setSaving(true);
+
+    try {
+      // Add all players to database first
+      const playerData = filledPlayers.map(p => ({
+        name: p.name.trim(),
+        team: p.team.trim() || undefined,
+        seed: p.seed ? parseInt(p.seed) : undefined,
+      }));
+
+      const createdPlayers = await addPlayers(table.id, playerData);
+      if (createdPlayers.length === 0) throw new Error('Failed to add players');
+
+      // Create a map from input player id to created player
+      const playerMap = new Map<string, typeof createdPlayers[0]>();
+      filledPlayers.forEach((inputPlayer, index) => {
+        playerMap.set(inputPlayer.id, createdPlayers[index]);
+      });
+
+      // Create groups
+      const groups = await createGroups(table.id, table.group_count);
+      if (groups.length === 0) throw new Error('Failed to create groups');
+
+      // Manually assign players to groups based on user selection
+      for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+        const group = groups[groupIndex];
+        const assignedInputPlayers = groupAssignments.get(groupIndex) || [];
+        
+        // Get the created player IDs for this group
+        const playersToAssign = assignedInputPlayers
+          .map(ip => playerMap.get(ip.id))
+          .filter(Boolean) as typeof createdPlayers;
+
+        if (playersToAssign.length > 0) {
+          // Assign these specific players to this group
+          await assignPlayersToGroups(playersToAssign, [group]);
+        }
+      }
+
+      // Refresh players with group assignments
+      const refreshed = await getTableByShareId(shareId!);
+      if (!refreshed) throw new Error('Failed to refresh data');
+
+      // Create matches for each group
+      for (const group of groups) {
+        const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
+        if (groupPlayers.length >= 2) {
+          await createGroupMatches(table.id, group.id, groupPlayers.map(p => p.id));
+        }
+      }
+
+      // Update table status
+      await updateTableStatus(table.id, 'group_stage');
+
+      toast.success('Đã chia bảng thủ công thành công!');
+      navigate(`/quick-tables/${shareId}`);
+    } catch (error) {
+      console.error('Error setting up table with manual assignment:', error);
+      toast.error('Có lỗi xảy ra, vui lòng thử lại');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -176,6 +264,57 @@ const QuickTableSetup = () => {
           <div className="text-center">
             <h1 className="text-xl font-bold mb-2">Không tìm thấy bảng đấu</h1>
             <p className="text-foreground-secondary">Bảng đấu không tồn tại hoặc đã bị xóa.</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // Show manual assignment UI
+  if (step === 'assignment' && table.group_count) {
+    return (
+      <MainLayout>
+        <div className="container-wide py-8">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold mb-1">{table.name}</h1>
+              <div className="flex items-center gap-2 text-foreground-secondary">
+                <Badge variant="outline">
+                  {table.format === 'round_robin' ? 'Round Robin' : 'Playoff đông người'}
+                </Badge>
+                <Badge variant="outline">{table.group_count} bảng</Badge>
+                <span>•</span>
+                <span>{filledPlayers.length} VĐV</span>
+                <span>•</span>
+                <Badge variant="secondary">Chia bảng thủ công</Badge>
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Hand className="w-5 h-5" />
+                  Chia bảng thủ công
+                </CardTitle>
+                <CardDescription>
+                  Phân VĐV vào các bảng theo ý muốn của bạn
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ManualGroupAssignment
+                  players={filledPlayers}
+                  groupCount={table.group_count}
+                  onComplete={handleManualAssignmentComplete}
+                  onCancel={() => setStep('input')}
+                />
+                {saving && (
+                  <div className="mt-4 text-center text-muted-foreground">
+                    Đang xử lý...
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </MainLayout>
@@ -264,6 +403,57 @@ const QuickTableSetup = () => {
                 </Button>
               </div>
 
+              {/* Assignment Mode Selection - Only for round robin */}
+              {table.format === 'round_robin' && table.group_count && (
+                <div className="mt-4 pt-4 border-t border-border-subtle">
+                  <Label className="text-sm font-medium mb-3 block">Phương thức chia bảng</Label>
+                  <RadioGroup
+                    value={assignmentMode}
+                    onValueChange={(value) => setAssignmentMode(value as AssignmentMode)}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                  >
+                    <div className="relative">
+                      <RadioGroupItem
+                        value="auto"
+                        id="mode-auto"
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor="mode-auto"
+                        className="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/50"
+                      >
+                        <Wand2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm">Tự động</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Hệ thống chia đều, tránh cùng team, rải seed
+                          </p>
+                        </div>
+                      </Label>
+                    </div>
+                    <div className="relative">
+                      <RadioGroupItem
+                        value="manual"
+                        id="mode-manual"
+                        className="peer sr-only"
+                      />
+                      <Label
+                        htmlFor="mode-manual"
+                        className="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/50"
+                      >
+                        <Hand className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm">Thủ công</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Tự chọn VĐV vào từng bảng
+                          </p>
+                        </div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+
               <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm">
                 <div className="flex items-start gap-2">
                   <Users className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
@@ -272,7 +462,12 @@ const QuickTableSetup = () => {
                     <ul className="text-foreground-secondary mt-1 space-y-1">
                       <li>• Nhập Team để tránh cùng team vào cùng bảng</li>
                       <li>• Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng</li>
-                      <li>• Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau</li>
+                      {assignmentMode === 'auto' && (
+                        <li>• Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau</li>
+                      )}
+                      {assignmentMode === 'manual' && (
+                        <li>• Bạn sẽ tự phân VĐV vào từng bảng ở bước tiếp theo</li>
+                      )}
                     </ul>
                   </div>
                 </div>
@@ -281,10 +476,10 @@ const QuickTableSetup = () => {
               <div className="mt-6">
                 <Button
                   className="w-full"
-                  onClick={handleSubmit}
-                  disabled={saving || players.filter(p => p.name.trim()).length < 2}
+                  onClick={handleProceedToAssignment}
+                  disabled={saving || filledPlayers.length < 2}
                 >
-                  {saving ? 'Đang xử lý...' : 'Tạo bảng đấu và chia bảng'}
+                  {saving ? 'Đang xử lý...' : assignmentMode === 'manual' && table.format === 'round_robin' && table.group_count ? 'Tiếp tục chia bảng' : 'Tạo bảng đấu và chia bảng'}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>

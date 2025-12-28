@@ -4,4 +4,5 @@ export { default as RegistrationManager } from './RegistrationManager';
 export { default as OpenRegistrationSection } from './OpenRegistrationSection';
 export { default as ApprovedPlayersList } from './ApprovedPlayersList';
 export { BracketSetupDialog } from './BracketSetupDialog';
+export { ManualGroupAssignment } from './ManualGroupAssignment';
 export type { Referee } from '@/hooks/useRefereeManagement';
