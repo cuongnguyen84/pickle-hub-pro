@@ -11,6 +11,7 @@ import Videos from "./pages/Videos";
 import Tournaments from "./pages/Tournaments";
 import TournamentDetail from "./pages/TournamentDetail";
 import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import WatchVideo from "./pages/WatchVideo";
 import WatchLive from "./pages/WatchLive";
 import Account from "./pages/Account";
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="/tournament/:slug" element={<TournamentDetail />} />
               <Route path="/org/:slug" element={<OrganizationDetail />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/account" element={<Account />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/search" element={<Search />} />
