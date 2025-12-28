@@ -18,6 +18,66 @@ export interface Translations {
     noResults: string;
     comingSoon: string;
   };
+  privacy: {
+    title: string;
+    intro: {
+      title: string;
+      description: string;
+      commitment: string;
+    };
+    dataCollection: {
+      title: string;
+      description: string;
+      items: {
+        email: string;
+        displayName: string;
+        avatar: string;
+        usage: string;
+      };
+    };
+    purpose: {
+      title: string;
+      items: {
+        auth: string;
+        tournament: string;
+        display: string;
+        improve: string;
+      };
+    };
+    sharing: {
+      title: string;
+      description: string;
+      items: {
+        oauth: string;
+        legal: string;
+      };
+    };
+    security: {
+      title: string;
+      items: {
+        storage: string;
+        measures: string;
+        access: string;
+      };
+    };
+    rights: {
+      title: string;
+      description: string;
+      items: {
+        view: string;
+        edit: string;
+        stop: string;
+      };
+    };
+    contact: {
+      title: string;
+      description: string;
+    };
+    effective: {
+      text: string;
+      update: string;
+    };
+  };
   nav: {
     home: string;
     live: string;
@@ -473,6 +533,66 @@ export const vi: Translations = {
     copied: "Đã sao chép!",
     noResults: "Không có kết quả",
     comingSoon: "Sắp ra mắt",
+  },
+  privacy: {
+    title: "Chính sách bảo mật – The Pickle Hub",
+    intro: {
+      title: "Giới thiệu",
+      description: "The Pickle Hub là nền tảng video, livestream và công cụ tổ chức giải đấu Pickleball.",
+      commitment: "Chúng tôi tôn trọng quyền riêng tư của người dùng và cam kết bảo vệ dữ liệu cá nhân.",
+    },
+    dataCollection: {
+      title: "Thông tin chúng tôi thu thập",
+      description: "Chúng tôi chỉ thu thập các dữ liệu cần thiết để cung cấp dịch vụ:",
+      items: {
+        email: "Email",
+        displayName: "Tên hiển thị / username",
+        avatar: "Ảnh đại diện (nếu đăng nhập bằng Google)",
+        usage: "Dữ liệu sử dụng liên quan đến giải đấu, chia bảng, video và livestream",
+      },
+    },
+    purpose: {
+      title: "Mục đích sử dụng dữ liệu",
+      items: {
+        auth: "Xác thực tài khoản người dùng",
+        tournament: "Cho phép tạo và quản lý giải đấu",
+        display: "Hiển thị bảng xếp hạng, kết quả thi đấu",
+        improve: "Cải thiện trải nghiệm người dùng",
+      },
+    },
+    sharing: {
+      title: "Chia sẻ dữ liệu",
+      description: "Chúng tôi không bán hoặc chia sẻ dữ liệu cá nhân cho bên thứ ba. Chỉ chia sẻ với:",
+      items: {
+        oauth: "Nhà cung cấp xác thực (Google) để đăng nhập",
+        legal: "Cơ quan pháp luật khi có yêu cầu hợp lệ",
+      },
+    },
+    security: {
+      title: "Bảo mật dữ liệu",
+      items: {
+        storage: "Dữ liệu được lưu trữ an toàn trên hạ tầng đám mây",
+        measures: "Áp dụng các biện pháp bảo mật tiêu chuẩn ngành",
+        access: "Giới hạn quyền truy cập dữ liệu cho nhân viên cần thiết",
+      },
+    },
+    rights: {
+      title: "Quyền của người dùng",
+      description: "Bạn có quyền:",
+      items: {
+        view: "Xem thông tin cá nhân của mình",
+        edit: "Yêu cầu chỉnh sửa hoặc xoá tài khoản",
+        stop: "Ngừng sử dụng dịch vụ bất kỳ lúc nào",
+      },
+    },
+    contact: {
+      title: "Liên hệ",
+      description: "Nếu bạn có câu hỏi về chính sách bảo mật, vui lòng liên hệ:",
+    },
+    effective: {
+      text: "Chính sách này có hiệu lực từ ngày {date}.",
+      update: "Chính sách có thể được cập nhật khi nền tảng phát triển thêm tính năng mới.",
+    },
   },
   nav: {
     home: "Trang chủ",

@@ -321,6 +321,13 @@ const Login = () => {
               {isLogin ? t.nav.signup : t.nav.login}
             </button>
           </p>
+
+          {/* Privacy Policy Link */}
+          <p className="text-center text-xs text-foreground-muted pt-4">
+            <Link to="/privacy" className="hover:underline">
+              {t.privacy.title.replace(" – The Pickle Hub", "")}
+            </Link>
+          </p>
         </div>
       </main>
     </div>

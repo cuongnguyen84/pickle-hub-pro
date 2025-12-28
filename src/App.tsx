@@ -22,6 +22,7 @@ import QuickTables from "./pages/QuickTables";
 import QuickTableSetup from "./pages/QuickTableSetup";
 import QuickTableView from "./pages/QuickTableView";
 import MatchScoring from "./pages/MatchScoring";
+import Privacy from "./pages/Privacy";
 import { EmbedLive, EmbedVideo } from "./pages/embed";
 import {
   AdminOverview,
@@ -87,6 +88,8 @@ const App = () => (
               <Route path="/creator/livestreams/new" element={<CreatorLivestreamForm />} />
               <Route path="/creator/livestreams/:id/edit" element={<CreatorLivestreamForm />} />
               <Route path="/creator/settings" element={<CreatorSettings />} />
+              {/* Public pages */}
+              <Route path="/privacy" element={<Privacy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
