@@ -5,4 +5,6 @@ export { default as OpenRegistrationSection } from './OpenRegistrationSection';
 export { default as ApprovedPlayersList } from './ApprovedPlayersList';
 export { BracketSetupDialog } from './BracketSetupDialog';
 export { ManualGroupAssignment } from './ManualGroupAssignment';
+export { CourtTimeSettings } from './CourtTimeSettings';
+export { default as EditCourtsDialog } from './EditCourtsDialog';
 export type { Referee } from '@/hooks/useRefereeManagement';
