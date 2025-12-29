@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand } from 'lucide-react';
 import { toast } from 'sonner';
 import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
+import CourtTimeSettings from '@/components/quicktable/CourtTimeSettings';
+import { parseCourtsInput, assignCourtsToMatches, calculateMatchTimes } from '@/lib/round-robin';
 
 interface PlayerInput {
   id: string;
@@ -25,7 +27,7 @@ type Step = 'input' | 'assignment';
 const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
-  const { getTableByShareId, addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus } = useQuickTable();
+  const { getTableByShareId, addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus, updateTableCourtSettings, reassignCourtsAndTimes } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,10 @@ const QuickTableSetup = () => {
   const [players, setPlayers] = useState<PlayerInput[]>([]);
   const [assignmentMode, setAssignmentMode] = useState<AssignmentMode>('auto');
   const [step, setStep] = useState<Step>('input');
+  
+  // Court and time settings
+  const [courts, setCourts] = useState('');
+  const [startTime, setStartTime] = useState('');
 
   useEffect(() => {
     const loadTable = async () => {
@@ -141,6 +147,19 @@ const QuickTableSetup = () => {
       const createdPlayers = await addPlayers(table.id, playerData);
       if (createdPlayers.length === 0) throw new Error('Failed to add players');
 
+      // Parse courts
+      const parsedCourts = parseCourtsInput(courts);
+      const hasCourtSettings = parsedCourts.length > 0;
+
+      // Save court settings to table
+      if (hasCourtSettings || startTime) {
+        await updateTableCourtSettings(
+          table.id, 
+          parsedCourts.map(String), 
+          startTime || null
+        );
+      }
+
       // If round robin, create groups and assign players automatically
       if (table.format === 'round_robin' && table.group_count) {
         const groups = await createGroups(table.id, table.group_count);
@@ -152,11 +171,26 @@ const QuickTableSetup = () => {
         const refreshed = await getTableByShareId(shareId!);
         if (!refreshed) throw new Error('Failed to refresh data');
 
-        // Create matches for each group
-        for (const group of groups) {
+        // Create matches for each group (using Circle Method)
+        for (let i = 0; i < groups.length; i++) {
+          const group = groups[i];
           const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
           if (groupPlayers.length >= 2) {
-            await createGroupMatches(table.id, group.id, groupPlayers.map(p => p.id));
+            await createGroupMatches(table.id, group.id, groupPlayers.map(p => p.id), i);
+          }
+        }
+
+        // Assign courts and times if configured
+        if (hasCourtSettings) {
+          const refreshedAgain = await getTableByShareId(shareId!);
+          if (refreshedAgain) {
+            await reassignCourtsAndTimes(
+              table.id,
+              parsedCourts,
+              startTime || null,
+              groups,
+              refreshedAgain.matches
+            );
           }
         }
 
@@ -452,6 +486,16 @@ const QuickTableSetup = () => {
                     </div>
                   </RadioGroup>
                 </div>
+              )}
+
+              {/* Court and Time Settings */}
+              {table.format === 'round_robin' && (
+                <CourtTimeSettings
+                  courts={courts}
+                  onCourtsChange={setCourts}
+                  startTime={startTime}
+                  onStartTimeChange={setStartTime}
+                />
               )}
 
               <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm">

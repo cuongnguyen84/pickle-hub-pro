@@ -31,6 +31,9 @@ export interface QuickTable {
   skill_rating_system: string | null;
   auto_approve_registrations: boolean;
   registration_message: string | null;
+  // Court and time settings
+  courts: string[] | null;
+  start_time: string | null;
 }
 
 export interface QuickTableGroup {
@@ -84,6 +87,11 @@ export interface QuickTableMatch {
   display_order: number;
   created_at: string;
   updated_at: string;
+  // Court and time
+  court_id: number | null;
+  start_at: string | null;
+  rr_round_number: number | null;
+  rr_match_index: number | null;
 }
 
 export interface GroupSuggestion {
@@ -183,7 +191,7 @@ export function suggestGroupConfigs(playerCount: number): GroupSuggestion[] {
   return suggestions;
 }
 
-// Generate round robin matches for a group
+// Generate round robin matches for a group (legacy - simple pairing)
 export function generateRoundRobinMatches(playerIds: string[]): Array<{ player1: string; player2: string }> {
   const matches: Array<{ player1: string; player2: string }> = [];
   
@@ -195,6 +203,9 @@ export function generateRoundRobinMatches(playerIds: string[]): Array<{ player1:
   
   return matches;
 }
+
+// Re-export circle method for use by setup page
+export { generateCircleMethodMatches, parseCourtsInput, assignCourtsToMatches, calculateMatchTimes, mergeMatchesByRound, optimizeMatchOrder } from '@/lib/round-robin';
 
 // Distribute players to groups (avoiding same team, spreading seeds)
 export function distributePlayersToGroups(
@@ -546,9 +557,12 @@ export function useQuickTable() {
   const createGroupMatches = useCallback(async (
     tableId: string,
     groupId: string,
-    playerIds: string[]
+    playerIds: string[],
+    groupIndex: number = 0
   ): Promise<QuickTableMatch[]> => {
-    const matchPairs = generateRoundRobinMatches(playerIds);
+    // Use Circle Method for proper round-based scheduling
+    const { generateCircleMethodMatches } = await import('@/lib/round-robin');
+    const matchPairs = generateCircleMethodMatches(playerIds);
 
     const { data, error } = await supabase
       .from('quick_table_matches')
@@ -560,6 +574,8 @@ export function useQuickTable() {
           player1_id: pair.player1,
           player2_id: pair.player2,
           display_order: i,
+          rr_round_number: pair.rrRoundNumber,
+          rr_match_index: pair.rrMatchIndex,
         }))
       )
       .select();
@@ -1215,6 +1231,107 @@ export function useQuickTable() {
     }
   }, []);
 
+  // Update table courts and start time
+  const updateTableCourtSettings = useCallback(async (
+    tableId: string,
+    courts: string[],
+    startTime: string | null
+  ): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('quick_tables')
+        .update({ 
+          courts: courts.length > 0 ? courts : [],
+          start_time: startTime 
+        })
+        .eq('id', tableId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error updating court settings:', error);
+      return false;
+    }
+  }, []);
+
+  // Reassign courts and times to all group matches
+  const reassignCourtsAndTimes = useCallback(async (
+    tableId: string,
+    courts: number[],
+    startTime: string | null,
+    groups: QuickTableGroup[],
+    matches: QuickTableMatch[]
+  ): Promise<boolean> => {
+    if (courts.length === 0) {
+      // Clear court assignments
+      try {
+        const groupMatchIds = matches.filter(m => !m.is_playoff && m.group_id).map(m => m.id);
+        if (groupMatchIds.length > 0) {
+          await supabase
+            .from('quick_table_matches')
+            .update({ court_id: null, start_at: null })
+            .in('id', groupMatchIds);
+        }
+        return true;
+      } catch (error) {
+        console.error('Error clearing courts:', error);
+        return false;
+      }
+    }
+
+    try {
+      const { assignCourtsToMatches, calculateMatchTimes } = await import('@/lib/round-robin');
+      
+      // Get group matches sorted by round number then by group
+      const groupMatches = matches
+        .filter(m => !m.is_playoff && m.group_id)
+        .sort((a, b) => {
+          // Sort by round number first, then by group
+          if ((a.rr_round_number || 0) !== (b.rr_round_number || 0)) {
+            return (a.rr_round_number || 0) - (b.rr_round_number || 0);
+          }
+          const groupAIdx = groups.findIndex(g => g.id === a.group_id);
+          const groupBIdx = groups.findIndex(g => g.id === b.group_id);
+          return groupAIdx - groupBIdx;
+        });
+
+      // Create match data with group index
+      const matchData = groupMatches.map((m, idx) => ({
+        matchIndex: idx,
+        matchId: m.id,
+        groupIndex: groups.findIndex(g => g.id === m.group_id),
+      }));
+
+      // Assign courts
+      const courtAssignments = assignCourtsToMatches(
+        matchData.map(m => ({ groupIndex: m.groupIndex })),
+        courts,
+        groups.length
+      );
+
+      // Calculate times
+      const timeAssignments = startTime 
+        ? calculateMatchTimes(courtAssignments, courts, startTime, 20)
+        : new Map<number, string>();
+
+      // Update each match
+      for (const md of matchData) {
+        const courtId = courtAssignments.get(md.matchIndex) || null;
+        const startAt = timeAssignments.get(md.matchIndex) || null;
+        
+        await supabase
+          .from('quick_table_matches')
+          .update({ court_id: courtId, start_at: startAt })
+          .eq('id', md.matchId);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error reassigning courts:', error);
+      return false;
+    }
+  }, []);
+
   return {
     loading,
     createTable,
@@ -1242,5 +1359,7 @@ export function useQuickTable() {
     addPlayerToGroup,
     removePlayerFromGroup,
     regenerateGroupMatches,
+    updateTableCourtSettings,
+    reassignCourtsAndTimes,
   };
 }
