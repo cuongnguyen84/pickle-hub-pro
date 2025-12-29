@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList } from 'lucide-react';
+import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PlayoffBracket from '@/components/tournament/PlayoffBracket';
@@ -24,6 +24,7 @@ import RefereeManagement from '@/components/quicktable/RefereeManagement';
 import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
+import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
 
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
@@ -34,7 +35,8 @@ const QuickTableView = () => {
     getQualifiedPlayers, generatePlayoffBracket, createPlayoffMatches, 
     markPlayersQualified, updateTableStatus, isGroupStageComplete, getWildcardCount,
     isPlayoffRoundComplete, createNextPlayoffRound, movePlayerToGroup,
-    addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches
+    addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
+    updateTableCourtSettings, reassignCourtsAndTimes
   } = useQuickTable();
   const { getUserRegistration, getPendingCount } = useRegistration();
 
@@ -86,6 +88,9 @@ const QuickTableView = () => {
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerTeam, setNewPlayerTeam] = useState('');
   const [addToGroupId, setAddToGroupId] = useState<string>('');
+  
+  // Edit courts dialog
+  const [showEditCourtsDialog, setShowEditCourtsDialog] = useState(false);
 
   const loadData = async () => {
     if (!shareId) return;
@@ -384,6 +389,23 @@ const QuickTableView = () => {
     }
   };
 
+  // Handle courts and time update
+  const handleSaveCourtsAndTime = async (newCourts: string[], newStartTime: string | null) => {
+    if (!table) return;
+    
+    // Convert string[] to number[] for reassign function
+    const courtsAsNumbers = newCourts.map(c => parseInt(c, 10)).filter(n => !isNaN(n));
+    
+    // Update table settings
+    await updateTableCourtSettings(table.id, newCourts, newStartTime);
+    
+    // Reassign courts and times to all matches
+    await reassignCourtsAndTimes(table.id, courtsAsNumbers, newStartTime, groups, matches);
+    
+    toast.success('Đã cập nhật sân & giờ thi đấu');
+    await loadData();
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -517,6 +539,10 @@ const QuickTableView = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setShowEditCourtsDialog(true)}>
+                      <MapPin className="w-4 h-4 mr-1" />
+                      Sân & Giờ
+                    </Button>
                     {isEditingGroups ? (
                       <>
                         <Button size="sm" variant="outline" onClick={() => { setAddToGroupId(groups[0]?.id || ''); setShowAddDialog(true); }}>
@@ -826,6 +852,15 @@ const QuickTableView = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Courts Dialog */}
+        <EditCourtsDialog
+          open={showEditCourtsDialog}
+          onOpenChange={setShowEditCourtsDialog}
+          currentCourts={table.courts || []}
+          currentStartTime={table.start_time}
+          onSave={handleSaveCourtsAndTime}
+        />
       </div>
     </MainLayout>
   );
@@ -883,14 +918,32 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
         isLive && !isCompleted && "border-red-500/50 bg-red-50/50 dark:bg-red-950/20"
       )}
     >
-      <div className="flex items-center gap-1 w-8 sm:w-10 flex-shrink-0">
-        <span className="text-sm text-foreground-muted">{index + 1}</span>
-        {isLive && !isCompleted && (
-          <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 animate-pulse">
-            <Radio className="w-2 h-2 mr-0.5" />
-            LIVE
-          </Badge>
-        )}
+      {/* Match number + Court/Time info */}
+      <div className="flex flex-col items-start gap-0.5 w-16 sm:w-20 flex-shrink-0">
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-foreground-muted">{index + 1}</span>
+          {isLive && !isCompleted && (
+            <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 animate-pulse">
+              <Radio className="w-2 h-2 mr-0.5" />
+              LIVE
+            </Badge>
+          )}
+        </div>
+        {/* Court & Time display */}
+        <div className="flex flex-col text-[11px] text-foreground-muted leading-tight">
+          {match.court_id != null ? (
+            <span className="flex items-center gap-0.5">
+              <MapPin className="w-3 h-3" />
+              Sân {match.court_id}
+            </span>
+          ) : null}
+          {match.start_at ? (
+            <span className="flex items-center gap-0.5">
+              <Clock className="w-3 h-3" />
+              {match.start_at}
+            </span>
+          ) : null}
+        </div>
       </div>
       
       <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
