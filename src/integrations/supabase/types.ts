@@ -414,6 +414,7 @@ export type Database = {
       quick_table_matches: {
         Row: {
           bracket_position: string | null
+          court_id: number | null
           created_at: string
           display_order: number
           group_id: string | null
@@ -427,8 +428,11 @@ export type Database = {
           player2_id: string | null
           playoff_match_number: number | null
           playoff_round: number | null
+          rr_match_index: number | null
+          rr_round_number: number | null
           score1: number | null
           score2: number | null
+          start_at: string | null
           status: Database["public"]["Enums"]["quick_match_status"]
           table_id: string
           updated_at: string
@@ -436,6 +440,7 @@ export type Database = {
         }
         Insert: {
           bracket_position?: string | null
+          court_id?: number | null
           created_at?: string
           display_order?: number
           group_id?: string | null
@@ -449,8 +454,11 @@ export type Database = {
           player2_id?: string | null
           playoff_match_number?: number | null
           playoff_round?: number | null
+          rr_match_index?: number | null
+          rr_round_number?: number | null
           score1?: number | null
           score2?: number | null
+          start_at?: string | null
           status?: Database["public"]["Enums"]["quick_match_status"]
           table_id: string
           updated_at?: string
@@ -458,6 +466,7 @@ export type Database = {
         }
         Update: {
           bracket_position?: string | null
+          court_id?: number | null
           created_at?: string
           display_order?: number
           group_id?: string | null
@@ -471,8 +480,11 @@ export type Database = {
           player2_id?: string | null
           playoff_match_number?: number | null
           playoff_round?: number | null
+          rr_match_index?: number | null
+          rr_round_number?: number | null
           score1?: number | null
           score2?: number | null
+          start_at?: string | null
           status?: Database["public"]["Enums"]["quick_match_status"]
           table_id?: string
           updated_at?: string
@@ -701,6 +713,7 @@ export type Database = {
       quick_tables: {
         Row: {
           auto_approve_registrations: boolean | null
+          courts: string[] | null
           created_at: string
           creator_user_id: string | null
           format: Database["public"]["Enums"]["quick_table_format"]
@@ -716,6 +729,7 @@ export type Database = {
           requires_skill_level: boolean | null
           share_id: string
           skill_rating_system: string | null
+          start_time: string | null
           status: Database["public"]["Enums"]["quick_table_status"]
           top_per_group: number | null
           updated_at: string
@@ -724,6 +738,7 @@ export type Database = {
         }
         Insert: {
           auto_approve_registrations?: boolean | null
+          courts?: string[] | null
           created_at?: string
           creator_user_id?: string | null
           format: Database["public"]["Enums"]["quick_table_format"]
@@ -739,6 +754,7 @@ export type Database = {
           requires_skill_level?: boolean | null
           share_id?: string
           skill_rating_system?: string | null
+          start_time?: string | null
           status?: Database["public"]["Enums"]["quick_table_status"]
           top_per_group?: number | null
           updated_at?: string
@@ -747,6 +763,7 @@ export type Database = {
         }
         Update: {
           auto_approve_registrations?: boolean | null
+          courts?: string[] | null
           created_at?: string
           creator_user_id?: string | null
           format?: Database["public"]["Enums"]["quick_table_format"]
@@ -762,6 +779,7 @@ export type Database = {
           requires_skill_level?: boolean | null
           share_id?: string
           skill_rating_system?: string | null
+          start_time?: string | null
           status?: Database["public"]["Enums"]["quick_table_status"]
           top_per_group?: number | null
           updated_at?: string
