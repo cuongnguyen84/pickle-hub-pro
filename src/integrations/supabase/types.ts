@@ -354,6 +354,7 @@ export type Database = {
           email: string
           id: string
           organization_id: string | null
+          tournament_create_quota: number
         }
         Insert: {
           created_at?: string
@@ -361,6 +362,7 @@ export type Database = {
           email: string
           id: string
           organization_id?: string | null
+          tournament_create_quota?: number
         }
         Update: {
           created_at?: string
@@ -368,6 +370,7 @@ export type Database = {
           email?: string
           id?: string
           organization_id?: string | null
+          tournament_create_quota?: number
         }
         Relationships: [
           {
@@ -1020,6 +1023,10 @@ export type Database = {
     }
     Functions: {
       can_create_quick_table: { Args: { _user_id: string }; Returns: boolean }
+      can_create_quick_table_with_quota: {
+        Args: { _user_id: string }
+        Returns: Json
+      }
       can_edit_quick_table_scores: {
         Args: { _table_id: string; _user_id: string }
         Returns: boolean
@@ -1045,6 +1052,7 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_quick_table: { Args: { _table_id: string }; Returns: boolean }
       get_org_analytics_summary: {
         Args: { _days?: number; _org_id: string }
         Returns: Json
@@ -1066,6 +1074,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
+      get_user_quota_info: { Args: { _user_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1081,6 +1090,10 @@ export type Database = {
       }
       is_quick_table_referee: {
         Args: { _table_id: string; _user_id: string }
+        Returns: boolean
+      }
+      set_user_quota: {
+        Args: { _new_quota: number; _user_id: string }
         Returns: boolean
       }
     }
