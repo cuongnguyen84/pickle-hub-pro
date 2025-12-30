@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList, MapPin } from 'lucide-react';
+import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList, MapPin, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PlayoffBracket from '@/components/tournament/PlayoffBracket';
@@ -26,18 +26,22 @@ import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
 import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
 
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const navigate = useNavigate();
   const { 
     getTableByShareId, updateMatchScore, updatePlayerStats, isOwner,
     getQualifiedPlayers, generatePlayoffBracket, createPlayoffMatches, 
     markPlayersQualified, updateTableStatus, isGroupStageComplete, getWildcardCount,
     isPlayoffRoundComplete, createNextPlayoffRound, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
-    updateTableCourtSettings, reassignCourtsAndTimes
+    updateTableCourtSettings, reassignCourtsAndTimes, deleteTable
   } = useQuickTable();
+  const { isAdmin } = useAdminAuth();
+  const { user } = useAuth();
   const { getUserRegistration, getPendingCount } = useRegistration();
 
   const [table, setTable] = useState<QuickTable | null>(null);
@@ -406,6 +410,22 @@ const QuickTableView = () => {
     await loadData();
   };
 
+  // Handle delete table
+  const handleDeleteTable = async () => {
+    if (!table) return;
+    if (!confirm(`Bạn có chắc chắn muốn xoá giải "${table.name}"? Tất cả dữ liệu (VĐV, trận đấu, đăng ký...) sẽ bị xoá vĩnh viễn.`)) {
+      return;
+    }
+    
+    const success = await deleteTable(table.id);
+    if (success) {
+      navigate('/quick-tables');
+    }
+  };
+
+  // Check if user can delete this table
+  const canDeleteTable = isAdmin || (user && table?.creator_user_id === user.id);
+
   if (loading) {
     return (
       <MainLayout>
@@ -450,10 +470,18 @@ const QuickTableView = () => {
               {groups.length > 0 && <span>• {groups.length} bảng</span>}
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="w-4 h-4 mr-2" />
-            Chia sẻ
-          </Button>
+          <div className="flex gap-2">
+            {canDeleteTable && (
+              <Button variant="outline" size="sm" onClick={handleDeleteTable} className="text-destructive hover:bg-destructive/10">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Xoá giải
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleShare}>
+              <Share2 className="w-4 h-4 mr-2" />
+              Chia sẻ
+            </Button>
+          </div>
         </div>
 
         {/* Advance to Playoff Button */}

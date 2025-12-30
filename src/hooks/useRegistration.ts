@@ -43,22 +43,35 @@ export function useRegistration() {
   // Get all registrations for a table (for BTC/creator) - with email from profiles
   const getTableRegistrations = useCallback(async (tableId: string): Promise<Registration[]> => {
     try {
-      const { data, error } = await supabase
+      // First get all registrations
+      const { data: registrations, error: regError } = await supabase
         .from('quick_table_registrations')
-        .select(`
-          *,
-          profiles:user_id (email)
-        `)
+        .select('*')
         .eq('table_id', tableId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (regError) throw regError;
       
-      // Flatten the profiles join to get email directly
-      return (data || []).map((reg: any) => ({
+      if (!registrations || registrations.length === 0) return [];
+
+      // Then get emails for all user_ids
+      const userIds = registrations.map(r => r.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', userIds);
+
+      // Build a map of user_id -> email (profiles query might fail due to RLS, that's OK)
+      const emailMap: Record<string, string> = {};
+      if (profiles && !profilesError) {
+        profiles.forEach((p: { id: string; email: string }) => {
+          emailMap[p.id] = p.email;
+        });
+      }
+
+      return registrations.map((reg: any) => ({
         ...reg,
-        email: reg.profiles?.email || null,
-        profiles: undefined, // Remove the nested object
+        email: emailMap[reg.user_id] || null,
       })) as Registration[];
     } catch (error) {
       console.error('Error fetching registrations:', error);

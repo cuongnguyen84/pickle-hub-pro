@@ -1339,12 +1339,53 @@ export function useQuickTable() {
     }
   }, []);
 
+  // Delete a quick table (creator or admin)
+  const deleteTable = useCallback(async (tableId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.rpc('delete_quick_table', {
+        _table_id: tableId
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Đã xoá giải đấu');
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting table:', error);
+      if (error.message?.includes('Permission denied')) {
+        toast.error('Bạn không có quyền xoá giải đấu này');
+      } else {
+        toast.error('Không thể xoá giải đấu');
+      }
+      return false;
+    }
+  }, []);
+
+  // Get user quota info
+  const getUserQuotaInfo = useCallback(async (): Promise<{ current_count: number; quota: number } | null> => {
+    if (!user) return null;
+    
+    try {
+      const { data, error } = await supabase.rpc('get_user_quota_info', {
+        _user_id: user.id
+      });
+      
+      if (error) throw error;
+      return data as { current_count: number; quota: number };
+    } catch (error) {
+      console.error('Error getting quota info:', error);
+      return null;
+    }
+  }, [user]);
+
   return {
     loading,
     createTable,
     getTableByShareId,
     getUserTables,
     getUserQuickTableCount,
+    getUserQuotaInfo,
+    deleteTable,
     addPlayers,
     createGroups,
     assignPlayersToGroups,
