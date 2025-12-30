@@ -604,15 +604,22 @@ export function useQuickTable() {
                       winnerId === 'player2' ? match.player2_id : null;
     const oldWinner = match.winner_id;
 
-    await supabase
+    // Update match: set score, status, winner, and clear live_referee_id
+    const { error: updateError } = await supabase
       .from('quick_table_matches')
       .update({
         score1,
         score2,
         winner_id: newWinner,
         status: 'completed' as QuickMatchStatus,
+        live_referee_id: null, // Clear live scoring when completing match
       })
       .eq('id', matchId);
+    
+    if (updateError) {
+      console.error('[updateMatchScore] Error updating match:', updateError);
+      return;
+    }
 
     // If this is a playoff match, always update next round match (even if same winner, ensures consistency)
     if (match.is_playoff && match.playoff_round !== null) {
@@ -772,9 +779,9 @@ export function useQuickTable() {
 
     console.log('[updatePlayerStats] Calculated stats:', stats);
 
-    // Update all players with calculated stats including point_diff
+    // Update all players with calculated stats
+    // Note: point_diff is a generated column (points_for - points_against), so we don't update it directly
     for (const [playerId, stat] of Object.entries(stats)) {
-      const pointDiff = stat.pf - stat.pa;
       const { error: updateError } = await supabase
         .from('quick_table_players')
         .update({
@@ -782,14 +789,14 @@ export function useQuickTable() {
           matches_won: stat.won,
           points_for: stat.pf,
           points_against: stat.pa,
-          point_diff: pointDiff,
+          // point_diff is auto-calculated by the database as (points_for - points_against)
         })
         .eq('id', playerId);
       
       if (updateError) {
         console.error('[updatePlayerStats] Error updating player:', playerId, updateError);
       } else {
-        console.log('[updatePlayerStats] Updated player:', playerId, { ...stat, point_diff: pointDiff });
+        console.log('[updatePlayerStats] Updated player:', playerId, stat);
       }
     }
   }, []);

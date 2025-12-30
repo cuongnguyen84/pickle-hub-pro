@@ -154,7 +154,12 @@ export function parseCourtsInput(input: string): number[] {
 }
 
 /**
- * Assign courts to matches with home court preference and load balancing
+ * Assign courts to matches with STRICT home court preference
+ * Algorithm:
+ * 1. Groups with home courts: ALL matches go to home court (no balancing)
+ * 2. Unassigned groups: matches are distributed across all courts for load balance
+ * 
+ * This ensures "1 group = 1 court" when possible
  */
 export interface MatchWithCourt {
   matchIndex: number;
@@ -169,45 +174,47 @@ export function assignCourtsToMatches<T extends { groupIndex: number }>(
 ): Map<number, number> {
   if (courts.length === 0) return new Map();
 
-  // Assign home courts to groups
+  // Assign home courts to groups (1 group = 1 court)
   const homeCourtByGroup = new Map<number, number>();
   for (let i = 0; i < Math.min(numGroups, courts.length); i++) {
     homeCourtByGroup.set(i, courts[i]);
   }
 
-  // Track load per court
+  // Track load per court for unassigned groups
   const loadCount = new Map<number, number>();
   courts.forEach(c => loadCount.set(c, 0));
 
   // Result: matchIndex -> courtId
   const result = new Map<number, number>();
 
+  // Pass 1: Assign matches from groups WITH home court to their home court
   for (let i = 0; i < matches.length; i++) {
     const match = matches[i];
     const homeCourt = homeCourtByGroup.get(match.groupIndex);
     
-    // Get court with minimum load
-    const minLoad = Math.min(...Array.from(loadCount.values()));
-    const courtsWithMinLoad = courts.filter(c => loadCount.get(c) === minLoad);
-    
-    let assignedCourt: number;
-
     if (homeCourt !== undefined) {
-      const homeLoad = loadCount.get(homeCourt) || 0;
-      // Use home court if not overloaded (within 1 of min load)
-      if (homeLoad <= minLoad + 1) {
-        assignedCourt = homeCourt;
-      } else {
-        // Home court overloaded, use min load court
-        assignedCourt = courtsWithMinLoad[0];
-      }
-    } else {
-      // Unassigned group - use min load court (tie-break by order)
-      assignedCourt = courtsWithMinLoad[0];
+      // Group has home court - ALWAYS use it (strict 1 group = 1 court)
+      result.set(i, homeCourt);
+      loadCount.set(homeCourt, (loadCount.get(homeCourt) || 0) + 1);
     }
+  }
 
-    result.set(i, assignedCourt);
-    loadCount.set(assignedCourt, (loadCount.get(assignedCourt) || 0) + 1);
+  // Pass 2: Assign matches from groups WITHOUT home court - load balance across all courts
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const homeCourt = homeCourtByGroup.get(match.groupIndex);
+    
+    if (homeCourt === undefined) {
+      // Unassigned group - find court with minimum load
+      const minLoad = Math.min(...Array.from(loadCount.values()));
+      const courtsWithMinLoad = courts.filter(c => loadCount.get(c) === minLoad);
+      
+      // Tie-break by court order (user input order)
+      const assignedCourt = courtsWithMinLoad[0];
+      
+      result.set(i, assignedCourt);
+      loadCount.set(assignedCourt, (loadCount.get(assignedCourt) || 0) + 1);
+    }
   }
 
   return result;
