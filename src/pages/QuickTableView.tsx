@@ -152,7 +152,7 @@ const QuickTableView = () => {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, [shareId]);
+  useEffect(() => { loadData(); }, [shareId, user]);
 
   // Realtime subscription for live updates
   useEffect(() => {

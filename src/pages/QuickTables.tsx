@@ -26,9 +26,9 @@ const QuickTables = () => {
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { createTable, getUserTables, getUserQuickTableCount, loading } = useQuickTable();
+  const { createTable, getUserTables, getUserQuotaInfo, loading } = useQuickTable();
   const { tables: refereeTables, loading: refereeTablesLoading } = useRefereeTables();
-  const [quotaCount, setQuotaCount] = useState<number>(0);
+  const [quotaInfo, setQuotaInfo] = useState<{ current_count: number; quota: number }>({ current_count: 0, quota: 3 });
 
   const [step, setStep] = useState<Step>("count");
   const [playerCount, setPlayerCount] = useState<number>(0);
@@ -66,16 +66,18 @@ const QuickTables = () => {
         return;
       }
       setTablesLoading(true);
-      const [tables, count] = await Promise.all([
+      const [tables, quota] = await Promise.all([
         getUserTables(),
-        getUserQuickTableCount()
+        getUserQuotaInfo()
       ]);
       setUserTables(tables);
-      setQuotaCount(count);
+      if (quota) {
+        setQuotaInfo(quota);
+      }
       setTablesLoading(false);
     };
     loadUserData();
-  }, [user, getUserTables, getUserQuickTableCount]);
+  }, [user, getUserTables, getUserQuotaInfo]);
 
   const handlePlayerCountSubmit = () => {
     if (playerCount < 2) return;
@@ -215,7 +217,7 @@ const QuickTables = () => {
                   <AIAssistantButton 
                     screenName="quick-table-setup" 
                     stepName="info"
-                    contextData={{ quotaUsed: quotaCount, hasName: !!tableName.trim() }}
+                    contextData={{ quotaUsed: quotaInfo.current_count, quota: quotaInfo.quota, hasName: !!tableName.trim() }}
                   />
                 </CardTitle>
                 <CardDescription>Nhập thông tin cơ bản về giải đấu</CardDescription>
@@ -318,8 +320,8 @@ const QuickTables = () => {
                   )}
                 </div>
 
-                <Button className="w-full" onClick={handlePlayerCountSubmit} disabled={playerCount < 2 || quotaCount >= 3}>
-                  {quotaCount >= 3 ? (
+                <Button className="w-full" onClick={handlePlayerCountSubmit} disabled={playerCount < 2 || quotaInfo.current_count >= quotaInfo.quota}>
+                  {quotaInfo.current_count >= quotaInfo.quota ? (
                     <span className="text-destructive">{t.quickTable.quota.limitReached}</span>
                   ) : (
                     <>
@@ -328,12 +330,12 @@ const QuickTables = () => {
                     </>
                   )}
                 </Button>
-                {quotaCount > 0 && (
-                  <p className={cn("text-sm text-center mt-2", quotaCount >= 3 ? "text-destructive" : "text-foreground-muted")}>
-                    {t.quickTable.quota.usage.replace("{count}", String(quotaCount))}
+                {quotaInfo.current_count > 0 && (
+                  <p className={cn("text-sm text-center mt-2", quotaInfo.current_count >= quotaInfo.quota ? "text-destructive" : "text-foreground-muted")}>
+                    {quotaInfo.current_count}/{quotaInfo.quota} giải đã tạo
                   </p>
                 )}
-                {quotaCount >= 3 && (
+                {quotaInfo.current_count >= quotaInfo.quota && (
                   <p className="text-xs text-center text-foreground-muted mt-1">
                     {t.quickTable.quota.limitReachedDesc}{" "}
                     <a href="mailto:tapickleballvn@gmail.com" className="text-primary hover:underline">
