@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { AIAssistantButton } from '@/components/ai';
 import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand } from 'lucide-react';
 import { toast } from 'sonner';
 import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
@@ -379,7 +380,18 @@ const QuickTableSetup = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Nhập danh sách người chơi</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    Nhập danh sách người chơi
+                    <AIAssistantButton 
+                      screenName="quick-table-setup" 
+                      stepName="players"
+                      contextData={{ 
+                        playerCount: filledPlayers.length,
+                        format: table.format,
+                        groupCount: table.group_count,
+                      }}
+                    />
+                  </CardTitle>
                   <CardDescription>
                     Nhập tên và hạt giống (tùy chọn)
                   </CardDescription>
