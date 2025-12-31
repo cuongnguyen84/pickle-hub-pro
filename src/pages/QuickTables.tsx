@@ -16,6 +16,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield, ClipboardList, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { AIAssistantButton } from '@/components/ai';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -209,7 +210,14 @@ const QuickTables = () => {
           {step === "count" && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Bước 1: Thông tin giải đấu</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Bước 1: Thông tin giải đấu
+                  <AIAssistantButton 
+                    screenName="quick-table-setup" 
+                    stepName="info"
+                    contextData={{ quotaUsed: quotaCount, hasName: !!tableName.trim() }}
+                  />
+                </CardTitle>
                 <CardDescription>Nhập thông tin cơ bản về giải đấu</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

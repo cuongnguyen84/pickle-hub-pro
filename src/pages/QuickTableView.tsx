@@ -25,6 +25,7 @@ import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
 import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
+import { AIAssistantButton } from '@/components/ai';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -455,7 +456,19 @@ const QuickTableView = () => {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold mb-1">{table.name}</h1>
+            <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
+              {table.name}
+              <AIAssistantButton 
+                screenName="quick-table-view" 
+                stepName={table.status === 'playoff' ? 'playoff' : 'group'}
+                contextData={{ 
+                  status: table.status,
+                  playerCount: players.length,
+                  groupCount: groups.length,
+                  playoffReady: groupStageComplete,
+                }}
+              />
+            </h1>
             <div className="flex items-center gap-2 text-foreground-secondary flex-wrap">
               <Badge variant="outline">
                 {table.format === 'round_robin' ? 'Round Robin' : 'Playoff'}
