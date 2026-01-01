@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Bot, HelpCircle, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Bot, HelpCircle, Loader2, Send } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 interface AIAssistantDialogProps {
   open: boolean;
@@ -19,104 +21,14 @@ interface AIAssistantDialogProps {
   contextData?: Record<string, any>;
 }
 
-// Predefined guidance for each screen/step
-const SCREEN_GUIDANCE: Record<string, {
-  title: string;
-  location: string;
-  tasks: string[];
-  requirements: string[];
-  commonErrors?: string[];
-}> = {
-  'quick-table-setup/info': {
-    title: 'Thông tin giải đấu',
-    location: 'Bạn đang ở bước tạo giải mới',
-    tasks: [
-      'Nhập tên giải / bảng đấu',
-      'Nhập số người chơi dự kiến',
-      'Chọn có yêu cầu đăng ký trước hay không',
-    ],
-    requirements: [
-      'Tên giải là bắt buộc',
-      'Số người chơi tối thiểu là 2',
-    ],
-    commonErrors: [
-      'Quota hết: Mỗi tài khoản chỉ được tạo tối đa số giải theo quota',
-    ],
-  },
-  'quick-table-setup/players': {
-    title: 'Nhập danh sách VĐV',
-    location: 'Bạn đang ở bước nhập danh sách người chơi',
-    tasks: [
-      'Nhập tên từng VĐV',
-      'Nhập team/CLB (tùy chọn)',
-      'Nhập hạt giống nếu có',
-      'Chọn phương thức chia bảng (tự động hoặc thủ công)',
-    ],
-    requirements: [
-      'Cần ít nhất 2 VĐV',
-      'Tên VĐV là bắt buộc',
-    ],
-    commonErrors: [
-      'Thiếu tên VĐV - hệ thống sẽ bỏ qua dòng trống',
-    ],
-  },
-  'quick-table-view/group': {
-    title: 'Xem bảng đấu vòng bảng',
-    location: 'Bạn đang xem kết quả chia bảng',
-    tasks: [
-      'Xem danh sách VĐV theo bảng',
-      'Xem lịch thi đấu và sân',
-      'Nhập điểm cho các trận đã đấu',
-    ],
-    requirements: [
-      'Điểm phải là số dương',
-      'Cần nhập điểm cả 2 bên để lưu kết quả',
-    ],
-    commonErrors: [
-      'Điểm bằng nhau - hệ thống vẫn chấp nhận nhưng BXH sẽ cần xét head-to-head',
-    ],
-  },
-  'quick-table-view/playoff': {
-    title: 'Vòng playoff',
-    location: 'Bạn đang ở vòng playoff',
-    tasks: [
-      'Xem nhánh đấu loại trực tiếp',
-      'Nhập điểm cho các trận playoff',
-      'Theo dõi tiến độ giải',
-    ],
-    requirements: [
-      'Vòng bảng phải hoàn thành trước',
-      'Điểm playoff không ảnh hưởng BXH vòng bảng',
-    ],
-  },
-  'registration': {
-    title: 'Đăng ký tham dự',
-    location: 'Bạn đang ở trang đăng ký tham gia giải',
-    tasks: [
-      'Nhập tên hiển thị',
-      'Chọn hệ thống rating (DUPR, khác, hoặc không có)',
-      'Nhập trình độ theo hệ thống đã chọn',
-    ],
-    requirements: [
-      'Tên hiển thị là bắt buộc',
-      'Nếu giải yêu cầu trình độ, phải điền đầy đủ',
-    ],
-    commonErrors: [
-      'Đã đăng ký trước đó - hệ thống sẽ hiển thị trạng thái thay vì form',
-    ],
-  },
-  'registration-manager': {
-    title: 'Quản lý đăng ký',
-    location: 'Bạn đang xem danh sách VĐV đăng ký',
-    tasks: [
-      'Xem danh sách đăng ký theo trạng thái',
-      'Duyệt hoặc từ chối đăng ký',
-      'Thêm VĐV đã duyệt vào bảng đấu',
-    ],
-    requirements: [
-      'Phải duyệt đủ số VĐV trước khi chia bảng',
-    ],
-  },
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`;
+
+// Screen title mapping
+const SCREEN_TITLES: Record<string, string> = {
+  'quick-table-setup': 'Tạo giải đấu',
+  'quick-table-view': 'Xem bảng đấu',
+  'registration': 'Đăng ký tham gia',
+  'registration-manager': 'Quản lý đăng ký',
 };
 
 export function AIAssistantDialog({
@@ -126,124 +38,210 @@ export function AIAssistantDialog({
   stepName,
   contextData,
 }: AIAssistantDialogProps) {
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-
-  const guidance = SCREEN_GUIDANCE[`${screenName}/${stepName}`] || SCREEN_GUIDANCE[screenName] || {
-    title: 'Hướng dẫn',
-    location: 'Bạn đang sử dụng hệ thống chia bảng',
-    tasks: ['Thực hiện thao tác theo hướng dẫn trên màn hình'],
-    requirements: [],
-  };
+  const [response, setResponse] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [customQuestion, setCustomQuestion] = useState('');
 
   const suggestedQuestions = [
     'Tôi cần làm gì ở bước này?',
     'Vì sao tôi không bấm tiếp được?',
   ];
 
-  const handleQuestionClick = (question: string) => {
-    setSelectedQuestion(question);
+  const handleAskQuestion = useCallback(async (question: string) => {
+    if (loading) return;
+    
+    setLoading(true);
+    setResponse('');
+    
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          screenName,
+          stepName,
+          contextData,
+          question,
+        }),
+      });
+
+      if (resp.status === 429) {
+        toast.error('Hệ thống đang bận, vui lòng thử lại sau');
+        setLoading(false);
+        return;
+      }
+      if (resp.status === 402) {
+        toast.error('AI credits đã hết, vui lòng liên hệ admin');
+        setLoading(false);
+        return;
+      }
+      if (!resp.ok || !resp.body) {
+        throw new Error('Failed to start stream');
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = '';
+      let fullResponse = '';
+      let streamDone = false;
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              fullResponse += content;
+              setResponse(fullResponse);
+            }
+          } catch {
+            textBuffer = line + '\n' + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Final flush
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split('\n')) {
+          if (!raw) continue;
+          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
+          if (raw.startsWith(':') || raw.trim() === '') continue;
+          if (!raw.startsWith('data: ')) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              fullResponse += content;
+              setResponse(fullResponse);
+            }
+          } catch { /* ignore */ }
+        }
+      }
+    } catch (error) {
+      console.error('AI assistant error:', error);
+      toast.error('Không thể kết nối AI hỗ trợ');
+    } finally {
+      setLoading(false);
+    }
+  }, [screenName, stepName, contextData, loading]);
+
+  const handleSubmitCustom = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (customQuestion.trim()) {
+      handleAskQuestion(customQuestion.trim());
+      setCustomQuestion('');
+    }
   };
 
-  const renderAnswer = () => {
-    if (!selectedQuestion) return null;
-
-    return (
-      <Card className="mt-4 bg-muted/50">
-        <CardContent className="pt-4 space-y-4">
-          <div>
-            <h4 className="font-medium text-sm text-primary mb-2">📍 Bạn đang ở đâu</h4>
-            <p className="text-sm text-foreground-secondary">{guidance.location}</p>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-sm text-primary mb-2">✅ Việc cần làm ở bước này</h4>
-            <ul className="text-sm text-foreground-secondary space-y-1">
-              {guidance.tasks.map((task, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  {task}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {guidance.requirements.length > 0 && (
-            <div>
-              <h4 className="font-medium text-sm text-primary mb-2">📋 Điều kiện để tiếp tục</h4>
-              <ul className="text-sm text-foreground-secondary space-y-1">
-                {guidance.requirements.map((req, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <HelpCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                    {req}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {guidance.commonErrors && guidance.commonErrors.length > 0 && (
-            <div>
-              <h4 className="font-medium text-sm text-primary mb-2">⚠️ Lỗi thường gặp</h4>
-              <ul className="text-sm text-foreground-secondary space-y-1">
-                {guidance.commonErrors.map((err, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                    {err}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {contextData && Object.keys(contextData).length > 0 && (
-            <div className="pt-2 border-t border-border">
-              <h4 className="font-medium text-sm text-muted-foreground mb-2">Dữ liệu hiện tại</h4>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(contextData).map(([key, value]) => (
-                  <Badge key={key} variant="outline" className="text-xs">
-                    {key}: {String(value)}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
+  const screenTitle = SCREEN_TITLES[screenName] || 'Hướng dẫn';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bot className="w-5 h-5 text-primary" />
             AI Hỗ trợ
           </DialogTitle>
-          <DialogDescription>
-            {guidance.title}
+          <DialogDescription className="flex items-center gap-2">
+            {screenTitle}
+            {stepName && (
+              <Badge variant="outline" className="text-xs">
+                {stepName}
+              </Badge>
+            )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex-1 space-y-4 overflow-hidden">
+          {/* Suggested questions */}
           <div>
-            <p className="text-sm text-muted-foreground mb-3">Chọn câu hỏi:</p>
-            <div className="space-y-2">
+            <p className="text-sm text-muted-foreground mb-2">Câu hỏi gợi ý:</p>
+            <div className="flex flex-wrap gap-2">
               {suggestedQuestions.map((question) => (
                 <Button
                   key={question}
-                  variant={selectedQuestion === question ? "default" : "outline"}
-                  className="w-full justify-start text-left h-auto py-3"
-                  onClick={() => handleQuestionClick(question)}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-auto py-2"
+                  onClick={() => handleAskQuestion(question)}
+                  disabled={loading}
                 >
-                  <HelpCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <HelpCircle className="w-3 h-3 mr-1" />
                   {question}
                 </Button>
               ))}
             </div>
           </div>
 
-          {renderAnswer()}
+          {/* Custom question input */}
+          <form onSubmit={handleSubmitCustom} className="flex gap-2">
+            <Input
+              value={customQuestion}
+              onChange={(e) => setCustomQuestion(e.target.value)}
+              placeholder="Hoặc nhập câu hỏi của bạn..."
+              disabled={loading}
+              className="flex-1"
+            />
+            <Button type="submit" size="icon" disabled={loading || !customQuestion.trim()}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </form>
+
+          {/* Response area */}
+          {(loading || response) && (
+            <ScrollArea className="flex-1 max-h-[300px] rounded-md border p-4 bg-muted/30">
+              {loading && !response && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Đang phân tích...</span>
+                </div>
+              )}
+              {response && (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <div className="whitespace-pre-wrap text-sm">{response}</div>
+                </div>
+              )}
+            </ScrollArea>
+          )}
+
+          {/* Context display */}
+          {contextData && Object.keys(contextData).length > 0 && (
+            <div className="pt-2 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-2">Dữ liệu ngữ cảnh:</p>
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(contextData).map(([key, value]) => (
+                  <Badge key={key} variant="secondary" className="text-xs">
+                    {key}: {String(value)}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
