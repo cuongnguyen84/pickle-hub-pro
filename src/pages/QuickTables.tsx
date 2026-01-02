@@ -44,6 +44,7 @@ const QuickTables = () => {
   const [autoApprove, setAutoApprove] = useState(false);
   const [registrationMessage, setRegistrationMessage] = useState("");
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [isDoubles, setIsDoubles] = useState(true); // Default to doubles
 
   // User's tables
   const [userTables, setUserTables] = useState<QuickTable[]>([]);
@@ -120,7 +121,8 @@ const QuickTables = () => {
       requires_skill_level: requiresSkillLevel,
       auto_approve_registrations: autoApprove,
       registration_message: registrationMessage || undefined,
-    } : undefined;
+      is_doubles: isDoubles,
+    } : { is_doubles: isDoubles };
 
     const table = await createTable(
       tableName,
@@ -265,6 +267,24 @@ const QuickTables = () => {
 
                   {requiresRegistration && (
                     <div className="ml-6 mt-4 space-y-4 p-4 rounded-lg bg-muted/50 border border-border">
+                      {/* Doubles checkbox - only show when registration is required */}
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="is-doubles"
+                          checked={isDoubles}
+                          onCheckedChange={(checked) => setIsDoubles(!!checked)}
+                        />
+                        <div>
+                          <Label htmlFor="is-doubles" className="cursor-pointer font-medium flex items-center gap-2">
+                            <Users className="w-4 h-4 text-primary" />
+                            Thi đấu đôi
+                          </Label>
+                          <p className="text-xs text-foreground-muted">
+                            VĐV đăng ký theo cặp đôi, có thể mời partner qua link
+                          </p>
+                        </div>
+                      </div>
+
                       <div className="flex items-start space-x-3">
                         <Checkbox
                           id="requires-skill"
