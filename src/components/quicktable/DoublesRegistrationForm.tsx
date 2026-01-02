@@ -291,6 +291,11 @@ export function DoublesRegistrationForm({
 
     const result = await createTeam(tableId, formData);
     if (result) {
+      // Automatically create first invitation after team creation
+      const inv = await createInvitation(result.id, tableId);
+      if (inv) {
+        toast.success('Đã tạo link mời partner!');
+      }
       onRegistrationComplete?.();
     }
   };
