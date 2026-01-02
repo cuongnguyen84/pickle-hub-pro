@@ -34,6 +34,8 @@ export interface QuickTable {
   // Court and time settings
   courts: string[] | null;
   start_time: string | null;
+  // Doubles settings
+  is_doubles: boolean;
 }
 
 export interface QuickTableGroup {
@@ -384,6 +386,7 @@ export function useQuickTable() {
       max_skill_level?: number;
       auto_approve_registrations?: boolean;
       registration_message?: string;
+      is_doubles?: boolean;
     }
   ): Promise<QuickTable | null> => {
     if (!user) {
@@ -403,6 +406,7 @@ export function useQuickTable() {
         _requires_skill_level: registrationOptions?.requires_skill_level || false,
         _auto_approve_registrations: registrationOptions?.auto_approve_registrations || false,
         _registration_message: registrationOptions?.registration_message || null,
+        _is_doubles: registrationOptions?.is_doubles ?? true,
       });
 
       if (error) throw error;

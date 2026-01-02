@@ -25,6 +25,8 @@ import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
 import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
+import DoublesRegistrationForm from '@/components/quicktable/DoublesRegistrationForm';
+import TeamManager from '@/components/quicktable/TeamManager';
 import { AIAssistantButton } from '@/components/ai';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -540,23 +542,45 @@ const QuickTableView = () => {
           {table.requires_registration && (
             <TabsContent value="registration" className="space-y-4">
               {canManageTable ? (
-                <RegistrationManager 
-                  tableId={table.id}
-                  shareId={shareId}
-                  table={table}
-                  onPendingCountChange={setRegistrationCount}
-                />
+                // BTC view: show appropriate manager based on doubles/singles
+                table.is_doubles ? (
+                  <TeamManager 
+                    tableId={table.id}
+                    shareId={shareId}
+                    table={table}
+                    onPendingCountChange={setRegistrationCount}
+                  />
+                ) : (
+                  <RegistrationManager 
+                    tableId={table.id}
+                    shareId={shareId}
+                    table={table}
+                    onPendingCountChange={setRegistrationCount}
+                  />
+                )
               ) : (
                 <div className="space-y-4">
-                  <RegistrationForm
-                    tableId={table.id}
-                    tableName={table.name}
-                    requiresSkillLevel={table.requires_skill_level}
-                    registrationMessage={table.registration_message}
-                    existingRegistration={userRegistration}
-                    onRegistrationComplete={loadData}
-                  />
-                  {/* Show approved players list for public viewers */}
+                  {/* Player view: show appropriate form based on doubles/singles */}
+                  {table.is_doubles ? (
+                    <DoublesRegistrationForm
+                      tableId={table.id}
+                      shareId={shareId || ''}
+                      tableName={table.name}
+                      requiresSkillLevel={table.requires_skill_level}
+                      registrationMessage={table.registration_message}
+                      onRegistrationComplete={loadData}
+                    />
+                  ) : (
+                    <RegistrationForm
+                      tableId={table.id}
+                      tableName={table.name}
+                      requiresSkillLevel={table.requires_skill_level}
+                      registrationMessage={table.registration_message}
+                      existingRegistration={userRegistration}
+                      onRegistrationComplete={loadData}
+                    />
+                  )}
+                  {/* Show approved players/teams list for public viewers */}
                   <ApprovedPlayersList tableId={table.id} />
                 </div>
               )}

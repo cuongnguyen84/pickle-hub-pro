@@ -23,6 +23,7 @@ import QuickTables from "./pages/QuickTables";
 import QuickTableSetup from "./pages/QuickTableSetup";
 import QuickTableView from "./pages/QuickTableView";
 import MatchScoring from "./pages/MatchScoring";
+import JoinTeam from "./pages/JoinTeam";
 import Privacy from "./pages/Privacy";
 import { EmbedLive, EmbedVideo } from "./pages/embed";
 import {
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/quick-tables/:shareId" element={<QuickTableView />} />
               <Route path="/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
               <Route path="/matches/:matchId/score" element={<MatchScoring />} />
+              <Route path="/join/:inviteCode" element={<JoinTeam />} />
               {/* Embed routes - no layout, minimal UI */}
               <Route path="/embed/live/:id" element={<EmbedLive />} />
               <Route path="/embed/video/:id" element={<EmbedVideo />} />

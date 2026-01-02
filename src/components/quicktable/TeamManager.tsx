@@ -412,13 +412,15 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
       </Dialog>
 
       {/* Bracket Setup Dialog */}
-      <BracketSetupDialog
-        open={showBracketSetup}
-        onOpenChange={setShowBracketSetup}
-        tableId={tableId}
-        shareId={shareId}
-        approvedPlayers={approvedPlayersForBracket}
-      />
+      {table && shareId && (
+        <BracketSetupDialog
+          open={showBracketSetup}
+          onOpenChange={setShowBracketSetup}
+          table={table}
+          shareId={shareId}
+          approvedPlayers={approvedPlayersForBracket}
+        />
+      )}
     </div>
   );
 }

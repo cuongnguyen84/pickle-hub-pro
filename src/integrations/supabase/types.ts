@@ -1204,19 +1204,34 @@ export type Database = {
         Args: { _livestream_id: string; _user_id: string }
         Returns: boolean
       }
-      create_quick_table_with_quota: {
-        Args: {
-          _auto_approve_registrations?: boolean
-          _format: Database["public"]["Enums"]["quick_table_format"]
-          _group_count?: number
-          _name: string
-          _player_count: number
-          _registration_message?: string
-          _requires_registration?: boolean
-          _requires_skill_level?: boolean
-        }
-        Returns: Json
-      }
+      create_quick_table_with_quota:
+        | {
+            Args: {
+              _auto_approve_registrations?: boolean
+              _format: Database["public"]["Enums"]["quick_table_format"]
+              _group_count?: number
+              _name: string
+              _player_count: number
+              _registration_message?: string
+              _requires_registration?: boolean
+              _requires_skill_level?: boolean
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _auto_approve_registrations?: boolean
+              _format: Database["public"]["Enums"]["quick_table_format"]
+              _group_count?: number
+              _is_doubles?: boolean
+              _name: string
+              _player_count: number
+              _registration_message?: string
+              _requires_registration?: boolean
+              _requires_skill_level?: boolean
+            }
+            Returns: Json
+          }
       delete_quick_table: { Args: { _table_id: string }; Returns: boolean }
       get_active_invitation_count: {
         Args: { _team_id: string }

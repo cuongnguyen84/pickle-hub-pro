@@ -7,4 +7,6 @@ export { BracketSetupDialog } from './BracketSetupDialog';
 export { ManualGroupAssignment } from './ManualGroupAssignment';
 export { CourtTimeSettings } from './CourtTimeSettings';
 export { default as EditCourtsDialog } from './EditCourtsDialog';
+export { default as DoublesRegistrationForm } from './DoublesRegistrationForm';
+export { default as TeamManager } from './TeamManager';
 export type { Referee } from '@/hooks/useRefereeManagement';
