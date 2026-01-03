@@ -59,6 +59,7 @@ const QuickTableView = () => {
   // Registration state
   const [userRegistration, setUserRegistration] = useState<Registration | null>(null);
   const [userTeam, setUserTeam] = useState<Team | null>(null);
+  const [allTeams, setAllTeams] = useState<Team[]>([]);
   const [registrationCount, setRegistrationCount] = useState(0);
 
   // Referee management hook
@@ -117,6 +118,15 @@ const QuickTableView = () => {
           // For doubles: load user's team
           const team = await getUserTeam(data.table.id);
           setUserTeam(team);
+          
+          // Load all teams for pairing list
+          const { data: teamsData } = await supabase
+            .from('quick_table_teams')
+            .select('*')
+            .eq('table_id', data.table.id)
+            .not('team_status', 'in', '(removed)')
+            .order('created_at', { ascending: true });
+          setAllTeams((teamsData || []) as Team[]);
         } else {
           // For singles: load user's registration
           const reg = await getUserRegistration(data.table.id);
@@ -579,6 +589,8 @@ const QuickTableView = () => {
                       requiresSkillLevel={table.requires_skill_level}
                       registrationMessage={table.registration_message}
                       existingTeam={userTeam}
+                      allTeams={allTeams}
+                      tableStatus={table.status}
                       onRegistrationComplete={loadData}
                     />
                   ) : (

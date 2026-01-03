@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useTeamRegistration, type Team, type PartnerInvitation, type TeamFormData } from '@/hooks/useTeamRegistration';
+import { useTeamRegistration, type Team, type TeamFormData } from '@/hooks/useTeamRegistration';
+import { usePairRequest, type PairRequest } from '@/hooks/usePairRequest';
 import type { SkillRatingSystem } from '@/hooks/useRegistration';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,14 +12,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn, 
-  Users, Link2, Copy, Trash2, UserMinus, Send
+  Users, UserMinus, Handshake, Loader2, Bell
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { format, formatDistanceToNow } from 'date-fns';
-import { vi } from 'date-fns/locale';
 
 interface DoublesRegistrationFormProps {
   tableId: string;
@@ -27,6 +27,8 @@ interface DoublesRegistrationFormProps {
   requiresSkillLevel?: boolean;
   registrationMessage?: string | null;
   existingTeam?: Team | null;
+  allTeams?: Team[];
+  tableStatus?: string;
   onRegistrationComplete?: () => void;
 }
 
@@ -44,17 +46,20 @@ export function DoublesRegistrationForm({
   requiresSkillLevel = true,
   registrationMessage,
   existingTeam,
+  allTeams = [],
+  tableStatus = 'setup',
   onRegistrationComplete,
 }: DoublesRegistrationFormProps) {
   const { user } = useAuth();
+  const { createTeam, removePartner, loading: teamLoading } = useTeamRegistration();
   const { 
-    createTeam, 
-    getTeamInvitations, 
-    createInvitation, 
-    cancelInvitation, 
-    removePartner,
-    loading 
-  } = useTeamRegistration();
+    getIncomingRequests, 
+    getOutgoingRequests, 
+    createPairRequest, 
+    respondToPairRequest,
+    cancelPairRequest,
+    loading: pairLoading 
+  } = usePairRequest();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -65,22 +70,31 @@ export function DoublesRegistrationForm({
   const [skillDescription, setSkillDescription] = useState('');
   const [profileLink, setProfileLink] = useState('');
   
-  const [invitations, setInvitations] = useState<PartnerInvitation[]>([]);
-  const [loadingInvitations, setLoadingInvitations] = useState(false);
+  // Pair request state
+  const [incomingRequests, setIncomingRequests] = useState<PairRequest[]>([]);
+  const [outgoingRequests, setOutgoingRequests] = useState<PairRequest[]>([]);
+  
+  // Confirm dialog
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedTeamForPairing, setSelectedTeamForPairing] = useState<Team | null>(null);
 
-  // Load invitations when team exists
+  const loading = teamLoading || pairLoading;
+  const isTableLocked = tableStatus !== 'setup';
+
+  // Load pair requests when team exists
   useEffect(() => {
-    if (existingTeam && existingTeam.player1_user_id === user?.id) {
-      loadInvitations();
+    if (existingTeam && user) {
+      loadPairRequests();
     }
   }, [existingTeam, user]);
 
-  const loadInvitations = async () => {
-    if (!existingTeam) return;
-    setLoadingInvitations(true);
-    const data = await getTeamInvitations(existingTeam.id);
-    setInvitations(data);
-    setLoadingInvitations(false);
+  const loadPairRequests = async () => {
+    const [incoming, outgoing] = await Promise.all([
+      getIncomingRequests(tableId),
+      getOutgoingRequests(tableId),
+    ]);
+    setIncomingRequests(incoming);
+    setOutgoingRequests(outgoing);
   };
 
   const handleLoginClick = () => {
@@ -88,6 +102,44 @@ export function DoublesRegistrationForm({
     navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
   };
 
+  // Filter available teams for pairing
+  const availableTeamsForPairing = allTeams.filter(t => 
+    t.id !== existingTeam?.id && // Not self
+    t.player2_user_id === null && // No partner yet
+    t.team_status !== 'rejected' && 
+    t.team_status !== 'removed' &&
+    t.player1_user_id !== user?.id // Not current user's team
+  );
+
+  // Handle pair request
+  const handlePairRequest = (targetTeam: Team) => {
+    setSelectedTeamForPairing(targetTeam);
+    setConfirmDialogOpen(true);
+  };
+
+  const confirmPairRequest = async () => {
+    if (!selectedTeamForPairing) return;
+    
+    const result = await createPairRequest(tableId, selectedTeamForPairing.id);
+    if (result.success) {
+      setConfirmDialogOpen(false);
+      setSelectedTeamForPairing(null);
+      loadPairRequests();
+      onRegistrationComplete?.();
+    }
+  };
+
+  // Check if user has a pending request to a specific team
+  const hasPendingRequestTo = (teamId: string) => {
+    return outgoingRequests.some(r => r.to_team_id === teamId);
+  };
+
+  // Check if user has incoming request from a specific team
+  const hasIncomingRequestFrom = (teamId: string) => {
+    return incomingRequests.some(r => r.from_team_id === teamId);
+  };
+
+  // Not logged in
   if (!user) {
     return (
       <Card>
@@ -102,7 +154,7 @@ export function DoublesRegistrationForm({
     );
   }
 
-  // User is partner in a team
+  // User is partner in a team (player2)
   if (existingTeam && existingTeam.player2_user_id === user.id) {
     return (
       <Card>
@@ -134,11 +186,28 @@ export function DoublesRegistrationForm({
     );
   }
 
-  // User is VDV1 - show team management
-  if (existingTeam && existingTeam.player1_user_id === user.id) {
-    const activeInvitations = invitations.filter(
-      inv => inv.status === 'pending' && new Date(inv.expires_at) > new Date()
+  // User has registered and their team is REJECTED
+  if (existingTeam && (existingTeam.team_status === 'rejected' || existingTeam.team_status === 'removed')) {
+    return (
+      <Card>
+        <CardContent className="py-6">
+          <div className="text-center">
+            <XCircle className="w-12 h-12 mx-auto mb-3 text-destructive" />
+            <h3 className="font-semibold text-lg mb-1">Bạn đã bị từ chối tham gia giải</h3>
+            {existingTeam.btc_notes && (
+              <p className="text-muted-foreground mt-2">
+                Lý do: {existingTeam.btc_notes}
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     );
+  }
+
+  // User is VDV1 (team owner) - show team management + pairing
+  if (existingTeam && existingTeam.player1_user_id === user.id) {
+    const hasPartner = existingTeam.player2_user_id !== null;
 
     return (
       <Card>
@@ -148,11 +217,11 @@ export function DoublesRegistrationForm({
             Đội của bạn
           </CardTitle>
           <CardDescription>
-            Quản lý đội và mời partner tham gia
+            Quản lý đội và ghép đôi với VĐV khác
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Status Alert - Clear status message */}
+          {/* Status Alert */}
           {existingTeam.btc_approved || existingTeam.team_status === 'approved' ? (
             <Alert className="bg-green-50 border-green-200">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -165,6 +234,62 @@ export function DoublesRegistrationForm({
               <Clock className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-800 font-medium">
                 Bạn đang chờ BTC duyệt
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Incoming Pair Requests Banner */}
+          {incomingRequests.length > 0 && !hasPartner && (
+            <Alert className="bg-blue-50 border-blue-200">
+              <Bell className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <div className="font-medium mb-2">
+                  Có {incomingRequests.length} người đang chờ ghép đôi với bạn:
+                </div>
+                <div className="space-y-2">
+                  {incomingRequests.map((req) => (
+                    <div key={req.id} className="flex items-center justify-between bg-white rounded-lg p-2 border">
+                      <span className="font-medium">
+                        {req.from_team?.player1_display_name || 'VĐV'}
+                        {req.from_team?.player1_team && (
+                          <span className="text-muted-foreground ml-1">
+                            ({req.from_team.player1_team})
+                          </span>
+                        )}
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={async () => {
+                            const result = await respondToPairRequest(req.id, true);
+                            if (result.success) {
+                              onRegistrationComplete?.();
+                            }
+                          }}
+                          disabled={loading || isTableLocked}
+                        >
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Chấp nhận
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            const result = await respondToPairRequest(req.id, false);
+                            if (result.success) {
+                              loadPairRequests();
+                            }
+                          }}
+                          disabled={loading || isTableLocked}
+                        >
+                          <XCircle className="w-3 h-3 mr-1" />
+                          Từ chối
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </AlertDescription>
             </Alert>
           )}
@@ -190,27 +315,29 @@ export function DoublesRegistrationForm({
             {/* Partner Info */}
             <div className="space-y-1">
               <p className="text-sm font-medium">Partner:</p>
-              {existingTeam.player2_user_id ? (
+              {hasPartner ? (
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
                     {existingTeam.player2_display_name}
                     {existingTeam.player2_team && ` - ${existingTeam.player2_team}`}
                   </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive"
-                    onClick={async () => {
-                      if (confirm('Bạn có chắc muốn xóa partner khỏi đội?')) {
-                        const success = await removePartner(existingTeam.id);
-                        if (success) onRegistrationComplete?.();
-                      }
-                    }}
-                    disabled={loading}
-                  >
-                    <UserMinus className="w-4 h-4 mr-1" />
-                    Xóa
-                  </Button>
+                  {!isTableLocked && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={async () => {
+                        if (confirm('Bạn có chắc muốn xóa partner khỏi đội?')) {
+                          const success = await removePartner(existingTeam.id);
+                          if (success) onRegistrationComplete?.();
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      <UserMinus className="w-4 h-4 mr-1" />
+                      Xóa
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-amber-600">Chưa có partner</p>
@@ -218,76 +345,127 @@ export function DoublesRegistrationForm({
             </div>
           </div>
 
-          {/* Partner Invitations - only show if no partner yet */}
-          {!existingTeam.player2_user_id && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Link2 className="w-4 h-4" />
-                  Lời mời partner ({activeInvitations.length}/3)
-                </h4>
-                <Button
-                  size="sm"
-                  onClick={async () => {
-                    const inv = await createInvitation(existingTeam.id, tableId);
-                    if (inv) loadInvitations();
-                  }}
-                  disabled={loading || activeInvitations.length >= 3}
-                >
-                  <Send className="w-4 h-4 mr-1" />
-                  Tạo link mời
-                </Button>
-              </div>
-
-              {activeInvitations.length > 0 ? (
-                <div className="space-y-2">
-                  {activeInvitations.map((inv) => (
-                    <InvitationCard
-                      key={inv.id}
-                      invitation={inv}
-                      shareId={shareId}
-                      onCancel={async () => {
-                        const success = await cancelInvitation(inv.id);
-                        if (success) loadInvitations();
-                      }}
-                    />
-                  ))}
+          {/* Outgoing requests */}
+          {outgoingRequests.length > 0 && !hasPartner && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Yêu cầu ghép đôi đã gửi:</p>
+              {outgoingRequests.map((req) => (
+                <div key={req.id} className="flex items-center justify-between bg-muted/30 rounded-lg p-2 text-sm">
+                  <span>
+                    Đang chờ <strong>{req.to_team?.player1_display_name}</strong> xác nhận
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive"
+                    onClick={async () => {
+                      const success = await cancelPairRequest(req.id);
+                      if (success) loadPairRequests();
+                    }}
+                    disabled={loading}
+                  >
+                    Hủy
+                  </Button>
                 </div>
-              ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Tạo link mời và gửi cho partner của bạn. Mỗi link có hiệu lực 7 ngày.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Past invitations */}
-              {invitations.filter(inv => inv.status !== 'pending').length > 0 && (
-                <details className="text-sm">
-                  <summary className="cursor-pointer text-muted-foreground">
-                    Lịch sử lời mời ({invitations.filter(inv => inv.status !== 'pending').length})
-                  </summary>
-                  <div className="mt-2 space-y-1">
-                    {invitations
-                      .filter(inv => inv.status !== 'pending')
-                      .map((inv) => (
-                        <div key={inv.id} className="flex items-center justify-between text-xs p-2 bg-muted rounded">
-                          <code className="font-mono">{inv.invite_code.slice(0, 8)}...</code>
-                          <Badge variant="outline" className="text-xs">
-                            {inv.status === 'accepted' && 'Đã sử dụng'}
-                            {inv.status === 'rejected' && 'Bị từ chối'}
-                            {inv.status === 'expired' && 'Hết hạn'}
-                            {inv.status === 'cancelled' && 'Đã hủy'}
-                          </Badge>
-                        </div>
-                      ))}
-                  </div>
-                </details>
-              )}
+              ))}
             </div>
           )}
+
+          {/* Available players for pairing */}
+          {!hasPartner && !isTableLocked && availableTeamsForPairing.length > 0 && (
+            <div className="space-y-3">
+              <Separator />
+              <h4 className="font-medium flex items-center gap-2">
+                <Handshake className="w-4 h-4" />
+                VĐV chưa có partner ({availableTeamsForPairing.length})
+              </h4>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {availableTeamsForPairing.map((t) => {
+                  const hasSentRequest = hasPendingRequestTo(t.id);
+                  const hasReceivedRequest = hasIncomingRequestFrom(t.id);
+                  
+                  return (
+                    <div key={t.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{t.player1_display_name}</p>
+                        {t.player1_team && (
+                          <p className="text-sm text-muted-foreground">{t.player1_team}</p>
+                        )}
+                        <div className="flex gap-1 mt-1">
+                          {(t.btc_approved || t.team_status === 'approved') && (
+                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                              Đã duyệt
+                            </Badge>
+                          )}
+                          {t.player1_skill_level && (
+                            <Badge variant="outline" className="text-xs">
+                              {t.player1_rating_system}: {t.player1_skill_level}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      {hasSentRequest ? (
+                        <Badge variant="secondary">Đang chờ xác nhận</Badge>
+                      ) : hasReceivedRequest ? (
+                        <Badge variant="default" className="bg-blue-600">Đang chờ bạn xác nhận</Badge>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handlePairRequest(t)}
+                          disabled={loading}
+                        >
+                          <Handshake className="w-4 h-4 mr-1" />
+                          Ghép đôi
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Table locked message */}
+          {isTableLocked && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Giải đấu đã diễn ra. Không thể thay đổi đội.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
+
+        {/* Confirm Pair Dialog */}
+        <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Xác nhận ghép đôi</DialogTitle>
+              <DialogDescription>
+                Gửi yêu cầu ghép đôi với <strong>{selectedTeamForPairing?.player1_display_name}</strong>?
+                {selectedTeamForPairing?.player1_team && (
+                  <span> ({selectedTeamForPairing.player1_team})</span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+                Hủy
+              </Button>
+              <Button onClick={confirmPairRequest} disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Đang gửi...
+                  </>
+                ) : (
+                  'Xác nhận'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Card>
     );
   }
@@ -308,11 +486,6 @@ export function DoublesRegistrationForm({
 
     const result = await createTeam(tableId, formData);
     if (result) {
-      // Automatically create first invitation after team creation
-      const inv = await createInvitation(result.id, tableId);
-      if (inv) {
-        toast.success('Đã tạo link mời partner!');
-      }
       onRegistrationComplete?.();
     }
   };
@@ -325,7 +498,7 @@ export function DoublesRegistrationForm({
           Đăng ký tham dự (Đội đôi)
         </CardTitle>
         <CardDescription>
-          Đăng ký tham gia giải <strong>{tableName}</strong>. Sau khi đăng ký, bạn có thể mời partner.
+          Đăng ký tham gia giải <strong>{tableName}</strong>. Sau khi đăng ký, bạn có thể ghép đôi với VĐV khác.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -471,12 +644,12 @@ export function DoublesRegistrationForm({
           <Alert variant="default" className="bg-muted/50">
             <Users className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              Sau khi đăng ký, bạn sẽ có thể tạo link mời partner. Partner có 7 ngày để xác nhận.
+              Sau khi đăng ký, bạn sẽ thấy danh sách VĐV chưa có partner và có thể gửi yêu cầu ghép đôi.
             </AlertDescription>
           </Alert>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Đang gửi...' : 'Đăng ký & Mời Partner'}
+            {loading ? 'Đang gửi...' : 'Đăng ký tham dự'}
           </Button>
         </form>
       </CardContent>
@@ -496,50 +669,6 @@ function TeamStatusBadge({ status, btcApproved }: { status: string; btcApproved:
     return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Đã loại</Badge>;
   }
   return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Chờ duyệt</Badge>;
-}
-
-function InvitationCard({ 
-  invitation, 
-  shareId,
-  onCancel 
-}: { 
-  invitation: PartnerInvitation; 
-  shareId?: string;
-  onCancel: () => void;
-}) {
-  const inviteUrl = `${window.location.origin}/join/${invitation.invite_code}`;
-  
-  const copyLink = () => {
-    navigator.clipboard.writeText(inviteUrl);
-    toast.success('Đã sao chép link');
-  };
-
-  const expiresIn = formatDistanceToNow(new Date(invitation.expires_at), { 
-    addSuffix: true, 
-    locale: vi 
-  });
-
-  return (
-    <div className="border rounded-lg p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
-          {invitation.invite_code}
-        </code>
-        <span className="text-xs text-muted-foreground">
-          Hết hạn {expiresIn}
-        </span>
-      </div>
-      <div className="flex gap-2">
-        <Button size="sm" variant="outline" className="flex-1" onClick={copyLink}>
-          <Copy className="w-3 h-3 mr-1" />
-          Sao chép link
-        </Button>
-        <Button size="sm" variant="ghost" className="text-destructive" onClick={onCancel}>
-          <Trash2 className="w-3 h-3" />
-        </Button>
-      </div>
-    </div>
-  );
 }
 
 export default DoublesRegistrationForm;

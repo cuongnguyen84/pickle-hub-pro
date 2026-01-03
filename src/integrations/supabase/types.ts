@@ -538,6 +538,64 @@ export type Database = {
           },
         ]
       }
+      quick_table_pair_requests: {
+        Row: {
+          created_at: string
+          from_team_id: string
+          from_user_id: string
+          id: string
+          responded_at: string | null
+          status: string
+          table_id: string
+          to_team_id: string
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_team_id: string
+          from_user_id: string
+          id?: string
+          responded_at?: string | null
+          status?: string
+          table_id: string
+          to_team_id: string
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_team_id?: string
+          from_user_id?: string
+          id?: string
+          responded_at?: string | null
+          status?: string
+          table_id?: string
+          to_team_id?: string
+          to_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_table_pair_requests_from_team_id_fkey"
+            columns: ["from_team_id"]
+            isOneToOne: false
+            referencedRelation: "quick_table_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_table_pair_requests_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "quick_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quick_table_pair_requests_to_team_id_fkey"
+            columns: ["to_team_id"]
+            isOneToOne: false
+            referencedRelation: "quick_table_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quick_table_partner_invitations: {
         Row: {
           created_at: string
@@ -1204,6 +1262,11 @@ export type Database = {
         Args: { _livestream_id: string; _user_id: string }
         Returns: boolean
       }
+      cancel_pair_request: { Args: { _request_id: string }; Returns: Json }
+      create_pair_request: {
+        Args: { _table_id: string; _to_team_id: string }
+        Returns: Json
+      }
       create_quick_table_with_quota:
         | {
             Args: {
@@ -1279,6 +1342,10 @@ export type Database = {
       is_table_locked: { Args: { _table_id: string }; Returns: boolean }
       remove_partner_from_team: {
         Args: { _team_id: string; _user_id: string }
+        Returns: Json
+      }
+      respond_pair_request: {
+        Args: { _accept: boolean; _request_id: string }
         Returns: Json
       }
       set_user_quota: {
