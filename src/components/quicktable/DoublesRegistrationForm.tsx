@@ -152,6 +152,23 @@ export function DoublesRegistrationForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Status Alert - Clear status message */}
+          {existingTeam.btc_approved || existingTeam.team_status === 'approved' ? (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 font-medium">
+                Bạn đã được BTC duyệt
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert className="bg-amber-50 border-amber-200">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800 font-medium">
+                Bạn đang chờ BTC duyệt
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Team Status */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
