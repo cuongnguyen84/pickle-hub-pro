@@ -118,6 +118,19 @@ export function useTeamRegistration() {
 
     setLoading(true);
     try {
+      // Check if user already has a team in this table (as player1 or player2)
+      const { data: existingTeam } = await supabase
+        .from('quick_table_teams')
+        .select('id')
+        .eq('table_id', tableId)
+        .or(`player1_user_id.eq.${user.id},player2_user_id.eq.${user.id}`)
+        .maybeSingle();
+
+      if (existingTeam) {
+        toast.error('Bạn đã đăng ký tham gia giải này rồi');
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('quick_table_teams')
         .insert({

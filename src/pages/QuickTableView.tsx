@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
 import { useRefereeManagement } from '@/hooks/useRefereeManagement';
 import { useRegistration, type Registration } from '@/hooks/useRegistration';
+import { useTeamRegistration, type Team } from '@/hooks/useTeamRegistration';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ const QuickTableView = () => {
   const { isAdmin } = useAdminAuth();
   const { user } = useAuth();
   const { getUserRegistration, getPendingCount } = useRegistration();
+  const { getUserTeam } = useTeamRegistration();
 
   const [table, setTable] = useState<QuickTable | null>(null);
   const [groups, setGroups] = useState<QuickTableGroup[]>([]);
@@ -56,6 +58,7 @@ const QuickTableView = () => {
 
   // Registration state
   const [userRegistration, setUserRegistration] = useState<Registration | null>(null);
+  const [userTeam, setUserTeam] = useState<Team | null>(null);
   const [registrationCount, setRegistrationCount] = useState(0);
 
   // Referee management hook
@@ -110,8 +113,15 @@ const QuickTableView = () => {
       
       // Load user registration if requires_registration
       if (data.table.requires_registration && user) {
-        const reg = await getUserRegistration(data.table.id);
-        setUserRegistration(reg);
+        if (data.table.is_doubles) {
+          // For doubles: load user's team
+          const team = await getUserTeam(data.table.id);
+          setUserTeam(team);
+        } else {
+          // For singles: load user's registration
+          const reg = await getUserRegistration(data.table.id);
+          setUserRegistration(reg);
+        }
       }
       
       // Load pending registration count for creators
@@ -568,6 +578,7 @@ const QuickTableView = () => {
                       tableName={table.name}
                       requiresSkillLevel={table.requires_skill_level}
                       registrationMessage={table.registration_message}
+                      existingTeam={userTeam}
                       onRegistrationComplete={loadData}
                     />
                   ) : (
