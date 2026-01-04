@@ -297,6 +297,7 @@ export type QuickTablePublic = {
   format: string;
   player_count: number;
   requires_registration: boolean;
+  is_doubles: boolean;
   created_at: string;
 };
 
@@ -306,7 +307,7 @@ export function useOpenRegistrationTables(options?: { limit?: number }) {
     queryFn: async () => {
       let query = supabase
         .from("quick_tables")
-        .select("id, name, share_id, status, format, player_count, requires_registration, created_at")
+        .select("id, name, share_id, status, format, player_count, requires_registration, is_doubles, created_at")
         .eq("is_public", true)
         .eq("requires_registration", true)
         .eq("status", "setup")
@@ -363,6 +364,7 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
             status,
             format,
             player_count,
+            is_doubles,
             created_at
           )
         `)
@@ -404,6 +406,7 @@ export function useUserCompletedTournaments(userId: string | undefined) {
             status,
             format,
             player_count,
+            is_doubles,
             created_at
           )
         `)

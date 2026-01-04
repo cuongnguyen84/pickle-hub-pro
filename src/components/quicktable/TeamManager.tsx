@@ -221,6 +221,7 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                   <TableHead>Đội</TableHead>
                   <TableHead>VĐV 1</TableHead>
                   <TableHead>VĐV 2 (Partner)</TableHead>
+                  <TableHead>Trình độ</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
@@ -237,11 +238,6 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                         {team.player1_team && (
                           <p className="text-sm text-muted-foreground">{team.player1_team}</p>
                         )}
-                        {team.player1_skill_level && (
-                          <p className="text-xs text-muted-foreground">
-                            {team.player1_rating_system === 'DUPR' ? 'DUPR' : ''} {team.player1_skill_level}
-                          </p>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -255,6 +251,25 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                       ) : (
                         <span className="text-muted-foreground italic">Chưa có</span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {team.player1_skill_level && (
+                          <p className="text-xs">
+                            <span className="text-muted-foreground">VĐV1:</span>{' '}
+                            {team.player1_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player1_skill_level}
+                          </p>
+                        )}
+                        {team.player2_skill_level && (
+                          <p className="text-xs">
+                            <span className="text-muted-foreground">VĐV2:</span>{' '}
+                            {team.player2_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player2_skill_level}
+                          </p>
+                        )}
+                        {!team.player1_skill_level && !team.player2_skill_level && (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>{getTeamStatusBadge(team)}</TableCell>
                     <TableCell className="text-right">
@@ -302,6 +317,7 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                   <TableHead>Đội</TableHead>
                   <TableHead>VĐV 1</TableHead>
                   <TableHead>VĐV 2</TableHead>
+                  <TableHead>Trình độ</TableHead>
                   <TableHead>Ghi chú BTC</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
@@ -330,6 +346,25 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                       ) : (
                         <span className="text-muted-foreground italic">—</span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {team.player1_skill_level && (
+                          <p className="text-xs">
+                            <span className="text-muted-foreground">VĐV1:</span>{' '}
+                            {team.player1_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player1_skill_level}
+                          </p>
+                        )}
+                        {team.player2_skill_level && (
+                          <p className="text-xs">
+                            <span className="text-muted-foreground">VĐV2:</span>{' '}
+                            {team.player2_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player2_skill_level}
+                          </p>
+                        )}
+                        {!team.player1_skill_level && !team.player2_skill_level && (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                       {team.btc_notes || '—'}
