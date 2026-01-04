@@ -487,6 +487,53 @@ export interface Translations {
     createBracket: string;
     needMinPlayers: string;
     approveSelected: string;
+    // Registration / Pairing
+    registration: {
+      title: string;
+      doublesTitle: string;
+      displayName: string;
+      teamClub: string;
+      skillLevel: string;
+      dupr: string;
+      duprDesc: string;
+      otherSystem: string;
+      otherSystemDesc: string;
+      noRating: string;
+      noRatingDesc: string;
+      systemName: string;
+      systemNamePlaceholder: string;
+      duprScore: string;
+      duprLink: string;
+      skillScore: string;
+      skillDescription: string;
+      submit: string;
+      submitting: string;
+      afterRegisterNote: string;
+      waitingApproval: string;
+      approved: string;
+      rejected: string;
+      rejectedMessage: string;
+    };
+    pairing: {
+      pairUp: string;
+      confirmPair: string;
+      confirmPairWith: string;
+      cancel: string;
+      confirm: string;
+      sending: string;
+      waitingConfirm: string;
+      waitingYourConfirm: string;
+      accept: string;
+      decline: string;
+      incomingRequests: string;
+      outgoingRequests: string;
+      availablePlayers: string;
+      noPartner: string;
+      hasPartner: string;
+      removePartner: string;
+      teamLocked: string;
+    };
+    allRegistered: string;
     // Playoff bracket
     playoff: {
       noMatches: string;
@@ -1003,6 +1050,53 @@ export const vi: Translations = {
     createBracket: "Chia bảng",
     needMinPlayers: "Cần ít nhất 6 VĐV được duyệt để chia bảng. Hiện có {count}/6 VĐV.",
     approveSelected: "Duyệt {count} VĐV",
+    // Registration / Pairing
+    registration: {
+      title: "Đăng ký tham dự",
+      doublesTitle: "Đăng ký tham dự (Đội đôi)",
+      displayName: "Tên hiển thị",
+      teamClub: "Team / CLB (nếu có)",
+      skillLevel: "Trình độ",
+      dupr: "DUPR",
+      duprDesc: "Hệ thống rating DUPR chính thức",
+      otherSystem: "Hệ thống khác",
+      otherSystemDesc: "UTPR, APP, hoặc hệ thống khác",
+      noRating: "Tôi chưa có rating",
+      noRatingDesc: "Bạn sẽ mô tả trình độ của mình",
+      systemName: "Tên hệ thống",
+      systemNamePlaceholder: "VD: UTPR, APP, WPR...",
+      duprScore: "Điểm DUPR",
+      duprLink: "Link hồ sơ DUPR",
+      skillScore: "Điểm trình độ",
+      skillDescription: "Mô tả trình độ",
+      submit: "Đăng ký tham dự",
+      submitting: "Đang gửi...",
+      afterRegisterNote: "Sau khi đăng ký, bạn sẽ thấy danh sách VĐV chưa có partner và có thể gửi yêu cầu ghép đôi.",
+      waitingApproval: "Bạn đang chờ BTC duyệt",
+      approved: "Bạn đã được BTC duyệt",
+      rejected: "Bạn đã bị từ chối tham gia giải",
+      rejectedMessage: "Lý do",
+    },
+    pairing: {
+      pairUp: "Ghép đôi",
+      confirmPair: "Xác nhận ghép đôi",
+      confirmPairWith: "Gửi yêu cầu ghép đôi với",
+      cancel: "Hủy",
+      confirm: "Xác nhận",
+      sending: "Đang gửi...",
+      waitingConfirm: "Đang chờ xác nhận",
+      waitingYourConfirm: "Đang chờ bạn xác nhận",
+      accept: "Chấp nhận",
+      decline: "Từ chối",
+      incomingRequests: "Có người đang chờ ghép đôi với bạn",
+      outgoingRequests: "Yêu cầu ghép đôi đã gửi",
+      availablePlayers: "VĐV chưa có partner",
+      noPartner: "Chưa có partner",
+      hasPartner: "Đã có partner",
+      removePartner: "Xóa partner",
+      teamLocked: "Giải đấu đã diễn ra. Không thể thay đổi đội.",
+    },
+    allRegistered: "Các VĐV đã đăng ký",
     // Playoff bracket
     playoff: {
       noMatches: "Chưa có trận playoff",

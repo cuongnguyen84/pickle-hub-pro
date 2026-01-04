@@ -215,17 +215,17 @@ const Tournaments = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{tournament.name}</div>
-                    <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                    <div className="flex items-center gap-2">
                       {tournament.is_doubles ? (
-                        <>
+                        <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-700 border-blue-200">
                           <Users className="w-3 h-3" />
-                          <span>{tournament.player_count} đôi</span>
-                        </>
+                          <span>👥 {tournament.player_count} đôi</span>
+                        </Badge>
                       ) : (
-                        <>
+                        <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-700 border-orange-200">
                           <User className="w-3 h-3" />
-                          <span>{tournament.player_count} người</span>
-                        </>
+                          <span>👤 {tournament.player_count} người</span>
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -264,17 +264,17 @@ const Tournaments = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{tournament.name}</div>
-                    <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                    <div className="flex items-center gap-2">
                       {tournament.is_doubles ? (
-                        <>
+                        <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-700 border-blue-200">
                           <Users className="w-3 h-3" />
-                          <span>{tournament.player_count} đôi</span>
-                        </>
+                          <span>👥 {tournament.player_count} đôi</span>
+                        </Badge>
                       ) : (
-                        <>
+                        <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-700 border-orange-200">
                           <User className="w-3 h-3" />
-                          <span>{tournament.player_count} người</span>
-                        </>
+                          <span>👤 {tournament.player_count} người</span>
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -307,17 +307,17 @@ const Tournaments = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{table.name}</div>
-                    <div className="flex items-center gap-2 text-xs text-foreground-muted">
+                    <div className="flex items-center gap-2">
                       {table.is_doubles ? (
-                        <>
+                        <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-700 border-blue-200">
                           <Users className="w-3 h-3" />
-                          <span>{table.player_count} đôi</span>
-                        </>
+                          <span>👥 {table.player_count} đôi</span>
+                        </Badge>
                       ) : (
-                        <>
+                        <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-700 border-orange-200">
                           <User className="w-3 h-3" />
-                          <span>{table.player_count} người</span>
-                        </>
+                          <span>👤 {table.player_count} người</span>
+                        </Badge>
                       )}
                     </div>
                   </div>

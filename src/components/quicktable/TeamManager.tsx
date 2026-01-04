@@ -72,6 +72,8 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
     };
   }, [tableId]);
 
+  // All registered teams (excluding removed/rejected) for display
+  const allRegisteredTeams = teams.filter(t => t.team_status !== 'rejected' && t.team_status !== 'removed');
   const pendingTeams = teams.filter(t => !t.btc_approved && t.team_status !== 'rejected' && t.team_status !== 'removed');
   const approvedTeams = teams.filter(t => t.btc_approved && t.team_status !== 'removed');
   const rejectedTeams = teams.filter(t => t.team_status === 'rejected');
@@ -205,19 +207,20 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
         </Card>
       )}
 
-      {/* Pending Teams */}
-      {pendingTeams.length > 0 && (
+      {/* All Registered Teams */}
+      {allRegisteredTeams.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="w-4 h-4 text-yellow-600" />
-              Đội chờ duyệt ({pendingTeams.length})
+              <Users className="w-4 h-4 text-primary" />
+              Các VĐV đã đăng ký ({allRegisteredTeams.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">#</TableHead>
                   <TableHead>Đội</TableHead>
                   <TableHead>VĐV 1</TableHead>
                   <TableHead>VĐV 2 (Partner)</TableHead>
@@ -227,8 +230,9 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pendingTeams.map((team) => (
+                {allRegisteredTeams.map((team, idx) => (
                   <TableRow key={team.id}>
+                    <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                     <TableCell>
                       {getPartnerStatus(team)}
                     </TableCell>
@@ -257,13 +261,24 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                         {team.player1_skill_level && (
                           <p className="text-xs">
                             <span className="text-muted-foreground">VĐV1:</span>{' '}
-                            {team.player1_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player1_skill_level}
+                            {team.player1_rating_system === 'DUPR' ? 'DUPR ' : 
+                             team.player1_rating_system === 'other' ? '' : ''}{team.player1_skill_level}
+                            {team.player1_profile_link && team.player1_rating_system === 'other' && team.player1_profile_link.startsWith('[') && (
+                              <span className="text-muted-foreground ml-1">
+                                ({team.player1_profile_link.match(/\[(.*?)\]/)?.[1] || 'Khác'})
+                              </span>
+                            )}
                           </p>
                         )}
                         {team.player2_skill_level && (
                           <p className="text-xs">
                             <span className="text-muted-foreground">VĐV2:</span>{' '}
                             {team.player2_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player2_skill_level}
+                            {team.player2_profile_link && team.player2_rating_system === 'other' && team.player2_profile_link.startsWith('[') && (
+                              <span className="text-muted-foreground ml-1">
+                                ({team.player2_profile_link.match(/\[(.*?)\]/)?.[1] || 'Khác'})
+                              </span>
+                            )}
                           </p>
                         )}
                         {!team.player1_skill_level && !team.player2_skill_level && (
@@ -273,24 +288,43 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                     </TableCell>
                     <TableCell>{getTeamStatusBadge(team)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8 text-green-600" 
-                          onClick={() => handleAction(team.id, 'approve')}
-                        >
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8 text-red-600" 
-                          onClick={() => setNoteDialog({ team, action: 'reject' })}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      {!team.btc_approved ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-green-600" 
+                            onClick={() => handleAction(team.id, 'approve')}
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-red-600" 
+                            onClick={() => setNoteDialog({ team, action: 'reject' })}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-8 w-8">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setNoteDialog({ team, action: 'remove' })}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Loại khỏi giải
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -300,92 +334,33 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
         </Card>
       )}
 
-      {/* Approved Teams */}
-      {approvedTeams.length > 0 && (
-        <Card>
+      {/* Rejected/Removed Teams (collapsed) */}
+      {(rejectedTeams.length > 0 || removedTeams.length > 0) && (
+        <Card className="opacity-60">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              Đội đã duyệt ({approvedTeams.length})
+              <XCircle className="w-4 h-4 text-red-600" />
+              Từ chối / Đã loại ({rejectedTeams.length + removedTeams.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-10">#</TableHead>
-                  <TableHead>Đội</TableHead>
-                  <TableHead>VĐV 1</TableHead>
-                  <TableHead>VĐV 2</TableHead>
-                  <TableHead>Trình độ</TableHead>
-                  <TableHead>Ghi chú BTC</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
+                  <TableHead>VĐV</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Ghi chú</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {approvedTeams.map((team, idx) => (
+                {[...rejectedTeams, ...removedTeams].map((team) => (
                   <TableRow key={team.id}>
-                    <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                    <TableCell>{getPartnerStatus(team)}</TableCell>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{team.player1_display_name}</p>
-                        {team.player1_team && (
-                          <p className="text-sm text-muted-foreground">{team.player1_team}</p>
-                        )}
-                      </div>
+                      <p className="font-medium">{team.player1_display_name}</p>
                     </TableCell>
-                    <TableCell>
-                      {team.player2_display_name ? (
-                        <div>
-                          <p className="font-medium">{team.player2_display_name}</p>
-                          {team.player2_team && (
-                            <p className="text-sm text-muted-foreground">{team.player2_team}</p>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground italic">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {team.player1_skill_level && (
-                          <p className="text-xs">
-                            <span className="text-muted-foreground">VĐV1:</span>{' '}
-                            {team.player1_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player1_skill_level}
-                          </p>
-                        )}
-                        {team.player2_skill_level && (
-                          <p className="text-xs">
-                            <span className="text-muted-foreground">VĐV2:</span>{' '}
-                            {team.player2_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player2_skill_level}
-                          </p>
-                        )}
-                        {!team.player1_skill_level && !team.player2_skill_level && (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                    <TableCell>{getTeamStatusBadge(team)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
                       {team.btc_notes || '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-8 w-8">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setNoteDialog({ team, action: 'remove' })}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Loại khỏi giải
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
