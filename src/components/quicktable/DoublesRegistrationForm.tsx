@@ -156,31 +156,68 @@ export function DoublesRegistrationForm({
 
   // User is partner in a team (player2)
   if (existingTeam && existingTeam.player2_user_id === user.id) {
+    const isApproved = existingTeam.btc_approved || existingTeam.team_status === 'approved';
+    
     return (
       <Card>
-        <CardContent className="py-6">
-          <div className="text-center mb-4">
-            <Users className="w-12 h-12 mx-auto mb-3 text-primary" />
-            <h3 className="font-semibold text-lg mb-1">Bạn đã tham gia đội</h3>
-            <p className="text-muted-foreground">
-              Bạn là partner của <strong>{existingTeam.player1_display_name}</strong>
-            </p>
-          </div>
-          
-          <div className="border-t pt-4 mt-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Trạng thái:</span>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-primary" />
+            Đội của bạn
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Status Alert */}
+          {isApproved ? (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 font-medium">
+                Bạn đã được BTC duyệt
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert className="bg-amber-50 border-amber-200">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800 font-medium">
+                Bạn đang chờ BTC duyệt
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Team Info */}
+          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Trạng thái:</span>
               <TeamStatusBadge status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} />
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">VĐV 1:</span>
-              <span>{existingTeam.player1_display_name}</span>
+            
+            <Separator />
+            
+            {/* VDV1 Info */}
+            <div className="space-y-1">
+              <p className="text-sm font-medium">VĐV 1 (Đội trưởng):</p>
+              <p className="text-sm text-muted-foreground">
+                {existingTeam.player1_display_name}
+                {existingTeam.player1_team && ` - ${existingTeam.player1_team}`}
+              </p>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">VĐV 2 (Bạn):</span>
-              <span>{existingTeam.player2_display_name}</span>
+            
+            {/* Partner Info (Bạn) */}
+            <div className="space-y-1">
+              <p className="text-sm font-medium">VĐV 2 (Bạn):</p>
+              <p className="text-sm text-muted-foreground">
+                {existingTeam.player2_display_name}
+                {existingTeam.player2_team && ` - ${existingTeam.player2_team}`}
+              </p>
             </div>
           </div>
+
+          <Alert variant="default" className="bg-muted/30">
+            <Users className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              Đội trưởng ({existingTeam.player1_display_name}) có thể quản lý đội và thay đổi partner.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );

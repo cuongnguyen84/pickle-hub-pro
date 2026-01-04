@@ -11,7 +11,7 @@ import { useI18n } from "@/i18n";
 import { useTournaments, useOpenRegistrationTables, useUserRegisteredTournaments, useUserCompletedTournaments } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
 import { useAuth } from "@/hooks/useAuth";
-import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock } from "lucide-react";
+import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -216,8 +216,17 @@ const Tournaments = () => {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{tournament.name}</div>
                     <div className="flex items-center gap-2 text-xs text-foreground-muted">
-                      <Users className="w-3 h-3" />
-                      <span>{tournament.player_count} {t.quickTable.players}</span>
+                      {tournament.is_doubles ? (
+                        <>
+                          <Users className="w-3 h-3" />
+                          <span>{tournament.player_count} đôi</span>
+                        </>
+                      ) : (
+                        <>
+                          <User className="w-3 h-3" />
+                          <span>{tournament.player_count} người</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <Badge 
@@ -256,8 +265,17 @@ const Tournaments = () => {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{tournament.name}</div>
                     <div className="flex items-center gap-2 text-xs text-foreground-muted">
-                      <Users className="w-3 h-3" />
-                      <span>{tournament.player_count} {t.quickTable.players}</span>
+                      {tournament.is_doubles ? (
+                        <>
+                          <Users className="w-3 h-3" />
+                          <span>{tournament.player_count} đôi</span>
+                        </>
+                      ) : (
+                        <>
+                          <User className="w-3 h-3" />
+                          <span>{tournament.player_count} người</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <Badge variant="default">{t.quickTable.status.completed}</Badge>
@@ -290,8 +308,17 @@ const Tournaments = () => {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{table.name}</div>
                     <div className="flex items-center gap-2 text-xs text-foreground-muted">
-                      <Users className="w-3 h-3" />
-                      <span>{table.player_count} {t.quickTable.players}</span>
+                      {table.is_doubles ? (
+                        <>
+                          <Users className="w-3 h-3" />
+                          <span>{table.player_count} đôi</span>
+                        </>
+                      ) : (
+                        <>
+                          <User className="w-3 h-3" />
+                          <span>{table.player_count} người</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
