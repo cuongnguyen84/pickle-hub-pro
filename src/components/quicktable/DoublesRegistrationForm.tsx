@@ -69,6 +69,7 @@ export function DoublesRegistrationForm({
   const [skillLevel, setSkillLevel] = useState('');
   const [skillDescription, setSkillDescription] = useState('');
   const [profileLink, setProfileLink] = useState('');
+  const [otherSystemName, setOtherSystemName] = useState('');
   
   // Pair request state
   const [incomingRequests, setIncomingRequests] = useState<PairRequest[]>([]);
@@ -512,13 +513,21 @@ export function DoublesRegistrationForm({
     e.preventDefault();
 
     if (!displayName.trim()) return;
+    
+    // Validate other system name if selected
+    if (ratingSystem === 'other' && !otherSystemName.trim()) {
+      toast.error('Vui lòng nhập tên hệ thống');
+      return;
+    }
 
     const formData: TeamFormData = {
       display_name: displayName,
       team: team || undefined,
       rating_system: ratingSystem,
       skill_level: skillLevel ? parseFloat(skillLevel) : undefined,
-      profile_link: profileLink || undefined,
+      profile_link: ratingSystem === 'other' 
+        ? `[${otherSystemName.trim()}] ${profileLink || ''}`.trim()
+        : profileLink || undefined,
     };
 
     const result = await createTeam(tableId, formData);
@@ -635,6 +644,16 @@ export function DoublesRegistrationForm({
 
             {ratingSystem === 'other' && (
               <div className="pl-6 space-y-3 border-l-2 border-primary/20">
+                <div className="space-y-2">
+                  <Label htmlFor="otherSystemName">Tên hệ thống *</Label>
+                  <Input
+                    id="otherSystemName"
+                    value={otherSystemName}
+                    onChange={(e) => setOtherSystemName(e.target.value)}
+                    placeholder="VD: UTPR, APP, WPR..."
+                    required
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="skillLevelOther">Điểm trình độ</Label>
                   <Input
