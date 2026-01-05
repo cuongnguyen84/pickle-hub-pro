@@ -462,6 +462,12 @@ export interface Translations {
     yourRegisteredTournaments: string;
     yourCompletedTournaments: string;
     openRegistrationTournaments: string;
+    ongoing: string;
+    completed: string;
+    noOngoing: string;
+    noCompleted: string;
+    noTournaments: string;
+    moreRemaining: string;
     players: string;
     approved: string;
     pending: string;
@@ -1020,11 +1026,17 @@ export const vi: Translations = {
       playoff: "Playoff",
       completed: "Hoàn thành",
     },
-    myTournaments: "Giải của tôi",
-    refereeTournaments: "Giải bạn làm trọng tài",
+    myTournaments: "Giải đấu của tôi",
+    refereeTournaments: "Giải đang điều hành",
     yourRegisteredTournaments: "Giải đấu bạn đang tham gia",
     yourCompletedTournaments: "Giải đấu đã tham gia",
     openRegistrationTournaments: "Giải đấu đang đăng ký",
+    ongoing: "Đang diễn ra",
+    completed: "Hoàn thành",
+    noOngoing: "Không có giải đấu đang diễn ra",
+    noCompleted: "Chưa có giải đấu nào hoàn thành",
+    noTournaments: "Bạn chưa tạo bảng đấu nào",
+    moreRemaining: "Còn {count} giải khác",
     players: "người",
     approved: "Đã duyệt",
     pending: "Chờ duyệt",
