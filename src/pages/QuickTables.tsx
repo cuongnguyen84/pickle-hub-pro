@@ -145,13 +145,13 @@ const QuickTables = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "setup":
-        return "Đang thiết lập";
+        return t.quickTable.status.setup;
       case "group_stage":
-        return "Vòng bảng";
+        return t.quickTable.status.groupStage;
       case "playoff":
-        return "Playoff";
+        return t.quickTable.status.playoff;
       case "completed":
-        return "Hoàn thành";
+        return t.quickTable.status.completed;
       default:
         return status;
     }
@@ -536,40 +536,46 @@ const QuickTables = () => {
             <>
               {userTables.length > 0 ? (
                 <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <ListTodo className="w-4 h-4 text-primary" />
-                        Giải đấu của tôi
-                      </CardTitle>
-                      <div className="flex gap-1">
-                        <Button
-                          variant={showMyCompleted ? "ghost" : "secondary"}
-                          size="sm"
-                          onClick={() => setShowMyCompleted(false)}
-                          className="text-xs h-7"
-                        >
-                          Đang diễn ra ({myOngoingTables.length})
-                        </Button>
-                        <Button
-                          variant={showMyCompleted ? "secondary" : "ghost"}
-                          size="sm"
-                          onClick={() => setShowMyCompleted(true)}
-                          className="text-xs h-7"
-                        >
-                          Hoàn thành ({myCompletedTables.length})
-                        </Button>
-                      </div>
-                    </div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <ListTodo className="w-4 h-4 text-primary" />
+                      {t.quickTable.myTournaments}
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <div className="px-6 pb-2">
+                    <div className="flex gap-1 border-b border-border">
+                      <button
+                        onClick={() => setShowMyCompleted(false)}
+                        className={cn(
+                          "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                          !showMyCompleted
+                            ? "border-primary text-primary"
+                            : "border-transparent text-foreground-muted hover:text-foreground"
+                        )}
+                      >
+                        {t.quickTable.ongoing} ({myOngoingTables.length})
+                      </button>
+                      <button
+                        onClick={() => setShowMyCompleted(true)}
+                        className={cn(
+                          "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                          showMyCompleted
+                            ? "border-primary text-primary"
+                            : "border-transparent text-foreground-muted hover:text-foreground"
+                        )}
+                      >
+                        {t.quickTable.completed} ({myCompletedTables.length})
+                      </button>
+                    </div>
+                  </div>
+                  <CardContent className="space-y-2 pt-2">
                     {(() => {
                       const displayTables = showMyCompleted ? myCompletedTables : myOngoingTables;
                       
                       if (displayTables.length === 0) {
                         return (
                           <div className="text-center py-4 text-foreground-muted">
-                            {showMyCompleted ? "Chưa có giải đấu nào hoàn thành" : "Không có giải đấu đang diễn ra"}
+                            {showMyCompleted ? t.quickTable.noCompleted : t.quickTable.noOngoing}
                           </div>
                         );
                       }
@@ -604,14 +610,14 @@ const QuickTables = () => {
                           {!showAllTables && displayTables.length > 5 && (
                             <div className="text-center pt-3 border-t border-border/50">
                               <p className="text-sm text-foreground-muted mb-2">
-                                Còn {displayTables.length - 5} bảng đấu khác
+                                {t.quickTable.moreRemaining.replace('{count}', String(displayTables.length - 5))}
                               </p>
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => setShowAllTables(true)}
                               >
-                                Xem thêm
+                                {t.quickTable.showMore}
                               </Button>
                             </div>
                           )}
@@ -622,7 +628,7 @@ const QuickTables = () => {
                                 size="sm"
                                 onClick={() => setShowAllTables(false)}
                               >
-                                Thu gọn
+                                {t.quickTable.showLess}
                               </Button>
                             </div>
                           )}
@@ -635,7 +641,7 @@ const QuickTables = () => {
                 <Card className="border-dashed">
                   <CardContent className="py-6 text-center">
                     <ListTodo className="w-8 h-8 mx-auto mb-2 text-foreground-muted opacity-50" />
-                    <p className="text-foreground-muted">Bạn chưa tạo bảng đấu nào</p>
+                    <p className="text-foreground-muted">{t.quickTable.noTournaments}</p>
                   </CardContent>
                 </Card>
               ) : null}
@@ -643,40 +649,46 @@ const QuickTables = () => {
               {/* Referee Tables Section */}
               {refereeTables.length > 0 && (
                 <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-primary" />
-                        Giải đang điều hành
-                      </CardTitle>
-                      <div className="flex gap-1">
-                        <Button
-                          variant={showRefereeCompleted ? "ghost" : "secondary"}
-                          size="sm"
-                          onClick={() => setShowRefereeCompleted(false)}
-                          className="text-xs h-7"
-                        >
-                          Đang diễn ra ({refereeOngoingTables.length})
-                        </Button>
-                        <Button
-                          variant={showRefereeCompleted ? "secondary" : "ghost"}
-                          size="sm"
-                          onClick={() => setShowRefereeCompleted(true)}
-                          className="text-xs h-7"
-                        >
-                          Hoàn thành ({refereeCompletedTables.length})
-                        </Button>
-                      </div>
-                    </div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-primary" />
+                      {t.quickTable.refereeTournaments}
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <div className="px-6 pb-2">
+                    <div className="flex gap-1 border-b border-border">
+                      <button
+                        onClick={() => setShowRefereeCompleted(false)}
+                        className={cn(
+                          "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                          !showRefereeCompleted
+                            ? "border-primary text-primary"
+                            : "border-transparent text-foreground-muted hover:text-foreground"
+                        )}
+                      >
+                        {t.quickTable.ongoing} ({refereeOngoingTables.length})
+                      </button>
+                      <button
+                        onClick={() => setShowRefereeCompleted(true)}
+                        className={cn(
+                          "px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                          showRefereeCompleted
+                            ? "border-primary text-primary"
+                            : "border-transparent text-foreground-muted hover:text-foreground"
+                        )}
+                      >
+                        {t.quickTable.completed} ({refereeCompletedTables.length})
+                      </button>
+                    </div>
+                  </div>
+                  <CardContent className="space-y-2 pt-2">
                     {(() => {
                       const displayTables = showRefereeCompleted ? refereeCompletedTables : refereeOngoingTables;
                       
                       if (displayTables.length === 0) {
                         return (
                           <div className="text-center py-4 text-foreground-muted">
-                            {showRefereeCompleted ? "Chưa có giải đấu nào hoàn thành" : "Không có giải đấu đang diễn ra"}
+                            {showRefereeCompleted ? t.quickTable.noCompleted : t.quickTable.noOngoing}
                           </div>
                         );
                       }
@@ -714,14 +726,14 @@ const QuickTables = () => {
                           {!showAllRefereeTables && displayTables.length > 5 && (
                             <div className="text-center pt-3 border-t border-border/50">
                               <p className="text-sm text-foreground-muted mb-2">
-                                Còn {displayTables.length - 5} giải khác
+                                {t.quickTable.moreRemaining.replace('{count}', String(displayTables.length - 5))}
                               </p>
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => setShowAllRefereeTables(true)}
                               >
-                                Xem thêm
+                                {t.quickTable.showMore}
                               </Button>
                             </div>
                           )}
@@ -732,7 +744,7 @@ const QuickTables = () => {
                                 size="sm"
                                 onClick={() => setShowAllRefereeTables(false)}
                               >
-                                Thu gọn
+                                {t.quickTable.showLess}
                               </Button>
                             </div>
                           )}
