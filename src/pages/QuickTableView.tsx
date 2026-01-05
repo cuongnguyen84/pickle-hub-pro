@@ -476,9 +476,9 @@ const QuickTableView = () => {
     <MainLayout>
       <div className="container-wide py-8">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2 flex-wrap">
               {table.name}
               <AIAssistantButton 
                 screenName="quick-table-view" 
@@ -491,31 +491,31 @@ const QuickTableView = () => {
                 }}
               />
             </h1>
-            <div className="flex items-center gap-2 text-foreground-secondary flex-wrap">
-              <Badge variant="outline">
+            <div className="flex items-center gap-2 text-foreground-secondary flex-wrap text-sm">
+              <Badge variant="outline" className="text-xs">
                 {table.format === 'round_robin' ? 'Round Robin' : 'Playoff'}
               </Badge>
-              <Badge variant={table.status === 'completed' ? 'default' : 'outline'}>
+              <Badge variant={table.status === 'completed' ? 'default' : 'outline'} className="text-xs">
                 {table.status === 'setup' && 'Đang thiết lập'}
                 {table.status === 'group_stage' && 'Vòng bảng'}
                 {table.status === 'playoff' && 'Playoff'}
                 {table.status === 'completed' && 'Hoàn thành'}
               </Badge>
-              <span>{players.length} người chơi</span>
-              {groups.length > 0 && <span>• {groups.length} bảng</span>}
+              <span className="text-xs">{players.length} người chơi</span>
+              {groups.length > 0 && <span className="text-xs">• {groups.length} bảng</span>}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleShare}>
+              <Share2 className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Chia sẻ</span>
+            </Button>
             {canDeleteTable && (
               <Button variant="outline" size="sm" onClick={handleDeleteTable} className="text-destructive hover:bg-destructive/10">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Xoá giải
+                <Trash2 className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Xoá giải</span>
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={handleShare}>
-              <Share2 className="w-4 h-4 mr-2" />
-              Chia sẻ
-            </Button>
           </div>
         </div>
 

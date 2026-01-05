@@ -208,35 +208,39 @@ const Tournaments = () => {
                 <Link
                   key={tournament.id}
                   to={`/quick-tables/${tournament.share_id}`}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center flex-shrink-0">
-                    <Trophy className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{tournament.name}</div>
-                    <div className="flex items-center gap-2">
-                      {tournament.is_doubles ? (
-                        <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-700 border-blue-200">
-                          <Users className="w-3 h-3" />
-                          <span>👥 {tournament.player_count} đôi</span>
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-700 border-orange-200">
-                          <User className="w-3 h-3" />
-                          <span>👤 {tournament.player_count} người</span>
-                        </Badge>
-                      )}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center flex-shrink-0">
+                      <Trophy className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{tournament.name}</div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {tournament.is_doubles ? (
+                          <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
+                            <Users className="w-3 h-3" />
+                            <span>{tournament.player_count} đôi</span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
+                            <User className="w-3 h-3" />
+                            <span>{tournament.player_count} người</span>
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Badge 
-                    variant={tournament.registrationStatus === 'approved' ? 'default' : 'outline'}
-                    className={tournament.registrationStatus === 'approved' ? 'bg-green-600' : ''}
-                  >
-                    {tournament.registrationStatus === 'approved' ? t.quickTable.approved : t.quickTable.pending}
-                  </Badge>
-                  <Badge variant={getStatusVariant(tournament.status)}>{getStatusLabel(tournament.status)}</Badge>
-                  <ChevronRight className="w-4 h-4 text-foreground-muted" />
+                  <div className="flex items-center gap-2 pl-13 sm:pl-0">
+                    <Badge 
+                      variant={tournament.registrationStatus === 'approved' ? 'default' : 'outline'}
+                      className={cn("text-xs", tournament.registrationStatus === 'approved' ? 'bg-green-600' : '')}
+                    >
+                      {tournament.registrationStatus === 'approved' ? t.quickTable.approved : t.quickTable.pending}
+                    </Badge>
+                    <Badge variant={getStatusVariant(tournament.status)} className="text-xs">{getStatusLabel(tournament.status)}</Badge>
+                    <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                  </div>
                 </Link>
               ))}
             </div>
@@ -257,29 +261,33 @@ const Tournaments = () => {
                 <Link
                   key={tournament.id}
                   to={`/quick-tables/${tournament.share_id}`}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                    <Trophy className="w-5 h-5 text-foreground-muted" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{tournament.name}</div>
-                    <div className="flex items-center gap-2">
-                      {tournament.is_doubles ? (
-                        <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-700 border-blue-200">
-                          <Users className="w-3 h-3" />
-                          <span>👥 {tournament.player_count} đôi</span>
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-700 border-orange-200">
-                          <User className="w-3 h-3" />
-                          <span>👤 {tournament.player_count} người</span>
-                        </Badge>
-                      )}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                      <Trophy className="w-5 h-5 text-foreground-muted" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{tournament.name}</div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {tournament.is_doubles ? (
+                          <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
+                            <Users className="w-3 h-3" />
+                            <span>{tournament.player_count} đôi</span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
+                            <User className="w-3 h-3" />
+                            <span>{tournament.player_count} người</span>
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Badge variant="default">{t.quickTable.status.completed}</Badge>
-                  <ChevronRight className="w-4 h-4 text-foreground-muted" />
+                  <div className="flex items-center gap-2 pl-13 sm:pl-0">
+                    <Badge variant="default" className="text-xs">{t.quickTable.status.completed}</Badge>
+                    <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                  </div>
                 </Link>
               ))}
             </div>
@@ -300,31 +308,35 @@ const Tournaments = () => {
                 <Link
                   key={table.id}
                   to={`/quick-tables/${table.share_id}`}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <ClipboardList className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{table.name}</div>
-                    <div className="flex items-center gap-2">
-                      {table.is_doubles ? (
-                        <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-700 border-blue-200">
-                          <Users className="w-3 h-3" />
-                          <span>👥 {table.player_count} đôi</span>
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="gap-1 bg-orange-100 text-orange-700 border-orange-200">
-                          <User className="w-3 h-3" />
-                          <span>👤 {table.player_count} người</span>
-                        </Badge>
-                      )}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <ClipboardList className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{table.name}</div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {table.is_doubles ? (
+                          <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
+                            <Users className="w-3 h-3" />
+                            <span>{table.player_count} đôi</span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
+                            <User className="w-3 h-3" />
+                            <span>{table.player_count} người</span>
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                    {t.quickTable.openRegistrationTournaments}
-                  </Badge>
-                  <ChevronRight className="w-4 h-4 text-foreground-muted" />
+                  <div className="flex items-center gap-2 pl-13 sm:pl-0">
+                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 whitespace-nowrap">
+                      Đang mở đăng ký
+                    </Badge>
+                    <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                  </div>
                 </Link>
               ))}
             </div>
