@@ -440,6 +440,8 @@ export interface Translations {
     advancedSettings: string;
     autoApprove: string;
     autoApproveDesc: string;
+    doublesMode: string;
+    doublesModeDesc: string;
     registrationMessage: string;
     registrationMessagePlaceholder: string;
     continue: string;
@@ -476,6 +478,7 @@ export interface Translations {
     showLess: string;
     showCompleted: string;
     hideCompleted: string;
+    referee: string;
     noRating: string;
     viewProfile: string;
     editSkillLevel: string;
@@ -1009,6 +1012,8 @@ export const vi: Translations = {
     advancedSettings: "Cài đặt nâng cao",
     autoApprove: "Tự động duyệt đăng ký",
     autoApproveDesc: "VĐV được duyệt ngay khi đăng ký (không khuyến nghị)",
+    doublesMode: "Thi đấu đôi",
+    doublesModeDesc: "VĐV đăng ký theo cặp đôi, có thể mời partner qua link",
     registrationMessage: "Thông báo cho VĐV khi đăng ký",
     registrationMessagePlaceholder: "VD: BTC sẽ xác nhận trình độ dựa vào điểm tự khai và đối chiếu với các hệ điểm...",
     continue: "Tiếp tục",
@@ -1045,6 +1050,7 @@ export const vi: Translations = {
     showLess: "Thu gọn",
     showCompleted: "Xem giải đã hoàn thành",
     hideCompleted: "Ẩn giải đã hoàn thành",
+    referee: "Trọng tài",
     noRating: "Chưa có rating",
     viewProfile: "Xem hồ sơ",
     editSkillLevel: "Chỉnh sửa trình độ",

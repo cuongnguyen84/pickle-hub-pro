@@ -344,14 +344,15 @@ export function useApprovedRegistrations(tableId: string) {
 }
 
 // Fetch tournaments user is registered for (active - not completed)
+// Supports both singles (quick_table_registrations) and doubles (quick_table_teams)
 export function useUserRegisteredTournaments(userId: string | undefined) {
   return useQuery({
     queryKey: ["user-registered-tournaments", userId],
     queryFn: async () => {
       if (!userId) return [];
       
-      // Get all registrations for this user with table info
-      const { data, error } = await supabase
+      // Get singles registrations
+      const { data: singlesData, error: singlesError } = await supabase
         .from("quick_table_registrations")
         .select(`
           id,
@@ -371,29 +372,80 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
         .eq("user_id", userId)
         .in("status", ["pending", "approved"]);
 
-      if (error) throw error;
+      if (singlesError) throw singlesError;
       
-      // Filter to active tournaments (not completed)
-      return data
+      // Get doubles registrations (as player1 or player2)
+      const { data: doublesData, error: doublesError } = await supabase
+        .from("quick_table_teams")
+        .select(`
+          id,
+          team_status,
+          btc_approved,
+          table_id,
+          quick_tables:table_id (
+            id,
+            name,
+            share_id,
+            status,
+            format,
+            player_count,
+            is_doubles,
+            created_at
+          )
+        `)
+        .or(`player1_user_id.eq.${userId},player2_user_id.eq.${userId}`)
+        .not("team_status", "in", "(rejected,removed)");
+
+      if (doublesError) throw doublesError;
+      
+      // Combine and deduplicate by table_id
+      const tableMap = new Map<string, any>();
+      
+      // Add singles registrations
+      singlesData
         .filter(reg => reg.quick_tables && (reg.quick_tables as any).status !== 'completed')
-        .map(reg => ({
-          registrationId: reg.id,
-          registrationStatus: reg.status,
-          ...reg.quick_tables as any,
-        }));
+        .forEach(reg => {
+          const table = reg.quick_tables as any;
+          if (!tableMap.has(table.id)) {
+            tableMap.set(table.id, {
+              registrationId: reg.id,
+              registrationStatus: reg.status,
+              ...table,
+            });
+          }
+        });
+      
+      // Add doubles registrations
+      doublesData
+        .filter(team => team.quick_tables && (team.quick_tables as any).status !== 'completed')
+        .forEach(team => {
+          const table = team.quick_tables as any;
+          if (!tableMap.has(table.id)) {
+            tableMap.set(table.id, {
+              registrationId: team.id,
+              registrationStatus: team.btc_approved ? 'approved' : 'pending',
+              teamStatus: team.team_status,
+              ...table,
+            });
+          }
+        });
+      
+      return Array.from(tableMap.values());
     },
     enabled: !!userId,
   });
 }
 
 // Fetch tournaments user has participated in (completed)
+// Supports both singles and doubles
 export function useUserCompletedTournaments(userId: string | undefined) {
   return useQuery({
     queryKey: ["user-completed-tournaments", userId],
     queryFn: async () => {
       if (!userId) return [];
       
-      const { data, error } = await supabase
+      // Get singles registrations
+      const { data: singlesData, error: singlesError } = await supabase
         .from("quick_table_registrations")
         .select(`
           id,
@@ -413,16 +465,65 @@ export function useUserCompletedTournaments(userId: string | undefined) {
         .eq("user_id", userId)
         .eq("status", "approved");
 
-      if (error) throw error;
+      if (singlesError) throw singlesError;
       
-      // Filter to completed tournaments only
-      return data
+      // Get doubles registrations (as player1 or player2)
+      const { data: doublesData, error: doublesError } = await supabase
+        .from("quick_table_teams")
+        .select(`
+          id,
+          team_status,
+          btc_approved,
+          table_id,
+          quick_tables:table_id (
+            id,
+            name,
+            share_id,
+            status,
+            format,
+            player_count,
+            is_doubles,
+            created_at
+          )
+        `)
+        .or(`player1_user_id.eq.${userId},player2_user_id.eq.${userId}`)
+        .eq("btc_approved", true);
+
+      if (doublesError) throw doublesError;
+      
+      // Combine and deduplicate by table_id
+      const tableMap = new Map<string, any>();
+      
+      // Add singles registrations (completed tournaments only)
+      singlesData
         .filter(reg => reg.quick_tables && (reg.quick_tables as any).status === 'completed')
-        .map(reg => ({
-          registrationId: reg.id,
-          registrationStatus: reg.status,
-          ...reg.quick_tables as any,
-        }));
+        .forEach(reg => {
+          const table = reg.quick_tables as any;
+          if (!tableMap.has(table.id)) {
+            tableMap.set(table.id, {
+              registrationId: reg.id,
+              registrationStatus: reg.status,
+              ...table,
+            });
+          }
+        });
+      
+      // Add doubles registrations (completed tournaments only)
+      doublesData
+        .filter(team => team.quick_tables && (team.quick_tables as any).status === 'completed')
+        .forEach(team => {
+          const table = team.quick_tables as any;
+          if (!tableMap.has(table.id)) {
+            tableMap.set(table.id, {
+              registrationId: team.id,
+              registrationStatus: 'approved',
+              teamStatus: team.team_status,
+              ...table,
+            });
+          }
+        });
+      
+      return Array.from(tableMap.values());
     },
     enabled: !!userId,
   });

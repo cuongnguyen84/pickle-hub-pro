@@ -178,15 +178,15 @@ const QuickTables = () => {
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
               <Users className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Chia bảng nhanh</h1>
+            <h1 className="text-2xl font-bold mb-2">{t.quickTable.title}</h1>
             <p className="text-foreground-secondary mb-6">
-              Công cụ miễn phí giúp chia bảng, tạo danh sách trận đấu và tổ chức thi đấu phong trào.
+              {t.quickTable.description}
             </p>
-            <p className="text-foreground-muted mb-6">Vui lòng đăng nhập để tạo bảng đấu mới.</p>
+            <p className="text-foreground-muted mb-6">{t.quickTable.loginRequired}</p>
             <Link to="/login">
               <Button className="gap-2">
                 <LogIn className="w-4 h-4" />
-                Đăng nhập
+                {t.nav.login}
               </Button>
             </Link>
           </div>
@@ -204,9 +204,9 @@ const QuickTables = () => {
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Chia bảng nhanh</h1>
+            <h1 className="text-2xl font-bold mb-2">{t.quickTable.title}</h1>
             <p className="text-foreground-secondary">
-              Công cụ miễn phí giúp chia bảng, tạo danh sách trận đấu và tổ chức thi đấu phong trào.
+              {t.quickTable.description}
             </p>
           </div>
 
@@ -215,34 +215,34 @@ const QuickTables = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  Bước 1: Thông tin giải đấu
+                  {t.quickTable.step1Title}
                   <AIAssistantButton 
                     screenName="quick-table-setup" 
                     stepName="info"
                     contextData={{ quotaUsed: quotaInfo.current_count, quota: quotaInfo.quota, hasName: !!tableName.trim() }}
                   />
                 </CardTitle>
-                <CardDescription>Nhập thông tin cơ bản về giải đấu</CardDescription>
+                <CardDescription>{t.quickTable.step1Desc}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Tên giải / bảng đấu</Label>
+                  <Label>{t.quickTable.tournamentName}</Label>
                   <Input
                     value={tableName}
                     onChange={(e) => setTableName(e.target.value)}
-                    placeholder="VD: Giải Pickleball Mùa Hè 2024"
+                    placeholder={t.quickTable.tournamentNamePlaceholder}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Số người chơi (dự kiến)</Label>
+                  <Label>{t.quickTable.playerCount}</Label>
                   <Input
                     type="number"
                     min={2}
                     max={200}
                     value={playerCount || ""}
                     onChange={(e) => setPlayerCount(parseInt(e.target.value) || 0)}
-                    placeholder="VD: 16"
+                    placeholder={t.quickTable.playerCountPlaceholder}
                   />
                 </div>
 
@@ -257,10 +257,10 @@ const QuickTables = () => {
                     <div className="flex-1">
                       <Label htmlFor="requires-registration" className="cursor-pointer font-medium flex items-center gap-2">
                         <ClipboardList className="w-4 h-4 text-primary" />
-                        Yêu cầu VĐV đăng ký trước
+                        {t.quickTable.requireRegistration}
                       </Label>
                       <p className="text-sm text-foreground-muted mt-1">
-                        VĐV phải đăng ký và được BTC duyệt trước khi vào danh sách thi đấu
+                        {t.quickTable.requireRegistrationDesc}
                       </p>
                     </div>
                   </div>
@@ -277,10 +277,10 @@ const QuickTables = () => {
                         <div>
                           <Label htmlFor="is-doubles" className="cursor-pointer font-medium flex items-center gap-2">
                             <Users className="w-4 h-4 text-primary" />
-                            Thi đấu đôi
+                            {t.quickTable.doublesMode || 'Doubles'}
                           </Label>
                           <p className="text-xs text-foreground-muted">
-                            VĐV đăng ký theo cặp đôi, có thể mời partner qua link
+                            {t.quickTable.doublesModeDesc || 'Players register as pairs and can invite partners via link'}
                           </p>
                         </div>
                       </div>
@@ -293,10 +293,10 @@ const QuickTables = () => {
                         />
                         <div>
                           <Label htmlFor="requires-skill" className="cursor-pointer">
-                            Bắt buộc khai trình độ
+                            {t.quickTable.requireSkillLevel}
                           </Label>
                           <p className="text-xs text-foreground-muted">
-                            VĐV phải khai trình độ (DUPR hoặc tự mô tả)
+                            {t.quickTable.requireSkillLevelDesc}
                           </p>
                         </div>
                       </div>
@@ -304,7 +304,7 @@ const QuickTables = () => {
                       <Collapsible open={showAdvancedSettings} onOpenChange={setShowAdvancedSettings}>
                         <CollapsibleTrigger asChild>
                           <Button variant="ghost" size="sm" className="w-full justify-between">
-                            Cài đặt nâng cao
+                            {t.quickTable.advancedSettings}
                             <ChevronDown className={cn("w-4 h-4 transition-transform", showAdvancedSettings && "rotate-180")} />
                           </Button>
                         </CollapsibleTrigger>
@@ -317,20 +317,20 @@ const QuickTables = () => {
                             />
                             <div>
                               <Label htmlFor="auto-approve" className="cursor-pointer">
-                                Tự động duyệt đăng ký
+                                {t.quickTable.autoApprove}
                               </Label>
                               <p className="text-xs text-foreground-muted">
-                                VĐV được duyệt ngay khi đăng ký (không khuyến nghị)
+                                {t.quickTable.autoApproveDesc}
                               </p>
                             </div>
                           </div>
 
                           <div className="space-y-2">
-                            <Label>Thông báo cho VĐV khi đăng ký</Label>
+                            <Label>{t.quickTable.registrationMessage}</Label>
                             <Textarea
                               value={registrationMessage}
                               onChange={(e) => setRegistrationMessage(e.target.value)}
-                              placeholder="VD: BTC sẽ xác nhận trình độ dựa vào điểm tự khai và đối chiếu với các hệ điểm..."
+                              placeholder={t.quickTable.registrationMessagePlaceholder}
                               rows={2}
                             />
                           </div>
@@ -371,14 +371,14 @@ const QuickTables = () => {
           {step === "format" && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Bước 2: Chọn thể thức</CardTitle>
+                <CardTitle className="text-lg">{t.quickTable.step2Title}</CardTitle>
                 <CardDescription>
-                  {playerCount} người chơi -{" "}
+                  {playerCount} {t.quickTable.players} -{" "}
                   {suggestedFormat === "round_robin"
-                    ? "Phù hợp với thể thức chia bảng (Round Robin)"
+                    ? t.quickTable.roundRobinDesc
                     : suggestedFormat === "large_playoff"
-                      ? "Số lượng lớn, phù hợp với thể thức Playoff đông người"
-                      : "Bạn có thể chọn Round Robin hoặc Playoff"}
+                      ? t.quickTable.largePlayoffDesc
+                      : t.quickTable.roundRobinDesc}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -395,25 +395,24 @@ const QuickTables = () => {
                       suggestedFormat === "round_robin" && "border-primary bg-primary/5",
                     )}
                   >
-                    <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                         <Trophy className="w-5 h-5 text-primary" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold">Chia bảng (Round Robin)</span>
+                          <span className="font-semibold">{t.quickTable.roundRobin}</span>
                           {suggestedFormat === "round_robin" && (
                             <Badge variant="default" className="text-xs">
-                              Khuyến nghị
+                              {t.quickTable.recommended}
                             </Badge>
                           )}
                         </div>
                         <p className="text-sm text-foreground-secondary">
-                          Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng. Top của mỗi
-                          bảng sẽ vào vòng Playoff.
+                          {t.quickTable.roundRobinDesc}
                         </p>
                         {playerCount > 48 && (
-                          <p className="text-sm text-destructive mt-1">Không khả dụng với &gt;48 người</p>
+                          <p className="text-sm text-destructive mt-1">{t.quickTable.notAvailableOver48}</p>
                         )}
                       </div>
                     </div>
@@ -431,25 +430,24 @@ const QuickTables = () => {
                       suggestedFormat === "large_playoff" && "border-primary bg-primary/5",
                     )}
                   >
-                    <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                         <Zap className="w-5 h-5 text-primary" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold">Playoff đông người</span>
+                          <span className="font-semibold">{t.quickTable.largePlayoff}</span>
                           {suggestedFormat === "large_playoff" && (
                             <Badge variant="default" className="text-xs">
-                              Khuyến nghị
+                              {t.quickTable.recommended}
                             </Badge>
                           )}
                         </div>
                         <p className="text-sm text-foreground-secondary">
-                          Thể thức dành cho giải đông người. Lượt 1-2 ghi nhận thắng/thua và hiệu số, từ lượt 3 trở đi
-                          là single elimination.
+                          {t.quickTable.largePlayoffDesc}
                         </p>
                         {playerCount < 32 && (
-                          <p className="text-sm text-destructive mt-1">Chỉ khả dụng với ≥32 người</p>
+                          <p className="text-sm text-destructive mt-1">{t.quickTable.onlyAvailableOver32}</p>
                         )}
                       </div>
                     </div>
@@ -457,7 +455,7 @@ const QuickTables = () => {
                 </div>
 
                 <Button variant="ghost" onClick={() => setStep("count")}>
-                  ← Quay lại
+                  ← {t.quickTable.back}
                 </Button>
               </CardContent>
             </Card>
@@ -467,8 +465,8 @@ const QuickTables = () => {
           {step === "groups" && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Bước 3: Chọn số bảng</CardTitle>
-                <CardDescription>Chọn cách chia {playerCount} người chơi vào các bảng</CardDescription>
+                <CardTitle className="text-lg">{t.quickTable.step3Title}</CardTitle>
+                <CardDescription>{playerCount} {t.quickTable.players}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-3">
@@ -487,9 +485,9 @@ const QuickTables = () => {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold">{suggestion.groupCount} bảng</span>
-                            {suggestion.isRecommended && (
-                              <Badge variant="default" className="text-xs">
-                                Khuyến nghị
+                          {suggestion.isRecommended && (
+                            <Badge variant="default" className="text-xs">
+                              {t.quickTable.recommended}
                               </Badge>
                             )}
                           </div>
@@ -516,14 +514,14 @@ const QuickTables = () => {
 
                 <div className="flex gap-3">
                   <Button variant="ghost" onClick={() => setStep("format")}>
-                    ← Quay lại
+                    ← {t.quickTable.back}
                   </Button>
                   <Button
                     className="flex-1"
                     onClick={() => handleCreateTable()}
                     disabled={!selectedGroupCount || loading}
                   >
-                    {loading ? "Đang tạo..." : "Tạo bảng đấu"}
+                    {loading ? t.common.loading : t.common.create}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -598,9 +596,9 @@ const QuickTables = () => {
                                   <Calendar className="w-3 h-3" />
                                   {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
                                   <span>•</span>
-                                  <span>{table.player_count} người</span>
+                                  <span>{table.player_count} {t.quickTable.players}</span>
                                   <span>•</span>
-                                  <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
+                                  <span>{table.format === "round_robin" ? t.quickTable.roundRobin : t.quickTable.largePlayoff}</span>
                                 </div>
                               </div>
                               <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
@@ -711,14 +709,14 @@ const QuickTables = () => {
                                   <Calendar className="w-3 h-3" />
                                   {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
                                   <span>•</span>
-                                  <span>{table.player_count} người</span>
+                                  <span>{table.player_count} {t.quickTable.players}</span>
                                   <span>•</span>
-                                  <span>{table.format === "round_robin" ? "Chia bảng" : "Playoff"}</span>
+                                  <span>{table.format === "round_robin" ? t.quickTable.roundRobin : t.quickTable.largePlayoff}</span>
                                 </div>
                               </div>
                               <Badge variant="outline" className="gap-1">
                                 <Shield className="w-3 h-3" />
-                                Trọng tài
+                                {t.quickTable.referee || 'Referee'}
                               </Badge>
                               <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
                             </Link>

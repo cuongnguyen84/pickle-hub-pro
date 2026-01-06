@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Check, X, MoreVertical, Users, Clock, CheckCircle2, XCircle, 
   RefreshCw, Swords, AlertCircle, UserMinus, Trash2
@@ -36,6 +37,10 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
   const [showBracketSetup, setShowBracketSetup] = useState(false);
   const [noteDialog, setNoteDialog] = useState<{ team: Team; action: 'approve' | 'reject' | 'remove' } | null>(null);
   const [notes, setNotes] = useState('');
+  
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchLoading, setBatchLoading] = useState(false);
 
   const loadTeams = async () => {
     setLoading(true);
@@ -85,6 +90,57 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
       loadTeams();
       setNoteDialog(null);
       setNotes('');
+      // Clear selection if the approved/rejected team was selected
+      setSelectedIds(prev => prev.filter(id => id !== teamId));
+    }
+  };
+
+  // Batch approve/reject
+  const handleBatchApprove = async () => {
+    if (selectedIds.length === 0) return;
+    setBatchLoading(true);
+    let successCount = 0;
+    for (const id of selectedIds) {
+      const success = await btcManageTeam(id, 'approve');
+      if (success) successCount++;
+    }
+    setBatchLoading(false);
+    setSelectedIds([]);
+    loadTeams();
+    if (successCount > 0) {
+      toast.success(`Đã duyệt ${successCount} đội`);
+    }
+  };
+
+  const handleBatchReject = async () => {
+    if (selectedIds.length === 0) return;
+    setBatchLoading(true);
+    let successCount = 0;
+    for (const id of selectedIds) {
+      const success = await btcManageTeam(id, 'reject');
+      if (success) successCount++;
+    }
+    setBatchLoading(false);
+    setSelectedIds([]);
+    loadTeams();
+    if (successCount > 0) {
+      toast.success(`Đã từ chối ${successCount} đội`);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllPending = () => {
+    const pendingIds = pendingTeams.map(t => t.id);
+    const allSelected = pendingIds.every(id => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !pendingIds.includes(id)));
+    } else {
+      setSelectedIds(prev => [...new Set([...prev, ...pendingIds])]);
     }
   };
 
@@ -211,15 +267,54 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
       {allRegisteredTeams.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" />
-              Các VĐV đã đăng ký ({allRegisteredTeams.length})
-            </CardTitle>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                Các VĐV đã đăng ký ({allRegisteredTeams.length})
+              </CardTitle>
+              {/* Batch actions */}
+              {pendingTeams.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    {selectedIds.length > 0 && `${selectedIds.length} đã chọn`}
+                  </span>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleBatchApprove}
+                    disabled={selectedIds.length === 0 || batchLoading}
+                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    Duyệt ({selectedIds.length})
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleBatchReject}
+                    disabled={selectedIds.length === 0 || batchLoading}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <XCircle className="w-4 h-4 mr-1" />
+                    Từ chối ({selectedIds.length})
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  {pendingTeams.length > 0 && (
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={pendingTeams.length > 0 && pendingTeams.every(t => selectedIds.includes(t.id))}
+                        onCheckedChange={toggleSelectAllPending}
+                        aria-label="Chọn tất cả"
+                      />
+                    </TableHead>
+                  )}
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Đội</TableHead>
                   <TableHead>VĐV 1</TableHead>
@@ -232,6 +327,17 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
               <TableBody>
                 {allRegisteredTeams.map((team, idx) => (
                   <TableRow key={team.id}>
+                    {pendingTeams.length > 0 && (
+                      <TableCell>
+                        {!team.btc_approved && (
+                          <Checkbox
+                            checked={selectedIds.includes(team.id)}
+                            onCheckedChange={() => toggleSelect(team.id)}
+                            aria-label={`Chọn ${team.player1_display_name}`}
+                          />
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                     <TableCell>
                       {getPartnerStatus(team)}

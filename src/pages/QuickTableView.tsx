@@ -1001,131 +1001,140 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
   return (
     <div 
       className={cn(
-        "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border",
+        "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border",
         isCompleted && !isEditing ? "bg-muted/30 border-border" : "border-border-subtle",
         isLive && !isCompleted && "border-red-500/50 bg-red-50/50 dark:bg-red-950/20"
       )}
     >
-      {/* Match number + Court/Time info */}
-      <div className="flex flex-col items-start gap-0.5 w-16 sm:w-20 flex-shrink-0">
-        <div className="flex items-center gap-1">
-          <span className="text-sm text-foreground-muted">{index + 1}</span>
-          {isLive && !isCompleted && (
-            <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 animate-pulse">
-              <Radio className="w-2 h-2 mr-0.5" />
-              LIVE
-            </Badge>
+      {/* Top row: Match info + Players */}
+      <div className="flex items-center gap-2 sm:gap-3 flex-1">
+        {/* Match number + Court/Time info */}
+        <div className="flex flex-col items-start gap-0.5 w-12 sm:w-20 flex-shrink-0">
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium text-foreground-muted">{index + 1}</span>
+            {isLive && !isCompleted && (
+              <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 animate-pulse">
+                <Radio className="w-2 h-2 mr-0.5" />
+                LIVE
+              </Badge>
+            )}
+          </div>
+          {/* Court & Time display */}
+          <div className="flex flex-col text-[10px] sm:text-[11px] text-foreground-muted leading-tight">
+            {match.court_id != null ? (
+              <span className="flex items-center gap-0.5">
+                <MapPin className="w-3 h-3" />
+                Sân {match.court_id}
+              </span>
+            ) : null}
+            {match.start_at ? (
+              <span className="flex items-center gap-0.5">
+                <Clock className="w-3 h-3" />
+                {match.start_at}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        
+        {/* Players + Score - better mobile layout */}
+        <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
+          {/* Player 1 name - INCREASED font size on mobile */}
+          <span className={cn(
+            "flex-1 text-right truncate text-sm sm:text-base font-medium",
+            match.winner_id === match.player1_id && "text-primary font-bold"
+          )}>
+            {formatPlayerName(player1)}
+          </span>
+          
+          {/* Score display (not editing) */}
+          {!isEditing && (
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded bg-muted min-w-[50px] sm:min-w-[60px] justify-center flex-shrink-0">
+              <span className={cn("text-sm sm:text-base font-medium", match.winner_id === match.player1_id && "font-bold")}>
+                {match.score1 ?? '-'}
+              </span>
+              <span className="text-foreground-muted">:</span>
+              <span className={cn("text-sm sm:text-base font-medium", match.winner_id === match.player2_id && "font-bold")}>
+                {match.score2 ?? '-'}
+              </span>
+            </div>
           )}
-        </div>
-        {/* Court & Time display */}
-        <div className="flex flex-col text-[11px] text-foreground-muted leading-tight">
-          {match.court_id != null ? (
-            <span className="flex items-center gap-0.5">
-              <MapPin className="w-3 h-3" />
-              Sân {match.court_id}
-            </span>
-          ) : null}
-          {match.start_at ? (
-            <span className="flex items-center gap-0.5">
-              <Clock className="w-3 h-3" />
-              {match.start_at}
-            </span>
-          ) : null}
+          
+          {/* Player 2 name - INCREASED font size on mobile */}
+          <span className={cn(
+            "flex-1 truncate text-sm sm:text-base font-medium",
+            match.winner_id === match.player2_id && "text-primary font-bold"
+          )}>
+            {formatPlayerName(player2)}
+          </span>
         </div>
       </div>
       
-      <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
-        <span className={cn(
-          "flex-1 text-right truncate text-sm",
-          match.winner_id === match.player1_id && "font-semibold text-primary"
-        )}>
-          {formatPlayerName(player1)}
-        </span>
-        
-        {isEditing ? (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <Input
-              type="number"
-              className="w-12 sm:w-14 h-8 text-center text-sm p-1"
-              min={0}
-              value={s1}
-              onChange={(e) => setS1(e.target.value)}
-              autoFocus
-            />
-            <span className="text-foreground-muted">-</span>
-            <Input
-              type="number"
-              className="w-12 sm:w-14 h-8 text-center text-sm p-1"
-              min={0}
-              value={s2}
-              onChange={(e) => setS2(e.target.value)}
-            />
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 px-2 sm:px-3 py-1 rounded bg-muted min-w-[50px] sm:min-w-[60px] justify-center flex-shrink-0">
-            <span className={cn("text-sm", match.winner_id === match.player1_id && "font-bold")}>
-              {match.score1 ?? '-'}
-            </span>
-            <span className="text-foreground-muted">:</span>
-            <span className={cn("text-sm", match.winner_id === match.player2_id && "font-bold")}>
-              {match.score2 ?? '-'}
-            </span>
-          </div>
-        )}
-        
-        <span className={cn(
-          "flex-1 truncate text-sm",
-          match.winner_id === match.player2_id && "font-semibold text-primary"
-        )}>
-          {formatPlayerName(player2)}
-        </span>
-      </div>
-      
-      {/* Actions */}
-      <div className="flex items-center gap-1 flex-shrink-0">
+      {/* Bottom row on mobile / Right side on desktop: Actions + Input */}
+      <div className="flex items-center justify-end gap-2 sm:gap-1 flex-shrink-0">
         {canEdit && (
           <>
-            {/* Scoring button - always visible for editors */}
-            <Button 
-              variant={isLive ? "destructive" : "outline"}
-              size="sm" 
-              className="h-7 px-2 text-xs"
-              onClick={handleOpenScoring}
-              title="Mở trang chấm điểm"
-            >
-              <Play className="w-3 h-3" />
-              <span className="hidden sm:inline ml-1">Chấm</span>
-            </Button>
-            
             {isEditing ? (
               <>
+                {/* Score inputs - separated from buttons with margin */}
+                <div className="flex items-center gap-1 mr-2">
+                  <Input
+                    type="number"
+                    className="w-14 sm:w-16 h-9 text-center text-base p-1"
+                    min={0}
+                    value={s1}
+                    onChange={(e) => setS1(e.target.value)}
+                    autoFocus
+                  />
+                  <span className="text-foreground-muted font-medium">-</span>
+                  <Input
+                    type="number"
+                    className="w-14 sm:w-16 h-9 text-center text-base p-1"
+                    min={0}
+                    value={s2}
+                    onChange={(e) => setS2(e.target.value)}
+                  />
+                </div>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-7 px-2 text-xs"
+                  className="h-9 px-3 text-sm"
                   onClick={handleCancel}
                 >
                   Hủy
                 </Button>
                 <Button 
                   size="sm" 
-                  className="h-7 px-2 text-xs"
+                  className="h-9 px-3 text-sm"
                   onClick={handleSubmit}
                 >
-                  <Check className="w-3 h-3 mr-1" />
+                  <Check className="w-4 h-4 mr-1" />
                   Lưu
                 </Button>
               </>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 px-2 text-xs"
-                onClick={handleStartEdit}
-              >
-                <Pencil className="w-3 h-3 mr-1" />
-                {isCompleted ? 'Sửa' : 'Nhập'}
-              </Button>
+              <>
+                {/* Scoring button */}
+                <Button 
+                  variant={isLive ? "destructive" : "outline"}
+                  size="sm" 
+                  className="h-8 px-3 text-xs"
+                  onClick={handleOpenScoring}
+                  title="Mở trang chấm điểm"
+                >
+                  <Play className="w-3 h-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Chấm</span>
+                </Button>
+                {/* Edit button */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 px-3 text-xs"
+                  onClick={handleStartEdit}
+                >
+                  <Pencil className="w-3 h-3 sm:mr-1" />
+                  <span className="hidden sm:inline">{isCompleted ? 'Sửa' : 'Nhập'}</span>
+                </Button>
+              </>
             )}
           </>
         )}
