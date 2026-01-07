@@ -5,8 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus } from 'lucide-react';
-import { useTeamMatchTournament } from '@/hooks/useTeamMatch';
+import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -42,9 +52,11 @@ export default function TeamMatchView() {
   const { toast } = useToast();
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
   const { data: userTeam } = useUserTeam(tournament?.id);
+  const { updateTournamentStatus, isUpdatingStatus } = useTeamMatch();
   
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
+  const [showOpenRegDialog, setShowOpenRegDialog] = useState(false);
 
   const isOwner = tournament?.created_by === user?.id;
   const canRegister = tournament?.status === 'registration' && !userTeam && user;
@@ -53,6 +65,16 @@ export default function TeamMatchView() {
     const shareUrl = `${window.location.origin}/tools/team-match/${tournament?.share_id}`;
     navigator.clipboard.writeText(shareUrl);
     toast({ title: 'Đã sao chép link!' });
+  };
+
+  const handleOpenRegistration = async () => {
+    if (!tournament) return;
+    try {
+      await updateTournamentStatus({ tournamentId: tournament.id, status: 'registration' });
+      setShowOpenRegDialog(false);
+    } catch (error) {
+      // Error handled in hook
+    }
   };
 
   if (isLoading) {
@@ -216,11 +238,15 @@ export default function TeamMatchView() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex gap-2">
-                  <Button>
+                  <Button onClick={() => setShowCreateTeam(true)}>
                     <Users className="h-4 w-4 mr-2" />
                     Thêm đội
                   </Button>
-                  <Button variant="outline">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowOpenRegDialog(true)}
+                    disabled={isUpdatingStatus}
+                  >
                     Mở đăng ký
                   </Button>
                 </CardContent>
@@ -306,6 +332,24 @@ export default function TeamMatchView() {
           team={selectedTeam}
           maxRosterSize={tournament.team_roster_size}
         />
+
+        {/* Open Registration Confirmation */}
+        <AlertDialog open={showOpenRegDialog} onOpenChange={setShowOpenRegDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Mở đăng ký?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Sau khi mở đăng ký, các đội có thể đăng ký tham gia giải đấu thông qua link chia sẻ.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction onClick={handleOpenRegistration} disabled={isUpdatingStatus}>
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MainLayout>
   );
