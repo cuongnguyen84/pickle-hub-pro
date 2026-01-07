@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Check, Clock, UserCheck, AlertCircle } from 'lucide-react';
-import { TeamMatchTeam, TeamMatchRosterMember } from '@/hooks/useTeamMatchTeams';
+import { Button } from '@/components/ui/button';
+import { Users, Check, Clock, UserCheck, AlertCircle, X, Loader2 } from 'lucide-react';
+import { TeamMatchTeam, TeamMatchRosterMember, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,6 +22,7 @@ interface RegisteredTeamsSummaryProps {
   teams: TeamMatchTeam[];
   maxRosterSize: number;
   isOwner: boolean;
+  tournamentId: string;
   onTeamClick?: (team: TeamMatchTeam) => void;
 }
 
@@ -28,8 +30,11 @@ export function RegisteredTeamsSummary({
   teams,
   maxRosterSize,
   isOwner,
+  tournamentId,
   onTeamClick,
 }: RegisteredTeamsSummaryProps) {
+  const { updateTeamStatus, isUpdatingStatus } = useTeamMatchTeamManagement();
+
   // Fetch all rosters for the teams
   const { data: allRosters } = useQuery({
     queryKey: ['team-match-all-rosters', teams.map(t => t.id).join(',')],
@@ -77,6 +82,16 @@ export function RegisteredTeamsSummary({
     return getRosterCount(teamId) >= maxRosterSize;
   };
 
+  const handleApprove = async (e: React.MouseEvent, teamId: string) => {
+    e.stopPropagation();
+    await updateTeamStatus({ teamId, status: 'approved', tournamentId });
+  };
+
+  const handleReject = async (e: React.MouseEvent, teamId: string) => {
+    e.stopPropagation();
+    await updateTeamStatus({ teamId, status: 'rejected', tournamentId });
+  };
+
   if (teams.length === 0) {
     return (
       <Card>
@@ -95,7 +110,7 @@ export function RegisteredTeamsSummary({
     return (
       <div 
         key={team.id}
-        className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+        className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer gap-2"
         onClick={() => onTeamClick?.(team)}
       >
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -132,6 +147,43 @@ export function RegisteredTeamsSummary({
             {team.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
             {STATUS_LABELS[team.status]}
           </Badge>
+          
+          {/* Approve/Reject actions for owner */}
+          {isOwner && team.status === 'pending' && (
+            <div className="flex items-center gap-1 ml-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100"
+                onClick={(e) => handleApprove(e, team.id)}
+                disabled={isUpdatingStatus}
+              >
+                {isUpdatingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-100"
+                onClick={(e) => handleReject(e, team.id)}
+                disabled={isUpdatingStatus}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+          
+          {/* Re-approve action for rejected teams */}
+          {isOwner && team.status === 'rejected' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100 ml-1"
+              onClick={(e) => handleApprove(e, team.id)}
+              disabled={isUpdatingStatus}
+            >
+              <Check className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
     );

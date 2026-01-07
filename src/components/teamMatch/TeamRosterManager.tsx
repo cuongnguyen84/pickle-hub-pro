@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Users, Plus, Trash2, Crown, Copy, Loader2 } from 'lucide-react';
-import { useTeamMatchTeam, useTeamMatchTeamManagement, TeamMatchRosterMember } from '@/hooks/useTeamMatchTeams';
+import { useTeamMatchTeam, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useToast } from '@/hooks/use-toast';
 
 const addMemberSchema = z.object({
@@ -133,23 +133,23 @@ export function TeamRosterManager({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Roster list */}
+        {/* Roster list - larger font for mobile */}
         <div className="space-y-2">
           {roster.map((member) => (
             <div
               key={member.id}
-              className="flex items-center justify-between p-3 rounded-lg border bg-card"
+              className="flex items-center justify-between p-4 rounded-lg border bg-card"
             >
               <div className="flex items-center gap-3">
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{member.player_name}</span>
+                    <span className="text-base font-medium">{member.player_name}</span>
                     {member.is_captain && (
                       <Crown className="h-4 w-4 text-amber-500" />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Badge variant="secondary" className="text-xs">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                    <Badge variant="secondary" className="text-sm">
                       {member.gender === 'male' ? 'Nam' : 'Nữ'}
                     </Badge>
                     {member.skill_level && (
