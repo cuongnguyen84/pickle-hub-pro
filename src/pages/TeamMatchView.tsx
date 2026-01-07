@@ -41,9 +41,9 @@ export default function TeamMatchView() {
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
 
   const isOwner = tournament?.created_by === user?.id;
-  const shareUrl = `${window.location.origin}/tools/team-match/${tournament?.share_id}`;
 
   const handleCopyLink = () => {
+    const shareUrl = `${window.location.origin}/tools/team-match/${tournament?.share_id}`;
     navigator.clipboard.writeText(shareUrl);
     toast({ title: 'Đã sao chép link!' });
   };
