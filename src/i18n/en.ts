@@ -85,6 +85,7 @@ export const en: Translations = {
     live: "Live",
     videos: "Videos",
     tournaments: "Tournaments",
+    tools: "Tools",
     search: "Search",
     profile: "Profile",
     login: "Login",
@@ -92,6 +93,27 @@ export const en: Translations = {
     signup: "Sign up",
     creator: "Creator Studio",
     admin: "Admin",
+  },
+  tools: {
+    title: "Tools",
+    description: "Tools to help organize Pickleball tournaments",
+    quickTable: {
+      title: "Quick Bracket",
+      description: "Round robin and playoff brackets for casual tournaments",
+    },
+    teamMatch: {
+      title: "Team Match (MLP)",
+      description: "Team-based competition in Major League Pickleball style",
+    },
+    singleElimination: {
+      title: "Single Elimination",
+      description: "Simple knockout bracket",
+    },
+    doublesElimination: {
+      title: "Doubles Elimination",
+      description: "Double elimination with winners/losers bracket",
+    },
+    comingSoon: "Coming soon",
   },
   auth: {
     login: "Log in",

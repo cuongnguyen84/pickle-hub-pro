@@ -83,6 +83,7 @@ export interface Translations {
     live: string;
     videos: string;
     tournaments: string;
+    tools: string;
     search: string;
     profile: string;
     login: string;
@@ -90,6 +91,27 @@ export interface Translations {
     signup: string;
     creator: string;
     admin: string;
+  };
+  tools: {
+    title: string;
+    description: string;
+    quickTable: {
+      title: string;
+      description: string;
+    };
+    teamMatch: {
+      title: string;
+      description: string;
+    };
+    singleElimination: {
+      title: string;
+      description: string;
+    };
+    doublesElimination: {
+      title: string;
+      description: string;
+    };
+    comingSoon: string;
   };
   auth: {
     login: string;
@@ -680,6 +702,7 @@ export const vi: Translations = {
     live: "Trực tiếp",
     videos: "Video",
     tournaments: "Giải đấu",
+    tools: "Công cụ",
     search: "Tìm kiếm",
     profile: "Tài khoản",
     login: "Đăng nhập",
@@ -687,6 +710,27 @@ export const vi: Translations = {
     signup: "Đăng ký",
     creator: "Creator Studio",
     admin: "Quản trị",
+  },
+  tools: {
+    title: "Công cụ",
+    description: "Các công cụ hỗ trợ tổ chức giải đấu Pickleball",
+    quickTable: {
+      title: "Chia bảng nhanh",
+      description: "Chia bảng vòng tròn, playoff cho giải đấu nghiệp dư",
+    },
+    teamMatch: {
+      title: "Đồng đội MLP",
+      description: "Thi đấu theo đội kiểu Major League Pickleball",
+    },
+    singleElimination: {
+      title: "Single Elimination",
+      description: "Loại trực tiếp đơn giản",
+    },
+    doublesElimination: {
+      title: "Doubles Elimination",
+      description: "Loại kép với nhánh thắng/thua",
+    },
+    comingSoon: "Sắp ra mắt",
   },
   auth: {
     login: "Đăng nhập",
