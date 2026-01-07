@@ -543,6 +543,22 @@ export interface Translations {
       teamLocked: string;
     };
     allRegistered: string;
+    yourTeam: string;
+    teamLeader: string;
+    partner: string;
+    manageTeam: string;
+    registerDesc: string;
+    alreadyRegistered: string;
+    loginToRegister: string;
+    login: string;
+    removePartnerConfirm: string;
+    remove: string;
+    waitingForApproval: string;
+    waitingPartnerApproval: string;
+    skillDescOptions: string[];
+    exampleClub: string;
+    exampleDuprLink: string;
+    exampleSkillDesc: string;
     registeredPlayers: string;
     noRegisteredPlayers: string;
     teamName: string;
@@ -1124,6 +1140,22 @@ export const vi: Translations = {
       teamLocked: "Giải đấu đã diễn ra. Không thể thay đổi đội.",
     },
     allRegistered: "Các VĐV đã đăng ký",
+    yourTeam: "Đội của bạn",
+    teamLeader: "VĐV 1 (Đội trưởng)",
+    partner: "Partner",
+    manageTeam: "Quản lý đội và ghép đôi với VĐV khác",
+    registerDesc: "Đăng ký tham gia giải",
+    alreadyRegistered: "Bạn đã đăng ký tham gia giải này rồi",
+    loginToRegister: "Vui lòng đăng nhập để đăng ký tham dự giải",
+    login: "Đăng nhập",
+    removePartnerConfirm: "Bạn có chắc muốn xóa partner khỏi đội?",
+    remove: "Xóa",
+    waitingForApproval: "Đội trưởng có thể quản lý đội và thay đổi partner.",
+    waitingPartnerApproval: "Đang chờ",
+    skillDescOptions: ["Mới chơi ~6 tháng", "Chơi phong trào", "Chơi thường xuyên ~1-2 năm", "Đã thi đấu nhiều giải"],
+    exampleClub: "VD: CLB Pickleball Quận 1",
+    exampleDuprLink: "https://mydupr.com/profile/...",
+    exampleSkillDesc: "Hoặc mô tả theo cách của bạn...",
     registeredPlayers: "VĐV đã đăng kí",
     noRegisteredPlayers: "Chưa có VĐV nào đăng kí",
     teamName: "Tên đội",
