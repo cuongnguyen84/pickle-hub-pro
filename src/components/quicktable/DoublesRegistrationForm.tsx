@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useTranslation } from '@/i18n';
 
 interface DoublesRegistrationFormProps {
   tableId: string;
@@ -32,13 +33,6 @@ interface DoublesRegistrationFormProps {
   onRegistrationComplete?: () => void;
 }
 
-const SKILL_DESCRIPTIONS = [
-  'Mới chơi ~6 tháng',
-  'Chơi phong trào',
-  'Chơi thường xuyên ~1-2 năm',
-  'Đã thi đấu nhiều giải',
-];
-
 export function DoublesRegistrationForm({
   tableId,
   tableName,
@@ -51,6 +45,7 @@ export function DoublesRegistrationForm({
   onRegistrationComplete,
 }: DoublesRegistrationFormProps) {
   const { user } = useAuth();
+  const t = useTranslation();
   const { createTeam, removePartner, loading: teamLoading } = useTeamRegistration();
   const { 
     getIncomingRequests, 
@@ -147,9 +142,9 @@ export function DoublesRegistrationForm({
         <CardContent className="py-8 text-center">
           <LogIn className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground mb-4">
-            Vui lòng đăng nhập để đăng ký tham dự giải
+            {t.quickTable.loginToRegister}
           </p>
-          <Button onClick={handleLoginClick}>Đăng nhập</Button>
+          <Button onClick={handleLoginClick}>{t.quickTable.login}</Button>
         </CardContent>
       </Card>
     );
@@ -164,7 +159,7 @@ export function DoublesRegistrationForm({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
-            Đội của bạn
+            {t.quickTable.yourTeam}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -173,14 +168,14 @@ export function DoublesRegistrationForm({
             <Alert className="bg-green-50 border-green-200">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800 font-medium">
-                Bạn đã được BTC duyệt
+                {t.quickTable.registration.approved}
               </AlertDescription>
             </Alert>
           ) : (
             <Alert className="bg-amber-50 border-amber-200">
               <Clock className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-800 font-medium">
-                Bạn đang chờ BTC duyệt
+                {t.quickTable.registration.waitingApproval}
               </AlertDescription>
             </Alert>
           )}
@@ -188,15 +183,15 @@ export function DoublesRegistrationForm({
           {/* Team Info */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="font-medium">Trạng thái:</span>
-              <TeamStatusBadge status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} />
+              <span className="font-medium">{t.quickTable.statusHeader}:</span>
+              <TeamStatusBadge status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} t={t} />
             </div>
             
             <Separator />
             
             {/* VDV1 Info */}
             <div className="space-y-1">
-              <p className="text-sm font-medium">VĐV 1 (Đội trưởng):</p>
+              <p className="text-sm font-medium">{t.quickTable.teamLeader}:</p>
               <p className="text-sm text-muted-foreground">
                 {existingTeam.player1_display_name}
                 {existingTeam.player1_team && ` - ${existingTeam.player1_team}`}
@@ -205,7 +200,7 @@ export function DoublesRegistrationForm({
             
             {/* Partner Info (Bạn) */}
             <div className="space-y-1">
-              <p className="text-sm font-medium">VĐV 2 (Bạn):</p>
+              <p className="text-sm font-medium">{t.quickTable.partner} ({t.auth.hasAccount ? 'You' : 'Bạn'}):</p>
               <p className="text-sm text-muted-foreground">
                 {existingTeam.player2_display_name}
                 {existingTeam.player2_team && ` - ${existingTeam.player2_team}`}
@@ -216,7 +211,7 @@ export function DoublesRegistrationForm({
           <Alert variant="default" className="bg-muted/30">
             <Users className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              Đội trưởng ({existingTeam.player1_display_name}) có thể quản lý đội và thay đổi partner.
+              {t.quickTable.waitingPartnerApproval} ({existingTeam.player1_display_name}) {t.quickTable.waitingForApproval}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -231,10 +226,10 @@ export function DoublesRegistrationForm({
         <CardContent className="py-6">
           <div className="text-center">
             <XCircle className="w-12 h-12 mx-auto mb-3 text-destructive" />
-            <h3 className="font-semibold text-lg mb-1">Bạn đã bị từ chối tham gia giải</h3>
+            <h3 className="font-semibold text-lg mb-1">{t.quickTable.registration.rejected}</h3>
             {existingTeam.btc_notes && (
               <p className="text-muted-foreground mt-2">
-                Lý do: {existingTeam.btc_notes}
+                {t.quickTable.registration.rejectedMessage}: {existingTeam.btc_notes}
               </p>
             )}
           </div>
@@ -252,10 +247,10 @@ export function DoublesRegistrationForm({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
-            Đội của bạn
+            {t.quickTable.yourTeam}
           </CardTitle>
           <CardDescription>
-            Quản lý đội và ghép đôi với VĐV khác
+            {t.quickTable.manageTeam}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -264,14 +259,14 @@ export function DoublesRegistrationForm({
             <Alert className="bg-green-50 border-green-200">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800 font-medium">
-                Bạn đã được BTC duyệt
+                {t.quickTable.registration.approved}
               </AlertDescription>
             </Alert>
           ) : (
             <Alert className="bg-amber-50 border-amber-200">
               <Clock className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-800 font-medium">
-                Bạn đang chờ BTC duyệt
+                {t.quickTable.registration.waitingApproval}
               </AlertDescription>
             </Alert>
           )}
@@ -282,7 +277,7 @@ export function DoublesRegistrationForm({
               <Bell className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-800">
                 <div className="font-medium mb-2">
-                  Có {incomingRequests.length} người đang chờ ghép đôi với bạn:
+                  {t.quickTable.pairing.incomingRequests} ({incomingRequests.length}):
                 </div>
                 <div className="space-y-2">
                   {incomingRequests.map((req) => (
@@ -305,13 +300,13 @@ export function DoublesRegistrationForm({
                               // Force refetch to update userTeam state
                               onRegistrationComplete?.();
                               // Show success toast
-                              toast.success('Ghép đôi thành công! Đang cập nhật...');
+                              toast.success(t.quickTable.pairing.pairUp + '!');
                             }
                           }}
                           disabled={loading || isTableLocked}
                         >
                           <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Chấp nhận
+                          {t.quickTable.pairing.accept}
                         </Button>
                         <Button
                           size="sm"
@@ -325,7 +320,7 @@ export function DoublesRegistrationForm({
                           disabled={loading || isTableLocked}
                         >
                           <XCircle className="w-3 h-3 mr-1" />
-                          Từ chối
+                          {t.quickTable.pairing.decline}
                         </Button>
                       </div>
                     </div>
@@ -338,15 +333,15 @@ export function DoublesRegistrationForm({
           {/* Team Status */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="font-medium">Trạng thái:</span>
-              <TeamStatusBadge status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} />
+              <span className="font-medium">{t.quickTable.statusHeader}:</span>
+              <TeamStatusBadge status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} t={t} />
             </div>
             
             <Separator />
             
             {/* VDV1 Info */}
             <div className="space-y-1">
-              <p className="text-sm font-medium">VĐV 1 (Bạn):</p>
+              <p className="text-sm font-medium">{t.quickTable.teamLeader.replace(' (Đội trưởng)', '').replace(' (Team Leader)', '')} ({t.auth.hasAccount ? 'You' : 'Bạn'}):</p>
               <p className="text-sm text-muted-foreground">
                 {existingTeam.player1_display_name}
                 {existingTeam.player1_team && ` - ${existingTeam.player1_team}`}
@@ -355,7 +350,7 @@ export function DoublesRegistrationForm({
             
             {/* Partner Info */}
             <div className="space-y-1">
-              <p className="text-sm font-medium">Partner:</p>
+              <p className="text-sm font-medium">{t.quickTable.partner}:</p>
               {hasPartner ? (
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
@@ -368,7 +363,7 @@ export function DoublesRegistrationForm({
                       variant="ghost"
                       className="text-destructive hover:text-destructive"
                       onClick={async () => {
-                        if (confirm('Bạn có chắc muốn xóa partner khỏi đội?')) {
+                        if (confirm(t.quickTable.removePartnerConfirm)) {
                           const success = await removePartner(existingTeam.id);
                           if (success) onRegistrationComplete?.();
                         }
@@ -376,12 +371,12 @@ export function DoublesRegistrationForm({
                       disabled={loading}
                     >
                       <UserMinus className="w-4 h-4 mr-1" />
-                      Xóa
+                      {t.quickTable.remove}
                     </Button>
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-amber-600">Chưa có partner</p>
+                <p className="text-sm text-amber-600">{t.quickTable.pairing.noPartner}</p>
               )}
             </div>
           </div>
@@ -389,11 +384,11 @@ export function DoublesRegistrationForm({
           {/* Outgoing requests */}
           {outgoingRequests.length > 0 && !hasPartner && (
             <div className="space-y-2">
-              <p className="text-sm font-medium">Yêu cầu ghép đôi đã gửi:</p>
+              <p className="text-sm font-medium">{t.quickTable.pairing.outgoingRequests}:</p>
               {outgoingRequests.map((req) => (
                 <div key={req.id} className="flex items-center justify-between bg-muted/30 rounded-lg p-2 text-sm">
                   <span>
-                    Đang chờ <strong>{req.to_team?.player1_display_name}</strong> xác nhận
+                    {t.quickTable.pairing.waitingConfirm}: <strong>{req.to_team?.player1_display_name}</strong>
                   </span>
                   <Button
                     size="sm"
@@ -405,7 +400,7 @@ export function DoublesRegistrationForm({
                     }}
                     disabled={loading}
                   >
-                    Hủy
+                    {t.quickTable.pairing.cancel}
                   </Button>
                 </div>
               ))}
@@ -418,46 +413,46 @@ export function DoublesRegistrationForm({
               <Separator />
               <h4 className="font-medium flex items-center gap-2">
                 <Handshake className="w-4 h-4" />
-                VĐV chưa có partner ({availableTeamsForPairing.length})
+                {t.quickTable.pairing.availablePlayers} ({availableTeamsForPairing.length})
               </h4>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {availableTeamsForPairing.map((t) => {
-                  const hasSentRequest = hasPendingRequestTo(t.id);
-                  const hasReceivedRequest = hasIncomingRequestFrom(t.id);
+                {availableTeamsForPairing.map((team) => {
+                  const hasSentRequest = hasPendingRequestTo(team.id);
+                  const hasReceivedRequest = hasIncomingRequestFrom(team.id);
                   
                   return (
-                    <div key={t.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={team.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <p className="font-medium">{t.player1_display_name}</p>
-                        {t.player1_team && (
-                          <p className="text-sm text-muted-foreground">{t.player1_team}</p>
+                        <p className="font-medium">{team.player1_display_name}</p>
+                        {team.player1_team && (
+                          <p className="text-sm text-muted-foreground">{team.player1_team}</p>
                         )}
                         <div className="flex gap-1 mt-1">
-                          {(t.btc_approved || t.team_status === 'approved') && (
+                          {(team.btc_approved || team.team_status === 'approved') && (
                             <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                              Đã duyệt
+                              {t.quickTable.approved}
                             </Badge>
                           )}
-                          {t.player1_skill_level && (
+                          {team.player1_skill_level && (
                             <Badge variant="outline" className="text-xs">
-                              {t.player1_rating_system}: {t.player1_skill_level}
+                              {team.player1_rating_system}: {team.player1_skill_level}
                             </Badge>
                           )}
                         </div>
                       </div>
                       {hasSentRequest ? (
-                        <Badge variant="secondary">Đang chờ xác nhận</Badge>
+                        <Badge variant="secondary">{t.quickTable.pairing.waitingConfirm}</Badge>
                       ) : hasReceivedRequest ? (
-                        <Badge variant="default" className="bg-blue-600">Đang chờ bạn xác nhận</Badge>
+                        <Badge variant="default" className="bg-blue-600">{t.quickTable.pairing.waitingYourConfirm}</Badge>
                       ) : (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handlePairRequest(t)}
+                          onClick={() => handlePairRequest(team)}
                           disabled={loading}
                         >
                           <Handshake className="w-4 h-4 mr-1" />
-                          Ghép đôi
+                          {t.quickTable.pairing.pairUp}
                         </Button>
                       )}
                     </div>
@@ -472,7 +467,7 @@ export function DoublesRegistrationForm({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Giải đấu đã diễn ra. Không thể thay đổi đội.
+                {t.quickTable.pairing.teamLocked}
               </AlertDescription>
             </Alert>
           )}
@@ -482,9 +477,9 @@ export function DoublesRegistrationForm({
         <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Xác nhận ghép đôi</DialogTitle>
+              <DialogTitle>{t.quickTable.pairing.confirmPair}</DialogTitle>
               <DialogDescription>
-                Gửi yêu cầu ghép đôi với <strong>{selectedTeamForPairing?.player1_display_name}</strong>?
+                {t.quickTable.pairing.confirmPairWith} <strong>{selectedTeamForPairing?.player1_display_name}</strong>?
                 {selectedTeamForPairing?.player1_team && (
                   <span> ({selectedTeamForPairing.player1_team})</span>
                 )}
@@ -492,16 +487,16 @@ export function DoublesRegistrationForm({
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
-                Hủy
+                {t.quickTable.pairing.cancel}
               </Button>
               <Button onClick={confirmPairRequest} disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Đang gửi...
+                    {t.quickTable.pairing.sending}
                   </>
                 ) : (
-                  'Xác nhận'
+                  t.quickTable.pairing.confirm
                 )}
               </Button>
             </DialogFooter>
@@ -519,7 +514,7 @@ export function DoublesRegistrationForm({
     
     // Validate other system name if selected
     if (ratingSystem === 'other' && !otherSystemName.trim()) {
-      toast.error('Vui lòng nhập tên hệ thống');
+      toast.error(t.quickTable.registration.systemName);
       return;
     }
 
@@ -544,10 +539,10 @@ export function DoublesRegistrationForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UserPlus className="w-5 h-5 text-primary" />
-          Đăng ký tham dự (Đội đôi)
+          {t.quickTable.registration.doublesTitle}
         </CardTitle>
         <CardDescription>
-          Đăng ký tham gia giải <strong>{tableName}</strong>. Sau khi đăng ký, bạn có thể ghép đôi với VĐV khác.
+          {t.quickTable.registerDesc} <strong>{tableName}</strong>. {t.quickTable.registration.afterRegisterNote}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -676,9 +671,9 @@ export function DoublesRegistrationForm({
             {ratingSystem === 'none' && (
               <div className="pl-6 space-y-3 border-l-2 border-primary/20">
                 <div className="space-y-2">
-                  <Label>Mô tả trình độ</Label>
+                  <Label>{t.quickTable.registration.skillDescription}</Label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {SKILL_DESCRIPTIONS.map((desc) => (
+                    {t.quickTable.skillDescOptions.map((desc: string) => (
                       <Badge
                         key={desc}
                         variant={skillDescription === desc ? 'default' : 'outline'}
@@ -692,7 +687,7 @@ export function DoublesRegistrationForm({
                   <Textarea
                     value={skillDescription}
                     onChange={(e) => setSkillDescription(e.target.value)}
-                    placeholder="Hoặc mô tả theo cách của bạn..."
+                    placeholder={t.quickTable.exampleSkillDesc}
                     rows={2}
                   />
                 </div>
@@ -703,12 +698,12 @@ export function DoublesRegistrationForm({
           <Alert variant="default" className="bg-muted/50">
             <Users className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              Sau khi đăng ký, bạn sẽ thấy danh sách VĐV chưa có partner và có thể gửi yêu cầu ghép đôi.
+              {t.quickTable.registration.afterRegisterNote}
             </AlertDescription>
           </Alert>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Đang gửi...' : 'Đăng ký tham dự'}
+            {loading ? t.quickTable.registration.submitting : t.quickTable.registration.submit}
           </Button>
         </form>
       </CardContent>
@@ -717,17 +712,17 @@ export function DoublesRegistrationForm({
 }
 
 // Helper Components
-function TeamStatusBadge({ status, btcApproved }: { status: string; btcApproved: boolean }) {
+function TeamStatusBadge({ status, btcApproved, t }: { status: string; btcApproved: boolean; t: any }) {
   if (status === 'approved' || btcApproved) {
-    return <Badge className="gap-1 bg-green-600"><CheckCircle2 className="w-3 h-3" /> Đã duyệt</Badge>;
+    return <Badge className="gap-1 bg-green-600"><CheckCircle2 className="w-3 h-3" /> {t.quickTable.approved}</Badge>;
   }
   if (status === 'rejected') {
-    return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Bị từ chối</Badge>;
+    return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> {t.quickTable.rejected}</Badge>;
   }
   if (status === 'removed') {
-    return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Đã loại</Badge>;
+    return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> {t.quickTable.rejected}</Badge>;
   }
-  return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Chờ duyệt</Badge>;
+  return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> {t.quickTable.pending}</Badge>;
 }
 
 export default DoublesRegistrationForm;

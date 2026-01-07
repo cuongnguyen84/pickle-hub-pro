@@ -90,16 +90,34 @@ export function useTeamRegistration() {
     if (!user) return null;
 
     try {
-      // Check if user is player1 or player2 in any team
-      const { data, error } = await supabase
+      // Check if user is player1 or player2 in any ACTIVE team (not removed)
+      // First check if user is player2 (partner) in a team - this takes priority
+      const { data: asPlayer2 } = await supabase
         .from('quick_table_teams')
         .select('*')
         .eq('table_id', tableId)
-        .or(`player1_user_id.eq.${user.id},player2_user_id.eq.${user.id}`)
+        .eq('player2_user_id', user.id)
+        .not('team_status', 'in', '(removed,rejected)')
         .maybeSingle();
 
-      if (error) throw error;
-      return data as Team | null;
+      if (asPlayer2) {
+        return asPlayer2 as Team;
+      }
+
+      // Then check if user is player1 (owner) in a non-removed team
+      const { data: asPlayer1 } = await supabase
+        .from('quick_table_teams')
+        .select('*')
+        .eq('table_id', tableId)
+        .eq('player1_user_id', user.id)
+        .not('team_status', 'in', '(removed,rejected)')
+        .maybeSingle();
+
+      if (asPlayer1) {
+        return asPlayer1 as Team;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error fetching user team:', error);
       return null;
