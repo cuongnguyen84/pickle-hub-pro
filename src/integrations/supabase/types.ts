@@ -998,6 +998,388 @@ export type Database = {
         }
         Relationships: []
       }
+      team_match_game_templates: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          game_type: Database["public"]["Enums"]["team_game_type"]
+          id: string
+          order_index: number
+          scoring_type: Database["public"]["Enums"]["game_scoring_type"]
+          tournament_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          game_type: Database["public"]["Enums"]["team_game_type"]
+          id?: string
+          order_index: number
+          scoring_type?: Database["public"]["Enums"]["game_scoring_type"]
+          tournament_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          game_type?: Database["public"]["Enums"]["team_game_type"]
+          id?: string
+          order_index?: number
+          scoring_type?: Database["public"]["Enums"]["game_scoring_type"]
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_match_game_templates_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_match_games: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          game_type: Database["public"]["Enums"]["team_game_type"]
+          id: string
+          is_dreambreaker: boolean | null
+          lineup_team_a: string[] | null
+          lineup_team_b: string[] | null
+          match_id: string
+          order_index: number
+          score_a: number | null
+          score_b: number | null
+          scoring_type: Database["public"]["Enums"]["game_scoring_type"]
+          status: string | null
+          template_id: string | null
+          updated_at: string | null
+          winner_team_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          game_type: Database["public"]["Enums"]["team_game_type"]
+          id?: string
+          is_dreambreaker?: boolean | null
+          lineup_team_a?: string[] | null
+          lineup_team_b?: string[] | null
+          match_id: string
+          order_index: number
+          score_a?: number | null
+          score_b?: number | null
+          scoring_type: Database["public"]["Enums"]["game_scoring_type"]
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+          winner_team_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          game_type?: Database["public"]["Enums"]["team_game_type"]
+          id?: string
+          is_dreambreaker?: boolean | null
+          lineup_team_a?: string[] | null
+          lineup_team_b?: string[] | null
+          match_id?: string
+          order_index?: number
+          score_a?: number | null
+          score_b?: number | null
+          scoring_type?: Database["public"]["Enums"]["game_scoring_type"]
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+          winner_team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_match_games_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_match_games_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_game_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_match_games_winner_team_id_fkey"
+            columns: ["winner_team_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_match_matches: {
+        Row: {
+          bracket_position: number | null
+          created_at: string | null
+          display_order: number | null
+          games_won_a: number | null
+          games_won_b: number | null
+          id: string
+          is_playoff: boolean | null
+          lineup_a_submitted: boolean | null
+          lineup_b_submitted: boolean | null
+          next_match_id: string | null
+          next_match_slot: number | null
+          playoff_round: number | null
+          round_number: number | null
+          status: Database["public"]["Enums"]["team_match_match_status"] | null
+          team_a_id: string | null
+          team_b_id: string | null
+          total_points_a: number | null
+          total_points_b: number | null
+          tournament_id: string
+          updated_at: string | null
+          winner_team_id: string | null
+        }
+        Insert: {
+          bracket_position?: number | null
+          created_at?: string | null
+          display_order?: number | null
+          games_won_a?: number | null
+          games_won_b?: number | null
+          id?: string
+          is_playoff?: boolean | null
+          lineup_a_submitted?: boolean | null
+          lineup_b_submitted?: boolean | null
+          next_match_id?: string | null
+          next_match_slot?: number | null
+          playoff_round?: number | null
+          round_number?: number | null
+          status?: Database["public"]["Enums"]["team_match_match_status"] | null
+          team_a_id?: string | null
+          team_b_id?: string | null
+          total_points_a?: number | null
+          total_points_b?: number | null
+          tournament_id: string
+          updated_at?: string | null
+          winner_team_id?: string | null
+        }
+        Update: {
+          bracket_position?: number | null
+          created_at?: string | null
+          display_order?: number | null
+          games_won_a?: number | null
+          games_won_b?: number | null
+          id?: string
+          is_playoff?: boolean | null
+          lineup_a_submitted?: boolean | null
+          lineup_b_submitted?: boolean | null
+          next_match_id?: string | null
+          next_match_slot?: number | null
+          playoff_round?: number | null
+          round_number?: number | null
+          status?: Database["public"]["Enums"]["team_match_match_status"] | null
+          team_a_id?: string | null
+          team_b_id?: string | null
+          total_points_a?: number | null
+          total_points_b?: number | null
+          tournament_id?: string
+          updated_at?: string | null
+          winner_team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_match_matches_next_match_id_fkey"
+            columns: ["next_match_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_match_matches_team_a_id_fkey"
+            columns: ["team_a_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_match_matches_team_b_id_fkey"
+            columns: ["team_b_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_match_matches_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_match_matches_winner_team_id_fkey"
+            columns: ["winner_team_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_match_roster: {
+        Row: {
+          created_at: string | null
+          gender: Database["public"]["Enums"]["player_gender"]
+          id: string
+          is_captain: boolean | null
+          player_name: string
+          skill_level: number | null
+          status: string | null
+          team_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gender: Database["public"]["Enums"]["player_gender"]
+          id?: string
+          is_captain?: boolean | null
+          player_name: string
+          skill_level?: number | null
+          status?: string | null
+          team_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gender?: Database["public"]["Enums"]["player_gender"]
+          id?: string
+          is_captain?: boolean | null
+          player_name?: string
+          skill_level?: number | null
+          status?: string | null
+          team_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_match_roster_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_match_teams: {
+        Row: {
+          captain_user_id: string | null
+          created_at: string | null
+          id: string
+          invite_code: string | null
+          seed: number | null
+          status: string | null
+          team_name: string
+          tournament_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          captain_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          invite_code?: string | null
+          seed?: number | null
+          status?: string | null
+          team_name: string
+          tournament_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          captain_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          invite_code?: string | null
+          seed?: number | null
+          status?: string | null
+          team_name?: string
+          tournament_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_match_teams_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_match_tournaments: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          dreambreaker_game_type:
+            | Database["public"]["Enums"]["team_game_type"]
+            | null
+          dreambreaker_scoring_type:
+            | Database["public"]["Enums"]["game_scoring_type"]
+            | null
+          format: string
+          has_dreambreaker: boolean | null
+          id: string
+          name: string
+          playoff_team_count: number | null
+          require_min_games_per_player: boolean | null
+          require_registration: boolean | null
+          share_id: string
+          status: Database["public"]["Enums"]["team_match_status"] | null
+          team_count: number
+          team_roster_size: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          dreambreaker_game_type?:
+            | Database["public"]["Enums"]["team_game_type"]
+            | null
+          dreambreaker_scoring_type?:
+            | Database["public"]["Enums"]["game_scoring_type"]
+            | null
+          format?: string
+          has_dreambreaker?: boolean | null
+          id?: string
+          name: string
+          playoff_team_count?: number | null
+          require_min_games_per_player?: boolean | null
+          require_registration?: boolean | null
+          share_id?: string
+          status?: Database["public"]["Enums"]["team_match_status"] | null
+          team_count: number
+          team_roster_size: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          dreambreaker_game_type?:
+            | Database["public"]["Enums"]["team_game_type"]
+            | null
+          dreambreaker_scoring_type?:
+            | Database["public"]["Enums"]["game_scoring_type"]
+            | null
+          format?: string
+          has_dreambreaker?: boolean | null
+          id?: string
+          name?: string
+          playoff_team_count?: number | null
+          require_min_games_per_player?: boolean | null
+          require_registration?: boolean | null
+          share_id?: string
+          status?: Database["public"]["Enums"]["team_match_status"] | null
+          team_count?: number
+          team_roster_size?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tournaments: {
         Row: {
           created_at: string
@@ -1316,6 +1698,11 @@ export type Database = {
         Args: { _days?: number; _org_id: string }
         Returns: Json
       }
+      get_tournament_from_match: {
+        Args: { _match_id: string }
+        Returns: string
+      }
+      get_tournament_from_team: { Args: { _team_id: string }; Returns: string }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_quick_table_count: {
         Args: { _user_id: string }
@@ -1340,6 +1727,14 @@ export type Database = {
         Returns: boolean
       }
       is_table_locked: { Args: { _table_id: string }; Returns: boolean }
+      is_team_captain: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_team_match_creator: {
+        Args: { _tournament_id: string; _user_id: string }
+        Returns: boolean
+      }
       remove_partner_from_team: {
         Args: { _team_id: string; _user_id: string }
         Returns: Json
@@ -1357,6 +1752,7 @@ export type Database = {
       app_role: "viewer" | "creator" | "admin"
       content_status: "draft" | "published" | "hidden"
       follow_target_type: "organization" | "tournament"
+      game_scoring_type: "rally21" | "sideout11"
       invitation_status:
         | "pending"
         | "accepted"
@@ -1365,12 +1761,20 @@ export type Database = {
         | "cancelled"
       livestream_status: "scheduled" | "live" | "ended"
       notification_type: "livestream_scheduled" | "livestream_live"
+      player_gender: "male" | "female"
       quick_match_status: "pending" | "completed"
       quick_table_format: "round_robin" | "large_playoff"
       quick_table_status: "setup" | "group_stage" | "playoff" | "completed"
       registration_status: "pending" | "approved" | "rejected"
       skill_rating_system: "DUPR" | "other" | "none"
       target_type: "video" | "livestream"
+      team_game_type: "WD" | "MD" | "MX" | "WS" | "MS"
+      team_match_match_status:
+        | "pending"
+        | "lineup"
+        | "in_progress"
+        | "completed"
+      team_match_status: "setup" | "registration" | "ongoing" | "completed"
       team_status:
         | "draft"
         | "pending_partner"
@@ -1512,6 +1916,7 @@ export const Constants = {
       app_role: ["viewer", "creator", "admin"],
       content_status: ["draft", "published", "hidden"],
       follow_target_type: ["organization", "tournament"],
+      game_scoring_type: ["rally21", "sideout11"],
       invitation_status: [
         "pending",
         "accepted",
@@ -1521,12 +1926,21 @@ export const Constants = {
       ],
       livestream_status: ["scheduled", "live", "ended"],
       notification_type: ["livestream_scheduled", "livestream_live"],
+      player_gender: ["male", "female"],
       quick_match_status: ["pending", "completed"],
       quick_table_format: ["round_robin", "large_playoff"],
       quick_table_status: ["setup", "group_stage", "playoff", "completed"],
       registration_status: ["pending", "approved", "rejected"],
       skill_rating_system: ["DUPR", "other", "none"],
       target_type: ["video", "livestream"],
+      team_game_type: ["WD", "MD", "MX", "WS", "MS"],
+      team_match_match_status: [
+        "pending",
+        "lineup",
+        "in_progress",
+        "completed",
+      ],
+      team_match_status: ["setup", "registration", "ongoing", "completed"],
       team_status: [
         "draft",
         "pending_partner",
