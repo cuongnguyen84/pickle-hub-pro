@@ -74,6 +74,7 @@ export default function TeamMatchView() {
   const [selectedMatch, setSelectedMatch] = useState<TeamMatchMatch | null>(null);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [showStartTournamentDialog, setShowStartTournamentDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const isOwner = tournament?.created_by === user?.id;
   const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
@@ -188,9 +189,8 @@ export default function TeamMatchView() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopyLink}>
-              <Copy className="h-4 w-4 mr-2" />
-              Sao chép link
+            <Button variant="outline" size="icon" onClick={handleCopyLink} title="Sao chép link">
+              <Copy className="h-4 w-4" />
             </Button>
             {isOwner && (
               <Button variant="outline" size="sm">
@@ -202,7 +202,7 @@ export default function TeamMatchView() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Tổng quan</TabsTrigger>
             <TabsTrigger value="teams">Đội</TabsTrigger>
@@ -211,72 +211,33 @@ export default function TeamMatchView() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4 mt-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Thông tin đội
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Số đội:</span>
-                    <span className="font-medium">{tournament.team_count} đội</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Roster:</span>
-                    <span className="font-medium">{tournament.team_roster_size} người/đội</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Đăng ký:</span>
-                    <span className="font-medium">
-                      {tournament.require_registration ? 'Yêu cầu đăng ký' : 'Không yêu cầu'}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Captain: Show my team overview */}
+            {userTeam && (
+              <MyTeamCard
+                team={userTeam}
+                maxRosterSize={tournament.team_roster_size}
+                onManageClick={() => setSelectedTeam(userTeam)}
+              />
+            )}
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Gamepad2 className="h-4 w-4" />
-                    Thể thức
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Format:</span>
-                    <span className="font-medium">{FORMAT_LABELS[tournament.format]}</span>
-                  </div>
-                  {tournament.format === 'rr_playoff' && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Playoff:</span>
-                      <span className="font-medium">{tournament.playoff_team_count} đội</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">DreamBreaker:</span>
-                    <span className="font-medium">
-                      {tournament.has_dreambreaker ? 'Có' : 'Không'}
-                    </span>
-                  </div>
-                  {tournament.has_dreambreaker && tournament.dreambreaker_game_type && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Loại DB:</span>
-                      <span className="font-medium">{tournament.dreambreaker_game_type}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Registered Teams Summary - Shows for all users */}
-            {displayTeams.length > 0 && (
+            {/* BTC-only: Registered Teams Summary with approve actions */}
+            {isOwner && displayTeams.length > 0 && (
               <RegisteredTeamsSummary
                 teams={displayTeams}
                 maxRosterSize={tournament.team_roster_size}
                 isOwner={isOwner}
+                tournamentId={tournament.id}
+                onTeamClick={(team) => setSelectedTeam(team)}
+              />
+            )}
+
+            {/* Non-owner, non-captain: Show teams summary (view only) */}
+            {!isOwner && !userTeam && displayTeams.length > 0 && (
+              <RegisteredTeamsSummary
+                teams={displayTeams}
+                maxRosterSize={tournament.team_roster_size}
+                isOwner={false}
+                tournamentId={tournament.id}
                 onTeamClick={(team) => setSelectedTeam(team)}
               />
             )}
@@ -308,15 +269,6 @@ export default function TeamMatchView() {
           </TabsContent>
 
           <TabsContent value="teams" className="mt-4 space-y-4">
-            {/* Captain's team overview - Show at top if user has a team */}
-            {userTeam && (
-              <MyTeamCard
-                team={userTeam}
-                maxRosterSize={tournament.team_roster_size}
-                onManageClick={() => setSelectedTeam(userTeam)}
-              />
-            )}
-
             {/* Registration action for users - Only show if no team yet */}
             {canRegister && (
               <Card className="border-dashed border-2">
@@ -335,10 +287,10 @@ export default function TeamMatchView() {
               </Card>
             )}
 
-            {/* Teams list - For BTC to manage, for others to view */}
+            {/* Teams list - Shows roster view like captain, no approval section */}
             <TeamList
               tournamentId={tournament.id}
-              isOwner={isOwner}
+              isOwner={false}
               onTeamClick={(team) => setSelectedTeam(team)}
             />
           </TabsContent>
@@ -403,6 +355,7 @@ export default function TeamMatchView() {
           open={showCreateTeam}
           onOpenChange={setShowCreateTeam}
           tournamentId={tournament.id}
+          onSuccess={() => setActiveTab('overview')}
         />
 
         {/* Team Detail Sheet */}
@@ -428,6 +381,7 @@ export default function TeamMatchView() {
           onOpenChange={setShowGenerateDialog}
           teams={teams || []}
           gameTemplatesCount={5}
+          maxRosterSize={tournament.team_roster_size}
           isGenerating={isGenerating}
           onConfirm={handleGenerateMatches}
         />

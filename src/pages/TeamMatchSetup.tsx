@@ -24,9 +24,9 @@ const STEPS = [
 ];
 
 const ROSTER_SIZE_OPTIONS = [
-  { value: 4, label: '4 người/đội', description: 'VD: 2 nam + 2 nữ' },
-  { value: 6, label: '6 người/đội', description: 'VD: 3 nam + 3 nữ' },
-  { value: 8, label: '8 người/đội', description: 'VD: 4 nam + 4 nữ' },
+  { value: 4, label: '4 người/đội' },
+  { value: 6, label: '6 người/đội' },
+  { value: 8, label: '8 người/đội' },
 ];
 
 const GAME_TYPE_LABELS: Record<string, string> = {
@@ -218,10 +218,9 @@ export default function TeamMatchSetup() {
                         />
                         <Label
                           htmlFor={`roster-${opt.value}`}
-                          className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          className="flex items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                         >
                           <span className="font-semibold">{opt.label}</span>
-                          <span className="text-xs text-muted-foreground">{opt.description}</span>
                         </Label>
                       </div>
                     ))}

@@ -65,25 +65,25 @@ export function MyTeamCard({ team, maxRosterSize, onManageClick }: MyTeamCardPro
           </Badge>
         </div>
 
-        {/* Quick roster preview */}
+        {/* Roster list - larger, easier to read on mobile */}
         {!isLoading && roster.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Danh sách thành viên:</p>
-            <div className="flex flex-wrap gap-1">
-              {roster.slice(0, 6).map((member) => (
-                <Badge key={member.id} variant="outline" className="text-xs">
-                  {member.is_captain && <Crown className="h-3 w-3 mr-1 text-amber-500" />}
-                  {member.player_name}
-                  <span className="ml-1 opacity-60">
-                    ({member.gender === 'male' ? 'Nam' : 'Nữ'})
-                  </span>
-                </Badge>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">Danh sách thành viên:</p>
+            <div className="space-y-2">
+              {roster.map((member) => (
+                <div 
+                  key={member.id} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-background border"
+                >
+                  <div className="flex items-center gap-2">
+                    {member.is_captain && <Crown className="h-4 w-4 text-amber-500" />}
+                    <span className="text-base font-medium">{member.player_name}</span>
+                  </div>
+                  <Badge variant="secondary" className="text-sm">
+                    {member.gender === 'male' ? 'Nam' : 'Nữ'}
+                  </Badge>
+                </div>
               ))}
-              {roster.length > 6 && (
-                <Badge variant="outline" className="text-xs">
-                  +{roster.length - 6}
-                </Badge>
-              )}
             </div>
           </div>
         )}

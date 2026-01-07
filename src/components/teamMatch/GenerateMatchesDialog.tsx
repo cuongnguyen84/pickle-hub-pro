@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,14 +9,17 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Users, Gamepad2 } from 'lucide-react';
-import { TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { Loader2, Users, Gamepad2, AlertTriangle } from 'lucide-react';
+import { TeamMatchTeam, TeamMatchRosterMember } from '@/hooks/useTeamMatchTeams';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GenerateMatchesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   teams: TeamMatchTeam[];
   gameTemplatesCount: number;
+  maxRosterSize: number;
   isGenerating: boolean;
   onConfirm: () => void;
 }
@@ -27,6 +29,7 @@ export function GenerateMatchesDialog({
   onOpenChange,
   teams,
   gameTemplatesCount,
+  maxRosterSize,
   isGenerating,
   onConfirm,
 }: GenerateMatchesDialogProps) {
@@ -36,6 +39,40 @@ export function GenerateMatchesDialog({
   // Calculate number of matches in round-robin
   const numMatches = n > 1 ? (n * (n - 1)) / 2 : 0;
   const numRounds = n > 1 ? (n % 2 === 0 ? n - 1 : n) : 0;
+
+  // Fetch rosters to check completeness
+  const { data: allRosters } = useQuery({
+    queryKey: ['team-match-all-rosters-check', approvedTeams.map(t => t.id).join(',')],
+    queryFn: async () => {
+      if (approvedTeams.length === 0) return {};
+      
+      const { data, error } = await supabase
+        .from('team_match_roster')
+        .select('*')
+        .in('team_id', approvedTeams.map(t => t.id));
+      
+      if (error) throw error;
+      
+      const grouped: Record<string, TeamMatchRosterMember[]> = {};
+      (data as TeamMatchRosterMember[]).forEach(member => {
+        if (!grouped[member.team_id]) {
+          grouped[member.team_id] = [];
+        }
+        grouped[member.team_id].push(member);
+      });
+      return grouped;
+    },
+    enabled: open && approvedTeams.length > 0,
+  });
+
+  // Check which teams are incomplete
+  const incompleteTeams = approvedTeams.filter(team => {
+    const rosterCount = allRosters?.[team.id]?.length || 0;
+    return rosterCount < maxRosterSize;
+  });
+
+  const hasIncompleteTeams = incompleteTeams.length > 0;
+  const canGenerate = n >= 2 && !hasIncompleteTeams;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -72,6 +109,26 @@ export function GenerateMatchesDialog({
                   ⚠️ Cần ít nhất 2 đội đã được duyệt để tạo lịch thi đấu
                 </p>
               )}
+
+              {/* Warning for incomplete teams */}
+              {hasIncompleteTeams && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2">
+                  <div className="flex items-center gap-2 text-destructive font-medium">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>Không thể tạo lịch - Có đội chưa đủ người</span>
+                  </div>
+                  <ul className="text-sm text-destructive/80 space-y-1 ml-6">
+                    {incompleteTeams.map(team => {
+                      const rosterCount = allRosters?.[team.id]?.length || 0;
+                      return (
+                        <li key={team.id}>
+                          • {team.team_name}: {rosterCount}/{maxRosterSize} người
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -79,7 +136,7 @@ export function GenerateMatchesDialog({
           <AlertDialogCancel disabled={isGenerating}>Hủy</AlertDialogCancel>
           <AlertDialogAction 
             onClick={onConfirm} 
-            disabled={isGenerating || n < 2}
+            disabled={isGenerating || !canGenerate}
           >
             {isGenerating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Tạo lịch
