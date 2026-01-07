@@ -185,6 +185,33 @@ export function useTeamMatch() {
     },
   });
 
+  // Update tournament status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ tournamentId, status }: { tournamentId: string; status: 'setup' | 'registration' | 'ongoing' | 'completed' }) => {
+      const { error } = await supabase
+        .from('team_match_tournaments')
+        .update({ status })
+        .eq('id', tournamentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-tournament'] });
+      toast({
+        title: 'Thành công',
+        description: 'Đã cập nhật trạng thái giải đấu',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Lỗi',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     myTournaments: myTournaments || [],
     publicTournaments: publicTournaments || [],
@@ -193,6 +220,8 @@ export function useTeamMatch() {
     isCreating: createMutation.isPending,
     deleteTournament: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
+    updateTournamentStatus: updateStatusMutation.mutateAsync,
+    isUpdatingStatus: updateStatusMutation.isPending,
   };
 }
 
