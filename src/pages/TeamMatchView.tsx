@@ -5,13 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Share2, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus } from 'lucide-react';
 import { useTeamMatchTournament } from '@/hooks/useTeamMatch';
+import { useUserTeam, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useState } from 'react';
+import { CreateTeamDialog, TeamList, TeamDetailSheet } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
   setup: 'bg-muted text-muted-foreground',
@@ -39,8 +41,13 @@ export default function TeamMatchView() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
+  const { data: userTeam } = useUserTeam(tournament?.id);
+  
+  const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
 
   const isOwner = tournament?.created_by === user?.id;
+  const canRegister = tournament?.status === 'registration' && !userTeam && user;
 
   const handleCopyLink = () => {
     const shareUrl = `${window.location.origin}/tools/team-match/${tournament?.share_id}`;
@@ -221,19 +228,48 @@ export default function TeamMatchView() {
             )}
           </TabsContent>
 
-          <TabsContent value="teams" className="mt-4">
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Chưa có đội nào</p>
-                {isOwner && (
-                  <Button variant="outline" className="mt-4">
-                    <Users className="h-4 w-4 mr-2" />
-                    Thêm đội đầu tiên
+          <TabsContent value="teams" className="mt-4 space-y-4">
+            {/* Registration action for users */}
+            {canRegister && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Đăng ký đội của bạn</p>
+                    <p className="text-sm text-muted-foreground">
+                      Tạo đội mới để tham gia giải đấu
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowCreateTeam(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tạo đội
                   </Button>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* User's team info */}
+            {userTeam && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Đội của bạn: {userTeam.team_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Bạn là đội trưởng
+                    </p>
+                  </div>
+                  <Button variant="outline" onClick={() => setSelectedTeam(userTeam)}>
+                    Quản lý đội
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Teams list */}
+            <TeamList
+              tournamentId={tournament.id}
+              isOwner={isOwner}
+              onTeamClick={(team) => setSelectedTeam(team)}
+            />
           </TabsContent>
 
           <TabsContent value="matches" className="mt-4">
@@ -255,6 +291,21 @@ export default function TeamMatchView() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Create Team Dialog */}
+        <CreateTeamDialog
+          open={showCreateTeam}
+          onOpenChange={setShowCreateTeam}
+          tournamentId={tournament.id}
+        />
+
+        {/* Team Detail Sheet */}
+        <TeamDetailSheet
+          open={!!selectedTeam}
+          onOpenChange={(open) => !open && setSelectedTeam(null)}
+          team={selectedTeam}
+          maxRosterSize={tournament.team_roster_size}
+        />
       </div>
     </MainLayout>
   );
