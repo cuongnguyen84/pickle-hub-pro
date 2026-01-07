@@ -31,6 +31,7 @@ import {
   MatchList,
   MatchDetailSheet,
   GenerateMatchesDialog,
+  StandingsTable,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -399,12 +400,7 @@ export default function TeamMatchView() {
           </TabsContent>
 
           <TabsContent value="standings" className="mt-4">
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Chưa có dữ liệu xếp hạng</p>
-              </CardContent>
-            </Card>
+            <StandingsTable tournamentId={tournament.id} />
           </TabsContent>
         </Tabs>
 
