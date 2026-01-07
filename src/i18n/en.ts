@@ -545,6 +545,15 @@ export const en: Translations = {
       teamLocked: "Tournament has started. Cannot modify team.",
     },
     allRegistered: "All registered players",
+    registeredPlayers: "Registered Players",
+    noRegisteredPlayers: "No players registered yet",
+    teamName: "Team Name",
+    playerName: "Player Name",
+    club: "Team/Club",
+    notDeclared: "Not declared",
+    hasPartnerStatus: "Has partner",
+    noPartnerStatus: "No partner",
+    statusHeader: "Status",
     // Playoff bracket
     playoff: {
       noMatches: "No playoff matches yet",

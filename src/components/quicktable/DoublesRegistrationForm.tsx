@@ -302,7 +302,10 @@ export function DoublesRegistrationForm({
                           onClick={async () => {
                             const result = await respondToPairRequest(req.id, true);
                             if (result.success) {
+                              // Force refetch to update userTeam state
                               onRegistrationComplete?.();
+                              // Show success toast
+                              toast.success('Ghép đôi thành công! Đang cập nhật...');
                             }
                           }}
                           disabled={loading || isTableLocked}

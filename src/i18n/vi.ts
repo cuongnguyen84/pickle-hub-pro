@@ -543,6 +543,15 @@ export interface Translations {
       teamLocked: string;
     };
     allRegistered: string;
+    registeredPlayers: string;
+    noRegisteredPlayers: string;
+    teamName: string;
+    playerName: string;
+    club: string;
+    notDeclared: string;
+    hasPartnerStatus: string;
+    noPartnerStatus: string;
+    statusHeader: string;
     // Playoff bracket
     playoff: {
       noMatches: string;
@@ -1115,6 +1124,15 @@ export const vi: Translations = {
       teamLocked: "Giải đấu đã diễn ra. Không thể thay đổi đội.",
     },
     allRegistered: "Các VĐV đã đăng ký",
+    registeredPlayers: "VĐV đã đăng kí",
+    noRegisteredPlayers: "Chưa có VĐV nào đăng kí",
+    teamName: "Tên đội",
+    playerName: "Tên VĐV",
+    club: "Team/CLB",
+    notDeclared: "Chưa khai",
+    hasPartnerStatus: "Đã có partner",
+    noPartnerStatus: "Chưa có partner",
+    statusHeader: "Trạng thái",
     // Playoff bracket
     playoff: {
       noMatches: "Chưa có trận playoff",

@@ -25,6 +25,7 @@ import RefereeManagement from '@/components/quicktable/RefereeManagement';
 import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
+import RegisteredPlayersList from '@/components/quicktable/RegisteredPlayersList';
 import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
 import DoublesRegistrationForm from '@/components/quicktable/DoublesRegistrationForm';
 import TeamManager from '@/components/quicktable/TeamManager';
@@ -603,8 +604,8 @@ const QuickTableView = () => {
                       onRegistrationComplete={loadData}
                     />
                   )}
-                  {/* Show approved players/teams list for public viewers */}
-                  <ApprovedPlayersList tableId={table.id} />
+                  {/* Show all registered players/teams for public viewers */}
+                  <RegisteredPlayersList tableId={table.id} isDoubles={table.is_doubles} />
                 </div>
               )}
             </TabsContent>
