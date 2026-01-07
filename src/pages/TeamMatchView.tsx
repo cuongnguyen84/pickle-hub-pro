@@ -15,15 +15,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play } from 'lucide-react';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
-import { useUserTeam, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useState } from 'react';
-import { CreateTeamDialog, TeamList, TeamDetailSheet } from '@/components/teamMatch';
+import { 
+  CreateTeamDialog, 
+  TeamList, 
+  TeamDetailSheet,
+  MatchList,
+  MatchDetailSheet,
+  GenerateMatchesDialog,
+} from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
   setup: 'bg-muted text-muted-foreground',
@@ -54,12 +62,21 @@ export default function TeamMatchView() {
   const { data: userTeam } = useUserTeam(tournament?.id);
   const { updateTournamentStatus, isUpdatingStatus } = useTeamMatch();
   
+  const { data: teams } = useTeamMatchTeams(tournament?.id);
+  const { data: matches } = useTeamMatchMatches(tournament?.id);
+  const { generateMatches, isGenerating } = useTeamMatchMatchManagement();
+  
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<TeamMatchMatch | null>(null);
   const [showOpenRegDialog, setShowOpenRegDialog] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [showStartTournamentDialog, setShowStartTournamentDialog] = useState(false);
 
   const isOwner = tournament?.created_by === user?.id;
   const canRegister = tournament?.status === 'registration' && !userTeam && user;
+  const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
+  const hasMatches = matches && matches.length > 0;
 
   const handleCopyLink = () => {
     const shareUrl = `${window.location.origin}/tools/team-match/${tournament?.share_id}`;
@@ -72,6 +89,39 @@ export default function TeamMatchView() {
     try {
       await updateTournamentStatus({ tournamentId: tournament.id, status: 'registration' });
       setShowOpenRegDialog(false);
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  const handleGenerateMatches = async () => {
+    if (!tournament || !teams) return;
+    try {
+      // TODO: Fetch actual game templates from database
+      const gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[] = [
+        { game_type: 'WD', scoring_type: 'rally21', display_name: 'Đôi Nữ', order_index: 0 },
+        { game_type: 'MD', scoring_type: 'rally21', display_name: 'Đôi Nam', order_index: 1 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 1', order_index: 2 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 2', order_index: 3 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 3', order_index: 4 },
+      ];
+      
+      await generateMatches({
+        tournamentId: tournament.id,
+        teams,
+        gameTemplates,
+      });
+      setShowGenerateDialog(false);
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  const handleStartTournament = async () => {
+    if (!tournament) return;
+    try {
+      await updateTournamentStatus({ tournamentId: tournament.id, status: 'ongoing' });
+      setShowStartTournamentDialog(false);
     } catch (error) {
       // Error handled in hook
     }
@@ -298,14 +348,54 @@ export default function TeamMatchView() {
             />
           </TabsContent>
 
-          <TabsContent value="matches" className="mt-4">
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                <Gamepad2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Chưa có trận đấu nào</p>
-                <p className="text-sm mt-1">Thêm đội để bắt đầu tạo lịch thi đấu</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="matches" className="mt-4 space-y-4">
+            {/* Generate matches action for owner */}
+            {isOwner && !hasMatches && tournament.status !== 'completed' && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Tạo lịch thi đấu</p>
+                    <p className="text-sm text-muted-foreground">
+                      {approvedTeamsCount} đội đã sẵn sàng
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowGenerateDialog(true)}
+                    disabled={approvedTeamsCount < 2}
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Tạo lịch
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Start tournament action */}
+            {isOwner && hasMatches && tournament.status === 'registration' && (
+              <Card className="border-green-500/50 bg-green-500/5">
+                <CardContent className="py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-green-600">Bắt đầu giải đấu</p>
+                    <p className="text-sm text-muted-foreground">
+                      Đã có {matches?.length} trận đấu được tạo
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowStartTournamentDialog(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Bắt đầu
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Match List */}
+            <MatchList 
+              tournamentId={tournament.id}
+              onMatchClick={(match) => setSelectedMatch(match)}
+            />
           </TabsContent>
 
           <TabsContent value="standings" className="mt-4">
@@ -346,6 +436,43 @@ export default function TeamMatchView() {
               <AlertDialogCancel>Hủy</AlertDialogCancel>
               <AlertDialogAction onClick={handleOpenRegistration} disabled={isUpdatingStatus}>
                 Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        {/* Match Detail Sheet */}
+        <MatchDetailSheet
+          open={!!selectedMatch}
+          onOpenChange={(open) => !open && setSelectedMatch(null)}
+          match={selectedMatch}
+          isOwner={isOwner}
+          tournamentId={tournament.id}
+        />
+
+        {/* Generate Matches Dialog */}
+        <GenerateMatchesDialog
+          open={showGenerateDialog}
+          onOpenChange={setShowGenerateDialog}
+          teams={teams || []}
+          gameTemplatesCount={5}
+          isGenerating={isGenerating}
+          onConfirm={handleGenerateMatches}
+        />
+
+        {/* Start Tournament Confirmation */}
+        <AlertDialog open={showStartTournamentDialog} onOpenChange={setShowStartTournamentDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Bắt đầu giải đấu?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Sau khi bắt đầu, giải đấu sẽ chuyển sang trạng thái "Đang diễn ra" và 
+                không thể thêm/xóa đội nữa.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction onClick={handleStartTournament} disabled={isUpdatingStatus}>
+                Bắt đầu
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
