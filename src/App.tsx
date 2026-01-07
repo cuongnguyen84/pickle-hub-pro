@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { I18nProvider } from "@/i18n";
 import Index from "./pages/Index";
 import Live from "./pages/Live";
@@ -19,6 +19,7 @@ import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
 import OrganizationDetail from "./pages/OrganizationDetail";
 import NotFound from "./pages/NotFound";
+import Tools from "./pages/Tools";
 import QuickTables from "./pages/QuickTables";
 import QuickTableSetup from "./pages/QuickTableSetup";
 import QuickTableView from "./pages/QuickTableView";
@@ -26,6 +27,7 @@ import MatchScoring from "./pages/MatchScoring";
 import JoinTeam from "./pages/JoinTeam";
 import Privacy from "./pages/Privacy";
 import { EmbedLive, EmbedVideo } from "./pages/embed";
+import { QuickTableRedirect, QuickTableSetupRedirect } from "./pages/redirects";
 import {
   AdminOverview,
   AdminOrganizations,
@@ -67,10 +69,15 @@ const App = () => (
               <Route path="/account" element={<Account />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/search" element={<Search />} />
-              {/* Quick Tables routes */}
-              <Route path="/quick-tables" element={<QuickTables />} />
-              <Route path="/quick-tables/:shareId" element={<QuickTableView />} />
-              <Route path="/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
+              {/* Tools routes */}
+              <Route path="/tools" element={<Tools />} />
+              <Route path="/tools/quick-tables" element={<QuickTables />} />
+              <Route path="/tools/quick-tables/:shareId" element={<QuickTableView />} />
+              <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
+              {/* Legacy Quick Tables redirects */}
+              <Route path="/quick-tables" element={<Navigate to="/tools/quick-tables" replace />} />
+              <Route path="/quick-tables/:shareId" element={<QuickTableRedirect />} />
+              <Route path="/quick-tables/:shareId/setup" element={<QuickTableSetupRedirect />} />
               <Route path="/matches/:matchId/score" element={<MatchScoring />} />
               <Route path="/join/:inviteCode" element={<JoinTeam />} />
               {/* Embed routes - no layout, minimal UI */}
