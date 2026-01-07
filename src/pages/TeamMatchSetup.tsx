@@ -24,9 +24,9 @@ const STEPS = [
 ];
 
 const ROSTER_SIZE_OPTIONS = [
-  { value: 4, label: '4 người/đội', description: '2 nam + 2 nữ' },
-  { value: 6, label: '6 người/đội', description: '3 nam + 3 nữ' },
-  { value: 8, label: '8 người/đội', description: '4 nam + 4 nữ' },
+  { value: 4, label: '4 người/đội', description: 'VD: 2 nam + 2 nữ' },
+  { value: 6, label: '6 người/đội', description: 'VD: 3 nam + 3 nữ' },
+  { value: 8, label: '8 người/đội', description: 'VD: 4 nam + 4 nữ' },
 ];
 
 const GAME_TYPE_LABELS: Record<string, string> = {
@@ -226,6 +226,12 @@ export default function TeamMatchSetup() {
                       </div>
                     ))}
                   </RadioGroup>
+                  <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+                    <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>
+                      Số nam/nữ tham khảo theo kiểu MLP. BTC có thể tự quyết định tỷ lệ phù hợp.
+                    </span>
+                  </p>
                 </div>
 
                 <div className="space-y-2">

@@ -32,6 +32,8 @@ import {
   MatchDetailSheet,
   GenerateMatchesDialog,
   StandingsTable,
+  RegisteredTeamsSummary,
+  MyTeamCard,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -70,29 +72,21 @@ export default function TeamMatchView() {
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<TeamMatchMatch | null>(null);
-  const [showOpenRegDialog, setShowOpenRegDialog] = useState(false);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [showStartTournamentDialog, setShowStartTournamentDialog] = useState(false);
 
   const isOwner = tournament?.created_by === user?.id;
-  const canRegister = tournament?.status === 'registration' && !userTeam && user;
+  const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
   const hasMatches = matches && matches.length > 0;
+  
+  // Filter out rejected teams for display
+  const displayTeams = teams?.filter(t => t.status !== 'rejected') || [];
 
   const handleCopyLink = () => {
     const shareUrl = `${window.location.origin}/tools/team-match/${tournament?.share_id}`;
     navigator.clipboard.writeText(shareUrl);
     toast({ title: 'Đã sao chép link!' });
-  };
-
-  const handleOpenRegistration = async () => {
-    if (!tournament) return;
-    try {
-      await updateTournamentStatus({ tournamentId: tournament.id, status: 'registration' });
-      setShowOpenRegDialog(false);
-    } catch (error) {
-      // Error handled in hook
-    }
   };
 
   const handleGenerateMatches = async () => {
@@ -162,8 +156,6 @@ export default function TeamMatchView() {
       </MainLayout>
     );
   }
-
-  const shareUrl = `${window.location.origin}/tools/team-match/${tournament.share_id}`;
 
   return (
     <MainLayout>
@@ -279,26 +271,36 @@ export default function TeamMatchView() {
               </Card>
             </div>
 
+            {/* Registered Teams Summary - Shows for all users */}
+            {displayTeams.length > 0 && (
+              <RegisteredTeamsSummary
+                teams={displayTeams}
+                maxRosterSize={tournament.team_roster_size}
+                isOwner={isOwner}
+                onTeamClick={(team) => setSelectedTeam(team)}
+              />
+            )}
+
             {/* Quick actions for owner */}
-            {isOwner && tournament.status === 'setup' && (
+            {isOwner && tournament.status === 'registration' && !hasMatches && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Bước tiếp theo</CardTitle>
+                  <CardTitle className="text-base">Hành động BTC</CardTitle>
                   <CardDescription>
-                    Giải đấu đang ở trạng thái thiết lập
+                    Thêm đội hoặc tạo lịch thi đấu
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex gap-2">
-                  <Button onClick={() => setShowCreateTeam(true)}>
+                  <Button variant="outline" onClick={() => setShowCreateTeam(true)}>
                     <Users className="h-4 w-4 mr-2" />
                     Thêm đội
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowOpenRegDialog(true)}
-                    disabled={isUpdatingStatus}
+                  <Button
+                    onClick={() => setShowGenerateDialog(true)}
+                    disabled={approvedTeamsCount < 2}
                   >
-                    Mở đăng ký
+                    <Play className="h-4 w-4 mr-2" />
+                    Tạo lịch thi đấu
                   </Button>
                 </CardContent>
               </Card>
@@ -306,14 +308,23 @@ export default function TeamMatchView() {
           </TabsContent>
 
           <TabsContent value="teams" className="mt-4 space-y-4">
-            {/* Registration action for users */}
+            {/* Captain's team overview - Show at top if user has a team */}
+            {userTeam && (
+              <MyTeamCard
+                team={userTeam}
+                maxRosterSize={tournament.team_roster_size}
+                onManageClick={() => setSelectedTeam(userTeam)}
+              />
+            )}
+
+            {/* Registration action for users - Only show if no team yet */}
             {canRegister && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardContent className="py-4 flex items-center justify-between">
+              <Card className="border-dashed border-2">
+                <CardContent className="py-6 flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Đăng ký đội của bạn</p>
+                    <p className="font-medium">Đăng ký tham gia giải đấu</p>
                     <p className="text-sm text-muted-foreground">
-                      Tạo đội mới để tham gia giải đấu
+                      Tạo đội mới để tham gia
                     </p>
                   </div>
                   <Button onClick={() => setShowCreateTeam(true)}>
@@ -324,24 +335,7 @@ export default function TeamMatchView() {
               </Card>
             )}
 
-            {/* User's team info */}
-            {userTeam && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardContent className="py-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Đội của bạn: {userTeam.team_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Bạn là đội trưởng
-                    </p>
-                  </div>
-                  <Button variant="outline" onClick={() => setSelectedTeam(userTeam)}>
-                    Quản lý đội
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Teams list */}
+            {/* Teams list - For BTC to manage, for others to view */}
             <TeamList
               tournamentId={tournament.id}
               isOwner={isOwner}
@@ -419,23 +413,6 @@ export default function TeamMatchView() {
           maxRosterSize={tournament.team_roster_size}
         />
 
-        {/* Open Registration Confirmation */}
-        <AlertDialog open={showOpenRegDialog} onOpenChange={setShowOpenRegDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Mở đăng ký?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Sau khi mở đăng ký, các đội có thể đăng ký tham gia giải đấu thông qua link chia sẻ.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Hủy</AlertDialogCancel>
-              <AlertDialogAction onClick={handleOpenRegistration} disabled={isUpdatingStatus}>
-                Xác nhận
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
         {/* Match Detail Sheet */}
         <MatchDetailSheet
           open={!!selectedMatch}
