@@ -102,7 +102,7 @@ export function useTeamMatch() {
 
       const shareId = generateShareId();
       
-      // Create tournament
+      // Create tournament - default to 'registration' status
       const { data: tournament, error: tournamentError } = await supabase
         .from('team_match_tournaments')
         .insert({
@@ -118,6 +118,7 @@ export function useTeamMatch() {
           dreambreaker_scoring_type: input.dreambreaker_scoring_type || null,
           require_min_games_per_player: input.require_min_games_per_player,
           created_by: user.id,
+          status: 'registration', // Default to open registration
         })
         .select()
         .single();
