@@ -143,7 +143,7 @@ export function useTeamMatchTeamManagement() {
           skill_level: input.captain_skill_level || null,
           user_id: user.id,
           is_captain: true,
-          status: 'confirmed',
+          status: 'approved', // Captain is auto-approved
         });
 
       if (rosterError) throw rosterError;
