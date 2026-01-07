@@ -4,3 +4,6 @@ export { CreateTeamDialog } from './CreateTeamDialog';
 export { TeamRosterManager } from './TeamRosterManager';
 export { TeamList } from './TeamList';
 export { TeamDetailSheet } from './TeamDetailSheet';
+export { MatchList } from './MatchList';
+export { MatchDetailSheet } from './MatchDetailSheet';
+export { GenerateMatchesDialog } from './GenerateMatchesDialog';
