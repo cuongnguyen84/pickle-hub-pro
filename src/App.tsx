@@ -26,6 +26,9 @@ import QuickTableView from "./pages/QuickTableView";
 import MatchScoring from "./pages/MatchScoring";
 import JoinTeam from "./pages/JoinTeam";
 import Privacy from "./pages/Privacy";
+import TeamMatchList from "./pages/TeamMatchList";
+import TeamMatchSetup from "./pages/TeamMatchSetup";
+import TeamMatchView from "./pages/TeamMatchView";
 import { EmbedLive, EmbedVideo } from "./pages/embed";
 import { QuickTableRedirect, QuickTableSetupRedirect } from "./pages/redirects";
 import {
@@ -74,6 +77,10 @@ const App = () => (
               <Route path="/tools/quick-tables" element={<QuickTables />} />
               <Route path="/tools/quick-tables/:shareId" element={<QuickTableView />} />
               <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
+              {/* Team Match routes */}
+              <Route path="/tools/team-match" element={<TeamMatchList />} />
+              <Route path="/tools/team-match/new" element={<TeamMatchSetup />} />
+              <Route path="/tools/team-match/:id" element={<TeamMatchView />} />
               {/* Legacy Quick Tables redirects */}
               <Route path="/quick-tables" element={<Navigate to="/tools/quick-tables" replace />} />
               <Route path="/quick-tables/:shareId" element={<QuickTableRedirect />} />
