@@ -2,11 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Gamepad2, Trophy, Clock, Play } from 'lucide-react';
+import { Gamepad2, Trophy, Clock, Play, ClipboardList } from 'lucide-react';
 import { useTeamMatchMatches, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 
 interface MatchListProps {
   tournamentId: string;
+  userTeamId?: string;
   onMatchClick?: (match: TeamMatchMatch) => void;
 }
 
@@ -16,7 +17,7 @@ const STATUS_CONFIG = {
   completed: { label: 'Đã kết thúc', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Trophy },
 };
 
-export function MatchList({ tournamentId, onMatchClick }: MatchListProps) {
+export function MatchList({ tournamentId, userTeamId, onMatchClick }: MatchListProps) {
   const { data: matches, isLoading } = useTeamMatchMatches(tournamentId);
 
   if (isLoading) {
@@ -60,11 +61,13 @@ export function MatchList({ tournamentId, onMatchClick }: MatchListProps) {
             {matchesByRound[round].map((match) => {
               const config = STATUS_CONFIG[match.status] || STATUS_CONFIG.pending;
               const StatusIcon = config.icon;
+              const isMyMatch = userTeamId && (match.team_a_id === userTeamId || match.team_b_id === userTeamId);
+              const needsLineup = isMyMatch && match.status !== 'completed';
               
               return (
                 <Card 
                   key={match.id} 
-                  className="cursor-pointer hover:border-primary/50 transition-colors"
+                  className={`cursor-pointer hover:border-primary/50 transition-colors ${isMyMatch ? 'border-primary/30 bg-primary/5' : ''}`}
                   onClick={() => onMatchClick?.(match)}
                 >
                   <CardContent className="py-4">
@@ -72,7 +75,7 @@ export function MatchList({ tournamentId, onMatchClick }: MatchListProps) {
                       <div className="flex-1">
                         <div className="flex items-center gap-4">
                           {/* Team A */}
-                          <div className={`flex-1 text-right ${match.winner_team_id === match.team_a_id ? 'font-bold' : ''}`}>
+                          <div className={`flex-1 text-right ${match.winner_team_id === match.team_a_id ? 'font-bold' : ''} ${match.team_a_id === userTeamId ? 'text-primary' : ''}`}>
                             <span className="text-base">
                               {(match.team_a as any)?.team_name || 'TBD'}
                             </span>
@@ -90,7 +93,7 @@ export function MatchList({ tournamentId, onMatchClick }: MatchListProps) {
                           </div>
                           
                           {/* Team B */}
-                          <div className={`flex-1 ${match.winner_team_id === match.team_b_id ? 'font-bold' : ''}`}>
+                          <div className={`flex-1 ${match.winner_team_id === match.team_b_id ? 'font-bold' : ''} ${match.team_b_id === userTeamId ? 'text-primary' : ''}`}>
                             <span className="text-base">
                               {(match.team_b as any)?.team_name || 'TBD'}
                             </span>
@@ -110,9 +113,16 @@ export function MatchList({ tournamentId, onMatchClick }: MatchListProps) {
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {config.label}
                         </Badge>
-                        <Button variant="ghost" size="sm">
-                          Chi tiết
-                        </Button>
+                        {needsLineup ? (
+                          <Button variant="default" size="sm">
+                            <ClipboardList className="h-3 w-3 mr-1" />
+                            Line up
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="sm">
+                            Chi tiết
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>

@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList } from 'lucide-react';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
@@ -33,7 +33,8 @@ import {
   GenerateMatchesDialog,
   StandingsTable,
   RegisteredTeamsSummary,
-  MyTeamCard,
+  TeamOverviewCard,
+  TeamRosterDisplay,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -211,12 +212,12 @@ export default function TeamMatchView() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4 mt-4">
-            {/* Captain: Show my team overview */}
-            {userTeam && (
-              <MyTeamCard
+            {/* Captain: Show team overview (NO member list) */}
+            {userTeam && !isOwner && (
+              <TeamOverviewCard
                 team={userTeam}
                 maxRosterSize={tournament.team_roster_size}
-                onManageClick={() => setSelectedTeam(userTeam)}
+                totalTeamsRegistered={displayTeams.length}
               />
             )}
 
@@ -287,15 +288,55 @@ export default function TeamMatchView() {
               </Card>
             )}
 
-            {/* Teams list - Shows roster view like captain, no approval section */}
-            <TeamList
-              tournamentId={tournament.id}
-              isOwner={false}
-              onTeamClick={(team) => setSelectedTeam(team)}
-            />
+            {/* Captain's team roster display - mobile-friendly large font */}
+            {userTeam && (
+              <TeamRosterDisplay
+                team={userTeam}
+                maxRosterSize={tournament.team_roster_size}
+                onManageClick={() => setSelectedTeam(userTeam)}
+              />
+            )}
+
+            {/* Other teams list - for BTC or viewing other teams */}
+            {(isOwner || !userTeam) && (
+              <TeamList
+                tournamentId={tournament.id}
+                isOwner={false}
+                onTeamClick={(team) => setSelectedTeam(team)}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="matches" className="mt-4 space-y-4">
+            {/* Line up action for captain - prominent button */}
+            {userTeam && hasMatches && tournament.status !== 'completed' && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Chọn đội hình</p>
+                    <p className="text-sm text-muted-foreground">
+                      Chọn VĐV cho từng ván đấu của đội bạn
+                    </p>
+                  </div>
+                  <Button 
+                    size="lg"
+                    onClick={() => {
+                      // Find matches involving user's team
+                      const teamMatches = matches?.filter(m => 
+                        m.team_a_id === userTeam.id || m.team_b_id === userTeam.id
+                      );
+                      if (teamMatches && teamMatches.length > 0) {
+                        setSelectedMatch(teamMatches[0]);
+                      }
+                    }}
+                  >
+                    <ClipboardList className="h-4 w-4 mr-2" />
+                    Line up
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Generate matches action for owner */}
             {isOwner && !hasMatches && tournament.status !== 'completed' && (
               <Card className="border-primary/50 bg-primary/5">
@@ -341,6 +382,7 @@ export default function TeamMatchView() {
             {/* Match List */}
             <MatchList 
               tournamentId={tournament.id}
+              userTeamId={userTeam?.id}
               onMatchClick={(match) => setSelectedMatch(match)}
             />
           </TabsContent>

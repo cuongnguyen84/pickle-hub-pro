@@ -10,3 +10,5 @@ export { GenerateMatchesDialog } from './GenerateMatchesDialog';
 export { StandingsTable } from './StandingsTable';
 export { RegisteredTeamsSummary } from './RegisteredTeamsSummary';
 export { MyTeamCard } from './MyTeamCard';
+export { TeamOverviewCard } from './TeamOverviewCard';
+export { TeamRosterDisplay } from './TeamRosterDisplay';
