@@ -382,35 +382,6 @@ export default function TeamMatchView() {
           </TabsContent>
 
           <TabsContent value="matches" className="mt-4 space-y-4">
-            {/* Line up action for captain - prominent button */}
-            {userTeam && hasMatches && tournament.status !== 'completed' && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardContent className="py-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Chọn đội hình</p>
-                    <p className="text-sm text-muted-foreground">
-                      Chọn VĐV cho từng ván đấu của đội bạn
-                    </p>
-                  </div>
-                  <Button 
-                    size="lg"
-                    onClick={() => {
-                      // Find matches involving user's team
-                      const teamMatches = matches?.filter(m => 
-                        m.team_a_id === userTeam.id || m.team_b_id === userTeam.id
-                      );
-                      if (teamMatches && teamMatches.length > 0) {
-                        setSelectedMatch(teamMatches[0]);
-                      }
-                    }}
-                  >
-                    <ClipboardList className="h-4 w-4 mr-2" />
-                    Line up
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Generate matches action for owner */}
             {isOwner && !hasMatches && tournament.status !== 'completed' && (
               <Card className="border-primary/50 bg-primary/5">

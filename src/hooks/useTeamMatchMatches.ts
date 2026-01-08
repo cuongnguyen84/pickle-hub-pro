@@ -279,6 +279,15 @@ export function useTeamMatchMatchManagement() {
       winnerId: string | null;
       tournamentId: string;
     }) => {
+      // First get the match to check if it's a playoff match
+      const { data: match, error: fetchError } = await supabase
+        .from('team_match_matches')
+        .select('next_match_id, next_match_slot, is_playoff')
+        .eq('id', matchId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+
       const { error } = await supabase
         .from('team_match_matches')
         .update({
@@ -292,6 +301,20 @@ export function useTeamMatchMatchManagement() {
         .eq('id', matchId);
 
       if (error) throw error;
+
+      // If playoff match completed, advance winner to next match
+      if (match.is_playoff && winnerId && match.next_match_id) {
+        const slot = match.next_match_slot; // 0 = team_a, 1 = team_b
+        const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
+        
+        const { error: advanceError } = await supabase
+          .from('team_match_matches')
+          .update({ [updateField]: winnerId })
+          .eq('id', match.next_match_id);
+        
+        if (advanceError) throw advanceError;
+      }
+
       return { matchId, tournamentId };
     },
     onSuccess: ({ matchId, tournamentId }) => {
