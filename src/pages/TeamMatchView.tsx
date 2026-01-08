@@ -27,7 +27,8 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useState } from 'react';
 import { 
-  CreateTeamDialog, 
+  CreateTeamDialog,
+  TeamRegistrationDialog,
   TeamList, 
   TeamDetailSheet,
   MatchList,
@@ -497,13 +498,26 @@ export default function TeamMatchView() {
           </TabsContent>
         </Tabs>
 
-        {/* Create Team Dialog */}
-        <CreateTeamDialog
-          open={showCreateTeam}
-          onOpenChange={setShowCreateTeam}
-          tournamentId={tournament.id}
-          onSuccess={() => setActiveTab('overview')}
-        />
+        {/* Team Registration Dialog - for users to register */}
+        {!isOwner && (
+          <TeamRegistrationDialog
+            open={showCreateTeam}
+            onOpenChange={setShowCreateTeam}
+            tournamentId={tournament.id}
+            maxRosterSize={tournament.team_roster_size}
+            onSuccess={() => setActiveTab('overview')}
+          />
+        )}
+        
+        {/* Create Team Dialog - for BTC to add teams */}
+        {isOwner && (
+          <CreateTeamDialog
+            open={showCreateTeam}
+            onOpenChange={setShowCreateTeam}
+            tournamentId={tournament.id}
+            onSuccess={() => setActiveTab('overview')}
+          />
+        )}
 
         {/* Team Detail Sheet */}
         <TeamDetailSheet
