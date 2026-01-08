@@ -152,6 +152,8 @@ export function useTeamMatchTeamManagement() {
     },
     onSuccess: (team) => {
       queryClient.invalidateQueries({ queryKey: ['team-match-teams', team.tournament_id] });
+      // Also invalidate user team query so UI updates immediately
+      queryClient.invalidateQueries({ queryKey: ['team-match-user-team', team.tournament_id] });
       toast({
         title: 'Thành công',
         description: 'Đã tạo đội mới',
