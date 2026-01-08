@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -12,7 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Save, Trophy } from 'lucide-react';
-import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch, TeamMatchGame } from '@/hooks/useTeamMatchMatches';
+import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MatchDetailSheetProps {
   open: boolean;
@@ -42,6 +44,38 @@ export function MatchDetailSheet({
   
   const [scores, setScores] = useState<Record<string, { a: number; b: number }>>({});
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Collect all roster IDs from games to fetch player names
+  const allRosterIds = useMemo(() => {
+    const ids = new Set<string>();
+    games.forEach(game => {
+      game.lineup_team_a?.forEach(id => ids.add(id));
+      game.lineup_team_b?.forEach(id => ids.add(id));
+    });
+    return Array.from(ids);
+  }, [games]);
+
+  // Fetch player names for all roster IDs
+  const { data: rosterMap } = useQuery({
+    queryKey: ['roster-names', allRosterIds],
+    queryFn: async () => {
+      if (allRosterIds.length === 0) return {};
+      
+      const { data, error } = await supabase
+        .from('team_match_roster')
+        .select('id, player_name')
+        .in('id', allRosterIds);
+      
+      if (error) throw error;
+      
+      const map: Record<string, string> = {};
+      data?.forEach(r => {
+        map[r.id] = r.player_name;
+      });
+      return map;
+    },
+    enabled: allRosterIds.length > 0,
+  });
 
   // Initialize scores from games
   useEffect(() => {
@@ -215,8 +249,10 @@ export function MatchDetailSheet({
                         </div>
                         
                         <div className="flex items-center justify-center gap-4">
-                          <div className={`flex-1 text-right ${gameWinner === 'a' ? 'text-green-600 font-bold' : ''}`}>
-                            {lineupA.length > 0 ? lineupA.join(', ') : teamAName}
+                          <div className={`flex-1 text-right text-sm ${gameWinner === 'a' ? 'text-green-600 font-bold' : ''}`}>
+                            {lineupA.length > 0 
+                              ? lineupA.map(id => rosterMap?.[id] || id).join(', ') 
+                              : teamAName}
                           </div>
                           
                           {isOwner ? (
@@ -249,8 +285,10 @@ export function MatchDetailSheet({
                             </div>
                           )}
                           
-                          <div className={`flex-1 ${gameWinner === 'b' ? 'text-green-600 font-bold' : ''}`}>
-                            {lineupB.length > 0 ? lineupB.join(', ') : teamBName}
+                          <div className={`flex-1 text-sm ${gameWinner === 'b' ? 'text-green-600 font-bold' : ''}`}>
+                            {lineupB.length > 0 
+                              ? lineupB.map(id => rosterMap?.[id] || id).join(', ') 
+                              : teamBName}
                           </div>
                         </div>
                       </CardContent>
