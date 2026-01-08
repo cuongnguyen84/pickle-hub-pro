@@ -313,6 +313,47 @@ export function useTeamMatchMatchManagement() {
           .eq('id', match.next_match_id);
         
         if (advanceError) throw advanceError;
+
+        // Check if next match now has both teams, create games if needed
+        const { data: nextMatch } = await supabase
+          .from('team_match_matches')
+          .select('id, team_a_id, team_b_id')
+          .eq('id', match.next_match_id)
+          .single();
+
+        if (nextMatch?.team_a_id && nextMatch?.team_b_id) {
+          // Check if games already exist
+          const { data: existingGames } = await supabase
+            .from('team_match_games')
+            .select('id')
+            .eq('match_id', nextMatch.id)
+            .limit(1);
+
+          if (!existingGames || existingGames.length === 0) {
+            // Get game templates for this tournament
+            const { data: templates } = await supabase
+              .from('team_match_game_templates')
+              .select('*')
+              .eq('tournament_id', tournamentId)
+              .order('order_index');
+
+            if (templates && templates.length > 0) {
+              const games = templates.map((template, index) => ({
+                match_id: nextMatch.id,
+                order_index: index,
+                game_type: template.game_type,
+                scoring_type: template.scoring_type,
+                display_name: template.display_name,
+                is_dreambreaker: false,
+                score_a: 0,
+                score_b: 0,
+                status: 'pending',
+              }));
+
+              await supabase.from('team_match_games').insert(games);
+            }
+          }
+        }
       }
 
       return { matchId, tournamentId };
