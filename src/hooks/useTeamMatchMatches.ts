@@ -304,8 +304,8 @@ export function useTeamMatchMatchManagement() {
 
       // If playoff match completed, advance winner to next match
       if (match.is_playoff && winnerId && match.next_match_id) {
-        const slot = match.next_match_slot; // 0 = team_a, 1 = team_b
-        const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
+        const slot = match.next_match_slot; // 1 = team_a, 2 = team_b
+        const updateField = slot === 1 ? 'team_a_id' : 'team_b_id';
         
         const { error: advanceError } = await supabase
           .from('team_match_matches')
@@ -469,13 +469,17 @@ export function useTeamMatchMatchManagement() {
           const nextMatch = nextRoundMatches[nextMatchIndex];
           
           if (nextMatch) {
-            await supabase
+            const { error: updateError } = await supabase
               .from('team_match_matches')
               .update({ 
                 next_match_id: nextMatch.id,
-                next_match_slot: i % 2,
+                next_match_slot: (i % 2) + 1, // 1 = team_a, 2 = team_b (matches constraint)
               })
               .eq('id', currentRoundMatches[i].id);
+            
+            if (updateError) {
+              console.error('Error linking match:', updateError);
+            }
           }
         }
       }
