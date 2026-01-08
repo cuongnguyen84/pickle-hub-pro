@@ -378,8 +378,8 @@ export function useTeamMatchMatchManagement() {
           is_playoff: true,
           playoff_round: totalRounds,
           bracket_position: i,
-          next_match_id: null, // Will be updated after all matches created
-          next_match_slot: totalRounds > 1 ? (i % 2) : null, // null for final
+          next_match_id: null,
+          next_match_slot: null, // Will be set when next_match_id is set
           lineup_a_submitted: false,
           lineup_b_submitted: false,
           display_order: i,
@@ -406,7 +406,7 @@ export function useTeamMatchMatchManagement() {
             playoff_round: round,
             bracket_position: i,
             next_match_id: null,
-            next_match_slot: round > 1 ? (i % 2) : null, // null for final
+            next_match_slot: null, // Will be set when next_match_id is set
             lineup_a_submitted: false,
             lineup_b_submitted: false,
             display_order: 100 + (totalRounds - round) * 10 + i,
