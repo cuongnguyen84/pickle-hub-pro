@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTeamMatchMatches, TeamMatchMatch } from './useTeamMatchMatches';
 import { useTeamMatchTeams, TeamMatchTeam } from './useTeamMatchTeams';
+import { useTeamMatchGroups } from './useTeamMatchGroups';
 
 export interface TeamStanding {
   team: TeamMatchTeam;
@@ -12,11 +13,20 @@ export interface TeamStanding {
   pointsFor: number;
   pointsAgainst: number;
   pointsDiff: number;
+  groupId?: string;
+  groupRank?: number;
+  isQualified?: boolean;
+  isWildcard?: boolean;
 }
 
-export function useTeamMatchStandings(tournamentId: string | undefined) {
+export function useTeamMatchStandings(tournamentId: string | undefined, options?: {
+  topPerGroup?: number;
+  wildcardCount?: number;
+}) {
+  const { topPerGroup = 2, wildcardCount = 0 } = options || {};
   const { data: matches, isLoading: isLoadingMatches } = useTeamMatchMatches(tournamentId);
   const { data: teams, isLoading: isLoadingTeams } = useTeamMatchTeams(tournamentId);
+  const { data: groups, isLoading: isLoadingGroups } = useTeamMatchGroups(tournamentId);
 
   const standings = useMemo(() => {
     if (!teams || !matches) return [];
@@ -36,6 +46,7 @@ export function useTeamMatchStandings(tournamentId: string | undefined) {
         pointsFor: 0,
         pointsAgainst: 0,
         pointsDiff: 0,
+        groupId: (team as any).group_id || undefined,
       });
     });
 
@@ -89,6 +100,80 @@ export function useTeamMatchStandings(tournamentId: string | undefined) {
     });
   }, [teams, matches]);
 
+  // Calculate standings per group with qualification
+  const standingsByGroup = useMemo(() => {
+    if (!groups || groups.length === 0) return new Map<string, TeamStanding[]>();
+    
+    const result = new Map<string, TeamStanding[]>();
+    
+    groups.forEach(group => {
+      const groupStandings = standings
+        .filter(s => s.groupId === group.id)
+        .sort((a, b) => {
+          if (b.won !== a.won) return b.won - a.won;
+          const gameDiffA = a.gamesWon - a.gamesLost;
+          const gameDiffB = b.gamesWon - b.gamesLost;
+          if (gameDiffB !== gameDiffA) return gameDiffB - gameDiffA;
+          return b.pointsDiff - a.pointsDiff;
+        })
+        .map((standing, index) => ({
+          ...standing,
+          groupRank: index + 1,
+          isQualified: index < topPerGroup,
+        }));
+      
+      result.set(group.id, groupStandings);
+    });
+
+    return result;
+  }, [standings, groups, topPerGroup]);
+
+  // Get all qualifying teams for playoff
+  const qualifyingTeams = useMemo(() => {
+    if (!groups || groups.length === 0) {
+      // No groups - return top N from overall standings
+      return standings.slice(0, topPerGroup);
+    }
+
+    const qualified: TeamStanding[] = [];
+    const nonQualified: TeamStanding[] = [];
+
+    standingsByGroup.forEach((groupStandings) => {
+      groupStandings.forEach(standing => {
+        if (standing.isQualified) {
+          qualified.push(standing);
+        } else {
+          nonQualified.push(standing);
+        }
+      });
+    });
+
+    // Add wildcards
+    if (wildcardCount > 0) {
+      const sortedNonQualified = nonQualified.sort((a, b) => {
+        if (b.won !== a.won) return b.won - a.won;
+        const gameDiffA = a.gamesWon - a.gamesLost;
+        const gameDiffB = b.gamesWon - b.gamesLost;
+        if (gameDiffB !== gameDiffA) return gameDiffB - gameDiffA;
+        return b.pointsDiff - a.pointsDiff;
+      });
+
+      sortedNonQualified.slice(0, wildcardCount).forEach(standing => {
+        standing.isWildcard = true;
+        qualified.push(standing);
+      });
+    }
+
+    // Sort qualified teams by performance for seeding
+    return qualified.sort((a, b) => {
+      if (b.won !== a.won) return b.won - a.won;
+      const gameDiffA = a.gamesWon - a.gamesLost;
+      const gameDiffB = b.gamesWon - b.gamesLost;
+      if (gameDiffB !== gameDiffA) return gameDiffB - gameDiffA;
+      return b.pointsDiff - a.pointsDiff;
+    });
+  }, [standings, standingsByGroup, groups, topPerGroup, wildcardCount]);
+
   // Check if round-robin is complete
   const roundRobinComplete = useMemo(() => {
     if (!matches || !teams) return false;
@@ -108,10 +193,18 @@ export function useTeamMatchStandings(tournamentId: string | undefined) {
     return matches.some(m => m.is_playoff);
   }, [matches]);
 
+  // Check if groups exist
+  const hasGroups = useMemo(() => {
+    return groups && groups.length > 0;
+  }, [groups]);
+
   return {
     standings,
-    isLoading: isLoadingMatches || isLoadingTeams,
+    standingsByGroup,
+    qualifyingTeams,
+    isLoading: isLoadingMatches || isLoadingTeams || isLoadingGroups,
     roundRobinComplete,
     hasPlayoff,
+    hasGroups,
   };
 }

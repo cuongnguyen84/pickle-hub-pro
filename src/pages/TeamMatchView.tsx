@@ -44,6 +44,8 @@ import {
   PlayoffSetupDialog,
   PlayoffBracket,
   GroupSetupDialog,
+  GroupMatchList,
+  GroupStandingsTable,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -540,8 +542,26 @@ export default function TeamMatchView() {
               </div>
             )}
 
-            {/* Round Robin Match List */}
-            {roundRobinMatches.length > 0 && (
+            {/* Group-based Match List for rr_playoff format */}
+            {hasGroups && roundRobinMatches.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Gamepad2 className="h-5 w-5" />
+                  Vòng bảng
+                </h3>
+                <GroupMatchList 
+                  tournamentId={tournament.id}
+                  userTeamId={userTeam?.id}
+                  isOwner={isOwner}
+                  onMatchClick={(match) => setSelectedMatch(match)}
+                  onLineupClick={(match) => setLineupMatch(match)}
+                  onStartRound={handleStartRound}
+                />
+              </div>
+            )}
+
+            {/* Regular Round Robin Match List (no groups) */}
+            {!hasGroups && roundRobinMatches.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Gamepad2 className="h-5 w-5" />
@@ -571,7 +591,15 @@ export default function TeamMatchView() {
           </TabsContent>
 
           <TabsContent value="standings" className="mt-4">
-            <StandingsTable tournamentId={tournament.id} />
+            {/* Group-based Standings for rr_playoff format */}
+            {hasGroups ? (
+              <GroupStandingsTable 
+                tournamentId={tournament.id} 
+                topPerGroup={(tournament as any).top_per_group || 2}
+              />
+            ) : (
+              <StandingsTable tournamentId={tournament.id} />
+            )}
           </TabsContent>
         </Tabs>
 

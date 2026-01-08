@@ -6,6 +6,7 @@ import type { TeamMatchTeam } from './useTeamMatchTeams';
 export interface TeamMatchMatch {
   id: string;
   tournament_id: string;
+  group_id: string | null;
   team_a_id: string | null;
   team_b_id: string | null;
   games_won_a: number;
@@ -13,7 +14,7 @@ export interface TeamMatchMatch {
   total_points_a: number;
   total_points_b: number;
   winner_team_id: string | null;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'pending' | 'lineup' | 'in_progress' | 'completed';
   round_number: number | null;
   is_playoff: boolean;
   playoff_round: number | null;
@@ -160,6 +161,7 @@ export function useTeamMatchMatchManagement() {
           
           matches.push({
             tournament_id: tournamentId,
+            group_id: null,
             team_a_id: teamA.id,
             team_b_id: teamB.id,
             games_won_a: 0,
@@ -430,6 +432,7 @@ export function useTeamMatchMatchManagement() {
         
         matches.push({
           tournament_id: tournamentId,
+          group_id: null,
           team_a_id: team1?.teamId || null,
           team_b_id: team2?.teamId || null,
           games_won_a: 0,
@@ -457,6 +460,7 @@ export function useTeamMatchMatchManagement() {
         for (let i = 0; i < matchesInRound; i++) {
           matches.push({
             tournament_id: tournamentId,
+            group_id: null,
             team_a_id: null,
             team_b_id: null,
             games_won_a: 0,
