@@ -1,11 +1,15 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Clock, Play, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Trophy, Clock, Play, Check, ClipboardList } from 'lucide-react';
 import { TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 
 interface PlayoffBracketProps {
   matches: TeamMatchMatch[];
+  userTeamId?: string;
+  isOwner?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
+  onLineupClick?: (match: TeamMatchMatch) => void;
 }
 
 const ROUND_NAMES: Record<number, string> = {
@@ -23,7 +27,7 @@ const STATUS_CONFIG = {
   completed: { label: 'Hoàn thành', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Check },
 };
 
-export function PlayoffBracket({ matches, onMatchClick }: PlayoffBracketProps) {
+export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onLineupClick }: PlayoffBracketProps) {
   // Group playoff matches by round
   const matchesByRound = matches
     .filter(m => m.is_playoff)
@@ -78,7 +82,7 @@ export function PlayoffBracket({ matches, onMatchClick }: PlayoffBracketProps) {
             const roundName = ROUND_NAMES[round] || `Vòng ${round}`;
             
             return (
-              <div key={round} className="flex flex-col gap-4 min-w-[200px]">
+              <div key={round} className="flex flex-col gap-4 min-w-[240px]">
                 <h4 className="text-sm font-semibold text-center text-muted-foreground">
                   {roundName}
                 </h4>
@@ -88,11 +92,16 @@ export function PlayoffBracket({ matches, onMatchClick }: PlayoffBracketProps) {
                     .sort((a, b) => (a.bracket_position || 0) - (b.bracket_position || 0))
                     .map((match) => {
                       const config = STATUS_CONFIG[match.status] || STATUS_CONFIG.pending;
+                      const isMyMatch = userTeamId && (match.team_a_id === userTeamId || match.team_b_id === userTeamId);
+                      const isTeamA = match.team_a_id === userTeamId;
+                      const myLineupSubmitted = isMyMatch && (isTeamA ? match.lineup_a_submitted : match.lineup_b_submitted);
+                      const matchStarted = match.status === 'in_progress' || match.status === 'completed';
+                      const needsLineup = isMyMatch && !myLineupSubmitted && !matchStarted && match.team_a_id && match.team_b_id;
                       
                       return (
                         <Card 
                           key={match.id}
-                          className="cursor-pointer hover:border-primary/50 transition-colors"
+                          className={`cursor-pointer hover:border-primary/50 transition-colors ${isMyMatch ? 'border-primary/30 bg-primary/5' : ''}`}
                           onClick={() => onMatchClick?.(match)}
                         >
                           <CardContent className="p-3 space-y-2">
@@ -102,14 +111,35 @@ export function PlayoffBracket({ matches, onMatchClick }: PlayoffBracketProps) {
                                 ? 'bg-green-500/10 font-medium' 
                                 : 'bg-muted/50'
                             }`}>
-                              <span className="text-sm truncate max-w-[120px]">
-                                {(match.team_a as any)?.team_name || 'TBD'}
-                              </span>
-                              <span className={`text-sm font-bold ${
-                                match.winner_team_id === match.team_a_id ? 'text-green-600' : ''
-                              }`}>
-                                {match.games_won_a}
-                              </span>
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className={`text-sm truncate ${match.team_a_id === userTeamId ? 'text-primary font-medium' : ''}`}>
+                                  {(match.team_a as any)?.team_name || 'TBD'}
+                                </span>
+                                {match.lineup_a_submitted && (
+                                  <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-sm font-bold ${
+                                  match.winner_team_id === match.team_a_id ? 'text-green-600' : ''
+                                }`}>
+                                  {match.games_won_a}
+                                </span>
+                                {match.team_a_id === userTeamId && needsLineup && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 text-xs px-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onLineupClick?.(match);
+                                    }}
+                                  >
+                                    <ClipboardList className="h-3 w-3 mr-1" />
+                                    Line up
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                             
                             {/* Team B */}
@@ -118,14 +148,35 @@ export function PlayoffBracket({ matches, onMatchClick }: PlayoffBracketProps) {
                                 ? 'bg-green-500/10 font-medium' 
                                 : 'bg-muted/50'
                             }`}>
-                              <span className="text-sm truncate max-w-[120px]">
-                                {(match.team_b as any)?.team_name || 'TBD'}
-                              </span>
-                              <span className={`text-sm font-bold ${
-                                match.winner_team_id === match.team_b_id ? 'text-green-600' : ''
-                              }`}>
-                                {match.games_won_b}
-                              </span>
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className={`text-sm truncate ${match.team_b_id === userTeamId ? 'text-primary font-medium' : ''}`}>
+                                  {(match.team_b as any)?.team_name || 'TBD'}
+                                </span>
+                                {match.lineup_b_submitted && (
+                                  <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-sm font-bold ${
+                                  match.winner_team_id === match.team_b_id ? 'text-green-600' : ''
+                                }`}>
+                                  {match.games_won_b}
+                                </span>
+                                {match.team_b_id === userTeamId && needsLineup && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 text-xs px-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onLineupClick?.(match);
+                                    }}
+                                  >
+                                    <ClipboardList className="h-3 w-3 mr-1" />
+                                    Line up
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                             
                             {/* Status */}

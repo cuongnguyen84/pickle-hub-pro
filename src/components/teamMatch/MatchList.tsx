@@ -47,15 +47,18 @@ export function MatchList({ tournamentId, userTeamId, isOwner, onMatchClick, onL
     );
   }
 
-  // Group matches by round
-  const matchesByRound = matches.reduce((acc, match) => {
+  // Group matches by round - filter out playoff matches (they have round_number 0 or null and is_playoff = true)
+  const roundRobinMatches = matches.filter(m => !m.is_playoff);
+  
+  const matchesByRound = roundRobinMatches.reduce((acc, match) => {
     const round = match.round_number || 0;
     if (!acc[round]) acc[round] = [];
     acc[round].push(match);
     return acc;
   }, {} as Record<number, TeamMatchMatch[]>);
 
-  const rounds = Object.keys(matchesByRound).map(Number).sort((a, b) => a - b);
+  // Filter out round 0 (should not exist for round robin)
+  const rounds = Object.keys(matchesByRound).map(Number).filter(r => r > 0).sort((a, b) => a - b);
 
   return (
     <div className="space-y-6">
