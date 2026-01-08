@@ -353,10 +353,6 @@ export function useTeamMatchMatchManagement() {
       const totalRounds = Math.log2(teamCount);
       const matches: Omit<TeamMatchMatch, 'id' | 'created_at' | 'updated_at' | 'team_a' | 'team_b'>[] = [];
       
-      // Create match structure for all rounds
-      // Round numbering: 1 = final, 2 = semi-final, etc.
-      const matchIdMap = new Map<string, string>(); // bracket_key -> match_id (filled after insert)
-      
       // First round matches (highest round number)
       const firstRoundMatchCount = teamCount / 2;
       
@@ -383,7 +379,7 @@ export function useTeamMatchMatchManagement() {
           playoff_round: totalRounds,
           bracket_position: i,
           next_match_id: null, // Will be updated after all matches created
-          next_match_slot: i % 2, // 0 or 1 for which slot in next match
+          next_match_slot: totalRounds > 1 ? (i % 2) : null, // null for final
           lineup_a_submitted: false,
           lineup_b_submitted: false,
           display_order: i,
@@ -410,7 +406,7 @@ export function useTeamMatchMatchManagement() {
             playoff_round: round,
             bracket_position: i,
             next_match_id: null,
-            next_match_slot: i % 2,
+            next_match_slot: round > 1 ? (i % 2) : null, // null for final
             lineup_a_submitted: false,
             lineup_b_submitted: false,
             display_order: 100 + (totalRounds - round) * 10 + i,
