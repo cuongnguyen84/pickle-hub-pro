@@ -44,11 +44,13 @@ export function useTeamMatchGroupManagement() {
       groupCount,
       distribution,
       gameTemplates,
+      hasDreambreaker,
     }: {
       tournamentId: string;
       groupCount: number;
       distribution: Array<Array<{ id: string; name: string }>>;
       gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[];
+      hasDreambreaker?: boolean;
     }) => {
       // 1. Create groups
       const groupsToInsert = distribution.map((_, index) => ({
@@ -141,8 +143,11 @@ export function useTeamMatchGroupManagement() {
 
       // 5. Create games for each match based on templates
       if (insertedMatches && gameTemplates.length > 0) {
-        const games = insertedMatches.flatMap(match => 
-          gameTemplates.map((template, index) => ({
+        const isEvenGames = gameTemplates.length % 2 === 0;
+        const shouldAddDreambreaker = hasDreambreaker && isEvenGames;
+        
+        const games = insertedMatches.flatMap(match => {
+          const regularGames = gameTemplates.map((template, index) => ({
             match_id: match.id,
             order_index: index,
             game_type: template.game_type,
@@ -152,8 +157,25 @@ export function useTeamMatchGroupManagement() {
             score_a: 0,
             score_b: 0,
             status: 'pending',
-          }))
-        );
+          }));
+          
+          // Add dreambreaker as the last game
+          if (shouldAddDreambreaker) {
+            regularGames.push({
+              match_id: match.id,
+              order_index: gameTemplates.length,
+              game_type: 'MS' as const,
+              scoring_type: 'rally21' as const,
+              display_name: 'Dreambreaker',
+              is_dreambreaker: true,
+              score_a: 0,
+              score_b: 0,
+              status: 'pending',
+            });
+          }
+          
+          return regularGames;
+        });
 
         const { error: gamesError } = await supabase
           .from('team_match_games')
