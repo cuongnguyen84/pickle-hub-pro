@@ -118,19 +118,27 @@ export default function TeamMatchView() {
   const handleGenerateMatches = async () => {
     if (!tournament || !teams) return;
     try {
-      // TODO: Fetch actual game templates from database
-      const gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[] = [
-        { game_type: 'WD', scoring_type: 'rally21', display_name: 'Đôi Nữ', order_index: 0 },
-        { game_type: 'MD', scoring_type: 'rally21', display_name: 'Đôi Nam', order_index: 1 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 1', order_index: 2 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 2', order_index: 3 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 3', order_index: 4 },
-      ];
+      // Fetch actual game templates from database
+      const { data: templates, error: templatesError } = await supabase
+        .from('team_match_game_templates')
+        .select('*')
+        .eq('tournament_id', tournament.id)
+        .order('order_index');
+      
+      if (templatesError) throw templatesError;
+      
+      const gameTemplates = (templates || []).map(t => ({
+        game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
+        scoring_type: t.scoring_type as 'rally21' | 'sideout11',
+        display_name: t.display_name,
+        order_index: t.order_index,
+      }));
       
       await generateMatches({
         tournamentId: tournament.id,
         teams,
         gameTemplates,
+        hasDreambreaker: tournament.has_dreambreaker,
       });
       setShowGenerateDialog(false);
     } catch (error) {
@@ -206,20 +214,28 @@ export default function TeamMatchView() {
     if (!tournament) return;
     
     try {
-      // Get game templates (TODO: fetch from database)
-      const gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[] = [
-        { game_type: 'WD', scoring_type: 'rally21', display_name: 'Đôi Nữ', order_index: 0 },
-        { game_type: 'MD', scoring_type: 'rally21', display_name: 'Đôi Nam', order_index: 1 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 1', order_index: 2 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 2', order_index: 3 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 3', order_index: 4 },
-      ];
+      // Fetch actual game templates from database
+      const { data: templates, error: templatesError } = await supabase
+        .from('team_match_game_templates')
+        .select('*')
+        .eq('tournament_id', tournament.id)
+        .order('order_index');
+      
+      if (templatesError) throw templatesError;
+      
+      const gameTemplates = (templates || []).map(t => ({
+        game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
+        scoring_type: t.scoring_type as 'rally21' | 'sideout11',
+        display_name: t.display_name,
+        order_index: t.order_index,
+      }));
 
       await createGroups({
         tournamentId: tournament.id,
         groupCount,
         distribution,
         gameTemplates,
+        hasDreambreaker: tournament.has_dreambreaker,
       });
       
       setShowGroupSetupDialog(false);

@@ -70,6 +70,9 @@ export default function TeamMatchSetup() {
 
   const isEvenGames = templates.length % 2 === 0;
 
+  // Auto-disable dreambreaker if games count becomes odd
+  const effectiveDreambreaker = isEvenGames && hasDreambreaker;
+
   const canProceed = () => {
     switch (step) {
       case 1:
@@ -98,7 +101,7 @@ export default function TeamMatchSetup() {
       format,
       playoff_team_count: format === 'rr_playoff' ? playoffTeamCount : undefined,
       require_registration: requireRegistration,
-      has_dreambreaker: hasDreambreaker,
+      has_dreambreaker: effectiveDreambreaker,
       // Dreambreaker is FIXED: Singles (4 players), Rally Scoring - no config stored
       require_min_games_per_player: requireMinGames,
       game_templates: templates.map(t => ({
@@ -283,63 +286,80 @@ export default function TeamMatchSetup() {
             {/* Step 3: DreamBreaker */}
             {step === 3 && (
               <>
-                {isEvenGames && (
-                  <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                    <Info className="h-5 w-5 text-amber-500 mt-0.5" />
+                {!isEvenGames ? (
+                  // Odd number of games - no dreambreaker needed
+                  <div className="flex items-start gap-3 p-4 bg-muted/50 border rounded-lg">
+                    <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="font-medium text-amber-600 dark:text-amber-400">
-                        Số game là số chẵn ({templates.length} games)
+                      <p className="font-medium">
+                        Số game là số lẻ ({templates.length} games)
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Khi 2 đội thắng số game bằng nhau, có thể cần DreamBreaker để phân định.
+                        Không cần DreamBreaker vì đã có ván quyết định (ván cuối cùng).
                       </p>
                     </div>
                   </div>
-                )}
-
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <Label>Bật DreamBreaker</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Game phụ khi 2 đội hòa về số game thắng
-                    </p>
-                  </div>
-                  <Switch
-                    checked={hasDreambreaker}
-                    onCheckedChange={setHasDreambreaker}
-                  />
-                </div>
-
-                {hasDreambreaker && (
-                  <div className="space-y-4 pl-4 border-l-2 border-primary">
-                    {/* Fixed Dreambreaker format - no configuration options */}
-                    <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Zap className="h-5 w-5 text-primary" />
-                        <span className="font-semibold">Thể thức Dreambreaker (Cố định)</span>
+                ) : (
+                  // Even number of games - show dreambreaker option
+                  <>
+                    <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                      <Info className="h-5 w-5 text-amber-500 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-amber-600 dark:text-amber-400">
+                          Số game là số chẵn ({templates.length} games)
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Khi 2 đội thắng số game bằng nhau, cần DreamBreaker để phân định.
+                          Khi bật, ván lẻ cuối cùng sẽ là ván Dreambreaker.
+                        </p>
                       </div>
-                      
-                      <div className="grid grid-cols-1 gap-2 text-sm">
-                        <div className="flex items-center justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Hình thức:</span>
-                          <span className="font-medium">Đánh Đơn (Singles)</span>
-                        </div>
-                        <div className="flex items-center justify-between py-2 border-b">
-                          <span className="text-muted-foreground">Số VĐV mỗi đội:</span>
-                          <span className="font-medium">4 VĐV (Nam + Nữ)</span>
-                        </div>
-                        <div className="flex items-center justify-between py-2">
-                          <span className="text-muted-foreground">Cách tính điểm:</span>
-                          <span className="font-medium">Rally Scoring</span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Dreambreaker theo chuẩn MLP: 4 VĐV thi đấu đơn, mỗi pha bóng đều tính điểm.
-                        Đội trưởng sẽ chọn 4 VĐV khi line up.
-                      </p>
                     </div>
-                  </div>
+
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label>Bật DreamBreaker</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Thêm ván quyết định khi 2 đội hòa về số game thắng
+                        </p>
+                      </div>
+                      <Switch
+                        checked={hasDreambreaker}
+                        onCheckedChange={setHasDreambreaker}
+                      />
+                    </div>
+
+                    {hasDreambreaker && (
+                      <div className="space-y-4 pl-4 border-l-2 border-primary">
+                        {/* Fixed Dreambreaker format - no configuration options */}
+                        <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Zap className="h-5 w-5 text-primary" />
+                            <span className="font-semibold">Ván Dreambreaker (Ván cuối cùng)</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 gap-2 text-sm">
+                            <div className="flex items-center justify-between py-2 border-b">
+                              <span className="text-muted-foreground">Hình thức:</span>
+                              <span className="font-medium">Đánh Đơn (Singles)</span>
+                            </div>
+                            <div className="flex items-center justify-between py-2 border-b">
+                              <span className="text-muted-foreground">Số VĐV mỗi đội:</span>
+                              <span className="font-medium">4 VĐV (Tự do chọn nam/nữ)</span>
+                            </div>
+                            <div className="flex items-center justify-between py-2">
+                              <span className="text-muted-foreground">Cách tính điểm:</span>
+                              <span className="font-medium">Rally Scoring</span>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Dreambreaker theo chuẩn MLP: 4 VĐV thi đấu đơn, mỗi pha bóng đều tính điểm.
+                            Đội trưởng sẽ chọn 4 VĐV bất kỳ (không phân biệt giới tính) khi line up.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

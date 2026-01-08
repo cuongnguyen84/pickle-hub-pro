@@ -129,10 +129,11 @@ export function useTeamMatchMatchManagement() {
 
   // Generate round-robin matches
   const generateMatchesMutation = useMutation({
-    mutationFn: async ({ tournamentId, teams, gameTemplates }: {
+    mutationFn: async ({ tournamentId, teams, gameTemplates, hasDreambreaker }: {
       tournamentId: string;
       teams: TeamMatchTeam[];
       gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[];
+      hasDreambreaker?: boolean;
     }) => {
       // Generate round-robin schedule
       const approvedTeams = teams.filter(t => t.status === 'approved');
@@ -196,8 +197,11 @@ export function useTeamMatchMatchManagement() {
 
       // Create games for each match based on templates
       if (insertedMatches && gameTemplates.length > 0) {
-        const games = insertedMatches.flatMap(match => 
-          gameTemplates.map((template, index) => ({
+        const isEvenGames = gameTemplates.length % 2 === 0;
+        const shouldAddDreambreaker = hasDreambreaker && isEvenGames;
+        
+        const games = insertedMatches.flatMap(match => {
+          const regularGames = gameTemplates.map((template, index) => ({
             match_id: match.id,
             order_index: index,
             game_type: template.game_type,
@@ -207,8 +211,25 @@ export function useTeamMatchMatchManagement() {
             score_a: 0,
             score_b: 0,
             status: 'pending',
-          }))
-        );
+          }));
+          
+          // Add dreambreaker as the last game (odd game to break tie)
+          if (shouldAddDreambreaker) {
+            regularGames.push({
+              match_id: match.id,
+              order_index: gameTemplates.length, // After all regular games
+              game_type: 'MS' as const, // Singles format for dreambreaker
+              scoring_type: 'rally21' as const,
+              display_name: 'Dreambreaker',
+              is_dreambreaker: true,
+              score_a: 0,
+              score_b: 0,
+              status: 'pending',
+            });
+          }
+          
+          return regularGames;
+        });
 
         const { error: gamesError } = await supabase
           .from('team_match_games')
@@ -272,7 +293,7 @@ export function useTeamMatchMatchManagement() {
 
   // Update match result
   const updateMatchResultMutation = useMutation({
-    mutationFn: async ({ matchId, gamesWonA, gamesWonB, totalPointsA, totalPointsB, winnerId, tournamentId }: {
+    mutationFn: async ({ matchId, gamesWonA, gamesWonB, totalPointsA, totalPointsB, winnerId, tournamentId, hasDreambreaker }: {
       matchId: string;
       gamesWonA: number;
       gamesWonB: number;
@@ -280,6 +301,7 @@ export function useTeamMatchMatchManagement() {
       totalPointsB: number;
       winnerId: string | null;
       tournamentId: string;
+      hasDreambreaker?: boolean;
     }) => {
       // First get the match to check if it's a playoff match
       const { data: match, error: fetchError } = await supabase
@@ -340,17 +362,35 @@ export function useTeamMatchMatchManagement() {
               .order('order_index');
 
             if (templates && templates.length > 0) {
+              const isEvenGames = templates.length % 2 === 0;
+              const shouldAddDreambreaker = hasDreambreaker && isEvenGames;
+              
               const games = templates.map((template, index) => ({
                 match_id: nextMatch.id,
                 order_index: index,
-                game_type: template.game_type,
-                scoring_type: template.scoring_type,
+                game_type: template.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
+                scoring_type: template.scoring_type as 'rally21' | 'sideout11',
                 display_name: template.display_name,
                 is_dreambreaker: false,
                 score_a: 0,
                 score_b: 0,
                 status: 'pending',
               }));
+              
+              // Add dreambreaker as the last game
+              if (shouldAddDreambreaker) {
+                games.push({
+                  match_id: nextMatch.id,
+                  order_index: templates.length,
+                  game_type: 'MS' as const,
+                  scoring_type: 'rally21' as const,
+                  display_name: 'Dreambreaker',
+                  is_dreambreaker: true,
+                  score_a: 0,
+                  score_b: 0,
+                  status: 'pending',
+                });
+              }
 
               await supabase.from('team_match_games').insert(games);
             }
@@ -406,10 +446,11 @@ export function useTeamMatchMatchManagement() {
 
   // Generate playoff matches
   const generatePlayoffMatchesMutation = useMutation({
-    mutationFn: async ({ tournamentId, qualifyingTeams, gameTemplates }: {
+    mutationFn: async ({ tournamentId, qualifyingTeams, gameTemplates, hasDreambreaker }: {
       tournamentId: string;
       qualifyingTeams: { teamId: string; seed: number }[];
       gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[];
+      hasDreambreaker?: boolean;
     }) => {
       const teamCount = qualifyingTeams.length;
       if (teamCount < 2 || (teamCount & (teamCount - 1)) !== 0) {
@@ -535,8 +576,11 @@ export function useTeamMatchMatchManagement() {
       );
       
       if (firstRoundMatches.length > 0 && gameTemplates.length > 0) {
-        const games = firstRoundMatches.flatMap(match => 
-          gameTemplates.map((template, index) => ({
+        const isEvenGames = gameTemplates.length % 2 === 0;
+        const shouldAddDreambreaker = hasDreambreaker && isEvenGames;
+        
+        const games = firstRoundMatches.flatMap(match => {
+          const regularGames = gameTemplates.map((template, index) => ({
             match_id: match.id,
             order_index: index,
             game_type: template.game_type,
@@ -546,8 +590,25 @@ export function useTeamMatchMatchManagement() {
             score_a: 0,
             score_b: 0,
             status: 'pending',
-          }))
-        );
+          }));
+          
+          // Add dreambreaker as the last game
+          if (shouldAddDreambreaker) {
+            regularGames.push({
+              match_id: match.id,
+              order_index: gameTemplates.length,
+              game_type: 'MS' as const,
+              scoring_type: 'rally21' as const,
+              display_name: 'Dreambreaker',
+              is_dreambreaker: true,
+              score_a: 0,
+              score_b: 0,
+              status: 'pending',
+            });
+          }
+          
+          return regularGames;
+        });
 
         const { error: gamesError } = await supabase
           .from('team_match_games')
