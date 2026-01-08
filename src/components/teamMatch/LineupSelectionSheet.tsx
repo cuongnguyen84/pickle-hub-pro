@@ -193,13 +193,24 @@ export function LineupSelectionSheet({
   const isComplete = validationErrors.length === 0;
   const canEdit = !isMatchStarted && !isSubmitted;
 
+  // Determine round label
+  const getRoundLabel = () => {
+    if (match.is_playoff && match.playoff_round) {
+      if (match.playoff_round === 1) return 'Chung kết';
+      if (match.playoff_round === 2) return 'Bán kết';
+      if (match.playoff_round === 3) return 'Tứ kết';
+      return `Vòng ${match.playoff_round}`;
+    }
+    return match.round_number ? `Vòng ${match.round_number}` : '';
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Chọn đội hình - Vòng {match.round_number}
+            Chọn đội hình - {getRoundLabel()}
           </SheetTitle>
           <SheetDescription>
             {myTeamName} vs {opponentName}
