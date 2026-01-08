@@ -1,6 +1,7 @@
 export { GameTemplateEditor, getDefaultTemplates } from './GameTemplateEditor';
 export type { GameTemplateItem } from './GameTemplateEditor';
 export { CreateTeamDialog } from './CreateTeamDialog';
+export { GroupSetupDialog } from './GroupSetupDialog';
 export { TeamRegistrationDialog } from './TeamRegistrationDialog';
 export { TeamRosterManager } from './TeamRosterManager';
 export { TeamList } from './TeamList';

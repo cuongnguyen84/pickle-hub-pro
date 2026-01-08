@@ -1180,6 +1180,38 @@ export type Database = {
           },
         ]
       }
+      team_match_groups: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          tournament_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          tournament_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_match_groups_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_match_matches: {
         Row: {
           bracket_position: number | null
@@ -1187,6 +1219,7 @@ export type Database = {
           display_order: number | null
           games_won_a: number | null
           games_won_b: number | null
+          group_id: string | null
           id: string
           is_playoff: boolean | null
           lineup_a_submitted: boolean | null
@@ -1210,6 +1243,7 @@ export type Database = {
           display_order?: number | null
           games_won_a?: number | null
           games_won_b?: number | null
+          group_id?: string | null
           id?: string
           is_playoff?: boolean | null
           lineup_a_submitted?: boolean | null
@@ -1233,6 +1267,7 @@ export type Database = {
           display_order?: number | null
           games_won_a?: number | null
           games_won_b?: number | null
+          group_id?: string | null
           id?: string
           is_playoff?: boolean | null
           lineup_a_submitted?: boolean | null
@@ -1251,6 +1286,13 @@ export type Database = {
           winner_team_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "team_match_matches_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_match_matches_next_match_id_fkey"
             columns: ["next_match_id"]
@@ -1336,6 +1378,7 @@ export type Database = {
         Row: {
           captain_user_id: string | null
           created_at: string | null
+          group_id: string | null
           id: string
           invite_code: string | null
           master_team_id: string | null
@@ -1348,6 +1391,7 @@ export type Database = {
         Insert: {
           captain_user_id?: string | null
           created_at?: string | null
+          group_id?: string | null
           id?: string
           invite_code?: string | null
           master_team_id?: string | null
@@ -1360,6 +1404,7 @@ export type Database = {
         Update: {
           captain_user_id?: string | null
           created_at?: string | null
+          group_id?: string | null
           id?: string
           invite_code?: string | null
           master_team_id?: string | null
@@ -1370,6 +1415,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "team_match_teams_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_match_teams_master_team_id_fkey"
             columns: ["master_team_id"]
@@ -1397,6 +1449,7 @@ export type Database = {
             | Database["public"]["Enums"]["game_scoring_type"]
             | null
           format: string
+          group_count: number | null
           has_dreambreaker: boolean | null
           id: string
           name: string
@@ -1407,6 +1460,7 @@ export type Database = {
           status: Database["public"]["Enums"]["team_match_status"] | null
           team_count: number
           team_roster_size: number
+          top_per_group: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1419,6 +1473,7 @@ export type Database = {
             | Database["public"]["Enums"]["game_scoring_type"]
             | null
           format?: string
+          group_count?: number | null
           has_dreambreaker?: boolean | null
           id?: string
           name: string
@@ -1429,6 +1484,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["team_match_status"] | null
           team_count: number
           team_roster_size: number
+          top_per_group?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1441,6 +1497,7 @@ export type Database = {
             | Database["public"]["Enums"]["game_scoring_type"]
             | null
           format?: string
+          group_count?: number | null
           has_dreambreaker?: boolean | null
           id?: string
           name?: string
@@ -1451,6 +1508,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["team_match_status"] | null
           team_count?: number
           team_roster_size?: number
+          top_per_group?: number | null
           updated_at?: string | null
         }
         Relationships: []

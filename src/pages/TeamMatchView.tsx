@@ -15,17 +15,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid } from 'lucide-react';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchStandings } from '@/hooks/useTeamMatchStandings';
+import { useTeamMatchGroups, useTeamMatchGroupManagement } from '@/hooks/useTeamMatchGroups';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   CreateTeamDialog,
   TeamRegistrationDialog,
@@ -42,6 +43,7 @@ import {
   AllTeamsOverview,
   PlayoffSetupDialog,
   PlayoffBracket,
+  GroupSetupDialog,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -75,7 +77,9 @@ export default function TeamMatchView() {
   
   const { data: teams } = useTeamMatchTeams(tournament?.id);
   const { data: matches } = useTeamMatchMatches(tournament?.id);
+  const { data: groups } = useTeamMatchGroups(tournament?.id);
   const { generateMatches, isGenerating, generatePlayoffMatches, isGeneratingPlayoff } = useTeamMatchMatchManagement();
+  const { createGroups, isCreatingGroups } = useTeamMatchGroupManagement();
   const { standings, roundRobinComplete, hasPlayoff } = useTeamMatchStandings(tournament?.id);
   
   const [showCreateTeam, setShowCreateTeam] = useState(false);
@@ -85,15 +89,20 @@ export default function TeamMatchView() {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [showStartTournamentDialog, setShowStartTournamentDialog] = useState(false);
   const [showPlayoffDialog, setShowPlayoffDialog] = useState(false);
+  const [showGroupSetupDialog, setShowGroupSetupDialog] = useState(false);
   const [startRoundNumber, setStartRoundNumber] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
   const isOwner = tournament?.created_by === user?.id;
   const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
+  const pendingTeamsCount = teams?.filter(t => t.status === 'pending').length || 0;
   const hasMatches = matches && matches.length > 0;
+  const hasGroups = groups && groups.length > 0;
   const roundRobinMatches = matches?.filter(m => !m.is_playoff) || [];
   const playoffMatches = matches?.filter(m => m.is_playoff) || [];
+  const isGroupPlayoffFormat = tournament?.format === 'rr_playoff';
+  const canStartGroupSetup = isOwner && isGroupPlayoffFormat && !hasGroups && pendingTeamsCount === 0 && approvedTeamsCount >= 6;
   
   // Filter out rejected teams for display
   const displayTeams = teams?.filter(t => t.status !== 'rejected') || [];
@@ -185,6 +194,33 @@ export default function TeamMatchView() {
       });
       
       setShowPlayoffDialog(false);
+      setActiveTab('matches');
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  const handleCreateGroups = async (groupCount: number, distribution: Array<Array<{ id: string; name: string }>>) => {
+    if (!tournament) return;
+    
+    try {
+      // Get game templates (TODO: fetch from database)
+      const gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[] = [
+        { game_type: 'WD', scoring_type: 'rally21', display_name: 'Đôi Nữ', order_index: 0 },
+        { game_type: 'MD', scoring_type: 'rally21', display_name: 'Đôi Nam', order_index: 1 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 1', order_index: 2 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 2', order_index: 3 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 3', order_index: 4 },
+      ];
+
+      await createGroups({
+        tournamentId: tournament.id,
+        groupCount,
+        distribution,
+        gameTemplates,
+      });
+      
+      setShowGroupSetupDialog(false);
       setActiveTab('matches');
     } catch (error) {
       // Error handled in hook
@@ -318,8 +354,49 @@ export default function TeamMatchView() {
               />
             )}
 
-            {/* Quick actions for owner */}
-            {isOwner && tournament.status === 'registration' && !hasMatches && (
+            {/* Quick actions for owner - Group Playoff format */}
+            {isOwner && isGroupPlayoffFormat && tournament.status === 'registration' && !hasGroups && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Hành động BTC</CardTitle>
+                  <CardDescription>
+                    {pendingTeamsCount > 0 
+                      ? `Duyệt ${pendingTeamsCount} đội đang chờ trước khi chia bảng`
+                      : 'Thêm đội hoặc chia bảng thi đấu'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => setShowCreateTeam(true)}>
+                    <Users className="h-4 w-4 mr-2" />
+                    Thêm đội
+                  </Button>
+                  <Button
+                    onClick={() => setShowGroupSetupDialog(true)}
+                    disabled={!canStartGroupSetup}
+                  >
+                    <LayoutGrid className="h-4 w-4 mr-2" />
+                    Chia bảng ({approvedTeamsCount} đội)
+                  </Button>
+                </CardContent>
+                {pendingTeamsCount > 0 && (
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-amber-600">
+                      ⚠️ Cần duyệt tất cả đội trước khi chia bảng
+                    </p>
+                  </CardContent>
+                )}
+                {approvedTeamsCount < 6 && pendingTeamsCount === 0 && (
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-amber-600">
+                      ⚠️ Cần ít nhất 6 đội để chia bảng
+                    </p>
+                  </CardContent>
+                )}
+              </Card>
+            )}
+
+            {/* Quick actions for owner - Other formats */}
+            {isOwner && !isGroupPlayoffFormat && tournament.status === 'registration' && !hasMatches && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">Hành động BTC</CardTitle>
@@ -565,6 +642,15 @@ export default function TeamMatchView() {
           standings={standings}
           isCreating={isGeneratingPlayoff}
           onConfirm={handleCreatePlayoff}
+        />
+
+        {/* Group Setup Dialog */}
+        <GroupSetupDialog
+          open={showGroupSetupDialog}
+          onOpenChange={setShowGroupSetupDialog}
+          teams={teams || []}
+          isCreating={isCreatingGroups}
+          onConfirm={handleCreateGroups}
         />
 
         {/* Start Tournament Confirmation */}
