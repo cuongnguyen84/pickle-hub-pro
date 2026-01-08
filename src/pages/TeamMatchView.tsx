@@ -530,6 +530,7 @@ export default function TeamMatchView() {
             match={lineupMatch}
             teamId={userTeam.id}
             tournamentId={tournament.id}
+            hasDreambreaker={tournament.has_dreambreaker}
           />
         )}
 
