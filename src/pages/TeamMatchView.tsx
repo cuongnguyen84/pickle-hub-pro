@@ -21,6 +21,7 @@ import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMa
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useState } from 'react';
@@ -35,6 +36,8 @@ import {
   RegisteredTeamsSummary,
   TeamOverviewCard,
   TeamRosterDisplay,
+  LineupSelectionSheet,
+  AllTeamsOverview,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -73,8 +76,10 @@ export default function TeamMatchView() {
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<TeamMatchMatch | null>(null);
+  const [lineupMatch, setLineupMatch] = useState<TeamMatchMatch | null>(null);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [showStartTournamentDialog, setShowStartTournamentDialog] = useState(false);
+  const [startRoundNumber, setStartRoundNumber] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
   const isOwner = tournament?.created_by === user?.id;
@@ -121,6 +126,28 @@ export default function TeamMatchView() {
       setShowStartTournamentDialog(false);
     } catch (error) {
       // Error handled in hook
+    }
+  };
+
+  const handleStartRound = async (roundNumber: number) => {
+    // Update all matches in this round to in_progress
+    if (!tournament || !matches) return;
+    
+    const roundMatches = matches.filter(m => m.round_number === roundNumber);
+    
+    try {
+      for (const match of roundMatches) {
+        await supabase
+          .from('team_match_matches')
+          .update({ status: 'in_progress' })
+          .eq('id', match.id);
+      }
+      
+      toast({ title: 'Đã bắt đầu vòng ' + roundNumber });
+      // Refetch matches
+      window.location.reload(); // Simple refresh for now
+    } catch (error) {
+      toast({ title: 'Lỗi', variant: 'destructive' });
     }
   };
 
@@ -212,13 +239,21 @@ export default function TeamMatchView() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4 mt-4">
-            {/* Captain: Show team overview (NO member list) */}
+            {/* Captain: Show team overview + all teams list */}
             {userTeam && !isOwner && (
-              <TeamOverviewCard
-                team={userTeam}
-                maxRosterSize={tournament.team_roster_size}
-                totalTeamsRegistered={displayTeams.length}
-              />
+              <>
+                <TeamOverviewCard
+                  team={userTeam}
+                  maxRosterSize={tournament.team_roster_size}
+                  totalTeamsRegistered={displayTeams.length}
+                />
+                {/* Captain can see all teams */}
+                <AllTeamsOverview
+                  teams={displayTeams}
+                  tournamentId={tournament.id}
+                  maxRosterSize={tournament.team_roster_size}
+                />
+              </>
             )}
 
             {/* BTC-only: Registered Teams Summary with approve actions */}
@@ -383,7 +418,10 @@ export default function TeamMatchView() {
             <MatchList 
               tournamentId={tournament.id}
               userTeamId={userTeam?.id}
+              isOwner={isOwner}
               onMatchClick={(match) => setSelectedMatch(match)}
+              onLineupClick={(match) => setLineupMatch(match)}
+              onStartRound={handleStartRound}
             />
           </TabsContent>
 
@@ -417,7 +455,17 @@ export default function TeamMatchView() {
           tournamentId={tournament.id}
         />
 
-        {/* Generate Matches Dialog */}
+        {/* Lineup Selection Sheet */}
+        {userTeam && (
+          <LineupSelectionSheet
+            open={!!lineupMatch}
+            onOpenChange={(open) => !open && setLineupMatch(null)}
+            match={lineupMatch}
+            teamId={userTeam.id}
+            tournamentId={tournament.id}
+          />
+        )}
+
         <GenerateMatchesDialog
           open={showGenerateDialog}
           onOpenChange={setShowGenerateDialog}
