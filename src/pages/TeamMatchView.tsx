@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid, Mail } from 'lucide-react';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
@@ -46,6 +46,7 @@ import {
   GroupSetupDialog,
   GroupMatchList,
   GroupStandingsTable,
+  InviteTeamDialog,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -92,8 +93,11 @@ export default function TeamMatchView() {
   const [showStartTournamentDialog, setShowStartTournamentDialog] = useState(false);
   const [showPlayoffDialog, setShowPlayoffDialog] = useState(false);
   const [showGroupSetupDialog, setShowGroupSetupDialog] = useState(false);
+  const [showInviteTeamDialog, setShowInviteTeamDialog] = useState(false);
   const [startRoundNumber, setStartRoundNumber] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  // For BTC lineup: track which team to lineup for
+  const [lineupTeamId, setLineupTeamId] = useState<string | null>(null);
 
   const isOwner = tournament?.created_by === user?.id;
   const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
@@ -388,6 +392,10 @@ export default function TeamMatchView() {
                     <Users className="h-4 w-4 mr-2" />
                     Thêm đội
                   </Button>
+                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Mời đội
+                  </Button>
                   <Button
                     onClick={() => setShowGroupSetupDialog(true)}
                     disabled={!canStartGroupSetup}
@@ -422,10 +430,14 @@ export default function TeamMatchView() {
                     Thêm đội hoặc tạo lịch thi đấu
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex gap-2">
+                <CardContent className="flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => setShowCreateTeam(true)}>
                     <Users className="h-4 w-4 mr-2" />
                     Thêm đội
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Mời đội
                   </Button>
                   <Button
                     onClick={() => setShowGenerateDialog(true)}
@@ -570,7 +582,10 @@ export default function TeamMatchView() {
                   userTeamId={userTeam?.id}
                   isOwner={isOwner}
                   onMatchClick={(match) => setSelectedMatch(match)}
-                  onLineupClick={(match) => setLineupMatch(match)}
+                  onLineupClick={(match, teamId) => {
+                    setLineupMatch(match);
+                    setLineupTeamId(teamId || null);
+                  }}
                   onStartRound={handleStartRound}
                 />
               </div>
@@ -588,7 +603,10 @@ export default function TeamMatchView() {
                   userTeamId={userTeam?.id}
                   isOwner={isOwner}
                   onMatchClick={(match) => setSelectedMatch(match)}
-                  onLineupClick={(match) => setLineupMatch(match)}
+                  onLineupClick={(match, teamId) => {
+                    setLineupMatch(match);
+                    setLineupTeamId(teamId || null);
+                  }}
                   onStartRound={handleStartRound}
                 />
               </div>
@@ -657,17 +675,31 @@ export default function TeamMatchView() {
           tournamentId={tournament.id}
         />
 
-        {/* Lineup Selection Sheet */}
-        {userTeam && (
+        {/* Lineup Selection Sheet - For Captain's own team OR BTC for any team */}
+        {(userTeam || isOwner) && lineupMatch && (
           <LineupSelectionSheet
             open={!!lineupMatch}
-            onOpenChange={(open) => !open && setLineupMatch(null)}
+            onOpenChange={(open) => {
+              if (!open) {
+                setLineupMatch(null);
+                setLineupTeamId(null);
+              }
+            }}
             match={lineupMatch}
-            teamId={userTeam.id}
+            teamId={lineupTeamId || userTeam?.id || ''}
             tournamentId={tournament.id}
             hasDreambreaker={tournament.has_dreambreaker}
+            isOwner={isOwner}
           />
         )}
+
+        {/* Invite Team Dialog */}
+        <InviteTeamDialog
+          open={showInviteTeamDialog}
+          onOpenChange={setShowInviteTeamDialog}
+          tournamentId={tournament.id}
+          tournamentName={tournament.name}
+        />
 
         <GenerateMatchesDialog
           open={showGenerateDialog}

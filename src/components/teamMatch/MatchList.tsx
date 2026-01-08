@@ -11,7 +11,7 @@ interface MatchListProps {
   userTeamId?: string;
   isOwner?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
-  onLineupClick?: (match: TeamMatchMatch) => void;
+  onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number) => void;
 }
 
@@ -134,6 +134,10 @@ export function MatchList({ tournamentId, userTeamId, isOwner, onMatchClick, onL
                 const myLineupSubmitted = isMyMatch && (isTeamA ? match.lineup_a_submitted : match.lineup_b_submitted);
                 const needsLineup = isMyMatch && !myLineupSubmitted && match.status !== 'completed' && !roundStarted;
                 
+                // BTC can lineup for either team if not yet submitted
+                const canBTCLineupA = isOwner && !match.lineup_a_submitted && match.status !== 'completed';
+                const canBTCLineupB = isOwner && !match.lineup_b_submitted && match.status !== 'completed';
+                
                 return (
                   <Card 
                     key={match.id} 
@@ -189,24 +193,66 @@ export function MatchList({ tournamentId, userTeamId, isOwner, onMatchClick, onL
                             <StatusIcon className="h-3 w-3 mr-1" />
                             {config.label}
                           </Badge>
-                          {needsLineup ? (
+                          
+                          {/* Captain's own lineup button */}
+                          {needsLineup && (
                             <Button 
                               variant="default" 
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onLineupClick?.(match);
+                                onLineupClick?.(match, userTeamId);
                               }}
                             >
                               <ClipboardList className="h-3 w-3 mr-1" />
                               Line up
                             </Button>
-                          ) : myLineupSubmitted && !roundStarted ? (
+                          )}
+                          
+                          {/* Captain's lineup done badge */}
+                          {!needsLineup && myLineupSubmitted && !roundStarted && (
                             <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
                               <Check className="h-3 w-3 mr-1" />
                               Đã line up
                             </Badge>
-                          ) : (
+                          )}
+                          
+                          {/* BTC lineup buttons for both teams */}
+                          {isOwner && !isMyMatch && (
+                            <div className="flex gap-1">
+                              {canBTCLineupA && match.team_a_id && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLineupClick?.(match, match.team_a_id!);
+                                  }}
+                                >
+                                  <ClipboardList className="h-3 w-3 mr-1" />
+                                  A
+                                </Button>
+                              )}
+                              {canBTCLineupB && match.team_b_id && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLineupClick?.(match, match.team_b_id!);
+                                  }}
+                                >
+                                  <ClipboardList className="h-3 w-3 mr-1" />
+                                  B
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Show detail button */}
+                          {!needsLineup && !myLineupSubmitted && (!isOwner || (!canBTCLineupA && !canBTCLineupB)) && (
                             <Button variant="ghost" size="sm" onClick={(e) => {
                               e.stopPropagation();
                               onMatchClick?.(match);

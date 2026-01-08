@@ -27,6 +27,7 @@ interface LineupSelectionSheetProps {
   tournamentId: string;
   isMatchStarted?: boolean;
   hasDreambreaker?: boolean;
+  isOwner?: boolean; // BTC can edit any team's lineup at any time
 }
 
 const GAME_TYPE_LABELS: Record<string, string> = {
@@ -56,6 +57,7 @@ export function LineupSelectionSheet({
   tournamentId,
   isMatchStarted = false,
   hasDreambreaker = false,
+  isOwner = false,
 }: LineupSelectionSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { roster, isLoading: rosterLoading } = useTeamMatchTeam(teamId);
@@ -240,7 +242,8 @@ export function LineupSelectionSheet({
   const opponentName = isTeamA ? teamBName : teamAName;
   const validationErrors = validateSelections();
   const isComplete = validationErrors.length === 0;
-  const canEdit = !isMatchStarted && !isSubmitted;
+  // BTC can always edit, Captain can edit if not started and not submitted
+  const canEdit = isOwner || (!isMatchStarted && !isSubmitted);
 
   const getRoundLabel = () => {
     if (match.is_playoff && match.playoff_round) {

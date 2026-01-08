@@ -13,7 +13,7 @@ interface GroupMatchListProps {
   userTeamId?: string;
   isOwner?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
-  onLineupClick?: (match: TeamMatchMatch) => void;
+  onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number, groupId?: string) => void;
 }
 
@@ -126,7 +126,7 @@ function GroupMatches({
   userTeamId?: string;
   isOwner?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
-  onLineupClick?: (match: TeamMatchMatch) => void;
+  onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number) => void;
 }) {
   if (matches.length === 0) {
@@ -272,7 +272,7 @@ function GroupMatches({
                               className="text-xs h-7"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onLineupClick?.(match);
+                                onLineupClick?.(match, userTeamId);
                               }}
                             >
                               <ClipboardList className="h-3 w-3 mr-1" />
