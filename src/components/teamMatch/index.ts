@@ -14,3 +14,5 @@ export { TeamOverviewCard } from './TeamOverviewCard';
 export { TeamRosterDisplay } from './TeamRosterDisplay';
 export { LineupSelectionSheet } from './LineupSelectionSheet';
 export { AllTeamsOverview } from './AllTeamsOverview';
+export { PlayoffSetupDialog } from './PlayoffSetupDialog';
+export { PlayoffBracket } from './PlayoffBracket';
