@@ -54,10 +54,9 @@ export default function TeamMatchSetup() {
   // Step 2: Game templates
   const [templates, setTemplates] = useState<GameTemplateItem[]>(() => getDefaultTemplates(4));
 
-  // Step 3: DreamBreaker
+  // Step 3: DreamBreaker - Fixed: Singles only, 4 players, Rally Scoring
   const [hasDreambreaker, setHasDreambreaker] = useState(false);
-  const [dreambreakerGameType, setDreambreakerGameType] = useState<'WD' | 'MD' | 'MX' | 'WS' | 'MS'>('MX');
-  const [dreambreakerScoringType, setDreambreakerScoringType] = useState<'rally21' | 'sideout11'>('rally21');
+  // Dreambreaker is always Singles (MS/WS alternating) with Rally Scoring - no config needed
 
   // Step 4: Format
   const [format, setFormat] = useState<'round_robin' | 'single_elimination' | 'rr_playoff'>('round_robin');
@@ -100,8 +99,7 @@ export default function TeamMatchSetup() {
       playoff_team_count: format === 'rr_playoff' ? playoffTeamCount : undefined,
       require_registration: requireRegistration,
       has_dreambreaker: hasDreambreaker,
-      dreambreaker_game_type: hasDreambreaker ? dreambreakerGameType : undefined,
-      dreambreaker_scoring_type: hasDreambreaker ? dreambreakerScoringType : undefined,
+      // Dreambreaker is FIXED: Singles (4 players), Rally Scoring - no config stored
       require_min_games_per_player: requireMinGames,
       game_templates: templates.map(t => ({
         order_index: t.order_index,
@@ -314,41 +312,32 @@ export default function TeamMatchSetup() {
 
                 {hasDreambreaker && (
                   <div className="space-y-4 pl-4 border-l-2 border-primary">
-                    <div className="space-y-2">
-                      <Label>Loại game</Label>
-                      <Select
-                        value={dreambreakerGameType}
-                        onValueChange={(v) => setDreambreakerGameType(v as any)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(GAME_TYPE_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {/* Fixed Dreambreaker format - no configuration options */}
+                    <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-primary" />
+                        <span className="font-semibold">Thể thức Dreambreaker (Cố định)</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex items-center justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Hình thức:</span>
+                          <span className="font-medium">Đánh Đơn (Singles)</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b">
+                          <span className="text-muted-foreground">Số VĐV mỗi đội:</span>
+                          <span className="font-medium">4 VĐV (Nam + Nữ)</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2">
+                          <span className="text-muted-foreground">Cách tính điểm:</span>
+                          <span className="font-medium">Rally Scoring</span>
+                        </div>
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label>Cách tính điểm</Label>
-                      <RadioGroup
-                        value={dreambreakerScoringType}
-                        onValueChange={(v) => setDreambreakerScoringType(v as any)}
-                        className="flex gap-4"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="rally21" id="db-rally21" />
-                          <Label htmlFor="db-rally21">Rally 21</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="sideout11" id="db-sideout11" />
-                          <Label htmlFor="db-sideout11">Sideout 11</Label>
-                        </div>
-                      </RadioGroup>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Dreambreaker theo chuẩn MLP: 4 VĐV thi đấu đơn, mỗi pha bóng đều tính điểm.
+                        Đội trưởng sẽ chọn 4 VĐV khi line up.
+                      </p>
                     </div>
                   </div>
                 )}

@@ -41,8 +41,8 @@ export interface CreateTournamentInput {
   playoff_team_count?: number;
   require_registration: boolean;
   has_dreambreaker: boolean;
-  dreambreaker_game_type?: 'WD' | 'MD' | 'MX' | 'WS' | 'MS';
-  dreambreaker_scoring_type?: 'rally21' | 'sideout11';
+  // Dreambreaker is always Singles (4 players) with Rally Scoring - stored as null in DB
+  // The frontend handles the fixed format logic
   require_min_games_per_player: boolean;
   game_templates: Omit<GameTemplate, 'id' | 'tournament_id'>[];
 }
@@ -103,6 +103,8 @@ export function useTeamMatch() {
       const shareId = generateShareId();
       
       // Create tournament - default to 'registration' status
+      // Note: dreambreaker_game_type and dreambreaker_scoring_type are set to null
+      // because Dreambreaker is now fixed: Singles (4 players) + Rally Scoring
       const { data: tournament, error: tournamentError } = await supabase
         .from('team_match_tournaments')
         .insert({
@@ -114,8 +116,8 @@ export function useTeamMatch() {
           playoff_team_count: input.playoff_team_count || null,
           require_registration: input.require_registration,
           has_dreambreaker: input.has_dreambreaker,
-          dreambreaker_game_type: input.dreambreaker_game_type || null,
-          dreambreaker_scoring_type: input.dreambreaker_scoring_type || null,
+          dreambreaker_game_type: null, // Fixed: Singles
+          dreambreaker_scoring_type: null, // Fixed: Rally Scoring
           require_min_games_per_player: input.require_min_games_per_player,
           created_by: user.id,
           status: 'registration', // Default to open registration
