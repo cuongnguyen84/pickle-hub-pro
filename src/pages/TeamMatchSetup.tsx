@@ -380,10 +380,10 @@ export default function TeamMatchSetup() {
                     <RadioGroupItem value="rr_playoff" id="format-rrp" className="mt-1" />
                     <div className="flex-1">
                       <Label htmlFor="format-rrp" className="font-semibold cursor-pointer">
-                        Vòng tròn + Playoff
+                        Vòng bảng + Playoff
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Vòng bảng rồi các đội đầu bảng vào playoff
+                        Chia đội thành nhiều bảng, top mỗi bảng vào playoff
                       </p>
                     </div>
                   </div>
