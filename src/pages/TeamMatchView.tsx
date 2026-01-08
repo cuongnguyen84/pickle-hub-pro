@@ -474,6 +474,23 @@ export default function TeamMatchView() {
               </Card>
             )}
 
+            {/* Playoff Bracket - Show above Round Robin */}
+            {playoffMatches.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Vòng Playoff
+                </h3>
+                <PlayoffBracket 
+                  matches={playoffMatches}
+                  userTeamId={userTeam?.id}
+                  isOwner={isOwner}
+                  onMatchClick={(match) => setSelectedMatch(match)}
+                  onLineupClick={(match) => setLineupMatch(match)}
+                />
+              </div>
+            )}
+
             {/* Round Robin Match List */}
             {roundRobinMatches.length > 0 && (
               <div className="space-y-4">
@@ -488,20 +505,6 @@ export default function TeamMatchView() {
                   onMatchClick={(match) => setSelectedMatch(match)}
                   onLineupClick={(match) => setLineupMatch(match)}
                   onStartRound={handleStartRound}
-                />
-              </div>
-            )}
-
-            {/* Playoff Bracket */}
-            {playoffMatches.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-500" />
-                  Vòng Playoff
-                </h3>
-                <PlayoffBracket 
-                  matches={playoffMatches}
-                  onMatchClick={(match) => setSelectedMatch(match)}
                 />
               </div>
             )}
