@@ -281,6 +281,71 @@ export type Database = {
           },
         ]
       }
+      master_team_roster: {
+        Row: {
+          created_at: string | null
+          gender: Database["public"]["Enums"]["player_gender"]
+          id: string
+          is_captain: boolean | null
+          master_team_id: string
+          player_name: string
+          skill_level: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gender: Database["public"]["Enums"]["player_gender"]
+          id?: string
+          is_captain?: boolean | null
+          master_team_id: string
+          player_name: string
+          skill_level?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gender?: Database["public"]["Enums"]["player_gender"]
+          id?: string
+          is_captain?: boolean | null
+          master_team_id?: string
+          player_name?: string
+          skill_level?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_team_roster_master_team_id_fkey"
+            columns: ["master_team_id"]
+            isOneToOne: false
+            referencedRelation: "master_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      master_teams: {
+        Row: {
+          captain_user_id: string
+          created_at: string | null
+          id: string
+          team_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          captain_user_id: string
+          created_at?: string | null
+          id?: string
+          team_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          captain_user_id?: string
+          created_at?: string | null
+          id?: string
+          team_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1273,6 +1338,7 @@ export type Database = {
           created_at: string | null
           id: string
           invite_code: string | null
+          master_team_id: string | null
           seed: number | null
           status: string | null
           team_name: string
@@ -1284,6 +1350,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           invite_code?: string | null
+          master_team_id?: string | null
           seed?: number | null
           status?: string | null
           team_name: string
@@ -1295,6 +1362,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           invite_code?: string | null
+          master_team_id?: string | null
           seed?: number | null
           status?: string | null
           team_name?: string
@@ -1302,6 +1370,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "team_match_teams_master_team_id_fkey"
+            columns: ["master_team_id"]
+            isOneToOne: false
+            referencedRelation: "master_teams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_match_teams_tournament_id_fkey"
             columns: ["tournament_id"]

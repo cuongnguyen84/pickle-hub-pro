@@ -114,18 +114,46 @@ export function useTeamMatchTeamManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Create team mutation
+  // Create team mutation - also creates/links master team automatically
   const createTeamMutation = useMutation({
-    mutationFn: async (input: CreateTeamInput) => {
+    mutationFn: async (input: CreateTeamInput & { master_team_id?: string }) => {
       if (!user) throw new Error('Not authenticated');
 
-      // Create team
+      let masterTeamId = input.master_team_id;
+
+      // If no master_team_id provided, create a new master team (auto-save)
+      if (!masterTeamId) {
+        const { data: masterTeam, error: masterError } = await supabase
+          .from('master_teams')
+          .insert({
+            team_name: input.team_name,
+            captain_user_id: user.id,
+          })
+          .select()
+          .single();
+
+        if (masterError) throw masterError;
+        masterTeamId = masterTeam.id;
+
+        // Add captain to master roster
+        await supabase.from('master_team_roster').insert({
+          master_team_id: masterTeamId,
+          player_name: input.captain_name,
+          gender: input.captain_gender,
+          skill_level: input.captain_skill_level || null,
+          user_id: user.id,
+          is_captain: true,
+        });
+      }
+
+      // Create tournament team linked to master team
       const { data: team, error: teamError } = await supabase
         .from('team_match_teams')
         .insert({
           tournament_id: input.tournament_id,
           team_name: input.team_name,
           captain_user_id: user.id,
+          master_team_id: masterTeamId,
           status: 'pending',
         })
         .select()
@@ -133,7 +161,7 @@ export function useTeamMatchTeamManagement() {
 
       if (teamError) throw teamError;
 
-      // Add captain as first roster member
+      // Add captain as first roster member (tournament snapshot)
       const { error: rosterError } = await supabase
         .from('team_match_roster')
         .insert({
@@ -154,6 +182,7 @@ export function useTeamMatchTeamManagement() {
       queryClient.invalidateQueries({ queryKey: ['team-match-teams', team.tournament_id] });
       // Also invalidate user team query so UI updates immediately
       queryClient.invalidateQueries({ queryKey: ['team-match-user-team', team.tournament_id] });
+      queryClient.invalidateQueries({ queryKey: ['master-teams'] });
       toast({
         title: 'Thành công',
         description: 'Đã tạo đội mới',
@@ -168,9 +197,10 @@ export function useTeamMatchTeamManagement() {
     },
   });
 
-  // Add roster member mutation
+  // Add roster member mutation - also syncs to master team
   const addRosterMemberMutation = useMutation({
     mutationFn: async (input: AddRosterMemberInput) => {
+      // Add to tournament roster
       const { data, error } = await supabase
         .from('team_match_roster')
         .insert({
@@ -186,10 +216,30 @@ export function useTeamMatchTeamManagement() {
         .single();
 
       if (error) throw error;
+
+      // Also add to master team roster if exists
+      const { data: team } = await supabase
+        .from('team_match_teams')
+        .select('master_team_id')
+        .eq('id', input.team_id)
+        .single();
+
+      if (team?.master_team_id) {
+        await supabase.from('master_team_roster').insert({
+          master_team_id: team.master_team_id,
+          player_name: input.player_name,
+          gender: input.gender,
+          skill_level: input.skill_level || null,
+          user_id: input.user_id || null,
+          is_captain: false,
+        });
+      }
+
       return data as TeamMatchRosterMember;
     },
     onSuccess: (member) => {
       queryClient.invalidateQueries({ queryKey: ['team-match-roster', member.team_id] });
+      queryClient.invalidateQueries({ queryKey: ['master-team-roster'] });
       toast({
         title: 'Thành công',
         description: 'Đã thêm thành viên',
