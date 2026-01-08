@@ -31,7 +31,8 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useMasterTeams, useMasterTeamWithRoster, useMasterTeamManagement, MasterTeam } from '@/hooks/useMasterTeams';
-import { Loader2, Plus, Users, Check, AlertCircle } from 'lucide-react';
+import { Loader2, Plus, Users, Check, AlertCircle, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -73,10 +74,37 @@ export function TeamRegistrationDialog({
   const [mode, setMode] = useState<RegistrationMode>('select');
   const [selectedMasterTeamId, setSelectedMasterTeamId] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [excludedMemberIds, setExcludedMemberIds] = useState<Set<string>>(new Set());
 
   const { team: selectedMasterTeam, roster: masterRoster, isLoading: isLoadingRoster } = useMasterTeamWithRoster(
     selectedMasterTeamId || undefined
   );
+
+  // Calculate effective roster (excluding selected members)
+  const effectiveRoster = masterRoster.filter(m => !excludedMemberIds.has(m.id));
+  const rosterExceedsLimit = effectiveRoster.length > maxRosterSize;
+  const needToExclude = masterRoster.length > maxRosterSize ? masterRoster.length - maxRosterSize : 0;
+  const currentlyExcluded = excludedMemberIds.size;
+
+  const toggleExcludeMember = (memberId: string, isCaptain: boolean) => {
+    if (isCaptain) return; // Cannot exclude captain
+    
+    setExcludedMemberIds(prev => {
+      const next = new Set(prev);
+      if (next.has(memberId)) {
+        next.delete(memberId);
+      } else {
+        next.add(memberId);
+      }
+      return next;
+    });
+  };
+
+  // Reset excluded members when changing team
+  const handleSelectMasterTeam = (teamId: string) => {
+    setSelectedMasterTeamId(teamId);
+    setExcludedMemberIds(new Set());
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -88,9 +116,7 @@ export function TeamRegistrationDialog({
   });
 
   const hasMasterTeams = masterTeams && masterTeams.length > 0;
-  const rosterExceedsLimit = masterRoster.length > maxRosterSize;
   const canRegisterWithExisting = selectedMasterTeam && !rosterExceedsLimit;
-
   const handleCreateNewTeam = async (values: FormValues) => {
     if (!user) return;
     
@@ -166,8 +192,8 @@ export function TeamRegistrationDialog({
 
       if (teamError) throw teamError;
 
-      // Copy roster from master team (snapshot)
-      const rosterToInsert = masterRoster.slice(0, maxRosterSize).map((member) => ({
+      // Copy roster from master team (snapshot) - excluding selected members
+      const rosterToInsert = effectiveRoster.map((member) => ({
         team_id: tournamentTeam.id,
         player_name: member.player_name,
         gender: member.gender,
@@ -201,12 +227,14 @@ export function TeamRegistrationDialog({
   const handleBack = () => {
     setMode('select');
     setSelectedMasterTeamId(null);
+    setExcludedMemberIds(new Set());
     form.reset();
   };
 
   const handleClose = () => {
     setMode('select');
     setSelectedMasterTeamId(null);
+    setExcludedMemberIds(new Set());
     form.reset();
     onOpenChange(false);
   };
@@ -372,7 +400,7 @@ export function TeamRegistrationDialog({
               <>
                 <RadioGroup
                   value={selectedMasterTeamId || ''}
-                  onValueChange={setSelectedMasterTeamId}
+                  onValueChange={handleSelectMasterTeam}
                   className="space-y-3"
                 >
                   {masterTeams?.map((team) => (
@@ -412,37 +440,58 @@ export function TeamRegistrationDialog({
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Badge variant={rosterExceedsLimit ? 'destructive' : 'secondary'}>
-                            {masterRoster.length}/{maxRosterSize} người
+                            {effectiveRoster.length}/{maxRosterSize} người
                           </Badge>
                         )}
                       </CardTitle>
+                      {needToExclude > 0 && (
+                        <CardDescription className="text-xs">
+                          Bỏ chọn {needToExclude - currentlyExcluded > 0 
+                            ? `thêm ${needToExclude - currentlyExcluded}` 
+                            : '0'} người nữa để đăng ký
+                        </CardDescription>
+                      )}
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {masterRoster.slice(0, 5).map((member) => (
-                        <div key={member.id} className="flex items-center gap-2 text-sm">
-                          <Badge variant="outline" className="text-xs">
-                            {member.gender === 'male' ? 'Nam' : 'Nữ'}
-                          </Badge>
-                          <span>{member.player_name}</span>
-                          {member.is_captain && (
-                            <Badge variant="secondary" className="text-xs">
-                              Đội trưởng
+                      {masterRoster.map((member) => {
+                        const isExcluded = excludedMemberIds.has(member.id);
+                        const isCaptain = member.is_captain;
+                        
+                        return (
+                          <div 
+                            key={member.id} 
+                            className={`flex items-center gap-3 text-sm p-2 rounded-md transition-colors ${
+                              isExcluded ? 'bg-muted/50 opacity-50' : ''
+                            } ${!isCaptain ? 'cursor-pointer hover:bg-muted/30' : ''}`}
+                            onClick={() => !isCaptain && toggleExcludeMember(member.id, isCaptain)}
+                          >
+                            <Checkbox
+                              checked={!isExcluded}
+                              disabled={isCaptain}
+                              onCheckedChange={() => toggleExcludeMember(member.id, isCaptain)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <Badge variant="outline" className="text-xs">
+                              {member.gender === 'male' ? 'Nam' : 'Nữ'}
                             </Badge>
-                          )}
-                        </div>
-                      ))}
-                      {masterRoster.length > 5 && (
-                        <div className="text-sm text-muted-foreground">
-                          +{masterRoster.length - 5} người khác
-                        </div>
-                      )}
+                            <span className={isExcluded ? 'line-through' : ''}>
+                              {member.player_name}
+                            </span>
+                            {isCaptain && (
+                              <Badge variant="secondary" className="text-xs">
+                                Đội trưởng
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })}
 
-                      {rosterExceedsLimit && (
+                      {needToExclude > 0 && rosterExceedsLimit && (
                         <div className="flex items-start gap-2 mt-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                           <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                           <div>
-                            Đội có {masterRoster.length} người, vượt quá giới hạn {maxRosterSize} người của giải.
-                            Bạn cần loại bớt thành viên sau khi đăng ký.
+                            Đội có {masterRoster.length} người, vượt quá giới hạn {maxRosterSize} người.
+                            Bỏ chọn {needToExclude - currentlyExcluded} thành viên để tiếp tục.
                           </div>
                         </div>
                       )}
