@@ -61,7 +61,7 @@ const STATUS_LABELS: Record<string, string> = {
 const FORMAT_LABELS: Record<string, string> = {
   round_robin: 'Vòng tròn',
   single_elimination: 'Loại trực tiếp',
-  rr_playoff: 'Vòng tròn + Playoff',
+  rr_playoff: 'Vòng bảng + Playoff',
 };
 
 export default function TeamMatchView() {
