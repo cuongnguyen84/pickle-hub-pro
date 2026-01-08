@@ -19,6 +19,7 @@ import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Pla
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
+import { useTeamMatchStandings } from '@/hooks/useTeamMatchStandings';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +39,8 @@ import {
   TeamRosterDisplay,
   LineupSelectionSheet,
   AllTeamsOverview,
+  PlayoffSetupDialog,
+  PlayoffBracket,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -71,7 +74,8 @@ export default function TeamMatchView() {
   
   const { data: teams } = useTeamMatchTeams(tournament?.id);
   const { data: matches } = useTeamMatchMatches(tournament?.id);
-  const { generateMatches, isGenerating } = useTeamMatchMatchManagement();
+  const { generateMatches, isGenerating, generatePlayoffMatches, isGeneratingPlayoff } = useTeamMatchMatchManagement();
+  const { standings, roundRobinComplete, hasPlayoff } = useTeamMatchStandings(tournament?.id);
   
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
@@ -79,6 +83,7 @@ export default function TeamMatchView() {
   const [lineupMatch, setLineupMatch] = useState<TeamMatchMatch | null>(null);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [showStartTournamentDialog, setShowStartTournamentDialog] = useState(false);
+  const [showPlayoffDialog, setShowPlayoffDialog] = useState(false);
   const [startRoundNumber, setStartRoundNumber] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -86,6 +91,8 @@ export default function TeamMatchView() {
   const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
   const hasMatches = matches && matches.length > 0;
+  const roundRobinMatches = matches?.filter(m => !m.is_playoff) || [];
+  const playoffMatches = matches?.filter(m => m.is_playoff) || [];
   
   // Filter out rejected teams for display
   const displayTeams = teams?.filter(t => t.status !== 'rejected') || [];
@@ -148,6 +155,38 @@ export default function TeamMatchView() {
       window.location.reload(); // Simple refresh for now
     } catch (error) {
       toast({ title: 'Lỗi', variant: 'destructive' });
+    }
+  };
+
+  const handleCreatePlayoff = async (teamCount: number) => {
+    if (!tournament) return;
+    
+    try {
+      // Get qualifying teams based on standings
+      const qualifyingTeams = standings.slice(0, teamCount).map((standing, index) => ({
+        teamId: standing.team.id,
+        seed: index + 1,
+      }));
+
+      // Game templates for playoff
+      const gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[] = [
+        { game_type: 'WD', scoring_type: 'rally21', display_name: 'Đôi Nữ', order_index: 0 },
+        { game_type: 'MD', scoring_type: 'rally21', display_name: 'Đôi Nam', order_index: 1 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 1', order_index: 2 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 2', order_index: 3 },
+        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 3', order_index: 4 },
+      ];
+
+      await generatePlayoffMatches({
+        tournamentId: tournament.id,
+        qualifyingTeams,
+        gameTemplates,
+      });
+      
+      setShowPlayoffDialog(false);
+      setActiveTab('matches');
+    } catch (error) {
+      // Error handled in hook
     }
   };
 
@@ -414,15 +453,69 @@ export default function TeamMatchView() {
               </Card>
             )}
 
-            {/* Match List */}
-            <MatchList 
-              tournamentId={tournament.id}
-              userTeamId={userTeam?.id}
-              isOwner={isOwner}
-              onMatchClick={(match) => setSelectedMatch(match)}
-              onLineupClick={(match) => setLineupMatch(match)}
-              onStartRound={handleStartRound}
-            />
+            {/* Create Playoff action - show when round robin is complete */}
+            {isOwner && roundRobinComplete && !hasPlayoff && (
+              <Card className="border-yellow-500/50 bg-yellow-500/5">
+                <CardContent className="py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-yellow-600">Tạo vòng Playoff</p>
+                    <p className="text-sm text-muted-foreground">
+                      Vòng tròn đã hoàn thành - {standings.length} đội đủ điều kiện
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowPlayoffDialog(true)}
+                    className="bg-yellow-600 hover:bg-yellow-700"
+                  >
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Tạo Playoff
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Round Robin Match List */}
+            {roundRobinMatches.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Gamepad2 className="h-5 w-5" />
+                  Vòng tròn
+                </h3>
+                <MatchList 
+                  tournamentId={tournament.id}
+                  userTeamId={userTeam?.id}
+                  isOwner={isOwner}
+                  onMatchClick={(match) => setSelectedMatch(match)}
+                  onLineupClick={(match) => setLineupMatch(match)}
+                  onStartRound={handleStartRound}
+                />
+              </div>
+            )}
+
+            {/* Playoff Bracket */}
+            {playoffMatches.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Vòng Playoff
+                </h3>
+                <PlayoffBracket 
+                  matches={playoffMatches}
+                  onMatchClick={(match) => setSelectedMatch(match)}
+                />
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!hasMatches && !isOwner && (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <Gamepad2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Chưa có trận đấu nào</p>
+                  <p className="text-sm mt-1">Lịch thi đấu sẽ được BTC tạo</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="standings" className="mt-4">
@@ -474,6 +567,15 @@ export default function TeamMatchView() {
           maxRosterSize={tournament.team_roster_size}
           isGenerating={isGenerating}
           onConfirm={handleGenerateMatches}
+        />
+
+        {/* Playoff Setup Dialog */}
+        <PlayoffSetupDialog
+          open={showPlayoffDialog}
+          onOpenChange={setShowPlayoffDialog}
+          standings={standings}
+          isCreating={isGeneratingPlayoff}
+          onConfirm={handleCreatePlayoff}
         />
 
         {/* Start Tournament Confirmation */}

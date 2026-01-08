@@ -338,9 +338,179 @@ export function useTeamMatchMatchManagement() {
     },
   });
 
+  // Generate playoff matches
+  const generatePlayoffMatchesMutation = useMutation({
+    mutationFn: async ({ tournamentId, qualifyingTeams, gameTemplates }: {
+      tournamentId: string;
+      qualifyingTeams: { teamId: string; seed: number }[];
+      gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[];
+    }) => {
+      const teamCount = qualifyingTeams.length;
+      if (teamCount < 2 || (teamCount & (teamCount - 1)) !== 0) {
+        throw new Error('Số đội phải là lũy thừa của 2 (2, 4, 8, 16...)');
+      }
+
+      const totalRounds = Math.log2(teamCount);
+      const matches: Omit<TeamMatchMatch, 'id' | 'created_at' | 'updated_at' | 'team_a' | 'team_b'>[] = [];
+      
+      // Create match structure for all rounds
+      // Round numbering: 1 = final, 2 = semi-final, etc.
+      const matchIdMap = new Map<string, string>(); // bracket_key -> match_id (filled after insert)
+      
+      // First round matches (highest round number)
+      const firstRoundMatchCount = teamCount / 2;
+      
+      for (let i = 0; i < firstRoundMatchCount; i++) {
+        // Standard seeding: 1 vs N, 2 vs N-1, etc.
+        const seed1 = i + 1;
+        const seed2 = teamCount - i;
+        
+        const team1 = qualifyingTeams.find(t => t.seed === seed1);
+        const team2 = qualifyingTeams.find(t => t.seed === seed2);
+        
+        matches.push({
+          tournament_id: tournamentId,
+          team_a_id: team1?.teamId || null,
+          team_b_id: team2?.teamId || null,
+          games_won_a: 0,
+          games_won_b: 0,
+          total_points_a: 0,
+          total_points_b: 0,
+          winner_team_id: null,
+          status: 'pending',
+          round_number: null,
+          is_playoff: true,
+          playoff_round: totalRounds,
+          bracket_position: i,
+          next_match_id: null, // Will be updated after all matches created
+          next_match_slot: i % 2, // 0 or 1 for which slot in next match
+          lineup_a_submitted: false,
+          lineup_b_submitted: false,
+          display_order: i,
+        });
+      }
+      
+      // Create later round matches (without teams yet)
+      for (let round = totalRounds - 1; round >= 1; round--) {
+        const matchesInRound = Math.pow(2, round - 1);
+        
+        for (let i = 0; i < matchesInRound; i++) {
+          matches.push({
+            tournament_id: tournamentId,
+            team_a_id: null,
+            team_b_id: null,
+            games_won_a: 0,
+            games_won_b: 0,
+            total_points_a: 0,
+            total_points_b: 0,
+            winner_team_id: null,
+            status: 'pending',
+            round_number: null,
+            is_playoff: true,
+            playoff_round: round,
+            bracket_position: i,
+            next_match_id: null,
+            next_match_slot: i % 2,
+            lineup_a_submitted: false,
+            lineup_b_submitted: false,
+            display_order: 100 + (totalRounds - round) * 10 + i,
+          });
+        }
+      }
+
+      // Insert all matches
+      const { data: insertedMatches, error: matchError } = await supabase
+        .from('team_match_matches')
+        .insert(matches)
+        .select();
+
+      if (matchError) throw matchError;
+      if (!insertedMatches) throw new Error('Không thể tạo trận đấu playoff');
+
+      // Update next_match_id references
+      // Group by playoff_round
+      const matchesByRound = insertedMatches.reduce((acc, match) => {
+        const round = match.playoff_round || 1;
+        if (!acc[round]) acc[round] = [];
+        acc[round].push(match);
+        return acc;
+      }, {} as Record<number, typeof insertedMatches>);
+
+      // Link each match to its next round match
+      for (let round = totalRounds; round > 1; round--) {
+        const currentRoundMatches = (matchesByRound[round] || []).sort((a, b) => 
+          (a.bracket_position || 0) - (b.bracket_position || 0)
+        );
+        const nextRoundMatches = (matchesByRound[round - 1] || []).sort((a, b) => 
+          (a.bracket_position || 0) - (b.bracket_position || 0)
+        );
+
+        for (let i = 0; i < currentRoundMatches.length; i++) {
+          const nextMatchIndex = Math.floor(i / 2);
+          const nextMatch = nextRoundMatches[nextMatchIndex];
+          
+          if (nextMatch) {
+            await supabase
+              .from('team_match_matches')
+              .update({ 
+                next_match_id: nextMatch.id,
+                next_match_slot: i % 2,
+              })
+              .eq('id', currentRoundMatches[i].id);
+          }
+        }
+      }
+
+      // Create games for first round matches (matches with teams)
+      const firstRoundMatches = insertedMatches.filter(m => 
+        m.playoff_round === totalRounds && m.team_a_id && m.team_b_id
+      );
+      
+      if (firstRoundMatches.length > 0 && gameTemplates.length > 0) {
+        const games = firstRoundMatches.flatMap(match => 
+          gameTemplates.map((template, index) => ({
+            match_id: match.id,
+            order_index: index,
+            game_type: template.game_type,
+            scoring_type: template.scoring_type,
+            display_name: template.display_name,
+            is_dreambreaker: false,
+            score_a: 0,
+            score_b: 0,
+            status: 'pending',
+          }))
+        );
+
+        const { error: gamesError } = await supabase
+          .from('team_match_games')
+          .insert(games);
+
+        if (gamesError) throw gamesError;
+      }
+
+      return insertedMatches;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-matches', variables.tournamentId] });
+      toast({
+        title: 'Thành công',
+        description: 'Đã tạo vòng Playoff',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Lỗi',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     generateMatches: generateMatchesMutation.mutateAsync,
     isGenerating: generateMatchesMutation.isPending,
+    generatePlayoffMatches: generatePlayoffMatchesMutation.mutateAsync,
+    isGeneratingPlayoff: generatePlayoffMatchesMutation.isPending,
     updateGameScore: updateGameScoreMutation.mutateAsync,
     isUpdatingScore: updateGameScoreMutation.isPending,
     updateMatchResult: updateMatchResultMutation.mutateAsync,
