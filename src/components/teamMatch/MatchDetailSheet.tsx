@@ -198,12 +198,16 @@ export function MatchDetailSheet({
                   const score = scores[game.id] || { a: 0, b: 0 };
                   const gameWinner = score.a > score.b ? 'a' : score.b > score.a ? 'b' : null;
                   
+                  // Get lineup player names
+                  const lineupA = game.lineup_team_a || [];
+                  const lineupB = game.lineup_team_b || [];
+                  
                   return (
                     <Card key={game.id} className="overflow-hidden">
                       <CardContent className="py-3 px-4">
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <span className="text-sm font-medium">
-                            Ván {index + 1}: {game.display_name || GAME_TYPE_LABELS[game.game_type]}
+                            Game {index + 1}
                           </span>
                           <Badge variant="secondary" className="text-xs">
                             {GAME_TYPE_LABELS[game.game_type]}
@@ -212,7 +216,7 @@ export function MatchDetailSheet({
                         
                         <div className="flex items-center justify-center gap-4">
                           <div className={`flex-1 text-right ${gameWinner === 'a' ? 'text-green-600 font-bold' : ''}`}>
-                            {teamAName}
+                            {lineupA.length > 0 ? lineupA.join(', ') : teamAName}
                           </div>
                           
                           {isOwner ? (
@@ -246,7 +250,7 @@ export function MatchDetailSheet({
                           )}
                           
                           <div className={`flex-1 ${gameWinner === 'b' ? 'text-green-600 font-bold' : ''}`}>
-                            {teamBName}
+                            {lineupB.length > 0 ? lineupB.join(', ') : teamBName}
                           </div>
                         </div>
                       </CardContent>
