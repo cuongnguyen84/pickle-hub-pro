@@ -14,9 +14,25 @@ export interface TeamStanding {
   pointsAgainst: number;
   pointsDiff: number;
   groupId?: string;
+  groupName?: string;
   groupRank?: number;
   isQualified?: boolean;
   isWildcard?: boolean;
+}
+
+export interface PlayoffSeed {
+  teamId: string;
+  seed: number;
+  groupId?: string;
+  groupRank?: number;
+  standing: TeamStanding;
+}
+
+export interface PlayoffPairing {
+  matchIndex: number;
+  bracketSide: 'left' | 'right'; // For 8+ teams, to separate branches
+  team1: PlayoffSeed;
+  team2: PlayoffSeed;
 }
 
 export function useTeamMatchStandings(tournamentId: string | undefined, options?: {
@@ -36,6 +52,7 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
 
     // Initialize all approved teams
     approvedTeams.forEach(team => {
+      const group = groups?.find(g => g.id === (team as any).group_id);
       standingsMap.set(team.id, {
         team,
         played: 0,
@@ -47,6 +64,7 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
         pointsAgainst: 0,
         pointsDiff: 0,
         groupId: (team as any).group_id || undefined,
+        groupName: group?.name || undefined,
       });
     });
 
@@ -98,7 +116,7 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
       if (gameDiffB !== gameDiffA) return gameDiffB - gameDiffA;
       return b.pointsDiff - a.pointsDiff;
     });
-  }, [teams, matches]);
+  }, [teams, matches, groups]);
 
   // Calculate standings per group with qualification
   const standingsByGroup = useMemo(() => {
@@ -128,7 +146,7 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
     return result;
   }, [standings, groups, topPerGroup]);
 
-  // Get all qualifying teams for playoff
+  // Get all qualifying teams for playoff with proper cross-group seeding
   const qualifyingTeams = useMemo(() => {
     if (!groups || groups.length === 0) {
       // No groups - return top N from overall standings
@@ -174,6 +192,174 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
     });
   }, [standings, standingsByGroup, groups, topPerGroup, wildcardCount]);
 
+  /**
+   * Generate playoff pairings with cross-group seeding logic:
+   * - 1st of Group A vs 2nd of Group B
+   * - 1st of Group B vs 2nd of Group A
+   * - For 8+ teams, separate into left/right branches so teams from same
+   *   cross-group pairing only meet in finals
+   */
+  const generatePlayoffSeeding = useMemo(() => {
+    return (teamCount: number): { seeds: PlayoffSeed[]; pairings: PlayoffPairing[] } => {
+      const hasMultipleGroups = groups && groups.length >= 2;
+      
+      if (!hasMultipleGroups || groups!.length !== 2) {
+        // Standard seeding: 1 vs N, 2 vs N-1, etc.
+        const seeds: PlayoffSeed[] = qualifyingTeams.slice(0, teamCount).map((standing, index) => ({
+          teamId: standing.team.id,
+          seed: index + 1,
+          groupId: standing.groupId,
+          groupRank: standing.groupRank,
+          standing,
+        }));
+
+        const pairings: PlayoffPairing[] = [];
+        for (let i = 0; i < teamCount / 2; i++) {
+          const seed1 = i + 1;
+          const seed2 = teamCount - i;
+          pairings.push({
+            matchIndex: i,
+            bracketSide: i < teamCount / 4 ? 'left' : 'right',
+            team1: seeds[seed1 - 1],
+            team2: seeds[seed2 - 1],
+          });
+        }
+
+        return { seeds, pairings };
+      }
+
+      // Two groups: Cross-group seeding
+      const [groupAId, groupBId] = Array.from(standingsByGroup.keys());
+      const groupAStandings = standingsByGroup.get(groupAId) || [];
+      const groupBStandings = standingsByGroup.get(groupBId) || [];
+      
+      const teamsPerGroup = teamCount / 2;
+      const groupATeams = groupAStandings.filter(s => s.isQualified).slice(0, teamsPerGroup);
+      const groupBTeams = groupBStandings.filter(s => s.isQualified).slice(0, teamsPerGroup);
+
+      const seeds: PlayoffSeed[] = [];
+      const pairings: PlayoffPairing[] = [];
+
+      if (teamCount === 2) {
+        // Finals only: 1st A vs 1st B
+        if (groupATeams[0] && groupBTeams[0]) {
+          seeds.push(
+            { teamId: groupATeams[0].team.id, seed: 1, groupId: groupAId, groupRank: 1, standing: groupATeams[0] },
+            { teamId: groupBTeams[0].team.id, seed: 2, groupId: groupBId, groupRank: 1, standing: groupBTeams[0] }
+          );
+          pairings.push({
+            matchIndex: 0,
+            bracketSide: 'left',
+            team1: seeds[0],
+            team2: seeds[1],
+          });
+        }
+      } else if (teamCount === 4) {
+        // Semi-finals: 1A vs 2B, 1B vs 2A
+        seeds.push(
+          { teamId: groupATeams[0]?.team.id || '', seed: 1, groupId: groupAId, groupRank: 1, standing: groupATeams[0] },
+          { teamId: groupBTeams[1]?.team.id || '', seed: 4, groupId: groupBId, groupRank: 2, standing: groupBTeams[1] },
+          { teamId: groupBTeams[0]?.team.id || '', seed: 2, groupId: groupBId, groupRank: 1, standing: groupBTeams[0] },
+          { teamId: groupATeams[1]?.team.id || '', seed: 3, groupId: groupAId, groupRank: 2, standing: groupATeams[1] },
+        );
+
+        // SF1: 1A vs 2B (left branch)
+        pairings.push({
+          matchIndex: 0,
+          bracketSide: 'left',
+          team1: seeds[0],  // 1A
+          team2: seeds[1],  // 2B
+        });
+        // SF2: 1B vs 2A (right branch)
+        pairings.push({
+          matchIndex: 1,
+          bracketSide: 'right',
+          team1: seeds[2],  // 1B
+          team2: seeds[3],  // 2A
+        });
+      } else {
+        // 8+ teams: Cross-group with bracket separation
+        // Left branch: 1A vs 2B at bottom, meeting semifinal
+        // Right branch: 1B vs 2A at bottom, meeting semifinal
+        // Winners of left/right branches meet in finals
+        
+        let seedIndex = 0;
+        
+        // Left branch pairings (1A side)
+        for (let i = 0; i < teamsPerGroup / 2; i++) {
+          const rankA = i + 1; // 1, 2, 3... from Group A
+          const rankB = teamsPerGroup - i; // 2, 1 from Group B (reversed for seeding)
+          
+          const teamA = groupATeams[rankA - 1];
+          const teamB = groupBTeams[rankB - 1];
+          
+          if (teamA && teamB) {
+            const seed1: PlayoffSeed = { 
+              teamId: teamA.team.id, 
+              seed: seedIndex + 1, 
+              groupId: groupAId, 
+              groupRank: rankA, 
+              standing: teamA 
+            };
+            const seed2: PlayoffSeed = { 
+              teamId: teamB.team.id, 
+              seed: seedIndex + 2, 
+              groupId: groupBId, 
+              groupRank: rankB, 
+              standing: teamB 
+            };
+            seeds.push(seed1, seed2);
+            
+            pairings.push({
+              matchIndex: pairings.length,
+              bracketSide: 'left',
+              team1: seed1,
+              team2: seed2,
+            });
+            seedIndex += 2;
+          }
+        }
+        
+        // Right branch pairings (1B side)
+        for (let i = 0; i < teamsPerGroup / 2; i++) {
+          const rankB = i + 1; // 1, 2, 3... from Group B
+          const rankA = teamsPerGroup - i; // 2, 1 from Group A (reversed for seeding)
+          
+          const teamB = groupBTeams[rankB - 1];
+          const teamA = groupATeams[rankA - 1];
+          
+          if (teamA && teamB) {
+            const seed1: PlayoffSeed = { 
+              teamId: teamB.team.id, 
+              seed: seedIndex + 1, 
+              groupId: groupBId, 
+              groupRank: rankB, 
+              standing: teamB 
+            };
+            const seed2: PlayoffSeed = { 
+              teamId: teamA.team.id, 
+              seed: seedIndex + 2, 
+              groupId: groupAId, 
+              groupRank: rankA, 
+              standing: teamA 
+            };
+            seeds.push(seed1, seed2);
+            
+            pairings.push({
+              matchIndex: pairings.length,
+              bracketSide: 'right',
+              team1: seed1,
+              team2: seed2,
+            });
+            seedIndex += 2;
+          }
+        }
+      }
+
+      return { seeds, pairings };
+    };
+  }, [qualifyingTeams, groups, standingsByGroup]);
+
   // Check if round-robin is complete
   const roundRobinComplete = useMemo(() => {
     if (!matches || !teams) return false;
@@ -202,9 +388,11 @@ export function useTeamMatchStandings(tournamentId: string | undefined, options?
     standings,
     standingsByGroup,
     qualifyingTeams,
+    generatePlayoffSeeding,
     isLoading: isLoadingMatches || isLoadingTeams || isLoadingGroups,
     roundRobinComplete,
     hasPlayoff,
     hasGroups,
+    groups,
   };
 }

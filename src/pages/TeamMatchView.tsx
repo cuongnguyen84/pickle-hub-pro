@@ -83,7 +83,15 @@ export default function TeamMatchView() {
   const { data: groups } = useTeamMatchGroups(tournament?.id);
   const { generateMatches, isGenerating, generatePlayoffMatches, isGeneratingPlayoff } = useTeamMatchMatchManagement();
   const { createGroups, isCreatingGroups } = useTeamMatchGroupManagement();
-  const { standings, roundRobinComplete, hasPlayoff } = useTeamMatchStandings(tournament?.id);
+  const { 
+    standings, 
+    roundRobinComplete, 
+    hasPlayoff,
+    hasGroups: standingsHasGroups,
+    generatePlayoffSeeding,
+  } = useTeamMatchStandings(tournament?.id, {
+    topPerGroup: tournament?.top_per_group || 2,
+  });
   
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
@@ -186,31 +194,51 @@ export default function TeamMatchView() {
     if (!tournament) return;
     
     try {
-      // Get qualifying teams based on standings
-      const qualifyingTeams = standings.slice(0, teamCount).map((standing, index) => ({
-        teamId: standing.team.id,
+      // Use cross-group seeding if available
+      const playoffSeeding = generatePlayoffSeeding(teamCount);
+      const qualifyingTeams = playoffSeeding.seeds.map((seed, index) => ({
+        teamId: seed.teamId,
         seed: index + 1,
       }));
 
-      // Game templates for playoff
-      const gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[] = [
-        { game_type: 'WD', scoring_type: 'rally21', display_name: 'Đôi Nữ', order_index: 0 },
-        { game_type: 'MD', scoring_type: 'rally21', display_name: 'Đôi Nam', order_index: 1 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 1', order_index: 2 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 2', order_index: 3 },
-        { game_type: 'MX', scoring_type: 'rally21', display_name: 'Đôi Nam Nữ 3', order_index: 4 },
-      ];
+      // Fetch actual game templates from database
+      const { data: templates, error: templatesError } = await supabase
+        .from('team_match_game_templates')
+        .select('*')
+        .eq('tournament_id', tournament.id)
+        .order('order_index');
+      
+      if (templatesError) throw templatesError;
+      
+      const gameTemplates = (templates || []).map(t => ({
+        game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
+        scoring_type: t.scoring_type as 'rally21' | 'sideout11',
+        display_name: t.display_name,
+        order_index: t.order_index,
+      }));
 
+      // Pass pairings for proper bracket structure
       await generatePlayoffMatches({
         tournamentId: tournament.id,
         qualifyingTeams,
         gameTemplates,
+        hasDreambreaker: tournament.has_dreambreaker,
+        pairings: playoffSeeding.pairings.map(p => ({
+          matchIndex: p.matchIndex,
+          bracketSide: p.bracketSide,
+          team1Id: p.team1.teamId,
+          team2Id: p.team2.teamId,
+        })),
       });
       
       setShowPlayoffDialog(false);
       setActiveTab('matches');
-    } catch (error) {
-      // Error handled in hook
+    } catch (error: any) {
+      toast({
+        title: 'Lỗi tạo Playoff',
+        description: error.message || 'Đã có lỗi xảy ra',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -716,6 +744,8 @@ export default function TeamMatchView() {
           open={showPlayoffDialog}
           onOpenChange={setShowPlayoffDialog}
           standings={standings}
+          hasGroups={standingsHasGroups}
+          generatePlayoffSeeding={generatePlayoffSeeding}
           isCreating={isGeneratingPlayoff}
           onConfirm={handleCreatePlayoff}
         />

@@ -11,25 +11,18 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, AlertTriangle } from 'lucide-react';
-import { TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
-
-interface TeamStanding {
-  team: TeamMatchTeam;
-  played: number;
-  won: number;
-  lost: number;
-  gamesWon: number;
-  gamesLost: number;
-  pointsFor: number;
-  pointsAgainst: number;
-  pointsDiff: number;
-}
+import { Trophy, AlertTriangle, Info } from 'lucide-react';
+import { TeamStanding, PlayoffPairing } from '@/hooks/useTeamMatchStandings';
 
 interface PlayoffSetupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   standings: TeamStanding[];
+  hasGroups: boolean;
+  generatePlayoffSeeding: (teamCount: number) => { 
+    seeds: { teamId: string; seed: number; groupId?: string; groupRank?: number; standing: TeamStanding }[]; 
+    pairings: PlayoffPairing[] 
+  };
   isCreating: boolean;
   onConfirm: (teamCount: number) => void;
 }
@@ -38,6 +31,8 @@ export function PlayoffSetupDialog({
   open,
   onOpenChange,
   standings,
+  hasGroups,
+  generatePlayoffSeeding,
   isCreating,
   onConfirm,
 }: PlayoffSetupDialogProps) {
@@ -56,11 +51,11 @@ export function PlayoffSetupDialog({
     return sizes.filter(s => s >= 2);
   }, [standings.length]);
 
-  // Get teams that would qualify for selected playoff size
-  const qualifyingTeams = useMemo(() => {
-    if (!selectedCount) return [];
-    return standings.slice(0, selectedCount);
-  }, [standings, selectedCount]);
+  // Get playoff seeding for selected count
+  const playoffSeeding = useMemo(() => {
+    if (!selectedCount) return null;
+    return generatePlayoffSeeding(selectedCount);
+  }, [selectedCount, generatePlayoffSeeding]);
 
   const handleConfirm = () => {
     if (selectedCount) {
@@ -78,16 +73,24 @@ export function PlayoffSetupDialog({
     }
   };
 
+  const getGroupLabel = (standing: TeamStanding) => {
+    if (!standing.groupName || !standing.groupRank) return '';
+    return `(${standing.groupName.replace('Bảng ', '')}${standing.groupRank})`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
             Tạo vòng Playoff
           </DialogTitle>
           <DialogDescription>
-            Chọn số đội tham gia vòng Playoff. Các đội sẽ được chọn theo thứ hạng BXH vòng tròn.
+            Chọn số đội tham gia vòng Playoff. 
+            {hasGroups 
+              ? ' Nhất bảng này sẽ gặp nhì bảng kia.' 
+              : ' Các đội sẽ được chọn theo thứ hạng BXH.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -115,19 +118,36 @@ export function PlayoffSetupDialog({
             </RadioGroup>
           </div>
 
+          {/* Cross-group seeding explanation */}
+          {hasGroups && selectedCount && selectedCount >= 4 && (
+            <div className="flex items-start gap-2 text-sm text-muted-foreground bg-blue-500/10 p-3 rounded-lg">
+              <Info className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+              <span>
+                {selectedCount >= 8 
+                  ? 'Cặp 1A vs 2B và 1B vs 2A sẽ ở 2 nhánh riêng, chỉ gặp nhau ở Chung kết.'
+                  : 'Nhất bảng A gặp nhì bảng B, nhất bảng B gặp nhì bảng A.'}
+              </span>
+            </div>
+          )}
+
           {/* Preview qualifying teams */}
-          {selectedCount && qualifyingTeams.length > 0 && (
+          {playoffSeeding && playoffSeeding.seeds.length > 0 && (
             <Card className="border-primary/30">
               <CardContent className="py-3">
                 <p className="text-sm font-medium mb-2">Đội vào Playoff:</p>
                 <div className="space-y-1 text-sm">
-                  {qualifyingTeams.map((standing, index) => (
-                    <div key={standing.team.id} className="flex justify-between">
-                      <span className={index < 3 ? 'font-medium' : ''}>
-                        {index + 1}. {standing.team.team_name}
+                  {playoffSeeding.seeds.map((seed, index) => (
+                    <div key={seed.teamId} className="flex justify-between">
+                      <span className={index < 2 ? 'font-medium' : ''}>
+                        {index + 1}. {seed.standing.team.team_name}
+                        {hasGroups && (
+                          <span className="text-muted-foreground ml-1 text-xs">
+                            {getGroupLabel(seed.standing)}
+                          </span>
+                        )}
                       </span>
                       <span className="text-muted-foreground">
-                        {standing.won}T-{standing.lost}B
+                        {seed.standing.won}T-{seed.standing.lost}B
                       </span>
                     </div>
                   ))}
@@ -136,30 +156,50 @@ export function PlayoffSetupDialog({
             </Card>
           )}
 
-          {/* Seeding preview */}
-          {selectedCount && selectedCount >= 2 && (
+          {/* Seeding preview with pairings */}
+          {playoffSeeding && playoffSeeding.pairings.length > 0 && (
             <Card>
               <CardContent className="py-3">
                 <p className="text-sm font-medium mb-2">Ghép cặp vòng đầu:</p>
                 <div className="space-y-1 text-sm">
-                  {Array.from({ length: selectedCount / 2 }).map((_, index) => {
-                    const seed1 = index + 1;
-                    const seed2 = selectedCount - index;
-                    const team1 = qualifyingTeams[seed1 - 1];
-                    const team2 = qualifyingTeams[seed2 - 1];
-                    return (
-                      <div key={index} className="flex justify-between items-center py-1 px-2 bg-muted/50 rounded">
-                        <span>
-                          Trận {index + 1}:
+                  {playoffSeeding.pairings.map((pairing, index) => (
+                    <div 
+                      key={index} 
+                      className={`flex justify-between items-center py-1.5 px-2 rounded ${
+                        pairing.bracketSide === 'left' 
+                          ? 'bg-blue-500/10' 
+                          : 'bg-orange-500/10'
+                      }`}
+                    >
+                      <span className="text-xs">
+                        Trận {index + 1}
+                        {selectedCount && selectedCount >= 8 && (
+                          <span className="ml-1 opacity-60">
+                            ({pairing.bracketSide === 'left' ? 'Nhánh A' : 'Nhánh B'})
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs">
+                        <span className="font-medium">
+                          {pairing.team1.standing.team.team_name}
+                          {hasGroups && (
+                            <span className="text-muted-foreground ml-0.5">
+                              {getGroupLabel(pairing.team1.standing)}
+                            </span>
+                          )}
                         </span>
-                        <span className="text-xs">
-                          <span className="font-medium">{team1?.team.team_name || `Hạng ${seed1}`}</span>
-                          <span className="mx-2 text-muted-foreground">vs</span>
-                          <span className="font-medium">{team2?.team.team_name || `Hạng ${seed2}`}</span>
+                        <span className="mx-2 text-muted-foreground">vs</span>
+                        <span className="font-medium">
+                          {pairing.team2.standing.team.team_name}
+                          {hasGroups && (
+                            <span className="text-muted-foreground ml-0.5">
+                              {getGroupLabel(pairing.team2.standing)}
+                            </span>
+                          )}
                         </span>
-                      </div>
-                    );
-                  })}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

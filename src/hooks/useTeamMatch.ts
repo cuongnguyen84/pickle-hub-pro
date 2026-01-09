@@ -22,6 +22,8 @@ export interface TeamMatchTournament {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  group_count: number | null;
+  top_per_group: number | null;
 }
 
 export interface GameTemplate {
