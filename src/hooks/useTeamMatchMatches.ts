@@ -444,13 +444,14 @@ export function useTeamMatchMatchManagement() {
     },
   });
 
-  // Generate playoff matches
+  // Generate playoff matches with cross-group seeding support
   const generatePlayoffMatchesMutation = useMutation({
-    mutationFn: async ({ tournamentId, qualifyingTeams, gameTemplates, hasDreambreaker }: {
+    mutationFn: async ({ tournamentId, qualifyingTeams, gameTemplates, hasDreambreaker, pairings }: {
       tournamentId: string;
       qualifyingTeams: { teamId: string; seed: number }[];
       gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[];
       hasDreambreaker?: boolean;
+      pairings?: { matchIndex: number; bracketSide: 'left' | 'right'; team1Id: string; team2Id: string }[];
     }) => {
       const teamCount = qualifyingTeams.length;
       if (teamCount < 2 || (teamCount & (teamCount - 1)) !== 0) {
@@ -460,38 +461,70 @@ export function useTeamMatchMatchManagement() {
       const totalRounds = Math.log2(teamCount);
       const matches: Omit<TeamMatchMatch, 'id' | 'created_at' | 'updated_at' | 'team_a' | 'team_b'>[] = [];
       
-      // First round matches (highest round number)
+      // First round matches - use pairings if provided (cross-group seeding)
       const firstRoundMatchCount = teamCount / 2;
       
-      for (let i = 0; i < firstRoundMatchCount; i++) {
-        // Standard seeding: 1 vs N, 2 vs N-1, etc.
-        const seed1 = i + 1;
-        const seed2 = teamCount - i;
+      if (pairings && pairings.length > 0) {
+        // Use explicit pairings from cross-group seeding
+        // Sort by bracket side to ensure proper bracket structure
+        const leftBranch = pairings.filter(p => p.bracketSide === 'left');
+        const rightBranch = pairings.filter(p => p.bracketSide === 'right');
+        const sortedPairings = [...leftBranch, ...rightBranch];
         
-        const team1 = qualifyingTeams.find(t => t.seed === seed1);
-        const team2 = qualifyingTeams.find(t => t.seed === seed2);
-        
-        matches.push({
-          tournament_id: tournamentId,
-          group_id: null,
-          team_a_id: team1?.teamId || null,
-          team_b_id: team2?.teamId || null,
-          games_won_a: 0,
-          games_won_b: 0,
-          total_points_a: 0,
-          total_points_b: 0,
-          winner_team_id: null,
-          status: 'pending',
-          round_number: null,
-          is_playoff: true,
-          playoff_round: totalRounds,
-          bracket_position: i,
-          next_match_id: null,
-          next_match_slot: null, // Will be set when next_match_id is set
-          lineup_a_submitted: false,
-          lineup_b_submitted: false,
-          display_order: i,
+        sortedPairings.forEach((pairing, index) => {
+          matches.push({
+            tournament_id: tournamentId,
+            group_id: null,
+            team_a_id: pairing.team1Id,
+            team_b_id: pairing.team2Id,
+            games_won_a: 0,
+            games_won_b: 0,
+            total_points_a: 0,
+            total_points_b: 0,
+            winner_team_id: null,
+            status: 'pending',
+            round_number: null,
+            is_playoff: true,
+            playoff_round: totalRounds,
+            bracket_position: index,
+            next_match_id: null,
+            next_match_slot: null,
+            lineup_a_submitted: false,
+            lineup_b_submitted: false,
+            display_order: index,
+          });
         });
+      } else {
+        // Standard seeding: 1 vs N, 2 vs N-1, etc.
+        for (let i = 0; i < firstRoundMatchCount; i++) {
+          const seed1 = i + 1;
+          const seed2 = teamCount - i;
+          
+          const team1 = qualifyingTeams.find(t => t.seed === seed1);
+          const team2 = qualifyingTeams.find(t => t.seed === seed2);
+          
+          matches.push({
+            tournament_id: tournamentId,
+            group_id: null,
+            team_a_id: team1?.teamId || null,
+            team_b_id: team2?.teamId || null,
+            games_won_a: 0,
+            games_won_b: 0,
+            total_points_a: 0,
+            total_points_b: 0,
+            winner_team_id: null,
+            status: 'pending',
+            round_number: null,
+            is_playoff: true,
+            playoff_round: totalRounds,
+            bracket_position: i,
+            next_match_id: null,
+            next_match_slot: null,
+            lineup_a_submitted: false,
+            lineup_b_submitted: false,
+            display_order: i,
+          });
+        }
       }
       
       // Create later round matches (without teams yet)
