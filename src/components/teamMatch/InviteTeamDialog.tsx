@@ -64,12 +64,20 @@ export function InviteTeamDialog({
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Có lỗi xảy ra');
+        // Parse error from edge function response
+        let errorMessage = 'Có lỗi xảy ra';
+        try {
+          const errorData = JSON.parse(response.error.message.split(', ').slice(1).join(', '));
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = response.error.message || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = response.data;
       
-      if (data.error) {
+      if (!data.success && data.error) {
         throw new Error(data.error);
       }
 

@@ -77,15 +77,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (tournamentError || !tournament) {
       return new Response(
-        JSON.stringify({ error: 'Giải đấu không tồn tại' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Giải đấu không tồn tại' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (tournament.created_by !== user.id) {
       return new Response(
-        JSON.stringify({ error: 'Bạn không có quyền mời đội vào giải này' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Bạn không có quyền mời đội vào giải này' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -98,8 +98,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (profileError || !profile) {
       return new Response(
-        JSON.stringify({ error: 'Email này chưa đăng ký tài khoản trong hệ thống' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Email này chưa đăng ký tài khoản trong hệ thống' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -111,11 +111,11 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (masterTeamError || !masterTeam) {
-      return new Response(
-        JSON.stringify({ error: 'Người dùng này chưa có đội (Master Team). Họ cần tạo đội trước.' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    return new Response(
+      JSON.stringify({ success: false, error: 'Người dùng này chưa có đội (Master Team). Họ cần tạo đội trước.' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
 
     // Check if team is already registered for this tournament
     const { data: existingTeam, error: existingError } = await supabase
@@ -127,8 +127,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (existingTeam) {
       return new Response(
-        JSON.stringify({ error: 'Đội này đã đăng ký giải đấu rồi' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Đội này đã đăng ký giải đấu rồi' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -149,8 +149,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (createError) {
       console.error('Create team error:', createError);
       return new Response(
-        JSON.stringify({ error: 'Không thể tạo đội: ' + createError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Không thể tạo đội: ' + createError.message }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
