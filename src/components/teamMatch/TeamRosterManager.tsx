@@ -63,6 +63,7 @@ interface TeamRosterManagerProps {
   isCaptain: boolean;
   isOwner?: boolean;
   inviteCode?: string | null;
+  masterTeamId?: string | null;
 }
 
 export function TeamRosterManager({
@@ -71,6 +72,7 @@ export function TeamRosterManager({
   isCaptain,
   isOwner = false,
   inviteCode,
+  masterTeamId,
 }: TeamRosterManagerProps) {
   const { toast } = useToast();
   const { team, roster, isLoading } = useTeamMatchTeam(teamId);
@@ -79,37 +81,23 @@ export function TeamRosterManager({
   const [selectedMasterMembers, setSelectedMasterMembers] = useState<Set<string>>(new Set());
   const [isAddingFromMaster, setIsAddingFromMaster] = useState(false);
 
-  // Fetch master team roster if team has master_team_id
-  const { data: masterTeamData, isLoading: isLoadingMaster } = useQuery({
-    queryKey: ['master-team-with-roster', team?.id],
+  // Fetch master team roster if masterTeamId is provided
+  const { data: masterRoster, isLoading: isLoadingMaster } = useQuery({
+    queryKey: ['master-team-roster', masterTeamId],
     queryFn: async () => {
-      if (!team) return null;
+      if (!masterTeamId) return [];
       
-      // Get master_team_id from team
-      const { data: teamData, error: teamError } = await supabase
-        .from('team_match_teams')
-        .select('master_team_id')
-        .eq('id', team.id)
-        .single();
-      
-      if (teamError || !teamData?.master_team_id) return null;
-      
-      // Fetch master team roster
-      const { data: masterRoster, error: rosterError } = await supabase
+      const { data, error } = await supabase
         .from('master_team_roster')
         .select('*')
-        .eq('master_team_id', teamData.master_team_id)
+        .eq('master_team_id', masterTeamId)
         .order('is_captain', { ascending: false })
         .order('created_at', { ascending: true });
       
-      if (rosterError) throw rosterError;
-      
-      return {
-        master_team_id: teamData.master_team_id,
-        roster: masterRoster as MasterTeamMember[],
-      };
+      if (error) throw error;
+      return data as MasterTeamMember[];
     },
-    enabled: !!team && isOwner,
+    enabled: !!masterTeamId && isOwner,
   });
 
   const form = useForm<AddMemberValues>({
@@ -155,7 +143,7 @@ export function TeamRosterManager({
     
     setIsAddingFromMaster(true);
     try {
-      const membersToAdd = masterTeamData?.roster.filter(m => selectedMasterMembers.has(m.id)) || [];
+      const membersToAdd = (masterRoster || []).filter(m => selectedMasterMembers.has(m.id));
       
       for (const member of membersToAdd) {
         await addRosterMember({
@@ -196,9 +184,9 @@ export function TeamRosterManager({
   
   // Get list of already added player names to filter out
   const addedPlayerNames = new Set(roster.map(r => r.player_name.toLowerCase()));
-  const availableMasterMembers = masterTeamData?.roster.filter(
+  const availableMasterMembers = (masterRoster || []).filter(
     m => !addedPlayerNames.has(m.player_name.toLowerCase())
-  ) || [];
+  );
 
   if (isLoading || (isOwner && isLoadingMaster)) {
     return (

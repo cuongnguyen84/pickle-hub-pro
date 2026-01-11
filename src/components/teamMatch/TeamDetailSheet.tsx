@@ -69,6 +69,7 @@ export function TeamDetailSheet({
             isCaptain={isCaptain}
             isOwner={isOwner}
             inviteCode={team.invite_code}
+            masterTeamId={team.master_team_id}
           />
         </div>
       </SheetContent>
