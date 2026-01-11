@@ -356,13 +356,17 @@ export default function TeamMatchView() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-            <TabsTrigger value="teams">Đội</TabsTrigger>
-            <TabsTrigger value="matches">Trận đấu</TabsTrigger>
-            <TabsTrigger value="standings">Xếp hạng</TabsTrigger>
-          </TabsList>
+        {/* Hide standings tab for single_elimination format */}
+        {(() => {
+          const showStandingsTab = tournament.format !== 'single_elimination';
+          return (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className={`grid w-full ${showStandingsTab ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+                <TabsTrigger value="teams">Đội</TabsTrigger>
+                <TabsTrigger value="matches">Trận đấu</TabsTrigger>
+                {showStandingsTab && <TabsTrigger value="standings">Xếp hạng</TabsTrigger>}
+              </TabsList>
 
           <TabsContent value="overview" className="space-y-4 mt-4">
             {/* Captain: Show team overview + all teams list */}
@@ -593,7 +597,10 @@ export default function TeamMatchView() {
                   userTeamId={userTeam?.id}
                   isOwner={isOwner}
                   onMatchClick={(match) => setSelectedMatch(match)}
-                  onLineupClick={(match) => setLineupMatch(match)}
+                  onLineupClick={(match, teamId) => {
+                    setLineupMatch(match);
+                    setLineupTeamId(teamId || null);
+                  }}
                 />
               </div>
             )}
@@ -652,18 +659,22 @@ export default function TeamMatchView() {
             )}
           </TabsContent>
 
-          <TabsContent value="standings" className="mt-4">
-            {/* Group-based Standings for rr_playoff format */}
-            {hasGroups ? (
-              <GroupStandingsTable 
-                tournamentId={tournament.id} 
-                topPerGroup={(tournament as any).top_per_group || 2}
-              />
-            ) : (
-              <StandingsTable tournamentId={tournament.id} />
-            )}
-          </TabsContent>
-        </Tabs>
+          {showStandingsTab && (
+            <TabsContent value="standings" className="mt-4">
+              {/* Group-based Standings for rr_playoff format */}
+              {hasGroups ? (
+                <GroupStandingsTable 
+                  tournamentId={tournament.id} 
+                  topPerGroup={(tournament as any).top_per_group || 2}
+                />
+              ) : (
+                <StandingsTable tournamentId={tournament.id} />
+              )}
+            </TabsContent>
+          )}
+            </Tabs>
+          );
+        })()}
 
         {/* Team Registration Dialog - for users to register */}
         {!isOwner && (
