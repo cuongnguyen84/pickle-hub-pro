@@ -48,6 +48,7 @@ interface TeamRosterManagerProps {
   teamId: string;
   maxRosterSize: number;
   isCaptain: boolean;
+  isOwner?: boolean;
   inviteCode?: string | null;
 }
 
@@ -55,6 +56,7 @@ export function TeamRosterManager({
   teamId,
   maxRosterSize,
   isCaptain,
+  isOwner = false,
   inviteCode,
 }: TeamRosterManagerProps) {
   const { toast } = useToast();
@@ -99,6 +101,7 @@ export function TeamRosterManager({
     }
   };
 
+  const canEdit = isCaptain || isOwner;
   const canAddMore = roster.length < maxRosterSize;
 
   if (isLoading) {
@@ -124,7 +127,7 @@ export function TeamRosterManager({
               {roster.length}/{maxRosterSize} người
             </CardDescription>
           </div>
-          {isCaptain && inviteCode && (
+          {(isCaptain || isOwner) && inviteCode && (
             <Button variant="outline" size="sm" onClick={handleCopyInviteCode}>
               <Copy className="h-4 w-4 mr-2" />
               Mã mời: {inviteCode}
@@ -159,7 +162,7 @@ export function TeamRosterManager({
                 </div>
               </div>
               
-              {isCaptain && !member.is_captain && (
+              {canEdit && !member.is_captain && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-destructive">
@@ -190,7 +193,7 @@ export function TeamRosterManager({
         </div>
 
         {/* Add member form */}
-        {isCaptain && canAddMore && (
+        {canEdit && canAddMore && (
           <>
             {showAddForm ? (
               <Card className="border-dashed">
