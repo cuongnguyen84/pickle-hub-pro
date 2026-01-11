@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -32,9 +33,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Plus, Trash2, Crown, Copy, Loader2 } from 'lucide-react';
-import { useTeamMatchTeam, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
+import { Users, Plus, Trash2, Crown, Copy, Loader2, UserPlus, Check } from 'lucide-react';
+import { useTeamMatchTeam, useTeamMatchTeamManagement, TeamMatchRosterMember } from '@/hooks/useTeamMatchTeams';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const addMemberSchema = z.object({
   player_name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự').max(50),
@@ -43,6 +46,16 @@ const addMemberSchema = z.object({
 });
 
 type AddMemberValues = z.infer<typeof addMemberSchema>;
+
+interface MasterTeamMember {
+  id: string;
+  master_team_id: string;
+  player_name: string;
+  gender: 'male' | 'female';
+  skill_level: number | null;
+  user_id: string | null;
+  is_captain: boolean;
+}
 
 interface TeamRosterManagerProps {
   teamId: string;
@@ -63,6 +76,41 @@ export function TeamRosterManager({
   const { team, roster, isLoading } = useTeamMatchTeam(teamId);
   const { addRosterMember, isAddingMember, removeRosterMember, isRemovingMember } = useTeamMatchTeamManagement();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedMasterMembers, setSelectedMasterMembers] = useState<Set<string>>(new Set());
+  const [isAddingFromMaster, setIsAddingFromMaster] = useState(false);
+
+  // Fetch master team roster if team has master_team_id
+  const { data: masterTeamData, isLoading: isLoadingMaster } = useQuery({
+    queryKey: ['master-team-with-roster', team?.id],
+    queryFn: async () => {
+      if (!team) return null;
+      
+      // Get master_team_id from team
+      const { data: teamData, error: teamError } = await supabase
+        .from('team_match_teams')
+        .select('master_team_id')
+        .eq('id', team.id)
+        .single();
+      
+      if (teamError || !teamData?.master_team_id) return null;
+      
+      // Fetch master team roster
+      const { data: masterRoster, error: rosterError } = await supabase
+        .from('master_team_roster')
+        .select('*')
+        .eq('master_team_id', teamData.master_team_id)
+        .order('is_captain', { ascending: false })
+        .order('created_at', { ascending: true });
+      
+      if (rosterError) throw rosterError;
+      
+      return {
+        master_team_id: teamData.master_team_id,
+        roster: masterRoster as MasterTeamMember[],
+      };
+    },
+    enabled: !!team && isOwner,
+  });
 
   const form = useForm<AddMemberValues>({
     resolver: zodResolver(addMemberSchema),
@@ -101,10 +149,58 @@ export function TeamRosterManager({
     }
   };
 
+  // Add selected members from master team
+  const handleAddFromMaster = async () => {
+    if (selectedMasterMembers.size === 0) return;
+    
+    setIsAddingFromMaster(true);
+    try {
+      const membersToAdd = masterTeamData?.roster.filter(m => selectedMasterMembers.has(m.id)) || [];
+      
+      for (const member of membersToAdd) {
+        await addRosterMember({
+          team_id: teamId,
+          player_name: member.player_name,
+          gender: member.gender,
+          skill_level: member.skill_level || undefined,
+          user_id: member.user_id || undefined,
+        });
+      }
+      
+      setSelectedMasterMembers(new Set());
+      toast({ title: `Đã thêm ${membersToAdd.length} thành viên` });
+    } catch (error) {
+      toast({ title: 'Lỗi khi thêm thành viên', variant: 'destructive' });
+    } finally {
+      setIsAddingFromMaster(false);
+    }
+  };
+
+  const toggleMasterMember = (memberId: string) => {
+    const newSet = new Set(selectedMasterMembers);
+    if (newSet.has(memberId)) {
+      newSet.delete(memberId);
+    } else {
+      // Check if can add more
+      if (roster.length + newSet.size < maxRosterSize) {
+        newSet.add(memberId);
+      } else {
+        toast({ title: 'Đã đủ số lượng thành viên', variant: 'destructive' });
+      }
+    }
+    setSelectedMasterMembers(newSet);
+  };
+
   const canEdit = isCaptain || isOwner;
   const canAddMore = roster.length < maxRosterSize;
+  
+  // Get list of already added player names to filter out
+  const addedPlayerNames = new Set(roster.map(r => r.player_name.toLowerCase()));
+  const availableMasterMembers = masterTeamData?.roster.filter(
+    m => !addedPlayerNames.has(m.player_name.toLowerCase())
+  ) || [];
 
-  if (isLoading) {
+  if (isLoading || (isOwner && isLoadingMaster)) {
     return (
       <Card>
         <CardContent className="py-8 flex justify-center">
@@ -136,63 +232,130 @@ export function TeamRosterManager({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Roster list - larger font for mobile */}
+        {/* Current roster list */}
         <div className="space-y-2">
-          {roster.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center justify-between p-4 rounded-lg border bg-card"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-medium">{member.player_name}</span>
-                    {member.is_captain && (
-                      <Crown className="h-4 w-4 text-amber-500" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                    <Badge variant="secondary" className="text-sm">
-                      {member.gender === 'male' ? 'Nam' : 'Nữ'}
-                    </Badge>
-                    {member.skill_level && (
-                      <span>Level: {member.skill_level.toFixed(1)}</span>
-                    )}
+          {roster.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground text-sm">
+              Chưa có thành viên nào
+            </div>
+          ) : (
+            roster.map((member) => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-4 rounded-lg border bg-card"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-medium">{member.player_name}</span>
+                      {member.is_captain && (
+                        <Crown className="h-4 w-4 text-amber-500" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <Badge variant="secondary" className="text-sm">
+                        {member.gender === 'male' ? 'Nam' : 'Nữ'}
+                      </Badge>
+                      {member.skill_level && (
+                        <span>Level: {member.skill_level.toFixed(1)}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
+                
+                {canEdit && !member.is_captain && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Xóa thành viên?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Bạn có chắc muốn xóa {member.player_name} khỏi đội?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="bg-destructive text-destructive-foreground"
+                        >
+                          Xóa
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
-              
-              {canEdit && !member.is_captain && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Xóa thành viên?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Bạn có chắc muốn xóa {member.player_name} khỏi đội?
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Hủy</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleRemoveMember(member.id)}
-                        className="bg-destructive text-destructive-foreground"
-                      >
-                        Xóa
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
-        {/* Add member form */}
+        {/* BTC: Select from master team roster */}
+        {isOwner && canAddMore && availableMasterMembers.length > 0 && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Chọn từ đội gốc ({availableMasterMembers.length} người khả dụng)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                {availableMasterMembers.map((member) => {
+                  const isSelected = selectedMasterMembers.has(member.id);
+                  return (
+                    <div
+                      key={member.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                        isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => toggleMasterMember(member.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Checkbox 
+                          checked={isSelected}
+                          onCheckedChange={() => toggleMasterMember(member.id)}
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{member.player_name}</span>
+                            {member.is_captain && (
+                              <Crown className="h-3 w-3 text-amber-500" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{member.gender === 'male' ? 'Nam' : 'Nữ'}</span>
+                            {member.skill_level && (
+                              <span>• Level: {member.skill_level.toFixed(1)}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {isSelected && <Check className="h-4 w-4 text-primary" />}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {selectedMasterMembers.size > 0 && (
+                <Button 
+                  className="w-full" 
+                  onClick={handleAddFromMaster}
+                  disabled={isAddingFromMaster}
+                >
+                  {isAddingFromMaster && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Thêm {selectedMasterMembers.size} thành viên đã chọn
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Add new member form */}
         {canEdit && canAddMore && (
           <>
             {showAddForm ? (
@@ -294,7 +457,7 @@ export function TeamRosterManager({
                 onClick={() => setShowAddForm(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Thêm thành viên ({roster.length}/{maxRosterSize})
+                Thêm thành viên mới ({roster.length}/{maxRosterSize})
               </Button>
             )}
           </>
