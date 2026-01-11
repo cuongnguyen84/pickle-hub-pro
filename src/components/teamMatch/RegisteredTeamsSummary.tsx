@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Check, Clock, UserCheck, AlertCircle, X, Loader2, Play } from 'lucide-react';
+import { Users, Check, Clock, UserCheck, AlertCircle, X, Loader2, Play, UserPlus } from 'lucide-react';
 import { TeamMatchTeam, TeamMatchRosterMember, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -130,22 +130,33 @@ export function RegisteredTeamsSummary({
         </div>
         
         <div className="flex items-center gap-2 shrink-0">
-          <Badge 
-            variant="outline" 
-            className={isFull ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-orange-500/10 text-orange-600 border-orange-500/20'}
-          >
-            {isFull ? (
-              <>
-                <UserCheck className="h-3 w-3 mr-1" />
-                Đủ đội
-              </>
-            ) : (
-              <>
-                <AlertCircle className="h-3 w-3 mr-1" />
-                {rosterCount}/{maxRosterSize}
-              </>
-            )}
-          </Badge>
+          {/* Add members button for incomplete rosters - BTC only */}
+          {isOwner && !isFull && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs bg-orange-500/10 text-orange-600 border-orange-500/30 hover:bg-orange-500/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTeamClick?.(team);
+              }}
+            >
+              <UserPlus className="h-3 w-3 mr-1" />
+              Thêm ({rosterCount}/{maxRosterSize})
+            </Button>
+          )}
+          
+          {/* Full roster badge */}
+          {isFull && (
+            <Badge 
+              variant="outline" 
+              className="bg-green-500/10 text-green-600 border-green-500/20"
+            >
+              <UserCheck className="h-3 w-3 mr-1" />
+              {rosterCount}/{maxRosterSize}
+            </Badge>
+          )}
+          
           <Badge variant="outline" className={STATUS_COLORS[team.status]}>
             {team.status === 'approved' && <Check className="h-3 w-3 mr-1" />}
             {team.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
