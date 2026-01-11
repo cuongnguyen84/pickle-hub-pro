@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Check, Clock, UserCheck, AlertCircle, X, Loader2 } from 'lucide-react';
+import { Users, Check, Clock, UserCheck, AlertCircle, X, Loader2, Play } from 'lucide-react';
 import { TeamMatchTeam, TeamMatchRosterMember, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,7 +23,9 @@ interface RegisteredTeamsSummaryProps {
   maxRosterSize: number;
   isOwner: boolean;
   tournamentId: string;
+  hasMatches?: boolean;
   onTeamClick?: (team: TeamMatchTeam) => void;
+  onGenerateMatches?: () => void;
 }
 
 export function RegisteredTeamsSummary({
@@ -31,7 +33,9 @@ export function RegisteredTeamsSummary({
   maxRosterSize,
   isOwner,
   tournamentId,
+  hasMatches,
   onTeamClick,
+  onGenerateMatches,
 }: RegisteredTeamsSummaryProps) {
   const { updateTeamStatus, isUpdatingStatus } = useTeamMatchTeamManagement();
 
@@ -213,6 +217,17 @@ export function RegisteredTeamsSummary({
             <span>{rejectedTeams.length} từ chối</span>
           </div>
         </div>
+
+        {/* Quick action: Generate matches button for BTC */}
+        {isOwner && !hasMatches && approvedTeams.length >= 2 && onGenerateMatches && (
+          <Button 
+            onClick={onGenerateMatches}
+            className="w-full"
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Tạo lịch thi đấu ({approvedTeams.length} đội)
+          </Button>
+        )}
 
         {/* Team list - show pending first for owner, then approved */}
         <div className="space-y-2 max-h-[300px] overflow-y-auto">
