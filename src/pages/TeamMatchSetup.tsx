@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, CreateTournamentInput } from '@/hooks/useTeamMatch';
@@ -384,12 +385,15 @@ export default function TeamMatchSetup() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent">
-                    <RadioGroupItem value="single_elimination" id="format-se" className="mt-1" />
-                    <div>
-                      <Label htmlFor="format-se" className="font-semibold cursor-pointer">
-                        Loại trực tiếp (Single Elimination)
-                      </Label>
+                  <div className="flex items-start space-x-3 rounded-lg border p-4 opacity-50 cursor-not-allowed">
+                    <RadioGroupItem value="single_elimination" id="format-se" className="mt-1" disabled />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="format-se" className="font-semibold text-muted-foreground">
+                          Loại trực tiếp (Single Elimination)
+                        </Label>
+                        <Badge variant="secondary" className="text-xs">Sắp ra mắt</Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         Thua 1 trận là bị loại
                       </p>
