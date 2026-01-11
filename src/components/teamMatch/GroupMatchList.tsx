@@ -212,10 +212,19 @@ function GroupMatches({
                 const config = STATUS_CONFIG[match.status] || STATUS_CONFIG.pending;
                 const StatusIcon = config.icon;
                 const isMyMatch = userTeamId && (match.team_a_id === userTeamId || match.team_b_id === userTeamId);
+                const matchStarted = match.status === 'in_progress' || match.status === 'completed';
                 
+                // Check lineup needs for each team
+                const needsLineupA = !match.lineup_a_submitted && !matchStarted;
+                const needsLineupB = !match.lineup_b_submitted && !matchStarted;
+                
+                // Captain can lineup their own team, BTC can lineup any team
+                const canLineupA = needsLineupA && (isOwner || match.team_a_id === userTeamId);
+                const canLineupB = needsLineupB && (isOwner || match.team_b_id === userTeamId);
+                
+                // For showing "Đã line up" badge to captain
                 const isTeamA = match.team_a_id === userTeamId;
                 const myLineupSubmitted = isMyMatch && (isTeamA ? match.lineup_a_submitted : match.lineup_b_submitted);
-                const needsLineup = isMyMatch && !myLineupSubmitted && match.status !== 'completed' && !roundStarted;
                 
                 return (
                   <Card 
@@ -265,7 +274,43 @@ function GroupMatches({
                             <StatusIcon className="h-3 w-3 mr-1" />
                             {config.label}
                           </Badge>
-                          {needsLineup ? (
+                          
+                          {/* BTC lineup buttons - show A and B separately */}
+                          {isOwner && (canLineupA || canLineupB) && (
+                            <div className="flex gap-1">
+                              {canLineupA && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="text-xs h-6 px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLineupClick?.(match, match.team_a_id!);
+                                  }}
+                                >
+                                  <ClipboardList className="h-3 w-3 mr-1" />
+                                  A
+                                </Button>
+                              )}
+                              {canLineupB && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="text-xs h-6 px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLineupClick?.(match, match.team_b_id!);
+                                  }}
+                                >
+                                  <ClipboardList className="h-3 w-3 mr-1" />
+                                  B
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Captain lineup button */}
+                          {!isOwner && isMyMatch && !myLineupSubmitted && !matchStarted && (
                             <Button 
                               variant="default" 
                               size="sm"
@@ -278,12 +323,15 @@ function GroupMatches({
                               <ClipboardList className="h-3 w-3 mr-1" />
                               Line up
                             </Button>
-                          ) : myLineupSubmitted && !roundStarted ? (
+                          )}
+                          
+                          {/* Captain already lined up badge */}
+                          {!isOwner && myLineupSubmitted && !matchStarted && (
                             <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
                               <Check className="h-3 w-3 mr-1" />
                               Đã line up
                             </Badge>
-                          ) : null}
+                          )}
                         </div>
                       </div>
                     </CardContent>
