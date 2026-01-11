@@ -47,14 +47,14 @@ const addMemberSchema = z.object({
 
 type AddMemberValues = z.infer<typeof addMemberSchema>;
 
-interface MasterTeamMember {
+interface PreviousRosterMember {
   id: string;
-  master_team_id: string;
   player_name: string;
   gender: 'male' | 'female';
   skill_level: number | null;
   user_id: string | null;
   is_captain: boolean;
+  tournament_name: string;
 }
 
 interface TeamRosterManagerProps {
@@ -64,6 +64,7 @@ interface TeamRosterManagerProps {
   isOwner?: boolean;
   inviteCode?: string | null;
   masterTeamId?: string | null;
+  tournamentId?: string;
 }
 
 export function TeamRosterManager({
@@ -73,31 +74,58 @@ export function TeamRosterManager({
   isOwner = false,
   inviteCode,
   masterTeamId,
+  tournamentId,
 }: TeamRosterManagerProps) {
   const { toast } = useToast();
   const { team, roster, isLoading } = useTeamMatchTeam(teamId);
   const { addRosterMember, isAddingMember, removeRosterMember, isRemovingMember } = useTeamMatchTeamManagement();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedMasterMembers, setSelectedMasterMembers] = useState<Set<string>>(new Set());
-  const [isAddingFromMaster, setIsAddingFromMaster] = useState(false);
+  const [selectedPreviousMembers, setSelectedPreviousMembers] = useState<Set<string>>(new Set());
+  const [isAddingFromPrevious, setIsAddingFromPrevious] = useState(false);
 
-  // Fetch master team roster if masterTeamId is provided
-  const { data: masterRoster, isLoading: isLoadingMaster } = useQuery({
-    queryKey: ['master-team-roster', masterTeamId],
+  // Fetch roster from most recent tournament with same master_team_id
+  const { data: previousRoster, isLoading: isLoadingPrevious } = useQuery({
+    queryKey: ['previous-tournament-roster', masterTeamId, tournamentId],
     queryFn: async () => {
-      if (!masterTeamId) return [];
+      if (!masterTeamId || !tournamentId) return [];
       
-      const { data, error } = await supabase
-        .from('master_team_roster')
-        .select('*')
+      // Find teams with same master_team_id from other tournaments
+      const { data: otherTeams, error: teamError } = await supabase
+        .from('team_match_teams')
+        .select(`
+          id,
+          tournament_id,
+          team_match_tournaments!inner (
+            created_at,
+            name
+          )
+        `)
         .eq('master_team_id', masterTeamId)
+        .neq('tournament_id', tournamentId)
+        .order('team_match_tournaments(created_at)', { ascending: false })
+        .limit(1);
+      
+      if (teamError || !otherTeams?.length) return [];
+      
+      const latestTeam = otherTeams[0];
+      const tournamentInfo = latestTeam.team_match_tournaments as any;
+      
+      // Fetch roster from that team
+      const { data: rosterData, error: rosterError } = await supabase
+        .from('team_match_roster')
+        .select('id, player_name, gender, skill_level, user_id, is_captain')
+        .eq('team_id', latestTeam.id)
         .order('is_captain', { ascending: false })
         .order('created_at', { ascending: true });
       
-      if (error) throw error;
-      return data as MasterTeamMember[];
+      if (rosterError) throw rosterError;
+      
+      return (rosterData || []).map(r => ({
+        ...r,
+        tournament_name: tournamentInfo?.name || 'Giải trước',
+      })) as PreviousRosterMember[];
     },
-    enabled: !!masterTeamId && isOwner,
+    enabled: !!masterTeamId && !!tournamentId && isOwner,
   });
 
   const form = useForm<AddMemberValues>({
@@ -137,13 +165,13 @@ export function TeamRosterManager({
     }
   };
 
-  // Add selected members from master team
-  const handleAddFromMaster = async () => {
-    if (selectedMasterMembers.size === 0) return;
+  // Add selected members from previous tournament roster
+  const handleAddFromPrevious = async () => {
+    if (selectedPreviousMembers.size === 0) return;
     
-    setIsAddingFromMaster(true);
+    setIsAddingFromPrevious(true);
     try {
-      const membersToAdd = (masterRoster || []).filter(m => selectedMasterMembers.has(m.id));
+      const membersToAdd = (previousRoster || []).filter(m => selectedPreviousMembers.has(m.id));
       
       for (const member of membersToAdd) {
         await addRosterMember({
@@ -155,17 +183,17 @@ export function TeamRosterManager({
         });
       }
       
-      setSelectedMasterMembers(new Set());
+      setSelectedPreviousMembers(new Set());
       toast({ title: `Đã thêm ${membersToAdd.length} thành viên` });
     } catch (error) {
       toast({ title: 'Lỗi khi thêm thành viên', variant: 'destructive' });
     } finally {
-      setIsAddingFromMaster(false);
+      setIsAddingFromPrevious(false);
     }
   };
 
-  const toggleMasterMember = (memberId: string) => {
-    const newSet = new Set(selectedMasterMembers);
+  const togglePreviousMember = (memberId: string) => {
+    const newSet = new Set(selectedPreviousMembers);
     if (newSet.has(memberId)) {
       newSet.delete(memberId);
     } else {
@@ -176,7 +204,7 @@ export function TeamRosterManager({
         toast({ title: 'Đã đủ số lượng thành viên', variant: 'destructive' });
       }
     }
-    setSelectedMasterMembers(newSet);
+    setSelectedPreviousMembers(newSet);
   };
 
   const canEdit = isCaptain || isOwner;
@@ -184,11 +212,11 @@ export function TeamRosterManager({
   
   // Get list of already added player names to filter out
   const addedPlayerNames = new Set(roster.map(r => r.player_name.toLowerCase()));
-  const availableMasterMembers = (masterRoster || []).filter(
+  const availablePreviousMembers = (previousRoster || []).filter(
     m => !addedPlayerNames.has(m.player_name.toLowerCase())
   );
 
-  if (isLoading || (isOwner && isLoadingMaster)) {
+  if (isLoading || (isOwner && isLoadingPrevious)) {
     return (
       <Card>
         <CardContent className="py-8 flex justify-center">
@@ -282,31 +310,34 @@ export function TeamRosterManager({
           )}
         </div>
 
-        {/* BTC: Select from master team roster */}
-        {isOwner && canAddMore && availableMasterMembers.length > 0 && (
+        {/* BTC: Select from previous tournament roster */}
+        {isOwner && canAddMore && availablePreviousMembers.length > 0 && (
           <Card className="border-primary/30 bg-primary/5">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <UserPlus className="h-4 w-4" />
-                Chọn từ đội gốc ({availableMasterMembers.length} người khả dụng)
+                Chọn từ giải trước ({availablePreviousMembers.length} người)
               </CardTitle>
+              <CardDescription className="text-xs">
+                Từ giải: {previousRoster?.[0]?.tournament_name}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                {availableMasterMembers.map((member) => {
-                  const isSelected = selectedMasterMembers.has(member.id);
+                {availablePreviousMembers.map((member) => {
+                  const isSelected = selectedPreviousMembers.has(member.id);
                   return (
                     <div
                       key={member.id}
                       className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
                         isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
                       }`}
-                      onClick={() => toggleMasterMember(member.id)}
+                      onClick={() => togglePreviousMember(member.id)}
                     >
                       <div className="flex items-center gap-3">
                         <Checkbox 
                           checked={isSelected}
-                          onCheckedChange={() => toggleMasterMember(member.id)}
+                          onCheckedChange={() => togglePreviousMember(member.id)}
                         />
                         <div>
                           <div className="flex items-center gap-2">
@@ -329,14 +360,14 @@ export function TeamRosterManager({
                 })}
               </div>
               
-              {selectedMasterMembers.size > 0 && (
+              {selectedPreviousMembers.size > 0 && (
                 <Button 
                   className="w-full" 
-                  onClick={handleAddFromMaster}
-                  disabled={isAddingFromMaster}
+                  onClick={handleAddFromPrevious}
+                  disabled={isAddingFromPrevious}
                 >
-                  {isAddingFromMaster && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Thêm {selectedMasterMembers.size} thành viên đã chọn
+                  {isAddingFromPrevious && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Thêm {selectedPreviousMembers.size} thành viên đã chọn
                 </Button>
               )}
             </CardContent>
