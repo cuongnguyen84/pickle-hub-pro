@@ -11,6 +11,8 @@ export interface TeamMatchTeam {
   invite_code: string | null;
   seed: number | null;
   status: string;
+  master_team_id: string | null;
+  group_id: string | null;
   created_at: string;
   updated_at: string;
 }
