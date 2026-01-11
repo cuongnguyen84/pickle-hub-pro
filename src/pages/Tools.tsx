@@ -67,7 +67,6 @@ const Tools = () => {
       description: t.tools.teamMatch.description,
       icon: <Swords className="w-6 h-6" />,
       href: "/tools/team-match",
-      comingSoon: true,
     },
     {
       title: t.tools.singleElimination.title,
