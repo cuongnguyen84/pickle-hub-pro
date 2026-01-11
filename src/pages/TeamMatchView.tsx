@@ -393,7 +393,9 @@ export default function TeamMatchView() {
                 maxRosterSize={tournament.team_roster_size}
                 isOwner={isOwner}
                 tournamentId={tournament.id}
+                hasMatches={hasMatches}
                 onTeamClick={(team) => setSelectedTeam(team)}
+                onGenerateMatches={() => setShowGenerateDialog(true)}
               />
             )}
 
