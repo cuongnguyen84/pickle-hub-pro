@@ -705,6 +705,7 @@ export default function TeamMatchView() {
           onOpenChange={(open) => !open && setSelectedTeam(null)}
           team={selectedTeam}
           maxRosterSize={tournament.team_roster_size}
+          isOwner={isOwner}
         />
 
         {/* Match Detail Sheet */}

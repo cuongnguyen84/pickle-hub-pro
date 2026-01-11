@@ -27,6 +27,7 @@ interface TeamDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   team: TeamMatchTeam | null;
   maxRosterSize: number;
+  isOwner?: boolean;
 }
 
 export function TeamDetailSheet({
@@ -34,6 +35,7 @@ export function TeamDetailSheet({
   onOpenChange,
   team,
   maxRosterSize,
+  isOwner = false,
 }: TeamDetailSheetProps) {
   const { user } = useAuth();
 
@@ -52,9 +54,11 @@ export function TeamDetailSheet({
             </Badge>
           </div>
           <SheetDescription>
-            {isCaptain
-              ? 'Bạn là đội trưởng của đội này'
-              : 'Xem thông tin đội'}
+            {isOwner 
+              ? 'Quản lý đội hình với quyền BTC'
+              : isCaptain
+                ? 'Bạn là đội trưởng của đội này'
+                : 'Xem thông tin đội'}
           </SheetDescription>
         </SheetHeader>
 
@@ -63,6 +67,7 @@ export function TeamDetailSheet({
             teamId={team.id}
             maxRosterSize={maxRosterSize}
             isCaptain={isCaptain}
+            isOwner={isOwner}
             inviteCode={team.invite_code}
           />
         </div>
