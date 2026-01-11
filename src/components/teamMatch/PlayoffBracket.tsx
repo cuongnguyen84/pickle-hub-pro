@@ -9,7 +9,7 @@ interface PlayoffBracketProps {
   userTeamId?: string;
   isOwner?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
-  onLineupClick?: (match: TeamMatchMatch) => void;
+  onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
 }
 
 const ROUND_NAMES: Record<number, string> = {
@@ -93,10 +93,16 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onL
                     .map((match) => {
                       const config = STATUS_CONFIG[match.status] || STATUS_CONFIG.pending;
                       const isMyMatch = userTeamId && (match.team_a_id === userTeamId || match.team_b_id === userTeamId);
-                      const isTeamA = match.team_a_id === userTeamId;
-                      const myLineupSubmitted = isMyMatch && (isTeamA ? match.lineup_a_submitted : match.lineup_b_submitted);
                       const matchStarted = match.status === 'in_progress' || match.status === 'completed';
-                      const needsLineup = isMyMatch && !myLineupSubmitted && !matchStarted && match.team_a_id && match.team_b_id;
+                      const hasBothTeams = match.team_a_id && match.team_b_id;
+                      
+                      // Check lineup needs for each team
+                      const needsLineupA = hasBothTeams && !match.lineup_a_submitted && !matchStarted;
+                      const needsLineupB = hasBothTeams && !match.lineup_b_submitted && !matchStarted;
+                      
+                      // Captain can lineup their own team, BTC can lineup any team
+                      const canLineupA = needsLineupA && (isOwner || match.team_a_id === userTeamId);
+                      const canLineupB = needsLineupB && (isOwner || match.team_b_id === userTeamId);
                       
                       return (
                         <Card 
@@ -125,18 +131,18 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onL
                                 }`}>
                                   {match.games_won_a}
                                 </span>
-                                {match.team_a_id === userTeamId && needsLineup && (
+                                {canLineupA && (
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     className="h-6 text-xs px-2"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onLineupClick?.(match);
+                                      onLineupClick?.(match, match.team_a_id!);
                                     }}
                                   >
                                     <ClipboardList className="h-3 w-3 mr-1" />
-                                    Line up
+                                    {isOwner ? 'A' : 'Line up'}
                                   </Button>
                                 )}
                               </div>
@@ -162,18 +168,18 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onL
                                 }`}>
                                   {match.games_won_b}
                                 </span>
-                                {match.team_b_id === userTeamId && needsLineup && (
+                                {canLineupB && (
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     className="h-6 text-xs px-2"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onLineupClick?.(match);
+                                      onLineupClick?.(match, match.team_b_id!);
                                     }}
                                   >
                                     <ClipboardList className="h-3 w-3 mr-1" />
-                                    Line up
+                                    {isOwner ? 'B' : 'Line up'}
                                   </Button>
                                 )}
                               </div>
