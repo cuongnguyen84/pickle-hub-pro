@@ -286,28 +286,35 @@ export default function CreatorLivestreamForm() {
                 id="thumbnail_url"
                 value={formData.thumbnail_url}
                 onChange={(e) => {
-                  const url = e.target.value;
+                  const url = e.target.value.trim();
                   // Convert Google Drive share links to direct image URL
                   let directUrl = url;
                   
                   // Google Drive: https://drive.google.com/file/d/{FILE_ID}/view
                   const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
                   if (driveMatch) {
-                    directUrl = `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+                    // Use lh3.googleusercontent.com format - bypasses CORS
+                    directUrl = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
                   }
                   
                   // Google Drive: https://drive.google.com/open?id={FILE_ID}
                   const driveOpenMatch = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
                   if (driveOpenMatch) {
-                    directUrl = `https://drive.google.com/uc?export=view&id=${driveOpenMatch[1]}`;
+                    directUrl = `https://lh3.googleusercontent.com/d/${driveOpenMatch[1]}`;
+                  }
+
+                  // Google Drive: Already converted uc?export format - also convert
+                  const driveUcMatch = url.match(/drive\.google\.com\/uc\?.*id=([a-zA-Z0-9_-]+)/);
+                  if (driveUcMatch) {
+                    directUrl = `https://lh3.googleusercontent.com/d/${driveUcMatch[1]}`;
                   }
                   
                   setFormData({ ...formData, thumbnail_url: directUrl });
                 }}
-                placeholder="Dán link ảnh (Google Drive, Facebook, Instagram...)"
+                placeholder="Dán link ảnh (Google Drive, hoặc link ảnh trực tiếp)"
               />
               <p className="text-xs text-muted-foreground">
-                Hỗ trợ: Link ảnh trực tiếp, Google Drive share link
+                Hỗ trợ: Link ảnh trực tiếp (.jpg, .png), Google Drive (phải chia sẻ công khai)
               </p>
               
               {/* Thumbnail Preview */}
@@ -322,22 +329,27 @@ export default function CreatorLivestreamForm() {
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
+                        const errorDiv = target.nextElementSibling;
+                        if (errorDiv) errorDiv.classList.remove('hidden');
                       }}
                       onLoad={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'block';
-                        target.nextElementSibling?.classList.add('hidden');
+                        const errorDiv = target.nextElementSibling;
+                        if (errorDiv) errorDiv.classList.add('hidden');
                       }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground text-sm hidden">
                       <div className="text-center p-4">
                         <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                         <p>Không thể tải ảnh preview</p>
-                        <p className="text-xs mt-1">Link có thể bị chặn CORS hoặc không hợp lệ</p>
+                        <p className="text-xs mt-1">Kiểm tra ảnh đã được chia sẻ công khai chưa</p>
                       </div>
                     </div>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    URL đã chuyển đổi: <code className="bg-muted px-1 rounded text-xs break-all">{formData.thumbnail_url}</code>
+                  </p>
                 </div>
               )}
             </div>
