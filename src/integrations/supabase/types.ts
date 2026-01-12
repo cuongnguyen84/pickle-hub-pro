@@ -414,6 +414,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           display_name: string | null
           email: string
@@ -422,6 +423,7 @@ export type Database = {
           tournament_create_quota: number
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           email: string
@@ -430,6 +432,7 @@ export type Database = {
           tournament_create_quota?: number
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           email?: string
@@ -1868,6 +1871,7 @@ export type Database = {
         Args: { _tournament_id: string; _user_id: string }
         Returns: boolean
       }
+      is_user_creator: { Args: { _user_id: string }; Returns: boolean }
       remove_partner_from_team: {
         Args: { _team_id: string; _user_id: string }
         Returns: Json
