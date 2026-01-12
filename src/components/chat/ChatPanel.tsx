@@ -194,42 +194,76 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevMessagesLengthRef = useRef(messages.length);
+  // Track last fetch time to debounce user data fetching (for 1000+ viewers optimization)
+  const lastFetchTimeRef = useRef<number>(0);
+  const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch creator status and avatar for users in messages
+  // Fetch creator status and avatar for users in messages (optimized batch fetch)
   useEffect(() => {
     const userIds = [...new Set(messages.map(m => m.user_id))];
     const uncachedIds = userIds.filter(id => !(id in creatorCache));
     
     if (uncachedIds.length === 0) return;
+    
+    // Debounce fetching to avoid too many requests during high traffic
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTimeRef.current;
+    const minFetchInterval = 2000; // Min 2 seconds between batch fetches
+    
+    if (fetchDebounceRef.current) {
+      clearTimeout(fetchDebounceRef.current);
+    }
+    
+    const delay = timeSinceLastFetch < minFetchInterval 
+      ? minFetchInterval - timeSinceLastFetch 
+      : 0;
 
-    const fetchUserData = async () => {
+    fetchDebounceRef.current = setTimeout(async () => {
+      lastFetchTimeRef.current = Date.now();
+      
+      // Limit batch size to prevent excessive requests
+      const batchIds = uncachedIds.slice(0, 20);
+      
       const creatorResults: Record<string, boolean> = {};
       const avatarResults: Record<string, string | null> = {};
       
-      await Promise.all(
-        uncachedIds.map(async (userId) => {
-          try {
-            // Fetch creator status and profile in parallel
-            const [creatorRes, profileRes] = await Promise.all([
-              supabase.rpc("is_user_creator", { _user_id: userId }),
-              supabase.from("profiles").select("avatar_url").eq("id", userId).single()
-            ]);
-            
-            creatorResults[userId] = !!creatorRes.data;
-            avatarResults[userId] = profileRes.data?.avatar_url ?? null;
-          } catch {
-            creatorResults[userId] = false;
-            avatarResults[userId] = null;
-          }
-        })
-      );
-      
-      setCreatorCache(prev => ({ ...prev, ...creatorResults }));
-      setAvatarCache(prev => ({ ...prev, ...avatarResults }));
-    };
+      try {
+        // Batch fetch profiles in a single query
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, avatar_url")
+          .in("id", batchIds);
+        
+        // Create a lookup map for profiles
+        const profileMap = new Map(profiles?.map(p => [p.id, p.avatar_url]) ?? []);
+        
+        // Fetch creator status in parallel but with batching
+        await Promise.all(
+          batchIds.map(async (userId) => {
+            try {
+              const { data } = await supabase.rpc("is_user_creator", { _user_id: userId });
+              creatorResults[userId] = !!data;
+              avatarResults[userId] = profileMap.get(userId) ?? null;
+            } catch {
+              creatorResults[userId] = false;
+              avatarResults[userId] = profileMap.get(userId) ?? null;
+            }
+          })
+        );
+        
+        setCreatorCache(prev => ({ ...prev, ...creatorResults }));
+        setAvatarCache(prev => ({ ...prev, ...avatarResults }));
+      } catch (err) {
+        console.error('[ChatPanel] Error fetching user data:', err);
+      }
+    }, delay);
 
-    fetchUserData();
-  }, [messages]);
+    return () => {
+      if (fetchDebounceRef.current) {
+        clearTimeout(fetchDebounceRef.current);
+      }
+    };
+  }, [messages, creatorCache]);
 
   // Check if user is near bottom of scroll
   const isNearBottom = useCallback(() => {
