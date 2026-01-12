@@ -1,18 +1,26 @@
 import { useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useI18n } from "@/i18n";
 import MainLayout from "@/components/layout/MainLayout";
+import { UserAvatar } from "@/components/user";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
-  User, 
   LogOut, 
   Palette, 
   Shield, 
   Loader2,
   Mail,
-  UserCircle
+  UserCircle,
+  Camera,
+  Edit2,
+  Check,
+  X
 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -21,9 +29,14 @@ const Account = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { isCreator, isLoading: creatorLoading } = useCreatorAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
+  const { profile, isLoading: profileLoading, uploadAvatar, updateProfile } = useUserProfile();
   const navigate = useNavigate();
+  
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [displayNameInput, setDisplayNameInput] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isLoading = authLoading || creatorLoading || adminLoading;
+  const isLoading = authLoading || creatorLoading || adminLoading || profileLoading;
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -32,9 +45,37 @@ const Account = () => {
     }
   }, [user, isLoading, navigate]);
 
+  useEffect(() => {
+    if (profile?.display_name) {
+      setDisplayNameInput(profile.display_name);
+    }
+  }, [profile?.display_name]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        return;
+      }
+      uploadAvatar.mutate(file);
+    }
+  };
+
+  const handleSaveDisplayName = () => {
+    if (displayNameInput.trim()) {
+      updateProfile.mutate({ display_name: displayNameInput.trim() });
+      setIsEditingName(false);
+    }
   };
 
   if (isLoading) {
@@ -59,6 +100,7 @@ const Account = () => {
   };
 
   const role = getRoleDisplay();
+  const displayName = profile?.display_name || user.email?.split("@")[0] || "User";
 
   return (
     <MainLayout>
@@ -68,14 +110,80 @@ const Account = () => {
           <div className="glass-card p-6 md:p-8">
             {/* Avatar */}
             <div className="flex flex-col items-center mb-6">
-              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-                <User className="w-10 h-10 text-primary" />
+              <div className="relative group">
+                <UserAvatar
+                  avatarUrl={profile?.avatar_url}
+                  displayName={displayName}
+                  isCreator={isCreator}
+                  size="xl"
+                  showBadge={true}
+                />
+                
+                {/* Upload overlay */}
+                <button
+                  onClick={handleAvatarClick}
+                  className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  disabled={uploadAvatar.isPending}
+                >
+                  {uploadAvatar.isPending ? (
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  ) : (
+                    <Camera className="w-6 h-6 text-white" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </div>
               
               {/* Display Name */}
-              <h1 className="text-xl font-semibold text-foreground text-center">
-                {user.email?.split("@")[0]}
-              </h1>
+              <div className="mt-4 flex items-center gap-2">
+                {isEditingName ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={displayNameInput}
+                      onChange={(e) => setDisplayNameInput(e.target.value)}
+                      className="h-8 w-40 text-center"
+                      placeholder="Tên hiển thị"
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={handleSaveDisplayName}
+                      disabled={updateProfile.isPending}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => setIsEditingName(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="text-xl font-semibold text-foreground text-center">
+                      {displayName}
+                    </h1>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => setIsEditingName(true)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
               
               {/* Role Badge */}
               <span className={`mt-2 px-3 py-1 rounded-full text-xs font-medium ${role.color}`}>

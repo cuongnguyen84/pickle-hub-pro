@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useComments } from "@/hooks/useSupabaseData";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { UserAvatar, UserDisplayName } from "@/components/user";
 import { Loader2, MessageCircle, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
@@ -17,16 +18,67 @@ interface CommentSectionProps {
   targetId: string;
 }
 
+interface CommentUserInfo {
+  displayName: string;
+  avatarUrl: string | null;
+  isCreator: boolean;
+}
+
 export function CommentSection({ targetType, targetId }: CommentSectionProps) {
   const { t, language } = useI18n();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userInfoCache, setUserInfoCache] = useState<Record<string, CommentUserInfo>>({});
 
   const { data: comments = [], isLoading } = useComments(targetType, targetId);
 
   const MAX_COMMENT_LENGTH = 2000;
+
+  // Fetch user info for commenters
+  useEffect(() => {
+    const userIds = [...new Set(comments.map(c => c.user_id))];
+    const uncachedIds = userIds.filter(id => !(id in userInfoCache));
+    
+    if (uncachedIds.length === 0) return;
+
+    const fetchUserInfo = async () => {
+      const results: Record<string, CommentUserInfo> = {};
+      
+      await Promise.all(
+        uncachedIds.map(async (userId) => {
+          try {
+            // Fetch profile
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("display_name, avatar_url")
+              .eq("id", userId)
+              .single();
+
+            // Check if creator
+            const { data: isCreator } = await supabase.rpc("is_user_creator", { _user_id: userId });
+
+            results[userId] = {
+              displayName: profile?.display_name || "User",
+              avatarUrl: profile?.avatar_url || null,
+              isCreator: !!isCreator,
+            };
+          } catch {
+            results[userId] = {
+              displayName: "User",
+              avatarUrl: null,
+              isCreator: false,
+            };
+          }
+        })
+      );
+      
+      setUserInfoCache(prev => ({ ...prev, ...results }));
+    };
+
+    fetchUserInfo();
+  }, [comments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,37 +194,53 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
         </p>
       ) : (
         <div className="space-y-4">
-          {comments.map((comment) => (
-            <div
-              key={comment.id}
-              className="bg-surface-elevated rounded-lg p-4 space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-xs font-medium text-primary">U</span>
+          {comments.map((comment) => {
+            const userInfo = userInfoCache[comment.user_id];
+            
+            return (
+              <div
+                key={comment.id}
+                className="bg-surface-elevated rounded-lg p-4 space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserAvatar
+                      avatarUrl={userInfo?.avatarUrl}
+                      displayName={userInfo?.displayName}
+                      isCreator={userInfo?.isCreator}
+                      size="sm"
+                      showBadge={false}
+                    />
+                    <div className="flex flex-col">
+                      <UserDisplayName
+                        displayName={userInfo?.displayName || "User"}
+                        isCreator={userInfo?.isCreator}
+                        className="text-sm font-medium"
+                        badgeClassName="h-3.5 w-3.5"
+                      />
+                      <span className="text-xs text-foreground-muted">
+                        {formatDistanceToNow(new Date(comment.created_at), {
+                          addSuffix: true,
+                          locale: dateLocale,
+                        })}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-sm text-foreground-secondary">
-                    {formatDistanceToNow(new Date(comment.created_at), {
-                      addSuffix: true,
-                      locale: dateLocale,
-                    })}
-                  </span>
+                  {user?.id === comment.user_id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(comment.id)}
+                      className="text-foreground-muted hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
-                {user?.id === comment.user_id && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(comment.id)}
-                    className="text-foreground-muted hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
+                <p className="text-foreground pl-10">{comment.content}</p>
               </div>
-              <p className="text-foreground">{comment.content}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

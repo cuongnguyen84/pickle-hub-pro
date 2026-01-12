@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback, forwardRef, KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
-  MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp
+  MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UserAvatar } from "@/components/user";
 import { useLiveChat, ChatMessage } from "@/hooks/useLiveChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "./EmojiPicker";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatPanelProps {
   livestreamId: string;
@@ -32,6 +34,7 @@ interface ChatPanelProps {
 interface ChatMessageItemProps {
   message: ChatMessage;
   isModerator: boolean;
+  isCreator: boolean;
   onDelete: (id: string) => void;
   onMute: (userId: string, duration: number) => void;
   onRetry?: (tempId: string, message: string) => void;
@@ -41,6 +44,7 @@ interface ChatMessageItemProps {
 const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   message,
   isModerator,
+  isCreator,
   onDelete,
   onMute,
   onRetry,
@@ -59,10 +63,23 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
         isFailed && "opacity-80 bg-destructive/5"
       )}
     >
+      {/* Avatar */}
+      <UserAvatar
+        avatarUrl={message.avatar_url}
+        displayName={message.display_name}
+        isCreator={isCreator}
+        size="sm"
+        showBadge={false}
+        className="shrink-0 mt-0.5"
+      />
+      
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="font-medium text-sm text-primary truncate max-w-[120px]">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-medium text-sm text-primary truncate max-w-[120px] inline-flex items-center gap-1">
             {message.display_name}
+            {isCreator && (
+              <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+            )}
           </span>
           <span className="text-[10px] text-foreground-muted">
             {format(new Date(message.created_at), "HH:mm")}
@@ -168,11 +185,39 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  const [creatorCache, setCreatorCache] = useState<Record<string, boolean>>({});
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevMessagesLengthRef = useRef(messages.length);
+
+  // Fetch creator status for users in messages
+  useEffect(() => {
+    const userIds = [...new Set(messages.map(m => m.user_id))];
+    const uncachedIds = userIds.filter(id => !(id in creatorCache));
+    
+    if (uncachedIds.length === 0) return;
+
+    const fetchCreatorStatus = async () => {
+      const results: Record<string, boolean> = {};
+      
+      await Promise.all(
+        uncachedIds.map(async (userId) => {
+          try {
+            const { data } = await supabase.rpc("is_user_creator", { _user_id: userId });
+            results[userId] = !!data;
+          } catch {
+            results[userId] = false;
+          }
+        })
+      );
+      
+      setCreatorCache(prev => ({ ...prev, ...results }));
+    };
+
+    fetchCreatorStatus();
+  }, [messages]);
 
   // Check if user is near bottom of scroll
   const isNearBottom = useCallback(() => {
@@ -441,6 +486,7 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
                   key={message.id}
                   message={message}
                   isModerator={isModerator}
+                  isCreator={creatorCache[message.user_id] ?? false}
                   onDelete={deleteMessage}
                   onMute={muteUser}
                   onRetry={retryMessage}
