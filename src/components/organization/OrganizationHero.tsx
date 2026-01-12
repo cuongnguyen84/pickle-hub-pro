@@ -2,8 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useI18n } from "@/i18n";
-import { Building2, Share2, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { BadgeCheck, Building2, Share2, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   Breadcrumb,
@@ -23,6 +22,7 @@ interface OrganizationHeroProps {
   slug: string;
   description?: string | null;
   logoUrl?: string | null;
+  isVerifiedCreator?: boolean;
 }
 
 export const OrganizationHero = ({
@@ -31,6 +31,7 @@ export const OrganizationHero = ({
   slug,
   description,
   logoUrl,
+  isVerifiedCreator = true, // Organizations are always verified creators
 }: OrganizationHeroProps) => {
   const { t } = useI18n();
   const { data: followCount } = useFollowCount("organization", id);
@@ -95,8 +96,11 @@ export const OrganizationHero = ({
                     <Building2 className="w-3 h-3 mr-1" />
                     {t.organization.title}
                   </Badge>
-                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground flex items-center gap-2">
                     {name}
+                    {isVerifiedCreator && (
+                      <BadgeCheck className="w-6 h-6 md:w-7 md:h-7 text-primary shrink-0" />
+                    )}
                   </h1>
                 </div>
               </div>

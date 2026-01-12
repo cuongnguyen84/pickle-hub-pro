@@ -156,7 +156,8 @@ const OrganizationDetail = () => {
         name={organization.name}
         slug={organization.slug}
         description={organization.description}
-        logoUrl={organization.logo_url}
+        logoUrl={organization.display_logo ?? organization.logo_url}
+        isVerifiedCreator
       />
 
       <div className="container-wide pb-12">
@@ -234,6 +235,8 @@ const OrganizationDetail = () => {
                       title={stream.title ?? ""}
                       viewerCount={0}
                       organizationName={organization.name}
+                      organizationLogo={organization.display_logo ?? organization.logo_url ?? undefined}
+                      isVerifiedCreator
                       status="live"
                       thumbnail={stream.thumbnail_url ?? undefined}
                     />
@@ -258,6 +261,8 @@ const OrganizationDetail = () => {
                       id={stream.id!}
                       title={stream.title ?? ""}
                       organizationName={organization.name}
+                      organizationLogo={organization.display_logo ?? organization.logo_url ?? undefined}
+                      isVerifiedCreator
                       status="scheduled"
                       thumbnail={stream.thumbnail_url ?? undefined}
                       scheduledAt={stream.scheduled_start_at ?? undefined}
@@ -283,6 +288,8 @@ const OrganizationDetail = () => {
                       id={stream.id!}
                       title={stream.title ?? ""}
                       organizationName={organization.name}
+                      organizationLogo={organization.display_logo ?? organization.logo_url ?? undefined}
+                      isVerifiedCreator
                       status="ended"
                       thumbnail={stream.thumbnail_url ?? undefined}
                       isReplay
@@ -337,6 +344,8 @@ const OrganizationDetail = () => {
                         duration={video.duration_seconds ?? 0}
                         views={0}
                         organizationName={organization.name}
+                        organizationLogo={organization.display_logo ?? organization.logo_url ?? undefined}
+                        isVerifiedCreator
                         thumbnail={video.thumbnail_url ?? undefined}
                       />
                     ))}
