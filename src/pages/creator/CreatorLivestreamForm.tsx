@@ -285,9 +285,61 @@ export default function CreatorLivestreamForm() {
               <Input
                 id="thumbnail_url"
                 value={formData.thumbnail_url}
-                onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                placeholder="https://..."
+                onChange={(e) => {
+                  const url = e.target.value;
+                  // Convert Google Drive share links to direct image URL
+                  let directUrl = url;
+                  
+                  // Google Drive: https://drive.google.com/file/d/{FILE_ID}/view
+                  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+                  if (driveMatch) {
+                    directUrl = `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
+                  }
+                  
+                  // Google Drive: https://drive.google.com/open?id={FILE_ID}
+                  const driveOpenMatch = url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+                  if (driveOpenMatch) {
+                    directUrl = `https://drive.google.com/uc?export=view&id=${driveOpenMatch[1]}`;
+                  }
+                  
+                  setFormData({ ...formData, thumbnail_url: directUrl });
+                }}
+                placeholder="Dán link ảnh (Google Drive, Facebook, Instagram...)"
               />
+              <p className="text-xs text-muted-foreground">
+                Hỗ trợ: Link ảnh trực tiếp, Google Drive share link
+              </p>
+              
+              {/* Thumbnail Preview */}
+              {formData.thumbnail_url && (
+                <div className="mt-3 space-y-2">
+                  <Label className="text-sm text-muted-foreground">Preview</Label>
+                  <div className="relative aspect-video w-full max-w-md rounded-lg overflow-hidden border border-border bg-muted">
+                    <img
+                      src={formData.thumbnail_url}
+                      alt="Thumbnail preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.nextElementSibling?.classList.remove('hidden');
+                      }}
+                      onLoad={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'block';
+                        target.nextElementSibling?.classList.add('hidden');
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground text-sm hidden">
+                      <div className="text-center p-4">
+                        <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>Không thể tải ảnh preview</p>
+                        <p className="text-xs mt-1">Link có thể bị chặn CORS hoặc không hợp lệ</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
