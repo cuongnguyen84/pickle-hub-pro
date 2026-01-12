@@ -62,6 +62,15 @@ export function useVideo(id: string) {
   });
 }
 
+// Extended organization type with creator avatar fallback
+type OrganizationWithLogo = Tables<"organizations"> & {
+  display_logo?: string | null;
+};
+
+export type LivestreamWithLogo = Tables<"public_livestreams"> & {
+  organization?: OrganizationWithLogo | null;
+};
+
 // Fetch livestreams by status (uses public_livestreams view for security)
 export function useLivestreams(status?: "live" | "scheduled" | "ended") {
   return useQuery({
@@ -73,7 +82,7 @@ export function useLivestreams(status?: "live" | "scheduled" | "ended") {
           *,
           organization:organizations(*)
         `)
-        .order("started_at", { ascending: false });
+        .order("scheduled_start_at", { ascending: true });
 
       if (status) {
         query = query.eq("status", status);
@@ -81,7 +90,30 @@ export function useLivestreams(status?: "live" | "scheduled" | "ended") {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Livestream[];
+      
+      // Fetch display logos for each organization
+      const livestreams = data as LivestreamWithLogo[];
+      const orgIds = [...new Set(livestreams.map(l => l.organization_id).filter(Boolean))] as string[];
+      
+      if (orgIds.length > 0) {
+        // Get display logos (org logo or creator avatar)
+        const logoPromises = orgIds.map(async (orgId) => {
+          const { data: logo } = await supabase.rpc("get_organization_display_logo", { org_id: orgId });
+          return { orgId, logo: logo as string | null };
+        });
+        
+        const logos = await Promise.all(logoPromises);
+        const logoMap = Object.fromEntries(logos.map(l => [l.orgId, l.logo]));
+        
+        // Attach logos to organizations
+        livestreams.forEach(l => {
+          if (l.organization && l.organization_id) {
+            l.organization.display_logo = logoMap[l.organization_id] || l.organization.logo_url;
+          }
+        });
+      }
+      
+      return livestreams;
     },
   });
 }

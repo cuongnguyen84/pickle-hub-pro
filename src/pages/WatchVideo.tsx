@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
-import { ArrowLeft, Eye, Calendar, Clock, Play } from "lucide-react";
+import { ArrowLeft, Eye, Calendar, Clock, Play, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 import { ShareDialog } from "@/components/share";
@@ -171,9 +171,10 @@ const WatchVideo = () => {
                 {video.organization && (
                   <Link
                     to={`/org/${video.organization.slug}`}
-                    className="font-medium text-primary hover:underline"
+                    className="font-medium text-primary hover:underline inline-flex items-center gap-1"
                   >
                     {video.organization.name}
+                    <BadgeCheck className="w-4 h-4 text-primary" />
                   </Link>
                 )}
                 <span className="flex items-center gap-1">

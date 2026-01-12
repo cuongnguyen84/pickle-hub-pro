@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Play, Users, RotateCcw } from "lucide-react";
+import { Play, Users, RotateCcw, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
 
@@ -11,6 +11,7 @@ interface LiveCardProps {
   organizationName?: string;
   organizationSlug?: string;
   organizationLogo?: string;
+  isVerifiedCreator?: boolean;
   status?: "live" | "scheduled" | "ended";
   scheduledAt?: string;
   className?: string;
@@ -25,6 +26,7 @@ const LiveCard = ({
   organizationName,
   organizationSlug,
   organizationLogo,
+  isVerifiedCreator = true, // All organizations are verified creators
   status = "live",
   scheduledAt,
   className,
@@ -119,18 +121,30 @@ const LiveCard = ({
                   className="w-4 h-4 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-4 h-4 rounded-full bg-muted" />
+                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-[8px] font-medium text-primary">
+                    {organizationName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
               )}
               {organizationSlug ? (
                 <Link
                   to={`/org/${organizationSlug}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="line-clamp-1 hover:text-primary hover:underline"
+                  className="line-clamp-1 hover:text-primary hover:underline inline-flex items-center gap-1"
                 >
                   {organizationName}
+                  {isVerifiedCreator && (
+                    <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                  )}
                 </Link>
               ) : (
-                <span className="line-clamp-1">{organizationName}</span>
+                <span className="line-clamp-1 inline-flex items-center gap-1">
+                  {organizationName}
+                  {isVerifiedCreator && (
+                    <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                  )}
+                </span>
               )}
             </div>
           )}
