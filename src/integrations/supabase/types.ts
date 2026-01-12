@@ -1834,6 +1834,10 @@ export type Database = {
         Args: { _days?: number; _org_id: string }
         Returns: Json
       }
+      get_organization_display_logo: {
+        Args: { org_id: string }
+        Returns: string
+      }
       get_tournament_from_match: {
         Args: { _match_id: string }
         Returns: string

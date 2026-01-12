@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -194,9 +194,10 @@ const WatchLive = () => {
                 {livestream.organization && (
                   <Link
                     to={`/org/${livestream.organization.slug}`}
-                    className="font-medium text-primary hover:underline"
+                    className="font-medium text-primary hover:underline inline-flex items-center gap-1"
                   >
                     {livestream.organization.name}
+                    <BadgeCheck className="w-4 h-4 text-primary" />
                   </Link>
                 )}
                 <span className="flex items-center gap-1">
