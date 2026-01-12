@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import type { Livestream, Video } from "./useSupabaseData";
 
-export type Organization = Tables<"organizations">;
+export type Organization = Tables<"organizations"> & {
+  display_logo?: string | null;
+};
 
 // Fetch single organization by slug
 export function useOrganizationBySlug(slug: string) {
@@ -17,7 +19,17 @@ export function useOrganizationBySlug(slug: string) {
         .single();
 
       if (error) throw error;
-      return data as Organization;
+
+      // Get display logo (org logo or creator avatar fallback)
+      const { data: displayLogo } = await supabase.rpc(
+        "get_organization_display_logo",
+        { org_id: data.id }
+      );
+
+      return {
+        ...data,
+        display_logo: displayLogo,
+      } as Organization;
     },
     enabled: !!slug,
   });
