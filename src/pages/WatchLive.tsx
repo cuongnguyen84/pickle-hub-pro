@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/share";
 import { DynamicMeta } from "@/components/seo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
@@ -194,10 +195,21 @@ const WatchLive = () => {
                 {livestream.organization && (
                   <Link
                     to={`/org/${livestream.organization.slug}`}
-                    className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+                    className="font-medium text-primary hover:underline inline-flex items-center gap-2"
                   >
-                    {livestream.organization.name}
-                    <BadgeCheck className="w-4 h-4 text-primary" />
+                    <Avatar className="w-6 h-6 border border-primary/20">
+                      <AvatarImage 
+                        src={livestream.organization.display_logo ?? livestream.organization.logo_url ?? undefined} 
+                        alt={livestream.organization.name} 
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {livestream.organization.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="inline-flex items-center gap-1">
+                      {livestream.organization.name}
+                      <BadgeCheck className="w-4 h-4 text-primary" />
+                    </span>
                   </Link>
                 )}
                 <span className="flex items-center gap-1">

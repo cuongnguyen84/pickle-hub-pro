@@ -3,13 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
 // Types
+type OrganizationWithLogo = Tables<"organizations"> & {
+  display_logo?: string | null;
+};
+
 export type Video = Tables<"videos"> & {
-  organization?: Tables<"organizations"> | null;
+  organization?: OrganizationWithLogo | null;
 };
 
 // Use public_livestreams view for public access (excludes mux_stream_key)
 export type Livestream = Tables<"public_livestreams"> & {
-  organization?: Tables<"organizations"> | null;
+  organization?: OrganizationWithLogo | null;
 };
 
 // Fetch published videos
@@ -56,16 +60,22 @@ export function useVideo(id: string) {
         .single();
 
       if (error) throw error;
-      return data as Video;
+      
+      const video = data as Video;
+      
+      // Fetch display logo for organization
+      if (video.organization && video.organization_id) {
+        const { data: logo } = await supabase.rpc("get_organization_display_logo", { 
+          org_id: video.organization_id 
+        });
+        video.organization.display_logo = logo as string | null;
+      }
+      
+      return video;
     },
     enabled: !!id,
   });
 }
-
-// Extended organization type with creator avatar fallback
-type OrganizationWithLogo = Tables<"organizations"> & {
-  display_logo?: string | null;
-};
 
 export type LivestreamWithLogo = Tables<"public_livestreams"> & {
   organization?: OrganizationWithLogo | null;
@@ -133,7 +143,18 @@ export function useLivestream(id: string) {
         .single();
 
       if (error) throw error;
-      return data as Livestream;
+      
+      const livestream = data as LivestreamWithLogo;
+      
+      // Fetch display logo for organization
+      if (livestream.organization && livestream.organization_id) {
+        const { data: logo } = await supabase.rpc("get_organization_display_logo", { 
+          org_id: livestream.organization_id 
+        });
+        livestream.organization.display_logo = logo as string | null;
+      }
+      
+      return livestream;
     },
     enabled: !!id,
   });
