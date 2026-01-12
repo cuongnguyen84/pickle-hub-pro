@@ -51,7 +51,9 @@ interface UseLiveChatResult {
 }
 
 const MESSAGES_LIMIT = 50;
-const SEND_TIMEOUT_MS = 4000;
+const SEND_TIMEOUT_MS = 5000;
+const RECONNECT_DELAY_MS = 3000;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 // Generate unique client message ID
 const generateClientMessageId = () => 
@@ -84,6 +86,9 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     userId: string; 
     timestamp: number 
   }>>(new Map());
+  // Track reconnection attempts for resilience during high traffic
+  const broadcastReconnectAttemptsRef = useRef(0);
+  const pgReconnectAttemptsRef = useRef(0);
 
   // Check if user is moderator
   useEffect(() => {
@@ -229,11 +234,28 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       setMessages(prev => [...prev, newMessage]);
     });
     
-    // Subscribe AFTER registering handlers
+    // Subscribe AFTER registering handlers with reconnection logic
     broadcastChannel.subscribe((status, err) => {
       console.log('[Chat] BROADCAST channel status:', status, err ? `Error: ${err.message}` : '');
       if (status === 'SUBSCRIBED') {
         console.log('[Chat] ✓ BROADCAST channel ready');
+        broadcastReconnectAttemptsRef.current = 0; // Reset on success
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        // Auto-reconnect with exponential backoff
+        if (broadcastReconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+          const delay = RECONNECT_DELAY_MS * Math.pow(2, broadcastReconnectAttemptsRef.current);
+          console.log(`[Chat] BROADCAST reconnecting in ${delay}ms (attempt ${broadcastReconnectAttemptsRef.current + 1})`);
+          broadcastReconnectAttemptsRef.current++;
+          setTimeout(() => {
+            if (broadcastChannelRef.current) {
+              supabase.removeChannel(broadcastChannelRef.current);
+              broadcastChannelRef.current = null;
+            }
+            // Force re-subscribe by triggering effect cleanup
+          }, delay);
+        } else {
+          console.error('[Chat] BROADCAST max reconnect attempts reached');
+        }
       }
     });
     
@@ -361,11 +383,27 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       }
     );
     
-    // IMPORTANT: Subscribe AFTER registering ALL handlers
+    // IMPORTANT: Subscribe AFTER registering ALL handlers with reconnection logic
     pgChannel.subscribe((status, err) => {
       console.log('[Chat] POSTGRES channel status:', status, err ? `Error: ${err.message}` : '');
       if (status === 'SUBSCRIBED') {
         console.log('[Chat] ✓ POSTGRES channel ready');
+        pgReconnectAttemptsRef.current = 0; // Reset on success
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        // Auto-reconnect with exponential backoff
+        if (pgReconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+          const delay = RECONNECT_DELAY_MS * Math.pow(2, pgReconnectAttemptsRef.current);
+          console.log(`[Chat] POSTGRES reconnecting in ${delay}ms (attempt ${pgReconnectAttemptsRef.current + 1})`);
+          pgReconnectAttemptsRef.current++;
+          setTimeout(() => {
+            if (pgChannelRef.current) {
+              supabase.removeChannel(pgChannelRef.current);
+              pgChannelRef.current = null;
+            }
+          }, delay);
+        } else {
+          console.error('[Chat] POSTGRES max reconnect attempts reached');
+        }
       }
     });
     

@@ -33,21 +33,26 @@ const WatchLive = () => {
 
   const dateLocale = language === "vi" ? viLocale : enUS;
 
-  // Record view event
+  // Record view event (optimized: wait for livestream data to be ready, debounce)
   useEffect(() => {
-    if (!id || viewRecorded.current) return;
+    if (!id || viewRecorded.current || !livestream?.organization_id) return;
 
     const recordView = async () => {
-      await supabase.from("view_events").insert({
-        target_type: "livestream",
-        target_id: id,
-        viewer_user_id: user?.id ?? null,
-        organization_id: livestream?.organization_id ?? null,
-      });
-      viewRecorded.current = true;
+      try {
+        await supabase.from("view_events").insert({
+          target_type: "livestream",
+          target_id: id,
+          viewer_user_id: user?.id ?? null,
+          organization_id: livestream.organization_id,
+        });
+        viewRecorded.current = true;
+      } catch (err) {
+        console.error('[WatchLive] Error recording view:', err);
+      }
     };
 
-    const timer = setTimeout(recordView, 5000);
+    // Increased delay to reduce database writes during high traffic
+    const timer = setTimeout(recordView, 8000);
     return () => clearTimeout(timer);
   }, [id, user?.id, livestream?.organization_id]);
 

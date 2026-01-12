@@ -323,7 +323,7 @@ export function useComments(targetType: "video" | "livestream", targetId: string
   });
 }
 
-// Fetch view count for a target
+// Fetch view count for a target (optimized for high-traffic livestreams)
 export function useViewCount(targetType: "video" | "livestream", targetId: string) {
   return useQuery({
     queryKey: ["view-count", targetType, targetId],
@@ -338,6 +338,9 @@ export function useViewCount(targetType: "video" | "livestream", targetId: strin
       return count ?? 0;
     },
     enabled: !!targetId,
+    // Optimize for high-traffic: cache for 30 seconds, refetch every 30s
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
   });
 }
 
