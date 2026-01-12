@@ -35,6 +35,7 @@ interface ChatMessageItemProps {
   message: ChatMessage;
   isModerator: boolean;
   isCreator: boolean;
+  avatarUrl: string | null;
   onDelete: (id: string) => void;
   onMute: (userId: string, duration: number) => void;
   onRetry?: (tempId: string, message: string) => void;
@@ -45,6 +46,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   message,
   isModerator,
   isCreator,
+  avatarUrl,
   onDelete,
   onMute,
   onRetry,
@@ -65,7 +67,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
     >
       {/* Avatar */}
       <UserAvatar
-        avatarUrl={message.avatar_url}
+        avatarUrl={avatarUrl || message.avatar_url}
         displayName={message.display_name}
         isCreator={isCreator}
         size="sm"
@@ -186,37 +188,47 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
   const [creatorCache, setCreatorCache] = useState<Record<string, boolean>>({});
+  const [avatarCache, setAvatarCache] = useState<Record<string, string | null>>({});
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevMessagesLengthRef = useRef(messages.length);
 
-  // Fetch creator status for users in messages
+  // Fetch creator status and avatar for users in messages
   useEffect(() => {
     const userIds = [...new Set(messages.map(m => m.user_id))];
     const uncachedIds = userIds.filter(id => !(id in creatorCache));
     
     if (uncachedIds.length === 0) return;
 
-    const fetchCreatorStatus = async () => {
-      const results: Record<string, boolean> = {};
+    const fetchUserData = async () => {
+      const creatorResults: Record<string, boolean> = {};
+      const avatarResults: Record<string, string | null> = {};
       
       await Promise.all(
         uncachedIds.map(async (userId) => {
           try {
-            const { data } = await supabase.rpc("is_user_creator", { _user_id: userId });
-            results[userId] = !!data;
+            // Fetch creator status and profile in parallel
+            const [creatorRes, profileRes] = await Promise.all([
+              supabase.rpc("is_user_creator", { _user_id: userId }),
+              supabase.from("profiles").select("avatar_url").eq("id", userId).single()
+            ]);
+            
+            creatorResults[userId] = !!creatorRes.data;
+            avatarResults[userId] = profileRes.data?.avatar_url ?? null;
           } catch {
-            results[userId] = false;
+            creatorResults[userId] = false;
+            avatarResults[userId] = null;
           }
         })
       );
       
-      setCreatorCache(prev => ({ ...prev, ...results }));
+      setCreatorCache(prev => ({ ...prev, ...creatorResults }));
+      setAvatarCache(prev => ({ ...prev, ...avatarResults }));
     };
 
-    fetchCreatorStatus();
+    fetchUserData();
   }, [messages]);
 
   // Check if user is near bottom of scroll
@@ -487,6 +499,7 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
                   message={message}
                   isModerator={isModerator}
                   isCreator={creatorCache[message.user_id] ?? false}
+                  avatarUrl={avatarCache[message.user_id] ?? message.avatar_url}
                   onDelete={deleteMessage}
                   onMute={muteUser}
                   onRetry={retryMessage}

@@ -380,13 +380,13 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     };
   }, [livestreamId]);
 
-  // Get user profile for display name
+  // Get user profile for display name and avatar
   const getUserProfile = async () => {
     if (!user) return null;
     
     const { data } = await supabase
       .from('profiles')
-      .select('display_name')
+      .select('display_name, avatar_url')
       .eq('id', user.id)
       .single();
     
@@ -427,6 +427,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
 
     const profile = await getUserProfile();
     const displayName = profile?.display_name || user.email?.split('@')[0] || 'User';
+    const avatarUrl = profile?.avatar_url || null;
 
     // Generate client_message_id for dedupe
     const clientMessageId = generateClientMessageId();
@@ -438,7 +439,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       livestream_id: livestreamId,
       user_id: user.id,
       display_name: displayName,
-      avatar_url: null,
+      avatar_url: avatarUrl,
       message: trimmedMessage,
       created_at: createdAt,
       client_message_id: clientMessageId,
@@ -473,7 +474,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
           livestream_id: livestreamId,
           user_id: user.id,
           display_name: displayName,
-          avatar_url: null,
+          avatar_url: avatarUrl,
           message: trimmedMessage,
           created_at: createdAt
         }
@@ -501,6 +502,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         livestream_id: livestreamId,
         user_id: user.id,
         display_name: displayName,
+        avatar_url: avatarUrl,
         message: trimmedMessage,
         client_message_id: clientMessageId
       });
