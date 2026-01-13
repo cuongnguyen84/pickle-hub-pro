@@ -323,19 +323,21 @@ export function useComments(targetType: "video" | "livestream", targetId: string
   });
 }
 
-// Fetch view count for a target (optimized for high-traffic livestreams)
+// Fetch view count for a target (optimized: uses aggregate table instead of COUNT(*))
 export function useViewCount(targetType: "video" | "livestream", targetId: string) {
   return useQuery({
     queryKey: ["view-count", targetType, targetId],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("view_events")
-        .select("*", { count: "exact", head: true })
+      // Use the aggregate view_counts table for O(1) lookup instead of COUNT(*)
+      const { data, error } = await supabase
+        .from("view_counts")
+        .select("count")
         .eq("target_type", targetType)
-        .eq("target_id", targetId);
+        .eq("target_id", targetId)
+        .maybeSingle();
 
       if (error) throw error;
-      return count ?? 0;
+      return data?.count ?? 0;
     },
     enabled: !!targetId,
     // Optimize for high-traffic: cache for 30 seconds, refetch every 30s

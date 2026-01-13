@@ -71,9 +71,9 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   const [isModerator, setIsModerator] = useState(false);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   
-  // SPLIT CHANNELS: Separate broadcast and postgres_changes to avoid binding mismatch
-  const broadcastChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const pgChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  // UNIFIED CHANNEL: Single channel for both broadcast and postgres_changes
+  // This reduces realtime connections by 50% (from 2 to 1 per user)
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   
   // Track all known message IDs (real DB IDs)
   const messageIdsRef = useRef<Set<string>>(new Set());
@@ -87,8 +87,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     timestamp: number 
   }>>(new Map());
   // Track reconnection attempts for resilience during high traffic
-  const broadcastReconnectAttemptsRef = useRef(0);
-  const pgReconnectAttemptsRef = useRef(0);
+  const reconnectAttemptsRef = useRef(0);
 
   // Check if user is moderator
   useEffect(() => {
@@ -172,21 +171,22 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   }, [livestreamId, user]);
 
   // ============================================
-  // CHANNEL A: BROADCAST (instant message delivery)
+  // UNIFIED CHANNEL: Combined broadcast + postgres_changes
+  // Reduces connections from 2 to 1 per user (50% reduction)
   // ============================================
   useEffect(() => {
     if (!livestreamId) return;
     
-    console.log('[Chat] Setting up BROADCAST channel for:', livestreamId);
+    console.log('[Chat] Setting up UNIFIED channel for:', livestreamId);
     
-    const broadcastChannel = supabase.channel(`chat:broadcast:${livestreamId}`, {
+    const channel = supabase.channel(`chat:unified:${livestreamId}`, {
       config: {
         broadcast: { self: true }
       }
     });
     
-    // Listen for broadcast messages
-    broadcastChannel.on('broadcast', { event: 'message' }, (payload) => {
+    // Listen for broadcast messages (instant delivery)
+    channel.on('broadcast', { event: 'message' }, (payload) => {
       const broadcastMsg = payload.payload as {
         client_message_id: string;
         livestream_id: string;
@@ -234,54 +234,8 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       setMessages(prev => [...prev, newMessage]);
     });
     
-    // Subscribe AFTER registering handlers with reconnection logic
-    broadcastChannel.subscribe((status, err) => {
-      console.log('[Chat] BROADCAST channel status:', status, err ? `Error: ${err.message}` : '');
-      if (status === 'SUBSCRIBED') {
-        console.log('[Chat] ✓ BROADCAST channel ready');
-        broadcastReconnectAttemptsRef.current = 0; // Reset on success
-      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-        // Auto-reconnect with exponential backoff
-        if (broadcastReconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-          const delay = RECONNECT_DELAY_MS * Math.pow(2, broadcastReconnectAttemptsRef.current);
-          console.log(`[Chat] BROADCAST reconnecting in ${delay}ms (attempt ${broadcastReconnectAttemptsRef.current + 1})`);
-          broadcastReconnectAttemptsRef.current++;
-          setTimeout(() => {
-            if (broadcastChannelRef.current) {
-              supabase.removeChannel(broadcastChannelRef.current);
-              broadcastChannelRef.current = null;
-            }
-            // Force re-subscribe by triggering effect cleanup
-          }, delay);
-        } else {
-          console.error('[Chat] BROADCAST max reconnect attempts reached');
-        }
-      }
-    });
-    
-    broadcastChannelRef.current = broadcastChannel;
-    
-    return () => {
-      console.log('[Chat] Cleaning up BROADCAST channel');
-      if (broadcastChannelRef.current) {
-        supabase.removeChannel(broadcastChannelRef.current);
-        broadcastChannelRef.current = null;
-      }
-    };
-  }, [livestreamId]);
-  
-  // ============================================
-  // CHANNEL B: POSTGRES CHANGES (reconciliation & persistence)
-  // ============================================
-  useEffect(() => {
-    if (!livestreamId) return;
-    
-    console.log('[Chat] Setting up POSTGRES channel for:', livestreamId);
-    
-    const pgChannel = supabase.channel(`chat:pg:${livestreamId}`);
-    
     // Listen for INSERT (message persistence confirmation)
-    pgChannel.on(
+    channel.on(
       'postgres_changes',
       {
         event: 'INSERT',
@@ -351,7 +305,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     );
     
     // Listen for DELETE
-    pgChannel.on(
+    channel.on(
       'postgres_changes',
       {
         event: 'DELETE',
@@ -368,7 +322,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     );
     
     // Listen for settings changes
-    pgChannel.on(
+    channel.on(
       'postgres_changes',
       {
         event: '*',
@@ -383,37 +337,37 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       }
     );
     
-    // IMPORTANT: Subscribe AFTER registering ALL handlers with reconnection logic
-    pgChannel.subscribe((status, err) => {
-      console.log('[Chat] POSTGRES channel status:', status, err ? `Error: ${err.message}` : '');
+    // Subscribe with reconnection logic
+    channel.subscribe((status, err) => {
+      console.log('[Chat] UNIFIED channel status:', status, err ? `Error: ${err.message}` : '');
       if (status === 'SUBSCRIBED') {
-        console.log('[Chat] ✓ POSTGRES channel ready');
-        pgReconnectAttemptsRef.current = 0; // Reset on success
+        console.log('[Chat] ✓ UNIFIED channel ready');
+        reconnectAttemptsRef.current = 0; // Reset on success
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
         // Auto-reconnect with exponential backoff
-        if (pgReconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-          const delay = RECONNECT_DELAY_MS * Math.pow(2, pgReconnectAttemptsRef.current);
-          console.log(`[Chat] POSTGRES reconnecting in ${delay}ms (attempt ${pgReconnectAttemptsRef.current + 1})`);
-          pgReconnectAttemptsRef.current++;
+        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+          const delay = RECONNECT_DELAY_MS * Math.pow(2, reconnectAttemptsRef.current);
+          console.log(`[Chat] UNIFIED reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1})`);
+          reconnectAttemptsRef.current++;
           setTimeout(() => {
-            if (pgChannelRef.current) {
-              supabase.removeChannel(pgChannelRef.current);
-              pgChannelRef.current = null;
+            if (channelRef.current) {
+              supabase.removeChannel(channelRef.current);
+              channelRef.current = null;
             }
           }, delay);
         } else {
-          console.error('[Chat] POSTGRES max reconnect attempts reached');
+          console.error('[Chat] UNIFIED max reconnect attempts reached');
         }
       }
     });
     
-    pgChannelRef.current = pgChannel;
+    channelRef.current = channel;
     
     return () => {
-      console.log('[Chat] Cleaning up POSTGRES channel');
-      if (pgChannelRef.current) {
-        supabase.removeChannel(pgChannelRef.current);
-        pgChannelRef.current = null;
+      console.log('[Chat] Cleaning up UNIFIED channel');
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [livestreamId]);
@@ -500,11 +454,11 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
     // Immediately add to UI
     setMessages(prev => [...prev, optimisticMessage]);
 
-    // 1. Send broadcast IMMEDIATELY via BROADCAST channel
-    const broadcastChannel = broadcastChannelRef.current;
-    if (broadcastChannel) {
+    // 1. Send broadcast IMMEDIATELY via UNIFIED channel
+    const channel = channelRef.current;
+    if (channel) {
       console.log('[Chat] Sending broadcast via channel');
-      broadcastChannel.send({
+      channel.send({
         type: 'broadcast',
         event: 'message',
         payload: {
@@ -522,7 +476,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         console.error('[Chat] Broadcast error:', err);
       });
     } else {
-      console.warn('[Chat] Broadcast channel not available - message will rely on Postgres changes');
+      console.warn('[Chat] Channel not available - message will rely on Postgres changes');
     }
 
     // 2. Persist to DB (in parallel)
