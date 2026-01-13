@@ -337,11 +337,61 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       }
     );
     
+    // Fetch missed messages when reconnecting
+    const fetchMissedMessages = async () => {
+      const lastMessage = messages[messages.length - 1];
+      if (!lastMessage) return;
+      
+      console.log('[Chat] Fetching missed messages since:', lastMessage.created_at);
+      
+      const { data: newMessages } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('livestream_id', livestreamId)
+        .gt('created_at', lastMessage.created_at)
+        .order('created_at', { ascending: true })
+        .limit(100);
+      
+      if (newMessages && newMessages.length > 0) {
+        console.log('[Chat] Found', newMessages.length, 'missed messages');
+        
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const existingClientIds = new Set(
+            prev.map(m => m.client_message_id).filter(Boolean)
+          );
+          
+          const trulyNew = newMessages.filter(m => 
+            !existingIds.has(m.id) && 
+            (!m.client_message_id || !existingClientIds.has(m.client_message_id))
+          );
+          
+          if (trulyNew.length === 0) return prev;
+          
+          // Add to tracking
+          trulyNew.forEach(m => {
+            messageIdsRef.current.add(m.id);
+            if (m.client_message_id) {
+              clientMessageIdsRef.current.add(m.client_message_id);
+            }
+          });
+          
+          return [...prev, ...trulyNew];
+        });
+      }
+    };
+    
     // Subscribe with reconnection logic
     channel.subscribe((status, err) => {
       console.log('[Chat] UNIFIED channel status:', status, err ? `Error: ${err.message}` : '');
       if (status === 'SUBSCRIBED') {
         console.log('[Chat] ✓ UNIFIED channel ready');
+        
+        // Fetch missed messages on reconnect
+        if (reconnectAttemptsRef.current > 0) {
+          fetchMissedMessages();
+        }
+        
         reconnectAttemptsRef.current = 0; // Reset on success
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
         // Auto-reconnect with exponential backoff
@@ -505,6 +555,7 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       console.error('[Chat] Error persisting message:', error);
       
       // Mark as failed
+      pendingMessagesRef.current.delete(tempId);
       setMessages(prev => prev.map(m => 
         m.id === tempId ? { ...m, _pending: false, _failed: true } : m
       ));
@@ -523,7 +574,15 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       return false;
     }
 
-    console.log('[Chat] Message persisted successfully, waiting for Postgres change to confirm');
+    // SUCCESS: Mark as confirmed immediately after DB persist
+    // Don't wait for postgres_changes since channel might be disconnected
+    console.log('[Chat] Message persisted successfully, confirming immediately');
+    
+    pendingMessagesRef.current.delete(tempId);
+    setMessages(prev => prev.map(m => 
+      m.id === tempId ? { ...m, _pending: false, _failed: false } : m
+    ));
+    
     return true;
   }, [user, userMute, settings, livestreamId, toast, t]);
 
