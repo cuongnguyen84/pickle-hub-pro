@@ -71,6 +71,9 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   const [isModerator, setIsModerator] = useState(false);
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   
+  // Channel reconnection trigger - increment to force re-subscribe
+  const [channelVersion, setChannelVersion] = useState(0);
+  
   // UNIFIED CHANNEL: Single channel for both broadcast and postgres_changes
   // This reduces realtime connections by 50% (from 2 to 1 per user)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -88,6 +91,8 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
   }>>(new Map());
   // Track reconnection attempts for resilience during high traffic
   const reconnectAttemptsRef = useRef(0);
+  // Track last fetched timestamp for polling fallback
+  const lastFetchTimeRef = useRef<string | null>(null);
 
   // Check if user is moderator
   useEffect(() => {
@@ -132,6 +137,11 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         });
         setMessages(reversed);
         setHasOlderMessages((count || 0) > MESSAGES_LIMIT);
+        
+        // Set last fetch time for polling
+        if (reversed.length > 0) {
+          lastFetchTimeRef.current = reversed[reversed.length - 1].created_at;
+        }
       }
       
       // Load settings
@@ -396,17 +406,20 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
         // Auto-reconnect with exponential backoff
         if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-          const delay = RECONNECT_DELAY_MS * Math.pow(2, reconnectAttemptsRef.current);
+          const delay = Math.min(RECONNECT_DELAY_MS * Math.pow(2, reconnectAttemptsRef.current), 15000);
           console.log(`[Chat] UNIFIED reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1})`);
           reconnectAttemptsRef.current++;
+          
           setTimeout(() => {
             if (channelRef.current) {
               supabase.removeChannel(channelRef.current);
               channelRef.current = null;
             }
+            // Trigger re-subscribe by incrementing channelVersion
+            setChannelVersion(v => v + 1);
           }, delay);
         } else {
-          console.error('[Chat] UNIFIED max reconnect attempts reached');
+          console.error('[Chat] UNIFIED max reconnect attempts reached, falling back to polling');
         }
       }
     });
@@ -420,7 +433,68 @@ export const useLiveChat = (livestreamId: string): UseLiveChatResult => {
         channelRef.current = null;
       }
     };
-  }, [livestreamId]);
+  }, [livestreamId, channelVersion]);
+
+  // ============================================
+  // POLLING FALLBACK: Fetch new messages every 5 seconds
+  // This ensures messages are received even if realtime fails
+  // ============================================
+  useEffect(() => {
+    if (!livestreamId) return;
+    
+    const pollMessages = async () => {
+      // Get the latest message timestamp from current messages
+      const currentMessages = messages;
+      const lastMessage = currentMessages[currentMessages.length - 1];
+      const sinceTime = lastMessage?.created_at || lastFetchTimeRef.current;
+      
+      if (!sinceTime) return;
+      
+      const { data: newMessages } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('livestream_id', livestreamId)
+        .gt('created_at', sinceTime)
+        .order('created_at', { ascending: true })
+        .limit(50);
+      
+      if (newMessages && newMessages.length > 0) {
+        console.log('[Chat] Polling found', newMessages.length, 'new messages');
+        
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const existingClientIds = new Set(
+            prev.map(m => m.client_message_id).filter(Boolean)
+          );
+          
+          const trulyNew = newMessages.filter(m => 
+            !existingIds.has(m.id) && 
+            (!m.client_message_id || !existingClientIds.has(m.client_message_id))
+          );
+          
+          if (trulyNew.length === 0) return prev;
+          
+          // Add to tracking
+          trulyNew.forEach(m => {
+            messageIdsRef.current.add(m.id);
+            if (m.client_message_id) {
+              clientMessageIdsRef.current.add(m.client_message_id);
+            }
+          });
+          
+          // Update last fetch time
+          lastFetchTimeRef.current = trulyNew[trulyNew.length - 1].created_at;
+          
+          return [...prev, ...trulyNew];
+        });
+      }
+    };
+    
+    // Poll every 5 seconds as fallback
+    const pollInterval = setInterval(pollMessages, 5000);
+    
+    return () => clearInterval(pollInterval);
+  }, [livestreamId, messages]);
 
   // Get user profile for display name and avatar
   const getUserProfile = async () => {
