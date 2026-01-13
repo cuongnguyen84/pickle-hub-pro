@@ -1642,6 +1642,30 @@ export type Database = {
           },
         ]
       }
+      view_counts: {
+        Row: {
+          count: number
+          id: string
+          last_updated_at: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type"]
+        }
+        Insert: {
+          count?: number
+          id?: string
+          last_updated_at?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type"]
+        }
+        Update: {
+          count?: number
+          id?: string
+          last_updated_at?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["target_type"]
+        }
+        Relationships: []
+      }
       view_events: {
         Row: {
           created_at: string
@@ -1849,6 +1873,13 @@ export type Database = {
         Returns: number
       }
       get_user_quota_info: { Args: { _user_id: string }; Returns: Json }
+      get_view_count: {
+        Args: {
+          _target_id: string
+          _target_type: Database["public"]["Enums"]["target_type"]
+        }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
