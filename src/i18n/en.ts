@@ -341,6 +341,10 @@ export const en: Translations = {
     notReady: "Video not ready",
     playbackError: "Unable to play",
     playbackErrorDesc: "Cannot play on this browser. Try reloading or switching networks.",
+    reconnecting: "Reconnecting...",
+    connectionLost: "Connection lost, retrying...",
+    autoRetry: "Auto-retrying in {seconds} seconds",
+    retryFailed: "Could not reconnect. Please try again.",
   },
   errors: {
     notFound: "Page not found",
