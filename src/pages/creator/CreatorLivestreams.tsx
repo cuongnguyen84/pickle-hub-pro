@@ -91,63 +91,66 @@ export default function CreatorLivestreams() {
             ))
           ) : livestreams && livestreams.length > 0 ? (
             livestreams.map((stream) => (
-              <Link
+              <div
                 key={stream.id}
-                to={`/creator/livestreams/${stream.id}/edit`}
-                className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-border-subtle hover:bg-muted transition-colors"
+                className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-border-subtle"
               >
-                <div className="w-20 h-14 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {stream.thumbnail_url ? (
-                    <img
-                      src={stream.thumbnail_url}
-                      alt={stream.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Radio className="w-5 h-5 text-foreground-muted" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground text-sm truncate">
-                    {stream.title}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge
-                      variant={
-                        stream.status === "live"
-                          ? "destructive"
-                          : stream.status === "scheduled"
-                          ? "default"
-                          : "secondary"
-                      }
-                      className="text-[10px]"
-                    >
-                      {stream.status === "live" && (
-                        <span className="w-1.5 h-1.5 bg-current rounded-full mr-1 animate-pulse" />
-                      )}
-                      {stream.status}
-                    </Badge>
+                <Link
+                  to={`/creator/livestreams/${stream.id}/edit`}
+                  className="flex items-center gap-3 flex-1 min-w-0"
+                >
+                  <div className="w-20 h-14 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {stream.thumbnail_url ? (
+                      <img
+                        src={stream.thumbnail_url}
+                        alt={stream.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Radio className="w-5 h-5 text-foreground-muted" />
+                    )}
                   </div>
-                  <p className="text-xs text-foreground-secondary mt-1">
-                    {stream.scheduled_start_at
-                      ? format(new Date(stream.scheduled_start_at), "MMM d, HH:mm")
-                      : "-"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
-                  <Edit className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground text-sm truncate">
+                      {stream.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge
+                        variant={
+                          stream.status === "live"
+                            ? "destructive"
+                            : stream.status === "scheduled"
+                            ? "default"
+                            : "secondary"
+                        }
+                        className="text-[10px]"
+                      >
+                        {stream.status === "live" && (
+                          <span className="w-1.5 h-1.5 bg-current rounded-full mr-1 animate-pulse" />
+                        )}
+                        {stream.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-foreground-secondary mt-1">
+                      {stream.scheduled_start_at
+                        ? format(new Date(stream.scheduled_start_at), "MMM d, HH:mm")
+                        : "-"}
+                    </p>
+                  </div>
+                </Link>
+                <div className="flex items-center gap-1">
+                  <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+                    <Link to={`/creator/livestreams/${stream.id}/edit`}>
+                      <Edit className="w-4 h-4 text-foreground-muted" />
+                    </Link>
+                  </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Xóa livestream?</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -157,10 +160,7 @@ export default function CreatorLivestreams() {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(stream.id);
-                          }}
+                          onClick={() => handleDelete(stream.id)}
                           className="bg-destructive hover:bg-destructive/90"
                         >
                           Xóa
@@ -169,7 +169,7 @@ export default function CreatorLivestreams() {
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
-              </Link>
+              </div>
             ))
           ) : (
             <div className="text-center py-8 bg-surface rounded-lg border border-border-subtle">

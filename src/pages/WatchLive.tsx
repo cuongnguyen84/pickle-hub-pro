@@ -125,7 +125,7 @@ const WatchLive = () => {
         </Link>
 
         {/* Sticky Video Player for Mobile */}
-        <div className="lg:hidden sticky top-0 z-40 -mx-4 sm:-mx-6 bg-background">
+        <div className="lg:hidden sticky top-14 z-40 -mx-4 sm:-mx-6 bg-background">
           <div className="aspect-video bg-surface-elevated overflow-hidden relative">
             {hasPlayback ? (
               <MuxPlayer

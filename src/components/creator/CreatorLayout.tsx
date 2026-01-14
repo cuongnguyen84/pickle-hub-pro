@@ -161,14 +161,8 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
         />
       )}
 
-      {/* Sidebar - Desktop always visible, Mobile as drawer */}
-      <aside
-        className={cn(
-          "fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-surface border-r border-border-subtle flex-col transition-transform duration-300",
-          "hidden lg:flex",
-          sidebarOpen ? "flex translate-x-0" : "-translate-x-full lg:translate-x-0"
-        )}
-      >
+      {/* Sidebar - Desktop only */}
+      <aside className="hidden lg:flex sticky top-0 left-0 h-screen w-64 bg-surface border-r border-border-subtle flex-col">
         {/* Header */}
         <div className="p-4 border-b border-border-subtle">
           <Link to="/" className="flex items-center gap-2 text-foreground font-semibold">
@@ -190,7 +184,6 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
               <Link
                 key={link.path}
                 to={link.path}
-                onClick={() => setSidebarOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   isActive
@@ -217,31 +210,10 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
         </div>
       </aside>
 
-      {/* Mobile Drawer Menu - Only Home link */}
+      {/* Mobile Drawer - Only Home link */}
       {sidebarOpen && (
-        <aside className="fixed top-0 left-0 z-50 h-screen w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden pt-[env(safe-area-inset-top)]">
-          {/* Header */}
-          <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-            <Link 
-              to="/" 
-              onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-2 text-foreground font-semibold"
-            >
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">PH</span>
-              </div>
-              <span>Creator Studio</span>
-            </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="p-2 rounded-lg text-foreground-secondary hover:text-foreground hover:bg-muted"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Only Home link */}
-          <nav className="flex-1 p-4">
+        <aside className="fixed top-14 left-0 z-50 w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden shadow-xl" style={{ height: 'calc(100vh - 3.5rem - env(safe-area-inset-top))' }}>
+          <nav className="p-4">
             <Link
               to="/"
               onClick={() => setSidebarOpen(false)}
