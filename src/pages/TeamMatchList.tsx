@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -162,7 +162,7 @@ export default function TeamMatchList() {
             The pickleball team match format brings professional-style team competition to your club or tournament. 
             Inspired by Major League Pickleball (MLP), this format features teams competing across multiple game types 
             including men's doubles, women's doubles, and mixed doubles. Create exciting team rivalries with our 
-            comprehensive team management tools.
+            comprehensive team management tools as part of our <Link to="/tournaments" className="text-primary hover:underline">pickleball tournament software</Link>.
           </p>
           
           <h2 className="text-lg font-semibold mb-3">
@@ -181,8 +181,8 @@ export default function TeamMatchList() {
           <p className="text-muted-foreground">
             Whether organizing a casual inter-club match or a full league season, ThePickleHub's team match 
             format tool handles all the complexity. Track team standings, manage rosters, schedule matches, 
-            and calculate results automatically. The MLP format is perfect for building community engagement 
-            and creating memorable pickleball team experiences.
+            and calculate results automatically. Combine with our <Link to="/tools/quick-tables" className="text-primary hover:underline">pickleball bracket generator</Link> for 
+            complete tournament management and memorable pickleball team experiences.
           </p>
         </section>
 

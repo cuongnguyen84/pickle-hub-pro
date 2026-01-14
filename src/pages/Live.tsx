@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { LiveCard, SectionHeader, EmptyState } from "@/components/content";
 import { SearchBar } from "@/components/search";
@@ -68,7 +69,7 @@ const Live = () => {
           </h2>
           <p className="text-foreground-secondary mb-4">
             ThePickleHub brings you the best pickleball livestream experience in Vietnam and beyond. 
-            Watch live matches from professional tournaments, amateur competitions, and community events. 
+            Watch live matches from professional <Link to="/tournaments" className="text-primary hover:underline">pickleball tournaments</Link>, amateur competitions, and community events. 
             Our platform features streams from top pickleball creators including TAPickleball, featuring 
             high-quality broadcasts of singles, doubles, and mixed doubles matches.
           </p>
@@ -88,7 +89,8 @@ const Live = () => {
           </h2>
           <p className="text-foreground-secondary">
             Browse our schedule of upcoming livestreams and set reminders for matches you don't want to miss. 
-            Whether you're looking for recreational club tournaments or competitive league matches, 
+            Whether you're looking for recreational club tournaments or competitive league matches with 
+            <Link to="/tools/quick-tables" className="text-primary hover:underline"> pickleball tournament brackets</Link>, 
             ThePickleHub has your pickleball livestream needs covered.
           </p>
         </section>
