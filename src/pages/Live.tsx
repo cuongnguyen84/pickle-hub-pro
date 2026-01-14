@@ -52,51 +52,18 @@ const Live = () => {
         url="https://thepicklehub.net/livestream"
       />
       <div className="container-wide py-8">
-        {/* SEO Header Section */}
-        <header className="mb-8">
+        {/* SEO Header Section - H1 giữ nguyên */}
+        <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Pickleball Livestream
+            {t.live.hubTitle}
           </h1>
           <p className="text-foreground-secondary max-w-3xl">
-            Watch pickleball tournaments live on ThePickleHub – your destination for real-time pickleball action.
+            {t.live.hubDescription}
           </p>
         </header>
 
-        {/* SEO Content Section */}
-        <section className="mb-8 p-6 rounded-xl bg-background-surface border border-border-subtle">
-          <h2 className="text-lg font-semibold text-foreground mb-3">
-            Watch Pickleball Tournaments Live
-          </h2>
-          <p className="text-foreground-secondary mb-4">
-            ThePickleHub brings you the best pickleball livestream experience in Vietnam and beyond. 
-            Watch live matches from professional <Link to="/tournaments" className="text-primary hover:underline">pickleball tournaments</Link>, amateur competitions, and community events. 
-            Our platform features streams from top pickleball creators including TAPickleball, featuring 
-            high-quality broadcasts of singles, doubles, and mixed doubles matches.
-          </p>
-          
-          <h2 className="text-lg font-semibold text-foreground mb-3">
-            Livestream From Top Pickleball Creators
-          </h2>
-          <p className="text-foreground-secondary mb-4">
-            Follow your favorite pickleball content creators and never miss a live match. 
-            Our creators broadcast tournaments, training sessions, and exhibition matches regularly. 
-            Get real-time scores, commentary, and the excitement of live pickleball competition 
-            directly on your device.
-          </p>
-
-          <h2 className="text-lg font-semibold text-foreground mb-3">
-            Upcoming & Ongoing Pickleball Livestreams
-          </h2>
-          <p className="text-foreground-secondary">
-            Browse our schedule of upcoming livestreams and set reminders for matches you don't want to miss. 
-            Whether you're looking for recreational club tournaments or competitive league matches with 
-            <Link to="/tools/quick-tables" className="text-primary hover:underline"> pickleball tournament brackets</Link>, 
-            ThePickleHub has your pickleball livestream needs covered.
-          </p>
-        </section>
-
-        {/* Search Bar */}
-        <div className="mb-8">
+        {/* Search Bar - Ngay dưới header */}
+        <div className="mb-6">
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
@@ -120,7 +87,7 @@ const Live = () => {
           <EmptyState icon={Search} title={t.search.noResults} />
         ) : (
           <>
-            {/* Live Now Section */}
+            {/* Live Now Section - Ưu tiên hiển thị đầu tiên */}
             <section className="mb-12">
               <SectionHeader title={t.home.sections.liveNow} />
               {filteredLive.length > 0 ? (
@@ -144,9 +111,9 @@ const Live = () => {
               )}
             </section>
 
-            {/* Scheduled Section */}
+            {/* Scheduled Section - Thứ hai */}
             {filteredScheduled.length > 0 && (
-              <section>
+              <section className="mb-12">
                 <SectionHeader title={t.live.scheduled} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredScheduled.map((stream) => (
@@ -166,6 +133,45 @@ const Live = () => {
             )}
           </>
         )}
+
+        {/* SEO Content Section - Đưa xuống cuối, chia thành các blocks rõ ràng */}
+        <section className="mt-16 space-y-8">
+          {/* Block 1: Livestream Tournaments */}
+          <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
+            <h2 className="text-lg font-semibold text-foreground mb-3">
+              {t.live.seo.tournamentsTitle}
+            </h2>
+            <p className="text-foreground-secondary">
+              {t.live.seo.tournamentsDesc}{" "}
+              <Link to="/tournaments" className="text-primary hover:underline">
+                {t.tournament.title}
+              </Link>
+            </p>
+          </article>
+
+          {/* Block 2: Livestream from Creators */}
+          <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
+            <h2 className="text-lg font-semibold text-foreground mb-3">
+              {t.live.seo.creatorsTitle}
+            </h2>
+            <p className="text-foreground-secondary">
+              {t.live.seo.creatorsDesc}
+            </p>
+          </article>
+
+          {/* Block 3: Upcoming & Match Types */}
+          <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
+            <h2 className="text-lg font-semibold text-foreground mb-3">
+              {t.live.seo.upcomingTitle}
+            </h2>
+            <p className="text-foreground-secondary">
+              {t.live.seo.upcomingDesc}{" "}
+              <Link to="/tools/quick-tables" className="text-primary hover:underline">
+                {t.tools.quickTable.title}
+              </Link>
+            </p>
+          </article>
+        </section>
       </div>
     </MainLayout>
   );
