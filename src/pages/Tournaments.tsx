@@ -191,32 +191,6 @@ const Tournaments = () => {
           </p>
         </header>
 
-        {/* SEO Content Section */}
-        <section className="mb-8 p-6 rounded-xl bg-background-surface border border-border-subtle">
-          <h2 className="text-lg font-semibold text-foreground mb-3">
-            {t.tournament.seo.createTitle}
-          </h2>
-          <p className="text-foreground-secondary mb-4">
-            {t.tournament.seo.createDesc}{" "}
-            <Link to="/tools/quick-tables" className="text-primary hover:underline">{t.tools.quickTable.title}</Link>
-          </p>
-          
-          <h2 className="text-lg font-semibold text-foreground mb-3">
-            {t.tournament.seo.formatsTitle}
-          </h2>
-          <p className="text-foreground-secondary mb-4">
-            {t.tournament.seo.formatsDesc}{" "}
-            <Link to="/tools/team-match" className="text-primary hover:underline">{t.tools.teamMatch.title}</Link>{" "}
-            <Link to="/livestream" className="text-primary hover:underline">{t.live.hubTitle}</Link>
-          </p>
-
-          <h2 className="text-lg font-semibold text-foreground mb-3">
-            {t.tournament.seo.builtTitle}
-          </h2>
-          <p className="text-foreground-secondary">
-            {t.tournament.seo.builtDesc}
-          </p>
-        </section>
 
         {/* Search Bar */}
         <div className="mb-8">
@@ -420,6 +394,33 @@ const Tournaments = () => {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* SEO Content Section - moved to bottom */}
+        <section className="mt-12 p-6 rounded-xl bg-background-surface border border-border-subtle">
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            {t.tournament.seo.createTitle}
+          </h2>
+          <p className="text-foreground-secondary mb-4">
+            {t.tournament.seo.createDesc}{" "}
+            <Link to="/tools/quick-tables" className="text-primary hover:underline">{t.tools.quickTable.title}</Link>
+          </p>
+          
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            {t.tournament.seo.formatsTitle}
+          </h2>
+          <p className="text-foreground-secondary mb-4">
+            {t.tournament.seo.formatsDesc}{" "}
+            <Link to="/tools/team-match" className="text-primary hover:underline">{t.tools.teamMatch.title}</Link>{" "}
+            <Link to="/livestream" className="text-primary hover:underline">{t.live.hubTitle}</Link>
+          </p>
+
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            {t.tournament.seo.builtTitle}
+          </h2>
+          <p className="text-foreground-secondary">
+            {t.tournament.seo.builtDesc}
+          </p>
+        </section>
       </div>
     </MainLayout>
   );
