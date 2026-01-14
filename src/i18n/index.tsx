@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { vi, Translations } from "./vi";
+import type { Translations } from "./vi";
+import { vi } from "./vi";
 import { en } from "./en";
 
 type Language = "vi" | "en";
