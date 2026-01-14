@@ -184,46 +184,37 @@ const Tournaments = () => {
         {/* SEO Header */}
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Pickleball Tournament Software
+            {t.tournament.hubTitle}
           </h1>
           <p className="text-foreground-secondary max-w-3xl">
-            The complete platform for organizing and managing pickleball tournaments of any size.
+            {t.tournament.hubDescription}
           </p>
         </header>
 
         {/* SEO Content Section */}
         <section className="mb-8 p-6 rounded-xl bg-background-surface border border-border-subtle">
           <h2 className="text-lg font-semibold text-foreground mb-3">
-            Create, Manage and Run Pickleball Tournaments
+            {t.tournament.seo.createTitle}
           </h2>
           <p className="text-foreground-secondary mb-4">
-            ThePickleHub provides powerful pickleball tournament software designed specifically for organizers. 
-            Whether you're running a small club tournament or a large competitive event, our platform 
-            handles everything from player registration to bracket generation and live scoring. 
-            Use our <Link to="/tools/quick-tables" className="text-primary hover:underline">pickleball bracket generator</Link> for 
-            automated bracket creation, real-time score updates, and professional tournament management tools.
+            {t.tournament.seo.createDesc}{" "}
+            <Link to="/tools/quick-tables" className="text-primary hover:underline">{t.tools.quickTable.title}</Link>
           </p>
           
           <h2 className="text-lg font-semibold text-foreground mb-3">
-            Support for Brackets, Team Matches and Livestream
+            {t.tournament.seo.formatsTitle}
           </h2>
           <p className="text-foreground-secondary mb-4">
-            Our pickleball tournament software supports multiple formats including round robin, 
-            single elimination, double elimination, and <Link to="/tools/team-match" className="text-primary hover:underline">pickleball team match format</Link> competitions. 
-            Integrate <Link to="/livestream" className="text-primary hover:underline">pickleball livestream</Link> directly into your tournament to reach a wider audience. 
-            Players can view brackets, check schedules, and follow match results in real-time 
-            from any device.
+            {t.tournament.seo.formatsDesc}{" "}
+            <Link to="/tools/team-match" className="text-primary hover:underline">{t.tools.teamMatch.title}</Link>{" "}
+            <Link to="/livestream" className="text-primary hover:underline">{t.live.hubTitle}</Link>
           </p>
 
           <h2 className="text-lg font-semibold text-foreground mb-3">
-            Built for Real Pickleball Events
+            {t.tournament.seo.builtTitle}
           </h2>
           <p className="text-foreground-secondary">
-            Used by tournament directors and pickleball clubs across Vietnam, ThePickleHub's tournament 
-            software is built from real-world experience organizing competitive pickleball events. 
-            From amateur community tournaments to professional competitions, our platform scales 
-            to meet your needs with features like court scheduling, referee management, and 
-            automated standings calculations.
+            {t.tournament.seo.builtDesc}
           </p>
         </section>
 
@@ -375,7 +366,7 @@ const Tournaments = () => {
                   </div>
                   <div className="flex items-center gap-2 pl-13 sm:pl-0">
                     <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 whitespace-nowrap">
-                      Đang mở đăng ký
+                      {t.tournament.openRegistration}
                     </Badge>
                     <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
                   </div>
