@@ -16,7 +16,7 @@ interface MuxPlayerProps {
   title?: string;
   poster?: string;
   className?: string;
-  streamType?: "on-demand" | "live" | "ll-live";
+  streamType?: "on-demand" | "live" | "ll-live" | "live:dvr";
   type?: "video" | "livestream";
   isLive?: boolean;
 }

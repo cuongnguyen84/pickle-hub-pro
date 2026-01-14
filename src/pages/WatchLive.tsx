@@ -100,6 +100,10 @@ const WatchLive = () => {
   const hasPlayback = !!livestream.mux_playback_id;
   const isLive = livestream.status === "live";
   const isScheduled = livestream.status === "scheduled";
+  const isEnded = livestream.status === "ended";
+  
+  // Determine stream type: live for active streams, live:dvr for replays
+  const streamType = isLive ? "live" : "live:dvr";
 
   return (
     <MainLayout>
@@ -120,17 +124,59 @@ const WatchLive = () => {
           <span className="text-sm">{t.nav.live}</span>
         </Link>
 
+        {/* Sticky Video Player for Mobile */}
+        <div className="lg:hidden sticky top-0 z-40 -mx-4 sm:-mx-6 bg-background">
+          <div className="aspect-video bg-surface-elevated overflow-hidden relative">
+            {hasPlayback ? (
+              <MuxPlayer
+                playbackId={livestream.mux_playback_id!}
+                title={livestream.title}
+                poster={livestream.thumbnail_url ?? undefined}
+                streamType={streamType}
+                type="livestream"
+                isLive={isLive}
+              />
+            ) : isScheduled ? (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
+                <Radio className="w-12 h-12 text-foreground-muted" />
+                <p className="text-foreground-secondary text-center px-4">
+                  {t.live.scheduled} - {livestream.scheduled_start_at && format(
+                    new Date(livestream.scheduled_start_at),
+                    "dd MMM yyyy, HH:mm",
+                    { locale: dateLocale }
+                  )}
+                </p>
+              </div>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
+                {livestream.thumbnail_url ? (
+                  <img
+                    src={livestream.thumbnail_url}
+                    alt={livestream.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <>
+                    <AlertCircle className="w-12 h-12 text-foreground-muted" />
+                    <p className="text-foreground-secondary">{t.player.notReady}</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Video Player */}
-            <div className="aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
+            {/* Video Player - Desktop only */}
+            <div className="hidden lg:block aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
               {hasPlayback ? (
                 <MuxPlayer
                   playbackId={livestream.mux_playback_id!}
                   title={livestream.title}
                   poster={livestream.thumbnail_url ?? undefined}
-                  streamType={isLive ? "live" : "on-demand"}
+                  streamType={streamType}
                   type="livestream"
                   isLive={isLive}
                 />
