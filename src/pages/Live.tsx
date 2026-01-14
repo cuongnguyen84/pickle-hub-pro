@@ -7,6 +7,7 @@ import { useI18n } from "@/i18n";
 import { useLivestreams } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
 import { Radio, Search } from "lucide-react";
+import { DynamicMeta } from "@/components/seo";
 
 const Live = () => {
   const { t } = useI18n();
@@ -44,8 +45,53 @@ const Live = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta 
+        title="Pickleball Livestream | Watch Pickleball Tournaments Live"
+        description="Watch live pickleball tournaments and matches on ThePickleHub. Stream pickleball events from top creators, professional tournaments, and community competitions in real-time."
+        url="https://thepicklehub.net/livestream"
+      />
       <div className="container-wide py-8">
-        <h1 className="text-2xl font-semibold mb-6">{t.nav.live}</h1>
+        {/* SEO Header Section */}
+        <header className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+            Pickleball Livestream
+          </h1>
+          <p className="text-foreground-secondary max-w-3xl">
+            Watch pickleball tournaments live on ThePickleHub – your destination for real-time pickleball action.
+          </p>
+        </header>
+
+        {/* SEO Content Section */}
+        <section className="mb-8 p-6 rounded-xl bg-background-surface border border-border-subtle">
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            Watch Pickleball Tournaments Live
+          </h2>
+          <p className="text-foreground-secondary mb-4">
+            ThePickleHub brings you the best pickleball livestream experience in Vietnam and beyond. 
+            Watch live matches from professional tournaments, amateur competitions, and community events. 
+            Our platform features streams from top pickleball creators including TAPickleball, featuring 
+            high-quality broadcasts of singles, doubles, and mixed doubles matches.
+          </p>
+          
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            Livestream From Top Pickleball Creators
+          </h2>
+          <p className="text-foreground-secondary mb-4">
+            Follow your favorite pickleball content creators and never miss a live match. 
+            Our creators broadcast tournaments, training sessions, and exhibition matches regularly. 
+            Get real-time scores, commentary, and the excitement of live pickleball competition 
+            directly on your device.
+          </p>
+
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            Upcoming & Ongoing Pickleball Livestreams
+          </h2>
+          <p className="text-foreground-secondary">
+            Browse our schedule of upcoming livestreams and set reminders for matches you don't want to miss. 
+            Whether you're looking for recreational club tournaments or competitive league matches, 
+            ThePickleHub has your pickleball livestream needs covered.
+          </p>
+        </section>
 
         {/* Search Bar */}
         <div className="mb-8">
