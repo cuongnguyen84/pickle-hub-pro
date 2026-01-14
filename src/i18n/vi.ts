@@ -180,6 +180,8 @@ export interface Translations {
     noLivestreams: string;
     scheduledFor: string;
     replay: string;
+    watchingTooltip: string;
+    totalViewsTooltip: string;
   };
   tournament: {
     title: string;
@@ -807,6 +809,8 @@ export const vi: Translations = {
     noLivestreams: "Không có livestream nào",
     scheduledFor: "Bắt đầu lúc",
     replay: "Xem lại",
+    watchingTooltip: "Số người đang xem trực tiếp ngay bây giờ",
+    totalViewsTooltip: "Tổng số lượt xem từ khi bắt đầu phát",
   },
   tournament: {
     title: "Giải đấu",

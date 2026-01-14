@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { useI18n } from "@/i18n";
 import { useLivestream, useLivestreams, useViewCount } from "@/hooks/useSupabaseData";
+import { useLivePresence } from "@/hooks/useLivePresence";
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { LiveCard } from "@/components/content";
@@ -11,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck } from "lucide-react";
+import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/share";
 import { DynamicMeta } from "@/components/seo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +32,11 @@ const WatchLive = () => {
   const { data: livestream, isLoading } = useLivestream(id!);
   const { data: viewCount = 0 } = useViewCount("livestream", id!);
   const { data: otherLivestreams = [] } = useLivestreams("live");
+  
+  // Real-time concurrent viewers using Supabase Presence
+  // Only enabled when livestream is live
+  const isLiveStatus = livestream?.status === "live";
+  const { concurrentViewers, isConnected } = useLivePresence(id!, isLiveStatus);
 
   const dateLocale = language === "vi" ? viLocale : enUS;
 
@@ -272,17 +279,53 @@ const WatchLive = () => {
                     </span>
                   </Link>
                 )}
-                {/* View count with context-aware label */}
-                <span className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  {isEnded ? (
-                    // For ended livestreams: show as total views (not "watching")
-                    <>{viewCount.toLocaleString()} {t.live.totalViews}</>
+                {/* View counts with context-aware labels and tooltips */}
+                <TooltipProvider>
+                  {isLive ? (
+                    // LIVE: Show both concurrent viewers and total views
+                    <>
+                      {/* Concurrent viewers (real-time) */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 cursor-help">
+                            <Users className="w-4 h-4 text-live" />
+                            <span className="text-live font-medium">
+                              {isConnected ? concurrentViewers.toLocaleString() : "—"} {t.live.watching}
+                            </span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t.live.watchingTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      {/* Total views */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 cursor-help text-foreground-muted">
+                            <Eye className="w-4 h-4" />
+                            {viewCount.toLocaleString()} {t.live.totalViews}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t.live.totalViewsTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </>
                   ) : (
-                    // For live/scheduled: show as currently watching
-                    <>{viewCount.toLocaleString()} {t.live.watching}</>
+                    // ENDED/SCHEDULED: Only show total views
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1 cursor-help">
+                          <Eye className="w-4 h-4" />
+                          {viewCount.toLocaleString()} {t.live.totalViews}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t.live.totalViewsTooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
-                </span>
+                </TooltipProvider>
                 {/* Date/time display based on status */}
                 {isEnded && livestream.ended_at ? (
                   // Ended: show when it ended

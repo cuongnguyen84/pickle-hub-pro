@@ -1,13 +1,15 @@
 import { Link } from "react-router-dom";
-import { Play, Users, RotateCcw, BadgeCheck } from "lucide-react";
+import { Play, Users, RotateCcw, BadgeCheck, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface LiveCardProps {
   id: string;
   title: string;
   thumbnail?: string;
   viewerCount?: number;
+  totalViews?: number;
   organizationName?: string;
   organizationSlug?: string;
   organizationLogo?: string;
@@ -23,6 +25,7 @@ const LiveCard = ({
   title,
   thumbnail,
   viewerCount,
+  totalViews,
   organizationName,
   organizationSlug,
   organizationLogo,
@@ -43,6 +46,8 @@ const LiveCard = ({
 
   // For ended streams with replay, show replay badge
   const showReplayBadge = status === "ended" && isReplay;
+  const isLive = status === "live";
+  const isEnded = status === "ended";
 
   return (
     <Link
@@ -89,13 +94,36 @@ const LiveCard = ({
           )}
         </div>
 
-        {/* Viewer count */}
-        {status === "live" && viewerCount !== undefined && (
-          <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-md bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground">
-            <Users className="w-3 h-3" />
-            <span>{formatViewers(viewerCount)} {t.live.watching}</span>
-          </div>
-        )}
+        {/* Viewer/View count badge */}
+        <TooltipProvider>
+          {isLive && viewerCount !== undefined && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-md bg-live/90 backdrop-blur-sm text-xs font-medium text-foreground cursor-help">
+                  <Users className="w-3 h-3" />
+                  <span>{formatViewers(viewerCount)} {t.live.watching}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t.live.watchingTooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          
+          {isEnded && totalViews !== undefined && totalViews > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-md bg-background/80 backdrop-blur-sm text-xs font-medium text-foreground-muted cursor-help">
+                  <Eye className="w-3 h-3" />
+                  <span>{formatViewers(totalViews)} {t.live.totalViews}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t.live.totalViewsTooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </TooltipProvider>
         
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-background/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
