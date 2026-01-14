@@ -24,7 +24,7 @@ import { DynamicMeta } from "@/components/seo";
 type Step = "count" | "format" | "groups" | "players";
 
 const QuickTables = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { createTable, getUserTables, getUserQuotaInfo, loading } = useQuickTable();
@@ -210,47 +210,12 @@ const QuickTables = () => {
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Pickleball Bracket Generator</h1>
+            <h1 className="text-2xl font-bold mb-2">{t.quickTable.seo.pageTitle}</h1>
             <p className="text-foreground-secondary">
-              Create tournament brackets for your pickleball events in seconds
+              {t.quickTable.seo.pageSubtitle}
             </p>
           </header>
 
-          {/* SEO Content Section - Show on count step */}
-          {step === "count" && (
-            <section className="p-6 rounded-xl bg-background-surface border border-border-subtle text-left">
-              <h2 className="text-lg font-semibold text-foreground mb-3">
-                Create Pickleball Tournament Brackets in Seconds
-              </h2>
-              <p className="text-foreground-secondary mb-4">
-                ThePickleHub's pickleball bracket generator makes tournament organization effortless. 
-                Simply enter your player count, choose your format, and get a complete bracket instantly. 
-                Our tool handles all the complexity of round robin scheduling, playoff seeding, and 
-                match ordering so you can focus on playing. Part of our complete <Link to="/tournaments" className="text-primary hover:underline">pickleball tournament software</Link> suite.
-              </p>
-              
-              <h2 className="text-lg font-semibold text-foreground mb-3">
-                Round Robin Generator for Pickleball Events
-              </h2>
-              <p className="text-foreground-secondary mb-4">
-                The round robin format ensures every player or team competes against each other. 
-                Our generator automatically creates balanced groups, calculates the optimal number 
-                of matches, and schedules games to minimize wait times. Perfect for recreational 
-                tournaments where everyone wants maximum court time.
-              </p>
-
-              <h2 className="text-lg font-semibold text-foreground mb-3">
-                Support for Playoff, Elimination & Custom Formats
-              </h2>
-              <p className="text-foreground-secondary">
-                Beyond round robin, our pickleball bracket generator supports single elimination playoffs, 
-                group stage with knockout rounds, and large tournament formats for 50+ players. 
-                For team-based competitions, try our <Link to="/tools/team-match" className="text-primary hover:underline">pickleball team match format</Link> tool. 
-                Track scores in real-time, share live brackets with participants, and crown your 
-                tournament champion with professional-quality bracket displays.
-              </p>
-            </section>
-          )}
 
           {/* Step 1: Player Count */}
           {step === "count" && (
@@ -797,6 +762,32 @@ const QuickTables = () => {
             </>
           )}
         </div>
+
+          {/* SEO Content Section - at bottom */}
+          <section className="p-6 rounded-xl bg-background-surface border border-border-subtle text-left mt-8">
+            <h2 className="text-lg font-semibold text-foreground mb-3">
+              {t.quickTable.seo.createTitle}
+            </h2>
+            <p className="text-foreground-secondary mb-4">
+              {t.quickTable.seo.createDesc}{" "}
+              <Link to="/tournaments" className="text-primary hover:underline">{t.tournament.title}</Link>
+            </p>
+            
+            <h2 className="text-lg font-semibold text-foreground mb-3">
+              {t.quickTable.seo.roundRobinTitle}
+            </h2>
+            <p className="text-foreground-secondary mb-4">
+              {t.quickTable.seo.roundRobinDesc}
+            </p>
+
+            <h2 className="text-lg font-semibold text-foreground mb-3">
+              {t.quickTable.seo.formatsTitle}
+            </h2>
+            <p className="text-foreground-secondary">
+              {t.quickTable.seo.formatsDesc}{" "}
+              <Link to="/tools/team-match" className="text-primary hover:underline">{t.teamMatch.pageTitle}</Link>
+            </p>
+          </section>
       </div>
     </MainLayout>
   );
