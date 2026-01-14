@@ -182,6 +182,8 @@ export const en: Translations = {
     noLivestreams: "No livestreams",
     scheduledFor: "Scheduled for",
     replay: "Replay",
+    watchingTooltip: "Number of people watching live right now",
+    totalViewsTooltip: "Total number of views since the stream started",
   },
   tournament: {
     title: "Tournaments",
