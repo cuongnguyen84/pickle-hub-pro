@@ -147,6 +147,9 @@ export const en: Translations = {
       subtitle: "Professional Pickleball Media Platform",
       description: "Live streaming and on-demand videos from top tournaments",
       cta: "Explore now",
+      badge: "Livestream & Video",
+      mainTitle: "ThePickleHub – Vietnam's Leading Pickleball Platform",
+      mainDescription: "Watch live pickleball tournaments, follow brackets, and connect with Vietnam's most vibrant pickleball community.",
     },
     sections: {
       liveNow: "Live now",
@@ -157,6 +160,23 @@ export const en: Translations = {
     },
     noLive: "No livestreams at the moment",
     noVideos: "No videos available",
+    // SEO Feature blocks
+    features: {
+      livestreamTitle: "Pickleball Livestream",
+      livestreamDesc: "Watch professional and amateur pickleball tournaments live. Follow exciting matches with live commentary from anywhere.",
+      tournamentsTitle: "Tournaments & Brackets",
+      tournamentsDesc: "Smart bracket tool with automatic round-robin or playoff scheduling. Manage tournaments easily with a user-friendly interface.",
+      communityTitle: "Pickleball Community",
+      communityDesc: "Connect with thousands of pickleball players across Vietnam. Register for tournaments, follow your favorite creators, and share your passion.",
+    },
+    // SEO Footer
+    about: {
+      title: "About ThePickleHub",
+      description: "ThePickleHub is a comprehensive pickleball platform for the Vietnamese community. We provide live tournament streaming, automatic bracket management tools, and a space for players to connect. Whether you're a beginner or experienced, ThePickleHub is where you watch, learn, and improve your pickleball skills.",
+      watchLive: "Watch Livestream →",
+      tournaments: "Tournaments →",
+      freeTools: "Free Tools →",
+    },
   },
   video: {
     watch: "Watch video",
@@ -219,6 +239,19 @@ export const en: Translations = {
     noReplays: "No replays available",
     noVideos: "No videos yet",
     checkBackLater: "Check back later for new content",
+    hubTitle: "Pickleball Tournament Software",
+    hubDescription: "The complete platform for organizing and managing pickleball tournaments of any size.",
+    seo: {
+      createTitle: "Create, Manage and Run Pickleball Tournaments",
+      createDesc: "ThePickleHub provides powerful pickleball tournament software designed specifically for organizers. Whether you're running a small club tournament or a large competitive event, our platform handles everything from player registration to bracket generation and live scoring.",
+      formatsTitle: "Support for Brackets, Team Matches and Livestream",
+      formatsDesc: "Our pickleball tournament software supports multiple formats including round robin, single elimination, double elimination, and pickleball team match format competitions. Integrate pickleball livestream directly into your tournament to reach a wider audience. Players can view brackets, check schedules, and follow match results in real-time from any device.",
+      builtTitle: "Built for Real Pickleball Events",
+      builtDesc: "Used by tournament directors and pickleball clubs across Vietnam, ThePickleHub's tournament software is built from real-world experience organizing competitive pickleball events. From amateur community tournaments to professional competitions, our platform scales to meet your needs with features like court scheduling, referee management, and automated standings calculations.",
+    },
+    openRegistration: "Open for registration",
+    pairs: "pairs",
+    players: "players",
   },
   organization: {
     title: "Organization",
