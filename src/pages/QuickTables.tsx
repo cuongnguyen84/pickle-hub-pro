@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import { AIAssistantButton } from '@/components/ai';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { DynamicMeta } from "@/components/seo";
 
 type Step = "count" | "format" | "groups" | "players";
 
@@ -197,18 +198,58 @@ const QuickTables = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta 
+        title="Pickleball Bracket Generator & Round Robin Tool"
+        description="Free pickleball bracket generator for tournaments. Create round robin brackets, playoff brackets, and elimination formats in seconds. Perfect for club tournaments and competitive events."
+        url="https://thepicklehub.net/tools/quick-tables"
+      />
       <div className="container-wide py-8">
         <div className="max-w-2xl mx-auto space-y-8">
-          {/* Header */}
-          <div className="text-center">
+          {/* SEO Header */}
+          <header className="text-center">
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">{t.quickTable.title}</h1>
+            <h1 className="text-2xl font-bold mb-2">Pickleball Bracket Generator</h1>
             <p className="text-foreground-secondary">
-              {t.quickTable.description}
+              Create tournament brackets for your pickleball events in seconds
             </p>
-          </div>
+          </header>
+
+          {/* SEO Content Section - Show on count step */}
+          {step === "count" && (
+            <section className="p-6 rounded-xl bg-background-surface border border-border-subtle text-left">
+              <h2 className="text-lg font-semibold text-foreground mb-3">
+                Create Pickleball Tournament Brackets in Seconds
+              </h2>
+              <p className="text-foreground-secondary mb-4">
+                ThePickleHub's pickleball bracket generator makes tournament organization effortless. 
+                Simply enter your player count, choose your format, and get a complete bracket instantly. 
+                Our tool handles all the complexity of round robin scheduling, playoff seeding, and 
+                match ordering so you can focus on playing.
+              </p>
+              
+              <h2 className="text-lg font-semibold text-foreground mb-3">
+                Round Robin Generator for Pickleball Events
+              </h2>
+              <p className="text-foreground-secondary mb-4">
+                The round robin format ensures every player or team competes against each other. 
+                Our generator automatically creates balanced groups, calculates the optimal number 
+                of matches, and schedules games to minimize wait times. Perfect for recreational 
+                tournaments where everyone wants maximum court time.
+              </p>
+
+              <h2 className="text-lg font-semibold text-foreground mb-3">
+                Support for Playoff, Elimination & Custom Formats
+              </h2>
+              <p className="text-foreground-secondary">
+                Beyond round robin, our pickleball bracket generator supports single elimination playoffs, 
+                group stage with knockout rounds, and large tournament formats for 50+ players. 
+                Track scores in real-time, share live brackets with participants, and crown your 
+                tournament champion with professional-quality bracket displays.
+              </p>
+            </section>
+          )}
 
           {/* Step 1: Player Count */}
           {step === "count" && (

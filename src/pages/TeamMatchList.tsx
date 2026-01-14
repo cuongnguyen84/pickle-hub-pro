@@ -10,6 +10,7 @@ import { useTeamMatch, TeamMatchTournament } from '@/hooks/useTeamMatch';
 import { useI18n } from '@/i18n';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { DynamicMeta } from '@/components/seo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -127,23 +128,63 @@ export default function TeamMatchList() {
 
   return (
     <MainLayout>
+      <DynamicMeta 
+        title="Pickleball Team Match Format & MLP Style Scoring"
+        description="Create and manage pickleball team match competitions with MLP-style format. Features lineup management, dreambreaker games, rally scoring, and complete team tournament organization."
+        url="https://thepicklehub.net/tools/team-match"
+      />
       <div className="container max-w-4xl py-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/tools')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{t.tools.teamMatch.title}</h1>
-            <p className="text-muted-foreground">{t.tools.teamMatch.description}</p>
-          </div>
-          {user && (
-            <Button onClick={() => navigate('/tools/team-match/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tạo mới
+        {/* SEO Header */}
+        <header>
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/tools')}>
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-          )}
-        </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold">Pickleball Team Match Format</h1>
+              <p className="text-muted-foreground">Create and manage MLP-style team competitions</p>
+            </div>
+            {user && (
+              <Button onClick={() => navigate('/tools/team-match/new')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tạo mới
+              </Button>
+            )}
+          </div>
+        </header>
+
+        {/* SEO Content Section */}
+        <section className="p-6 rounded-xl bg-background border border-border">
+          <h2 className="text-lg font-semibold mb-3">
+            MLP-Style Pickleball Team Competition
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            The pickleball team match format brings professional-style team competition to your club or tournament. 
+            Inspired by Major League Pickleball (MLP), this format features teams competing across multiple game types 
+            including men's doubles, women's doubles, and mixed doubles. Create exciting team rivalries with our 
+            comprehensive team management tools.
+          </p>
+          
+          <h2 className="text-lg font-semibold mb-3">
+            Lineup, Dreambreaker & Rally Scoring
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            Our team match system supports full lineup management, allowing captains to strategically assign 
+            players to each game. When matches are tied, the dreambreaker format adds thrilling sudden-death 
+            gameplay. Rally scoring keeps every point exciting and ensures matches maintain competitive pace 
+            throughout the competition.
+          </p>
+
+          <h2 className="text-lg font-semibold mb-3">
+            Manage Team Matches for Pickleball Tournaments
+          </h2>
+          <p className="text-muted-foreground">
+            Whether organizing a casual inter-club match or a full league season, ThePickleHub's team match 
+            format tool handles all the complexity. Track team standings, manage rosters, schedule matches, 
+            and calculate results automatically. The MLP format is perfect for building community engagement 
+            and creating memorable pickleball team experiences.
+          </p>
+        </section>
 
         {/* My Tournaments */}
         {user && (
