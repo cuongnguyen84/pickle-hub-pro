@@ -5,8 +5,9 @@ import { useI18n } from "@/i18n";
 import { useLivestreams, useVideos } from "@/hooks/useSupabaseData";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Play, Radio } from "lucide-react";
+import { ArrowRight, Play, Radio, Trophy, Users, Tv } from "lucide-react";
 import { OpenRegistrationSection } from "@/components/quicktable/OpenRegistrationSection";
+import { DynamicMeta } from "@/components/seo";
 
 const Index = () => {
   const { t } = useI18n();
@@ -16,6 +17,12 @@ const Index = () => {
 
   return (
     <MainLayout>
+      {/* SEO Meta Tags */}
+      <DynamicMeta 
+        title="Pickleball Tournaments, Livestream & Community"
+        description="ThePickleHub là nền tảng pickleball hàng đầu Việt Nam với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!"
+      />
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero">
         <div className="container-wide py-16 md:py-24 lg:py-32">
@@ -25,12 +32,13 @@ const Index = () => {
               <span className="text-sm font-medium text-primary">Livestream & Video</span>
             </div>
             
+            {/* H1 - Only one per page */}
             <h1 className="text-foreground text-balance">
-              {t.home.hero.title}
+              ThePickleHub – Nền tảng Pickleball hàng đầu Việt Nam
             </h1>
             
             <p className="text-lg text-foreground-secondary leading-relaxed">
-              {t.home.hero.description}
+              Xem livestream trực tiếp các giải đấu pickleball, theo dõi bracket, và kết nối với cộng đồng pickleball sôi động nhất Việt Nam.
             </p>
             
             <div className="flex flex-wrap gap-3 pt-2">
@@ -52,6 +60,44 @@ const Index = () => {
         
         {/* Decorative gradient */}
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+      </section>
+
+      {/* SEO Content Section - About ThePickleHub */}
+      <section className="container-wide py-12 border-b border-border">
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* H2 - Livestream */}
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Tv className="w-6 h-6 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground">Livestream Pickleball</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              Xem trực tiếp các giải đấu pickleball chuyên nghiệp và nghiệp dư. Theo dõi các trận đấu hấp dẫn với bình luận trực tiếp từ mọi nơi.
+            </p>
+          </div>
+          
+          {/* H2 - Tournaments */}
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Trophy className="w-6 h-6 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground">Giải đấu & Bracket</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              Công cụ chia bảng thông minh, tự động tạo lịch thi đấu round-robin hoặc playoff. Quản lý giải đấu dễ dàng với giao diện thân thiện.
+            </p>
+          </div>
+          
+          {/* H2 - Community */}
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Users className="w-6 h-6 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground">Cộng đồng Pickleball</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              Kết nối với hàng nghìn người chơi pickleball trên khắp Việt Nam. Đăng ký tham gia giải đấu, theo dõi creator yêu thích và chia sẻ đam mê.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Live Now Section */}
@@ -162,10 +208,27 @@ const Index = () => {
         ) : null}
       </section>
 
+      {/* SEO Footer Content */}
+      <section className="container-wide py-12 bg-surface-elevated rounded-xl mb-8">
+        <div className="max-w-3xl mx-auto text-center space-y-4">
+          <h2 className="text-2xl font-semibold text-foreground">Về ThePickleHub</h2>
+          <p className="text-foreground-secondary leading-relaxed">
+            ThePickleHub là nền tảng pickleball toàn diện dành cho cộng đồng Việt Nam. Chúng tôi cung cấp livestream trực tiếp các giải đấu pickleball, 
+            công cụ quản lý giải đấu với bracket tự động, và không gian để người chơi kết nối với nhau. Dù bạn là người mới bắt đầu hay đã có kinh nghiệm, 
+            ThePickleHub là nơi để bạn theo dõi, học hỏi và phát triển kỹ năng pickleball.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 pt-4">
+            <Link to="/live" className="text-primary hover:underline font-medium">Xem Livestream →</Link>
+            <Link to="/tournaments" className="text-primary hover:underline font-medium">Các Giải Đấu →</Link>
+            <Link to="/tools" className="text-primary hover:underline font-medium">Công Cụ Miễn Phí →</Link>
+          </div>
+        </div>
+      </section>
+
       {/* Footer - Using plain <a> tag for Google OAuth Branding Verification */}
       <footer className="container-wide py-8 border-t border-border">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-foreground-muted">
-          <p>© 2024 The Pickle Hub</p>
+          <p>© 2024 ThePickleHub – Pickleball Tournaments, Livestream & Community</p>
           <div className="flex items-center gap-4">
             <a href="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy

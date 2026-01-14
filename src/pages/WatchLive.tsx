@@ -105,14 +105,21 @@ const WatchLive = () => {
   // Determine stream type: live for active streams, live:dvr for replays
   const streamType = isLive ? "live" : "live:dvr";
 
+  // Generate SEO description from livestream data
+  const seoDescription = livestream.description 
+    ? `${livestream.description.slice(0, 150)}...` 
+    : `Xem livestream ${livestream.title} trên ThePickleHub. ${livestream.organization?.name ? `Được phát bởi ${livestream.organization.name}.` : ''} Theo dõi trực tiếp các giải đấu pickleball hấp dẫn.`;
+
   return (
     <MainLayout>
-      {/* Dynamic OG tags for sharing */}
+      {/* Dynamic SEO tags - auto-generated from livestream data */}
       <DynamicMeta
         title={livestream.title ?? "Livestream"}
-        description={livestream.description ?? `Watch ${livestream.title} on The Pickle Hub`}
+        description={seoDescription}
         image={livestream.thumbnail_url ?? undefined}
         type="video.other"
+        creator={livestream.organization?.name}
+        publishedTime={livestream.scheduled_start_at ?? livestream.created_at}
       />
       <div className="container-wide section-spacing">
         {/* Back Button */}
@@ -233,7 +240,7 @@ const WatchLive = () => {
               )}
             </div>
 
-            {/* Stream Info */}
+            {/* Stream Info - H1 for SEO */}
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <h1 className="text-2xl font-semibold text-foreground">{livestream.title}</h1>
