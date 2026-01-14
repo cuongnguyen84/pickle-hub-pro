@@ -3,6 +3,8 @@
 
 User-agent: *
 Allow: /
+Allow: /livestream
+Allow: /livestream/
 Allow: /live
 Allow: /live/
 Allow: /videos
@@ -10,6 +12,7 @@ Allow: /watch/
 Allow: /tournaments
 Allow: /tournament/
 Allow: /org/
+Allow: /creators/
 Allow: /tools
 Allow: /privacy
 

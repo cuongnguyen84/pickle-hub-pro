@@ -7,18 +7,11 @@
     <priority>1.0</priority>
   </url>
   
-  <!-- Live Streams -->
+  <!-- Livestream Hub - SEO Primary -->
   <url>
-    <loc>https://thepicklehub.net/live</loc>
+    <loc>https://thepicklehub.net/livestream</loc>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
-  </url>
-  
-  <!-- Videos -->
-  <url>
-    <loc>https://thepicklehub.net/videos</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
   </url>
   
   <!-- Tournaments -->
@@ -28,7 +21,14 @@
     <priority>0.8</priority>
   </url>
   
-  <!-- Tools -->
+  <!-- Videos (Replay) -->
+  <url>
+    <loc>https://thepicklehub.net/videos</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Tools - Public & Useful -->
   <url>
     <loc>https://thepicklehub.net/tools</loc>
     <changefreq>weekly</changefreq>
