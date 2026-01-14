@@ -10,7 +10,7 @@ import { OpenRegistrationSection } from "@/components/quicktable/OpenRegistratio
 import { DynamicMeta } from "@/components/seo";
 
 const Index = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
   const { data: videos = [], isLoading: videosLoading } = useVideos({ limit: 8 });
@@ -20,7 +20,10 @@ const Index = () => {
       {/* SEO Meta Tags */}
       <DynamicMeta 
         title="Pickleball Tournaments, Livestream & Community"
-        description="ThePickleHub là nền tảng pickleball hàng đầu Việt Nam với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!"
+        description={language === 'vi' 
+          ? "ThePickleHub là nền tảng pickleball toàn cầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!"
+          : "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant pickleball community. Watch livestreams, follow tournaments, and connect now!"
+        }
       />
 
       {/* Hero Section */}
