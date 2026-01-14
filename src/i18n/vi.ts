@@ -409,6 +409,12 @@ export interface Translations {
     copy: string;
     loadOlder: string;
     newMessages: string;
+    nickname: string;
+    nicknamePlaceholder: string;
+    nicknameUpdated: string;
+    nicknameError: string;
+    nicknameLengthError: string;
+    nextEdit: string;
   };
   analytics: {
     title: string;
@@ -1028,6 +1034,12 @@ export const vi: Translations = {
     copy: "Sao chép",
     loadOlder: "Tải tin cũ hơn",
     newMessages: "tin nhắn mới",
+    nickname: "Biệt danh",
+    nicknamePlaceholder: "Nhập biệt danh của bạn",
+    nicknameUpdated: "Đã cập nhật biệt danh",
+    nicknameError: "Lỗi biệt danh",
+    nicknameLengthError: "Biệt danh phải từ 2-30 ký tự",
+    nextEdit: "Lần đổi tiếp",
   },
   analytics: {
     title: "Analytics",

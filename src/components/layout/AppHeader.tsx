@@ -163,6 +163,22 @@ const AppHeader = () => {
                     <div className="px-4 py-2 text-sm text-foreground-muted">
                       {user.email}
                     </div>
+                    {isCreator && (
+                      <Link to="/creator" className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-foreground-secondary hover:text-foreground hover:bg-muted/50 transition-colors duration-200">
+                        <Palette className="w-4 h-4" />
+                        Creator Studio
+                      </Link>
+                    )}
+                    {isAdmin && (
+                      <Link to="/admin" className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-foreground-secondary hover:text-foreground hover:bg-muted/50 transition-colors duration-200">
+                        <Shield className="w-4 h-4" />
+                        Admin
+                      </Link>
+                    )}
+                    <Link to="/account" className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-foreground-secondary hover:text-foreground hover:bg-muted/50 transition-colors duration-200">
+                      <User className="w-4 h-4" />
+                      {t.nav.profile}
+                    </Link>
                     <button onClick={handleSignOut} className="flex items-center gap-2 w-full px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-muted/50 transition-colors duration-200">
                       <LogOut className="w-4 h-4" />
                       {t.nav.logout}

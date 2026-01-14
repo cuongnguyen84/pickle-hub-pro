@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CreatorLayout } from "@/components/creator/CreatorLayout";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
-import { useCreatorVideos } from "@/hooks/useCreatorData";
+import { useCreatorVideos, useVideoMutations } from "@/hooks/useCreatorData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Video, Edit } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Plus, Search, Video, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function CreatorVideos() {
@@ -36,6 +47,12 @@ export default function CreatorVideos() {
     status: statusFilter,
     search: search || undefined,
   });
+
+  const { deleteVideo } = useVideoMutations(organizationId);
+
+  const handleDelete = (id: string) => {
+    deleteVideo.mutate(id);
+  };
 
   return (
     <CreatorLayout>
@@ -144,7 +161,38 @@ export default function CreatorVideos() {
                       : "Draft"}
                   </p>
                 </div>
-                <Edit className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                <div className="flex items-center gap-1">
+                  <Edit className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Xóa video?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Hành động này không thể hoàn tác. Video sẽ bị xóa vĩnh viễn.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(video.id)}
+                          className="bg-destructive hover:bg-destructive/90"
+                        >
+                          Xóa
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </Link>
             ))
           ) : (
@@ -243,11 +291,37 @@ export default function CreatorVideos() {
                         : "-"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link to={`/creator/videos/${video.id}/edit`}>
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button asChild variant="ghost" size="sm">
+                          <Link to={`/creator/videos/${video.id}/edit`}>
+                            <Edit className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Xóa video?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Hành động này không thể hoàn tác. Video sẽ bị xóa vĩnh viễn.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(video.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

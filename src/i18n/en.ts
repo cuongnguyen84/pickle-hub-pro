@@ -411,6 +411,12 @@ export const en: Translations = {
     copy: "Copy",
     loadOlder: "Load older messages",
     newMessages: "new messages",
+    nickname: "Nickname",
+    nicknamePlaceholder: "Enter your nickname",
+    nicknameUpdated: "Nickname updated",
+    nicknameError: "Nickname error",
+    nicknameLengthError: "Nickname must be 2-30 characters",
+    nextEdit: "Next edit",
   },
   analytics: {
     title: "Analytics",
