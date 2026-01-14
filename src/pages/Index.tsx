@@ -8,23 +8,20 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio, Trophy, Users, Tv } from "lucide-react";
 import { OpenRegistrationSection } from "@/components/quicktable/OpenRegistrationSection";
 import { DynamicMeta } from "@/components/seo";
+
 const Index = () => {
-  const {
-    t
-  } = useI18n();
-  const {
-    data: liveStreams = [],
-    isLoading: liveLoading
-  } = useLivestreams("live");
-  const {
-    data: videos = [],
-    isLoading: videosLoading
-  } = useVideos({
-    limit: 8
-  });
-  return <MainLayout>
+  const { t } = useI18n();
+
+  const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
+  const { data: videos = [], isLoading: videosLoading } = useVideos({ limit: 8 });
+
+  return (
+    <MainLayout>
       {/* SEO Meta Tags */}
-      <DynamicMeta title="Pickleball Tournaments, Livestream & Community" description="ThePickleHub là nền tảng pickleball hàng đầu Việt Nam với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!" />
+      <DynamicMeta
+        title="Pickleball Tournaments, Livestream & Community"
+        description="ThePickleHub là nền tảng pickleball hàng đầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!"
+      />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero">
@@ -34,16 +31,15 @@ const Index = () => {
               <Radio className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium text-primary">Livestream & Video</span>
             </div>
-            
+
             {/* H1 - Only one per page */}
-            <h1 className="text-foreground text-balance">
-              ThePickleHub – Nền tảng Pickleball hàng đầu Việt Nam
-            </h1>
-            
+            <h1 className="text-foreground text-balance">ThePickleHub – Nền tảng Pickleball hàng đầu Việt Nam</h1>
+
             <p className="text-lg text-foreground-secondary leading-relaxed">
-              Xem livestream trực tiếp các giải đấu pickleball, theo dõi bracket, và kết nối với cộng đồng pickleball sôi động nhất Việt Nam.
+              Xem livestream trực tiếp các giải đấu pickleball, theo dõi bracket, và kết nối với cộng đồng pickleball
+              sôi động nhất.
             </p>
-            
+
             <div className="flex flex-wrap gap-3 pt-2">
               <Link to="/live">
                 <Button size="lg" className="gap-2">
@@ -60,7 +56,7 @@ const Index = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Decorative gradient */}
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
       </section>
@@ -75,10 +71,11 @@ const Index = () => {
             </div>
             <h2 className="text-xl font-semibold text-foreground">Livestream Pickleball</h2>
             <p className="text-foreground-secondary leading-relaxed">
-              Xem trực tiếp các giải đấu pickleball chuyên nghiệp và nghiệp dư. Theo dõi các trận đấu hấp dẫn với bình luận trực tiếp từ mọi nơi.
+              Xem trực tiếp các giải đấu pickleball chuyên nghiệp và nghiệp dư. Theo dõi các trận đấu hấp dẫn với bình
+              luận trực tiếp từ mọi nơi.
             </p>
           </div>
-          
+
           {/* H2 - Tournaments */}
           <div className="space-y-3">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -86,10 +83,11 @@ const Index = () => {
             </div>
             <h2 className="text-xl font-semibold text-foreground">Giải đấu & Bracket</h2>
             <p className="text-foreground-secondary leading-relaxed">
-              Công cụ chia bảng thông minh, tự động tạo lịch thi đấu round-robin hoặc playoff. Quản lý giải đấu dễ dàng với giao diện thân thiện.
+              Công cụ chia bảng thông minh, tự động tạo lịch thi đấu round-robin hoặc playoff. Quản lý giải đấu dễ dàng
+              với giao diện thân thiện.
             </p>
           </div>
-          
+
           {/* H2 - Community */}
           <div className="space-y-3">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -97,7 +95,8 @@ const Index = () => {
             </div>
             <h2 className="text-xl font-semibold text-foreground">Cộng đồng Pickleball</h2>
             <p className="text-foreground-secondary leading-relaxed">
-              Kết nối với hàng nghìn người chơi pickleball trên khắp Việt Nam. Đăng ký tham gia giải đấu, theo dõi creator yêu thích và chia sẻ đam mê.
+              Kết nối với hàng nghìn người chơi pickleball trên khắp Việt Nam. Đăng ký tham gia giải đấu, theo dõi
+              creator yêu thích và chia sẻ đam mê.
             </p>
           </div>
         </div>
@@ -106,16 +105,35 @@ const Index = () => {
       {/* Live Now Section */}
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.liveNow} href="/live" />
-        
-        {liveLoading ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {[1, 2, 3].map(i => <div key={i} className="space-y-3">
+
+        {liveLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-3">
                 <Skeleton className="aspect-video rounded-xl" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
-              </div>)}
-          </div> : liveStreams.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {liveStreams.slice(0, 3).map(stream => <LiveCard key={stream.id} id={stream.id!} title={stream.title ?? ""} viewerCount={0} organizationName={stream.organization?.name ?? ""} organizationSlug={stream.organization?.slug} status={stream.status as "live" | "scheduled" | "ended"} thumbnail={stream.thumbnail_url ?? undefined} />)}
-          </div> : <EmptyState icon={Radio} title={t.home.noLive} />}
+              </div>
+            ))}
+          </div>
+        ) : liveStreams.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {liveStreams.slice(0, 3).map((stream) => (
+              <LiveCard
+                key={stream.id}
+                id={stream.id!}
+                title={stream.title ?? ""}
+                viewerCount={0}
+                organizationName={stream.organization?.name ?? ""}
+                organizationSlug={stream.organization?.slug}
+                status={stream.status as "live" | "scheduled" | "ended"}
+                thumbnail={stream.thumbnail_url ?? undefined}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Radio} title={t.home.noLive} />
+        )}
       </section>
 
       {/* Open Registration Tournaments */}
@@ -129,31 +147,71 @@ const Index = () => {
       {/* Latest Videos */}
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.latestVideos} href="/videos" />
-        
-        {videosLoading ? <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {[1, 2, 3, 4].map(i => <div key={i} className="space-y-3">
+
+        {videosLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-3">
                 <Skeleton className="aspect-video rounded-xl" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
-              </div>)}
-          </div> : videos.length > 0 ? <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {videos.slice(0, 4).map(video => <ContentCard key={video.id} id={video.id} title={video.title} duration={video.duration_seconds ?? 0} views={0} organizationName={video.organization?.name ?? ""} organizationSlug={video.organization?.slug} thumbnail={video.thumbnail_url ?? undefined} />)}
-          </div> : <EmptyState icon={Play} title={t.home.noVideos} />}
+              </div>
+            ))}
+          </div>
+        ) : videos.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {videos.slice(0, 4).map((video) => (
+              <ContentCard
+                key={video.id}
+                id={video.id}
+                title={video.title}
+                duration={video.duration_seconds ?? 0}
+                views={0}
+                organizationName={video.organization?.name ?? ""}
+                organizationSlug={video.organization?.slug}
+                thumbnail={video.thumbnail_url ?? undefined}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Play} title={t.home.noVideos} />
+        )}
       </section>
 
       {/* Popular This Week */}
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.popularThisWeek} href="/videos?sort=popular" />
-        
-        {videosLoading ? <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {[1, 2, 3, 4].map(i => <div key={i} className="space-y-3">
+
+        {videosLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-3">
                 <Skeleton className="aspect-video rounded-xl" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
-              </div>)}
-          </div> : videos.length > 0 ? <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {videos.slice().reverse().slice(0, 4).map(video => <ContentCard key={video.id} id={video.id} title={video.title} duration={video.duration_seconds ?? 0} views={0} organizationName={video.organization?.name ?? ""} organizationSlug={video.organization?.slug} thumbnail={video.thumbnail_url ?? undefined} />)}
-          </div> : null}
+              </div>
+            ))}
+          </div>
+        ) : videos.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {videos
+              .slice()
+              .reverse()
+              .slice(0, 4)
+              .map((video) => (
+                <ContentCard
+                  key={video.id}
+                  id={video.id}
+                  title={video.title}
+                  duration={video.duration_seconds ?? 0}
+                  views={0}
+                  organizationName={video.organization?.name ?? ""}
+                  organizationSlug={video.organization?.slug}
+                  thumbnail={video.thumbnail_url ?? undefined}
+                />
+              ))}
+          </div>
+        ) : null}
       </section>
 
       {/* SEO Footer Content */}
@@ -161,12 +219,21 @@ const Index = () => {
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <h2 className="text-2xl font-semibold text-foreground">Về ThePickleHub</h2>
           <p className="text-foreground-secondary leading-relaxed">
-            ThePickleHub is a comprehensive pickleball platform for the community. We provide live tournament streaming, automatic bracket management tools, and a space for players to connect. Whether you're a beginner or experienced, ThePickleHub is where you watch, learn, and improve your pickleball skills.
+            ThePickleHub là nền tảng pickleball toàn diện dành cho cộng đồng Việt Nam. Chúng tôi cung cấp livestream
+            trực tiếp các giải đấu pickleball, công cụ quản lý giải đấu với bracket tự động, và không gian để người chơi
+            kết nối với nhau. Dù bạn là người mới bắt đầu hay đã có kinh nghiệm, ThePickleHub là nơi để bạn theo dõi,
+            học hỏi và phát triển kỹ năng pickleball.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-4">
-            <Link to="/live" className="text-primary hover:underline font-medium">Xem Livestream →</Link>
-            <Link to="/tournaments" className="text-primary hover:underline font-medium">Các Giải Đấu →</Link>
-            <Link to="/tools" className="text-primary hover:underline font-medium">Công Cụ Miễn Phí →</Link>
+            <Link to="/live" className="text-primary hover:underline font-medium">
+              Xem Livestream →
+            </Link>
+            <Link to="/tournaments" className="text-primary hover:underline font-medium">
+              Các Giải Đấu →
+            </Link>
+            <Link to="/tools" className="text-primary hover:underline font-medium">
+              Công Cụ Miễn Phí →
+            </Link>
           </div>
         </div>
       </section>
@@ -185,6 +252,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </MainLayout>;
+    </MainLayout>
+  );
 };
+
 export default Index;
