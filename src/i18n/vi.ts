@@ -669,6 +669,50 @@ export interface Translations {
       limitReachedDesc: string;
       contactUs: string;
     };
+    // SEO content
+    seo: {
+      pageTitle: string;
+      pageSubtitle: string;
+      createTitle: string;
+      createDesc: string;
+      roundRobinTitle: string;
+      roundRobinDesc: string;
+      formatsTitle: string;
+      formatsDesc: string;
+    };
+  };
+  // Team Match SEO
+  teamMatch: {
+    pageTitle: string;
+    pageSubtitle: string;
+    myTournaments: string;
+    publicTournaments: string;
+    noTournaments: string;
+    createFirst: string;
+    loginPrompt: string;
+    createNew: string;
+    viewDetails: string;
+    confirmDelete: string;
+    confirmDeleteDesc: string;
+    cancel: string;
+    delete: string;
+    teams: string;
+    players: string;
+    formatRoundRobin: string;
+    formatSingleElim: string;
+    formatRrPlayoff: string;
+    statusSetup: string;
+    statusRegistration: string;
+    statusOngoing: string;
+    statusCompleted: string;
+    seo: {
+      mlpTitle: string;
+      mlpDesc: string;
+      lineupTitle: string;
+      lineupDesc: string;
+      manageTitle: string;
+      manageDesc: string;
+    };
   };
 }
 
@@ -1345,6 +1389,50 @@ export const vi: Translations = {
       limitReached: "Đã đạt giới hạn soft launch",
       limitReachedDesc: "Giai đoạn soft launch: mỗi tài khoản chỉ được tạo tối đa 3 giải.",
       contactUs: "Liên hệ",
+    },
+    // SEO content
+    seo: {
+      pageTitle: "Công cụ Chia Bảng Pickleball",
+      pageSubtitle: "Tạo bảng đấu cho giải pickleball của bạn trong vài giây",
+      createTitle: "Tạo Bảng Đấu Pickleball Trong Vài Giây",
+      createDesc: "Công cụ chia bảng pickleball của ThePickleHub giúp tổ chức giải đấu trở nên dễ dàng. Chỉ cần nhập số VĐV, chọn thể thức và nhận bảng đấu hoàn chỉnh ngay lập tức. Công cụ xử lý mọi phức tạp của lịch thi đấu round robin, xếp hạng playoff và thứ tự trận đấu để bạn tập trung vào việc thi đấu.",
+      roundRobinTitle: "Công Cụ Round Robin Cho Giải Pickleball",
+      roundRobinDesc: "Thể thức round robin đảm bảo mọi VĐV hoặc đội đều thi đấu với nhau. Công cụ tự động tạo bảng cân bằng, tính toán số trận tối ưu và sắp xếp lịch để giảm thiểu thời gian chờ. Hoàn hảo cho giải phong trào nơi mọi người đều muốn tối đa thời gian thi đấu.",
+      formatsTitle: "Hỗ Trợ Playoff, Loại Trực Tiếp & Thể Thức Tùy Chỉnh",
+      formatsDesc: "Ngoài round robin, công cụ chia bảng còn hỗ trợ playoff loại trực tiếp đơn, vòng bảng kết hợp knockout và thể thức giải lớn cho 50+ VĐV. Theo dõi điểm số real-time, chia sẻ bracket trực tiếp với người tham gia và tìm ra nhà vô địch với bảng đấu chuyên nghiệp.",
+    },
+  },
+  // Team Match SEO
+  teamMatch: {
+    pageTitle: "Thể Thức Thi Đấu Đồng Đội Pickleball",
+    pageSubtitle: "Tạo và quản lý giải đấu đồng đội theo phong cách MLP",
+    myTournaments: "Giải đấu của tôi",
+    publicTournaments: "Giải đấu đang mở",
+    noTournaments: "Bạn chưa tạo giải đấu đồng đội nào",
+    createFirst: "Tạo giải đấu đầu tiên",
+    loginPrompt: "Đăng nhập để tạo và quản lý giải đấu đồng đội",
+    createNew: "Tạo mới",
+    viewDetails: "Xem chi tiết",
+    confirmDelete: "Xác nhận xóa?",
+    confirmDeleteDesc: "Bạn có chắc muốn xóa \"{name}\"? Hành động này không thể hoàn tác.",
+    cancel: "Hủy",
+    delete: "Xóa",
+    teams: "đội",
+    players: "người",
+    formatRoundRobin: "Vòng tròn",
+    formatSingleElim: "Loại trực tiếp",
+    formatRrPlayoff: "Vòng tròn + Playoff",
+    statusSetup: "Đang thiết lập",
+    statusRegistration: "Đang đăng ký",
+    statusOngoing: "Đang diễn ra",
+    statusCompleted: "Đã kết thúc",
+    seo: {
+      mlpTitle: "Giải Đấu Đồng Đội Pickleball Theo Phong Cách MLP",
+      mlpDesc: "Thể thức thi đấu đồng đội pickleball mang đến trải nghiệm thi đấu chuyên nghiệp cho câu lạc bộ hoặc giải của bạn. Lấy cảm hứng từ Major League Pickleball (MLP), thể thức này có các đội thi đấu qua nhiều nội dung bao gồm đôi nam, đôi nữ và đôi nam nữ. Tạo sự cạnh tranh đội hấp dẫn với các công cụ quản lý đội toàn diện.",
+      lineupTitle: "Lineup, Dreambreaker & Rally Scoring",
+      lineupDesc: "Hệ thống thi đấu đồng đội hỗ trợ quản lý lineup đầy đủ, cho phép đội trưởng sắp xếp VĐV chiến lược cho từng trận. Khi trận đấu hòa, thể thức dreambreaker mang đến gameplay đột tử hấp dẫn. Rally scoring giữ mọi điểm đều căng thẳng và đảm bảo trận đấu duy trì nhịp độ cạnh tranh.",
+      manageTitle: "Quản Lý Thi Đấu Đồng Đội Cho Giải Pickleball",
+      manageDesc: "Dù tổ chức trận giao hữu giữa các câu lạc bộ hay một mùa giải đầy đủ, công cụ thi đấu đồng đội của ThePickleHub xử lý mọi phức tạp. Theo dõi bảng xếp hạng đội, quản lý đội hình, lên lịch trận đấu và tính toán kết quả tự động. Kết hợp với công cụ chia bảng để có trải nghiệm quản lý giải đấu và thi đấu đồng đội đáng nhớ.",
     },
   },
 };

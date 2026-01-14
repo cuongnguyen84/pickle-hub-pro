@@ -30,23 +30,37 @@ const STATUS_COLORS: Record<string, string> = {
   completed: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  setup: 'Đang thiết lập',
-  registration: 'Đang đăng ký',
-  ongoing: 'Đang diễn ra',
-  completed: 'Đã kết thúc',
-};
-
 function TournamentCard({ 
   tournament, 
   isOwner, 
-  onDelete 
+  onDelete,
+  t
 }: { 
   tournament: TeamMatchTournament; 
   isOwner: boolean;
   onDelete: () => void;
+  t: any;
 }) {
   const navigate = useNavigate();
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'setup': return t.teamMatch.statusSetup;
+      case 'registration': return t.teamMatch.statusRegistration;
+      case 'ongoing': return t.teamMatch.statusOngoing;
+      case 'completed': return t.teamMatch.statusCompleted;
+      default: return status;
+    }
+  };
+
+  const getFormatLabel = (format: string) => {
+    switch (format) {
+      case 'round_robin': return t.teamMatch.formatRoundRobin;
+      case 'single_elimination': return t.teamMatch.formatSingleElim;
+      case 'rr_playoff': return t.teamMatch.formatRrPlayoff;
+      default: return format;
+    }
+  };
 
   return (
     <Card className="hover:border-primary/50 transition-colors cursor-pointer group">
@@ -62,7 +76,7 @@ function TournamentCard({
             </CardDescription>
           </div>
           <Badge variant="outline" className={STATUS_COLORS[tournament.status]}>
-            {STATUS_LABELS[tournament.status]}
+            {getStatusLabel(tournament.status)}
           </Badge>
         </div>
       </CardHeader>
@@ -70,15 +84,11 @@ function TournamentCard({
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>{tournament.team_count} đội × {tournament.team_roster_size} người</span>
+            <span>{tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size} {t.teamMatch.players}</span>
           </div>
           <div className="flex items-center gap-1">
             <Trophy className="h-4 w-4" />
-            <span>
-              {tournament.format === 'round_robin' && 'Vòng tròn'}
-              {tournament.format === 'single_elimination' && 'Loại trực tiếp'}
-              {tournament.format === 'rr_playoff' && 'Vòng tròn + Playoff'}
-            </span>
+            <span>{getFormatLabel(tournament.format)}</span>
           </div>
         </div>
       </CardContent>
@@ -91,7 +101,7 @@ function TournamentCard({
             onClick={() => navigate(`/tools/team-match/${tournament.share_id}`)}
           >
             <ExternalLink className="h-4 w-4 mr-1" />
-            Xem chi tiết
+            {t.teamMatch.viewDetails}
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -101,15 +111,15 @@ function TournamentCard({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle>
+                <AlertDialogTitle>{t.teamMatch.confirmDelete}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Bạn có chắc muốn xóa "{tournament.name}"? Hành động này không thể hoàn tác.
+                  {t.teamMatch.confirmDeleteDesc.replace('{name}', tournament.name)}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                <AlertDialogCancel>{t.teamMatch.cancel}</AlertDialogCancel>
                 <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground">
-                  Xóa
+                  {t.teamMatch.delete}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -141,55 +151,22 @@ export default function TeamMatchList() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold">Pickleball Team Match Format</h1>
-              <p className="text-muted-foreground">Create and manage MLP-style team competitions</p>
+              <h1 className="text-2xl font-bold">{t.teamMatch.pageTitle}</h1>
+              <p className="text-muted-foreground">{t.teamMatch.pageSubtitle}</p>
             </div>
             {user && (
               <Button onClick={() => navigate('/tools/team-match/new')}>
                 <Plus className="h-4 w-4 mr-2" />
-                Tạo mới
+                {t.teamMatch.createNew}
               </Button>
             )}
           </div>
         </header>
 
-        {/* SEO Content Section */}
-        <section className="p-6 rounded-xl bg-background border border-border">
-          <h2 className="text-lg font-semibold mb-3">
-            MLP-Style Pickleball Team Competition
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            The pickleball team match format brings professional-style team competition to your club or tournament. 
-            Inspired by Major League Pickleball (MLP), this format features teams competing across multiple game types 
-            including men's doubles, women's doubles, and mixed doubles. Create exciting team rivalries with our 
-            comprehensive team management tools as part of our <Link to="/tournaments" className="text-primary hover:underline">pickleball tournament software</Link>.
-          </p>
-          
-          <h2 className="text-lg font-semibold mb-3">
-            Lineup, Dreambreaker & Rally Scoring
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            Our team match system supports full lineup management, allowing captains to strategically assign 
-            players to each game. When matches are tied, the dreambreaker format adds thrilling sudden-death 
-            gameplay. Rally scoring keeps every point exciting and ensures matches maintain competitive pace 
-            throughout the competition.
-          </p>
-
-          <h2 className="text-lg font-semibold mb-3">
-            Manage Team Matches for Pickleball Tournaments
-          </h2>
-          <p className="text-muted-foreground">
-            Whether organizing a casual inter-club match or a full league season, ThePickleHub's team match 
-            format tool handles all the complexity. Track team standings, manage rosters, schedule matches, 
-            and calculate results automatically. Combine with our <Link to="/tools/quick-tables" className="text-primary hover:underline">pickleball bracket generator</Link> for 
-            complete tournament management and memorable pickleball team experiences.
-          </p>
-        </section>
-
         {/* My Tournaments */}
         {user && (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold">Giải đấu của tôi</h2>
+            <h2 className="text-lg font-semibold">{t.teamMatch.myTournaments}</h2>
             {isLoading ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 {[1, 2].map(i => (
@@ -208,14 +185,14 @@ export default function TeamMatchList() {
               <Card className="border-dashed">
                 <CardContent className="py-8 text-center text-muted-foreground">
                   <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Bạn chưa tạo giải đấu đồng đội nào</p>
+                  <p>{t.teamMatch.noTournaments}</p>
                   <Button 
                     variant="outline" 
                     className="mt-4"
                     onClick={() => navigate('/tools/team-match/new')}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Tạo giải đấu đầu tiên
+                    {t.teamMatch.createFirst}
                   </Button>
                 </CardContent>
               </Card>
@@ -227,6 +204,7 @@ export default function TeamMatchList() {
                     tournament={tournament}
                     isOwner={true}
                     onDelete={() => deleteTournament(tournament.id)}
+                    t={t}
                   />
                 ))}
               </div>
@@ -237,16 +215,17 @@ export default function TeamMatchList() {
         {/* Public Tournaments */}
         {publicTournaments.length > 0 && (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold">Giải đấu đang mở</h2>
+            <h2 className="text-lg font-semibold">{t.teamMatch.publicTournaments}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {publicTournaments
-                .filter(t => !myTournaments.some(my => my.id === t.id))
+                .filter(tm => !myTournaments.some(my => my.id === tm.id))
                 .map(tournament => (
                   <TournamentCard
                     key={tournament.id}
                     tournament={tournament}
                     isOwner={false}
                     onDelete={() => {}}
+                    t={t}
                   />
                 ))}
             </div>
@@ -259,14 +238,40 @@ export default function TeamMatchList() {
             <CardContent className="py-8 text-center">
               <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <p className="text-muted-foreground mb-4">
-                Đăng nhập để tạo và quản lý giải đấu đồng đội
+                {t.teamMatch.loginPrompt}
               </p>
               <Button onClick={() => navigate('/login')}>
-                Đăng nhập
+                {t.nav.login}
               </Button>
             </CardContent>
           </Card>
         )}
+
+        {/* SEO Content Section - at bottom */}
+        <section className="p-6 rounded-xl bg-background border border-border mt-8">
+          <h2 className="text-lg font-semibold mb-3">
+            {t.teamMatch.seo.mlpTitle}
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            {t.teamMatch.seo.mlpDesc}{" "}
+            <Link to="/tournaments" className="text-primary hover:underline">{t.tournament.title}</Link>
+          </p>
+          
+          <h2 className="text-lg font-semibold mb-3">
+            {t.teamMatch.seo.lineupTitle}
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            {t.teamMatch.seo.lineupDesc}
+          </p>
+
+          <h2 className="text-lg font-semibold mb-3">
+            {t.teamMatch.seo.manageTitle}
+          </h2>
+          <p className="text-muted-foreground">
+            {t.teamMatch.seo.manageDesc}{" "}
+            <Link to="/tools/quick-tables" className="text-primary hover:underline">{t.quickTable.seo.pageTitle}</Link>
+          </p>
+        </section>
       </div>
     </MainLayout>
   );
