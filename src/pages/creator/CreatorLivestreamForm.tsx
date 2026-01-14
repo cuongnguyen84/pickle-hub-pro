@@ -202,25 +202,33 @@ export default function CreatorLivestreamForm() {
           <CardContent className="space-y-6">
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Tiêu đề *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter livestream title"
+                placeholder="Nhập tiêu đề livestream"
               />
+              <p className="text-xs text-muted-foreground">
+                💡 Gợi ý: Tiêu đề rõ ràng + tên sự kiện giúp nhiều người dễ tìm thấy livestream hơn. 
+                Ví dụ: "Chung kết Đôi Nam – Giải Pickleball Mùa Xuân 2026"
+              </p>
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Mô tả</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter livestream description"
+                placeholder="Nhập mô tả nội dung livestream"
                 rows={4}
               />
+              <p className="text-xs text-muted-foreground">
+                💡 Gợi ý: Mô tả ngắn nội dung chính, giải đấu hoặc sự kiện sẽ được phát trong livestream. 
+                Điều này giúp người xem hiểu nhanh nội dung trước khi xem.
+              </p>
             </div>
 
             {/* Tournament */}

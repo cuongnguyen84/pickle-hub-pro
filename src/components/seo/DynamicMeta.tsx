@@ -4,19 +4,25 @@ interface DynamicMetaProps {
   title: string;
   description?: string;
   image?: string;
-  type?: "website" | "video.other";
+  type?: "website" | "video.other" | "article";
   url?: string;
+  noindex?: boolean;
+  creator?: string;
+  publishedTime?: string;
 }
 
 export const DynamicMeta = ({
   title,
-  description = "Live streaming and on-demand videos from top pickleball tournaments",
-  image = "https://lovable.dev/opengraph-image-p98pqg.png",
+  description = "ThePickleHub là nền tảng pickleball hàng đầu với livestream trực tiếp, giải đấu, bracket và cộng đồng pickleball sôi động.",
+  image = "https://thepicklehub.net/og-image.png",
   type = "website",
   url,
+  noindex = false,
+  creator,
+  publishedTime,
 }: DynamicMetaProps) => {
   const currentUrl = url || window.location.href;
-  const fullTitle = `${title} | The Pickle Hub`;
+  const fullTitle = `${title} | ThePickleHub`;
 
   useEffect(() => {
     // Update document title
@@ -36,12 +42,25 @@ export const DynamicMeta = ({
       meta.content = content;
     };
 
+    // Robots meta for noindex pages
+    if (noindex) {
+      updateMeta("robots", "noindex, nofollow", true);
+    } else {
+      // Remove noindex if it was previously set
+      const robotsMeta = document.querySelector('meta[name="robots"]');
+      if (robotsMeta) {
+        robotsMeta.remove();
+      }
+    }
+
     // Open Graph tags
     updateMeta("og:title", fullTitle);
     updateMeta("og:description", description);
     updateMeta("og:image", image);
     updateMeta("og:type", type);
     updateMeta("og:url", currentUrl);
+    updateMeta("og:site_name", "ThePickleHub");
+    updateMeta("og:locale", "vi_VN");
 
     // Twitter tags
     updateMeta("twitter:title", fullTitle, true);
@@ -52,11 +71,30 @@ export const DynamicMeta = ({
     // General meta
     updateMeta("description", description, true);
 
+    // Article specific meta (for livestreams/videos)
+    if (type === "video.other" || type === "article") {
+      if (creator) {
+        updateMeta("article:author", creator);
+      }
+      if (publishedTime) {
+        updateMeta("article:published_time", publishedTime);
+      }
+    }
+
+    // Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = currentUrl;
+
     // Cleanup: Reset to default on unmount
     return () => {
-      document.title = "The Pickle Hub - Professional Pickleball Media Platform";
+      document.title = "ThePickleHub – Pickleball Tournaments, Livestream & Community";
     };
-  }, [fullTitle, description, image, type, currentUrl]);
+  }, [fullTitle, description, image, type, currentUrl, noindex, creator, publishedTime]);
 
   return null;
 };

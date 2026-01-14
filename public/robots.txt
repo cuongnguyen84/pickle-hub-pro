@@ -1,14 +1,30 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# ThePickleHub Robots.txt
+# Allow search engines to crawl public content
 
 User-agent: *
 Allow: /
+Allow: /live
+Allow: /live/
+Allow: /videos
+Allow: /watch/
+Allow: /tournaments
+Allow: /tournament/
+Allow: /org/
+Allow: /tools
+Allow: /privacy
+
+# Block admin and private routes
+Disallow: /admin
+Disallow: /admin/
+Disallow: /creator
+Disallow: /creator/
+Disallow: /account
+Disallow: /login
+Disallow: /auth/
+Disallow: /notifications
+Disallow: /embed/
+Disallow: /matches/
+Disallow: /join/
+
+# Sitemap location
+Sitemap: https://thepicklehub.net/sitemap.xml
