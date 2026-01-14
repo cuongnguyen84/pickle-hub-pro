@@ -62,44 +62,6 @@ const Index = () => {
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
       </section>
 
-      {/* SEO Content Section - About ThePickleHub */}
-      <section className="container-wide py-12 border-b border-border">
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* H2 - Livestream */}
-          <div className="space-y-3">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Tv className="w-6 h-6 text-primary" />
-            </div>
-            <h2 className="text-xl font-semibold text-foreground">{t.home.features.livestreamTitle}</h2>
-            <p className="text-foreground-secondary leading-relaxed">
-              {t.home.features.livestreamDesc}
-            </p>
-          </div>
-          
-          {/* H2 - Tournaments */}
-          <div className="space-y-3">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-primary" />
-            </div>
-            <h2 className="text-xl font-semibold text-foreground">{t.home.features.tournamentsTitle}</h2>
-            <p className="text-foreground-secondary leading-relaxed">
-              {t.home.features.tournamentsDesc}
-            </p>
-          </div>
-          
-          {/* H2 - Community */}
-          <div className="space-y-3">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Users className="w-6 h-6 text-primary" />
-            </div>
-            <h2 className="text-xl font-semibold text-foreground">{t.home.features.communityTitle}</h2>
-            <p className="text-foreground-secondary leading-relaxed">
-              {t.home.features.communityDesc}
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Live Now Section */}
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.liveNow} href="/live" />
@@ -208,7 +170,45 @@ const Index = () => {
         ) : null}
       </section>
 
-      {/* SEO Footer Content */}
+      {/* SEO Content Section - Features Overview */}
+      <section className="container-wide py-12 border-t border-border">
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* H2 - Livestream */}
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Tv className="w-6 h-6 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground">{t.home.features.livestreamTitle}</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              {t.home.features.livestreamDesc}
+            </p>
+          </div>
+          
+          {/* H2 - Tournaments */}
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Trophy className="w-6 h-6 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground">{t.home.features.tournamentsTitle}</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              {t.home.features.tournamentsDesc}
+            </p>
+          </div>
+          
+          {/* H2 - Community */}
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Users className="w-6 h-6 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground">{t.home.features.communityTitle}</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              {t.home.features.communityDesc}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Footer Content - About ThePickleHub */}
       <section className="container-wide py-12 bg-surface-elevated rounded-xl mb-8">
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <h2 className="text-2xl font-semibold text-foreground">{t.home.about.title}</h2>
