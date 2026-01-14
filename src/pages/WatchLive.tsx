@@ -272,18 +272,35 @@ const WatchLive = () => {
                     </span>
                   </Link>
                 )}
+                {/* View count with context-aware label */}
                 <span className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  {viewCount.toLocaleString()} {t.live.watching}
+                  {isEnded ? (
+                    // For ended livestreams: show as total views (not "watching")
+                    <>{viewCount.toLocaleString()} {t.live.totalViews}</>
+                  ) : (
+                    // For live/scheduled: show as currently watching
+                    <>{viewCount.toLocaleString()} {t.live.watching}</>
+                  )}
                 </span>
-                {livestream.scheduled_start_at && (
+                {/* Date/time display based on status */}
+                {isEnded && livestream.ended_at ? (
+                  // Ended: show when it ended
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {t.live.endedAt} {format(new Date(livestream.ended_at), "dd MMM yyyy, HH:mm", {
+                      locale: dateLocale,
+                    })}
+                  </span>
+                ) : livestream.scheduled_start_at ? (
+                  // Live/Scheduled: show scheduled start time
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     {format(new Date(livestream.scheduled_start_at), "dd MMM yyyy, HH:mm", {
                       locale: dateLocale,
                     })}
                   </span>
-                )}
+                ) : null}
               </div>
 
               {/* Like & Share Buttons */}

@@ -171,6 +171,8 @@ export interface Translations {
   live: {
     live: string;
     watching: string;
+    totalViews: string;
+    endedAt: string;
     scheduled: string;
     ended: string;
     startingSoon: string;
@@ -796,6 +798,8 @@ export const vi: Translations = {
   live: {
     live: "TRỰC TIẾP",
     watching: "đang xem",
+    totalViews: "lượt xem",
+    endedAt: "Kết thúc lúc",
     scheduled: "Đã lên lịch",
     ended: "Đã kết thúc",
     startingSoon: "Sắp bắt đầu",

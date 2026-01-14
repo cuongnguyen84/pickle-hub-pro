@@ -173,6 +173,8 @@ export const en: Translations = {
   live: {
     live: "LIVE",
     watching: "watching",
+    totalViews: "views",
+    endedAt: "Ended at",
     scheduled: "Scheduled",
     ended: "Ended",
     startingSoon: "Starting soon",
