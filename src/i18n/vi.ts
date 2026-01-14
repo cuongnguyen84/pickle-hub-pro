@@ -339,6 +339,10 @@ export interface Translations {
     notReady: string;
     playbackError: string;
     playbackErrorDesc: string;
+    reconnecting: string;
+    connectionLost: string;
+    autoRetry: string;
+    retryFailed: string;
   };
   errors: {
     notFound: string;
@@ -968,6 +972,10 @@ export const vi: Translations = {
     notReady: "Video chưa sẵn sàng",
     playbackError: "Không thể phát",
     playbackErrorDesc: "Không thể phát trên trình duyệt này. Hãy thử reload hoặc đổi mạng.",
+    reconnecting: "Đang kết nối lại...",
+    connectionLost: "Mất kết nối, đang thử lại...",
+    autoRetry: "Tự động thử lại sau {seconds} giây",
+    retryFailed: "Không thể kết nối lại. Vui lòng thử lại.",
   },
   errors: {
     notFound: "Không tìm thấy trang",
