@@ -193,7 +193,28 @@ export function useVideoMutations(organizationId: string | null) {
     },
   });
 
-  return { createVideo, updateVideo };
+  const deleteVideo = useMutation({
+    mutationFn: async (id: string) => {
+      if (!organizationId) throw new Error("No organization");
+      const { error } = await supabase
+        .from("videos")
+        .delete()
+        .eq("id", id)
+        .eq("organization_id", organizationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["creator-videos"] });
+      queryClient.invalidateQueries({ queryKey: ["creator-recent-videos"] });
+      queryClient.invalidateQueries({ queryKey: ["creator-stats"] });
+      toast({ title: "Video deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error deleting video", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return { createVideo, updateVideo, deleteVideo };
 }
 
 // Livestreams list with filters
@@ -295,7 +316,28 @@ export function useLivestreamMutations(organizationId: string | null) {
     },
   });
 
-  return { createLivestream, updateLivestream };
+  const deleteLivestream = useMutation({
+    mutationFn: async (id: string) => {
+      if (!organizationId) throw new Error("No organization");
+      const { error } = await supabase
+        .from("livestreams")
+        .delete()
+        .eq("id", id)
+        .eq("organization_id", organizationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["creator-livestreams"] });
+      queryClient.invalidateQueries({ queryKey: ["creator-recent-livestreams"] });
+      queryClient.invalidateQueries({ queryKey: ["creator-stats"] });
+      toast({ title: "Livestream deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error deleting livestream", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return { createLivestream, updateLivestream, deleteLivestream };
 }
 
 // Organization for settings

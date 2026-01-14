@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
-  MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck
+  MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3
 } from "lucide-react";
+import { NicknameInput } from "./NicknameInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -559,7 +560,9 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
         )}
       </div>
 
-      {/* Input */}
+      {/* Nickname & Input */}
+      {user && <NicknameInput />}
+      
       <div className="p-3 border-t border-border shrink-0">
         {!user ? (
           <Link

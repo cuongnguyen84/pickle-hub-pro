@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CreatorLayout } from "@/components/creator/CreatorLayout";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
-import { useCreatorLivestreams } from "@/hooks/useCreatorData";
+import { useCreatorLivestreams, useLivestreamMutations } from "@/hooks/useCreatorData";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +21,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Radio, Edit } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Plus, Radio, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function CreatorLivestreams() {
@@ -31,6 +42,12 @@ export default function CreatorLivestreams() {
   const { data: livestreams, isLoading } = useCreatorLivestreams(organizationId, {
     status: statusFilter,
   });
+  
+  const { deleteLivestream } = useLivestreamMutations(organizationId);
+
+  const handleDelete = (id: string) => {
+    deleteLivestream.mutate(id);
+  };
 
   return (
     <CreatorLayout>
@@ -117,7 +134,38 @@ export default function CreatorLivestreams() {
                       : "-"}
                   </p>
                 </div>
-                <Edit className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                <div className="flex items-center gap-1">
+                  <Edit className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Xóa livestream?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Hành động này không thể hoàn tác. Livestream sẽ bị xóa vĩnh viễn.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(stream.id)}
+                          className="bg-destructive hover:bg-destructive/90"
+                        >
+                          Xóa
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </Link>
             ))
           ) : (
@@ -219,11 +267,37 @@ export default function CreatorLivestreams() {
                         : "-"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link to={`/creator/livestreams/${stream.id}/edit`}>
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button asChild variant="ghost" size="sm">
+                          <Link to={`/creator/livestreams/${stream.id}/edit`}>
+                            <Edit className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Xóa livestream?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Hành động này không thể hoàn tác. Livestream sẽ bị xóa vĩnh viễn.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(stream.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
