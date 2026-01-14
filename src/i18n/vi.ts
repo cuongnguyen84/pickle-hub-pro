@@ -820,8 +820,8 @@ export const vi: Translations = {
       description: "Livestream trực tiếp và video theo yêu cầu từ các giải đấu hàng đầu",
       cta: "Khám phá ngay",
       badge: "Livestream & Video",
-      mainTitle: "ThePickleHub – Nền tảng Pickleball hàng đầu Việt Nam",
-      mainDescription: "Xem livestream trực tiếp các giải đấu pickleball, theo dõi bracket, và kết nối với cộng đồng pickleball sôi động nhất Việt Nam.",
+      mainTitle: "ThePickleHub – Nền tảng Pickleball Toàn Cầu",
+      mainDescription: "Xem livestream trực tiếp các giải đấu pickleball, theo dõi bracket, và kết nối với cộng đồng pickleball khắp nơi trên thế giới.",
     },
     sections: {
       liveNow: "Đang phát trực tiếp",
@@ -839,12 +839,12 @@ export const vi: Translations = {
       tournamentsTitle: "Giải đấu & Bracket",
       tournamentsDesc: "Công cụ chia bảng thông minh, tự động tạo lịch thi đấu round-robin hoặc playoff. Quản lý giải đấu dễ dàng với giao diện thân thiện.",
       communityTitle: "Cộng đồng Pickleball",
-      communityDesc: "Kết nối với hàng nghìn người chơi pickleball trên khắp Việt Nam. Đăng ký tham gia giải đấu, theo dõi creator yêu thích và chia sẻ đam mê.",
+      communityDesc: "Kết nối với hàng nghìn người chơi pickleball trên khắp thế giới. Đăng ký tham gia giải đấu, theo dõi creator yêu thích và chia sẻ đam mê.",
     },
     // SEO Footer
     about: {
       title: "Về ThePickleHub",
-      description: "ThePickleHub là nền tảng pickleball toàn diện dành cho cộng đồng Việt Nam. Chúng tôi cung cấp livestream trực tiếp các giải đấu pickleball, công cụ quản lý giải đấu với bracket tự động, và không gian để người chơi kết nối với nhau. Dù bạn là người mới bắt đầu hay đã có kinh nghiệm, ThePickleHub là nơi để bạn theo dõi, học hỏi và phát triển kỹ năng pickleball.",
+      description: "ThePickleHub là nền tảng pickleball toàn diện dành cho người chơi và ban tổ chức giải đấu toàn cầu. Chúng tôi cung cấp livestream trực tiếp các giải đấu pickleball, công cụ quản lý giải đấu với bracket tự động, và không gian để người chơi kết nối với nhau. Dù bạn là người mới bắt đầu hay đã có kinh nghiệm, ThePickleHub là nơi để bạn theo dõi, học hỏi và phát triển kỹ năng pickleball.",
       watchLive: "Xem Livestream →",
       tournaments: "Các Giải Đấu →",
       freeTools: "Công Cụ Miễn Phí →",
@@ -881,7 +881,7 @@ export const vi: Translations = {
     hubDescription: "Xem trực tiếp các giải pickleball trên ThePickleHub – điểm đến cho những ai yêu thích pickleball.",
     seo: {
       tournamentsTitle: "Xem Trực Tiếp Các Giải Pickleball",
-      tournamentsDesc: "ThePickleHub mang đến trải nghiệm xem livestream pickleball tốt nhất tại Việt Nam. Theo dõi các trận đấu trực tiếp từ giải chuyên nghiệp, giải phong trào đến các sự kiện cộng đồng. Nền tảng có sự góp mặt của các creator hàng đầu như TAPickleball với chất lượng phát sóng cao, bao gồm đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ.",
+      tournamentsDesc: "ThePickleHub mang đến trải nghiệm xem livestream pickleball tốt nhất. Theo dõi các trận đấu trực tiếp từ giải chuyên nghiệp, giải phong trào đến các sự kiện cộng đồng. Nền tảng có sự góp mặt của các creator hàng đầu với chất lượng phát sóng cao, bao gồm đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ.",
       creatorsTitle: "Livestream Từ Các Creator Pickleball",
       creatorsDesc: "Theo dõi các creator pickleball yêu thích và không bỏ lỡ trận đấu nào. Các creator thường xuyên phát sóng giải đấu, buổi tập luyện và các trận giao hữu. Nhận điểm số real-time, bình luận trực tiếp và cảm nhận sự phấn khích của pickleball ngay trên thiết bị của bạn.",
       upcomingTitle: "Lịch Phát Sóng & Livestream Sắp Tới",
@@ -919,7 +919,7 @@ export const vi: Translations = {
       formatsTitle: "Hỗ Trợ Bracket, Team Match và Livestream",
       formatsDesc: "Phần mềm giải đấu pickleball của chúng tôi hỗ trợ nhiều thể thức bao gồm round robin, loại trực tiếp đơn, loại trực tiếp kép và thi đấu đồng đội. Tích hợp livestream pickleball trực tiếp vào giải để tiếp cận nhiều khán giả hơn. VĐV có thể xem bracket, kiểm tra lịch thi đấu và theo dõi kết quả real-time từ mọi thiết bị.",
       builtTitle: "Xây Dựng Cho Giải Pickleball Thực Tế",
-      builtDesc: "Được sử dụng bởi các giám đốc giải đấu và câu lạc bộ pickleball khắp Việt Nam, phần mềm giải đấu của ThePickleHub được xây dựng từ kinh nghiệm thực tế tổ chức các sự kiện pickleball cạnh tranh. Từ giải phong trào đến giải chuyên nghiệp, nền tảng của chúng tôi mở rộng để đáp ứng nhu cầu với các tính năng như xếp sân, quản lý trọng tài và tính toán bảng xếp hạng tự động.",
+      builtDesc: "Được sử dụng bởi các giám đốc giải đấu và câu lạc bộ pickleball trên toàn thế giới, phần mềm giải đấu của ThePickleHub được xây dựng từ kinh nghiệm thực tế tổ chức các sự kiện pickleball cạnh tranh. Từ giải phong trào đến giải chuyên nghiệp, nền tảng của chúng tôi mở rộng để đáp ứng nhu cầu với các tính năng như xếp sân, quản lý trọng tài và tính toán bảng xếp hạng tự động.",
     },
     openRegistration: "Đang mở đăng ký",
     pairs: "đôi",

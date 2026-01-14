@@ -367,21 +367,30 @@ const WatchLive = () => {
                 {/* SEO Body Content - Always rendered for search engines */}
                 <div className="text-sm text-foreground-muted space-y-2">
                   <p>
-                    Xem trực tiếp <strong>{livestream.title}</strong> trên ThePickleHub - nền tảng pickleball hàng đầu Việt Nam. 
+                    {language === 'vi' 
+                      ? <>Xem trực tiếp <strong>{livestream.title}</strong> trên ThePickleHub - nền tảng pickleball toàn cầu.</>
+                      : <>Watch <strong>{livestream.title}</strong> live on ThePickleHub - a global pickleball platform.</>
+                    }
                     {livestream.organization?.name && (
-                      <> Được phát bởi <strong>{livestream.organization.name}</strong>.</>
+                      language === 'vi'
+                        ? <> Được phát bởi <strong>{livestream.organization.name}</strong>.</>
+                        : <> Streamed by <strong>{livestream.organization.name}</strong>.</>
                     )}
                   </p>
                   <p>
-                    ThePickleHub mang đến trải nghiệm xem livestream pickleball chất lượng cao với chat trực tiếp, 
-                    bình luận real-time và replay sau khi buổi phát kết thúc. Theo dõi các giải đấu, trận đấu giao hữu 
-                    và sự kiện pickleball từ khắp Việt Nam ngay tại đây.
+                    {language === 'vi'
+                      ? "ThePickleHub mang đến trải nghiệm xem livestream pickleball chất lượng cao với chat trực tiếp, bình luận real-time và replay sau khi buổi phát kết thúc. Theo dõi các giải đấu, trận đấu giao hữu và sự kiện pickleball ngay tại đây."
+                      : "ThePickleHub delivers high-quality pickleball livestream experience with live chat, real-time comments, and replay after the stream ends. Follow tournaments, friendly matches, and pickleball events right here."
+                    }
                   </p>
                   <p>
-                    {isLive && "🔴 Đang phát trực tiếp - Tham gia ngay để không bỏ lỡ những điểm đánh hay nhất! "}
-                    {isScheduled && "📅 Sắp diễn ra - Đặt lịch nhắc nhở để xem khi buổi phát bắt đầu. "}
-                    {isEnded && "📹 Xem lại replay đầy đủ của buổi livestream. "}
-                    Sử dụng tính năng chat để trò chuyện với người xem khác và chia sẻ cảm xúc về trận đấu.
+                    {isLive && (language === 'vi' ? "🔴 Đang phát trực tiếp - Tham gia ngay để không bỏ lỡ những điểm đánh hay nhất! " : "🔴 Live now - Join now to catch the best rallies! ")}
+                    {isScheduled && (language === 'vi' ? "📅 Sắp diễn ra - Đặt lịch nhắc nhở để xem khi buổi phát bắt đầu. " : "📅 Coming soon - Set a reminder to watch when the stream starts. ")}
+                    {isEnded && (language === 'vi' ? "📹 Xem lại replay đầy đủ của buổi livestream. " : "📹 Watch the full replay of this livestream. ")}
+                    {language === 'vi'
+                      ? "Sử dụng tính năng chat để trò chuyện với người xem khác và chia sẻ cảm xúc về trận đấu."
+                      : "Use the chat feature to interact with other viewers and share your thoughts about the match."
+                    }
                   </p>
                 </div>
               </div>
