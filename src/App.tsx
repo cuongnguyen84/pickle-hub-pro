@@ -60,6 +60,10 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              {/* Livestream routes - SEO primary */}
+              <Route path="/livestream" element={<Live />} />
+              <Route path="/livestream/:id" element={<WatchLive />} />
+              {/* Legacy /live routes - redirect for backward compatibility */}
               <Route path="/live" element={<Live />} />
               <Route path="/live/:id" element={<WatchLive />} />
               <Route path="/videos" element={<Videos />} />

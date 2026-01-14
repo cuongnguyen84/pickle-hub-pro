@@ -113,6 +113,7 @@ const WatchLive = () => {
   return (
     <MainLayout>
       {/* Dynamic SEO tags - auto-generated from livestream data */}
+      {/* Canonical URL points to /livestream/{id} for SEO */}
       <DynamicMeta
         title={livestream.title ?? "Livestream"}
         description={seoDescription}
@@ -120,6 +121,7 @@ const WatchLive = () => {
         type="video.other"
         creator={livestream.organization?.name}
         publishedTime={livestream.scheduled_start_at ?? livestream.created_at}
+        url={`https://thepicklehub.net/livestream/${id}`}
       />
       <div className="container-wide section-spacing">
         {/* Back Button */}
@@ -295,14 +297,34 @@ const WatchLive = () => {
                 />
               </div>
 
-              {/* Description */}
-              {livestream.description && (
-                <div className="bg-surface-elevated rounded-lg p-4">
+              {/* Description & SEO Content (100-200 words body content) */}
+              <div className="bg-surface-elevated rounded-lg p-4 space-y-4">
+                {livestream.description && (
                   <p className="text-foreground-secondary whitespace-pre-wrap">
                     {livestream.description}
                   </p>
+                )}
+                {/* SEO Body Content - Always rendered for search engines */}
+                <div className="text-sm text-foreground-muted space-y-2">
+                  <p>
+                    Xem trực tiếp <strong>{livestream.title}</strong> trên ThePickleHub - nền tảng pickleball hàng đầu Việt Nam. 
+                    {livestream.organization?.name && (
+                      <> Được phát bởi <strong>{livestream.organization.name}</strong>.</>
+                    )}
+                  </p>
+                  <p>
+                    ThePickleHub mang đến trải nghiệm xem livestream pickleball chất lượng cao với chat trực tiếp, 
+                    bình luận real-time và replay sau khi buổi phát kết thúc. Theo dõi các giải đấu, trận đấu giao hữu 
+                    và sự kiện pickleball từ khắp Việt Nam ngay tại đây.
+                  </p>
+                  <p>
+                    {isLive && "🔴 Đang phát trực tiếp - Tham gia ngay để không bỏ lỡ những điểm đánh hay nhất! "}
+                    {isScheduled && "📅 Sắp diễn ra - Đặt lịch nhắc nhở để xem khi buổi phát bắt đầu. "}
+                    {isEnded && "📹 Xem lại replay đầy đủ của buổi livestream. "}
+                    Sử dụng tính năng chat để trò chuyện với người xem khác và chia sẻ cảm xúc về trận đấu.
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Comments Section */}
