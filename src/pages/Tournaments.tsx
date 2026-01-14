@@ -200,8 +200,8 @@ const Tournaments = () => {
             ThePickleHub provides powerful pickleball tournament software designed specifically for organizers. 
             Whether you're running a small club tournament or a large competitive event, our platform 
             handles everything from player registration to bracket generation and live scoring. 
-            Streamline your tournament workflow with automated bracket creation, real-time score updates, 
-            and professional tournament management tools.
+            Use our <Link to="/tools/quick-tables" className="text-primary hover:underline">pickleball bracket generator</Link> for 
+            automated bracket creation, real-time score updates, and professional tournament management tools.
           </p>
           
           <h2 className="text-lg font-semibold text-foreground mb-3">
@@ -209,8 +209,8 @@ const Tournaments = () => {
           </h2>
           <p className="text-foreground-secondary mb-4">
             Our pickleball tournament software supports multiple formats including round robin, 
-            single elimination, double elimination, and MLP-style team competitions. 
-            Integrate livestreaming directly into your tournament to reach a wider audience. 
+            single elimination, double elimination, and <Link to="/tools/team-match" className="text-primary hover:underline">pickleball team match format</Link> competitions. 
+            Integrate <Link to="/livestream" className="text-primary hover:underline">pickleball livestream</Link> directly into your tournament to reach a wider audience. 
             Players can view brackets, check schedules, and follow match results in real-time 
             from any device.
           </p>

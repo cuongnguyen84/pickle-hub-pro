@@ -226,7 +226,7 @@ const QuickTables = () => {
                 ThePickleHub's pickleball bracket generator makes tournament organization effortless. 
                 Simply enter your player count, choose your format, and get a complete bracket instantly. 
                 Our tool handles all the complexity of round robin scheduling, playoff seeding, and 
-                match ordering so you can focus on playing.
+                match ordering so you can focus on playing. Part of our complete <Link to="/tournaments" className="text-primary hover:underline">pickleball tournament software</Link> suite.
               </p>
               
               <h2 className="text-lg font-semibold text-foreground mb-3">
@@ -245,6 +245,7 @@ const QuickTables = () => {
               <p className="text-foreground-secondary">
                 Beyond round robin, our pickleball bracket generator supports single elimination playoffs, 
                 group stage with knockout rounds, and large tournament formats for 50+ players. 
+                For team-based competitions, try our <Link to="/tools/team-match" className="text-primary hover:underline">pickleball team match format</Link> tool. 
                 Track scores in real-time, share live brackets with participants, and crown your 
                 tournament champion with professional-quality bracket displays.
               </p>
