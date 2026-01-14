@@ -134,7 +134,7 @@ export default function CreatorLivestreams() {
                       : "-"}
                   </p>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
                   <Edit className="w-4 h-4 text-foreground-muted flex-shrink-0" />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -142,12 +142,12 @@ export default function CreatorLivestreams() {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8"
-                        onClick={(e) => e.preventDefault()}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Xóa livestream?</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -157,7 +157,10 @@ export default function CreatorLivestreams() {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDelete(stream.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(stream.id);
+                          }}
                           className="bg-destructive hover:bg-destructive/90"
                         >
                           Xóa

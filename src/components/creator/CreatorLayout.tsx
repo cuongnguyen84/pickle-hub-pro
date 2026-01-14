@@ -217,12 +217,16 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
         </div>
       </aside>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer Menu - Only Home link */}
       {sidebarOpen && (
         <aside className="fixed top-0 left-0 z-50 h-screen w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden pt-[env(safe-area-inset-top)]">
           {/* Header */}
           <div className="p-4 border-b border-border-subtle flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 text-foreground font-semibold">
+            <Link 
+              to="/" 
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-2 text-foreground font-semibold"
+            >
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">PH</span>
               </div>
@@ -236,43 +240,17 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
             </button>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
-            {sidebarLinks.map((link) => {
-              const isActive = link.exact
-                ? location.pathname === link.path
-                : location.pathname.startsWith(link.path);
-
-              return (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground-secondary hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  <link.icon className="w-5 h-5" />
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Back to site */}
-          <div className="p-4 border-t border-border-subtle">
+          {/* Only Home link */}
+          <nav className="flex-1 p-4">
             <Link
               to="/"
               onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-foreground-secondary hover:text-foreground hover:bg-muted"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
               Về trang chủ
             </Link>
-          </div>
+          </nav>
         </aside>
       )}
 
