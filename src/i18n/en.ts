@@ -184,6 +184,17 @@ export const en: Translations = {
     replay: "Replay",
     watchingTooltip: "Number of people watching live right now",
     totalViewsTooltip: "Total number of views since the stream started",
+    // SEO Hub content
+    hubTitle: "Pickleball Livestream",
+    hubDescription: "Watch pickleball tournaments live on ThePickleHub – your destination for real-time pickleball action.",
+    seo: {
+      tournamentsTitle: "Watch Pickleball Tournaments Live",
+      tournamentsDesc: "ThePickleHub brings you the best pickleball livestream experience in Vietnam and beyond. Watch live matches from professional pickleball tournaments, amateur competitions, and community events. Our platform features streams from top pickleball creators including TAPickleball, featuring high-quality broadcasts of singles, doubles, and mixed doubles matches.",
+      creatorsTitle: "Livestream From Top Pickleball Creators",
+      creatorsDesc: "Follow your favorite pickleball content creators and never miss a live match. Our creators broadcast tournaments, training sessions, and exhibition matches regularly. Get real-time scores, commentary, and the excitement of live pickleball competition directly on your device.",
+      upcomingTitle: "Upcoming & Ongoing Pickleball Livestreams",
+      upcomingDesc: "Browse our schedule of upcoming livestreams and set reminders for matches you don't want to miss. Whether you're looking for recreational club tournaments or competitive league matches with pickleball tournament brackets, ThePickleHub has your pickleball livestream needs covered.",
+    },
   },
   tournament: {
     title: "Tournaments",

@@ -182,6 +182,16 @@ export interface Translations {
     replay: string;
     watchingTooltip: string;
     totalViewsTooltip: string;
+    hubTitle: string;
+    hubDescription: string;
+    seo: {
+      tournamentsTitle: string;
+      tournamentsDesc: string;
+      creatorsTitle: string;
+      creatorsDesc: string;
+      upcomingTitle: string;
+      upcomingDesc: string;
+    };
   };
   tournament: {
     title: string;
@@ -815,6 +825,17 @@ export const vi: Translations = {
     replay: "Xem lại",
     watchingTooltip: "Số người đang xem trực tiếp ngay bây giờ",
     totalViewsTooltip: "Tổng số lượt xem từ khi bắt đầu phát",
+    // SEO Hub content
+    hubTitle: "Xem Livestream Pickleball",
+    hubDescription: "Xem trực tiếp các giải pickleball trên ThePickleHub – điểm đến cho những ai yêu thích pickleball.",
+    seo: {
+      tournamentsTitle: "Xem Trực Tiếp Các Giải Pickleball",
+      tournamentsDesc: "ThePickleHub mang đến trải nghiệm xem livestream pickleball tốt nhất tại Việt Nam. Theo dõi các trận đấu trực tiếp từ giải chuyên nghiệp, giải phong trào đến các sự kiện cộng đồng. Nền tảng có sự góp mặt của các creator hàng đầu như TAPickleball với chất lượng phát sóng cao, bao gồm đơn nam, đơn nữ, đôi nam, đôi nữ và đôi nam nữ.",
+      creatorsTitle: "Livestream Từ Các Creator Pickleball",
+      creatorsDesc: "Theo dõi các creator pickleball yêu thích và không bỏ lỡ trận đấu nào. Các creator thường xuyên phát sóng giải đấu, buổi tập luyện và các trận giao hữu. Nhận điểm số real-time, bình luận trực tiếp và cảm nhận sự phấn khích của pickleball ngay trên thiết bị của bạn.",
+      upcomingTitle: "Lịch Phát Sóng & Livestream Sắp Tới",
+      upcomingDesc: "Xem lịch phát sóng và đặt nhắc nhở cho các trận đấu bạn không muốn bỏ lỡ. Dù bạn tìm kiếm giải phong trào hay giải đấu cạnh tranh với bracket pickleball, ThePickleHub đáp ứng mọi nhu cầu xem livestream của bạn.",
+    },
   },
   tournament: {
     title: "Giải đấu",
