@@ -73,6 +73,9 @@ const ContentCard = ({
             src={thumbnail}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
+            sizes={type === "short" ? "(max-width: 640px) 50vw, 25vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

@@ -18,6 +18,7 @@ interface LiveCardProps {
   scheduledAt?: string;
   className?: string;
   isReplay?: boolean;
+  priority?: boolean; // For LCP optimization
 }
 
 const LiveCard = ({
@@ -34,6 +35,7 @@ const LiveCard = ({
   scheduledAt,
   className,
   isReplay = false,
+  priority = false,
 }: LiveCardProps) => {
   const { t } = useI18n();
 
@@ -64,6 +66,10 @@ const LiveCard = ({
             src={thumbnail}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={priority ? "high" : "auto"}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-background-surface to-background-elevated">

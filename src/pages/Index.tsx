@@ -81,7 +81,7 @@ const Index = () => {
           </div>
         ) : liveStreams.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {liveStreams.slice(0, 3).map((stream) => (
+            {liveStreams.slice(0, 3).map((stream, index) => (
               <LiveCard
                 key={stream.id}
                 id={stream.id!}
@@ -91,6 +91,7 @@ const Index = () => {
                 organizationSlug={stream.organization?.slug}
                 status={stream.status as "live" | "scheduled" | "ended"}
                 thumbnail={stream.thumbnail_url ?? undefined}
+                priority={index === 0}
               />
             ))}
           </div>
