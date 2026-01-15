@@ -221,6 +221,8 @@ export type Database = {
           description: string | null
           ended_at: string | null
           id: string
+          mux_asset_id: string | null
+          mux_asset_playback_id: string | null
           mux_live_stream_id: string | null
           mux_playback_id: string | null
           mux_stream_key: string | null
@@ -237,6 +239,8 @@ export type Database = {
           description?: string | null
           ended_at?: string | null
           id?: string
+          mux_asset_id?: string | null
+          mux_asset_playback_id?: string | null
           mux_live_stream_id?: string | null
           mux_playback_id?: string | null
           mux_stream_key?: string | null
@@ -253,6 +257,8 @@ export type Database = {
           description?: string | null
           ended_at?: string | null
           id?: string
+          mux_asset_id?: string | null
+          mux_asset_playback_id?: string | null
           mux_live_stream_id?: string | null
           mux_playback_id?: string | null
           mux_stream_key?: string | null
@@ -1715,7 +1721,7 @@ export type Database = {
           description: string | null
           ended_at: string | null
           id: string | null
-          mux_live_stream_id: string | null
+          mux_asset_playback_id: string | null
           mux_playback_id: string | null
           organization_id: string | null
           scheduled_start_at: string | null
@@ -1730,7 +1736,7 @@ export type Database = {
           description?: string | null
           ended_at?: string | null
           id?: string | null
-          mux_live_stream_id?: string | null
+          mux_asset_playback_id?: string | null
           mux_playback_id?: string | null
           organization_id?: string | null
           scheduled_start_at?: string | null
@@ -1745,7 +1751,7 @@ export type Database = {
           description?: string | null
           ended_at?: string | null
           id?: string | null
-          mux_live_stream_id?: string | null
+          mux_asset_playback_id?: string | null
           mux_playback_id?: string | null
           organization_id?: string | null
           scheduled_start_at?: string | null

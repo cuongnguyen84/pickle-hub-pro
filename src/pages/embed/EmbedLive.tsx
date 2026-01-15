@@ -51,16 +51,24 @@ const EmbedLive = () => {
   }
 
   const isLive = livestream.status === "live";
+  const isEnded = livestream.status === "ended";
+  
+  // Use asset playback ID for ended streams (replay), otherwise use live playback ID
+  const playbackId = isEnded && livestream.mux_asset_playback_id 
+    ? livestream.mux_asset_playback_id 
+    : livestream.mux_playback_id;
+    
+  const streamType = isLive ? "live" : "on-demand";
 
   return (
     <div className="w-full h-full min-h-screen bg-black flex flex-col">
       {/* Video Player - Full screen */}
       <div className="flex-1 relative">
         <MuxPlayer
-          playbackId={livestream.mux_playback_id}
+          playbackId={playbackId!}
           title={livestream.title}
           poster={livestream.thumbnail_url ?? undefined}
-          streamType={isLive ? "live" : "on-demand"}
+          streamType={streamType}
           type="livestream"
           isLive={isLive}
           className="w-full h-full absolute inset-0"
