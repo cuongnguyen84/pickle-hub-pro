@@ -1,0 +1,14 @@
+# Cache static assets with content hashes for 1 year
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache favicon
+/favicon.ico
+  Cache-Control: public, max-age=86400
+
+# Cache sitemap and robots
+/sitemap.xml
+  Cache-Control: public, max-age=86400
+
+/robots.txt
+  Cache-Control: public, max-age=86400
