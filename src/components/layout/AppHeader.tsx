@@ -142,7 +142,12 @@ const AppHeader = () => {
                 </Link>}
 
               {/* Mobile Menu Toggle */}
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 md:hidden rounded-lg text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors duration-200">
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                className="p-2 md:hidden rounded-lg text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors duration-200"
+                aria-label={isMobileMenuOpen ? t.nav.closeMenu : t.nav.openMenu}
+                aria-expanded={isMobileMenuOpen}
+              >
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>

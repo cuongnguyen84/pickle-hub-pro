@@ -91,6 +91,8 @@ export interface Translations {
     signup: string;
     creator: string;
     admin: string;
+    openMenu: string;
+    closeMenu: string;
   };
   tools: {
     title: string;
@@ -809,6 +811,8 @@ export const vi: Translations = {
     signup: "Đăng ký",
     creator: "Creator Studio",
     admin: "Quản trị",
+    openMenu: "Mở menu",
+    closeMenu: "Đóng menu",
   },
   tools: {
     title: "Công cụ",

@@ -93,6 +93,8 @@ export const en: Translations = {
     signup: "Sign up",
     creator: "Creator Studio",
     admin: "Admin",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
   },
   tools: {
     title: "Tools",
