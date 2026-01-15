@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    sourcemap: true,
+  },
   // Ensure static files in public folder are served with correct MIME types
   assetsInclude: ['**/*.xml'],
 }));
