@@ -104,13 +104,19 @@ const WatchLive = () => {
     ended: t.live.ended,
   };
 
-  const hasPlayback = !!livestream.mux_playback_id;
   const isLive = livestream.status === "live";
   const isScheduled = livestream.status === "scheduled";
   const isEnded = livestream.status === "ended";
   
-  // Determine stream type: live for active streams, live:dvr for replays
-  const streamType = isLive ? "live" : "live:dvr";
+  // Use asset playback ID for ended streams (replay), otherwise use live playback ID
+  const playbackId = isEnded && livestream.mux_asset_playback_id 
+    ? livestream.mux_asset_playback_id 
+    : livestream.mux_playback_id;
+  
+  const hasPlayback = !!playbackId;
+  
+  // Determine stream type: live for active streams, on-demand for replays
+  const streamType = isLive ? "live" : "on-demand";
 
   // Generate SEO description from livestream data
   const seoDescription = livestream.description 
@@ -145,7 +151,7 @@ const WatchLive = () => {
           <div className="aspect-video bg-surface-elevated overflow-hidden relative">
             {hasPlayback ? (
               <MuxPlayer
-                playbackId={livestream.mux_playback_id!}
+                playbackId={playbackId!}
                 title={livestream.title}
                 poster={livestream.thumbnail_url ?? undefined}
                 streamType={streamType}
@@ -189,7 +195,7 @@ const WatchLive = () => {
             <div className="hidden lg:block aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
               {hasPlayback ? (
                 <MuxPlayer
-                  playbackId={livestream.mux_playback_id!}
+                  playbackId={playbackId!}
                   title={livestream.title}
                   poster={livestream.thumbnail_url ?? undefined}
                   streamType={streamType}

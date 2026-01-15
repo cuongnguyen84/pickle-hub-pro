@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.batch-view-events]
 verify_jwt = false
+
+[functions.mux-webhook]
+verify_jwt = false
