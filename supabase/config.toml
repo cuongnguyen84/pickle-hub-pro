@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.news-ingest]
 verify_jwt = false
+
+[functions.api-keys-generate]
+verify_jwt = false
+
+[functions.api-keys-revoke]
+verify_jwt = false
