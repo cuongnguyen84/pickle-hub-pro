@@ -721,4 +721,9 @@ export const en: Translations = {
       manageDesc: "Whether organizing a casual inter-club match or a full league season, ThePickleHub's team match format tool handles all the complexity. Track team standings, manage rosters, schedule matches, and calculate results automatically. Combine with our bracket generator for complete tournament management and memorable pickleball team experiences.",
     },
   },
+  news: {
+    title: "Pickleball News",
+    noNews: "No news available",
+    readMore: "Read more",
+  },
 };

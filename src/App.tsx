@@ -34,6 +34,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const TeamMatchList = lazy(() => import("./pages/TeamMatchList"));
 const TeamMatchSetup = lazy(() => import("./pages/TeamMatchSetup"));
 const TeamMatchView = lazy(() => import("./pages/TeamMatchView"));
+const News = lazy(() => import("./pages/News"));
 
 // Lazy load embed pages
 const EmbedLive = lazy(() => import("./pages/embed/EmbedLive"));
@@ -95,6 +96,7 @@ const App = () => (
                 <Route path="/account" element={<Account />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/search" element={<Search />} />
+                <Route path="/news" element={<News />} />
                 {/* Tools routes */}
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/tools/quick-tables" element={<QuickTables />} />
