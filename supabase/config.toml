@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.api-keys-admin-revoke]
 verify_jwt = false
+
+[functions.news-check]
+verify_jwt = false
