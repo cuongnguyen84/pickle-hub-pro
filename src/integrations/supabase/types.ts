@@ -352,6 +352,39 @@ export type Database = {
         }
         Relationships: []
       }
+      news_items: {
+        Row: {
+          created_at: string
+          id: string
+          published_at: string
+          source: string
+          source_url: string
+          status: Database["public"]["Enums"]["news_status"]
+          summary: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          published_at: string
+          source: string
+          source_url: string
+          status?: Database["public"]["Enums"]["news_status"]
+          summary: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          published_at?: string
+          source?: string
+          source_url?: string
+          status?: Database["public"]["Enums"]["news_status"]
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1941,6 +1974,7 @@ export type Database = {
         | "expired"
         | "cancelled"
       livestream_status: "scheduled" | "live" | "ended"
+      news_status: "draft" | "scheduled" | "published"
       notification_type: "livestream_scheduled" | "livestream_live"
       player_gender: "male" | "female"
       quick_match_status: "pending" | "completed"
@@ -2106,6 +2140,7 @@ export const Constants = {
         "cancelled",
       ],
       livestream_status: ["scheduled", "live", "ended"],
+      news_status: ["draft", "scheduled", "published"],
       notification_type: ["livestream_scheduled", "livestream_live"],
       player_gender: ["male", "female"],
       quick_match_status: ["pending", "completed"],

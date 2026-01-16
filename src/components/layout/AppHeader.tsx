@@ -54,6 +54,9 @@ const AppHeader = () => {
     path: "/videos",
     label: t.nav.videos
   }, {
+    path: "/news",
+    label: t.news.title
+  }, {
     path: "/tools",
     label: t.nav.tools
   }, {

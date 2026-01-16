@@ -716,6 +716,11 @@ export interface Translations {
       manageDesc: string;
     };
   };
+  news: {
+    title: string;
+    noNews: string;
+    readMore: string;
+  };
 }
 
 // Vietnamese translations
@@ -1438,5 +1443,10 @@ export const vi: Translations = {
       manageTitle: "Quản Lý Thi Đấu Đồng Đội Cho Giải Pickleball",
       manageDesc: "Dù tổ chức trận giao hữu giữa các câu lạc bộ hay một mùa giải đầy đủ, công cụ thi đấu đồng đội của ThePickleHub xử lý mọi phức tạp. Theo dõi bảng xếp hạng đội, quản lý đội hình, lên lịch trận đấu và tính toán kết quả tự động. Kết hợp với công cụ chia bảng để có trải nghiệm quản lý giải đấu và thi đấu đồng đội đáng nhớ.",
     },
+  },
+  news: {
+    title: "Tin tức Pickleball",
+    noNews: "Chưa có tin tức nào",
+    readMore: "Đọc thêm",
   },
 };
