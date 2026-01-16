@@ -5,6 +5,72 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Hash API key using SHA-256
+const hashApiKey = async (key: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+};
+
+interface ApiKeyRecord {
+  id: string;
+  is_active: boolean;
+  expires_at: string | null;
+  permissions: string[];
+}
+
+// Validate custom API key against database
+const validateApiKey = async (
+  token: string,
+  supabaseServiceKey: string,
+  requiredPermission: string
+): Promise<{ valid: boolean; keyId?: string }> => {
+  try {
+    const keyHash = await hashApiKey(token);
+    
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: apiKey, error } = await supabase
+      .from("api_keys")
+      .select("id, is_active, expires_at, permissions")
+      .eq("key_hash", keyHash)
+      .single();
+
+    if (error || !apiKey) {
+      return { valid: false };
+    }
+
+    const key = apiKey as ApiKeyRecord;
+
+    // Check if key is active
+    if (!key.is_active) {
+      console.log("[news-ingest] API key is revoked");
+      return { valid: false };
+    }
+
+    // Check expiration
+    if (key.expires_at && new Date(key.expires_at) < new Date()) {
+      console.log("[news-ingest] API key has expired");
+      return { valid: false };
+    }
+
+    // Check permissions
+    if (!key.permissions?.includes(requiredPermission)) {
+      console.log("[news-ingest] API key lacks required permission:", requiredPermission);
+      return { valid: false };
+    }
+
+    return { valid: true, keyId: key.id };
+  } catch (err) {
+    console.error("[news-ingest] Error validating API key:", err);
+    return { valid: false };
+  }
+};
+
 interface NewsPayload {
   title: string;
   summary: string;
@@ -29,26 +95,39 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate: Only allow service_role key
     const authHeader = req.headers.get("Authorization");
-    const expectedKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!authHeader || !expectedKey) {
-      console.error("[news-ingest] Missing authorization or service key not configured");
+    if (!authHeader) {
+      console.error("[news-ingest] Missing authorization header");
       return new Response(
-        JSON.stringify({ error: "Unauthorized - Service key required" }),
+        JSON.stringify({ error: "Unauthorized - API key required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Extract token from Bearer header
     const token = authHeader.replace("Bearer ", "");
-    if (token !== expectedKey) {
-      console.error("[news-ingest] Invalid service key provided");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Try custom API key first
+    const apiKeyResult = await validateApiKey(token, supabaseServiceKey, "news:write");
+    const isServiceRole = token === supabaseServiceKey;
+
+    if (!apiKeyResult.valid && !isServiceRole) {
+      console.error("[news-ingest] Invalid API key or service key");
       return new Response(
-        JSON.stringify({ error: "Unauthorized - Invalid service key" }),
+        JSON.stringify({ error: "Unauthorized - Invalid API key" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Update last_used_at for custom API keys
+    if (apiKeyResult.valid && apiKeyResult.keyId) {
+      await supabase
+        .from("api_keys")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("id", apiKeyResult.keyId);
     }
 
     const body: NewsPayload = await req.json();
@@ -111,11 +190,6 @@ Deno.serve(async (req) => {
 
     console.log("[news-ingest] Inserting news item:", sanitizedData.title);
 
-    // Insert with service role
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     const { data, error } = await supabase
       .from("news_items")
       .insert(sanitizedData)
@@ -130,7 +204,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("[news-ingest] Successfully inserted news item:", data.id);
+    console.log("[news-ingest] Successfully inserted news item:", (data as { id: string }).id);
 
     return new Response(
       JSON.stringify({ success: true, data }),
