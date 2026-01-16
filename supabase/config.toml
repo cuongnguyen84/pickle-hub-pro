@@ -23,3 +23,12 @@ verify_jwt = false
 
 [functions.api-keys-revoke]
 verify_jwt = false
+
+[functions.api-keys-list]
+verify_jwt = false
+
+[functions.api-keys-admin-generate]
+verify_jwt = false
+
+[functions.api-keys-admin-revoke]
+verify_jwt = false
