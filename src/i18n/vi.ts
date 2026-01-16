@@ -718,6 +718,7 @@ export interface Translations {
   };
   news: {
     title: string;
+    subtitle: string;
     noNews: string;
     readMore: string;
   };
@@ -1446,7 +1447,8 @@ export const vi: Translations = {
   },
   news: {
     title: "Tin tức Pickleball",
-    noNews: "Chưa có tin tức nào",
+    subtitle: "Tổng hợp nhanh các cập nhật pickleball từ nguồn uy tín.",
+    noNews: "Chưa có cập nhật. Tin tức sẽ hiển thị tại đây khi có nội dung mới.",
     readMore: "Đọc thêm",
   },
 };

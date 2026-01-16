@@ -12,10 +12,13 @@ export default function News() {
   return (
     <MainLayout>
       <div className="container-wide py-8">
-        <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Newspaper className="w-6 h-6" />
-          {t.news.title}
-        </h1>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Newspaper className="w-6 h-6" />
+            {t.news.title}
+          </h1>
+          <p className="text-foreground-secondary mt-2">{t.news.subtitle}</p>
+        </div>
 
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

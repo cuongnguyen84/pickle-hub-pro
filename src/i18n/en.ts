@@ -723,7 +723,8 @@ export const en: Translations = {
   },
   news: {
     title: "Pickleball News",
-    noNews: "No news available",
+    subtitle: "Curated pickleball updates from trusted sources.",
+    noNews: "No updates yet. News will appear here when available.",
     readMore: "Read more",
   },
 };
