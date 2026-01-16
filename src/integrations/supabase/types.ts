@@ -357,6 +357,7 @@ export type Database = {
           created_at: string
           id: string
           published_at: string
+          show_on_home: boolean
           source: string
           source_url: string
           status: Database["public"]["Enums"]["news_status"]
@@ -367,6 +368,7 @@ export type Database = {
           created_at?: string
           id?: string
           published_at: string
+          show_on_home?: boolean
           source: string
           source_url: string
           status?: Database["public"]["Enums"]["news_status"]
@@ -377,6 +379,7 @@ export type Database = {
           created_at?: string
           id?: string
           published_at?: string
+          show_on_home?: boolean
           source?: string
           source_url?: string
           status?: Database["public"]["Enums"]["news_status"]
