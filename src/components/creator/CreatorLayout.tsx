@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Loader2,
   BarChart3,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +28,7 @@ const sidebarLinks = [
   { path: "/creator/analytics", label: "Analytics", icon: BarChart3 },
   { path: "/creator/videos", label: "Videos", icon: Video },
   { path: "/creator/livestreams", label: "Livestreams", icon: Radio },
+  { path: "/creator/tournaments", label: "Tournaments", icon: Trophy },
   { path: "/creator/settings", label: "Settings", icon: Settings },
 ];
 
