@@ -60,6 +60,7 @@ const CreatorLivestreams = lazy(() => import("./pages/creator/CreatorLivestreams
 const CreatorLivestreamForm = lazy(() => import("./pages/creator/CreatorLivestreamForm"));
 const CreatorSettings = lazy(() => import("./pages/creator/CreatorSettings"));
 const CreatorAnalytics = lazy(() => import("./pages/creator/CreatorAnalytics"));
+const CreatorTournaments = lazy(() => import("./pages/creator/CreatorTournaments"));
 
 const queryClient = new QueryClient();
 
@@ -133,6 +134,7 @@ const App = () => (
                 <Route path="/creator/livestreams/new" element={<CreatorLivestreamForm />} />
                 <Route path="/creator/livestreams/:id/edit" element={<CreatorLivestreamForm />} />
                 <Route path="/creator/settings" element={<CreatorSettings />} />
+                <Route path="/creator/tournaments" element={<CreatorTournaments />} />
                 {/* Public pages */}
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="*" element={<NotFound />} />
