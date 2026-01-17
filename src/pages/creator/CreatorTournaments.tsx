@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { CreatorLayout } from "@/components/creator/CreatorLayout";
+import { useAdminTournaments, useCreateTournament, useUpdateTournament } from "@/hooks/useAdminData";
+import { useI18n } from "@/i18n";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trophy, Calendar, Users } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { useTeamMatch, CreateTournamentInput } from "@/hooks/useTeamMatch";
-import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -22,186 +24,219 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { Plus, Pencil, Trophy, Calendar } from "lucide-react";
+import { format } from "date-fns";
 
-const statusColors: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  registration: "bg-blue-500/20 text-blue-400",
-  group_stage: "bg-yellow-500/20 text-yellow-400",
-  playoff: "bg-orange-500/20 text-orange-400",
-  completed: "bg-green-500/20 text-green-400",
-};
-
-const statusLabels: Record<string, string> = {
-  draft: "Nháp",
-  registration: "Đăng ký",
-  group_stage: "Vòng bảng",
-  playoff: "Playoff",
-  completed: "Hoàn thành",
-};
-
-const defaultGameTemplates = [
-  { order_index: 0, game_type: 'WD' as const, display_name: 'Đôi Nữ', scoring_type: 'rally21' as const },
-  { order_index: 1, game_type: 'MD' as const, display_name: 'Đôi Nam', scoring_type: 'rally21' as const },
-  { order_index: 2, game_type: 'MX' as const, display_name: 'Đôi Nam Nữ', scoring_type: 'rally21' as const },
-];
+interface TournamentFormData {
+  name: string;
+  slug: string;
+  start_date: string;
+  end_date: string;
+  status: "upcoming" | "ongoing" | "ended";
+  description: string;
+}
 
 export default function CreatorTournaments() {
-  const navigate = useNavigate();
-  const { myTournaments, isLoading, createTournament, isCreating } = useTeamMatch();
+  const { t } = useI18n();
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [editingTournament, setEditingTournament] = useState<any>(null);
+  const [formData, setFormData] = useState<TournamentFormData>({
     name: "",
-    team_roster_size: 6 as 4 | 6 | 8,
-    team_count: 4,
-    format: "round_robin" as "round_robin" | "single_elimination" | "rr_playoff",
-    require_registration: true,
-    has_dreambreaker: true,
-    require_min_games_per_player: false,
+    slug: "",
+    start_date: "",
+    end_date: "",
+    status: "upcoming",
+    description: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.name.trim()) {
-      return;
-    }
-
-    try {
-      const input: CreateTournamentInput = {
-        name: formData.name.trim(),
-        team_roster_size: formData.team_roster_size,
-        team_count: formData.team_count,
-        format: formData.format,
-        require_registration: formData.require_registration,
-        has_dreambreaker: formData.has_dreambreaker,
-        require_min_games_per_player: formData.require_min_games_per_player,
-        game_templates: defaultGameTemplates,
-      };
-
-      const tournament = await createTournament(input);
-      setDialogOpen(false);
-      // Navigate to tournament view
-      navigate(`/team-match/${tournament.share_id}`);
-    } catch (error) {
-      // Error handled in hook
-    }
-  };
+  const { data: tournaments, isLoading } = useAdminTournaments();
+  const createTournament = useCreateTournament();
+  const updateTournament = useUpdateTournament();
 
   const resetForm = () => {
     setFormData({
       name: "",
-      team_roster_size: 6,
-      team_count: 4,
-      format: "round_robin",
-      require_registration: true,
-      has_dreambreaker: true,
-      require_min_games_per_player: false,
+      slug: "",
+      start_date: "",
+      end_date: "",
+      status: "upcoming",
+      description: "",
     });
+    setEditingTournament(null);
+  };
+
+  const openCreateDialog = () => {
+    resetForm();
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (tournament: any) => {
+    setEditingTournament(tournament);
+    setFormData({
+      name: tournament.name,
+      slug: tournament.slug,
+      start_date: tournament.start_date || "",
+      end_date: tournament.end_date || "",
+      status: tournament.status,
+      description: tournament.description || "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name.trim() || !formData.slug.trim()) {
+      toast({ variant: "destructive", title: "Vui lòng điền đầy đủ thông tin" });
+      return;
+    }
+
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        slug: formData.slug.trim(),
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+        status: formData.status,
+        description: formData.description.trim() || null,
+      };
+
+      if (editingTournament) {
+        await updateTournament.mutateAsync({ id: editingTournament.id, ...payload });
+        toast({ title: "Cập nhật giải đấu thành công" });
+      } else {
+        await createTournament.mutateAsync(payload);
+        toast({ title: "Tạo giải đấu thành công" });
+      }
+      setDialogOpen(false);
+      resetForm();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    }
+  };
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "ongoing":
+        return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">{t.tournament.ongoing}</Badge>;
+      case "ended":
+        return <Badge variant="secondary">{t.tournament.ended}</Badge>;
+      default:
+        return <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">{t.tournament.upcoming}</Badge>;
+    }
   };
 
   return (
     <CreatorLayout
-      title="Quản lý Tournaments"
+      title="Giải đấu"
       actions={
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={openCreateDialog}>
               <Plus className="w-4 h-4 mr-2" />
-              Tạo Tournament
+              {t.admin.tournament.create}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Tạo Team Match Tournament</DialogTitle>
+              <DialogTitle>
+                {editingTournament ? t.admin.tournament.edit : t.admin.tournament.create}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Tên giải đấu *</Label>
+                <Label htmlFor="name">{t.admin.tournament.name}</Label>
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="VD: Giải Pickleball Đội 2025"
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      name: e.target.value,
+                      slug: !editingTournament ? generateSlug(e.target.value) : formData.slug,
+                    });
+                  }}
+                  placeholder="Tên giải đấu"
                   required
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="slug">{t.admin.tournament.slug}</Label>
+                <Input
+                  id="slug"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  placeholder="slug-giai-dau"
+                  required
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Số đội</Label>
-                  <Select
-                    value={formData.team_count.toString()}
-                    onValueChange={(v) => setFormData({ ...formData, team_count: parseInt(v) })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[2, 3, 4, 5, 6, 7, 8, 10, 12, 16].map((n) => (
-                        <SelectItem key={n} value={n.toString()}>{n} đội</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="start_date">{t.admin.tournament.startDate}</Label>
+                  <Input
+                    id="start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Số thành viên/đội</Label>
-                  <Select
-                    value={formData.team_roster_size.toString()}
-                    onValueChange={(v) => setFormData({ ...formData, team_roster_size: parseInt(v) as 4 | 6 | 8 })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="4">4 người</SelectItem>
-                      <SelectItem value="6">6 người</SelectItem>
-                      <SelectItem value="8">8 người</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="end_date">{t.admin.tournament.endDate}</Label>
+                  <Input
+                    id="end_date"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  />
                 </div>
               </div>
-
               <div className="space-y-2">
-                <Label>Thể thức</Label>
+                <Label htmlFor="status">{t.admin.tournament.status}</Label>
                 <Select
-                  value={formData.format}
-                  onValueChange={(v) => setFormData({ ...formData, format: v as typeof formData.format })}
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, status: value as "upcoming" | "ongoing" | "ended" })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="round_robin">Vòng tròn (Round Robin)</SelectItem>
-                    <SelectItem value="single_elimination">Loại trực tiếp</SelectItem>
-                    <SelectItem value="rr_playoff">Vòng bảng + Playoff</SelectItem>
+                    <SelectItem value="upcoming">{t.tournament.upcoming}</SelectItem>
+                    <SelectItem value="ongoing">{t.tournament.ongoing}</SelectItem>
+                    <SelectItem value="ended">{t.tournament.ended}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="dreambreaker">Cho phép Dreambreaker</Label>
-                  <Switch
-                    id="dreambreaker"
-                    checked={formData.has_dreambreaker}
-                    onCheckedChange={(c) => setFormData({ ...formData, has_dreambreaker: c })}
-                  />
-                </div>
-                <p className="text-xs text-foreground-muted">
-                  Dreambreaker: 4 ván đơn rally scoring khi hòa 2-2
-                </p>
+              <div className="space-y-2">
+                <Label htmlFor="description">{t.admin.tournament.description}</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Mô tả giải đấu"
+                  rows={3}
+                />
               </div>
-
-              <div className="flex gap-3 justify-end pt-2">
+              <div className="flex gap-3 justify-end">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Hủy
+                  {t.common.cancel}
                 </Button>
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating ? "Đang tạo..." : "Tạo giải đấu"}
+                <Button
+                  type="submit"
+                  disabled={createTournament.isPending || updateTournament.isPending}
+                >
+                  {t.common.save}
                 </Button>
               </div>
             </form>
@@ -210,91 +245,59 @@ export default function CreatorTournaments() {
       }
     >
       <div className="space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-card p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-foreground-secondary text-sm">Tổng số</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {myTournaments?.length || 0}
-                </p>
-              </div>
-              <Trophy className="w-8 h-8 text-primary" />
-            </div>
-          </div>
-          <div className="glass-card p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-foreground-secondary text-sm">Đang diễn ra</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {myTournaments?.filter(t => 
-                    t.status === 'group_stage' || t.status === 'playoff'
-                  ).length || 0}
-                </p>
-              </div>
-              <Calendar className="w-8 h-8 text-yellow-400" />
-            </div>
-          </div>
-        </div>
+        <p className="text-foreground-muted">Quản lý các giải đấu cho livestream</p>
 
         {/* Tournaments List */}
-        <div className="glass-card">
-          <div className="p-4 border-b border-border-subtle">
-            <h2 className="text-lg font-semibold text-foreground">
-              Danh sách Tournaments
-            </h2>
+        {isLoading ? (
+          <div className="grid gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
           </div>
-          
-          {isLoading ? (
-            <div className="p-8 text-center text-foreground-secondary">
-              Đang tải...
-            </div>
-          ) : !myTournaments?.length ? (
-            <div className="p-8 text-center">
-              <Trophy className="w-12 h-12 mx-auto text-foreground-muted mb-3" />
-              <p className="text-foreground-secondary mb-4">
-                Bạn chưa có tournament nào
-              </p>
-              <Button size="sm" onClick={() => setDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Tạo Tournament đầu tiên
-              </Button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border-subtle">
-              {myTournaments.map((tournament) => (
-                <Link
-                  key={tournament.id}
-                  to={`/team-match/${tournament.share_id}`}
-                  className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                      <Trophy className="w-5 h-5 text-primary" />
+        ) : tournaments && tournaments.length > 0 ? (
+          <div className="grid gap-4">
+            {tournaments.map((tournament) => (
+              <Card key={tournament.id} className="bg-card border-border">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Trophy className="w-6 h-6 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-medium text-foreground">
-                        {tournament.name}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-foreground-secondary">
-                        <Users className="w-3.5 h-3.5" />
-                        <span>{tournament.team_count} đội</span>
-                        <span>•</span>
-                        <span>
-                          {format(new Date(tournament.created_at || ''), 'dd/MM/yyyy')}
-                        </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-medium">{tournament.name}</h3>
+                        {getStatusBadge(tournament.status)}
                       </div>
+                      <p className="text-sm text-foreground-muted">/{tournament.slug}</p>
+                      {(tournament.start_date || tournament.end_date) && (
+                        <div className="flex items-center gap-1 text-sm text-foreground-muted mt-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {tournament.start_date && format(new Date(tournament.start_date), "dd/MM/yyyy")}
+                          {tournament.start_date && tournament.end_date && " - "}
+                          {tournament.end_date && format(new Date(tournament.end_date), "dd/MM/yyyy")}
+                        </div>
+                      )}
                     </div>
+                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(tournament)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <Badge className={statusColors[tournament.status || 'draft']}>
-                    {statusLabels[tournament.status || 'draft']}
-                  </Badge>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-card border-border">
+            <CardContent className="p-8 text-center">
+              <Trophy className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
+              <p className="text-foreground-muted mb-4">Chưa có giải đấu nào</p>
+              <Button onClick={openCreateDialog}>
+                <Plus className="w-4 h-4 mr-2" />
+                Tạo giải đấu đầu tiên
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </CreatorLayout>
   );
