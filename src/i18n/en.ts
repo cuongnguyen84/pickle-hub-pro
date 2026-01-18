@@ -504,6 +504,9 @@ export const en: Translations = {
     downloadQR: "Download QR",
     qrDownloaded: "Downloaded!",
     qrDownloadedDesc: "QR code saved to your device",
+    socialLink: "Social share link (Facebook, Twitter...)",
+    socialLinkDesc: "Use this link when sharing on social media to display correct title & image",
+    directLink: "Direct link",
   },
   quickTable: {
     title: "Quick Bracket",

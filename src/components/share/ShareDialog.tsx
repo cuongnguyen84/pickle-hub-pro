@@ -28,6 +28,15 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const baseUrl = window.location.origin;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  // For social sharing, use edge function URL that returns proper OG tags
+  // Social crawlers (Facebook, Twitter) don't run JS, so they need server-rendered OG tags
+  const socialShareUrl = type === "live" 
+    ? `${supabaseUrl}/functions/v1/og-live?id=${id}`
+    : `${baseUrl}/video/${id}`;
+  
+  // Direct watch URL for QR codes and embed (these work without OG)
   const watchUrl = `${baseUrl}/${type === "live" ? "live" : "video"}/${id}`;
   const embedUrl = `${baseUrl}/embed/${type}/${id}`;
 
@@ -129,23 +138,60 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
             <p className="text-sm text-foreground-secondary">
               {t.share.linkDesc}
             </p>
-            <div className="flex gap-2">
-              <Input
-                value={watchUrl}
-                readOnly
-                className="flex-1 text-sm"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => copyToClipboard(watchUrl, "link")}
-              >
-                {copied === "link" ? (
-                  <Check className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </Button>
+            
+            {/* Social share URL - optimized for Facebook/Twitter */}
+            {type === "live" && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foreground-muted">
+                  {t.share.socialLink}
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={socialShareUrl}
+                    readOnly
+                    className="flex-1 text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(socialShareUrl, "social")}
+                  >
+                    {copied === "social" ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-foreground-muted">
+                  {t.share.socialLinkDesc}
+                </p>
+              </div>
+            )}
+            
+            {/* Direct watch URL */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-foreground-muted">
+                {type === "live" ? t.share.directLink : "Link"}
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  value={watchUrl}
+                  readOnly
+                  className="flex-1 text-sm"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(watchUrl, "link")}
+                >
+                  {copied === "link" ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </TabsContent>
 
