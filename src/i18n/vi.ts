@@ -499,6 +499,9 @@ export interface Translations {
     downloadQR: string;
     qrDownloaded: string;
     qrDownloadedDesc: string;
+    socialLink: string;
+    socialLinkDesc: string;
+    directLink: string;
   };
   quickTable: {
     title: string;
@@ -1228,6 +1231,9 @@ export const vi: Translations = {
     downloadQR: "Tải mã QR",
     qrDownloaded: "Đã tải xuống!",
     qrDownloadedDesc: "Mã QR đã được lưu vào máy của bạn",
+    socialLink: "Link chia sẻ (Facebook, Zalo...)",
+    socialLinkDesc: "Dùng link này khi share lên mạng xã hội để hiển thị đúng tiêu đề & hình ảnh",
+    directLink: "Link trực tiếp",
   },
   quickTable: {
     title: "Chia bảng nhanh",
