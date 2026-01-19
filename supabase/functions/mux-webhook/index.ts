@@ -58,14 +58,14 @@ Deno.serve(async (req) => {
 
       console.log(`Updating livestream with mux_stream_id=${liveStreamId}, asset_id=${assetId}, playback_id=${assetPlaybackId}`);
 
-      // Find and update the livestream by mux_stream_id
+      // Find and update the livestream by mux_live_stream_id
       const { data, error } = await supabase
         .from("livestreams")
         .update({
           mux_asset_id: assetId,
           mux_asset_playback_id: assetPlaybackId,
         })
-        .eq("mux_stream_id", liveStreamId)
+        .eq("mux_live_stream_id", liveStreamId)
         .select();
 
       if (error) {
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       }
 
       if (!data || data.length === 0) {
-        console.log("No livestream found with mux_stream_id:", liveStreamId);
+        console.log("No livestream found with mux_live_stream_id:", liveStreamId);
       } else {
         console.log("Successfully updated livestream:", data[0].id);
       }
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
           status: "ended",
           ended_at: new Date().toISOString(),
         })
-        .eq("mux_stream_id", liveStreamId)
+        .eq("mux_live_stream_id", liveStreamId)
         .eq("status", "live");
 
       if (error) {
