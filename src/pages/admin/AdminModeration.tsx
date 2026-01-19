@@ -5,11 +5,13 @@ import {
   useModerationLivestreams,
   useUpdateVideoStatus,
   useUpdateLivestreamStatus,
+  useUpdateLivestream,
+  useDeleteLivestream,
   useAdminOrganizations,
   useAdminTournaments,
 } from "@/hooks/useAdminData";
 import { useI18n } from "@/i18n";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Video, Radio, Eye, EyeOff, StopCircle, Shield } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { EditLivestreamDialog } from "@/components/admin/EditLivestreamDialog";
+import { Video, Radio, Eye, EyeOff, StopCircle, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function AdminModeration() {
@@ -30,6 +43,8 @@ export default function AdminModeration() {
   const { toast } = useToast();
   const [orgFilter, setOrgFilter] = useState<string>("all");
   const [tournamentFilter, setTournamentFilter] = useState<string>("all");
+  const [editingLivestream, setEditingLivestream] = useState<any>(null);
+  const [deletingLivestreamId, setDeletingLivestreamId] = useState<string | null>(null);
 
   const filters = {
     organizationId: orgFilter !== "all" ? orgFilter : undefined,
@@ -42,6 +57,8 @@ export default function AdminModeration() {
   const { data: tournaments } = useAdminTournaments();
   const updateVideoStatus = useUpdateVideoStatus();
   const updateLivestreamStatus = useUpdateLivestreamStatus();
+  const updateLivestream = useUpdateLivestream();
+  const deleteLivestream = useDeleteLivestream();
 
   const handleToggleVideoStatus = async (videoId: string, currentStatus: string) => {
     const newStatus = currentStatus === "published" ? "hidden" : "published";
@@ -57,6 +74,27 @@ export default function AdminModeration() {
     try {
       await updateLivestreamStatus.mutateAsync({ id: livestreamId, status: "ended" });
       toast({ title: "Đã kết thúc livestream" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    }
+  };
+
+  const handleSaveLivestream = async (data: { id: string; title: string; description: string; thumbnail_url: string; tournament_id: string | null }) => {
+    try {
+      await updateLivestream.mutateAsync(data);
+      toast({ title: "Đã cập nhật livestream" });
+      setEditingLivestream(null);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
+    }
+  };
+
+  const handleDeleteLivestream = async () => {
+    if (!deletingLivestreamId) return;
+    try {
+      await deleteLivestream.mutateAsync(deletingLivestreamId);
+      toast({ title: "Đã xóa livestream" });
+      setDeletingLivestreamId(null);
     } catch (error: any) {
       toast({ variant: "destructive", title: error.message || "Có lỗi xảy ra" });
     }
@@ -257,17 +295,34 @@ export default function AdminModeration() {
                             {stream.created_at && format(new Date(stream.created_at), "dd/MM/yyyy HH:mm")}
                           </p>
                         </div>
-                        {stream.status === "live" && (
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <Button
-                            variant="destructive"
+                            variant="outline"
                             size="sm"
-                            onClick={() => handleEndLivestream(stream.id)}
-                            disabled={updateLivestreamStatus.isPending}
+                            onClick={() => setEditingLivestream(stream)}
                           >
-                            <StopCircle className="w-4 h-4 mr-2" />
-                            Kết thúc
+                            <Pencil className="w-4 h-4" />
                           </Button>
-                        )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDeletingLivestreamId(stream.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                          {stream.status === "live" && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleEndLivestream(stream.id)}
+                              disabled={updateLivestreamStatus.isPending}
+                            >
+                              <StopCircle className="w-4 h-4 mr-2" />
+                              Kết thúc
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -284,6 +339,37 @@ export default function AdminModeration() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Livestream Dialog */}
+      <EditLivestreamDialog
+        open={!!editingLivestream}
+        onOpenChange={(open) => !open && setEditingLivestream(null)}
+        livestream={editingLivestream}
+        tournaments={tournaments || []}
+        onSave={handleSaveLivestream}
+        isPending={updateLivestream.isPending}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingLivestreamId} onOpenChange={(open) => !open && setDeletingLivestreamId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa livestream này? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLivestream}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteLivestream.isPending ? "Đang xóa..." : "Xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }

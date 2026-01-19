@@ -299,3 +299,33 @@ export function useUpdateLivestreamStatus() {
     },
   });
 }
+
+export function useUpdateLivestream() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; title?: string; description?: string; thumbnail_url?: string; tournament_id?: string | null }) => {
+      const { data, error } = await supabase.from("livestreams").update(updates).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "moderation", "livestreams"] });
+      queryClient.invalidateQueries({ queryKey: ["livestreams"] });
+    },
+  });
+}
+
+export function useDeleteLivestream() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("livestreams").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "moderation", "livestreams"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      queryClient.invalidateQueries({ queryKey: ["livestreams"] });
+    },
+  });
+}
