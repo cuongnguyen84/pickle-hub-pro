@@ -1,0 +1,3 @@
+# Social share redirects - Facebook/Zalo crawlers follow these to get OG tags
+/share/live/:id https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-live?id=:id 200
+/share/video/:id https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-video?id=:id 200

@@ -25,13 +25,9 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  
-  // Use edge function URL for social sharing - returns proper OG tags then redirects
-  // Facebook/Zalo crawlers can't execute JS, so they need server-rendered OG tags
-  const shareUrl = type === "live" 
-    ? `${supabaseUrl}/functions/v1/og-live?id=${id}`
-    : `https://thepicklehub.net/video/${id}`;
+  // Use /share/ routes which redirect to edge functions for OG tags
+  // This keeps the domain as thepicklehub.net while still serving proper OG meta
+  const shareUrl = `https://thepicklehub.net/share/${type}/${id}`;
 
   const copyToClipboard = async () => {
     try {
