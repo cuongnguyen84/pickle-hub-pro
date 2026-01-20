@@ -25,8 +25,13 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  // Use production domain for share links
-  const shareUrl = `https://thepicklehub.net/${type === "live" ? "live" : "video"}/${id}`;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  // Use edge function URL for social sharing - returns proper OG tags then redirects
+  // Facebook/Zalo crawlers can't execute JS, so they need server-rendered OG tags
+  const shareUrl = type === "live" 
+    ? `${supabaseUrl}/functions/v1/og-live?id=${id}`
+    : `https://thepicklehub.net/video/${id}`;
 
   const copyToClipboard = async () => {
     try {
@@ -78,7 +83,7 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
               onClick={copyToClipboard}
             >
               {copied ? (
-                <Check className="w-4 h-4 text-green-500" />
+                <Check className="w-4 h-4 text-success" />
               ) : (
                 <Copy className="w-4 h-4" />
               )}
