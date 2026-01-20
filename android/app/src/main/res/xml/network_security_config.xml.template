@@ -1,0 +1,22 @@
+<!--
+  Android Network Security Config for ThePickleHub
+  
+  After running `npx cap add android`, create this file at:
+  android/app/src/main/res/xml/network_security_config.xml
+  
+  Then reference it in AndroidManifest.xml:
+  android:networkSecurityConfig="@xml/network_security_config"
+-->
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">thepicklehub.net</domain>
+        <domain includeSubdomains="true">supabase.co</domain>
+        <domain includeSubdomains="true">mux.com</domain>
+    </domain-config>
+</network-security-config>
