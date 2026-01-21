@@ -7,7 +7,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { Share2, Copy, Check } from "lucide-react";
@@ -25,9 +24,10 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  // Use /share/ routes which redirect to edge functions for OG tags
-  // This keeps the domain as thepicklehub.net while still serving proper OG meta
-  const shareUrl = `https://thepicklehub.net/share/${type}/${id}`;
+  // Use direct Edge Function URL for social crawlers to read OG tags
+  const shareUrl = type === "live"
+    ? `https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-live?id=${id}`
+    : `https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-video?id=${id}`;
 
   const copyToClipboard = async () => {
     try {
@@ -67,24 +67,23 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
             {t.share.linkDesc}
           </p>
           
-          <div className="flex gap-2">
-            <Input
-              value={shareUrl}
-              readOnly
-              className="flex-1 text-sm"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={copyToClipboard}
-            >
-              {copied ? (
+          <Button
+            onClick={copyToClipboard}
+            className="w-full gap-2"
+            variant={copied ? "outline" : "default"}
+          >
+            {copied ? (
+              <>
                 <Check className="w-4 h-4 text-success" />
-              ) : (
+                {t.share.copied}
+              </>
+            ) : (
+              <>
                 <Copy className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
+                {t.share.directLink}
+              </>
+            )}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
