@@ -194,35 +194,40 @@ const DoublesEliminationBracket = ({
 
       {/* PRELIMINARY VIEW */}
       {!showPlayoffOnly && (
-        <div className="space-y-6">
-          {/* Progress indicator */}
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
+        <div className="space-y-4">
+          {/* Progress bar */}
+          <div className="flex items-center gap-2 px-1">
+            <div className="flex items-center gap-1.5">
               <div className={cn(
-                "w-3 h-3 rounded-full",
-                r1Completed ? "bg-emerald-500" : "bg-muted animate-pulse"
+                "w-2.5 h-2.5 rounded-full transition-colors",
+                r1Completed ? "bg-emerald-500" : "bg-muted-foreground/30"
               )} />
-              <span className={cn("text-sm", r1Completed ? "text-foreground" : "text-muted-foreground")}>
-                Vòng 1 {r1Completed && '✓'}
-              </span>
+              <span className={cn(
+                "text-xs font-medium transition-colors",
+                r1Completed ? "text-emerald-500" : "text-muted-foreground"
+              )}>V1</span>
             </div>
-            <div className="h-px w-4 bg-border" />
-            <div className="flex items-center gap-2">
+            <div className="w-6 h-px bg-border" />
+            <div className="flex items-center gap-1.5">
               <div className={cn(
-                "w-3 h-3 rounded-full",
-                r2Completed ? "bg-amber-500" : "bg-muted animate-pulse"
+                "w-2.5 h-2.5 rounded-full transition-colors",
+                r2Completed ? "bg-amber-500" : "bg-muted-foreground/30"
               )} />
-              <span className={cn("text-sm", r2Completed ? "text-foreground" : "text-muted-foreground")}>
-                Vòng 2 {r2Completed && '✓'}
-              </span>
+              <span className={cn(
+                "text-xs font-medium transition-colors",
+                r2Completed ? "text-amber-500" : "text-muted-foreground"
+              )}>V2</span>
             </div>
-            <div className="h-px w-4 bg-border" />
-            <div className="flex items-center gap-2">
+            <div className="w-6 h-px bg-border" />
+            <div className="flex items-center gap-1.5">
               <div className={cn(
-                "w-3 h-3 rounded-full",
-                !r3NeedsAssignment && r1Completed && r2Completed ? "bg-blue-500" : "bg-muted"
+                "w-2.5 h-2.5 rounded-full transition-colors",
+                !r3NeedsAssignment && r1Completed && r2Completed ? "bg-blue-500" : "bg-muted-foreground/30"
               )} />
-              <span className="text-sm text-muted-foreground">Vòng 3</span>
+              <span className={cn(
+                "text-xs font-medium transition-colors",
+                !r3NeedsAssignment && r1Completed && r2Completed ? "text-blue-500" : "text-muted-foreground"
+              )}>V3</span>
             </div>
 
             {/* Manual R3 assignment button */}
@@ -232,111 +237,121 @@ const DoublesEliminationBracket = ({
                 variant="outline" 
                 onClick={handleManualR3Assignment}
                 disabled={isAssigningR3}
-                className="ml-auto"
+                className="ml-auto h-7 text-xs"
               >
-                <RefreshCw className={cn("w-4 h-4 mr-1", isAssigningR3 && "animate-spin")} />
+                <RefreshCw className={cn("w-3 h-3 mr-1", isAssigningR3 && "animate-spin")} />
                 Phân vòng 3
               </Button>
             )}
           </div>
 
-          {/* Rounds grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* R1 Winner Matches */}
-            <Card>
-              <CardHeader className="py-3 px-4 bg-emerald-50/50 dark:bg-emerald-950/20 border-b">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  Vòng 1 - Winner
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    {rounds.find(r => r.roundNumber === 1)?.matches.filter(m => m.status === 'completed').length || 0}/
-                    {rounds.find(r => r.roundNumber === 1)?.matches.length || 0}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 max-h-[600px] overflow-y-auto">
-                <div className="flex flex-col gap-2">
-                  {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
-                    <BracketMatchCard
-                      key={match.id}
-                      match={match}
-                      allMatches={matches}
-                      teamA={getTeam(match.team_a_id)}
-                      teamB={getTeam(match.team_b_id)}
-                      formatTeamName={formatTeamName}
-                      isFinal={false}
-                      canEdit={canEdit}
-                      onScoreUpdated={onScoreUpdated}
-                      onMatchUpdated={onMatchUpdated}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* R2 Loser Matches */}
-            <Card>
-              <CardHeader className="py-3 px-4 bg-amber-50/50 dark:bg-amber-950/20 border-b">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-amber-500" />
-                  Vòng 2 - Loser Bracket
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    {loserMatches.filter(m => m.status === 'completed').length}/{loserMatches.length}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 max-h-[600px] overflow-y-auto">
-                <div className="flex flex-col gap-2">
-                  {loserMatches.map((match) => {
-                    const sourceA = match.source_a as { type: string; match_index?: number } | null;
-                    const sourceB = match.source_b as { type: string; match_index?: number } | null;
-                    const matchANum = sourceA?.match_index !== undefined ? sourceA.match_index + 1 : '?';
-                    const matchBNum = sourceB?.match_index !== undefined ? sourceB.match_index + 1 : '?';
-                    
-                    return (
-                      <LoserBracketCard
+          {/* Horizontal bracket layout */}
+          <div className="overflow-x-auto pb-4 -mx-4 px-4">
+            <div className="flex gap-6 min-w-max items-start">
+              {/* R1 Winner Matches */}
+              {rounds.find(r => r.roundNumber === 1) && (
+                <div className="flex flex-col min-w-[260px]">
+                  <div className="mb-3 pb-2 border-b border-emerald-500/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-5 rounded-full bg-emerald-500" />
+                        <span className="font-semibold text-sm">Vòng 1</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                        {rounds.find(r => r.roundNumber === 1)?.matches.filter(m => m.status === 'completed').length || 0}/
+                        {rounds.find(r => r.roundNumber === 1)?.matches.length || 0}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 ml-3">Winner Bracket</p>
+                  </div>
+                  <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-1">
+                    {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
+                      <BracketMatchCard
                         key={match.id}
                         match={match}
                         allMatches={matches}
                         teamA={getTeam(match.team_a_id)}
                         teamB={getTeam(match.team_b_id)}
                         formatTeamName={formatTeamName}
-                        sourceAMatchNum={matchANum}
-                        sourceBMatchNum={matchBNum}
+                        isFinal={false}
                         canEdit={canEdit}
                         onScoreUpdated={onScoreUpdated}
                         onMatchUpdated={onMatchUpdated}
-                        tournamentId={tournamentId}
-                        onR3Assigned={onR3Assigned}
                       />
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              )}
 
-            {/* R3 Merge Matches */}
-            <Card>
-              <CardHeader className="py-3 px-4 bg-blue-50/50 dark:bg-blue-950/20 border-b">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  Vòng 3 - Sơ loại cuối
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    {r3Rounds[0]?.matches.filter(m => m.status === 'completed').length || 0}/
-                    {r3Rounds[0]?.matches.length || 0}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3">
+              {/* R2 Loser Matches */}
+              {loserMatches.length > 0 && (
+                <div className="flex flex-col min-w-[260px]">
+                  <div className="mb-3 pb-2 border-b border-amber-500/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-5 rounded-full bg-amber-500" />
+                        <span className="font-semibold text-sm">Vòng 2</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                        {loserMatches.filter(m => m.status === 'completed').length}/{loserMatches.length}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 ml-3">Loser Bracket</p>
+                  </div>
+                  <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-1">
+                    {loserMatches.map((match) => {
+                      const sourceA = match.source_a as { type: string; match_index?: number } | null;
+                      const sourceB = match.source_b as { type: string; match_index?: number } | null;
+                      const matchANum = sourceA?.match_index !== undefined ? sourceA.match_index + 1 : '?';
+                      const matchBNum = sourceB?.match_index !== undefined ? sourceB.match_index + 1 : '?';
+                      
+                      return (
+                        <LoserBracketCard
+                          key={match.id}
+                          match={match}
+                          allMatches={matches}
+                          teamA={getTeam(match.team_a_id)}
+                          teamB={getTeam(match.team_b_id)}
+                          formatTeamName={formatTeamName}
+                          sourceAMatchNum={matchANum}
+                          sourceBMatchNum={matchBNum}
+                          canEdit={canEdit}
+                          onScoreUpdated={onScoreUpdated}
+                          onMatchUpdated={onMatchUpdated}
+                          tournamentId={tournamentId}
+                          onR3Assigned={onR3Assigned}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* R3 Merge Matches */}
+              <div className="flex flex-col min-w-[260px]">
+                <div className="mb-3 pb-2 border-b border-blue-500/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-5 rounded-full bg-blue-500" />
+                      <span className="font-semibold text-sm">Vòng 3</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                      {r3Rounds[0]?.matches.filter(m => m.status === 'completed').length || 0}/
+                      {r3Rounds[0]?.matches.length || 0}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 ml-3">Sơ loại cuối</p>
+                </div>
+                
                 {r3NeedsAssignment && r1Completed && r2Completed ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <AlertCircle className="w-8 h-8 text-amber-500 mb-2" />
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Đang tính hiệu số và ghép cặp...
+                  <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed border-muted rounded-lg">
+                    <RefreshCw className={cn(
+                      "w-5 h-5 mb-2",
+                      isAssigningR3 ? "animate-spin text-primary" : "text-muted-foreground"
+                    )} />
+                    <p className="text-xs text-muted-foreground">
+                      {isAssigningR3 ? "Đang phân vòng..." : "Chờ phân vòng"}
                     </p>
-                    {isAssigningR3 && (
-                      <RefreshCw className="w-5 h-5 animate-spin text-primary" />
-                    )}
                   </div>
                 ) : r3Rounds.length > 0 && r3Rounds[0].matches.length > 0 ? (
                   <div className="flex flex-col gap-2">
@@ -356,14 +371,16 @@ const DoublesEliminationBracket = ({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    {!r1Completed || !r2Completed 
-                      ? "Chờ hoàn thành vòng 1 & 2" 
-                      : "Không có trận vòng 3"}
+                  <div className="flex items-center justify-center py-6 text-center border border-dashed border-muted rounded-lg">
+                    <p className="text-xs text-muted-foreground">
+                      {!r1Completed || !r2Completed 
+                        ? "Chờ V1 & V2" 
+                        : "Không có trận"}
+                    </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       )}
