@@ -175,12 +175,12 @@ export function useDoublesElimination() {
   ): Promise<{ success: boolean; teams?: Team[]; error?: string }> => {
     setLoading(true);
     try {
-      const teamsWithTournament = teams.map((t, index) => ({
+      const teamsWithTournament = teams.map((t) => ({
         tournament_id: tournamentId,
         team_name: t.team_name,
         player1_name: t.player1_name,
         player2_name: t.player2_name || null,
-        seed: t.seed ?? (index + 1)
+        seed: t.seed || null // Only set seed if provided, otherwise null
       }));
       
       const { data, error } = await supabase
