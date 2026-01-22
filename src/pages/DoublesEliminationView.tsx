@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { DynamicMeta } from "@/components/seo";
@@ -90,13 +90,24 @@ export default function DoublesEliminationView() {
     setLoading(false);
   };
 
+  // Track if we just made an optimistic update to skip realtime reload
+  const skipNextRealtimeRef = useRef(false);
+
   // Optimistic update handler - updates local state without reload
   const handleMatchUpdated = (matchId: string, updates: Partial<Match>) => {
+    // Set flag to skip next realtime event (caused by our own update)
+    skipNextRealtimeRef.current = true;
+    
     setMatches(prevMatches => 
       prevMatches.map(m => 
         m.id === matchId ? { ...m, ...updates } : m
       )
     );
+
+    // Reset flag after a short delay
+    setTimeout(() => {
+      skipNextRealtimeRef.current = false;
+    }, 2000);
   };
 
   const setupRealtimeSubscription = () => {
@@ -112,6 +123,10 @@ export default function DoublesEliminationView() {
           table: 'doubles_elimination_matches'
         },
         () => {
+          // Skip reload if we just made an optimistic update
+          if (skipNextRealtimeRef.current) {
+            return;
+          }
           loadData();
         }
       )
