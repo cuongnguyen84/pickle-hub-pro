@@ -256,8 +256,12 @@ export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, on
                             </div>
                           )}
                           
-                          {/* Referee Score Button */}
-                          {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
+                          {/* Referee Score Button - show when both lineups ready OR match started */}
+                          {canEditScores && (
+                            (match.lineup_a_submitted && match.lineup_b_submitted) || 
+                            match.status === 'in_progress' || 
+                            match.status === 'completed'
+                          ) && (
                             <Button 
                               variant="default" 
                               size="sm"

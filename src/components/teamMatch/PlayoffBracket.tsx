@@ -110,6 +110,10 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
                       const needsLineupA = hasBothTeams && !match.lineup_a_submitted && !matchStarted;
                       const needsLineupB = hasBothTeams && !match.lineup_b_submitted && !matchStarted;
                       
+                      // Ready to start = both lineups submitted
+                      const isReadyToStart = hasBothTeams && match.lineup_a_submitted && match.lineup_b_submitted;
+                      const canScore = canEditScores && (isReadyToStart || match.status === 'in_progress' || match.status === 'completed');
+                      
                       // Captain can lineup their own team, BTC can lineup any team
                       const canLineupA = needsLineupA && (isOwner || match.team_a_id === userTeamId);
                       const canLineupB = needsLineupB && (isOwner || match.team_b_id === userTeamId);
@@ -204,7 +208,7 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
                                 <config.icon className={`h-3 w-3 mr-1 ${match.status === 'in_progress' ? 'animate-pulse' : ''}`} />
                                 {config.label}
                               </Badge>
-                              {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
+                              {canScore && (
                                 <Button
                                   size="sm"
                                   variant="default"
@@ -247,6 +251,10 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
             const needsLineupB = hasBothTeams && !match.lineup_b_submitted && !matchStarted;
             const canLineupA = needsLineupA && (isOwner || match.team_a_id === userTeamId);
             const canLineupB = needsLineupB && (isOwner || match.team_b_id === userTeamId);
+            
+            // Ready to start = both lineups submitted
+            const isReadyToStart = hasBothTeams && match.lineup_a_submitted && match.lineup_b_submitted;
+            const canScore = canEditScores && (isReadyToStart || match.status === 'in_progress' || match.status === 'completed');
 
             return (
               <Card 
@@ -337,7 +345,7 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
                       <config.icon className={`h-3 w-3 mr-1 ${match.status === 'in_progress' ? 'animate-pulse' : ''}`} />
                       {config.label}
                     </Badge>
-                    {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
+                    {canScore && (
                       <Button
                         size="sm"
                         variant="default"

@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Save, Trophy } from 'lucide-react';
+import { Loader2, Save, Trophy, Play } from 'lucide-react';
 import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +22,7 @@ interface MatchDetailSheetProps {
   match: TeamMatchMatch | null;
   isOwner?: boolean;
   tournamentId: string;
+  onScoreMatch?: (match: TeamMatchMatch) => void;
 }
 
 const GAME_TYPE_LABELS: Record<string, string> = {
@@ -38,6 +39,7 @@ export function MatchDetailSheet({
   match, 
   isOwner,
   tournamentId,
+  onScoreMatch,
 }: MatchDetailSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
@@ -159,6 +161,11 @@ export function MatchDetailSheet({
 
   const teamAName = (match.team_a as any)?.team_name || 'TBD';
   const teamBName = (match.team_b as any)?.team_name || 'TBD';
+  
+  // Ready to start = both lineups submitted
+  const hasBothTeams = match.team_a_id && match.team_b_id;
+  const isReadyToStart = hasBothTeams && match.lineup_a_submitted && match.lineup_b_submitted;
+  const canScore = isOwner && (isReadyToStart || match.status === 'in_progress' || match.status === 'completed');
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -211,6 +218,18 @@ export function MatchDetailSheet({
               </div>
             </CardContent>
           </Card>
+          
+          {/* Score Button */}
+          {canScore && onScoreMatch && (
+            <Button 
+              onClick={() => onScoreMatch(match)}
+              className="w-full"
+              variant="default"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Chấm điểm trận đấu
+            </Button>
+          )}
 
           <Separator />
 
