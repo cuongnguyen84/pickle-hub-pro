@@ -25,33 +25,38 @@ type Step = 'info' | 'format' | 'teams';
 
 const SUGGESTED_COUNTS = [32, 40, 48, 64, 80, 96, 128];
 
-// Calculate tournament structure hints
-function calculateTournamentHints(teamCount: number): { r1Matches: number; byesToR4: number; isEven: boolean } {
-  const r1Matches = Math.floor(teamCount / 2);
+// Calculate tournament structure hints using correct formula:
+// T3 = teams entering Round 3
+// R4 = 2^floor(log2(T3)) - target power of 2 for Round 4
+// Teams with bye = 2×R4 − T3
+function calculateTournamentHints(teamCount: number): { r1Matches: number; byesToR4: number; isEven: boolean; t3: number; r4Target: number } {
+  const N = teamCount;
   
-  // Calculate progression through R1 -> R2 -> R3 -> R4
-  const byeFromR1 = teamCount % 2 === 1 ? 1 : 0;
-  const winnersFromR1 = r1Matches + byeFromR1;
+  // Round 1: All teams play
+  const r1Matches = Math.floor(N / 2);
+  const W1 = r1Matches; // Winners from Round 1
+  const L1 = r1Matches; // Losers from Round 1 (go to Loser Bracket)
   
-  const r2Matches = Math.floor(r1Matches / 2);
-  const byeFromR2 = r1Matches % 2 === 1 ? 1 : 0;
-  const winnersFromR2 = r2Matches + byeFromR2;
+  // Round 2 (Loser Bracket): Losers from R1 play each other
+  const r2Matches = Math.floor(L1 / 2);
+  const byeInR2 = L1 % 2 === 1 ? 1 : 0;
+  const W2 = r2Matches + byeInR2; // Winners from Round 2
   
-  const teamsEnteringR3 = winnersFromR1 + winnersFromR2;
+  // Round 3 (Merge Round): W1 + W2 teams enter
+  const T3 = W1 + W2;
   
-  // Target for R4 (power of 2)
-  let target = 1;
-  while (target < Math.floor(teamsEnteringR3 / 2)) target *= 2;
-  const actualTarget = target > teamsEnteringR3 ? target / 2 : target;
+  // R4 target = 2^floor(log2(T3)) - the power of 2 we're normalizing to
+  const R4 = Math.pow(2, Math.floor(Math.log2(T3)));
   
-  // Teams with byes to R4 = teams not needing to play in R3
-  const r3Matches = teamsEnteringR3 - actualTarget;
-  const byesToR4 = teamsEnteringR3 - (r3Matches * 2);
+  // Teams with bye to Round 4 = 2×R4 − T3
+  const byesToR4 = 2 * R4 - T3;
   
   return {
     r1Matches,
     byesToR4,
-    isEven: r1Matches % 2 === 0
+    isEven: r1Matches % 2 === 0,
+    t3: T3,
+    r4Target: R4
   };
 }
 
@@ -324,21 +329,27 @@ export default function DoublesEliminationSetup() {
                   return (
                     <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className={hints.isEven ? "text-green-600" : "text-amber-600"}>
+                        <span className={hints.isEven ? "text-green-600" : "text-yellow-600"}>
                           {hints.isEven ? "✓" : "⚠"}
                         </span>
                         <span>
                           Vòng 1: {hints.r1Matches} trận 
                           {!hints.isEven && (
-                            <span className="text-amber-600 ml-1">(lẻ - nên chọn số chẵn)</span>
+                            <span className="text-yellow-600 ml-1">(lẻ - nên chọn số chẵn)</span>
                           )}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span>📊</span>
+                        <span>
+                          Vào Vòng 3: <strong className="text-foreground">{hints.t3} VĐV</strong> (W1 + W2) → Vòng 4: {hints.r4Target} VĐV
                         </span>
                       </div>
                       {hints.byesToR4 > 0 && (
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <span>📋</span>
+                          <span>🎯</span>
                           <span>
-                            Kết thúc vòng 1-3, sẽ có <strong className="text-foreground">{hints.byesToR4} VĐV</strong> được vào thẳng vòng 4
+                            Được vào thẳng Vòng 4: <strong className="text-foreground">{hints.byesToR4} VĐV</strong>
                           </span>
                         </div>
                       )}
