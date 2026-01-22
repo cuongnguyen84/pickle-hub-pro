@@ -422,51 +422,52 @@ export default function DoublesEliminationScoring() {
         {/* Score Controls */}
         {canEdit && match.status !== 'completed' && (
           <div className="space-y-4">
+            {/* Team names row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center text-sm font-medium">{teamA.team_name}</div>
+              <div className="text-center text-sm font-medium">{teamB.team_name}</div>
+            </div>
+            
+            {/* Score controls row - all buttons on same line */}
             <div className="grid grid-cols-2 gap-4">
               {/* Team A controls */}
-              <div className="space-y-2">
-                <div className="text-center text-sm font-medium">{teamA.team_name}</div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="flex-1 h-16"
-                    onClick={() => handleScoreChange('a', -1)}
-                  >
-                    <Minus className="w-6 h-6" />
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    size="lg" 
-                    className="flex-1 h-16"
-                    onClick={() => handleScoreChange('a', 1)}
-                  >
-                    <Plus className="w-6 h-6" />
-                  </Button>
-                </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="flex-1 h-16"
+                  onClick={() => handleScoreChange('a', -1)}
+                >
+                  <Minus className="w-6 h-6" />
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="lg" 
+                  className="flex-1 h-16"
+                  onClick={() => handleScoreChange('a', 1)}
+                >
+                  <Plus className="w-6 h-6" />
+                </Button>
               </div>
 
               {/* Team B controls */}
-              <div className="space-y-2">
-                <div className="text-center text-sm font-medium">{teamB.team_name}</div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="flex-1 h-16"
-                    onClick={() => handleScoreChange('b', -1)}
-                  >
-                    <Minus className="w-6 h-6" />
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    size="lg" 
-                    className="flex-1 h-16"
-                    onClick={() => handleScoreChange('b', 1)}
-                  >
-                    <Plus className="w-6 h-6" />
-                  </Button>
-                </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="flex-1 h-16"
+                  onClick={() => handleScoreChange('b', -1)}
+                >
+                  <Minus className="w-6 h-6" />
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="lg" 
+                  className="flex-1 h-16"
+                  onClick={() => handleScoreChange('b', 1)}
+                >
+                  <Plus className="w-6 h-6" />
+                </Button>
               </div>
             </div>
 
