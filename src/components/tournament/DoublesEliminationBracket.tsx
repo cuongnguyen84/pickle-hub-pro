@@ -1,17 +1,23 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Trophy, Radio } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Crown, Trophy, Radio, Play, Pencil, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Match, Team } from '@/hooks/useDoublesElimination';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface DoublesEliminationBracketProps {
   matches: Match[];
   teams: Team[];
   onMatchClick?: (matchId: string) => void;
-  showPreliminaryOnly?: boolean; // Show R1, R2, R3 only
-  showPlayoffOnly?: boolean; // Show R4+ only
+  showPreliminaryOnly?: boolean;
+  showPlayoffOnly?: boolean;
+  canEdit?: boolean; // Can this user edit scores
+  onScoreUpdated?: () => void; // Callback after score update
 }
 
 const DoublesEliminationBracket = ({ 
@@ -19,29 +25,24 @@ const DoublesEliminationBracket = ({
   teams, 
   onMatchClick,
   showPreliminaryOnly = false,
-  showPlayoffOnly = false
+  showPlayoffOnly = false,
+  canEdit = false,
+  onScoreUpdated
 }: DoublesEliminationBracketProps) => {
   const getTeam = (id: string | null): Team | undefined => 
     id ? teams.find(t => t.id === id) : undefined;
 
-  // Only show seed if explicitly set by user during registration
-  // Seeds are meaningful from R4+ only, and should only show if user intentionally set them
-  // Auto-generated display_order or team index should NOT be shown
   const formatTeamName = (team: Team | undefined): string => {
     if (!team) return 'TBD';
-    // Just show team name - no auto seed display
     return team.team_name;
   };
 
-  // Group matches by round for horizontal display - Loser R2 shown alongside R1
   const { rounds, champion, loserMatches, thirdPlaceMatch } = useMemo(() => {
     if (matches.length === 0) return { rounds: [], champion: null, loserMatches: [], thirdPlaceMatch: null };
 
-    // Separate R1 winner matches and R2 loser matches
     const r1Matches = matches.filter(m => m.round_number === 1 && m.bracket_type === 'winner');
     const r2LoserMatches = matches.filter(m => m.round_number === 2 && m.bracket_type === 'loser');
     
-    // Main bracket: R3+ matches
     const mainBracketMatches = matches.filter(m => 
       (m.round_number >= 3 && (m.bracket_type === 'merged' || m.bracket_type === 'single')) ||
       m.round_type === 'final'
@@ -49,15 +50,12 @@ const DoublesEliminationBracket = ({
     
     const thirdPlaceMatch = matches.find(m => m.round_type === 'third_place');
 
-    // Group main bracket by round
     const roundMap = new Map<number, Match[]>();
     
-    // Add R1 Winner matches
     if (r1Matches.length > 0) {
       roundMap.set(1, r1Matches.sort((a, b) => a.match_number - b.match_number));
     }
     
-    // R3+ matches
     mainBracketMatches.forEach(match => {
       const round = match.round_number;
       if (!roundMap.has(round)) {
@@ -66,12 +64,10 @@ const DoublesEliminationBracket = ({
       roundMap.get(round)!.push(match);
     });
 
-    // Sort matches within each round by match number
     roundMap.forEach((roundMatches) => {
       roundMatches.sort((a, b) => a.match_number - b.match_number);
     });
 
-    // Build rounds array
     const roundNumbers = Array.from(roundMap.keys()).sort((a, b) => a - b);
     const roundsArray = roundNumbers.map(roundNum => {
       const roundMatches = roundMap.get(roundNum) || [];
@@ -82,7 +78,6 @@ const DoublesEliminationBracket = ({
       };
     });
 
-    // Find champion
     const finalMatch = matches.find(m => m.round_type === 'final');
     const champion = finalMatch?.winner_id ? getTeam(finalMatch.winner_id) : null;
 
@@ -121,14 +116,12 @@ const DoublesEliminationBracket = ({
     );
   }
 
-  // Separate preliminary (R1, R2, R3) and playoff (R4+) rounds
   const preliminaryRounds = rounds.filter(r => r.roundNumber <= 3);
   const playoffRounds = rounds.filter(r => r.roundNumber >= 4);
   const r3Rounds = rounds.filter(r => r.roundNumber === 3);
 
   return (
     <div className="space-y-6">
-      {/* Champion Banner - only show in playoff view or full view */}
       {!showPreliminaryOnly && champion && (
         <Card className="border-primary/50 bg-gradient-to-r from-primary/10 to-primary/5">
           <CardContent className="py-6">
@@ -144,7 +137,7 @@ const DoublesEliminationBracket = ({
         </Card>
       )}
 
-      {/* PRELIMINARY VIEW: Round 1 + Loser Bracket R2 + Round 3 side by side */}
+      {/* PRELIMINARY VIEW */}
       {!showPlayoffOnly && (
         <div className="mb-8">
           <div className="overflow-x-auto pb-4 -mx-4 px-4">
@@ -170,13 +163,15 @@ const DoublesEliminationBracket = ({
                         formatTeamName={formatTeamName}
                         isFinal={false}
                         onClick={() => onMatchClick?.(match.id)}
+                        canEdit={canEdit}
+                        onScoreUpdated={onScoreUpdated}
                       />
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* R2 Loser Matches - shown alongside R1 */}
+              {/* R2 Loser Matches */}
               {loserMatches.length > 0 && (
                 <div className="flex flex-col min-w-[280px]">
                   <div className="text-center mb-4">
@@ -202,6 +197,8 @@ const DoublesEliminationBracket = ({
                           sourceAMatchNum={matchANum}
                           sourceBMatchNum={matchBNum}
                           onClick={() => onMatchClick?.(match.id)}
+                          canEdit={canEdit}
+                          onScoreUpdated={onScoreUpdated}
                         />
                       );
                     })}
@@ -209,7 +206,7 @@ const DoublesEliminationBracket = ({
                 </div>
               )}
 
-              {/* R3 Merge Matches - shown alongside R2 */}
+              {/* R3 Merge Matches */}
               {r3Rounds.length > 0 && r3Rounds[0].matches.length > 0 && (
                 <div className="flex flex-col min-w-[280px]">
                   <div className="text-center mb-4">
@@ -228,6 +225,8 @@ const DoublesEliminationBracket = ({
                         formatTeamName={formatTeamName}
                         isFinal={false}
                         onClick={() => onMatchClick?.(match.id)}
+                        canEdit={canEdit}
+                        onScoreUpdated={onScoreUpdated}
                       />
                     ))}
                   </div>
@@ -238,13 +237,12 @@ const DoublesEliminationBracket = ({
         </div>
       )}
 
-      {/* PLAYOFF VIEW: R4+ - Standard Single Elimination */}
+      {/* PLAYOFF VIEW */}
       {!showPreliminaryOnly && playoffRounds.length > 0 && (
         <div className="overflow-x-auto pb-4 -mx-4 px-4">
           <div className="flex gap-6 min-w-max items-stretch">
             {playoffRounds.map((round, roundIdx) => (
               <div key={round.roundNumber} className="flex flex-col min-w-[260px]">
-                {/* Round Header */}
                 <div className="text-center mb-4">
                   <Badge 
                     variant={round.roundType === 'final' ? "default" : "outline"} 
@@ -259,7 +257,6 @@ const DoublesEliminationBracket = ({
                   </Badge>
                 </div>
 
-                {/* Matches in this round - with spacing that increases each round */}
                 <div 
                   className="flex flex-col flex-1"
                   style={{
@@ -276,6 +273,8 @@ const DoublesEliminationBracket = ({
                       formatTeamName={formatTeamName}
                       isFinal={match.round_type === 'final'}
                       onClick={() => onMatchClick?.(match.id)}
+                      canEdit={canEdit}
+                      onScoreUpdated={onScoreUpdated}
                     />
                   ))}
                 </div>
@@ -285,7 +284,6 @@ const DoublesEliminationBracket = ({
         </div>
       )}
 
-      {/* Empty state for playoff when no matches yet */}
       {showPlayoffOnly && playoffRounds.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
@@ -294,7 +292,6 @@ const DoublesEliminationBracket = ({
         </Card>
       )}
 
-      {/* Third Place Match - only in playoff view */}
       {!showPreliminaryOnly && matches.find(m => m.round_type === 'third_place') && (
         <div className="mt-6 pt-6 border-t">
           <h3 className="text-lg font-semibold mb-4">Tranh hạng 3</h3>
@@ -308,6 +305,8 @@ const DoublesEliminationBracket = ({
                 formatTeamName={formatTeamName}
                 isFinal={false}
                 onClick={() => onMatchClick?.(match.id)}
+                canEdit={canEdit}
+                onScoreUpdated={onScoreUpdated}
               />
             );
           })()}
@@ -317,7 +316,7 @@ const DoublesEliminationBracket = ({
   );
 };
 
-// Loser Bracket Card - shows source matches
+// Loser Bracket Card
 interface LoserBracketCardProps {
   match: Match;
   teamA: Team | undefined;
@@ -326,6 +325,8 @@ interface LoserBracketCardProps {
   sourceAMatchNum: number | string;
   sourceBMatchNum: number | string;
   onClick?: () => void;
+  canEdit?: boolean;
+  onScoreUpdated?: () => void;
 }
 
 const LoserBracketCard = ({
@@ -335,16 +336,27 @@ const LoserBracketCard = ({
   formatTeamName,
   sourceAMatchNum,
   sourceBMatchNum,
-  onClick
+  onClick,
+  canEdit = false,
+  onScoreUpdated
 }: LoserBracketCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editScoreA, setEditScoreA] = useState(match.score_a?.toString() || '0');
+  const [editScoreB, setEditScoreB] = useState(match.score_b?.toString() || '0');
+  const [saving, setSaving] = useState(false);
   
   const isCompleted = match.status === 'completed';
   const isLive = match.status === 'live';
   const isAWinner = match.winner_id === match.team_a_id && isCompleted;
   const isBWinner = match.winner_id === match.team_b_id && isCompleted;
 
-  const handleClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isEditing) {
+      e.stopPropagation();
+      return;
+    }
     if (onClick) {
       onClick();
     } else {
@@ -352,14 +364,69 @@ const LoserBracketCard = ({
     }
   };
 
+  const handleStartScoring = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditScoreA(match.score_a?.toString() || '0');
+    setEditScoreB(match.score_b?.toString() || '0');
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(false);
+  };
+
+  const handleSaveScore = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSaving(true);
+
+    const scoreA = parseInt(editScoreA) || 0;
+    const scoreB = parseInt(editScoreB) || 0;
+    const winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
+    const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
+    const isMatchComplete = scoreA !== scoreB;
+
+    try {
+      await supabase
+        .from('doubles_elimination_matches')
+        .update({
+          score_a: scoreA,
+          score_b: scoreB,
+          winner_id: isMatchComplete ? winnerId : null,
+          status: isMatchComplete ? 'completed' : 'live'
+        })
+        .eq('id', match.id);
+
+      // Mark loser as eliminated if match complete and not R1
+      if (isMatchComplete && loserId && match.round_type !== 'winner_r1') {
+        await supabase
+          .from('doubles_elimination_teams')
+          .update({
+            status: 'eliminated',
+            eliminated_at_round: match.round_number
+          })
+          .eq('id', loserId);
+      }
+
+      toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
+      setIsEditing(false);
+      onScoreUpdated?.();
+    } catch (error) {
+      toast({ title: "Lỗi lưu điểm", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Card 
       className={cn(
-        "overflow-hidden transition-all cursor-pointer hover:border-orange-400/50 border-orange-200/50 dark:border-orange-800/50",
+        "overflow-hidden transition-all border-orange-200/50 dark:border-orange-800/50",
+        !isEditing && "cursor-pointer hover:border-orange-400/50",
         isCompleted && "opacity-90",
         isLive && "border-red-500/50 ring-2 ring-red-500/20"
       )}
-      onClick={handleClick}
+      onClick={handleCardClick}
     >
       {/* Match header */}
       <div className={cn(
@@ -415,14 +482,25 @@ const LoserBracketCard = ({
           </div>
           
           {/* Score A */}
-          <div className={cn(
-            "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
-            isAWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-          )}>
-            {match.best_of > 1 ? match.games_won_a : match.score_a}
-          </div>
+          {isEditing ? (
+            <Input
+              type="number"
+              value={editScoreA}
+              onChange={(e) => setEditScoreA(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="w-14 h-8 text-center text-sm font-bold p-1"
+              min={0}
+            />
+          ) : (
+            <div className={cn(
+              "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
+              isAWinner ? "bg-primary text-primary-foreground" : "bg-muted"
+            )}>
+              {match.best_of > 1 ? match.games_won_a : match.score_a}
+            </div>
+          )}
           
-          {isAWinner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
+          {isAWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
         </div>
         
         {/* Team B Slot */}
@@ -449,28 +527,78 @@ const LoserBracketCard = ({
           </div>
           
           {/* Score B */}
-          <div className={cn(
-            "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
-            isBWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-          )}>
-            {match.best_of > 1 ? match.games_won_b : match.score_b}
-          </div>
+          {isEditing ? (
+            <Input
+              type="number"
+              value={editScoreB}
+              onChange={(e) => setEditScoreB(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="w-14 h-8 text-center text-sm font-bold p-1"
+              min={0}
+            />
+          ) : (
+            <div className={cn(
+              "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
+              isBWinner ? "bg-primary text-primary-foreground" : "bg-muted"
+            )}>
+              {match.best_of > 1 ? match.games_won_b : match.score_b}
+            </div>
+          )}
           
-          {isBWinner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
+          {isBWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
         </div>
       </div>
 
-      {/* Game scores for BO3/BO5 */}
-      {match.best_of > 1 && match.games && Array.isArray(match.games) && (match.games as any[]).length > 0 && (
-        <div className="px-3 py-1.5 border-t bg-muted/20 text-xs text-muted-foreground text-center">
-          {(match.games as any[]).map((g: any, i: number) => (
-            <span key={i}>
-              {i > 0 && ' | '}
-              <span className={g.winner === 'a' ? 'text-primary font-medium' : ''}>{g.score_a}</span>
-              -
-              <span className={g.winner === 'b' ? 'text-primary font-medium' : ''}>{g.score_b}</span>
-            </span>
-          ))}
+      {/* Edit Controls for BTC/Referee */}
+      {canEdit && teamA && teamB && (
+        <div className="px-3 py-2 border-t bg-muted/20 flex items-center justify-end gap-2">
+          {isEditing ? (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCancelEdit}
+                disabled={saving}
+                className="h-7 px-2"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Hủy
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveScore}
+                disabled={saving}
+                className="h-7 px-2"
+              >
+                <Check className="w-3 h-3 mr-1" />
+                Lưu
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleStartScoring}
+                className="h-7 px-2"
+              >
+                <Play className="w-3 h-3 mr-1" />
+                Chấm
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/tools/doubles-elimination/match/${match.id}/score`);
+                }}
+                className="h-7 px-2"
+              >
+                <Pencil className="w-3 h-3 mr-1" />
+                Sửa
+              </Button>
+            </>
+          )}
         </div>
       )}
     </Card>
@@ -484,6 +612,8 @@ interface BracketMatchCardProps {
   formatTeamName: (team: Team | undefined) => string;
   isFinal: boolean;
   onClick?: () => void;
+  canEdit?: boolean;
+  onScoreUpdated?: () => void;
 }
 
 const BracketMatchCard = ({ 
@@ -492,16 +622,27 @@ const BracketMatchCard = ({
   teamB, 
   formatTeamName,
   isFinal,
-  onClick
+  onClick,
+  canEdit = false,
+  onScoreUpdated
 }: BracketMatchCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editScoreA, setEditScoreA] = useState(match.score_a?.toString() || '0');
+  const [editScoreB, setEditScoreB] = useState(match.score_b?.toString() || '0');
+  const [saving, setSaving] = useState(false);
   
   const isCompleted = match.status === 'completed';
   const isLive = match.status === 'live';
   const isAWinner = match.winner_id === match.team_a_id && isCompleted;
   const isBWinner = match.winner_id === match.team_b_id && isCompleted;
 
-  const handleClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isEditing) {
+      e.stopPropagation();
+      return;
+    }
     if (onClick) {
       onClick();
     } else {
@@ -509,15 +650,70 @@ const BracketMatchCard = ({
     }
   };
 
+  const handleStartScoring = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditScoreA(match.score_a?.toString() || '0');
+    setEditScoreB(match.score_b?.toString() || '0');
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditing(false);
+  };
+
+  const handleSaveScore = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSaving(true);
+
+    const scoreA = parseInt(editScoreA) || 0;
+    const scoreB = parseInt(editScoreB) || 0;
+    const winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
+    const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
+    const isMatchComplete = scoreA !== scoreB;
+
+    try {
+      await supabase
+        .from('doubles_elimination_matches')
+        .update({
+          score_a: scoreA,
+          score_b: scoreB,
+          winner_id: isMatchComplete ? winnerId : null,
+          status: isMatchComplete ? 'completed' : 'live'
+        })
+        .eq('id', match.id);
+
+      // Mark loser as eliminated if match complete and not R1
+      if (isMatchComplete && loserId && match.round_type !== 'winner_r1') {
+        await supabase
+          .from('doubles_elimination_teams')
+          .update({
+            status: 'eliminated',
+            eliminated_at_round: match.round_number
+          })
+          .eq('id', loserId);
+      }
+
+      toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
+      setIsEditing(false);
+      onScoreUpdated?.();
+    } catch (error) {
+      toast({ title: "Lỗi lưu điểm", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Card 
       className={cn(
-        "overflow-hidden transition-all cursor-pointer hover:border-primary/50",
+        "overflow-hidden transition-all",
+        !isEditing && "cursor-pointer hover:border-primary/50",
         isFinal && "border-primary/30 shadow-lg ring-2 ring-primary/10",
         isCompleted && "opacity-90",
         isLive && "border-red-500/50 ring-2 ring-red-500/20"
       )}
-      onClick={handleClick}
+      onClick={handleCardClick}
     >
       {/* Match header */}
       <div className={cn(
@@ -579,14 +775,25 @@ const BracketMatchCard = ({
           </div>
           
           {/* Score A */}
-          <div className={cn(
-            "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
-            isAWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-          )}>
-            {match.best_of > 1 ? match.games_won_a : match.score_a}
-          </div>
+          {isEditing ? (
+            <Input
+              type="number"
+              value={editScoreA}
+              onChange={(e) => setEditScoreA(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="w-14 h-8 text-center text-sm font-bold p-1"
+              min={0}
+            />
+          ) : (
+            <div className={cn(
+              "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
+              isAWinner ? "bg-primary text-primary-foreground" : "bg-muted"
+            )}>
+              {match.best_of > 1 ? match.games_won_a : match.score_a}
+            </div>
+          )}
           
-          {isAWinner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
+          {isAWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
         </div>
         
         {/* Team B Slot */}
@@ -613,19 +820,30 @@ const BracketMatchCard = ({
           </div>
           
           {/* Score B */}
-          <div className={cn(
-            "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
-            isBWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-          )}>
-            {match.best_of > 1 ? match.games_won_b : match.score_b}
-          </div>
+          {isEditing ? (
+            <Input
+              type="number"
+              value={editScoreB}
+              onChange={(e) => setEditScoreB(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="w-14 h-8 text-center text-sm font-bold p-1"
+              min={0}
+            />
+          ) : (
+            <div className={cn(
+              "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
+              isBWinner ? "bg-primary text-primary-foreground" : "bg-muted"
+            )}>
+              {match.best_of > 1 ? match.games_won_b : match.score_b}
+            </div>
+          )}
           
-          {isBWinner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
+          {isBWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
         </div>
       </div>
 
       {/* Game scores for BO3/BO5 */}
-      {match.best_of > 1 && match.games && Array.isArray(match.games) && (match.games as any[]).length > 0 && (
+      {!isEditing && match.best_of > 1 && match.games && Array.isArray(match.games) && (match.games as any[]).length > 0 && (
         <div className="px-3 py-1.5 border-t bg-muted/20 text-xs text-muted-foreground text-center">
           {(match.games as any[]).map((g: any, i: number) => (
             <span key={i}>
@@ -635,6 +853,59 @@ const BracketMatchCard = ({
               <span className={g.winner === 'b' ? 'text-primary font-medium' : ''}>{g.score_b}</span>
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Edit Controls for BTC/Referee */}
+      {canEdit && teamA && teamB && (
+        <div className="px-3 py-2 border-t bg-muted/20 flex items-center justify-end gap-2">
+          {isEditing ? (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCancelEdit}
+                disabled={saving}
+                className="h-7 px-2"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Hủy
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveScore}
+                disabled={saving}
+                className="h-7 px-2"
+              >
+                <Check className="w-3 h-3 mr-1" />
+                Lưu
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleStartScoring}
+                className="h-7 px-2"
+              >
+                <Play className="w-3 h-3 mr-1" />
+                Chấm
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/tools/doubles-elimination/match/${match.id}/score`);
+                }}
+                className="h-7 px-2"
+              >
+                <Pencil className="w-3 h-3 mr-1" />
+                Sửa
+              </Button>
+            </>
+          )}
         </div>
       )}
     </Card>
