@@ -665,7 +665,40 @@ export function useDoublesElimination() {
       
       // Handle loser based on round
       if (match.round_type === 'winner_r1' && loserId) {
-        // Loser goes to R2 - handled by dest_loser linking
+        // Loser goes to R2 - find the R2 match waiting for this loser and assign them
+        const { data: r2Matches } = await supabase
+          .from('doubles_elimination_matches')
+          .select('*')
+          .eq('tournament_id', match.tournament_id)
+          .eq('round_number', 2);
+        
+        if (r2Matches) {
+          for (const r2Match of r2Matches) {
+            // Parse source_a and source_b to find match_index
+            const sourceA = r2Match.source_a as { type?: string; match_index?: number } | null;
+            const sourceB = r2Match.source_b as { type?: string; match_index?: number } | null;
+            
+            // Check if this R2 match is waiting for loser from our R1 match
+            // match_number in R1 is 1-indexed, match_index in source is 0-indexed
+            const r1MatchIndex = match.match_number - 1;
+            
+            let updateField: 'team_a_id' | 'team_b_id' | null = null;
+            
+            if (sourceA?.type === 'loser_of' && sourceA.match_index === r1MatchIndex && !r2Match.team_a_id) {
+              updateField = 'team_a_id';
+            } else if (sourceB?.type === 'loser_of' && sourceB.match_index === r1MatchIndex && !r2Match.team_b_id) {
+              updateField = 'team_b_id';
+            }
+            
+            if (updateField && loserId) {
+              await supabase
+                .from('doubles_elimination_matches')
+                .update({ [updateField]: loserId })
+                .eq('id', r2Match.id);
+              break; // Found the match, exit loop
+            }
+          }
+        }
       } else if (loserId) {
         // Loser eliminated (R2+)
         await supabase
