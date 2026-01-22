@@ -50,6 +50,10 @@ const DoublesEliminationBracket = ({
 
   const formatTeamName = (team: Team | undefined): string => {
     if (!team) return 'TBD';
+    // Display seed next to name if seed exists
+    if (team.seed) {
+      return `${team.team_name} (${team.seed})`;
+    }
     return team.team_name;
   };
 

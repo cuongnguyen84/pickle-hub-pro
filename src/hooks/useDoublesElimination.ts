@@ -437,7 +437,8 @@ export function useDoublesElimination() {
         });
       }
       
-      // Assign courts and times to matches if tournament has courts and start_time configured
+      // Assign courts and times ONLY to Round 1 and Round 2 matches
+      // Round 3 and Playoff will get times dynamically when the previous round completes
       const courts = courtsInput && courtsInput.length > 0 
         ? courtsInput 
         : tournament.court_count > 0 
@@ -456,24 +457,30 @@ export function useDoublesElimination() {
         const [startHour, startMinute] = startTime.split(':').map((s: string) => parseInt(s, 10));
         const validStartTime = !isNaN(startHour) && !isNaN(startMinute);
 
-        // Assign courts and times to matches sequentially
-        for (let i = 0; i < matches.length; i++) {
+        // Filter only Round 1 and Round 2 matches for initial scheduling
+        const r1r2Matches = matches.filter(m => m.round_number === 1 || m.round_number === 2);
+
+        // Assign courts and times to R1 & R2 matches sequentially
+        for (const match of r1r2Matches) {
           // Find court with minimum load (earliest next available slot)
           const minSlot = Math.min(...Array.from(courtNextSlot.values()));
           const availableCourt = courts.find(c => courtNextSlot.get(c) === minSlot) || courts[0];
 
-          matches[i].court_number = availableCourt;
+          match.court_number = availableCourt;
 
           if (validStartTime) {
             const slotIdx = courtNextSlot.get(availableCourt) || 0;
             const totalMinutes = startHour * 60 + startMinute + slotIdx * matchDurationMinutes;
             const hour = Math.floor(totalMinutes / 60) % 24;
             const minute = totalMinutes % 60;
-            matches[i].start_time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            match.start_time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
           }
 
           courtNextSlot.set(availableCourt, (courtNextSlot.get(availableCourt) || 0) + 1);
         }
+        
+        // R3 and R4+ matches will NOT have court/time assigned here
+        // They will be assigned dynamically when checkAndAssignR3 is called
       }
 
       // Insert all matches
@@ -844,28 +851,73 @@ export function useDoublesElimination() {
       // Shuffle R3 teams for random pairing
       const shuffledR3Teams = [...r3TeamIds].sort(() => Math.random() - 0.5);
 
-      // Get R3 matches and assign teams
+      // Get R3 matches and assign teams + court/time scheduling
       const r3Matches = matches.filter(m => m.round_number === 3);
+      
+      // Calculate R3 start time: system time + 15 minutes
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 15);
+      const r3StartHour = now.getHours();
+      const r3StartMinute = now.getMinutes();
+      
+      // Get courts from tournament (reset from court 1)
+      const { data: tournamentData } = await supabase
+        .from('doubles_elimination_tournaments')
+        .select('court_count')
+        .eq('id', tournamentId)
+        .single();
+      
+      const courtCount = tournamentData?.court_count || 4;
+      const courts = Array.from({ length: courtCount }, (_, i) => i + 1);
+      const matchDurationMinutes = 20;
+      
+      // Track court usage for R3
+      const courtNextSlot = new Map<number, number>();
+      courts.forEach(c => courtNextSlot.set(c, 0));
       
       for (let i = 0; i < r3Matches.length; i++) {
         const match = r3Matches[i];
         const teamAId = shuffledR3Teams[i * 2];
         const teamBId = shuffledR3Teams[i * 2 + 1];
 
+        // Assign court and time
+        const minSlot = Math.min(...Array.from(courtNextSlot.values()));
+        const availableCourt = courts.find(c => courtNextSlot.get(c) === minSlot) || courts[0];
+        const slotIdx = courtNextSlot.get(availableCourt) || 0;
+        const totalMinutes = r3StartHour * 60 + r3StartMinute + slotIdx * matchDurationMinutes;
+        const hour = Math.floor(totalMinutes / 60) % 24;
+        const minute = totalMinutes % 60;
+        const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        
+        courtNextSlot.set(availableCourt, slotIdx + 1);
+
         if (teamAId && teamBId) {
           await supabase
             .from('doubles_elimination_matches')
             .update({
               team_a_id: teamAId,
-              team_b_id: teamBId
+              team_b_id: teamBId,
+              court_number: availableCourt,
+              start_time: startTime
             })
             .eq('id', match.id);
         }
       }
+      
+      // Also schedule R4 (playoff) matches with times starting after R3
+      // Calculate R4 start based on when R3 would finish
+      const maxR3Slots = Math.max(...Array.from(courtNextSlot.values()));
+      const r4StartMinutes = r3StartHour * 60 + r3StartMinute + maxR3Slots * matchDurationMinutes + 15; // +15 min buffer
+      const r4StartHour = Math.floor(r4StartMinutes / 60) % 24;
+      const r4StartMinute = r4StartMinutes % 60;
 
       // For R4, we need to assign byes - teams go directly to R4
-      // Get R4 matches and assign teams (with proper bracket positioning)
+      // Get R4 matches and assign teams (with proper bracket positioning) + court/time
       const r4Matches = matches.filter(m => m.round_number === 4);
+      
+      // Reset court slots for R4
+      const r4CourtNextSlot = new Map<number, number>();
+      courts.forEach(c => r4CourtNextSlot.set(c, 0));
       
       // Simple assignment: fill R4 slots with R4 teams
       // Seeds 1 and 2 should be at opposite ends (if using seeds)
@@ -876,14 +928,63 @@ export function useDoublesElimination() {
         const teamAId = sortedR4Teams[i * 2];
         const teamBId = sortedR4Teams[i * 2 + 1];
 
-        const updateData: Record<string, string | null> = {};
+        // Assign court and time for R4
+        const minSlot = Math.min(...Array.from(r4CourtNextSlot.values()));
+        const availableCourt = courts.find(c => r4CourtNextSlot.get(c) === minSlot) || courts[0];
+        const slotIdx = r4CourtNextSlot.get(availableCourt) || 0;
+        const totalMinutes = r4StartHour * 60 + r4StartMinute + slotIdx * matchDurationMinutes;
+        const hour = Math.floor(totalMinutes / 60) % 24;
+        const minute = totalMinutes % 60;
+        const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        
+        r4CourtNextSlot.set(availableCourt, slotIdx + 1);
+
+        const updateData: Record<string, string | number | null> = {
+          court_number: availableCourt,
+          start_time: startTime
+        };
         if (teamAId) updateData.team_a_id = teamAId;
         if (teamBId) updateData.team_b_id = teamBId;
 
-        if (Object.keys(updateData).length > 0) {
+        await supabase
+          .from('doubles_elimination_matches')
+          .update(updateData)
+          .eq('id', match.id);
+      }
+      
+      // Also schedule subsequent playoff rounds (R5+, semifinals, finals, third place)
+      const laterRounds = matches.filter(m => 
+        m.round_number > 4 || 
+        m.round_type === 'semifinal' || 
+        m.round_type === 'final' || 
+        m.round_type === 'third_place'
+      );
+      
+      if (laterRounds.length > 0) {
+        // Calculate start time after R4
+        const maxR4Slots = Math.max(...Array.from(r4CourtNextSlot.values()));
+        const laterStartMinutes = r4StartHour * 60 + r4StartMinute + maxR4Slots * matchDurationMinutes + 15;
+        
+        const laterCourtNextSlot = new Map<number, number>();
+        courts.forEach(c => laterCourtNextSlot.set(c, 0));
+        
+        for (const match of laterRounds) {
+          const minSlot = Math.min(...Array.from(laterCourtNextSlot.values()));
+          const availableCourt = courts.find(c => laterCourtNextSlot.get(c) === minSlot) || courts[0];
+          const slotIdx = laterCourtNextSlot.get(availableCourt) || 0;
+          const totalMinutes = laterStartMinutes + slotIdx * matchDurationMinutes;
+          const hour = Math.floor(totalMinutes / 60) % 24;
+          const minute = totalMinutes % 60;
+          const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          
+          laterCourtNextSlot.set(availableCourt, slotIdx + 1);
+          
           await supabase
             .from('doubles_elimination_matches')
-            .update(updateData)
+            .update({
+              court_number: availableCourt,
+              start_time: startTime
+            })
             .eq('id', match.id);
         }
       }
