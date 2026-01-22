@@ -10,6 +10,7 @@ interface PlayoffBracketProps {
   isOwner?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
+  isSingleElimination?: boolean;
 }
 
 const ROUND_NAMES: Record<number, string> = {
@@ -27,10 +28,13 @@ const STATUS_CONFIG = {
   completed: { label: 'Hoàn thành', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Check },
 };
 
-export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onLineupClick }: PlayoffBracketProps) {
-  // Group playoff matches by round
-  const matchesByRound = matches
-    .filter(m => m.is_playoff)
+export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onLineupClick, isSingleElimination }: PlayoffBracketProps) {
+  // Group playoff matches by round - separate third-place match (round 0)
+  const allPlayoffMatches = matches.filter(m => m.is_playoff);
+  const thirdPlaceMatch = allPlayoffMatches.find(m => (m as any).is_third_place === true || m.playoff_round === 0);
+  const regularPlayoffMatches = allPlayoffMatches.filter(m => (m as any).is_third_place !== true && m.playoff_round !== 0);
+  
+  const matchesByRound = regularPlayoffMatches
     .reduce((acc, match) => {
       const round = match.playoff_round || 1;
       if (!acc[round]) acc[round] = [];
@@ -42,13 +46,17 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onL
     .map(Number)
     .sort((a, b) => b - a); // Higher round = earlier stage
 
-  if (matches.filter(m => m.is_playoff).length === 0) {
+  if (allPlayoffMatches.length === 0) {
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
           <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Chưa có vòng Playoff</p>
-          <p className="text-sm mt-1">Hoàn thành vòng tròn để tạo Playoff</p>
+          <p>{isSingleElimination ? 'Chưa có Bracket' : 'Chưa có vòng Playoff'}</p>
+          <p className="text-sm mt-1">
+            {isSingleElimination 
+              ? 'Tạo bracket để bắt đầu thi đấu loại trực tiếp'
+              : 'Hoàn thành vòng tròn để tạo Playoff'}
+          </p>
         </CardContent>
       </Card>
     );
@@ -201,6 +209,117 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onL
           })}
         </div>
       </div>
+
+      {/* Third-place match */}
+      {thirdPlaceMatch && (
+        <div className="mt-6">
+          <h4 className="text-sm font-semibold text-center text-muted-foreground mb-3">
+            Tranh hạng 3
+          </h4>
+          {(() => {
+            const match = thirdPlaceMatch;
+            const config = STATUS_CONFIG[match.status] || STATUS_CONFIG.pending;
+            const isMyMatch = userTeamId && (match.team_a_id === userTeamId || match.team_b_id === userTeamId);
+            const matchStarted = match.status === 'in_progress' || match.status === 'completed';
+            const hasBothTeams = match.team_a_id && match.team_b_id;
+            
+            const needsLineupA = hasBothTeams && !match.lineup_a_submitted && !matchStarted;
+            const needsLineupB = hasBothTeams && !match.lineup_b_submitted && !matchStarted;
+            const canLineupA = needsLineupA && (isOwner || match.team_a_id === userTeamId);
+            const canLineupB = needsLineupB && (isOwner || match.team_b_id === userTeamId);
+
+            return (
+              <Card 
+                className={`max-w-[280px] mx-auto cursor-pointer hover:border-primary/50 transition-colors border-amber-500/30 ${isMyMatch ? 'border-primary/30 bg-primary/5' : ''}`}
+                onClick={() => onMatchClick?.(match)}
+              >
+                <CardContent className="p-3 space-y-2">
+                  {/* Team A */}
+                  <div className={`flex justify-between items-center p-2 rounded ${
+                    match.winner_team_id === match.team_a_id 
+                      ? 'bg-amber-500/10 font-medium' 
+                      : 'bg-muted/50'
+                  }`}>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className={`text-sm truncate ${match.team_a_id === userTeamId ? 'text-primary font-medium' : ''}`}>
+                        {(match.team_a as any)?.team_name || 'Đợi BK'}
+                      </span>
+                      {match.lineup_a_submitted && (
+                        <Check className="h-3 w-3 text-amber-600 flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${
+                        match.winner_team_id === match.team_a_id ? 'text-amber-600' : ''
+                      }`}>
+                        {match.games_won_a}
+                      </span>
+                      {canLineupA && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 text-xs px-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onLineupClick?.(match, match.team_a_id!);
+                          }}
+                        >
+                          <ClipboardList className="h-3 w-3 mr-1" />
+                          {isOwner ? 'A' : 'Line up'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Team B */}
+                  <div className={`flex justify-between items-center p-2 rounded ${
+                    match.winner_team_id === match.team_b_id 
+                      ? 'bg-amber-500/10 font-medium' 
+                      : 'bg-muted/50'
+                  }`}>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className={`text-sm truncate ${match.team_b_id === userTeamId ? 'text-primary font-medium' : ''}`}>
+                        {(match.team_b as any)?.team_name || 'Đợi BK'}
+                      </span>
+                      {match.lineup_b_submitted && (
+                        <Check className="h-3 w-3 text-amber-600 flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${
+                        match.winner_team_id === match.team_b_id ? 'text-amber-600' : ''
+                      }`}>
+                        {match.games_won_b}
+                      </span>
+                      {canLineupB && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 text-xs px-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onLineupClick?.(match, match.team_b_id!);
+                          }}
+                        >
+                          <ClipboardList className="h-3 w-3 mr-1" />
+                          {isOwner ? 'B' : 'Line up'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Status */}
+                  <div className="flex justify-center">
+                    <Badge variant="outline" className={`text-xs ${config.color}`}>
+                      {config.label}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }
