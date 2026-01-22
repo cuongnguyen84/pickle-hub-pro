@@ -49,6 +49,7 @@ import {
   InviteTeamDialog,
   SingleEliminationSetupDialog,
   TeamMatchSettingsDialog,
+  TeamMatchScoringSheet,
 } from '@/components/teamMatch';
 import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
 
@@ -120,6 +121,8 @@ export default function TeamMatchView() {
   const [activeTab, setActiveTab] = useState('overview');
   // For BTC lineup: track which team to lineup for
   const [lineupTeamId, setLineupTeamId] = useState<string | null>(null);
+  // For scoring sheet
+  const [scoringMatch, setScoringMatch] = useState<TeamMatchMatch | null>(null);
 
   const isOwner = tournament?.created_by === user?.id;
   const isSingleElimination = tournament?.format === 'single_elimination';
@@ -719,7 +722,7 @@ export default function TeamMatchView() {
                     setLineupMatch(match);
                     setLineupTeamId(teamId || null);
                   }}
-                  onScoreMatch={(match) => setSelectedMatch(match)}
+                  onScoreMatch={(match) => setScoringMatch(match)}
                   isSingleElimination={isSingleElimination}
                 />
               </div>
@@ -743,7 +746,7 @@ export default function TeamMatchView() {
                     setLineupTeamId(teamId || null);
                   }}
                   onStartRound={handleStartRound}
-                  onScoreMatch={(match) => setSelectedMatch(match)}
+                  onScoreMatch={(match) => setScoringMatch(match)}
                 />
               </div>
             )}
@@ -766,7 +769,7 @@ export default function TeamMatchView() {
                     setLineupTeamId(teamId || null);
                   }}
                   onStartRound={handleStartRound}
-                  onScoreMatch={(match) => setSelectedMatch(match)}
+                  onScoreMatch={(match) => setScoringMatch(match)}
                 />
               </div>
             )}
@@ -836,6 +839,14 @@ export default function TeamMatchView() {
           onOpenChange={(open) => !open && setSelectedMatch(null)}
           match={selectedMatch}
           isOwner={userRole.canEditScores}
+          tournamentId={tournament.id}
+        />
+
+        {/* Scoring Sheet for referees */}
+        <TeamMatchScoringSheet
+          open={!!scoringMatch}
+          onOpenChange={(open) => !open && setScoringMatch(null)}
+          match={scoringMatch}
           tournamentId={tournament.id}
         />
 

@@ -1,6 +1,7 @@
 export { GameTemplateEditor, getDefaultTemplates } from './GameTemplateEditor';
 export type { GameTemplateItem } from './GameTemplateEditor';
 export { CreateTeamDialog } from './CreateTeamDialog';
+export { TeamMatchScoringSheet } from './TeamMatchScoringSheet';
 export { InviteTeamDialog } from './InviteTeamDialog';
 export { GroupSetupDialog } from './GroupSetupDialog';
 export { GroupMatchList } from './GroupMatchList';
