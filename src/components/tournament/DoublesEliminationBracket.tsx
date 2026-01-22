@@ -10,19 +10,26 @@ interface DoublesEliminationBracketProps {
   matches: Match[];
   teams: Team[];
   onMatchClick?: (matchId: string) => void;
+  showPreliminaryOnly?: boolean; // Show R1, R2, R3 only
+  showPlayoffOnly?: boolean; // Show R4+ only
 }
 
-const DoublesEliminationBracket = ({ matches, teams, onMatchClick }: DoublesEliminationBracketProps) => {
+const DoublesEliminationBracket = ({ 
+  matches, 
+  teams, 
+  onMatchClick,
+  showPreliminaryOnly = false,
+  showPlayoffOnly = false
+}: DoublesEliminationBracketProps) => {
   const getTeam = (id: string | null): Team | undefined => 
     id ? teams.find(t => t.id === id) : undefined;
 
-  // Only show seed if explicitly set by user (not auto-generated)
+  // Only show seed if explicitly set by user during registration
+  // Seeds are meaningful from R4+ only, and should only show if user intentionally set them
+  // Auto-generated display_order or team index should NOT be shown
   const formatTeamName = (team: Team | undefined): string => {
     if (!team) return 'TBD';
-    // Only show seed if it was explicitly entered (seed exists and > 0)
-    if (team.seed && team.seed > 0) {
-      return `(${team.seed}) ${team.team_name}`;
-    }
+    // Just show team name - no auto seed display
     return team.team_name;
   };
 
@@ -114,10 +121,15 @@ const DoublesEliminationBracket = ({ matches, teams, onMatchClick }: DoublesElim
     );
   }
 
+  // Separate preliminary (R1, R2, R3) and playoff (R4+) rounds
+  const preliminaryRounds = rounds.filter(r => r.roundNumber <= 3);
+  const playoffRounds = rounds.filter(r => r.roundNumber >= 4);
+  const r3Rounds = rounds.filter(r => r.roundNumber === 3);
+
   return (
     <div className="space-y-6">
-      {/* Champion Banner */}
-      {champion && (
+      {/* Champion Banner - only show in playoff view or full view */}
+      {!showPreliminaryOnly && champion && (
         <Card className="border-primary/50 bg-gradient-to-r from-primary/10 to-primary/5">
           <CardContent className="py-6">
             <div className="flex items-center justify-center gap-3">
@@ -132,41 +144,43 @@ const DoublesEliminationBracket = ({ matches, teams, onMatchClick }: DoublesElim
         </Card>
       )}
 
-      {/* Round 1 + Loser Bracket R2 side by side */}
-      {rounds.find(r => r.roundNumber === 1) && (
+      {/* PRELIMINARY VIEW: Round 1 + Loser Bracket R2 + Round 3 side by side */}
+      {!showPlayoffOnly && (
         <div className="mb-8">
           <div className="overflow-x-auto pb-4 -mx-4 px-4">
             <div className="flex gap-8 min-w-max items-start">
               {/* R1 Winner Matches */}
-              <div className="flex flex-col min-w-[280px]">
-                <div className="text-center mb-4">
-                  <Badge variant="outline" className="px-4 py-1 bg-green-50 dark:bg-green-950/30 border-green-300">
-                    Vòng 1 - Winner
-                    <span className="ml-2 opacity-70">
-                      ({rounds.find(r => r.roundNumber === 1)?.matches.length || 0})
-                    </span>
-                  </Badge>
+              {rounds.find(r => r.roundNumber === 1) && (
+                <div className="flex flex-col min-w-[280px]">
+                  <div className="text-center mb-4">
+                    <Badge variant="outline" className="px-4 py-1 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300">
+                      Vòng 1 - Winner
+                      <span className="ml-2 opacity-70">
+                        ({rounds.find(r => r.roundNumber === 1)?.matches.length || 0})
+                      </span>
+                    </Badge>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
+                      <BracketMatchCard
+                        key={match.id}
+                        match={match}
+                        teamA={getTeam(match.team_a_id)}
+                        teamB={getTeam(match.team_b_id)}
+                        formatTeamName={formatTeamName}
+                        isFinal={false}
+                        onClick={() => onMatchClick?.(match.id)}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-3">
-                  {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
-                    <BracketMatchCard
-                      key={match.id}
-                      match={match}
-                      teamA={getTeam(match.team_a_id)}
-                      teamB={getTeam(match.team_b_id)}
-                      formatTeamName={formatTeamName}
-                      isFinal={false}
-                      onClick={() => onMatchClick?.(match.id)}
-                    />
-                  ))}
-                </div>
-              </div>
+              )}
 
               {/* R2 Loser Matches - shown alongside R1 */}
               {loserMatches.length > 0 && (
                 <div className="flex flex-col min-w-[280px]">
                   <div className="text-center mb-4">
-                    <Badge variant="secondary" className="px-4 py-1 bg-orange-50 dark:bg-orange-950/30 border-orange-300">
+                    <Badge variant="secondary" className="px-4 py-1 bg-amber-50 dark:bg-amber-950/30 border-amber-300">
                       Vòng 2 - Loser Bracket
                       <span className="ml-2 opacity-70">({loserMatches.length})</span>
                     </Badge>
@@ -194,16 +208,41 @@ const DoublesEliminationBracket = ({ matches, teams, onMatchClick }: DoublesElim
                   </div>
                 </div>
               )}
+
+              {/* R3 Merge Matches - shown alongside R2 */}
+              {r3Rounds.length > 0 && r3Rounds[0].matches.length > 0 && (
+                <div className="flex flex-col min-w-[280px]">
+                  <div className="text-center mb-4">
+                    <Badge variant="outline" className="px-4 py-1 bg-blue-50 dark:bg-blue-950/30 border-blue-300">
+                      Vòng 3 - Merge
+                      <span className="ml-2 opacity-70">({r3Rounds[0].matches.length})</span>
+                    </Badge>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {r3Rounds[0].matches.map((match) => (
+                      <BracketMatchCard
+                        key={match.id}
+                        match={match}
+                        teamA={getTeam(match.team_a_id)}
+                        teamB={getTeam(match.team_b_id)}
+                        formatTeamName={formatTeamName}
+                        isFinal={false}
+                        onClick={() => onMatchClick?.(match.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Bracket R3+ - Horizontal Scroll */}
-      {rounds.filter(r => r.roundNumber >= 3).length > 0 && (
+      {/* PLAYOFF VIEW: R4+ - Standard Single Elimination */}
+      {!showPreliminaryOnly && playoffRounds.length > 0 && (
         <div className="overflow-x-auto pb-4 -mx-4 px-4">
           <div className="flex gap-6 min-w-max items-stretch">
-            {rounds.filter(r => r.roundNumber >= 3).map((round, roundIdx) => (
+            {playoffRounds.map((round, roundIdx) => (
               <div key={round.roundNumber} className="flex flex-col min-w-[260px]">
                 {/* Round Header */}
                 <div className="text-center mb-4">
@@ -246,10 +285,17 @@ const DoublesEliminationBracket = ({ matches, teams, onMatchClick }: DoublesElim
         </div>
       )}
 
-      {/* Loser Bracket section removed - now shown alongside R1 above */}
+      {/* Empty state for playoff when no matches yet */}
+      {showPlayoffOnly && playoffRounds.length === 0 && (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại.
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Third Place Match */}
-      {matches.find(m => m.round_type === 'third_place') && (
+      {/* Third Place Match - only in playoff view */}
+      {!showPreliminaryOnly && matches.find(m => m.round_type === 'third_place') && (
         <div className="mt-6 pt-6 border-t">
           <h3 className="text-lg font-semibold mb-4">Tranh hạng 3</h3>
           {(() => {

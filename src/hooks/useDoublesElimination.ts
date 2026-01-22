@@ -316,17 +316,19 @@ export function useDoublesElimination() {
       // Handle odd loser from R1 (bye to R3)
       const byeFromR2 = r1MatchCount % 2 === 1;
       
-      // Calculate teams entering R3
+      // Calculate teams entering R3 (T3)
       const winnersFromR1 = r1MatchCount + (byeTeamFromR1 ? 1 : 0);
       const winnersFromR2 = r2MatchCount + (byeFromR2 ? 1 : 0);
-      const teamsEnteringR3 = winnersFromR1 + winnersFromR2;
+      const T3 = winnersFromR1 + winnersFromR2;
       
-      // ROUND 3: Merge Round - normalize to power of 2
-      const targetR4 = nextPowerOf2(Math.floor(teamsEnteringR3 / 2));
-      const actualTarget = targetR4 > teamsEnteringR3 ? targetR4 / 2 : targetR4;
-      const excess = teamsEnteringR3 - actualTarget;
-      const r3Matches = excess;
-      const byesToR4 = teamsEnteringR3 - (r3Matches * 2);
+      // ROUND 3: Normalize to power of 2 by Round 4
+      // Formula: R4 = 2^floor(log2(T3)), Byes to R4 = 2 × R4 - T3
+      const R4 = Math.pow(2, Math.floor(Math.log2(T3)));
+      const byesToR4 = 2 * R4 - T3;
+      // Teams that play in R3 = T3 - byesToR4
+      // R3 matches = (T3 - byesToR4) / 2
+      const teamsPlayingR3 = T3 - byesToR4;
+      const r3Matches = Math.floor(teamsPlayingR3 / 2);
       
       for (let i = 0; i < r3Matches; i++) {
         matches.push({
@@ -360,7 +362,7 @@ export function useDoublesElimination() {
       // ROUND 4+: Single Elimination with proper seeding
       // Seeds 1 and 2 should be placed on opposite halves of bracket
       let currentRound = 4;
-      let teamsInRound = actualTarget;
+      let teamsInRound = R4;
       
       while (teamsInRound > 1) {
         const matchesInRound = teamsInRound / 2;

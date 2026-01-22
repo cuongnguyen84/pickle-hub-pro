@@ -213,19 +213,31 @@ export default function DoublesEliminationView() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="bracket" className="space-y-4">
+        <Tabs defaultValue="preliminary" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="bracket">Bracket</TabsTrigger>
+            <TabsTrigger value="preliminary">Sơ loại</TabsTrigger>
+            <TabsTrigger value="playoff">Playoff</TabsTrigger>
             <TabsTrigger value="teams">Đội ({teams.length})</TabsTrigger>
             {isCreator && <TabsTrigger value="settings">Cài đặt</TabsTrigger>}
           </TabsList>
 
-          {/* Bracket Tab */}
-          <TabsContent value="bracket" className="space-y-6">
+          {/* Preliminary Tab - Round 1, 2, 3 */}
+          <TabsContent value="preliminary" className="space-y-6">
             <DoublesEliminationBracket 
               matches={matches}
               teams={teams}
               onMatchClick={handleMatchClick}
+              showPreliminaryOnly={true}
+            />
+          </TabsContent>
+
+          {/* Playoff Tab - Round 4+ */}
+          <TabsContent value="playoff" className="space-y-6">
+            <DoublesEliminationBracket 
+              matches={matches}
+              teams={teams}
+              onMatchClick={handleMatchClick}
+              showPlayoffOnly={true}
             />
           </TabsContent>
 
