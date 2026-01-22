@@ -481,6 +481,60 @@ async function propagateLoserToR2(
   }
 }
 
+// Helper to propagate winner to next round match (R3 -> R4, R4 -> R5, etc.)
+async function propagateWinnerToNextRound(
+  match: Match,
+  winnerId: string,
+  allMatches: Match[]
+) {
+  // For R3 matches, find corresponding R4 match slot
+  // R3 winners fill empty slots in R4 (teams with high point diff already have byes to R4)
+  if (match.round_number === 3) {
+    const r4Matches = allMatches
+      .filter(m => m.round_number === 4)
+      .sort((a, b) => a.match_number - b.match_number);
+    
+    // Find R4 match with an empty slot to fill
+    for (const r4Match of r4Matches) {
+      // Check for empty slots (not already filled)
+      if (!r4Match.team_a_id) {
+        await supabase
+          .from('doubles_elimination_matches')
+          .update({ team_a_id: winnerId })
+          .eq('id', r4Match.id);
+        return;
+      }
+      if (!r4Match.team_b_id) {
+        await supabase
+          .from('doubles_elimination_matches')
+          .update({ team_b_id: winnerId })
+          .eq('id', r4Match.id);
+        return;
+      }
+    }
+  }
+  // For R4+ rounds, follow the bracket position pattern
+  else if (match.round_number >= 4) {
+    const nextRoundMatches = allMatches
+      .filter(m => m.round_number === match.round_number + 1)
+      .sort((a, b) => a.match_number - b.match_number);
+    
+    // Find the next match based on bracket position
+    const matchIndex = match.match_number - 1;
+    const nextMatchIndex = Math.floor(matchIndex / 2);
+    const slot = matchIndex % 2;
+    
+    const targetMatch = nextRoundMatches[nextMatchIndex];
+    if (targetMatch) {
+      const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
+      await supabase
+        .from('doubles_elimination_matches')
+        .update({ [updateField]: winnerId })
+        .eq('id', targetMatch.id);
+    }
+  }
+}
+
 // Loser Bracket Card
 interface LoserBracketCardProps {
   match: Match;
@@ -882,6 +936,11 @@ const BracketMatchCard = ({
         await propagateLoserToR2(matchIndex, loserId, allMatches);
       }
 
+      // For R3+ matches, propagate winner to next round
+      if (isMatchComplete && winnerId && match.round_number >= 3) {
+        await propagateWinnerToNextRound(match, winnerId, allMatches);
+      }
+
       // Mark loser as eliminated if not R1
       if (isMatchComplete && loserId && match.round_type !== 'winner_r1') {
         await supabase
@@ -895,7 +954,11 @@ const BracketMatchCard = ({
 
       toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
       setIsEditing(false);
-      // Don't call onScoreUpdated to avoid full reload
+      
+      // Trigger reload to show propagated winners in next round
+      if (isMatchComplete && winnerId && match.round_number >= 3) {
+        onScoreUpdated?.();
+      }
     } catch (error) {
       toast({ title: "Lỗi lưu điểm", variant: "destructive" });
       // Revert on error - trigger full reload
