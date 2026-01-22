@@ -407,7 +407,9 @@ export default function DoublesEliminationScoring() {
             {/* Scores - centered on same line */}
             <div className="flex items-center justify-center gap-3">
               <div className="text-center">
-                <div className="text-xs text-muted-foreground">#{teamA.seed}</div>
+                {teamA.seed !== null && teamA.seed !== undefined && (
+                  <div className="text-xs text-muted-foreground">#{teamA.seed}</div>
+                )}
                 <div className="text-sm font-medium truncate max-w-[80px]">{teamA.team_name}</div>
               </div>
               <div className="text-5xl font-bold font-mono whitespace-nowrap">
@@ -418,7 +420,9 @@ export default function DoublesEliminationScoring() {
                 {localScoreB}
               </div>
               <div className="text-center">
-                <div className="text-xs text-muted-foreground">#{teamB.seed}</div>
+                {teamB.seed !== null && teamB.seed !== undefined && (
+                  <div className="text-xs text-muted-foreground">#{teamB.seed}</div>
+                )}
                 <div className="text-sm font-medium truncate max-w-[80px]">{teamB.team_name}</div>
               </div>
             </div>
