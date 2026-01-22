@@ -1678,6 +1678,35 @@ export type Database = {
           },
         ]
       }
+      team_match_referees: {
+        Row: {
+          created_at: string | null
+          id: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_match_referees_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "team_match_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_match_roster: {
         Row: {
           created_at: string | null
@@ -2149,6 +2178,10 @@ export type Database = {
       }
       can_edit_quick_table_scores: {
         Args: { _table_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_edit_team_match_scores: {
+        Args: { _tournament_id: string; _user_id: string }
         Returns: boolean
       }
       can_moderate_chat: {
