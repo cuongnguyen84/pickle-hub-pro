@@ -1020,23 +1020,143 @@ const BracketMatchCard = ({
   const [editScoreB, setEditScoreB] = useState(match.score_b?.toString() || '0');
   const [saving, setSaving] = useState(false);
   
+  // State for BO3/BO5 game-by-game editing
+  const [editingGameIndex, setEditingGameIndex] = useState<number | null>(null);
+  const [gameScoreA, setGameScoreA] = useState('0');
+  const [gameScoreB, setGameScoreB] = useState('0');
+  
   const isCompleted = match.status === 'completed';
   const isLive = match.status === 'live';
   const isAWinner = match.winner_id === match.team_a_id && isCompleted;
   const isBWinner = match.winner_id === match.team_b_id && isCompleted;
 
-  // "Sửa" button = inline edit
+  // Parse existing games from JSONB
+  const existingGames = Array.isArray(match.games) ? match.games as { game: number; score_a: number; score_b: number; winner: 'a' | 'b' }[] : [];
+
+  // "Sửa" button = inline edit for BO1
   const handleStartInlineEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // For BO3/BO5, use games_won; for BO1, use score
-    if (match.best_of > 1) {
-      setEditScoreA((match.games_won_a ?? 0).toString());
-      setEditScoreB((match.games_won_b ?? 0).toString());
-    } else {
-      setEditScoreA(match.score_a?.toString() || '0');
-      setEditScoreB(match.score_b?.toString() || '0');
-    }
+    setEditScoreA(match.score_a?.toString() || '0');
+    setEditScoreB(match.score_b?.toString() || '0');
     setIsEditing(true);
+  };
+
+  // For BO3/BO5: click on game slot to edit that specific game
+  const handleStartGameEdit = (gameIndex: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const existingGame = existingGames[gameIndex];
+    setGameScoreA(existingGame?.score_a?.toString() || '0');
+    setGameScoreB(existingGame?.score_b?.toString() || '0');
+    setEditingGameIndex(gameIndex);
+  };
+
+  const handleCancelGameEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingGameIndex(null);
+  };
+
+  const handleSaveGameScore = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (editingGameIndex === null) return;
+    setSaving(true);
+
+    const scoreA = parseInt(gameScoreA) || 0;
+    const scoreB = parseInt(gameScoreB) || 0;
+    
+    if (scoreA === scoreB) {
+      toast({ title: "Điểm không được bằng nhau", variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
+    const gameWinner: 'a' | 'b' = scoreA > scoreB ? 'a' : 'b';
+    const gameNum = editingGameIndex + 1;
+
+    // Build updated games array
+    const updatedGames = [...existingGames];
+    updatedGames[editingGameIndex] = {
+      game: gameNum,
+      score_a: scoreA,
+      score_b: scoreB,
+      winner: gameWinner
+    };
+
+    // Calculate games won
+    const gamesWonA = updatedGames.filter(g => g?.winner === 'a').length;
+    const gamesWonB = updatedGames.filter(g => g?.winner === 'b').length;
+    const winsNeededForMatch = Math.ceil(match.best_of / 2);
+    
+    const matchComplete = gamesWonA >= winsNeededForMatch || gamesWonB >= winsNeededForMatch;
+    const winnerId = matchComplete ? (gamesWonA > gamesWonB ? match.team_a_id : match.team_b_id) : null;
+    const loserId = matchComplete ? (gamesWonA > gamesWonB ? match.team_b_id : match.team_a_id) : null;
+
+    // Optimistic update
+    const matchUpdates: Partial<Match> = {
+      games: updatedGames as any,
+      games_won_a: gamesWonA,
+      games_won_b: gamesWonB,
+      winner_id: winnerId,
+      status: matchComplete ? 'completed' : 'live'
+    };
+    onMatchUpdated?.(match.id, matchUpdates);
+
+    try {
+      await supabase
+        .from('doubles_elimination_matches')
+        .update({
+          games: updatedGames,
+          games_won_a: gamesWonA,
+          games_won_b: gamesWonB,
+          winner_id: winnerId,
+          status: matchComplete ? 'completed' : 'live'
+        })
+        .eq('id', match.id);
+
+      if (matchComplete) {
+        // For R1 winner matches, propagate loser to R2 loser bracket
+        if (loserId && match.round_type === 'winner_r1') {
+          const matchIndex = match.match_number - 1;
+          await propagateLoserToR2(matchIndex, loserId, allMatches);
+        }
+
+        // For R3+ matches, propagate winner to next round
+        if (winnerId && match.round_number >= 3) {
+          await propagateWinnerToNextRound(match, winnerId, allMatches, onMatchUpdated);
+        }
+
+        // For semifinal matches, propagate loser to 3rd place match
+        if (loserId && match.round_type === 'semifinal') {
+          await propagateLoserToThirdPlace(match, loserId, allMatches, onMatchUpdated);
+        }
+
+        // Mark loser as eliminated if not R1
+        if (loserId && match.round_type !== 'winner_r1') {
+          await supabase
+            .from('doubles_elimination_teams')
+            .update({
+              status: 'eliminated',
+              eliminated_at_round: match.round_number
+            })
+            .eq('id', loserId);
+        }
+
+        // If this is the final match, mark tournament as completed
+        if (match.round_type === 'final') {
+          await supabase
+            .from('doubles_elimination_tournaments')
+            .update({ status: 'completed' })
+            .eq('id', match.tournament_id);
+        }
+      }
+
+      toast({ title: matchComplete ? "Đã lưu kết quả trận đấu" : `Đã lưu Game ${gameNum}` });
+      setEditingGameIndex(null);
+    } catch (error) {
+      toast({ title: "Lỗi lưu điểm", variant: "destructive" });
+      onScoreUpdated?.();
+    } finally {
+      setSaving(false);
+    }
   };
 
   // "Chấm" button = go to scoring page
@@ -1057,40 +1177,13 @@ const BracketMatchCard = ({
     const scoreA = parseInt(editScoreA) || 0;
     const scoreB = parseInt(editScoreB) || 0;
     
-    // For BO3/BO5, the scores represent games won
-    const isBestOfMatch = match.best_of > 1;
-    const winsNeededForMatch = Math.ceil(match.best_of / 2);
-    
-    // Determine winner based on match type
-    let winnerId: string | null = null;
-    let loserId: string | null = null;
-    let isMatchComplete = false;
-    
-    if (isBestOfMatch) {
-      // For BO3/BO5: check if either team has enough game wins
-      if (scoreA >= winsNeededForMatch) {
-        winnerId = match.team_a_id;
-        loserId = match.team_b_id;
-        isMatchComplete = true;
-      } else if (scoreB >= winsNeededForMatch) {
-        winnerId = match.team_b_id;
-        loserId = match.team_a_id;
-        isMatchComplete = true;
-      }
-    } else {
-      // For BO1: higher score wins
-      winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
-      loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
-      isMatchComplete = scoreA !== scoreB;
-    }
+    // For BO1: higher score wins
+    const winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
+    const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
+    const isMatchComplete = scoreA !== scoreB;
 
-    // Optimistic update - immediately update local state
-    const matchUpdates: Partial<Match> = isBestOfMatch ? {
-      games_won_a: scoreA,
-      games_won_b: scoreB,
-      winner_id: isMatchComplete ? winnerId : null,
-      status: isMatchComplete ? 'completed' : 'live'
-    } : {
+    // Optimistic update
+    const matchUpdates: Partial<Match> = {
       score_a: scoreA,
       score_b: scoreB,
       winner_id: isMatchComplete ? winnerId : null,
@@ -1099,31 +1192,23 @@ const BracketMatchCard = ({
     onMatchUpdated?.(match.id, matchUpdates);
 
     try {
-      const updateData = isBestOfMatch ? {
-        games_won_a: scoreA,
-        games_won_b: scoreB,
-        winner_id: isMatchComplete ? winnerId : null,
-        status: isMatchComplete ? 'completed' : 'live'
-      } : {
-        score_a: scoreA,
-        score_b: scoreB,
-        winner_id: isMatchComplete ? winnerId : null,
-        status: isMatchComplete ? 'completed' : 'live'
-      };
-      
       await supabase
         .from('doubles_elimination_matches')
-        .update(updateData)
+        .update({
+          score_a: scoreA,
+          score_b: scoreB,
+          winner_id: isMatchComplete ? winnerId : null,
+          status: isMatchComplete ? 'completed' : 'live'
+        })
         .eq('id', match.id);
 
       // For R1 winner matches, propagate loser to R2 loser bracket
       if (isMatchComplete && loserId && match.round_type === 'winner_r1') {
-        // match_number is 1-based, convert to 0-based index
         const matchIndex = match.match_number - 1;
         await propagateLoserToR2(matchIndex, loserId, allMatches);
       }
 
-      // For R3+ matches, propagate winner to next round with optimistic update
+      // For R3+ matches, propagate winner to next round
       if (isMatchComplete && winnerId && match.round_number >= 3) {
         await propagateWinnerToNextRound(match, winnerId, allMatches, onMatchUpdated);
       }
@@ -1154,10 +1239,8 @@ const BracketMatchCard = ({
 
       toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
       setIsEditing(false);
-      // No reload - optimistic update already applied via onMatchUpdated
     } catch (error) {
       toast({ title: "Lỗi lưu điểm", variant: "destructive" });
-      // Revert on error - trigger full reload
       onScoreUpdated?.();
     } finally {
       setSaving(false);
@@ -1312,21 +1395,47 @@ const BracketMatchCard = ({
         <div className="px-2 py-2 border-t bg-muted/20">
           <div className="flex justify-center gap-1">
             {Array.from({ length: match.best_of }).map((_, gameIndex) => {
-              const gameData = (match.games as any[])?.[gameIndex];
-              const isCompleted = !!gameData;
+              const gameData = existingGames[gameIndex];
+              const gameCompleted = !!gameData;
               const winnerTeam = gameData?.winner;
+              const isEditingThis = editingGameIndex === gameIndex;
+              const canEditGame = canEdit && teamA && teamB;
               
               return (
                 <div
                   key={gameIndex}
+                  onClick={(e) => canEditGame && handleStartGameEdit(gameIndex, e)}
                   className={cn(
-                    "flex flex-col items-center justify-center w-10 h-10 rounded border text-[10px]",
-                    isCompleted ? "border-muted bg-muted/50" : "border-dashed border-muted-foreground/30"
+                    "flex flex-col items-center justify-center rounded border text-[10px] transition-all",
+                    isEditingThis ? "w-20 h-16 border-primary ring-2 ring-primary/30 bg-primary/10" : "w-10 h-10",
+                    gameCompleted && !isEditingThis && "border-muted bg-muted/50",
+                    !gameCompleted && !isEditingThis && "border-dashed border-muted-foreground/30",
+                    canEditGame && !isEditingThis && "cursor-pointer hover:border-primary/50 hover:bg-primary/5"
                   )}
-                  title={`Game ${gameIndex + 1}`}
+                  title={canEditGame ? `Click để sửa Game ${gameIndex + 1}` : `Game ${gameIndex + 1}`}
                 >
                   <div className="text-[8px] text-muted-foreground">G{gameIndex + 1}</div>
-                  {isCompleted ? (
+                  {isEditingThis ? (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Input
+                        type="number"
+                        value={gameScoreA}
+                        onChange={(e) => setGameScoreA(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-8 h-5 text-center text-[10px] font-bold p-0"
+                        min={0}
+                      />
+                      <span className="text-muted-foreground text-[10px]">-</span>
+                      <Input
+                        type="number"
+                        value={gameScoreB}
+                        onChange={(e) => setGameScoreB(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-8 h-5 text-center text-[10px] font-bold p-0"
+                        min={0}
+                      />
+                    </div>
+                  ) : gameCompleted ? (
                     <div className="flex items-center gap-0.5">
                       <span className={winnerTeam === 'a' ? 'text-primary font-bold' : 'text-muted-foreground'}>
                         {gameData.score_a}
@@ -1343,9 +1452,35 @@ const BracketMatchCard = ({
               );
             })}
           </div>
-          {isEditing && (
-            <div className="text-[10px] text-blue-600 dark:text-blue-400 text-center mt-1">
-              Nhập số game thắng (cần {winsNeeded} để thắng)
+          
+          {/* Save/Cancel buttons for game editing */}
+          {editingGameIndex !== null && (
+            <div className="flex justify-center gap-2 mt-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCancelGameEdit}
+                disabled={saving}
+                className="h-6 px-2 text-xs"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Hủy
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveGameScore}
+                disabled={saving}
+                className="h-6 px-2 text-xs"
+              >
+                <Check className="w-3 h-3 mr-1" />
+                Lưu G{editingGameIndex + 1}
+              </Button>
+            </div>
+          )}
+          
+          {editingGameIndex === null && canEdit && teamA && teamB && (
+            <div className="text-[10px] text-muted-foreground text-center mt-1">
+              Click vào ô game để sửa điểm
             </div>
           )}
         </div>
@@ -1387,18 +1522,8 @@ const BracketMatchCard = ({
                 <Play className="w-3 h-3 mr-1" />
                 Chấm
               </Button>
-              {/* For BO1: allow inline edit. For BO3/BO5: go to scoring page */}
-              {isBestOf ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleGoToScoringPage}
-                  className="h-7 px-2"
-                >
-                  <Pencil className="w-3 h-3 mr-1" />
-                  Sửa
-                </Button>
-              ) : (
+              {/* For BO1: show "Sửa" button. For BO3/BO5: game slots are clickable instead */}
+              {!isBestOf && (
                 <Button
                   size="sm"
                   variant="ghost"
