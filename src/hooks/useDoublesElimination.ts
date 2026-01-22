@@ -638,8 +638,13 @@ export function useDoublesElimination() {
           .eq('id', loserId);
       }
       
-      // Advance winner to next match (if dest_winner exists)
-      // This would be handled by realtime triggers or explicit linking
+      // If this is the final match, mark tournament as completed
+      if (match.round_type === 'final') {
+        await supabase
+          .from('doubles_elimination_tournaments')
+          .update({ status: 'completed' })
+          .eq('id', match.tournament_id);
+      }
       
       return { success: true };
     } catch (error: any) {
