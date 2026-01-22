@@ -4,10 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Users, UserPlus, UserMinus, Mail, Loader2 } from 'lucide-react';
-import { type Referee } from '@/hooks/useRefereeManagement';
+
+// Generic referee display type - works for both Quick Tables and Doubles Elimination
+interface RefereeDisplay {
+  id: string;
+  email?: string;
+  display_name?: string;
+}
 
 interface RefereeManagementProps {
-  referees: Referee[];
+  referees: RefereeDisplay[];
   loading: boolean;
   onAddReferee: (email: string) => Promise<boolean>;
   onRemoveReferee: (refereeId: string) => Promise<boolean>;
