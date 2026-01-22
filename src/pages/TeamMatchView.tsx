@@ -100,6 +100,7 @@ export default function TeamMatchView() {
   const {
     referees,
     loading: refereesLoading,
+    userRole,
     addRefereeByEmail,
     removeReferee,
   } = useTeamMatchRefereeManagement(tournament?.id, tournament?.created_by);
@@ -712,11 +713,13 @@ export default function TeamMatchView() {
                   matches={playoffMatches}
                   userTeamId={userTeam?.id}
                   isOwner={isOwner}
+                  canEditScores={userRole.canEditScores}
                   onMatchClick={(match) => setSelectedMatch(match)}
                   onLineupClick={(match, teamId) => {
                     setLineupMatch(match);
                     setLineupTeamId(teamId || null);
                   }}
+                  onScoreMatch={(match) => setSelectedMatch(match)}
                   isSingleElimination={isSingleElimination}
                 />
               </div>
@@ -733,12 +736,14 @@ export default function TeamMatchView() {
                   tournamentId={tournament.id}
                   userTeamId={userTeam?.id}
                   isOwner={isOwner}
+                  canEditScores={userRole.canEditScores}
                   onMatchClick={(match) => setSelectedMatch(match)}
                   onLineupClick={(match, teamId) => {
                     setLineupMatch(match);
                     setLineupTeamId(teamId || null);
                   }}
                   onStartRound={handleStartRound}
+                  onScoreMatch={(match) => setSelectedMatch(match)}
                 />
               </div>
             )}
@@ -754,12 +759,14 @@ export default function TeamMatchView() {
                   tournamentId={tournament.id}
                   userTeamId={userTeam?.id}
                   isOwner={isOwner}
+                  canEditScores={userRole.canEditScores}
                   onMatchClick={(match) => setSelectedMatch(match)}
                   onLineupClick={(match, teamId) => {
                     setLineupMatch(match);
                     setLineupTeamId(teamId || null);
                   }}
                   onStartRound={handleStartRound}
+                  onScoreMatch={(match) => setSelectedMatch(match)}
                 />
               </div>
             )}
@@ -828,7 +835,7 @@ export default function TeamMatchView() {
           open={!!selectedMatch}
           onOpenChange={(open) => !open && setSelectedMatch(null)}
           match={selectedMatch}
-          isOwner={isOwner}
+          isOwner={userRole.canEditScores}
           tournamentId={tournament.id}
         />
 

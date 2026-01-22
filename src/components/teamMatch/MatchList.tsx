@@ -3,16 +3,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Gamepad2, Trophy, Clock, Play, ClipboardList, Check, AlertTriangle } from 'lucide-react';
+import { Gamepad2, Trophy, Clock, Play, ClipboardList, Check, AlertTriangle, Edit } from 'lucide-react';
 import { useTeamMatchMatches, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 
 interface MatchListProps {
   tournamentId: string;
   userTeamId?: string;
   isOwner?: boolean;
+  canEditScores?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number) => void;
+  onScoreMatch?: (match: TeamMatchMatch) => void;
 }
 
 const STATUS_CONFIG = {
@@ -22,7 +24,7 @@ const STATUS_CONFIG = {
   completed: { label: 'Đã kết thúc', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Trophy },
 };
 
-export function MatchList({ tournamentId, userTeamId, isOwner, onMatchClick, onLineupClick, onStartRound }: MatchListProps) {
+export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, onMatchClick, onLineupClick, onStartRound, onScoreMatch }: MatchListProps) {
   const { data: matches, isLoading } = useTeamMatchMatches(tournamentId);
 
   if (isLoading) {
@@ -251,8 +253,24 @@ export function MatchList({ tournamentId, userTeamId, isOwner, onMatchClick, onL
                             </div>
                           )}
                           
+                          {/* Referee Score Button */}
+                          {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              className="bg-primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onScoreMatch?.(match);
+                              }}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Chấm
+                            </Button>
+                          )}
+                          
                           {/* Show detail button */}
-                          {!needsLineup && !myLineupSubmitted && (!isOwner || (!canBTCLineupA && !canBTCLineupB)) && (
+                          {!needsLineup && !myLineupSubmitted && !canEditScores && (!isOwner || (!canBTCLineupA && !canBTCLineupB)) && (
                             <Button variant="ghost" size="sm" onClick={(e) => {
                               e.stopPropagation();
                               onMatchClick?.(match);
