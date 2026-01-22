@@ -583,18 +583,40 @@ const DoublesEliminationBracket = ({
 };
 
 // Helper to propagate loser to R2 match using match_index (0-based)
+// Now fetches R2 matches directly from database to ensure we have latest data
 async function propagateLoserToR2(
   matchIndex: number, // 0-based index of R1 match
   loserId: string, 
   allMatches: Match[]
 ) {
-  // Find R2 match where this loser should go based on match_index
-  const r2Match = allMatches.find(m => {
+  // First try from allMatches (for optimistic update when data is fresh)
+  let r2Match = allMatches.find(m => {
     if (m.round_number !== 2 || m.bracket_type !== 'loser') return false;
     const sourceA = m.source_a as { type: string; match_index?: number } | null;
     const sourceB = m.source_b as { type: string; match_index?: number } | null;
     return sourceA?.match_index === matchIndex || sourceB?.match_index === matchIndex;
   });
+
+  // If not found in allMatches, fetch from database
+  if (!r2Match) {
+    // Get tournament_id from any match in allMatches
+    const tournamentId = allMatches[0]?.tournament_id;
+    if (tournamentId) {
+      const { data: r2Matches } = await supabase
+        .from('doubles_elimination_matches')
+        .select('*')
+        .eq('tournament_id', tournamentId)
+        .eq('round_number', 2);
+      
+      if (r2Matches) {
+        r2Match = r2Matches.find(m => {
+          const sourceA = m.source_a as { type: string; match_index?: number } | null;
+          const sourceB = m.source_b as { type: string; match_index?: number } | null;
+          return sourceA?.match_index === matchIndex || sourceB?.match_index === matchIndex;
+        }) as Match | undefined;
+      }
+    }
+  }
 
   if (r2Match) {
     const sourceA = r2Match.source_a as { type: string; match_index?: number } | null;
