@@ -273,18 +273,26 @@ export function useDoublesElimination() {
         byeTeamFromR1 = shuffledTeams[N - 1]; // Last team in shuffle gets bye
       }
       
-      // ROUND 2: Losers from R1 play (Loser Bracket)
+      // ROUND 2: Losers from R1 play (Loser Bracket) - RANDOMIZED pairings
       const r2MatchCount = Math.floor(r1MatchCount / 2);
       
+      // Create array of R1 match indices and shuffle for random loser pairings
+      const r1MatchIndices = Array.from({ length: r1MatchCount }, (_, i) => i);
+      const shuffledLoserIndices = [...r1MatchIndices].sort(() => Math.random() - 0.5);
+      
       for (let i = 0; i < r2MatchCount; i++) {
+        // Random pairing from shuffled indices
+        const loserAIndex = shuffledLoserIndices[i * 2];
+        const loserBIndex = shuffledLoserIndices[i * 2 + 1];
+        
         matches.push({
           tournament_id: tournamentId,
           round_number: 2,
           round_type: 'loser_r2',
           bracket_type: 'loser',
           match_number: i + 1,
-          team_a_id: null, // Loser from R1 match 2i
-          team_b_id: null, // Loser from R1 match 2i+1
+          team_a_id: null, // Loser from random R1 match
+          team_b_id: null, // Loser from another random R1 match
           score_a: 0,
           score_b: 0,
           winner_id: null,
@@ -292,8 +300,8 @@ export function useDoublesElimination() {
           games: [],
           games_won_a: 0,
           games_won_b: 0,
-          source_a: { type: 'loser_of', match_index: i * 2 },
-          source_b: { type: 'loser_of', match_index: i * 2 + 1 },
+          source_a: { type: 'loser_of', match_index: loserAIndex },
+          source_b: { type: 'loser_of', match_index: loserBIndex },
           dest_winner: null,
           dest_loser: { type: 'ELIMINATED' },
           is_bye: false,

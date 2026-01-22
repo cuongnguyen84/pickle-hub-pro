@@ -16,9 +16,11 @@ const DoublesEliminationBracket = ({ matches, teams, onMatchClick }: DoublesElim
   const getTeam = (id: string | null): Team | undefined => 
     id ? teams.find(t => t.id === id) : undefined;
 
+  // Only show seed if explicitly set by user (not auto-generated)
   const formatTeamName = (team: Team | undefined): string => {
     if (!team) return 'TBD';
-    if (team.seed) {
+    // Only show seed if it was explicitly entered (seed exists and > 0)
+    if (team.seed && team.seed > 0) {
       return `(${team.seed}) ${team.team_name}`;
     }
     return team.team_name;
