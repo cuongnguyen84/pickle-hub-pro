@@ -936,7 +936,7 @@ const LoserBracketCard = ({
       </div>
 
       {/* Edit Controls for BTC/Referee */}
-      {canEdit && teamA && teamB && (
+      {canEdit && (
         <div className="px-3 py-2 border-t bg-muted/20 flex items-center justify-end gap-2">
           {isEditing ? (
             <>
@@ -966,6 +966,7 @@ const LoserBracketCard = ({
                 size="sm"
                 variant="outline"
                 onClick={handleGoToScoringPage}
+                disabled={!teamA || !teamB}
                 className="h-7 px-2"
               >
                 <Play className="w-3 h-3 mr-1" />
@@ -975,6 +976,7 @@ const LoserBracketCard = ({
                 size="sm"
                 variant="ghost"
                 onClick={handleStartInlineEdit}
+                disabled={!teamA || !teamB}
                 className="h-7 px-2"
               >
                 <Pencil className="w-3 h-3 mr-1" />
@@ -1483,11 +1485,18 @@ const BracketMatchCard = ({
               Click vào ô game để sửa điểm
             </div>
           )}
+          
+          {/* Message when teams are not ready */}
+          {editingGameIndex === null && canEdit && (!teamA || !teamB) && (
+            <div className="text-[10px] text-muted-foreground text-center mt-1">
+              Chờ đủ 2 đội để chấm điểm
+            </div>
+          )}
         </div>
       )}
 
       {/* Edit Controls for BTC/Referee */}
-      {canEdit && teamA && teamB && (
+      {canEdit && (
         <div className="px-3 py-2 border-t bg-muted/20 flex items-center justify-end gap-2">
           {isEditing ? (
             <>
@@ -1517,6 +1526,7 @@ const BracketMatchCard = ({
                 size="sm"
                 variant="outline"
                 onClick={handleGoToScoringPage}
+                disabled={!teamA || !teamB}
                 className="h-7 px-2"
               >
                 <Play className="w-3 h-3 mr-1" />
@@ -1528,6 +1538,7 @@ const BracketMatchCard = ({
                   size="sm"
                   variant="ghost"
                   onClick={handleStartInlineEdit}
+                  disabled={!teamA || !teamB}
                   className="h-7 px-2"
                 >
                   <Pencil className="w-3 h-3 mr-1" />
