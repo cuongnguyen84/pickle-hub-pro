@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Crown, Trophy, Radio, Play, Pencil, Check, X } from 'lucide-react';
+import { Crown, Trophy, Radio, Play, Pencil, Check, X, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Match, Team, useDoublesElimination } from '@/hooks/useDoublesElimination';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DoublesEliminationBracketProps {
   matches: Match[];
@@ -38,6 +39,9 @@ const DoublesEliminationBracket = ({
   onR3Assigned
 }: DoublesEliminationBracketProps) => {
   const { checkAndAssignR3 } = useDoublesElimination();
+  const { toast } = useToast();
+  const [isAssigningR3, setIsAssigningR3] = useState(false);
+  
   const getTeam = (id: string | null): Team | undefined => 
     id ? teams.find(t => t.id === id) : undefined;
 
@@ -46,11 +50,23 @@ const DoublesEliminationBracket = ({
     return team.team_name;
   };
 
-  const { rounds, champion, loserMatches } = useMemo(() => {
-    if (matches.length === 0) return { rounds: [], champion: null, loserMatches: [] };
+  const { rounds, champion, loserMatches, r1Completed, r2Completed, r3NeedsAssignment } = useMemo(() => {
+    if (matches.length === 0) return { 
+      rounds: [], 
+      champion: null, 
+      loserMatches: [], 
+      r1Completed: false, 
+      r2Completed: false,
+      r3NeedsAssignment: false 
+    };
 
     const r1Matches = matches.filter(m => m.round_number === 1 && m.bracket_type === 'winner');
     const r2LoserMatches = matches.filter(m => m.round_number === 2 && m.bracket_type === 'loser');
+    const r3Matches = matches.filter(m => m.round_number === 3);
+    
+    const r1CompletedCheck = r1Matches.length > 0 && r1Matches.every(m => m.status === 'completed');
+    const r2CompletedCheck = r2LoserMatches.length > 0 && r2LoserMatches.every(m => m.status === 'completed');
+    const r3NeedsAssignmentCheck = r3Matches.length > 0 && r3Matches.some(m => !m.team_a_id || !m.team_b_id);
     
     const mainBracketMatches = matches.filter(m => 
       (m.round_number >= 3 && (m.bracket_type === 'merged' || m.bracket_type === 'single')) ||
@@ -91,9 +107,43 @@ const DoublesEliminationBracket = ({
     return { 
       rounds: roundsArray, 
       champion,
-      loserMatches: r2LoserMatches.sort((a, b) => a.match_number - b.match_number)
+      loserMatches: r2LoserMatches.sort((a, b) => a.match_number - b.match_number),
+      r1Completed: r1CompletedCheck,
+      r2Completed: r2CompletedCheck,
+      r3NeedsAssignment: r3NeedsAssignmentCheck
     };
   }, [matches, teams]);
+
+  // Auto-trigger R3 assignment when R1+R2 are completed but R3 has no teams
+  useEffect(() => {
+    const autoAssign = async () => {
+      if (r1Completed && r2Completed && r3NeedsAssignment && tournamentId && !isAssigningR3) {
+        setIsAssigningR3(true);
+        const result = await checkAndAssignR3(tournamentId);
+        if (result.triggered) {
+          onR3Assigned?.(result.tiedTeamsInfo);
+          onScoreUpdated?.(); // Reload to show assignments
+        }
+        setIsAssigningR3(false);
+      }
+    };
+    autoAssign();
+  }, [r1Completed, r2Completed, r3NeedsAssignment, tournamentId]);
+
+  // Manual trigger for R3 assignment
+  const handleManualR3Assignment = async () => {
+    if (!tournamentId) return;
+    setIsAssigningR3(true);
+    const result = await checkAndAssignR3(tournamentId);
+    if (result.triggered) {
+      toast({ title: "Đã phân vòng 3", description: "Các VĐV đã được phân vào vòng tiếp theo." });
+      onR3Assigned?.(result.tiedTeamsInfo);
+      onScoreUpdated?.();
+    } else if (result.error === 'NOT_ALL_MATCHES_COMPLETED') {
+      toast({ title: "Chưa hoàn thành", description: "Vui lòng hoàn thành tất cả trận đấu vòng 1 và vòng 2 trước.", variant: "destructive" });
+    }
+    setIsAssigningR3(false);
+  };
 
   const getRoundLabel = (roundType: string, matchCount: number): string => {
     switch (roundType) {
@@ -144,87 +194,152 @@ const DoublesEliminationBracket = ({
 
       {/* PRELIMINARY VIEW */}
       {!showPlayoffOnly && (
-        <div className="mb-8">
-          <div className="overflow-x-auto pb-4 -mx-4 px-4">
-            <div className="flex gap-8 min-w-max items-start">
-              {/* R1 Winner Matches */}
-              {rounds.find(r => r.roundNumber === 1) && (
-                <div className="flex flex-col min-w-[280px]">
-                  <div className="text-center mb-4">
-                    <Badge variant="outline" className="px-4 py-1 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300">
-                      Vòng 1 - Winner
-                      <span className="ml-2 opacity-70">
-                        ({rounds.find(r => r.roundNumber === 1)?.matches.length || 0})
-                      </span>
-                    </Badge>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
-                      <BracketMatchCard
+        <div className="space-y-6">
+          {/* Progress indicator */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-3 h-3 rounded-full",
+                r1Completed ? "bg-emerald-500" : "bg-muted animate-pulse"
+              )} />
+              <span className={cn("text-sm", r1Completed ? "text-foreground" : "text-muted-foreground")}>
+                Vòng 1 {r1Completed && '✓'}
+              </span>
+            </div>
+            <div className="h-px w-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-3 h-3 rounded-full",
+                r2Completed ? "bg-amber-500" : "bg-muted animate-pulse"
+              )} />
+              <span className={cn("text-sm", r2Completed ? "text-foreground" : "text-muted-foreground")}>
+                Vòng 2 {r2Completed && '✓'}
+              </span>
+            </div>
+            <div className="h-px w-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-3 h-3 rounded-full",
+                !r3NeedsAssignment && r1Completed && r2Completed ? "bg-blue-500" : "bg-muted"
+              )} />
+              <span className="text-sm text-muted-foreground">Vòng 3</span>
+            </div>
+
+            {/* Manual R3 assignment button */}
+            {canEdit && r1Completed && r2Completed && r3NeedsAssignment && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleManualR3Assignment}
+                disabled={isAssigningR3}
+                className="ml-auto"
+              >
+                <RefreshCw className={cn("w-4 h-4 mr-1", isAssigningR3 && "animate-spin")} />
+                Phân vòng 3
+              </Button>
+            )}
+          </div>
+
+          {/* Rounds grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* R1 Winner Matches */}
+            <Card>
+              <CardHeader className="py-3 px-4 bg-emerald-50/50 dark:bg-emerald-950/20 border-b">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Vòng 1 - Winner
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {rounds.find(r => r.roundNumber === 1)?.matches.filter(m => m.status === 'completed').length || 0}/
+                    {rounds.find(r => r.roundNumber === 1)?.matches.length || 0}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 max-h-[600px] overflow-y-auto">
+                <div className="flex flex-col gap-2">
+                  {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
+                    <BracketMatchCard
+                      key={match.id}
+                      match={match}
+                      allMatches={matches}
+                      teamA={getTeam(match.team_a_id)}
+                      teamB={getTeam(match.team_b_id)}
+                      formatTeamName={formatTeamName}
+                      isFinal={false}
+                      canEdit={canEdit}
+                      onScoreUpdated={onScoreUpdated}
+                      onMatchUpdated={onMatchUpdated}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* R2 Loser Matches */}
+            <Card>
+              <CardHeader className="py-3 px-4 bg-amber-50/50 dark:bg-amber-950/20 border-b">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500" />
+                  Vòng 2 - Loser Bracket
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {loserMatches.filter(m => m.status === 'completed').length}/{loserMatches.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 max-h-[600px] overflow-y-auto">
+                <div className="flex flex-col gap-2">
+                  {loserMatches.map((match) => {
+                    const sourceA = match.source_a as { type: string; match_index?: number } | null;
+                    const sourceB = match.source_b as { type: string; match_index?: number } | null;
+                    const matchANum = sourceA?.match_index !== undefined ? sourceA.match_index + 1 : '?';
+                    const matchBNum = sourceB?.match_index !== undefined ? sourceB.match_index + 1 : '?';
+                    
+                    return (
+                      <LoserBracketCard
                         key={match.id}
                         match={match}
                         allMatches={matches}
                         teamA={getTeam(match.team_a_id)}
                         teamB={getTeam(match.team_b_id)}
                         formatTeamName={formatTeamName}
-                        isFinal={false}
+                        sourceAMatchNum={matchANum}
+                        sourceBMatchNum={matchBNum}
                         canEdit={canEdit}
                         onScoreUpdated={onScoreUpdated}
                         onMatchUpdated={onMatchUpdated}
+                        tournamentId={tournamentId}
+                        onR3Assigned={onR3Assigned}
                       />
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
+              </CardContent>
+            </Card>
 
-              {/* R2 Loser Matches */}
-              {loserMatches.length > 0 && (
-                <div className="flex flex-col min-w-[280px]">
-                  <div className="text-center mb-4">
-                    <Badge variant="secondary" className="px-4 py-1 bg-amber-50 dark:bg-amber-950/30 border-amber-300">
-                      Vòng 2 - Loser Bracket
-                      <span className="ml-2 opacity-70">({loserMatches.length})</span>
-                    </Badge>
+            {/* R3 Merge Matches */}
+            <Card>
+              <CardHeader className="py-3 px-4 bg-blue-50/50 dark:bg-blue-950/20 border-b">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  Vòng 3 - Sơ loại cuối
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {r3Rounds[0]?.matches.filter(m => m.status === 'completed').length || 0}/
+                    {r3Rounds[0]?.matches.length || 0}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3">
+                {r3NeedsAssignment && r1Completed && r2Completed ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <AlertCircle className="w-8 h-8 text-amber-500 mb-2" />
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Đang tính hiệu số và ghép cặp...
+                    </p>
+                    {isAssigningR3 && (
+                      <RefreshCw className="w-5 h-5 animate-spin text-primary" />
+                    )}
                   </div>
-                  <div className="flex flex-col gap-3">
-                    {loserMatches.map((match) => {
-                      const sourceA = match.source_a as { type: string; match_index?: number } | null;
-                      const sourceB = match.source_b as { type: string; match_index?: number } | null;
-                      const matchANum = sourceA?.match_index !== undefined ? sourceA.match_index + 1 : '?';
-                      const matchBNum = sourceB?.match_index !== undefined ? sourceB.match_index + 1 : '?';
-                      
-                      return (
-                        <LoserBracketCard
-                          key={match.id}
-                          match={match}
-                          allMatches={matches}
-                          teamA={getTeam(match.team_a_id)}
-                          teamB={getTeam(match.team_b_id)}
-                          formatTeamName={formatTeamName}
-                          sourceAMatchNum={matchANum}
-                          sourceBMatchNum={matchBNum}
-                          canEdit={canEdit}
-                          onScoreUpdated={onScoreUpdated}
-                          onMatchUpdated={onMatchUpdated}
-                          tournamentId={tournamentId}
-                          onR3Assigned={onR3Assigned}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* R3 Merge Matches */}
-              {r3Rounds.length > 0 && r3Rounds[0].matches.length > 0 && (
-                <div className="flex flex-col min-w-[280px]">
-                  <div className="text-center mb-4">
-                    <Badge variant="outline" className="px-4 py-1 bg-blue-50 dark:bg-blue-950/30 border-blue-300">
-                      Vòng 3 - Merge
-                      <span className="ml-2 opacity-70">({r3Rounds[0].matches.length})</span>
-                    </Badge>
-                  </div>
-                  <div className="flex flex-col gap-3">
+                ) : r3Rounds.length > 0 && r3Rounds[0].matches.length > 0 ? (
+                  <div className="flex flex-col gap-2">
                     {r3Rounds[0].matches.map((match) => (
                       <BracketMatchCard
                         key={match.id}
@@ -240,9 +355,15 @@ const DoublesEliminationBracket = ({
                       />
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    {!r1Completed || !r2Completed 
+                      ? "Chờ hoàn thành vòng 1 & 2" 
+                      : "Không có trận vòng 3"}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}
