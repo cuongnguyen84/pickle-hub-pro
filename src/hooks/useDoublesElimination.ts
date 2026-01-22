@@ -982,30 +982,43 @@ export function useDoublesElimination() {
       const shuffledUnseeded = [...unseededTeams].sort(() => Math.random() - 0.5);
 
       // Build bracket positions for proper seeding
-      // Seeds 1 and 2 should be at opposite ends of the bracket
+      // Standard tournament seeding: 1&2 different halves, 3&4 different halves, 5&6 different halves
+      // Seeds should not meet until as late as possible
       const bracketPositions: (any | null)[] = new Array(R4).fill(null);
       
-      // Place seeded teams first
-      if (seededTeams.length >= 1) {
-        bracketPositions[0] = seededTeams[0]; // Seed 1 at top
-      }
-      if (seededTeams.length >= 2) {
-        bracketPositions[R4 - 1] = seededTeams[1]; // Seed 2 at bottom (opposite end)
-      }
+      // Generate standard seeding positions for a bracket of size R4
+      // This ensures:
+      // - Seed 1 vs Seed 2 can only meet in Finals
+      // - Seed 3 vs Seed 4 can only meet in Semifinals (different halves as 1&2)
+      // - Seed 5 vs Seed 6 can only meet in Quarterfinals (different quarters as 1-4)
+      const generateSeedPositions = (bracketSize: number): number[] => {
+        if (bracketSize === 2) return [0, 1];
+        if (bracketSize === 4) return [0, 3, 2, 1]; // 1 top, 2 bottom, 3 middle-bottom, 4 middle-top
+        if (bracketSize === 8) return [0, 7, 4, 3, 2, 5, 6, 1];
+        if (bracketSize === 16) return [0, 15, 8, 7, 4, 11, 12, 3, 2, 13, 10, 5, 6, 9, 14, 1];
+        if (bracketSize === 32) return [
+          0, 31, 16, 15, 8, 23, 24, 7, 
+          4, 27, 20, 11, 12, 19, 28, 3,
+          2, 29, 18, 13, 10, 21, 26, 5,
+          6, 25, 22, 9, 14, 17, 30, 1
+        ];
+        // Fallback for larger brackets - generate recursively
+        const halfPositions = generateSeedPositions(bracketSize / 2);
+        const positions: number[] = [];
+        for (let i = 0; i < halfPositions.length; i++) {
+          positions.push(halfPositions[i] * 2);
+          positions.push(bracketSize - 1 - halfPositions[i] * 2);
+        }
+        return positions;
+      };
+
+      const seedPositions = generateSeedPositions(R4);
       
-      // Place remaining seeded teams (3, 4, etc.) with proper spacing
-      const remainingSeeded = seededTeams.slice(2);
-      const emptyPositions = bracketPositions
-        .map((p, idx) => p === null ? idx : -1)
-        .filter(idx => idx !== -1);
-      
-      // Interleave remaining seeded teams
-      for (let i = 0; i < remainingSeeded.length && i < emptyPositions.length; i++) {
-        const pos = i % 2 === 0 
-          ? emptyPositions[Math.floor(emptyPositions.length / 2) + Math.floor(i / 2)]
-          : emptyPositions[Math.floor(i / 2)];
-        if (pos !== undefined) {
-          bracketPositions[pos] = remainingSeeded[i];
+      // Place seeded teams according to standard positions
+      for (let i = 0; i < seededTeams.length && i < seedPositions.length; i++) {
+        const position = seedPositions[i];
+        if (position !== undefined && position < R4) {
+          bracketPositions[position] = seededTeams[i];
         }
       }
 
