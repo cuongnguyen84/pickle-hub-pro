@@ -18,6 +18,8 @@ interface DoublesEliminationBracketProps {
   showPlayoffOnly?: boolean;
   canEdit?: boolean;
   onScoreUpdated?: () => void;
+  // Callback for optimistic updates - passes updated match data
+  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void;
 }
 
 const DoublesEliminationBracket = ({ 
@@ -27,7 +29,8 @@ const DoublesEliminationBracket = ({
   showPreliminaryOnly = false,
   showPlayoffOnly = false,
   canEdit = false,
-  onScoreUpdated
+  onScoreUpdated,
+  onMatchUpdated
 }: DoublesEliminationBracketProps) => {
   const getTeam = (id: string | null): Team | undefined => 
     id ? teams.find(t => t.id === id) : undefined;
@@ -161,6 +164,7 @@ const DoublesEliminationBracket = ({
                         isFinal={false}
                         canEdit={canEdit}
                         onScoreUpdated={onScoreUpdated}
+                        onMatchUpdated={onMatchUpdated}
                       />
                     ))}
                   </div>
@@ -195,6 +199,7 @@ const DoublesEliminationBracket = ({
                           sourceBMatchNum={matchBNum}
                           canEdit={canEdit}
                           onScoreUpdated={onScoreUpdated}
+                          onMatchUpdated={onMatchUpdated}
                         />
                       );
                     })}
@@ -223,6 +228,7 @@ const DoublesEliminationBracket = ({
                         isFinal={false}
                         canEdit={canEdit}
                         onScoreUpdated={onScoreUpdated}
+                        onMatchUpdated={onMatchUpdated}
                       />
                     ))}
                   </div>
@@ -271,6 +277,7 @@ const DoublesEliminationBracket = ({
                       isFinal={match.round_type === 'final'}
                       canEdit={canEdit}
                       onScoreUpdated={onScoreUpdated}
+                      onMatchUpdated={onMatchUpdated}
                     />
                   ))}
                 </div>
@@ -303,6 +310,7 @@ const DoublesEliminationBracket = ({
                 isFinal={false}
                 canEdit={canEdit}
                 onScoreUpdated={onScoreUpdated}
+                onMatchUpdated={onMatchUpdated}
               />
             );
           })()}
@@ -348,6 +356,7 @@ interface LoserBracketCardProps {
   sourceBMatchNum: number | string;
   canEdit?: boolean;
   onScoreUpdated?: () => void;
+  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void;
 }
 
 const LoserBracketCard = ({
@@ -359,7 +368,8 @@ const LoserBracketCard = ({
   sourceAMatchNum,
   sourceBMatchNum,
   canEdit = false,
-  onScoreUpdated
+  onScoreUpdated,
+  onMatchUpdated
 }: LoserBracketCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -402,6 +412,15 @@ const LoserBracketCard = ({
     const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
     const isMatchComplete = scoreA !== scoreB;
 
+    // Optimistic update - immediately update local state
+    const matchUpdates: Partial<Match> = {
+      score_a: scoreA,
+      score_b: scoreB,
+      winner_id: isMatchComplete ? winnerId : null,
+      status: isMatchComplete ? 'completed' : 'live'
+    };
+    onMatchUpdated?.(match.id, matchUpdates);
+
     try {
       await supabase
         .from('doubles_elimination_matches')
@@ -426,9 +445,11 @@ const LoserBracketCard = ({
 
       toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
       setIsEditing(false);
-      onScoreUpdated?.();
+      // Don't call onScoreUpdated to avoid full reload
     } catch (error) {
       toast({ title: "Lỗi lưu điểm", variant: "destructive" });
+      // Revert on error - trigger full reload
+      onScoreUpdated?.();
     } finally {
       setSaving(false);
     }
@@ -625,6 +646,7 @@ interface BracketMatchCardProps {
   isFinal: boolean;
   canEdit?: boolean;
   onScoreUpdated?: () => void;
+  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void;
 }
 
 const BracketMatchCard = ({ 
@@ -635,7 +657,8 @@ const BracketMatchCard = ({
   formatTeamName,
   isFinal,
   canEdit = false,
-  onScoreUpdated
+  onScoreUpdated,
+  onMatchUpdated
 }: BracketMatchCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -678,6 +701,15 @@ const BracketMatchCard = ({
     const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
     const isMatchComplete = scoreA !== scoreB;
 
+    // Optimistic update - immediately update local state
+    const matchUpdates: Partial<Match> = {
+      score_a: scoreA,
+      score_b: scoreB,
+      winner_id: isMatchComplete ? winnerId : null,
+      status: isMatchComplete ? 'completed' : 'live'
+    };
+    onMatchUpdated?.(match.id, matchUpdates);
+
     try {
       await supabase
         .from('doubles_elimination_matches')
@@ -709,9 +741,11 @@ const BracketMatchCard = ({
 
       toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
       setIsEditing(false);
-      onScoreUpdated?.();
+      // Don't call onScoreUpdated to avoid full reload
     } catch (error) {
       toast({ title: "Lỗi lưu điểm", variant: "destructive" });
+      // Revert on error - trigger full reload
+      onScoreUpdated?.();
     } finally {
       setSaving(false);
     }

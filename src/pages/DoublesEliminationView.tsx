@@ -90,6 +90,15 @@ export default function DoublesEliminationView() {
     setLoading(false);
   };
 
+  // Optimistic update handler - updates local state without reload
+  const handleMatchUpdated = (matchId: string, updates: Partial<Match>) => {
+    setMatches(prevMatches => 
+      prevMatches.map(m => 
+        m.id === matchId ? { ...m, ...updates } : m
+      )
+    );
+  };
+
   const setupRealtimeSubscription = () => {
     if (!shareId) return;
 
@@ -256,6 +265,7 @@ export default function DoublesEliminationView() {
               showPreliminaryOnly={true}
               canEdit={canEdit}
               onScoreUpdated={loadData}
+              onMatchUpdated={handleMatchUpdated}
             />
           </TabsContent>
 
@@ -267,6 +277,7 @@ export default function DoublesEliminationView() {
               showPlayoffOnly={true}
               canEdit={canEdit}
               onScoreUpdated={loadData}
+              onMatchUpdated={handleMatchUpdated}
             />
           </TabsContent>
 
