@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useDoublesElimination } from "@/hooks/useDoublesElimination";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Minus, Plus, RotateCcw, Check, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -59,11 +60,74 @@ interface TournamentData {
   creator_user_id: string;
 }
 
+// Helper to propagate winner to next round
+async function propagateWinnerToNextRound(
+  match: MatchData,
+  winnerId: string,
+  tournamentId: string
+) {
+  // For R3 matches, find R4 match slot to fill
+  if (match.round_number === 3) {
+    const { data: r4Matches } = await supabase
+      .from('doubles_elimination_matches')
+      .select('*')
+      .eq('tournament_id', tournamentId)
+      .eq('round_number', 4)
+      .order('match_number', { ascending: true });
+    
+    if (r4Matches) {
+      for (const r4Match of r4Matches) {
+        if (!r4Match.team_a_id) {
+          await supabase
+            .from('doubles_elimination_matches')
+            .update({ team_a_id: winnerId })
+            .eq('id', r4Match.id);
+          return;
+        }
+        if (!r4Match.team_b_id) {
+          await supabase
+            .from('doubles_elimination_matches')
+            .update({ team_b_id: winnerId })
+            .eq('id', r4Match.id);
+          return;
+        }
+      }
+    }
+  }
+  // For R4+ matches, follow bracket position
+  else if (match.round_number >= 4) {
+    const nextRound = match.round_number + 1;
+    const { data: nextRoundMatches } = await supabase
+      .from('doubles_elimination_matches')
+      .select('*')
+      .eq('tournament_id', tournamentId)
+      .eq('round_number', nextRound)
+      .neq('round_type', 'third_place')
+      .order('match_number', { ascending: true });
+    
+    if (nextRoundMatches && nextRoundMatches.length > 0) {
+      const matchIndex = match.match_number - 1;
+      const nextMatchIndex = Math.floor(matchIndex / 2);
+      const slot = matchIndex % 2;
+      
+      const targetMatch = nextRoundMatches[nextMatchIndex];
+      if (targetMatch) {
+        const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
+        await supabase
+          .from('doubles_elimination_matches')
+          .update({ [updateField]: winnerId })
+          .eq('id', targetMatch.id);
+      }
+    }
+  }
+}
+
 export default function DoublesEliminationScoring() {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { checkAndAssignR3, checkAndGeneratePlayoff } = useDoublesElimination();
 
   const [match, setMatch] = useState<MatchData | null>(null);
   const [teamA, setTeamA] = useState<TeamData | null>(null);
@@ -279,12 +343,29 @@ export default function DoublesEliminationScoring() {
           .eq('id', loserId);
       }
 
+      // Propagate winner to next round for R3+ matches
+      if (winnerId && match.round_number >= 3 && tournament) {
+        await propagateWinnerToNextRound(match, winnerId, tournament.id);
+      }
+
       // If final match, mark tournament as completed
       if (match.round_type === 'final' && tournament) {
         await supabase
           .from('doubles_elimination_tournaments')
           .update({ status: 'completed' })
           .eq('id', tournament.id);
+      }
+
+      // Trigger auto-generation of next rounds
+      if (tournament) {
+        // Check if R2 is complete and trigger R3 assignment
+        if (match.round_number === 2) {
+          await checkAndAssignR3(tournament.id);
+        }
+        // Check if R3 is complete and trigger playoff generation
+        if (match.round_number === 3) {
+          await checkAndGeneratePlayoff(tournament.id);
+        }
       }
 
       // Update local state
@@ -366,12 +447,29 @@ export default function DoublesEliminationScoring() {
         .eq('id', loserId);
     }
 
+    // Propagate winner to next round for R3+ matches
+    if (winnerId && match.round_number >= 3 && tournament) {
+      await propagateWinnerToNextRound(match, winnerId, tournament.id);
+    }
+
     // If this is the final match, mark tournament as completed
     if (match.round_type === 'final' && tournament) {
       await supabase
         .from('doubles_elimination_tournaments')
         .update({ status: 'completed' })
         .eq('id', tournament.id);
+    }
+
+    // Trigger auto-generation of next rounds
+    if (tournament) {
+      // Check if R2 is complete and trigger R3 assignment
+      if (match.round_number === 2) {
+        await checkAndAssignR3(tournament.id);
+      }
+      // Check if R3 is complete and trigger playoff generation
+      if (match.round_number === 3) {
+        await checkAndGeneratePlayoff(tournament.id);
+      }
     }
 
     toast({ title: "Trận đấu kết thúc!" });

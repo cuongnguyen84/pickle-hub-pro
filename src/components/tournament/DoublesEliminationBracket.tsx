@@ -46,6 +46,15 @@ const DoublesEliminationBracket = ({
   const [isAssigningR3, setIsAssigningR3] = useState(false);
   const [isGeneratingPlayoff, setIsGeneratingPlayoff] = useState(false);
   
+  // Track if we've already triggered generation in this session to prevent duplicate calls
+  const hasTriggeredR3Ref = React.useRef(false);
+  const hasTriggeredPlayoffRef = React.useRef(false);
+  
+  // Reset refs when matches change significantly (e.g., after reload)
+  const matchStatusKey = React.useMemo(() => {
+    return matches.map(m => `${m.id}:${m.status}`).join(',');
+  }, [matches]);
+  
   const getTeam = (id: string | null): Team | undefined => 
     id ? teams.find(t => t.id === id) : undefined;
 
@@ -129,10 +138,17 @@ const DoublesEliminationBracket = ({
     };
   }, [matches, teams]);
 
+  // Reset trigger flags when match statuses change (after reload)
+  React.useEffect(() => {
+    hasTriggeredR3Ref.current = false;
+    hasTriggeredPlayoffRef.current = false;
+  }, [matchStatusKey]);
+
   // Auto-trigger R3 assignment when R1+R2 are completed but R3 has no teams
   useEffect(() => {
     const autoAssign = async () => {
-      if (r1Completed && r2Completed && r3NeedsAssignment && tournamentId && !isAssigningR3) {
+      if (r1Completed && r2Completed && r3NeedsAssignment && tournamentId && !isAssigningR3 && !hasTriggeredR3Ref.current) {
+        hasTriggeredR3Ref.current = true;
         setIsAssigningR3(true);
         const result = await checkAndAssignR3(tournamentId);
         if (result.triggered) {
@@ -143,12 +159,13 @@ const DoublesEliminationBracket = ({
       }
     };
     autoAssign();
-  }, [r1Completed, r2Completed, r3NeedsAssignment, tournamentId]);
+  }, [r1Completed, r2Completed, r3NeedsAssignment, tournamentId, matchStatusKey]);
 
   // Auto-generate playoff bracket when R3 is completed
   useEffect(() => {
     const autoGeneratePlayoff = async () => {
-      if (r3Completed && playoffNeedsGeneration && tournamentId && !isGeneratingPlayoff) {
+      if (r3Completed && playoffNeedsGeneration && tournamentId && !isGeneratingPlayoff && !hasTriggeredPlayoffRef.current) {
+        hasTriggeredPlayoffRef.current = true;
         setIsGeneratingPlayoff(true);
         const result = await checkAndGeneratePlayoff(tournamentId);
         if (result.generated) {
@@ -162,7 +179,7 @@ const DoublesEliminationBracket = ({
       }
     };
     autoGeneratePlayoff();
-  }, [r3Completed, playoffNeedsGeneration, tournamentId]);
+  }, [r3Completed, playoffNeedsGeneration, tournamentId, matchStatusKey]);
 
   // Manual trigger for R3 assignment
   const handleManualR3Assignment = async () => {
@@ -1153,6 +1170,11 @@ const BracketMatchCard = ({
 
       toast({ title: matchComplete ? "Đã lưu kết quả trận đấu" : `Đã lưu Game ${gameNum}` });
       setEditingGameIndex(null);
+      
+      // Trigger reload to update data and auto-generate next round if needed
+      if (matchComplete) {
+        onScoreUpdated?.();
+      }
     } catch (error) {
       toast({ title: "Lỗi lưu điểm", variant: "destructive" });
       onScoreUpdated?.();
@@ -1241,6 +1263,11 @@ const BracketMatchCard = ({
 
       toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
       setIsEditing(false);
+      
+      // Trigger reload to update data and auto-generate next round if needed
+      if (isMatchComplete) {
+        onScoreUpdated?.();
+      }
     } catch (error) {
       toast({ title: "Lỗi lưu điểm", variant: "destructive" });
       onScoreUpdated?.();
