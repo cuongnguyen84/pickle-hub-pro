@@ -169,7 +169,8 @@ export default function DoublesEliminationView() {
           if (skipNextRealtimeRef.current) {
             return;
           }
-          loadData();
+          // Use soft reload to avoid full page reload/loading state
+          softReload();
         }
       )
       .subscribe();
