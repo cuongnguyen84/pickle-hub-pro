@@ -626,10 +626,10 @@ const LoserBracketCard = ({
       {/* Match header */}
       <div className={cn(
         "px-3 py-1.5 border-b flex items-center justify-between",
-        isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-orange-50/50 dark:bg-orange-950/30"
+        isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/50 dark:bg-muted/30"
       )}>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Trận {match.match_number}</span>
+          <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
           {match.court_number && (
             <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">
               Sân {match.court_number}
@@ -923,10 +923,10 @@ const BracketMatchCard = ({
       {/* Match header */}
       <div className={cn(
         "px-3 py-1.5 border-b flex items-center justify-between",
-        isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/30"
+        isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/50 dark:bg-muted/30"
       )}>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Trận {match.match_number}</span>
+          <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
           {match.court_number && (
             <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">
               Sân {match.court_number}
