@@ -206,6 +206,261 @@ export type Database = {
         }
         Relationships: []
       }
+      doubles_elimination_matches: {
+        Row: {
+          best_of: number | null
+          bracket_type: string
+          court_number: number | null
+          created_at: string | null
+          dest_loser: Json | null
+          dest_winner: Json | null
+          display_order: number
+          games: Json | null
+          games_won_a: number | null
+          games_won_b: number | null
+          id: string
+          is_bye: boolean | null
+          live_referee_id: string | null
+          match_number: number
+          round_number: number
+          round_type: string
+          score_a: number | null
+          score_b: number | null
+          source_a: Json | null
+          source_b: Json | null
+          start_time: string | null
+          status: string | null
+          team_a_id: string | null
+          team_b_id: string | null
+          tournament_id: string | null
+          updated_at: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          best_of?: number | null
+          bracket_type: string
+          court_number?: number | null
+          created_at?: string | null
+          dest_loser?: Json | null
+          dest_winner?: Json | null
+          display_order: number
+          games?: Json | null
+          games_won_a?: number | null
+          games_won_b?: number | null
+          id?: string
+          is_bye?: boolean | null
+          live_referee_id?: string | null
+          match_number: number
+          round_number: number
+          round_type: string
+          score_a?: number | null
+          score_b?: number | null
+          source_a?: Json | null
+          source_b?: Json | null
+          start_time?: string | null
+          status?: string | null
+          team_a_id?: string | null
+          team_b_id?: string | null
+          tournament_id?: string | null
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          best_of?: number | null
+          bracket_type?: string
+          court_number?: number | null
+          created_at?: string | null
+          dest_loser?: Json | null
+          dest_winner?: Json | null
+          display_order?: number
+          games?: Json | null
+          games_won_a?: number | null
+          games_won_b?: number | null
+          id?: string
+          is_bye?: boolean | null
+          live_referee_id?: string | null
+          match_number?: number
+          round_number?: number
+          round_type?: string
+          score_a?: number | null
+          score_b?: number | null
+          source_a?: Json | null
+          source_b?: Json | null
+          start_time?: string | null
+          status?: string | null
+          team_a_id?: string | null
+          team_b_id?: string | null
+          tournament_id?: string | null
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doubles_elimination_matches_team_a_id_fkey"
+            columns: ["team_a_id"]
+            isOneToOne: false
+            referencedRelation: "doubles_elimination_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doubles_elimination_matches_team_b_id_fkey"
+            columns: ["team_b_id"]
+            isOneToOne: false
+            referencedRelation: "doubles_elimination_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doubles_elimination_matches_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "doubles_elimination_tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doubles_elimination_matches_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "doubles_elimination_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doubles_elimination_referees: {
+        Row: {
+          created_at: string | null
+          id: string
+          tournament_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tournament_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tournament_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doubles_elimination_referees_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "doubles_elimination_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doubles_elimination_teams: {
+        Row: {
+          created_at: string | null
+          eliminated_at_round: number | null
+          final_placement: number | null
+          id: string
+          player1_name: string
+          player2_name: string | null
+          point_diff: number | null
+          seed: number | null
+          status: string | null
+          team_name: string
+          total_points_against: number | null
+          total_points_for: number | null
+          tournament_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          eliminated_at_round?: number | null
+          final_placement?: number | null
+          id?: string
+          player1_name: string
+          player2_name?: string | null
+          point_diff?: number | null
+          seed?: number | null
+          status?: string | null
+          team_name: string
+          total_points_against?: number | null
+          total_points_for?: number | null
+          tournament_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          eliminated_at_round?: number | null
+          final_placement?: number | null
+          id?: string
+          player1_name?: string
+          player2_name?: string | null
+          point_diff?: number | null
+          seed?: number | null
+          status?: string | null
+          team_name?: string
+          total_points_against?: number | null
+          total_points_for?: number | null
+          tournament_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doubles_elimination_teams_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "doubles_elimination_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doubles_elimination_tournaments: {
+        Row: {
+          court_count: number | null
+          created_at: string | null
+          creator_user_id: string | null
+          current_round: number | null
+          early_rounds_format: string | null
+          finals_format: string | null
+          has_third_place_match: boolean | null
+          id: string
+          name: string
+          share_id: string
+          start_time: string | null
+          status: string
+          team_count: number
+          updated_at: string | null
+        }
+        Insert: {
+          court_count?: number | null
+          created_at?: string | null
+          creator_user_id?: string | null
+          current_round?: number | null
+          early_rounds_format?: string | null
+          finals_format?: string | null
+          has_third_place_match?: boolean | null
+          id?: string
+          name: string
+          share_id: string
+          start_time?: string | null
+          status?: string
+          team_count: number
+          updated_at?: string | null
+        }
+        Update: {
+          court_count?: number | null
+          created_at?: string | null
+          creator_user_id?: string | null
+          current_round?: number | null
+          early_rounds_format?: string | null
+          finals_format?: string | null
+          has_third_place_match?: boolean | null
+          id?: string
+          name?: string
+          share_id?: string
+          start_time?: string | null
+          status?: string
+          team_count?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -1876,6 +2131,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Json
       }
+      can_edit_doubles_elimination_scores: {
+        Args: { _tournament_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_edit_quick_table_scores: {
         Args: { _table_id: string; _user_id: string }
         Returns: boolean
@@ -1973,6 +2232,14 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_creator: { Args: never; Returns: boolean }
+      is_doubles_elimination_creator: {
+        Args: { _tournament_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_doubles_elimination_referee: {
+        Args: { _tournament_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_quick_table_creator: {
         Args: { _table_id: string; _user_id: string }
         Returns: boolean

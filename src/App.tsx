@@ -36,6 +36,12 @@ const TeamMatchSetup = lazy(() => import("./pages/TeamMatchSetup"));
 const TeamMatchView = lazy(() => import("./pages/TeamMatchView"));
 const News = lazy(() => import("./pages/News"));
 
+// Doubles Elimination pages
+const DoublesEliminationList = lazy(() => import("./pages/DoublesEliminationList"));
+const DoublesEliminationSetup = lazy(() => import("./pages/DoublesEliminationSetup"));
+const DoublesEliminationView = lazy(() => import("./pages/DoublesEliminationView"));
+const DoublesEliminationScoring = lazy(() => import("./pages/DoublesEliminationScoring"));
+
 // Lazy load embed pages
 const EmbedLive = lazy(() => import("./pages/embed/EmbedLive"));
 const EmbedVideo = lazy(() => import("./pages/embed/EmbedVideo"));
@@ -108,6 +114,11 @@ const App = () => (
                 <Route path="/tools/team-match" element={<TeamMatchList />} />
                 <Route path="/tools/team-match/new" element={<TeamMatchSetup />} />
                 <Route path="/tools/team-match/:id" element={<TeamMatchView />} />
+                {/* Doubles Elimination routes */}
+                <Route path="/tools/doubles-elimination" element={<DoublesEliminationList />} />
+                <Route path="/tools/doubles-elimination/new" element={<DoublesEliminationSetup />} />
+                <Route path="/tools/doubles-elimination/:shareId" element={<DoublesEliminationView />} />
+                <Route path="/tools/doubles-elimination/match/:matchId/score" element={<DoublesEliminationScoring />} />
                 {/* Legacy Quick Tables redirects */}
                 <Route path="/quick-tables" element={<Navigate to="/tools/quick-tables" replace />} />
                 <Route path="/quick-tables/:shareId" element={<QuickTableRedirect />} />
