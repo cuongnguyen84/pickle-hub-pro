@@ -17,6 +17,9 @@ import { cn } from '@/lib/utils';
 
 type Step = 1 | 2 | 3 | 4;
 
+// Helper to check if a number is a power of 2
+const isPowerOfTwo = (n: number): boolean => n > 0 && (n & (n - 1)) === 0;
+
 const STEPS = [
   { id: 1, title: 'Thông tin cơ bản', icon: Users },
   { id: 2, title: 'Game Templates', icon: Gamepad2 },
@@ -62,6 +65,14 @@ export default function TeamMatchSetup() {
   // Step 4: Format
   const [format, setFormat] = useState<'round_robin' | 'single_elimination' | 'rr_playoff'>('round_robin');
   const [playoffTeamCount, setPlayoffTeamCount] = useState(4);
+  const [hasThirdPlaceMatch, setHasThirdPlaceMatch] = useState(false);
+
+  // Validation for single elimination
+  const isSingleElimination = format === 'single_elimination';
+  const isValidTeamCountForSE = isPowerOfTwo(teamCount) && teamCount >= 4;
+  const teamCountWarning = isSingleElimination && !isValidTeamCountForSE 
+    ? 'Số đội phải là 4, 8, 16 hoặc 32 cho thể thức loại trực tiếp' 
+    : null;
 
   // When roster size changes, reset templates
   const handleRosterSizeChange = (size: 4 | 6 | 8) => {
@@ -83,6 +94,10 @@ export default function TeamMatchSetup() {
       case 3:
         return true;
       case 4:
+        // For single elimination, require valid team count
+        if (format === 'single_elimination') {
+          return isValidTeamCountForSE;
+        }
         return true;
       default:
         return false;
@@ -105,6 +120,7 @@ export default function TeamMatchSetup() {
       has_dreambreaker: effectiveDreambreaker,
       // Dreambreaker is FIXED: Singles (4 players), Rally Scoring - no config stored
       require_min_games_per_player: requireMinGames,
+      has_third_place_match: format === 'single_elimination' ? hasThirdPlaceMatch : false,
       game_templates: templates.map(t => ({
         order_index: t.order_index,
         game_type: t.game_type,
@@ -385,15 +401,12 @@ export default function TeamMatchSetup() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3 rounded-lg border p-4 opacity-50 cursor-not-allowed">
-                    <RadioGroupItem value="single_elimination" id="format-se" className="mt-1" disabled />
+                  <div className="flex items-start space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="single_elimination" id="format-se" className="mt-1" />
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="format-se" className="font-semibold text-muted-foreground">
-                          Loại trực tiếp (Single Elimination)
-                        </Label>
-                        <Badge variant="secondary" className="text-xs">Sắp ra mắt</Badge>
-                      </div>
+                      <Label htmlFor="format-se" className="font-semibold cursor-pointer">
+                        Loại trực tiếp (Single Elimination)
+                      </Label>
                       <p className="text-sm text-muted-foreground">
                         Thua 1 trận là bị loại
                       </p>
@@ -429,6 +442,54 @@ export default function TeamMatchSetup() {
                         <SelectItem value="8">8 đội (Tứ kết)</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                )}
+
+                {format === 'single_elimination' && (
+                  <div className="space-y-4 pl-4 border-l-2 border-primary">
+                    {/* Team count validation warning */}
+                    {teamCountWarning && (
+                      <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <Info className="h-4 w-4 text-destructive mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-destructive">{teamCountWarning}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Hiện tại: {teamCount} đội. Quay lại bước 1 để điều chỉnh.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {isValidTeamCountForSE && (
+                      <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <Check className="h-4 w-4 text-green-600 mt-0.5" />
+                        <p className="text-sm text-green-700 dark:text-green-400">
+                          {teamCount} đội - Hợp lệ cho Single Elimination
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Third place match option */}
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label>Tranh giải Ba</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Tạo thêm trận tranh hạng 3 giữa 2 đội thua bán kết
+                        </p>
+                      </div>
+                      <Switch
+                        checked={hasThirdPlaceMatch}
+                        onCheckedChange={setHasThirdPlaceMatch}
+                      />
+                    </div>
+
+                    {/* Info about bracket generation */}
+                    <div className="flex items-start gap-2 p-3 bg-muted rounded-lg">
+                      <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <p className="text-sm text-muted-foreground">
+                        Sau khi tạo giải, BTC sẽ chọn cách ghép đội: Bốc thăm ngẫu nhiên hoặc Xếp thủ công.
+                      </p>
+                    </div>
                   </div>
                 )}
               </>

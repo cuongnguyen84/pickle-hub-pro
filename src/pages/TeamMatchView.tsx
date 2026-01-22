@@ -47,6 +47,7 @@ import {
   GroupMatchList,
   GroupStandingsTable,
   InviteTeamDialog,
+  SingleEliminationSetupDialog,
 } from '@/components/teamMatch';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -81,7 +82,7 @@ export default function TeamMatchView() {
   const { data: teams } = useTeamMatchTeams(tournament?.id);
   const { data: matches } = useTeamMatchMatches(tournament?.id);
   const { data: groups } = useTeamMatchGroups(tournament?.id);
-  const { generateMatches, isGenerating, generatePlayoffMatches, isGeneratingPlayoff } = useTeamMatchMatchManagement();
+  const { generateMatches, isGenerating, generatePlayoffMatches, isGeneratingPlayoff, generateSingleElimination, isGeneratingSE } = useTeamMatchMatchManagement();
   const { createGroups, isCreatingGroups } = useTeamMatchGroupManagement();
   const { 
     standings, 
@@ -102,12 +103,14 @@ export default function TeamMatchView() {
   const [showPlayoffDialog, setShowPlayoffDialog] = useState(false);
   const [showGroupSetupDialog, setShowGroupSetupDialog] = useState(false);
   const [showInviteTeamDialog, setShowInviteTeamDialog] = useState(false);
+  const [showSESetupDialog, setShowSESetupDialog] = useState(false);
   const [startRoundNumber, setStartRoundNumber] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   // For BTC lineup: track which team to lineup for
   const [lineupTeamId, setLineupTeamId] = useState<string | null>(null);
 
   const isOwner = tournament?.created_by === user?.id;
+  const isSingleElimination = tournament?.format === 'single_elimination';
   const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
   const pendingTeamsCount = teams?.filter(t => t.status === 'pending').length || 0;
@@ -455,8 +458,46 @@ export default function TeamMatchView() {
               </Card>
             )}
 
-            {/* Quick actions for owner - Other formats */}
-            {isOwner && !isGroupPlayoffFormat && tournament.status === 'registration' && !hasMatches && (
+            {/* Quick actions for owner - Single Elimination format */}
+            {isOwner && isSingleElimination && tournament.status === 'registration' && !hasMatches && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Hành động BTC</CardTitle>
+                  <CardDescription>
+                    {pendingTeamsCount > 0 
+                      ? `Duyệt ${pendingTeamsCount} đội đang chờ trước khi tạo bracket`
+                      : 'Thêm đội hoặc tạo bracket Single Elimination'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => setShowCreateTeam(true)}>
+                    <Users className="h-4 w-4 mr-2" />
+                    Thêm đội
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Mời đội
+                  </Button>
+                  <Button
+                    onClick={() => setShowSESetupDialog(true)}
+                    disabled={pendingTeamsCount > 0 || approvedTeamsCount < 4}
+                  >
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Sinh Bracket ({approvedTeamsCount} đội)
+                  </Button>
+                </CardContent>
+                {pendingTeamsCount > 0 && (
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-amber-600">
+                      ⚠️ Cần duyệt tất cả đội trước khi tạo bracket
+                    </p>
+                  </CardContent>
+                )}
+              </Card>
+            )}
+
+            {/* Quick actions for owner - Other formats (Round Robin) */}
+            {isOwner && !isGroupPlayoffFormat && !isSingleElimination && tournament.status === 'registration' && !hasMatches && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">Hành động BTC</CardTitle>

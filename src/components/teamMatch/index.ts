@@ -21,3 +21,4 @@ export { LineupSelectionSheet } from './LineupSelectionSheet';
 export { AllTeamsOverview } from './AllTeamsOverview';
 export { PlayoffSetupDialog } from './PlayoffSetupDialog';
 export { PlayoffBracket } from './PlayoffBracket';
+export { SingleEliminationSetupDialog } from './SingleEliminationSetupDialog';
