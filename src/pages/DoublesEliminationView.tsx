@@ -136,9 +136,7 @@ export default function DoublesEliminationView() {
     }
   };
 
-  const handleMatchClick = (matchId: string) => {
-    navigate(`/tools/doubles-elimination/match/${matchId}/score`);
-  };
+  // Removed handleMatchClick - card click behavior removed, only buttons work
 
   if (loading) {
     return (
@@ -255,7 +253,6 @@ export default function DoublesEliminationView() {
             <DoublesEliminationBracket 
               matches={matches}
               teams={teams}
-              onMatchClick={handleMatchClick}
               showPreliminaryOnly={true}
               canEdit={canEdit}
               onScoreUpdated={loadData}
@@ -267,7 +264,6 @@ export default function DoublesEliminationView() {
             <DoublesEliminationBracket 
               matches={matches}
               teams={teams}
-              onMatchClick={handleMatchClick}
               showPlayoffOnly={true}
               canEdit={canEdit}
               onScoreUpdated={loadData}

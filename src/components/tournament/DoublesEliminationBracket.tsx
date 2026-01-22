@@ -159,7 +159,6 @@ const DoublesEliminationBracket = ({
                         teamB={getTeam(match.team_b_id)}
                         formatTeamName={formatTeamName}
                         isFinal={false}
-                        onClick={() => onMatchClick?.(match.id)}
                         canEdit={canEdit}
                         onScoreUpdated={onScoreUpdated}
                       />
@@ -194,7 +193,6 @@ const DoublesEliminationBracket = ({
                           formatTeamName={formatTeamName}
                           sourceAMatchNum={matchANum}
                           sourceBMatchNum={matchBNum}
-                          onClick={() => onMatchClick?.(match.id)}
                           canEdit={canEdit}
                           onScoreUpdated={onScoreUpdated}
                         />
@@ -223,7 +221,6 @@ const DoublesEliminationBracket = ({
                         teamB={getTeam(match.team_b_id)}
                         formatTeamName={formatTeamName}
                         isFinal={false}
-                        onClick={() => onMatchClick?.(match.id)}
                         canEdit={canEdit}
                         onScoreUpdated={onScoreUpdated}
                       />
@@ -272,7 +269,6 @@ const DoublesEliminationBracket = ({
                       teamB={getTeam(match.team_b_id)}
                       formatTeamName={formatTeamName}
                       isFinal={match.round_type === 'final'}
-                      onClick={() => onMatchClick?.(match.id)}
                       canEdit={canEdit}
                       onScoreUpdated={onScoreUpdated}
                     />
@@ -305,7 +301,6 @@ const DoublesEliminationBracket = ({
                 teamB={getTeam(match.team_b_id)}
                 formatTeamName={formatTeamName}
                 isFinal={false}
-                onClick={() => onMatchClick?.(match.id)}
                 canEdit={canEdit}
                 onScoreUpdated={onScoreUpdated}
               />
@@ -317,23 +312,23 @@ const DoublesEliminationBracket = ({
   );
 };
 
-// Helper to propagate loser to R2 match
+// Helper to propagate loser to R2 match using match_index (0-based)
 async function propagateLoserToR2(
-  matchId: string, 
+  matchIndex: number, // 0-based index of R1 match
   loserId: string, 
   allMatches: Match[]
 ) {
-  // Find R2 match where this loser should go
+  // Find R2 match where this loser should go based on match_index
   const r2Match = allMatches.find(m => {
     if (m.round_number !== 2 || m.bracket_type !== 'loser') return false;
-    const sourceA = m.source_a as { type: string; match_id?: string } | null;
-    const sourceB = m.source_b as { type: string; match_id?: string } | null;
-    return sourceA?.match_id === matchId || sourceB?.match_id === matchId;
+    const sourceA = m.source_a as { type: string; match_index?: number } | null;
+    const sourceB = m.source_b as { type: string; match_index?: number } | null;
+    return sourceA?.match_index === matchIndex || sourceB?.match_index === matchIndex;
   });
 
   if (r2Match) {
-    const sourceA = r2Match.source_a as { type: string; match_id?: string } | null;
-    const updateField = sourceA?.match_id === matchId ? 'team_a_id' : 'team_b_id';
+    const sourceA = r2Match.source_a as { type: string; match_index?: number } | null;
+    const updateField = sourceA?.match_index === matchIndex ? 'team_a_id' : 'team_b_id';
     
     await supabase
       .from('doubles_elimination_matches')
@@ -351,7 +346,6 @@ interface LoserBracketCardProps {
   formatTeamName: (team: Team | undefined) => string;
   sourceAMatchNum: number | string;
   sourceBMatchNum: number | string;
-  onClick?: () => void;
   canEdit?: boolean;
   onScoreUpdated?: () => void;
 }
@@ -364,7 +358,6 @@ const LoserBracketCard = ({
   formatTeamName,
   sourceAMatchNum,
   sourceBMatchNum,
-  onClick,
   canEdit = false,
   onScoreUpdated
 }: LoserBracketCardProps) => {
@@ -379,18 +372,6 @@ const LoserBracketCard = ({
   const isLive = match.status === 'live';
   const isAWinner = match.winner_id === match.team_a_id && isCompleted;
   const isBWinner = match.winner_id === match.team_b_id && isCompleted;
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    if (isEditing) {
-      e.stopPropagation();
-      return;
-    }
-    if (onClick) {
-      onClick();
-    } else {
-      navigate(`/tools/doubles-elimination/match/${match.id}/score`);
-    }
-  };
 
   // "Sửa" button = inline edit
   const handleStartInlineEdit = (e: React.MouseEvent) => {
@@ -457,11 +438,9 @@ const LoserBracketCard = ({
     <Card 
       className={cn(
         "overflow-hidden transition-all border-orange-200/50 dark:border-orange-800/50",
-        !isEditing && "cursor-pointer hover:border-orange-400/50",
         isCompleted && "opacity-90",
         isLive && "border-red-500/50 ring-2 ring-red-500/20"
       )}
-      onClick={handleCardClick}
     >
       {/* Match header */}
       <div className={cn(
@@ -644,7 +623,6 @@ interface BracketMatchCardProps {
   teamB: Team | undefined;
   formatTeamName: (team: Team | undefined) => string;
   isFinal: boolean;
-  onClick?: () => void;
   canEdit?: boolean;
   onScoreUpdated?: () => void;
 }
@@ -656,7 +634,6 @@ const BracketMatchCard = ({
   teamB, 
   formatTeamName,
   isFinal,
-  onClick,
   canEdit = false,
   onScoreUpdated
 }: BracketMatchCardProps) => {
@@ -671,18 +648,6 @@ const BracketMatchCard = ({
   const isLive = match.status === 'live';
   const isAWinner = match.winner_id === match.team_a_id && isCompleted;
   const isBWinner = match.winner_id === match.team_b_id && isCompleted;
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    if (isEditing) {
-      e.stopPropagation();
-      return;
-    }
-    if (onClick) {
-      onClick();
-    } else {
-      navigate(`/tools/doubles-elimination/match/${match.id}/score`);
-    }
-  };
 
   // "Sửa" button = inline edit
   const handleStartInlineEdit = (e: React.MouseEvent) => {
@@ -726,7 +691,9 @@ const BracketMatchCard = ({
 
       // For R1 winner matches, propagate loser to R2 loser bracket
       if (isMatchComplete && loserId && match.round_type === 'winner_r1') {
-        await propagateLoserToR2(match.id, loserId, allMatches);
+        // match_number is 1-based, convert to 0-based index
+        const matchIndex = match.match_number - 1;
+        await propagateLoserToR2(matchIndex, loserId, allMatches);
       }
 
       // Mark loser as eliminated if not R1
@@ -754,12 +721,10 @@ const BracketMatchCard = ({
     <Card 
       className={cn(
         "overflow-hidden transition-all",
-        !isEditing && "cursor-pointer hover:border-primary/50",
         isFinal && "border-primary/30 shadow-lg ring-2 ring-primary/10",
         isCompleted && "opacity-90",
         isLive && "border-red-500/50 ring-2 ring-red-500/20"
       )}
-      onClick={handleCardClick}
     >
       {/* Match header */}
       <div className={cn(
@@ -795,7 +760,7 @@ const BracketMatchCard = ({
         </div>
       </div>
       
-      {/* Teams - only show team name once, no duplicate player1_name */}
+      {/* Teams */}
       <div className="divide-y divide-border/50">
         {/* Team A Slot */}
         <div 
