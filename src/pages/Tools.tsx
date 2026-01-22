@@ -1,10 +1,12 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Users, Swords, Trophy, GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MyRefereeTournaments } from "@/components/tools/MyRefereeTournaments";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ToolCardProps {
   title: string;
@@ -54,6 +56,7 @@ const ToolCard = ({ title, description, icon, href, comingSoon }: ToolCardProps)
 
 const Tools = () => {
   const { t } = useI18n();
+  const { user } = useAuth();
 
   const tools: ToolCardProps[] = [
     {
@@ -78,7 +81,7 @@ const Tools = () => {
       title: t.tools.doublesElimination.title,
       description: t.tools.doublesElimination.description,
       icon: <GitBranch className="w-6 h-6" />,
-      comingSoon: true,
+      href: "/tools/doubles-elimination",
     },
   ];
 
@@ -94,6 +97,13 @@ const Tools = () => {
             {t.tools.description}
           </p>
         </div>
+
+        {/* Referee Tournaments Section */}
+        {user && (
+          <div className="mb-8">
+            <MyRefereeTournaments />
+          </div>
+        )}
 
         {/* Tools Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
