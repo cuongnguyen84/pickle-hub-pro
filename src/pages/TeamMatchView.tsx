@@ -280,6 +280,47 @@ export default function TeamMatchView() {
     }
   };
 
+  // Handler for Single Elimination bracket generation
+  const handleGenerateSingleElimination = async (
+    pairingType: 'random' | 'manual',
+    manualPairings?: Array<{ team1Id: string; team2Id: string }>
+  ) => {
+    if (!tournament || !teams) return;
+    
+    try {
+      // Fetch actual game templates from database
+      const { data: templates, error: templatesError } = await supabase
+        .from('team_match_game_templates')
+        .select('*')
+        .eq('tournament_id', tournament.id)
+        .order('order_index');
+      
+      if (templatesError) throw templatesError;
+      
+      const gameTemplates = (templates || []).map(t => ({
+        game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
+        scoring_type: t.scoring_type as 'rally21' | 'sideout11',
+        display_name: t.display_name,
+        order_index: t.order_index,
+      }));
+
+      await generateSingleElimination({
+        tournamentId: tournament.id,
+        teams,
+        gameTemplates,
+        hasDreambreaker: tournament.has_dreambreaker,
+        hasThirdPlaceMatch: tournament.has_third_place_match || false,
+        pairingType,
+        manualPairings,
+      });
+      
+      setShowSESetupDialog(false);
+      setActiveTab('matches');
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -565,8 +606,8 @@ export default function TeamMatchView() {
           </TabsContent>
 
           <TabsContent value="matches" className="mt-4 space-y-4">
-            {/* Generate matches action for owner */}
-            {isOwner && !hasMatches && tournament.status !== 'completed' && (
+            {/* Generate matches action for owner - NOT for single elimination */}
+            {isOwner && !hasMatches && tournament.status !== 'completed' && !isSingleElimination && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardContent className="py-4 flex items-center justify-between">
                   <div>
@@ -581,6 +622,27 @@ export default function TeamMatchView() {
                   >
                     <Play className="h-4 w-4 mr-2" />
                     Tạo lịch
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Generate bracket action for owner - Single Elimination ONLY */}
+            {isOwner && !hasMatches && tournament.status !== 'completed' && isSingleElimination && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardContent className="py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Sinh Bracket</p>
+                    <p className="text-sm text-muted-foreground">
+                      {approvedTeamsCount} đội đã sẵn sàng (Single Elimination)
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowSESetupDialog(true)}
+                    disabled={approvedTeamsCount < 4 || pendingTeamsCount > 0}
+                  >
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Sinh Bracket
                   </Button>
                 </CardContent>
               </Card>
@@ -628,12 +690,12 @@ export default function TeamMatchView() {
               </Card>
             )}
 
-            {/* Playoff Bracket - Show above Round Robin */}
+            {/* Playoff/SE Bracket - Show for playoff matches */}
             {playoffMatches.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  Vòng Playoff
+                  {isSingleElimination ? 'Bracket Loại Trực Tiếp' : 'Vòng Playoff'}
                 </h3>
                 <PlayoffBracket 
                   matches={playoffMatches}
@@ -644,6 +706,7 @@ export default function TeamMatchView() {
                     setLineupMatch(match);
                     setLineupTeamId(teamId || null);
                   }}
+                  isSingleElimination={isSingleElimination}
                 />
               </div>
             )}
@@ -812,6 +875,16 @@ export default function TeamMatchView() {
           teams={teams || []}
           isCreating={isCreatingGroups}
           onConfirm={handleCreateGroups}
+        />
+
+        {/* Single Elimination Setup Dialog */}
+        <SingleEliminationSetupDialog
+          open={showSESetupDialog}
+          onOpenChange={setShowSESetupDialog}
+          teams={teams || []}
+          hasThirdPlaceMatch={tournament.has_third_place_match || false}
+          isCreating={isGeneratingSE}
+          onConfirm={handleGenerateSingleElimination}
         />
 
         {/* Start Tournament Confirmation */}
