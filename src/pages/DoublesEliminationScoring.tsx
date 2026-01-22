@@ -240,6 +240,14 @@ export default function DoublesEliminationScoring() {
           .eq('id', loserId);
       }
 
+      // If this is the final match, mark tournament as completed
+      if (match.round_type === 'final' && tournament) {
+        await supabase
+          .from('doubles_elimination_tournaments')
+          .update({ status: 'completed' })
+          .eq('id', tournament.id);
+      }
+
       toast({ title: "Trận đấu kết thúc!" });
       navigate(`/tools/doubles-elimination/${tournament?.share_id}`);
     } else {
@@ -291,6 +299,14 @@ export default function DoublesEliminationScoring() {
           eliminated_at_round: match.round_number
         })
         .eq('id', loserId);
+    }
+
+    // If this is the final match, mark tournament as completed
+    if (match.round_type === 'final' && tournament) {
+      await supabase
+        .from('doubles_elimination_tournaments')
+        .update({ status: 'completed' })
+        .eq('id', tournament.id);
     }
 
     toast({ title: "Trận đấu kết thúc!" });
@@ -389,7 +405,7 @@ export default function DoublesEliminationScoring() {
         <Card className="mb-6">
           <CardContent className="py-8">
             {/* Scores - centered on same line */}
-            <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex items-center justify-center gap-3">
               <div className="text-center">
                 <div className="text-xs text-muted-foreground">#{teamA.seed}</div>
                 <div className="text-sm font-medium truncate max-w-[80px]">{teamA.team_name}</div>
@@ -404,18 +420,6 @@ export default function DoublesEliminationScoring() {
               <div className="text-center">
                 <div className="text-xs text-muted-foreground">#{teamB.seed}</div>
                 <div className="text-sm font-medium truncate max-w-[80px]">{teamB.team_name}</div>
-              </div>
-            </div>
-            
-            {/* Player names */}
-            <div className="flex justify-between text-xs text-muted-foreground px-2">
-              <div className="text-center">
-                {teamA.player1_name}
-                {teamA.player2_name && <><br />{teamA.player2_name}</>}
-              </div>
-              <div className="text-center">
-                {teamB.player1_name}
-                {teamB.player2_name && <><br />{teamB.player2_name}</>}
               </div>
             </div>
           </CardContent>
