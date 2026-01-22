@@ -1307,24 +1307,47 @@ const BracketMatchCard = ({
         </div>
       </div>
 
-      {/* BO3/BO5 hint when editing */}
-      {isEditing && isBestOf && (
-        <div className="px-3 py-1 border-t bg-blue-50 dark:bg-blue-950/30 text-xs text-blue-600 dark:text-blue-400 text-center">
-          Thắng {winsNeeded} game = Thắng trận ({formatLabel})
-        </div>
-      )}
-
-      {/* Game scores for BO3/BO5 */}
-      {!isEditing && match.best_of > 1 && match.games && Array.isArray(match.games) && (match.games as any[]).length > 0 && (
-        <div className="px-3 py-1.5 border-t bg-muted/20 text-xs text-muted-foreground text-center">
-          {(match.games as any[]).map((g: any, i: number) => (
-            <span key={i}>
-              {i > 0 && ' | '}
-              <span className={g.winner === 'a' ? 'text-primary font-medium' : ''}>{g.score_a}</span>
-              -
-              <span className={g.winner === 'b' ? 'text-primary font-medium' : ''}>{g.score_b}</span>
-            </span>
-          ))}
+      {/* BO3/BO5 game slots visualization */}
+      {isBestOf && (
+        <div className="px-2 py-2 border-t bg-muted/20">
+          <div className="flex justify-center gap-1">
+            {Array.from({ length: match.best_of }).map((_, gameIndex) => {
+              const gameData = (match.games as any[])?.[gameIndex];
+              const isCompleted = !!gameData;
+              const winnerTeam = gameData?.winner;
+              
+              return (
+                <div
+                  key={gameIndex}
+                  className={cn(
+                    "flex flex-col items-center justify-center w-10 h-10 rounded border text-[10px]",
+                    isCompleted ? "border-muted bg-muted/50" : "border-dashed border-muted-foreground/30"
+                  )}
+                  title={`Game ${gameIndex + 1}`}
+                >
+                  <div className="text-[8px] text-muted-foreground">G{gameIndex + 1}</div>
+                  {isCompleted ? (
+                    <div className="flex items-center gap-0.5">
+                      <span className={winnerTeam === 'a' ? 'text-primary font-bold' : 'text-muted-foreground'}>
+                        {gameData.score_a}
+                      </span>
+                      <span className="text-muted-foreground">-</span>
+                      <span className={winnerTeam === 'b' ? 'text-primary font-bold' : 'text-muted-foreground'}>
+                        {gameData.score_b}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {isEditing && (
+            <div className="text-[10px] text-blue-600 dark:text-blue-400 text-center mt-1">
+              Nhập số game thắng (cần {winsNeeded} để thắng)
+            </div>
+          )}
         </div>
       )}
 
