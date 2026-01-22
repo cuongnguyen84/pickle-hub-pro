@@ -12,24 +12,80 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Bracket connector component for visual lines between rounds
-const BracketConnector = ({ roundIdx }: { roundIdx: number }) => {
-  // Height scales with round index to match the increasing gap
-  const height = Math.pow(2, roundIdx + 1) * 40;
-  
+// Connects from the center-right of two match cards to the center-left of the next match
+const BracketConnector = ({ matchHeight = 120 }: { matchHeight?: number }) => {
   return (
-    <div className="relative w-8 flex items-center" style={{ height }}>
-      {/* Top horizontal line */}
-      <div className="absolute top-0 left-0 w-4 h-px bg-border" />
-      {/* Vertical line */}
-      <div className="absolute top-0 left-4 w-px bg-border" style={{ height: '100%' }} />
-      {/* Bottom horizontal line */}
-      <div className="absolute bottom-0 left-0 w-4 h-px bg-border" />
-      {/* Connector to next match */}
-      <div 
-        className="absolute left-4 right-0 h-px bg-border" 
-        style={{ top: '50%' }}
+    <svg 
+      className="flex-shrink-0" 
+      width="32" 
+      height={matchHeight * 2 + 12} 
+      viewBox={`0 0 32 ${matchHeight * 2 + 12}`}
+      fill="none"
+    >
+      {/* Top match → horizontal line out */}
+      <line 
+        x1="0" 
+        y1={matchHeight / 2} 
+        x2="16" 
+        y2={matchHeight / 2} 
+        stroke="hsl(var(--primary))" 
+        strokeWidth="2" 
+        strokeOpacity="0.6"
       />
-    </div>
+      {/* Bottom match → horizontal line out */}
+      <line 
+        x1="0" 
+        y1={matchHeight * 1.5 + 12} 
+        x2="16" 
+        y2={matchHeight * 1.5 + 12} 
+        stroke="hsl(var(--primary))" 
+        strokeWidth="2" 
+        strokeOpacity="0.6"
+      />
+      {/* Vertical line connecting the two */}
+      <line 
+        x1="16" 
+        y1={matchHeight / 2} 
+        x2="16" 
+        y2={matchHeight * 1.5 + 12} 
+        stroke="hsl(var(--primary))" 
+        strokeWidth="2" 
+        strokeOpacity="0.6"
+      />
+      {/* Horizontal line to next match */}
+      <line 
+        x1="16" 
+        y1={matchHeight + 6} 
+        x2="32" 
+        y2={matchHeight + 6} 
+        stroke="hsl(var(--primary))" 
+        strokeWidth="2" 
+        strokeOpacity="0.6"
+      />
+    </svg>
+  );
+};
+
+// Single connector line (for final round → next)
+const SingleConnector = ({ height = 120 }: { height?: number }) => {
+  return (
+    <svg 
+      className="flex-shrink-0" 
+      width="32" 
+      height={height}
+      viewBox={`0 0 32 ${height}`}
+      fill="none"
+    >
+      <line 
+        x1="0" 
+        y1={height / 2} 
+        x2="32" 
+        y2={height / 2} 
+        stroke="hsl(var(--primary))" 
+        strokeWidth="2" 
+        strokeOpacity="0.6"
+      />
+    </svg>
   );
 };
 
@@ -443,17 +499,17 @@ const DoublesEliminationBracket = ({
 
                   {/* Connector lines to next round */}
                   {!isLastBeforeFinal && matchCount > 1 && (
-                    <div className="flex flex-col flex-1 justify-around py-8 w-8">
+                    <div className="flex flex-col justify-around items-center">
                       {Array.from({ length: Math.floor(matchCount / 2) }).map((_, pairIdx) => (
-                        <BracketConnector key={pairIdx} roundIdx={roundIdx} />
+                        <BracketConnector key={pairIdx} matchHeight={140} />
                       ))}
                     </div>
                   )}
 
                   {/* Connector to finals (semifinal → final) */}
                   {isLastBeforeFinal && matchCount === 2 && (
-                    <div className="flex flex-col flex-1 justify-around py-8 w-8">
-                      <BracketConnector roundIdx={roundIdx} />
+                    <div className="flex flex-col justify-center items-center">
+                      <BracketConnector matchHeight={180} />
                     </div>
                   )}
                 </div>
