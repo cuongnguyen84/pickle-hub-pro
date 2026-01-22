@@ -41,6 +41,7 @@ export default function DoublesEliminationView() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
 
   const isCreator = user?.id === tournament?.creator_user_id;
 
@@ -50,6 +51,34 @@ export default function DoublesEliminationView() {
       setupRealtimeSubscription();
     }
   }, [shareId]);
+
+  // Check edit permissions when user and tournament change
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!user || !tournament) {
+        setCanEdit(false);
+        return;
+      }
+
+      const isCreator = user.id === tournament.creator_user_id;
+      if (isCreator) {
+        setCanEdit(true);
+        return;
+      }
+
+      // Check if user is a referee
+      const { data: refereeData } = await supabase
+        .from('doubles_elimination_referees')
+        .select('id')
+        .eq('tournament_id', tournament.id)
+        .eq('user_id', user.id)
+        .single();
+
+      setCanEdit(!!refereeData);
+    };
+
+    checkPermissions();
+  }, [user, tournament]);
 
   const loadData = async () => {
     if (!shareId) return;
@@ -228,6 +257,8 @@ export default function DoublesEliminationView() {
               teams={teams}
               onMatchClick={handleMatchClick}
               showPreliminaryOnly={true}
+              canEdit={canEdit}
+              onScoreUpdated={loadData}
             />
           </TabsContent>
 
@@ -238,6 +269,8 @@ export default function DoublesEliminationView() {
               teams={teams}
               onMatchClick={handleMatchClick}
               showPlayoffOnly={true}
+              canEdit={canEdit}
+              onScoreUpdated={loadData}
             />
           </TabsContent>
 
