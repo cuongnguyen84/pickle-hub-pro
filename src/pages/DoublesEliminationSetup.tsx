@@ -25,6 +25,36 @@ type Step = 'info' | 'format' | 'teams';
 
 const SUGGESTED_COUNTS = [32, 40, 48, 64, 80, 96, 128];
 
+// Calculate tournament structure hints
+function calculateTournamentHints(teamCount: number): { r1Matches: number; byesToR4: number; isEven: boolean } {
+  const r1Matches = Math.floor(teamCount / 2);
+  
+  // Calculate progression through R1 -> R2 -> R3 -> R4
+  const byeFromR1 = teamCount % 2 === 1 ? 1 : 0;
+  const winnersFromR1 = r1Matches + byeFromR1;
+  
+  const r2Matches = Math.floor(r1Matches / 2);
+  const byeFromR2 = r1Matches % 2 === 1 ? 1 : 0;
+  const winnersFromR2 = r2Matches + byeFromR2;
+  
+  const teamsEnteringR3 = winnersFromR1 + winnersFromR2;
+  
+  // Target for R4 (power of 2)
+  let target = 1;
+  while (target < Math.floor(teamsEnteringR3 / 2)) target *= 2;
+  const actualTarget = target > teamsEnteringR3 ? target / 2 : target;
+  
+  // Teams with byes to R4 = teams not needing to play in R3
+  const r3Matches = teamsEnteringR3 - actualTarget;
+  const byesToR4 = teamsEnteringR3 - (r3Matches * 2);
+  
+  return {
+    r1Matches,
+    byesToR4,
+    isEven: r1Matches % 2 === 0
+  };
+}
+
 export default function DoublesEliminationSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -287,7 +317,36 @@ export default function DoublesEliminationSetup() {
                   value={teamCount}
                   onChange={(e) => setTeamCount(Math.max(32, parseInt(e.target.value) || 32))}
                 />
-                <p className="text-xs text-muted-foreground">
+                
+                {/* Hints based on team count */}
+                {(() => {
+                  const hints = calculateTournamentHints(teamCount);
+                  return (
+                    <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={hints.isEven ? "text-green-600" : "text-amber-600"}>
+                          {hints.isEven ? "✓" : "⚠"}
+                        </span>
+                        <span>
+                          Vòng 1: {hints.r1Matches} trận 
+                          {!hints.isEven && (
+                            <span className="text-amber-600 ml-1">(lẻ - nên chọn số chẵn)</span>
+                          )}
+                        </span>
+                      </div>
+                      {hints.byesToR4 > 0 && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <span>📋</span>
+                          <span>
+                            Kết thúc vòng 1-3, sẽ có <strong className="text-foreground">{hints.byesToR4} VĐV</strong> được vào thẳng vòng 4
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+                
+                <p className="text-xs text-muted-foreground mt-2">
                   Gợi ý: 32, 40, 48, 64, 80, 96, 128 đội để bracket cân đối
                 </p>
               </div>
