@@ -11,8 +11,8 @@ import { useDoublesElimination, Tournament, Team, Match } from "@/hooks/useDoubl
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  ArrowLeft, Share2, Copy, Check, Trophy, Users, 
-  Calendar, Clock, Settings, Trash2 
+  ArrowLeft, Share2, Check, Trophy, Users, 
+  Calendar, Trash2 
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import DoublesEliminationBracket from "@/components/tournament/DoublesEliminationBracket";
 
 export default function DoublesEliminationView() {
   const { shareId } = useParams<{ shareId: string }>();
@@ -106,55 +107,9 @@ export default function DoublesEliminationView() {
     }
   };
 
-  const getRoundTypeLabel = (roundType: string) => {
-    switch (roundType) {
-      case 'winner_r1': return 'Vòng 1 (Winner)';
-      case 'loser_r2': return 'Vòng 2 (Loser)';
-      case 'merge_r3': return 'Vòng 3 (Merge)';
-      case 'elimination': return 'Vòng loại trực tiếp';
-      case 'quarterfinal': return 'Tứ kết';
-      case 'semifinal': return 'Bán kết';
-      case 'third_place': return 'Tranh hạng 3';
-      case 'final': return 'Chung kết';
-      default: return roundType;
-    }
+  const handleMatchClick = (matchId: string) => {
+    navigate(`/tools/doubles-elimination/match/${matchId}/score`);
   };
-
-  const getTeamName = (teamId: string | null) => {
-    if (!teamId) return 'TBD';
-    const team = teams.find(t => t.id === teamId);
-    return team?.team_name || 'TBD';
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending': return <Badge variant="outline">Chờ</Badge>;
-      case 'live': return <Badge variant="default" className="bg-red-500">Đang đấu</Badge>;
-      case 'completed': return <Badge variant="secondary">Xong</Badge>;
-      default: return null;
-    }
-  };
-
-  // Group matches by round
-  const matchesByRound = matches.reduce((acc, match) => {
-    const key = `${match.round_number}_${match.round_type}`;
-    if (!acc[key]) {
-      acc[key] = {
-        round_number: match.round_number,
-        round_type: match.round_type,
-        matches: []
-      };
-    }
-    acc[key].matches.push(match);
-    return acc;
-  }, {} as Record<string, { round_number: number; round_type: string; matches: Match[] }>);
-
-  const sortedRounds = Object.values(matchesByRound).sort((a, b) => {
-    if (a.round_number !== b.round_number) return a.round_number - b.round_number;
-    // Sort third_place after semifinal, before final
-    const typeOrder = ['winner_r1', 'loser_r2', 'merge_r3', 'elimination', 'quarterfinal', 'semifinal', 'third_place', 'final'];
-    return typeOrder.indexOf(a.round_type) - typeOrder.indexOf(b.round_type);
-  });
 
   if (loading) {
     return (
@@ -267,65 +222,11 @@ export default function DoublesEliminationView() {
 
           {/* Bracket Tab */}
           <TabsContent value="bracket" className="space-y-6">
-            {sortedRounds.map((round) => (
-              <Card key={`${round.round_number}_${round.round_type}`}>
-                <CardHeader className="py-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    {getRoundTypeLabel(round.round_type)}
-                    <Badge variant="outline" className="font-normal">
-                      {round.matches.length} trận
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {round.matches.map((match) => (
-                      <div 
-                        key={match.id}
-                        className={`p-3 rounded-lg border cursor-pointer hover:border-primary/50 transition-colors
-                          ${match.status === 'live' ? 'border-red-500 bg-red-500/5' : ''}`}
-                        onClick={() => navigate(`/tools/doubles-elimination/match/${match.id}/score`)}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-muted-foreground">
-                            Trận {match.match_number}
-                          </span>
-                          {getStatusBadge(match.status)}
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className={`flex items-center justify-between p-2 rounded
-                            ${match.winner_id === match.team_a_id ? 'bg-primary/10 font-medium' : 'bg-muted/50'}`}>
-                            <span className="truncate">{getTeamName(match.team_a_id)}</span>
-                            <span className="font-mono">
-                              {match.best_of > 1 ? match.games_won_a : match.score_a}
-                            </span>
-                          </div>
-                          <div className={`flex items-center justify-between p-2 rounded
-                            ${match.winner_id === match.team_b_id ? 'bg-primary/10 font-medium' : 'bg-muted/50'}`}>
-                            <span className="truncate">{getTeamName(match.team_b_id)}</span>
-                            <span className="font-mono">
-                              {match.best_of > 1 ? match.games_won_b : match.score_b}
-                            </span>
-                          </div>
-                        </div>
-
-                        {match.best_of > 1 && match.games && Array.isArray(match.games) && match.games.length > 0 && (
-                          <div className="mt-2 text-xs text-muted-foreground text-center">
-                            {(match.games as any[]).map((g: any, i: number) => (
-                              <span key={i}>
-                                {i > 0 && ', '}
-                                {g.score_a}-{g.score_b}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <DoublesEliminationBracket 
+              matches={matches}
+              teams={teams}
+              onMatchClick={handleMatchClick}
+            />
           </TabsContent>
 
           {/* Teams Tab */}
