@@ -320,8 +320,19 @@ export default function DoublesEliminationSetup() {
                 <Input
                   type="number"
                   min={32}
-                  value={teamCount}
-                  onChange={(e) => setTeamCount(Math.max(32, parseInt(e.target.value) || 32))}
+                  value={teamCount || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setTeamCount(0);
+                    } else {
+                      setTeamCount(parseInt(val) || 0);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    if (val < 32) setTeamCount(32);
+                  }}
                 />
                 
                 {/* Hints based on team count */}
@@ -537,7 +548,7 @@ export default function DoublesEliminationSetup() {
               <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground px-3">
                 <div className="col-span-1 text-center">#</div>
                 <div className="col-span-5">Tên</div>
-                <div className="col-span-3">Team/CLB</div>
+                <div className="col-span-3">Team</div>
                 <div className="col-span-2">Seed</div>
                 <div className="col-span-1"></div>
               </div>
@@ -560,7 +571,7 @@ export default function DoublesEliminationSetup() {
                     </div>
                     <div className="col-span-3">
                       <Input
-                        placeholder="Team/CLB"
+                        placeholder="Team"
                         value={team.team}
                         onChange={(e) => updateTeam(index, 'team', e.target.value)}
                       />
