@@ -110,6 +110,22 @@ export default function DoublesEliminationView() {
     }, 2000);
   };
 
+  // Handler for R3 assignment notifications
+  const handleR3Assigned = (tiedTeamsInfo?: { count: number; names: string[] }) => {
+    if (tiedTeamsInfo) {
+      toast({
+        title: "Đã phân vòng 3",
+        description: `Có ${tiedTeamsInfo.count} VĐV trùng hiệu số (${tiedTeamsInfo.names.join(', ')}). Chương trình đã ghép ngẫu nhiên 2 VĐV thi đấu trận sơ loại.`,
+        duration: 8000
+      });
+    } else {
+      toast({
+        title: "Đã phân vòng 3 & vòng 4",
+        description: "Các VĐV đã được phân vào vòng tiếp theo dựa trên hiệu số."
+      });
+    }
+  };
+
   const setupRealtimeSubscription = () => {
     if (!shareId) return;
 
@@ -277,10 +293,12 @@ export default function DoublesEliminationView() {
             <DoublesEliminationBracket 
               matches={matches}
               teams={teams}
+              tournamentId={tournament?.id}
               showPreliminaryOnly={true}
               canEdit={canEdit}
               onScoreUpdated={loadData}
               onMatchUpdated={handleMatchUpdated}
+              onR3Assigned={handleR3Assigned}
             />
           </TabsContent>
 
@@ -289,10 +307,12 @@ export default function DoublesEliminationView() {
             <DoublesEliminationBracket 
               matches={matches}
               teams={teams}
+              tournamentId={tournament?.id}
               showPlayoffOnly={true}
               canEdit={canEdit}
               onScoreUpdated={loadData}
               onMatchUpdated={handleMatchUpdated}
+              onR3Assigned={handleR3Assigned}
             />
           </TabsContent>
 

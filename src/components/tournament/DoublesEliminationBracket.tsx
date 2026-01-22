@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Crown, Trophy, Radio, Play, Pencil, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Match, Team } from '@/hooks/useDoublesElimination';
+import { Match, Team, useDoublesElimination } from '@/hooks/useDoublesElimination';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface DoublesEliminationBracketProps {
   matches: Match[];
   teams: Team[];
+  tournamentId?: string;
   onMatchClick?: (matchId: string) => void;
   showPreliminaryOnly?: boolean;
   showPlayoffOnly?: boolean;
@@ -20,18 +21,23 @@ interface DoublesEliminationBracketProps {
   onScoreUpdated?: () => void;
   // Callback for optimistic updates - passes updated match data
   onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void;
+  // Callback for R3 assignment notification
+  onR3Assigned?: (tiedTeamsInfo?: { count: number; names: string[] }) => void;
 }
 
 const DoublesEliminationBracket = ({ 
   matches, 
-  teams, 
+  teams,
+  tournamentId,
   onMatchClick,
   showPreliminaryOnly = false,
   showPlayoffOnly = false,
   canEdit = false,
   onScoreUpdated,
-  onMatchUpdated
+  onMatchUpdated,
+  onR3Assigned
 }: DoublesEliminationBracketProps) => {
+  const { checkAndAssignR3 } = useDoublesElimination();
   const getTeam = (id: string | null): Team | undefined => 
     id ? teams.find(t => t.id === id) : undefined;
 
@@ -200,6 +206,8 @@ const DoublesEliminationBracket = ({
                           canEdit={canEdit}
                           onScoreUpdated={onScoreUpdated}
                           onMatchUpdated={onMatchUpdated}
+                          tournamentId={tournamentId}
+                          onR3Assigned={onR3Assigned}
                         />
                       );
                     })}
@@ -357,6 +365,8 @@ interface LoserBracketCardProps {
   canEdit?: boolean;
   onScoreUpdated?: () => void;
   onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void;
+  tournamentId?: string;
+  onR3Assigned?: (tiedTeamsInfo?: { count: number; names: string[] }) => void;
 }
 
 const LoserBracketCard = ({
@@ -369,8 +379,11 @@ const LoserBracketCard = ({
   sourceBMatchNum,
   canEdit = false,
   onScoreUpdated,
-  onMatchUpdated
+  onMatchUpdated,
+  tournamentId,
+  onR3Assigned
 }: LoserBracketCardProps) => {
+  const { checkAndAssignR3 } = useDoublesElimination();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -445,7 +458,16 @@ const LoserBracketCard = ({
 
       toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
       setIsEditing(false);
-      // Don't call onScoreUpdated to avoid full reload
+
+      // After R2 match completion, check if we need to assign R3
+      if (isMatchComplete && match.round_number === 2 && tournamentId) {
+        const result = await checkAndAssignR3(tournamentId);
+        if (result.triggered) {
+          onR3Assigned?.(result.tiedTeamsInfo);
+          // Reload to show R3 assignments
+          onScoreUpdated?.();
+        }
+      }
     } catch (error) {
       toast({ title: "Lỗi lưu điểm", variant: "destructive" });
       // Revert on error - trigger full reload

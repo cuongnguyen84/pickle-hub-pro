@@ -653,6 +653,279 @@ export function useDoublesElimination() {
     }
   }, []);
 
+  // Calculate point differential and auto-assign R3/R4 after R2 completes
+  // Returns info about tied teams if random selection was used
+  const calculateR3Assignments = useCallback(async (
+    tournamentId: string,
+    matches: Match[],
+    teams: Team[]
+  ): Promise<{ 
+    success: boolean; 
+    r3Teams?: string[]; 
+    r4Teams?: string[];
+    tiedTeamsInfo?: { count: number; names: string[] };
+    error?: string 
+  }> => {
+    try {
+      // Get all completed R1 and R2 matches
+      const r1Matches = matches.filter(m => m.round_number === 1 && m.status === 'completed');
+      const r2Matches = matches.filter(m => m.round_number === 2 && m.status === 'completed');
+      
+      // Check if all R1 and R2 matches are completed
+      const allR1Matches = matches.filter(m => m.round_number === 1);
+      const allR2Matches = matches.filter(m => m.round_number === 2);
+      
+      if (r1Matches.length !== allR1Matches.length || r2Matches.length !== allR2Matches.length) {
+        return { success: false, error: 'NOT_ALL_MATCHES_COMPLETED' };
+      }
+
+      // Calculate point differential for each surviving team
+      // For teams that played in both R1 and R2, only use R2 results
+      interface TeamDiff {
+        teamId: string;
+        teamName: string;
+        pointDiff: number;
+        playedR2: boolean;
+      }
+
+      const teamDiffs: TeamDiff[] = [];
+
+      // R1 winners (those who did NOT play in R2 - they won R1 and their opponent went to R2)
+      r1Matches.forEach(match => {
+        const winnerId = match.winner_id;
+        if (!winnerId) return;
+
+        // Check if this winner also played in R2 (they wouldn't be in R2, only losers are)
+        // R1 winners don't play R2, they wait for R3/R4
+        const winnerTeam = teams.find(t => t.id === winnerId);
+        if (!winnerTeam) return;
+
+        // Calculate point diff from R1
+        const isTeamA = match.team_a_id === winnerId;
+        const pointsFor = isTeamA ? match.score_a : match.score_b;
+        const pointsAgainst = isTeamA ? match.score_b : match.score_a;
+
+        teamDiffs.push({
+          teamId: winnerId,
+          teamName: winnerTeam.team_name,
+          pointDiff: pointsFor - pointsAgainst,
+          playedR2: false
+        });
+      });
+
+      // R2 winners (losers from R1 who won R2 - use only R2 results)
+      r2Matches.forEach(match => {
+        const winnerId = match.winner_id;
+        if (!winnerId) return;
+
+        const winnerTeam = teams.find(t => t.id === winnerId);
+        if (!winnerTeam) return;
+
+        // Calculate point diff from R2 ONLY (ignore their R1 loss)
+        const isTeamA = match.team_a_id === winnerId;
+        const pointsFor = isTeamA ? match.score_a : match.score_b;
+        const pointsAgainst = isTeamA ? match.score_b : match.score_a;
+
+        teamDiffs.push({
+          teamId: winnerId,
+          teamName: winnerTeam.team_name,
+          pointDiff: pointsFor - pointsAgainst,
+          playedR2: true
+        });
+      });
+
+      // Check for bye team from R1 (odd number of teams)
+      const r1MatchTeams = new Set<string>();
+      r1Matches.forEach(m => {
+        if (m.team_a_id) r1MatchTeams.add(m.team_a_id);
+        if (m.team_b_id) r1MatchTeams.add(m.team_b_id);
+      });
+      
+      // Teams that didn't play in R1 get a bye (point diff = 0)
+      teams.forEach(team => {
+        if (!r1MatchTeams.has(team.id) && team.status !== 'eliminated') {
+          teamDiffs.push({
+            teamId: team.id,
+            teamName: team.team_name,
+            pointDiff: 0, // Bye teams have 0 diff
+            playedR2: false
+          });
+        }
+      });
+
+      // Sort by point differential (highest = best)
+      teamDiffs.sort((a, b) => b.pointDiff - a.pointDiff);
+
+      // Determine how many teams go to R3 vs R4
+      const r3MatchesNeeded = matches.filter(m => m.round_number === 3).length;
+      const teamsNeededForR3 = r3MatchesNeeded * 2;
+      const teamsForR4 = teamDiffs.length - teamsNeededForR3;
+
+      // Check for ties at the cutoff point
+      let tiedTeamsInfo: { count: number; names: string[] } | undefined;
+
+      if (teamsNeededForR3 > 0 && teamDiffs.length >= teamsNeededForR3) {
+        const cutoffDiff = teamDiffs[teamsForR4 - 1]?.pointDiff;
+        const teamsAtCutoff = teamDiffs.filter(t => t.pointDiff === cutoffDiff);
+        
+        if (teamsAtCutoff.length > 1) {
+          // There are ties at the cutoff - need to randomly select
+          tiedTeamsInfo = {
+            count: teamsAtCutoff.length,
+            names: teamsAtCutoff.map(t => t.teamName)
+          };
+
+          // Separate teams above cutoff, at cutoff, and below cutoff
+          const aboveCutoff = teamDiffs.filter(t => t.pointDiff > cutoffDiff);
+          const atCutoff = teamDiffs.filter(t => t.pointDiff === cutoffDiff);
+          const belowCutoff = teamDiffs.filter(t => t.pointDiff < cutoffDiff);
+
+          // Shuffle teams at cutoff for random selection
+          const shuffledAtCutoff = [...atCutoff].sort(() => Math.random() - 0.5);
+
+          // Recalculate how many we need from the tied group for R4
+          const r4SlotsLeft = teamsForR4 - aboveCutoff.length;
+          const r4FromTied = shuffledAtCutoff.slice(0, r4SlotsLeft);
+          const r3FromTied = shuffledAtCutoff.slice(r4SlotsLeft);
+
+          // Rebuild the sorted list
+          teamDiffs.length = 0;
+          teamDiffs.push(...aboveCutoff, ...r4FromTied, ...r3FromTied, ...belowCutoff);
+        }
+      }
+
+      // Teams going to R4 (top performers - bye to R4)
+      const r4TeamIds = teamDiffs.slice(0, teamsForR4).map(t => t.teamId);
+      
+      // Teams going to R3 (bottom performers - must play R3)
+      const r3TeamIds = teamDiffs.slice(teamsForR4).map(t => t.teamId);
+
+      // Shuffle R3 teams for random pairing
+      const shuffledR3Teams = [...r3TeamIds].sort(() => Math.random() - 0.5);
+
+      // Get R3 matches and assign teams
+      const r3Matches = matches.filter(m => m.round_number === 3);
+      
+      for (let i = 0; i < r3Matches.length; i++) {
+        const match = r3Matches[i];
+        const teamAId = shuffledR3Teams[i * 2];
+        const teamBId = shuffledR3Teams[i * 2 + 1];
+
+        if (teamAId && teamBId) {
+          await supabase
+            .from('doubles_elimination_matches')
+            .update({
+              team_a_id: teamAId,
+              team_b_id: teamBId
+            })
+            .eq('id', match.id);
+        }
+      }
+
+      // For R4, we need to assign byes - teams go directly to R4
+      // Get R4 matches and assign teams (with proper bracket positioning)
+      const r4Matches = matches.filter(m => m.round_number === 4);
+      
+      // Simple assignment: fill R4 slots with R4 teams
+      // Seeds 1 and 2 should be at opposite ends (if using seeds)
+      const sortedR4Teams = [...r4TeamIds];
+      
+      for (let i = 0; i < r4Matches.length; i++) {
+        const match = r4Matches[i];
+        const teamAId = sortedR4Teams[i * 2];
+        const teamBId = sortedR4Teams[i * 2 + 1];
+
+        const updateData: Record<string, string | null> = {};
+        if (teamAId) updateData.team_a_id = teamAId;
+        if (teamBId) updateData.team_b_id = teamBId;
+
+        if (Object.keys(updateData).length > 0) {
+          await supabase
+            .from('doubles_elimination_matches')
+            .update(updateData)
+            .eq('id', match.id);
+        }
+      }
+
+      return { 
+        success: true, 
+        r3Teams: r3TeamIds,
+        r4Teams: r4TeamIds,
+        tiedTeamsInfo
+      };
+    } catch (error: any) {
+      console.error('Calculate R3 assignments error:', error);
+      return { success: false, error: error.message };
+    }
+  }, []);
+
+  // Check if all R2 matches are completed and trigger R3 assignment
+  const checkAndAssignR3 = useCallback(async (
+    tournamentId: string
+  ): Promise<{ 
+    success: boolean; 
+    triggered: boolean;
+    tiedTeamsInfo?: { count: number; names: string[] };
+    error?: string 
+  }> => {
+    try {
+      // Fetch current matches
+      const { data: matches, error: fetchError } = await supabase
+        .from('doubles_elimination_matches')
+        .select('*')
+        .eq('tournament_id', tournamentId);
+
+      if (fetchError) throw fetchError;
+
+      const { data: teams, error: teamsError } = await supabase
+        .from('doubles_elimination_teams')
+        .select('*')
+        .eq('tournament_id', tournamentId);
+
+      if (teamsError) throw teamsError;
+
+      // Check if R3 matches already have teams assigned
+      const r3Matches = (matches || []).filter((m: any) => m.round_number === 3);
+      const r3AlreadyAssigned = r3Matches.some((m: any) => m.team_a_id || m.team_b_id);
+      
+      if (r3AlreadyAssigned) {
+        return { success: true, triggered: false };
+      }
+
+      // Check if all R2 matches are completed
+      const r2Matches = (matches || []).filter((m: any) => m.round_number === 2);
+      const allR2Completed = r2Matches.every((m: any) => m.status === 'completed');
+      
+      // Also check R1
+      const r1Matches = (matches || []).filter((m: any) => m.round_number === 1);
+      const allR1Completed = r1Matches.every((m: any) => m.status === 'completed');
+
+      if (!allR1Completed || !allR2Completed) {
+        return { success: true, triggered: false };
+      }
+
+      // All preliminary matches completed, calculate and assign R3
+      const result = await calculateR3Assignments(
+        tournamentId, 
+        matches as Match[], 
+        teams as Team[]
+      );
+
+      if (!result.success) {
+        return { success: false, triggered: false, error: result.error };
+      }
+
+      return { 
+        success: true, 
+        triggered: true,
+        tiedTeamsInfo: result.tiedTeamsInfo
+      };
+    } catch (error: any) {
+      console.error('Check and assign R3 error:', error);
+      return { success: false, triggered: false, error: error.message };
+    }
+  }, [calculateR3Assignments]);
+
   return {
     loading,
     createTournament,
@@ -663,6 +936,8 @@ export function useDoublesElimination() {
     updateMatchScore,
     addGameScore,
     endMatch,
-    deleteTournament
+    deleteTournament,
+    calculateR3Assignments,
+    checkAndAssignR3
   };
 }
