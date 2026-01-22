@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoublesElimination, Tournament, Team, Match } from "@/hooks/useDoublesElimination";
+import { useDoublesEliminationReferees } from "@/hooks/useDoublesEliminationReferees";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { RefereeManagement } from "@/components/quicktable/RefereeManagement";
 import { 
   ArrowLeft, Share2, Check, Trophy, Users, 
   Calendar, Trash2 
@@ -43,6 +45,14 @@ export default function DoublesEliminationView() {
   const [copied, setCopied] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [activeTab, setActiveTab] = useState('preliminary');
+
+  // Referee management hook
+  const {
+    referees,
+    loading: refereesLoading,
+    addRefereeByEmail,
+    removeReferee,
+  } = useDoublesEliminationReferees(tournament?.id);
 
   // Check if preliminary rounds are complete (R3 completed)
   const preliminaryComplete = useMemo(() => {
@@ -375,7 +385,7 @@ export default function DoublesEliminationView() {
 
           {/* Settings Tab */}
           {isCreator && (
-            <TabsContent value="settings">
+            <TabsContent value="settings" className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle>Cài đặt giải đấu</CardTitle>
@@ -401,6 +411,18 @@ export default function DoublesEliminationView() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Referee Management */}
+              <RefereeManagement
+                referees={referees.map(r => ({
+                  id: r.id,
+                  email: r.email,
+                  display_name: r.display_name,
+                }))}
+                loading={refereesLoading}
+                onAddReferee={addRefereeByEmail}
+                onRemoveReferee={removeReferee}
+              />
             </TabsContent>
           )}
         </Tabs>
