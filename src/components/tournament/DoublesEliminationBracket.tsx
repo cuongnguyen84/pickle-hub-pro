@@ -41,9 +41,10 @@ const DoublesEliminationBracket = ({
   onMatchUpdated,
   onR3Assigned
 }: DoublesEliminationBracketProps) => {
-  const { checkAndAssignR3 } = useDoublesElimination();
+  const { checkAndAssignR3, checkAndGeneratePlayoff } = useDoublesElimination();
   const { toast } = useToast();
   const [isAssigningR3, setIsAssigningR3] = useState(false);
+  const [isGeneratingPlayoff, setIsGeneratingPlayoff] = useState(false);
   
   const getTeam = (id: string | null): Team | undefined => 
     id ? teams.find(t => t.id === id) : undefined;
@@ -57,23 +58,28 @@ const DoublesEliminationBracket = ({
     return team.team_name;
   };
 
-  const { rounds, champion, loserMatches, r1Completed, r2Completed, r3NeedsAssignment } = useMemo(() => {
+  const { rounds, champion, loserMatches, r1Completed, r2Completed, r3NeedsAssignment, r3Completed, playoffNeedsGeneration } = useMemo(() => {
     if (matches.length === 0) return { 
       rounds: [], 
       champion: null, 
       loserMatches: [], 
       r1Completed: false, 
       r2Completed: false,
-      r3NeedsAssignment: false 
+      r3NeedsAssignment: false,
+      r3Completed: false,
+      playoffNeedsGeneration: false
     };
 
     const r1Matches = matches.filter(m => m.round_number === 1 && m.bracket_type === 'winner');
     const r2LoserMatches = matches.filter(m => m.round_number === 2 && m.bracket_type === 'loser');
     const r3Matches = matches.filter(m => m.round_number === 3);
+    const playoffMatches = matches.filter(m => m.round_number >= 4);
     
     const r1CompletedCheck = r1Matches.length > 0 && r1Matches.every(m => m.status === 'completed');
     const r2CompletedCheck = r2LoserMatches.length > 0 && r2LoserMatches.every(m => m.status === 'completed');
     const r3NeedsAssignmentCheck = r3Matches.length > 0 && r3Matches.some(m => !m.team_a_id || !m.team_b_id);
+    const r3CompletedCheck = r3Matches.length > 0 && r3Matches.every(m => m.status === 'completed');
+    const playoffNeedsGenerationCheck = r3CompletedCheck && playoffMatches.length === 0;
     
     const mainBracketMatches = matches.filter(m => 
       (m.round_number >= 3 && (m.bracket_type === 'merged' || m.bracket_type === 'single')) ||
@@ -117,7 +123,9 @@ const DoublesEliminationBracket = ({
       loserMatches: r2LoserMatches.sort((a, b) => a.match_number - b.match_number),
       r1Completed: r1CompletedCheck,
       r2Completed: r2CompletedCheck,
-      r3NeedsAssignment: r3NeedsAssignmentCheck
+      r3NeedsAssignment: r3NeedsAssignmentCheck,
+      r3Completed: r3CompletedCheck,
+      playoffNeedsGeneration: playoffNeedsGenerationCheck
     };
   }, [matches, teams]);
 
@@ -136,6 +144,25 @@ const DoublesEliminationBracket = ({
     };
     autoAssign();
   }, [r1Completed, r2Completed, r3NeedsAssignment, tournamentId]);
+
+  // Auto-generate playoff bracket when R3 is completed
+  useEffect(() => {
+    const autoGeneratePlayoff = async () => {
+      if (r3Completed && playoffNeedsGeneration && tournamentId && !isGeneratingPlayoff) {
+        setIsGeneratingPlayoff(true);
+        const result = await checkAndGeneratePlayoff(tournamentId);
+        if (result.generated) {
+          toast({ 
+            title: "Đã tạo playoff", 
+            description: "Lịch thi đấu vòng playoff đã được tạo với seeding đúng." 
+          });
+          onScoreUpdated?.(); // Reload to show new playoff matches
+        }
+        setIsGeneratingPlayoff(false);
+      }
+    };
+    autoGeneratePlayoff();
+  }, [r3Completed, playoffNeedsGeneration, tournamentId]);
 
   // Manual trigger for R3 assignment
   const handleManualR3Assignment = async () => {
