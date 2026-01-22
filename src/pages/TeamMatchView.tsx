@@ -840,6 +840,10 @@ export default function TeamMatchView() {
           match={selectedMatch}
           isOwner={userRole.canEditScores}
           tournamentId={tournament.id}
+          onScoreMatch={(match) => {
+            setSelectedMatch(null);
+            setScoringMatch(match);
+          }}
         />
 
         {/* Scoring Sheet for referees */}
