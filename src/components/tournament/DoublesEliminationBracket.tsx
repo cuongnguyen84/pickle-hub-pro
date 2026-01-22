@@ -954,11 +954,7 @@ const BracketMatchCard = ({
 
       toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
       setIsEditing(false);
-      
-      // Trigger reload to show propagated winners in next round
-      if (isMatchComplete && winnerId && match.round_number >= 3) {
-        onScoreUpdated?.();
-      }
+      // No reload - optimistic update already applied via onMatchUpdated
     } catch (error) {
       toast({ title: "Lỗi lưu điểm", variant: "destructive" });
       // Revert on error - trigger full reload
