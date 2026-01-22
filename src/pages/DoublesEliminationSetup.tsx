@@ -207,13 +207,14 @@ export default function DoublesEliminationSetup() {
     }
 
     // Add teams - now using name field and team as club
+    // Only include seed if user explicitly entered it
     const teamsResult = await addTeams(
       result.tournament.id,
-      filledTeams.map((t, index) => ({
+      filledTeams.map((t) => ({
         team_name: t.name,
         player1_name: t.name, // Use name as player1 for compatibility
         player2_name: undefined,
-        seed: t.seed ? parseInt(t.seed) : index + 1, // Use entered seed or fallback to index
+        seed: t.seed && t.seed.trim() ? parseInt(t.seed) : undefined, // Only set seed if user entered it
         club: t.team // Pass club/team info
       }))
     );
