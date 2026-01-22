@@ -18,6 +18,8 @@ export interface TeamMatchTournament {
   dreambreaker_game_type: string | null;
   dreambreaker_scoring_type: string | null;
   require_min_games_per_player: boolean;
+  has_third_place_match: boolean;
+  bracket_pairing_type: 'random' | 'manual' | null;
   status: string;
   created_by: string | null;
   created_at: string;
@@ -46,6 +48,8 @@ export interface CreateTournamentInput {
   // Dreambreaker is always Singles (4 players) with Rally Scoring - stored as null in DB
   // The frontend handles the fixed format logic
   require_min_games_per_player: boolean;
+  has_third_place_match?: boolean;
+  bracket_pairing_type?: 'random' | 'manual';
   game_templates: Omit<GameTemplate, 'id' | 'tournament_id'>[];
 }
 
@@ -121,6 +125,8 @@ export function useTeamMatch() {
           dreambreaker_game_type: null, // Fixed: Singles
           dreambreaker_scoring_type: null, // Fixed: Rally Scoring
           require_min_games_per_player: input.require_min_games_per_player,
+          has_third_place_match: input.has_third_place_match || false,
+          bracket_pairing_type: input.bracket_pairing_type || 'random',
           created_by: user.id,
           status: 'registration', // Default to open registration
         })

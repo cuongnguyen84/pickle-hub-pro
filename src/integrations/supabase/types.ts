@@ -1567,6 +1567,7 @@ export type Database = {
           group_id: string | null
           id: string
           is_playoff: boolean | null
+          is_third_place: boolean | null
           lineup_a_submitted: boolean | null
           lineup_b_submitted: boolean | null
           next_match_id: string | null
@@ -1591,6 +1592,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           is_playoff?: boolean | null
+          is_third_place?: boolean | null
           lineup_a_submitted?: boolean | null
           lineup_b_submitted?: boolean | null
           next_match_id?: string | null
@@ -1615,6 +1617,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           is_playoff?: boolean | null
+          is_third_place?: boolean | null
           lineup_a_submitted?: boolean | null
           lineup_b_submitted?: boolean | null
           next_match_id?: string | null
@@ -1785,6 +1788,7 @@ export type Database = {
       }
       team_match_tournaments: {
         Row: {
+          bracket_pairing_type: string | null
           created_at: string | null
           created_by: string | null
           dreambreaker_game_type:
@@ -1796,6 +1800,7 @@ export type Database = {
           format: string
           group_count: number | null
           has_dreambreaker: boolean | null
+          has_third_place_match: boolean | null
           id: string
           name: string
           playoff_team_count: number | null
@@ -1809,6 +1814,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          bracket_pairing_type?: string | null
           created_at?: string | null
           created_by?: string | null
           dreambreaker_game_type?:
@@ -1820,6 +1826,7 @@ export type Database = {
           format?: string
           group_count?: number | null
           has_dreambreaker?: boolean | null
+          has_third_place_match?: boolean | null
           id?: string
           name: string
           playoff_team_count?: number | null
@@ -1833,6 +1840,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          bracket_pairing_type?: string | null
           created_at?: string | null
           created_by?: string | null
           dreambreaker_game_type?:
@@ -1844,6 +1852,7 @@ export type Database = {
           format?: string
           group_count?: number | null
           has_dreambreaker?: boolean | null
+          has_third_place_match?: boolean | null
           id?: string
           name?: string
           playoff_team_count?: number | null

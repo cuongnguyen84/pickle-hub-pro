@@ -306,7 +306,7 @@ export function useTeamMatchMatchManagement() {
       // First get the match to check if it's a playoff match
       const { data: match, error: fetchError } = await supabase
         .from('team_match_matches')
-        .select('next_match_id, next_match_slot, is_playoff')
+        .select('next_match_id, next_match_slot, is_playoff, playoff_round, team_a_id, team_b_id')
         .eq('id', matchId)
         .single();
       
@@ -337,6 +337,89 @@ export function useTeamMatchMatchManagement() {
           .eq('id', match.next_match_id);
         
         if (advanceError) throw advanceError;
+
+        // Check if this is a semifinal match (playoff_round === 2)
+        // If so, send loser to third-place match
+        if (match.playoff_round === 2 && winnerId) {
+          const loserId = match.team_a_id === winnerId ? match.team_b_id : match.team_a_id;
+          
+          if (loserId) {
+            // Find the third-place match
+            const { data: thirdPlaceMatch } = await supabase
+              .from('team_match_matches')
+              .select('id, team_a_id, team_b_id')
+              .eq('tournament_id', tournamentId)
+              .eq('is_third_place', true)
+              .single();
+
+            if (thirdPlaceMatch) {
+              // Assign loser to the first available slot
+              const updateField = thirdPlaceMatch.team_a_id ? 'team_b_id' : 'team_a_id';
+              
+              await supabase
+                .from('team_match_matches')
+                .update({ [updateField]: loserId })
+                .eq('id', thirdPlaceMatch.id);
+
+              // Check if third-place match now has both teams
+              const { data: updatedTPMatch } = await supabase
+                .from('team_match_matches')
+                .select('id, team_a_id, team_b_id')
+                .eq('id', thirdPlaceMatch.id)
+                .single();
+
+              // Create games for third-place match if both teams are assigned
+              if (updatedTPMatch?.team_a_id && updatedTPMatch?.team_b_id) {
+                const { data: existingGames } = await supabase
+                  .from('team_match_games')
+                  .select('id')
+                  .eq('match_id', updatedTPMatch.id)
+                  .limit(1);
+
+                if (!existingGames || existingGames.length === 0) {
+                  const { data: templates } = await supabase
+                    .from('team_match_game_templates')
+                    .select('*')
+                    .eq('tournament_id', tournamentId)
+                    .order('order_index');
+
+                  if (templates && templates.length > 0) {
+                    const isEvenGames = templates.length % 2 === 0;
+                    const shouldAddDreambreaker = hasDreambreaker && isEvenGames;
+                    
+                    const games = templates.map((template, index) => ({
+                      match_id: updatedTPMatch.id,
+                      order_index: index,
+                      game_type: template.game_type,
+                      scoring_type: template.scoring_type,
+                      display_name: template.display_name,
+                      is_dreambreaker: false,
+                      score_a: 0,
+                      score_b: 0,
+                      status: 'pending',
+                    }));
+                    
+                    if (shouldAddDreambreaker) {
+                      games.push({
+                        match_id: updatedTPMatch.id,
+                        order_index: templates.length,
+                        game_type: 'MS',
+                        scoring_type: 'rally21',
+                        display_name: 'Dreambreaker',
+                        is_dreambreaker: true,
+                        score_a: 0,
+                        score_b: 0,
+                        status: 'pending',
+                      });
+                    }
+
+                    await supabase.from('team_match_games').insert(games);
+                  }
+                }
+              }
+            }
+          }
+        }
 
         // Check if next match now has both teams, create games if needed
         const { data: nextMatch } = await supabase
@@ -668,11 +751,257 @@ export function useTeamMatchMatchManagement() {
     },
   });
 
+  // Generate single elimination bracket with optional third-place match
+  const generateSingleEliminationMutation = useMutation({
+    mutationFn: async ({ 
+      tournamentId, 
+      teams, 
+      gameTemplates, 
+      hasDreambreaker,
+      hasThirdPlaceMatch,
+      pairingType,
+      manualPairings,
+    }: {
+      tournamentId: string;
+      teams: TeamMatchTeam[];
+      gameTemplates: { game_type: 'WD' | 'MD' | 'MX' | 'WS' | 'MS'; scoring_type: 'rally21' | 'sideout11'; display_name: string | null; order_index: number }[];
+      hasDreambreaker?: boolean;
+      hasThirdPlaceMatch?: boolean;
+      pairingType: 'random' | 'manual';
+      manualPairings?: Array<{ team1Id: string; team2Id: string }>;
+    }) => {
+      const approvedTeams = teams.filter(t => t.status === 'approved');
+      const teamCount = approvedTeams.length;
+
+      // Validate power of 2
+      if (teamCount < 2 || (teamCount & (teamCount - 1)) !== 0) {
+        throw new Error('Số đội phải là lũy thừa của 2 (4, 8, 16, 32...)');
+      }
+
+      const totalRounds = Math.log2(teamCount);
+      const matches: Omit<TeamMatchMatch, 'id' | 'created_at' | 'updated_at' | 'team_a' | 'team_b'>[] = [];
+      
+      // First round matches
+      const firstRoundMatchCount = teamCount / 2;
+      let firstRoundPairings: Array<{ team1Id: string; team2Id: string }>;
+
+      if (pairingType === 'manual' && manualPairings && manualPairings.length === firstRoundMatchCount) {
+        // Use provided manual pairings
+        firstRoundPairings = manualPairings;
+      } else {
+        // Random pairing: shuffle teams
+        const shuffled = [...approvedTeams].sort(() => Math.random() - 0.5);
+        firstRoundPairings = [];
+        for (let i = 0; i < shuffled.length; i += 2) {
+          if (shuffled[i + 1]) {
+            firstRoundPairings.push({
+              team1Id: shuffled[i].id,
+              team2Id: shuffled[i + 1].id,
+            });
+          }
+        }
+      }
+
+      // Create first round matches
+      firstRoundPairings.forEach((pairing, index) => {
+        matches.push({
+          tournament_id: tournamentId,
+          group_id: null,
+          team_a_id: pairing.team1Id,
+          team_b_id: pairing.team2Id,
+          games_won_a: 0,
+          games_won_b: 0,
+          total_points_a: 0,
+          total_points_b: 0,
+          winner_team_id: null,
+          status: 'pending',
+          round_number: null,
+          is_playoff: true, // Using playoff structure for SE
+          playoff_round: totalRounds,
+          bracket_position: index,
+          next_match_id: null,
+          next_match_slot: null,
+          lineup_a_submitted: false,
+          lineup_b_submitted: false,
+          display_order: index,
+        });
+      });
+
+      // Create later round matches (without teams yet)
+      for (let round = totalRounds - 1; round >= 1; round--) {
+        const matchesInRound = Math.pow(2, round - 1);
+        
+        for (let i = 0; i < matchesInRound; i++) {
+          matches.push({
+            tournament_id: tournamentId,
+            group_id: null,
+            team_a_id: null,
+            team_b_id: null,
+            games_won_a: 0,
+            games_won_b: 0,
+            total_points_a: 0,
+            total_points_b: 0,
+            winner_team_id: null,
+            status: 'pending',
+            round_number: null,
+            is_playoff: true,
+            playoff_round: round,
+            bracket_position: i,
+            next_match_id: null,
+            next_match_slot: null,
+            lineup_a_submitted: false,
+            lineup_b_submitted: false,
+            display_order: 100 + (totalRounds - round) * 10 + i,
+          });
+        }
+      }
+
+      // Insert all matches
+      const { data: insertedMatches, error: matchError } = await supabase
+        .from('team_match_matches')
+        .insert(matches)
+        .select();
+
+      if (matchError) throw matchError;
+      if (!insertedMatches) throw new Error('Không thể tạo trận đấu');
+
+      // Group by playoff_round
+      const matchesByRound = insertedMatches.reduce((acc, match) => {
+        const round = match.playoff_round || 1;
+        if (!acc[round]) acc[round] = [];
+        acc[round].push(match);
+        return acc;
+      }, {} as Record<number, typeof insertedMatches>);
+
+      // Link each match to its next round match
+      for (let round = totalRounds; round > 1; round--) {
+        const currentRoundMatches = (matchesByRound[round] || []).sort((a, b) => 
+          (a.bracket_position || 0) - (b.bracket_position || 0)
+        );
+        const nextRoundMatches = (matchesByRound[round - 1] || []).sort((a, b) => 
+          (a.bracket_position || 0) - (b.bracket_position || 0)
+        );
+
+        for (let i = 0; i < currentRoundMatches.length; i++) {
+          const nextMatchIndex = Math.floor(i / 2);
+          const nextMatch = nextRoundMatches[nextMatchIndex];
+          
+          if (nextMatch) {
+            await supabase
+              .from('team_match_matches')
+              .update({ 
+                next_match_id: nextMatch.id,
+                next_match_slot: (i % 2) + 1,
+              })
+              .eq('id', currentRoundMatches[i].id);
+          }
+        }
+      }
+
+      // Create third-place match if enabled
+      let thirdPlaceMatchId: string | null = null;
+      if (hasThirdPlaceMatch && teamCount >= 4) {
+        const { data: thirdPlaceMatch, error: tpError } = await supabase
+          .from('team_match_matches')
+          .insert({
+            tournament_id: tournamentId,
+            group_id: null,
+            team_a_id: null,
+            team_b_id: null,
+            games_won_a: 0,
+            games_won_b: 0,
+            total_points_a: 0,
+            total_points_b: 0,
+            winner_team_id: null,
+            status: 'pending',
+            round_number: null,
+            is_playoff: true,
+            playoff_round: 0, // Special round for third place
+            bracket_position: 0,
+            next_match_id: null,
+            next_match_slot: null,
+            lineup_a_submitted: false,
+            lineup_b_submitted: false,
+            display_order: 999, // Display at end
+            is_third_place: true,
+          })
+          .select()
+          .single();
+
+        if (tpError) {
+          console.error('Error creating third-place match:', tpError);
+        } else {
+          thirdPlaceMatchId = thirdPlaceMatch.id;
+        }
+      }
+
+      // Create games for first round matches
+      const firstRoundMatches = insertedMatches.filter(m => 
+        m.playoff_round === totalRounds && m.team_a_id && m.team_b_id
+      );
+      
+      if (firstRoundMatches.length > 0 && gameTemplates.length > 0) {
+        const isEvenGames = gameTemplates.length % 2 === 0;
+        const shouldAddDreambreaker = hasDreambreaker && isEvenGames;
+        
+        const games = firstRoundMatches.flatMap(match => {
+          const regularGames = gameTemplates.map((template, index) => ({
+            match_id: match.id,
+            order_index: index,
+            game_type: template.game_type,
+            scoring_type: template.scoring_type,
+            display_name: template.display_name,
+            is_dreambreaker: false,
+            score_a: 0,
+            score_b: 0,
+            status: 'pending',
+          }));
+          
+          if (shouldAddDreambreaker) {
+            regularGames.push({
+              match_id: match.id,
+              order_index: gameTemplates.length,
+              game_type: 'MS' as const,
+              scoring_type: 'rally21' as const,
+              display_name: 'Dreambreaker',
+              is_dreambreaker: true,
+              score_a: 0,
+              score_b: 0,
+              status: 'pending',
+            });
+          }
+          
+          return regularGames;
+        });
+
+        await supabase.from('team_match_games').insert(games);
+      }
+
+      return { insertedMatches, thirdPlaceMatchId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-matches', variables.tournamentId] });
+      toast({
+        title: 'Thành công',
+        description: 'Đã tạo Bracket Single Elimination',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Lỗi',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     generateMatches: generateMatchesMutation.mutateAsync,
     isGenerating: generateMatchesMutation.isPending,
     generatePlayoffMatches: generatePlayoffMatchesMutation.mutateAsync,
     isGeneratingPlayoff: generatePlayoffMatchesMutation.isPending,
+    generateSingleElimination: generateSingleEliminationMutation.mutateAsync,
+    isGeneratingSE: generateSingleEliminationMutation.isPending,
     updateGameScore: updateGameScoreMutation.mutateAsync,
     isUpdatingScore: updateGameScoreMutation.isPending,
     updateMatchResult: updateMatchResultMutation.mutateAsync,
