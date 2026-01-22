@@ -250,12 +250,12 @@ const DoublesEliminationBracket = ({
             <div className="flex gap-6 min-w-max items-start">
               {/* R1 Winner Matches */}
               {rounds.find(r => r.roundNumber === 1) && (
-                <div className="flex flex-col min-w-[260px]">
+                <div className="flex flex-col min-w-[280px]">
                   <div className="mb-3 pb-2 border-b border-emerald-500/30">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-5 rounded-full bg-emerald-500" />
-                        <span className="font-semibold text-sm">Vòng 1</span>
+                        <span className="font-semibold text-sm text-foreground">Vòng 1</span>
                       </div>
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                         {rounds.find(r => r.roundNumber === 1)?.matches.filter(m => m.status === 'completed').length || 0}/
@@ -264,19 +264,22 @@ const DoublesEliminationBracket = ({
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 ml-3">Winner Bracket</p>
                   </div>
-                  <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-1">
+                  <div className="flex flex-col gap-3 max-h-[70vh] overflow-y-auto pr-1">
                     {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
-                      <BracketMatchCard
+                      <LoserBracketCard
                         key={match.id}
                         match={match}
                         allMatches={matches}
                         teamA={getTeam(match.team_a_id)}
                         teamB={getTeam(match.team_b_id)}
                         formatTeamName={formatTeamName}
-                        isFinal={false}
+                        sourceAMatchNum=""
+                        sourceBMatchNum=""
                         canEdit={canEdit}
                         onScoreUpdated={onScoreUpdated}
                         onMatchUpdated={onMatchUpdated}
+                        tournamentId={tournamentId}
+                        onR3Assigned={onR3Assigned}
                       />
                     ))}
                   </div>
@@ -285,12 +288,12 @@ const DoublesEliminationBracket = ({
 
               {/* R2 Loser Matches */}
               {loserMatches.length > 0 && (
-                <div className="flex flex-col min-w-[260px]">
+                <div className="flex flex-col min-w-[280px]">
                   <div className="mb-3 pb-2 border-b border-amber-500/30">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-5 rounded-full bg-amber-500" />
-                        <span className="font-semibold text-sm">Vòng 2</span>
+                        <span className="font-semibold text-sm text-foreground">Vòng 2</span>
                       </div>
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                         {loserMatches.filter(m => m.status === 'completed').length}/{loserMatches.length}
@@ -298,7 +301,7 @@ const DoublesEliminationBracket = ({
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 ml-3">Loser Bracket</p>
                   </div>
-                  <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-1">
+                  <div className="flex flex-col gap-3 max-h-[70vh] overflow-y-auto pr-1">
                     {loserMatches.map((match) => {
                       const sourceA = match.source_a as { type: string; match_index?: number } | null;
                       const sourceB = match.source_b as { type: string; match_index?: number } | null;
@@ -328,12 +331,12 @@ const DoublesEliminationBracket = ({
               )}
 
               {/* R3 Merge Matches */}
-              <div className="flex flex-col min-w-[260px]">
+              <div className="flex flex-col min-w-[280px]">
                 <div className="mb-3 pb-2 border-b border-blue-500/30">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-1 h-5 rounded-full bg-blue-500" />
-                      <span className="font-semibold text-sm">Vòng 3</span>
+                      <span className="font-semibold text-sm text-foreground">Vòng 3</span>
                     </div>
                     <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                       {r3Rounds[0]?.matches.filter(m => m.status === 'completed').length || 0}/
@@ -354,7 +357,7 @@ const DoublesEliminationBracket = ({
                     </p>
                   </div>
                 ) : r3Rounds.length > 0 && r3Rounds[0].matches.length > 0 ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-3">
                     {r3Rounds[0].matches.map((match) => (
                       <BracketMatchCard
                         key={match.id}
@@ -669,10 +672,12 @@ const LoserBracketCard = ({
               )}>
                 {formatTeamName(teamA)}
               </div>
-            ) : (
+            ) : sourceAMatchNum ? (
               <div className="text-muted-foreground text-sm italic">
                 Thua trận {sourceAMatchNum}
               </div>
+            ) : (
+              <div className="text-muted-foreground text-sm italic">TBD</div>
             )}
           </div>
           
@@ -714,10 +719,12 @@ const LoserBracketCard = ({
               )}>
                 {formatTeamName(teamB)}
               </div>
-            ) : (
+            ) : sourceBMatchNum ? (
               <div className="text-muted-foreground text-sm italic">
                 Thua trận {sourceBMatchNum}
               </div>
+            ) : (
+              <div className="text-muted-foreground text-sm italic">TBD</div>
             )}
           </div>
           
@@ -914,7 +921,7 @@ const BracketMatchCard = ({
   return (
     <Card 
       className={cn(
-        "overflow-hidden transition-all",
+        "overflow-hidden transition-all border-border/50",
         isFinal && "border-primary/30 shadow-lg ring-2 ring-primary/10",
         isCompleted && "opacity-90",
         isLive && "border-red-500/50 ring-2 ring-red-500/20"
@@ -923,7 +930,7 @@ const BracketMatchCard = ({
       {/* Match header */}
       <div className={cn(
         "px-3 py-1.5 border-b flex items-center justify-between",
-        isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/50 dark:bg-muted/30"
+        isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/50"
       )}>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
@@ -959,7 +966,7 @@ const BracketMatchCard = ({
         {/* Team A Slot */}
         <div 
           className={cn(
-            "flex items-center gap-2 p-2 transition-colors",
+            "flex items-center gap-2 p-2 min-h-[40px] transition-colors",
             isAWinner && "bg-primary/10 border-l-2 border-primary",
             !teamA && "bg-muted/20"
           )}
@@ -999,7 +1006,7 @@ const BracketMatchCard = ({
         {/* Team B Slot */}
         <div 
           className={cn(
-            "flex items-center gap-2 p-2 transition-colors",
+            "flex items-center gap-2 p-2 min-h-[40px] transition-colors",
             isBWinner && "bg-primary/10 border-l-2 border-primary",
             !teamB && "bg-muted/20"
           )}
