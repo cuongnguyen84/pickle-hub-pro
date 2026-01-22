@@ -17,6 +17,7 @@ export interface Tournament {
   team_count: number;
   has_third_place_match: boolean;
   early_rounds_format: BestOfFormat;
+  semifinals_format: BestOfFormat;
   finals_format: BestOfFormat;
   status: TournamentStatus;
   current_round: number;
@@ -87,11 +88,18 @@ function nextPowerOf2(n: number): number {
 }
 
 // Helper to get best_of value based on round type
-function getBestOfForRound(roundType: RoundType, earlyFormat: BestOfFormat, finalsFormat: BestOfFormat): number {
-  const isFinals = roundType === 'semifinal' || roundType === 'final' || roundType === 'third_place';
+function getBestOfForRound(
+  roundType: RoundType, 
+  earlyFormat: BestOfFormat, 
+  semifinalsFormat: BestOfFormat,
+  finalsFormat: BestOfFormat
+): number {
+  if (roundType === 'final' || roundType === 'third_place') {
+    return finalsFormat === 'bo5' ? 5 : finalsFormat === 'bo3' ? 3 : 1;
+  }
   
-  if (isFinals) {
-    return finalsFormat === 'bo5' ? 5 : 3;
+  if (roundType === 'semifinal') {
+    return semifinalsFormat === 'bo5' ? 5 : semifinalsFormat === 'bo3' ? 3 : 1;
   }
   
   switch (earlyFormat) {
@@ -123,7 +131,8 @@ export function useDoublesElimination() {
     earlyRoundsFormat: BestOfFormat,
     finalsFormat: BestOfFormat,
     courtCount: number = 1,
-    startTime?: string
+    startTime?: string,
+    semifinalsFormat?: BestOfFormat
   ): Promise<{ success: boolean; tournament?: Tournament; error?: string }> => {
     if (!user) return { success: false, error: 'AUTH_REQUIRED' };
     
@@ -140,6 +149,7 @@ export function useDoublesElimination() {
           team_count: teamCount,
           has_third_place_match: hasThirdPlaceMatch,
           early_rounds_format: earlyRoundsFormat,
+          semifinals_format: semifinalsFormat || finalsFormat,
           finals_format: finalsFormat,
           court_count: courtCount,
           start_time: startTime || null
@@ -212,6 +222,7 @@ export function useDoublesElimination() {
       
       const N = teams.length;
       const earlyFormat = (tournament.early_rounds_format || 'bo1') as BestOfFormat;
+      const semifinalsFormat = (tournament.semifinals_format || 'bo3') as BestOfFormat;
       const finalsFormat = (tournament.finals_format || 'bo3') as BestOfFormat;
       
       const matches: any[] = [];
@@ -240,7 +251,7 @@ export function useDoublesElimination() {
           score_a: 0,
           score_b: 0,
           winner_id: null,
-          best_of: getBestOfForRound('winner_r1', earlyFormat, finalsFormat),
+          best_of: getBestOfForRound('winner_r1', earlyFormat, semifinalsFormat, finalsFormat),
           games: [],
           games_won_a: 0,
           games_won_b: 0,
@@ -278,7 +289,7 @@ export function useDoublesElimination() {
           score_a: 0,
           score_b: 0,
           winner_id: null,
-          best_of: getBestOfForRound('loser_r2', earlyFormat, finalsFormat),
+          best_of: getBestOfForRound('loser_r2', earlyFormat, semifinalsFormat, finalsFormat),
           games: [],
           games_won_a: 0,
           games_won_b: 0,
@@ -322,7 +333,7 @@ export function useDoublesElimination() {
           score_a: 0,
           score_b: 0,
           winner_id: null,
-          best_of: getBestOfForRound('merge_r3', earlyFormat, finalsFormat),
+          best_of: getBestOfForRound('merge_r3', earlyFormat, semifinalsFormat, finalsFormat),
           games: [],
           games_won_a: 0,
           games_won_b: 0,
@@ -363,7 +374,7 @@ export function useDoublesElimination() {
             score_a: 0,
             score_b: 0,
             winner_id: null,
-            best_of: getBestOfForRound(roundType, earlyFormat, finalsFormat),
+            best_of: getBestOfForRound(roundType, earlyFormat, semifinalsFormat, finalsFormat),
             games: [],
             games_won_a: 0,
             games_won_b: 0,
@@ -397,7 +408,7 @@ export function useDoublesElimination() {
           score_a: 0,
           score_b: 0,
           winner_id: null,
-          best_of: getBestOfForRound('third_place', earlyFormat, finalsFormat),
+          best_of: getBestOfForRound('third_place', earlyFormat, semifinalsFormat, finalsFormat),
           games: [],
           games_won_a: 0,
           games_won_b: 0,
