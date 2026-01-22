@@ -361,81 +361,9 @@ export function useDoublesElimination() {
         });
       }
       
-      // ROUND 4+: Single Elimination with proper seeding
-      // Seeds 1 and 2 should be placed on opposite halves of bracket
-      let currentRound = 4;
-      let teamsInRound = R4;
-      
-      while (teamsInRound > 1) {
-        const matchesInRound = teamsInRound / 2;
-        let roundType: RoundType = 'elimination';
-        
-        if (teamsInRound === 8) roundType = 'quarterfinal';
-        else if (teamsInRound === 4) roundType = 'semifinal';
-        else if (teamsInRound === 2) roundType = 'final';
-        
-        for (let i = 0; i < matchesInRound; i++) {
-          matches.push({
-            tournament_id: tournamentId,
-            round_number: currentRound,
-            round_type: roundType,
-            bracket_type: 'single',
-            match_number: i + 1,
-            team_a_id: null,
-            team_b_id: null,
-            score_a: 0,
-            score_b: 0,
-            winner_id: null,
-            best_of: getBestOfForRound(roundType, earlyFormat, semifinalsFormat, finalsFormat),
-            games: [],
-            games_won_a: 0,
-            games_won_b: 0,
-            source_a: { type: 'winner_of', round: currentRound - 1, match_index: i * 2 },
-            source_b: { type: 'winner_of', round: currentRound - 1, match_index: i * 2 + 1 },
-            dest_winner: teamsInRound === 2 ? { type: 'CHAMPION' } : null,
-            dest_loser: { type: 'ELIMINATED' },
-            is_bye: false,
-            display_order: displayOrder++,
-            status: 'pending',
-            live_referee_id: null,
-            court_number: null,
-            start_time: null
-          });
-        }
-        
-        teamsInRound = matchesInRound;
-        currentRound++;
-      }
-      
-      // Third place match (if enabled)
-      if (tournament.has_third_place_match) {
-        matches.push({
-          tournament_id: tournamentId,
-          round_number: currentRound - 1,
-          round_type: 'third_place',
-          bracket_type: 'single',
-          match_number: 1,
-          team_a_id: null,
-          team_b_id: null,
-          score_a: 0,
-          score_b: 0,
-          winner_id: null,
-          best_of: getBestOfForRound('third_place', earlyFormat, semifinalsFormat, finalsFormat),
-          games: [],
-          games_won_a: 0,
-          games_won_b: 0,
-          source_a: { type: 'loser_of', round_type: 'semifinal', match_index: 0 },
-          source_b: { type: 'loser_of', round_type: 'semifinal', match_index: 1 },
-          dest_winner: null,
-          dest_loser: null,
-          is_bye: false,
-          display_order: displayOrder++,
-          status: 'pending',
-          live_referee_id: null,
-          court_number: null,
-          start_time: null
-        });
-      }
+      // IMPORTANT: Do NOT generate Round 4+ (playoff) matches here!
+      // Playoff matches will be generated dynamically after Round 3 completes
+      // This ensures proper seeding where seeds 1&2 are at opposite ends of the bracket
       
       // Assign courts and times ONLY to Round 1 and Round 2 matches
       // Round 3 and Playoff will get times dynamically when the previous round completes
@@ -734,8 +662,8 @@ export function useDoublesElimination() {
     }
   }, []);
 
-  // Calculate point differential and auto-assign R3/R4 after R2 completes
-  // Returns info about tied teams if random selection was used
+  // Calculate point differential and auto-assign R3 after R2 completes
+  // Does NOT generate playoff yet - that happens after R3 completes
   const calculateR3Assignments = useCallback(async (
     tournamentId: string,
     matches: Match[],
@@ -761,7 +689,6 @@ export function useDoublesElimination() {
       }
 
       // Calculate point differential for each surviving team
-      // For teams that played in both R1 and R2, only use R2 results
       interface TeamDiff {
         teamId: string;
         teamName: string;
@@ -771,21 +698,15 @@ export function useDoublesElimination() {
 
       const teamDiffs: TeamDiff[] = [];
 
-      // R1 winners (those who did NOT play in R2 - they won R1 and their opponent went to R2)
+      // R1 winners
       r1Matches.forEach(match => {
         const winnerId = match.winner_id;
         if (!winnerId) return;
-
-        // Check if this winner also played in R2 (they wouldn't be in R2, only losers are)
-        // R1 winners don't play R2, they wait for R3/R4
         const winnerTeam = teams.find(t => t.id === winnerId);
         if (!winnerTeam) return;
-
-        // Calculate point diff from R1
         const isTeamA = match.team_a_id === winnerId;
         const pointsFor = isTeamA ? match.score_a : match.score_b;
         const pointsAgainst = isTeamA ? match.score_b : match.score_a;
-
         teamDiffs.push({
           teamId: winnerId,
           teamName: winnerTeam.team_name,
@@ -794,19 +715,15 @@ export function useDoublesElimination() {
         });
       });
 
-      // R2 winners (losers from R1 who won R2 - use only R2 results)
+      // R2 winners (use only R2 results)
       r2Matches.forEach(match => {
         const winnerId = match.winner_id;
         if (!winnerId) return;
-
         const winnerTeam = teams.find(t => t.id === winnerId);
         if (!winnerTeam) return;
-
-        // Calculate point diff from R2 ONLY (ignore their R1 loss)
         const isTeamA = match.team_a_id === winnerId;
         const pointsFor = isTeamA ? match.score_a : match.score_b;
         const pointsAgainst = isTeamA ? match.score_b : match.score_a;
-
         teamDiffs.push({
           teamId: winnerId,
           teamName: winnerTeam.team_name,
@@ -822,13 +739,12 @@ export function useDoublesElimination() {
         if (m.team_b_id) r1MatchTeams.add(m.team_b_id);
       });
       
-      // Teams that didn't play in R1 get a bye (point diff = 0)
       teams.forEach(team => {
         if (!r1MatchTeams.has(team.id) && team.status !== 'eliminated') {
           teamDiffs.push({
             teamId: team.id,
             teamName: team.team_name,
-            pointDiff: 0, // Bye teams have 0 diff
+            pointDiff: 0,
             playedR2: false
           });
         }
@@ -850,26 +766,20 @@ export function useDoublesElimination() {
         const teamsAtCutoff = teamDiffs.filter(t => t.pointDiff === cutoffDiff);
         
         if (teamsAtCutoff.length > 1) {
-          // There are ties at the cutoff - need to randomly select
           tiedTeamsInfo = {
             count: teamsAtCutoff.length,
             names: teamsAtCutoff.map(t => t.teamName)
           };
 
-          // Separate teams above cutoff, at cutoff, and below cutoff
           const aboveCutoff = teamDiffs.filter(t => t.pointDiff > cutoffDiff);
           const atCutoff = teamDiffs.filter(t => t.pointDiff === cutoffDiff);
           const belowCutoff = teamDiffs.filter(t => t.pointDiff < cutoffDiff);
 
-          // Shuffle teams at cutoff for random selection
           const shuffledAtCutoff = [...atCutoff].sort(() => Math.random() - 0.5);
-
-          // Recalculate how many we need from the tied group for R4
           const r4SlotsLeft = teamsForR4 - aboveCutoff.length;
           const r4FromTied = shuffledAtCutoff.slice(0, r4SlotsLeft);
           const r3FromTied = shuffledAtCutoff.slice(r4SlotsLeft);
 
-          // Rebuild the sorted list
           teamDiffs.length = 0;
           teamDiffs.push(...aboveCutoff, ...r4FromTied, ...r3FromTied, ...belowCutoff);
         }
@@ -885,7 +795,7 @@ export function useDoublesElimination() {
       const shuffledR3Teams = [...r3TeamIds].sort(() => Math.random() - 0.5);
 
       // Get R3 matches and assign teams + court/time scheduling
-      const r3Matches = matches.filter(m => m.round_number === 3);
+      const r3MatchesList = matches.filter(m => m.round_number === 3);
       
       // Calculate R3 start time: system time + 15 minutes
       const now = new Date();
@@ -908,8 +818,8 @@ export function useDoublesElimination() {
       const courtNextSlot = new Map<number, number>();
       courts.forEach(c => courtNextSlot.set(c, 0));
       
-      for (let i = 0; i < r3Matches.length; i++) {
-        const match = r3Matches[i];
+      for (let i = 0; i < r3MatchesList.length; i++) {
+        const match = r3MatchesList[i];
         const teamAId = shuffledR3Teams[i * 2];
         const teamBId = shuffledR3Teams[i * 2 + 1];
 
@@ -936,91 +846,9 @@ export function useDoublesElimination() {
             .eq('id', match.id);
         }
       }
-      
-      // Also schedule R4 (playoff) matches with times starting after R3
-      // Calculate R4 start based on when R3 would finish
-      const maxR3Slots = Math.max(...Array.from(courtNextSlot.values()));
-      const r4StartMinutes = r3StartHour * 60 + r3StartMinute + maxR3Slots * matchDurationMinutes + 15; // +15 min buffer
-      const r4StartHour = Math.floor(r4StartMinutes / 60) % 24;
-      const r4StartMinute = r4StartMinutes % 60;
 
-      // For R4, we need to assign byes - teams go directly to R4
-      // Get R4 matches and assign teams (with proper bracket positioning) + court/time
-      const r4Matches = matches.filter(m => m.round_number === 4);
-      
-      // Reset court slots for R4
-      const r4CourtNextSlot = new Map<number, number>();
-      courts.forEach(c => r4CourtNextSlot.set(c, 0));
-      
-      // Simple assignment: fill R4 slots with R4 teams
-      // Seeds 1 and 2 should be at opposite ends (if using seeds)
-      const sortedR4Teams = [...r4TeamIds];
-      
-      for (let i = 0; i < r4Matches.length; i++) {
-        const match = r4Matches[i];
-        const teamAId = sortedR4Teams[i * 2];
-        const teamBId = sortedR4Teams[i * 2 + 1];
-
-        // Assign court and time for R4
-        const minSlot = Math.min(...Array.from(r4CourtNextSlot.values()));
-        const availableCourt = courts.find(c => r4CourtNextSlot.get(c) === minSlot) || courts[0];
-        const slotIdx = r4CourtNextSlot.get(availableCourt) || 0;
-        const totalMinutes = r4StartHour * 60 + r4StartMinute + slotIdx * matchDurationMinutes;
-        const hour = Math.floor(totalMinutes / 60) % 24;
-        const minute = totalMinutes % 60;
-        const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        
-        r4CourtNextSlot.set(availableCourt, slotIdx + 1);
-
-        const updateData: Record<string, string | number | null> = {
-          court_number: availableCourt,
-          start_time: startTime
-        };
-        if (teamAId) updateData.team_a_id = teamAId;
-        if (teamBId) updateData.team_b_id = teamBId;
-
-        await supabase
-          .from('doubles_elimination_matches')
-          .update(updateData)
-          .eq('id', match.id);
-      }
-      
-      // Also schedule subsequent playoff rounds (R5+, semifinals, finals, third place)
-      const laterRounds = matches.filter(m => 
-        m.round_number > 4 || 
-        m.round_type === 'semifinal' || 
-        m.round_type === 'final' || 
-        m.round_type === 'third_place'
-      );
-      
-      if (laterRounds.length > 0) {
-        // Calculate start time after R4
-        const maxR4Slots = Math.max(...Array.from(r4CourtNextSlot.values()));
-        const laterStartMinutes = r4StartHour * 60 + r4StartMinute + maxR4Slots * matchDurationMinutes + 15;
-        
-        const laterCourtNextSlot = new Map<number, number>();
-        courts.forEach(c => laterCourtNextSlot.set(c, 0));
-        
-        for (const match of laterRounds) {
-          const minSlot = Math.min(...Array.from(laterCourtNextSlot.values()));
-          const availableCourt = courts.find(c => laterCourtNextSlot.get(c) === minSlot) || courts[0];
-          const slotIdx = laterCourtNextSlot.get(availableCourt) || 0;
-          const totalMinutes = laterStartMinutes + slotIdx * matchDurationMinutes;
-          const hour = Math.floor(totalMinutes / 60) % 24;
-          const minute = totalMinutes % 60;
-          const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-          
-          laterCourtNextSlot.set(availableCourt, slotIdx + 1);
-          
-          await supabase
-            .from('doubles_elimination_matches')
-            .update({
-              court_number: availableCourt,
-              start_time: startTime
-            })
-            .eq('id', match.id);
-        }
-      }
+      // Store R4 team IDs in tournament for later playoff generation
+      // Note: Playoff is NOT generated here - it will be generated after R3 completes
 
       return { 
         success: true, 
@@ -1030,6 +858,290 @@ export function useDoublesElimination() {
       };
     } catch (error: any) {
       console.error('Calculate R3 assignments error:', error);
+      return { success: false, error: error.message };
+    }
+  }, []);
+
+  // Generate playoff bracket after R3 completes
+  // Uses proper seeding: seeds 1&2 at opposite ends, random for non-seeded teams
+  const generatePlayoffBracket = useCallback(async (
+    tournamentId: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // Fetch tournament, teams, and matches
+      const { data: tournament, error: tError } = await supabase
+        .from('doubles_elimination_tournaments')
+        .select('*')
+        .eq('id', tournamentId)
+        .single();
+      
+      if (tError) throw tError;
+
+      const { data: teams, error: teamsError } = await supabase
+        .from('doubles_elimination_teams')
+        .select('*')
+        .eq('tournament_id', tournamentId);
+      
+      if (teamsError) throw teamsError;
+
+      const { data: matches, error: matchesError } = await supabase
+        .from('doubles_elimination_matches')
+        .select('*')
+        .eq('tournament_id', tournamentId);
+      
+      if (matchesError) throw matchesError;
+
+      // Check if R3 is complete
+      const r3Matches = matches.filter((m: any) => m.round_number === 3);
+      const allR3Completed = r3Matches.every((m: any) => m.status === 'completed');
+      
+      if (!allR3Completed) {
+        return { success: false, error: 'R3_NOT_COMPLETED' };
+      }
+
+      // Check if playoff already exists
+      const existingPlayoff = matches.filter((m: any) => m.round_number >= 4);
+      if (existingPlayoff.length > 0) {
+        return { success: true }; // Already generated
+      }
+
+      // Collect all teams advancing to playoff (R4)
+      // R3 winners + teams who had a bye to R4
+      const playoffTeamIds: string[] = [];
+
+      // R3 winners
+      r3Matches.forEach((m: any) => {
+        if (m.winner_id) {
+          playoffTeamIds.push(m.winner_id);
+        }
+      });
+
+      // Teams that had bye to R4 (were in R1/R2 but not in R3)
+      const r3TeamIds = new Set<string>();
+      r3Matches.forEach((m: any) => {
+        if (m.team_a_id) r3TeamIds.add(m.team_a_id);
+        if (m.team_b_id) r3TeamIds.add(m.team_b_id);
+      });
+
+      // Find teams that are still active but weren't in R3 (they got bye to R4)
+      const r1Matches = matches.filter((m: any) => m.round_number === 1);
+      const r2Matches = matches.filter((m: any) => m.round_number === 2);
+      
+      // R1 winners who weren't in R3
+      r1Matches.forEach((m: any) => {
+        if (m.winner_id && !r3TeamIds.has(m.winner_id)) {
+          playoffTeamIds.push(m.winner_id);
+        }
+      });
+
+      // R2 winners who weren't in R3
+      r2Matches.forEach((m: any) => {
+        if (m.winner_id && !r3TeamIds.has(m.winner_id)) {
+          playoffTeamIds.push(m.winner_id);
+        }
+      });
+
+      // Also check for original bye teams (teams that didn't play in R1)
+      const r1Teams = new Set<string>();
+      r1Matches.forEach((m: any) => {
+        if (m.team_a_id) r1Teams.add(m.team_a_id);
+        if (m.team_b_id) r1Teams.add(m.team_b_id);
+      });
+      
+      teams.forEach((team: any) => {
+        if (!r1Teams.has(team.id) && team.status !== 'eliminated' && !playoffTeamIds.includes(team.id)) {
+          playoffTeamIds.push(team.id);
+        }
+      });
+
+      // Remove duplicates
+      const uniquePlayoffTeamIds = [...new Set(playoffTeamIds)];
+      const playoffTeamCount = uniquePlayoffTeamIds.length;
+
+      if (playoffTeamCount < 2) {
+        return { success: false, error: 'NOT_ENOUGH_TEAMS' };
+      }
+
+      // Ensure it's a power of 2 (should be from our R3 logic)
+      const R4 = Math.pow(2, Math.floor(Math.log2(playoffTeamCount)));
+      
+      // Get team objects for seeding
+      const playoffTeams = uniquePlayoffTeamIds.map(id => teams.find((t: any) => t.id === id)).filter(Boolean);
+
+      // Separate seeded and unseeded teams
+      const seededTeams = playoffTeams.filter((t: any) => t.seed !== null && t.seed !== undefined)
+        .sort((a: any, b: any) => a.seed - b.seed);
+      const unseededTeams = playoffTeams.filter((t: any) => t.seed === null || t.seed === undefined);
+
+      // Shuffle unseeded teams for 100% random
+      const shuffledUnseeded = [...unseededTeams].sort(() => Math.random() - 0.5);
+
+      // Build bracket positions for proper seeding
+      // Seeds 1 and 2 should be at opposite ends of the bracket
+      const bracketPositions: (any | null)[] = new Array(R4).fill(null);
+      
+      // Place seeded teams first
+      if (seededTeams.length >= 1) {
+        bracketPositions[0] = seededTeams[0]; // Seed 1 at top
+      }
+      if (seededTeams.length >= 2) {
+        bracketPositions[R4 - 1] = seededTeams[1]; // Seed 2 at bottom (opposite end)
+      }
+      
+      // Place remaining seeded teams (3, 4, etc.) with proper spacing
+      const remainingSeeded = seededTeams.slice(2);
+      const emptyPositions = bracketPositions
+        .map((p, idx) => p === null ? idx : -1)
+        .filter(idx => idx !== -1);
+      
+      // Interleave remaining seeded teams
+      for (let i = 0; i < remainingSeeded.length && i < emptyPositions.length; i++) {
+        const pos = i % 2 === 0 
+          ? emptyPositions[Math.floor(emptyPositions.length / 2) + Math.floor(i / 2)]
+          : emptyPositions[Math.floor(i / 2)];
+        if (pos !== undefined) {
+          bracketPositions[pos] = remainingSeeded[i];
+        }
+      }
+
+      // Fill remaining positions with shuffled unseeded teams
+      let unseededIdx = 0;
+      for (let i = 0; i < bracketPositions.length; i++) {
+        if (bracketPositions[i] === null && unseededIdx < shuffledUnseeded.length) {
+          bracketPositions[i] = shuffledUnseeded[unseededIdx];
+          unseededIdx++;
+        }
+      }
+
+      // Now generate playoff matches
+      const earlyFormat = (tournament.early_rounds_format || 'bo1') as BestOfFormat;
+      const semifinalsFormat = (tournament.semifinals_format || 'bo3') as BestOfFormat;
+      const finalsFormat = (tournament.finals_format || 'bo3') as BestOfFormat;
+      
+      const playoffMatches: any[] = [];
+      let displayOrder = matches.length;
+      
+      // Calculate R4 start time: system time + 15 minutes
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 15);
+      const r4StartHour = now.getHours();
+      const r4StartMinute = now.getMinutes();
+      
+      const courtCount = tournament.court_count || 4;
+      const courts = Array.from({ length: courtCount }, (_, i) => i + 1);
+      const matchDurationMinutes = 20;
+      
+      const courtNextSlot = new Map<number, number>();
+      courts.forEach(c => courtNextSlot.set(c, 0));
+
+      // Generate Round 4 (first playoff round)
+      let currentRound = 4;
+      let teamsInRound = R4;
+      let currentTeams = bracketPositions;
+
+      while (teamsInRound > 1) {
+        const matchesInRound = teamsInRound / 2;
+        let roundType: RoundType = 'elimination';
+        
+        if (teamsInRound === 8) roundType = 'quarterfinal';
+        else if (teamsInRound === 4) roundType = 'semifinal';
+        else if (teamsInRound === 2) roundType = 'final';
+
+        for (let i = 0; i < matchesInRound; i++) {
+          // Calculate court and time
+          const minSlot = Math.min(...Array.from(courtNextSlot.values()));
+          const availableCourt = courts.find(c => courtNextSlot.get(c) === minSlot) || courts[0];
+          const slotIdx = courtNextSlot.get(availableCourt) || 0;
+          const totalMinutes = r4StartHour * 60 + r4StartMinute + slotIdx * matchDurationMinutes;
+          const hour = Math.floor(totalMinutes / 60) % 24;
+          const minute = totalMinutes % 60;
+          const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          
+          courtNextSlot.set(availableCourt, slotIdx + 1);
+
+          const teamA = currentRound === 4 ? currentTeams[i * 2] : null;
+          const teamB = currentRound === 4 ? currentTeams[i * 2 + 1] : null;
+
+          playoffMatches.push({
+            tournament_id: tournamentId,
+            round_number: currentRound,
+            round_type: roundType,
+            bracket_type: 'single',
+            match_number: i + 1,
+            team_a_id: teamA?.id || null,
+            team_b_id: teamB?.id || null,
+            score_a: 0,
+            score_b: 0,
+            winner_id: null,
+            best_of: getBestOfForRound(roundType, earlyFormat, semifinalsFormat, finalsFormat),
+            games: [],
+            games_won_a: 0,
+            games_won_b: 0,
+            source_a: currentRound === 4 
+              ? { type: 'bracket_position', position: i * 2 }
+              : { type: 'winner_of', round: currentRound - 1, match_index: i * 2 },
+            source_b: currentRound === 4 
+              ? { type: 'bracket_position', position: i * 2 + 1 }
+              : { type: 'winner_of', round: currentRound - 1, match_index: i * 2 + 1 },
+            dest_winner: teamsInRound === 2 ? { type: 'CHAMPION' } : null,
+            dest_loser: { type: 'ELIMINATED' },
+            is_bye: false,
+            display_order: displayOrder++,
+            status: 'pending',
+            live_referee_id: null,
+            court_number: currentRound === 4 ? availableCourt : null,
+            start_time: currentRound === 4 ? startTime : null
+          });
+        }
+        
+        teamsInRound = matchesInRound;
+        currentRound++;
+        
+        // Reset court slots for next round
+        courts.forEach(c => courtNextSlot.set(c, 0));
+      }
+
+      // Third place match (if enabled)
+      if (tournament.has_third_place_match) {
+        const finalRound = currentRound - 1;
+        playoffMatches.push({
+          tournament_id: tournamentId,
+          round_number: finalRound,
+          round_type: 'third_place',
+          bracket_type: 'single',
+          match_number: 1,
+          team_a_id: null,
+          team_b_id: null,
+          score_a: 0,
+          score_b: 0,
+          winner_id: null,
+          best_of: getBestOfForRound('third_place', earlyFormat, semifinalsFormat, finalsFormat),
+          games: [],
+          games_won_a: 0,
+          games_won_b: 0,
+          source_a: { type: 'loser_of', round_type: 'semifinal', match_index: 0 },
+          source_b: { type: 'loser_of', round_type: 'semifinal', match_index: 1 },
+          dest_winner: null,
+          dest_loser: null,
+          is_bye: false,
+          display_order: displayOrder++,
+          status: 'pending',
+          live_referee_id: null,
+          court_number: null,
+          start_time: null
+        });
+      }
+
+      // Insert all playoff matches
+      const { error: insertError } = await supabase
+        .from('doubles_elimination_matches')
+        .insert(playoffMatches);
+      
+      if (insertError) throw insertError;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Generate playoff bracket error:', error);
       return { success: false, error: error.message };
     }
   }, []);
@@ -1101,6 +1213,50 @@ export function useDoublesElimination() {
     }
   }, [calculateR3Assignments]);
 
+  // Check if R3 is completed and generate playoff bracket
+  const checkAndGeneratePlayoff = useCallback(async (
+    tournamentId: string
+  ): Promise<{ success: boolean; generated: boolean; error?: string }> => {
+    try {
+      // Fetch current matches
+      const { data: matches, error: fetchError } = await supabase
+        .from('doubles_elimination_matches')
+        .select('*')
+        .eq('tournament_id', tournamentId);
+
+      if (fetchError) throw fetchError;
+
+      // Check if playoff already exists
+      const playoffMatches = (matches || []).filter((m: any) => m.round_number >= 4);
+      if (playoffMatches.length > 0) {
+        return { success: true, generated: false }; // Already exists
+      }
+
+      // Check if all R3 matches are completed
+      const r3Matches = (matches || []).filter((m: any) => m.round_number === 3);
+      if (r3Matches.length === 0) {
+        return { success: true, generated: false }; // No R3 matches yet
+      }
+      
+      const allR3Completed = r3Matches.every((m: any) => m.status === 'completed');
+      if (!allR3Completed) {
+        return { success: true, generated: false }; // R3 not done yet
+      }
+
+      // R3 is complete, generate playoff bracket
+      const result = await generatePlayoffBracket(tournamentId);
+
+      if (!result.success) {
+        return { success: false, generated: false, error: result.error };
+      }
+
+      return { success: true, generated: true };
+    } catch (error: any) {
+      console.error('Check and generate playoff error:', error);
+      return { success: false, generated: false, error: error.message };
+    }
+  }, [generatePlayoffBracket]);
+
   return {
     loading,
     createTournament,
@@ -1113,6 +1269,8 @@ export function useDoublesElimination() {
     endMatch,
     deleteTournament,
     calculateR3Assignments,
-    checkAndAssignR3
+    checkAndAssignR3,
+    generatePlayoffBracket,
+    checkAndGeneratePlayoff
   };
 }
