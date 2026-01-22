@@ -532,7 +532,7 @@ export function useDoublesElimination() {
       
       if (fetchError) throw fetchError;
       
-      const games = (Array.isArray(match.games) ? match.games : []) as GameScore[];
+      const games = (Array.isArray(match.games) ? match.games : []) as unknown as GameScore[];
       const newGame = {
         game: gameNumber,
         score_a: scoreA,
