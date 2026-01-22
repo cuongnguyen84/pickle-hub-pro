@@ -52,6 +52,7 @@ import {
   TeamMatchScoringSheet,
 } from '@/components/teamMatch';
 import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
+import { useTeamMatchRealtime } from '@/hooks/useTeamMatchRealtime';
 
 const STATUS_COLORS: Record<string, string> = {
   setup: 'bg-muted text-muted-foreground',
@@ -105,6 +106,9 @@ export default function TeamMatchView() {
     addRefereeByEmail,
     removeReferee,
   } = useTeamMatchRefereeManagement(tournament?.id, tournament?.created_by);
+
+  // Realtime subscription for matches and games
+  useTeamMatchRealtime(tournament?.id);
 
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);

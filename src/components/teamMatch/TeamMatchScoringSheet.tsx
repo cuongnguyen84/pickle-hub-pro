@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Trophy, Play, RotateCcw, Check, Plus, Minus, Radio } from 'lucide-react';
 import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch, TeamMatchGame } from '@/hooks/useTeamMatchMatches';
+import { useTeamMatchMatchRealtime } from '@/hooks/useTeamMatchRealtime';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,9 @@ export function TeamMatchScoringSheet({
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
   
+  // Subscribe to realtime updates for this match
+  useTeamMatchMatchRealtime(match?.id);
+
   const [selectedGameIndex, setSelectedGameIndex] = useState(0);
   const [localScoreA, setLocalScoreA] = useState(0);
   const [localScoreB, setLocalScoreB] = useState(0);
