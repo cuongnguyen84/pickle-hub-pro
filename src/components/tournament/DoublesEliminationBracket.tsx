@@ -377,49 +377,102 @@ const DoublesEliminationBracket = ({
 
       {/* PLAYOFF VIEW */}
       {!showPreliminaryOnly && playoffRounds.length > 0 && (
-        <div className="overflow-x-auto pb-4 -mx-4 px-4">
-          <div className="flex gap-6 min-w-max items-stretch">
-            {playoffRounds.map((round, roundIdx) => (
-              <div key={round.roundNumber} className="flex flex-col min-w-[260px]">
-                <div className="text-center mb-4">
-                  <Badge 
-                    variant={round.roundType === 'final' ? "default" : "outline"} 
-                    className={cn(
-                      "px-4 py-1",
-                      round.roundType === 'final' && "bg-primary"
-                    )}
+        <div className="space-y-6">
+          {/* Bracket horizontal layout */}
+          <div className="overflow-x-auto pb-4 -mx-4 px-4">
+            <div className="flex gap-6 min-w-max items-stretch">
+              {playoffRounds.filter(r => r.roundType !== 'final').map((round, roundIdx) => (
+                <div key={round.roundNumber} className="flex flex-col min-w-[260px]">
+                  <div className="text-center mb-4">
+                    <Badge variant="outline" className="px-4 py-1">
+                      {getRoundLabel(round.roundType, round.matches.length)}
+                      <span className="ml-2 opacity-70">({round.matches.length})</span>
+                    </Badge>
+                  </div>
+
+                  <div 
+                    className="flex flex-col flex-1"
+                    style={{
+                      justifyContent: 'space-around',
+                      gap: roundIdx === 0 ? '0.75rem' : `${Math.pow(2, roundIdx) * 1.5}rem`
+                    }}
                   >
-                    {round.roundType === 'final' && <Trophy className="w-3 h-3 mr-1" />}
-                    {getRoundLabel(round.roundType, round.matches.length)}
-                    <span className="ml-2 opacity-70">({round.matches.length})</span>
-                  </Badge>
+                    {round.matches.map((match) => (
+                      <BracketMatchCard
+                        key={match.id}
+                        match={match}
+                        allMatches={matches}
+                        teamA={getTeam(match.team_a_id)}
+                        teamB={getTeam(match.team_b_id)}
+                        formatTeamName={formatTeamName}
+                        isFinal={false}
+                        canEdit={canEdit}
+                        onScoreUpdated={onScoreUpdated}
+                        onMatchUpdated={onMatchUpdated}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Finals Section - Chung kết highlighted */}
+          {(() => {
+            const finalMatch = matches.find(m => m.round_type === 'final');
+            const thirdPlaceMatch = matches.find(m => m.round_type === 'third_place');
+            
+            if (!finalMatch) return null;
+            
+            return (
+              <div className="space-y-4">
+                {/* Chung kết */}
+                <div className="max-w-sm mx-auto">
+                  <div className="text-center mb-3">
+                    <Badge variant="default" className="px-4 py-1.5 bg-primary">
+                      <Trophy className="w-4 h-4 mr-1.5" />
+                      Chung kết
+                    </Badge>
+                  </div>
+                  <BracketMatchCard
+                    match={finalMatch}
+                    allMatches={matches}
+                    teamA={getTeam(finalMatch.team_a_id)}
+                    teamB={getTeam(finalMatch.team_b_id)}
+                    formatTeamName={formatTeamName}
+                    isFinal={true}
+                    canEdit={canEdit}
+                    onScoreUpdated={onScoreUpdated}
+                    onMatchUpdated={onMatchUpdated}
+                  />
                 </div>
 
-                <div 
-                  className="flex flex-col flex-1"
-                  style={{
-                    justifyContent: 'space-around',
-                    gap: roundIdx === 0 ? '0.75rem' : `${Math.pow(2, roundIdx) * 1.5}rem`
-                  }}
-                >
-                  {round.matches.map((match) => (
+                {/* Tranh hạng 3 - below finals */}
+                {thirdPlaceMatch && (
+                  <div className="max-w-sm mx-auto pt-4 border-t border-dashed">
+                    <div className="text-center mb-3">
+                      <Badge variant="outline" className="px-4 py-1 border-amber-500/50 text-amber-600 dark:text-amber-400">
+                        <Trophy className="w-3 h-3 mr-1" />
+                        Tranh hạng 3
+                      </Badge>
+                    </div>
                     <BracketMatchCard
-                      key={match.id}
-                      match={match}
+                      match={thirdPlaceMatch}
                       allMatches={matches}
-                      teamA={getTeam(match.team_a_id)}
-                      teamB={getTeam(match.team_b_id)}
+                      teamA={getTeam(thirdPlaceMatch.team_a_id)}
+                      teamB={getTeam(thirdPlaceMatch.team_b_id)}
                       formatTeamName={formatTeamName}
-                      isFinal={match.round_type === 'final'}
+                      isFinal={false}
+                      isThirdPlace={true}
                       canEdit={canEdit}
                       onScoreUpdated={onScoreUpdated}
                       onMatchUpdated={onMatchUpdated}
                     />
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </div>
       )}
 
@@ -429,28 +482,6 @@ const DoublesEliminationBracket = ({
             Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại.
           </CardContent>
         </Card>
-      )}
-
-      {!showPreliminaryOnly && matches.find(m => m.round_type === 'third_place') && (
-        <div className="mt-6 pt-6 border-t">
-          <h3 className="text-lg font-semibold mb-4">Tranh hạng 3</h3>
-          {(() => {
-            const match = matches.find(m => m.round_type === 'third_place')!;
-            return (
-              <BracketMatchCard
-                match={match}
-                allMatches={matches}
-                teamA={getTeam(match.team_a_id)}
-                teamB={getTeam(match.team_b_id)}
-                formatTeamName={formatTeamName}
-                isFinal={false}
-                canEdit={canEdit}
-                onScoreUpdated={onScoreUpdated}
-                onMatchUpdated={onMatchUpdated}
-              />
-            );
-          })()}
-        </div>
       )}
     </div>
   );
@@ -519,10 +550,10 @@ async function propagateWinnerToNextRound(
       }
     }
   }
-  // For R4+ rounds, follow the bracket position pattern
+// For R4+ rounds, follow the bracket position pattern
   else if (match.round_number >= 4) {
     const nextRoundMatches = allMatches
-      .filter(m => m.round_number === match.round_number + 1)
+      .filter(m => m.round_number === match.round_number + 1 && m.round_type !== 'third_place')
       .sort((a, b) => a.match_number - b.match_number);
     
     // Find the next match based on bracket position
@@ -540,6 +571,30 @@ async function propagateWinnerToNextRound(
       // Optimistic update for next round match
       onMatchUpdated?.(targetMatch.id, { [updateField]: winnerId });
     }
+  }
+}
+
+// Helper to propagate semifinal loser to 3rd place match
+async function propagateLoserToThirdPlace(
+  match: Match,
+  loserId: string,
+  allMatches: Match[],
+  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void
+) {
+  const thirdPlaceMatch = allMatches.find(m => m.round_type === 'third_place');
+  if (!thirdPlaceMatch) return;
+
+  // Determine slot based on match_number (match 1 loser -> team_a, match 2 loser -> team_b)
+  const slot = match.match_number === 1 ? 'team_a_id' : 'team_b_id';
+  
+  // Check if slot is not already filled
+  if (!thirdPlaceMatch[slot]) {
+    await supabase
+      .from('doubles_elimination_matches')
+      .update({ [slot]: loserId })
+      .eq('id', thirdPlaceMatch.id);
+    // Optimistic update
+    onMatchUpdated?.(thirdPlaceMatch.id, { [slot]: loserId });
   }
 }
 
@@ -860,6 +915,7 @@ interface BracketMatchCardProps {
   teamB: Team | undefined;
   formatTeamName: (team: Team | undefined) => string;
   isFinal: boolean;
+  isThirdPlace?: boolean;
   canEdit?: boolean;
   onScoreUpdated?: () => void;
   onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void;
@@ -872,6 +928,7 @@ const BracketMatchCard = ({
   teamB, 
   formatTeamName,
   isFinal,
+  isThirdPlace = false,
   canEdit = false,
   onScoreUpdated,
   onMatchUpdated
@@ -949,6 +1006,11 @@ const BracketMatchCard = ({
         await propagateWinnerToNextRound(match, winnerId, allMatches, onMatchUpdated);
       }
 
+      // For semifinal matches, propagate loser to 3rd place match
+      if (isMatchComplete && loserId && match.round_type === 'semifinal') {
+        await propagateLoserToThirdPlace(match, loserId, allMatches, onMatchUpdated);
+      }
+
       // Mark loser as eliminated if not R1
       if (isMatchComplete && loserId && match.round_type !== 'winner_r1') {
         await supabase
@@ -975,19 +1037,27 @@ const BracketMatchCard = ({
   return (
     <Card 
       className={cn(
-        "overflow-hidden transition-all border-border/50",
-        isFinal && "border-primary/30 shadow-lg ring-2 ring-primary/10",
-        isCompleted && "opacity-90",
+        "overflow-hidden transition-all",
+        isFinal && "border-primary shadow-lg ring-2 ring-primary/30 bg-gradient-to-b from-primary/5 to-transparent",
+        isThirdPlace && "border-amber-500/50 ring-1 ring-amber-500/20",
+        !isFinal && !isThirdPlace && "border-border/50",
+        isCompleted && !isFinal && "opacity-90",
         isLive && "border-red-500/50 ring-2 ring-red-500/20"
       )}
     >
-      {/* Match header */}
+      {/* Match header - hide "Trận X" for finals */}
       <div className={cn(
         "px-3 py-1.5 border-b flex items-center justify-between",
-        isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/50"
+        isLive ? "bg-red-50 dark:bg-red-950/30" : 
+        isFinal ? "bg-primary/10" : "bg-muted/50"
       )}>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
+          {!isFinal && (
+            <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
+          )}
+          {isFinal && (
+            <span className="text-sm font-semibold text-primary">Trận Chung kết</span>
+          )}
           {match.court_number && (
             <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">
               Sân {match.court_number}
@@ -1002,12 +1072,12 @@ const BracketMatchCard = ({
             </Badge>
           )}
           {isFinal && (
-            <Badge variant="default" className="text-xs py-0">
+            <Badge variant="default" className="text-xs py-0.5 px-2">
               <Trophy className="w-3 h-3 mr-1" />
               CK
             </Badge>
           )}
-          {isCompleted && (
+          {isCompleted && !isFinal && (
             <Badge variant="secondary" className="text-[10px] py-0 px-1 h-4">
               Xong
             </Badge>
