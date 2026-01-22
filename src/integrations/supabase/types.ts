@@ -421,6 +421,7 @@ export type Database = {
           has_third_place_match: boolean | null
           id: string
           name: string
+          semifinals_format: string | null
           share_id: string
           start_time: string | null
           status: string
@@ -437,6 +438,7 @@ export type Database = {
           has_third_place_match?: boolean | null
           id?: string
           name: string
+          semifinals_format?: string | null
           share_id: string
           start_time?: string | null
           status?: string
@@ -453,6 +455,7 @@ export type Database = {
           has_third_place_match?: boolean | null
           id?: string
           name?: string
+          semifinals_format?: string | null
           share_id?: string
           start_time?: string | null
           status?: string

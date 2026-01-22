@@ -15,10 +15,9 @@ import { ArrowLeft, ArrowRight, Plus, Trash2, Shuffle, Trophy, Users } from "luc
 
 interface TeamInput {
   id: string;
-  team_name: string;
-  player1_name: string;
-  player2_name: string;
+  name: string;
   seed: number;
+  team: string; // Club/team to avoid early matchups
 }
 
 type Step = 'info' | 'format' | 'teams';
@@ -41,6 +40,7 @@ export default function DoublesEliminationSetup() {
   
   // Step 2: Format
   const [earlyRoundsFormat, setEarlyRoundsFormat] = useState<BestOfFormat>('bo1');
+  const [semifinalsFormat, setSemifinalsFormat] = useState<BestOfFormat>('bo3');
   const [finalsFormat, setFinalsFormat] = useState<BestOfFormat>('bo3');
   const [hasThirdPlace, setHasThirdPlace] = useState(false);
   
@@ -53,10 +53,9 @@ export default function DoublesEliminationSetup() {
     for (let i = 0; i < teamCount; i++) {
       newTeams.push({
         id: `team_${i}`,
-        team_name: '',
-        player1_name: '',
-        player2_name: '',
-        seed: i + 1
+        name: '',
+        seed: i + 1,
+        team: ''
       });
     }
     setTeams(newTeams);
@@ -69,7 +68,7 @@ export default function DoublesEliminationSetup() {
   };
 
   const shuffleTeams = () => {
-    const filledTeams = teams.filter(t => t.team_name.trim());
+    const filledTeams = teams.filter(t => t.name.trim());
     const shuffled = [...filledTeams].sort(() => Math.random() - 0.5);
     
     const newTeams = shuffled.map((t, i) => ({
@@ -81,10 +80,9 @@ export default function DoublesEliminationSetup() {
     while (newTeams.length < teamCount) {
       newTeams.push({
         id: `team_${newTeams.length}`,
-        team_name: '',
-        player1_name: '',
-        player2_name: '',
-        seed: newTeams.length + 1
+        name: '',
+        seed: newTeams.length + 1,
+        team: ''
       });
     }
     
@@ -116,7 +114,7 @@ export default function DoublesEliminationSetup() {
 
   const handleCreate = async () => {
     // Validate teams
-    const filledTeams = teams.filter(t => t.team_name.trim() && t.player1_name.trim());
+    const filledTeams = teams.filter(t => t.name.trim());
     
     if (filledTeams.length < 32) {
       toast({ 
@@ -127,7 +125,7 @@ export default function DoublesEliminationSetup() {
       return;
     }
 
-    // Create tournament
+    // Create tournament with all format settings
     const result = await createTournament(
       name,
       filledTeams.length,
@@ -135,7 +133,8 @@ export default function DoublesEliminationSetup() {
       earlyRoundsFormat,
       finalsFormat,
       courtCount,
-      startTime || undefined
+      startTime || undefined,
+      semifinalsFormat
     );
 
     if (!result.success || !result.tournament) {
@@ -143,14 +142,15 @@ export default function DoublesEliminationSetup() {
       return;
     }
 
-    // Add teams
+    // Add teams - now using name field and team as club
     const teamsResult = await addTeams(
       result.tournament.id,
       filledTeams.map(t => ({
-        team_name: t.team_name,
-        player1_name: t.player1_name,
-        player2_name: t.player2_name || undefined,
-        seed: t.seed
+        team_name: t.name,
+        player1_name: t.name, // Use name as player1 for compatibility
+        player2_name: undefined,
+        seed: t.seed,
+        club: t.team // Pass club/team info
       }))
     );
 
@@ -304,10 +304,17 @@ export default function DoublesEliminationSetup() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
-                <Label>Vòng ngoài (Round 1 → Round 3)</Label>
+                <Label>Vòng ngoài (đến trước Bán kết)</Label>
                 <RadioGroup
                   value={earlyRoundsFormat}
-                  onValueChange={(v) => setEarlyRoundsFormat(v as BestOfFormat)}
+                  onValueChange={(v) => {
+                    setEarlyRoundsFormat(v as BestOfFormat);
+                    // If BO3 or BO5, set finals to same format
+                    if (v === 'bo3' || v === 'bo5') {
+                      setFinalsFormat(v as BestOfFormat);
+                      setSemifinalsFormat(v as BestOfFormat);
+                    }
+                  }}
                   className="flex gap-4"
                 >
                   {(['bo1', 'bo3', 'bo5'] as const).map((format) => (
@@ -324,26 +331,79 @@ export default function DoublesEliminationSetup() {
                 </RadioGroup>
               </div>
 
-              <div className="space-y-3">
-                <Label>Từ Bán kết trở đi (Semifinal + Final)</Label>
-                <RadioGroup
-                  value={finalsFormat}
-                  onValueChange={(v) => setFinalsFormat(v as BestOfFormat)}
-                  className="flex gap-4"
-                >
-                  {(['bo3', 'bo5'] as const).map((format) => (
-                    <div key={format} className="flex items-center space-x-2">
-                      <RadioGroupItem value={format} id={`finals-${format}`} />
-                      <Label htmlFor={`finals-${format}`} className="cursor-pointer">
-                        {format.toUpperCase()}
-                        <span className="text-muted-foreground ml-1">
-                          ({format === 'bo3' ? 'Thắng 2/3' : 'Thắng 3/5'})
-                        </span>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
+              {/* Show semifinals and finals options only when BO1 is selected for early rounds */}
+              {earlyRoundsFormat === 'bo1' && (
+                <>
+                  <div className="space-y-3">
+                    <Label>Bán kết</Label>
+                    <RadioGroup
+                      value={semifinalsFormat}
+                      onValueChange={(v) => setSemifinalsFormat(v as BestOfFormat)}
+                      className="flex gap-4"
+                    >
+                      {(['bo3', 'bo5'] as const).map((format) => (
+                        <div key={format} className="flex items-center space-x-2">
+                          <RadioGroupItem value={format} id={`semi-${format}`} />
+                          <Label htmlFor={`semi-${format}`} className="cursor-pointer">
+                            {format.toUpperCase()}
+                            <span className="text-muted-foreground ml-1">
+                              ({format === 'bo3' ? 'Thắng 2/3' : 'Thắng 3/5'})
+                            </span>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>Chung kết</Label>
+                    <RadioGroup
+                      value={finalsFormat}
+                      onValueChange={(v) => setFinalsFormat(v as BestOfFormat)}
+                      className="flex gap-4"
+                    >
+                      {(['bo3', 'bo5'] as const).map((format) => (
+                        <div key={format} className="flex items-center space-x-2">
+                          <RadioGroupItem value={format} id={`finals-${format}`} />
+                          <Label htmlFor={`finals-${format}`} className="cursor-pointer">
+                            {format.toUpperCase()}
+                            <span className="text-muted-foreground ml-1">
+                              ({format === 'bo3' ? 'Thắng 2/3' : 'Thắng 3/5'})
+                            </span>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                </>
+              )}
+
+              {/* Show finals option when BO3/BO5 is selected for early rounds */}
+              {(earlyRoundsFormat === 'bo3' || earlyRoundsFormat === 'bo5') && (
+                <div className="space-y-3">
+                  <Label>Chung kết</Label>
+                  <RadioGroup
+                    value={finalsFormat}
+                    onValueChange={(v) => setFinalsFormat(v as BestOfFormat)}
+                    className="flex gap-4"
+                  >
+                    {(['bo3', 'bo5'] as const).map((format) => (
+                      <div key={format} className="flex items-center space-x-2">
+                        <RadioGroupItem value={format} id={`finals-${format}`} />
+                        <Label htmlFor={`finals-${format}`} className="cursor-pointer">
+                          {format.toUpperCase()}
+                          <span className="text-muted-foreground ml-1">
+                            ({format === 'bo3' ? 'Thắng 2/3' : 'Thắng 3/5'})
+                          </span>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground">
+                    Bán kết sẽ sử dụng format {earlyRoundsFormat.toUpperCase()} như vòng ngoài
+                  </p>
+                </div>
+              )}
 
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -376,7 +436,7 @@ export default function DoublesEliminationSetup() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Danh sách đội ({teams.filter(t => t.team_name.trim()).length}/{teamCount})</CardTitle>
+                  <CardTitle>Danh sách đội ({teams.filter(t => t.name.trim()).length}/{teamCount})</CardTitle>
                   <CardDescription>Nhập thông tin các đội tham gia</CardDescription>
                 </div>
                 <Button variant="outline" size="sm" onClick={shuffleTeams}>
@@ -386,6 +446,14 @@ export default function DoublesEliminationSetup() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Header row */}
+              <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground px-3">
+                <div className="col-span-1 text-center">#</div>
+                <div className="col-span-5">Tên</div>
+                <div className="col-span-3">Team/CLB</div>
+                <div className="col-span-3">Seed</div>
+              </div>
+              
               <div className="max-h-[500px] overflow-y-auto space-y-3 pr-2">
                 {teams.map((team, index) => (
                   <div 
@@ -393,32 +461,38 @@ export default function DoublesEliminationSetup() {
                     className="grid grid-cols-12 gap-2 items-center p-3 bg-muted/30 rounded-lg"
                   >
                     <div className="col-span-1 text-center font-medium text-muted-foreground">
-                      #{team.seed}
+                      {index + 1}
+                    </div>
+                    <div className="col-span-5">
+                      <Input
+                        placeholder="Tên đội / VĐV"
+                        value={team.name}
+                        onChange={(e) => updateTeam(index, 'name', e.target.value)}
+                      />
                     </div>
                     <div className="col-span-3">
                       <Input
-                        placeholder="Tên đội"
-                        value={team.team_name}
-                        onChange={(e) => updateTeam(index, 'team_name', e.target.value)}
+                        placeholder="Team/CLB"
+                        value={team.team}
+                        onChange={(e) => updateTeam(index, 'team', e.target.value)}
                       />
                     </div>
-                    <div className="col-span-4">
+                    <div className="col-span-3">
                       <Input
-                        placeholder="VĐV 1 *"
-                        value={team.player1_name}
-                        onChange={(e) => updateTeam(index, 'player1_name', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-4">
-                      <Input
-                        placeholder="VĐV 2"
-                        value={team.player2_name}
-                        onChange={(e) => updateTeam(index, 'player2_name', e.target.value)}
+                        type="number"
+                        min={1}
+                        placeholder="Seed"
+                        value={team.seed}
+                        onChange={(e) => updateTeam(index, 'seed', parseInt(e.target.value) || index + 1)}
                       />
                     </div>
                   </div>
                 ))}
               </div>
+
+              <p className="text-xs text-muted-foreground">
+                💡 Tip: Đội cùng Team/CLB sẽ được ưu tiên tránh gặp nhau ở vòng đầu
+              </p>
 
               <div className="flex justify-between pt-4 border-t">
                 <Button variant="outline" onClick={handleBack}>
