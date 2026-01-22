@@ -264,22 +264,19 @@ const DoublesEliminationBracket = ({
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 ml-3">Winner Bracket</p>
                   </div>
-                  <div className="flex flex-col gap-3 max-h-[70vh] overflow-y-auto pr-1">
+                  <div className="flex flex-col gap-3">
                     {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
-                      <LoserBracketCard
+                      <BracketMatchCard
                         key={match.id}
                         match={match}
                         allMatches={matches}
                         teamA={getTeam(match.team_a_id)}
                         teamB={getTeam(match.team_b_id)}
                         formatTeamName={formatTeamName}
-                        sourceAMatchNum=""
-                        sourceBMatchNum=""
+                        isFinal={false}
                         canEdit={canEdit}
                         onScoreUpdated={onScoreUpdated}
                         onMatchUpdated={onMatchUpdated}
-                        tournamentId={tournamentId}
-                        onR3Assigned={onR3Assigned}
                       />
                     ))}
                   </div>
@@ -301,31 +298,21 @@ const DoublesEliminationBracket = ({
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 ml-3">Loser Bracket</p>
                   </div>
-                  <div className="flex flex-col gap-3 max-h-[70vh] overflow-y-auto pr-1">
-                    {loserMatches.map((match) => {
-                      const sourceA = match.source_a as { type: string; match_index?: number } | null;
-                      const sourceB = match.source_b as { type: string; match_index?: number } | null;
-                      const matchANum = sourceA?.match_index !== undefined ? sourceA.match_index + 1 : '?';
-                      const matchBNum = sourceB?.match_index !== undefined ? sourceB.match_index + 1 : '?';
-                      
-                      return (
-                        <LoserBracketCard
-                          key={match.id}
-                          match={match}
-                          allMatches={matches}
-                          teamA={getTeam(match.team_a_id)}
-                          teamB={getTeam(match.team_b_id)}
-                          formatTeamName={formatTeamName}
-                          sourceAMatchNum={matchANum}
-                          sourceBMatchNum={matchBNum}
-                          canEdit={canEdit}
-                          onScoreUpdated={onScoreUpdated}
-                          onMatchUpdated={onMatchUpdated}
-                          tournamentId={tournamentId}
-                          onR3Assigned={onR3Assigned}
-                        />
-                      );
-                    })}
+                  <div className="flex flex-col gap-3">
+                    {loserMatches.map((match) => (
+                      <BracketMatchCard
+                        key={match.id}
+                        match={match}
+                        allMatches={matches}
+                        teamA={getTeam(match.team_a_id)}
+                        teamB={getTeam(match.team_b_id)}
+                        formatTeamName={formatTeamName}
+                        isFinal={false}
+                        canEdit={canEdit}
+                        onScoreUpdated={onScoreUpdated}
+                        onMatchUpdated={onMatchUpdated}
+                      />
+                    ))}
                   </div>
                 </div>
               )}
