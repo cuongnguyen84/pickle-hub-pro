@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Gamepad2, Trophy, Clock, Play, ClipboardList, Check, AlertTriangle, Users, Edit } from 'lucide-react';
+import { Gamepad2, Trophy, Clock, Play, ClipboardList, Check, AlertTriangle, Users, Radio } from 'lucide-react';
 import { useTeamMatchMatches, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchGroups, TeamMatchGroup } from '@/hooks/useTeamMatchGroups';
 
@@ -22,7 +22,7 @@ interface GroupMatchListProps {
 const STATUS_CONFIG = {
   pending: { label: 'Chưa bắt đầu', color: 'bg-muted text-muted-foreground', icon: Clock },
   lineup: { label: 'Đang line up', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: ClipboardList },
-  in_progress: { label: 'Đang diễn ra', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20', icon: Play },
+  in_progress: { label: 'LIVE', color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Radio },
   completed: { label: 'Đã kết thúc', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Trophy },
 };
 
@@ -280,8 +280,11 @@ function GroupMatches({
                         </div>
                         
                         <div className="ml-3 flex flex-col items-end gap-1">
-                          <Badge variant="outline" className={`${config.color} text-xs`}>
-                            <StatusIcon className="h-3 w-3 mr-1" />
+                          <Badge 
+                            variant="outline" 
+                            className={`${config.color} text-xs ${match.status === 'in_progress' ? 'animate-pulse' : ''}`}
+                          >
+                            <StatusIcon className={`h-3 w-3 mr-1 ${match.status === 'in_progress' ? 'animate-pulse' : ''}`} />
                             {config.label}
                           </Badge>
                           
@@ -354,7 +357,7 @@ function GroupMatches({
                                 onScoreMatch?.(match);
                               }}
                             >
-                              <Edit className="h-3 w-3 mr-1" />
+                              <Play className="h-3 w-3 mr-1" />
                               Chấm
                             </Button>
                           )}

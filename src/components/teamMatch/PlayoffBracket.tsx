@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Clock, Play, Check, ClipboardList, Edit } from 'lucide-react';
+import { Trophy, Clock, Play, Check, ClipboardList, Radio, Edit } from 'lucide-react';
 import { TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 
 interface PlayoffBracketProps {
@@ -26,7 +26,7 @@ const ROUND_NAMES: Record<number, string> = {
 const STATUS_CONFIG = {
   pending: { label: 'Chưa đấu', color: 'bg-muted text-muted-foreground', icon: Clock },
   lineup: { label: 'Đang line up', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: Clock },
-  in_progress: { label: 'Đang đấu', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20', icon: Play },
+  in_progress: { label: 'LIVE', color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Radio, isLive: true },
   completed: { label: 'Hoàn thành', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Check },
 };
 
@@ -197,7 +197,11 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
                             
                             {/* Status */}
                             <div className="flex justify-center gap-2">
-                              <Badge variant="outline" className={`text-xs ${config.color}`}>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${config.color} ${match.status === 'in_progress' ? 'animate-pulse' : ''}`}
+                              >
+                                <config.icon className={`h-3 w-3 mr-1 ${match.status === 'in_progress' ? 'animate-pulse' : ''}`} />
                                 {config.label}
                               </Badge>
                               {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
@@ -210,7 +214,7 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
                                     onScoreMatch?.(match);
                                   }}
                                 >
-                                  <Edit className="h-3 w-3 mr-1" />
+                                  <Play className="h-3 w-3 mr-1" />
                                   Chấm
                                 </Button>
                               )}
@@ -326,7 +330,11 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
                   
                   {/* Status */}
                   <div className="flex justify-center gap-2">
-                    <Badge variant="outline" className={`text-xs ${config.color}`}>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${config.color} ${match.status === 'in_progress' ? 'animate-pulse' : ''}`}
+                    >
+                      <config.icon className={`h-3 w-3 mr-1 ${match.status === 'in_progress' ? 'animate-pulse' : ''}`} />
                       {config.label}
                     </Badge>
                     {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
@@ -339,7 +347,7 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, on
                           onScoreMatch?.(match);
                         }}
                       >
-                        <Edit className="h-3 w-3 mr-1" />
+                        <Play className="h-3 w-3 mr-1" />
                         Chấm
                       </Button>
                     )}
