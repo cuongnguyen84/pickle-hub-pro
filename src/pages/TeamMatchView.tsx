@@ -48,7 +48,9 @@ import {
   GroupStandingsTable,
   InviteTeamDialog,
   SingleEliminationSetupDialog,
+  TeamMatchSettingsDialog,
 } from '@/components/teamMatch';
+import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
 
 const STATUS_COLORS: Record<string, string> = {
   setup: 'bg-muted text-muted-foreground',
@@ -94,7 +96,16 @@ export default function TeamMatchView() {
     topPerGroup: tournament?.top_per_group || 2,
   });
   
+  // Referee management
+  const {
+    referees,
+    loading: refereesLoading,
+    addRefereeByEmail,
+    removeReferee,
+  } = useTeamMatchRefereeManagement(tournament?.id, tournament?.created_by);
+
   const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamMatchTeam | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<TeamMatchMatch | null>(null);
   const [lineupMatch, setLineupMatch] = useState<TeamMatchMatch | null>(null);
@@ -391,7 +402,7 @@ export default function TeamMatchView() {
               <Copy className="h-4 w-4" />
             </Button>
             {isOwner && (
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setShowSettingsDialog(true)}>
                 <Settings className="h-4 w-4 mr-2" />
                 Cài đặt
               </Button>
@@ -885,6 +896,17 @@ export default function TeamMatchView() {
           hasThirdPlaceMatch={tournament.has_third_place_match || false}
           isCreating={isGeneratingSE}
           onConfirm={handleGenerateSingleElimination}
+        />
+
+        {/* Settings Dialog with Referee Management */}
+        <TeamMatchSettingsDialog
+          open={showSettingsDialog}
+          onOpenChange={setShowSettingsDialog}
+          tournamentName={tournament.name}
+          referees={referees}
+          refereesLoading={refereesLoading}
+          onAddReferee={addRefereeByEmail}
+          onRemoveReferee={removeReferee}
         />
 
         {/* Start Tournament Confirmation */}
