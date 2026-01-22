@@ -99,8 +99,8 @@ export default function DoublesEliminationScoring() {
 
       if (matchError) throw matchError;
 
-      const gamesArray = Array.isArray(matchData.games) ? matchData.games : [];
-      setMatch({ ...matchData, games: gamesArray } as MatchData);
+      const gamesArray = (Array.isArray(matchData.games) ? matchData.games : []) as unknown as GameScore[];
+      setMatch({ ...matchData, games: gamesArray } as unknown as MatchData);
       
       // Set current game number
       setCurrentGameNumber(gamesArray.length + 1);

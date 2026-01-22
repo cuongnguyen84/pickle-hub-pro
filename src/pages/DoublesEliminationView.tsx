@@ -310,7 +310,7 @@ export default function DoublesEliminationView() {
                           </div>
                         </div>
 
-                        {match.best_of > 1 && match.games && match.games.length > 0 && (
+                        {match.best_of > 1 && match.games && Array.isArray(match.games) && match.games.length > 0 && (
                           <div className="mt-2 text-xs text-muted-foreground text-center">
                             {(match.games as any[]).map((g: any, i: number) => (
                               <span key={i}>
