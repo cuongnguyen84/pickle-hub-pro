@@ -89,6 +89,19 @@ export function TeamMatchScoringSheet({
   // Current selected game
   const currentGame = games[selectedGameIndex];
 
+  // Calculate games won dynamically from games data
+  const calculatedGamesWon = useMemo(() => {
+    let gamesWonA = 0;
+    let gamesWonB = 0;
+    
+    games.forEach(game => {
+      if (game.score_a > game.score_b) gamesWonA++;
+      else if (game.score_b > game.score_a) gamesWonB++;
+    });
+    
+    return { a: gamesWonA, b: gamesWonB };
+  }, [games]);
+
   // Reset local scores when game changes
   useEffect(() => {
     if (currentGame) {
@@ -233,7 +246,7 @@ export function TeamMatchScoringSheet({
                 
                 <div className="text-center">
                   <div className="text-3xl font-bold tabular-nums">
-                    {match.games_won_a} - {match.games_won_b}
+                    {calculatedGamesWon.a} - {calculatedGamesWon.b}
                   </div>
                   <p className="text-xs text-muted-foreground">game</p>
                 </div>
