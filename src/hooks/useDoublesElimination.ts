@@ -130,7 +130,7 @@ export function useDoublesElimination() {
     hasThirdPlaceMatch: boolean,
     earlyRoundsFormat: BestOfFormat,
     finalsFormat: BestOfFormat,
-    courtCount: number = 1,
+    courts: number[] = [],
     startTime?: string,
     semifinalsFormat?: BestOfFormat
   ): Promise<{ success: boolean; tournament?: Tournament; error?: string }> => {
@@ -151,7 +151,7 @@ export function useDoublesElimination() {
           early_rounds_format: earlyRoundsFormat,
           semifinals_format: semifinalsFormat || finalsFormat,
           finals_format: finalsFormat,
-          court_count: courtCount,
+          court_count: courts.length || 1,
           start_time: startTime || null
         })
         .select()
