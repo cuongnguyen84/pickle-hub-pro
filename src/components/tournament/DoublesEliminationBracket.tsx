@@ -784,10 +784,12 @@ const LoserBracketCard = ({
       )}>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
-          {match.court_number && (
-            <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">
-              Sân {match.court_number}
-            </Badge>
+          {(match.court_number || match.start_time) && (
+            <span className="text-[10px] text-muted-foreground">
+              {match.court_number && `S${match.court_number}`}
+              {match.court_number && match.start_time && ' • '}
+              {match.start_time}
+            </span>
           )}
         </div>
         <div className="flex items-center gap-1">
@@ -1102,10 +1104,12 @@ const BracketMatchCard = ({
           {!isFinal && !isThirdPlace && (
             <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
           )}
-          {match.court_number && (
-            <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">
-              Sân {match.court_number}
-            </Badge>
+          {(match.court_number || match.start_time) && (
+            <span className="text-[10px] text-muted-foreground">
+              {match.court_number && `S${match.court_number}`}
+              {match.court_number && match.start_time && ' • '}
+              {match.start_time}
+            </span>
           )}
         </div>
         <div className="flex items-center gap-1">

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Json } from '@/integrations/supabase/types';
+import { parseCourtsInput } from '@/lib/round-robin';
 
 export type TournamentStatus = 'setup' | 'ongoing' | 'completed';
 export type MatchStatus = 'pending' | 'live' | 'completed';
@@ -201,7 +202,8 @@ export function useDoublesElimination() {
   // Round 1: RANDOM matchups (no seeding)
   // Round 3+: Use seeds to assign byes, ensure seeds 1&2 only meet in final
   const generateBracket = useCallback(async (
-    tournamentId: string
+    tournamentId: string,
+    courtsInput?: number[]
   ): Promise<{ success: boolean; matches?: Match[]; error?: string }> => {
     setLoading(true);
     try {
@@ -435,6 +437,45 @@ export function useDoublesElimination() {
         });
       }
       
+      // Assign courts and times to matches if tournament has courts and start_time configured
+      const courts = courtsInput && courtsInput.length > 0 
+        ? courtsInput 
+        : tournament.court_count > 0 
+          ? Array.from({ length: tournament.court_count }, (_, i) => i + 1)
+          : [];
+      
+      if (courts.length > 0 && tournament.start_time) {
+        const startTime = tournament.start_time;
+        const matchDurationMinutes = 20;
+
+        // Track court usage for time calculation
+        const courtNextSlot = new Map<number, number>();
+        courts.forEach(c => courtNextSlot.set(c, 0));
+
+        // Parse start time
+        const [startHour, startMinute] = startTime.split(':').map((s: string) => parseInt(s, 10));
+        const validStartTime = !isNaN(startHour) && !isNaN(startMinute);
+
+        // Assign courts and times to matches sequentially
+        for (let i = 0; i < matches.length; i++) {
+          // Find court with minimum load (earliest next available slot)
+          const minSlot = Math.min(...Array.from(courtNextSlot.values()));
+          const availableCourt = courts.find(c => courtNextSlot.get(c) === minSlot) || courts[0];
+
+          matches[i].court_number = availableCourt;
+
+          if (validStartTime) {
+            const slotIdx = courtNextSlot.get(availableCourt) || 0;
+            const totalMinutes = startHour * 60 + startMinute + slotIdx * matchDurationMinutes;
+            const hour = Math.floor(totalMinutes / 60) % 24;
+            const minute = totalMinutes % 60;
+            matches[i].start_time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          }
+
+          courtNextSlot.set(availableCourt, (courtNextSlot.get(availableCourt) || 0) + 1);
+        }
+      }
+
       // Insert all matches
       const { data: insertedMatches, error: insertError } = await supabase
         .from('doubles_elimination_matches')

@@ -223,8 +223,8 @@ export default function DoublesEliminationSetup() {
       return;
     }
 
-    // Generate bracket
-    const bracketResult = await generateBracket(result.tournament.id);
+    // Generate bracket with courts
+    const bracketResult = await generateBracket(result.tournament.id, parsedCourts);
 
     if (!bracketResult.success) {
       toast({ title: "Lỗi tạo bracket", description: bracketResult.error, variant: "destructive" });
