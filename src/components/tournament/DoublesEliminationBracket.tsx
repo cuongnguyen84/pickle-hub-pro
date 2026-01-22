@@ -11,81 +11,53 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Bracket connector component for visual lines between rounds
-// Connects from the center-right of two match cards to the center-left of the next match
-const BracketConnector = ({ matchHeight = 120 }: { matchHeight?: number }) => {
-  return (
-    <svg 
-      className="flex-shrink-0" 
-      width="32" 
-      height={matchHeight * 2 + 12} 
-      viewBox={`0 0 32 ${matchHeight * 2 + 12}`}
-      fill="none"
-    >
-      {/* Top match → horizontal line out */}
-      <line 
-        x1="0" 
-        y1={matchHeight / 2} 
-        x2="16" 
-        y2={matchHeight / 2} 
-        stroke="hsl(var(--primary))" 
-        strokeWidth="2" 
-        strokeOpacity="0.6"
-      />
-      {/* Bottom match → horizontal line out */}
-      <line 
-        x1="0" 
-        y1={matchHeight * 1.5 + 12} 
-        x2="16" 
-        y2={matchHeight * 1.5 + 12} 
-        stroke="hsl(var(--primary))" 
-        strokeWidth="2" 
-        strokeOpacity="0.6"
-      />
-      {/* Vertical line connecting the two */}
-      <line 
-        x1="16" 
-        y1={matchHeight / 2} 
-        x2="16" 
-        y2={matchHeight * 1.5 + 12} 
-        stroke="hsl(var(--primary))" 
-        strokeWidth="2" 
-        strokeOpacity="0.6"
-      />
-      {/* Horizontal line to next match */}
-      <line 
-        x1="16" 
-        y1={matchHeight + 6} 
-        x2="32" 
-        y2={matchHeight + 6} 
-        stroke="hsl(var(--primary))" 
-        strokeWidth="2" 
-        strokeOpacity="0.6"
-      />
-    </svg>
-  );
-};
+// Match card wrapper with connector lines for bracket visualization
+interface MatchWithConnectorProps {
+  children: React.ReactNode;
+  showConnector: boolean;
+  isTopOfPair: boolean;
+  isBottomOfPair: boolean;
+  isLastRound?: boolean;
+}
 
-// Single connector line (for final round → next)
-const SingleConnector = ({ height = 120 }: { height?: number }) => {
+const MatchWithConnector = ({ 
+  children, 
+  showConnector, 
+  isTopOfPair, 
+  isBottomOfPair,
+  isLastRound = false
+}: MatchWithConnectorProps) => {
+  if (!showConnector) {
+    return <div className="relative">{children}</div>;
+  }
+
   return (
-    <svg 
-      className="flex-shrink-0" 
-      width="32" 
-      height={height}
-      viewBox={`0 0 32 ${height}`}
-      fill="none"
-    >
-      <line 
-        x1="0" 
-        y1={height / 2} 
-        x2="32" 
-        y2={height / 2} 
-        stroke="hsl(var(--primary))" 
-        strokeWidth="2" 
-        strokeOpacity="0.6"
-      />
-    </svg>
+    <div className="relative flex items-center">
+      {/* Match card */}
+      <div className="relative z-10">{children}</div>
+      
+      {/* Horizontal line extending from card */}
+      <div className="w-6 h-0.5 bg-primary/60" />
+      
+      {/* Vertical connector (only on top or bottom of pair) */}
+      {isTopOfPair && (
+        <div 
+          className="absolute right-0 top-1/2 w-0.5 bg-primary/60"
+          style={{ height: 'calc(50% + 0.75rem + 50%)', transform: 'translateX(24px)' }}
+        />
+      )}
+      
+      {/* Horizontal line to next round (at merge point) */}
+      {isTopOfPair && !isLastRound && (
+        <div 
+          className="absolute w-4 h-0.5 bg-primary/60"
+          style={{ 
+            right: '-40px', 
+            top: 'calc(50% + 0.75rem/2 + 50%)'
+          }}
+        />
+      )}
+    </div>
   );
 };
 
@@ -456,62 +428,84 @@ const DoublesEliminationBracket = ({
       {/* PLAYOFF VIEW */}
       {!showPreliminaryOnly && playoffRounds.length > 0 && (
         <div className="overflow-x-auto pb-4 -mx-4 px-4">
-          <div className="flex min-w-max items-stretch">
+          <div className="flex min-w-max items-stretch gap-8">
             {/* Regular playoff rounds (non-final) */}
             {playoffRounds.filter(r => r.roundType !== 'final').map((round, roundIdx, filteredRounds) => {
               const isLastBeforeFinal = roundIdx === filteredRounds.length - 1;
               const matchCount = round.matches.length;
+              const hasNextRound = roundIdx < filteredRounds.length - 1 || isLastBeforeFinal;
               
               return (
-                <div key={round.roundNumber} className="flex items-stretch">
-                  {/* Round column */}
-                  <div className="flex flex-col min-w-[260px]">
-                    <div className="text-center mb-4">
-                      <Badge variant="outline" className="px-4 py-1">
-                        {getRoundLabel(round.roundType, round.matches.length)}
-                        <span className="ml-2 opacity-70">({round.matches.length})</span>
-                      </Badge>
-                    </div>
-
-                    <div 
-                      className="flex flex-col flex-1"
-                      style={{
-                        justifyContent: 'space-around',
-                        gap: roundIdx === 0 ? '0.75rem' : `${Math.pow(2, roundIdx) * 1.5}rem`
-                      }}
-                    >
-                      {round.matches.map((match) => (
-                        <BracketMatchCard
-                          key={match.id}
-                          match={match}
-                          allMatches={matches}
-                          teamA={getTeam(match.team_a_id)}
-                          teamB={getTeam(match.team_b_id)}
-                          formatTeamName={formatTeamName}
-                          isFinal={false}
-                          canEdit={canEdit}
-                          onScoreUpdated={onScoreUpdated}
-                          onMatchUpdated={onMatchUpdated}
-                        />
-                      ))}
-                    </div>
+                <div key={round.roundNumber} className="flex flex-col min-w-[260px]">
+                  <div className="text-center mb-4">
+                    <Badge variant="outline" className="px-4 py-1">
+                      {getRoundLabel(round.roundType, round.matches.length)}
+                      <span className="ml-2 opacity-70">({round.matches.length})</span>
+                    </Badge>
                   </div>
 
-                  {/* Connector lines to next round */}
-                  {!isLastBeforeFinal && matchCount > 1 && (
-                    <div className="flex flex-col justify-around items-center">
-                      {Array.from({ length: Math.floor(matchCount / 2) }).map((_, pairIdx) => (
-                        <BracketConnector key={pairIdx} matchHeight={140} />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Connector to finals (semifinal → final) */}
-                  {isLastBeforeFinal && matchCount === 2 && (
-                    <div className="flex flex-col justify-center items-center">
-                      <BracketConnector matchHeight={180} />
-                    </div>
-                  )}
+                  <div 
+                    className="flex flex-col flex-1"
+                    style={{
+                      justifyContent: 'space-around',
+                      gap: roundIdx === 0 ? '0.75rem' : `${Math.pow(2, roundIdx) * 1.5}rem`
+                    }}
+                  >
+                    {round.matches.map((match, matchIdx) => {
+                      const isEven = matchIdx % 2 === 0;
+                      const showConnector = hasNextRound && matchCount > 1;
+                      
+                      return (
+                        <div key={match.id} className="relative">
+                          <BracketMatchCard
+                            match={match}
+                            allMatches={matches}
+                            teamA={getTeam(match.team_a_id)}
+                            teamB={getTeam(match.team_b_id)}
+                            formatTeamName={formatTeamName}
+                            isFinal={false}
+                            canEdit={canEdit}
+                            onScoreUpdated={onScoreUpdated}
+                            onMatchUpdated={onMatchUpdated}
+                          />
+                          
+                          {/* Connector line from card to right */}
+                          {showConnector && (
+                            <>
+                              {/* Horizontal line from card */}
+                              <div 
+                                className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-primary/70"
+                                style={{ left: '100%', width: '32px' }}
+                              />
+                              {/* Vertical line connecting pairs */}
+                              {isEven && matchIdx + 1 < matchCount && (
+                                <div 
+                                  className="absolute bg-primary/70"
+                                  style={{ 
+                                    left: 'calc(100% + 32px)', 
+                                    top: '50%',
+                                    width: '2px',
+                                    height: `calc(100% + ${roundIdx === 0 ? '0.75rem' : `${Math.pow(2, roundIdx) * 1.5}rem`})`
+                                  }}
+                                />
+                              )}
+                              {/* Horizontal line to next round */}
+                              {isEven && (
+                                <div 
+                                  className="absolute h-0.5 bg-primary/70"
+                                  style={{ 
+                                    left: 'calc(100% + 32px)', 
+                                    top: `calc(100% + ${roundIdx === 0 ? '0.375rem' : `${Math.pow(2, roundIdx) * 0.75}rem`})`,
+                                    width: '16px'
+                                  }}
+                                />
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}
