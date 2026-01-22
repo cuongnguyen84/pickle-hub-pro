@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Gamepad2, Trophy, Clock, Play, ClipboardList, Check, AlertTriangle, Users } from 'lucide-react';
+import { Gamepad2, Trophy, Clock, Play, ClipboardList, Check, AlertTriangle, Users, Edit } from 'lucide-react';
 import { useTeamMatchMatches, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchGroups, TeamMatchGroup } from '@/hooks/useTeamMatchGroups';
 
@@ -12,9 +12,11 @@ interface GroupMatchListProps {
   tournamentId: string;
   userTeamId?: string;
   isOwner?: boolean;
+  canEditScores?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number, groupId?: string) => void;
+  onScoreMatch?: (match: TeamMatchMatch) => void;
 }
 
 const STATUS_CONFIG = {
@@ -27,10 +29,12 @@ const STATUS_CONFIG = {
 export function GroupMatchList({ 
   tournamentId, 
   userTeamId, 
-  isOwner, 
+  isOwner,
+  canEditScores,
   onMatchClick, 
   onLineupClick, 
-  onStartRound 
+  onStartRound,
+  onScoreMatch,
 }: GroupMatchListProps) {
   const { data: matches, isLoading: isLoadingMatches } = useTeamMatchMatches(tournamentId);
   const { data: groups, isLoading: isLoadingGroups } = useTeamMatchGroups(tournamentId);
@@ -101,9 +105,11 @@ export function GroupMatchList({
             matches={matchesByGroup.get(group.id) || []}
             userTeamId={userTeamId}
             isOwner={isOwner}
+            canEditScores={canEditScores}
             onMatchClick={onMatchClick}
             onLineupClick={onLineupClick}
             onStartRound={(round) => onStartRound?.(round, group.id)}
+            onScoreMatch={onScoreMatch}
           />
         </TabsContent>
       ))}
@@ -117,17 +123,21 @@ function GroupMatches({
   matches,
   userTeamId,
   isOwner,
+  canEditScores,
   onMatchClick,
   onLineupClick,
   onStartRound,
+  onScoreMatch,
 }: {
   group: TeamMatchGroup;
   matches: TeamMatchMatch[];
   userTeamId?: string;
   isOwner?: boolean;
+  canEditScores?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number) => void;
+  onScoreMatch?: (match: TeamMatchMatch) => void;
 }) {
   if (matches.length === 0) {
     return (
@@ -331,6 +341,22 @@ function GroupMatches({
                               <Check className="h-3 w-3 mr-1" />
                               Đã line up
                             </Badge>
+                          )}
+                          
+                          {/* Referee Score Button */}
+                          {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              className="text-xs h-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onScoreMatch?.(match);
+                              }}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Chấm
+                            </Button>
                           )}
                         </div>
                       </div>

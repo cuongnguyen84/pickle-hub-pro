@@ -7,7 +7,7 @@ interface RefereeTournament {
   name: string;
   share_id: string;
   status: string;
-  type: 'quick_table' | 'doubles_elimination';
+  type: 'quick_table' | 'doubles_elimination' | 'team_match';
   player_count?: number;
   team_count?: number;
   format?: string;
@@ -87,6 +87,35 @@ export function useMyRefereeTournaments() {
                 created_at: dt.created_at,
               });
             }
+          }
+        }
+      }
+
+      // Fetch Team Match where user is referee
+      const { data: teamMatchReferees } = await supabase
+        .from('team_match_referees')
+        .select('tournament_id')
+        .eq('user_id', user.id);
+
+      if (teamMatchReferees && teamMatchReferees.length > 0) {
+        const tournamentIds = teamMatchReferees.map(r => r.tournament_id);
+        const { data: teamMatchTournaments } = await supabase
+          .from('team_match_tournaments')
+          .select('id, name, share_id, status, team_count, format, created_at')
+          .in('id', tournamentIds);
+
+        if (teamMatchTournaments) {
+          for (const tm of teamMatchTournaments) {
+            allTournaments.push({
+              id: tm.id,
+              name: tm.name,
+              share_id: tm.share_id,
+              status: tm.status || 'draft',
+              type: 'team_match',
+              team_count: tm.team_count,
+              format: tm.format,
+              created_at: tm.created_at || undefined,
+            });
           }
         }
       }

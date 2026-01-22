@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
-import { Shield, Calendar, Users, GitBranch } from 'lucide-react';
+import { Shield, Calendar, Users, GitBranch, UsersRound } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function MyRefereeTournaments() {
@@ -46,7 +46,9 @@ export function MyRefereeTournaments() {
   const TournamentItem = ({ tournament }: { tournament: typeof tournaments[0] }) => {
     const href = tournament.type === 'quick_table' 
       ? `/tools/quick-table/${tournament.share_id}`
-      : `/tools/doubles-elimination/${tournament.share_id}`;
+      : tournament.type === 'doubles_elimination'
+      ? `/tools/doubles-elimination/${tournament.share_id}`
+      : `/tools/team-match/${tournament.share_id}`;
 
     const statusColor = 
       tournament.status === 'group_stage' || tournament.status === 'playing' ? 'bg-green-500/20 text-green-400' :
@@ -91,6 +93,8 @@ export function MyRefereeTournaments() {
               <Badge variant="outline" className="shrink-0">
                 {tournament.type === 'quick_table' ? (
                   <Users className="w-3 h-3 mr-1" />
+                ) : tournament.type === 'team_match' ? (
+                  <UsersRound className="w-3 h-3 mr-1" />
                 ) : (
                   <GitBranch className="w-3 h-3 mr-1" />
                 )}

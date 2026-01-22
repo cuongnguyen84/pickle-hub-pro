@@ -1,15 +1,17 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Clock, Play, Check, ClipboardList } from 'lucide-react';
+import { Trophy, Clock, Play, Check, ClipboardList, Edit } from 'lucide-react';
 import { TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 
 interface PlayoffBracketProps {
   matches: TeamMatchMatch[];
   userTeamId?: string;
   isOwner?: boolean;
+  canEditScores?: boolean;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
+  onScoreMatch?: (match: TeamMatchMatch) => void;
   isSingleElimination?: boolean;
 }
 
@@ -28,7 +30,7 @@ const STATUS_CONFIG = {
   completed: { label: 'Hoàn thành', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Check },
 };
 
-export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onLineupClick, isSingleElimination }: PlayoffBracketProps) {
+export function PlayoffBracket({ matches, userTeamId, isOwner, canEditScores, onMatchClick, onLineupClick, onScoreMatch, isSingleElimination }: PlayoffBracketProps) {
   // Group playoff matches by round - separate third-place match (round 0)
   const allPlayoffMatches = matches.filter(m => m.is_playoff);
   const thirdPlaceMatch = allPlayoffMatches.find(m => (m as any).is_third_place === true || m.playoff_round === 0);
@@ -194,10 +196,24 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onL
                             </div>
                             
                             {/* Status */}
-                            <div className="flex justify-center">
+                            <div className="flex justify-center gap-2">
                               <Badge variant="outline" className={`text-xs ${config.color}`}>
                                 {config.label}
                               </Badge>
+                              {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  className="h-6 text-xs px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onScoreMatch?.(match);
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Chấm
+                                </Button>
+                              )}
                             </div>
                           </CardContent>
                         </Card>
@@ -309,10 +325,24 @@ export function PlayoffBracket({ matches, userTeamId, isOwner, onMatchClick, onL
                   </div>
                   
                   {/* Status */}
-                  <div className="flex justify-center">
+                  <div className="flex justify-center gap-2">
                     <Badge variant="outline" className={`text-xs ${config.color}`}>
                       {config.label}
                     </Badge>
+                    {canEditScores && (match.status === 'in_progress' || match.status === 'completed') && (
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="h-6 text-xs px-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onScoreMatch?.(match);
+                        }}
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Chấm
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
