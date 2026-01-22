@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { DynamicMeta } from "@/components/seo";
@@ -42,6 +42,13 @@ export default function DoublesEliminationView() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState('preliminary');
+
+  // Check if preliminary rounds are complete (R3 completed)
+  const preliminaryComplete = useMemo(() => {
+    const r3Matches = matches.filter(m => m.round_number === 3);
+    return r3Matches.length > 0 && r3Matches.every(m => m.status === 'completed');
+  }, [matches]);
 
   const isCreator = user?.id === tournament?.creator_user_id;
 
@@ -280,10 +287,16 @@ export default function DoublesEliminationView() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="preliminary" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="preliminary">Sơ loại</TabsTrigger>
-            <TabsTrigger value="playoff">Playoff</TabsTrigger>
+            <TabsTrigger 
+              value="playoff"
+              className={preliminaryComplete ? "bg-primary/20 text-primary font-semibold animate-pulse" : ""}
+            >
+              {preliminaryComplete && <Trophy className="w-3.5 h-3.5 mr-1.5" />}
+              Playoff
+            </TabsTrigger>
             <TabsTrigger value="teams">Đội ({teams.length})</TabsTrigger>
             {isCreator && <TabsTrigger value="settings">Cài đặt</TabsTrigger>}
           </TabsList>
