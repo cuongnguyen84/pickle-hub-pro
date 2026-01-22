@@ -107,6 +107,15 @@ export default function DoublesEliminationView() {
     setLoading(false);
   };
 
+  // Soft reload - fetches data and merges without showing loading state
+  const softReload = async () => {
+    if (!shareId) return;
+    const data = await getTournamentByShareId(shareId);
+    setTournament(data.tournament);
+    setTeams(data.teams);
+    setMatches(data.matches);
+  };
+
   // Track if we just made an optimistic update to skip realtime reload
   const skipNextRealtimeRef = useRef(false);
 
@@ -319,7 +328,7 @@ export default function DoublesEliminationView() {
               tournamentId={tournament?.id}
               showPreliminaryOnly={true}
               canEdit={canEdit}
-              onScoreUpdated={loadData}
+              onScoreUpdated={softReload}
               onMatchUpdated={handleMatchUpdated}
               onR3Assigned={handleR3Assigned}
             />
@@ -333,7 +342,7 @@ export default function DoublesEliminationView() {
               tournamentId={tournament?.id}
               showPlayoffOnly={true}
               canEdit={canEdit}
-              onScoreUpdated={loadData}
+              onScoreUpdated={softReload}
               onMatchUpdated={handleMatchUpdated}
               onR3Assigned={handleR3Assigned}
             />
