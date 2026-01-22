@@ -388,32 +388,34 @@ export default function DoublesEliminationScoring() {
         {/* Score Board */}
         <Card className="mb-6">
           <CardContent className="py-8">
-            <div className="grid grid-cols-3 gap-4 items-center">
-              {/* Team A */}
+            {/* Scores - centered on same line */}
+            <div className="flex items-center justify-center gap-3 mb-4">
               <div className="text-center">
-                <div className="text-sm text-muted-foreground mb-1">#{teamA.seed}</div>
-                <div className="font-semibold mb-1">{teamA.team_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {teamA.player1_name}
-                  {teamA.player2_name && <><br />{teamA.player2_name}</>}
-                </div>
+                <div className="text-xs text-muted-foreground">#{teamA.seed}</div>
+                <div className="text-sm font-medium truncate max-w-[80px]">{teamA.team_name}</div>
               </div>
-
-              {/* Scores */}
-              <div className="text-center">
-                <div className="text-5xl font-bold font-mono">
-                  {localScoreA} : {localScoreB}
-                </div>
+              <div className="text-5xl font-bold font-mono whitespace-nowrap">
+                {localScoreA}
               </div>
-
-              {/* Team B */}
+              <div className="text-3xl font-bold text-muted-foreground">:</div>
+              <div className="text-5xl font-bold font-mono whitespace-nowrap">
+                {localScoreB}
+              </div>
               <div className="text-center">
-                <div className="text-sm text-muted-foreground mb-1">#{teamB.seed}</div>
-                <div className="font-semibold mb-1">{teamB.team_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {teamB.player1_name}
-                  {teamB.player2_name && <><br />{teamB.player2_name}</>}
-                </div>
+                <div className="text-xs text-muted-foreground">#{teamB.seed}</div>
+                <div className="text-sm font-medium truncate max-w-[80px]">{teamB.team_name}</div>
+              </div>
+            </div>
+            
+            {/* Player names */}
+            <div className="flex justify-between text-xs text-muted-foreground px-2">
+              <div className="text-center">
+                {teamA.player1_name}
+                {teamA.player2_name && <><br />{teamA.player2_name}</>}
+              </div>
+              <div className="text-center">
+                {teamB.player1_name}
+                {teamB.player2_name && <><br />{teamB.player2_name}</>}
               </div>
             </div>
           </CardContent>
@@ -434,16 +436,16 @@ export default function DoublesEliminationScoring() {
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
-                  size="lg" 
-                  className="flex-1 h-16"
+                  size="sm" 
+                  className="w-12 h-14"
                   onClick={() => handleScoreChange('a', -1)}
                 >
-                  <Minus className="w-6 h-6" />
+                  <Minus className="w-4 h-4" />
                 </Button>
                 <Button 
                   variant="default" 
                   size="lg" 
-                  className="flex-1 h-16"
+                  className="flex-1 h-14"
                   onClick={() => handleScoreChange('a', 1)}
                 >
                   <Plus className="w-6 h-6" />
@@ -454,16 +456,16 @@ export default function DoublesEliminationScoring() {
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
-                  size="lg" 
-                  className="flex-1 h-16"
+                  size="sm" 
+                  className="w-12 h-14"
                   onClick={() => handleScoreChange('b', -1)}
                 >
-                  <Minus className="w-6 h-6" />
+                  <Minus className="w-4 h-4" />
                 </Button>
                 <Button 
                   variant="default" 
                   size="lg" 
-                  className="flex-1 h-16"
+                  className="flex-1 h-14"
                   onClick={() => handleScoreChange('b', 1)}
                 >
                   <Plus className="w-6 h-6" />
