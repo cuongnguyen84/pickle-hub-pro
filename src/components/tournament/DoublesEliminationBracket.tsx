@@ -482,10 +482,12 @@ async function propagateLoserToR2(
 }
 
 // Helper to propagate winner to next round match (R3 -> R4, R4 -> R5, etc.)
+// Returns the updated match info for optimistic UI update
 async function propagateWinnerToNextRound(
   match: Match,
   winnerId: string,
-  allMatches: Match[]
+  allMatches: Match[],
+  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void
 ) {
   // For R3 matches, find corresponding R4 match slot
   // R3 winners fill empty slots in R4 (teams with high point diff already have byes to R4)
@@ -502,6 +504,8 @@ async function propagateWinnerToNextRound(
           .from('doubles_elimination_matches')
           .update({ team_a_id: winnerId })
           .eq('id', r4Match.id);
+        // Optimistic update for next round match
+        onMatchUpdated?.(r4Match.id, { team_a_id: winnerId });
         return;
       }
       if (!r4Match.team_b_id) {
@@ -509,6 +513,8 @@ async function propagateWinnerToNextRound(
           .from('doubles_elimination_matches')
           .update({ team_b_id: winnerId })
           .eq('id', r4Match.id);
+        // Optimistic update for next round match
+        onMatchUpdated?.(r4Match.id, { team_b_id: winnerId });
         return;
       }
     }
@@ -531,6 +537,8 @@ async function propagateWinnerToNextRound(
         .from('doubles_elimination_matches')
         .update({ [updateField]: winnerId })
         .eq('id', targetMatch.id);
+      // Optimistic update for next round match
+      onMatchUpdated?.(targetMatch.id, { [updateField]: winnerId });
     }
   }
 }
@@ -936,9 +944,9 @@ const BracketMatchCard = ({
         await propagateLoserToR2(matchIndex, loserId, allMatches);
       }
 
-      // For R3+ matches, propagate winner to next round
+      // For R3+ matches, propagate winner to next round with optimistic update
       if (isMatchComplete && winnerId && match.round_number >= 3) {
-        await propagateWinnerToNextRound(match, winnerId, allMatches);
+        await propagateWinnerToNextRound(match, winnerId, allMatches, onMatchUpdated);
       }
 
       // Mark loser as eliminated if not R1
