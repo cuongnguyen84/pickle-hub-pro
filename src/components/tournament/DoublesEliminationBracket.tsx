@@ -1028,8 +1028,14 @@ const BracketMatchCard = ({
   // "Sửa" button = inline edit
   const handleStartInlineEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditScoreA(match.score_a?.toString() || '0');
-    setEditScoreB(match.score_b?.toString() || '0');
+    // For BO3/BO5, use games_won; for BO1, use score
+    if (match.best_of > 1) {
+      setEditScoreA((match.games_won_a ?? 0).toString());
+      setEditScoreB((match.games_won_b ?? 0).toString());
+    } else {
+      setEditScoreA(match.score_a?.toString() || '0');
+      setEditScoreB(match.score_b?.toString() || '0');
+    }
     setIsEditing(true);
   };
 
@@ -1050,12 +1056,41 @@ const BracketMatchCard = ({
 
     const scoreA = parseInt(editScoreA) || 0;
     const scoreB = parseInt(editScoreB) || 0;
-    const winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
-    const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
-    const isMatchComplete = scoreA !== scoreB;
+    
+    // For BO3/BO5, the scores represent games won
+    const isBestOfMatch = match.best_of > 1;
+    const winsNeededForMatch = Math.ceil(match.best_of / 2);
+    
+    // Determine winner based on match type
+    let winnerId: string | null = null;
+    let loserId: string | null = null;
+    let isMatchComplete = false;
+    
+    if (isBestOfMatch) {
+      // For BO3/BO5: check if either team has enough game wins
+      if (scoreA >= winsNeededForMatch) {
+        winnerId = match.team_a_id;
+        loserId = match.team_b_id;
+        isMatchComplete = true;
+      } else if (scoreB >= winsNeededForMatch) {
+        winnerId = match.team_b_id;
+        loserId = match.team_a_id;
+        isMatchComplete = true;
+      }
+    } else {
+      // For BO1: higher score wins
+      winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
+      loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
+      isMatchComplete = scoreA !== scoreB;
+    }
 
     // Optimistic update - immediately update local state
-    const matchUpdates: Partial<Match> = {
+    const matchUpdates: Partial<Match> = isBestOfMatch ? {
+      games_won_a: scoreA,
+      games_won_b: scoreB,
+      winner_id: isMatchComplete ? winnerId : null,
+      status: isMatchComplete ? 'completed' : 'live'
+    } : {
       score_a: scoreA,
       score_b: scoreB,
       winner_id: isMatchComplete ? winnerId : null,
@@ -1064,14 +1099,21 @@ const BracketMatchCard = ({
     onMatchUpdated?.(match.id, matchUpdates);
 
     try {
+      const updateData = isBestOfMatch ? {
+        games_won_a: scoreA,
+        games_won_b: scoreB,
+        winner_id: isMatchComplete ? winnerId : null,
+        status: isMatchComplete ? 'completed' : 'live'
+      } : {
+        score_a: scoreA,
+        score_b: scoreB,
+        winner_id: isMatchComplete ? winnerId : null,
+        status: isMatchComplete ? 'completed' : 'live'
+      };
+      
       await supabase
         .from('doubles_elimination_matches')
-        .update({
-          score_a: scoreA,
-          score_b: scoreB,
-          winner_id: isMatchComplete ? winnerId : null,
-          status: isMatchComplete ? 'completed' : 'live'
-        })
+        .update(updateData)
         .eq('id', match.id);
 
       // For R1 winner matches, propagate loser to R2 loser bracket
@@ -1101,6 +1143,14 @@ const BracketMatchCard = ({
           })
           .eq('id', loserId);
       }
+      
+      // If this is the final match, mark tournament as completed
+      if (isMatchComplete && match.round_type === 'final') {
+        await supabase
+          .from('doubles_elimination_tournaments')
+          .update({ status: 'completed' })
+          .eq('id', match.tournament_id);
+      }
 
       toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
       setIsEditing(false);
@@ -1113,6 +1163,10 @@ const BracketMatchCard = ({
       setSaving(false);
     }
   };
+
+  const isBestOf = match.best_of > 1;
+  const winsNeeded = Math.ceil(match.best_of / 2);
+  const formatLabel = match.best_of === 1 ? '' : `BO${match.best_of}`;
 
   return (
     <Card 
@@ -1144,6 +1198,12 @@ const BracketMatchCard = ({
           )}
         </div>
         <div className="flex items-center gap-1">
+          {/* Best-of format badge */}
+          {isBestOf && (
+            <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 font-medium border-blue-500/50 text-blue-600 dark:text-blue-400">
+              {formatLabel}
+            </Badge>
+          )}
           {isLive && (
             <Badge variant="destructive" className="text-[10px] py-0 px-1 h-4 animate-pulse">
               <Radio className="w-2 h-2 mr-0.5" />
@@ -1246,6 +1306,13 @@ const BracketMatchCard = ({
           {isBWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
         </div>
       </div>
+
+      {/* BO3/BO5 hint when editing */}
+      {isEditing && isBestOf && (
+        <div className="px-3 py-1 border-t bg-blue-50 dark:bg-blue-950/30 text-xs text-blue-600 dark:text-blue-400 text-center">
+          Thắng {winsNeeded} game = Thắng trận ({formatLabel})
+        </div>
+      )}
 
       {/* Game scores for BO3/BO5 */}
       {!isEditing && match.best_of > 1 && match.games && Array.isArray(match.games) && (match.games as any[]).length > 0 && (
