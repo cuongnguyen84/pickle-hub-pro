@@ -422,31 +422,33 @@ const DoublesEliminationBracket = ({
               if (!finalMatch) return null;
               
               return (
-                <div className="flex flex-col min-w-[260px]">
-                  <div className="text-center mb-4">
-                    <Badge variant="default" className="px-4 py-1 bg-primary">
-                      <Trophy className="w-3 h-3 mr-1" />
-                      Chung kết
-                    </Badge>
-                  </div>
+                <div className="flex flex-col min-w-[260px] justify-center">
+                  {/* Centered container for both matches */}
+                  <div className="flex flex-col gap-3">
+                    {/* Finals match with title */}
+                    <div>
+                      <div className="text-center mb-2">
+                        <Badge variant="default" className="px-3 py-1 bg-primary">
+                          <Trophy className="w-3 h-3 mr-1" />
+                          Chung kết
+                        </Badge>
+                      </div>
+                      <BracketMatchCard
+                        match={finalMatch}
+                        allMatches={matches}
+                        teamA={getTeam(finalMatch.team_a_id)}
+                        teamB={getTeam(finalMatch.team_b_id)}
+                        formatTeamName={formatTeamName}
+                        isFinal={true}
+                        canEdit={canEdit}
+                        onScoreUpdated={onScoreUpdated}
+                        onMatchUpdated={onMatchUpdated}
+                      />
+                    </div>
 
-                  <div className="flex flex-col flex-1 justify-around gap-4">
-                    {/* Finals match */}
-                    <BracketMatchCard
-                      match={finalMatch}
-                      allMatches={matches}
-                      teamA={getTeam(finalMatch.team_a_id)}
-                      teamB={getTeam(finalMatch.team_b_id)}
-                      formatTeamName={formatTeamName}
-                      isFinal={true}
-                      canEdit={canEdit}
-                      onScoreUpdated={onScoreUpdated}
-                      onMatchUpdated={onMatchUpdated}
-                    />
-
-                    {/* 3rd place match */}
+                    {/* 3rd place match with title */}
                     {thirdPlaceMatch && (
-                      <div className="pt-4 border-t border-dashed border-amber-500/30">
+                      <div>
                         <div className="text-center mb-2">
                           <Badge variant="outline" className="text-xs px-2 py-0.5 border-amber-500/50 text-amber-600 dark:text-amber-400">
                             Tranh hạng 3
