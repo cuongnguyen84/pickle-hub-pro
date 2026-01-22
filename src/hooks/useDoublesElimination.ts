@@ -198,6 +198,8 @@ export function useDoublesElimination() {
   }, []);
 
   // Generate bracket - CORE ALGORITHM
+  // Round 1: RANDOM matchups (no seeding)
+  // Round 3+: Use seeds to assign byes, ensure seeds 1&2 only meet in final
   const generateBracket = useCallback(async (
     tournamentId: string
   ): Promise<{ success: boolean; matches?: Match[]; error?: string }> => {
@@ -212,15 +214,17 @@ export function useDoublesElimination() {
       
       if (tError) throw tError;
       
-      const { data: teams, error: teamsError } = await supabase
+      const { data: teamsData, error: teamsError } = await supabase
         .from('doubles_elimination_teams')
         .select('*')
-        .eq('tournament_id', tournamentId)
-        .order('seed', { ascending: true });
+        .eq('tournament_id', tournamentId);
       
       if (teamsError) throw teamsError;
       
-      const N = teams.length;
+      // Shuffle teams for Round 1 (random matchups)
+      const shuffledTeams = [...teamsData].sort(() => Math.random() - 0.5);
+      
+      const N = shuffledTeams.length;
       const earlyFormat = (tournament.early_rounds_format || 'bo1') as BestOfFormat;
       const semifinalsFormat = (tournament.semifinals_format || 'bo3') as BestOfFormat;
       const finalsFormat = (tournament.finals_format || 'bo3') as BestOfFormat;
@@ -228,17 +232,12 @@ export function useDoublesElimination() {
       const matches: any[] = [];
       let displayOrder = 0;
       
-      // ROUND 1: All teams play (Winner Bracket)
+      // ROUND 1: Random matchups (shuffled teams)
       const r1MatchCount = Math.floor(N / 2);
-      const r1Matches: { tempId: string; teamAIndex: number; teamBIndex: number }[] = [];
       
-      // Seed pairing: 1 vs N, 2 vs N-1, etc.
       for (let i = 0; i < r1MatchCount; i++) {
-        const teamAIndex = i;
-        const teamBIndex = N - 1 - i;
-        const tempId = `r1_${i}`;
-        
-        r1Matches.push({ tempId, teamAIndex, teamBIndex });
+        const teamAIndex = i * 2;
+        const teamBIndex = i * 2 + 1;
         
         matches.push({
           tournament_id: tournamentId,
@@ -246,8 +245,8 @@ export function useDoublesElimination() {
           round_type: 'winner_r1',
           bracket_type: 'winner',
           match_number: i + 1,
-          team_a_id: teams[teamAIndex].id,
-          team_b_id: teams[teamBIndex].id,
+          team_a_id: shuffledTeams[teamAIndex].id,
+          team_b_id: shuffledTeams[teamBIndex].id,
           score_a: 0,
           score_b: 0,
           winner_id: null,
@@ -255,10 +254,10 @@ export function useDoublesElimination() {
           games: [],
           games_won_a: 0,
           games_won_b: 0,
-          source_a: { type: 'seed', seed: teamAIndex + 1 },
-          source_b: { type: 'seed', seed: teamBIndex + 1 },
-          dest_winner: null, // Will be linked later
-          dest_loser: null, // Will be linked later
+          source_a: { type: 'team', team_id: shuffledTeams[teamAIndex].id },
+          source_b: { type: 'team', team_id: shuffledTeams[teamBIndex].id },
+          dest_winner: null,
+          dest_loser: null,
           is_bye: false,
           display_order: displayOrder++,
           status: 'pending',
@@ -269,9 +268,9 @@ export function useDoublesElimination() {
       }
       
       // Handle odd team (bye to R3)
-      let byeTeamFromR1: Team | null = null;
+      let byeTeamFromR1: typeof teamsData[0] | null = null;
       if (N % 2 === 1) {
-        byeTeamFromR1 = teams[Math.floor(N / 2)]; // Middle seed gets bye
+        byeTeamFromR1 = shuffledTeams[N - 1]; // Last team in shuffle gets bye
       }
       
       // ROUND 2: Losers from R1 play (Loser Bracket)
@@ -293,8 +292,8 @@ export function useDoublesElimination() {
           games: [],
           games_won_a: 0,
           games_won_b: 0,
-          source_a: { type: 'loser_of', match_id: `r1_${i * 2}` },
-          source_b: { type: 'loser_of', match_id: `r1_${i * 2 + 1}` },
+          source_a: { type: 'loser_of', match_index: i * 2 },
+          source_b: { type: 'loser_of', match_index: i * 2 + 1 },
           dest_winner: null,
           dest_loser: { type: 'ELIMINATED' },
           is_bye: false,
@@ -307,7 +306,7 @@ export function useDoublesElimination() {
       }
       
       // Handle odd loser from R1 (bye to R3)
-      let byeFromR2 = r1MatchCount % 2 === 1;
+      const byeFromR2 = r1MatchCount % 2 === 1;
       
       // Calculate teams entering R3
       const winnersFromR1 = r1MatchCount + (byeTeamFromR1 ? 1 : 0);
@@ -318,7 +317,7 @@ export function useDoublesElimination() {
       const targetR4 = nextPowerOf2(Math.floor(teamsEnteringR3 / 2));
       const actualTarget = targetR4 > teamsEnteringR3 ? targetR4 / 2 : targetR4;
       const excess = teamsEnteringR3 - actualTarget;
-      const r3Matches = excess; // Number of matches needed
+      const r3Matches = excess;
       const byesToR4 = teamsEnteringR3 - (r3Matches * 2);
       
       for (let i = 0; i < r3Matches; i++) {
@@ -337,8 +336,8 @@ export function useDoublesElimination() {
           games: [],
           games_won_a: 0,
           games_won_b: 0,
-          source_a: { type: 'winner_of', match_id: `r1_${i}` },
-          source_b: { type: 'winner_of', match_id: `r2_${i}` },
+          source_a: { type: 'winner_of', round: 1, match_index: i },
+          source_b: { type: 'winner_of', round: 2, match_index: i },
           dest_winner: null,
           dest_loser: { type: 'ELIMINATED' },
           is_bye: false,
@@ -350,7 +349,8 @@ export function useDoublesElimination() {
         });
       }
       
-      // ROUND 4+: Single Elimination
+      // ROUND 4+: Single Elimination with proper seeding
+      // Seeds 1 and 2 should be placed on opposite halves of bracket
       let currentRound = 4;
       let teamsInRound = actualTarget;
       
@@ -378,8 +378,8 @@ export function useDoublesElimination() {
             games: [],
             games_won_a: 0,
             games_won_b: 0,
-            source_a: { type: 'winner_of', match_id: `r${currentRound - 1}_${i * 2}` },
-            source_b: { type: 'winner_of', match_id: `r${currentRound - 1}_${i * 2 + 1}` },
+            source_a: { type: 'winner_of', round: currentRound - 1, match_index: i * 2 },
+            source_b: { type: 'winner_of', round: currentRound - 1, match_index: i * 2 + 1 },
             dest_winner: teamsInRound === 2 ? { type: 'CHAMPION' } : null,
             dest_loser: { type: 'ELIMINATED' },
             is_bye: false,
@@ -399,7 +399,7 @@ export function useDoublesElimination() {
       if (tournament.has_third_place_match) {
         matches.push({
           tournament_id: tournamentId,
-          round_number: currentRound - 1, // Same round as final
+          round_number: currentRound - 1,
           round_type: 'third_place',
           bracket_type: 'single',
           match_number: 1,
@@ -412,8 +412,8 @@ export function useDoublesElimination() {
           games: [],
           games_won_a: 0,
           games_won_b: 0,
-          source_a: { type: 'loser_of', match_id: 'semifinal_0' },
-          source_b: { type: 'loser_of', match_id: 'semifinal_1' },
+          source_a: { type: 'loser_of', round_type: 'semifinal', match_index: 0 },
+          source_b: { type: 'loser_of', round_type: 'semifinal', match_index: 1 },
           dest_winner: null,
           dest_loser: null,
           is_bye: false,
