@@ -11,6 +11,28 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+// Bracket connector component for visual lines between rounds
+const BracketConnector = ({ roundIdx }: { roundIdx: number }) => {
+  // Height scales with round index to match the increasing gap
+  const height = Math.pow(2, roundIdx + 1) * 40;
+  
+  return (
+    <div className="relative w-8 flex items-center" style={{ height }}>
+      {/* Top horizontal line */}
+      <div className="absolute top-0 left-0 w-4 h-px bg-border" />
+      {/* Vertical line */}
+      <div className="absolute top-0 left-4 w-px bg-border" style={{ height: '100%' }} />
+      {/* Bottom horizontal line */}
+      <div className="absolute bottom-0 left-0 w-4 h-px bg-border" />
+      {/* Connector to next match */}
+      <div 
+        className="absolute left-4 right-0 h-px bg-border" 
+        style={{ top: '50%' }}
+      />
+    </div>
+  );
+};
+
 interface DoublesEliminationBracketProps {
   matches: Match[];
   teams: Team[];
@@ -378,41 +400,65 @@ const DoublesEliminationBracket = ({
       {/* PLAYOFF VIEW */}
       {!showPreliminaryOnly && playoffRounds.length > 0 && (
         <div className="overflow-x-auto pb-4 -mx-4 px-4">
-          <div className="flex gap-6 min-w-max items-stretch">
+          <div className="flex min-w-max items-stretch">
             {/* Regular playoff rounds (non-final) */}
-            {playoffRounds.filter(r => r.roundType !== 'final').map((round, roundIdx) => (
-              <div key={round.roundNumber} className="flex flex-col min-w-[260px]">
-                <div className="text-center mb-4">
-                  <Badge variant="outline" className="px-4 py-1">
-                    {getRoundLabel(round.roundType, round.matches.length)}
-                    <span className="ml-2 opacity-70">({round.matches.length})</span>
-                  </Badge>
-                </div>
+            {playoffRounds.filter(r => r.roundType !== 'final').map((round, roundIdx, filteredRounds) => {
+              const isLastBeforeFinal = roundIdx === filteredRounds.length - 1;
+              const matchCount = round.matches.length;
+              
+              return (
+                <div key={round.roundNumber} className="flex items-stretch">
+                  {/* Round column */}
+                  <div className="flex flex-col min-w-[260px]">
+                    <div className="text-center mb-4">
+                      <Badge variant="outline" className="px-4 py-1">
+                        {getRoundLabel(round.roundType, round.matches.length)}
+                        <span className="ml-2 opacity-70">({round.matches.length})</span>
+                      </Badge>
+                    </div>
 
-                <div 
-                  className="flex flex-col flex-1"
-                  style={{
-                    justifyContent: 'space-around',
-                    gap: roundIdx === 0 ? '0.75rem' : `${Math.pow(2, roundIdx) * 1.5}rem`
-                  }}
-                >
-                  {round.matches.map((match) => (
-                    <BracketMatchCard
-                      key={match.id}
-                      match={match}
-                      allMatches={matches}
-                      teamA={getTeam(match.team_a_id)}
-                      teamB={getTeam(match.team_b_id)}
-                      formatTeamName={formatTeamName}
-                      isFinal={false}
-                      canEdit={canEdit}
-                      onScoreUpdated={onScoreUpdated}
-                      onMatchUpdated={onMatchUpdated}
-                    />
-                  ))}
+                    <div 
+                      className="flex flex-col flex-1"
+                      style={{
+                        justifyContent: 'space-around',
+                        gap: roundIdx === 0 ? '0.75rem' : `${Math.pow(2, roundIdx) * 1.5}rem`
+                      }}
+                    >
+                      {round.matches.map((match) => (
+                        <BracketMatchCard
+                          key={match.id}
+                          match={match}
+                          allMatches={matches}
+                          teamA={getTeam(match.team_a_id)}
+                          teamB={getTeam(match.team_b_id)}
+                          formatTeamName={formatTeamName}
+                          isFinal={false}
+                          canEdit={canEdit}
+                          onScoreUpdated={onScoreUpdated}
+                          onMatchUpdated={onMatchUpdated}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Connector lines to next round */}
+                  {!isLastBeforeFinal && matchCount > 1 && (
+                    <div className="flex flex-col flex-1 justify-around py-8 w-8">
+                      {Array.from({ length: Math.floor(matchCount / 2) }).map((_, pairIdx) => (
+                        <BracketConnector key={pairIdx} roundIdx={roundIdx} />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Connector to finals (semifinal → final) */}
+                  {isLastBeforeFinal && matchCount === 2 && (
+                    <div className="flex flex-col flex-1 justify-around py-8 w-8">
+                      <BracketConnector roundIdx={roundIdx} />
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Finals Column - Chung kết + Tranh hạng 3 */}
             {(() => {
