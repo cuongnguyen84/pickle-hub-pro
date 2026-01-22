@@ -1387,15 +1387,28 @@ const BracketMatchCard = ({
                 <Play className="w-3 h-3 mr-1" />
                 Chấm
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleStartInlineEdit}
-                className="h-7 px-2"
-              >
-                <Pencil className="w-3 h-3 mr-1" />
-                Sửa
-              </Button>
+              {/* For BO1: allow inline edit. For BO3/BO5: go to scoring page */}
+              {isBestOf ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleGoToScoringPage}
+                  className="h-7 px-2"
+                >
+                  <Pencil className="w-3 h-3 mr-1" />
+                  Sửa
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleStartInlineEdit}
+                  className="h-7 px-2"
+                >
+                  <Pencil className="w-3 h-3 mr-1" />
+                  Sửa
+                </Button>
+              )}
             </>
           )}
         </div>

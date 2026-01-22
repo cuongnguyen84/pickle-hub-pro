@@ -198,8 +198,29 @@ export default function DoublesEliminationScoring() {
     toast({ title: "Đã reset điểm" });
   };
 
-  const handleEndGame = async () => {
+  // Handle selecting a game to score
+  const handleSelectGame = (gameNum: number) => {
+    if (!match || !canEdit || match.status === 'completed') return;
+    
+    // Load existing game data if available
+    const existingGame = match.games?.[gameNum - 1];
+    if (existingGame) {
+      setLocalScoreA(existingGame.score_a);
+      setLocalScoreB(existingGame.score_b);
+    } else {
+      setLocalScoreA(0);
+      setLocalScoreB(0);
+    }
+    setCurrentGameNumber(gameNum);
+  };
+
+  // Save current game score
+  const handleSaveGame = async () => {
     if (!match || !canEdit) return;
+    if (localScoreA === localScoreB) {
+      toast({ title: "Điểm phải khác nhau", variant: "destructive" });
+      return;
+    }
 
     const newGame: GameScore = {
       game: currentGameNumber,
@@ -208,11 +229,26 @@ export default function DoublesEliminationScoring() {
       winner: localScoreA > localScoreB ? 'a' : 'b'
     };
 
-    const games = [...(match.games || []), newGame];
-    const winsA = games.filter(g => g.winner === 'a').length;
-    const winsB = games.filter(g => g.winner === 'b').length;
-    const winsNeeded = Math.ceil(match.best_of / 2);
-    const isMatchComplete = winsA >= winsNeeded || winsB >= winsNeeded;
+    // Update or add game
+    const existingGames = [...(match.games || [])];
+    const gameIndex = currentGameNumber - 1;
+    
+    if (gameIndex < existingGames.length) {
+      // Update existing game
+      existingGames[gameIndex] = newGame;
+    } else {
+      // Add new game (fill gaps if needed)
+      while (existingGames.length < gameIndex) {
+        existingGames.push({ game: existingGames.length + 1, score_a: 0, score_b: 0, winner: 'a' });
+      }
+      existingGames.push(newGame);
+    }
+
+    // Recalculate wins
+    const winsA = existingGames.filter(g => g.winner === 'a').length;
+    const winsB = existingGames.filter(g => g.winner === 'b').length;
+    const winsNeededForMatch = Math.ceil(match.best_of / 2);
+    const isMatchComplete = winsA >= winsNeededForMatch || winsB >= winsNeededForMatch;
 
     if (isMatchComplete) {
       // End match
@@ -222,15 +258,17 @@ export default function DoublesEliminationScoring() {
       await supabase
         .from('doubles_elimination_matches')
         .update({
-          games: games as any,
+          games: existingGames as any,
           games_won_a: winsA,
           games_won_b: winsB,
           winner_id: winnerId,
-          status: 'completed'
+          status: 'completed',
+          score_a: 0,
+          score_b: 0
         })
         .eq('id', match.id);
 
-      // Mark loser as eliminated (if applicable for this round)
+      // Mark loser as eliminated
       if (loserId && match.round_type !== 'winner_r1') {
         await supabase
           .from('doubles_elimination_teams')
@@ -241,7 +279,7 @@ export default function DoublesEliminationScoring() {
           .eq('id', loserId);
       }
 
-      // If this is the final match, mark tournament as completed
+      // If final match, mark tournament as completed
       if (match.round_type === 'final' && tournament) {
         await supabase
           .from('doubles_elimination_tournaments')
@@ -249,28 +287,54 @@ export default function DoublesEliminationScoring() {
           .eq('id', tournament.id);
       }
 
+      // Update local state
+      setMatch({
+        ...match,
+        games: existingGames,
+        games_won_a: winsA,
+        games_won_b: winsB,
+        winner_id: winnerId,
+        status: 'completed'
+      });
+
       toast({ title: "Trận đấu kết thúc!" });
-      navigate(`/tools/doubles-elimination/${tournament?.share_id}`);
     } else {
-      // Continue to next game
+      // Save game and continue
       await supabase
         .from('doubles_elimination_matches')
         .update({
-          games: games as any,
+          games: existingGames as any,
           games_won_a: winsA,
           games_won_b: winsB,
+          status: 'live',
           score_a: 0,
           score_b: 0
         })
         .eq('id', match.id);
 
-      setMatch(prev => prev ? { ...prev, games, games_won_a: winsA, games_won_b: winsB } : null);
-      setCurrentGameNumber(games.length + 1);
-      setLocalScoreA(0);
-      setLocalScoreB(0);
-      toast({ title: `Game ${currentGameNumber} kết thúc. Tiếp tục Game ${currentGameNumber + 1}` });
-    }
+      // Update local state
+      setMatch({
+        ...match,
+        games: existingGames,
+        games_won_a: winsA,
+        games_won_b: winsB
+      });
 
+      // Move to next empty game slot
+      const nextEmptyGame = existingGames.length + 1;
+      if (nextEmptyGame <= match.best_of) {
+        setCurrentGameNumber(nextEmptyGame);
+        setLocalScoreA(0);
+        setLocalScoreB(0);
+      }
+
+      toast({ title: `Đã lưu Game ${currentGameNumber}` });
+    }
+  };
+
+  // Legacy handleEndGame for dialog confirmation (redirects to handleSaveGame)
+  const handleEndGame = async () => {
+    await handleSaveGame();
     setShowEndDialog(false);
   };
 
@@ -371,30 +435,35 @@ export default function DoublesEliminationScoring() {
           <div className="w-10" />
         </div>
 
-        {/* Best of indicator with game slots */}
+        {/* Best of indicator with clickable game slots */}
         {isBestOf && (
           <div className="text-center mb-6">
             <Badge variant="outline" className="text-base px-4 py-1 mb-4">
               Best of {match.best_of} (Thắng {winsNeeded})
             </Badge>
             
-            {/* Game slots visualization */}
+            {/* Clickable Game slots */}
             <div className="flex justify-center gap-2 mt-3">
               {Array.from({ length: match.best_of }).map((_, gameIndex) => {
                 const gameNum = gameIndex + 1;
                 const gameData = match.games?.[gameIndex];
-                const isCurrentGame = gameNum === currentGameNumber && match.status !== 'completed';
+                const isCurrentGame = gameNum === currentGameNumber;
                 const isCompleted = !!gameData;
                 const winnerTeam = gameData?.winner;
+                const canClickGame = canEdit && match.status !== 'completed';
                 
                 return (
-                  <div
+                  <button
                     key={gameIndex}
+                    onClick={() => handleSelectGame(gameNum)}
+                    disabled={!canClickGame}
                     className={cn(
                       "flex flex-col items-center justify-center w-16 h-20 rounded-lg border-2 transition-all",
+                      canClickGame && "cursor-pointer hover:border-primary/50 hover:bg-primary/5",
                       isCurrentGame && "border-primary bg-primary/10 ring-2 ring-primary/30",
                       isCompleted && !isCurrentGame && "border-muted bg-muted/30",
-                      !isCompleted && !isCurrentGame && "border-dashed border-muted-foreground/30 bg-muted/10"
+                      !isCompleted && !isCurrentGame && "border-dashed border-muted-foreground/30 bg-muted/10",
+                      !canClickGame && "cursor-not-allowed"
                     )}
                   >
                     <div className={cn(
@@ -420,11 +489,13 @@ export default function DoublesEliminationScoring() {
                         </span>
                       </div>
                     ) : isCurrentGame ? (
-                      <div className="text-xs text-primary font-medium">Đang đấu</div>
+                      <div className="text-xs text-primary font-medium">
+                        {localScoreA}-{localScoreB}
+                      </div>
                     ) : (
                       <div className="text-xs text-muted-foreground">—</div>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -443,12 +514,26 @@ export default function DoublesEliminationScoring() {
               )}>{match.games_won_b}</span>
               <span className="text-muted-foreground">game</span>
             </div>
+            
+            {canEdit && match.status !== 'completed' && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Click vào ô game để chấm điểm game đó
+              </p>
+            )}
           </div>
         )}
 
         {/* Score Board */}
         <Card className="mb-6">
           <CardContent className="py-8">
+            {/* Current game indicator for BO3/BO5 */}
+            {isBestOf && (
+              <div className="text-center mb-4">
+                <Badge variant="secondary" className="text-sm">
+                  Game {currentGameNumber}
+                </Badge>
+              </div>
+            )}
             {/* Scores - centered on same line */}
             <div className="flex items-center justify-center gap-3">
               <div className="text-center">
@@ -536,15 +621,27 @@ export default function DoublesEliminationScoring() {
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset
               </Button>
-              <Button 
-                variant="default" 
-                className="flex-1"
-                onClick={() => setShowEndDialog(true)}
-                disabled={localScoreA === localScoreB}
-              >
-                <Check className="w-4 h-4 mr-2" />
-                {isBestOf ? 'Kết thúc Game' : 'Kết thúc trận'}
-              </Button>
+              {isBestOf ? (
+                <Button 
+                  variant="default" 
+                  className="flex-1"
+                  onClick={handleSaveGame}
+                  disabled={localScoreA === localScoreB}
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Lưu Game {currentGameNumber}
+                </Button>
+              ) : (
+                <Button 
+                  variant="default" 
+                  className="flex-1"
+                  onClick={() => setShowEndDialog(true)}
+                  disabled={localScoreA === localScoreB}
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Kết thúc trận
+                </Button>
+              )}
             </div>
           </div>
         )}
