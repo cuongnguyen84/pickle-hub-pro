@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Minus, Plus, RotateCcw, Check, Trophy } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -370,34 +371,78 @@ export default function DoublesEliminationScoring() {
           <div className="w-10" />
         </div>
 
-        {/* Best of indicator */}
+        {/* Best of indicator with game slots */}
         {isBestOf && (
-          <div className="text-center mb-4">
-            <Badge variant="outline" className="text-base px-4 py-1">
+          <div className="text-center mb-6">
+            <Badge variant="outline" className="text-base px-4 py-1 mb-4">
               Best of {match.best_of} (Thắng {winsNeeded})
             </Badge>
-            <div className="flex justify-center gap-4 mt-2">
-              <span className="font-medium">{match.games_won_a}</span>
-              <span className="text-muted-foreground">-</span>
-              <span className="font-medium">{match.games_won_b}</span>
+            
+            {/* Game slots visualization */}
+            <div className="flex justify-center gap-2 mt-3">
+              {Array.from({ length: match.best_of }).map((_, gameIndex) => {
+                const gameNum = gameIndex + 1;
+                const gameData = match.games?.[gameIndex];
+                const isCurrentGame = gameNum === currentGameNumber && match.status !== 'completed';
+                const isCompleted = !!gameData;
+                const winnerTeam = gameData?.winner;
+                
+                return (
+                  <div
+                    key={gameIndex}
+                    className={cn(
+                      "flex flex-col items-center justify-center w-16 h-20 rounded-lg border-2 transition-all",
+                      isCurrentGame && "border-primary bg-primary/10 ring-2 ring-primary/30",
+                      isCompleted && !isCurrentGame && "border-muted bg-muted/30",
+                      !isCompleted && !isCurrentGame && "border-dashed border-muted-foreground/30 bg-muted/10"
+                    )}
+                  >
+                    <div className={cn(
+                      "text-[10px] font-medium mb-1",
+                      isCurrentGame ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      G{gameNum}
+                    </div>
+                    {isCompleted ? (
+                      <div className="text-center">
+                        <span className={cn(
+                          "text-sm font-bold",
+                          winnerTeam === 'a' ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          {gameData.score_a}
+                        </span>
+                        <span className="text-xs text-muted-foreground mx-0.5">-</span>
+                        <span className={cn(
+                          "text-sm font-bold",
+                          winnerTeam === 'b' ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          {gameData.score_b}
+                        </span>
+                      </div>
+                    ) : isCurrentGame ? (
+                      <div className="text-xs text-primary font-medium">Đang đấu</div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">—</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            {match.games && match.games.length > 0 && (
-              <div className="text-sm text-muted-foreground mt-1">
-                {match.games.map((g, i) => (
-                  <span key={i}>
-                    {i > 0 && ' | '}
-                    {g.score_a}-{g.score_b}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Current game indicator */}
-        {isBestOf && (
-          <div className="text-center mb-4">
-            <Badge>Game {currentGameNumber}</Badge>
+            
+            {/* Games won summary */}
+            <div className="flex justify-center items-center gap-3 mt-3">
+              <span className={cn(
+                "text-lg font-bold",
+                match.games_won_a > match.games_won_b ? "text-primary" : "text-foreground"
+              )}>{match.games_won_a}</span>
+              <span className="text-muted-foreground">game</span>
+              <span className="text-muted-foreground">-</span>
+              <span className={cn(
+                "text-lg font-bold",
+                match.games_won_b > match.games_won_a ? "text-primary" : "text-foreground"
+              )}>{match.games_won_b}</span>
+              <span className="text-muted-foreground">game</span>
+            </div>
           </div>
         )}
 
