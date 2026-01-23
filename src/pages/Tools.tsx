@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Users, Swords, Trophy, GitBranch } from "lucide-react";
+import { Users, Swords, Trophy, GitBranch, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MyRefereeTournaments } from "@/components/tools/MyRefereeTournaments";
 import { useAuth } from "@/hooks/useAuth";
@@ -82,6 +82,12 @@ const Tools = () => {
       description: t.tools.doublesElimination.description,
       icon: <GitBranch className="w-6 h-6" />,
       href: "/tools/doubles-elimination",
+    },
+    {
+      title: t.tools.flexTournament.title,
+      description: t.tools.flexTournament.description,
+      icon: <Sparkles className="w-6 h-6" />,
+      href: "/tools/flex-tournament",
     },
   ];
 

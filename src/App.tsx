@@ -43,6 +43,11 @@ const DoublesEliminationSetup = lazy(() => import("./pages/DoublesEliminationSet
 const DoublesEliminationView = lazy(() => import("./pages/DoublesEliminationView"));
 const DoublesEliminationScoring = lazy(() => import("./pages/DoublesEliminationScoring"));
 
+// Flex Tournament pages
+const FlexTournamentList = lazy(() => import("./pages/FlexTournamentList"));
+const FlexTournamentSetup = lazy(() => import("./pages/FlexTournamentSetup"));
+const FlexTournamentView = lazy(() => import("./pages/FlexTournamentView"));
+
 // Lazy load embed pages
 const EmbedLive = lazy(() => import("./pages/embed/EmbedLive"));
 const EmbedVideo = lazy(() => import("./pages/embed/EmbedVideo"));
@@ -120,6 +125,10 @@ const App = () => (
                 <Route path="/tools/doubles-elimination/new" element={<DoublesEliminationSetup />} />
                 <Route path="/tools/doubles-elimination/:shareId" element={<DoublesEliminationView />} />
                 <Route path="/tools/doubles-elimination/match/:matchId/score" element={<DoublesEliminationScoring />} />
+                {/* Flex Tournament routes */}
+                <Route path="/tools/flex-tournament" element={<FlexTournamentList />} />
+                <Route path="/tools/flex-tournament/new" element={<FlexTournamentSetup />} />
+                <Route path="/tools/flex-tournament/:shareId" element={<FlexTournamentView />} />
                 {/* Legacy Quick Tables redirects */}
                 <Route path="/quick-tables" element={<Navigate to="/tools/quick-tables" replace />} />
                 <Route path="/quick-tables/:shareId" element={<QuickTableRedirect />} />

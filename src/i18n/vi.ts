@@ -195,6 +195,67 @@ export interface Translations {
       description: string;
     };
     comingSoon: string;
+    flexTournament: {
+      title: string;
+      description: string;
+      subtitle: string;
+      subtitleFull: string;
+      create: string;
+      tournamentName: string;
+      tournamentNamePlaceholder: string;
+      addPlayers: string;
+      addPlayersPlaceholder: string;
+      addPlayersHint: string;
+      playerPool: string;
+      addTeam: string;
+      addGroup: string;
+      addMatch: string;
+      teamName: string;
+      groupName: string;
+      matchName: string;
+      matchType: {
+        label: string;
+        singles: string;
+        doubles: string;
+      };
+      stats: {
+        playerStats: string;
+        pairStats: string;
+        wins: string;
+        losses: string;
+        pointDiff: string;
+        rank: string;
+        name: string;
+      };
+      generateRR: string;
+      unlisted: string;
+      public: string;
+      slotA: string;
+      slotB: string;
+      noPlayers: string;
+      noTeams: string;
+      noGroups: string;
+      noMatches: string;
+      dropPlayerHere: string;
+      dropTeamHere: string;
+      score: string;
+      vs: string;
+      deleteConfirm: string;
+      myTournaments: string;
+      createNew: string;
+      noTournaments: string;
+      viewTournament: string;
+      share: string;
+      settings: string;
+      visibility: string;
+      visibilityHint: string;
+      deleteError: string;
+      createError: string;
+      createSuccess: string;
+      updateSuccess: string;
+      generating: string;
+      rrGenerated: string;
+    };
   };
   auth: {
     login: string;
@@ -1303,6 +1364,67 @@ export const vi: Translations = {
       description: "Loại kép với nhánh thắng/thua",
     },
     comingSoon: "Sắp ra mắt",
+    flexTournament: {
+      title: "Flex Tournament",
+      description: "Tạo giải đấu theo cách của bạn. Hoàn toàn linh hoạt. Không giới hạn luật.",
+      subtitle: "Tạo giải đấu theo cách của bạn. Hoàn toàn linh hoạt. Không giới hạn luật.",
+      subtitleFull: "Đây là thể thức do người dùng tự tạo, linh hoạt và không giới hạn luật thi đấu. Người tạo giải toàn quyền sắp xếp VĐV, đội, bảng và trận đấu theo nhu cầu thống kê của mình.",
+      create: "Tạo giải đấu",
+      tournamentName: "Tên giải đấu",
+      tournamentNamePlaceholder: "Nhập tên giải đấu",
+      addPlayers: "Thêm VĐV",
+      addPlayersPlaceholder: "Nhập tên VĐV (mỗi dòng một tên)",
+      addPlayersHint: "Bạn có thể paste nhiều tên cùng lúc",
+      playerPool: "Danh sách VĐV",
+      addTeam: "+ Đội",
+      addGroup: "+ Bảng",
+      addMatch: "+ Trận",
+      teamName: "Tên đội",
+      groupName: "Tên bảng",
+      matchName: "Tên trận",
+      matchType: {
+        label: "Loại trận",
+        singles: "Đơn",
+        doubles: "Đôi",
+      },
+      stats: {
+        playerStats: "Thống kê VĐV",
+        pairStats: "Thống kê cặp đôi",
+        wins: "T",
+        losses: "B",
+        pointDiff: "+/-",
+        rank: "#",
+        name: "Tên",
+      },
+      generateRR: "Tạo lịch vòng tròn",
+      unlisted: "Không công khai",
+      public: "Công khai",
+      slotA: "Bên A",
+      slotB: "Bên B",
+      noPlayers: "Chưa có VĐV",
+      noTeams: "Chưa có đội",
+      noGroups: "Chưa có bảng",
+      noMatches: "Chưa có trận",
+      dropPlayerHere: "Kéo VĐV vào đây",
+      dropTeamHere: "Kéo đội vào đây",
+      score: "Điểm",
+      vs: "vs",
+      deleteConfirm: "Bạn có chắc muốn xóa?",
+      myTournaments: "Giải đấu của tôi",
+      createNew: "Tạo mới",
+      noTournaments: "Chưa có giải đấu. Hãy tạo giải đầu tiên!",
+      viewTournament: "Xem",
+      share: "Chia sẻ",
+      settings: "Cài đặt",
+      visibility: "Hiển thị",
+      visibilityHint: "Giải công khai có thể xem bởi bất kỳ ai có link",
+      deleteError: "Không thể xóa",
+      createError: "Không thể tạo giải đấu",
+      createSuccess: "Đã tạo giải đấu!",
+      updateSuccess: "Đã cập nhật",
+      generating: "Đang tạo...",
+      rrGenerated: "Đã tạo lịch vòng tròn",
+    },
   },
   auth: {
     login: "Đăng nhập",

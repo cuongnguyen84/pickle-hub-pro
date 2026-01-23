@@ -464,6 +464,440 @@ export type Database = {
         }
         Relationships: []
       }
+      flex_group_items: {
+        Row: {
+          created_at: string
+          display_order: number
+          group_id: string
+          id: string
+          item_type: string
+          player_id: string | null
+          team_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          group_id: string
+          id?: string
+          item_type: string
+          player_id?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          group_id?: string
+          id?: string
+          item_type?: string
+          player_id?: string | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_group_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "flex_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_group_items_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_group_items_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "flex_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flex_groups: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          tournament_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          tournament_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_groups_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "flex_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flex_matches: {
+        Row: {
+          created_at: string
+          display_order: number
+          group_id: string | null
+          id: string
+          match_type: string
+          name: string
+          score_a: number | null
+          score_b: number | null
+          slot_a_team_id: string | null
+          slot_a1_player_id: string | null
+          slot_a2_player_id: string | null
+          slot_b_team_id: string | null
+          slot_b1_player_id: string | null
+          slot_b2_player_id: string | null
+          tournament_id: string
+          updated_at: string
+          winner_side: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          group_id?: string | null
+          id?: string
+          match_type?: string
+          name: string
+          score_a?: number | null
+          score_b?: number | null
+          slot_a_team_id?: string | null
+          slot_a1_player_id?: string | null
+          slot_a2_player_id?: string | null
+          slot_b_team_id?: string | null
+          slot_b1_player_id?: string | null
+          slot_b2_player_id?: string | null
+          tournament_id: string
+          updated_at?: string
+          winner_side?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          group_id?: string | null
+          id?: string
+          match_type?: string
+          name?: string
+          score_a?: number | null
+          score_b?: number | null
+          slot_a_team_id?: string | null
+          slot_a1_player_id?: string | null
+          slot_a2_player_id?: string | null
+          slot_b_team_id?: string | null
+          slot_b1_player_id?: string | null
+          slot_b2_player_id?: string | null
+          tournament_id?: string
+          updated_at?: string
+          winner_side?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_matches_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "flex_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_matches_slot_a_team_id_fkey"
+            columns: ["slot_a_team_id"]
+            isOneToOne: false
+            referencedRelation: "flex_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_matches_slot_a1_player_id_fkey"
+            columns: ["slot_a1_player_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_matches_slot_a2_player_id_fkey"
+            columns: ["slot_a2_player_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_matches_slot_b_team_id_fkey"
+            columns: ["slot_b_team_id"]
+            isOneToOne: false
+            referencedRelation: "flex_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_matches_slot_b1_player_id_fkey"
+            columns: ["slot_b1_player_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_matches_slot_b2_player_id_fkey"
+            columns: ["slot_b2_player_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_matches_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "flex_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flex_pair_stats: {
+        Row: {
+          group_id: string
+          id: string
+          losses: number
+          player1_id: string
+          player2_id: string
+          point_diff: number
+          updated_at: string
+          wins: number
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          losses?: number
+          player1_id: string
+          player2_id: string
+          point_diff?: number
+          updated_at?: string
+          wins?: number
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          losses?: number
+          player1_id?: string
+          player2_id?: string
+          point_diff?: number
+          updated_at?: string
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_pair_stats_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "flex_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_pair_stats_player1_id_fkey"
+            columns: ["player1_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_pair_stats_player2_id_fkey"
+            columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flex_player_stats: {
+        Row: {
+          group_id: string
+          id: string
+          losses: number
+          player_id: string
+          point_diff: number
+          updated_at: string
+          wins: number
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          losses?: number
+          player_id: string
+          point_diff?: number
+          updated_at?: string
+          wins?: number
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          losses?: number
+          player_id?: string
+          point_diff?: number
+          updated_at?: string
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_player_stats_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "flex_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_player_stats_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flex_players: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          tournament_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          tournament_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_players_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "flex_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flex_team_members: {
+        Row: {
+          created_at: string
+          id: string
+          player_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_team_members_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "flex_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "flex_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flex_teams: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          tournament_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          tournament_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_teams_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "flex_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flex_tournaments: {
+        Row: {
+          created_at: string
+          creator_user_id: string
+          id: string
+          is_public: boolean
+          name: string
+          share_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_user_id: string
+          id?: string
+          is_public?: boolean
+          name: string
+          share_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_user_id?: string
+          id?: string
+          is_public?: boolean
+          name?: string
+          share_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -2227,6 +2661,10 @@ export type Database = {
         Args: { _livestream_id: string; _user_id: string }
         Returns: boolean
       }
+      can_view_flex_tournament: {
+        Args: { p_tournament_id: string; p_user_id: string }
+        Returns: boolean
+      }
       cancel_pair_request: { Args: { _request_id: string }; Returns: Json }
       create_pair_request: {
         Args: { _table_id: string; _to_team_id: string }
@@ -2334,6 +2772,10 @@ export type Database = {
       }
       is_doubles_elimination_referee: {
         Args: { _tournament_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_flex_tournament_creator: {
+        Args: { p_tournament_id: string; p_user_id: string }
         Returns: boolean
       }
       is_quick_table_creator: {
