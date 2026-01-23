@@ -18,11 +18,12 @@ interface ActionButtonsProps {
   onAddTeam: (name: string) => void;
   onAddGroup: (name: string) => void;
   onAddMatch: (name: string, type: 'singles' | 'doubles') => void;
+  compact?: boolean;
 }
 
 type DialogType = 'team' | 'group' | 'match' | null;
 
-export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch }: ActionButtonsProps) {
+export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: ActionButtonsProps) {
   const { t } = useI18n();
   const [openDialog, setOpenDialog] = useState<DialogType>(null);
   const [inputValue, setInputValue] = useState('');
@@ -68,6 +69,104 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch }: ActionButto
     }
   };
 
+  const dialogContent = (
+    <Dialog open={openDialog !== null} onOpenChange={(open) => !open && setOpenDialog(null)}>
+      <DialogContent className="max-w-[90vw] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{getDialogTitle()}</DialogTitle>
+          {openDialog === 'match' && (
+            <DialogDescription>
+              {t.tools.flexTournament.matchType.label}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>{getDialogTitle()}</Label>
+            <Input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={getDialogTitle()}
+              autoFocus
+              className="text-base"
+            />
+          </div>
+
+          {openDialog === 'match' && (
+            <div className="space-y-2">
+              <Label>{t.tools.flexTournament.matchType.label}</Label>
+              <RadioGroup
+                value={matchType}
+                onValueChange={(value) => setMatchType(value as 'singles' | 'doubles')}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="singles" id="singles" />
+                  <Label htmlFor="singles" className="font-normal">
+                    {t.tools.flexTournament.matchType.singles}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="doubles" id="doubles" />
+                  <Label htmlFor="doubles" className="font-normal">
+                    {t.tools.flexTournament.matchType.doubles}
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpenDialog(null)}>
+            {t.common.cancel}
+          </Button>
+          <Button onClick={handleSubmit} disabled={!inputValue.trim()}>
+            {t.common.create}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // Compact mode for mobile - returns fragment with buttons
+  if (compact) {
+    return (
+      <>
+        <Button
+          variant="outline"
+          size="sm"
+          className="justify-center text-xs h-9"
+          onClick={() => setOpenDialog('team')}
+        >
+          <Users className="w-3.5 h-3.5 mr-1" />
+          {t.tools.flexTournament.addTeam}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="justify-center text-xs h-9"
+          onClick={() => setOpenDialog('group')}
+        >
+          <Grid3X3 className="w-3.5 h-3.5 mr-1" />
+          {t.tools.flexTournament.addGroup}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="justify-center text-xs h-9"
+          onClick={() => setOpenDialog('match')}
+        >
+          <Swords className="w-3.5 h-3.5 mr-1" />
+          {t.tools.flexTournament.addMatch}
+        </Button>
+        {dialogContent}
+      </>
+    );
+  }
+
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -96,63 +195,7 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch }: ActionButto
           {t.tools.flexTournament.addMatch}
         </Button>
       </div>
-
-      <Dialog open={openDialog !== null} onOpenChange={(open) => !open && setOpenDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{getDialogTitle()}</DialogTitle>
-            <DialogDescription>
-              {openDialog === 'match' && t.tools.flexTournament.matchType.label}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>{getDialogTitle()}</Label>
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={getDialogTitle()}
-                autoFocus
-              />
-            </div>
-
-            {openDialog === 'match' && (
-              <div className="space-y-2">
-                <Label>{t.tools.flexTournament.matchType.label}</Label>
-                <RadioGroup
-                  value={matchType}
-                  onValueChange={(value) => setMatchType(value as 'singles' | 'doubles')}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="singles" id="singles" />
-                    <Label htmlFor="singles" className="font-normal">
-                      {t.tools.flexTournament.matchType.singles}
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="doubles" id="doubles" />
-                    <Label htmlFor="doubles" className="font-normal">
-                      {t.tools.flexTournament.matchType.doubles}
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDialog(null)}>
-              {t.common.cancel}
-            </Button>
-            <Button onClick={handleSubmit} disabled={!inputValue.trim()}>
-              {t.common.create}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {dialogContent}
     </>
   );
 }
