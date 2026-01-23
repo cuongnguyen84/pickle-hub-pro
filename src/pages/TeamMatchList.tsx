@@ -151,17 +151,17 @@ export default function TeamMatchList() {
       />
       <div className="container max-w-4xl py-6 space-y-6">
         {/* SEO Header */}
-        <header>
-          <div className="flex items-center gap-4 mb-6">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/tools')}>
+        <header className="mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/tools')} className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold whitespace-nowrap">{t.teamMatch.pageTitle}</h1>
-              <p className="text-sm text-muted-foreground">{t.teamMatch.pageSubtitle}</p>
-            </div>
+            <h1 className="text-2xl font-bold">{t.teamMatch.pageTitle}</h1>
+          </div>
+          <div className="flex items-center justify-between gap-4 pl-10">
+            <p className="text-sm text-muted-foreground">{t.teamMatch.pageSubtitle}</p>
             {user && (
-              <Button onClick={() => navigate('/tools/team-match/new')}>
+              <Button onClick={() => navigate('/tools/team-match/new')} className="shrink-0">
                 <Plus className="h-4 w-4 mr-2" />
                 {t.teamMatch.createNew}
               </Button>
