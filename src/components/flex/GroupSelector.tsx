@@ -179,6 +179,13 @@ export function GroupSelector({
     );
   }
 
+  // Determine group type for each group
+  const getGroupType = (groupId: string): 'team' | 'player' | null => {
+    const items = groupItems.filter(gi => gi.group_id === groupId);
+    if (items.length === 0) return null;
+    return items[0].item_type === 'team' ? 'team' : 'player';
+  };
+
   return (
     <div className="space-y-3">
       {/* Group selector tabs */}
@@ -186,6 +193,8 @@ export function GroupSelector({
         {groups.map(group => {
           const itemCount = groupItems.filter(gi => gi.group_id === group.id).length;
           const matchCount = matches.filter(m => m.group_id === group.id).length;
+          const type = getGroupType(group.id);
+          const GroupIcon = type === 'team' ? Users : User;
           return (
             <Button
               key={group.id}
@@ -197,7 +206,7 @@ export function GroupSelector({
                 setSelectedTeamIds([]);
               }}
             >
-              <Grid3X3 className="w-3 h-3" />
+              {type ? <GroupIcon className="w-3 h-3" /> : <Grid3X3 className="w-3 h-3" />}
               {group.name}
               <Badge variant="secondary" className="ml-1 text-[10px] px-1 h-4">
                 {itemCount}/{matchCount}
