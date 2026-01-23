@@ -13,6 +13,7 @@ import { useDoublesElimination, BestOfFormat } from "@/hooks/useDoublesEliminati
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, Plus, Trash2, Shuffle, Trophy, Users } from "lucide-react";
 import { parseCourtsInput } from "@/lib/round-robin";
+import { useI18n } from "@/i18n";
 
 interface TeamInput {
   id: string;
@@ -63,6 +64,7 @@ function calculateTournamentHints(teamCount: number): { r1Matches: number; byesT
 export default function DoublesEliminationSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const { createTournament, addTeams, generateBracket, loading } = useDoublesElimination();
   const { toast } = useToast();
 

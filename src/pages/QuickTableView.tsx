@@ -30,6 +30,7 @@ import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
 import DoublesRegistrationForm from '@/components/quicktable/DoublesRegistrationForm';
 import TeamManager from '@/components/quicktable/TeamManager';
 import { AIAssistantButton } from '@/components/ai';
+import { useI18n } from '@/i18n';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -37,6 +38,7 @@ const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { 
     getTableByShareId, updateMatchScore, updatePlayerStats, isOwner,
     getQualifiedPlayers, generatePlayoffBracket, createPlayoffMatches, 

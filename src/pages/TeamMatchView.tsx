@@ -26,7 +26,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { vi as viLocale, enUS } from 'date-fns/locale';
 import { useState, useMemo } from 'react';
 import { 
   CreateTeamDialog,
@@ -54,6 +54,7 @@ import {
 } from '@/components/teamMatch';
 import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
 import { useTeamMatchRealtime } from '@/hooks/useTeamMatchRealtime';
+import { useI18n } from '@/i18n';
 
 const STATUS_COLORS: Record<string, string> = {
   setup: 'bg-muted text-muted-foreground',
@@ -62,24 +63,28 @@ const STATUS_COLORS: Record<string, string> = {
   completed: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  setup: 'Đang thiết lập',
-  registration: 'Đang đăng ký',
-  ongoing: 'Đang diễn ra',
-  completed: 'Đã kết thúc',
-};
-
-const FORMAT_LABELS: Record<string, string> = {
-  round_robin: 'Vòng tròn',
-  single_elimination: 'Loại trực tiếp',
-  rr_playoff: 'Vòng bảng + Playoff',
-};
+// STATUS_LABELS and FORMAT_LABELS moved inside component to use i18n
 
 export default function TeamMatchView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t, language } = useI18n();
+  
+  const STATUS_LABELS: Record<string, string> = {
+    setup: t.teamMatch.statusSetup,
+    registration: t.teamMatch.statusRegistration,
+    ongoing: t.teamMatch.statusOngoing,
+    completed: t.teamMatch.statusCompleted,
+  };
+
+  const FORMAT_LABELS: Record<string, string> = {
+    round_robin: t.teamMatch.formatRoundRobin,
+    single_elimination: t.teamMatch.formatSingleElim,
+    rr_playoff: t.teamMatch.formatRrPlayoff,
+  };
+
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
   const { data: userTeam } = useUserTeam(tournament?.id);
   const { updateTournamentStatus, isUpdatingStatus } = useTeamMatch();
@@ -395,11 +400,11 @@ export default function TeamMatchView() {
               <div className="flex items-center gap-3 mt-1 text-xs md:text-sm text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
-                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: vi })}
+                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: viLocale })}
                 </span>
                 <span className="flex items-center gap-1">
                   <Users className="h-3.5 w-3.5" />
-                  {tournament.team_count} đội × {tournament.team_roster_size} VĐV
+                  {tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size} {t.teamMatch.players}
                 </span>
                 <span className="hidden sm:flex items-center gap-1">
                   <Trophy className="h-3.5 w-3.5" />
