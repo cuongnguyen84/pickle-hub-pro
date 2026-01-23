@@ -3,8 +3,8 @@ import { useI18n } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DraggablePlayer } from './DraggablePlayer';
-import { Plus, Users, X } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Plus, Users } from 'lucide-react';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import type { FlexPlayer, FlexTeam } from '@/hooks/useFlexTournament';
 
 interface FloatingPlayerPanelProps {
@@ -58,40 +58,19 @@ export function FloatingPlayerPanel({
         )}
       </Button>
 
-      {/* Sheet Panel - slides from right, no overlay */}
-      <Sheet open={isOpen} onOpenChange={setIsOpen} modal={false}>
+      {/* Sheet Panel - slides from right, auto-height */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent 
           side="right" 
-          className={`w-[280px] sm:w-[320px] p-0 transition-all duration-200 ${
+          hideCloseButton
+          className={`w-[280px] sm:w-[300px] p-0 h-auto max-h-[80vh] top-auto bottom-20 rounded-l-xl ${
             isDragging ? 'w-[80px] sm:w-[80px]' : ''
           }`}
         >
-          <SheetHeader className="p-4 pb-2 border-b">
-            <div className="flex items-center justify-between">
-              <SheetTitle className="flex items-center gap-2 text-sm">
-                <Users className="w-4 h-4" />
-                {!isDragging && (
-                  <>
-                    {t.tools.flexTournament.playerPanel}
-                    <span className="text-muted-foreground font-normal">({players.length})</span>
-                  </>
-                )}
-              </SheetTitle>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={() => setIsOpen(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </SheetHeader>
-          
-          <div className="flex flex-col h-[calc(100vh-120px)]">
+          <div className="flex flex-col">
             {/* Add player input */}
             {isCreator && !isDragging && (
-              <div className="p-4 pb-2 border-b">
+              <div className="p-3 border-b">
                 <div className="flex gap-2">
                   <Input
                     value={newPlayerName}
@@ -113,7 +92,7 @@ export function FloatingPlayerPanel({
             )}
 
             {/* Player list */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
+            <div className="overflow-y-auto p-3 space-y-1.5 max-h-[50vh]">
               {players.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-3">
                   {t.tools.flexTournament.noPlayers}
@@ -133,7 +112,7 @@ export function FloatingPlayerPanel({
 
             {/* Teams section */}
             {teams.length > 0 && !isDragging && (
-              <div className="border-t p-4 space-y-1.5">
+              <div className="border-t p-3 space-y-1.5">
                 <div className="text-xs font-medium text-muted-foreground px-1 mb-2">
                   {t.tools.flexTournament.teams}
                 </div>
