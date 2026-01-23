@@ -627,6 +627,10 @@ export interface Translations {
     yourRegisteredTournaments: string;
     yourCompletedTournaments: string;
     openRegistrationTournaments: string;
+    openRegistrationTitle: string;
+    expectedPlayers: string;
+    expectedPairs: string;
+    registering: string;
     ongoing: string;
     completed: string;
     noOngoing: string;
@@ -1734,6 +1738,10 @@ export const vi: Translations = {
     yourRegisteredTournaments: "Giải đấu bạn đang tham gia",
     yourCompletedTournaments: "Giải đấu đã tham gia",
     openRegistrationTournaments: "Giải đấu đang đăng ký",
+    openRegistrationTitle: "Giải đang mở đăng ký",
+    expectedPlayers: "Dự kiến {count} người",
+    expectedPairs: "Dự kiến {count} đôi",
+    registering: "Đang đăng ký",
     ongoing: "Đang diễn ra",
     completed: "Hoàn thành",
     noOngoing: "Không có giải đấu đang diễn ra",
