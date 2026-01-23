@@ -452,7 +452,12 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
             format,
             player_count,
             is_doubles,
-            created_at
+            created_at,
+            creator_user_id,
+            profiles:creator_user_id (
+              display_name,
+              email
+            )
           )
         `)
         .eq("user_id", userId)
@@ -476,7 +481,12 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
             format,
             player_count,
             is_doubles,
-            created_at
+            created_at,
+            creator_user_id,
+            profiles:creator_user_id (
+              display_name,
+              email
+            )
           )
         `)
         .or(`player1_user_id.eq.${userId},player2_user_id.eq.${userId}`)
@@ -492,10 +502,13 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
         .filter(reg => reg.quick_tables && (reg.quick_tables as any).status !== 'completed')
         .forEach(reg => {
           const table = reg.quick_tables as any;
+          const profile = table.profiles;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: reg.id,
               registrationStatus: reg.status,
+              creator_display_name: profile?.display_name,
+              creator_email: profile?.email,
               ...table,
             });
           }
@@ -506,11 +519,14 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
         .filter(team => team.quick_tables && (team.quick_tables as any).status !== 'completed')
         .forEach(team => {
           const table = team.quick_tables as any;
+          const profile = table.profiles;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: team.id,
               registrationStatus: team.btc_approved ? 'approved' : 'pending',
               teamStatus: team.team_status,
+              creator_display_name: profile?.display_name,
+              creator_email: profile?.email,
               ...table,
             });
           }
