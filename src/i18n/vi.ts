@@ -259,6 +259,7 @@ export interface Translations {
       duplicatePlayer: string;
       duplicateInTeam: string;
       duplicateInGroup: string;
+      groupTypeMismatch: string;
       duplicateInMatch: string;
       includeDoublesInSingles: string;
       noDoublesStats: string;
@@ -1444,6 +1445,7 @@ export const vi: Translations = {
       duplicatePlayer: "Tên VĐV này đã tồn tại",
       duplicateInTeam: "VĐV này đã có trong đội này",
       duplicateInGroup: "VĐV/Đội này đã có trong bảng này",
+      groupTypeMismatch: "Bảng chỉ nhận VĐV hoặc chỉ nhận đội",
       duplicateInMatch: "VĐV này đã có trong trận này",
       includeDoublesInSingles: "Tính cả các trận đôi",
       noDoublesStats: "Chưa có thống kê đôi",

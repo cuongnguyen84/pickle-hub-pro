@@ -60,6 +60,13 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     );
   };
 
+  // Detect group item type based on existing items
+  const getGroupItemType = (groupId: string): 'player' | 'team' | null => {
+    const groupItemsList = data.groupItems.filter(gi => gi.group_id === groupId);
+    if (groupItemsList.length === 0) return null; // Empty, any type allowed
+    return groupItemsList[0].item_type as 'player' | 'team';
+  };
+
   // Check if player already exists in a match
   const isPlayerInMatch = (playerId: string, match: typeof data.matches[0]) => {
     return [
@@ -117,10 +124,21 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     // Handle drop on group
     if (targetId.startsWith('group-drop-')) {
       const groupId = targetId.replace('group-drop-', '');
+      
+      // Check group type - first item determines type
+      const existingType = getGroupItemType(groupId);
+      if (existingType && existingType !== sourceData.type) {
+        toast({ 
+          title: t.tools.flexTournament.groupTypeMismatch,
+          variant: "destructive" 
+        });
+        return;
+      }
+      
       // Check for duplicate
       if (isItemInGroup(sourceData.type, sourceData.id, groupId)) {
         toast({ 
-          title: "VĐV đã có trong bảng này",
+          title: t.tools.flexTournament.duplicateInGroup,
           variant: "destructive" 
         });
         return;
@@ -197,21 +215,28 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [data.tournament.id, data.players, addPlayer, onRefresh, toast, t]);
 
+  // Get next negative display order for new items (appear at top)
+  const getNextDisplayOrder = (existingItems: { display_order: number }[]) => {
+    const minOrder = existingItems.length > 0 
+      ? Math.min(...existingItems.map(i => i.display_order)) 
+      : 0;
+    return minOrder - 1;
+  };
+
   const handleAddTeam = useCallback(async (name: string) => {
-    // New items at top: display_order = -1 (or use timestamp for uniqueness)
-    await addTeam(data.tournament.id, name, -Date.now());
+    await addTeam(data.tournament.id, name, getNextDisplayOrder(data.teams));
     onRefresh();
-  }, [data.tournament.id, addTeam, onRefresh]);
+  }, [data.tournament.id, data.teams, addTeam, onRefresh]);
 
   const handleAddGroup = useCallback(async (name: string) => {
-    await addGroup(data.tournament.id, name, -Date.now());
+    await addGroup(data.tournament.id, name, getNextDisplayOrder(data.groups));
     onRefresh();
-  }, [data.tournament.id, addGroup, onRefresh]);
+  }, [data.tournament.id, data.groups, addGroup, onRefresh]);
 
   const handleAddMatch = useCallback(async (name: string, matchType: 'singles' | 'doubles') => {
-    await addMatch(data.tournament.id, name, matchType, null, -Date.now());
+    await addMatch(data.tournament.id, name, matchType, null, getNextDisplayOrder(data.matches));
     onRefresh();
-  }, [data.tournament.id, addMatch, onRefresh]);
+  }, [data.tournament.id, data.matches, addMatch, onRefresh]);
 
   const handleDeleteTeam = useCallback(async (teamId: string) => {
     await deleteEntity('flex_teams', teamId);
