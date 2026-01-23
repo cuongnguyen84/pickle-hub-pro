@@ -453,11 +453,7 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
             player_count,
             is_doubles,
             created_at,
-            creator_user_id,
-            profiles:creator_user_id (
-              display_name,
-              email
-            )
+            creator_user_id
           )
         `)
         .eq("user_id", userId)
@@ -482,17 +478,37 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
             player_count,
             is_doubles,
             created_at,
-            creator_user_id,
-            profiles:creator_user_id (
-              display_name,
-              email
-            )
+            creator_user_id
           )
         `)
         .or(`player1_user_id.eq.${userId},player2_user_id.eq.${userId}`)
         .not("team_status", "in", "(rejected,removed)");
 
       if (doublesError) throw doublesError;
+      
+      // Collect all unique creator_user_ids
+      const creatorIds = new Set<string>();
+      singlesData.forEach(reg => {
+        const table = reg.quick_tables as any;
+        if (table?.creator_user_id) creatorIds.add(table.creator_user_id);
+      });
+      doublesData.forEach(team => {
+        const table = team.quick_tables as any;
+        if (table?.creator_user_id) creatorIds.add(table.creator_user_id);
+      });
+      
+      // Fetch creator profiles
+      let profilesMap = new Map<string, { display_name: string | null; email: string }>();
+      if (creatorIds.size > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, display_name, email")
+          .in("id", Array.from(creatorIds));
+        
+        if (profilesData) {
+          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name, email: p.email }));
+        }
+      }
       
       // Combine and deduplicate by table_id
       const tableMap = new Map<string, any>();
@@ -502,7 +518,7 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
         .filter(reg => reg.quick_tables && (reg.quick_tables as any).status !== 'completed')
         .forEach(reg => {
           const table = reg.quick_tables as any;
-          const profile = table.profiles;
+          const profile = profilesMap.get(table.creator_user_id);
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: reg.id,
@@ -519,7 +535,7 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
         .filter(team => team.quick_tables && (team.quick_tables as any).status !== 'completed')
         .forEach(team => {
           const table = team.quick_tables as any;
-          const profile = table.profiles;
+          const profile = profilesMap.get(table.creator_user_id);
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: team.id,
