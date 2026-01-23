@@ -218,26 +218,6 @@ export default function TeamMatchList() {
           </section>
         )}
 
-        {/* Public Tournaments */}
-        {publicTournaments.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold">{t.teamMatch.publicTournaments}</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {publicTournaments
-                .filter(tm => !myTournaments.some(my => my.id === tm.id))
-                .map(tournament => (
-                  <TournamentCard
-                    key={tournament.id}
-                    tournament={tournament}
-                    isOwner={false}
-                    onDelete={() => {}}
-                    t={t}
-                  />
-                ))}
-            </div>
-          </section>
-        )}
-
         {/* Login prompt */}
         {!user && (
           <Card className="border-dashed">
