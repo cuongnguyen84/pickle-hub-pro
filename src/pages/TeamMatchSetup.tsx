@@ -28,9 +28,9 @@ const STEPS = [
 ];
 
 const ROSTER_SIZE_OPTIONS = [
-  { value: 4, label: '4 người/đội' },
-  { value: 6, label: '6 người/đội' },
-  { value: 8, label: '8 người/đội' },
+  { value: 4, label: '4' },
+  { value: 6, label: '6' },
+  { value: 8, label: '8' },
 ];
 
 const GAME_TYPE_LABELS: Record<string, string> = {
@@ -221,11 +221,11 @@ export default function TeamMatchSetup() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Số người mỗi đội *</Label>
+                  <Label>Số VĐV mỗi đội *</Label>
                   <RadioGroup
                     value={rosterSize.toString()}
                     onValueChange={(v) => handleRosterSizeChange(Number(v) as 4 | 6 | 8)}
-                    className="grid grid-cols-3 gap-4"
+                    className="grid grid-cols-3 gap-3"
                   >
                     {ROSTER_SIZE_OPTIONS.map(opt => (
                       <div key={opt.value}>
@@ -236,9 +236,10 @@ export default function TeamMatchSetup() {
                         />
                         <Label
                           htmlFor={`roster-${opt.value}`}
-                          className="flex items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          className="flex flex-col items-center justify-center rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                         >
-                          <span className="font-semibold">{opt.label}</span>
+                          <span className="text-3xl font-bold">{opt.label}</span>
+                          <span className="text-xs text-muted-foreground mt-1">VĐV</span>
                         </Label>
                       </div>
                     ))}

@@ -141,8 +141,7 @@ export function RegisteredTeamsSummary({
                 onTeamClick?.(team);
               }}
             >
-              <UserPlus className="h-3 w-3 mr-1" />
-              Thêm ({rosterCount}/{maxRosterSize})
+              +VĐV ({rosterCount}/{maxRosterSize})
             </Button>
           )}
           
