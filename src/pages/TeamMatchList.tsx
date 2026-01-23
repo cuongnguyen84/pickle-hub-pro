@@ -156,9 +156,9 @@ export default function TeamMatchList() {
             <Button variant="ghost" size="icon" onClick={() => navigate('/tools')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold">{t.teamMatch.pageTitle}</h1>
-              <p className="text-muted-foreground">{t.teamMatch.pageSubtitle}</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold whitespace-nowrap">{t.teamMatch.pageTitle}</h1>
+              <p className="text-sm text-muted-foreground">{t.teamMatch.pageSubtitle}</p>
             </div>
             {user && (
               <Button onClick={() => navigate('/tools/team-match/new')}>
