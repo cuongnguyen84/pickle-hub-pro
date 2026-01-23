@@ -43,6 +43,7 @@ export interface FlexGroup {
   tournament_id: string;
   name: string;
   display_order: number;
+  include_doubles_in_singles: boolean;
   created_at: string;
 }
 
@@ -71,6 +72,7 @@ export interface FlexMatch {
   score_a: number;
   score_b: number;
   winner_side: 'a' | 'b' | null;
+  counts_for_standings: boolean;
   display_order: number;
   created_at: string;
   updated_at: string;
@@ -163,6 +165,29 @@ export function useFlexTournament() {
 
         if (playersError) throw playersError;
       }
+
+      // Create preset forms: 1 Group, 1 Singles Match, 1 Doubles Match
+      const presetPromises = [
+        supabase.from('flex_groups').insert({
+          tournament_id: tournament.id,
+          name: 'Group A',
+          display_order: 0,
+        }),
+        supabase.from('flex_matches').insert({
+          tournament_id: tournament.id,
+          name: 'Singles Match 1',
+          match_type: 'singles',
+          display_order: 0,
+        }),
+        supabase.from('flex_matches').insert({
+          tournament_id: tournament.id,
+          name: 'Doubles Match 1',
+          match_type: 'doubles',
+          display_order: 1,
+        }),
+      ];
+
+      await Promise.all(presetPromises);
 
       return tournament as FlexTournament;
     },
@@ -425,6 +450,23 @@ export function useFlexTournament() {
     return true;
   }
 
+  // Update match counts_for_standings
+  async function updateMatchCountsForStandings(
+    matchId: string,
+    countsForStandings: boolean
+  ): Promise<boolean> {
+    const { error } = await supabase
+      .from('flex_matches')
+      .update({ counts_for_standings: countsForStandings })
+      .eq('id', matchId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return false;
+    }
+    return true;
+  }
+
   // Delete entity
   async function deleteEntity(table: string, id: string): Promise<boolean> {
     const { error } = await supabase
@@ -539,6 +581,7 @@ export function useFlexTournament() {
     addMatch,
     updateMatchSlots,
     updateMatchScore,
+    updateMatchCountsForStandings,
     deleteEntity,
     updateEntityName,
     updateTournamentVisibility,

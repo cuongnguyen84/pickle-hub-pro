@@ -521,6 +521,7 @@ export type Database = {
           created_at: string
           display_order: number
           id: string
+          include_doubles_in_singles: boolean
           name: string
           tournament_id: string
         }
@@ -528,6 +529,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          include_doubles_in_singles?: boolean
           name: string
           tournament_id: string
         }
@@ -535,6 +537,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          include_doubles_in_singles?: boolean
           name?: string
           tournament_id?: string
         }
@@ -550,6 +553,7 @@ export type Database = {
       }
       flex_matches: {
         Row: {
+          counts_for_standings: boolean
           created_at: string
           display_order: number
           group_id: string | null
@@ -569,6 +573,7 @@ export type Database = {
           winner_side: string | null
         }
         Insert: {
+          counts_for_standings?: boolean
           created_at?: string
           display_order?: number
           group_id?: string | null
@@ -588,6 +593,7 @@ export type Database = {
           winner_side?: string | null
         }
         Update: {
+          counts_for_standings?: boolean
           created_at?: string
           display_order?: number
           group_id?: string | null

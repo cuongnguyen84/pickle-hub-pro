@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Swords, Trash2, X, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -14,10 +15,12 @@ interface MatchBlockProps {
   players: FlexPlayer[];
   teams: FlexTeam[];
   isCreator: boolean;
+  hasGroups: boolean;
   onUpdateName: (name: string) => void;
   onDelete: () => void;
   onUpdateScore: (scoreA: number, scoreB: number) => void;
   onClearSlot: (slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => void;
+  onToggleCountsForStandings: (counts: boolean) => void;
 }
 
 interface DroppableSlotProps {
@@ -85,10 +88,12 @@ export function MatchBlock({
   players,
   teams,
   isCreator,
+  hasGroups,
   onUpdateName,
   onDelete,
   onUpdateScore,
   onClearSlot,
+  onToggleCountsForStandings,
 }: MatchBlockProps) {
   const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
@@ -112,6 +117,15 @@ export function MatchBlock({
   };
 
   const isDoubles = match.match_type === 'doubles';
+  
+  // Check if match is "complete" (has all required players)
+  const isMatchFilled = isDoubles
+    ? (match.slot_a1_player_id && match.slot_a2_player_id && match.slot_b1_player_id && match.slot_b2_player_id) ||
+      (match.slot_a_team_id && match.slot_b_team_id)
+    : match.slot_a1_player_id && match.slot_b1_player_id;
+
+  // Show hint if match is filled, counts for standings, but no groups exist
+  const showNoGroupHint = isMatchFilled && match.counts_for_standings && !hasGroups;
 
   return (
     <Card>
@@ -148,6 +162,29 @@ export function MatchBlock({
         </div>
       </CardHeader>
       <CardContent className="pt-0 px-3 pb-3 space-y-2">
+        {/* Counts for standings checkbox */}
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id={`counts-standings-${match.id}`}
+            checked={match.counts_for_standings}
+            onCheckedChange={(checked) => onToggleCountsForStandings(!!checked)}
+            disabled={!isCreator}
+          />
+          <label
+            htmlFor={`counts-standings-${match.id}`}
+            className="text-xs text-muted-foreground cursor-pointer"
+          >
+            {t.tools.flexTournament.countsForStandings}
+          </label>
+        </div>
+
+        {/* No group hint */}
+        {showNoGroupHint && (
+          <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5 rounded">
+            {t.tools.flexTournament.noGroupHint}
+          </div>
+        )}
+
         {/* Side A */}
         <div className="space-y-1">
           <div className="text-xs font-medium text-muted-foreground">{t.tools.flexTournament.slotA}</div>
