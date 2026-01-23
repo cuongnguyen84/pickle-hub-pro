@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoublesElimination, Tournament } from "@/hooks/useDoublesElimination";
 import { useI18n } from "@/i18n";
-import { Plus, Trophy, Calendar, Users, Eye, ChevronRight } from "lucide-react";
+import { Plus, Trophy, Calendar, Users, ChevronRight, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 
@@ -148,7 +148,7 @@ export default function DoublesEliminationList() {
                   </div>
                   
                   {/* Info Row - Compact */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                     <span className="flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5" />
                       <span className="font-medium">{tournament.team_count}</span>
@@ -167,7 +167,16 @@ export default function DoublesEliminationList() {
                       <Calendar className="w-3.5 h-3.5" />
                       {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
                     </span>
-                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                    {(tournament.creator_display_name || tournament.creator_email) && (
+                      <>
+                        <span className="text-muted-foreground/50">•</span>
+                        <span className="flex items-center gap-1 truncate max-w-[120px]">
+                          <Mail className="w-3.5 h-3.5 shrink-0" />
+                          {tournament.creator_display_name || tournament.creator_email?.split('@')[0]}
+                        </span>
+                      </>
+                    )}
+                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground shrink-0" />
                   </div>
                 </CardContent>
               </Card>
