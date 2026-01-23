@@ -215,39 +215,53 @@ const Tournaments = () => {
                 <Link
                   key={tournament.id}
                   to={`/quick-tables/${tournament.share_id}`}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center flex-shrink-0">
-                      <Trophy className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center flex-shrink-0">
+                    <Trophy className="w-5 h-5 text-green-600" />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    {/* Title + Status Row */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium truncate max-w-[180px]">{tournament.name}</span>
+                      <Badge 
+                        variant={tournament.registrationStatus === 'approved' ? 'default' : 'outline'}
+                        className={cn("text-xs shrink-0", tournament.registrationStatus === 'approved' ? 'bg-green-600' : '')}
+                      >
+                        {tournament.registrationStatus === 'approved' ? t.quickTable.approved : t.quickTable.pending}
+                      </Badge>
+                      <Badge variant={getStatusVariant(tournament.status)} className="text-xs shrink-0">
+                        {getStatusLabel(tournament.status)}
+                      </Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{tournament.name}</div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {tournament.is_doubles ? (
-                          <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
-                            <Users className="w-3 h-3" />
-                            <span>{tournament.player_count} đôi</span>
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
-                            <User className="w-3 h-3" />
-                            <span>{tournament.player_count} người</span>
-                          </Badge>
-                        )}
-                      </div>
+                    
+                    {/* Meta Row */}
+                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      {tournament.is_doubles ? (
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {tournament.player_count} đôi
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          {tournament.player_count} người
+                        </span>
+                      )}
+                      {(tournament.creator_display_name || tournament.creator_email) && (
+                        <>
+                          <span className="text-muted-foreground/50">•</span>
+                          <span className="flex items-center gap-1 truncate max-w-[120px]">
+                            <Mail className="w-3 h-3 shrink-0" />
+                            {tournament.creator_display_name || tournament.creator_email?.split('@')[0]}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 pl-13 sm:pl-0">
-                    <Badge 
-                      variant={tournament.registrationStatus === 'approved' ? 'default' : 'outline'}
-                      className={cn("text-xs", tournament.registrationStatus === 'approved' ? 'bg-green-600' : '')}
-                    >
-                      {tournament.registrationStatus === 'approved' ? t.quickTable.approved : t.quickTable.pending}
-                    </Badge>
-                    <Badge variant={getStatusVariant(tournament.status)} className="text-xs">{getStatusLabel(tournament.status)}</Badge>
-                    <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
-                  </div>
+                  
+                  <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
                 </Link>
               ))}
             </div>
