@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Grid3X3, User, Users, Trash2, X, RefreshCw, Swords } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
+import { MatchBlock } from './MatchBlock';
 import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember, FlexMatch } from '@/hooks/useFlexTournament';
 
 interface GroupSelectorProps {
@@ -21,11 +22,19 @@ interface GroupSelectorProps {
   pairStats: FlexPairStats[];
   matches: FlexMatch[];
   isCreator: boolean;
+  selectedGroupId: string | null;
+  onSelectGroup: (groupId: string | null) => void;
   onUpdateGroupName: (groupId: string, name: string) => void;
   onDeleteGroup: (groupId: string) => void;
   onRemoveItem: (itemId: string) => void;
   onGenerateRR: (groupId: string) => void;
   onToggleIncludeDoubles: (groupId: string, include: boolean) => void;
+  // Match handlers for inline match display
+  onUpdateMatchName: (matchId: string, name: string) => void;
+  onDeleteMatch: (matchId: string) => void;
+  onUpdateMatchScore: (matchId: string, scoreA: number, scoreB: number) => void;
+  onClearMatchSlot: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => void;
+  onToggleMatchCountsForStandings: (matchId: string, counts: boolean) => void;
 }
 
 export function GroupSelector({
@@ -38,14 +47,20 @@ export function GroupSelector({
   pairStats,
   matches,
   isCreator,
+  selectedGroupId,
+  onSelectGroup,
   onUpdateGroupName,
   onDeleteGroup,
   onRemoveItem,
   onGenerateRR,
   onToggleIncludeDoubles,
+  onUpdateMatchName,
+  onDeleteMatch,
+  onUpdateMatchScore,
+  onClearMatchSlot,
+  onToggleMatchCountsForStandings,
 }: GroupSelectorProps) {
   const { t } = useI18n();
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(groups[0]?.id || null);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'singles' | 'doubles' | 'teams' | 'individuals'>('singles');
 
@@ -200,7 +215,7 @@ export function GroupSelector({
               size="sm"
               className="text-xs h-8 gap-1"
               onClick={() => {
-                setSelectedGroupId(group.id);
+                onSelectGroup(group.id);
                 setSelectedTeamIds([]);
               }}
             >
@@ -421,13 +436,31 @@ export function GroupSelector({
               </Tabs>
             )}
 
-            {/* Group matches summary */}
+            {/* Group matches - displayed inline */}
             {selectedGroupMatches.length > 0 && (
-              <div className="mt-3 pt-3 border-t">
+              <div className="mt-3 pt-3 border-t space-y-3">
                 <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
                   <Swords className="w-3 h-3" />
                   {t.tools.flexTournament.tabMatches}: {selectedGroupMatches.length}
                 </div>
+                {selectedGroupMatches.map(match => (
+                  <MatchBlock
+                    key={match.id}
+                    match={match}
+                    players={players}
+                    teams={teams}
+                    teamMembers={teamMembers}
+                    groups={groups}
+                    isCreator={isCreator}
+                    hasGroups={groups.length > 0}
+                    isTeamMatch={groupType === 'team'}
+                    onUpdateName={(name) => onUpdateMatchName(match.id, name)}
+                    onDelete={() => onDeleteMatch(match.id)}
+                    onUpdateScore={(scoreA, scoreB) => onUpdateMatchScore(match.id, scoreA, scoreB)}
+                    onClearSlot={(slot) => onClearMatchSlot(match.id, slot)}
+                    onToggleCountsForStandings={(counts) => onToggleMatchCountsForStandings(match.id, counts)}
+                  />
+                ))}
               </div>
             )}
           </CardContent>
