@@ -5,6 +5,7 @@ import { PlayerPool } from './PlayerPool';
 import { FloatingPlayerPanel } from './FloatingPlayerPanel';
 import { ActionButtons } from './ActionButtons';
 import { TeamBlock } from './TeamBlock';
+import { TeamSelector } from './TeamSelector';
 import { GroupBlock } from './GroupBlock';
 import { GroupSelector } from './GroupSelector';
 import { MatchBlock } from './MatchBlock';
@@ -405,30 +406,19 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="teams" className="mt-3 space-y-3">
-              {sortedTeams.length > 0 ? (
-                sortedTeams.map(team => (
-                  <TeamBlock
-                    key={team.id}
-                    team={team}
-                    members={data.teamMembers.filter(m => m.team_id === team.id)}
-                    players={data.players}
-                    isCreator={isCreator}
-                    onUpdateName={(name) => handleUpdateTeamName(team.id, name)}
-                    onDelete={() => handleDeleteTeam(team.id)}
-                    onRemoveMember={(memberId) => {
-                      removePlayerFromTeam(memberId);
-                      onRefresh();
-                    }}
-                  />
-                ))
-              ) : (
-                <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground text-center text-sm">
-                    {t.tools.flexTournament.noTeams}
-                  </p>
-                </div>
-              )}
+            <TabsContent value="teams" className="mt-3">
+              <TeamSelector
+                teams={sortedTeams}
+                teamMembers={data.teamMembers}
+                players={data.players}
+                isCreator={isCreator}
+                onUpdateTeamName={handleUpdateTeamName}
+                onDeleteTeam={handleDeleteTeam}
+                onRemoveMember={(memberId) => {
+                  removePlayerFromTeam(memberId);
+                  onRefresh();
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="groups" className="mt-3">
@@ -561,25 +551,20 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
         {/* Main workspace */}
         <div className="flex-1 space-y-4">
-          {/* Teams row */}
+          {/* Teams row - using tab-based selector */}
           {sortedTeams.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {sortedTeams.map(team => (
-                <TeamBlock
-                  key={team.id}
-                  team={team}
-                  members={data.teamMembers.filter(m => m.team_id === team.id)}
-                  players={data.players}
-                  isCreator={isCreator}
-                  onUpdateName={(name) => handleUpdateTeamName(team.id, name)}
-                  onDelete={() => handleDeleteTeam(team.id)}
-                  onRemoveMember={(memberId) => {
-                    removePlayerFromTeam(memberId);
-                    onRefresh();
-                  }}
-                />
-              ))}
-            </div>
+            <TeamSelector
+              teams={sortedTeams}
+              teamMembers={data.teamMembers}
+              players={data.players}
+              isCreator={isCreator}
+              onUpdateTeamName={handleUpdateTeamName}
+              onDeleteTeam={handleDeleteTeam}
+              onRemoveMember={(memberId) => {
+                removePlayerFromTeam(memberId);
+                onRefresh();
+              }}
+            />
           )}
 
           {/* Groups row - using tab-based selector */}
