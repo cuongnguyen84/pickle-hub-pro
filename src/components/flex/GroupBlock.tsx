@@ -8,14 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Grid3X3, Trash2, X, RefreshCw, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats } from '@/hooks/useFlexTournament';
+import { useState, useMemo } from 'react';
+import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember } from '@/hooks/useFlexTournament';
 
 interface GroupBlockProps {
   group: FlexGroup;
   items: FlexGroupItem[];
   players: FlexPlayer[];
   teams: FlexTeam[];
+  teamMembers: FlexTeamMember[];
   playerStats: FlexPlayerStats[];
   pairStats: FlexPairStats[];
   isCreator: boolean;
@@ -31,6 +32,7 @@ export function GroupBlock({
   items,
   players,
   teams,
+  teamMembers,
   playerStats,
   pairStats,
   isCreator,
@@ -43,12 +45,34 @@ export function GroupBlock({
   const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(group.name);
-  const [activeTab, setActiveTab] = useState<'singles' | 'doubles'>('singles');
+  const [activeTab, setActiveTab] = useState<'singles' | 'doubles' | 'teams' | 'individuals'>('singles');
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
 
   const { isOver, setNodeRef } = useDroppable({
     id: `group-drop-${group.id}`,
     data: { type: 'group', groupId: group.id },
   });
+
+  // Determine group type: 'player' or 'team' based on items
+  const groupType = useMemo(() => {
+    if (items.length === 0) return null;
+    return items[0].item_type === 'team' ? 'team' : 'player';
+  }, [items]);
+
+  // Get teams in this group
+  const teamsInGroup = useMemo(() => {
+    return items
+      .filter(item => item.item_type === 'team')
+      .map(item => teams.find(t => t.id === item.team_id))
+      .filter(Boolean) as FlexTeam[];
+  }, [items, teams]);
+
+  // Initialize selectedTeamIds when teams change
+  useMemo(() => {
+    if (teamsInGroup.length > 0 && selectedTeamIds.length === 0) {
+      setSelectedTeamIds(teamsInGroup.map(t => t.id));
+    }
+  }, [teamsInGroup]);
 
   const handleSaveName = () => {
     if (editName.trim() && editName !== group.name) {
@@ -96,6 +120,84 @@ export function GroupBlock({
 
   const includeDoubles = group.include_doubles_in_singles ?? true;
 
+  // Get team stats (aggregate from all players in team)
+  const getTeamStats = (teamId: string) => {
+    const members = teamMembers.filter(m => m.team_id === teamId);
+    let wins = 0;
+    let losses = 0;
+    let pointDiff = 0;
+    
+    members.forEach(member => {
+      const stats = playerStats.find(s => s.player_id === member.player_id && s.group_id === group.id);
+      if (stats) {
+        wins += stats.wins;
+        losses += stats.losses;
+        pointDiff += stats.point_diff;
+      }
+    });
+    
+    return { wins, losses, point_diff: pointDiff };
+  };
+
+  // Sort teams by wins, then point_diff
+  const sortedTeams = useMemo(() => {
+    return [...teamsInGroup].sort((a, b) => {
+      const statsA = getTeamStats(a.id);
+      const statsB = getTeamStats(b.id);
+      if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
+      return statsB.point_diff - statsA.point_diff;
+    });
+  }, [teamsInGroup, playerStats, teamMembers]);
+
+  // Get players from selected teams for individual tab
+  const playersFromSelectedTeams = useMemo(() => {
+    if (selectedTeamIds.length === 0) return [];
+    
+    const playerIds = new Set<string>();
+    selectedTeamIds.forEach(teamId => {
+      const members = teamMembers.filter(m => m.team_id === teamId);
+      members.forEach(m => playerIds.add(m.player_id));
+    });
+    
+    return players.filter(p => playerIds.has(p.id));
+  }, [selectedTeamIds, teamMembers, players]);
+
+  // Sort players from selected teams by stats
+  const sortedPlayersFromTeams = useMemo(() => {
+    return [...playersFromSelectedTeams].sort((a, b) => {
+      const statsA = getSinglesStats(a.id);
+      const statsB = getSinglesStats(b.id);
+      if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
+      return statsB.point_diff - statsA.point_diff;
+    });
+  }, [playersFromSelectedTeams, playerStats]);
+
+  // Get team name for player
+  const getPlayerTeamName = (playerId: string) => {
+    const member = teamMembers.find(m => m.player_id === playerId);
+    if (!member) return '';
+    const team = teams.find(t => t.id === member.team_id);
+    return team?.name || '';
+  };
+
+  const handleTeamToggle = (teamId: string) => {
+    setSelectedTeamIds(prev => {
+      if (prev.includes(teamId)) {
+        return prev.filter(id => id !== teamId);
+      } else {
+        return [...prev, teamId];
+      }
+    });
+  };
+
+  const handleSelectAllTeams = () => {
+    if (selectedTeamIds.length === teamsInGroup.length) {
+      setSelectedTeamIds([]);
+    } else {
+      setSelectedTeamIds(teamsInGroup.map(t => t.id));
+    }
+  };
+
   return (
     <Card
       ref={setNodeRef}
@@ -128,7 +230,7 @@ export function GroupBlock({
             <span className="text-xs text-muted-foreground flex-shrink-0">({items.length})</span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            {isCreator && items.length >= 2 && (
+            {isCreator && items.length >= 2 && groupType === 'player' && (
               <Button variant="ghost" size="sm" onClick={onGenerateRR} className="h-7 text-xs px-2">
                 <RefreshCw className="w-3 h-3 mr-1" />
                 RR
@@ -147,8 +249,145 @@ export function GroupBlock({
           <p className="text-xs text-muted-foreground text-center py-2 border-2 border-dashed rounded-lg">
             {t.tools.flexTournament.dropPlayerHere}
           </p>
+        ) : groupType === 'team' ? (
+          // Team-based group: Teams / Individuals tabs
+          <Tabs value={activeTab === 'singles' || activeTab === 'doubles' ? 'teams' : activeTab} onValueChange={(v) => setActiveTab(v as 'teams' | 'individuals')}>
+            <TabsList className="grid w-full grid-cols-2 h-8">
+              <TabsTrigger value="teams" className="text-xs gap-1">
+                <Users className="w-3 h-3" />
+                {t.tools.flexTournament.groupTabTeams}
+              </TabsTrigger>
+              <TabsTrigger value="individuals" className="text-xs gap-1">
+                <User className="w-3 h-3" />
+                {t.tools.flexTournament.groupTabIndividuals}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="teams" className="mt-2">
+              {/* Teams standings table */}
+              <div className="overflow-x-auto -mx-1">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-6 px-1 text-xs">#</TableHead>
+                      <TableHead className="px-1 text-xs">{t.tools.flexTournament.stats.name}</TableHead>
+                      <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.wins}</TableHead>
+                      <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.losses}</TableHead>
+                      <TableHead className="text-center w-10 px-1 text-xs">{t.tools.flexTournament.stats.pointDiff}</TableHead>
+                      {isCreator && <TableHead className="w-6 px-1"></TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedTeams.map((team, index) => {
+                      const stats = getTeamStats(team.id);
+                      const item = items.find(i => i.team_id === team.id);
+                      return (
+                        <TableRow key={team.id}>
+                          <TableCell className="font-medium px-1 py-1.5 text-xs">{index + 1}</TableCell>
+                          <TableCell className="px-1 py-1.5 text-xs truncate max-w-[120px]">{team.name}</TableCell>
+                          <TableCell className="text-center px-1 py-1.5 text-xs">{stats.wins}</TableCell>
+                          <TableCell className="text-center px-1 py-1.5 text-xs">{stats.losses}</TableCell>
+                          <TableCell className="text-center px-1 py-1.5 text-xs">
+                            {stats.point_diff > 0 ? `+${stats.point_diff}` : stats.point_diff}
+                          </TableCell>
+                          {isCreator && item && (
+                            <TableCell className="px-1 py-1.5">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5"
+                                onClick={() => onRemoveItem(item.id)}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="individuals" className="mt-2 space-y-2">
+              {/* Team filter checkboxes */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex items-center gap-1.5">
+                  <Checkbox
+                    id={`all-teams-${group.id}`}
+                    checked={selectedTeamIds.length === teamsInGroup.length}
+                    onCheckedChange={handleSelectAllTeams}
+                  />
+                  <label
+                    htmlFor={`all-teams-${group.id}`}
+                    className="text-xs cursor-pointer font-medium"
+                  >
+                    {t.tools.flexTournament.allTeams}
+                  </label>
+                </div>
+                <span className="text-muted-foreground">|</span>
+                {teamsInGroup.map(team => (
+                  <div key={team.id} className="flex items-center gap-1.5">
+                    <Checkbox
+                      id={`team-filter-${team.id}`}
+                      checked={selectedTeamIds.includes(team.id)}
+                      onCheckedChange={() => handleTeamToggle(team.id)}
+                    />
+                    <label
+                      htmlFor={`team-filter-${team.id}`}
+                      className="text-xs cursor-pointer"
+                    >
+                      {team.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+
+              {/* Individual player stats from selected teams */}
+              {sortedPlayersFromTeams.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  {t.tools.flexTournament.selectTeamsToShow}
+                </p>
+              ) : (
+                <div className="overflow-x-auto -mx-1">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-6 px-1 text-xs">#</TableHead>
+                        <TableHead className="px-1 text-xs">{t.tools.flexTournament.stats.name}</TableHead>
+                        <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.wins}</TableHead>
+                        <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.losses}</TableHead>
+                        <TableHead className="text-center w-10 px-1 text-xs">{t.tools.flexTournament.stats.pointDiff}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedPlayersFromTeams.map((player, index) => {
+                        const stats = getSinglesStats(player.id);
+                        return (
+                          <TableRow key={player.id}>
+                            <TableCell className="font-medium px-1 py-1.5 text-xs">{index + 1}</TableCell>
+                            <TableCell className="px-1 py-1.5 text-xs">
+                              <div className="truncate max-w-[100px]">{player.name}</div>
+                              <div className="text-[10px] text-muted-foreground truncate">{getPlayerTeamName(player.id)}</div>
+                            </TableCell>
+                            <TableCell className="text-center px-1 py-1.5 text-xs">{stats.wins}</TableCell>
+                            <TableCell className="text-center px-1 py-1.5 text-xs">{stats.losses}</TableCell>
+                            <TableCell className="text-center px-1 py-1.5 text-xs">
+                              {stats.point_diff > 0 ? `+${stats.point_diff}` : stats.point_diff}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         ) : (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'singles' | 'doubles')}>
+          // Player-based group: Singles / Doubles tabs
+          <Tabs value={activeTab === 'teams' || activeTab === 'individuals' ? 'singles' : activeTab} onValueChange={(v) => setActiveTab(v as 'singles' | 'doubles')}>
             <TabsList className="grid w-full grid-cols-2 h-8">
               <TabsTrigger value="singles" className="text-xs gap-1">
                 <User className="w-3 h-3" />

@@ -432,6 +432,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                     items={data.groupItems.filter(gi => gi.group_id === group.id)}
                     players={data.players}
                     teams={data.teams}
+                    teamMembers={data.teamMembers}
                     playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
                     pairStats={data.pairStats.filter(ps => ps.group_id === group.id)}
                     isCreator={isCreator}
@@ -590,6 +591,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   items={data.groupItems.filter(gi => gi.group_id === group.id)}
                   players={data.players}
                   teams={data.teams}
+                  teamMembers={data.teamMembers}
                   playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
                   pairStats={data.pairStats.filter(ps => ps.group_id === group.id)}
                   isCreator={isCreator}

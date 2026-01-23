@@ -272,6 +272,10 @@ export interface Translations {
       tabTeams: string;
       tabGroups: string;
       tabMatches: string;
+      groupTabTeams: string;
+      groupTabIndividuals: string;
+      selectTeamsToShow: string;
+      allTeams: string;
     };
   };
   auth: {
@@ -1423,7 +1427,7 @@ export const vi: Translations = {
       noTeams: "Chưa có đội",
       noGroups: "Chưa có bảng",
       noMatches: "Chưa có trận",
-      dropPlayerHere: "Kéo VĐV vào đây",
+      dropPlayerHere: "Kéo VĐV hoặc đội vào đây",
       dropTeamHere: "Kéo đội vào đây",
       score: "Điểm",
       vs: "vs",
@@ -1458,6 +1462,10 @@ export const vi: Translations = {
       tabTeams: "Đội",
       tabGroups: "Bảng",
       tabMatches: "Trận",
+      groupTabTeams: "Đội",
+      groupTabIndividuals: "Cá nhân",
+      selectTeamsToShow: "Chọn đội để hiển thị thành tích cá nhân",
+      allTeams: "Tất cả",
     },
   },
   auth: {
