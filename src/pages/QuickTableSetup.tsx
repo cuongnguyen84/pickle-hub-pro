@@ -14,6 +14,7 @@ import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand } from 'lucide-re
 import { toast } from 'sonner';
 import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
 import CourtTimeSettings from '@/components/quicktable/CourtTimeSettings';
+import { useI18n } from '@/i18n';
 import { parseCourtsInput, assignCourtsToMatches, calculateMatchTimes } from '@/lib/round-robin';
 
 interface PlayerInput {
@@ -29,6 +30,7 @@ type Step = 'input' | 'assignment';
 const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { getTableByShareId, addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus, updateTableCourtSettings, reassignCourtsAndTimes } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
@@ -119,7 +121,7 @@ const QuickTableSetup = () => {
   // Handle proceeding to assignment step
   const handleProceedToAssignment = () => {
     if (filledPlayers.length < 2) {
-      toast.error('Cần ít nhất 2 người chơi');
+      toast.error(t.quickTable.setup.minPlayersError);
       return;
     }
 
@@ -203,11 +205,11 @@ const QuickTableSetup = () => {
         await updateTableStatus(table.id, 'group_stage'); // First round
       }
 
-      toast.success('Đã tạo bảng đấu thành công!');
-      navigate(`/quick-tables/${shareId}`);
+      toast.success(t.quickTable.setup.createdSuccess);
+      navigate(`/tools/quick-tables/${shareId}`);
     } catch (error) {
       console.error('Error setting up table:', error);
-      toast.error('Có lỗi xảy ra, vui lòng thử lại');
+      toast.error(t.quickTable.setup.errorOccurred);
     } finally {
       setSaving(false);
     }
@@ -271,11 +273,11 @@ const QuickTableSetup = () => {
       // Update table status
       await updateTableStatus(table.id, 'group_stage');
 
-      toast.success('Đã chia bảng thủ công thành công!');
-      navigate(`/quick-tables/${shareId}`);
+      toast.success(t.quickTable.setup.manualSuccess);
+      navigate(`/tools/quick-tables/${shareId}`);
     } catch (error) {
       console.error('Error setting up table with manual assignment:', error);
-      toast.error('Có lỗi xảy ra, vui lòng thử lại');
+      toast.error(t.quickTable.setup.errorOccurred);
     } finally {
       setSaving(false);
     }
@@ -286,7 +288,7 @@ const QuickTableSetup = () => {
       <MainLayout>
         <div className="container-wide py-8">
           <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-foreground-muted">Đang tải...</div>
+            <div className="text-foreground-muted">{t.common.loading}</div>
           </div>
         </div>
       </MainLayout>
@@ -298,8 +300,8 @@ const QuickTableSetup = () => {
       <MainLayout>
         <div className="container-wide py-8">
           <div className="text-center">
-            <h1 className="text-xl font-bold mb-2">Không tìm thấy bảng đấu</h1>
-            <p className="text-foreground-secondary">Bảng đấu không tồn tại hoặc đã bị xóa.</p>
+            <h1 className="text-xl font-bold mb-2">{t.quickTable.setup.notFound}</h1>
+            <p className="text-foreground-secondary">{t.quickTable.setup.notFoundDesc}</p>
           </div>
         </div>
       </MainLayout>
@@ -317,25 +319,25 @@ const QuickTableSetup = () => {
             <div className="mb-6">
               <h1 className="text-2xl font-bold mb-1">{table.name}</h1>
               <div className="flex items-center gap-2 text-foreground-secondary">
-                <Badge variant="outline">
-                  {table.format === 'round_robin' ? 'Round Robin' : 'Playoff đông người'}
-                </Badge>
-                <Badge variant="outline">{table.group_count} bảng</Badge>
-                <span>•</span>
-                <span>{filledPlayers.length} VĐV</span>
-                <span>•</span>
-                <Badge variant="secondary">Chia bảng thủ công</Badge>
-              </div>
+              <Badge variant="outline">
+                {table.format === 'round_robin' ? 'Round Robin' : t.quickTable.largePlayoff}
+              </Badge>
+              <Badge variant="outline">{table.group_count} {t.quickTable.groups.groups}</Badge>
+              <span>•</span>
+              <span>{filledPlayers.length} {t.quickTable.players}</span>
+              <span>•</span>
+              <Badge variant="secondary">{t.quickTable.manualAssignment.title}</Badge>
             </div>
+          </div>
 
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Hand className="w-5 h-5" />
-                  Chia bảng thủ công
+                  {t.quickTable.manualAssignment.title}
                 </CardTitle>
                 <CardDescription>
-                  Phân VĐV vào các bảng theo ý muốn của bạn
+                  {t.quickTable.manualAssignment.description}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -347,7 +349,7 @@ const QuickTableSetup = () => {
                 />
                 {saving && (
                   <div className="mt-4 text-center text-muted-foreground">
-                    Đang xử lý...
+                    {t.quickTable.setup.processing}
                   </div>
                 )}
               </CardContent>
@@ -368,13 +370,13 @@ const QuickTableSetup = () => {
             <h1 className="text-2xl font-bold mb-1">{table.name}</h1>
             <div className="flex items-center gap-2 text-foreground-secondary">
               <Badge variant="outline">
-                {table.format === 'round_robin' ? 'Round Robin' : 'Playoff đông người'}
+                {table.format === 'round_robin' ? 'Round Robin' : t.quickTable.largePlayoff}
               </Badge>
               {table.group_count && (
-                <Badge variant="outline">{table.group_count} bảng</Badge>
+                <Badge variant="outline">{table.group_count} {t.quickTable.groups.groups}</Badge>
               )}
               <span>•</span>
-              <span>{table.player_count} người chơi</span>
+              <span>{table.player_count} {t.quickTable.players}</span>
             </div>
           </div>
 
@@ -384,7 +386,7 @@ const QuickTableSetup = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    Nhập danh sách người chơi
+                    {t.quickTable.setup.inputPlayers}
                     <AIAssistantButton 
                       screenName="quick-table-setup" 
                       stepName="players"
@@ -396,12 +398,12 @@ const QuickTableSetup = () => {
                     />
                   </CardTitle>
                   <CardDescription>
-                    Nhập tên và hạt giống (tùy chọn)
+                    {t.quickTable.setup.inputPlayersDesc}
                   </CardDescription>
                 </div>
                 <Button variant="outline" size="sm" onClick={shufflePlayers}>
                   <Shuffle className="w-4 h-4 mr-2" />
-                  Xáo trộn
+                  {t.quickTable.setup.shuffle}
                 </Button>
               </div>
             </CardHeader>
@@ -415,20 +417,20 @@ const QuickTableSetup = () => {
                     <Input
                       value={player.name}
                       onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                      placeholder="Tên VĐV *"
+                      placeholder={t.quickTable.setup.playerNamePlaceholder}
                       className="flex-1 min-w-0 h-10 sm:h-9"
                     />
                     <Input
                       value={player.team}
                       onChange={(e) => updatePlayer(index, 'team', e.target.value)}
-                      placeholder="Team"
+                      placeholder={t.quickTable.setup.teamPlaceholder}
                       className="w-16 sm:w-24 h-10 sm:h-9 flex-shrink-0"
                     />
                     <Input
                       type="number"
                       value={player.seed}
                       onChange={(e) => updatePlayer(index, 'seed', e.target.value)}
-                      placeholder="Seed"
+                      placeholder={t.quickTable.setup.seedPlaceholder}
                       className="w-14 sm:w-16 h-10 sm:h-9 flex-shrink-0"
                       min={1}
                     />
@@ -448,14 +450,14 @@ const QuickTableSetup = () => {
               <div className="mt-4 pt-4 border-t border-border-subtle">
                 <Button variant="outline" onClick={addPlayerSlot} className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
-                  Thêm người chơi
+                  {t.quickTable.setup.addPlayer}
                 </Button>
               </div>
 
               {/* Assignment Mode Selection - Only for round robin */}
               {table.format === 'round_robin' && table.group_count && (
                 <div className="mt-4 pt-4 border-t border-border-subtle">
-                  <Label className="text-sm font-medium mb-3 block">Phương thức chia bảng</Label>
+                  <Label className="text-sm font-medium mb-3 block">{t.quickTable.setup.assignmentMethod}</Label>
                   <RadioGroup
                     value={assignmentMode}
                     onValueChange={(value) => setAssignmentMode(value as AssignmentMode)}
@@ -473,9 +475,9 @@ const QuickTableSetup = () => {
                       >
                         <Wand2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium text-sm">Tự động</p>
+                          <p className="font-medium text-sm">{t.quickTable.setup.autoMode}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Hệ thống chia đều, tránh cùng team, rải seed
+                            {t.quickTable.setup.autoModeDesc}
                           </p>
                         </div>
                       </Label>
@@ -492,9 +494,9 @@ const QuickTableSetup = () => {
                       >
                         <Hand className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium text-sm">Thủ công</p>
+                          <p className="font-medium text-sm">{t.quickTable.setup.manualMode}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Tự chọn VĐV vào từng bảng
+                            {t.quickTable.setup.manualModeDesc}
                           </p>
                         </div>
                       </Label>
@@ -517,15 +519,15 @@ const QuickTableSetup = () => {
                 <div className="flex items-start gap-2">
                   <Users className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
                   <div>
-                    <p className="font-medium">Mẹo chia bảng tốt:</p>
+                    <p className="font-medium">{t.quickTable.setup.tips}</p>
                     <ul className="text-foreground-secondary mt-1 space-y-1">
-                      <li>• Nhập Team để tránh cùng team vào cùng bảng</li>
-                      <li>• Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng</li>
+                      <li>• {t.quickTable.setup.tipTeam}</li>
+                      <li>• {t.quickTable.setup.tipSeed}</li>
                       {assignmentMode === 'auto' && (
-                        <li>• Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau</li>
+                        <li>• {t.quickTable.setup.tipAuto}</li>
                       )}
                       {assignmentMode === 'manual' && (
-                        <li>• Bạn sẽ tự phân VĐV vào từng bảng ở bước tiếp theo</li>
+                        <li>• {t.quickTable.setup.tipManual}</li>
                       )}
                     </ul>
                   </div>
@@ -538,7 +540,7 @@ const QuickTableSetup = () => {
                   onClick={handleProceedToAssignment}
                   disabled={saving || filledPlayers.length < 2}
                 >
-                  {saving ? 'Đang xử lý...' : assignmentMode === 'manual' && table.format === 'round_robin' && table.group_count ? 'Tiếp tục chia bảng' : 'Tạo bảng đấu và chia bảng'}
+                  {saving ? t.quickTable.setup.processing : assignmentMode === 'manual' && table.format === 'round_robin' && table.group_count ? t.quickTable.setup.continueManual : t.quickTable.setup.createBracketBtn}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>

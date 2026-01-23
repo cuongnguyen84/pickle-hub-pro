@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, CreateTournamentInput } from '@/hooks/useTeamMatch';
 import { GameTemplateEditor, GameTemplateItem, getDefaultTemplates } from '@/components/teamMatch/GameTemplateEditor';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -45,6 +46,7 @@ const GAME_TYPE_LABELS: Record<string, string> = {
 export default function TeamMatchSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const { createTournament, isCreating } = useTeamMatch();
 
   const [step, setStep] = useState<Step>(1);
