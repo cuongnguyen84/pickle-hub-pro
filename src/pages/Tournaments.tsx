@@ -11,7 +11,7 @@ import { useI18n } from "@/i18n";
 import { useTournaments, useOpenRegistrationTables, useUserRegisteredTournaments, useUserCompletedTournaments } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
 import { useAuth } from "@/hooks/useAuth";
-import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User } from "lucide-react";
+import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -323,7 +323,7 @@ const Tournaments = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{table.name}</div>
-                      <div className="flex items-center gap-1.5 mt-1">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
                         {table.is_doubles ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
                             <Users className="w-3 h-3" />
@@ -334,6 +334,14 @@ const Tournaments = () => {
                             <User className="w-3 h-3" />
                             <span>{table.player_count} người</span>
                           </Badge>
+                        )}
+                        {(table.creator_display_name || table.creator_email) && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Mail className="w-3 h-3" />
+                            <span className="truncate max-w-[150px]">
+                              {table.creator_display_name || table.creator_email?.split('@')[0]}
+                            </span>
+                          </span>
                         )}
                       </div>
                     </div>

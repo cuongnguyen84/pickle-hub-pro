@@ -357,6 +357,9 @@ export type QuickTablePublic = {
   requires_registration: boolean;
   is_doubles: boolean;
   created_at: string;
+  creator_user_id?: string;
+  creator_email?: string;
+  creator_display_name?: string;
 };
 
 export function useOpenRegistrationTables(options?: { limit?: number }) {
@@ -365,7 +368,7 @@ export function useOpenRegistrationTables(options?: { limit?: number }) {
     queryFn: async () => {
       let query = supabase
         .from("quick_tables")
-        .select("id, name, share_id, status, format, player_count, requires_registration, is_doubles, created_at")
+        .select("id, name, share_id, status, format, player_count, requires_registration, is_doubles, created_at, creator_user_id")
         .eq("is_public", true)
         .eq("requires_registration", true)
         .eq("status", "setup")
@@ -375,9 +378,34 @@ export function useOpenRegistrationTables(options?: { limit?: number }) {
         query = query.limit(options.limit);
       }
 
-      const { data, error } = await query;
+      const { data: tables, error } = await query;
       if (error) throw error;
-      return data as QuickTablePublic[];
+      if (!tables || tables.length === 0) return [];
+      
+      // Get unique creator IDs
+      const creatorIds = [...new Set(tables.map(t => t.creator_user_id).filter(Boolean))] as string[];
+      
+      if (creatorIds.length === 0) {
+        return tables as QuickTablePublic[];
+      }
+      
+      // Fetch profiles for all creators
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, email, display_name")
+        .in("id", creatorIds);
+      
+      // Map profiles to tables
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      return tables.map((t) => {
+        const profile = t.creator_user_id ? profileMap.get(t.creator_user_id) : null;
+        return {
+          ...t,
+          creator_email: profile?.email,
+          creator_display_name: profile?.display_name,
+        };
+      }) as QuickTablePublic[];
     },
   });
 }
