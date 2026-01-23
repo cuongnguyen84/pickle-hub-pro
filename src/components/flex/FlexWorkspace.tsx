@@ -6,6 +6,7 @@ import { FloatingPlayerPanel } from './FloatingPlayerPanel';
 import { ActionButtons } from './ActionButtons';
 import { TeamBlock } from './TeamBlock';
 import { GroupBlock } from './GroupBlock';
+import { GroupSelector } from './GroupSelector';
 import { MatchBlock } from './MatchBlock';
 import { DraggablePlayer } from './DraggablePlayer';
 import { useFlexTournament, type FlexTournamentData } from '@/hooks/useFlexTournament';
@@ -430,36 +431,27 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
               )}
             </TabsContent>
 
-            <TabsContent value="groups" className="mt-3 space-y-3">
-              {sortedGroups.length > 0 ? (
-                sortedGroups.map(group => (
-                  <GroupBlock
-                    key={group.id}
-                    group={group}
-                    items={data.groupItems.filter(gi => gi.group_id === group.id)}
-                    players={data.players}
-                    teams={data.teams}
-                    teamMembers={data.teamMembers}
-                    playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
-                    pairStats={data.pairStats.filter(ps => ps.group_id === group.id)}
-                    isCreator={isCreator}
-                    onUpdateName={(name) => handleUpdateGroupName(group.id, name)}
-                    onDelete={() => handleDeleteGroup(group.id)}
-                    onRemoveItem={(itemId) => {
-                      removeItemFromGroup(itemId);
-                      onRefresh();
-                    }}
-                    onGenerateRR={() => handleGenerateRR(group.id)}
-                    onToggleIncludeDoubles={(include) => handleToggleIncludeDoubles(group.id, include)}
-                  />
-                ))
-              ) : (
-                <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground text-center text-sm">
-                    {t.tools.flexTournament.noGroups}
-                  </p>
-                </div>
-              )}
+            <TabsContent value="groups" className="mt-3">
+              <GroupSelector
+                groups={sortedGroups}
+                groupItems={data.groupItems}
+                players={data.players}
+                teams={data.teams}
+                teamMembers={data.teamMembers}
+                playerStats={data.playerStats}
+                pairStats={data.pairStats}
+                matches={data.matches}
+                isCreator={isCreator}
+                onUpdateGroupName={handleUpdateGroupName}
+                onDeleteGroup={handleDeleteGroup}
+                onRemoveItem={(itemId) => {
+                  removeItemFromGroup(itemId);
+                  onRefresh();
+                }}
+                onGenerateRR={handleGenerateRR}
+                onToggleIncludeDoubles={handleToggleIncludeDoubles}
+                onAddMatchToGroup={handleAddMatchToGroup}
+              />
             </TabsContent>
 
             <TabsContent value="matches" className="mt-3 space-y-3">
@@ -590,31 +582,28 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
             </div>
           )}
 
-          {/* Groups row */}
+          {/* Groups row - using tab-based selector */}
           {sortedGroups.length > 0 && (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-              {sortedGroups.map(group => (
-                <GroupBlock
-                  key={group.id}
-                  group={group}
-                  items={data.groupItems.filter(gi => gi.group_id === group.id)}
-                  players={data.players}
-                  teams={data.teams}
-                  teamMembers={data.teamMembers}
-                  playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
-                  pairStats={data.pairStats.filter(ps => ps.group_id === group.id)}
-                  isCreator={isCreator}
-                  onUpdateName={(name) => handleUpdateGroupName(group.id, name)}
-                  onDelete={() => handleDeleteGroup(group.id)}
-                  onRemoveItem={(itemId) => {
-                    removeItemFromGroup(itemId);
-                    onRefresh();
-                  }}
-                  onGenerateRR={() => handleGenerateRR(group.id)}
-                  onToggleIncludeDoubles={(include) => handleToggleIncludeDoubles(group.id, include)}
-                />
-              ))}
-            </div>
+            <GroupSelector
+              groups={sortedGroups}
+              groupItems={data.groupItems}
+              players={data.players}
+              teams={data.teams}
+              teamMembers={data.teamMembers}
+              playerStats={data.playerStats}
+              pairStats={data.pairStats}
+              matches={data.matches}
+              isCreator={isCreator}
+              onUpdateGroupName={handleUpdateGroupName}
+              onDeleteGroup={handleDeleteGroup}
+              onRemoveItem={(itemId) => {
+                removeItemFromGroup(itemId);
+                onRefresh();
+              }}
+              onGenerateRR={handleGenerateRR}
+              onToggleIncludeDoubles={handleToggleIncludeDoubles}
+              onAddMatchToGroup={handleAddMatchToGroup}
+            />
           )}
 
           {/* Matches row */}
