@@ -63,6 +63,7 @@ export function FloatingPlayerPanel({
         <SheetContent 
           side="right" 
           hideCloseButton
+          onOpenAutoFocus={(e) => e.preventDefault()}
           className={`w-[280px] sm:w-[300px] p-0 h-auto max-h-[80vh] top-auto bottom-20 rounded-l-xl ${
             isDragging ? 'w-[80px] sm:w-[80px]' : ''
           }`}
@@ -78,6 +79,7 @@ export function FloatingPlayerPanel({
                     onKeyDown={handleKeyDown}
                     placeholder={t.tools.flexTournament.addPlayers}
                     className="flex-1 text-base h-9"
+                    autoFocus={false}
                   />
                   <Button 
                     size="sm" 
