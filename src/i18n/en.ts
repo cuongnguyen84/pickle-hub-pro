@@ -269,6 +269,10 @@ export const en: Translations = {
       playerPanel: "Player List",
       openPlayerPanel: "Open player list",
       teams: "Teams",
+      wins: "wins",
+      tabTeams: "Teams",
+      tabGroups: "Groups",
+      tabMatches: "Matches",
     },
   },
   auth: {

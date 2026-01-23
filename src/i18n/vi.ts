@@ -267,6 +267,10 @@ export interface Translations {
       playerPanel: string;
       openPlayerPanel: string;
       teams: string;
+      wins: string;
+      tabTeams: string;
+      tabGroups: string;
+      tabMatches: string;
     };
   };
   auth: {
@@ -1448,6 +1452,10 @@ export const vi: Translations = {
       playerPanel: "Danh sách VĐV",
       openPlayerPanel: "Mở danh sách VĐV",
       teams: "Đội",
+      wins: "thắng",
+      tabTeams: "Đội",
+      tabGroups: "Bảng",
+      tabMatches: "Trận",
     },
   },
   auth: {

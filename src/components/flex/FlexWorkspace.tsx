@@ -12,6 +12,7 @@ import { useFlexTournament, type FlexTournamentData } from '@/hooks/useFlexTourn
 import { useFlexStats } from '@/hooks/useFlexStats';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface FlexWorkspaceProps {
   data: FlexTournamentData;
@@ -44,6 +45,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeName, setActiveName] = useState<string>('');
   const [activeType, setActiveType] = useState<'player' | 'team'>('player');
+  const [activeTab, setActiveTab] = useState<string>('matches');
 
   // Check if player already exists in a team
   const isPlayerInTeam = (playerId: string, teamId: string) => {
@@ -66,6 +68,16 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       match.slot_b1_player_id,
       match.slot_b2_player_id
     ].includes(playerId);
+  };
+
+  // Auto-add player/team to the single group when dropped on a match
+  const autoAddToSingleGroup = async (itemType: 'player' | 'team', itemId: string) => {
+    if (data.groups.length === 1) {
+      const group = data.groups[0];
+      if (!isItemInGroup(itemType, itemId, group.id)) {
+        await addItemToGroup(group.id, itemType, itemId, data.groupItems.length);
+      }
+    }
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -146,9 +158,15 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
         else if (slot === 'a2') updates.slot_a2_player_id = sourceData.id;
         else if (slot === 'b1') updates.slot_b1_player_id = sourceData.id;
         else if (slot === 'b2') updates.slot_b2_player_id = sourceData.id;
+
+        // Auto-add player to single group
+        await autoAddToSingleGroup('player', sourceData.id);
       } else if (sourceData.type === 'team') {
         if (slot === 'a1') updates.slot_a_team_id = sourceData.id;
         else if (slot === 'b1') updates.slot_b_team_id = sourceData.id;
+
+        // Auto-add team to single group
+        await autoAddToSingleGroup('team', sourceData.id);
       }
 
       if (Object.keys(updates).length > 0) {
@@ -180,19 +198,20 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   }, [data.tournament.id, data.players, addPlayer, onRefresh, toast, t]);
 
   const handleAddTeam = useCallback(async (name: string) => {
-    await addTeam(data.tournament.id, name, data.teams.length);
+    // New items at top: display_order = -1 (or use timestamp for uniqueness)
+    await addTeam(data.tournament.id, name, -Date.now());
     onRefresh();
-  }, [data.tournament.id, data.teams.length, addTeam, onRefresh]);
+  }, [data.tournament.id, addTeam, onRefresh]);
 
   const handleAddGroup = useCallback(async (name: string) => {
-    await addGroup(data.tournament.id, name, data.groups.length);
+    await addGroup(data.tournament.id, name, -Date.now());
     onRefresh();
-  }, [data.tournament.id, data.groups.length, addGroup, onRefresh]);
+  }, [data.tournament.id, addGroup, onRefresh]);
 
   const handleAddMatch = useCallback(async (name: string, matchType: 'singles' | 'doubles') => {
-    await addMatch(data.tournament.id, name, matchType, null, data.matches.length);
+    await addMatch(data.tournament.id, name, matchType, null, -Date.now());
     onRefresh();
-  }, [data.tournament.id, data.matches.length, addMatch, onRefresh]);
+  }, [data.tournament.id, addMatch, onRefresh]);
 
   const handleDeleteTeam = useCallback(async (teamId: string) => {
     await deleteEntity('flex_teams', teamId);
@@ -233,8 +252,13 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       await recomputeGroupStats(match.group_id);
     }
     
+    // If there's only one group, recompute its stats (since players auto-added)
+    if (data.groups.length === 1) {
+      await recomputeGroupStats(data.groups[0].id);
+    }
+    
     onRefresh();
-  }, [updateMatchScore, data.matches, recomputeGroupStats, onRefresh]);
+  }, [updateMatchScore, data.matches, data.groups, recomputeGroupStats, onRefresh]);
 
   const handleClearSlot = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => {
     const updates: any = {};
@@ -293,9 +317,14 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     type: 'team' as const,
   }));
 
+  // Sort items by display_order (negative = newer = first)
+  const sortedTeams = [...data.teams].sort((a, b) => a.display_order - b.display_order);
+  const sortedGroups = [...data.groups].sort((a, b) => a.display_order - b.display_order);
+  const sortedMatches = [...data.matches].sort((a, b) => a.display_order - b.display_order);
+
   const hasContent = data.teams.length > 0 || data.groups.length > 0 || data.matches.length > 0;
 
-  // Mobile layout: vertical stack with floating player panel
+  // Mobile layout: tabs for Teams/Groups/Matches
   if (isMobile) {
     return (
       <DndContext
@@ -316,75 +345,105 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
             </div>
           )}
 
-          {/* Teams */}
-          {data.teams.length > 0 && (
-            <div className="space-y-3">
-              {data.teams.map(team => (
-                <TeamBlock
-                  key={team.id}
-                  team={team}
-                  members={data.teamMembers.filter(m => m.team_id === team.id)}
-                  players={data.players}
-                  isCreator={isCreator}
-                  onUpdateName={(name) => handleUpdateTeamName(team.id, name)}
-                  onDelete={() => handleDeleteTeam(team.id)}
-                  onRemoveMember={(memberId) => {
-                    removePlayerFromTeam(memberId);
-                    onRefresh();
-                  }}
-                />
-              ))}
-            </div>
-          )}
+          {/* Tabbed content */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="teams" className="text-xs">
+                {t.tools.flexTournament.tabTeams} ({sortedTeams.length})
+              </TabsTrigger>
+              <TabsTrigger value="groups" className="text-xs">
+                {t.tools.flexTournament.tabGroups} ({sortedGroups.length})
+              </TabsTrigger>
+              <TabsTrigger value="matches" className="text-xs">
+                {t.tools.flexTournament.tabMatches} ({sortedMatches.length})
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Groups */}
-          {data.groups.length > 0 && (
-            <div className="space-y-3">
-              {data.groups.map(group => (
-                <GroupBlock
-                  key={group.id}
-                  group={group}
-                  items={data.groupItems.filter(gi => gi.group_id === group.id)}
-                  players={data.players}
-                  teams={data.teams}
-                  playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
-                  pairStats={data.pairStats.filter(ps => ps.group_id === group.id)}
-                  isCreator={isCreator}
-                  onUpdateName={(name) => handleUpdateGroupName(group.id, name)}
-                  onDelete={() => handleDeleteGroup(group.id)}
-                  onRemoveItem={(itemId) => {
-                    removeItemFromGroup(itemId);
-                    onRefresh();
-                  }}
-                  onGenerateRR={() => handleGenerateRR(group.id)}
-                  onToggleIncludeDoubles={(include) => handleToggleIncludeDoubles(group.id, include)}
-                />
-              ))}
-            </div>
-          )}
+            <TabsContent value="teams" className="mt-3 space-y-3">
+              {sortedTeams.length > 0 ? (
+                sortedTeams.map(team => (
+                  <TeamBlock
+                    key={team.id}
+                    team={team}
+                    members={data.teamMembers.filter(m => m.team_id === team.id)}
+                    players={data.players}
+                    isCreator={isCreator}
+                    onUpdateName={(name) => handleUpdateTeamName(team.id, name)}
+                    onDelete={() => handleDeleteTeam(team.id)}
+                    onRemoveMember={(memberId) => {
+                      removePlayerFromTeam(memberId);
+                      onRefresh();
+                    }}
+                  />
+                ))
+              ) : (
+                <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
+                  <p className="text-muted-foreground text-center text-sm">
+                    {t.tools.flexTournament.noTeams}
+                  </p>
+                </div>
+              )}
+            </TabsContent>
 
-          {/* Matches */}
-          {data.matches.length > 0 && (
-            <div className="grid grid-cols-1 gap-3">
-              {data.matches.map(match => (
-                <MatchBlock
-                  key={match.id}
-                  match={match}
-                  players={data.players}
-                  teams={data.teams}
-                  isCreator={isCreator}
-                  hasGroups={data.groups.length > 0}
-                  onUpdateName={(name) => handleUpdateMatchName(match.id, name)}
-                  onDelete={() => handleDeleteMatch(match.id)}
-                  onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
-                  onClearSlot={(slot) => handleClearSlot(match.id, slot)}
-                  onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
-                />
-              ))}
-            </div>
-          )}
+            <TabsContent value="groups" className="mt-3 space-y-3">
+              {sortedGroups.length > 0 ? (
+                sortedGroups.map(group => (
+                  <GroupBlock
+                    key={group.id}
+                    group={group}
+                    items={data.groupItems.filter(gi => gi.group_id === group.id)}
+                    players={data.players}
+                    teams={data.teams}
+                    playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
+                    pairStats={data.pairStats.filter(ps => ps.group_id === group.id)}
+                    isCreator={isCreator}
+                    onUpdateName={(name) => handleUpdateGroupName(group.id, name)}
+                    onDelete={() => handleDeleteGroup(group.id)}
+                    onRemoveItem={(itemId) => {
+                      removeItemFromGroup(itemId);
+                      onRefresh();
+                    }}
+                    onGenerateRR={() => handleGenerateRR(group.id)}
+                    onToggleIncludeDoubles={(include) => handleToggleIncludeDoubles(group.id, include)}
+                  />
+                ))
+              ) : (
+                <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
+                  <p className="text-muted-foreground text-center text-sm">
+                    {t.tools.flexTournament.noGroups}
+                  </p>
+                </div>
+              )}
+            </TabsContent>
 
-          {/* Empty state */}
+            <TabsContent value="matches" className="mt-3 space-y-3">
+              {sortedMatches.length > 0 ? (
+                sortedMatches.map(match => (
+                  <MatchBlock
+                    key={match.id}
+                    match={match}
+                    players={data.players}
+                    teams={data.teams}
+                    isCreator={isCreator}
+                    hasGroups={data.groups.length > 0}
+                    onUpdateName={(name) => handleUpdateMatchName(match.id, name)}
+                    onDelete={() => handleDeleteMatch(match.id)}
+                    onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
+                    onClearSlot={(slot) => handleClearSlot(match.id, slot)}
+                    onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
+                  />
+                ))
+              ) : (
+                <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
+                  <p className="text-muted-foreground text-center text-sm">
+                    {t.tools.flexTournament.noMatches}
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          {/* Empty state - only show if no content at all */}
           {!hasContent && (
             <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
               <p className="text-muted-foreground text-center text-sm">
@@ -463,9 +522,9 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
         {/* Main workspace */}
         <div className="flex-1 space-y-4">
           {/* Teams row */}
-          {data.teams.length > 0 && (
+          {sortedTeams.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {data.teams.map(team => (
+              {sortedTeams.map(team => (
                 <TeamBlock
                   key={team.id}
                   team={team}
@@ -484,9 +543,9 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
           )}
 
           {/* Groups row */}
-          {data.groups.length > 0 && (
+          {sortedGroups.length > 0 && (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-              {data.groups.map(group => (
+              {sortedGroups.map(group => (
                 <GroupBlock
                   key={group.id}
                   group={group}
@@ -510,9 +569,9 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
           )}
 
           {/* Matches row */}
-          {data.matches.length > 0 && (
+          {sortedMatches.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {data.matches.map(match => (
+              {sortedMatches.map(match => (
                 <MatchBlock
                   key={match.id}
                   match={match}

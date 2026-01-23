@@ -187,7 +187,6 @@ export function MatchBlock({
 
         {/* Side A */}
         <div className="space-y-1">
-          <div className="text-xs font-medium text-muted-foreground">{t.tools.flexTournament.slotA}</div>
           <DroppableSlot
             id={`match-${match.id}-slot-a1`}
             playerId={match.slot_a1_player_id}
@@ -233,7 +232,6 @@ export function MatchBlock({
 
         {/* Side B */}
         <div className="space-y-1">
-          <div className="text-xs font-medium text-muted-foreground">{t.tools.flexTournament.slotB}</div>
           <DroppableSlot
             id={`match-${match.id}-slot-b1`}
             playerId={match.slot_b1_player_id}
@@ -256,11 +254,28 @@ export function MatchBlock({
           )}
         </div>
 
-        {/* Winner indicator */}
+        {/* Winner indicator - show winner name */}
         {match.winner_side && (
           <div className="text-center pt-1">
             <Badge variant="default" className="text-xs">
-              {match.winner_side === 'a' ? t.tools.flexTournament.slotA : t.tools.flexTournament.slotB} wins
+              {(() => {
+                const winnerSide = match.winner_side;
+                if (winnerSide === 'a') {
+                  if (match.slot_a_team_id) {
+                    return teams.find(t => t.id === match.slot_a_team_id)?.name || 'A';
+                  }
+                  const p1 = players.find(p => p.id === match.slot_a1_player_id)?.name;
+                  const p2 = match.slot_a2_player_id ? players.find(p => p.id === match.slot_a2_player_id)?.name : null;
+                  return p2 ? `${p1} & ${p2}` : p1 || 'A';
+                } else {
+                  if (match.slot_b_team_id) {
+                    return teams.find(t => t.id === match.slot_b_team_id)?.name || 'B';
+                  }
+                  const p1 = players.find(p => p.id === match.slot_b1_player_id)?.name;
+                  const p2 = match.slot_b2_player_id ? players.find(p => p.id === match.slot_b2_player_id)?.name : null;
+                  return p2 ? `${p1} & ${p2}` : p1 || 'B';
+                }
+              })()} {t.tools.flexTournament.wins}
             </Badge>
           </div>
         )}
