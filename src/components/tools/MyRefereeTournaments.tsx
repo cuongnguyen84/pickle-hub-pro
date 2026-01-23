@@ -1,15 +1,17 @@
 import { useMyRefereeTournaments } from '@/hooks/useMyRefereeTournaments';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
-import { Shield, Calendar, Users, GitBranch, UsersRound } from 'lucide-react';
+import { Shield, Calendar, Users, GitBranch, UsersRound, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 
 export function MyRefereeTournaments() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const { tournaments, loading } = useMyRefereeTournaments();
 
   if (!user) return null;
@@ -28,7 +30,7 @@ export function MyRefereeTournaments() {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg">Giải đấu làm trọng tài</CardTitle>
+            <CardTitle className="text-lg">{t.quickTable.refereeTournaments}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -43,6 +45,20 @@ export function MyRefereeTournaments() {
 
   if (tournaments.length === 0) return null;
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'group_stage': return t.quickTable.status.groupStage;
+      case 'playing': 
+      case 'ongoing': return t.quickTable.ongoing;
+      case 'playoff': return t.quickTable.status.playoff;
+      case 'completed':
+      case 'finished': return t.quickTable.status.completed;
+      case 'draft':
+      case 'setup': return t.quickTable.status.setup;
+      default: return status;
+    }
+  };
+
   const TournamentItem = ({ tournament }: { tournament: typeof tournaments[0] }) => {
     const href = tournament.type === 'quick_table' 
       ? `/tools/quick-table/${tournament.share_id}`
@@ -56,20 +72,14 @@ export function MyRefereeTournaments() {
       tournament.status === 'draft' ? 'bg-muted text-muted-foreground' :
       'bg-muted text-muted-foreground';
 
-    const statusLabel = 
-      tournament.status === 'group_stage' ? 'Vòng bảng' :
-      tournament.status === 'playing' ? 'Đang diễn ra' :
-      tournament.status === 'playoff' ? 'Vòng loại trực tiếp' :
-      tournament.status === 'completed' || tournament.status === 'finished' ? 'Hoàn thành' :
-      tournament.status === 'draft' ? 'Chuẩn bị' :
-      tournament.status;
-
     return (
       <Link to={href} className="block">
         <div className="p-4 rounded-lg border hover:border-primary/50 transition-colors bg-card">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <h4 className="font-medium truncate">{tournament.name}</h4>
+              
+              {/* Row 1: Date, count, format */}
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground mt-1">
                 {tournament.created_at && (
                   <span className="flex items-center gap-1">
@@ -79,7 +89,7 @@ export function MyRefereeTournaments() {
                 )}
                 <span className="hidden sm:inline">•</span>
                 <span>
-                  {tournament.player_count || tournament.team_count} {tournament.type === 'quick_table' ? 'players' : 'teams'}
+                  {tournament.player_count || tournament.team_count} {tournament.type === 'quick_table' ? t.quickTable.players : t.teamMatch.teams}
                 </span>
                 {tournament.format && (
                   <>
@@ -88,6 +98,14 @@ export function MyRefereeTournaments() {
                   </>
                 )}
               </div>
+              
+              {/* Row 2: Creator email */}
+              {(tournament.creator_display_name || tournament.creator_email) && (
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
+                  <Mail className="w-3 h-3" />
+                  <span>{tournament.creator_display_name || tournament.creator_email?.split('@')[0]}</span>
+                </div>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 shrink-0">
               <Badge variant="outline" className="text-xs whitespace-nowrap">
@@ -98,10 +116,10 @@ export function MyRefereeTournaments() {
                 ) : (
                   <GitBranch className="w-3 h-3 mr-1" />
                 )}
-                Referee
+                {t.quickTable.referee}
               </Badge>
               <Badge className={`${statusColor} text-xs whitespace-nowrap`}>
-                {statusLabel}
+                {getStatusLabel(tournament.status)}
               </Badge>
             </div>
           </div>
@@ -115,24 +133,24 @@ export function MyRefereeTournaments() {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-primary" />
-          <CardTitle className="text-lg">Giải đấu làm trọng tài</CardTitle>
+          <CardTitle className="text-lg">{t.quickTable.refereeTournaments}</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="ongoing">
           <TabsList className="mb-4">
             <TabsTrigger value="ongoing">
-              Đang diễn ra ({ongoingTournaments.length})
+              {t.quickTable.ongoing} ({ongoingTournaments.length})
             </TabsTrigger>
             <TabsTrigger value="completed">
-              Đã hoàn thành ({completedTournaments.length})
+              {t.quickTable.completed} ({completedTournaments.length})
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="ongoing" className="space-y-3 mt-0">
             {ongoingTournaments.length === 0 ? (
               <p className="text-muted-foreground text-sm py-4 text-center">
-                Không có giải đấu đang diễn ra
+                {t.quickTable.noOngoing}
               </p>
             ) : (
               ongoingTournaments.map(t => (
@@ -144,7 +162,7 @@ export function MyRefereeTournaments() {
           <TabsContent value="completed" className="space-y-3 mt-0">
             {completedTournaments.length === 0 ? (
               <p className="text-muted-foreground text-sm py-4 text-center">
-                Không có giải đấu đã hoàn thành
+                {t.quickTable.noCompleted}
               </p>
             ) : (
               completedTournaments.map(t => (

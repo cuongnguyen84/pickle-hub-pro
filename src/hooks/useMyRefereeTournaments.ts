@@ -13,6 +13,9 @@ interface RefereeTournament {
   format?: string;
   start_time?: string | null;
   created_at?: string;
+  creator_user_id?: string;
+  creator_display_name?: string | null;
+  creator_email?: string | null;
 }
 
 export function useMyRefereeTournaments() {
@@ -29,6 +32,7 @@ export function useMyRefereeTournaments() {
     setLoading(true);
     try {
       const allTournaments: RefereeTournament[] = [];
+      const creatorIds = new Set<string>();
 
       // Fetch Quick Tables where user is referee
       const { data: quickTableReferees } = await supabase
@@ -36,28 +40,17 @@ export function useMyRefereeTournaments() {
         .select('table_id')
         .eq('user_id', user.id);
 
+      let quickTables: any[] = [];
       if (quickTableReferees && quickTableReferees.length > 0) {
         const tableIds = quickTableReferees.map(r => r.table_id);
-        const { data: quickTables } = await supabase
+        const { data } = await supabase
           .from('quick_tables')
-          .select('id, name, share_id, status, player_count, format, start_time, created_at')
+          .select('id, name, share_id, status, player_count, format, start_time, created_at, creator_user_id')
           .in('id', tableIds);
-
-        if (quickTables) {
-          for (const qt of quickTables) {
-            allTournaments.push({
-              id: qt.id,
-              name: qt.name,
-              share_id: qt.share_id,
-              status: qt.status,
-              type: 'quick_table',
-              player_count: qt.player_count,
-              format: qt.format,
-              start_time: qt.start_time,
-              created_at: qt.created_at,
-            });
-          }
-        }
+        quickTables = data || [];
+        quickTables.forEach(qt => {
+          if (qt.creator_user_id) creatorIds.add(qt.creator_user_id);
+        });
       }
 
       // Fetch Doubles Elimination where user is referee
@@ -66,28 +59,18 @@ export function useMyRefereeTournaments() {
         .select('tournament_id')
         .eq('user_id', user.id);
 
+      let doublesTournaments: any[] = [];
       if (doublesReferees && doublesReferees.length > 0) {
         const tournamentIds = doublesReferees.map(r => r.tournament_id).filter(Boolean) as string[];
         if (tournamentIds.length > 0) {
-          const { data: doublesTournaments } = await supabase
+          const { data } = await supabase
             .from('doubles_elimination_tournaments')
-            .select('id, name, share_id, status, team_count, start_time, created_at')
+            .select('id, name, share_id, status, team_count, start_time, created_at, creator_user_id')
             .in('id', tournamentIds);
-
-          if (doublesTournaments) {
-            for (const dt of doublesTournaments) {
-              allTournaments.push({
-                id: dt.id,
-                name: dt.name,
-                share_id: dt.share_id,
-                status: dt.status,
-                type: 'doubles_elimination',
-                team_count: dt.team_count,
-                start_time: dt.start_time,
-                created_at: dt.created_at,
-              });
-            }
-          }
+          doublesTournaments = data || [];
+          doublesTournaments.forEach(dt => {
+            if (dt.creator_user_id) creatorIds.add(dt.creator_user_id);
+          });
         }
       }
 
@@ -97,27 +80,83 @@ export function useMyRefereeTournaments() {
         .select('tournament_id')
         .eq('user_id', user.id);
 
+      let teamMatchTournaments: any[] = [];
       if (teamMatchReferees && teamMatchReferees.length > 0) {
         const tournamentIds = teamMatchReferees.map(r => r.tournament_id);
-        const { data: teamMatchTournaments } = await supabase
+        const { data } = await supabase
           .from('team_match_tournaments')
-          .select('id, name, share_id, status, team_count, format, created_at')
+          .select('id, name, share_id, status, team_count, format, created_at, created_by')
           .in('id', tournamentIds);
+        teamMatchTournaments = data || [];
+        teamMatchTournaments.forEach(tm => {
+          if (tm.created_by) creatorIds.add(tm.created_by);
+        });
+      }
 
-        if (teamMatchTournaments) {
-          for (const tm of teamMatchTournaments) {
-            allTournaments.push({
-              id: tm.id,
-              name: tm.name,
-              share_id: tm.share_id,
-              status: tm.status || 'draft',
-              type: 'team_match',
-              team_count: tm.team_count,
-              format: tm.format,
-              created_at: tm.created_at || undefined,
-            });
-          }
+      // Fetch all creator profiles
+      let profilesMap = new Map<string, { display_name: string | null; email: string }>();
+      if (creatorIds.size > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, email')
+          .in('id', Array.from(creatorIds));
+        
+        if (profilesData) {
+          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name, email: p.email }));
         }
+      }
+
+      // Build tournaments with creator info
+      for (const qt of quickTables) {
+        const profile = profilesMap.get(qt.creator_user_id);
+        allTournaments.push({
+          id: qt.id,
+          name: qt.name,
+          share_id: qt.share_id,
+          status: qt.status,
+          type: 'quick_table',
+          player_count: qt.player_count,
+          format: qt.format,
+          start_time: qt.start_time,
+          created_at: qt.created_at,
+          creator_user_id: qt.creator_user_id,
+          creator_display_name: profile?.display_name,
+          creator_email: profile?.email,
+        });
+      }
+
+      for (const dt of doublesTournaments) {
+        const profile = profilesMap.get(dt.creator_user_id);
+        allTournaments.push({
+          id: dt.id,
+          name: dt.name,
+          share_id: dt.share_id,
+          status: dt.status,
+          type: 'doubles_elimination',
+          team_count: dt.team_count,
+          start_time: dt.start_time,
+          created_at: dt.created_at,
+          creator_user_id: dt.creator_user_id,
+          creator_display_name: profile?.display_name,
+          creator_email: profile?.email,
+        });
+      }
+
+      for (const tm of teamMatchTournaments) {
+        const profile = profilesMap.get(tm.created_by);
+        allTournaments.push({
+          id: tm.id,
+          name: tm.name,
+          share_id: tm.share_id,
+          status: tm.status || 'draft',
+          type: 'team_match',
+          team_count: tm.team_count,
+          format: tm.format,
+          created_at: tm.created_at || undefined,
+          creator_user_id: tm.created_by,
+          creator_display_name: profile?.display_name,
+          creator_email: profile?.email,
+        });
       }
 
       // Sort by created_at desc
