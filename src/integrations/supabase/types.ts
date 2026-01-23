@@ -2092,6 +2092,7 @@ export type Database = {
           description: string | null
           ended_at: string | null
           id: string | null
+          mux_asset_id: string | null
           mux_asset_playback_id: string | null
           mux_playback_id: string | null
           organization_id: string | null
@@ -2107,6 +2108,7 @@ export type Database = {
           description?: string | null
           ended_at?: string | null
           id?: string | null
+          mux_asset_id?: string | null
           mux_asset_playback_id?: string | null
           mux_playback_id?: string | null
           organization_id?: string | null
@@ -2122,6 +2124,7 @@ export type Database = {
           description?: string | null
           ended_at?: string | null
           id?: string | null
+          mux_asset_id?: string | null
           mux_asset_playback_id?: string | null
           mux_playback_id?: string | null
           organization_id?: string | null
@@ -2145,6 +2148,38 @@ export type Database = {
             columns: ["tournament_id"]
             isOneToOne: false
             referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          organization_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          organization_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          organization_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2249,6 +2284,22 @@ export type Database = {
       get_organization_display_logo: {
         Args: { org_id: string }
         Returns: string
+      }
+      get_public_profile: {
+        Args: { profile_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+        }[]
+      }
+      get_public_profiles: {
+        Args: { profile_ids: string[] }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+        }[]
       }
       get_tournament_from_match: {
         Args: { _match_id: string }
