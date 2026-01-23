@@ -5,13 +5,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SectionHeader, EmptyState } from '@/components/content';
-import { ClipboardList, Users, ChevronRight, Trophy } from 'lucide-react';
+import { ClipboardList, Users, ChevronRight, Trophy, Mail } from 'lucide-react';
+import { useI18n } from '@/i18n';
 
 interface OpenRegistrationCardProps {
   table: QuickTablePublic;
 }
 
 function OpenRegistrationCard({ table }: OpenRegistrationCardProps) {
+  const { t } = useI18n();
+  
   return (
     <Link
       to={`/quick-tables/${table.share_id}`}
@@ -29,7 +32,7 @@ function OpenRegistrationCard({ table }: OpenRegistrationCardProps) {
             <div className="flex items-center gap-2 mb-1">
               <Badge variant="default" className="text-xs bg-green-500/90 hover:bg-green-500">
                 <ClipboardList className="w-3 h-3 mr-1" />
-                Đang đăng ký
+                {t.quickTable.registering}
               </Badge>
             </div>
 
@@ -39,8 +42,23 @@ function OpenRegistrationCard({ table }: OpenRegistrationCardProps) {
 
             <div className="flex items-center gap-2 mt-1 text-sm text-foreground-muted">
               <Users className="w-4 h-4" />
-              <span>Dự kiến {table.player_count} người</span>
+              <span>
+                {table.is_doubles 
+                  ? t.quickTable.expectedPairs.replace('{count}', String(table.player_count))
+                  : t.quickTable.expectedPlayers.replace('{count}', String(table.player_count))
+                }
+              </span>
             </div>
+            
+            {/* Creator email */}
+            {(table.creator_display_name || table.creator_email) && (
+              <div className="flex items-center gap-1 mt-1 text-xs text-foreground-muted">
+                <Mail className="w-3 h-3" />
+                <span className="truncate max-w-[200px]">
+                  {table.creator_display_name || table.creator_email?.split('@')[0]}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Arrow */}
@@ -60,11 +78,12 @@ interface OpenRegistrationSectionProps {
 
 export function OpenRegistrationSection({ limit = 5, showViewAll = true }: OpenRegistrationSectionProps) {
   const { data: tables = [], isLoading } = useOpenRegistrationTables({ limit });
+  const { t } = useI18n();
 
   if (isLoading) {
     return (
       <section className="container-wide section-spacing">
-        <SectionHeader title="Giải đang mở đăng ký" />
+        <SectionHeader title={t.quickTable.openRegistrationTitle} />
         <div className="grid gap-3">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-20 rounded-xl" />
@@ -81,7 +100,7 @@ export function OpenRegistrationSection({ limit = 5, showViewAll = true }: OpenR
   return (
     <section className="container-wide section-spacing">
       <SectionHeader 
-        title="Giải đang mở đăng ký" 
+        title={t.quickTable.openRegistrationTitle} 
         href={showViewAll ? "/quick-tables" : undefined}
       />
       <div className="grid gap-3">
@@ -93,7 +112,7 @@ export function OpenRegistrationSection({ limit = 5, showViewAll = true }: OpenR
         <div className="mt-4 text-center">
           <Link to="/quick-tables">
             <Button variant="outline" size="sm">
-              Xem tất cả
+              {t.common.viewAll}
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </Link>
