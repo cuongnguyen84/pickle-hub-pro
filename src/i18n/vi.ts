@@ -264,6 +264,9 @@ export interface Translations {
       noDoublesStats: string;
       countsForStandings: string;
       noGroupHint: string;
+      playerPanel: string;
+      openPlayerPanel: string;
+      teams: string;
     };
   };
   auth: {
@@ -1442,6 +1445,9 @@ export const vi: Translations = {
       noDoublesStats: "Chưa có thống kê đôi",
       countsForStandings: "Tính vào bảng xếp hạng",
       noGroupHint: "Tạo bảng đấu để xem thống kê",
+      playerPanel: "Danh sách VĐV",
+      openPlayerPanel: "Mở danh sách VĐV",
+      teams: "Đội",
     },
   },
   auth: {

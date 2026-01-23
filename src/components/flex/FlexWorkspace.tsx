@@ -1,7 +1,8 @@
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter, pointerWithin, rectIntersection } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, pointerWithin } from '@dnd-kit/core';
 import { useState, useCallback } from 'react';
 import { useI18n } from '@/i18n';
 import { PlayerPool } from './PlayerPool';
+import { FloatingPlayerPanel } from './FloatingPlayerPanel';
 import { ActionButtons } from './ActionButtons';
 import { TeamBlock } from './TeamBlock';
 import { GroupBlock } from './GroupBlock';
@@ -294,7 +295,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
   const hasContent = data.teams.length > 0 || data.groups.length > 0 || data.matches.length > 0;
 
-  // Mobile layout: vertical stack
+  // Mobile layout: vertical stack with floating player panel
   if (isMobile) {
     return (
       <DndContext
@@ -302,14 +303,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="space-y-4">
-          {/* Player Pool - collapsible on mobile */}
-          <PlayerPool
-            players={data.players}
-            onAddPlayer={handleAddPlayer}
-            isCreator={isCreator}
-          />
-
+        <div className="space-y-4 pb-20">
           {/* Action buttons */}
           {isCreator && (
             <div className="grid grid-cols-3 gap-2">
@@ -399,6 +393,15 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
             </div>
           )}
         </div>
+
+        {/* Floating Player Panel for mobile */}
+        <FloatingPlayerPanel
+          players={data.players}
+          teams={data.teams}
+          onAddPlayer={handleAddPlayer}
+          isCreator={isCreator}
+          isDragging={!!activeId}
+        />
 
         {/* Drag overlay */}
         <DragOverlay>
