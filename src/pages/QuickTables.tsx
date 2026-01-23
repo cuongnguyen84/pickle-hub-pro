@@ -595,21 +595,27 @@ const QuickTables = () => {
                                   ? `/quick-tables/${table.share_id}/setup`
                                   : `/quick-tables/${table.share_id}`
                               }
-                              className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                              className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                             >
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium truncate">{table.name}</div>
-                                <div className="flex items-center gap-2 text-xs text-foreground-muted">
-                                  <Calendar className="w-3 h-3" />
-                                  {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
-                                  <span>•</span>
-                                  <span>{table.player_count} {t.quickTable.players}</span>
-                                  <span>•</span>
-                                  <span>{table.format === "round_robin" ? t.quickTable.roundRobin : t.quickTable.largePlayoff}</span>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{table.name}</div>
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground-muted mt-1">
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
+                                    </span>
+                                    <span>•</span>
+                                    <span>{table.player_count} {t.quickTable.players}</span>
+                                    <span>•</span>
+                                    <span>{table.format === "round_robin" ? t.quickTable.roundRobin : t.quickTable.largePlayoff}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
+                                  <Eye className="w-4 h-4 text-foreground-muted" />
                                 </div>
                               </div>
-                              <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
-                              <Eye className="w-4 h-4 text-foreground-muted" />
                             </Link>
                           ))}
                           {!showAllTables && displayTables.length > 5 && (
@@ -708,24 +714,30 @@ const QuickTables = () => {
                                   ? `/quick-tables/${table.share_id}/setup`
                                   : `/quick-tables/${table.share_id}`
                               }
-                              className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                              className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                             >
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium truncate">{table.name}</div>
-                                <div className="flex items-center gap-2 text-xs text-foreground-muted">
-                                  <Calendar className="w-3 h-3" />
-                                  {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
-                                  <span>•</span>
-                                  <span>{table.player_count} {t.quickTable.players}</span>
-                                  <span>•</span>
-                                  <span>{table.format === "round_robin" ? t.quickTable.roundRobin : t.quickTable.largePlayoff}</span>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{table.name}</div>
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground-muted mt-1">
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {format(new Date(table.created_at), "dd/MM/yyyy", { locale: vi })}
+                                    </span>
+                                    <span>•</span>
+                                    <span>{table.player_count} {t.quickTable.players}</span>
+                                    <span>•</span>
+                                    <span>{table.format === "round_robin" ? t.quickTable.roundRobin : t.quickTable.largePlayoff}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Badge variant="outline" className="gap-1">
+                                    <Shield className="w-3 h-3" />
+                                    {t.quickTable.referee || 'Referee'}
+                                  </Badge>
+                                  <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="gap-1">
-                                <Shield className="w-3 h-3" />
-                                {t.quickTable.referee || 'Referee'}
-                              </Badge>
-                              <Badge variant={getStatusVariant(table.status)}>{getStatusLabel(table.status)}</Badge>
                             </Link>
                           ))}
                           {!showAllRefereeTables && displayTables.length > 5 && (
