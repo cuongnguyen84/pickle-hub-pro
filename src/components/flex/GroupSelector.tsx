@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Grid3X3, User, Users, Trash2, X, RefreshCw, Plus, Swords } from 'lucide-react';
+import { Grid3X3, User, Users, Trash2, X, RefreshCw, Swords } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember, FlexMatch } from '@/hooks/useFlexTournament';
 
@@ -26,7 +26,6 @@ interface GroupSelectorProps {
   onRemoveItem: (itemId: string) => void;
   onGenerateRR: (groupId: string) => void;
   onToggleIncludeDoubles: (groupId: string, include: boolean) => void;
-  onAddMatchToGroup: (groupId: string) => void;
 }
 
 export function GroupSelector({
@@ -44,7 +43,6 @@ export function GroupSelector({
   onRemoveItem,
   onGenerateRR,
   onToggleIncludeDoubles,
-  onAddMatchToGroup,
 }: GroupSelectorProps) {
   const { t } = useI18n();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(groups[0]?.id || null);
@@ -237,16 +235,6 @@ export function GroupSelector({
               <div className="flex items-center gap-1">
                 {isCreator && (
                   <>
-                    {/* Add match button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs px-2"
-                      onClick={() => onAddMatchToGroup(selectedGroup.id)}
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      {t.tools.flexTournament.addMatch}
-                    </Button>
                     {selectedGroupItems.length >= 2 && groupType === 'player' && (
                       <Button
                         variant="ghost"

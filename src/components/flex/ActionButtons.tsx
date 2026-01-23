@@ -3,11 +3,9 @@ import { useI18n } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -17,17 +15,16 @@ import { Users, Grid3X3, Swords } from 'lucide-react';
 interface ActionButtonsProps {
   onAddTeam: (name: string) => void;
   onAddGroup: (name: string) => void;
-  onAddMatch: (name: string, type: 'singles' | 'doubles') => void;
+  onAddMatch: () => void; // Directly creates match without dialog
   compact?: boolean;
 }
 
-type DialogType = 'team' | 'group' | 'match' | null;
+type DialogType = 'team' | 'group' | null;
 
 export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: ActionButtonsProps) {
   const { t } = useI18n();
   const [openDialog, setOpenDialog] = useState<DialogType>(null);
   const [inputValue, setInputValue] = useState('');
-  const [matchType, setMatchType] = useState<'singles' | 'doubles'>('singles');
 
   const handleSubmit = () => {
     if (!inputValue.trim()) return;
@@ -39,13 +36,9 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: Ac
       case 'group':
         onAddGroup(inputValue.trim());
         break;
-      case 'match':
-        onAddMatch(inputValue.trim(), matchType);
-        break;
     }
 
     setInputValue('');
-    setMatchType('singles');
     setOpenDialog(null);
   };
 
@@ -62,8 +55,6 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: Ac
         return t.tools.flexTournament.teamName;
       case 'group':
         return t.tools.flexTournament.groupName;
-      case 'match':
-        return t.tools.flexTournament.matchName;
       default:
         return '';
     }
@@ -74,11 +65,6 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: Ac
       <DialogContent className="max-w-[90vw] sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{getDialogTitle()}</DialogTitle>
-          {openDialog === 'match' && (
-            <DialogDescription>
-              {t.tools.flexTournament.matchType.label}
-            </DialogDescription>
-          )}
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -93,30 +79,6 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: Ac
               className="text-base"
             />
           </div>
-
-          {openDialog === 'match' && (
-            <div className="space-y-2">
-              <Label>{t.tools.flexTournament.matchType.label}</Label>
-              <RadioGroup
-                value={matchType}
-                onValueChange={(value) => setMatchType(value as 'singles' | 'doubles')}
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="singles" id="singles" />
-                  <Label htmlFor="singles" className="font-normal">
-                    {t.tools.flexTournament.matchType.singles}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="doubles" id="doubles" />
-                  <Label htmlFor="doubles" className="font-normal">
-                    {t.tools.flexTournament.matchType.doubles}
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
         </div>
 
         <DialogFooter>
@@ -157,7 +119,7 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: Ac
           variant="outline"
           size="sm"
           className="justify-center text-xs h-9"
-          onClick={() => setOpenDialog('match')}
+          onClick={onAddMatch}
         >
           <Swords className="w-3.5 h-3.5 mr-1" />
           {t.tools.flexTournament.addMatch}
@@ -189,7 +151,7 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: Ac
         <Button
           variant="outline"
           className="justify-start"
-          onClick={() => setOpenDialog('match')}
+          onClick={onAddMatch}
         >
           <Swords className="w-4 h-4 mr-2" />
           {t.tools.flexTournament.addMatch}
