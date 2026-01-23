@@ -15,7 +15,7 @@ const translations: Record<Language, Translations> = { vi, en };
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-const STORAGE_KEY = "pickleball-hub-language";
+const STORAGE_KEY = "pickleball-hub-language"; // i18n storage key
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
