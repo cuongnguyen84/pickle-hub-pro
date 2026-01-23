@@ -48,6 +48,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   const [activeName, setActiveName] = useState<string>('');
   const [activeType, setActiveType] = useState<'player' | 'team'>('player');
   const [activeTab, setActiveTab] = useState<string>('matches');
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(data.groups[0]?.id || null);
 
   // Check if player already exists in a team
   const isPlayerInTeam = (playerId: string, teamId: string) => {
@@ -248,14 +249,28 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [data.tournament.id, data.groups, addGroup, onRefresh]);
 
-  // Create a new match directly - always with 4 slots (doubles) ready for drag-and-drop
+  // Create a new match - context-aware based on selected group
   const handleAddMatch = useCallback(async () => {
     const matchNumber = data.matches.length + 1;
-    const matchName = `Trận ${matchNumber}`;
-    // Always create as 'doubles' to show 4 slots - users drag players/teams into slots
-    await addMatch(data.tournament.id, matchName, 'doubles', null, getNextDisplayOrder(data.matches));
+    
+    // If a group is selected and we're on groups tab, link match to that group
+    const groupId = activeTab === 'groups' && selectedGroupId ? selectedGroupId : null;
+    const group = groupId ? data.groups.find(g => g.id === groupId) : null;
+    const groupType = groupId ? getGroupItemType(groupId) : null;
+    
+    // Determine match name
+    const matchName = group 
+      ? `${group.name} - Trận ${data.matches.filter(m => m.group_id === groupId).length + 1}`
+      : `Trận ${matchNumber}`;
+    
+    // If group is team-based, create 'team_match' type, otherwise 'doubles' for players
+    // We use 'doubles' for player matches (4 slots) and 'singles' flag won't be used anymore
+    // Instead we'll detect team matches by checking slot_a_team_id / slot_b_team_id
+    const matchType = groupType === 'team' ? 'singles' : 'doubles'; // singles = 2 slots, doubles = 4 slots
+    
+    await addMatch(data.tournament.id, matchName, matchType, groupId, getNextDisplayOrder(data.matches));
     onRefresh();
-  }, [data.tournament.id, data.matches, addMatch, onRefresh]);
+  }, [data.tournament.id, data.matches, data.groups, activeTab, selectedGroupId, addMatch, onRefresh, getGroupItemType]);
 
   const handleDeleteTeam = useCallback(async (teamId: string) => {
     await deleteEntity('flex_teams', teamId);
@@ -429,6 +444,8 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                 pairStats={data.pairStats}
                 matches={data.matches}
                 isCreator={isCreator}
+                selectedGroupId={selectedGroupId}
+                onSelectGroup={setSelectedGroupId}
                 onUpdateGroupName={handleUpdateGroupName}
                 onDeleteGroup={handleDeleteGroup}
                 onRemoveItem={(itemId) => {
@@ -437,6 +454,11 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                 }}
                 onGenerateRR={handleGenerateRR}
                 onToggleIncludeDoubles={handleToggleIncludeDoubles}
+                onUpdateMatchName={handleUpdateMatchName}
+                onDeleteMatch={handleDeleteMatch}
+                onUpdateMatchScore={handleUpdateMatchScore}
+                onClearMatchSlot={handleClearSlot}
+                onToggleMatchCountsForStandings={handleToggleCountsForStandings}
               />
             </TabsContent>
 
@@ -575,6 +597,8 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
               pairStats={data.pairStats}
               matches={data.matches}
               isCreator={isCreator}
+              selectedGroupId={selectedGroupId}
+              onSelectGroup={setSelectedGroupId}
               onUpdateGroupName={handleUpdateGroupName}
               onDeleteGroup={handleDeleteGroup}
               onRemoveItem={(itemId) => {
@@ -583,6 +607,11 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
               }}
               onGenerateRR={handleGenerateRR}
               onToggleIncludeDoubles={handleToggleIncludeDoubles}
+              onUpdateMatchName={handleUpdateMatchName}
+              onDeleteMatch={handleDeleteMatch}
+              onUpdateMatchScore={handleUpdateMatchScore}
+              onClearMatchSlot={handleClearSlot}
+              onToggleMatchCountsForStandings={handleToggleCountsForStandings}
             />
           )}
 
