@@ -26,6 +26,9 @@ export interface TeamMatchTournament {
   updated_at: string;
   group_count: number | null;
   top_per_group: number | null;
+  // Joined from profiles
+  creator_email?: string;
+  creator_display_name?: string;
 }
 
 export interface GameTemplate {
@@ -85,11 +88,12 @@ export function useTeamMatch() {
     enabled: !!user,
   });
 
-  // Fetch public ongoing tournaments
+  // Fetch public ongoing tournaments with creator info
   const { data: publicTournaments, isLoading: isLoadingPublic } = useQuery({
     queryKey: ['team-match-tournaments', 'public'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch tournaments
+      const { data: tournaments, error } = await supabase
         .from('team_match_tournaments')
         .select('*')
         .in('status', ['registration', 'ongoing'])
@@ -97,7 +101,32 @@ export function useTeamMatch() {
         .limit(20);
       
       if (error) throw error;
-      return data as TeamMatchTournament[];
+      if (!tournaments || tournaments.length === 0) return [];
+      
+      // Get unique creator IDs
+      const creatorIds = [...new Set(tournaments.map(t => t.created_by).filter(Boolean))];
+      
+      if (creatorIds.length === 0) {
+        return tournaments as TeamMatchTournament[];
+      }
+      
+      // Fetch profiles for all creators
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, display_name')
+        .in('id', creatorIds);
+      
+      // Map profiles to tournaments
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      return tournaments.map((t: any) => {
+        const profile = t.created_by ? profileMap.get(t.created_by) : null;
+        return {
+          ...t,
+          creator_email: profile?.email,
+          creator_display_name: profile?.display_name,
+        };
+      }) as TeamMatchTournament[];
     },
   });
 
