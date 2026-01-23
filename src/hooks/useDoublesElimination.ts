@@ -26,6 +26,8 @@ export interface Tournament {
   start_time: string | null;
   created_at: string;
   updated_at: string;
+  creator_display_name?: string | null;
+  creator_email?: string | null;
 }
 
 export interface Team {
@@ -486,7 +488,33 @@ export function useDoublesElimination() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return (data || []) as Tournament[];
+      
+      // Collect creator IDs and fetch profiles
+      const creatorIds = new Set<string>();
+      (data || []).forEach((t: any) => {
+        if (t.creator_user_id) creatorIds.add(t.creator_user_id);
+      });
+      
+      let profilesMap = new Map<string, { display_name: string | null; email: string }>();
+      if (creatorIds.size > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, email')
+          .in('id', Array.from(creatorIds));
+        
+        if (profilesData) {
+          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name, email: p.email }));
+        }
+      }
+      
+      return (data || []).map((t: any) => {
+        const profile = profilesMap.get(t.creator_user_id);
+        return {
+          ...t,
+          creator_display_name: profile?.display_name,
+          creator_email: profile?.email,
+        } as Tournament;
+      });
     } catch (error) {
       console.error('Get user tournaments error:', error);
       return [];
