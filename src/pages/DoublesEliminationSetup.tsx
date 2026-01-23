@@ -252,6 +252,7 @@ export default function DoublesEliminationSetup() {
       <DynamicMeta 
         title="Tạo giải Doubles Elimination"
         description="Tạo giải đấu Doubles Elimination mới"
+        noindex={true}
       />
       
       <div className="container max-w-3xl mx-auto py-6 px-4">

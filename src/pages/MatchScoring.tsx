@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from '@/components/layout';
+import { DynamicMeta } from '@/components/seo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -606,6 +607,10 @@ const MatchScoring = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta 
+        title={`Chấm điểm - ${formatPlayer(player1).name} vs ${formatPlayer(player2).name}`} 
+        noindex={true} 
+      />
       <div className="container max-w-lg mx-auto py-6 px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

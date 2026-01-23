@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
+import { DynamicMeta } from '@/components/seo';
 import { useQuickTable, type QuickTable, distributePlayersToGroups } from '@/hooks/useQuickTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -309,6 +310,7 @@ const QuickTableSetup = () => {
   if (step === 'assignment' && table.group_count) {
     return (
       <MainLayout>
+        <DynamicMeta title={`Chia bảng - ${table.name}`} noindex={true} />
         <div className="container-wide py-8">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
@@ -358,6 +360,7 @@ const QuickTableSetup = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta title={`Nhập VĐV - ${table.name}`} noindex={true} />
       <div className="container-wide py-8">
         <div className="max-w-2xl mx-auto">
           {/* Header */}

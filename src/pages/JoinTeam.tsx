@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { DynamicMeta } from '@/components/seo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -84,6 +85,7 @@ export default function JoinTeam() {
 
   return (
     <MainLayout>
+      <DynamicMeta title="Tham gia đội" noindex={true} />
       <div className="container max-w-lg py-12">
         <Card>
           <CardHeader className="text-center">

@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/layout";
+import { DynamicMeta } from "@/components/seo";
 import { NotificationList } from "@/components/notifications";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
@@ -39,6 +40,7 @@ const Notifications = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta title={t.notifications.title} noindex={true} />
       <div className="container-wide py-8 max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
