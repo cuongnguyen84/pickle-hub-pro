@@ -2303,6 +2303,14 @@ export type Database = {
         Returns: boolean
       }
       is_user_creator: { Args: { _user_id: string }; Returns: boolean }
+      lookup_user_by_email: {
+        Args: { lookup_email: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       remove_partner_from_team: {
         Args: { _team_id: string; _user_id: string }
         Returns: Json

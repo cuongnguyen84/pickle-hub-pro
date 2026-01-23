@@ -4,12 +4,24 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useDeleteAccount } from "@/hooks/useDeleteAccount";
 import { useI18n } from "@/i18n";
 import MainLayout from "@/components/layout/MainLayout";
 import { UserAvatar } from "@/components/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   LogOut, 
   Palette, 
@@ -20,7 +32,9 @@ import {
   Camera,
   Edit2,
   Check,
-  X
+  X,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -30,10 +44,13 @@ const Account = () => {
   const { isCreator, isLoading: creatorLoading } = useCreatorAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { profile, isLoading: profileLoading, uploadAvatar, updateProfile } = useUserProfile();
+  const deleteAccount = useDeleteAccount();
   const navigate = useNavigate();
   
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState("");
+  const [confirmDeleteText, setConfirmDeleteText] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLoading = authLoading || creatorLoading || adminLoading || profileLoading;
@@ -240,11 +257,63 @@ const Account = () => {
               <Button
                 onClick={handleSignOut}
                 className="w-full"
-                variant="destructive"
+                variant="outline"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 {t.nav.logout}
               </Button>
+
+              {/* Delete Account */}
+              <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="w-full"
+                    variant="destructive"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {t.account.deleteAccount}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-destructive" />
+                      {t.account.deleteAccountConfirm}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-4">
+                      <p>{t.account.deleteAccountWarning}</p>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-delete">
+                          {t.account.typeToConfirm.replace("{text}", t.account.confirmText)}
+                        </Label>
+                        <Input
+                          id="confirm-delete"
+                          value={confirmDeleteText}
+                          onChange={(e) => setConfirmDeleteText(e.target.value)}
+                          placeholder={t.account.confirmText}
+                        />
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setConfirmDeleteText("")}>
+                      {t.common.cancel}
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteAccount.mutate()}
+                      disabled={confirmDeleteText !== t.account.confirmText || deleteAccount.isPending}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deleteAccount.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 mr-2" />
+                      )}
+                      {t.account.deleteAccount}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>

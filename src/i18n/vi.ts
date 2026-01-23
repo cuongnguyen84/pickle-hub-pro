@@ -78,6 +78,87 @@ export interface Translations {
       update: string;
     };
   };
+  terms: {
+    title: string;
+    intro: {
+      title: string;
+      description: string;
+      acceptance: string;
+    };
+    account: {
+      title: string;
+      items: {
+        age: string;
+        accuracy: string;
+        security: string;
+        responsibility: string;
+      };
+    };
+    acceptableUse: {
+      title: string;
+      description: string;
+      items: {
+        noIllegal: string;
+        noHarassment: string;
+        noSpam: string;
+        noImpersonation: string;
+        noMalware: string;
+      };
+    };
+    userContent: {
+      title: string;
+      description: string;
+      items: {
+        ownership: string;
+        license: string;
+        moderation: string;
+      };
+    };
+    intellectualProperty: {
+      title: string;
+      description: string;
+    };
+    liability: {
+      title: string;
+      description: string;
+      items: {
+        asIs: string;
+        noWarranty: string;
+        limitation: string;
+      };
+    };
+    termination: {
+      title: string;
+      description: string;
+      items: {
+        userRight: string;
+        platformRight: string;
+        effect: string;
+      };
+    };
+    changes: {
+      title: string;
+      description: string;
+    };
+    contact: {
+      title: string;
+      description: string;
+    };
+    effective: {
+      text: string;
+      update: string;
+    };
+  };
+  account: {
+    deleteAccount: string;
+    deleteAccountDescription: string;
+    deleteAccountConfirm: string;
+    deleteAccountWarning: string;
+    deleteAccountSuccess: string;
+    deleteAccountError: string;
+    typeToConfirm: string;
+    confirmText: string;
+  };
   nav: {
     home: string;
     live: string;
@@ -1093,6 +1174,87 @@ export const vi: Translations = {
       text: "Chính sách này có hiệu lực từ ngày {date}.",
       update: "Chính sách có thể được cập nhật khi nền tảng phát triển thêm tính năng mới.",
     },
+  },
+  terms: {
+    title: "Điều khoản Sử dụng – The Pickle Hub",
+    intro: {
+      title: "Giới thiệu",
+      description: "Chào mừng bạn đến với The Pickle Hub. Bằng việc sử dụng dịch vụ của chúng tôi, bạn đồng ý tuân thủ các điều khoản sau đây.",
+      acceptance: "Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng không sử dụng dịch vụ.",
+    },
+    account: {
+      title: "Điều khoản Tài khoản",
+      items: {
+        age: "Bạn phải đủ 13 tuổi để sử dụng dịch vụ",
+        accuracy: "Thông tin đăng ký phải chính xác và trung thực",
+        security: "Bạn chịu trách nhiệm bảo mật tài khoản của mình",
+        responsibility: "Bạn chịu trách nhiệm về mọi hoạt động trong tài khoản",
+      },
+    },
+    acceptableUse: {
+      title: "Sử dụng Hợp lệ",
+      description: "Khi sử dụng The Pickle Hub, bạn cam kết:",
+      items: {
+        noIllegal: "Không thực hiện hành vi bất hợp pháp",
+        noHarassment: "Không quấy rối, đe dọa hoặc xúc phạm người khác",
+        noSpam: "Không spam hoặc gửi nội dung rác",
+        noImpersonation: "Không mạo danh người khác hoặc tổ chức",
+        noMalware: "Không phát tán mã độc hoặc phần mềm có hại",
+      },
+    },
+    userContent: {
+      title: "Nội dung Người dùng",
+      description: "Về nội dung bạn đăng tải:",
+      items: {
+        ownership: "Bạn giữ quyền sở hữu nội dung do bạn tạo ra",
+        license: "Bạn cấp cho chúng tôi quyền hiển thị nội dung trên nền tảng",
+        moderation: "Chúng tôi có quyền xóa nội dung vi phạm quy định",
+      },
+    },
+    intellectualProperty: {
+      title: "Sở hữu Trí tuệ",
+      description: "Thương hiệu, logo và nội dung của The Pickle Hub được bảo vệ bởi luật sở hữu trí tuệ. Bạn không được sao chép hoặc sử dụng mà không có sự cho phép.",
+    },
+    liability: {
+      title: "Giới hạn Trách nhiệm",
+      description: "The Pickle Hub cung cấp dịch vụ với các giới hạn sau:",
+      items: {
+        asIs: "Dịch vụ được cung cấp \"nguyên trạng\"",
+        noWarranty: "Không đảm bảo dịch vụ hoạt động liên tục hoặc không có lỗi",
+        limitation: "Chúng tôi không chịu trách nhiệm về thiệt hại gián tiếp",
+      },
+    },
+    termination: {
+      title: "Chấm dứt Dịch vụ",
+      description: "Về việc chấm dứt sử dụng dịch vụ:",
+      items: {
+        userRight: "Bạn có thể xóa tài khoản bất kỳ lúc nào",
+        platformRight: "Chúng tôi có thể đình chỉ tài khoản vi phạm điều khoản",
+        effect: "Sau khi chấm dứt, dữ liệu của bạn sẽ được xóa theo chính sách bảo mật",
+      },
+    },
+    changes: {
+      title: "Thay đổi Điều khoản",
+      description: "Chúng tôi có thể cập nhật điều khoản này. Việc tiếp tục sử dụng dịch vụ sau khi thay đổi đồng nghĩa với việc bạn chấp nhận điều khoản mới.",
+    },
+    contact: {
+      title: "Liên hệ",
+      description: "Nếu bạn có câu hỏi về điều khoản sử dụng, vui lòng liên hệ:",
+    },
+    effective: {
+      text: "Điều khoản này có hiệu lực từ ngày {date}.",
+      update: "Điều khoản có thể được cập nhật khi nền tảng phát triển.",
+    },
+  },
+  account: {
+    deleteAccount: "Xóa tài khoản",
+    deleteAccountDescription: "Xóa vĩnh viễn tài khoản và toàn bộ dữ liệu của bạn. Hành động này không thể hoàn tác.",
+    deleteAccountConfirm: "Xác nhận xóa tài khoản",
+    deleteAccountWarning: "Cảnh báo: Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn bao gồm hồ sơ, giải đấu, bình luận và các hoạt động khác.",
+    deleteAccountSuccess: "Tài khoản đã được xóa thành công",
+    deleteAccountError: "Không thể xóa tài khoản. Vui lòng thử lại.",
+    typeToConfirm: "Nhập \"{text}\" để xác nhận",
+    confirmText: "XOA TAI KHOAN",
   },
   nav: {
     home: "Trang chủ",
