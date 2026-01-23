@@ -359,7 +359,7 @@ const QuickTables = () => {
                 </Button>
                 {quotaInfo.current_count > 0 && (
                   <p className={cn("text-sm text-center mt-2", quotaInfo.current_count >= quotaInfo.quota ? "text-destructive" : "text-foreground-muted")}>
-                    {quotaInfo.current_count}/{quotaInfo.quota} giải đã tạo
+                    {t.quickTable.groups.quotaUsed.replace('{count}', String(quotaInfo.current_count)).replace('{total}', String(quotaInfo.quota))}
                   </p>
                 )}
                 {quotaInfo.current_count >= quotaInfo.quota && (
@@ -491,7 +491,7 @@ const QuickTables = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold">{suggestion.groupCount} bảng</span>
+                          <span className="font-semibold">{suggestion.groupCount} {t.quickTable.groups.groups}</span>
                           {suggestion.isRecommended && (
                             <Badge variant="default" className="text-xs">
                               {t.quickTable.recommended}
@@ -499,10 +499,10 @@ const QuickTables = () => {
                             )}
                           </div>
                           <p className="text-sm text-foreground-secondary">
-                            {suggestion.playersPerGroup.join(", ")} người/bảng
+                            {suggestion.playersPerGroup.join(", ")} {t.quickTable.groups.playersPerGroup}
                           </p>
                           <p className="text-sm text-foreground-muted mt-1">
-                            {suggestion.reason} → {suggestion.totalPlayoffSpots} người vào Playoff
+                            {suggestion.reason} → {suggestion.totalPlayoffSpots} {t.quickTable.groups.advanceToPlayoff}
                           </p>
                         </div>
                         {selectedGroupCount === suggestion.groupCount && <Check className="w-5 h-5 text-primary" />}
@@ -514,8 +514,8 @@ const QuickTables = () => {
                 {groupSuggestions.length === 0 && (
                   <div className="text-center py-8 text-foreground-muted">
                     <Info className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>Không có cấu hình phù hợp với {playerCount} người.</p>
-                    <p className="text-sm">Thử số người chơi khác.</p>
+                    <p>{t.quickTable.groups.noConfig.replace('{count}', String(playerCount))}</p>
+                    <p className="text-sm">{t.quickTable.groups.tryOther}</p>
                   </div>
                 )}
 

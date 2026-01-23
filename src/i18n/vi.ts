@@ -685,6 +685,108 @@ export interface Translations {
       formatsTitle: string;
       formatsDesc: string;
     };
+    // Setup UI
+    setup: {
+      inputPlayers: string;
+      inputPlayersDesc: string;
+      shuffle: string;
+      playerNamePlaceholder: string;
+      teamPlaceholder: string;
+      seedPlaceholder: string;
+      addPlayer: string;
+      assignmentMethod: string;
+      autoMode: string;
+      autoModeDesc: string;
+      manualMode: string;
+      manualModeDesc: string;
+      tips: string;
+      tipTeam: string;
+      tipSeed: string;
+      tipAuto: string;
+      tipManual: string;
+      processing: string;
+      continueManual: string;
+      createBracketBtn: string;
+      minPlayersError: string;
+      notFound: string;
+      notFoundDesc: string;
+      createdSuccess: string;
+      manualSuccess: string;
+      errorOccurred: string;
+    };
+    manualAssignment: {
+      title: string;
+      description: string;
+      guide: string;
+      step1: string;
+      step2: string;
+      step3: string;
+      unassigned: string;
+      allAssigned: string;
+      group: string;
+      clickToAdd: string;
+      noPlayers: string;
+      warning: string;
+      unbalancedGroups: string;
+      sameTeamWarning: string;
+      topSeedsWarning: string;
+      confirm: string;
+      remainingPlayers: string;
+      emptyGroup: string;
+    };
+    view: {
+      groupStage: string;
+      shareSuccess: string;
+      deleteConfirm: string;
+      deleteBtn: string;
+      groupCompleteTitle: string;
+      groupCompleteDesc: string;
+      startPlayoff: string;
+      registrationTab: string;
+      playoffTab: string;
+      standings: string;
+      player: string;
+      wins: string;
+      matches: string;
+      pointDiff: string;
+      actions: string;
+      matchList: string;
+      showTeam: string;
+      courtTime: string;
+      addPlayer: string;
+      done: string;
+      editGroups: string;
+      movePlayer: string;
+      removePlayer: string;
+      removeConfirm: string;
+      movePlayerTitle: string;
+      selectGroup: string;
+      moveBtn: string;
+      movedSuccess: string;
+      addPlayerTitle: string;
+      playerName: string;
+      team: string;
+      addBtn: string;
+      addedSuccess: string;
+      removedSuccess: string;
+      scoreUpdated: string;
+      nextRoundCreated: string;
+      tournamentCompleted: string;
+      playoffCreated: string;
+      onlyCreatorCanScore: string;
+      wildcardTitle: string;
+      wildcardDesc: string;
+      selectExactly: string;
+      courtsTimeUpdated: string;
+    };
+    groups: {
+      groups: string;
+      playersPerGroup: string;
+      advanceToPlayoff: string;
+      noConfig: string;
+      tryOther: string;
+      quotaUsed: string;
+    };
   };
   // Team Match SEO
   teamMatch: {
@@ -717,6 +819,86 @@ export interface Translations {
       lineupDesc: string;
       manageTitle: string;
       manageDesc: string;
+    };
+    scoring: {
+      title: string;
+      saveScore: string;
+      saving: string;
+      saved: string;
+      scoreSaveError: string;
+      game: string;
+      selectGame: string;
+      matchComplete: string;
+      reset: string;
+      confirmReset: string;
+    };
+  };
+  // Doubles Elimination
+  doublesElimination: {
+    title: string;
+    description: string;
+    createNew: string;
+    loginRequired: string;
+    loginRequiredDesc: string;
+    noTournaments: string;
+    noTournamentsDesc: string;
+    viewBtn: string;
+    teams: string;
+    earlyRounds: string;
+    semifinalPlus: string;
+    status: {
+      setup: string;
+      ongoing: string;
+      completed: string;
+    };
+    format: {
+      bo1: string;
+      bo3: string;
+      bo5: string;
+    };
+    about: {
+      title: string;
+      description: string;
+      round1: string;
+      round2: string;
+      round3: string;
+      round4Plus: string;
+      minTeams: string;
+      suggestion: string;
+    };
+    setup: {
+      title: string;
+      tournamentName: string;
+      tournamentNamePlaceholder: string;
+      teamCount: string;
+      minTeamsError: string;
+      courtCount: string;
+      startTime: string;
+      earlyRoundsFormat: string;
+      semifinalsFormat: string;
+      finalsFormat: string;
+      thirdPlaceMatch: string;
+      thirdPlaceMatchDesc: string;
+      creating: string;
+      createBtn: string;
+      hints: {
+        byeCount: string;
+        r1Matches: string;
+        r2Matches: string;
+      };
+    };
+    scoring: {
+      match: string;
+      court: string;
+      time: string;
+      vs: string;
+      tbd: string;
+      edit: string;
+      score: string;
+      waiting: string;
+      winner: string;
+      saveSuccess: string;
+      saveError: string;
     };
   };
   news: {
@@ -1417,6 +1599,108 @@ export const vi: Translations = {
       formatsTitle: "Hỗ Trợ Playoff, Loại Trực Tiếp & Thể Thức Tùy Chỉnh",
       formatsDesc: "Ngoài round robin, công cụ chia bảng còn hỗ trợ playoff loại trực tiếp đơn, vòng bảng kết hợp knockout và thể thức giải lớn cho 50+ VĐV. Theo dõi điểm số real-time, chia sẻ bracket trực tiếp với người tham gia và tìm ra nhà vô địch với bảng đấu chuyên nghiệp.",
     },
+    // Additional UI text
+    setup: {
+      inputPlayers: "Nhập danh sách người chơi",
+      inputPlayersDesc: "Nhập tên và hạt giống (tùy chọn)",
+      shuffle: "Xáo trộn",
+      playerNamePlaceholder: "Tên VĐV *",
+      teamPlaceholder: "Team",
+      seedPlaceholder: "Seed",
+      addPlayer: "Thêm người chơi",
+      assignmentMethod: "Phương thức chia bảng",
+      autoMode: "Tự động",
+      autoModeDesc: "Hệ thống chia đều, tránh cùng team, rải seed",
+      manualMode: "Thủ công",
+      manualModeDesc: "Tự chọn VĐV vào từng bảng",
+      tips: "Mẹo chia bảng tốt:",
+      tipTeam: "Nhập Team để tránh cùng team vào cùng bảng",
+      tipSeed: "Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng",
+      tipAuto: "Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau",
+      tipManual: "Bạn sẽ tự phân VĐV vào từng bảng ở bước tiếp theo",
+      processing: "Đang xử lý...",
+      continueManual: "Tiếp tục chia bảng",
+      createBracketBtn: "Tạo bảng đấu và chia bảng",
+      minPlayersError: "Cần ít nhất 2 người chơi",
+      notFound: "Không tìm thấy bảng đấu",
+      notFoundDesc: "Bảng đấu không tồn tại hoặc đã bị xóa.",
+      createdSuccess: "Đã tạo bảng đấu thành công!",
+      manualSuccess: "Đã chia bảng thủ công thành công!",
+      errorOccurred: "Có lỗi xảy ra, vui lòng thử lại",
+    },
+    manualAssignment: {
+      title: "Chia bảng thủ công",
+      description: "Phân VĐV vào các bảng theo ý muốn của bạn",
+      guide: "Hướng dẫn chia bảng thủ công",
+      step1: "Click chọn VĐV từ danh sách bên trái",
+      step2: "Click vào bảng muốn đưa VĐV vào",
+      step3: "Click vào VĐV đã chia để xóa khỏi bảng",
+      unassigned: "Chưa phân bảng",
+      allAssigned: "Tất cả VĐV đã được phân bảng",
+      group: "Bảng",
+      clickToAdd: "Click để thêm VĐV",
+      noPlayers: "Chưa có VĐV",
+      warning: "Cảnh báo",
+      unbalancedGroups: "Các bảng không cân bằng số lượng VĐV",
+      sameTeamWarning: "VĐV cùng team",
+      topSeedsWarning: "hạt giống cao (seed 1-2)",
+      confirm: "Xác nhận chia bảng",
+      remainingPlayers: "Còn {count} VĐV chưa phân bảng",
+      emptyGroup: "Có bảng chưa có VĐV",
+    },
+    view: {
+      groupStage: "Vòng bảng",
+      shareSuccess: "Đã sao chép link!",
+      deleteConfirm: "Bạn có chắc chắn muốn xoá giải \"{name}\"? Tất cả dữ liệu (VĐV, trận đấu, đăng ký...) sẽ bị xoá vĩnh viễn.",
+      deleteBtn: "Xoá giải",
+      groupCompleteTitle: "Vòng bảng đã hoàn tất!",
+      groupCompleteDesc: "Tất cả trận đấu đã có kết quả. Bạn có thể chuyển sang vòng Playoff.",
+      startPlayoff: "Bắt đầu Playoff",
+      registrationTab: "Đăng ký",
+      playoffTab: "Playoff",
+      standings: "Bảng xếp hạng",
+      player: "Người chơi",
+      wins: "Thắng",
+      matches: "Trận",
+      pointDiff: "Hiệu số",
+      actions: "Thao tác",
+      matchList: "Danh sách trận đấu",
+      showTeam: "Hiện Team",
+      courtTime: "Sân & Giờ",
+      addPlayer: "Thêm VĐV",
+      done: "Xong",
+      editGroups: "Sửa bảng",
+      movePlayer: "Chuyển bảng",
+      removePlayer: "Xóa VĐV",
+      removeConfirm: "Xóa {name} khỏi bảng?",
+      movePlayerTitle: "Chuyển VĐV sang bảng khác",
+      selectGroup: "Chọn bảng",
+      moveBtn: "Chuyển",
+      movedSuccess: "Đã chuyển VĐV",
+      addPlayerTitle: "Thêm VĐV mới",
+      playerName: "Tên VĐV",
+      team: "Team (tùy chọn)",
+      addBtn: "Thêm",
+      addedSuccess: "Đã thêm VĐV",
+      removedSuccess: "Đã xóa VĐV",
+      scoreUpdated: "Đã cập nhật kết quả",
+      nextRoundCreated: "Đã tạo vòng tiếp theo!",
+      tournamentCompleted: "Giải đấu đã hoàn tất! 🎉",
+      playoffCreated: "Đã tạo vòng Playoff!",
+      onlyCreatorCanScore: "Chỉ người tạo bảng hoặc trọng tài mới có thể nhập điểm.",
+      wildcardTitle: "Chọn Wildcard",
+      wildcardDesc: "Chọn {count} VĐV hạng 3 để vào Playoff",
+      selectExactly: "Vui lòng chọn đúng {count} người",
+      courtsTimeUpdated: "Đã cập nhật sân & giờ thi đấu",
+    },
+    groups: {
+      groups: "bảng",
+      playersPerGroup: "người/bảng",
+      advanceToPlayoff: "người vào Playoff",
+      noConfig: "Không có cấu hình phù hợp với {count} người.",
+      tryOther: "Thử số người chơi khác.",
+      quotaUsed: "{count}/{total} giải đã tạo",
+    },
   },
   // Team Match SEO
   teamMatch: {
@@ -1449,6 +1733,86 @@ export const vi: Translations = {
       lineupDesc: "Hệ thống thi đấu đồng đội hỗ trợ quản lý lineup đầy đủ, cho phép đội trưởng sắp xếp VĐV chiến lược cho từng trận. Khi trận đấu hòa, thể thức dreambreaker mang đến gameplay đột tử hấp dẫn. Rally scoring giữ mọi điểm đều căng thẳng và đảm bảo trận đấu duy trì nhịp độ cạnh tranh.",
       manageTitle: "Quản Lý Thi Đấu Đồng Đội Cho Giải Pickleball",
       manageDesc: "Dù tổ chức trận giao hữu giữa các câu lạc bộ hay một mùa giải đầy đủ, công cụ thi đấu đồng đội của ThePickleHub xử lý mọi phức tạp. Theo dõi bảng xếp hạng đội, quản lý đội hình, lên lịch trận đấu và tính toán kết quả tự động. Kết hợp với công cụ chia bảng để có trải nghiệm quản lý giải đấu và thi đấu đồng đội đáng nhớ.",
+    },
+    scoring: {
+      title: "Chấm điểm",
+      saveScore: "Lưu điểm",
+      saving: "Đang lưu...",
+      saved: "Đã lưu kết quả",
+      scoreSaveError: "Không thể lưu điểm",
+      game: "Game",
+      selectGame: "Chọn game để chấm điểm",
+      matchComplete: "Trận đấu đã hoàn thành",
+      reset: "Đặt lại",
+      confirmReset: "Xác nhận đặt lại điểm?",
+    },
+  },
+  // Doubles Elimination translations
+  doublesElimination: {
+    title: "Doubles Elimination",
+    description: "Thể thức loại trực tiếp có nhánh thua cho giải 32+ đội",
+    createNew: "Tạo giải mới",
+    loginRequired: "Đăng nhập để tạo giải đấu",
+    loginRequiredDesc: "Bạn cần đăng nhập để tạo và quản lý các giải đấu Doubles Elimination",
+    noTournaments: "Chưa có giải đấu nào",
+    noTournamentsDesc: "Tạo giải đấu Doubles Elimination đầu tiên của bạn",
+    viewBtn: "Xem",
+    teams: "đội",
+    earlyRounds: "Vòng ngoài",
+    semifinalPlus: "Bán kết+",
+    status: {
+      setup: "Đang cài đặt",
+      ongoing: "Đang diễn ra",
+      completed: "Đã hoàn thành",
+    },
+    format: {
+      bo1: "BO1",
+      bo3: "BO3",
+      bo5: "BO5",
+    },
+    about: {
+      title: "Về thể thức Doubles Elimination",
+      description: "Doubles Elimination là thể thức loại trực tiếp cải tiến, cho phép các đội có cơ hội thứ hai sau khi thua ở vòng đầu.",
+      round1: "Tất cả đội thi đấu. Thua → xuống nhánh thua",
+      round2: "Đội thua R1 đấu nhau. Thua lần 2 → loại",
+      round3: "Hợp nhất nhánh thắng + thua, chuẩn hóa về 2^n đội",
+      round4Plus: "Single Elimination chuẩn đến chung kết",
+      minTeams: "Số đội tối thiểu: 32 đội.",
+      suggestion: "Gợi ý: 32, 40, 48, 64, 80, 96, 128 đội.",
+    },
+    setup: {
+      title: "Tạo giải Doubles Elimination",
+      tournamentName: "Tên giải đấu",
+      tournamentNamePlaceholder: "VD: Giải Pickleball Mùa Hè 2024",
+      teamCount: "Số đội tham gia",
+      minTeamsError: "Cần tối thiểu 32 đội",
+      courtCount: "Số sân thi đấu",
+      startTime: "Giờ bắt đầu",
+      earlyRoundsFormat: "Thể thức vòng ngoài (R1-R2)",
+      semifinalsFormat: "Thể thức bán kết",
+      finalsFormat: "Thể thức chung kết",
+      thirdPlaceMatch: "Có trận tranh hạng 3",
+      thirdPlaceMatchDesc: "Đội thua bán kết sẽ đấu tranh hạng 3",
+      creating: "Đang tạo...",
+      createBtn: "Tạo giải đấu",
+      hints: {
+        byeCount: "{count} đội được BYE vào R2",
+        r1Matches: "{count} trận ở R1",
+        r2Matches: "{count} trận ở R2",
+      },
+    },
+    scoring: {
+      match: "Trận",
+      court: "Sân",
+      time: "Giờ",
+      vs: "vs",
+      tbd: "TBD",
+      edit: "Sửa",
+      score: "Chấm",
+      waiting: "Chờ đủ 2 đội",
+      winner: "Thắng",
+      saveSuccess: "Đã lưu kết quả",
+      saveError: "Lỗi khi lưu điểm",
     },
   },
   news: {
