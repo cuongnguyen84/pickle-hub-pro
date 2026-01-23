@@ -278,6 +278,7 @@ export const en: Translations = {
       groupTabIndividuals: "Individuals",
       selectTeamsToShow: "Select teams to show individual stats",
       allTeams: "All",
+      noPairStats: "No pair stats yet",
     },
   },
   auth: {
