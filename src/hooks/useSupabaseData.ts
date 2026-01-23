@@ -410,6 +410,68 @@ export function useOpenRegistrationTables(options?: { limit?: number }) {
   });
 }
 
+// Public Team Match type
+export type TeamMatchTournamentPublic = {
+  id: string;
+  name: string;
+  share_id: string;
+  status: string;
+  format: string;
+  team_count: number;
+  team_roster_size: number;
+  created_at: string;
+  created_by?: string;
+  creator_email?: string;
+  creator_display_name?: string;
+};
+
+// Fetch open team match tournaments (registration or ongoing)
+export function useOpenTeamMatchTournaments(options?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["open-team-match-tournaments", options],
+    queryFn: async () => {
+      let query = supabase
+        .from("team_match_tournaments")
+        .select("id, name, share_id, status, format, team_count, team_roster_size, created_at, created_by")
+        .in("status", ["registration", "ongoing"])
+        .order("created_at", { ascending: false });
+
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data: tournaments, error } = await query;
+      if (error) throw error;
+      if (!tournaments || tournaments.length === 0) return [];
+
+      // Get unique creator IDs
+      const creatorIds = [...new Set(tournaments.map(t => t.created_by).filter(Boolean))] as string[];
+
+      if (creatorIds.length === 0) {
+        return tournaments as TeamMatchTournamentPublic[];
+      }
+
+      // Fetch profiles for all creators
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, email, display_name")
+        .in("id", creatorIds);
+
+      // Map profiles to tournaments
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      return tournaments.map((t) => {
+        const profile = t.created_by ? profileMap.get(t.created_by) : null;
+        return {
+          ...t,
+          creator_email: profile?.email,
+          creator_display_name: profile?.display_name,
+        };
+      }) as TeamMatchTournamentPublic[];
+    },
+  });
+}
+
 // Fetch approved registrations for a table (public view)
 export function useApprovedRegistrations(tableId: string) {
   return useQuery({

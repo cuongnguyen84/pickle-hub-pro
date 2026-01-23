@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
-import { useTournaments, useOpenRegistrationTables, useUserRegisteredTournaments, useUserCompletedTournaments } from "@/hooks/useSupabaseData";
+import { useTournaments, useOpenRegistrationTables, useUserRegisteredTournaments, useUserCompletedTournaments, useOpenTeamMatchTournaments } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail } from "lucide-react";
@@ -25,6 +25,7 @@ const Tournaments = () => {
 
   const { data: tournaments = [], isLoading } = useTournaments();
   const { data: openRegistrationTables = [], isLoading: openRegLoading } = useOpenRegistrationTables();
+  const { data: openTeamMatchTournaments = [], isLoading: teamMatchLoading } = useOpenTeamMatchTournaments();
   const { data: registeredTournaments = [], isLoading: registeredLoading } = useUserRegisteredTournaments(user?.id);
   const { data: completedTournaments = [], isLoading: completedLoading } = useUserCompletedTournaments(user?.id);
 
@@ -368,6 +369,79 @@ const Tournaments = () => {
                   </div>
                 </Link>
               ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Open Team Match Tournaments Section */}
+        {openTeamMatchTournaments.length > 0 && (
+          <Card className="mb-6">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">{t.teamMatch.publicTournaments}</h2>
+              </div>
+            </div>
+            <div className="px-4 pb-4 space-y-2">
+              {openTeamMatchTournaments.slice(0, 5).map((tournament) => {
+                const getStatusLabel = (status: string) => {
+                  switch (status) {
+                    case 'registration': return t.teamMatch.statusRegistration;
+                    case 'ongoing': return t.teamMatch.statusOngoing;
+                    default: return status;
+                  }
+                };
+                const getFormatLabel = (format: string) => {
+                  switch (format) {
+                    case 'round_robin': return t.teamMatch.formatRoundRobin;
+                    case 'single_elimination': return t.teamMatch.formatSingleElim;
+                    case 'rr_playoff': return t.teamMatch.formatRrPlayoff;
+                    default: return format;
+                  }
+                };
+                return (
+                  <Link
+                    key={tournament.id}
+                    to={`/tools/team-match/${tournament.share_id}`}
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Users className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{tournament.name}</div>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                          <Badge variant="secondary" className="gap-1 text-xs bg-purple-100 text-purple-700 border-purple-200">
+                            <Users className="w-3 h-3" />
+                            <span>{tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size}</span>
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{getFormatLabel(tournament.format)}</span>
+                          {(tournament.creator_display_name || tournament.creator_email) && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Mail className="w-3 h-3" />
+                              <span className="truncate max-w-[150px]">
+                                {tournament.creator_display_name || tournament.creator_email?.split('@')[0]}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pl-13 sm:pl-0">
+                      <Badge variant="outline" className={cn(
+                        "text-xs whitespace-nowrap",
+                        tournament.status === 'ongoing' 
+                          ? "bg-green-500/10 text-green-500 border-green-500/20"
+                          : "bg-primary/10 text-primary border-primary/30"
+                      )}>
+                        {getStatusLabel(tournament.status)}
+                      </Badge>
+                      <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </Card>
         )}
