@@ -33,11 +33,12 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     addMatch,
     updateMatchSlots,
     updateMatchScore,
+    updateMatchCountsForStandings,
     deleteEntity,
     updateEntityName,
     generateRoundRobinMatches,
   } = useFlexTournament();
-  const { recomputeGroupStats } = useFlexStats();
+  const { recomputeGroupStats, recomputeAllGroupStats, updateGroupIncludeDoubles } = useFlexStats();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeName, setActiveName] = useState<string>('');
@@ -247,6 +248,17 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [updateMatchSlots, onRefresh]);
 
+  const handleToggleCountsForStandings = useCallback(async (matchId: string, counts: boolean) => {
+    await updateMatchCountsForStandings(matchId, counts);
+    await recomputeAllGroupStats(data.tournament.id);
+    onRefresh();
+  }, [updateMatchCountsForStandings, recomputeAllGroupStats, data.tournament.id, onRefresh]);
+
+  const handleToggleIncludeDoubles = useCallback(async (groupId: string, include: boolean) => {
+    await updateGroupIncludeDoubles(groupId, include);
+    onRefresh();
+  }, [updateGroupIncludeDoubles, onRefresh]);
+
   const handleGenerateRR = useCallback(async (groupId: string) => {
     const group = data.groups.find(g => g.id === groupId);
     if (!group) return;
@@ -342,6 +354,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   players={data.players}
                   teams={data.teams}
                   playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
+                  pairStats={data.pairStats.filter(ps => ps.group_id === group.id)}
                   isCreator={isCreator}
                   onUpdateName={(name) => handleUpdateGroupName(group.id, name)}
                   onDelete={() => handleDeleteGroup(group.id)}
@@ -350,6 +363,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                     onRefresh();
                   }}
                   onGenerateRR={() => handleGenerateRR(group.id)}
+                  onToggleIncludeDoubles={(include) => handleToggleIncludeDoubles(group.id, include)}
                 />
               ))}
             </div>
@@ -365,10 +379,12 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   players={data.players}
                   teams={data.teams}
                   isCreator={isCreator}
+                  hasGroups={data.groups.length > 0}
                   onUpdateName={(name) => handleUpdateMatchName(match.id, name)}
                   onDelete={() => handleDeleteMatch(match.id)}
                   onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                   onClearSlot={(slot) => handleClearSlot(match.id, slot)}
+                  onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
                 />
               ))}
             </div>
@@ -475,6 +491,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   players={data.players}
                   teams={data.teams}
                   playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
+                  pairStats={data.pairStats.filter(ps => ps.group_id === group.id)}
                   isCreator={isCreator}
                   onUpdateName={(name) => handleUpdateGroupName(group.id, name)}
                   onDelete={() => handleDeleteGroup(group.id)}
@@ -483,6 +500,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                     onRefresh();
                   }}
                   onGenerateRR={() => handleGenerateRR(group.id)}
+                  onToggleIncludeDoubles={(include) => handleToggleIncludeDoubles(group.id, include)}
                 />
               ))}
             </div>
@@ -498,10 +516,12 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   players={data.players}
                   teams={data.teams}
                   isCreator={isCreator}
+                  hasGroups={data.groups.length > 0}
                   onUpdateName={(name) => handleUpdateMatchName(match.id, name)}
                   onDelete={() => handleDeleteMatch(match.id)}
                   onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                   onClearSlot={(slot) => handleClearSlot(match.id, slot)}
+                  onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
                 />
               ))}
             </div>
