@@ -117,10 +117,13 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     }
 
     // Handle drop on match slot
-    if (targetId.startsWith('match-')) {
-      const parts = targetId.split('-');
-      const matchId = parts[1];
-      const slot = parts[3]; // a1, a2, b1, b2
+    // Format: match-{uuid}-slot-{a1|a2|b1|b2}
+    if (targetId.startsWith('match-') && targetId.includes('-slot-')) {
+      const slotMatch = targetId.match(/^match-(.+)-slot-(a1|a2|b1|b2)$/);
+      if (!slotMatch) return;
+      
+      const matchId = slotMatch[1];
+      const slot = slotMatch[2];
 
       const match = data.matches.find(m => m.id === matchId);
       if (!match) return;
