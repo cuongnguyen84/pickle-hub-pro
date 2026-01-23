@@ -248,17 +248,14 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [data.tournament.id, data.groups, addGroup, onRefresh]);
 
-  const handleAddMatch = useCallback(async (name: string, matchType: 'singles' | 'doubles', groupId?: string) => {
-    await addMatch(data.tournament.id, name, matchType, groupId || null, getNextDisplayOrder(data.matches));
+  // Create a new match directly - always with 4 slots (doubles) ready for drag-and-drop
+  const handleAddMatch = useCallback(async () => {
+    const matchNumber = data.matches.length + 1;
+    const matchName = `Trận ${matchNumber}`;
+    // Always create as 'doubles' to show 4 slots - users drag players/teams into slots
+    await addMatch(data.tournament.id, matchName, 'doubles', null, getNextDisplayOrder(data.matches));
     onRefresh();
   }, [data.tournament.id, data.matches, addMatch, onRefresh]);
-
-  const handleAddMatchToGroup = useCallback(async (groupId: string) => {
-    const group = data.groups.find(g => g.id === groupId);
-    const matchName = `${group?.name || 'Group'} - Trận ${data.matches.filter(m => m.group_id === groupId).length + 1}`;
-    await addMatch(data.tournament.id, matchName, 'doubles', groupId, getNextDisplayOrder(data.matches));
-    onRefresh();
-  }, [data.tournament.id, data.groups, data.matches, addMatch, onRefresh]);
 
   const handleDeleteTeam = useCallback(async (teamId: string) => {
     await deleteEntity('flex_teams', teamId);
@@ -440,7 +437,6 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                 }}
                 onGenerateRR={handleGenerateRR}
                 onToggleIncludeDoubles={handleToggleIncludeDoubles}
-                onAddMatchToGroup={handleAddMatchToGroup}
               />
             </TabsContent>
 
@@ -587,7 +583,6 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
               }}
               onGenerateRR={handleGenerateRR}
               onToggleIncludeDoubles={handleToggleIncludeDoubles}
-              onAddMatchToGroup={handleAddMatchToGroup}
             />
           )}
 

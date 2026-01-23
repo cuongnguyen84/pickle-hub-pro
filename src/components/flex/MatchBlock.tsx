@@ -34,9 +34,10 @@ interface DroppableSlotProps {
   isCreator: boolean;
   onClear: () => void;
   disabled?: boolean;
+  isSecondSlot?: boolean; // True for slot a2/b2 - show faded delete button when empty
 }
 
-function DroppableSlot({ id, playerId, teamId, players, teams, isCreator, onClear, disabled }: DroppableSlotProps) {
+function DroppableSlot({ id, playerId, teamId, players, teams, isCreator, onClear, disabled, isSecondSlot }: DroppableSlotProps) {
   const { t } = useI18n();
   const { isOver, setNodeRef } = useDroppable({
     id,
@@ -79,7 +80,15 @@ function DroppableSlot({ id, playerId, teamId, players, teams, isCreator, onClea
           )}
         </>
       ) : (
-        <span className="text-xs text-muted-foreground">{t.tools.flexTournament.dropPlayerHere}</span>
+        <>
+          <span className="text-xs text-muted-foreground">{t.tools.flexTournament.dropPlayerHere}</span>
+          {/* Show faded delete button for second slot when empty - allows user to know they can remove slot 2 */}
+          {isSecondSlot && isCreator && (
+            <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0 opacity-30 hover:opacity-100" onClick={onClear}>
+              <X className="w-3 h-3" />
+            </Button>
+          )}
+        </>
       )}
     </div>
   );
@@ -241,7 +250,8 @@ export function MatchBlock({
             isCreator={isCreator}
             onClear={() => onClearSlot(match.slot_a_team_id ? 'a_team' : 'a1')}
           />
-          {isDoubles && !match.slot_a_team_id && (
+          {/* Always show slot a2 unless team-based match */}
+          {!match.slot_a_team_id && (
             <DroppableSlot
               id={`match-${match.id}-slot-a2`}
               playerId={match.slot_a2_player_id}
@@ -250,6 +260,7 @@ export function MatchBlock({
               teams={teams}
               isCreator={isCreator}
               onClear={() => onClearSlot('a2')}
+              isSecondSlot
             />
           )}
         </div>
@@ -293,7 +304,8 @@ export function MatchBlock({
             isCreator={isCreator}
             onClear={() => onClearSlot(match.slot_b_team_id ? 'b_team' : 'b1')}
           />
-          {isDoubles && !match.slot_b_team_id && (
+          {/* Always show slot b2 unless team-based match */}
+          {!match.slot_b_team_id && (
             <DroppableSlot
               id={`match-${match.id}-slot-b2`}
               playerId={match.slot_b2_player_id}
@@ -302,6 +314,7 @@ export function MatchBlock({
               teams={teams}
               isCreator={isCreator}
               onClear={() => onClearSlot('b2')}
+              isSecondSlot
             />
           )}
         </div>
