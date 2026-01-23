@@ -3,7 +3,7 @@ import { useI18n } from '@/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Trash2, X, GripVertical } from 'lucide-react';
+import { Users, Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import type { FlexTeam, FlexTeamMember, FlexPlayer } from '@/hooks/useFlexTournament';
@@ -55,11 +55,10 @@ export function TeamBlock({
         isOver && "ring-2 ring-primary border-primary bg-primary/5"
       )}
     >
-      <CardHeader className="pb-2">
+      <CardHeader className="py-2 px-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-1">
-            <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-            <Users className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             {isEditing ? (
               <Input
                 value={editName}
@@ -71,24 +70,24 @@ export function TeamBlock({
               />
             ) : (
               <CardTitle
-                className="text-sm cursor-pointer hover:text-primary"
+                className="text-sm cursor-pointer hover:text-primary truncate"
                 onClick={() => isCreator && setIsEditing(true)}
               >
                 {team.name}
               </CardTitle>
             )}
-            <span className="text-xs text-muted-foreground">({members.length})</span>
+            <span className="text-xs text-muted-foreground flex-shrink-0">({members.length})</span>
           </div>
           {isCreator && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
               <Trash2 className="w-3 h-3 text-destructive" />
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 px-3 pb-3">
         {members.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-3 border-2 border-dashed rounded-lg">
+          <p className="text-xs text-muted-foreground text-center py-2 border-2 border-dashed rounded-lg">
             {t.tools.flexTournament.dropPlayerHere}
           </p>
         ) : (
@@ -96,14 +95,14 @@ export function TeamBlock({
             {members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between px-2 py-1 bg-muted/50 rounded text-sm"
+                className="flex items-center justify-between px-2 py-1.5 bg-muted/50 rounded text-sm"
               >
-                <span>{getPlayerName(member.player_id)}</span>
+                <span className="truncate">{getPlayerName(member.player_id)}</span>
                 {isCreator && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5"
+                    className="h-5 w-5 flex-shrink-0"
                     onClick={() => onRemoveMember(member.id)}
                   >
                     <X className="w-3 h-3" />

@@ -1,4 +1,4 @@
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter, pointerWithin, rectIntersection } from '@dnd-kit/core';
 import { useState, useCallback } from 'react';
 import { useI18n } from '@/i18n';
 import { PlayerPool } from './PlayerPool';
@@ -10,6 +10,7 @@ import { DraggablePlayer } from './DraggablePlayer';
 import { useFlexTournament, type FlexTournamentData } from '@/hooks/useFlexTournament';
 import { useFlexStats } from '@/hooks/useFlexStats';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FlexWorkspaceProps {
   data: FlexTournamentData;
@@ -20,6 +21,7 @@ interface FlexWorkspaceProps {
 export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps) {
   const { t } = useI18n();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const {
     addPlayer,
     addTeam,
@@ -41,6 +43,29 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   const [activeName, setActiveName] = useState<string>('');
   const [activeType, setActiveType] = useState<'player' | 'team'>('player');
 
+  // Check if player already exists in a team
+  const isPlayerInTeam = (playerId: string, teamId: string) => {
+    return data.teamMembers.some(m => m.team_id === teamId && m.player_id === playerId);
+  };
+
+  // Check if player/team already exists in a group
+  const isItemInGroup = (itemType: 'player' | 'team', itemId: string, groupId: string) => {
+    return data.groupItems.some(gi => 
+      gi.group_id === groupId && 
+      ((itemType === 'player' && gi.player_id === itemId) || (itemType === 'team' && gi.team_id === itemId))
+    );
+  };
+
+  // Check if player already exists in a match
+  const isPlayerInMatch = (playerId: string, match: typeof data.matches[0]) => {
+    return [
+      match.slot_a1_player_id,
+      match.slot_a2_player_id,
+      match.slot_b1_player_id,
+      match.slot_b2_player_id
+    ].includes(playerId);
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     setActiveId(active.id as string);
@@ -61,6 +86,14 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     if (targetId.startsWith('team-drop-')) {
       const teamId = targetId.replace('team-drop-', '');
       if (sourceData.type === 'player') {
+        // Check for duplicate
+        if (isPlayerInTeam(sourceData.id, teamId)) {
+          toast({ 
+            title: "VĐV đã có trong đội này",
+            variant: "destructive" 
+          });
+          return;
+        }
         await addPlayerToTeam(teamId, sourceData.id);
         onRefresh();
       }
@@ -70,6 +103,14 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     // Handle drop on group
     if (targetId.startsWith('group-drop-')) {
       const groupId = targetId.replace('group-drop-', '');
+      // Check for duplicate
+      if (isItemInGroup(sourceData.type, sourceData.id, groupId)) {
+        toast({ 
+          title: "VĐV đã có trong bảng này",
+          variant: "destructive" 
+        });
+        return;
+      }
       await addItemToGroup(groupId, sourceData.type, sourceData.id, data.groupItems.length);
       onRefresh();
       return;
@@ -81,9 +122,21 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       const matchId = parts[1];
       const slot = parts[3]; // a1, a2, b1, b2
 
+      const match = data.matches.find(m => m.id === matchId);
+      if (!match) return;
+
       const updates: any = {};
       
       if (sourceData.type === 'player') {
+        // Check for duplicate player in same match
+        if (isPlayerInMatch(sourceData.id, match)) {
+          toast({ 
+            title: "VĐV đã có trong trận này",
+            variant: "destructive" 
+          });
+          return;
+        }
+
         if (slot === 'a1') updates.slot_a1_player_id = sourceData.id;
         else if (slot === 'a2') updates.slot_a2_player_id = sourceData.id;
         else if (slot === 'b1') updates.slot_b1_player_id = sourceData.id;
@@ -101,11 +154,25 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     }
   };
 
+  // Check for duplicate player name (case-insensitive)
+  const isDuplicatePlayerName = (name: string) => {
+    const normalizedName = name.trim().toLowerCase();
+    return data.players.some(p => p.name.toLowerCase() === normalizedName);
+  };
+
   // Action handlers
   const handleAddPlayer = useCallback(async (name: string) => {
+    // Validate duplicate
+    if (isDuplicatePlayerName(name)) {
+      toast({ 
+        title: "Tên VĐV đã tồn tại",
+        variant: "destructive" 
+      });
+      return;
+    }
     await addPlayer(data.tournament.id, name, data.players.length);
     onRefresh();
-  }, [data.tournament.id, data.players.length, addPlayer, onRefresh]);
+  }, [data.tournament.id, data.players, addPlayer, onRefresh, toast, t]);
 
   const handleAddTeam = useCallback(async (name: string) => {
     await addTeam(data.tournament.id, name, data.teams.length);
@@ -210,15 +277,134 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     type: 'team' as const,
   }));
 
+  const hasContent = data.teams.length > 0 || data.groups.length > 0 || data.matches.length > 0;
+
+  // Mobile layout: vertical stack
+  if (isMobile) {
+    return (
+      <DndContext
+        collisionDetection={pointerWithin}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="space-y-4">
+          {/* Player Pool - collapsible on mobile */}
+          <PlayerPool
+            players={data.players}
+            onAddPlayer={handleAddPlayer}
+            isCreator={isCreator}
+          />
+
+          {/* Action buttons */}
+          {isCreator && (
+            <div className="grid grid-cols-3 gap-2">
+              <ActionButtons
+                onAddTeam={handleAddTeam}
+                onAddGroup={handleAddGroup}
+                onAddMatch={handleAddMatch}
+                compact
+              />
+            </div>
+          )}
+
+          {/* Teams */}
+          {data.teams.length > 0 && (
+            <div className="space-y-3">
+              {data.teams.map(team => (
+                <TeamBlock
+                  key={team.id}
+                  team={team}
+                  members={data.teamMembers.filter(m => m.team_id === team.id)}
+                  players={data.players}
+                  isCreator={isCreator}
+                  onUpdateName={(name) => handleUpdateTeamName(team.id, name)}
+                  onDelete={() => handleDeleteTeam(team.id)}
+                  onRemoveMember={(memberId) => {
+                    removePlayerFromTeam(memberId);
+                    onRefresh();
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Groups */}
+          {data.groups.length > 0 && (
+            <div className="space-y-3">
+              {data.groups.map(group => (
+                <GroupBlock
+                  key={group.id}
+                  group={group}
+                  items={data.groupItems.filter(gi => gi.group_id === group.id)}
+                  players={data.players}
+                  teams={data.teams}
+                  playerStats={data.playerStats.filter(ps => ps.group_id === group.id)}
+                  isCreator={isCreator}
+                  onUpdateName={(name) => handleUpdateGroupName(group.id, name)}
+                  onDelete={() => handleDeleteGroup(group.id)}
+                  onRemoveItem={(itemId) => {
+                    removeItemFromGroup(itemId);
+                    onRefresh();
+                  }}
+                  onGenerateRR={() => handleGenerateRR(group.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Matches */}
+          {data.matches.length > 0 && (
+            <div className="grid grid-cols-1 gap-3">
+              {data.matches.map(match => (
+                <MatchBlock
+                  key={match.id}
+                  match={match}
+                  players={data.players}
+                  teams={data.teams}
+                  isCreator={isCreator}
+                  onUpdateName={(name) => handleUpdateMatchName(match.id, name)}
+                  onDelete={() => handleDeleteMatch(match.id)}
+                  onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
+                  onClearSlot={(slot) => handleClearSlot(match.id, slot)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!hasContent && (
+            <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
+              <p className="text-muted-foreground text-center text-sm">
+                {isCreator ? t.tools.flexTournament.subtitle : t.tools.flexTournament.noMatches}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Drag overlay */}
+        <DragOverlay>
+          {activeId ? (
+            <DraggablePlayer
+              id={activeId}
+              name={activeName}
+              type={activeType}
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    );
+  }
+
+  // Desktop layout: sidebar + main
   return (
     <DndContext
-      collisionDetection={closestCenter}
+      collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 min-h-[calc(100vh-200px)]">
+      <div className="flex gap-4">
         {/* Left sidebar */}
-        <div className="w-64 flex-shrink-0 space-y-4">
+        <div className="w-56 flex-shrink-0 space-y-4">
           <PlayerPool
             players={data.players}
             onAddPlayer={handleAddPlayer}
@@ -228,8 +414,8 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
           {/* Team chips for dragging */}
           {draggableTeams.length > 0 && (
             <div className="space-y-2">
-              <div className="text-sm font-medium text-muted-foreground">
-                {t.tools.flexTournament.noTeams.replace('Chưa có', '')}
+              <div className="text-xs font-medium text-muted-foreground px-1">
+                Teams
               </div>
               {draggableTeams.map(team => (
                 <DraggablePlayer
@@ -256,7 +442,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
         <div className="flex-1 space-y-4">
           {/* Teams row */}
           {data.teams.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {data.teams.map(team => (
                 <TeamBlock
                   key={team.id}
@@ -277,7 +463,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
           {/* Groups row */}
           {data.groups.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
               {data.groups.map(group => (
                 <GroupBlock
                   key={group.id}
@@ -301,7 +487,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
           {/* Matches row */}
           {data.matches.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {data.matches.map(match => (
                 <MatchBlock
                   key={match.id}
@@ -319,8 +505,8 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
           )}
 
           {/* Empty state */}
-          {data.teams.length === 0 && data.groups.length === 0 && data.matches.length === 0 && (
-            <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg">
+          {!hasContent && (
+            <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
               <p className="text-muted-foreground text-center">
                 {isCreator ? (
                   <>

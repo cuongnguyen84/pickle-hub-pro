@@ -1,7 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
-import { User } from 'lucide-react';
+import { User, Users } from 'lucide-react';
 
 interface DraggablePlayerProps {
   id: string;
@@ -28,14 +28,18 @@ export function DraggablePlayer({ id, name, type, disabled }: DraggablePlayerPro
       {...listeners}
       {...attributes}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-lg border bg-card",
-        "cursor-grab active:cursor-grabbing",
+        "flex items-center gap-2 px-2.5 py-1.5 rounded-lg border bg-card",
+        "cursor-grab active:cursor-grabbing touch-manipulation",
         "hover:border-primary/50 hover:bg-accent/50 transition-colors",
-        isDragging && "opacity-50 border-primary shadow-lg",
+        isDragging && "opacity-50 border-primary shadow-lg z-50",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
-      <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+      {type === 'team' ? (
+        <Users className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+      ) : (
+        <User className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+      )}
       <span className="text-sm font-medium truncate">{name}</span>
     </div>
   );

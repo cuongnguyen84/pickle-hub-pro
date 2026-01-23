@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Grid3X3, Trash2, X, GripVertical, RefreshCw } from 'lucide-react';
+import { Grid3X3, Trash2, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats } from '@/hooks/useFlexTournament';
@@ -81,11 +81,10 @@ export function GroupBlock({
         isOver && "ring-2 ring-primary border-primary bg-primary/5"
       )}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-1">
-            <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-            <Grid3X3 className="w-4 h-4 text-muted-foreground" />
+      <CardHeader className="py-2 px-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Grid3X3 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             {isEditing ? (
               <Input
                 value={editName}
@@ -97,19 +96,19 @@ export function GroupBlock({
               />
             ) : (
               <CardTitle
-                className="text-sm cursor-pointer hover:text-primary"
+                className="text-sm cursor-pointer hover:text-primary truncate"
                 onClick={() => isCreator && setIsEditing(true)}
               >
                 {group.name}
               </CardTitle>
             )}
-            <span className="text-xs text-muted-foreground">({items.length})</span>
+            <span className="text-xs text-muted-foreground flex-shrink-0">({items.length})</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {isCreator && items.length >= 2 && (
-              <Button variant="ghost" size="sm" onClick={onGenerateRR} className="h-7 text-xs">
+              <Button variant="ghost" size="sm" onClick={onGenerateRR} className="h-7 text-xs px-2">
                 <RefreshCw className="w-3 h-3 mr-1" />
-                {t.tools.flexTournament.generateRR}
+                RR
               </Button>
             )}
             {isCreator && (
@@ -120,52 +119,54 @@ export function GroupBlock({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 px-3 pb-3">
         {items.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-3 border-2 border-dashed rounded-lg">
+          <p className="text-xs text-muted-foreground text-center py-2 border-2 border-dashed rounded-lg">
             {t.tools.flexTournament.dropPlayerHere}
           </p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-8">{t.tools.flexTournament.stats.rank}</TableHead>
-                <TableHead>{t.tools.flexTournament.stats.name}</TableHead>
-                <TableHead className="text-center w-12">{t.tools.flexTournament.stats.wins}</TableHead>
-                <TableHead className="text-center w-12">{t.tools.flexTournament.stats.losses}</TableHead>
-                <TableHead className="text-center w-14">{t.tools.flexTournament.stats.pointDiff}</TableHead>
-                {isCreator && <TableHead className="w-8"></TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedItems.map((item, index) => {
-                const stats = getItemStats(item);
-                return (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell>{getItemName(item)}</TableCell>
-                    <TableCell className="text-center">{stats.wins}</TableCell>
-                    <TableCell className="text-center">{stats.losses}</TableCell>
-                    <TableCell className="text-center">
-                      {stats.point_diff > 0 ? `+${stats.point_diff}` : stats.point_diff}
-                    </TableCell>
-                    {isCreator && (
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => onRemoveItem(item.id)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
+          <div className="overflow-x-auto -mx-1">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-6 px-1 text-xs">#</TableHead>
+                  <TableHead className="px-1 text-xs">{t.tools.flexTournament.stats.name}</TableHead>
+                  <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.wins}</TableHead>
+                  <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.losses}</TableHead>
+                  <TableHead className="text-center w-10 px-1 text-xs">{t.tools.flexTournament.stats.pointDiff}</TableHead>
+                  {isCreator && <TableHead className="w-6 px-1"></TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedItems.map((item, index) => {
+                  const stats = getItemStats(item);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium px-1 py-1.5 text-xs">{index + 1}</TableCell>
+                      <TableCell className="px-1 py-1.5 text-xs truncate max-w-[120px]">{getItemName(item)}</TableCell>
+                      <TableCell className="text-center px-1 py-1.5 text-xs">{stats.wins}</TableCell>
+                      <TableCell className="text-center px-1 py-1.5 text-xs">{stats.losses}</TableCell>
+                      <TableCell className="text-center px-1 py-1.5 text-xs">
+                        {stats.point_diff > 0 ? `+${stats.point_diff}` : stats.point_diff}
                       </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      {isCreator && (
+                        <TableCell className="px-1 py-1.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={() => onRemoveItem(item.id)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

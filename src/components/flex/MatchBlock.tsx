@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Trash2, X, GripVertical, User } from 'lucide-react';
+import { Swords, Trash2, X, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import type { FlexMatch, FlexPlayer, FlexTeam } from '@/hooks/useFlexTournament';
@@ -22,20 +22,21 @@ interface MatchBlockProps {
 
 interface DroppableSlotProps {
   id: string;
-  label: string;
   playerId: string | null;
   teamId: string | null;
   players: FlexPlayer[];
   teams: FlexTeam[];
   isCreator: boolean;
   onClear: () => void;
+  disabled?: boolean;
 }
 
-function DroppableSlot({ id, label, playerId, teamId, players, teams, isCreator, onClear }: DroppableSlotProps) {
+function DroppableSlot({ id, playerId, teamId, players, teams, isCreator, onClear, disabled }: DroppableSlotProps) {
   const { t } = useI18n();
   const { isOver, setNodeRef } = useDroppable({
     id,
     data: { type: 'match-slot', slotId: id },
+    disabled,
   });
 
   const getName = () => {
@@ -54,19 +55,20 @@ function DroppableSlot({ id, label, playerId, teamId, players, teams, isCreator,
     <div
       ref={setNodeRef}
       className={cn(
-        "flex items-center justify-between px-2 py-1.5 rounded border-2 border-dashed min-h-[36px]",
-        isOver && "border-primary bg-primary/10",
-        name && "border-solid bg-muted/50"
+        "flex items-center justify-between px-2 py-2 rounded border-2 border-dashed min-h-[40px] transition-all",
+        isOver && !disabled && "border-primary bg-primary/10 scale-[1.02]",
+        name && "border-solid bg-muted/50 border-muted-foreground/20",
+        disabled && "opacity-50"
       )}
     >
       {name ? (
         <>
-          <div className="flex items-center gap-1.5">
-            <User className="w-3 h-3 text-muted-foreground" />
-            <span className="text-sm">{name}</span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+            <span className="text-sm truncate">{name}</span>
           </div>
           {isCreator && (
-            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onClear}>
+            <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={onClear}>
               <X className="w-3 h-3" />
             </Button>
           )}
@@ -113,11 +115,10 @@ export function MatchBlock({
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-1">
-            <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-            <Swords className="w-4 h-4 text-muted-foreground" />
+      <CardHeader className="py-2 px-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <Swords className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             {isEditing ? (
               <Input
                 value={editName}
@@ -129,30 +130,29 @@ export function MatchBlock({
               />
             ) : (
               <CardTitle
-                className="text-sm cursor-pointer hover:text-primary"
+                className="text-sm cursor-pointer hover:text-primary truncate"
                 onClick={() => isCreator && setIsEditing(true)}
               >
                 {match.name}
               </CardTitle>
             )}
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs flex-shrink-0">
               {isDoubles ? t.tools.flexTournament.matchType.doubles : t.tools.flexTournament.matchType.singles}
             </Badge>
           </div>
           {isCreator && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
               <Trash2 className="w-3 h-3 text-destructive" />
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-0 space-y-3">
+      <CardContent className="pt-0 px-3 pb-3 space-y-2">
         {/* Side A */}
         <div className="space-y-1">
           <div className="text-xs font-medium text-muted-foreground">{t.tools.flexTournament.slotA}</div>
           <DroppableSlot
             id={`match-${match.id}-slot-a1`}
-            label="A1"
             playerId={match.slot_a1_player_id}
             teamId={match.slot_a_team_id}
             players={players}
@@ -163,7 +163,6 @@ export function MatchBlock({
           {isDoubles && !match.slot_a_team_id && (
             <DroppableSlot
               id={`match-${match.id}-slot-a2`}
-              label="A2"
               playerId={match.slot_a2_player_id}
               teamId={null}
               players={players}
@@ -175,13 +174,13 @@ export function MatchBlock({
         </div>
 
         {/* VS + Score */}
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 py-1">
           <Input
             type="number"
             value={scoreA}
             onChange={(e) => setScoreA(e.target.value)}
             onBlur={handleScoreBlur}
-            className="w-14 text-center"
+            className="w-14 text-center h-9 text-base"
             disabled={!isCreator}
           />
           <span className="text-sm font-medium text-muted-foreground">{t.tools.flexTournament.vs}</span>
@@ -190,7 +189,7 @@ export function MatchBlock({
             value={scoreB}
             onChange={(e) => setScoreB(e.target.value)}
             onBlur={handleScoreBlur}
-            className="w-14 text-center"
+            className="w-14 text-center h-9 text-base"
             disabled={!isCreator}
           />
         </div>
@@ -200,7 +199,6 @@ export function MatchBlock({
           <div className="text-xs font-medium text-muted-foreground">{t.tools.flexTournament.slotB}</div>
           <DroppableSlot
             id={`match-${match.id}-slot-b1`}
-            label="B1"
             playerId={match.slot_b1_player_id}
             teamId={match.slot_b_team_id}
             players={players}
@@ -211,7 +209,6 @@ export function MatchBlock({
           {isDoubles && !match.slot_b_team_id && (
             <DroppableSlot
               id={`match-${match.id}-slot-b2`}
-              label="B2"
               playerId={match.slot_b2_player_id}
               teamId={null}
               players={players}
@@ -224,7 +221,7 @@ export function MatchBlock({
 
         {/* Winner indicator */}
         {match.winner_side && (
-          <div className="text-center">
+          <div className="text-center pt-1">
             <Badge variant="default" className="text-xs">
               {match.winner_side === 'a' ? t.tools.flexTournament.slotA : t.tools.flexTournament.slotB} wins
             </Badge>
