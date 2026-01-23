@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertCircle, Check, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 interface PlayerInput {
   id: string;
@@ -26,6 +27,8 @@ export function ManualGroupAssignment({
   onComplete,
   onCancel,
 }: ManualGroupAssignmentProps) {
+  const { t } = useI18n();
+  
   // Map from group index (0-based) to list of players
   const [groupAssignments, setGroupAssignments] = useState<Map<number, PlayerInput[]>>(
     () => new Map(Array.from({ length: groupCount }, (_, i) => [i, []]))
@@ -105,7 +108,7 @@ export function ManualGroupAssignment({
     const maxSize = Math.max(...sizes);
     const minSize = Math.min(...sizes);
     if (maxSize - minSize > 1) {
-      result.push('Các bảng không cân bằng số lượng VĐV');
+      result.push(t.quickTable.manualAssignment.unbalancedGroups);
     }
 
     // Check for same team in group
@@ -118,7 +121,7 @@ export function ManualGroupAssignment({
       });
       teamCounts.forEach((count, team) => {
         if (count > 1) {
-          result.push(`Bảng ${groupNames[groupIndex]}: ${count} VĐV cùng team "${team}"`);
+          result.push(`${t.quickTable.manualAssignment.group} ${groupNames[groupIndex]}: ${count} ${t.quickTable.manualAssignment.sameTeamWarning} "${team}"`);
         }
       });
     });
@@ -127,12 +130,12 @@ export function ManualGroupAssignment({
     groupAssignments.forEach((groupPlayers, groupIndex) => {
       const topSeeds = groupPlayers.filter(p => p.seed && parseInt(p.seed) <= 2);
       if (topSeeds.length > 1) {
-        result.push(`Bảng ${groupNames[groupIndex]}: ${topSeeds.length} hạt giống cao (seed 1-2)`);
+        result.push(`${t.quickTable.manualAssignment.group} ${groupNames[groupIndex]}: ${topSeeds.length} ${t.quickTable.manualAssignment.topSeedsWarning}`);
       }
     });
 
     return result;
-  }, [groupAssignments, groupNames]);
+  }, [groupAssignments, groupNames, t]);
 
   // Check if all players are assigned
   const allAssigned = unassignedPlayers.length === 0;
@@ -152,11 +155,11 @@ export function ManualGroupAssignment({
         <div className="flex items-start gap-2">
           <Users className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
           <div>
-            <p className="font-medium text-primary">Hướng dẫn chia bảng thủ công</p>
+            <p className="font-medium text-primary">{t.quickTable.manualAssignment.guide}</p>
             <ol className="text-foreground-secondary mt-1 space-y-0.5 list-decimal list-inside">
-              <li>Click chọn VĐV từ danh sách bên trái</li>
-              <li>Click vào bảng muốn đưa VĐV vào</li>
-              <li>Click vào VĐV đã chia để xóa khỏi bảng</li>
+              <li>{t.quickTable.manualAssignment.step1}</li>
+              <li>{t.quickTable.manualAssignment.step2}</li>
+              <li>{t.quickTable.manualAssignment.step3}</li>
             </ol>
           </div>
         </div>
@@ -168,7 +171,7 @@ export function ManualGroupAssignment({
           <CardHeader className="py-3 px-4">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <User className="w-4 h-4" />
-              Chưa phân bảng ({unassignedPlayers.length})
+              {t.quickTable.manualAssignment.unassigned} ({unassignedPlayers.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4 pt-0">
@@ -176,7 +179,7 @@ export function ManualGroupAssignment({
               <div className="space-y-1.5">
                 {unassignedPlayers.length === 0 ? (
                   <div className="text-sm text-muted-foreground text-center py-4">
-                    Tất cả VĐV đã được phân bảng
+                    {t.quickTable.manualAssignment.allAssigned}
                   </div>
                 ) : (
                   unassignedPlayers.map(player => (
@@ -239,7 +242,7 @@ export function ManualGroupAssignment({
                 <CardHeader className="py-2 px-3">
                   <CardTitle className="text-sm font-medium flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      Bảng {groupNames[groupIndex]}
+                      {t.quickTable.manualAssignment.group} {groupNames[groupIndex]}
                       <Badge variant="outline" className="text-xs">
                         {groupPlayers.length}/{minPerGroup}-{maxPerGroup}
                       </Badge>
@@ -252,7 +255,7 @@ export function ManualGroupAssignment({
                 <CardContent className="px-3 pb-3 pt-0">
                   {groupPlayers.length === 0 ? (
                     <div className="text-xs text-muted-foreground text-center py-2 border border-dashed rounded">
-                      {selectedPlayer ? 'Click để thêm VĐV' : 'Chưa có VĐV'}
+                      {selectedPlayer ? t.quickTable.manualAssignment.clickToAdd : t.quickTable.manualAssignment.noPlayers}
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
@@ -286,7 +289,7 @@ export function ManualGroupAssignment({
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 mt-0.5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
             <div>
-              <p className="font-medium text-yellow-700 dark:text-yellow-300">Cảnh báo</p>
+              <p className="font-medium text-yellow-700 dark:text-yellow-300">{t.quickTable.manualAssignment.warning}</p>
               <ul className="text-yellow-600 dark:text-yellow-400 mt-1 space-y-0.5">
                 {warnings.map((w, i) => (
                   <li key={i}>• {w}</li>
@@ -300,17 +303,17 @@ export function ManualGroupAssignment({
       {/* Actions */}
       <div className="flex items-center justify-between pt-2 border-t border-border-subtle">
         <Button variant="outline" onClick={onCancel}>
-          Quay lại
+          {t.quickTable.back}
         </Button>
         <Button
           onClick={handleConfirm}
           disabled={!allAssigned || hasEmptyGroups}
         >
           {!allAssigned
-            ? `Còn ${unassignedPlayers.length} VĐV chưa phân bảng`
+            ? t.quickTable.manualAssignment.remainingPlayers.replace('{count}', String(unassignedPlayers.length))
             : hasEmptyGroups
-            ? 'Có bảng chưa có VĐV'
-            : 'Xác nhận chia bảng'}
+            ? t.quickTable.manualAssignment.emptyGroup
+            : t.quickTable.manualAssignment.confirm}
         </Button>
       </div>
     </div>
