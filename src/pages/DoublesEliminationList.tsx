@@ -71,20 +71,19 @@ export default function DoublesEliminationList() {
       />
       
       <div className="container max-w-4xl mx-auto py-6 px-4">
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold whitespace-nowrap">{t.doublesElimination.title}</h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-1">{t.doublesElimination.title}</h1>
+          <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               {t.doublesElimination.description}
             </p>
+            {user && (
+              <Button onClick={() => navigate('/tools/doubles-elimination/new')} className="shrink-0">
+                <Plus className="w-4 h-4 mr-2" />
+                {t.doublesElimination.createNew}
+              </Button>
+            )}
           </div>
-          
-          {user && (
-            <Button onClick={() => navigate('/tools/doubles-elimination/new')}>
-              <Plus className="w-4 h-4 mr-2" />
-              {t.doublesElimination.createNew}
-            </Button>
-          )}
         </div>
 
         {!user ? (
