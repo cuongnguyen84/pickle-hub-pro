@@ -156,12 +156,12 @@ export function StandingsTable({ tournamentId }: StandingsTableProps) {
               <TableRow>
                 <TableHead className="w-12 text-center">#</TableHead>
                 <TableHead>Đội</TableHead>
-                <TableHead className="text-center w-12">Đ</TableHead>
-                <TableHead className="text-center w-12">T</TableHead>
-                <TableHead className="text-center w-12">B</TableHead>
-                <TableHead className="text-center w-20">Ván</TableHead>
-                <TableHead className="text-center w-24">Điểm</TableHead>
-                <TableHead className="text-center w-16">+/-</TableHead>
+                <TableHead className="text-center w-12" title="Số trận đã đấu">Tr</TableHead>
+                <TableHead className="text-center w-12" title="Số trận thắng">T</TableHead>
+                <TableHead className="text-center w-12" title="Số trận thua">B</TableHead>
+                <TableHead className="text-center w-12" title="Điểm (Thắng = 1đ)">Đ</TableHead>
+                <TableHead className="text-center w-20" title="Hiệu số ván thắng - thua">Ván</TableHead>
+                <TableHead className="text-center w-16" title="Hiệu số điểm">+/-</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -185,11 +185,11 @@ export function StandingsTable({ tournamentId }: StandingsTableProps) {
                   <TableCell className="text-center text-red-500">
                     {standing.lost}
                   </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {standing.gamesWon} - {standing.gamesLost}
+                  <TableCell className="text-center font-bold text-primary">
+                    {standing.won}
                   </TableCell>
                   <TableCell className="text-center text-sm">
-                    {standing.pointsFor} - {standing.pointsAgainst}
+                    {standing.gamesWon} - {standing.gamesLost}
                   </TableCell>
                   <TableCell className={`text-center font-medium ${standing.pointsDiff > 0 ? 'text-green-600' : standing.pointsDiff < 0 ? 'text-red-500' : ''}`}>
                     {standing.pointsDiff > 0 ? '+' : ''}{standing.pointsDiff}
@@ -201,12 +201,12 @@ export function StandingsTable({ tournamentId }: StandingsTableProps) {
         </div>
         
         {/* Legend */}
-        <div className="p-4 border-t text-xs text-muted-foreground flex flex-wrap gap-4">
-          <span><strong>Đ</strong> = Đã đấu</span>
+        <div className="p-4 border-t text-xs text-muted-foreground flex flex-wrap gap-3">
+          <span><strong>Tr</strong> = Số trận</span>
           <span><strong>T</strong> = Thắng</span>
           <span><strong>B</strong> = Thua</span>
-          <span><strong>Ván</strong> = Thắng - Thua</span>
-          <span><strong>+/-</strong> = Hiệu số điểm</span>
+          <span><strong>Đ</strong> = Điểm (Thắng = 1đ)</span>
+          <span><strong>+/-</strong> = Hiệu số</span>
         </div>
       </CardContent>
     </Card>

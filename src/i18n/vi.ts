@@ -832,6 +832,111 @@ export interface Translations {
       reset: string;
       confirmReset: string;
     };
+    setup: {
+      title: string;
+      subtitle: string;
+      stepBasicInfo: string;
+      stepGameTemplates: string;
+      stepDreambreaker: string;
+      stepFormat: string;
+      tournamentName: string;
+      tournamentNamePlaceholder: string;
+      playersPerTeam: string;
+      teamCount: string;
+      requireRegistration: string;
+      requireRegistrationDesc: string;
+      requireMinGames: string;
+      requireMinGamesDesc: string;
+      formatRoundRobin: string;
+      formatRoundRobinDesc: string;
+      formatSingleElimination: string;
+      formatSingleEliminationDesc: string;
+      formatRrPlayoff: string;
+      formatRrPlayoffDesc: string;
+      thirdPlaceMatch: string;
+      thirdPlaceMatchDesc: string;
+      playoffTeams: string;
+      playoffTeamsDesc: string;
+      creating: string;
+      createBtn: string;
+      invalidTeamCount: string;
+      loginRequired: string;
+      loginRequiredDesc: string;
+    };
+    view: {
+      overview: string;
+      teams: string;
+      matches: string;
+      standings: string;
+      settings: string;
+      copyLink: string;
+      linkCopied: string;
+      yourTeam: string;
+      youAreCaptain: string;
+      members: string;
+      rosterFull: string;
+      rosterIncomplete: string;
+      manageTeam: string;
+      registerPrompt: string;
+      createTeam: string;
+      inviteTeam: string;
+      generateBracket: string;
+      generateMatches: string;
+      createGroups: string;
+      startTournament: string;
+      createPlayoff: string;
+      approveAllFirst: string;
+      needMinTeams: string;
+      matchesCreated: string;
+      roundRobinComplete: string;
+    };
+    roster: {
+      title: string;
+      countLabel: string;
+      inviteCode: string;
+      addMember: string;
+      addFromPrevious: string;
+      memberName: string;
+      gender: string;
+      male: string;
+      female: string;
+      skillLevel: string;
+      optional: string;
+      removeMember: string;
+      removeMemberDesc: string;
+      rosterFull: string;
+      captain: string;
+      noMembers: string;
+      addedSuccess: string;
+    };
+    standings: {
+      rank: string;
+      team: string;
+      played: string;
+      won: string;
+      lost: string;
+      points: string;
+      games: string;
+      diff: string;
+      legend: {
+        played: string;
+        won: string;
+        lost: string;
+        points: string;
+        diff: string;
+      };
+    };
+    dialog: {
+      generateMatches: string;
+      generateMatchesDesc: string;
+      teamsCount: string;
+      matchesCount: string;
+      roundsCount: string;
+      gamesPerMatch: string;
+      minTeamsRequired: string;
+      incompleteRosters: string;
+      confirm: string;
+    };
   };
   // Doubles Elimination
   doublesElimination: {
@@ -1745,6 +1850,111 @@ export const vi: Translations = {
       matchComplete: "Trận đấu đã hoàn thành",
       reset: "Đặt lại",
       confirmReset: "Xác nhận đặt lại điểm?",
+    },
+    setup: {
+      title: "Tạo giải đấu đồng đội",
+      subtitle: "Kiểu MLP - Major League Pickleball",
+      stepBasicInfo: "Thông tin cơ bản",
+      stepGameTemplates: "Game Templates",
+      stepDreambreaker: "DreamBreaker",
+      stepFormat: "Thể thức",
+      tournamentName: "Tên giải đấu",
+      tournamentNamePlaceholder: "VD: MLP Mùa Xuân 2026",
+      playersPerTeam: "Số VĐV mỗi đội",
+      teamCount: "Số đội",
+      requireRegistration: "Yêu cầu đăng ký trước",
+      requireRegistrationDesc: "Đội trưởng tạo đội và mời thành viên",
+      requireMinGames: "Mỗi VĐV ít nhất 1 game",
+      requireMinGamesDesc: "Bắt buộc lineup sử dụng tất cả thành viên",
+      formatRoundRobin: "Vòng tròn (Round Robin)",
+      formatRoundRobinDesc: "Tất cả các đội đấu với nhau",
+      formatSingleElimination: "Loại trực tiếp (Single Elimination)",
+      formatSingleEliminationDesc: "Thua 1 trận là bị loại",
+      formatRrPlayoff: "Vòng bảng + Playoff",
+      formatRrPlayoffDesc: "Vòng tròn theo bảng, sau đó playoff",
+      thirdPlaceMatch: "Có trận tranh hạng 3",
+      thirdPlaceMatchDesc: "Trận đấu giữa 2 đội thua bán kết",
+      playoffTeams: "Số đội vào Playoff",
+      playoffTeamsDesc: "Số đội từ vòng bảng vào playoff",
+      creating: "Đang tạo...",
+      createBtn: "Tạo giải đấu",
+      invalidTeamCount: "Số đội phải là 4, 8, 16 hoặc 32 cho thể thức loại trực tiếp",
+      loginRequired: "Đăng nhập để tiếp tục",
+      loginRequiredDesc: "Bạn cần đăng nhập để tạo giải đấu đồng đội",
+    },
+    view: {
+      overview: "Tổng quan",
+      teams: "Đội",
+      matches: "Trận đấu",
+      standings: "Xếp hạng",
+      settings: "Cài đặt",
+      copyLink: "Sao chép link",
+      linkCopied: "Đã sao chép link!",
+      yourTeam: "Đội của bạn",
+      youAreCaptain: "Bạn là đội trưởng của đội này",
+      members: "Thành viên",
+      rosterFull: "Đủ đội",
+      rosterIncomplete: "Chưa đủ",
+      manageTeam: "Quản lý đội",
+      registerPrompt: "Đăng ký tham gia giải đấu",
+      createTeam: "Tạo đội",
+      inviteTeam: "Mời đội",
+      generateBracket: "Sinh Bracket",
+      generateMatches: "Tạo lịch thi đấu",
+      createGroups: "Chia bảng",
+      startTournament: "Bắt đầu giải đấu",
+      createPlayoff: "Tạo vòng Playoff",
+      approveAllFirst: "Cần duyệt tất cả đội trước khi chia bảng",
+      needMinTeams: "Cần ít nhất {count} đội",
+      matchesCreated: "{count} trận đã tạo",
+      roundRobinComplete: "Vòng tròn đã hoàn thành",
+    },
+    roster: {
+      title: "Danh sách thành viên",
+      countLabel: "{count}/{max} VĐV",
+      inviteCode: "Mã mời",
+      addMember: "Thêm thành viên",
+      addFromPrevious: "Chọn từ giải trước",
+      memberName: "Tên thành viên",
+      gender: "Giới tính",
+      male: "Nam",
+      female: "Nữ",
+      skillLevel: "Trình độ",
+      optional: "Tùy chọn",
+      removeMember: "Xóa thành viên?",
+      removeMemberDesc: "Bạn có chắc muốn xóa {name} khỏi đội?",
+      rosterFull: "Đội đã đủ số lượng thành viên",
+      captain: "Đội trưởng",
+      noMembers: "Chưa có thành viên nào",
+      addedSuccess: "Đã thêm {count} thành viên",
+    },
+    standings: {
+      rank: "#",
+      team: "Đội",
+      played: "Tr",
+      won: "T",
+      lost: "B",
+      points: "Đ",
+      games: "Ván",
+      diff: "+/-",
+      legend: {
+        played: "Số trận",
+        won: "Thắng",
+        lost: "Thua",
+        points: "Điểm (Thắng = 1đ)",
+        diff: "Hiệu số",
+      },
+    },
+    dialog: {
+      generateMatches: "Tạo lịch thi đấu?",
+      generateMatchesDesc: "Hệ thống sẽ tự động tạo lịch thi đấu vòng tròn cho các đội đã được duyệt.",
+      teamsCount: "{count} đội",
+      matchesCount: "{count} trận",
+      roundsCount: "{count} vòng",
+      gamesPerMatch: "{count} ván/trận",
+      minTeamsRequired: "Cần ít nhất 2 đội đã được duyệt để tạo lịch thi đấu",
+      incompleteRosters: "Không thể tạo lịch - Có đội chưa đủ người",
+      confirm: "Xác nhận",
     },
   },
   // Doubles Elimination translations

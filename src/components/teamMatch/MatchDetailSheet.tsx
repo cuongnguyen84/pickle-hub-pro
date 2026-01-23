@@ -28,9 +28,9 @@ interface MatchDetailSheetProps {
 const GAME_TYPE_LABELS: Record<string, string> = {
   WD: 'Đôi Nữ',
   MD: 'Đôi Nam',
-  MX: 'Đôi Nam Nữ',
-  WS: 'Đơn Nữ',
-  MS: 'Đơn Nam',
+  MX: 'Nam Nữ',
+  WS: 'Đơn',
+  MS: 'Đơn',
 };
 
 export function MatchDetailSheet({ 

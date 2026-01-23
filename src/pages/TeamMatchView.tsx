@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid, Mail } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
@@ -378,43 +379,44 @@ export default function TeamMatchView() {
   return (
     <MainLayout>
       <div className="container max-w-4xl py-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/tools/team-match')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{tournament.name}</h1>
-              <Badge variant="outline" className={STATUS_COLORS[tournament.status]}>
-                {STATUS_LABELS[tournament.status]}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: vi })}
-              </span>
-              <span className="flex items-center gap-1">
-                <Users className="h-4 w-4" />
-                {tournament.team_count} đội × {tournament.team_roster_size} người
-              </span>
-              <span className="flex items-center gap-1">
-                <Trophy className="h-4 w-4" />
-                {FORMAT_LABELS[tournament.format]}
-              </span>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={handleCopyLink} title="Sao chép link">
-              <Copy className="h-4 w-4" />
+        {/* Sticky Header with Settings */}
+        <div className="sticky top-14 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 py-3 border-b md:relative md:top-0 md:border-b-0 md:py-0 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none">
+          <div className="flex items-start gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/tools/team-match')} className="shrink-0">
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-            {isOwner && (
-              <Button variant="outline" size="sm" onClick={() => setShowSettingsDialog(true)}>
-                <Settings className="h-4 w-4 mr-2" />
-                Cài đặt
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl md:text-2xl font-bold truncate">{tournament.name}</h1>
+                <Badge variant="outline" className={cn("shrink-0", STATUS_COLORS[tournament.status])}>
+                  {STATUS_LABELS[tournament.status]}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-3 mt-1 text-xs md:text-sm text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: vi })}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  {tournament.team_count} đội × {tournament.team_roster_size} VĐV
+                </span>
+                <span className="hidden sm:flex items-center gap-1">
+                  <Trophy className="h-3.5 w-3.5" />
+                  {FORMAT_LABELS[tournament.format]}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button variant="outline" size="icon" onClick={handleCopyLink} title="Sao chép link">
+                <Copy className="h-4 w-4" />
               </Button>
-            )}
+              {isOwner && (
+                <Button variant="outline" size="icon" onClick={() => setShowSettingsDialog(true)} title="Cài đặt">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -473,7 +475,7 @@ export default function TeamMatchView() {
               />
             )}
 
-            {/* Quick actions for owner - Group Playoff format */}
+            {/* Quick actions for owner - Group Playoff format - READ ONLY, no add team */}
             {isOwner && isGroupPlayoffFormat && tournament.status === 'registration' && !hasGroups && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
@@ -481,14 +483,10 @@ export default function TeamMatchView() {
                   <CardDescription>
                     {pendingTeamsCount > 0 
                       ? `Duyệt ${pendingTeamsCount} đội đang chờ trước khi chia bảng`
-                      : 'Thêm đội hoặc chia bảng thi đấu'}
+                      : 'Chia bảng thi đấu hoặc mời thêm đội'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowCreateTeam(true)}>
-                    <Users className="h-4 w-4 mr-2" />
-                    Thêm đội
-                  </Button>
                   <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
                     <Mail className="h-4 w-4 mr-2" />
                     Mời đội
@@ -518,7 +516,7 @@ export default function TeamMatchView() {
               </Card>
             )}
 
-            {/* Quick actions for owner - Single Elimination format */}
+            {/* Quick actions for owner - Single Elimination format - no add team */}
             {isOwner && isSingleElimination && tournament.status === 'registration' && !hasMatches && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
@@ -526,14 +524,10 @@ export default function TeamMatchView() {
                   <CardDescription>
                     {pendingTeamsCount > 0 
                       ? `Duyệt ${pendingTeamsCount} đội đang chờ trước khi tạo bracket`
-                      : 'Thêm đội hoặc tạo bracket Single Elimination'}
+                      : 'Mời đội hoặc tạo bracket Single Elimination'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowCreateTeam(true)}>
-                    <Users className="h-4 w-4 mr-2" />
-                    Thêm đội
-                  </Button>
                   <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
                     <Mail className="h-4 w-4 mr-2" />
                     Mời đội
@@ -556,20 +550,16 @@ export default function TeamMatchView() {
               </Card>
             )}
 
-            {/* Quick actions for owner - Other formats (Round Robin) */}
+            {/* Quick actions for owner - Other formats (Round Robin) - no add team */}
             {isOwner && !isGroupPlayoffFormat && !isSingleElimination && tournament.status === 'registration' && !hasMatches && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">Hành động BTC</CardTitle>
                   <CardDescription>
-                    Thêm đội hoặc tạo lịch thi đấu
+                    Mời đội hoặc tạo lịch thi đấu
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowCreateTeam(true)}>
-                    <Users className="h-4 w-4 mr-2" />
-                    Thêm đội
-                  </Button>
                   <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
                     <Mail className="h-4 w-4 mr-2" />
                     Mời đội

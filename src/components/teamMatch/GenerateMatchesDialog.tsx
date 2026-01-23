@@ -76,12 +76,12 @@ export function GenerateMatchesDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-sm mx-4">
         <AlertDialogHeader>
           <AlertDialogTitle>Tạo lịch thi đấu?</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4">
-              <p>
+              <p className="text-sm">
                 Hệ thống sẽ tự động tạo lịch thi đấu vòng tròn cho các đội đã được duyệt.
               </p>
               
@@ -113,16 +113,16 @@ export function GenerateMatchesDialog({
               {/* Warning for incomplete teams */}
               {hasIncompleteTeams && (
                 <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2">
-                  <div className="flex items-center gap-2 text-destructive font-medium">
-                    <AlertTriangle className="h-4 w-4" />
+                  <div className="flex items-center gap-2 text-destructive font-medium text-sm">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
                     <span>Không thể tạo lịch - Có đội chưa đủ người</span>
                   </div>
-                  <ul className="text-sm text-destructive/80 space-y-1 ml-6">
+                  <ul className="text-xs text-destructive/80 space-y-1 ml-6">
                     {incompleteTeams.map(team => {
                       const rosterCount = allRosters?.[team.id]?.length || 0;
                       return (
                         <li key={team.id}>
-                          • {team.team_name}: {rosterCount}/{maxRosterSize} người
+                          • {team.team_name}: {rosterCount}/{maxRosterSize} VĐV
                         </li>
                       );
                     })}
@@ -132,14 +132,15 @@ export function GenerateMatchesDialog({
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isGenerating}>Hủy</AlertDialogCancel>
+        <AlertDialogFooter className="flex-row gap-2">
+          <AlertDialogCancel disabled={isGenerating} className="flex-1">Hủy</AlertDialogCancel>
           <AlertDialogAction 
             onClick={onConfirm} 
             disabled={isGenerating || !canGenerate}
+            className="flex-1"
           >
             {isGenerating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Tạo lịch
+            Xác nhận
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
