@@ -31,6 +31,7 @@ const QuickTableView = lazy(() => import("./pages/QuickTableView"));
 const MatchScoring = lazy(() => import("./pages/MatchScoring"));
 const JoinTeam = lazy(() => import("./pages/JoinTeam"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 const TeamMatchList = lazy(() => import("./pages/TeamMatchList"));
 const TeamMatchSetup = lazy(() => import("./pages/TeamMatchSetup"));
 const TeamMatchView = lazy(() => import("./pages/TeamMatchView"));
@@ -148,6 +149,7 @@ const App = () => (
                 <Route path="/creator/tournaments" element={<CreatorTournaments />} />
                 {/* Public pages */}
                 <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

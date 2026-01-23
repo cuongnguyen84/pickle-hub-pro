@@ -80,6 +80,87 @@ export const en: Translations = {
       update: "This policy may be updated as the platform develops new features.",
     },
   },
+  terms: {
+    title: "Terms of Service – The Pickle Hub",
+    intro: {
+      title: "Introduction",
+      description: "Welcome to The Pickle Hub. By using our services, you agree to comply with the following terms.",
+      acceptance: "If you do not agree with any of these terms, please do not use our services.",
+    },
+    account: {
+      title: "Account Terms",
+      items: {
+        age: "You must be at least 13 years old to use our services",
+        accuracy: "Registration information must be accurate and truthful",
+        security: "You are responsible for maintaining the security of your account",
+        responsibility: "You are responsible for all activities under your account",
+      },
+    },
+    acceptableUse: {
+      title: "Acceptable Use",
+      description: "When using The Pickle Hub, you agree to:",
+      items: {
+        noIllegal: "Not engage in illegal activities",
+        noHarassment: "Not harass, threaten, or insult others",
+        noSpam: "Not spam or send unwanted content",
+        noImpersonation: "Not impersonate others or organizations",
+        noMalware: "Not distribute malware or harmful software",
+      },
+    },
+    userContent: {
+      title: "User Content",
+      description: "Regarding content you upload:",
+      items: {
+        ownership: "You retain ownership of content you create",
+        license: "You grant us the right to display content on the platform",
+        moderation: "We reserve the right to remove content that violates our policies",
+      },
+    },
+    intellectualProperty: {
+      title: "Intellectual Property",
+      description: "The Pickle Hub brand, logo, and content are protected by intellectual property laws. You may not copy or use them without permission.",
+    },
+    liability: {
+      title: "Limitation of Liability",
+      description: "The Pickle Hub provides services with the following limitations:",
+      items: {
+        asIs: "Services are provided \"as is\"",
+        noWarranty: "We do not guarantee uninterrupted or error-free service",
+        limitation: "We are not liable for indirect damages",
+      },
+    },
+    termination: {
+      title: "Termination",
+      description: "Regarding termination of services:",
+      items: {
+        userRight: "You may delete your account at any time",
+        platformRight: "We may suspend accounts that violate terms",
+        effect: "After termination, your data will be deleted per our privacy policy",
+      },
+    },
+    changes: {
+      title: "Changes to Terms",
+      description: "We may update these terms. Continued use of services after changes means you accept the new terms.",
+    },
+    contact: {
+      title: "Contact",
+      description: "If you have questions about these terms, please contact:",
+    },
+    effective: {
+      text: "These terms are effective as of {date}.",
+      update: "Terms may be updated as the platform develops.",
+    },
+  },
+  account: {
+    deleteAccount: "Delete Account",
+    deleteAccountDescription: "Permanently delete your account and all your data. This action cannot be undone.",
+    deleteAccountConfirm: "Confirm Account Deletion",
+    deleteAccountWarning: "Warning: All your data will be permanently deleted including profile, tournaments, comments, and other activities.",
+    deleteAccountSuccess: "Account deleted successfully",
+    deleteAccountError: "Failed to delete account. Please try again.",
+    typeToConfirm: "Type \"{text}\" to confirm",
+    confirmText: "DELETE ACCOUNT",
+  },
   nav: {
     home: "Home",
     live: "Live",
