@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Users, Calendar, Trophy, Trash2, ExternalLink, ArrowLeft } from 'lucide-react';
+import { Plus, Users, Calendar, Trophy, Trash2, ExternalLink, ArrowLeft, Mail } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, TeamMatchTournament } from '@/hooks/useTeamMatch';
 import { useI18n } from '@/i18n';
@@ -81,7 +81,7 @@ function TournamentCard({
         </div>
       </CardHeader>
       <CardContent onClick={() => navigate(`/tools/team-match/${tournament.share_id}`)}>
-        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             <span>{tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size} {t.teamMatch.players}</span>
@@ -90,6 +90,12 @@ function TournamentCard({
             <Trophy className="h-4 w-4" />
             <span>{getFormatLabel(tournament.format)}</span>
           </div>
+          {(tournament.creator_display_name || tournament.creator_email) && !isOwner && (
+            <div className="flex items-center gap-1 w-full">
+              <Mail className="h-4 w-4 shrink-0" />
+              <span className="truncate">{tournament.creator_display_name || tournament.creator_email?.split('@')[0]}</span>
+            </div>
+          )}
         </div>
       </CardContent>
       {isOwner && (
