@@ -879,7 +879,7 @@ export const en: Translations = {
     pageTitle: "Pickleball Team Match Format",
     pageSubtitle: "Create and manage MLP-style team competitions",
     myTournaments: "My Tournaments",
-    publicTournaments: "Open Tournaments",
+    publicTournaments: "MLP Open Tournaments",
     noTournaments: "You haven't created any team tournaments yet",
     createFirst: "Create first tournament",
     loginPrompt: "Login to create and manage team tournaments",

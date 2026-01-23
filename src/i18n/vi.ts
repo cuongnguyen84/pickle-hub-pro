@@ -1981,7 +1981,7 @@ export const vi: Translations = {
     pageTitle: "Thể Thức Thi Đấu Đồng Đội Pickleball",
     pageSubtitle: "Tạo và quản lý giải đấu đồng đội theo phong cách MLP",
     myTournaments: "Giải đấu của tôi",
-    publicTournaments: "Giải đấu đang mở",
+    publicTournaments: "Giải đấu MLP đang mở",
     noTournaments: "Bạn chưa tạo giải đấu đồng đội nào",
     createFirst: "Tạo giải đấu đầu tiên",
     loginPrompt: "Đăng nhập để tạo và quản lý giải đấu đồng đội",
