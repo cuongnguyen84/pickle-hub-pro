@@ -5,3 +5,4 @@ export * from './TeamBlock';
 export * from './GroupBlock';
 export * from './MatchBlock';
 export * from './FlexWorkspace';
+export * from './FloatingPlayerPanel';

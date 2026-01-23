@@ -266,6 +266,9 @@ export const en: Translations = {
       noDoublesStats: "No doubles stats yet",
       countsForStandings: "Include in standings",
       noGroupHint: "Create a group to see stats",
+      playerPanel: "Player List",
+      openPlayerPanel: "Open player list",
+      teams: "Teams",
     },
   },
   auth: {
