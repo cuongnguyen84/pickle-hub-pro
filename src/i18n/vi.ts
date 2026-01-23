@@ -226,6 +226,7 @@ export interface Translations {
         pointDiff: string;
         rank: string;
         name: string;
+        pair: string;
       };
       generateRR: string;
       unlisted: string;
@@ -259,6 +260,10 @@ export interface Translations {
       duplicateInTeam: string;
       duplicateInGroup: string;
       duplicateInMatch: string;
+      includeDoublesInSingles: string;
+      noDoublesStats: string;
+      countsForStandings: string;
+      noGroupHint: string;
     };
   };
   auth: {
@@ -1432,6 +1437,20 @@ export const vi: Translations = {
       duplicateInTeam: "VĐV này đã có trong đội này",
       duplicateInGroup: "VĐV/Đội này đã có trong bảng này",
       duplicateInMatch: "VĐV này đã có trong trận này",
+      includeDoublesInSingles: "Tính cả các trận đôi",
+      noDoublesStats: "Chưa có thống kê đôi",
+      countsForStandings: "Tính vào bảng xếp hạng",
+      noGroupHint: "Tạo bảng đấu để xem thống kê",
+      stats: {
+        playerStats: "Thống kê VĐV",
+        pairStats: "Thống kê cặp",
+        wins: "T",
+        losses: "B",
+        pointDiff: "+/-",
+        rank: "#",
+        name: "Tên",
+        pair: "Cặp",
+      },
     },
   },
   auth: {
