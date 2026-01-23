@@ -102,11 +102,15 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
     const sourceData = active.data.current;
     const targetId = over.id as string;
+    
+    // Ensure type is correctly set - fallback to parsing from active.id
+    const itemType: 'player' | 'team' = sourceData.type || 
+      (typeof active.id === 'string' && active.id.startsWith('team-') ? 'team' : 'player');
 
     // Handle drop on team
     if (targetId.startsWith('team-drop-')) {
       const teamId = targetId.replace('team-drop-', '');
-      if (sourceData.type === 'player') {
+      if (itemType === 'player') {
         // Check for duplicate
         if (isPlayerInTeam(sourceData.id, teamId)) {
           toast({ 
@@ -127,7 +131,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       
       // Check group type - first item determines type
       const existingType = getGroupItemType(groupId);
-      if (existingType && existingType !== sourceData.type) {
+      if (existingType && existingType !== itemType) {
         toast({ 
           title: t.tools.flexTournament.groupTypeMismatch,
           variant: "destructive" 
@@ -136,14 +140,14 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       }
       
       // Check for duplicate
-      if (isItemInGroup(sourceData.type, sourceData.id, groupId)) {
+      if (isItemInGroup(itemType, sourceData.id, groupId)) {
         toast({ 
           title: t.tools.flexTournament.duplicateInGroup,
           variant: "destructive" 
         });
         return;
       }
-      await addItemToGroup(groupId, sourceData.type, sourceData.id, data.groupItems.length);
+      await addItemToGroup(groupId, itemType, sourceData.id, data.groupItems.length);
       onRefresh();
       return;
     }
@@ -162,7 +166,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
       const updates: any = {};
       
-      if (sourceData.type === 'player') {
+      if (itemType === 'player') {
         // Check for duplicate player in same match
         if (isPlayerInMatch(sourceData.id, match)) {
           toast({ 
@@ -179,7 +183,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
         // Auto-add player to single group
         await autoAddToSingleGroup('player', sourceData.id);
-      } else if (sourceData.type === 'team') {
+      } else if (itemType === 'team') {
         if (slot === 'a1') updates.slot_a_team_id = sourceData.id;
         else if (slot === 'b1') updates.slot_b_team_id = sourceData.id;
 
