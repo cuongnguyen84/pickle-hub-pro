@@ -147,37 +147,27 @@ export default function DoublesEliminationList() {
                     </Badge>
                   </div>
                   
-                  {/* Info Row - Compact Grid */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" />
-                        <span className="font-medium">{tournament.team_count}</span>
-                      </span>
-                      <span className="text-muted-foreground/50">•</span>
-                      <span className="truncate">
-                        {getFormatLabel(tournament.early_rounds_format)}
-                        {tournament.finals_format !== tournament.early_rounds_format && (
-                          <span className="text-muted-foreground/70">
-                            {' → '}{getFormatLabel(tournament.finals_format)}
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-muted-foreground/50">•</span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
-                      </span>
-                    </div>
-                    
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="shrink-0 h-8 px-2 text-primary"
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      {t.doublesElimination.viewBtn}
-                    </Button>
+                  {/* Info Row - Compact */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5" />
+                      <span className="font-medium">{tournament.team_count}</span>
+                    </span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span>
+                      {getFormatLabel(tournament.early_rounds_format)}
+                      {tournament.finals_format !== tournament.early_rounds_format && (
+                        <span className="text-muted-foreground/70">
+                          {' → '}{getFormatLabel(tournament.finals_format)}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
+                    </span>
+                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
                   </div>
                 </CardContent>
               </Card>
