@@ -147,8 +147,8 @@ export default function DoublesEliminationList() {
                     </Badge>
                   </div>
                   
-                  {/* Info Row - Compact */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                  {/* Info Row 1 - Stats */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5" />
                       <span className="font-medium">{tournament.team_count}</span>
@@ -167,16 +167,17 @@ export default function DoublesEliminationList() {
                       <Calendar className="w-3.5 h-3.5" />
                       {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
                     </span>
+                  </div>
+                  
+                  {/* Info Row 2 - Creator */}
+                  <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
                     {(tournament.creator_display_name || tournament.creator_email) && (
-                      <>
-                        <span className="text-muted-foreground/50">•</span>
-                        <span className="flex items-center gap-1 truncate max-w-[120px]">
-                          <Mail className="w-3.5 h-3.5 shrink-0" />
-                          {tournament.creator_display_name || tournament.creator_email?.split('@')[0]}
-                        </span>
-                      </>
+                      <span className="flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5" />
+                        {tournament.creator_display_name || tournament.creator_email?.split('@')[0]}
+                      </span>
                     )}
-                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground shrink-0" />
+                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
                   </div>
                 </CardContent>
               </Card>
