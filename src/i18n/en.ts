@@ -261,6 +261,7 @@ export const en: Translations = {
       duplicatePlayer: "This player name already exists",
       duplicateInTeam: "This player is already in this team",
       duplicateInGroup: "This player/team is already in this group",
+      groupTypeMismatch: "Group accepts players only or teams only",
       duplicateInMatch: "This player is already in this match",
       includeDoublesInSingles: "Include doubles matches",
       noDoublesStats: "No doubles stats yet",
