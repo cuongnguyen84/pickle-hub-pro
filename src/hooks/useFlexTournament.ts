@@ -347,6 +347,13 @@ export function useFlexTournament() {
     itemId: string,
     displayOrder: number
   ): Promise<FlexGroupItem | null> {
+    // Validate itemType
+    if (!itemType || (itemType !== 'player' && itemType !== 'team')) {
+      console.error('Invalid itemType:', itemType);
+      toast({ title: "Error", description: "Invalid item type", variant: "destructive" });
+      return null;
+    }
+    
     const insertData: any = {
       group_id: groupId,
       item_type: itemType,
@@ -358,6 +365,8 @@ export function useFlexTournament() {
     } else {
       insertData.team_id = itemId;
     }
+
+    console.log('addItemToGroup insertData:', insertData);
 
     const { data, error } = await supabase
       .from('flex_group_items')
