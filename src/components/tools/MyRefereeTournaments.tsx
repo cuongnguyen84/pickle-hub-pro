@@ -2,7 +2,6 @@ import { useMyRefereeTournaments } from '@/hooks/useMyRefereeTournaments';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
@@ -108,7 +107,7 @@ export function MyRefereeTournaments() {
               )}
             </div>
             <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 shrink-0">
-              <Badge variant="outline" className="text-xs whitespace-nowrap">
+              <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-foreground">
                 {tournament.type === 'quick_table' ? (
                   <Users className="w-3 h-3 mr-1" />
                 ) : tournament.type === 'team_match' ? (
@@ -117,10 +116,10 @@ export function MyRefereeTournaments() {
                   <GitBranch className="w-3 h-3 mr-1" />
                 )}
                 {t.quickTable.referee}
-              </Badge>
-              <Badge className={`${statusColor} text-xs whitespace-nowrap`}>
+              </span>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${statusColor}`}>
                 {getStatusLabel(tournament.status)}
-              </Badge>
+              </span>
             </div>
           </div>
         </div>

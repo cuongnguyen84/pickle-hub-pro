@@ -242,12 +242,12 @@ const Tournaments = () => {
                       {tournament.is_doubles ? (
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
-                          {tournament.player_count} đôi
+                          {tournament.player_count} {t.tournament.pairs}
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
                           <User className="w-3 h-3" />
-                          {tournament.player_count} người
+                          {tournament.player_count} {t.tournament.players}
                         </span>
                       )}
                       {(tournament.creator_display_name || tournament.creator_email) && (
@@ -295,12 +295,12 @@ const Tournaments = () => {
                         {tournament.is_doubles ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
                             <Users className="w-3 h-3" />
-                            <span>{tournament.player_count} đôi</span>
+                            <span>{tournament.player_count} {t.tournament.pairs}</span>
                           </Badge>
                         ) : (
                           <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
                             <User className="w-3 h-3" />
-                            <span>{tournament.player_count} người</span>
+                            <span>{tournament.player_count} {t.tournament.players}</span>
                           </Badge>
                         )}
                       </div>
@@ -342,12 +342,12 @@ const Tournaments = () => {
                         {table.is_doubles ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
                             <Users className="w-3 h-3" />
-                            <span>{table.player_count} đôi</span>
+                            <span>{table.player_count} {t.tournament.pairs}</span>
                           </Badge>
                         ) : (
                           <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
                             <User className="w-3 h-3" />
-                            <span>{table.player_count} người</span>
+                            <span>{table.player_count} {t.tournament.players}</span>
                           </Badge>
                         )}
                         {(table.creator_display_name || table.creator_email) && (
