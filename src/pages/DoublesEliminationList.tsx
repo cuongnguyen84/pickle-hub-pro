@@ -126,47 +126,58 @@ export default function DoublesEliminationList() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {tournaments.map((tournament) => (
               <Card 
                 key={tournament.id} 
                 className="cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => navigate(`/tools/doubles-elimination/${tournament.share_id}`)}
               >
-                <CardContent className="py-4">
+                <CardContent className="p-4">
+                  {/* Header: Name + Status */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <h3 className="font-semibold leading-tight flex-1 min-w-0 truncate">
+                      {tournament.name}
+                    </h3>
+                    <Badge 
+                      variant={getStatusVariant(tournament.status)}
+                      className="shrink-0 whitespace-nowrap"
+                    >
+                      {getStatusLabel(tournament.status)}
+                    </Badge>
+                  </div>
+                  
+                  {/* Info Row - Compact Grid */}
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{tournament.name}</h3>
-                        <Badge variant={getStatusVariant(tournament.status)}>
-                          {getStatusLabel(tournament.status)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          {tournament.team_count} {t.doublesElimination.teams}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Trophy className="w-4 h-4" />
-                          {t.doublesElimination.earlyRounds}: {getFormatLabel(tournament.early_rounds_format)} | 
-                          {t.doublesElimination.semifinalPlus}: {getFormatLabel(tournament.finals_format)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" />
+                        <span className="font-medium">{tournament.team_count}</span>
+                      </span>
+                      <span className="text-muted-foreground/50">•</span>
+                      <span className="truncate">
+                        {getFormatLabel(tournament.early_rounds_format)}
+                        {tournament.finals_format !== tournament.early_rounds_format && (
+                          <span className="text-muted-foreground/70">
+                            {' → '}{getFormatLabel(tournament.finals_format)}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-muted-foreground/50">•</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
+                      </span>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="w-4 h-4 mr-1" />
-                        {t.doublesElimination.viewBtn}
-                      </Button>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="shrink-0 h-8 px-2 text-primary"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      {t.doublesElimination.viewBtn}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
