@@ -67,30 +67,30 @@ export function MyRefereeTournaments() {
     return (
       <Link to={href} className="block">
         <div className="p-4 rounded-lg border hover:border-primary/50 transition-colors bg-card">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <h4 className="font-medium truncate">{tournament.name}</h4>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground mt-1">
                 {tournament.created_at && (
-                  <>
+                  <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     <span>{format(new Date(tournament.created_at), 'dd/MM/yyyy')}</span>
-                    <span>•</span>
-                  </>
+                  </span>
                 )}
+                <span className="hidden sm:inline">•</span>
                 <span>
                   {tournament.player_count || tournament.team_count} {tournament.type === 'quick_table' ? 'players' : 'teams'}
                 </span>
                 {tournament.format && (
                   <>
-                    <span>•</span>
+                    <span className="hidden sm:inline">•</span>
                     <span className="capitalize">{tournament.format.replace('_', ' ')}</span>
                   </>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="shrink-0">
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 shrink-0">
+              <Badge variant="outline" className="text-xs whitespace-nowrap">
                 {tournament.type === 'quick_table' ? (
                   <Users className="w-3 h-3 mr-1" />
                 ) : tournament.type === 'team_match' ? (
@@ -100,7 +100,7 @@ export function MyRefereeTournaments() {
                 )}
                 Referee
               </Badge>
-              <Badge className={statusColor}>
+              <Badge className={`${statusColor} text-xs whitespace-nowrap`}>
                 {statusLabel}
               </Badge>
             </div>
