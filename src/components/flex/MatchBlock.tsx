@@ -5,15 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Swords, Trash2, X, User } from 'lucide-react';
+import { Swords, Trash2, X, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import type { FlexMatch, FlexPlayer, FlexTeam } from '@/hooks/useFlexTournament';
+import { useState, useMemo } from 'react';
+import type { FlexMatch, FlexPlayer, FlexTeam, FlexTeamMember, FlexGroup } from '@/hooks/useFlexTournament';
 
 interface MatchBlockProps {
   match: FlexMatch;
   players: FlexPlayer[];
   teams: FlexTeam[];
+  teamMembers: FlexTeamMember[];
+  groups: FlexGroup[];
   isCreator: boolean;
   hasGroups: boolean;
   onUpdateName: (name: string) => void;
@@ -87,6 +89,8 @@ export function MatchBlock({
   match,
   players,
   teams,
+  teamMembers,
+  groups,
   isCreator,
   hasGroups,
   onUpdateName,
@@ -100,6 +104,35 @@ export function MatchBlock({
   const [editName, setEditName] = useState(match.name);
   const [scoreA, setScoreA] = useState(match.score_a.toString());
   const [scoreB, setScoreB] = useState(match.score_b.toString());
+
+  // Helper: find team that contains a player
+  const getPlayerTeam = (playerId: string): FlexTeam | null => {
+    const member = teamMembers.find(m => m.player_id === playerId);
+    if (!member) return null;
+    return teams.find(t => t.id === member.team_id) || null;
+  };
+
+  // Check if both players on same side belong to same team
+  const sideATeam = useMemo(() => {
+    if (!match.slot_a1_player_id || !match.slot_a2_player_id) return null;
+    const team1 = getPlayerTeam(match.slot_a1_player_id);
+    const team2 = getPlayerTeam(match.slot_a2_player_id);
+    if (team1 && team2 && team1.id === team2.id) return team1;
+    return null;
+  }, [match.slot_a1_player_id, match.slot_a2_player_id, teamMembers, teams]);
+
+  const sideBTeam = useMemo(() => {
+    if (!match.slot_b1_player_id || !match.slot_b2_player_id) return null;
+    const team1 = getPlayerTeam(match.slot_b1_player_id);
+    const team2 = getPlayerTeam(match.slot_b2_player_id);
+    if (team1 && team2 && team1.id === team2.id) return team1;
+    return null;
+  }, [match.slot_b1_player_id, match.slot_b2_player_id, teamMembers, teams]);
+
+  // Get group name if match belongs to a group
+  const groupName = match.group_id 
+    ? groups.find(g => g.id === match.group_id)?.name 
+    : null;
 
   const handleSaveName = () => {
     if (editName.trim() && editName !== match.name) {
@@ -153,6 +186,11 @@ export function MatchBlock({
             <Badge variant="secondary" className="text-xs flex-shrink-0">
               {isDoubles ? t.tools.flexTournament.matchType.doubles : t.tools.flexTournament.matchType.singles}
             </Badge>
+            {groupName && (
+              <Badge variant="outline" className="text-xs flex-shrink-0">
+                {groupName}
+              </Badge>
+            )}
           </div>
           {isCreator && (
             <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
@@ -187,6 +225,13 @@ export function MatchBlock({
 
         {/* Side A */}
         <div className="space-y-1">
+          {/* Team highlight for Side A */}
+          {sideATeam && (
+            <div className="flex items-center gap-1 text-xs text-primary font-medium px-1">
+              <Users className="w-3 h-3" />
+              {sideATeam.name}
+            </div>
+          )}
           <DroppableSlot
             id={`match-${match.id}-slot-a1`}
             playerId={match.slot_a1_player_id}
@@ -232,6 +277,13 @@ export function MatchBlock({
 
         {/* Side B */}
         <div className="space-y-1">
+          {/* Team highlight for Side B */}
+          {sideBTeam && (
+            <div className="flex items-center gap-1 text-xs text-primary font-medium px-1">
+              <Users className="w-3 h-3" />
+              {sideBTeam.name}
+            </div>
+          )}
           <DroppableSlot
             id={`match-${match.id}-slot-b1`}
             playerId={match.slot_b1_player_id}

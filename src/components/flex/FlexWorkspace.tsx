@@ -246,10 +246,17 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [data.tournament.id, data.groups, addGroup, onRefresh]);
 
-  const handleAddMatch = useCallback(async (name: string, matchType: 'singles' | 'doubles') => {
-    await addMatch(data.tournament.id, name, matchType, null, getNextDisplayOrder(data.matches));
+  const handleAddMatch = useCallback(async (name: string, matchType: 'singles' | 'doubles', groupId?: string) => {
+    await addMatch(data.tournament.id, name, matchType, groupId || null, getNextDisplayOrder(data.matches));
     onRefresh();
   }, [data.tournament.id, data.matches, addMatch, onRefresh]);
+
+  const handleAddMatchToGroup = useCallback(async (groupId: string) => {
+    const group = data.groups.find(g => g.id === groupId);
+    const matchName = `${group?.name || 'Group'} - Trận ${data.matches.filter(m => m.group_id === groupId).length + 1}`;
+    await addMatch(data.tournament.id, matchName, 'doubles', groupId, getNextDisplayOrder(data.matches));
+    onRefresh();
+  }, [data.tournament.id, data.groups, data.matches, addMatch, onRefresh]);
 
   const handleDeleteTeam = useCallback(async (teamId: string) => {
     await deleteEntity('flex_teams', teamId);
@@ -463,6 +470,8 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                     match={match}
                     players={data.players}
                     teams={data.teams}
+                    teamMembers={data.teamMembers}
+                    groups={data.groups}
                     isCreator={isCreator}
                     hasGroups={data.groups.length > 0}
                     onUpdateName={(name) => handleUpdateMatchName(match.id, name)}
@@ -617,6 +626,8 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   match={match}
                   players={data.players}
                   teams={data.teams}
+                  teamMembers={data.teamMembers}
+                  groups={data.groups}
                   isCreator={isCreator}
                   hasGroups={data.groups.length > 0}
                   onUpdateName={(name) => handleUpdateMatchName(match.id, name)}

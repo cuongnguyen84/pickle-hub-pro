@@ -276,6 +276,7 @@ export interface Translations {
       groupTabIndividuals: string;
       selectTeamsToShow: string;
       allTeams: string;
+      noPairStats: string;
     };
   };
   auth: {
@@ -1466,6 +1467,7 @@ export const vi: Translations = {
       groupTabIndividuals: "Cá nhân",
       selectTeamsToShow: "Chọn đội để hiển thị thành tích cá nhân",
       allTeams: "Tất cả",
+      noPairStats: "Chưa có thống kê cặp đôi",
     },
   },
   auth: {
