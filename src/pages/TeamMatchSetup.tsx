@@ -19,15 +19,7 @@ import { useI18n } from '@/i18n';
 
 type Step = 1 | 2 | 3 | 4;
 
-// Helper to check if a number is a power of 2
 const isPowerOfTwo = (n: number): boolean => n > 0 && (n & (n - 1)) === 0;
-
-const STEPS = [
-  { id: 1, title: 'Thông tin cơ bản', icon: Users },
-  { id: 2, title: 'Game Templates', icon: Gamepad2 },
-  { id: 3, title: 'DreamBreaker', icon: Zap },
-  { id: 4, title: 'Thể thức', icon: Trophy },
-];
 
 const ROSTER_SIZE_OPTIONS = [
   { value: 4, label: '4' },
@@ -35,57 +27,47 @@ const ROSTER_SIZE_OPTIONS = [
   { value: 8, label: '8' },
 ];
 
-const GAME_TYPE_LABELS: Record<string, string> = {
-  WD: 'Đôi Nữ (WD)',
-  MD: 'Đôi Nam (MD)',
-  MX: 'Đôi Nam Nữ (MX)',
-  WS: 'Đơn Nữ (WS)',
-  MS: 'Đơn Nam (MS)',
-};
-
 export default function TeamMatchSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { createTournament, isCreating } = useTeamMatch();
+
+  const STEPS = [
+    { id: 1, title: t.teamMatch.setup.stepBasicInfo, icon: Users },
+    { id: 2, title: t.teamMatch.setup.stepGameTemplates, icon: Gamepad2 },
+    { id: 3, title: t.teamMatch.setup.stepDreambreaker, icon: Zap },
+    { id: 4, title: t.teamMatch.setup.stepFormat, icon: Trophy },
+  ];
 
   const [step, setStep] = useState<Step>(1);
   
-  // Step 1: Basic info
   const [name, setName] = useState('');
   const [rosterSize, setRosterSize] = useState<4 | 6 | 8>(4);
   const [teamCount, setTeamCount] = useState(4);
   const [requireRegistration, setRequireRegistration] = useState(false);
   const [requireMinGames, setRequireMinGames] = useState(false);
 
-  // Step 2: Game templates
   const [templates, setTemplates] = useState<GameTemplateItem[]>(() => getDefaultTemplates(4));
 
-  // Step 3: DreamBreaker - Fixed: Singles only, 4 players, Rally Scoring
   const [hasDreambreaker, setHasDreambreaker] = useState(false);
-  // Dreambreaker is always Singles (MS/WS alternating) with Rally Scoring - no config needed
 
-  // Step 4: Format
   const [format, setFormat] = useState<'round_robin' | 'single_elimination' | 'rr_playoff'>('round_robin');
   const [playoffTeamCount, setPlayoffTeamCount] = useState(4);
   const [hasThirdPlaceMatch, setHasThirdPlaceMatch] = useState(false);
 
-  // Validation for single elimination
   const isSingleElimination = format === 'single_elimination';
   const isValidTeamCountForSE = isPowerOfTwo(teamCount) && teamCount >= 4;
   const teamCountWarning = isSingleElimination && !isValidTeamCountForSE 
-    ? 'Số đội phải là 4, 8, 16 hoặc 32 cho thể thức loại trực tiếp' 
+    ? t.teamMatch.setup.invalidTeamCount
     : null;
 
-  // When roster size changes, reset templates
   const handleRosterSizeChange = (size: 4 | 6 | 8) => {
     setRosterSize(size);
     setTemplates(getDefaultTemplates(size));
   };
 
   const isEvenGames = templates.length % 2 === 0;
-
-  // Auto-disable dreambreaker if games count becomes odd
   const effectiveDreambreaker = isEvenGames && hasDreambreaker;
 
   const canProceed = () => {
@@ -97,7 +79,6 @@ export default function TeamMatchSetup() {
       case 3:
         return true;
       case 4:
-        // For single elimination, require valid team count
         if (format === 'single_elimination') {
           return isValidTeamCountForSE;
         }
@@ -121,7 +102,6 @@ export default function TeamMatchSetup() {
       playoff_team_count: format === 'rr_playoff' ? playoffTeamCount : undefined,
       require_registration: requireRegistration,
       has_dreambreaker: effectiveDreambreaker,
-      // Dreambreaker is FIXED: Singles (4 players), Rally Scoring - no config stored
       require_min_games_per_player: requireMinGames,
       has_third_place_match: format === 'single_elimination' ? hasThirdPlaceMatch : false,
       game_templates: templates.map(t => ({
@@ -145,12 +125,12 @@ export default function TeamMatchSetup() {
       <MainLayout>
         <div className="container max-w-2xl py-12 text-center">
           <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2">Đăng nhập để tiếp tục</h1>
+          <h1 className="text-2xl font-bold mb-2">{t.teamMatch.setup.loginRequired}</h1>
           <p className="text-muted-foreground mb-6">
-            Bạn cần đăng nhập để tạo giải đấu đồng đội
+            {t.teamMatch.setup.loginRequiredDesc}
           </p>
           <Button onClick={() => navigate('/login')}>
-            Đăng nhập
+            {t.auth.login}
           </Button>
         </div>
       </MainLayout>
@@ -159,7 +139,7 @@ export default function TeamMatchSetup() {
 
   return (
     <MainLayout>
-      <DynamicMeta title="Tạo giải đấu đồng đội MLP" noindex={true} />
+      <DynamicMeta title={t.teamMatch.setup.title} noindex={true} />
       <div className="container max-w-3xl py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -167,8 +147,8 @@ export default function TeamMatchSetup() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Tạo giải đấu đồng đội</h1>
-            <p className="text-muted-foreground">Kiểu MLP - Major League Pickleball</p>
+            <h1 className="text-2xl font-bold">{t.teamMatch.setup.title}</h1>
+            <p className="text-muted-foreground">{t.teamMatch.setup.subtitle}</p>
           </div>
         </div>
 
@@ -207,7 +187,7 @@ export default function TeamMatchSetup() {
           <CardHeader>
             <CardTitle>{STEPS[step - 1].title}</CardTitle>
             <CardDescription>
-              Bước {step}/{STEPS.length}
+              {language === 'vi' ? `Bước ${step}/${STEPS.length}` : `Step ${step}/${STEPS.length}`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -215,17 +195,17 @@ export default function TeamMatchSetup() {
             {step === 1 && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Tên giải đấu *</Label>
+                  <Label htmlFor="name">{t.teamMatch.setup.tournamentName} *</Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="VD: MLP Mùa Xuân 2026"
+                    placeholder={t.teamMatch.setup.tournamentNamePlaceholder}
                   />
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Số VĐV mỗi đội *</Label>
+                  <Label>{t.teamMatch.setup.playersPerTeam} *</Label>
                   <RadioGroup
                     value={rosterSize.toString()}
                     onValueChange={(v) => handleRosterSizeChange(Number(v) as 4 | 6 | 8)}
@@ -243,7 +223,7 @@ export default function TeamMatchSetup() {
                           className="flex flex-col items-center justify-center rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                         >
                           <span className="text-3xl font-bold">{opt.label}</span>
-                          <span className="text-xs text-muted-foreground mt-1">VĐV</span>
+                          <span className="text-xs text-muted-foreground mt-1">{language === 'vi' ? 'VĐV' : 'players'}</span>
                         </Label>
                       </div>
                     ))}
@@ -251,13 +231,16 @@ export default function TeamMatchSetup() {
                   <p className="text-xs text-muted-foreground flex items-start gap-1.5">
                     <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                     <span>
-                      Số nam/nữ tham khảo theo kiểu MLP. BTC có thể tự quyết định tỷ lệ phù hợp.
+                      {language === 'vi' 
+                        ? 'Số nam/nữ tham khảo theo kiểu MLP. BTC có thể tự quyết định tỷ lệ phù hợp.'
+                        : 'MLP-style player count. Organizers decide the actual male/female ratio.'
+                      }
                     </span>
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="teamCount">Số đội *</Label>
+                  <Label htmlFor="teamCount">{t.teamMatch.setup.teamCount} *</Label>
                   <Input
                     id="teamCount"
                     type="number"
@@ -270,9 +253,9 @@ export default function TeamMatchSetup() {
 
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <Label>Yêu cầu đăng ký trước</Label>
+                    <Label>{t.teamMatch.setup.requireRegistration}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Đội trưởng tạo đội và mời thành viên
+                      {t.teamMatch.setup.requireRegistrationDesc}
                     </p>
                   </div>
                   <Switch
@@ -283,9 +266,9 @@ export default function TeamMatchSetup() {
 
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <Label>Mỗi VĐV ít nhất 1 game</Label>
+                    <Label>{t.teamMatch.setup.requireMinGames}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Bắt buộc lineup sử dụng tất cả thành viên
+                      {t.teamMatch.setup.requireMinGamesDesc}
                     </p>
                   </div>
                   <Switch
@@ -309,39 +292,51 @@ export default function TeamMatchSetup() {
             {step === 3 && (
               <>
                 {!isEvenGames ? (
-                  // Odd number of games - no dreambreaker needed
                   <div className="flex items-start gap-3 p-4 bg-muted/50 border rounded-lg">
                     <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="font-medium">
-                        Số game là số lẻ ({templates.length} games)
+                        {language === 'vi' 
+                          ? `Số game là số lẻ (${templates.length} games)`
+                          : `Odd number of games (${templates.length} games)`
+                        }
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Không cần DreamBreaker vì đã có ván quyết định (ván cuối cùng).
+                        {language === 'vi'
+                          ? 'Không cần DreamBreaker vì đã có ván quyết định (ván cuối cùng).'
+                          : 'No DreamBreaker needed as the last game serves as tiebreaker.'
+                        }
                       </p>
                     </div>
                   </div>
                 ) : (
-                  // Even number of games - show dreambreaker option
                   <>
                     <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                       <Info className="h-5 w-5 text-amber-500 mt-0.5" />
                       <div>
                         <p className="font-medium text-amber-600 dark:text-amber-400">
-                          Số game là số chẵn ({templates.length} games)
+                          {language === 'vi'
+                            ? `Số game là số chẵn (${templates.length} games)`
+                            : `Even number of games (${templates.length} games)`
+                          }
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Khi 2 đội thắng số game bằng nhau, cần DreamBreaker để phân định.
-                          Khi bật, ván lẻ cuối cùng sẽ là ván Dreambreaker.
+                          {language === 'vi'
+                            ? 'Khi 2 đội thắng số game bằng nhau, cần DreamBreaker để phân định. Khi bật, ván lẻ cuối cùng sẽ là ván Dreambreaker.'
+                            : 'When teams tie on game wins, DreamBreaker determines the winner.'
+                          }
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label>Bật DreamBreaker</Label>
+                        <Label>{language === 'vi' ? 'Bật DreamBreaker' : 'Enable DreamBreaker'}</Label>
                         <p className="text-sm text-muted-foreground">
-                          Thêm ván quyết định khi 2 đội hòa về số game thắng
+                          {language === 'vi'
+                            ? 'Thêm ván quyết định khi 2 đội hòa về số game thắng'
+                            : 'Add tiebreaker when teams are tied on games won'
+                          }
                         </p>
                       </div>
                       <Switch
@@ -352,31 +347,34 @@ export default function TeamMatchSetup() {
 
                     {hasDreambreaker && (
                       <div className="space-y-4 pl-4 border-l-2 border-primary">
-                        {/* Fixed Dreambreaker format - no configuration options */}
                         <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
                           <div className="flex items-center gap-2">
                             <Zap className="h-5 w-5 text-primary" />
-                            <span className="font-semibold">Ván Dreambreaker (Ván cuối cùng)</span>
+                            <span className="font-semibold">
+                              {language === 'vi' ? 'Ván Dreambreaker (Ván cuối cùng)' : 'Dreambreaker Game (Final Game)'}
+                            </span>
                           </div>
                           
                           <div className="grid grid-cols-1 gap-2 text-sm">
                             <div className="flex items-center justify-between py-2 border-b">
-                              <span className="text-muted-foreground">Hình thức:</span>
-                              <span className="font-medium">Đánh Đơn (Singles)</span>
+                              <span className="text-muted-foreground">{language === 'vi' ? 'Hình thức:' : 'Format:'}</span>
+                              <span className="font-medium">{language === 'vi' ? 'Đánh Đơn (Singles)' : 'Singles'}</span>
                             </div>
                             <div className="flex items-center justify-between py-2 border-b">
-                              <span className="text-muted-foreground">Số VĐV mỗi đội:</span>
-                              <span className="font-medium">4 VĐV (Tự do chọn nam/nữ)</span>
+                              <span className="text-muted-foreground">{language === 'vi' ? 'Số VĐV mỗi đội:' : 'Players per team:'}</span>
+                              <span className="font-medium">{language === 'vi' ? '4 VĐV (Tự do chọn nam/nữ)' : '4 players (any gender)'}</span>
                             </div>
                             <div className="flex items-center justify-between py-2">
-                              <span className="text-muted-foreground">Cách tính điểm:</span>
+                              <span className="text-muted-foreground">{language === 'vi' ? 'Cách tính điểm:' : 'Scoring:'}</span>
                               <span className="font-medium">Rally Scoring</span>
                             </div>
                           </div>
 
                           <p className="text-xs text-muted-foreground mt-2">
-                            Dreambreaker theo chuẩn MLP: 4 VĐV thi đấu đơn, mỗi pha bóng đều tính điểm.
-                            Đội trưởng sẽ chọn 4 VĐV bất kỳ (không phân biệt giới tính) khi line up.
+                            {language === 'vi'
+                              ? 'Dreambreaker theo chuẩn MLP: 4 VĐV thi đấu đơn, mỗi pha bóng đều tính điểm. Đội trưởng sẽ chọn 4 VĐV bất kỳ (không phân biệt giới tính) khi line up.'
+                              : 'MLP-standard Dreambreaker: 4 singles players, rally scoring. Captain chooses 4 players (any gender) during lineup.'
+                            }
                           </p>
                         </div>
                       </div>
@@ -398,10 +396,10 @@ export default function TeamMatchSetup() {
                     <RadioGroupItem value="round_robin" id="format-rr" className="mt-1" />
                     <div>
                       <Label htmlFor="format-rr" className="font-semibold cursor-pointer">
-                        Vòng tròn (Round Robin)
+                        {t.teamMatch.setup.formatRoundRobin}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Tất cả các đội đấu với nhau
+                        {t.teamMatch.setup.formatRoundRobinDesc}
                       </p>
                     </div>
                   </div>
@@ -410,10 +408,10 @@ export default function TeamMatchSetup() {
                     <RadioGroupItem value="single_elimination" id="format-se" className="mt-1" />
                     <div className="flex-1">
                       <Label htmlFor="format-se" className="font-semibold cursor-pointer">
-                        Loại trực tiếp (Single Elimination)
+                        {t.teamMatch.setup.formatSingleElimination}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Thua 1 trận là bị loại
+                        {t.teamMatch.setup.formatSingleEliminationDesc}
                       </p>
                     </div>
                   </div>
@@ -422,10 +420,10 @@ export default function TeamMatchSetup() {
                     <RadioGroupItem value="rr_playoff" id="format-rrp" className="mt-1" />
                     <div className="flex-1">
                       <Label htmlFor="format-rrp" className="font-semibold cursor-pointer">
-                        Vòng bảng + Playoff
+                        {t.teamMatch.setup.formatRrPlayoff}
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Chia đội thành nhiều bảng, top mỗi bảng vào playoff
+                        {t.teamMatch.setup.formatRrPlayoffDesc}
                       </p>
                     </div>
                   </div>
@@ -433,7 +431,7 @@ export default function TeamMatchSetup() {
 
                 {format === 'rr_playoff' && (
                   <div className="space-y-2 pl-4 border-l-2 border-primary">
-                    <Label htmlFor="playoffCount">Số đội vào playoff</Label>
+                    <Label htmlFor="playoffCount">{t.teamMatch.setup.playoffTeams}</Label>
                     <Select
                       value={playoffTeamCount.toString()}
                       onValueChange={(v) => setPlayoffTeamCount(Number(v))}
@@ -442,9 +440,9 @@ export default function TeamMatchSetup() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="2">2 đội (Chung kết)</SelectItem>
-                        <SelectItem value="4">4 đội (Bán kết)</SelectItem>
-                        <SelectItem value="8">8 đội (Tứ kết)</SelectItem>
+                        <SelectItem value="2">{language === 'vi' ? '2 đội (Chung kết)' : '2 teams (Finals)'}</SelectItem>
+                        <SelectItem value="4">{language === 'vi' ? '4 đội (Bán kết)' : '4 teams (Semifinals)'}</SelectItem>
+                        <SelectItem value="8">{language === 'vi' ? '8 đội (Tứ kết)' : '8 teams (Quarterfinals)'}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -452,14 +450,16 @@ export default function TeamMatchSetup() {
 
                 {format === 'single_elimination' && (
                   <div className="space-y-4 pl-4 border-l-2 border-primary">
-                    {/* Team count validation warning */}
                     {teamCountWarning && (
                       <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                         <Info className="h-4 w-4 text-destructive mt-0.5" />
                         <div>
                           <p className="text-sm font-medium text-destructive">{teamCountWarning}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Hiện tại: {teamCount} đội. Quay lại bước 1 để điều chỉnh.
+                            {language === 'vi' 
+                              ? `Hiện tại: ${teamCount} đội. Quay lại bước 1 để điều chỉnh.`
+                              : `Current: ${teamCount} teams. Go back to step 1 to adjust.`
+                            }
                           </p>
                         </div>
                       </div>
@@ -469,17 +469,19 @@ export default function TeamMatchSetup() {
                       <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                         <Check className="h-4 w-4 text-green-600 mt-0.5" />
                         <p className="text-sm text-green-700 dark:text-green-400">
-                          {teamCount} đội - Hợp lệ cho Single Elimination
+                          {language === 'vi'
+                            ? `${teamCount} đội - Hợp lệ cho Single Elimination`
+                            : `${teamCount} teams - Valid for Single Elimination`
+                          }
                         </p>
                       </div>
                     )}
 
-                    {/* Third place match option */}
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label>Tranh giải Ba</Label>
+                        <Label>{t.teamMatch.setup.thirdPlaceMatch}</Label>
                         <p className="text-sm text-muted-foreground">
-                          Tạo thêm trận tranh hạng 3 giữa 2 đội thua bán kết
+                          {t.teamMatch.setup.thirdPlaceMatchDesc}
                         </p>
                       </div>
                       <Switch
@@ -488,11 +490,13 @@ export default function TeamMatchSetup() {
                       />
                     </div>
 
-                    {/* Info about bracket generation */}
                     <div className="flex items-start gap-2 p-3 bg-muted rounded-lg">
                       <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                       <p className="text-sm text-muted-foreground">
-                        Sau khi tạo giải, BTC sẽ chọn cách ghép đội: Bốc thăm ngẫu nhiên hoặc Xếp thủ công.
+                        {language === 'vi'
+                          ? 'Sau khi tạo giải, BTC sẽ chọn cách ghép đội: Bốc thăm ngẫu nhiên hoặc Xếp thủ công.'
+                          : 'After creation, organizers can choose: Random draw or Manual pairing.'
+                        }
                       </p>
                     </div>
                   </div>
@@ -510,7 +514,7 @@ export default function TeamMatchSetup() {
             disabled={step === 1}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Quay lại
+            {t.quickTable.back}
           </Button>
 
           {step < 4 ? (
@@ -518,12 +522,12 @@ export default function TeamMatchSetup() {
               onClick={() => setStep((s) => (s + 1) as Step)}
               disabled={!canProceed()}
             >
-              Tiếp tục
+              {t.quickTable.continue}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
             <Button onClick={handleSubmit} disabled={isCreating}>
-              {isCreating ? 'Đang tạo...' : 'Tạo giải đấu'}
+              {isCreating ? t.teamMatch.setup.creating : t.teamMatch.setup.createBtn}
               <Check className="h-4 w-4 ml-2" />
             </Button>
           )}

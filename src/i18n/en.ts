@@ -1072,6 +1072,13 @@ export const en: Translations = {
       thirdPlaceMatchDesc: "Semifinal losers will play for 3rd place",
       creating: "Creating...",
       createBtn: "Create tournament",
+      shuffled: "Shuffled team order",
+      nameRequired: "Please enter tournament name",
+      need32Teams: "Need at least 32 teams",
+      createError: "Error creating tournament",
+      addTeamsError: "Error adding teams",
+      bracketError: "Error generating bracket",
+      createSuccess: "Tournament created!",
       hints: {
         byeCount: "{count} teams get a BYE to R2",
         r1Matches: "{count} matches in R1",

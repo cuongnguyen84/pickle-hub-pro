@@ -1067,6 +1067,13 @@ export interface Translations {
       thirdPlaceMatchDesc: string;
       creating: string;
       createBtn: string;
+      shuffled: string;
+      nameRequired: string;
+      need32Teams: string;
+      createError: string;
+      addTeamsError: string;
+      bracketError: string;
+      createSuccess: string;
       hints: {
         byeCount: string;
         r1Matches: string;
@@ -2167,6 +2174,13 @@ export const vi: Translations = {
       thirdPlaceMatchDesc: "Đội thua bán kết sẽ đấu tranh hạng 3",
       creating: "Đang tạo...",
       createBtn: "Tạo giải đấu",
+      shuffled: "Đã xáo trộn thứ tự đội",
+      nameRequired: "Vui lòng nhập tên giải đấu",
+      need32Teams: "Cần ít nhất 32 đội",
+      createError: "Lỗi tạo giải đấu",
+      addTeamsError: "Lỗi thêm đội",
+      bracketError: "Lỗi tạo bracket",
+      createSuccess: "Tạo giải đấu thành công!",
       hints: {
         byeCount: "{count} đội được BYE vào R2",
         r1Matches: "{count} trận ở R1",
