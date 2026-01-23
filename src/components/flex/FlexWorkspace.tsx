@@ -102,24 +102,33 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
     const sourceData = active.data.current;
     const targetId = over.id as string;
+    const activeIdStr = String(active.id);
     
-    // Ensure type is correctly set - fallback to parsing from active.id
-    const itemType: 'player' | 'team' = sourceData.type || 
-      (typeof active.id === 'string' && active.id.startsWith('team-') ? 'team' : 'player');
+    // Parse item type and id from active.id (format: "player-{uuid}" or "team-{uuid}")
+    let itemType: 'player' | 'team' = 'player';
+    let itemId: string = sourceData.id;
+    
+    if (activeIdStr.startsWith('team-')) {
+      itemType = 'team';
+      itemId = activeIdStr.substring(5); // Remove "team-" prefix
+    } else if (activeIdStr.startsWith('player-')) {
+      itemType = 'player';
+      itemId = activeIdStr.substring(7); // Remove "player-" prefix
+    }
 
     // Handle drop on team
     if (targetId.startsWith('team-drop-')) {
       const teamId = targetId.replace('team-drop-', '');
       if (itemType === 'player') {
         // Check for duplicate
-        if (isPlayerInTeam(sourceData.id, teamId)) {
+        if (isPlayerInTeam(itemId, teamId)) {
           toast({ 
             title: "VĐV đã có trong đội này",
             variant: "destructive" 
           });
           return;
         }
-        await addPlayerToTeam(teamId, sourceData.id);
+        await addPlayerToTeam(teamId, itemId);
         onRefresh();
       }
       return;
@@ -140,14 +149,14 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       }
       
       // Check for duplicate
-      if (isItemInGroup(itemType, sourceData.id, groupId)) {
+      if (isItemInGroup(itemType, itemId, groupId)) {
         toast({ 
           title: t.tools.flexTournament.duplicateInGroup,
           variant: "destructive" 
         });
         return;
       }
-      await addItemToGroup(groupId, itemType, sourceData.id, data.groupItems.length);
+      await addItemToGroup(groupId, itemType, itemId, data.groupItems.length);
       onRefresh();
       return;
     }
@@ -168,7 +177,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       
       if (itemType === 'player') {
         // Check for duplicate player in same match
-        if (isPlayerInMatch(sourceData.id, match)) {
+        if (isPlayerInMatch(itemId, match)) {
           toast({ 
             title: "VĐV đã có trong trận này",
             variant: "destructive" 
@@ -176,19 +185,19 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
           return;
         }
 
-        if (slot === 'a1') updates.slot_a1_player_id = sourceData.id;
-        else if (slot === 'a2') updates.slot_a2_player_id = sourceData.id;
-        else if (slot === 'b1') updates.slot_b1_player_id = sourceData.id;
-        else if (slot === 'b2') updates.slot_b2_player_id = sourceData.id;
+        if (slot === 'a1') updates.slot_a1_player_id = itemId;
+        else if (slot === 'a2') updates.slot_a2_player_id = itemId;
+        else if (slot === 'b1') updates.slot_b1_player_id = itemId;
+        else if (slot === 'b2') updates.slot_b2_player_id = itemId;
 
         // Auto-add player to single group
-        await autoAddToSingleGroup('player', sourceData.id);
+        await autoAddToSingleGroup('player', itemId);
       } else if (itemType === 'team') {
-        if (slot === 'a1') updates.slot_a_team_id = sourceData.id;
-        else if (slot === 'b1') updates.slot_b_team_id = sourceData.id;
+        if (slot === 'a1') updates.slot_a_team_id = itemId;
+        else if (slot === 'b1') updates.slot_b_team_id = itemId;
 
         // Auto-add team to single group
-        await autoAddToSingleGroup('team', sourceData.id);
+        await autoAddToSingleGroup('team', itemId);
       }
 
       if (Object.keys(updates).length > 0) {
