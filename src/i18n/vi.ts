@@ -255,6 +255,10 @@ export interface Translations {
       updateSuccess: string;
       generating: string;
       rrGenerated: string;
+      duplicatePlayer: string;
+      duplicateInTeam: string;
+      duplicateInGroup: string;
+      duplicateInMatch: string;
     };
   };
   auth: {
@@ -1424,6 +1428,10 @@ export const vi: Translations = {
       updateSuccess: "Đã cập nhật",
       generating: "Đang tạo...",
       rrGenerated: "Đã tạo lịch vòng tròn",
+      duplicatePlayer: "Tên VĐV này đã tồn tại",
+      duplicateInTeam: "VĐV này đã có trong đội này",
+      duplicateInGroup: "VĐV/Đội này đã có trong bảng này",
+      duplicateInMatch: "VĐV này đã có trong trận này",
     },
   },
   auth: {

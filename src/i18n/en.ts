@@ -257,6 +257,10 @@ export const en: Translations = {
       updateSuccess: "Updated successfully",
       generating: "Generating...",
       rrGenerated: "Round robin matches generated",
+      duplicatePlayer: "This player name already exists",
+      duplicateInTeam: "This player is already in this team",
+      duplicateInGroup: "This player/team is already in this group",
+      duplicateInMatch: "This player is already in this match",
     },
   },
   auth: {
