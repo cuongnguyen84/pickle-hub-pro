@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
+import { DynamicMeta } from '@/components/seo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -156,6 +157,7 @@ export default function TeamMatchSetup() {
 
   return (
     <MainLayout>
+      <DynamicMeta title="Tạo giải đấu đồng đội MLP" noindex={true} />
       <div className="container max-w-3xl py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">

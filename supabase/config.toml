@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.og-video]
 verify_jwt = false
+
+[functions.og-tournament]
+verify_jwt = false
+
+[functions.og-organization]
+verify_jwt = false

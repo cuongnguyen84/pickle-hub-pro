@@ -7,6 +7,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useDeleteAccount } from "@/hooks/useDeleteAccount";
 import { useI18n } from "@/i18n";
 import MainLayout from "@/components/layout/MainLayout";
+import { DynamicMeta } from "@/components/seo";
 import { UserAvatar } from "@/components/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,6 +122,7 @@ const Account = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta title="Tài khoản" noindex={true} />
       <div className="container-narrow py-8">
         <div className="max-w-md mx-auto">
           {/* Profile Card */}

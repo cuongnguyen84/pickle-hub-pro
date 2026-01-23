@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { DynamicMeta } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -514,6 +515,7 @@ export default function DoublesEliminationScoring() {
 
   return (
     <div className="min-h-screen bg-background">
+      <DynamicMeta title={`Chấm điểm - ${teamA.team_name} vs ${teamB.team_name}`} noindex={true} />
       <div className="container max-w-lg mx-auto py-6 px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
