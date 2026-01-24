@@ -35,6 +35,12 @@ interface GroupSelectorProps {
   onUpdateMatchScore: (matchId: string, scoreA: number, scoreB: number) => void;
   onClearMatchSlot: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => void;
   onToggleMatchCountsForStandings: (matchId: string, counts: boolean) => void;
+  // Child match handlers for team matches in groups
+  onAddChildMatch?: (parentMatchId: string) => void;
+  onUpdateChildMatchScore?: (matchId: string, scoreA: number, scoreB: number) => void;
+  onClearChildMatchSlot?: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => void;
+  onDeleteChildMatch?: (matchId: string) => void;
+  getChildMatches?: (parentMatchId: string) => FlexMatch[];
 }
 
 export function GroupSelector({
@@ -59,6 +65,11 @@ export function GroupSelector({
   onUpdateMatchScore,
   onClearMatchSlot,
   onToggleMatchCountsForStandings,
+  onAddChildMatch,
+  onUpdateChildMatchScore,
+  onClearChildMatchSlot,
+  onDeleteChildMatch,
+  getChildMatches,
 }: GroupSelectorProps) {
   const { t } = useI18n();
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
@@ -443,7 +454,7 @@ export function GroupSelector({
                   <Swords className="w-3 h-3" />
                   {t.tools.flexTournament.tabMatches}: {selectedGroupMatches.length}
                 </div>
-                {selectedGroupMatches.map(match => (
+                {selectedGroupMatches.filter(m => !m.parent_match_id).map(match => (
                   <MatchBlock
                     key={match.id}
                     match={match}
@@ -454,11 +465,16 @@ export function GroupSelector({
                     isCreator={isCreator}
                     hasGroups={groups.length > 0}
                     isTeamMatch={groupType === 'team'}
+                    childMatches={getChildMatches?.(match.id) || []}
                     onUpdateName={(name) => onUpdateMatchName(match.id, name)}
                     onDelete={() => onDeleteMatch(match.id)}
                     onUpdateScore={(scoreA, scoreB) => onUpdateMatchScore(match.id, scoreA, scoreB)}
                     onClearSlot={(slot) => onClearMatchSlot(match.id, slot)}
                     onToggleCountsForStandings={(counts) => onToggleMatchCountsForStandings(match.id, counts)}
+                    onAddChildMatch={onAddChildMatch ? () => onAddChildMatch(match.id) : undefined}
+                    onUpdateChildMatchScore={onUpdateChildMatchScore}
+                    onClearChildMatchSlot={onClearChildMatchSlot}
+                    onDeleteChildMatch={onDeleteChildMatch}
                   />
                 ))}
               </div>

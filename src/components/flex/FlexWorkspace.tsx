@@ -251,24 +251,28 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [data.tournament.id, data.groups, addGroup, onRefresh]);
 
-  // Create a new match - context-aware based on selected group
+  // Create a new match - context-aware based on active tab
   const handleAddMatch = useCallback(async () => {
     const matchNumber = data.matches.length + 1;
     
-    // If a group is selected and we're on groups tab, link match to that group
+    // If on "matches" tab, create standalone match without group
+    // If on "groups" tab with a selected group, link match to that group
     const groupId = activeTab === 'groups' && selectedGroupId ? selectedGroupId : null;
     const group = groupId ? data.groups.find(g => g.id === groupId) : null;
     const groupType = groupId ? getGroupItemType(groupId) : null;
     
     // Determine match name
-    const matchName = group 
-      ? `${group.name} - Trận ${data.matches.filter(m => m.group_id === groupId).length + 1}`
-      : `Trận ${matchNumber}`;
+    let matchName: string;
+    if (group) {
+      matchName = `${group.name} - Trận ${data.matches.filter(m => m.group_id === groupId).length + 1}`;
+    } else {
+      // For standalone matches in "Trận đấu" tab, count only standalone matches
+      const standaloneCount = data.matches.filter(m => !m.group_id && !m.parent_match_id).length;
+      matchName = `Trận ${standaloneCount + 1}`;
+    }
     
-    // If group is team-based, create 'team_match' type, otherwise 'doubles' for players
-    // We use 'doubles' for player matches (4 slots) and 'singles' flag won't be used anymore
-    // Instead we'll detect team matches by checking slot_a_team_id / slot_b_team_id
-    const matchType = groupType === 'team' ? 'singles' : 'doubles'; // singles = 2 slots, doubles = 4 slots
+    // If group is team-based, create 'singles' type (2 team slots)
+    const matchType = groupType === 'team' ? 'singles' : 'doubles';
     
     await addMatch(data.tournament.id, matchName, matchType, groupId, getNextDisplayOrder(data.matches));
     onRefresh();
@@ -447,6 +451,11 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   const sortedTeams = [...data.teams].sort((a, b) => a.display_order - b.display_order);
   const sortedGroups = [...data.groups].sort((a, b) => a.display_order - b.display_order);
   // Filter out child matches (they're displayed inside their parent)
+  // Also filter out matches that belong to a group (they show in group view)
+  const standaloneMatches = [...data.matches]
+    .filter(m => !m.parent_match_id && !m.group_id)
+    .sort((a, b) => a.display_order - b.display_order);
+
   const sortedMatches = [...data.matches]
     .filter(m => !m.parent_match_id)
     .sort((a, b) => a.display_order - b.display_order);
@@ -489,7 +498,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                 {t.tools.flexTournament.tabGroups} ({sortedGroups.length})
               </TabsTrigger>
               <TabsTrigger value="matches" className="text-xs">
-                {t.tools.flexTournament.tabMatches} ({sortedMatches.length})
+                {t.tools.flexTournament.tabMatches} ({standaloneMatches.length})
               </TabsTrigger>
             </TabsList>
 
@@ -534,12 +543,17 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                 onUpdateMatchScore={handleUpdateMatchScore}
                 onClearMatchSlot={handleClearSlot}
                 onToggleMatchCountsForStandings={handleToggleCountsForStandings}
+                onAddChildMatch={handleAddChildMatch}
+                onUpdateChildMatchScore={handleUpdateChildMatchScore}
+                onClearChildMatchSlot={handleClearChildMatchSlot}
+                onDeleteChildMatch={handleDeleteChildMatch}
+                getChildMatches={getChildMatches}
               />
             </TabsContent>
 
             <TabsContent value="matches" className="mt-3 space-y-3">
-              {sortedMatches.length > 0 ? (
-                sortedMatches.map(match => (
+              {standaloneMatches.length > 0 ? (
+                standaloneMatches.map(match => (
                   <MatchBlock
                     key={match.id}
                     match={match}
@@ -556,10 +570,6 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                     onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                     onClearSlot={(slot) => handleClearSlot(match.id, slot)}
                     onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
-                    onAddChildMatch={() => handleAddChildMatch(match.id)}
-                    onUpdateChildMatchScore={handleUpdateChildMatchScore}
-                    onClearChildMatchSlot={handleClearChildMatchSlot}
-                    onDeleteChildMatch={handleDeleteChildMatch}
                   />
                 ))
               ) : (
@@ -700,13 +710,18 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
               onUpdateMatchScore={handleUpdateMatchScore}
               onClearMatchSlot={handleClearSlot}
               onToggleMatchCountsForStandings={handleToggleCountsForStandings}
+              onAddChildMatch={handleAddChildMatch}
+              onUpdateChildMatchScore={handleUpdateChildMatchScore}
+              onClearChildMatchSlot={handleClearChildMatchSlot}
+              onDeleteChildMatch={handleDeleteChildMatch}
+              getChildMatches={getChildMatches}
             />
           )}
 
-          {/* Matches row */}
-          {sortedMatches.length > 0 && (
+          {/* Matches row - standalone matches only (not in groups) */}
+          {standaloneMatches.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {sortedMatches.map(match => (
+              {standaloneMatches.map(match => (
                 <MatchBlock
                   key={match.id}
                   match={match}
@@ -723,10 +738,6 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                   onClearSlot={(slot) => handleClearSlot(match.id, slot)}
                   onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
-                  onAddChildMatch={() => handleAddChildMatch(match.id)}
-                  onUpdateChildMatchScore={handleUpdateChildMatchScore}
-                  onClearChildMatchSlot={handleClearChildMatchSlot}
-                  onDeleteChildMatch={handleDeleteChildMatch}
                 />
               ))}
             </div>

@@ -14,8 +14,8 @@ export function FloatingAddMatchButton({ onClick, isCreator }: FloatingAddMatchB
 
   return (
     <Button
-      size="lg"
-      className="fixed bottom-36 right-4 z-40 h-12 w-12 rounded-full shadow-lg"
+      size="icon"
+      className="fixed bottom-36 right-4 z-40 h-14 w-14 rounded-full shadow-lg"
       onClick={onClick}
       title={t.tools.flexTournament.addMatch}
     >
