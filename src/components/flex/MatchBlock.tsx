@@ -222,9 +222,7 @@ export function MatchBlock({
                 {match.name}
               </CardTitle>
             )}
-            <Badge variant="secondary" className="text-xs flex-shrink-0">
-              {isDoubles ? t.tools.flexTournament.matchType.doubles : t.tools.flexTournament.matchType.singles}
-            </Badge>
+            {/* Removed "Đơn/Đôi" badge per user request */}
             {groupName && (
               <Badge variant="outline" className="text-xs flex-shrink-0">
                 {groupName}
@@ -415,7 +413,7 @@ export function MatchBlock({
                 <Button variant="ghost" size="sm" className="w-full justify-between text-xs h-7">
                   <span className="flex items-center gap-1">
                     <Swords className="w-3 h-3" />
-                    {t.tools.flexTournament.childMatches}: {childMatches.length}
+                    {t.tools.flexTournament.childMatches} ({childMatches.length})
                   </span>
                   <ChevronDown className={cn("w-3 h-3 transition-transform", isChildrenOpen && "rotate-180")} />
                 </Button>

@@ -124,12 +124,16 @@ export function GroupBlock({
 
   // Get team stats from TEAM MATCHES (parent matches with slot_a_team_id/slot_b_team_id)
   // Each team match = 1 win or 1 loss for the team
+  // IMPORTANT: Only count matches that belong to THIS group
   const getTeamStats = (teamId: string) => {
     let wins = 0;
     let losses = 0;
     let pointDiff = 0;
     
     for (const match of matches) {
+      // CRITICAL: Only count matches in THIS group
+      if (match.group_id !== group.id) continue;
+      
       // Only count team matches (with team assignments)
       if (!match.slot_a_team_id && !match.slot_b_team_id) continue;
       
