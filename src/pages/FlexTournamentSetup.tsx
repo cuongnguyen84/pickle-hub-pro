@@ -29,7 +29,7 @@ const FlexTournamentSetup = () => {
     e.preventDefault();
     
     if (!name.trim()) {
-      toast({ title: t.common.error, description: "Please enter tournament name", variant: "destructive" });
+      toast({ title: t.common.error, description: t.tools.flexTournament.tournamentName, variant: "destructive" });
       return;
     }
 

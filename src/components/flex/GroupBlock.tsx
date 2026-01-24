@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Grid3X3, Trash2, X, RefreshCw, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember, FlexMatch } from '@/hooks/useFlexTournament';
 
 interface GroupBlockProps {
@@ -70,7 +70,7 @@ export function GroupBlock({
   }, [items, teams]);
 
   // Initialize selectedTeamIds when teams change
-  useMemo(() => {
+  useEffect(() => {
     if (teamsInGroup.length > 0 && selectedTeamIds.length === 0) {
       setSelectedTeamIds(teamsInGroup.map(t => t.id));
     }
