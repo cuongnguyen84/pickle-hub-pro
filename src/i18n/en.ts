@@ -282,6 +282,7 @@ export const en: Translations = {
       childMatch: "Match",
       addChildMatch: "+ Individual Match",
       childMatches: "Individual Matches",
+      selectPlayer: "Select player",
     },
   },
   auth: {

@@ -30,6 +30,7 @@ interface MatchBlockProps {
   onAddChildMatch?: () => void;
   onUpdateChildMatchScore?: (matchId: string, scoreA: number, scoreB: number) => void;
   onClearChildMatchSlot?: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => void;
+  onSelectChildMatchPlayer?: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2', playerId: string) => void;
   onDeleteChildMatch?: (matchId: string) => void;
 }
 
@@ -123,6 +124,7 @@ export function MatchBlock({
   onAddChildMatch,
   onUpdateChildMatchScore,
   onClearChildMatchSlot,
+  onSelectChildMatchPlayer,
   onDeleteChildMatch,
 }: MatchBlockProps) {
   const { t } = useI18n();
@@ -421,10 +423,12 @@ export function MatchBlock({
                     players={players}
                     teams={teams}
                     teamMembers={teamMembers}
+                    parentMatch={match}
                     isCreator={isCreator}
                     matchIndex={idx + 1}
                     onUpdateScore={(scoreA, scoreB) => onUpdateChildMatchScore?.(childMatch.id, scoreA, scoreB)}
                     onClearSlot={(slot) => onClearChildMatchSlot?.(childMatch.id, slot)}
+                    onSelectPlayer={(slot, playerId) => onSelectChildMatchPlayer?.(childMatch.id, slot, playerId)}
                     onDelete={() => onDeleteChildMatch?.(childMatch.id)}
                   />
                 ))}
