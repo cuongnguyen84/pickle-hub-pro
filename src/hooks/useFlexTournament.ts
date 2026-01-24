@@ -61,6 +61,7 @@ export interface FlexMatch {
   id: string;
   tournament_id: string;
   group_id: string | null;
+  parent_match_id: string | null;
   name: string;
   match_type: 'singles' | 'doubles';
   slot_a1_player_id: string | null;
@@ -401,7 +402,8 @@ export function useFlexTournament() {
     name: string,
     matchType: 'singles' | 'doubles',
     groupId: string | null,
-    displayOrder: number
+    displayOrder: number,
+    parentMatchId?: string | null
   ): Promise<FlexMatch | null> {
     const { data, error } = await supabase
       .from('flex_matches')
@@ -411,6 +413,7 @@ export function useFlexTournament() {
         match_type: matchType,
         group_id: groupId,
         display_order: displayOrder,
+        parent_match_id: parentMatchId || null,
       })
       .select()
       .single();
@@ -420,6 +423,24 @@ export function useFlexTournament() {
       return null;
     }
     return data as FlexMatch;
+  }
+
+  // Update parent match score based on child matches (count wins)
+  async function updateParentMatchScore(parentMatchId: string, childMatches: FlexMatch[]): Promise<boolean> {
+    const teamAWins = childMatches.filter(m => m.winner_side === 'a').length;
+    const teamBWins = childMatches.filter(m => m.winner_side === 'b').length;
+    const winnerSide = teamAWins > teamBWins ? 'a' : teamBWins > teamAWins ? 'b' : null;
+    
+    const { error } = await supabase
+      .from('flex_matches')
+      .update({ score_a: teamAWins, score_b: teamBWins, winner_side: winnerSide })
+      .eq('id', parentMatchId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return false;
+    }
+    return true;
   }
 
   // Update match slots
@@ -591,6 +612,7 @@ export function useFlexTournament() {
     updateMatchSlots,
     updateMatchScore,
     updateMatchCountsForStandings,
+    updateParentMatchScore,
     deleteEntity,
     updateEntityName,
     updateTournamentVisibility,

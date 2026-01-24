@@ -277,6 +277,9 @@ export interface Translations {
       selectTeamsToShow: string;
       allTeams: string;
       noPairStats: string;
+      childMatch: string;
+      addChildMatch: string;
+      childMatches: string;
     };
   };
   auth: {
@@ -1468,6 +1471,9 @@ export const vi: Translations = {
       selectTeamsToShow: "Chọn đội để hiển thị thành tích cá nhân",
       allTeams: "Tất cả",
       noPairStats: "Chưa có thống kê cặp đôi",
+      childMatch: "Trận",
+      addChildMatch: "+ Trận cá nhân",
+      childMatches: "Trận cá nhân",
     },
   },
   auth: {

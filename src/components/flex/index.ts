@@ -5,6 +5,8 @@ export * from './TeamBlock';
 export * from './GroupBlock';
 export * from './GroupSelector';
 export * from './MatchBlock';
+export * from './ChildMatchBlock';
 export * from './FlexWorkspace';
 export * from './TeamSelector';
 export * from './FloatingPlayerPanel';
+export * from './FloatingAddMatchButton';
