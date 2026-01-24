@@ -1465,7 +1465,7 @@ export const vi: Translations = {
       wins: "thắng",
       tabTeams: "Đội",
       tabGroups: "Bảng",
-      tabMatches: "Trận",
+      tabMatches: "Trận đấu",
       groupTabTeams: "Đội",
       groupTabIndividuals: "Cá nhân",
       selectTeamsToShow: "Chọn đội để hiển thị thành tích cá nhân",
