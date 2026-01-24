@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Swords, Trash2, X, User, Users, ChevronDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, forwardRef } from 'react';
 import { ChildMatchBlock } from './ChildMatchBlock';
 import type { FlexMatch, FlexPlayer, FlexTeam, FlexTeamMember, FlexGroup } from '@/hooks/useFlexTournament';
 

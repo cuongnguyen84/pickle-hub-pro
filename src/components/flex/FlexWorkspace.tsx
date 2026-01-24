@@ -128,7 +128,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
         // Check for duplicate
         if (isPlayerInTeam(itemId, teamId)) {
           toast({ 
-            title: "VĐV đã có trong đội này",
+            title: t.tools.flexTournament.duplicateInTeam,
             variant: "destructive" 
           });
           return;
@@ -184,7 +184,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
         // Check for duplicate player in same match
         if (isPlayerInMatch(itemId, match)) {
           toast({ 
-            title: "VĐV đã có trong trận này",
+            title: t.tools.flexTournament.duplicateInMatch,
             variant: "destructive" 
           });
           return;
@@ -224,7 +224,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     // Validate duplicate
     if (isDuplicatePlayerName(name)) {
       toast({ 
-        title: "Tên VĐV đã tồn tại",
+        title: t.tools.flexTournament.duplicatePlayer,
         variant: "destructive" 
       });
       return;
