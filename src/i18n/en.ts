@@ -279,6 +279,9 @@ export const en: Translations = {
       selectTeamsToShow: "Select teams to show individual stats",
       allTeams: "All",
       noPairStats: "No pair stats yet",
+      childMatch: "Match",
+      addChildMatch: "+ Individual Match",
+      childMatches: "Individual Matches",
     },
   },
   auth: {

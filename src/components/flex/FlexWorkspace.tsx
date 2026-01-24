@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { useI18n } from '@/i18n';
 import { PlayerPool } from './PlayerPool';
 import { FloatingPlayerPanel } from './FloatingPlayerPanel';
+import { FloatingAddMatchButton } from './FloatingAddMatchButton';
 import { ActionButtons } from './ActionButtons';
 import { TeamBlock } from './TeamBlock';
 import { TeamSelector } from './TeamSelector';
@@ -10,7 +11,7 @@ import { GroupBlock } from './GroupBlock';
 import { GroupSelector } from './GroupSelector';
 import { MatchBlock } from './MatchBlock';
 import { DraggablePlayer } from './DraggablePlayer';
-import { useFlexTournament, type FlexTournamentData } from '@/hooks/useFlexTournament';
+import { useFlexTournament, type FlexTournamentData, type FlexMatch } from '@/hooks/useFlexTournament';
 import { useFlexStats } from '@/hooks/useFlexStats';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -38,6 +39,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     updateMatchSlots,
     updateMatchScore,
     updateMatchCountsForStandings,
+    updateParentMatchScore,
     deleteEntity,
     updateEntityName,
     generateRoundRobinMatches,
@@ -343,6 +345,71 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [updateGroupIncludeDoubles, onRefresh]);
 
+  // Child match handlers for team matches
+  const handleAddChildMatch = useCallback(async (parentMatchId: string) => {
+    const parentMatch = data.matches.find(m => m.id === parentMatchId);
+    if (!parentMatch) return;
+    
+    const childCount = data.matches.filter(m => m.parent_match_id === parentMatchId).length;
+    const matchName = `Trận ${childCount + 1}`;
+    
+    await addMatch(data.tournament.id, matchName, 'doubles', parentMatch.group_id, childCount, parentMatchId);
+    onRefresh();
+  }, [data.tournament.id, data.matches, addMatch, onRefresh]);
+
+  const handleUpdateChildMatchScore = useCallback(async (matchId: string, scoreA: number, scoreB: number) => {
+    await updateMatchScore(matchId, scoreA, scoreB);
+    
+    // Find child match and update parent score
+    const childMatch = data.matches.find(m => m.id === matchId);
+    if (childMatch?.parent_match_id) {
+      const siblingMatches = data.matches.filter(m => m.parent_match_id === childMatch.parent_match_id);
+      // Update the sibling's score in memory before recalculating
+      const updatedSiblings = siblingMatches.map(m => 
+        m.id === matchId 
+          ? { ...m, score_a: scoreA, score_b: scoreB, winner_side: scoreA > scoreB ? 'a' as const : scoreB > scoreA ? 'b' as const : null }
+          : m
+      );
+      await updateParentMatchScore(childMatch.parent_match_id, updatedSiblings);
+    }
+    
+    // Recompute group stats if in a group
+    if (childMatch?.group_id) {
+      await recomputeGroupStats(childMatch.group_id);
+    }
+    
+    onRefresh();
+  }, [updateMatchScore, updateParentMatchScore, data.matches, recomputeGroupStats, onRefresh]);
+
+  const handleClearChildMatchSlot = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => {
+    const updates: any = {};
+    if (slot === 'a1') updates.slot_a1_player_id = null;
+    else if (slot === 'a2') updates.slot_a2_player_id = null;
+    else if (slot === 'b1') updates.slot_b1_player_id = null;
+    else if (slot === 'b2') updates.slot_b2_player_id = null;
+
+    await updateMatchSlots(matchId, updates);
+    onRefresh();
+  }, [updateMatchSlots, onRefresh]);
+
+  const handleDeleteChildMatch = useCallback(async (matchId: string) => {
+    const childMatch = data.matches.find(m => m.id === matchId);
+    await deleteEntity('flex_matches', matchId);
+    
+    // Recalculate parent score after deletion
+    if (childMatch?.parent_match_id) {
+      const remainingSiblings = data.matches.filter(m => m.parent_match_id === childMatch.parent_match_id && m.id !== matchId);
+      await updateParentMatchScore(childMatch.parent_match_id, remainingSiblings);
+    }
+    
+    onRefresh();
+  }, [deleteEntity, updateParentMatchScore, data.matches, onRefresh]);
+
+  // Get child matches for a parent match
+  const getChildMatches = useCallback((parentMatchId: string): FlexMatch[] => {
+    return data.matches.filter(m => m.parent_match_id === parentMatchId).sort((a, b) => a.display_order - b.display_order);
+  }, [data.matches]);
+
   const handleGenerateRR = useCallback(async (groupId: string) => {
     const group = data.groups.find(g => g.id === groupId);
     if (!group) return;
@@ -379,9 +446,17 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   // Sort items by display_order (negative = newer = first)
   const sortedTeams = [...data.teams].sort((a, b) => a.display_order - b.display_order);
   const sortedGroups = [...data.groups].sort((a, b) => a.display_order - b.display_order);
-  const sortedMatches = [...data.matches].sort((a, b) => a.display_order - b.display_order);
+  // Filter out child matches (they're displayed inside their parent)
+  const sortedMatches = [...data.matches]
+    .filter(m => !m.parent_match_id)
+    .sort((a, b) => a.display_order - b.display_order);
 
   const hasContent = data.teams.length > 0 || data.groups.length > 0 || data.matches.length > 0;
+
+  // Check if a match is a team match (has teams assigned)
+  const isTeamMatch = (match: FlexMatch): boolean => {
+    return !!(match.slot_a_team_id || match.slot_b_team_id);
+  };
 
   // Mobile layout: tabs for Teams/Groups/Matches
   if (isMobile) {
@@ -474,11 +549,17 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                     groups={data.groups}
                     isCreator={isCreator}
                     hasGroups={data.groups.length > 0}
+                    isTeamMatch={isTeamMatch(match)}
+                    childMatches={getChildMatches(match.id)}
                     onUpdateName={(name) => handleUpdateMatchName(match.id, name)}
                     onDelete={() => handleDeleteMatch(match.id)}
                     onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                     onClearSlot={(slot) => handleClearSlot(match.id, slot)}
                     onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
+                    onAddChildMatch={() => handleAddChildMatch(match.id)}
+                    onUpdateChildMatchScore={handleUpdateChildMatchScore}
+                    onClearChildMatchSlot={handleClearChildMatchSlot}
+                    onDeleteChildMatch={handleDeleteChildMatch}
                   />
                 ))
               ) : (
@@ -508,6 +589,13 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
           onAddPlayer={handleAddPlayer}
           isCreator={isCreator}
           isDragging={!!activeId}
+        />
+
+        {/* Floating Add Match Button */}
+        {/* Floating Add Match Button */}
+        <FloatingAddMatchButton
+          onClick={handleAddMatch}
+          isCreator={isCreator}
         />
 
         {/* Drag overlay */}
@@ -628,11 +716,17 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   groups={data.groups}
                   isCreator={isCreator}
                   hasGroups={data.groups.length > 0}
+                  isTeamMatch={isTeamMatch(match)}
+                  childMatches={getChildMatches(match.id)}
                   onUpdateName={(name) => handleUpdateMatchName(match.id, name)}
                   onDelete={() => handleDeleteMatch(match.id)}
                   onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                   onClearSlot={(slot) => handleClearSlot(match.id, slot)}
                   onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
+                  onAddChildMatch={() => handleAddChildMatch(match.id)}
+                  onUpdateChildMatchScore={handleUpdateChildMatchScore}
+                  onClearChildMatchSlot={handleClearChildMatchSlot}
+                  onDeleteChildMatch={handleDeleteChildMatch}
                 />
               ))}
             </div>

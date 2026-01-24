@@ -560,6 +560,7 @@ export type Database = {
           id: string
           match_type: string
           name: string
+          parent_match_id: string | null
           score_a: number | null
           score_b: number | null
           slot_a_team_id: string | null
@@ -580,6 +581,7 @@ export type Database = {
           id?: string
           match_type?: string
           name: string
+          parent_match_id?: string | null
           score_a?: number | null
           score_b?: number | null
           slot_a_team_id?: string | null
@@ -600,6 +602,7 @@ export type Database = {
           id?: string
           match_type?: string
           name?: string
+          parent_match_id?: string | null
           score_a?: number | null
           score_b?: number | null
           slot_a_team_id?: string | null
@@ -618,6 +621,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "flex_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flex_matches_parent_match_id_fkey"
+            columns: ["parent_match_id"]
+            isOneToOne: false
+            referencedRelation: "flex_matches"
             referencedColumns: ["id"]
           },
           {

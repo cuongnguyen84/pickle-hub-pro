@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Swords, Trash2, X, User, Users } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Swords, Trash2, X, User, Users, ChevronDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo } from 'react';
+import { ChildMatchBlock } from './ChildMatchBlock';
 import type { FlexMatch, FlexPlayer, FlexTeam, FlexTeamMember, FlexGroup } from '@/hooks/useFlexTournament';
 
 interface MatchBlockProps {
@@ -19,11 +21,16 @@ interface MatchBlockProps {
   isCreator: boolean;
   hasGroups: boolean;
   isTeamMatch?: boolean; // True when this is a team vs team match (show 2 team slots instead of 4 player slots)
+  childMatches?: FlexMatch[]; // Child matches for team matches
   onUpdateName: (name: string) => void;
   onDelete: () => void;
   onUpdateScore: (scoreA: number, scoreB: number) => void;
   onClearSlot: (slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => void;
   onToggleCountsForStandings: (counts: boolean) => void;
+  onAddChildMatch?: () => void;
+  onUpdateChildMatchScore?: (matchId: string, scoreA: number, scoreB: number) => void;
+  onClearChildMatchSlot?: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => void;
+  onDeleteChildMatch?: (matchId: string) => void;
 }
 
 interface DroppableSlotProps {
@@ -107,17 +114,27 @@ export function MatchBlock({
   isCreator,
   hasGroups,
   isTeamMatch = false,
+  childMatches = [],
   onUpdateName,
   onDelete,
   onUpdateScore,
   onClearSlot,
   onToggleCountsForStandings,
+  onAddChildMatch,
+  onUpdateChildMatchScore,
+  onClearChildMatchSlot,
+  onDeleteChildMatch,
 }: MatchBlockProps) {
   const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(match.name);
   const [scoreA, setScoreA] = useState(match.score_a.toString());
   const [scoreB, setScoreB] = useState(match.score_b.toString());
+  const [isChildrenOpen, setIsChildrenOpen] = useState(true);
+
+  // Check if this is a team match with child matches
+  const hasChildMatches = childMatches.length > 0;
+  const isTeamMatchWithTeams = isTeamMatch && (match.slot_a_team_id || match.slot_b_team_id);
 
   // Helper: find team that contains a player
   const getPlayerTeam = (playerId: string): FlexTeam | null => {
@@ -380,6 +397,53 @@ export function MatchBlock({
               })()} {t.tools.flexTournament.wins}
             </Badge>
           </div>
+        )}
+
+        {/* Child matches section - for team matches */}
+        {isTeamMatchWithTeams && (
+          <Collapsible open={isChildrenOpen} onOpenChange={setIsChildrenOpen}>
+            <div className="border-t pt-2 mt-2">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between text-xs h-7">
+                  <span className="flex items-center gap-1">
+                    <Swords className="w-3 h-3" />
+                    {t.tools.flexTournament.childMatches}: {childMatches.length}
+                  </span>
+                  <ChevronDown className={cn("w-3 h-3 transition-transform", isChildrenOpen && "rotate-180")} />
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="space-y-2 mt-2">
+                {childMatches.map((childMatch, idx) => (
+                  <ChildMatchBlock
+                    key={childMatch.id}
+                    match={childMatch}
+                    players={players}
+                    teams={teams}
+                    teamMembers={teamMembers}
+                    isCreator={isCreator}
+                    matchIndex={idx + 1}
+                    onUpdateScore={(scoreA, scoreB) => onUpdateChildMatchScore?.(childMatch.id, scoreA, scoreB)}
+                    onClearSlot={(slot) => onClearChildMatchSlot?.(childMatch.id, slot)}
+                    onDelete={() => onDeleteChildMatch?.(childMatch.id)}
+                  />
+                ))}
+                
+                {/* Add child match button */}
+                {isCreator && onAddChildMatch && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs h-8"
+                    onClick={onAddChildMatch}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    {t.tools.flexTournament.addChildMatch}
+                  </Button>
+                )}
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         )}
       </CardContent>
     </Card>
