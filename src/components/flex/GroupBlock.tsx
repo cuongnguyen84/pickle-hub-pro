@@ -176,7 +176,7 @@ export function GroupBlock({
       if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
       return statsB.point_diff - statsA.point_diff;
     });
-  }, [teamsInGroup, matches]);
+  }, [teamsInGroup, matches, group.id]);
 
   // Get players from selected teams for individual tab
   const playersFromSelectedTeams = useMemo(() => {
