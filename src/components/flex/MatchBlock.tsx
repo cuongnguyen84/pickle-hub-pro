@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Swords, Trash2, X, User, Users, ChevronDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChildMatchBlock } from './ChildMatchBlock';
 import type { FlexMatch, FlexPlayer, FlexTeam, FlexTeamMember, FlexGroup } from '@/hooks/useFlexTournament';
 
@@ -133,6 +133,12 @@ export function MatchBlock({
   const [scoreA, setScoreA] = useState(match.score_a.toString());
   const [scoreB, setScoreB] = useState(match.score_b.toString());
   const [isChildrenOpen, setIsChildrenOpen] = useState(true);
+
+  // Sync score state when match prop updates (e.g., from realtime/child match updates)
+  useEffect(() => {
+    setScoreA(match.score_a.toString());
+    setScoreB(match.score_b.toString());
+  }, [match.score_a, match.score_b]);
 
   // Check if this is a team match with child matches
   const hasChildMatches = childMatches.length > 0;

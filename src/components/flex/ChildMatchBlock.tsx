@@ -230,23 +230,23 @@ export function ChildMatchBlock({
             />
           </div>
 
-          {/* Score - centered */}
-          <div className="flex items-center justify-center gap-2">
+          {/* Score - centered with larger inputs */}
+          <div className="flex items-center justify-center gap-3">
             <Input
               type="number"
               value={scoreA}
               onChange={(e) => setScoreA(e.target.value)}
               onBlur={handleScoreBlur}
-              className="w-12 text-center h-8 text-sm"
+              className="w-16 text-center h-10 text-lg font-semibold"
               disabled={!isCreator}
             />
-            <span className="text-muted-foreground font-medium">-</span>
+            <span className="text-lg text-muted-foreground font-bold">-</span>
             <Input
               type="number"
               value={scoreB}
               onChange={(e) => setScoreB(e.target.value)}
               onBlur={handleScoreBlur}
-              className="w-12 text-center h-8 text-sm"
+              className="w-16 text-center h-10 text-lg font-semibold"
               disabled={!isCreator}
             />
           </div>
