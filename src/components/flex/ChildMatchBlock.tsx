@@ -205,10 +205,10 @@ export function ChildMatchBlock({
           )}
         </div>
 
-        {/* Slots + Score in compact layout */}
-        <div className="flex items-center gap-2">
-          {/* Side A */}
-          <div className="flex-1 space-y-1">
+        {/* Stacked layout: Team A row, Score, Team B row */}
+        <div className="space-y-2">
+          {/* Team A Row */}
+          <div className="grid grid-cols-2 gap-1">
             <SelectableSlot
               id={`match-${match.id}-slot-a1`}
               playerId={match.slot_a1_player_id}
@@ -230,29 +230,29 @@ export function ChildMatchBlock({
             />
           </div>
 
-          {/* Score */}
-          <div className="flex items-center gap-1">
+          {/* Score - centered */}
+          <div className="flex items-center justify-center gap-2">
             <Input
               type="number"
               value={scoreA}
               onChange={(e) => setScoreA(e.target.value)}
               onBlur={handleScoreBlur}
-              className="w-10 text-center h-7 text-sm p-1"
+              className="w-12 text-center h-8 text-sm"
               disabled={!isCreator}
             />
-            <span className="text-xs text-muted-foreground">-</span>
+            <span className="text-muted-foreground font-medium">-</span>
             <Input
               type="number"
               value={scoreB}
               onChange={(e) => setScoreB(e.target.value)}
               onBlur={handleScoreBlur}
-              className="w-10 text-center h-7 text-sm p-1"
+              className="w-12 text-center h-8 text-sm"
               disabled={!isCreator}
             />
           </div>
 
-          {/* Side B */}
-          <div className="flex-1 space-y-1">
+          {/* Team B Row */}
+          <div className="grid grid-cols-2 gap-1">
             <SelectableSlot
               id={`match-${match.id}-slot-b1`}
               playerId={match.slot_b1_player_id}
