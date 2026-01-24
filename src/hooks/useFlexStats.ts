@@ -213,11 +213,11 @@ export function useFlexStats() {
 
       if (itemsError) throw itemsError;
 
-      // 3. Get all matches in the tournament that count for standings
+      // 3. Get only matches that belong to THIS group (not all tournament matches)
       const { data: matches, error: matchesError } = await supabase
         .from('flex_matches')
         .select('*')
-        .eq('tournament_id', group.tournament_id)
+        .eq('group_id', groupId)
         .eq('counts_for_standings', true);
 
       if (matchesError) throw matchesError;
