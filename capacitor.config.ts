@@ -9,8 +9,15 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://thepicklehub.net',
     cleartext: true,
-    // Allow navigation to external URLs
-    allowNavigation: ['thepicklehub.net', '*.thepicklehub.net', '*.supabase.co', '*.mux.com']
+    // Allow navigation to external URLs (including OAuth providers)
+    allowNavigation: [
+      'thepicklehub.net', 
+      '*.thepicklehub.net', 
+      '*.supabase.co', 
+      '*.mux.com',
+      'accounts.google.com',
+      '*.google.com'
+    ]
   },
 
   // iOS-specific configuration
@@ -60,3 +67,46 @@ const config: CapacitorConfig = {
 };
 
 export default config;
+
+/**
+ * =====================================================
+ * IMPORTANT: NATIVE PROJECT CONFIGURATION REQUIRED
+ * =====================================================
+ * 
+ * After updating this config, you MUST configure the native projects
+ * for OAuth deep linking to work correctly:
+ * 
+ * === iOS (ios/App/App/Info.plist) ===
+ * Add URL scheme for OAuth callback:
+ * 
+ * <key>CFBundleURLTypes</key>
+ * <array>
+ *   <dict>
+ *     <key>CFBundleURLSchemes</key>
+ *     <array>
+ *       <string>thepicklehub</string>
+ *     </array>
+ *     <key>CFBundleURLName</key>
+ *     <string>net.thepicklehub.app</string>
+ *   </dict>
+ * </array>
+ * 
+ * === Android (android/app/src/main/AndroidManifest.xml) ===
+ * Add intent-filter inside <activity> for OAuth callback:
+ * 
+ * <intent-filter>
+ *   <action android:name="android.intent.action.VIEW" />
+ *   <category android:name="android.intent.category.DEFAULT" />
+ *   <category android:name="android.intent.category.BROWSABLE" />
+ *   <data android:scheme="thepicklehub" android:host="auth" android:pathPrefix="/callback" />
+ * </intent-filter>
+ * 
+ * === Supabase Dashboard ===
+ * Add redirect URL: thepicklehub://auth/callback
+ * 
+ * === Google Cloud Console ===
+ * Add authorized redirect URI: thepicklehub://auth/callback
+ * (May require custom scheme support, check Google OAuth docs)
+ * 
+ * =====================================================
+ */

@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOAuthRedirectUrl, getEmailRedirectUrl, AUTH_CALLBACK_ROUTE } from "@/lib/auth-config";
+import { isNativeApp, getOAuthRedirectForPlatform } from "@/lib/capacitor-utils";
 
 const Login = () => {
   const { t } = useI18n();
@@ -72,12 +73,20 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      // Use centralized auth config for OAuth redirect
-      // After custom domain is set up, Google consent screen will show thepicklehub.net
+      // Determine redirect URL based on platform
+      // Native apps use custom URL scheme for deep linking back to the app
+      const webRedirectUrl = getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE);
+      const finalRedirectUrl = getOAuthRedirectForPlatform(webRedirectUrl);
+      
+      console.log('[OAuth] Platform:', isNativeApp() ? 'native' : 'web');
+      console.log('[OAuth] Redirect URL:', finalRedirectUrl);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE),
+          redirectTo: finalRedirectUrl,
+          // Skip browser redirect for native - handled by deep link
+          skipBrowserRedirect: isNativeApp(),
         }
       });
       if (error) {
