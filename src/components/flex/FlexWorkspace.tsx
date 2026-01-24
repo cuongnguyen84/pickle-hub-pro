@@ -409,6 +409,18 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [deleteEntity, updateParentMatchScore, data.matches, onRefresh]);
 
+  // Handle selecting a player for a child match slot via dropdown
+  const handleSelectChildMatchPlayer = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2', playerId: string) => {
+    const updates: any = {};
+    if (slot === 'a1') updates.slot_a1_player_id = playerId;
+    else if (slot === 'a2') updates.slot_a2_player_id = playerId;
+    else if (slot === 'b1') updates.slot_b1_player_id = playerId;
+    else if (slot === 'b2') updates.slot_b2_player_id = playerId;
+
+    await updateMatchSlots(matchId, updates);
+    onRefresh();
+  }, [updateMatchSlots, onRefresh]);
+
   // Get child matches for a parent match
   const getChildMatches = useCallback((parentMatchId: string): FlexMatch[] => {
     return data.matches.filter(m => m.parent_match_id === parentMatchId).sort((a, b) => a.display_order - b.display_order);
@@ -546,6 +558,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                 onAddChildMatch={handleAddChildMatch}
                 onUpdateChildMatchScore={handleUpdateChildMatchScore}
                 onClearChildMatchSlot={handleClearChildMatchSlot}
+                onSelectChildMatchPlayer={handleSelectChildMatchPlayer}
                 onDeleteChildMatch={handleDeleteChildMatch}
                 getChildMatches={getChildMatches}
               />
@@ -570,6 +583,11 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                     onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                     onClearSlot={(slot) => handleClearSlot(match.id, slot)}
                     onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
+                    onAddChildMatch={() => handleAddChildMatch(match.id)}
+                    onUpdateChildMatchScore={handleUpdateChildMatchScore}
+                    onClearChildMatchSlot={handleClearChildMatchSlot}
+                    onSelectChildMatchPlayer={handleSelectChildMatchPlayer}
+                    onDeleteChildMatch={handleDeleteChildMatch}
                   />
                 ))
               ) : (
@@ -713,6 +731,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
               onAddChildMatch={handleAddChildMatch}
               onUpdateChildMatchScore={handleUpdateChildMatchScore}
               onClearChildMatchSlot={handleClearChildMatchSlot}
+              onSelectChildMatchPlayer={handleSelectChildMatchPlayer}
               onDeleteChildMatch={handleDeleteChildMatch}
               getChildMatches={getChildMatches}
             />
@@ -738,6 +757,11 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                   onClearSlot={(slot) => handleClearSlot(match.id, slot)}
                   onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
+                  onAddChildMatch={() => handleAddChildMatch(match.id)}
+                  onUpdateChildMatchScore={handleUpdateChildMatchScore}
+                  onClearChildMatchSlot={handleClearChildMatchSlot}
+                  onSelectChildMatchPlayer={handleSelectChildMatchPlayer}
+                  onDeleteChildMatch={handleDeleteChildMatch}
                 />
               ))}
             </div>

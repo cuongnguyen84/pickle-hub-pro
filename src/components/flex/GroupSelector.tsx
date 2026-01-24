@@ -39,6 +39,7 @@ interface GroupSelectorProps {
   onAddChildMatch?: (parentMatchId: string) => void;
   onUpdateChildMatchScore?: (matchId: string, scoreA: number, scoreB: number) => void;
   onClearChildMatchSlot?: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => void;
+  onSelectChildMatchPlayer?: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2', playerId: string) => void;
   onDeleteChildMatch?: (matchId: string) => void;
   getChildMatches?: (parentMatchId: string) => FlexMatch[];
 }
@@ -68,6 +69,7 @@ export function GroupSelector({
   onAddChildMatch,
   onUpdateChildMatchScore,
   onClearChildMatchSlot,
+  onSelectChildMatchPlayer,
   onDeleteChildMatch,
   getChildMatches,
 }: GroupSelectorProps) {
@@ -474,6 +476,7 @@ export function GroupSelector({
                     onAddChildMatch={onAddChildMatch ? () => onAddChildMatch(match.id) : undefined}
                     onUpdateChildMatchScore={onUpdateChildMatchScore}
                     onClearChildMatchSlot={onClearChildMatchSlot}
+                    onSelectChildMatchPlayer={onSelectChildMatchPlayer}
                     onDeleteChildMatch={onDeleteChildMatch}
                   />
                 ))}

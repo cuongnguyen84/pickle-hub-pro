@@ -280,6 +280,7 @@ export interface Translations {
       childMatch: string;
       addChildMatch: string;
       childMatches: string;
+      selectPlayer: string;
     };
   };
   auth: {
@@ -1473,6 +1474,7 @@ export const vi: Translations = {
       noPairStats: "Chưa có thống kê cặp đôi",
       childMatch: "Trận",
       addChildMatch: "+ Trận cá nhân",
+      selectPlayer: "Chọn VĐV",
       childMatches: "Trận cá nhân",
     },
   },
