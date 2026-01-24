@@ -261,7 +261,10 @@ export function MatchBlock({
         )}
 
         {/* Side A */}
-        <div className="space-y-1">
+        <div className={cn(
+          "space-y-1 p-2 rounded",
+          isTeamMatch && match.slot_a_team_id && "bg-primary/10 border border-primary/20"
+        )}>
           {/* Team highlight for Side A - only show for player matches when both players are from same team */}
           {!isTeamMatch && sideATeam && (
             <div className="flex items-center gap-1 text-xs text-primary font-medium px-1">
@@ -309,29 +312,50 @@ export function MatchBlock({
           )}
         </div>
 
-        {/* VS + Score */}
+        {/* VS + Score - disabled for team matches with child matches */}
         <div className="flex items-center justify-center gap-2 py-1">
-          <Input
-            type="number"
-            value={scoreA}
-            onChange={(e) => setScoreA(e.target.value)}
-            onBlur={handleScoreBlur}
-            className="w-14 text-center h-9 text-base"
-            disabled={!isCreator}
-          />
+          <div className={cn(
+            "w-14 h-9 flex items-center justify-center text-base font-medium rounded border",
+            isTeamMatchWithTeams ? "bg-muted border-border" : "bg-background border-input"
+          )}>
+            {isTeamMatchWithTeams ? (
+              <span>{match.score_a}</span>
+            ) : (
+              <Input
+                type="number"
+                value={scoreA}
+                onChange={(e) => setScoreA(e.target.value)}
+                onBlur={handleScoreBlur}
+                className="w-14 text-center h-9 text-base border-0 p-0"
+                disabled={!isCreator}
+              />
+            )}
+          </div>
           <span className="text-sm font-medium text-muted-foreground">{t.tools.flexTournament.vs}</span>
-          <Input
-            type="number"
-            value={scoreB}
-            onChange={(e) => setScoreB(e.target.value)}
-            onBlur={handleScoreBlur}
-            className="w-14 text-center h-9 text-base"
-            disabled={!isCreator}
-          />
+          <div className={cn(
+            "w-14 h-9 flex items-center justify-center text-base font-medium rounded border",
+            isTeamMatchWithTeams ? "bg-muted border-border" : "bg-background border-input"
+          )}>
+            {isTeamMatchWithTeams ? (
+              <span>{match.score_b}</span>
+            ) : (
+              <Input
+                type="number"
+                value={scoreB}
+                onChange={(e) => setScoreB(e.target.value)}
+                onBlur={handleScoreBlur}
+                className="w-14 text-center h-9 text-base border-0 p-0"
+                disabled={!isCreator}
+              />
+            )}
+          </div>
         </div>
 
         {/* Side B */}
-        <div className="space-y-1">
+        <div className={cn(
+          "space-y-1 p-2 rounded",
+          isTeamMatch && match.slot_b_team_id && "bg-primary/10 border border-primary/20"
+        )}>
           {/* Team highlight for Side B - only show for player matches when both players are from same team */}
           {!isTeamMatch && sideBTeam && (
             <div className="flex items-center gap-1 text-xs text-primary font-medium px-1">

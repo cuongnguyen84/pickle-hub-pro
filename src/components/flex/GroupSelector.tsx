@@ -476,10 +476,6 @@ export function GroupSelector({
             {/* Group matches - displayed inline */}
             {selectedGroupMatches.length > 0 && (
               <div className="mt-3 pt-3 border-t space-y-3">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-                  <Swords className="w-3 h-3" />
-                  {t.tools.flexTournament.tabMatches}: {selectedGroupMatches.length}
-                </div>
                 {selectedGroupMatches.filter(m => !m.parent_match_id).map(match => (
                   <MatchBlock
                     key={match.id}
