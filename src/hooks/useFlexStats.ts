@@ -147,7 +147,7 @@ export function useFlexStats() {
 
       if (groupError || !group) throw groupError;
 
-      // 2. Get all group items (players in this group)
+      // 2. Get all group items (players/teams in this group)
       const { data: groupItems, error: itemsError } = await supabase
         .from('flex_group_items')
         .select('*')
@@ -168,26 +168,59 @@ export function useFlexStats() {
       const typedGroupItems = (groupItems || []) as FlexGroupItem[];
       const includeDoubles = group.include_doubles_in_singles ?? true;
 
-      // 4. Compute player stats
+      // Check if this is a team-based group
+      const isTeamGroup = typedGroupItems.length > 0 && typedGroupItems[0].item_type === 'team';
+      
+      // 4. Get player IDs - either from direct player items OR from team members
+      let groupPlayerIds: Set<string>;
+      
+      if (isTeamGroup) {
+        // Get team IDs from group items
+        const teamIds = typedGroupItems.filter(gi => gi.team_id).map(gi => gi.team_id!);
+        
+        // Get all team members
+        const { data: teamMembers, error: teamMembersError } = await supabase
+          .from('flex_team_members')
+          .select('player_id')
+          .in('team_id', teamIds);
+        
+        if (teamMembersError) throw teamMembersError;
+        
+        groupPlayerIds = new Set((teamMembers || []).map(m => m.player_id));
+      } else {
+        groupPlayerIds = new Set(
+          typedGroupItems.filter(gi => gi.item_type === 'player' && gi.player_id).map(gi => gi.player_id!)
+        );
+      }
+      
+      // Create fake groupItems with player type for the stats computation
+      const virtualPlayerGroupItems: FlexGroupItem[] = Array.from(groupPlayerIds).map(playerId => ({
+        id: playerId,
+        group_id: groupId,
+        player_id: playerId,
+        team_id: null,
+        item_type: 'player',
+        display_order: 0,
+        created_at: new Date().toISOString(),
+      }));
+
+      // 5. Compute player stats
       const playerStatsMap = computePlayerStats({
         matches: typedMatches,
-        groupItems: typedGroupItems,
+        groupItems: virtualPlayerGroupItems,
         includeDoublesInSingles: includeDoubles,
       });
 
-      // 5. Compute pair stats
-      const groupPlayerIds = new Set(
-        typedGroupItems.filter(gi => gi.item_type === 'player' && gi.player_id).map(gi => gi.player_id!)
-      );
+      // 6. Compute pair stats
       const pairStatsMap = computePairStats(typedMatches, groupPlayerIds);
 
-      // 6. Clear existing stats for this group
+      // 7. Clear existing stats for this group
       await Promise.all([
         supabase.from('flex_player_stats').delete().eq('group_id', groupId),
         supabase.from('flex_pair_stats').delete().eq('group_id', groupId),
       ]);
 
-      // 7. Insert new player stats
+      // 8. Insert new player stats
       const playerStatsToInsert = Array.from(playerStatsMap.entries()).map(([playerId, stats]) => ({
         group_id: groupId,
         player_id: playerId,
@@ -200,7 +233,7 @@ export function useFlexStats() {
         await supabase.from('flex_player_stats').insert(playerStatsToInsert);
       }
 
-      // 8. Insert new pair stats
+      // 9. Insert new pair stats
       const pairStatsToInsert = Array.from(pairStatsMap.values()).map(stats => ({
         group_id: groupId,
         player1_id: stats.player1_id,
