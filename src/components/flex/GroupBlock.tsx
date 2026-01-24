@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Grid3X3, Trash2, X, RefreshCw, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo } from 'react';
-import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember } from '@/hooks/useFlexTournament';
+import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember, FlexMatch } from '@/hooks/useFlexTournament';
 
 interface GroupBlockProps {
   group: FlexGroup;
@@ -19,6 +19,7 @@ interface GroupBlockProps {
   teamMembers: FlexTeamMember[];
   playerStats: FlexPlayerStats[];
   pairStats: FlexPairStats[];
+  matches: FlexMatch[]; // All matches in tournament
   isCreator: boolean;
   onUpdateName: (name: string) => void;
   onDelete: () => void;
@@ -35,6 +36,7 @@ export function GroupBlock({
   teamMembers,
   playerStats,
   pairStats,
+  matches,
   isCreator,
   onUpdateName,
   onDelete,
@@ -120,21 +122,44 @@ export function GroupBlock({
 
   const includeDoubles = group.include_doubles_in_singles ?? true;
 
-  // Get team stats (aggregate from all players in team)
+  // Get team stats from TEAM MATCHES (parent matches with slot_a_team_id/slot_b_team_id)
+  // Each team match = 1 win or 1 loss for the team
   const getTeamStats = (teamId: string) => {
-    const members = teamMembers.filter(m => m.team_id === teamId);
     let wins = 0;
     let losses = 0;
     let pointDiff = 0;
     
-    members.forEach(member => {
-      const stats = playerStats.find(s => s.player_id === member.player_id && s.group_id === group.id);
-      if (stats) {
-        wins += stats.wins;
-        losses += stats.losses;
-        pointDiff += stats.point_diff;
+    for (const match of matches) {
+      // Only count team matches (with team assignments)
+      if (!match.slot_a_team_id && !match.slot_b_team_id) continue;
+      
+      // Skip matches that don't count for standings
+      if (!match.counts_for_standings) continue;
+      
+      // Skip matches without a winner
+      if (!match.winner_side) continue;
+
+      const scoreDiff = Math.abs(match.score_a - match.score_b);
+
+      // Check if this team participated in this match
+      if (match.slot_a_team_id === teamId) {
+        if (match.winner_side === 'a') {
+          wins += 1;
+          pointDiff += scoreDiff;
+        } else {
+          losses += 1;
+          pointDiff -= scoreDiff;
+        }
+      } else if (match.slot_b_team_id === teamId) {
+        if (match.winner_side === 'b') {
+          wins += 1;
+          pointDiff += scoreDiff;
+        } else {
+          losses += 1;
+          pointDiff -= scoreDiff;
+        }
       }
-    });
+    }
     
     return { wins, losses, point_diff: pointDiff };
   };
@@ -147,7 +172,7 @@ export function GroupBlock({
       if (statsB.wins !== statsA.wins) return statsB.wins - statsA.wins;
       return statsB.point_diff - statsA.point_diff;
     });
-  }, [teamsInGroup, playerStats, teamMembers]);
+  }, [teamsInGroup, matches]);
 
   // Get players from selected teams for individual tab
   const playersFromSelectedTeams = useMemo(() => {

@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, X, User } from 'lucide-react';
+import { Trash2, X, User, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import type { FlexMatch, FlexPlayer, FlexTeam, FlexTeamMember } from '@/hooks/useFlexTournament';
 
 interface ChildMatchBlockProps {
@@ -30,19 +31,41 @@ interface SelectableSlotProps {
   players: FlexPlayer[];
   availablePlayers: FlexPlayer[]; // Players from the team for this side
   isCreator: boolean;
+  usedPlayerIds: Set<string>; // Players already used in this match
   onClear: () => void;
   onSelect: (playerId: string) => void;
   isSecondSlot?: boolean;
 }
 
-function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, onClear, onSelect, isSecondSlot }: SelectableSlotProps) {
+function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, usedPlayerIds, onClear, onSelect, isSecondSlot }: SelectableSlotProps) {
   const { t } = useI18n();
   const { isOver, setNodeRef } = useDroppable({
     id,
     data: { type: 'match-slot', slotId: id },
   });
+  
+  // Local state for optimistic updates
+  const [localPlayerId, setLocalPlayerId] = useState(playerId);
+  
+  // Sync when prop changes
+  useEffect(() => {
+    setLocalPlayerId(playerId);
+  }, [playerId]);
 
-  const selectedPlayer = playerId ? players.find(p => p.id === playerId) : null;
+  const selectedPlayer = localPlayerId ? players.find(p => p.id === localPlayerId) : null;
+  
+  // Filter out already used players (except current selection)
+  const filteredAvailablePlayers = useMemo(() => {
+    return availablePlayers.filter(p => !usedPlayerIds.has(p.id) || p.id === localPlayerId);
+  }, [availablePlayers, usedPlayerIds, localPlayerId]);
+
+  // Handle selection with optimistic update
+  const handleSelect = useCallback((value: string) => {
+    if (value) {
+      setLocalPlayerId(value); // Optimistic update
+      onSelect(value);
+    }
+  }, [onSelect]);
 
   // If no available players from team, show simple drop zone
   if (availablePlayers.length === 0) {
@@ -91,15 +114,13 @@ function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, on
       )}
     >
       <Select
-        value={playerId || ''}
-        onValueChange={(value) => {
-          if (value) onSelect(value);
-        }}
+        value={localPlayerId || ''}
+        onValueChange={handleSelect}
         disabled={!isCreator}
       >
         <SelectTrigger className={cn(
           "h-8 text-xs flex-1",
-          !playerId && "border-dashed"
+          !localPlayerId && "border-dashed"
         )}>
           <SelectValue placeholder={t.tools.flexTournament.selectPlayer}>
             {selectedPlayer && (
@@ -110,8 +131,8 @@ function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, on
             )}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent>
-          {availablePlayers.map(player => (
+        <SelectContent className="z-50">
+          {filteredAvailablePlayers.map(player => (
             <SelectItem key={player.id} value={player.id}>
               <div className="flex items-center gap-1.5">
                 <User className="w-3 h-3" />
@@ -121,7 +142,7 @@ function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, on
           ))}
         </SelectContent>
       </Select>
-      {playerId && isCreator && (
+      {localPlayerId && isCreator && (
         <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={onClear}>
           <X className="w-3 h-3" />
         </Button>
@@ -173,6 +194,29 @@ export function ChildMatchBlock({
     return players.filter(p => memberIds.includes(p.id));
   }, [parentMatch?.slot_b_team_id, teamMembers, players]);
 
+  // Get all used player IDs in this match (for duplicate validation)
+  const usedPlayerIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (match.slot_a1_player_id) ids.add(match.slot_a1_player_id);
+    if (match.slot_a2_player_id) ids.add(match.slot_a2_player_id);
+    if (match.slot_b1_player_id) ids.add(match.slot_b1_player_id);
+    if (match.slot_b2_player_id) ids.add(match.slot_b2_player_id);
+    return ids;
+  }, [match.slot_a1_player_id, match.slot_a2_player_id, match.slot_b1_player_id, match.slot_b2_player_id]);
+
+  // Check for duplicate player warning
+  const hasDuplicateWarning = useMemo(() => {
+    const allPlayers = [
+      match.slot_a1_player_id,
+      match.slot_a2_player_id,
+      match.slot_b1_player_id,
+      match.slot_b2_player_id
+    ].filter(Boolean) as string[];
+    
+    const uniquePlayers = new Set(allPlayers);
+    return allPlayers.length !== uniquePlayers.size;
+  }, [match.slot_a1_player_id, match.slot_a2_player_id, match.slot_b1_player_id, match.slot_b2_player_id]);
+
   // Get winner name
   const getWinnerName = () => {
     if (!match.winner_side) return null;
@@ -191,13 +235,21 @@ export function ChildMatchBlock({
   const winnerName = getWinnerName();
 
   return (
-    <Card className="bg-muted/30">
+    <Card className={cn("bg-muted/30", hasDuplicateWarning && "ring-2 ring-destructive")}>
       <CardContent className="p-2 space-y-2">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t.tools.flexTournament.childMatch} {matchIndex}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium text-muted-foreground">
+              {t.tools.flexTournament.childMatch} {matchIndex}
+            </span>
+            {hasDuplicateWarning && (
+              <div className="flex items-center gap-1 text-destructive">
+                <AlertTriangle className="w-3 h-3" />
+                <span className="text-[10px]">VĐV trùng!</span>
+              </div>
+            )}
+          </div>
           {isCreator && (
             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onDelete}>
               <Trash2 className="w-3 h-3 text-destructive" />
@@ -215,6 +267,7 @@ export function ChildMatchBlock({
               players={players}
               availablePlayers={teamAPlayers}
               isCreator={isCreator}
+              usedPlayerIds={usedPlayerIds}
               onClear={() => onClearSlot('a1')}
               onSelect={(id) => onSelectPlayer('a1', id)}
             />
@@ -224,6 +277,7 @@ export function ChildMatchBlock({
               players={players}
               availablePlayers={teamAPlayers}
               isCreator={isCreator}
+              usedPlayerIds={usedPlayerIds}
               onClear={() => onClearSlot('a2')}
               onSelect={(id) => onSelectPlayer('a2', id)}
               isSecondSlot
@@ -259,6 +313,7 @@ export function ChildMatchBlock({
               players={players}
               availablePlayers={teamBPlayers}
               isCreator={isCreator}
+              usedPlayerIds={usedPlayerIds}
               onClear={() => onClearSlot('b1')}
               onSelect={(id) => onSelectPlayer('b1', id)}
             />
@@ -268,6 +323,7 @@ export function ChildMatchBlock({
               players={players}
               availablePlayers={teamBPlayers}
               isCreator={isCreator}
+              usedPlayerIds={usedPlayerIds}
               onClear={() => onClearSlot('b2')}
               onSelect={(id) => onSelectPlayer('b2', id)}
               isSecondSlot
