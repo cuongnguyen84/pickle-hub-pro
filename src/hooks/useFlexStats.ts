@@ -15,10 +15,12 @@ interface ComputeStatsParams {
 
 export function useFlexStats() {
   /**
-   * Compute player stats for a group based on matches
+   * Compute player stats for a group based on CHILD MATCHES (individual matches within team matches)
    * - Only counts matches where counts_for_standings = true
    * - For singles tab: optionally include doubles matches
-   * - A player gets credit in a group if they are in groupItems
+   * - A player gets credit if they are in groupItems (directly or via team membership)
+   * - Each match = 1 win or 1 loss (not based on score difference)
+   * - Point difference is score_a - score_b for perspective of each player
    */
   function computePlayerStats(params: ComputeStatsParams): Map<string, StatsMap> {
     const { matches, groupItems, includeDoublesInSingles } = params;
@@ -40,6 +42,7 @@ export function useFlexStats() {
       const isDoubles = match.match_type === 'doubles';
       if (isDoubles && !includeDoublesInSingles) continue;
 
+      // Calculate point difference (absolute) for the match
       const scoreDiff = Math.abs(match.score_a - match.score_b);
 
       // Get all players on each side
@@ -50,6 +53,7 @@ export function useFlexStats() {
       const losersPlayers = match.winner_side === 'a' ? sideBPlayers : sideAPlayers;
 
       // Update stats for winners who are in this group
+      // Each player gets +1 win and +scoreDiff
       for (const playerId of winnersPlayers) {
         if (!groupPlayerIds.has(playerId)) continue;
         
@@ -60,6 +64,7 @@ export function useFlexStats() {
       }
 
       // Update stats for losers who are in this group
+      // Each player gets +1 loss and -scoreDiff
       for (const playerId of losersPlayers) {
         if (!groupPlayerIds.has(playerId)) continue;
         
@@ -71,6 +76,59 @@ export function useFlexStats() {
     }
 
     return playerStats;
+  }
+
+  /**
+   * Compute TEAM stats for a group based on TEAM MATCHES (parent matches with slot_a_team_id/slot_b_team_id)
+   * - Only counts matches where counts_for_standings = true and has team assignments
+   * - Each team match = 1 win or 1 loss for the team (winner determined by score comparison)
+   * - Point difference is score_a - score_b (team match score, not child match sum)
+   */
+  function computeTeamStats(matches: FlexMatch[], groupTeamIds: Set<string>): Map<string, StatsMap> {
+    const teamStats = new Map<string, StatsMap>();
+
+    for (const match of matches) {
+      // Only count team matches (with team assignments)
+      if (!match.slot_a_team_id && !match.slot_b_team_id) continue;
+      
+      // Skip matches that don't count for standings
+      if (!match.counts_for_standings) continue;
+      
+      // Skip matches without a winner
+      if (!match.winner_side) continue;
+
+      const scoreDiff = Math.abs(match.score_a - match.score_b);
+      const teamAId = match.slot_a_team_id;
+      const teamBId = match.slot_b_team_id;
+
+      // Update stats for Team A
+      if (teamAId && groupTeamIds.has(teamAId)) {
+        const existing = teamStats.get(teamAId) || { wins: 0, losses: 0, pointDiff: 0 };
+        if (match.winner_side === 'a') {
+          existing.wins += 1;
+          existing.pointDiff += scoreDiff;
+        } else {
+          existing.losses += 1;
+          existing.pointDiff -= scoreDiff;
+        }
+        teamStats.set(teamAId, existing);
+      }
+
+      // Update stats for Team B
+      if (teamBId && groupTeamIds.has(teamBId)) {
+        const existing = teamStats.get(teamBId) || { wins: 0, losses: 0, pointDiff: 0 };
+        if (match.winner_side === 'b') {
+          existing.wins += 1;
+          existing.pointDiff += scoreDiff;
+        } else {
+          existing.losses += 1;
+          existing.pointDiff -= scoreDiff;
+        }
+        teamStats.set(teamBId, existing);
+      }
+    }
+
+    return teamStats;
   }
 
   /**

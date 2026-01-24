@@ -131,18 +131,42 @@ export function GroupSelector({
     return `${p1} / ${p2}`;
   };
 
-  // Team stats
+  // Team stats - calculated from TEAM MATCHES (parent matches with slot_a_team_id/slot_b_team_id)
   const getTeamStats = (teamId: string) => {
-    const members = teamMembers.filter(m => m.team_id === teamId);
     let wins = 0, losses = 0, pointDiff = 0;
-    members.forEach(member => {
-      const stats = playerStats.find(s => s.player_id === member.player_id && s.group_id === selectedGroupId);
-      if (stats) {
-        wins += stats.wins;
-        losses += stats.losses;
-        pointDiff += stats.point_diff;
+    
+    for (const match of matches) {
+      // Only count team matches (with team assignments)
+      if (!match.slot_a_team_id && !match.slot_b_team_id) continue;
+      
+      // Skip matches that don't count for standings
+      if (!match.counts_for_standings) continue;
+      
+      // Skip matches without a winner
+      if (!match.winner_side) continue;
+
+      const scoreDiff = Math.abs(match.score_a - match.score_b);
+
+      // Check if this team participated in this match
+      if (match.slot_a_team_id === teamId) {
+        if (match.winner_side === 'a') {
+          wins += 1;
+          pointDiff += scoreDiff;
+        } else {
+          losses += 1;
+          pointDiff -= scoreDiff;
+        }
+      } else if (match.slot_b_team_id === teamId) {
+        if (match.winner_side === 'b') {
+          wins += 1;
+          pointDiff += scoreDiff;
+        } else {
+          losses += 1;
+          pointDiff -= scoreDiff;
+        }
       }
-    });
+    }
+    
     return { wins, losses, point_diff: pointDiff };
   };
 
