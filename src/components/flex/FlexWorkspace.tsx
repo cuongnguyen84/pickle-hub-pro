@@ -311,19 +311,11 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   const handleUpdateMatchScore = useCallback(async (matchId: string, scoreA: number, scoreB: number) => {
     await updateMatchScore(matchId, scoreA, scoreB);
     
-    // Find match and recompute group stats if in a group
-    const match = data.matches.find(m => m.id === matchId);
-    if (match?.group_id) {
-      await recomputeGroupStats(match.group_id);
-    }
-    
-    // If there's only one group, recompute its stats (since players auto-added)
-    if (data.groups.length === 1) {
-      await recomputeGroupStats(data.groups[0].id);
-    }
+    // Recompute ALL group stats since match players may be in any group
+    await recomputeAllGroupStats(data.tournament.id);
     
     onRefresh();
-  }, [updateMatchScore, data.matches, data.groups, recomputeGroupStats, onRefresh]);
+  }, [updateMatchScore, data.tournament.id, recomputeAllGroupStats, onRefresh]);
 
   const handleClearSlot = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => {
     const updates: any = {};
@@ -377,13 +369,11 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       await updateParentMatchScore(childMatch.parent_match_id, updatedSiblings);
     }
     
-    // Recompute group stats if in a group
-    if (childMatch?.group_id) {
-      await recomputeGroupStats(childMatch.group_id);
-    }
+    // Recompute ALL group stats since child matches can affect any player's standings
+    await recomputeAllGroupStats(data.tournament.id);
     
     onRefresh();
-  }, [updateMatchScore, updateParentMatchScore, data.matches, recomputeGroupStats, onRefresh]);
+  }, [updateMatchScore, updateParentMatchScore, data.matches, data.tournament.id, recomputeAllGroupStats, onRefresh]);
 
   const handleClearChildMatchSlot = useCallback(async (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => {
     const updates: any = {};
