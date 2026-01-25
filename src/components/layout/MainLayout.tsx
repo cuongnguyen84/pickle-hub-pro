@@ -2,7 +2,7 @@ import React from "react";
 import AppHeader from "./AppHeader";
 import BottomNav from "./BottomNav";
 import { cn } from "@/lib/utils";
-import { isIOS } from "@/lib/capacitor-utils";
+import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -12,9 +12,15 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children, className, hideBottomNav = false }: MainLayoutProps) => {
   // Calculate bottom padding based on platform
-  // iOS needs more space for safe area + nav bar
+  // Android native needs more space to avoid overlapping with system navigation
   const isIOSDevice = isIOS();
-  const bottomPadding = isIOSDevice ? 'pb-24' : 'pb-20';
+  const isAndroidDevice = isAndroid();
+  const isNative = isNativeApp();
+  
+  // Android native app needs more bottom padding (72px nav + 16px safe area)
+  const bottomPadding = (isAndroidDevice && isNative) 
+    ? 'pb-28' 
+    : (isIOSDevice ? 'pb-24' : 'pb-20');
 
   return (
     <div className="min-h-screen min-h-[-webkit-fill-available] bg-background">
