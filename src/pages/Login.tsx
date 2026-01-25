@@ -74,7 +74,7 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       // Determine redirect URL based on platform
-      // Native apps use custom URL scheme for deep linking back to the app
+      // Native apps use Universal Links to intercept the OAuth callback
       const webRedirectUrl = getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE);
       const finalRedirectUrl = getOAuthRedirectForPlatform(webRedirectUrl);
       
@@ -85,8 +85,9 @@ const Login = () => {
         provider: 'google',
         options: {
           redirectTo: finalRedirectUrl,
-          // Skip browser redirect for native - handled by deep link
-          skipBrowserRedirect: isNativeApp(),
+          // Don't skip browser redirect - let the browser handle OAuth
+          // Native app will intercept the callback URL via Universal Links
+          skipBrowserRedirect: false,
         }
       });
       if (error) {
