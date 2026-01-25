@@ -11,7 +11,8 @@ import { toast } from "@/hooks/use-toast";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOAuthRedirectUrl, getEmailRedirectUrl, AUTH_CALLBACK_ROUTE } from "@/lib/auth-config";
-import { isNativeApp, getOAuthRedirectForPlatform } from "@/lib/capacitor-utils";
+import { isNativeApp, NATIVE_OAUTH_REDIRECT_URL } from "@/lib/capacitor-utils";
+import { Browser } from "@capacitor/browser";
 
 const Login = () => {
   const { t } = useI18n();
@@ -73,28 +74,37 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      // Determine redirect URL based on platform
-      // Native apps use Universal Links to intercept the OAuth callback
-      const webRedirectUrl = getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE);
-      const finalRedirectUrl = getOAuthRedirectForPlatform(webRedirectUrl);
+      const isNative = isNativeApp();
       
-      console.log('[OAuth] Platform:', isNativeApp() ? 'native' : 'web');
-      console.log('[OAuth] Redirect URL:', finalRedirectUrl);
+      console.log('[OAuth] Platform:', isNative ? 'native' : 'web');
+      console.log('[OAuth] Redirect URL:', isNative ? NATIVE_OAUTH_REDIRECT_URL : getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE));
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: finalRedirectUrl,
-          // Don't skip browser redirect - let the browser handle OAuth
-          // Native app will intercept the callback URL via Universal Links
-          skipBrowserRedirect: false,
+          redirectTo: isNative ? NATIVE_OAUTH_REDIRECT_URL : getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE),
+          // For native: skip browser redirect so we can open with Chrome Custom Tabs
+          // For web: let supabase handle the redirect normally
+          skipBrowserRedirect: isNative,
         }
       });
+      
       if (error) {
         toast({
           variant: "destructive",
           title: t.common.error,
           description: error.message
+        });
+        return;
+      }
+      
+      // On native platforms, open the OAuth URL using Chrome Custom Tabs (Android) / Safari (iOS)
+      // This avoids the 403 disallowed_useragent error from Google
+      if (isNative && data?.url) {
+        console.log('[OAuth] Opening with Browser plugin:', data.url);
+        await Browser.open({
+          url: data.url,
+          presentationStyle: 'fullscreen',
         });
       }
     } finally {
