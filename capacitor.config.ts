@@ -70,43 +70,66 @@ export default config;
 
 /**
  * =====================================================
- * IMPORTANT: NATIVE PROJECT CONFIGURATION REQUIRED
+ * IMPORTANT: UNIVERSAL LINKS / APP LINKS CONFIGURATION
  * =====================================================
  * 
- * After updating this config, you MUST configure the native projects
- * for OAuth deep linking to work correctly:
+ * This app uses Universal Links (iOS) and App Links (Android) for OAuth
+ * instead of custom URL schemes, because Lovable Cloud only supports https:// URLs.
  * 
- * === iOS (ios/App/App/Info.plist) ===
- * Add URL scheme for OAuth callback:
+ * OAuth flow: Google → https://thepicklehub.net/auth/callback → Native App
  * 
- * <key>CFBundleURLTypes</key>
- * <array>
- *   <dict>
- *     <key>CFBundleURLSchemes</key>
- *     <array>
- *       <string>thepicklehub</string>
- *     </array>
- *     <key>CFBundleURLName</key>
- *     <string>net.thepicklehub.app</string>
- *   </dict>
- * </array>
+ * === iOS: Universal Links Setup ===
  * 
- * === Android (android/app/src/main/AndroidManifest.xml) ===
- * Add intent-filter inside <activity> for OAuth callback:
+ * 1. Create file: ios/App/App/.well-known/apple-app-site-association (on web server)
+ *    Or host at: https://thepicklehub.net/.well-known/apple-app-site-association
+ *    Content:
+ *    {
+ *      "applinks": {
+ *        "apps": [],
+ *        "details": [{
+ *          "appID": "TEAM_ID.net.thepicklehub.app",
+ *          "paths": ["/auth/callback"]
+ *        }]
+ *      }
+ *    }
  * 
- * <intent-filter>
- *   <action android:name="android.intent.action.VIEW" />
- *   <category android:name="android.intent.category.DEFAULT" />
- *   <category android:name="android.intent.category.BROWSABLE" />
- *   <data android:scheme="thepicklehub" android:host="auth" android:pathPrefix="/callback" />
- * </intent-filter>
+ * 2. Add Associated Domains in Xcode:
+ *    - Open ios/App/App.xcworkspace in Xcode
+ *    - Go to Signing & Capabilities → + Capability → Associated Domains
+ *    - Add: applinks:thepicklehub.net
  * 
- * === Supabase Dashboard ===
- * Add redirect URL: thepicklehub://auth/callback
+ * 3. In ios/App/App/Info.plist, ensure CFBundleURLTypes exists (for fallback):
+ *    <key>CFBundleURLTypes</key>
+ *    <array>
+ *      <dict>
+ *        <key>CFBundleURLSchemes</key>
+ *        <array><string>thepicklehub</string></array>
+ *      </dict>
+ *    </array>
  * 
- * === Google Cloud Console ===
- * Add authorized redirect URI: thepicklehub://auth/callback
- * (May require custom scheme support, check Google OAuth docs)
+ * === Android: App Links Setup ===
+ * 
+ * 1. Add intent-filter in android/app/src/main/AndroidManifest.xml inside <activity>:
+ *    <intent-filter android:autoVerify="true">
+ *      <action android:name="android.intent.action.VIEW" />
+ *      <category android:name="android.intent.category.DEFAULT" />
+ *      <category android:name="android.intent.category.BROWSABLE" />
+ *      <data android:scheme="https" android:host="thepicklehub.net" android:pathPrefix="/auth/callback" />
+ *    </intent-filter>
+ * 
+ * 2. Host assetlinks.json at: https://thepicklehub.net/.well-known/assetlinks.json
+ *    Content:
+ *    [{
+ *      "relation": ["delegate_permission/common.handle_all_urls"],
+ *      "target": {
+ *        "namespace": "android_app",
+ *        "package_name": "net.thepicklehub.app",
+ *        "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT"]
+ *      }
+ *    }]
+ * 
+ * === After Configuration ===
+ * Run: npx cap sync && rebuild native apps
  * 
  * =====================================================
  */

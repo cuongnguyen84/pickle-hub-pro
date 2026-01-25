@@ -51,23 +51,25 @@ export const getPlatform = (): 'ios' | 'android' | 'web' => {
 };
 
 /**
- * Custom URL scheme for the app (used for OAuth deep linking)
- * This must match the scheme configured in native projects:
- * - iOS: URL Types in Info.plist
- * - Android: intent-filter in AndroidManifest.xml
+ * Production domain for OAuth redirect
+ * Native apps use Universal Links / App Links to intercept this URL
  */
-export const APP_URL_SCHEME = 'thepicklehub';
+export const NATIVE_OAUTH_REDIRECT_URL = 'https://thepicklehub.net/auth/callback';
 
 /**
  * Get the OAuth redirect URL based on platform
- * - Native apps: Use custom URL scheme for deep linking back to app
- * - Web: Use regular web URL
+ * 
+ * APPROACH: Universal Links / App Links
+ * - All platforms redirect to https://thepicklehub.net/auth/callback
+ * - Native apps configure Associated Domains (iOS) / App Links (Android) to intercept this URL
+ * - This avoids the need for custom URL schemes which Lovable Cloud doesn't support
  */
 export const getOAuthRedirectForPlatform = (webRedirectUrl: string): string => {
   if (isNativeApp()) {
-    // For native apps, use custom scheme to ensure the OAuth callback
-    // opens the app instead of the web browser
-    return `${APP_URL_SCHEME}://auth/callback`;
+    // For native apps, use the production domain
+    // The native app must be configured with Universal Links (iOS) or App Links (Android)
+    // to intercept this URL and handle the OAuth callback
+    return NATIVE_OAUTH_REDIRECT_URL;
   }
   return webRedirectUrl;
 };
