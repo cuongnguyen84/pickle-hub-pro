@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { I18nProvider } from "@/i18n";
 import { lazy, Suspense } from "react";
+import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
@@ -83,11 +84,18 @@ const PageLoader = () => (
   </div>
 );
 
+// Component to initialize deep link handler
+const DeepLinkInitializer = () => {
+  useDeepLinkHandler();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <I18nProvider>
       <AuthProvider>
         <TooltipProvider>
+          <DeepLinkInitializer />
           <Toaster />
           <Sonner />
           <BrowserRouter>
