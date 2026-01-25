@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getOAuthRedirectUrl, getEmailRedirectUrl, AUTH_CALLBACK_ROUTE } from "@/lib/auth-config";
 import { isNativeApp, NATIVE_OAUTH_REDIRECT_URL } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
+import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
 
 const Login = () => {
   const { t } = useI18n();
@@ -79,6 +80,11 @@ const Login = () => {
       console.log('[OAuth] Platform:', isNative ? 'native' : 'web');
       console.log('[OAuth] Redirect URL:', isNative ? NATIVE_OAUTH_REDIRECT_URL : getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE));
       
+      // Mark OAuth as in progress for native polling fallback
+      if (isNative) {
+        setOAuthInProgress(true);
+      }
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -90,6 +96,9 @@ const Login = () => {
       });
       
       if (error) {
+        if (isNative) {
+          setOAuthInProgress(false);
+        }
         toast({
           variant: "destructive",
           title: t.common.error,
@@ -107,6 +116,9 @@ const Login = () => {
           presentationStyle: 'fullscreen',
         });
       }
+    } catch (err) {
+      console.error('[OAuth] Error:', err);
+      setOAuthInProgress(false);
     } finally {
       setIsSubmitting(false);
     }
