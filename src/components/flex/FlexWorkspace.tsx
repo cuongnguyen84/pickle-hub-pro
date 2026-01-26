@@ -39,6 +39,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     updateMatchSlots,
     updateMatchScore,
     updateMatchCountsForStandings,
+    updateMatchGroupId,
     updateParentMatchScore,
     deleteEntity,
     updateEntityName,
@@ -336,6 +337,12 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     onRefresh();
   }, [updateMatchCountsForStandings, recomputeAllGroupStats, data.tournament.id, onRefresh]);
 
+  const handleUpdateMatchGroupId = useCallback(async (matchId: string, groupId: string | null) => {
+    await updateMatchGroupId(matchId, groupId);
+    await recomputeAllGroupStats(data.tournament.id);
+    onRefresh();
+  }, [updateMatchGroupId, recomputeAllGroupStats, data.tournament.id, onRefresh]);
+
   const handleToggleIncludeDoubles = useCallback(async (groupId: string, include: boolean) => {
     await updateGroupIncludeDoubles(groupId, include);
     onRefresh();
@@ -573,6 +580,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                     onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                     onClearSlot={(slot) => handleClearSlot(match.id, slot)}
                     onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
+                    onUpdateGroupId={(groupId) => handleUpdateMatchGroupId(match.id, groupId)}
                     onAddChildMatch={() => handleAddChildMatch(match.id)}
                     onUpdateChildMatchScore={handleUpdateChildMatchScore}
                     onClearChildMatchSlot={handleClearChildMatchSlot}
@@ -747,6 +755,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   onUpdateScore={(scoreA, scoreB) => handleUpdateMatchScore(match.id, scoreA, scoreB)}
                   onClearSlot={(slot) => handleClearSlot(match.id, slot)}
                   onToggleCountsForStandings={(counts) => handleToggleCountsForStandings(match.id, counts)}
+                  onUpdateGroupId={(groupId) => handleUpdateMatchGroupId(match.id, groupId)}
                   onAddChildMatch={() => handleAddChildMatch(match.id)}
                   onUpdateChildMatchScore={handleUpdateChildMatchScore}
                   onClearChildMatchSlot={handleClearChildMatchSlot}

@@ -283,6 +283,9 @@ export const en: Translations = {
       addChildMatch: "+ Individual Match",
       childMatches: "Individual Matches",
       selectPlayer: "Select player",
+      assignToGroup: "Assign to group",
+      noGroup: "No group",
+      selectGroup: "Select group",
     },
   },
   auth: {

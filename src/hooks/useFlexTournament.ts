@@ -497,6 +497,23 @@ export function useFlexTournament() {
     return true;
   }
 
+  // Update match group_id
+  async function updateMatchGroupId(
+    matchId: string,
+    groupId: string | null
+  ): Promise<boolean> {
+    const { error } = await supabase
+      .from('flex_matches')
+      .update({ group_id: groupId })
+      .eq('id', matchId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return false;
+    }
+    return true;
+  }
+
   // Delete entity
   async function deleteEntity(table: string, id: string): Promise<boolean> {
     const { error } = await supabase
@@ -612,6 +629,7 @@ export function useFlexTournament() {
     updateMatchSlots,
     updateMatchScore,
     updateMatchCountsForStandings,
+    updateMatchGroupId,
     updateParentMatchScore,
     deleteEntity,
     updateEntityName,
