@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Swords, Trash2, X, User, Users, ChevronDown, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Swords, Trash2, X, User, Users, ChevronDown, Plus, Grid3X3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo, useEffect, forwardRef } from 'react';
 import { ChildMatchBlock } from './ChildMatchBlock';
@@ -27,6 +28,7 @@ interface MatchBlockProps {
   onUpdateScore: (scoreA: number, scoreB: number) => void;
   onClearSlot: (slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => void;
   onToggleCountsForStandings: (counts: boolean) => void;
+  onUpdateGroupId?: (groupId: string | null) => void;
   onAddChildMatch?: () => void;
   onUpdateChildMatchScore?: (matchId: string, scoreA: number, scoreB: number) => void;
   onClearChildMatchSlot?: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => void;
@@ -121,6 +123,7 @@ export function MatchBlock({
   onUpdateScore,
   onClearSlot,
   onToggleCountsForStandings,
+  onUpdateGroupId,
   onAddChildMatch,
   onUpdateChildMatchScore,
   onClearChildMatchSlot,
@@ -237,6 +240,31 @@ export function MatchBlock({
         </div>
       </CardHeader>
       <CardContent className="pt-0 px-3 pb-3 space-y-2">
+        {/* Group assignment dropdown - only show for standalone matches (not child matches) */}
+        {!match.parent_match_id && isCreator && hasGroups && onUpdateGroupId && (
+          <div className="flex items-center gap-2">
+            <Grid3X3 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+            <Select
+              value={match.group_id || 'none'}
+              onValueChange={(value) => onUpdateGroupId(value === 'none' ? null : value)}
+            >
+              <SelectTrigger className="h-8 text-xs flex-1">
+                <SelectValue placeholder={t.tools.flexTournament.selectGroup} />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-popover">
+                <SelectItem value="none" className="text-xs">
+                  {t.tools.flexTournament.noGroup}
+                </SelectItem>
+                {groups.map(group => (
+                  <SelectItem key={group.id} value={group.id} className="text-xs">
+                    {group.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Counts for standings checkbox */}
         <div className="flex items-center gap-2">
           <Checkbox
@@ -253,8 +281,8 @@ export function MatchBlock({
           </label>
         </div>
 
-        {/* No group hint */}
-        {showNoGroupHint && (
+        {/* No group hint - only show when no group assigned and "counts for standings" is checked */}
+        {showNoGroupHint && !match.group_id && (
           <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5 rounded">
             {t.tools.flexTournament.noGroupHint}
           </div>

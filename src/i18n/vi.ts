@@ -281,6 +281,9 @@ export interface Translations {
       addChildMatch: string;
       childMatches: string;
       selectPlayer: string;
+      assignToGroup: string;
+      noGroup: string;
+      selectGroup: string;
     };
   };
   auth: {
@@ -1476,6 +1479,9 @@ export const vi: Translations = {
       addChildMatch: "+ Trận cá nhân",
       selectPlayer: "Chọn VĐV",
       childMatches: "Trận cá nhân",
+      assignToGroup: "Thuộc bảng",
+      noGroup: "Không thuộc bảng nào",
+      selectGroup: "Chọn bảng",
     },
   },
   auth: {
