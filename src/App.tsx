@@ -11,6 +11,32 @@ import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
 
+import { App } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
+import { supabase } from "@/lib/supabase";
+
+App.addListener("appUrlOpen", async ({ url }) => {
+  console.log("[OAuth] appUrlOpen:", url);
+
+  if (url.includes("/auth/callback")) {
+    try {
+      // Đóng Chrome / Custom Tab nếu còn
+      await Browser.close();
+
+      // Supabase tự xử lý session từ URL
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("[OAuth] getSession error:", error.message);
+      } else {
+        console.log("[OAuth] Login success:", data.session);
+      }
+    } catch (err) {
+      console.error("[OAuth] Callback handling failed:", err);
+    }
+  }
+});
+
 // Lazy load all other pages for code splitting
 const Live = lazy(() => import("./pages/Live"));
 const Videos = lazy(() => import("./pages/Videos"));
@@ -54,8 +80,12 @@ const EmbedLive = lazy(() => import("./pages/embed/EmbedLive"));
 const EmbedVideo = lazy(() => import("./pages/embed/EmbedVideo"));
 
 // Lazy load redirect pages
-const QuickTableRedirect = lazy(() => import("./pages/redirects/QuickTableRedirects").then(m => ({ default: m.QuickTableRedirect })));
-const QuickTableSetupRedirect = lazy(() => import("./pages/redirects/QuickTableRedirects").then(m => ({ default: m.QuickTableSetupRedirect })));
+const QuickTableRedirect = lazy(() =>
+  import("./pages/redirects/QuickTableRedirects").then((m) => ({ default: m.QuickTableRedirect })),
+);
+const QuickTableSetupRedirect = lazy(() =>
+  import("./pages/redirects/QuickTableRedirects").then((m) => ({ default: m.QuickTableSetupRedirect })),
+);
 
 // Lazy load admin pages
 const AdminOverview = lazy(() => import("./pages/admin/AdminOverview"));

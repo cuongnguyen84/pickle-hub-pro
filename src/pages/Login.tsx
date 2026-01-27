@@ -67,37 +67,27 @@ const Login = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsSubmitting(true);
+  export const handleGoogleSignIn = async () => {
+    const isNative = isNativeApp();
 
-    try {
-      const isNative = isNativeApp();
+    console.log("[OAuth] Platform:", isNative ? "native" : "web");
 
-      const redirectTo = isNative ? NATIVE_OAUTH_REDIRECT_URL : getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE);
+    /**
+     * QUAN TRỌNG:
+     * - KHÔNG dùng Browser.open
+     * - KHÔNG dùng skipBrowserRedirect
+     * - Để Supabase mở SYSTEM BROWSER (Chrome thật)
+     */
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: isNative ? "https://thepicklehub.net/auth/callback" : `${window.location.origin}/auth/callback`,
+      },
+    });
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-          skipBrowserRedirect: isNative, // ⚠️ BẮT BUỘC
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // 🔥 CÁI QUAN TRỌNG NHẤT
-      if (isNative && data?.url) {
-        // ❌ KHÔNG dùng Browser.open
-        // ❌ KHÔNG dùng WebView
-        // ✅ Dùng browser hệ thống
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      console.error("[OAuth] Error:", err);
-    } finally {
-      setIsSubmitting(false);
+    if (error) {
+      console.error("[OAuth] Google sign-in error:", error.message);
+      throw error;
     }
   };
 
