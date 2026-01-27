@@ -11,11 +11,11 @@ import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
 
-import { App } from "@capacitor/app";
+import { App as CapacitorApp } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
-App.addListener("appUrlOpen", async ({ url }) => {
+CapacitorApp.addListener("appUrlOpen", async ({ url }) => {
   console.log("[OAuth] appUrlOpen:", url);
 
   if (url.includes("/auth/callback")) {

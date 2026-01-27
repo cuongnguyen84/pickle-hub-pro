@@ -67,7 +67,7 @@ const Login = () => {
     }
   };
 
-  export const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async () => {
     const isNative = isNativeApp();
 
     console.log("[OAuth] Platform:", isNative ? "native" : "web");
