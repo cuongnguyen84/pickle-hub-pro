@@ -184,6 +184,24 @@ export default function DoublesEliminationList() {
           </div>
         )}
 
+        {/* SEO Content Section */}
+        <section className="mt-12 border-t border-border pt-10">
+          <h2 className="text-xl font-bold mb-4">{t.seo.doublesElimination.title}</h2>
+          <p className="text-muted-foreground mb-6 max-w-2xl">
+            {t.seo.doublesElimination.description}
+          </p>
+
+          <h3 className="text-lg font-semibold mb-3">{t.seo.doublesElimination.whenToUseTitle}</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-2xl">
+            {t.seo.doublesElimination.whenToUseDesc}
+          </p>
+
+          <h3 className="text-lg font-semibold mb-3">{t.seo.doublesElimination.sizeTitle}</h3>
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            {t.seo.doublesElimination.sizeDesc}
+          </p>
+        </section>
+
         {/* Info Section */}
         <Card className="mt-8">
           <CardHeader>
@@ -209,3 +227,4 @@ export default function DoublesEliminationList() {
     </MainLayout>
   );
 }
+

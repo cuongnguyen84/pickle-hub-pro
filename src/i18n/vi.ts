@@ -1194,6 +1194,34 @@ export interface Translations {
     noNews: string;
     readMore: string;
   };
+  seo: {
+    tools: {
+      title: string;
+      description: string;
+      formatsTitle: string;
+      quickBracket: string;
+      teamMatch: string;
+      singleElimination: string;
+      doublesElimination: string;
+      flexTournament: string;
+    };
+    doublesElimination: {
+      title: string;
+      description: string;
+      whenToUseTitle: string;
+      whenToUseDesc: string;
+      sizeTitle: string;
+      sizeDesc: string;
+    };
+    flexTournament: {
+      title: string;
+      description: string;
+      differenceTitle: string;
+      differenceList: string[];
+      whoTitle: string;
+      whoDesc: string;
+    };
+  };
 }
 
 // Vietnamese translations
@@ -2394,5 +2422,38 @@ export const vi: Translations = {
     subtitle: "Tổng hợp nhanh các cập nhật pickleball từ nguồn uy tín.",
     noNews: "Chưa có cập nhật. Tin tức sẽ hiển thị tại đây khi có nội dung mới.",
     readMore: "Đọc thêm",
+  },
+  seo: {
+    tools: {
+      title: "Công cụ Tổ chức Giải Pickleball",
+      description: "Trang Tools cung cấp bộ công cụ tổ chức giải pickleball chuyên nghiệp. Hỗ trợ nhiều hình thức thi đấu khác nhau. Giúp BTC tổ chức giải nhanh, dễ và hạn chế sai sót. Phù hợp cho giải phong trào, CLB và bán chuyên.",
+      formatsTitle: "Các Thể thức Được Hỗ trợ",
+      quickBracket: "Chia bảng nhanh – Vòng tròn tính điểm + Playoff cho giải phong trào",
+      teamMatch: "Đồng đội MLP – Thi đấu theo đội kiểu Major League Pickleball",
+      singleElimination: "Single Elimination – Loại trực tiếp, thua 1 trận bị loại",
+      doublesElimination: "Loại Kép – Thua 2 trận mới bị loại, công bằng hơn cho VĐV",
+      flexTournament: "Flex Tournament – Tự tạo giải đấu theo cách riêng, không giới hạn luật",
+    },
+    doublesElimination: {
+      title: "Doubles Elimination – Thua 2 Trận Mới Bị Loại",
+      description: "Thể thức loại kép giúp tăng tính công bằng cho giải đấu. Thua 1 trận → xuống nhánh thua. Thua trận thứ 2 → bị loại. Nhánh thắng và nhánh thua gặp nhau trước chung kết.",
+      whenToUseTitle: "Khi nào nên dùng Loại Kép?",
+      whenToUseDesc: "Phù hợp cho giải đấu quy mô vừa đến lớn, các sự kiện cạnh tranh hoặc bán chuyên, khi các đội xứng đáng có cơ hội thứ hai để chứng minh năng lực.",
+      sizeTitle: "Quy mô Giải đề xuất",
+      sizeDesc: "Số đội tối thiểu: 32. Các quy mô đề xuất: 32, 40, 48, 64, 80, 96, 128 đội để bracket cân đối.",
+    },
+    flexTournament: {
+      title: "Flex Tournament – Tự Tạo Giải Đấu Theo Cách Của Bạn",
+      description: "Thể thức giải do người dùng tự tạo. Không giới hạn luật hay cấu trúc. Toàn quyền sắp xếp VĐV, đội, bảng, trận đấu. Phù hợp cho giải sáng tạo hoặc thử nghiệm.",
+      differenceTitle: "Điểm khác biệt của Flex Tournament",
+      differenceList: [
+        "Không ràng buộc logic bracket cố định",
+        "Linh hoạt tối đa về cấu trúc giải",
+        "BTC toàn quyền kiểm soát",
+        "Hỗ trợ thống kê tùy chỉnh",
+      ],
+      whoTitle: "Ai nên dùng Flex Tournament?",
+      whoDesc: "Dành cho BTC CLB, giải đấu tập luyện, thể thức đặc biệt, các giải có luật riêng hoặc sáng tạo.",
+    },
   },
 };
