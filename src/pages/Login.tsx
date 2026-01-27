@@ -12,19 +12,14 @@ import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getOAuthRedirectUrl, getEmailRedirectUrl, AUTH_CALLBACK_ROUTE } from "@/lib/auth-config";
 import { isNativeApp, NATIVE_OAUTH_REDIRECT_URL } from "@/lib/capacitor-utils";
-import { Browser } from "@capacitor/browser";
+//import { Browser } from "@capacitor/browser";
 import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
 
 const Login = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const {
-    user,
-    loading: authLoading,
-    signIn,
-    signUp
-  } = useAuth();
+  const { user, loading: authLoading, signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +28,7 @@ const Login = () => {
   const [resendingEmail, setResendingEmail] = useState(false);
 
   // Get redirect URL from query params
-  const redirectUrl = searchParams.get('redirect');
+  const redirectUrl = searchParams.get("redirect");
 
   // Redirect if already logged in
   useEffect(() => {
@@ -49,22 +44,22 @@ const Login = () => {
     setResendingEmail(true);
     try {
       const { error } = await supabase.auth.resend({
-        type: 'signup',
+        type: "signup",
         email: email,
         options: {
           emailRedirectTo: getEmailRedirectUrl(),
-        }
+        },
       });
       if (error) {
         toast({
           variant: "destructive",
           title: t.common.error,
-          description: error.message
+          description: error.message,
         });
       } else {
         toast({
           title: t.auth.verificationSent,
-          description: t.auth.verificationSentDesc
+          description: t.auth.verificationSentDesc,
         });
       }
     } finally {
@@ -76,49 +71,32 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       const isNative = isNativeApp();
-      
-      console.log('[OAuth] Platform:', isNative ? 'native' : 'web');
-      console.log('[OAuth] Redirect URL:', isNative ? NATIVE_OAUTH_REDIRECT_URL : getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE));
-      
-      // Mark OAuth as in progress for native polling fallback
-      if (isNative) {
-        setOAuthInProgress(true);
-      }
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+
+      const redirectTo = isNative ? NATIVE_OAUTH_REDIRECT_URL : getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE);
+
+      console.log("[OAuth] Platform:", isNative ? "native" : "web");
+      console.log("[OAuth] Redirect URL:", redirectTo);
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
         options: {
-          redirectTo: isNative ? NATIVE_OAUTH_REDIRECT_URL : getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE),
-          // For native: skip browser redirect so we can open with Chrome Custom Tabs
-          // For web: let supabase handle the redirect normally
-          skipBrowserRedirect: isNative,
-        }
+          redirectTo,
+          // ❌ BỎ HOÀN TOÀN
+          // skipBrowserRedirect: isNative,
+        },
       });
-      
+
       if (error) {
-        if (isNative) {
-          setOAuthInProgress(false);
-        }
         toast({
           variant: "destructive",
           title: t.common.error,
-          description: error.message
-        });
-        return;
-      }
-      
-      // On native platforms, open the OAuth URL using Chrome Custom Tabs (Android) / Safari (iOS)
-      // This avoids the 403 disallowed_useragent error from Google
-      if (isNative && data?.url) {
-        console.log('[OAuth] Opening with Browser plugin:', data.url);
-        await Browser.open({
-          url: data.url,
-          presentationStyle: 'fullscreen',
+          description: error.message,
         });
       }
+
+      // ❌ XOÁ TOÀN BỘ Browser.open()
     } catch (err) {
-      console.error('[OAuth] Error:', err);
-      setOAuthInProgress(false);
+      console.error("[OAuth] Error:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -140,18 +118,18 @@ const Login = () => {
             toast({
               variant: "destructive",
               title: t.auth.emailNotVerified,
-              description: t.auth.emailNotVerifiedDesc
+              description: t.auth.emailNotVerifiedDesc,
             });
           } else {
             toast({
               variant: "destructive",
               title: t.auth.invalidCredentials,
-              description: error.message
+              description: error.message,
             });
           }
         } else {
           toast({
-            title: t.auth.loginSuccess
+            title: t.auth.loginSuccess,
           });
           // Redirect to saved URL or home
           const targetUrl = redirectUrl || "/";
@@ -165,20 +143,20 @@ const Login = () => {
             toast({
               variant: "destructive",
               title: t.auth.emailAlreadyUsed,
-              description: t.auth.emailAlreadyUsedDesc
+              description: t.auth.emailAlreadyUsedDesc,
             });
           } else {
             toast({
               variant: "destructive",
               title: t.common.error,
-              description: error.message
+              description: error.message,
             });
           }
         } else {
           // Show verification message since email confirmation is required
           setShowVerificationMessage(true);
           toast({
-            title: t.auth.signupSuccess
+            title: t.auth.signupSuccess,
           });
         }
       }
@@ -201,7 +179,10 @@ const Login = () => {
       <DynamicMeta title={isLogin ? t.auth.login : t.auth.signup} noindex={true} />
       {/* Header */}
       <header className="p-4">
-        <Link to="/" className="inline-flex items-center gap-2 text-foreground-secondary hover:text-foreground transition-colors">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-foreground-secondary hover:text-foreground transition-colors"
+        >
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm">{t.errors.goHome}</span>
         </Link>
@@ -215,9 +196,7 @@ const Login = () => {
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4">
               <span className="text-primary-foreground font-bold text-lg">TPH</span>
             </div>
-            <h1 className="text-2xl font-semibold text-foreground">
-              {isLogin ? t.auth.login : t.auth.signup}
-            </h1>
+            <h1 className="text-2xl font-semibold text-foreground">{isLogin ? t.auth.login : t.auth.signup}</h1>
           </div>
 
           {/* Verification Message */}
@@ -314,9 +293,7 @@ const Login = () => {
                   disabled={isSubmitting}
                 />
                 {!isLogin && password.length > 0 && password.length < 8 && (
-                  <p className="text-xs text-destructive mt-1">
-                    Password must be at least 8 characters
-                  </p>
+                  <p className="text-xs text-destructive mt-1">Password must be at least 8 characters</p>
                 )}
               </div>
             </div>
