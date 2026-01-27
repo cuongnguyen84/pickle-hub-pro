@@ -117,6 +117,37 @@ const Tools = () => {
             <MyRefereeTournaments />
           </div>
         )}
+
+        {/* SEO Content Section */}
+        <section className="mt-16 border-t border-border pt-12">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+            {t.seo.tools.title}
+          </h2>
+          <p className="text-foreground-secondary mb-8 max-w-3xl">
+            {t.seo.tools.description}
+          </p>
+
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            {t.seo.tools.formatsTitle}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <p className="text-sm text-foreground-secondary">{t.seo.tools.quickBracket}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <p className="text-sm text-foreground-secondary">{t.seo.tools.teamMatch}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <p className="text-sm text-foreground-secondary">{t.seo.tools.singleElimination}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
+              <p className="text-sm text-foreground-secondary">{t.seo.tools.doublesElimination}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 border border-border md:col-span-2">
+              <p className="text-sm text-foreground-secondary">{t.seo.tools.flexTournament}</p>
+            </div>
+          </div>
+        </section>
       </div>
     </MainLayout>
   );

@@ -1199,4 +1199,37 @@ export const en: Translations = {
     noNews: "No updates yet. News will appear here when available.",
     readMore: "Read more",
   },
+  seo: {
+    tools: {
+      title: "Pickleball Tournament Tools",
+      description: "This page provides tools to organize pickleball tournaments easily. Supports multiple tournament formats. Designed for speed, simplicity, and accuracy. Suitable for casual, club, and competitive tournaments.",
+      formatsTitle: "Supported Tournament Formats",
+      quickBracket: "Quick Bracket – Round-robin scoring + Playoff for casual tournaments",
+      teamMatch: "Team Match (MLP) – Team-based competition like Major League Pickleball",
+      singleElimination: "Single Elimination – Direct knockout, one loss and you're out",
+      doublesElimination: "Doubles Elimination – 2 losses to be eliminated, fairer for competitors",
+      flexTournament: "Flex Tournament – Create your own tournament format with no restrictions",
+    },
+    doublesElimination: {
+      title: "Doubles Elimination – 2 Losses to Be Eliminated",
+      description: "Double elimination format increases fairness for tournaments. First loss → loser's bracket. Second loss → eliminated. Winner and loser brackets merge before finals.",
+      whenToUseTitle: "When should you use Doubles Elimination?",
+      whenToUseDesc: "Suitable for medium to large tournaments, competitive or semi-pro events, when teams deserve a second chance to prove themselves.",
+      sizeTitle: "Recommended Tournament Size",
+      sizeDesc: "Minimum teams: 32. Suggested sizes: 32, 40, 48, 64, 80, 96, 128 teams for balanced brackets.",
+    },
+    flexTournament: {
+      title: "Flex Tournament – Create Your Own Tournament",
+      description: "User-defined tournament format. No enforced rules or structure. Full control over players, teams, groups, matches. Ideal for custom or experimental tournaments.",
+      differenceTitle: "What makes Flex Tournament different?",
+      differenceList: [
+        "No predefined bracket logic",
+        "Maximum flexibility in structure",
+        "Organizer has full control",
+        "Supports custom tracking",
+      ],
+      whoTitle: "Who should use Flex Tournament?",
+      whoDesc: "Club organizers, training tournaments, special formats, and custom rules events.",
+    },
+  },
 };
