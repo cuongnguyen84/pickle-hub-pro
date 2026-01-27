@@ -69,33 +69,32 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
+
     try {
       const isNative = isNativeApp();
 
       const redirectTo = isNative ? NATIVE_OAUTH_REDIRECT_URL : getOAuthRedirectUrl(redirectUrl || AUTH_CALLBACK_ROUTE);
 
-      console.log("[OAuth] Platform:", isNative ? "native" : "web");
-      console.log("[OAuth] Redirect URL:", redirectTo);
-
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo,
-          // ❌ BỎ HOÀN TOÀN
-          // skipBrowserRedirect: isNative,
+          skipBrowserRedirect: isNative, // ⚠️ BẮT BUỘC
         },
       });
 
       if (error) {
-        toast({
-          variant: "destructive",
-          title: t.common.error,
-          description: error.message,
-        });
+        throw error;
       }
 
-      // ❌ XOÁ TOÀN BỘ Browser.open()
-    } catch (err) {
+      // 🔥 CÁI QUAN TRỌNG NHẤT
+      if (isNative && data?.url) {
+        // ❌ KHÔNG dùng Browser.open
+        // ❌ KHÔNG dùng WebView
+        // ✅ Dùng browser hệ thống
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
       console.error("[OAuth] Error:", err);
     } finally {
       setIsSubmitting(false);
