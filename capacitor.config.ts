@@ -62,6 +62,14 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'DARK',
       backgroundColor: '#000000'
+    },
+    // Native Google Sign-In configuration
+    GoogleAuth: {
+      scopes: ['profile', 'email'],
+      serverClientId: '799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com',
+      androidClientId: '799212701204-9aac8nqnkth7ch36822a3cjh89ddsmgs.apps.googleusercontent.com',
+      iosClientId: '799212701204-256cmrlb95s2m5nv6u3dsq3v646r44fj.apps.googleusercontent.com',
+      forceCodeForRefreshToken: true
     }
   }
 };

@@ -10,10 +10,9 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getOAuthRedirectUrl, getEmailRedirectUrl, AUTH_CALLBACK_ROUTE } from "@/lib/auth-config";
-import { isNativeApp, NATIVE_OAUTH_REDIRECT_URL } from "@/lib/capacitor-utils";
-//import { Browser } from "@capacitor/browser";
-import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
+import { getEmailRedirectUrl } from "@/lib/auth-config";
+import { isNativeApp } from "@/lib/capacitor-utils";
+import { nativeGoogleSignIn } from "@/hooks/useNativeGoogleAuth";
 
 const Login = () => {
   const { t } = useI18n();
@@ -71,24 +70,36 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      const isNative = isNativeApp();
+      if (isNativeApp()) {
+        // ===== NATIVE: Use native Google Sign-In SDK =====
+        console.log("[OAuth] Using native Google Sign-In");
+        const result = await nativeGoogleSignIn();
+        
+        if (result.session) {
+          toast({ title: t.auth.loginSuccess });
+          navigate(redirectUrl || "/", { replace: true });
+        }
+      } else {
+        // ===== WEB: Use OAuth redirect flow =====
+        console.log("[OAuth] Using web OAuth flow");
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: "https://thepicklehub.net/auth/callback",
+          },
+        });
 
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "https://thepicklehub.net/auth/callback",
-          // ⛔ KHÔNG DÙNG skipBrowserRedirect
-        },
-      });
-
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
       }
-
-      // ⛔ TUYỆT ĐỐI KHÔNG Browser.open()
-      // Supabase sẽ tự redirect ra Chrome hệ thống
     } catch (err: any) {
-      console.error("[OAuth]", err);
+      console.error("[OAuth] Error:", err);
+      toast({
+        variant: "destructive",
+        title: t.common.error,
+        description: err.message || "Google Sign-In failed",
+      });
     } finally {
       setIsSubmitting(false);
     }

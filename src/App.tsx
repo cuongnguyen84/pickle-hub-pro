@@ -7,35 +7,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { I18nProvider } from "@/i18n";
 import { lazy, Suspense } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
+import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
 
-import { App as CapacitorApp } from "@capacitor/app";
-import { Browser } from "@capacitor/browser";
-import { supabase } from "@/integrations/supabase/client";
-
-CapacitorApp.addListener("appUrlOpen", async ({ url }) => {
-  console.log("[OAuth] appUrlOpen:", url);
-
-  if (url.includes("/auth/callback")) {
-    try {
-      // Đóng Chrome / Custom Tab nếu còn
-      await Browser.close();
-
-      // Supabase tự xử lý session từ URL
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error("[OAuth] getSession error:", error.message);
-      } else {
-        console.log("[OAuth] Login success:", data.session);
-      }
-    } catch (err) {
-      console.error("[OAuth] Callback handling failed:", err);
-    }
-  }
-});
+// Initialize Native Google Auth plugin on app startup
+initializeGoogleAuth();
 
 // Lazy load all other pages for code splitting
 const Live = lazy(() => import("./pages/Live"));
