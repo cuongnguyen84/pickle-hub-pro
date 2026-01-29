@@ -52,6 +52,17 @@ export default function CreatorLivestreamForm() {
   const [isCreatingMux, setIsCreatingMux] = useState(false);
   const [muxError, setMuxError] = useState<string | null>(null);
 
+  // Helper to format date to local datetime-local input format (YYYY-MM-DDTHH:mm)
+  const formatToLocalDatetime = (isoString: string): string => {
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   useEffect(() => {
     if (livestream) {
       setFormData({
@@ -59,7 +70,7 @@ export default function CreatorLivestreamForm() {
         description: livestream.description ?? "",
         tournament_id: livestream.tournament_id ?? "",
         scheduled_start_at: livestream.scheduled_start_at
-          ? new Date(livestream.scheduled_start_at).toISOString().slice(0, 16)
+          ? formatToLocalDatetime(livestream.scheduled_start_at)
           : "",
         status: livestream.status,
         mux_live_stream_id: livestream.mux_live_stream_id ?? "",
