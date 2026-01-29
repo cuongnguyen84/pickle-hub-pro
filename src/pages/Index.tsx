@@ -1,5 +1,6 @@
 import { MainLayout } from "@/components/layout";
-import { SectionHeader, LiveCard, ContentCard, EmptyState, AdSlot } from "@/components/content";
+import { SectionHeader, ContentCard, EmptyState, AdSlot } from "@/components/content";
+import LiveCardWithPresence from "@/components/content/LiveCardWithPresence";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useVideos } from "@/hooks/useSupabaseData";
@@ -78,7 +79,7 @@ const Index = () => {
           <SectionHeader title={t.live.scheduled} href="/live" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {scheduledStreams.slice(0, 3).map((stream) => (
-              <LiveCard
+              <LiveCardWithPresence
                 key={stream.id}
                 id={stream.id!}
                 title={stream.title ?? ""}
@@ -87,6 +88,7 @@ const Index = () => {
                 organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
                 status={stream.status as "live" | "scheduled" | "ended"}
                 thumbnail={stream.thumbnail_url ?? undefined}
+                scheduledStartAt={stream.scheduled_start_at}
               />
             ))}
           </div>
@@ -110,13 +112,13 @@ const Index = () => {
         ) : liveStreams.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {liveStreams.slice(0, 3).map((stream, index) => (
-              <LiveCard
+              <LiveCardWithPresence
                 key={stream.id}
                 id={stream.id!}
                 title={stream.title ?? ""}
-                viewerCount={0}
                 organizationName={stream.organization?.name ?? ""}
                 organizationSlug={stream.organization?.slug}
+                organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
                 status={stream.status as "live" | "scheduled" | "ended"}
                 thumbnail={stream.thumbnail_url ?? undefined}
                 priority={index === 0}
