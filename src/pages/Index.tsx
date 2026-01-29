@@ -15,8 +15,12 @@ const Index = () => {
   const { t, language } = useI18n();
   
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
+  const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
   const { data: videos = [], isLoading: videosLoading } = useVideos({ limit: 8 });
   const { data: featuredNews = [] } = useFeaturedNews(3);
+
+  // Show scheduled section at top if no live streams
+  const showScheduledFirst = liveStreams.length === 0 && scheduledStreams.length > 0;
 
   return (
     <MainLayout>
@@ -67,6 +71,27 @@ const Index = () => {
         {/* Decorative gradient */}
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
       </section>
+
+      {/* Scheduled Section - Show at top if no live streams */}
+      {showScheduledFirst && (
+        <section className="container-wide section-spacing">
+          <SectionHeader title={t.live.scheduled} href="/live" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {scheduledStreams.slice(0, 3).map((stream) => (
+              <LiveCard
+                key={stream.id}
+                id={stream.id!}
+                title={stream.title ?? ""}
+                organizationName={stream.organization?.name ?? ""}
+                organizationSlug={stream.organization?.slug}
+                organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
+                status={stream.status as "live" | "scheduled" | "ended"}
+                thumbnail={stream.thumbnail_url ?? undefined}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Live Now Section */}
       <section className="container-wide section-spacing">
