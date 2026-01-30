@@ -205,8 +205,15 @@ const QuickTables = () => {
       />
       <div className="container-wide py-8">
         <div className="max-w-2xl mx-auto space-y-8">
-          {/* SEO Header */}
+          {/* Back to Tools + Header */}
           <header className="text-center">
+            <Link
+              to="/tools"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
+            >
+              <ArrowRight className="w-4 h-4 rotate-180" />
+              {language === "vi" ? "Tất cả công cụ" : "All tools"}
+            </Link>
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-primary" />
             </div>

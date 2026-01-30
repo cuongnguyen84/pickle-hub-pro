@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoublesElimination, Tournament } from "@/hooks/useDoublesElimination";
 import { useI18n } from "@/i18n";
-import { Plus, Trophy, Calendar, Users, ChevronRight, Mail } from "lucide-react";
+import { Plus, Trophy, Calendar, Users, ChevronRight, Mail, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
+import { Link } from "react-router-dom";
 
 export default function DoublesEliminationList() {
   const navigate = useNavigate();
@@ -71,6 +72,15 @@ export default function DoublesEliminationList() {
       />
       
       <div className="container max-w-4xl mx-auto py-6 px-4">
+        {/* Back to Tools */}
+        <Link
+          to="/tools"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {language === "vi" ? "Tất cả công cụ" : "All tools"}
+        </Link>
+
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-1">{t.doublesElimination.title}</h1>
           <div className="flex items-center justify-between gap-4">
