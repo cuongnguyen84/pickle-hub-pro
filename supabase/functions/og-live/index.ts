@@ -39,6 +39,7 @@ serve(async (req) => {
         thumbnail_url,
         status,
         scheduled_start_at,
+        ended_at,
         created_at,
         organization_id,
         tournament_id
@@ -75,20 +76,43 @@ serve(async (req) => {
 
     // Build OG meta data with proper SEO format
     const rawTitle = livestream.title || "Livestream";
+    const isEnded = livestream.status === "ended";
     
-    // Title format: {Tournament Name} – {Livestream Title} | Pickleball Livestream
-    // Or if no tournament: {Livestream Title} | Pickleball Livestream
+    // Title format for ended streams: {Title} | Pickleball Replay
+    // For live/scheduled: {Tournament Name} – {Livestream Title} | Pickleball Livestream
     let ogTitle: string;
-    if (tournamentName) {
-      ogTitle = `${tournamentName} – ${rawTitle} | Pickleball Livestream`;
+    if (isEnded) {
+      // Ended streams focus on replay SEO
+      if (tournamentName) {
+        ogTitle = `${tournamentName} – ${rawTitle} | Pickleball Replay`;
+      } else {
+        ogTitle = `${rawTitle} | Pickleball Replay`;
+      }
     } else {
-      ogTitle = `${rawTitle} | Pickleball Livestream`;
+      // Live/scheduled streams
+      if (tournamentName) {
+        ogTitle = `${tournamentName} – ${rawTitle} | Pickleball Livestream`;
+      } else {
+        ogTitle = `${rawTitle} | Pickleball Livestream`;
+      }
     }
     
-    // Description format: Watch live pickleball match. Streaming now on ThePickleHub.
+    // Description format: Different for ended (replay) vs live
     let ogDescription: string;
     if (livestream.description && livestream.description.trim()) {
       ogDescription = livestream.description.slice(0, 160);
+    } else if (isEnded) {
+      // SEO-optimized description for replays
+      const parts: string[] = [];
+      parts.push(`Xem lại: ${rawTitle}.`);
+      if (tournamentName) {
+        parts.push(`Giải đấu: ${tournamentName}.`);
+      }
+      if (organizationName) {
+        parts.push(`Bởi ${organizationName}.`);
+      }
+      parts.push(`Full replay pickleball trên ${SITE_NAME}.`);
+      ogDescription = parts.join(" ").slice(0, 160);
     } else {
       const parts: string[] = [];
       parts.push(`Xem trực tiếp: ${rawTitle}.`);

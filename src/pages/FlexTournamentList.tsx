@@ -1,5 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
+import { DynamicMeta, ToolsInternalLinks } from "@/components/seo";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,11 @@ const FlexTournamentList = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta 
+        title={t.tools.flexTournament.title}
+        description={t.tools.flexTournament.description}
+        url="https://thepicklehub.net/tools/flex-tournament"
+      />
       <div className="container-wide py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -181,6 +187,9 @@ const FlexTournamentList = () => {
           <p className="text-sm text-muted-foreground max-w-2xl">
             {t.seo.flexTournament.whoDesc}
           </p>
+
+          {/* Internal Links to Other Tools */}
+          <ToolsInternalLinks currentTool="flex-tournament" />
         </section>
       </div>
     </MainLayout>

@@ -19,7 +19,7 @@ import { Link } from "react-router-dom";
 import { AIAssistantButton } from '@/components/ai';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, ToolsInternalLinks } from "@/components/seo";
 
 type Step = "count" | "format" | "groups" | "players";
 
@@ -799,6 +799,9 @@ const QuickTables = () => {
               {t.quickTable.seo.formatsDesc}{" "}
               <Link to="/tools/team-match" className="text-primary hover:underline">{t.teamMatch.pageTitle}</Link>
             </p>
+
+            {/* Internal Links to Other Tools */}
+            <ToolsInternalLinks currentTool="quick-tables" />
           </section>
       </div>
     </MainLayout>
