@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, ToolsInternalLinks } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -200,6 +200,9 @@ export default function DoublesEliminationList() {
           <p className="text-sm text-muted-foreground max-w-2xl">
             {t.seo.doublesElimination.sizeDesc}
           </p>
+
+          {/* Internal Links to Other Tools */}
+          <ToolsInternalLinks currentTool="doubles-elimination" />
         </section>
 
         {/* Info Section */}

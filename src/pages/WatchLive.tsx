@@ -18,7 +18,7 @@ import { vi as viLocale, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShareDialog } from "@/components/share";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, EndedLivestreamSEO, VideoSchema } from "@/components/seo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -32,6 +32,8 @@ const WatchLive = () => {
   const { data: livestream, isLoading } = useLivestream(id!);
   const { data: viewCount = 0 } = useViewCount("livestream", id!);
   const { data: otherLivestreams = [] } = useLivestreams("live");
+  // For ended streams, also fetch ended streams for related content
+  const { data: endedLivestreams = [] } = useLivestreams("ended");
   
   // Real-time concurrent viewers using Supabase Presence
   // Only enabled when livestream is live
@@ -118,17 +120,36 @@ const WatchLive = () => {
   // Determine stream type: live for active streams, on-demand for replays
   const streamType = isLive ? "live" : "on-demand";
 
+  // Generate SEO-optimized title for ended streams
+  // Format: {Title} | Pickleball Replay - ThePickleHub
+  const seoTitle = isEnded 
+    ? `${livestream.title} | Pickleball Replay`
+    : livestream.title ?? "Livestream";
+
   // Generate SEO description from livestream data
-  const seoDescription = livestream.description 
-    ? `${livestream.description.slice(0, 150)}...` 
-    : `Xem livestream ${livestream.title} trên ThePickleHub. ${livestream.organization?.name ? `Được phát bởi ${livestream.organization.name}.` : ''} Theo dõi trực tiếp các giải đấu pickleball hấp dẫn.`;
+  // For ended streams, focus on replay availability
+  const seoDescription = isEnded
+    ? (language === 'vi'
+        ? `Xem lại đầy đủ ${livestream.title}${livestream.organization?.name ? ` - ${livestream.organization.name}` : ''}. Replay livestream pickleball trên ThePickleHub.`
+        : `Watch the full replay of ${livestream.title}${livestream.organization?.name ? ` by ${livestream.organization.name}` : ''}. Pickleball livestream replay on ThePickleHub.`)
+    : (livestream.description 
+        ? `${livestream.description.slice(0, 150)}...` 
+        : `Xem livestream ${livestream.title} trên ThePickleHub. ${livestream.organization?.name ? `Được phát bởi ${livestream.organization.name}.` : ''} Theo dõi trực tiếp các giải đấu pickleball hấp dẫn.`);
+
+  // Related livestreams for ended streams (same org or tournament)
+  const relatedStreams = isEnded
+    ? endedLivestreams.filter((s) => 
+        s.id !== livestream.id && 
+        (s.organization_id === livestream.organization_id || s.tournament_id === livestream.tournament_id)
+      ).slice(0, 4)
+    : [];
 
   return (
     <MainLayout>
       {/* Dynamic SEO tags - auto-generated from livestream data */}
       {/* Canonical URL points to /livestream/{id} for SEO */}
       <DynamicMeta
-        title={livestream.title ?? "Livestream"}
+        title={seoTitle}
         description={seoDescription}
         image={livestream.thumbnail_url ?? undefined}
         type="video.other"
@@ -136,6 +157,17 @@ const WatchLive = () => {
         publishedTime={livestream.scheduled_start_at ?? livestream.created_at}
         url={`https://thepicklehub.net/livestream/${id}`}
       />
+      
+      {/* VideoObject Schema for ended streams (helps Google Video indexing) */}
+      {isEnded && livestream.mux_asset_playback_id && (
+        <VideoSchema
+          name={livestream.title || "Pickleball Replay"}
+          description={seoDescription}
+          thumbnailUrl={livestream.thumbnail_url || "https://thepicklehub.net/og-image.png"}
+          uploadDate={livestream.ended_at || livestream.created_at}
+          embedUrl={`https://thepicklehub.net/embed/live/${id}`}
+        />
+      )}
       <div className="container-wide section-spacing">
         {/* Back Button */}
         <Link
@@ -400,6 +432,16 @@ const WatchLive = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Enhanced SEO Section for Ended Livestreams */}
+              {isEnded && (
+                <EndedLivestreamSEO
+                  livestream={livestream}
+                  viewCount={viewCount}
+                  relatedLivestreams={relatedStreams}
+                  tournamentSlug={null}
+                />
+              )}
             </div>
 
             {/* Comments Section */}
