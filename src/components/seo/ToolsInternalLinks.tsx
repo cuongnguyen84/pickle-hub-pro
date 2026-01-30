@@ -73,16 +73,6 @@ export const ToolsInternalLinks = ({ currentTool }: ToolsInternalLinksProps) => 
           </Link>
         ))}
       </div>
-
-      {/* Back to tools link */}
-      <div className="mt-4">
-        <Link
-          to="/tools"
-          className="text-sm text-muted-foreground hover:text-primary transition-colors"
-        >
-          {language === "vi" ? "← Tất cả công cụ" : "← All tools"}
-        </Link>
-      </div>
     </nav>
   );
 };

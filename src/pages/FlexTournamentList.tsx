@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Trash2, Globe, Lock, Loader2 } from "lucide-react";
+import { Plus, Eye, Trash2, Globe, Lock, Loader2, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -23,7 +23,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 const FlexTournamentList = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const { myTournaments, isLoadingTournaments, deleteTournament, isDeleting } = useFlexTournament();
   const navigate = useNavigate();
@@ -65,6 +65,15 @@ const FlexTournamentList = () => {
         url="https://thepicklehub.net/tools/flex-tournament"
       />
       <div className="container-wide py-8">
+        {/* Back to Tools */}
+        <Link
+          to="/tools"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {language === "vi" ? "Tất cả công cụ" : "All tools"}
+        </Link>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
