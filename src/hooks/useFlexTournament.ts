@@ -134,6 +134,28 @@ export function useFlexTournament() {
     enabled: !!user?.id,
   });
 
+  // Fetch public tournaments (excluding user's own)
+  const { data: publicTournaments = [], isLoading: isLoadingPublic } = useQuery({
+    queryKey: ['flex-tournaments', 'public', user?.id],
+    queryFn: async () => {
+      let query = supabase
+        .from('flex_tournaments')
+        .select('*')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      // Exclude user's own tournaments
+      if (user?.id) {
+        query = query.neq('creator_user_id', user.id);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as FlexTournament[];
+    },
+  });
+
   // Create tournament mutation
   const createMutation = useMutation({
     mutationFn: async (input: { name: string; playerNames: string[]; isPublic: boolean }) => {
@@ -635,5 +657,7 @@ export function useFlexTournament() {
     updateEntityName,
     updateTournamentVisibility,
     generateRoundRobinMatches,
+    publicTournaments,
+    isLoadingPublic,
   };
 }
