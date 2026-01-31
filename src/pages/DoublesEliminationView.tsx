@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useDoublesElimination, Tournament, Team, Match } from "@/hooks/useDoublesElimination";
 import { useDoublesEliminationReferees } from "@/hooks/useDoublesEliminationReferees";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +36,7 @@ export default function DoublesEliminationView() {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const { getTournamentByShareId, deleteTournament } = useDoublesElimination();
   const { toast } = useToast();
 
@@ -61,6 +63,7 @@ export default function DoublesEliminationView() {
   }, [matches]);
 
   const isCreator = user?.id === tournament?.creator_user_id;
+  const canManage = isCreator || isAdmin; // Admin or creator can manage
 
   useEffect(() => {
     if (shareId) {
@@ -77,8 +80,14 @@ export default function DoublesEliminationView() {
         return;
       }
 
-      const isCreator = user.id === tournament.creator_user_id;
-      if (isCreator) {
+      // Admin can always edit
+      if (isAdmin) {
+        setCanEdit(true);
+        return;
+      }
+
+      const isCreatorUser = user.id === tournament.creator_user_id;
+      if (isCreatorUser) {
         setCanEdit(true);
         return;
       }
@@ -95,7 +104,7 @@ export default function DoublesEliminationView() {
     };
 
     checkPermissions();
-  }, [user, tournament]);
+  }, [user, tournament, isAdmin]);
 
   const loadData = async () => {
     if (!shareId) return;
@@ -280,7 +289,7 @@ export default function DoublesEliminationView() {
               {copied ? 'Đã sao chép' : 'Chia sẻ'}
             </Button>
             
-            {isCreator && (
+            {canManage && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm" className="text-destructive">
@@ -296,7 +305,7 @@ export default function DoublesEliminationView() {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive">
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                       Xóa
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -318,7 +327,7 @@ export default function DoublesEliminationView() {
               Playoff
             </TabsTrigger>
             <TabsTrigger value="teams">Đội ({teams.length})</TabsTrigger>
-            {isCreator && <TabsTrigger value="settings">Cài đặt</TabsTrigger>}
+            {canManage && <TabsTrigger value="settings">Cài đặt</TabsTrigger>}
           </TabsList>
 
           {/* Preliminary Tab - Round 1, 2, 3 */}
@@ -394,7 +403,7 @@ export default function DoublesEliminationView() {
           </TabsContent>
 
           {/* Settings Tab */}
-          {isCreator && (
+          {canManage && (
             <TabsContent value="settings" className="space-y-4">
               <Card>
                 <CardHeader>

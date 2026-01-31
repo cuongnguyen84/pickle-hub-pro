@@ -14,8 +14,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid, Mail } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid, Mail, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
@@ -23,6 +24,7 @@ import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from
 import { useTeamMatchStandings } from '@/hooks/useTeamMatchStandings';
 import { useTeamMatchGroups, useTeamMatchGroupManagement } from '@/hooks/useTeamMatchGroups';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -69,6 +71,7 @@ export default function TeamMatchView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const { toast } = useToast();
   const { t, language } = useI18n();
   
@@ -87,7 +90,7 @@ export default function TeamMatchView() {
 
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
   const { data: userTeam } = useUserTeam(tournament?.id);
-  const { updateTournamentStatus, isUpdatingStatus } = useTeamMatch();
+  const { updateTournamentStatus, isUpdatingStatus, deleteTournament } = useTeamMatch();
   
   const { data: teams } = useTeamMatchTeams(tournament?.id);
   const { data: matches } = useTeamMatchMatches(tournament?.id);
@@ -135,6 +138,7 @@ export default function TeamMatchView() {
   const [scoringMatch, setScoringMatch] = useState<TeamMatchMatch | null>(null);
 
   const isOwner = tournament?.created_by === user?.id;
+  const canManage = isOwner || isAdmin; // Admin or owner can manage
   const isSingleElimination = tournament?.format === 'single_elimination';
   const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
@@ -144,8 +148,19 @@ export default function TeamMatchView() {
   const roundRobinMatches = matches?.filter(m => !m.is_playoff) || [];
   const playoffMatches = matches?.filter(m => m.is_playoff) || [];
   const isGroupPlayoffFormat = tournament?.format === 'rr_playoff';
-  const canStartGroupSetup = isOwner && isGroupPlayoffFormat && !hasGroups && pendingTeamsCount === 0 && approvedTeamsCount >= 6;
-  
+  const canStartGroupSetup = canManage && isGroupPlayoffFormat && !hasGroups && pendingTeamsCount === 0 && approvedTeamsCount >= 6;
+
+  // Handle delete tournament
+  const handleDeleteTournament = async () => {
+    if (!tournament) return;
+    try {
+      await deleteTournament(tournament.id);
+      navigate('/tools/team-match');
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
   // Filter out rejected teams for display
   const displayTeams = teams?.filter(t => t.status !== 'rejected') || [];
 
@@ -416,10 +431,33 @@ export default function TeamMatchView() {
               <Button variant="outline" size="icon" onClick={handleCopyLink} title="Sao chép link">
                 <Copy className="h-4 w-4" />
               </Button>
-              {isOwner && (
-                <Button variant="outline" size="icon" onClick={() => setShowSettingsDialog(true)} title="Cài đặt">
-                  <Settings className="h-4 w-4" />
-                </Button>
+              {canManage && (
+                <>
+                  <Button variant="outline" size="icon" onClick={() => setShowSettingsDialog(true)} title="Cài đặt">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="icon" className="text-destructive hover:bg-destructive/10" title="Xoá giải">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Xoá giải đấu?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xoá vĩnh viễn.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteTournament} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Xoá
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
               )}
             </div>
           </div>
