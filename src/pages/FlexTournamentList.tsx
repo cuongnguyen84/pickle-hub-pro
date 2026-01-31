@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 const FlexTournamentList = () => {
   const { t, language } = useI18n();
   const { user } = useAuth();
-  const { myTournaments, isLoadingTournaments, deleteTournament, isDeleting } = useFlexTournament();
+  const { myTournaments, isLoadingTournaments, publicTournaments, isLoadingPublic, deleteTournament, isDeleting } = useFlexTournament();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -41,21 +41,8 @@ const FlexTournamentList = () => {
     setDeleteId(null);
   };
 
-  if (!user) {
-    return (
-      <MainLayout>
-        <div className="container-wide py-8">
-          <div className="text-center py-12">
-            <h1 className="text-2xl font-bold mb-4">{t.tools.flexTournament.title}</h1>
-            <p className="text-muted-foreground mb-6">{t.auth.loginRequired}</p>
-            <Button asChild>
-              <Link to="/login">{t.auth.login}</Link>
-            </Button>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
+  // Allow viewing public tournaments even when not logged in
+  // But show login prompt for creating
 
   return (
     <MainLayout>
@@ -84,10 +71,16 @@ const FlexTournamentList = () => {
               {t.tools.flexTournament.subtitle}
             </p>
           </div>
-          <Button onClick={() => navigate('/tools/flex-tournament/new')}>
-            <Plus className="w-4 h-4 mr-2" />
-            {t.tools.flexTournament.createNew}
-          </Button>
+          {user ? (
+            <Button onClick={() => navigate('/tools/flex-tournament/new')}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t.tools.flexTournament.createNew}
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link to="/login">{t.auth.login}</Link>
+            </Button>
+          )}
         </div>
 
         {/* Microcopy */}
@@ -99,34 +92,92 @@ const FlexTournamentList = () => {
           </CardContent>
         </Card>
 
-        {/* Tournament List */}
-        {isLoadingTournaments ? (
+        {/* My Tournaments - Only show when logged in */}
+        {user && (
+          <>
+            <h2 className="text-lg font-semibold mb-4">{language === "vi" ? "Giải đấu của tôi" : "My Tournaments"}</h2>
+            {isLoadingTournaments ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : myTournaments.length === 0 ? (
+              <Card className="text-center py-8 mb-8">
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">{t.tools.flexTournament.noTournaments}</p>
+                  <Button onClick={() => navigate('/tools/flex-tournament/new')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    {t.tools.flexTournament.create}
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {myTournaments.map((tournament) => (
+                  <Card key={tournament.id} className="hover:border-primary/50 transition-colors">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-lg line-clamp-1">{tournament.name}</CardTitle>
+                        <Badge variant={tournament.is_public ? "default" : "secondary"}>
+                          {tournament.is_public ? (
+                            <><Globe className="w-3 h-3 mr-1" />{t.tools.flexTournament.public}</>
+                          ) : (
+                            <><Lock className="w-3 h-3 mr-1" />{t.tools.flexTournament.unlisted}</>
+                          )}
+                        </Badge>
+                      </div>
+                      <CardDescription>
+                        {format(new Date(tournament.created_at), 'dd/MM/yyyy HH:mm')}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => navigate(`/tools/flex-tournament/${tournament.share_id}`)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          {t.tools.flexTournament.viewTournament}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeleteId(tournament.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Public Tournaments - Always visible */}
+        <h2 className="text-lg font-semibold mb-4">{language === "vi" ? "Giải đấu công khai" : "Public Tournaments"}</h2>
+        {isLoadingPublic ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        ) : myTournaments.length === 0 ? (
-          <Card className="text-center py-12">
+        ) : publicTournaments.length === 0 ? (
+          <Card className="text-center py-8">
             <CardContent>
-              <p className="text-muted-foreground mb-4">{t.tools.flexTournament.noTournaments}</p>
-              <Button onClick={() => navigate('/tools/flex-tournament/new')}>
-                <Plus className="w-4 h-4 mr-2" />
-                {t.tools.flexTournament.create}
-              </Button>
+              <p className="text-muted-foreground">{language === "vi" ? "Chưa có giải đấu công khai nào" : "No public tournaments yet"}</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myTournaments.map((tournament) => (
+            {publicTournaments.map((tournament) => (
               <Card key={tournament.id} className="hover:border-primary/50 transition-colors">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-lg line-clamp-1">{tournament.name}</CardTitle>
-                    <Badge variant={tournament.is_public ? "default" : "secondary"}>
-                      {tournament.is_public ? (
-                        <><Globe className="w-3 h-3 mr-1" />{t.tools.flexTournament.public}</>
-                      ) : (
-                        <><Lock className="w-3 h-3 mr-1" />{t.tools.flexTournament.unlisted}</>
-                      )}
+                    <Badge variant="default">
+                      <Globe className="w-3 h-3 mr-1" />{t.tools.flexTournament.public}
                     </Badge>
                   </div>
                   <CardDescription>
@@ -134,25 +185,15 @@ const FlexTournamentList = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => navigate(`/tools/flex-tournament/${tournament.share_id}`)}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      {t.tools.flexTournament.viewTournament}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setDeleteId(tournament.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => navigate(`/tools/flex-tournament/${tournament.share_id}`)}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    {t.tools.flexTournament.viewTournament}
+                  </Button>
                 </CardContent>
               </Card>
             ))}
