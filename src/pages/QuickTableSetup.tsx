@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
 import { DynamicMeta } from '@/components/seo';
 import { useQuickTable, type QuickTable, distributePlayersToGroups } from '@/hooks/useQuickTable';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +33,9 @@ const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
   const { t } = useI18n();
-  const { getTableByShareId, addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus, updateTableCourtSettings, reassignCourtsAndTimes } = useQuickTable();
+  const { user } = useAuth();
+  const { isAdmin } = useAdminAuth();
+  const { getTableByShareId, addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus, updateTableCourtSettings, reassignCourtsAndTimes, deleteTable } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
   const [loading, setLoading] = useState(true);
@@ -360,6 +364,22 @@ const QuickTableSetup = () => {
     );
   }
 
+  // Handle delete table
+  const handleDeleteTable = async () => {
+    if (!table) return;
+    if (!confirm(`Bạn có chắc chắn muốn xoá giải "${table.name}"? Tất cả dữ liệu sẽ bị xoá vĩnh viễn.`)) {
+      return;
+    }
+    
+    const success = await deleteTable(table.id);
+    if (success) {
+      navigate('/tools/quick-tables');
+    }
+  };
+
+  // Check if user can delete this table
+  const canDeleteTable = isAdmin || (user && table.creator_user_id === user.id);
+
   return (
     <MainLayout>
       <DynamicMeta title={`Nhập VĐV - ${table.name}`} noindex={true} />
@@ -367,7 +387,20 @@ const QuickTableSetup = () => {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold mb-1">{table.name}</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold mb-1">{table.name}</h1>
+              {canDeleteTable && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDeleteTable} 
+                  className="text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Xoá giải
+                </Button>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-foreground-secondary">
               <Badge variant="outline">
                 {table.format === 'round_robin' ? 'Round Robin' : t.quickTable.largePlayoff}
