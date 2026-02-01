@@ -14,7 +14,17 @@ Allow: /tournament/
 Allow: /org/
 Allow: /creators/
 Allow: /tools
+Allow: /tools/
+Allow: /tools/flex-tournament
+Allow: /tools/flex-tournament/
+Allow: /tools/doubles-elimination
+Allow: /tools/doubles-elimination/
+Allow: /tools/quick-tables
+Allow: /tools/quick-tables/
+Allow: /tools/team-match
+Allow: /tools/team-match/
 Allow: /privacy
+Allow: /news
 
 # Block admin and private routes
 Disallow: /admin
