@@ -5,6 +5,8 @@
 <url><loc>https://thepicklehub.net/tournaments</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
 <url><loc>https://thepicklehub.net/videos</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
 <url><loc>https://thepicklehub.net/tools</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+<url><loc>https://thepicklehub.net/tools/flex-tournament</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+<url><loc>https://thepicklehub.net/tools/doubles-elimination</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
 <url><loc>https://thepicklehub.net/tools/quick-tables</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
 <url><loc>https://thepicklehub.net/tools/team-match</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
 <url><loc>https://thepicklehub.net/privacy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
