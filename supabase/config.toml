@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.og-organization]
 verify_jwt = false
+
+[functions.og-flex-tournament]
+verify_jwt = false
