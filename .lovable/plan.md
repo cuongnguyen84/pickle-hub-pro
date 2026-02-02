@@ -1,242 +1,181 @@
 
-## Kế hoạch: Triển khai Native Google Sign-In với @codetrix-studio/capacitor-google-auth
+# Kế hoạch triển khai hreflang trong DynamicMeta
 
-### Tổng quan
+## Mục tiêu
+Thêm hreflang tags vào component DynamicMeta để giúp Google hiểu rằng website hỗ trợ đa ngôn ngữ (Tiếng Việt và Tiếng Anh), từ đó serve đúng phiên bản ngôn ngữ cho người dùng từ các quốc gia khác nhau.
 
-Chuyển từ web-based OAuth (đang gặp lỗi redirect về app) sang Native Google Sign-In SDK, giúp:
-- ✅ Tránh hoàn toàn lỗi `disallowed_useragent`
-- ✅ Không cần App Links / Universal Links phức tạp
-- ✅ Trải nghiệm native popup chọn tài khoản Google
-- ✅ Đáng tin cậy hơn trên cả iOS và Android
+## Phân tích hiện trạng
 
-### OAuth Client IDs (đã cung cấp)
+### Đã có
+- DynamicMeta component quản lý tất cả meta tags động
+- i18n system với 2 ngôn ngữ: `vi` (default) và `en`
+- Language context lưu trong localStorage và cập nhật `document.documentElement.lang`
 
-| Loại | Client ID |
-|------|-----------|
-| Web (serverClientId) | `799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com` |
-| Android | `799212701204-9aac8nqnkth7ch36822a3cjh89ddsmgs.apps.googleusercontent.com` |
-| iOS | `799212701204-256cmrlb95s2m5nv6u3dsq3v646r44fj.apps.googleusercontent.com` |
+### Cần thêm
+- hreflang link tags cho mỗi ngôn ngữ
+- x-default hreflang cho ngôn ngữ mặc định
+- Cập nhật og:locale dựa trên ngôn ngữ hiện tại
 
----
-
-### Luồng đăng nhập mới (Native Flow)
+## Cách hoạt động của hreflang
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  User nhấn "Đăng nhập bằng Google"                          │
-└────────────────────────┬────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│  isNativeApp() → true?                                      │
-├────────────────────────┬────────────────────────────────────┤
-│  YES (Native)          │  NO (Web)                          │
-│  ↓                     │  ↓                                 │
-│  GoogleAuth.signIn()   │  supabase.auth.signInWithOAuth()  │
-│  (Native SDK popup)    │  (Redirect browser)                │
-│  ↓                     │                                    │
-│  Nhận idToken          │                                    │
-│  ↓                     │                                    │
-│  supabase.auth         │                                    │
-│  .signInWithIdToken()  │                                    │
-│  ↓                     │                                    │
-│  Session created ✓     │                                    │
+│                    Google Crawler                            │
+│                         │                                    │
+│     ┌───────────────────▼───────────────────┐               │
+│     │  Đọc hreflang tags trên trang          │               │
+│     └───────────────────┬───────────────────┘               │
+│                         │                                    │
+│     ┌───────────────────▼───────────────────┐               │
+│     │  Hiểu: Trang này có 2 phiên bản ngôn ngữ              │
+│     │  - Vietnamese: hreflang="vi"                          │
+│     │  - English: hreflang="en"                             │
+│     │  - Default: hreflang="x-default"                      │
+│     └───────────────────┬───────────────────┘               │
+│                         │                                    │
+│     ┌───────────────────▼───────────────────┐               │
+│     │  Serve đúng phiên bản cho user         │               │
+│     │  User từ US → Show English result      │               │
+│     │  User từ VN → Show Vietnamese result   │               │
+│     └───────────────────────────────────────┘               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Các thay đổi code
+## Chi tiết kỹ thuật
 
-#### 1. Cài đặt package mới
+### File cần sửa: `src/components/seo/DynamicMeta.tsx`
 
-```bash
-npm install @codetrix-studio/capacitor-google-auth
-npx cap sync
-```
-
-**File:** `package.json`
-- Thêm dependency: `@codetrix-studio/capacitor-google-auth`
-
-#### 2. Cấu hình Capacitor
-
-**File:** `capacitor.config.ts`
-- Thêm plugin config `GoogleAuth` với 3 Client IDs
-
+### Thay đổi 1: Thêm prop mới
 ```typescript
-plugins: {
-  // ... existing plugins
-  GoogleAuth: {
-    scopes: ['profile', 'email'],
-    serverClientId: '799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com',
-    androidClientId: '799212701204-9aac8nqnkth7ch36822a3cjh89ddsmgs.apps.googleusercontent.com',
-    iosClientId: '799212701204-256cmrlb95s2m5nv6u3dsq3v646r44fj.apps.googleusercontent.com',
-    forceCodeForRefreshToken: true
-  }
+interface DynamicMetaProps {
+  title: string;
+  description?: string;
+  image?: string;
+  type?: "website" | "video.other" | "article";
+  url?: string;
+  noindex?: boolean;
+  creator?: string;
+  publishedTime?: string;
+  // Mới
+  enableHreflang?: boolean;
 }
 ```
 
-#### 3. Tạo hook useNativeGoogleAuth
+### Thay đổi 2: Import useI18n hook
+```typescript
+import { useI18n } from "@/i18n";
+```
 
-**File mới:** `src/hooks/useNativeGoogleAuth.ts`
+### Thay đổi 3: Logic tạo hreflang tags
+Trong useEffect, thêm logic:
 
 ```typescript
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
-import { supabase } from '@/integrations/supabase/client';
-import { isNativeApp } from '@/lib/capacitor-utils';
-
-export const initializeGoogleAuth = () => {
-  if (isNativeApp()) {
-    GoogleAuth.initialize({
-      scopes: ['profile', 'email'],
-      grantOfflineAccess: true,
-    });
-  }
-};
-
-export const nativeGoogleSignIn = async () => {
-  // Gọi native Google SDK → lấy idToken
-  const googleUser = await GoogleAuth.signIn();
+// Hreflang tags cho SEO đa ngôn ngữ
+if (enableHreflang) {
+  const baseUrl = "https://thepicklehub.net";
+  const pathname = new URL(currentUrl).pathname;
   
-  // Dùng idToken để tạo Supabase session
-  const { data, error } = await supabase.auth.signInWithIdToken({
-    provider: 'google',
-    token: googleUser.authentication.idToken,
-  });
-
-  if (error) throw error;
-  return data;
-};
-
-export const nativeGoogleSignOut = async () => {
-  if (isNativeApp()) {
-    await GoogleAuth.signOut();
-  }
-};
-```
-
-#### 4. Cập nhật Login.tsx
-
-**File:** `src/pages/Login.tsx`
-
-Sửa `handleGoogleSignIn` để phân biệt Native vs Web:
-
-```typescript
-import { isNativeApp } from '@/lib/capacitor-utils';
-import { nativeGoogleSignIn } from '@/hooks/useNativeGoogleAuth';
-
-const handleGoogleSignIn = async () => {
-  setIsSubmitting(true);
-
-  try {
-    if (isNativeApp()) {
-      // ===== NATIVE: Dùng native SDK =====
-      const result = await nativeGoogleSignIn();
-      
-      toast({ title: t.auth.loginSuccess });
-      navigate(redirectUrl || '/', { replace: true });
-      
-    } else {
-      // ===== WEB: Dùng OAuth redirect =====
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'https://thepicklehub.net/auth/callback',
-        },
-      });
-      if (error) throw error;
+  const updateHreflang = (hreflang: string, href: string) => {
+    let link = document.querySelector(
+      `link[rel="alternate"][hreflang="${hreflang}"]`
+    ) as HTMLLinkElement;
+    
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "alternate";
+      link.hreflang = hreflang;
+      document.head.appendChild(link);
     }
-  } catch (err: any) {
-    console.error('[OAuth]', err);
-    toast({
-      variant: 'destructive',
-      title: t.common.error,
-      description: err.message || 'Google Sign-In failed',
-    });
-  } finally {
-    setIsSubmitting(false);
+    link.href = href;
+  };
+
+  // Vietnamese version
+  updateHreflang("vi", `${baseUrl}${pathname}`);
+  // English version  
+  updateHreflang("en", `${baseUrl}${pathname}`);
+  // Default fallback
+  updateHreflang("x-default", `${baseUrl}${pathname}`);
+}
+```
+
+### Thay đổi 4: Cập nhật og:locale dựa trên ngôn ngữ
+```typescript
+const { language } = useI18n();
+
+// Trong useEffect
+updateMeta("og:locale", language === "en" ? "en_US" : "vi_VN");
+```
+
+### Thay đổi 5: Cleanup hreflang khi unmount
+```typescript
+return () => {
+  document.title = "ThePickleHub – Pickleball Tournaments, Livestream & Community";
+  
+  // Cleanup hreflang tags
+  if (enableHreflang) {
+    const hreflangLinks = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    hreflangLinks.forEach(link => link.remove());
   }
 };
 ```
 
-#### 5. Khởi tạo plugin trong App.tsx
+---
 
-**File:** `src/App.tsx`
+## Cách sử dụng
 
-```typescript
-import { initializeGoogleAuth } from '@/hooks/useNativeGoogleAuth';
-
-// Khởi tạo Google Auth khi app load (đặt trước component App)
-initializeGoogleAuth();
+### Các trang cần bật hreflang (SEO pages)
+```tsx
+// FlexTournamentList.tsx
+<DynamicMeta 
+  title={t.tools.flexTournament.title}
+  description={t.tools.flexTournament.description}
+  url="https://thepicklehub.net/tools/flex-tournament"
+  enableHreflang={true}  // Bật cho các trang tools SEO
+/>
 ```
 
-Đồng thời, có thể bỏ logic `CapacitorApp.addListener("appUrlOpen")` cho OAuth vì không còn cần thiết với native flow.
+### Các trang KHÔNG cần hreflang
+- `/login`, `/account` - Trang cá nhân
+- `/tools/flex-tournament/:shareId` - Tournament cụ thể (dùng og edge function)
+- Admin pages
 
-#### 6. Cấu hình Android (Manual step)
+---
 
-**File:** `android/app/src/main/res/values/strings.xml`
-- Thêm `server_client_id`
+## Kết quả HTML sau khi triển khai
 
-```xml
-<resources>
-    <string name="app_name">ThePickleHub</string>
-    <string name="title_activity_main">ThePickleHub</string>
-    <string name="package_name">net.thepicklehub.app</string>
-    <string name="custom_url_scheme">net.thepicklehub.app</string>
-    <string name="server_client_id">799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com</string>
-</resources>
-```
-
-#### 7. Cấu hình iOS (Manual step)
-
-**File:** `ios/App/App/Info.plist`
-- Thêm URL scheme cho iOS client
-
-```xml
-<key>CFBundleURLTypes</key>
-<array>
-  <dict>
-    <key>CFBundleURLSchemes</key>
-    <array>
-      <string>com.googleusercontent.apps.799212701204-256cmrlb95s2m5nv6u3dsq3v646r44fj</string>
-    </array>
-  </dict>
-</array>
-
-<key>GIDClientID</key>
-<string>799212701204-256cmrlb95s2m5nv6u3dsq3v646r44fj.apps.googleusercontent.com</string>
+```html
+<head>
+  <!-- Existing meta tags -->
+  <title>Flex Tournament | ThePickleHub</title>
+  <meta property="og:locale" content="vi_VN" />
+  
+  <!-- NEW: hreflang tags -->
+  <link rel="alternate" hreflang="vi" href="https://thepicklehub.net/tools/flex-tournament" />
+  <link rel="alternate" hreflang="en" href="https://thepicklehub.net/tools/flex-tournament" />
+  <link rel="alternate" hreflang="x-default" href="https://thepicklehub.net/tools/flex-tournament" />
+</head>
 ```
 
 ---
 
-### Tóm tắt các file thay đổi
+## Files cần sửa
 
-| File | Thao tác | Mô tả |
-|------|----------|-------|
-| `package.json` | Sửa | Thêm `@codetrix-studio/capacitor-google-auth` |
-| `capacitor.config.ts` | Sửa | Thêm config GoogleAuth plugin với 3 Client IDs |
-| `src/hooks/useNativeGoogleAuth.ts` | **Tạo mới** | Hook để khởi tạo và gọi native Google Sign-In |
-| `src/pages/Login.tsx` | Sửa | Phân biệt native vs web flow |
-| `src/App.tsx` | Sửa | Gọi `initializeGoogleAuth()` khi khởi động |
-| `android/.../strings.xml` | Manual | Thêm `server_client_id` |
-| `ios/.../Info.plist` | Manual | Thêm URL scheme + GIDClientID |
-
----
-
-### Sau khi approve kế hoạch này
-
-1. Tôi sẽ tạo/sửa các file code TypeScript
-2. Bạn cần chạy:
-   ```bash
-   npm install
-   npx cap sync
-   ```
-3. Cập nhật file `strings.xml` (Android) và `Info.plist` (iOS) theo hướng dẫn
-4. Rebuild native app và test Google Sign-In
+| File | Thay đổi |
+|------|----------|
+| `src/components/seo/DynamicMeta.tsx` | Thêm logic hreflang + enableHreflang prop |
+| `src/pages/FlexTournamentList.tsx` | Thêm `enableHreflang={true}` |
+| `src/pages/DoublesEliminationList.tsx` | Thêm `enableHreflang={true}` |
+| `src/pages/Tools.tsx` | Thêm DynamicMeta với `enableHreflang={true}` |
+| `src/pages/QuickTables.tsx` | Thêm `enableHreflang={true}` |
+| `src/pages/TeamMatchList.tsx` | Thêm `enableHreflang={true}` |
 
 ---
 
-### Lưu ý quan trọng
+## Lợi ích SEO
 
-- **Web flow vẫn hoạt động**: Code mới chỉ dùng native SDK khi `isNativeApp() === true`
-- **Không cần App Links nữa**: Native SDK xử lý hoàn toàn trong app
-- **idToken verification**: Supabase sẽ verify idToken với Google để tạo session an toàn
+1. **Tránh duplicate content**: Google hiểu VI và EN là cùng một nội dung, không phải spam
+2. **Tăng CTR quốc tế**: User thấy kết quả đúng ngôn ngữ trong search results
+3. **Cải thiện ranking**: Google ưu tiên serve đúng phiên bản cho từng thị trường
+4. **Sẵn sàng mở rộng**: Dễ dàng thêm ngôn ngữ mới (Thai, Japanese, etc.)
