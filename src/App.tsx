@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { I18nProvider } from "@/i18n";
 import { lazy, Suspense } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
+import { usePageTracking } from "@/hooks/usePageTracking";
 import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
@@ -98,15 +99,22 @@ const DeepLinkInitializer = () => {
   return null;
 };
 
+// Component to track page views for GA4
+const PageTracker = () => {
+  usePageTracking();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <I18nProvider>
       <AuthProvider>
         <TooltipProvider>
-          <DeepLinkInitializer />
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <DeepLinkInitializer />
+            <PageTracker />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
