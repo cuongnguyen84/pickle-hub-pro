@@ -50,6 +50,7 @@ const FlexTournamentList = () => {
         title={t.tools.flexTournament.title}
         description={t.tools.flexTournament.description}
         url="https://thepicklehub.net/tools/flex-tournament"
+        enableHreflang={true}
       />
       <div className="container-wide py-8">
         {/* Back to Tools */}

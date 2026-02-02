@@ -1,5 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
+import { DynamicMeta } from "@/components/seo";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -93,6 +94,12 @@ const Tools = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta 
+        title={t.tools.title}
+        description={t.tools.description}
+        url="https://thepicklehub.net/tools"
+        enableHreflang={true}
+      />
       <div className="container-wide py-8">
         {/* Header */}
         <div className="mb-8">

@@ -148,6 +148,7 @@ export default function TeamMatchList() {
         title="Pickleball Team Match Format & MLP Style Scoring"
         description="Create and manage pickleball team match competitions with MLP-style format. Features lineup management, dreambreaker games, rally scoring, and complete team tournament organization."
         url="https://thepicklehub.net/tools/team-match"
+        enableHreflang={true}
       />
       <div className="container max-w-4xl py-6 space-y-6">
         {/* SEO Header */}

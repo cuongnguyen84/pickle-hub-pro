@@ -202,6 +202,7 @@ const QuickTables = () => {
         title="Pickleball Bracket Generator & Round Robin Tool"
         description="Free pickleball bracket generator for tournaments. Create round robin brackets, playoff brackets, and elimination formats in seconds. Perfect for club tournaments and competitive events."
         url="https://thepicklehub.net/tools/quick-tables"
+        enableHreflang={true}
       />
       <div className="container-wide py-8">
         <div className="max-w-2xl mx-auto space-y-8">
