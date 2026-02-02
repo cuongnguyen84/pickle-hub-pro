@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useI18n } from "@/i18n";
 
 interface DynamicMetaProps {
   title: string;
@@ -9,6 +10,7 @@ interface DynamicMetaProps {
   noindex?: boolean;
   creator?: string;
   publishedTime?: string;
+  enableHreflang?: boolean;
 }
 
 export const DynamicMeta = ({
@@ -20,7 +22,9 @@ export const DynamicMeta = ({
   noindex = false,
   creator,
   publishedTime,
+  enableHreflang = false,
 }: DynamicMetaProps) => {
+  const { language } = useI18n();
   const currentUrl = url || window.location.href;
   const fullTitle = `${title} | ThePickleHub`;
 
@@ -60,7 +64,7 @@ export const DynamicMeta = ({
     updateMeta("og:type", type);
     updateMeta("og:url", currentUrl);
     updateMeta("og:site_name", "ThePickleHub");
-    updateMeta("og:locale", "vi_VN");
+    updateMeta("og:locale", language === "en" ? "en_US" : "vi_VN");
 
     // Twitter tags
     updateMeta("twitter:title", fullTitle, true);
@@ -90,11 +94,44 @@ export const DynamicMeta = ({
     }
     canonical.href = currentUrl;
 
+    // Hreflang tags for multilingual SEO
+    if (enableHreflang) {
+      const baseUrl = "https://thepicklehub.net";
+      const pathname = new URL(currentUrl).pathname;
+
+      const updateHreflang = (hreflang: string, href: string) => {
+        let link = document.querySelector(
+          `link[rel="alternate"][hreflang="${hreflang}"]`
+        ) as HTMLLinkElement;
+
+        if (!link) {
+          link = document.createElement("link");
+          link.rel = "alternate";
+          link.hreflang = hreflang;
+          document.head.appendChild(link);
+        }
+        link.href = href;
+      };
+
+      // Vietnamese version
+      updateHreflang("vi", `${baseUrl}${pathname}`);
+      // English version
+      updateHreflang("en", `${baseUrl}${pathname}`);
+      // Default fallback
+      updateHreflang("x-default", `${baseUrl}${pathname}`);
+    }
+
     // Cleanup: Reset to default on unmount
     return () => {
       document.title = "ThePickleHub – Pickleball Tournaments, Livestream & Community";
+
+      // Cleanup hreflang tags
+      if (enableHreflang) {
+        const hreflangLinks = document.querySelectorAll('link[rel="alternate"][hreflang]');
+        hreflangLinks.forEach(link => link.remove());
+      }
     };
-  }, [fullTitle, description, image, type, currentUrl, noindex, creator, publishedTime]);
+  }, [fullTitle, description, image, type, currentUrl, noindex, creator, publishedTime, language, enableHreflang]);
 
   return null;
 };

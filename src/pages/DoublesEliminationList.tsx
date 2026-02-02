@@ -69,6 +69,8 @@ export default function DoublesEliminationList() {
       <DynamicMeta 
         title={`${t.doublesElimination.title} - ${t.common.appName}`}
         description={t.doublesElimination.description}
+        url="https://thepicklehub.net/tools/doubles-elimination"
+        enableHreflang={true}
       />
       
       <div className="container max-w-4xl mx-auto py-6 px-4">
