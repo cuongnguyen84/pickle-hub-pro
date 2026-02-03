@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useI18n } from '@/i18n';
 import { MainLayout } from '@/components/layout';
+import { DynamicMeta } from '@/components/seo';
 import { useFlexTournament, type FlexTournamentData } from '@/hooks/useFlexTournament';
 import { useFlexRealtime } from '@/hooks/useFlexRealtime';
 import { useAuth } from '@/hooks/useAuth';
@@ -34,7 +35,7 @@ import {
 
 const FlexTournamentView = () => {
   const { shareId } = useParams<{ shareId: string }>();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
   const navigate = useNavigate();
@@ -132,8 +133,18 @@ const FlexTournamentView = () => {
     );
   }
 
+  // SEO meta for individual tournament
+  const seoTitle = `${data.tournament.name} | Flex Tournament`;
+  const seoDescription = `${language === 'vi' ? 'Xem bracket và kết quả trực tiếp của giải đấu' : 'View bracket and live results for'} ${data.tournament.name}. ${data.players.length} ${language === 'vi' ? 'VĐV' : 'players'}, ${data.matches.length} ${language === 'vi' ? 'trận đấu' : 'matches'}.`;
+
   return (
     <MainLayout>
+      <DynamicMeta 
+        title={seoTitle}
+        description={seoDescription}
+        url={`https://thepicklehub.net/tools/flex-tournament/${shareId}`}
+        noindex={!data.tournament.is_public} // Don't index private tournaments
+      />
       <div className="container-wide py-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">

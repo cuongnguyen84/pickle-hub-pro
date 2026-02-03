@@ -19,7 +19,7 @@ import { Link } from "react-router-dom";
 import { AIAssistantButton } from '@/components/ai';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { DynamicMeta, ToolsInternalLinks } from "@/components/seo";
+import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema } from "@/components/seo";
 
 type Step = "count" | "format" | "groups" | "players";
 
@@ -203,6 +203,20 @@ const QuickTables = () => {
         description="Free pickleball bracket generator for tournaments. Create round robin brackets, playoff brackets, and elimination formats in seconds. Perfect for club tournaments and competitive events."
         url="https://thepicklehub.net/tools/quick-tables"
         enableHreflang={true}
+      />
+      <WebApplicationSchema
+        name="Quick Tables - Pickleball Bracket Generator"
+        description="Free pickleball bracket generator. Create round robin brackets with automatic group balancing, playoff brackets, and elimination formats in seconds."
+        url="https://thepicklehub.net/tools/quick-tables"
+        applicationCategory="SportsApplication"
+        featureList={[
+          "Round robin bracket generation",
+          "Automatic group balancing",
+          "Playoff bracket support",
+          "Player registration",
+          "Skill level tracking",
+          "Real-time scoring"
+        ]}
       />
       <div className="container-wide py-8">
         <div className="max-w-2xl mx-auto space-y-8">

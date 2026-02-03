@@ -1,6 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, SoftwareApplicationSchema } from "@/components/seo";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -99,6 +99,13 @@ const Tools = () => {
         description={t.tools.description}
         url="https://thepicklehub.net/tools"
         enableHreflang={true}
+      />
+      <SoftwareApplicationSchema
+        name="ThePickleHub Tournament Tools"
+        description="Free pickleball tournament management tools. Create brackets, manage round-robin groups, run team matches with MLP-style scoring, and organize doubles elimination tournaments."
+        applicationCategory="SportsApplication"
+        operatingSystem="Web"
+        offers={{ price: "0", priceCurrency: "USD" }}
       />
       <div className="container-wide py-8">
         {/* Header */}

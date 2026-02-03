@@ -10,7 +10,7 @@ import { useTeamMatch, TeamMatchTournament } from '@/hooks/useTeamMatch';
 import { useI18n } from '@/i18n';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { DynamicMeta } from '@/components/seo';
+import { DynamicMeta, WebApplicationSchema } from '@/components/seo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -149,6 +149,20 @@ export default function TeamMatchList() {
         description="Create and manage pickleball team match competitions with MLP-style format. Features lineup management, dreambreaker games, rally scoring, and complete team tournament organization."
         url="https://thepicklehub.net/tools/team-match"
         enableHreflang={true}
+      />
+      <WebApplicationSchema
+        name="Team Match - MLP Style Pickleball Tournament"
+        description="Create team match competitions with MLP-style format. Features lineup management, dreambreaker games, rally scoring, and team tournament organization."
+        url="https://thepicklehub.net/tools/team-match"
+        applicationCategory="SportsApplication"
+        featureList={[
+          "MLP-style team format",
+          "Lineup management",
+          "Dreambreaker games",
+          "Rally scoring support",
+          "Team roster management",
+          "Round robin and playoff formats"
+        ]}
       />
       <div className="container max-w-4xl py-6 space-y-6">
         {/* SEO Header */}
