@@ -1,6 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, ToolsInternalLinks } from "@/components/seo";
+import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema } from "@/components/seo";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,20 @@ const FlexTournamentList = () => {
         description={t.tools.flexTournament.description}
         url="https://thepicklehub.net/tools/flex-tournament"
         enableHreflang={true}
+      />
+      <WebApplicationSchema
+        name="Flex Tournament - Custom Pickleball Bracket Maker"
+        description="Create flexible pickleball tournament brackets with custom groups, team play, singles, doubles, and mixed formats. Real-time scoring and live standings."
+        url="https://thepicklehub.net/tools/flex-tournament"
+        applicationCategory="SportsApplication"
+        featureList={[
+          "Custom group creation",
+          "Singles and doubles matches",
+          "Team-based tournaments",
+          "Real-time scoring",
+          "Live standings",
+          "Mobile-friendly interface"
+        ]}
       />
       <div className="container-wide py-8">
         {/* Back to Tools */}
