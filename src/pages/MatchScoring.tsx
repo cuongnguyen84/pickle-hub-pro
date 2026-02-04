@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/i18n';
 import { MainLayout } from '@/components/layout';
 import { DynamicMeta } from '@/components/seo';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ const MatchScoring = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useI18n();
 
   const [match, setMatch] = useState<MatchData | null>(null);
   const [table, setTable] = useState<TableData | null>(null);
@@ -95,7 +97,7 @@ const MatchScoring = () => {
         .maybeSingle();
 
       if (matchError || !matchData) {
-        toast.error('Không tìm thấy trận đấu');
+        toast.error(t.quickTable.matchScoring.matchNotFound);
         navigate('/quick-tables');
         return;
       }
@@ -144,7 +146,7 @@ const MatchScoring = () => {
 
     } catch (error) {
       console.error('Error loading match:', error);
-      toast.error('Lỗi tải dữ liệu');
+      toast.error(t.quickTable.matchScoring.loadError);
     } finally {
       setLoading(false);
     }
@@ -202,9 +204,9 @@ const MatchScoring = () => {
     if (!error) {
       setIsLiveOwner(true);
       setIsReadOnly(false);
-      toast.success('Bạn đang chấm điểm trận này');
+      toast.success(t.quickTable.matchScoring.claimSuccess);
     }
-  }, [matchId, user, isLiveOwner]);
+  }, [matchId, user, isLiveOwner, t]);
 
   // Update score with debounce
   const updateScore = useCallback(async (score1: number, score2: number) => {
@@ -230,13 +232,13 @@ const MatchScoring = () => {
 
         if (error) {
           console.error('Error updating score:', error);
-          toast.error('Lỗi cập nhật điểm');
+          toast.error(t.quickTable.matchScoring.scoreUpdateError);
         }
       } finally {
         setUpdating(false);
       }
     }, 100); // 100ms debounce
-  }, [matchId, user?.id, isReadOnly]);
+  }, [matchId, user?.id, isReadOnly, t]);
 
   // Score handlers
   const handleScoreChange = (player: 1 | 2, delta: number) => {
@@ -261,7 +263,7 @@ const MatchScoring = () => {
     setLocalScore2(0);
     await updateScore(0, 0);
     setShowResetDialog(false);
-    toast.success('Đã reset điểm');
+    toast.success(t.quickTable.matchScoring.resetSuccess);
   };
 
   // End match
@@ -301,14 +303,14 @@ const MatchScoring = () => {
         await advanceWinnerToNextMatch(matchId, winnerId);
       }
 
-      toast.success('Đã kết thúc trận đấu');
+      toast.success(t.quickTable.matchScoring.endMatchSuccess);
       setShowEndDialog(false);
       
       // Reload match data
       await loadMatchData();
     } catch (error) {
       console.error('Error ending match:', error);
-      toast.error('Lỗi kết thúc trận đấu');
+      toast.error(t.quickTable.matchScoring.endMatchError);
     }
   };
 
@@ -443,7 +445,7 @@ const MatchScoring = () => {
     if (nextMatch) {
       navigate(`/matches/${nextMatch.id}/score`);
     } else {
-      toast.info('Không còn trận đấu tiếp theo');
+      toast.info(t.quickTable.matchScoring.noNextMatch);
     }
   };
 
@@ -550,22 +552,18 @@ const MatchScoring = () => {
       const roundsFromFinal = totalPlayoffRounds - currentRound;
       
       // Map based on distance from final
-      // roundsFromFinal = 0 → Chung kết
-      // roundsFromFinal = 1 → Bán kết  
-      // roundsFromFinal = 2 → Tứ kết
-      // roundsFromFinal >= 3 → Vòng 1, 2, ...
       if (roundsFromFinal === 0) {
-        return 'Chung kết';
+        return t.quickTable.matchScoring.final;
       } else if (roundsFromFinal === 1) {
-        return 'Bán kết';
+        return t.quickTable.matchScoring.semiFinal;
       } else if (roundsFromFinal === 2) {
-        return 'Tứ kết';
+        return t.quickTable.matchScoring.quarterFinal;
       } else {
-        return `Vòng ${currentRound}`;
+        return `${t.quickTable.matchScoring.round} ${currentRound}`;
       }
     }
     
-    return group ? `${group.name} — Trận ${match.display_order + 1}` : `Trận ${match.display_order + 1}`;
+    return group ? `${group.name} — ${t.quickTable.matchScoring.match} ${match.display_order + 1}` : `${t.quickTable.matchScoring.match} ${match.display_order + 1}`;
   };
 
   // Format player display
@@ -582,7 +580,7 @@ const MatchScoring = () => {
     return (
       <MainLayout>
         <div className="container-wide py-8 flex items-center justify-center min-h-[60vh]">
-          <div className="text-muted-foreground">Đang tải...</div>
+          <div className="text-muted-foreground">{t.quickTable.matchScoring.loading}</div>
         </div>
       </MainLayout>
     );
@@ -592,12 +590,12 @@ const MatchScoring = () => {
     return (
       <MainLayout>
         <div className="container-wide py-8 text-center">
-          <h1 className="text-xl font-bold mb-2">Không có quyền truy cập</h1>
-          <p className="text-muted-foreground mb-4">Bạn cần là Creator hoặc Trọng tài để chấm điểm</p>
+          <h1 className="text-xl font-bold mb-2">{t.quickTable.matchScoring.noPermission}</h1>
+          <p className="text-muted-foreground mb-4">{t.quickTable.matchScoring.noPermissionDesc}</p>
           {table && (
             <Button variant="outline" onClick={() => navigate(`/quick-tables/${table.share_id}`)}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Quay lại bảng đấu
+              {t.quickTable.matchScoring.backToBracket}
             </Button>
           )}
         </div>
@@ -608,7 +606,7 @@ const MatchScoring = () => {
   return (
     <MainLayout>
       <DynamicMeta 
-        title={`Chấm điểm - ${formatPlayer(player1).name} vs ${formatPlayer(player2).name}`} 
+        title={`${t.quickTable.matchScoring.match} - ${formatPlayer(player1).name} vs ${formatPlayer(player2).name}`} 
         noindex={true} 
       />
       <div className="container max-w-lg mx-auto py-6 px-4">
@@ -620,22 +618,22 @@ const MatchScoring = () => {
             onClick={() => table && navigate(`/quick-tables/${table.share_id}`)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Quay lại
+            {t.quickTable.matchScoring.goBack}
           </Button>
           {match?.status !== 'completed' && (
             <Badge 
               variant={isLiveOwner ? 'default' : 'secondary'}
               className={cn(
                 'gap-1',
-                isLiveOwner && 'bg-red-500 hover:bg-red-600 animate-pulse'
+                isLiveOwner && 'bg-destructive hover:bg-destructive/90 animate-pulse'
               )}
             >
               <Radio className="w-3 h-3" />
-              LIVE
+              {t.quickTable.matchScoring.live}
             </Badge>
           )}
           {match?.status === 'completed' && (
-            <Badge variant="outline">Đã kết thúc</Badge>
+            <Badge variant="outline">{t.quickTable.matchScoring.ended}</Badge>
           )}
         </div>
 
@@ -649,10 +647,10 @@ const MatchScoring = () => {
 
         {/* Read-only banner */}
         {isReadOnly && match?.status !== 'completed' && (
-          <Card className="mb-4 bg-amber-50 border-amber-200">
-            <CardContent className="py-3 flex items-center gap-2 text-amber-700">
+          <Card className="mb-4 bg-warning/10 border-warning/30">
+            <CardContent className="py-3 flex items-center gap-2 text-warning-foreground">
               <Lock className="w-4 h-4" />
-              <span className="text-sm">Trọng tài khác đang chấm điểm trận này</span>
+              <span className="text-sm">{t.quickTable.matchScoring.otherRefereeScoring}</span>
             </CardContent>
           </Card>
         )}
@@ -757,7 +755,7 @@ const MatchScoring = () => {
                 disabled={updating}
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Reset điểm
+                {t.quickTable.matchScoring.resetScore}
               </Button>
 
               <Button 
@@ -766,7 +764,7 @@ const MatchScoring = () => {
                 disabled={updating}
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Kết thúc trận
+                {t.quickTable.matchScoring.endMatch}
               </Button>
             </>
           )}
@@ -776,7 +774,7 @@ const MatchScoring = () => {
             className="w-full"
             onClick={handleNextMatch}
           >
-            Trận tiếp theo
+            {t.quickTable.matchScoring.nextMatch}
             <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
@@ -785,13 +783,13 @@ const MatchScoring = () => {
         <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Reset điểm số?</AlertDialogTitle>
+              <AlertDialogTitle>{t.quickTable.matchScoring.resetConfirmTitle}</AlertDialogTitle>
               <AlertDialogDescription>
-                Điểm số sẽ được đặt về 0 — 0
+                {t.quickTable.matchScoring.resetConfirmDesc}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogCancel>{t.quickTable.matchScoring.cancel}</AlertDialogCancel>
               <AlertDialogAction onClick={handleReset}>Reset</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -801,23 +799,23 @@ const MatchScoring = () => {
         <AlertDialog open={showEndDialog} onOpenChange={setShowEndDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Kết thúc trận đấu?</AlertDialogTitle>
+              <AlertDialogTitle>{t.quickTable.matchScoring.endMatchConfirmTitle}</AlertDialogTitle>
               <AlertDialogDescription>
-                Kết quả cuối cùng: {localScore1} — {localScore2}
+                {t.quickTable.matchScoring.finalResult}: {localScore1} — {localScore2}
                 {localScore1 > localScore2 && player1 && (
-                  <div className="mt-2 font-medium">🏆 Người thắng: {player1.name}</div>
+                  <div className="mt-2 font-medium">🏆 {t.quickTable.matchScoring.winner}: {player1.name}</div>
                 )}
                 {localScore2 > localScore1 && player2 && (
-                  <div className="mt-2 font-medium">🏆 Người thắng: {player2.name}</div>
+                  <div className="mt-2 font-medium">🏆 {t.quickTable.matchScoring.winner}: {player2.name}</div>
                 )}
                 {localScore1 === localScore2 && (
-                  <div className="mt-2 text-amber-600">⚠️ Điểm hòa - không có người thắng</div>
+                  <div className="mt-2 text-warning">⚠️ {t.quickTable.matchScoring.tieWarning}</div>
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Hủy</AlertDialogCancel>
-              <AlertDialogAction onClick={handleEndMatch}>Xác nhận</AlertDialogAction>
+              <AlertDialogCancel>{t.quickTable.matchScoring.cancel}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleEndMatch}>{t.quickTable.matchScoring.confirm}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

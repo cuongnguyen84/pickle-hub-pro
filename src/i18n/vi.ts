@@ -962,6 +962,42 @@ export interface Translations {
       tryOther: string;
       quotaUsed: string;
     };
+    // Match Scoring Page
+    matchScoring: {
+      loading: string;
+      matchNotFound: string;
+      loadError: string;
+      scoreUpdateError: string;
+      noPermission: string;
+      noPermissionDesc: string;
+      backToBracket: string;
+      goBack: string;
+      live: string;
+      ended: string;
+      match: string;
+      final: string;
+      semiFinal: string;
+      quarterFinal: string;
+      round: string;
+      claimSuccess: string;
+      otherRefereeScoring: string;
+      resetScore: string;
+      resetConfirmTitle: string;
+      resetConfirmDesc: string;
+      resetSuccess: string;
+      endMatch: string;
+      endMatchConfirmTitle: string;
+      endMatchConfirmDesc: string;
+      finalResult: string;
+      winner: string;
+      tieWarning: string;
+      confirm: string;
+      cancel: string;
+      endMatchSuccess: string;
+      endMatchError: string;
+      nextMatch: string;
+      noNextMatch: string;
+    };
   };
   // Team Match SEO
   teamMatch: {
@@ -2190,6 +2226,42 @@ export const vi: Translations = {
       noConfig: "Không có cấu hình phù hợp với {count} người.",
       tryOther: "Thử số người chơi khác.",
       quotaUsed: "{count}/{total} giải đã tạo",
+    },
+    // Match Scoring Page
+    matchScoring: {
+      loading: "Đang tải...",
+      matchNotFound: "Không tìm thấy trận đấu",
+      loadError: "Lỗi tải dữ liệu",
+      scoreUpdateError: "Lỗi cập nhật điểm",
+      noPermission: "Không có quyền truy cập",
+      noPermissionDesc: "Bạn cần là Creator hoặc Trọng tài để chấm điểm",
+      backToBracket: "Quay lại bảng đấu",
+      goBack: "Quay lại",
+      live: "LIVE",
+      ended: "Đã kết thúc",
+      match: "Trận",
+      final: "Chung kết",
+      semiFinal: "Bán kết",
+      quarterFinal: "Tứ kết",
+      round: "Vòng",
+      claimSuccess: "Bạn đang chấm điểm trận này",
+      otherRefereeScoring: "Trọng tài khác đang chấm điểm trận này",
+      resetScore: "Reset điểm",
+      resetConfirmTitle: "Reset điểm số?",
+      resetConfirmDesc: "Điểm số sẽ được đặt về 0 — 0",
+      resetSuccess: "Đã reset điểm",
+      endMatch: "Kết thúc trận",
+      endMatchConfirmTitle: "Kết thúc trận đấu?",
+      endMatchConfirmDesc: "Kết quả cuối cùng",
+      finalResult: "Kết quả cuối cùng",
+      winner: "Người thắng",
+      tieWarning: "Điểm hòa - không có người thắng",
+      confirm: "Xác nhận",
+      cancel: "Hủy",
+      endMatchSuccess: "Đã kết thúc trận đấu",
+      endMatchError: "Lỗi kết thúc trận đấu",
+      nextMatch: "Trận tiếp theo",
+      noNextMatch: "Không còn trận đấu tiếp theo",
     },
   },
   // Team Match SEO
