@@ -8,6 +8,7 @@ import { Plus, Users, Calendar, Trophy, Trash2, ExternalLink, ArrowLeft, Mail } 
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, TeamMatchTournament } from '@/hooks/useTeamMatch';
 import { useI18n } from '@/i18n';
+import { getLoginUrl } from '@/lib/auth-config';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { DynamicMeta, WebApplicationSchema } from '@/components/seo';
@@ -136,10 +137,13 @@ function TournamentCard({
   );
 }
 
+import { useLocation } from 'react-router-dom';
+
 export default function TeamMatchList() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useI18n();
+  const location = useLocation();
   const { myTournaments, publicTournaments, isLoading, deleteTournament } = useTeamMatch();
 
   return (
@@ -241,7 +245,7 @@ export default function TeamMatchList() {
               <p className="text-muted-foreground mb-4">
                 {t.teamMatch.loginPrompt}
               </p>
-              <Button onClick={() => navigate('/login')}>
+              <Button onClick={() => navigate(getLoginUrl(location.pathname))}>
                 {t.nav.login}
               </Button>
             </CardContent>

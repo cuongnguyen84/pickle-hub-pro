@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { cn } from "@/lib/utils";
+import { getLoginUrl } from "@/lib/auth-config";
 import {
   LayoutDashboard,
   Video,
@@ -52,7 +53,7 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
 
   // Not authenticated
   if (!isAuthenticated) {
-    navigate("/login", { replace: true });
+    navigate(getLoginUrl(location.pathname), { replace: true });
     return null;
   }
 

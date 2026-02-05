@@ -26,6 +26,8 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "./EmojiPicker";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocation } from "react-router-dom";
+import { getLoginUrl } from "@/lib/auth-config";
 
 interface ChatPanelProps {
   livestreamId: string;
@@ -168,6 +170,7 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   const { t } = useI18n();
   const { toast } = useToast();
   const { user } = useAuth();
+  const location = useLocation();
   const {
     messages,
     settings,

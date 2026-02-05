@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { getLoginUrl } from "@/lib/auth-config";
 
 const FlexTournamentSetup = () => {
   const { t } = useI18n();
@@ -64,7 +65,7 @@ const FlexTournamentSetup = () => {
             <h1 className="text-2xl font-bold mb-4">{t.tools.flexTournament.title}</h1>
             <p className="text-muted-foreground mb-6">{t.auth.loginRequired}</p>
             <Button asChild>
-              <Link to="/login">{t.auth.login}</Link>
+              <Link to={getLoginUrl('/tools/flex-tournament/new')}>{t.auth.login}</Link>
             </Button>
           </div>
         </div>

@@ -20,6 +20,7 @@ import { AIAssistantButton } from '@/components/ai';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema } from "@/components/seo";
+import { getLoginUrl } from "@/lib/auth-config";
 
 type Step = "count" | "format" | "groups" | "players";
 
@@ -184,7 +185,7 @@ const QuickTables = () => {
               {t.quickTable.description}
             </p>
             <p className="text-foreground-muted mb-6">{t.quickTable.loginRequired}</p>
-            <Link to="/login">
+            <Link to={getLoginUrl('/tools/quick-tables')}>
               <Button className="gap-2">
                 <LogIn className="w-4 h-4" />
                 {t.nav.login}

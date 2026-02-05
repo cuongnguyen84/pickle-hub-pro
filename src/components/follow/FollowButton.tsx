@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Heart, HeartOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFollow, useToggleFollow } from "@/hooks/useFollowData";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getLoginUrl } from "@/lib/auth-config";
 
 interface FollowButtonProps {
   targetType: "organization" | "tournament";
@@ -26,6 +27,7 @@ export const FollowButton = ({
   const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOptimistic, setIsOptimistic] = useState<boolean | null>(null);
 
   const { data: isFollowing, isLoading } = useFollow(targetType, targetId, user?.id);
@@ -36,7 +38,7 @@ export const FollowButton = ({
   const handleClick = async () => {
     if (!user) {
       toast.info(t.auth.loginRequired);
-      navigate("/login");
+      navigate(getLoginUrl(location.pathname + location.search));
       return;
     }
 

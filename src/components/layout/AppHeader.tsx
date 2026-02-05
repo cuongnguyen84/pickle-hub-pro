@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/notifications";
+import { getLoginUrl } from "@/lib/auth-config";
+
 const AppHeader = () => {
   const {
     t,
@@ -137,7 +139,7 @@ const AppHeader = () => {
                       {t.nav.logout}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu> : <Link to="/login" className="hidden md:block">
+                </DropdownMenu> : <Link to={getLoginUrl(location.pathname + location.search)} className="hidden md:block">
                   <Button variant="ghost" size="sm" className="gap-2">
                     <LogIn className="w-4 h-4" />
                     {t.nav.login}
@@ -191,7 +193,7 @@ const AppHeader = () => {
                       <LogOut className="w-4 h-4" />
                       {t.nav.logout}
                     </button>
-                  </> : <Link to="/login" className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-foreground-secondary hover:text-foreground hover:bg-muted/50 transition-colors duration-200">
+                  </> : <Link to={getLoginUrl(location.pathname + location.search)} className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-foreground-secondary hover:text-foreground hover:bg-muted/50 transition-colors duration-200">
                     <LogIn className="w-4 h-4" />
                     {t.nav.login}
                   </Link>}

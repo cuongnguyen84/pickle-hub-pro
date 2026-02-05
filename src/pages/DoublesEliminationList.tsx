@@ -12,11 +12,15 @@ import { Plus, Trophy, Calendar, Users, ChevronRight, Mail, ArrowLeft } from "lu
 import { format } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 import { Link } from "react-router-dom";
+import { getLoginUrl } from "@/lib/auth-config";
+
+import { useLocation } from "react-router-dom";
 
 export default function DoublesEliminationList() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, language } = useI18n();
+  const location = useLocation();
   const { getUserTournaments } = useDoublesElimination();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +123,7 @@ export default function DoublesEliminationList() {
               <p className="text-muted-foreground mb-4">
                 {t.doublesElimination.loginRequiredDesc}
               </p>
-              <Button onClick={() => navigate('/login')}>
+              <Button onClick={() => navigate(getLoginUrl(location.pathname))}>
                 {t.nav.login}
               </Button>
             </CardContent>

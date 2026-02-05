@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Trash2, Globe, Lock, Loader2, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { useState } from "react";
 import {
@@ -21,10 +22,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { getLoginUrl } from "@/lib/auth-config";
 
 const FlexTournamentList = () => {
   const { t, language } = useI18n();
   const { user } = useAuth();
+  const location = useLocation();
   const { myTournaments, isLoadingTournaments, publicTournaments, isLoadingPublic, deleteTournament, isDeleting } = useFlexTournament();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -93,7 +96,7 @@ const FlexTournamentList = () => {
             </Button>
           ) : (
             <Button asChild>
-              <Link to="/login">{t.auth.login}</Link>
+              <Link to={getLoginUrl(location.pathname)}>{t.auth.login}</Link>
             </Button>
           )}
         </div>
