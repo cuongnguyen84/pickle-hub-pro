@@ -1,181 +1,123 @@
 
-# Kế hoạch triển khai hreflang trong DynamicMeta
+# Kế hoạch: Redirect về trang gốc sau khi đăng nhập
 
-## Mục tiêu
-Thêm hreflang tags vào component DynamicMeta để giúp Google hiểu rằng website hỗ trợ đa ngôn ngữ (Tiếng Việt và Tiếng Anh), từ đó serve đúng phiên bản ngôn ngữ cho người dùng từ các quốc gia khác nhau.
+## Vấn đề hiện tại
+Khi người dùng cần đăng nhập (ví dụ: tạo giải đấu, xem thông báo, bình luận...), họ bị redirect về `/login` nhưng **không lưu lại trang đang ở**. Sau khi đăng nhập thành công, họ bị đưa về trang chủ (`/`) thay vì quay lại trang trước đó.
 
-## Phân tích hiện trạng
+## Giải pháp
+Cập nhật tất cả các nơi navigate/link đến `/login` để thêm `?redirect=` query parameter, giống như đã làm ở `RegistrationForm.tsx`.
 
-### Đã có
-- DynamicMeta component quản lý tất cả meta tags động
-- i18n system với 2 ngôn ngữ: `vi` (default) và `en`
-- Language context lưu trong localStorage và cập nhật `document.documentElement.lang`
+## Chi tiết kỹ thuật
 
-### Cần thêm
-- hreflang link tags cho mỗi ngôn ngữ
-- x-default hreflang cho ngôn ngữ mặc định
-- Cập nhật og:locale dựa trên ngôn ngữ hiện tại
+### Pattern đã có (đang hoạt động đúng)
+```typescript
+// src/components/quicktable/RegistrationForm.tsx
+const returnUrl = location.pathname + location.search;
+navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+```
 
-## Cách hoạt động của hreflang
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                    Google Crawler                            │
-│                         │                                    │
-│     ┌───────────────────▼───────────────────┐               │
-│     │  Đọc hreflang tags trên trang          │               │
-│     └───────────────────┬───────────────────┘               │
-│                         │                                    │
-│     ┌───────────────────▼───────────────────┐               │
-│     │  Hiểu: Trang này có 2 phiên bản ngôn ngữ              │
-│     │  - Vietnamese: hreflang="vi"                          │
-│     │  - English: hreflang="en"                             │
-│     │  - Default: hreflang="x-default"                      │
-│     └───────────────────┬───────────────────┘               │
-│                         │                                    │
-│     ┌───────────────────▼───────────────────┐               │
-│     │  Serve đúng phiên bản cho user         │               │
-│     │  User từ US → Show English result      │               │
-│     │  User từ VN → Show Vietnamese result   │               │
-│     └───────────────────────────────────────┘               │
-└─────────────────────────────────────────────────────────────┘
+### Logic xử lý redirect trong Login.tsx (đã có)
+```typescript
+const redirectUrl = searchParams.get("redirect");
+// Sau khi đăng nhập thành công:
+const targetUrl = redirectUrl || "/";
+navigate(targetUrl, { replace: true });
 ```
 
 ---
 
-## Chi tiết kỹ thuật
+## Các file cần sửa
 
-### File cần sửa: `src/components/seo/DynamicMeta.tsx`
+| File | Thay đổi |
+|------|----------|
+| `src/pages/Account.tsx` | Thêm redirect param khi navigate về login |
+| `src/pages/TeamMatchList.tsx` | Thêm redirect param vào Button onClick |
+| `src/pages/TeamMatchSetup.tsx` | Thêm redirect param vào 2 vị trí |
+| `src/pages/DoublesEliminationList.tsx` | Thêm redirect param vào Button onClick |
+| `src/pages/DoublesEliminationSetup.tsx` | Thêm redirect param vào Button onClick |
+| `src/pages/FlexTournamentList.tsx` | Thêm redirect param vào Link |
+| `src/pages/FlexTournamentSetup.tsx` | Thêm redirect param vào Link |
+| `src/pages/QuickTables.tsx` | Thêm redirect param vào Link |
+| `src/pages/Notifications.tsx` | Thêm redirect param vào Navigate |
+| `src/components/follow/FollowButton.tsx` | Thêm redirect param khi navigate |
+| `src/components/chat/ChatPanel.tsx` | Thêm redirect param vào Link |
+| `src/components/content/CommentSection.tsx` | Thêm redirect param vào Link |
+| `src/components/creator/CreatorLayout.tsx` | Thêm redirect param khi navigate |
+| `src/components/admin/AdminLayout.tsx` | Thêm redirect param khi navigate |
+| `src/components/layout/AppHeader.tsx` | Thêm redirect param vào Link (mobile và desktop) |
 
-### Thay đổi 1: Thêm prop mới
-```typescript
-interface DynamicMetaProps {
-  title: string;
-  description?: string;
-  image?: string;
-  type?: "website" | "video.other" | "article";
-  url?: string;
-  noindex?: boolean;
-  creator?: string;
-  publishedTime?: string;
-  // Mới
-  enableHreflang?: boolean;
-}
-```
+---
 
-### Thay đổi 2: Import useI18n hook
-```typescript
-import { useI18n } from "@/i18n";
-```
+## Tạo utility function
 
-### Thay đổi 3: Logic tạo hreflang tags
-Trong useEffect, thêm logic:
+Thêm helper function trong `src/lib/auth-config.ts` để chuẩn hóa việc tạo login URL:
 
 ```typescript
-// Hreflang tags cho SEO đa ngôn ngữ
-if (enableHreflang) {
-  const baseUrl = "https://thepicklehub.net";
-  const pathname = new URL(currentUrl).pathname;
-  
-  const updateHreflang = (hreflang: string, href: string) => {
-    let link = document.querySelector(
-      `link[rel="alternate"][hreflang="${hreflang}"]`
-    ) as HTMLLinkElement;
-    
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "alternate";
-      link.hreflang = hreflang;
-      document.head.appendChild(link);
+/**
+ * Get login URL with optional redirect back to current page
+ * @param currentPath - Current path to redirect back to after login
+ */
+export const getLoginUrl = (currentPath?: string): string => {
+  if (!currentPath) {
+    if (typeof window !== 'undefined') {
+      currentPath = window.location.pathname + window.location.search;
+    } else {
+      return '/login';
     }
-    link.href = href;
-  };
-
-  // Vietnamese version
-  updateHreflang("vi", `${baseUrl}${pathname}`);
-  // English version  
-  updateHreflang("en", `${baseUrl}${pathname}`);
-  // Default fallback
-  updateHreflang("x-default", `${baseUrl}${pathname}`);
-}
-```
-
-### Thay đổi 4: Cập nhật og:locale dựa trên ngôn ngữ
-```typescript
-const { language } = useI18n();
-
-// Trong useEffect
-updateMeta("og:locale", language === "en" ? "en_US" : "vi_VN");
-```
-
-### Thay đổi 5: Cleanup hreflang khi unmount
-```typescript
-return () => {
-  document.title = "ThePickleHub – Pickleball Tournaments, Livestream & Community";
-  
-  // Cleanup hreflang tags
-  if (enableHreflang) {
-    const hreflangLinks = document.querySelectorAll('link[rel="alternate"][hreflang]');
-    hreflangLinks.forEach(link => link.remove());
   }
+  return `/login?redirect=${encodeURIComponent(currentPath)}`;
 };
 ```
 
 ---
 
-## Cách sử dụng
+## Ví dụ thay đổi
 
-### Các trang cần bật hreflang (SEO pages)
+### Trước
 ```tsx
-// FlexTournamentList.tsx
-<DynamicMeta 
-  title={t.tools.flexTournament.title}
-  description={t.tools.flexTournament.description}
-  url="https://thepicklehub.net/tools/flex-tournament"
-  enableHreflang={true}  // Bật cho các trang tools SEO
-/>
+// FlexTournamentSetup.tsx
+<Link to="/login">{t.auth.login}</Link>
 ```
 
-### Các trang KHÔNG cần hreflang
-- `/login`, `/account` - Trang cá nhân
-- `/tools/flex-tournament/:shareId` - Tournament cụ thể (dùng og edge function)
-- Admin pages
+### Sau
+```tsx
+import { getLoginUrl } from "@/lib/auth-config";
+import { useLocation } from "react-router-dom";
 
----
+const location = useLocation();
+// ...
+<Link to={getLoginUrl(location.pathname)}>{t.auth.login}</Link>
+```
 
-## Kết quả HTML sau khi triển khai
+### Hoặc dùng navigate
+```tsx
+// FollowButton.tsx - Trước
+navigate("/login");
 
-```html
-<head>
-  <!-- Existing meta tags -->
-  <title>Flex Tournament | ThePickleHub</title>
-  <meta property="og:locale" content="vi_VN" />
-  
-  <!-- NEW: hreflang tags -->
-  <link rel="alternate" hreflang="vi" href="https://thepicklehub.net/tools/flex-tournament" />
-  <link rel="alternate" hreflang="en" href="https://thepicklehub.net/tools/flex-tournament" />
-  <link rel="alternate" hreflang="x-default" href="https://thepicklehub.net/tools/flex-tournament" />
-</head>
+// Sau
+navigate(getLoginUrl(location.pathname + location.search));
 ```
 
 ---
 
-## Files cần sửa
-
-| File | Thay đổi |
-|------|----------|
-| `src/components/seo/DynamicMeta.tsx` | Thêm logic hreflang + enableHreflang prop |
-| `src/pages/FlexTournamentList.tsx` | Thêm `enableHreflang={true}` |
-| `src/pages/DoublesEliminationList.tsx` | Thêm `enableHreflang={true}` |
-| `src/pages/Tools.tsx` | Thêm DynamicMeta với `enableHreflang={true}` |
-| `src/pages/QuickTables.tsx` | Thêm `enableHreflang={true}` |
-| `src/pages/TeamMatchList.tsx` | Thêm `enableHreflang={true}` |
+## Lợi ích
+1. **UX tốt hơn**: Người dùng không bị mất context khi cần đăng nhập
+2. **Tăng conversion**: Giảm friction khi yêu cầu login
+3. **Consistent**: Tất cả các luồng login đều hoạt động giống nhau
+4. **Maintainable**: Sử dụng helper function tập trung
 
 ---
 
-## Lợi ích SEO
+## Các trường hợp đặc biệt
 
-1. **Tránh duplicate content**: Google hiểu VI và EN là cùng một nội dung, không phải spam
-2. **Tăng CTR quốc tế**: User thấy kết quả đúng ngôn ngữ trong search results
-3. **Cải thiện ranking**: Google ưu tiên serve đúng phiên bản cho từng thị trường
-4. **Sẵn sàng mở rộng**: Dễ dàng thêm ngôn ngữ mới (Thai, Japanese, etc.)
+### AppHeader (Login button ở header)
+- Desktop: `/login` link trong DropdownMenu
+- Mobile: `/login` link trong mobile menu
+
+Với header, nên giữ redirect về trang hiện tại vì user click login từ bất kỳ trang nào.
+
+### AuthCallback
+Đã hoạt động đúng - đọc `redirect` từ query params và navigate đến đó sau khi OAuth thành công.
+
+### Google OAuth
+Cần cập nhật `redirectTo` trong OAuth flow để truyền redirect URL qua auth callback.
