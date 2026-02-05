@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, Plus, Trash2, Shuffle, Trophy, Users } from "lucide-react";
 import { parseCourtsInput } from "@/lib/round-robin";
 import { useI18n } from "@/i18n";
+import { getLoginUrl } from "@/lib/auth-config";
 
 interface TeamInput {
   id: string;
@@ -221,7 +222,7 @@ export default function DoublesEliminationSetup() {
       <MainLayout>
         <div className="container max-w-2xl mx-auto py-12 text-center">
           <h2 className="text-xl font-semibold mb-4">{t.doublesElimination.loginRequired}</h2>
-          <Button onClick={() => navigate('/login')}>{t.auth.login}</Button>
+          <Button onClick={() => navigate(getLoginUrl('/tools/doubles-elimination/new'))}>{t.auth.login}</Button>
         </div>
       </MainLayout>
     );

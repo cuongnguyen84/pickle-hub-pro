@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useRef, useState } from "react";
+import { getLoginUrl } from "@/lib/auth-config";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -47,6 +49,7 @@ const Account = () => {
   const { profile, isLoading: profileLoading, uploadAvatar, updateProfile } = useUserProfile();
   const deleteAccount = useDeleteAccount();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState("");
@@ -59,9 +62,9 @@ const Account = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !user) {
-      navigate("/login", { replace: true });
+      navigate(getLoginUrl(location.pathname + location.search), { replace: true });
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, location]);
 
   useEffect(() => {
     if (profile?.display_name) {

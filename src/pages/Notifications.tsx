@@ -6,11 +6,13 @@ import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarkAllAsRead, useUnreadNotificationCount } from "@/hooks/useNotifications";
 import { CheckCheck } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { getLoginUrl } from "@/lib/auth-config";
 
 const Notifications = () => {
   const { t } = useI18n();
   const { user, loading } = useAuth();
+  const location = useLocation();
   const markAllAsRead = useMarkAllAsRead();
   const { data: unreadCount = 0 } = useUnreadNotificationCount(user?.id);
 
@@ -35,7 +37,7 @@ const Notifications = () => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={getLoginUrl(location.pathname + location.search)} replace />;
   }
 
   return (

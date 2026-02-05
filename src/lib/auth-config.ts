@@ -76,6 +76,21 @@ export const getEmailRedirectUrl = (): string => {
 export const AUTH_CALLBACK_ROUTE = '/auth/callback';
 
 /**
+ * Get login URL with optional redirect back to current page
+ * @param currentPath - Current path to redirect back to after login
+ */
+export const getLoginUrl = (currentPath?: string): string => {
+  if (!currentPath) {
+    if (typeof window !== 'undefined') {
+      currentPath = window.location.pathname + window.location.search;
+    } else {
+      return '/login';
+    }
+  }
+  return `/login?redirect=${encodeURIComponent(currentPath)}`;
+};
+
+/**
  * Production URLs (for reference)
  */
 export const PRODUCTION_URLS = {

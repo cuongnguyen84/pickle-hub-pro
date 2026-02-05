@@ -11,7 +11,8 @@ import { UserAvatar, UserDisplayName } from "@/components/user";
 import { Loader2, MessageCircle, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { getLoginUrl } from "@/lib/auth-config";
 
 interface CommentSectionProps {
   targetType: "video" | "livestream";
@@ -27,6 +28,7 @@ interface CommentUserInfo {
 export function CommentSection({ targetType, targetId }: CommentSectionProps) {
   const { t, language } = useI18n();
   const { user } = useAuth();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -177,7 +179,7 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
       ) : (
         <div className="bg-surface-elevated rounded-lg p-4 text-center">
           <p className="text-foreground-secondary mb-3">{t.comments.loginToComment}</p>
-          <Link to="/login">
+          <Link to={getLoginUrl(location.pathname + location.search)}>
             <Button variant="outline">{t.nav.login}</Button>
           </Link>
         </div>

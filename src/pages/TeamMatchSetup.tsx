@@ -16,6 +16,7 @@ import { useTeamMatch, CreateTournamentInput } from '@/hooks/useTeamMatch';
 import { GameTemplateEditor, GameTemplateItem, getDefaultTemplates } from '@/components/teamMatch/GameTemplateEditor';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
+import { getLoginUrl } from '@/lib/auth-config';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -90,7 +91,7 @@ export default function TeamMatchSetup() {
 
   const handleSubmit = async () => {
     if (!user) {
-      navigate('/login');
+      navigate(getLoginUrl('/tools/team-match/new'));
       return;
     }
 
@@ -129,7 +130,7 @@ export default function TeamMatchSetup() {
           <p className="text-muted-foreground mb-6">
             {t.teamMatch.setup.loginRequiredDesc}
           </p>
-          <Button onClick={() => navigate('/login')}>
+          <Button onClick={() => navigate(getLoginUrl('/tools/team-match/new'))}>
             {t.auth.login}
           </Button>
         </div>
