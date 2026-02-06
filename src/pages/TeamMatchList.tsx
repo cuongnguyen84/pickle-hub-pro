@@ -91,10 +91,10 @@ function TournamentCard({
             <Trophy className="h-4 w-4" />
             <span>{getFormatLabel(tournament.format)}</span>
           </div>
-          {(tournament.creator_display_name || tournament.creator_email) && !isOwner && (
+          {tournament.creator_display_name && !isOwner && (
             <div className="flex items-center gap-1 w-full">
               <Mail className="h-4 w-4 shrink-0" />
-              <span className="truncate">{tournament.creator_display_name || tournament.creator_email?.split('@')[0]}</span>
+              <span className="truncate">{tournament.creator_display_name}</span>
             </div>
           )}
         </div>

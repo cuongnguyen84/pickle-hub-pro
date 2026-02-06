@@ -358,7 +358,6 @@ export type QuickTablePublic = {
   is_doubles: boolean;
   created_at: string;
   creator_user_id?: string;
-  creator_email?: string;
   creator_display_name?: string;
 };
 
@@ -389,10 +388,10 @@ export function useOpenRegistrationTables(options?: { limit?: number }) {
         return tables as QuickTablePublic[];
       }
       
-      // Fetch profiles for all creators
+      // Fetch profiles for all creators (use public_profiles view to avoid exposing emails)
       const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, email, display_name")
+        .from("public_profiles")
+        .select("id, display_name")
         .in("id", creatorIds);
       
       // Map profiles to tables
@@ -402,7 +401,6 @@ export function useOpenRegistrationTables(options?: { limit?: number }) {
         const profile = t.creator_user_id ? profileMap.get(t.creator_user_id) : null;
         return {
           ...t,
-          creator_email: profile?.email,
           creator_display_name: profile?.display_name,
         };
       }) as QuickTablePublic[];
@@ -421,7 +419,6 @@ export type TeamMatchTournamentPublic = {
   team_roster_size: number;
   created_at: string;
   created_by?: string;
-  creator_email?: string;
   creator_display_name?: string;
 };
 
@@ -451,10 +448,10 @@ export function useOpenTeamMatchTournaments(options?: { limit?: number }) {
         return tournaments as TeamMatchTournamentPublic[];
       }
 
-      // Fetch profiles for all creators
+      // Fetch profiles for all creators (use public_profiles view to avoid exposing emails)
       const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, email, display_name")
+        .from("public_profiles")
+        .select("id, display_name")
         .in("id", creatorIds);
 
       // Map profiles to tournaments
@@ -464,7 +461,6 @@ export function useOpenTeamMatchTournaments(options?: { limit?: number }) {
         const profile = t.created_by ? profileMap.get(t.created_by) : null;
         return {
           ...t,
-          creator_email: profile?.email,
           creator_display_name: profile?.display_name,
         };
       }) as TeamMatchTournamentPublic[];
@@ -559,16 +555,16 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
         if (table?.creator_user_id) creatorIds.add(table.creator_user_id);
       });
       
-      // Fetch creator profiles
-      let profilesMap = new Map<string, { display_name: string | null; email: string }>();
+      // Fetch creator profiles (use public_profiles view to avoid exposing emails)
+      let profilesMap = new Map<string, { display_name: string | null }>();
       if (creatorIds.size > 0) {
         const { data: profilesData } = await supabase
-          .from("profiles")
-          .select("id, display_name, email")
+          .from("public_profiles")
+          .select("id, display_name")
           .in("id", Array.from(creatorIds));
         
         if (profilesData) {
-          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name, email: p.email }));
+          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name }));
         }
       }
       
@@ -586,7 +582,6 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
               registrationId: reg.id,
               registrationStatus: reg.status,
               creator_display_name: profile?.display_name,
-              creator_email: profile?.email,
               ...table,
             });
           }
@@ -604,7 +599,6 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
               registrationStatus: team.btc_approved ? 'approved' : 'pending',
               teamStatus: team.team_status,
               creator_display_name: profile?.display_name,
-              creator_email: profile?.email,
               ...table,
             });
           }

@@ -15,7 +15,6 @@ interface RefereeTournament {
   created_at?: string;
   creator_user_id?: string;
   creator_display_name?: string | null;
-  creator_email?: string | null;
 }
 
 export function useMyRefereeTournaments() {
@@ -94,15 +93,15 @@ export function useMyRefereeTournaments() {
       }
 
       // Fetch all creator profiles
-      let profilesMap = new Map<string, { display_name: string | null; email: string }>();
+      let profilesMap = new Map<string, { display_name: string | null }>();
       if (creatorIds.size > 0) {
         const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, display_name, email')
+          .from('public_profiles')
+          .select('id, display_name')
           .in('id', Array.from(creatorIds));
         
         if (profilesData) {
-          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name, email: p.email }));
+          profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name }));
         }
       }
 
@@ -121,7 +120,6 @@ export function useMyRefereeTournaments() {
           created_at: qt.created_at,
           creator_user_id: qt.creator_user_id,
           creator_display_name: profile?.display_name,
-          creator_email: profile?.email,
         });
       }
 
@@ -138,7 +136,6 @@ export function useMyRefereeTournaments() {
           created_at: dt.created_at,
           creator_user_id: dt.creator_user_id,
           creator_display_name: profile?.display_name,
-          creator_email: profile?.email,
         });
       }
 
@@ -155,7 +152,6 @@ export function useMyRefereeTournaments() {
           created_at: tm.created_at || undefined,
           creator_user_id: tm.created_by,
           creator_display_name: profile?.display_name,
-          creator_email: profile?.email,
         });
       }
 

@@ -27,7 +27,6 @@ export interface TeamMatchTournament {
   group_count: number | null;
   top_per_group: number | null;
   // Joined from profiles
-  creator_email?: string;
   creator_display_name?: string;
 }
 
@@ -112,8 +111,8 @@ export function useTeamMatch() {
       
       // Fetch profiles for all creators
       const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, email, display_name')
+        .from('public_profiles')
+        .select('id, display_name')
         .in('id', creatorIds);
       
       // Map profiles to tournaments
@@ -123,7 +122,6 @@ export function useTeamMatch() {
         const profile = t.created_by ? profileMap.get(t.created_by) : null;
         return {
           ...t,
-          creator_email: profile?.email,
           creator_display_name: profile?.display_name,
         };
       }) as TeamMatchTournament[];
