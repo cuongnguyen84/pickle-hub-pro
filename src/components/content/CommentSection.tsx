@@ -51,9 +51,9 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
       await Promise.all(
         uncachedIds.map(async (userId) => {
           try {
-            // Fetch profile
+            // Fetch profile (use public_profiles view)
             const { data: profile } = await supabase
-              .from("profiles")
+              .from("public_profiles")
               .select("display_name, avatar_url")
               .eq("id", userId)
               .single();

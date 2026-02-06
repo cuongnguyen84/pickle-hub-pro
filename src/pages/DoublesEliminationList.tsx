@@ -199,10 +199,10 @@ export default function DoublesEliminationList() {
                   
                   {/* Info Row 2 - Creator */}
                   <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
-                    {(tournament.creator_display_name || tournament.creator_email) && (
+                    {tournament.creator_display_name && (
                       <span className="flex items-center gap-1.5">
                         <Mail className="w-3.5 h-3.5" />
-                        {tournament.creator_display_name || tournament.creator_email?.split('@')[0]}
+                        {tournament.creator_display_name}
                       </span>
                     )}
                     <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />

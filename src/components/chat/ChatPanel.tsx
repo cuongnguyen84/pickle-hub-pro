@@ -232,9 +232,9 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
       const avatarResults: Record<string, string | null> = {};
       
       try {
-        // Batch fetch profiles in a single query
+        // Batch fetch profiles in a single query (use public_profiles view)
         const { data: profiles } = await supabase
-          .from("profiles")
+          .from("public_profiles")
           .select("id, avatar_url")
           .in("id", batchIds);
         

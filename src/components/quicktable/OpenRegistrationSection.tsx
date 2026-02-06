@@ -50,12 +50,12 @@ function OpenRegistrationCard({ table }: OpenRegistrationCardProps) {
               </span>
             </div>
             
-            {/* Creator email */}
-            {(table.creator_display_name || table.creator_email) && (
+            {/* Creator */}
+            {table.creator_display_name && (
               <div className="flex items-center gap-1 mt-1 text-xs text-foreground-muted">
                 <Mail className="w-3 h-3" />
                 <span className="truncate max-w-[200px]">
-                  {table.creator_display_name || table.creator_email?.split('@')[0]}
+                  {table.creator_display_name}
                 </span>
               </div>
             )}

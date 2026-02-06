@@ -250,12 +250,12 @@ const Tournaments = () => {
                           {tournament.player_count} {t.tournament.players}
                         </span>
                       )}
-                      {(tournament.creator_display_name || tournament.creator_email) && (
+                      {tournament.creator_display_name && (
                         <>
                           <span className="text-muted-foreground/50">•</span>
                           <span className="flex items-center gap-1 truncate max-w-[120px]">
                             <Mail className="w-3 h-3 shrink-0" />
-                            {tournament.creator_display_name || tournament.creator_email?.split('@')[0]}
+                            {tournament.creator_display_name}
                           </span>
                         </>
                       )}
@@ -350,11 +350,11 @@ const Tournaments = () => {
                             <span>{table.player_count} {t.tournament.players}</span>
                           </Badge>
                         )}
-                        {(table.creator_display_name || table.creator_email) && (
+                        {table.creator_display_name && (
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Mail className="w-3 h-3" />
                             <span className="truncate max-w-[150px]">
-                              {table.creator_display_name || table.creator_email?.split('@')[0]}
+                              {table.creator_display_name}
                             </span>
                           </span>
                         )}
@@ -417,11 +417,11 @@ const Tournaments = () => {
                             <span>{tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size}</span>
                           </Badge>
                           <span className="text-xs text-muted-foreground">{getFormatLabel(tournament.format)}</span>
-                          {(tournament.creator_display_name || tournament.creator_email) && (
+                          {tournament.creator_display_name && (
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Mail className="w-3 h-3" />
                               <span className="truncate max-w-[150px]">
-                                {tournament.creator_display_name || tournament.creator_email?.split('@')[0]}
+                                {tournament.creator_display_name}
                               </span>
                             </span>
                           )}

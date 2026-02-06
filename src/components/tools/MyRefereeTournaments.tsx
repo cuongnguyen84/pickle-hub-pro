@@ -98,11 +98,11 @@ export function MyRefereeTournaments() {
                 )}
               </div>
               
-              {/* Row 2: Creator email */}
-              {(tournament.creator_display_name || tournament.creator_email) && (
+              {/* Row 2: Creator */}
+              {tournament.creator_display_name && (
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
                   <Mail className="w-3 h-3" />
-                  <span>{tournament.creator_display_name || tournament.creator_email?.split('@')[0]}</span>
+                  <span>{tournament.creator_display_name}</span>
                 </div>
               )}
             </div>

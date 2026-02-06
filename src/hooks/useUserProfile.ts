@@ -119,9 +119,9 @@ export function usePublicUserInfo(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
 
-      // Get profile
+      // Get profile (use public_profiles view for other users)
       const { data: profile, error: profileError } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("display_name, avatar_url")
         .eq("id", userId)
         .single();
