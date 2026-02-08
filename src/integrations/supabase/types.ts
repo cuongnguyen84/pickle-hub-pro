@@ -2815,9 +2815,9 @@ export type Database = {
       lookup_user_by_email: {
         Args: { lookup_email: string }
         Returns: {
-          avatar_url: string
           display_name: string
-          user_id: string
+          email: string
+          id: string
         }[]
       }
       remove_partner_from_team: {
