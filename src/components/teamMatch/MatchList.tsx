@@ -151,32 +151,32 @@ export function MatchList({ tournamentId, userTeamId, isOwner, canEditScores, on
                         <div className="flex-1">
                           <div className="flex items-center gap-4">
                             {/* Team A */}
-                            <div className={`flex-1 text-right ${match.winner_team_id === match.team_a_id ? 'font-bold' : ''} ${match.team_a_id === userTeamId ? 'text-primary' : ''}`}>
-                              <span className="text-base">
+                            <div className={`flex-1 text-right whitespace-nowrap truncate ${match.winner_team_id === match.team_a_id ? 'font-bold' : ''} ${match.team_a_id === userTeamId ? 'text-primary' : ''}`}>
+                              <span className="text-sm sm:text-base">
                                 {(match.team_a as any)?.team_name || 'TBD'}
                               </span>
                               {match.lineup_a_submitted && (
-                                <Check className="h-3 w-3 inline-block ml-1 text-green-600" />
+                                <Check className="h-3 w-3 inline-block ml-1 text-green-500 shrink-0" />
                               )}
                             </div>
                             
                             {/* Score */}
-                            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg min-w-[100px] justify-center">
-                              <span className={`text-xl font-bold ${match.winner_team_id === match.team_a_id ? 'text-green-600' : ''}`}>
+                            <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-muted rounded-lg min-w-[80px] sm:min-w-[100px] justify-center shrink-0">
+                              <span className={`text-lg sm:text-xl font-bold ${match.winner_team_id === match.team_a_id ? 'text-green-600' : ''}`}>
                                 {match.games_won_a}
                               </span>
                               <span className="text-muted-foreground">-</span>
-                              <span className={`text-xl font-bold ${match.winner_team_id === match.team_b_id ? 'text-green-600' : ''}`}>
+                              <span className={`text-lg sm:text-xl font-bold ${match.winner_team_id === match.team_b_id ? 'text-green-600' : ''}`}>
                                 {match.games_won_b}
                               </span>
                             </div>
                             
                             {/* Team B */}
-                            <div className={`flex-1 ${match.winner_team_id === match.team_b_id ? 'font-bold' : ''} ${match.team_b_id === userTeamId ? 'text-primary' : ''}`}>
+                            <div className={`flex-1 whitespace-nowrap truncate ${match.winner_team_id === match.team_b_id ? 'font-bold' : ''} ${match.team_b_id === userTeamId ? 'text-primary' : ''}`}>
                               {match.lineup_b_submitted && (
-                                <Check className="h-3 w-3 inline-block mr-1 text-green-600" />
+                                <Check className="h-3 w-3 inline-block mr-1 text-green-500 shrink-0" />
                               )}
-                              <span className="text-base">
+                              <span className="text-sm sm:text-base">
                                 {(match.team_b as any)?.team_name || 'TBD'}
                               </span>
                             </div>

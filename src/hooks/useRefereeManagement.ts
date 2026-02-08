@@ -78,22 +78,18 @@ export function useRefereeManagement(tableId: string | undefined, creatorUserId:
 
       if (error) throw error;
 
-      // Fetch user profiles for display names
-      const refereeList: Referee[] = [];
-      for (const ref of data || []) {
-        // Try to get profile info
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email, display_name')
-          .eq('id', ref.user_id)
-          .maybeSingle();
+      // Fetch user profiles for display names via public_profiles view
+      const userIds = (data || []).map(r => r.user_id);
+      const { data: profilesData } = userIds.length > 0
+        ? await supabase.from('public_profiles').select('id, display_name').in('id', userIds)
+        : { data: [] };
 
-        refereeList.push({
-          ...ref,
-          email: profile?.email,
-          display_name: profile?.display_name,
-        });
-      }
+      const profileMap = new Map((profilesData || []).map(p => [p.id, p]));
+
+      const refereeList: Referee[] = (data || []).map(ref => ({
+        ...ref,
+        display_name: profileMap.get(ref.user_id)?.display_name || undefined,
+      }));
 
       setReferees(refereeList);
     } catch (error) {
@@ -108,14 +104,12 @@ export function useRefereeManagement(tableId: string | undefined, creatorUserId:
     if (!tableId || !user) return false;
 
     try {
-      // Find user by email
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email, display_name')
-        .eq('email', email.toLowerCase().trim())
-        .maybeSingle();
+      // Find user by email using secure RPC
+      const { data: profiles, error: profileError } = await supabase
+        .rpc('lookup_user_by_email', { lookup_email: email.toLowerCase().trim() });
 
       if (profileError) throw profileError;
+      const profile = profiles?.[0];
       if (!profile) {
         toast.error('Không tìm thấy người dùng với email này');
         return false;

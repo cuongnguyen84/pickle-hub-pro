@@ -152,16 +152,15 @@ export function StandingsTable({ tournamentId }: StandingsTableProps) {
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">#</TableHead>
-                <TableHead>Đội</TableHead>
-                <TableHead className="text-center w-12" title="Số trận đã đấu">Tr</TableHead>
-                <TableHead className="text-center w-12" title="Số trận thắng">T</TableHead>
-                <TableHead className="text-center w-12" title="Số trận thua">B</TableHead>
-                <TableHead className="text-center w-12" title="Điểm (Thắng = 1đ)">Đ</TableHead>
-                <TableHead className="text-center w-20" title="Hiệu số ván thắng - thua">Ván</TableHead>
-                <TableHead className="text-center w-16" title="Hiệu số điểm">+/-</TableHead>
+                <TableHead className="w-10 text-center px-1">#</TableHead>
+                <TableHead className="px-2">Đội</TableHead>
+                <TableHead className="text-center w-8 px-1" title="Số trận thắng">T</TableHead>
+                <TableHead className="text-center w-8 px-1" title="Số trận thua">B</TableHead>
+                <TableHead className="text-center w-8 px-1" title="Điểm (Thắng = 1đ)">Đ</TableHead>
+                <TableHead className="text-center w-14 px-1" title="Hiệu số ván thắng - thua">Ván</TableHead>
+                <TableHead className="text-center w-12 px-1" title="Hiệu số điểm">+/-</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -170,28 +169,27 @@ export function StandingsTable({ tournamentId }: StandingsTableProps) {
                   key={standing.team.id}
                   className={index < 3 ? 'bg-primary/5' : ''}
                 >
-                  <TableCell className="text-center">
+                  <TableCell className="text-center px-1">
                     <div className="flex justify-center">
                       {getRankIcon(index + 1)}
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium whitespace-nowrap px-2">
                     {standing.team.team_name}
                   </TableCell>
-                  <TableCell className="text-center">{standing.played}</TableCell>
-                  <TableCell className="text-center text-green-600 font-medium">
+                  <TableCell className="text-center text-green-600 font-medium px-1">
                     {standing.won}
                   </TableCell>
-                  <TableCell className="text-center text-red-500">
+                  <TableCell className="text-center text-red-500 px-1">
                     {standing.lost}
                   </TableCell>
-                  <TableCell className="text-center font-bold text-primary">
+                  <TableCell className="text-center font-bold text-primary px-1">
                     {standing.won}
                   </TableCell>
-                  <TableCell className="text-center text-sm">
-                    {standing.gamesWon} - {standing.gamesLost}
+                  <TableCell className="text-center text-sm whitespace-nowrap px-1">
+                    {standing.gamesWon}-{standing.gamesLost}
                   </TableCell>
-                  <TableCell className={`text-center font-medium ${standing.pointsDiff > 0 ? 'text-green-600' : standing.pointsDiff < 0 ? 'text-red-500' : ''}`}>
+                  <TableCell className={`text-center font-medium whitespace-nowrap px-1 ${standing.pointsDiff > 0 ? 'text-green-600' : standing.pointsDiff < 0 ? 'text-red-500' : ''}`}>
                     {standing.pointsDiff > 0 ? '+' : ''}{standing.pointsDiff}
                   </TableCell>
                 </TableRow>
@@ -201,11 +199,10 @@ export function StandingsTable({ tournamentId }: StandingsTableProps) {
         </div>
         
         {/* Legend */}
-        <div className="p-4 border-t text-xs text-muted-foreground flex flex-wrap gap-3">
-          <span><strong>Tr</strong> = Số trận</span>
+        <div className="p-3 border-t text-xs text-muted-foreground flex flex-wrap gap-2">
           <span><strong>T</strong> = Thắng</span>
           <span><strong>B</strong> = Thua</span>
-          <span><strong>Đ</strong> = Điểm (Thắng = 1đ)</span>
+          <span><strong>Đ</strong> = Điểm</span>
           <span><strong>+/-</strong> = Hiệu số</span>
         </div>
       </CardContent>
