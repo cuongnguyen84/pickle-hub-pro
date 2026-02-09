@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
-import { useTournaments, useOpenRegistrationTables, useUserRegisteredTournaments, useUserCompletedTournaments, useOpenTeamMatchTournaments } from "@/hooks/useSupabaseData";
+import { useTournaments, useOpenRegistrationTables, useUserRegisteredTournaments, useUserCompletedTournaments, useOpenTeamMatchTournaments, useCompletedPublicQuickTables, useCompletedTeamMatchTournaments } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail } from "lucide-react";
@@ -26,7 +26,13 @@ const Tournaments = () => {
   const { data: tournaments = [], isLoading } = useTournaments();
   const { data: openRegistrationTables = [], isLoading: openRegLoading } = useOpenRegistrationTables();
   const { data: openTeamMatchTournaments = [], isLoading: teamMatchLoading } = useOpenTeamMatchTournaments();
+  const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 50 });
+  const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 50 });
   const { data: registeredTournaments = [], isLoading: registeredLoading } = useUserRegisteredTournaments(user?.id);
+  const [qtExpanded, setQtExpanded] = useState(false);
+  const [qtTab, setQtTab] = useState<"active" | "completed">("active");
+  const [tmExpanded, setTmExpanded] = useState(false);
+  const [tmTab, setTmTab] = useState<"active" | "completed">("active");
   const { data: completedTournaments = [], isLoading: completedLoading } = useUserCompletedTournaments(user?.id);
 
   // Filter tournaments by search
@@ -316,78 +322,137 @@ const Tournaments = () => {
           </Card>
         )}
 
-        {/* Open Registration Section */}
-        {openRegistrationTables.length > 0 && (
+        {/* Quick Tables Section - with tabs */}
+        {(openRegistrationTables.length > 0 || completedQuickTables.length > 0) && (
           <Card className="mb-6">
             <div className="p-4">
               <div className="flex items-center gap-2 mb-4">
                 <ClipboardList className="w-5 h-5 text-primary" />
                 <h2 className="text-lg font-semibold text-foreground">{t.quickTable.openRegistrationTournaments}</h2>
               </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={qtTab === "active" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setQtTab("active"); setQtExpanded(false); }}
+                >
+                  {t.tournament.openRegistration} ({openRegistrationTables.length})
+                </Button>
+                <Button
+                  variant={qtTab === "completed" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setQtTab("completed"); setQtExpanded(false); }}
+                >
+                  {t.tournament.ended} ({completedQuickTables.length})
+                </Button>
+              </div>
             </div>
             <div className="px-4 pb-4 space-y-2">
-              {openRegistrationTables.slice(0, 5).map((table) => (
-                <Link
-                  key={table.id}
-                  to={`/quick-tables/${table.share_id}`}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <ClipboardList className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{table.name}</div>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                        {table.is_doubles ? (
-                          <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
-                            <Users className="w-3 h-3" />
-                            <span>{table.player_count} {t.tournament.pairs}</span>
+              {(() => {
+                const items = qtTab === "active" ? openRegistrationTables : completedQuickTables;
+                const displayItems = qtExpanded ? items : items.slice(0, 5);
+                if (items.length === 0) return (
+                  <p className="text-sm text-muted-foreground text-center py-4">{t.common.noResults}</p>
+                );
+                return (
+                  <>
+                    {displayItems.map((table) => (
+                      <Link
+                        key={table.id}
+                        to={`/quick-tables/${table.share_id}`}
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <ClipboardList className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{table.name}</div>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                              {table.is_doubles ? (
+                                <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
+                                  <Users className="w-3 h-3" />
+                                  <span>{table.player_count} {t.tournament.pairs}</span>
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
+                                  <User className="w-3 h-3" />
+                                  <span>{table.player_count} {t.tournament.players}</span>
+                                </Badge>
+                              )}
+                              {table.creator_display_name && (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Mail className="w-3 h-3" />
+                                  <span className="truncate max-w-[150px]">{table.creator_display_name}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 pl-13 sm:pl-0">
+                          <Badge variant="outline" className={cn(
+                            "text-xs whitespace-nowrap",
+                            qtTab === "active"
+                              ? "bg-primary/10 text-primary border-primary/30"
+                              : "bg-muted text-muted-foreground border-border"
+                          )}>
+                            {qtTab === "active" ? t.tournament.openRegistration : t.quickTable.status.completed}
                           </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
-                            <User className="w-3 h-3" />
-                            <span>{table.player_count} {t.tournament.players}</span>
-                          </Badge>
-                        )}
-                        {table.creator_display_name && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Mail className="w-3 h-3" />
-                            <span className="truncate max-w-[150px]">
-                              {table.creator_display_name}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 pl-13 sm:pl-0">
-                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 whitespace-nowrap">
-                      {t.tournament.openRegistration}
-                    </Badge>
-                    <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
-                  </div>
-                </Link>
-              ))}
+                          <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                        </div>
+                      </Link>
+                    ))}
+                    {items.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={(e) => { e.preventDefault(); setQtExpanded(!qtExpanded); }}
+                      >
+                        {qtExpanded ? t.quickTable.showLess : `${t.quickTable.showMore} (${items.length})`}
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </Card>
         )}
 
-        {/* Open Team Match Tournaments Section */}
-        {openTeamMatchTournaments.length > 0 && (
+        {/* Team Match Tournaments Section - with tabs */}
+        {(openTeamMatchTournaments.length > 0 || completedTeamMatches.length > 0) && (
           <Card className="mb-6">
             <div className="p-4">
               <div className="flex items-center gap-2 mb-4">
                 <Users className="w-5 h-5 text-primary" />
                 <h2 className="text-lg font-semibold text-foreground">{t.teamMatch.publicTournaments}</h2>
               </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={tmTab === "active" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setTmTab("active"); setTmExpanded(false); }}
+                >
+                  {t.tournament.ongoing} ({openTeamMatchTournaments.length})
+                </Button>
+                <Button
+                  variant={tmTab === "completed" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setTmTab("completed"); setTmExpanded(false); }}
+                >
+                  {t.tournament.ended} ({completedTeamMatches.length})
+                </Button>
+              </div>
             </div>
             <div className="px-4 pb-4 space-y-2">
-              {openTeamMatchTournaments.slice(0, 5).map((tournament) => {
-                const getStatusLabel = (status: string) => {
+              {(() => {
+                const items = tmTab === "active" ? openTeamMatchTournaments : completedTeamMatches;
+                const displayItems = tmExpanded ? items : items.slice(0, 5);
+                const getTeamStatusLabel = (status: string) => {
                   switch (status) {
                     case 'registration': return t.teamMatch.statusRegistration;
                     case 'ongoing': return t.teamMatch.statusOngoing;
+                    case 'completed': return t.quickTable.status.completed;
                     default: return status;
                   }
                 };
@@ -399,49 +464,66 @@ const Tournaments = () => {
                     default: return format;
                   }
                 };
-                return (
-                  <Link
-                    key={tournament.id}
-                    to={`/tools/team-match/${tournament.share_id}`}
-                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Users className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{tournament.name}</div>
-                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                          <Badge variant="secondary" className="gap-1 text-xs bg-purple-100 text-purple-700 border-purple-200">
-                            <Users className="w-3 h-3" />
-                            <span>{tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size}</span>
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">{getFormatLabel(tournament.format)}</span>
-                          {tournament.creator_display_name && (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Mail className="w-3 h-3" />
-                              <span className="truncate max-w-[150px]">
-                                {tournament.creator_display_name}
-                              </span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 pl-13 sm:pl-0">
-                      <Badge variant="outline" className={cn(
-                        "text-xs whitespace-nowrap",
-                        tournament.status === 'ongoing' 
-                          ? "bg-green-500/10 text-green-500 border-green-500/20"
-                          : "bg-primary/10 text-primary border-primary/30"
-                      )}>
-                        {getStatusLabel(tournament.status)}
-                      </Badge>
-                      <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
-                    </div>
-                  </Link>
+                if (items.length === 0) return (
+                  <p className="text-sm text-muted-foreground text-center py-4">{t.common.noResults}</p>
                 );
-              })}
+                return (
+                  <>
+                    {displayItems.map((tournament) => (
+                      <Link
+                        key={tournament.id}
+                        to={`/tools/team-match/${tournament.share_id}`}
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Users className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{tournament.name}</div>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                              <Badge variant="secondary" className="gap-1 text-xs bg-purple-100 text-purple-700 border-purple-200">
+                                <Users className="w-3 h-3" />
+                                <span>{tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size}</span>
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">{getFormatLabel(tournament.format)}</span>
+                              {tournament.creator_display_name && (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Mail className="w-3 h-3" />
+                                  <span className="truncate max-w-[150px]">{tournament.creator_display_name}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 pl-13 sm:pl-0">
+                          <Badge variant="outline" className={cn(
+                            "text-xs whitespace-nowrap",
+                            tournament.status === 'ongoing'
+                              ? "bg-green-500/10 text-green-500 border-green-500/20"
+                              : tournament.status === 'completed'
+                                ? "bg-muted text-muted-foreground border-border"
+                                : "bg-primary/10 text-primary border-primary/30"
+                          )}>
+                            {getTeamStatusLabel(tournament.status)}
+                          </Badge>
+                          <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                        </div>
+                      </Link>
+                    ))}
+                    {items.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={(e) => { e.preventDefault(); setTmExpanded(!tmExpanded); }}
+                      >
+                        {tmExpanded ? t.quickTable.showLess : `${t.quickTable.showMore} (${items.length})`}
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </Card>
         )}

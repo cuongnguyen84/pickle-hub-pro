@@ -468,6 +468,79 @@ export function useOpenTeamMatchTournaments(options?: { limit?: number }) {
   });
 }
 
+// Fetch completed public quick tables
+export function useCompletedPublicQuickTables(options?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["completed-public-quick-tables", options],
+    queryFn: async () => {
+      let query = supabase
+        .from("quick_tables")
+        .select("id, name, share_id, status, format, player_count, requires_registration, is_doubles, created_at, creator_user_id")
+        .eq("is_public", true)
+        .eq("status", "completed")
+        .order("updated_at", { ascending: false });
+
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data: tables, error } = await query;
+      if (error) throw error;
+      if (!tables || tables.length === 0) return [];
+
+      const creatorIds = [...new Set(tables.map(t => t.creator_user_id).filter(Boolean))] as string[];
+      if (creatorIds.length === 0) return tables as QuickTablePublic[];
+
+      const { data: profiles } = await supabase
+        .from("public_profiles")
+        .select("id, display_name")
+        .in("id", creatorIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      return tables.map((t) => ({
+        ...t,
+        creator_display_name: t.creator_user_id ? profileMap.get(t.creator_user_id)?.display_name : undefined,
+      })) as QuickTablePublic[];
+    },
+  });
+}
+
+// Fetch completed team match tournaments
+export function useCompletedTeamMatchTournaments(options?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["completed-team-match-tournaments", options],
+    queryFn: async () => {
+      let query = supabase
+        .from("team_match_tournaments")
+        .select("id, name, share_id, status, format, team_count, team_roster_size, created_at, created_by")
+        .eq("status", "completed")
+        .order("updated_at", { ascending: false });
+
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data: tournaments, error } = await query;
+      if (error) throw error;
+      if (!tournaments || tournaments.length === 0) return [];
+
+      const creatorIds = [...new Set(tournaments.map(t => t.created_by).filter(Boolean))] as string[];
+      if (creatorIds.length === 0) return tournaments as TeamMatchTournamentPublic[];
+
+      const { data: profiles } = await supabase
+        .from("public_profiles")
+        .select("id, display_name")
+        .in("id", creatorIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      return tournaments.map((t) => ({
+        ...t,
+        creator_display_name: t.created_by ? profileMap.get(t.created_by)?.display_name : undefined,
+      })) as TeamMatchTournamentPublic[];
+    },
+  });
+}
+
 // Fetch approved registrations for a table (public view)
 export function useApprovedRegistrations(tableId: string) {
   return useQuery({
