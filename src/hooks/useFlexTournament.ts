@@ -305,7 +305,11 @@ export function useFlexTournament() {
   }
 
   // Add team
-  async function addTeam(tournamentId: string, name: string, displayOrder: number): Promise<FlexTeam | null> {
+  async function addTeam(tournamentId: string, name: string, displayOrder: number, currentCount?: number): Promise<FlexTeam | null> {
+    if (currentCount !== undefined && currentCount >= 20) {
+      toast({ title: "Giới hạn", description: "Tối đa 20 đội cho mỗi giải đấu", variant: "destructive" });
+      return null;
+    }
     const { data, error } = await supabase
       .from('flex_teams')
       .insert({ tournament_id: tournamentId, name, display_order: displayOrder })
@@ -349,7 +353,11 @@ export function useFlexTournament() {
   }
 
   // Add group
-  async function addGroup(tournamentId: string, name: string, displayOrder: number): Promise<FlexGroup | null> {
+  async function addGroup(tournamentId: string, name: string, displayOrder: number, currentCount?: number): Promise<FlexGroup | null> {
+    if (currentCount !== undefined && currentCount >= 20) {
+      toast({ title: "Giới hạn", description: "Tối đa 20 bảng đấu cho mỗi giải đấu", variant: "destructive" });
+      return null;
+    }
     const { data, error } = await supabase
       .from('flex_groups')
       .insert({ tournament_id: tournamentId, name, display_order: displayOrder })
@@ -425,8 +433,13 @@ export function useFlexTournament() {
     matchType: 'singles' | 'doubles',
     groupId: string | null,
     displayOrder: number,
-    parentMatchId?: string | null
+    parentMatchId?: string | null,
+    currentCount?: number
   ): Promise<FlexMatch | null> {
+    if (currentCount !== undefined && currentCount >= 100) {
+      toast({ title: "Giới hạn", description: "Tối đa 100 trận đấu cho mỗi giải đấu", variant: "destructive" });
+      return null;
+    }
     const { data, error } = await supabase
       .from('flex_matches')
       .insert({

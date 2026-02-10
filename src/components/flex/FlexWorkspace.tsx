@@ -243,12 +243,12 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
   };
 
   const handleAddTeam = useCallback(async (name: string) => {
-    await addTeam(data.tournament.id, name, getNextDisplayOrder(data.teams));
+    await addTeam(data.tournament.id, name, getNextDisplayOrder(data.teams), data.teams.length);
     onRefresh();
   }, [data.tournament.id, data.teams, addTeam, onRefresh]);
 
   const handleAddGroup = useCallback(async (name: string) => {
-    await addGroup(data.tournament.id, name, getNextDisplayOrder(data.groups));
+    await addGroup(data.tournament.id, name, getNextDisplayOrder(data.groups), data.groups.length);
     onRefresh();
   }, [data.tournament.id, data.groups, addGroup, onRefresh]);
 
@@ -275,7 +275,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     // If group is team-based, create 'singles' type (2 team slots)
     const matchType = groupType === 'team' ? 'singles' : 'doubles';
     
-    await addMatch(data.tournament.id, matchName, matchType, groupId, getNextDisplayOrder(data.matches));
+    await addMatch(data.tournament.id, matchName, matchType, groupId, getNextDisplayOrder(data.matches), null, data.matches.length);
     onRefresh();
   }, [data.tournament.id, data.matches, data.groups, activeTab, selectedGroupId, addMatch, onRefresh, getGroupItemType]);
 
@@ -356,7 +356,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
     const childCount = data.matches.filter(m => m.parent_match_id === parentMatchId).length;
     const matchName = `Trận ${childCount + 1}`;
     
-    await addMatch(data.tournament.id, matchName, 'doubles', parentMatch.group_id, childCount, parentMatchId);
+    await addMatch(data.tournament.id, matchName, 'doubles', parentMatch.group_id, childCount, parentMatchId, data.matches.length);
     onRefresh();
   }, [data.tournament.id, data.matches, addMatch, onRefresh]);
 
