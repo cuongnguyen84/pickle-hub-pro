@@ -40,6 +40,23 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Validate target_type enum
+      if (body.target_type !== "video" && body.target_type !== "livestream") {
+        return new Response(
+          JSON.stringify({ error: "target_type must be 'video' or 'livestream'" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(body.target_id)) {
+        return new Response(
+          JSON.stringify({ error: "target_id must be a valid UUID" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // Add to pending batch
       pendingEvents.push({
         target_type: body.target_type,

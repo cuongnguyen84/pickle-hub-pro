@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { sanitizeString } from '@/lib/validation';
 
 export interface TeamMatchTeam {
   id: string;
@@ -121,6 +122,10 @@ export function useTeamMatchTeamManagement() {
     mutationFn: async (input: CreateTeamInput & { master_team_id?: string }) => {
       if (!user) throw new Error('Not authenticated');
 
+      const safeTeamName = sanitizeString(input.team_name, 100);
+      const safeCaptainName = sanitizeString(input.captain_name, 100);
+      if (!safeTeamName || !safeCaptainName) throw new Error('Tên không được để trống');
+
       let masterTeamId = input.master_team_id;
 
       // If no master_team_id provided, create a new master team (auto-save)
@@ -128,7 +133,7 @@ export function useTeamMatchTeamManagement() {
         const { data: masterTeam, error: masterError } = await supabase
           .from('master_teams')
           .insert({
-            team_name: input.team_name,
+            team_name: safeTeamName,
             captain_user_id: user.id,
           })
           .select()
@@ -140,7 +145,7 @@ export function useTeamMatchTeamManagement() {
         // Add captain to master roster
         await supabase.from('master_team_roster').insert({
           master_team_id: masterTeamId,
-          player_name: input.captain_name,
+          player_name: safeCaptainName,
           gender: input.captain_gender,
           skill_level: input.captain_skill_level || null,
           user_id: user.id,
@@ -153,7 +158,7 @@ export function useTeamMatchTeamManagement() {
         .from('team_match_teams')
         .insert({
           tournament_id: input.tournament_id,
-          team_name: input.team_name,
+          team_name: safeTeamName,
           captain_user_id: user.id,
           master_team_id: masterTeamId,
           status: 'pending',
@@ -168,7 +173,7 @@ export function useTeamMatchTeamManagement() {
         .from('team_match_roster')
         .insert({
           team_id: team.id,
-          player_name: input.captain_name,
+          player_name: safeCaptainName,
           gender: input.captain_gender,
           skill_level: input.captain_skill_level || null,
           user_id: user.id,
@@ -202,12 +207,15 @@ export function useTeamMatchTeamManagement() {
   // Add roster member mutation - also syncs to master team
   const addRosterMemberMutation = useMutation({
     mutationFn: async (input: AddRosterMemberInput) => {
+      const safePlayerName = sanitizeString(input.player_name, 100);
+      if (!safePlayerName) throw new Error('Tên không được để trống');
+
       // Add to tournament roster
       const { data, error } = await supabase
         .from('team_match_roster')
         .insert({
           team_id: input.team_id,
-          player_name: input.player_name,
+          player_name: safePlayerName,
           gender: input.gender,
           skill_level: input.skill_level || null,
           user_id: input.user_id || null,
@@ -229,7 +237,7 @@ export function useTeamMatchTeamManagement() {
       if (team?.master_team_id) {
         await supabase.from('master_team_roster').insert({
           master_team_id: team.master_team_id,
-          player_name: input.player_name,
+          player_name: safePlayerName,
           gender: input.gender,
           skill_level: input.skill_level || null,
           user_id: input.user_id || null,

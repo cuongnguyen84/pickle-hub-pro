@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeString, sanitizeProfileLink } from '@/lib/validation';
 
 export type RegistrationStatus = 'pending' | 'approved' | 'rejected';
 export type SkillRatingSystem = 'DUPR' | 'other' | 'none';
@@ -111,18 +112,24 @@ export function useRegistration() {
 
     setLoading(true);
     try {
+      const safeDisplayName = sanitizeString(formData.display_name, 100);
+      if (!safeDisplayName) {
+        toast.error('Tên hiển thị không được để trống');
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('quick_table_registrations')
         .insert({
           table_id: tableId,
           user_id: user.id,
-          display_name: formData.display_name.trim(),
-          team: formData.team?.trim() || null,
+          display_name: safeDisplayName,
+          team: formData.team ? sanitizeString(formData.team, 100) : null,
           rating_system: formData.rating_system,
           skill_level: formData.skill_level || null,
-          skill_description: formData.skill_description?.trim() || null,
-          skill_system_name: formData.skill_system_name?.trim() || null,
-          profile_link: formData.profile_link?.trim() || null,
+          skill_description: formData.skill_description ? sanitizeString(formData.skill_description, 200) : null,
+          skill_system_name: formData.skill_system_name ? sanitizeString(formData.skill_system_name, 100) : null,
+          profile_link: sanitizeProfileLink(formData.profile_link),
         })
         .select()
         .single();
@@ -157,13 +164,13 @@ export function useRegistration() {
       const { error } = await supabase
         .from('quick_table_registrations')
         .update({
-          display_name: formData.display_name?.trim(),
-          team: formData.team?.trim() || null,
+          display_name: formData.display_name ? sanitizeString(formData.display_name, 100) : undefined,
+          team: formData.team ? sanitizeString(formData.team, 100) : null,
           rating_system: formData.rating_system,
           skill_level: formData.skill_level || null,
-          skill_description: formData.skill_description?.trim() || null,
-          skill_system_name: formData.skill_system_name?.trim() || null,
-          profile_link: formData.profile_link?.trim() || null,
+          skill_description: formData.skill_description ? sanitizeString(formData.skill_description, 200) : null,
+          skill_system_name: formData.skill_system_name ? sanitizeString(formData.skill_system_name, 100) : null,
+          profile_link: sanitizeProfileLink(formData.profile_link),
         })
         .eq('id', registrationId);
 

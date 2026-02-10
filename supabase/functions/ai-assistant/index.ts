@@ -56,13 +56,18 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Input validation
+    const safeScreenName = typeof screenName === 'string' ? screenName.slice(0, 100) : '';
+    const safeStepName = typeof stepName === 'string' ? stepName.slice(0, 100) : '';
+    const safeQuestion = typeof question === 'string' ? question.slice(0, 500) : '';
+
     // Build user message with context
     const userMessage = `
-SCREEN: ${screenName}
-STEP: ${stepName}
-CONTEXT DATA: ${JSON.stringify(contextData || {}, null, 2)}
+SCREEN: ${safeScreenName}
+STEP: ${safeStepName}
+CONTEXT DATA: ${JSON.stringify(contextData || {}, null, 2).slice(0, 2000)}
 
-CÂU HỎI CỦA NGƯỜI DÙNG: ${question || "Tôi cần làm gì ở bước này?"}
+CÂU HỎI CỦA NGƯỜI DÙNG: ${safeQuestion || "Tôi cần làm gì ở bước này?"}
 `;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

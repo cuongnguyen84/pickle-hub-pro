@@ -37,7 +37,8 @@ const FlexTournamentSetup = () => {
     const playerNames = playersText
       .split('\n')
       .map(line => line.trim())
-      .filter(line => line.length > 0);
+      .filter(line => line.length > 0)
+      .slice(0, 200);
 
     try {
       const tournament = await createTournament({
@@ -100,6 +101,7 @@ const FlexTournamentSetup = () => {
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t.tools.flexTournament.tournamentNamePlaceholder}
                   required
+                  maxLength={100}
                 />
               </div>
 
