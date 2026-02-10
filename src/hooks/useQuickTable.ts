@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { sanitizeString } from '@/lib/validation';
 
 // Types
 export type QuickTableFormat = 'round_robin' | 'large_playoff';
@@ -396,16 +397,27 @@ export function useQuickTable() {
 
     setLoading(true);
     try {
+      // Sanitize inputs
+      const safeName = sanitizeString(name, 100);
+      if (!safeName) {
+        toast.error('Tên giải không được để trống');
+        return null;
+      }
+      const safeMessage = registrationOptions?.registration_message
+        ? sanitizeString(registrationOptions.registration_message, 500)
+        : null;
+      const safePlayerCount = Math.min(Math.max(playerCount, 2), 200);
+
       // Use RPC with quota enforcement
       const { data, error } = await supabase.rpc('create_quick_table_with_quota', {
-        _name: name,
-        _player_count: playerCount,
+        _name: safeName,
+        _player_count: safePlayerCount,
         _format: format,
         _group_count: groupCount || null,
         _requires_registration: registrationOptions?.requires_registration || false,
         _requires_skill_level: registrationOptions?.requires_skill_level || false,
         _auto_approve_registrations: registrationOptions?.auto_approve_registrations || false,
-        _registration_message: registrationOptions?.registration_message || null,
+        _registration_message: safeMessage,
         _is_doubles: registrationOptions?.is_doubles ?? true,
       });
 

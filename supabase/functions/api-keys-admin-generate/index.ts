@@ -95,6 +95,13 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (body.name.trim().length > 100) {
+      return new Response(
+        JSON.stringify({ error: "name must be 100 characters or less" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Generate API key
     const apiKey = generateApiKey();
     const keyHash = await hashApiKey(apiKey);

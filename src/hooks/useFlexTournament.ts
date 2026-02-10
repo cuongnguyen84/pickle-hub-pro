@@ -2,6 +2,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { sanitizeString } from "@/lib/validation";
+
+const MAX_NAME_LENGTH = 100;
+const MAX_PLAYERS_CREATE = 200;
 
 // Types
 export interface FlexTournament {
@@ -161,11 +165,17 @@ export function useFlexTournament() {
     mutationFn: async (input: { name: string; playerNames: string[]; isPublic: boolean }) => {
       if (!user?.id) throw new Error('Not authenticated');
 
+      const safeName = sanitizeString(input.name, MAX_NAME_LENGTH);
+      if (!safeName) throw new Error('Tournament name is required');
+
+      // Limit players
+      const limitedPlayers = input.playerNames.slice(0, MAX_PLAYERS_CREATE);
+
       // Create tournament
       const { data: tournament, error: tournamentError } = await supabase
         .from('flex_tournaments')
         .insert({
-          name: input.name,
+          name: safeName,
           creator_user_id: user.id,
           is_public: input.isPublic,
         })
@@ -175,18 +185,20 @@ export function useFlexTournament() {
       if (tournamentError) throw tournamentError;
 
       // Add players
-      if (input.playerNames.length > 0) {
-        const playersToInsert = input.playerNames.map((name, index) => ({
+      if (limitedPlayers.length > 0) {
+        const playersToInsert = limitedPlayers.map((name, index) => ({
           tournament_id: tournament.id,
-          name: name.trim(),
+          name: sanitizeString(name, MAX_NAME_LENGTH),
           display_order: index,
-        }));
+        })).filter(p => p.name.length > 0);
 
-        const { error: playersError } = await supabase
-          .from('flex_players')
-          .insert(playersToInsert);
+        if (playersToInsert.length > 0) {
+          const { error: playersError } = await supabase
+            .from('flex_players')
+            .insert(playersToInsert);
 
-        if (playersError) throw playersError;
+          if (playersError) throw playersError;
+        }
       }
 
       // Create preset forms: 1 Group, 1 Singles Match, 1 Doubles Match
@@ -291,9 +303,14 @@ export function useFlexTournament() {
 
   // Add player
   async function addPlayer(tournamentId: string, name: string, displayOrder: number): Promise<FlexPlayer | null> {
+    const safeName = sanitizeString(name, MAX_NAME_LENGTH);
+    if (!safeName) {
+      toast({ title: "Error", description: "Tên không được để trống", variant: "destructive" });
+      return null;
+    }
     const { data, error } = await supabase
       .from('flex_players')
-      .insert({ tournament_id: tournamentId, name, display_order: displayOrder })
+      .insert({ tournament_id: tournamentId, name: safeName, display_order: displayOrder })
       .select()
       .single();
 
@@ -310,9 +327,14 @@ export function useFlexTournament() {
       toast({ title: "Giới hạn", description: "Tối đa 20 đội cho mỗi giải đấu", variant: "destructive" });
       return null;
     }
+    const safeName = sanitizeString(name, MAX_NAME_LENGTH);
+    if (!safeName) {
+      toast({ title: "Error", description: "Tên không được để trống", variant: "destructive" });
+      return null;
+    }
     const { data, error } = await supabase
       .from('flex_teams')
-      .insert({ tournament_id: tournamentId, name, display_order: displayOrder })
+      .insert({ tournament_id: tournamentId, name: safeName, display_order: displayOrder })
       .select()
       .single();
 
@@ -358,9 +380,14 @@ export function useFlexTournament() {
       toast({ title: "Giới hạn", description: "Tối đa 20 bảng đấu cho mỗi giải đấu", variant: "destructive" });
       return null;
     }
+    const safeName = sanitizeString(name, MAX_NAME_LENGTH);
+    if (!safeName) {
+      toast({ title: "Error", description: "Tên không được để trống", variant: "destructive" });
+      return null;
+    }
     const { data, error } = await supabase
       .from('flex_groups')
-      .insert({ tournament_id: tournamentId, name, display_order: displayOrder })
+      .insert({ tournament_id: tournamentId, name: safeName, display_order: displayOrder })
       .select()
       .single();
 
@@ -440,11 +467,16 @@ export function useFlexTournament() {
       toast({ title: "Giới hạn", description: "Tối đa 100 trận đấu cho mỗi giải đấu", variant: "destructive" });
       return null;
     }
+    const safeName = sanitizeString(name, MAX_NAME_LENGTH);
+    if (!safeName) {
+      toast({ title: "Error", description: "Tên không được để trống", variant: "destructive" });
+      return null;
+    }
     const { data, error } = await supabase
       .from('flex_matches')
       .insert({
         tournament_id: tournamentId,
-        name,
+        name: safeName,
         match_type: matchType,
         group_id: groupId,
         display_order: displayOrder,

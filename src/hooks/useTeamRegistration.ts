@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import type { SkillRatingSystem } from './useRegistration';
+import { sanitizeString, sanitizeProfileLink } from '@/lib/validation';
 
 export type TeamStatus = 
   | 'draft' 
@@ -149,16 +150,22 @@ export function useTeamRegistration() {
         return null;
       }
 
+      const safeDisplayName = sanitizeString(formData.display_name, 100);
+      if (!safeDisplayName) {
+        toast.error('Tên hiển thị không được để trống');
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('quick_table_teams')
         .insert({
           table_id: tableId,
           player1_user_id: user.id,
-          player1_display_name: formData.display_name.trim(),
-          player1_team: formData.team?.trim() || null,
+          player1_display_name: safeDisplayName,
+          player1_team: formData.team ? sanitizeString(formData.team, 100) : null,
           player1_skill_level: formData.skill_level || null,
           player1_rating_system: formData.rating_system,
-          player1_profile_link: formData.profile_link?.trim() || null,
+          player1_profile_link: sanitizeProfileLink(formData.profile_link),
           team_status: 'draft',
         })
         .select()
@@ -276,11 +283,11 @@ export function useTeamRegistration() {
       const { data, error } = await supabase.rpc('accept_partner_invitation', {
         _invitation_code: inviteCode,
         _user_id: user.id,
-        _display_name: formData.display_name.trim(),
-        _team: formData.team?.trim() || null,
+        _display_name: sanitizeString(formData.display_name, 100),
+        _team: formData.team ? sanitizeString(formData.team, 100) : null,
         _skill_level: formData.skill_level || null,
         _rating_system: formData.rating_system,
-        _profile_link: formData.profile_link?.trim() || null,
+        _profile_link: sanitizeProfileLink(formData.profile_link),
       });
 
       if (error) throw error;

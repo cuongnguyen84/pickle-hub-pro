@@ -261,6 +261,7 @@ const QuickTables = () => {
                     value={tableName}
                     onChange={(e) => setTableName(e.target.value)}
                     placeholder={t.quickTable.tournamentNamePlaceholder}
+                    maxLength={100}
                   />
                 </div>
 
@@ -362,6 +363,7 @@ const QuickTables = () => {
                               onChange={(e) => setRegistrationMessage(e.target.value)}
                               placeholder={t.quickTable.registrationMessagePlaceholder}
                               rows={2}
+                              maxLength={500}
                             />
                           </div>
                         </CollapsibleContent>
