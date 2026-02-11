@@ -3,7 +3,7 @@ import { useI18n } from "@/i18n";
 import { Users, Trophy, Layers } from "lucide-react";
 
 interface ToolsInternalLinksProps {
-  currentTool: "quick-tables" | "doubles-elimination" | "flex-tournament";
+  currentTool: "quick-tables" | "doubles-elimination" | "flex-tournament" | "team-match";
 }
 
 /**
@@ -22,6 +22,15 @@ export const ToolsInternalLinks = ({ currentTool }: ToolsInternalLinksProps) => 
       description: language === "vi" 
         ? "Chia bảng tự động, tạo lịch thi đấu round robin hoặc playoff"
         : "Auto bracket generator for round robin or playoff formats",
+    },
+    {
+      id: "team-match" as const,
+      path: "/tools/team-match",
+      icon: Users,
+      title: language === "vi" ? "Đồng đội MLP" : "Team Match",
+      description: language === "vi"
+        ? "Thi đấu theo đội kiểu Major League Pickleball"
+        : "MLP-style team competition with lineup management",
     },
     {
       id: "doubles-elimination" as const,
