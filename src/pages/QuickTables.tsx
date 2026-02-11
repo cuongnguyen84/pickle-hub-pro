@@ -19,7 +19,7 @@ import { Link } from "react-router-dom";
 import { AIAssistantButton } from '@/components/ai';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema } from "@/components/seo";
+import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent } from "@/components/seo";
 import { getLoginUrl } from "@/lib/auth-config";
 
 type Step = "count" | "format" | "groups" | "players";
@@ -201,7 +201,7 @@ const QuickTables = () => {
     <MainLayout>
       <DynamicMeta 
         title="Pickleball Bracket Generator & Round Robin Tool"
-        description="Free pickleball bracket generator for tournaments. Create round robin brackets, playoff brackets, and elimination formats in seconds. Perfect for club tournaments and competitive events."
+        description="Free pickleball bracket generator for clubs and tournaments. Create round robin groups, playoff brackets, and elimination formats in seconds. Automatic group balancing, real-time scoring, mobile-friendly."
         url="https://thepicklehub.net/tools/quick-tables"
         enableHreflang={true}
       />
@@ -800,34 +800,8 @@ const QuickTables = () => {
           )}
         </div>
 
-          {/* SEO Content Section - at bottom */}
-          <section className="p-6 rounded-xl bg-background-surface border border-border-subtle text-left mt-8">
-            <h2 className="text-lg font-semibold text-foreground mb-3">
-              {t.quickTable.seo.createTitle}
-            </h2>
-            <p className="text-foreground-secondary mb-4">
-              {t.quickTable.seo.createDesc}{" "}
-              <Link to="/tournaments" className="text-primary hover:underline">{t.tournament.title}</Link>
-            </p>
-            
-            <h2 className="text-lg font-semibold text-foreground mb-3">
-              {t.quickTable.seo.roundRobinTitle}
-            </h2>
-            <p className="text-foreground-secondary mb-4">
-              {t.quickTable.seo.roundRobinDesc}
-            </p>
-
-            <h2 className="text-lg font-semibold text-foreground mb-3">
-              {t.quickTable.seo.formatsTitle}
-            </h2>
-            <p className="text-foreground-secondary">
-              {t.quickTable.seo.formatsDesc}{" "}
-              <Link to="/tools/team-match" className="text-primary hover:underline">{t.teamMatch.pageTitle}</Link>
-            </p>
-
-            {/* Internal Links to Other Tools */}
-            <ToolsInternalLinks currentTool="quick-tables" />
-          </section>
+          {/* SEO Content Section */}
+          <QuickTablesSeoContent />
       </div>
     </MainLayout>
   );

@@ -11,7 +11,7 @@ import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { DynamicMeta, WebApplicationSchema } from '@/components/seo';
+import { DynamicMeta, WebApplicationSchema, TeamMatchSeoContent } from '@/components/seo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -149,8 +149,8 @@ export default function TeamMatchList() {
   return (
     <MainLayout>
       <DynamicMeta 
-        title="Pickleball Team Match Format & MLP Style Scoring"
-        description="Create and manage pickleball team match competitions with MLP-style format. Features lineup management, dreambreaker games, rally scoring, and complete team tournament organization."
+        title="Pickleball Team Match Tool – MLP Style Tournament Format"
+        description="Create MLP-style pickleball team competitions. Features lineup management, dreambreaker games, rally scoring, and team standings. Free tool for clubs, leagues, and tournament organizers."
         url="https://thepicklehub.net/tools/team-match"
         enableHreflang={true}
       />
@@ -252,31 +252,8 @@ export default function TeamMatchList() {
           </Card>
         )}
 
-        {/* SEO Content Section - at bottom */}
-        <section className="p-6 rounded-xl bg-background border border-border mt-8">
-          <h2 className="text-lg font-semibold mb-3">
-            {t.teamMatch.seo.mlpTitle}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {t.teamMatch.seo.mlpDesc}{" "}
-            <Link to="/tournaments" className="text-primary hover:underline">{t.tournament.title}</Link>
-          </p>
-          
-          <h2 className="text-lg font-semibold mb-3">
-            {t.teamMatch.seo.lineupTitle}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {t.teamMatch.seo.lineupDesc}
-          </p>
-
-          <h2 className="text-lg font-semibold mb-3">
-            {t.teamMatch.seo.manageTitle}
-          </h2>
-          <p className="text-muted-foreground">
-            {t.teamMatch.seo.manageDesc}{" "}
-            <Link to="/tools/quick-tables" className="text-primary hover:underline">{t.quickTable.seo.pageTitle}</Link>
-          </p>
-        </section>
+        {/* SEO Content Section */}
+        <TeamMatchSeoContent />
       </div>
     </MainLayout>
   );

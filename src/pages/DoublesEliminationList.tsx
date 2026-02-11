@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema } from "@/components/seo";
+import { DynamicMeta, WebApplicationSchema, DoublesEliminationSeoContent } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,8 +71,8 @@ export default function DoublesEliminationList() {
   return (
     <MainLayout>
       <DynamicMeta 
-        title={`${t.doublesElimination.title} - ${t.common.appName}`}
-        description={t.doublesElimination.description}
+        title="Pickleball Double Elimination Bracket Generator"
+        description="Free double elimination bracket generator for pickleball tournaments. Create winners and losers brackets for 32-128+ teams. Automatic court scheduling, best-of-1/3/5 formats, referee assignment."
         url="https://thepicklehub.net/tools/doubles-elimination"
         enableHreflang={true}
       />
@@ -214,25 +214,7 @@ export default function DoublesEliminationList() {
         )}
 
         {/* SEO Content Section */}
-        <section className="mt-12 border-t border-border pt-10">
-          <h2 className="text-xl font-bold mb-4">{t.seo.doublesElimination.title}</h2>
-          <p className="text-muted-foreground mb-6 max-w-2xl">
-            {t.seo.doublesElimination.description}
-          </p>
-
-          <h3 className="text-lg font-semibold mb-3">{t.seo.doublesElimination.whenToUseTitle}</h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-2xl">
-            {t.seo.doublesElimination.whenToUseDesc}
-          </p>
-
-          <h3 className="text-lg font-semibold mb-3">{t.seo.doublesElimination.sizeTitle}</h3>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            {t.seo.doublesElimination.sizeDesc}
-          </p>
-
-          {/* Internal Links to Other Tools */}
-          <ToolsInternalLinks currentTool="doubles-elimination" />
-        </section>
+        <DoublesEliminationSeoContent />
 
         {/* Info Section */}
         <Card className="mt-8">

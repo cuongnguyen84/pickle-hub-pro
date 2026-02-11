@@ -1,6 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema } from "@/components/seo";
+import { DynamicMeta, WebApplicationSchema, FlexTournamentSeoContent } from "@/components/seo";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -50,8 +50,8 @@ const FlexTournamentList = () => {
   return (
     <MainLayout>
       <DynamicMeta 
-        title={t.tools.flexTournament.title}
-        description={t.tools.flexTournament.description}
+        title="Pickleball Flex Tournament – Custom Bracket Maker"
+        description="Create flexible pickleball tournament brackets with custom groups, team play, singles, doubles, and mixed formats. Free tool with real-time scoring and live standings for any tournament structure."
         url="https://thepicklehub.net/tools/flex-tournament"
         enableHreflang={true}
       />
@@ -238,27 +238,7 @@ const FlexTournamentList = () => {
         </AlertDialog>
 
         {/* SEO Content Section */}
-        <section className="mt-12 border-t border-border pt-10">
-          <h2 className="text-xl font-bold mb-4">{t.seo.flexTournament.title}</h2>
-          <p className="text-muted-foreground mb-6 max-w-2xl">
-            {t.seo.flexTournament.description}
-          </p>
-
-          <h3 className="text-lg font-semibold mb-3">{t.seo.flexTournament.differenceTitle}</h3>
-          <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground mb-6 max-w-2xl">
-            {t.seo.flexTournament.differenceList.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-
-          <h3 className="text-lg font-semibold mb-3">{t.seo.flexTournament.whoTitle}</h3>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            {t.seo.flexTournament.whoDesc}
-          </p>
-
-          {/* Internal Links to Other Tools */}
-          <ToolsInternalLinks currentTool="flex-tournament" />
-        </section>
+        <FlexTournamentSeoContent />
       </div>
     </MainLayout>
   );
