@@ -1,84 +1,61 @@
 
+# Fix OG Type cho Edge Functions og-live va og-video
 
-## Sửa lỗi Share Link không hiển thị OG metadata trên Facebook
+## Van de
+Cac Edge Function `og-live` va `og-video` dang su dung `og:type = "video.other"` nhung khong cung cap day du cac the `og:video` bat buoc. Facebook se tu choi scrape trang khi gap `video.other` ma khong co video object hop le.
 
-### Vấn đề
-Facebook Sharing Debugger trả về **response code 0** -- nghĩa là không đọc được nội dung từ `share.thepicklehub.net`. Nguyên nhân:
+## Giai phap
 
-1. **Worker thiếu `apikey` header** khi gọi Supabase edge function. Supabase yêu cầu header `apikey` (anon key) cho mọi request, kể cả khi `verify_jwt = false`. Không có header này, Supabase trả lỗi 401, Worker nhận lỗi và Facebook không đọc được OG tags.
+### 1. Sua `og-live/index.ts`
 
-2. **`og:url` chưa được cập nhật** trong bản deploy -- vẫn dùng format cũ `thepicklehub.net/share/live/...` thay vì `share.thepicklehub.net/live/...`.
+**Thay doi 1**: Them `mux_playback_id` vao query database (dong 38-49)
+- Them field `mux_playback_id` vao SELECT de kiem tra co video URL hay khong
 
-### Giải pháp
+**Thay doi 2**: Xay dung logic og:type thong minh (truoc khi generate HTML)
+- Neu livestream co `mux_playback_id` hop le → tao video URL dang `https://stream.mux.com/{playback_id}.m3u8`
+- Neu khong co → mac dinh `og:type = "article"`
 
-#### 1. Cập nhật Worker code trên Cloudflare (bạn tự làm)
+**Thay doi 3**: Thay doi phan OG tags trong HTML template (dong 166-167)
+- Thay the dong `<meta property="og:type" content="video.other" />` co dinh
+- Bang logic dieu kien:
+  - Co video URL:
+    ```
+    og:type = "video.other"
+    og:video = "{video_url}"
+    og:video:type = "text/html"  
+    og:video:width = "1280"
+    og:video:height = "720"
+    ```
+  - Khong co video URL:
+    ```
+    og:type = "article"
+    ```
 
-Thêm `apikey` header vào Worker khi gọi Supabase:
+### 2. Sua `og-video/index.ts`
 
-```javascript
-export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-    const path = url.pathname;
+**Thay doi tuong tu**:
 
-    if (path === "/" || path === "/test") {
-      return new Response("Share Worker is active!", {
-        headers: { "Content-Type": "text/plain" }
-      });
-    }
+**Thay doi 1**: Them `mux_playback_id` vao query (dong 37-49)
 
-    const userAgent = request.headers.get("User-Agent") || "";
-    const supabaseBase = "https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5paml3eXB1Ym1rdm1qdWFmbWdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzMjA5MDcsImV4cCI6MjA4MTg5NjkwN30.v_pmxd3idyYRwGFcpxBc0fsZtlDYbFzxjxgkRGdyE8s";
+**Thay doi 2**: Xay dung logic video URL
+- Neu video co `mux_playback_id` → tao URL `https://stream.mux.com/{playback_id}.m3u8`
 
-    async function proxyToEdge(functionName, id) {
-      try {
-        const resp = await fetch(
-          `${supabaseBase}/${functionName}?id=${id}`,
-          {
-            headers: {
-              "User-Agent": userAgent,
-              "apikey": supabaseAnonKey,
-              "Authorization": `Bearer ${supabaseAnonKey}`
-            }
-          }
-        );
-        const body = await resp.text();
-        return new Response(body, {
-          status: resp.status,
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "public, max-age=60, s-maxage=300"
-          }
-        });
-      } catch (e) {
-        return new Response("Proxy error", { status: 502 });
-      }
-    }
+**Thay doi 3**: Thay doi OG tags trong HTML (dong 142)
+- Logic dieu kien giong og-live:
+  - Co `mux_playback_id` → dung `video.other` + day du og:video tags
+  - Khong co → dung `article`
 
-    const liveMatch = path.match(/^\/live\/(.+)$/);
-    if (liveMatch) return proxyToEdge("og-live", liveMatch[1]);
+**Thay doi 4**: Loai bo dong `video:duration` rieng le (dong 156) vi no se duoc gop vao block og:video khi co video URL
 
-    const videoMatch = path.match(/^\/video\/(.+)$/);
-    if (videoMatch) return proxyToEdge("og-video", videoMatch[1]);
+### 3. Tong ket cac the giu nguyen (khong thay doi)
+- `og:title`, `og:description`, `og:image`, `og:url`, `og:site_name`, `og:locale`
+- Twitter Card tags
+- Crawler detection logic
+- Redirect logic cho browser vs crawler
+- Response headers (`Content-Type: text/html; charset=utf-8`)
+- Cache headers
 
-    const flexMatch = path.match(/^\/flex\/(.+)$/);
-    if (flexMatch) return proxyToEdge("og-flex-tournament", flexMatch[1]);
-
-    return new Response("Not Found", { status: 404 });
-  },
-};
-```
-
-**Thay doi quan trong**: Them `apikey` va `Authorization` header -- day la nguyen nhan chinh lam Facebook khong doc duoc OG tags.
-
-#### 2. Re-deploy edge functions (Lovable tu dong lam)
-
-Re-deploy `og-live` va `og-video` de cap nhat `og:url` sang format moi `share.thepicklehub.net/...`.
-
-### Kiem tra sau khi hoan thanh
-
-1. Mo `https://share.thepicklehub.net/live/e5c61e50-d121-4560-9c0a-6d978861d613` trong trinh duyet -- phai redirect toi trang chinh
-2. Test tren [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) -- phai hien thi title, description, thumbnail day du
-3. Test tuong tu voi mot video ID
-
+## Ket qua mong doi
+- Tat ca link share scrape thanh cong tren Facebook va Zalo
+- Khong con Response code 0 do thieu video object
+- Tuong thich mo rong: khi co video thuc su (Mux playback) se tu dong hien thi dung og:type video
