@@ -1263,7 +1263,7 @@ export interface Translations {
 // Vietnamese translations
 export const vi: Translations = {
   common: {
-    appName: "The Pickle Hub",
+    appName: "The PickleHub",
     loading: "Đang tải...",
     error: "Có lỗi xảy ra",
     retry: "Thử lại",

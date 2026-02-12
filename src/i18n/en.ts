@@ -3,7 +3,7 @@ import type { Translations } from "./vi";
 
 export const en: Translations = {
   common: {
-    appName: "The Pickle Hub",
+    appName: "The PickleHub",
     loading: "Loading...",
     error: "An error occurred",
     retry: "Retry",
