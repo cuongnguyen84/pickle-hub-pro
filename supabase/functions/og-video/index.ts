@@ -21,6 +21,9 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const videoId = url.searchParams.get("id");
+    
+    const userAgent = req.headers.get("user-agent") || "";
+    const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Zalobot|WhatsApp|Discordbot|Slackbot|bingbot|Googlebot/i.test(userAgent);
 
     if (!videoId) {
       return new Response("Missing video ID", { status: 400 });
@@ -159,12 +162,14 @@ serve(async (req) => {
   <meta name="twitter:description" content="${escapeHtml(ogDescription)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
   
-  <!-- Redirect to actual page for browsers -->
-  <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />
+  ${isCrawler ? "" : `<!-- Redirect to actual page for browsers -->
+  <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />`}
 </head>
 <body>
-  <p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(rawTitle)}</a>...</p>
-  <script>window.location.replace("${canonicalUrl}");</script>
+  ${isCrawler 
+    ? `<p>${escapeHtml(ogTitle)}</p>` 
+    : `<p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(rawTitle)}</a>...</p>
+  <script>window.location.replace("${canonicalUrl}");</script>`}
 </body>
 </html>`;
 

@@ -21,6 +21,9 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const livestreamId = url.searchParams.get("id");
+    
+    const userAgent = req.headers.get("user-agent") || "";
+    const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Zalobot|WhatsApp|Discordbot|Slackbot|bingbot|Googlebot/i.test(userAgent);
 
     if (!livestreamId) {
       return new Response("Missing livestream ID", { status: 400 });
@@ -185,12 +188,14 @@ serve(async (req) => {
   
   <!-- DO NOT set canonical here - this is a redirect page, not the real content -->
   
-  <!-- Redirect to actual page for browsers -->
-  <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />
+  ${isCrawler ? "" : `<!-- Redirect to actual page for browsers -->
+  <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />`}
 </head>
 <body>
-  <p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(rawTitle)}</a>...</p>
-  <script>window.location.replace("${canonicalUrl}");</script>
+  ${isCrawler 
+    ? `<p>${escapeHtml(ogTitle)}</p>` 
+    : `<p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(rawTitle)}</a>...</p>
+  <script>window.location.replace("${canonicalUrl}");</script>`}
 </body>
 </html>`;
 
