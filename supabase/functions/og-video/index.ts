@@ -44,7 +44,8 @@ serve(async (req) => {
         published_at,
         created_at,
         organization_id,
-        tournament_id
+        tournament_id,
+        mux_playback_id
       `)
       .eq("id", videoId)
       .single();
@@ -119,6 +120,10 @@ serve(async (req) => {
     // OG URL uses clean share URL (proxied to this edge function via _redirects)
     const ogUrl = `https://share.thepicklehub.net/video/${videoId}`;
     
+    // Build og:type logic based on mux_playback_id
+    const hasVideo = !!video.mux_playback_id;
+    const videoUrl = hasVideo ? `https://stream.mux.com/${video.mux_playback_id}.m3u8` : null;
+
     // Published time and duration
     const publishedTime = video.published_at || video.created_at;
     const duration = video.duration_seconds ? Math.round(video.duration_seconds) : null;
@@ -139,7 +144,12 @@ serve(async (req) => {
   <meta name="description" content="${escapeHtml(ogDescription)}" />
   
   <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="video.other" />
+  ${hasVideo ? `<meta property="og:type" content="video.other" />
+  <meta property="og:video" content="${escapeHtml(videoUrl!)}" />
+  <meta property="og:video:type" content="text/html" />
+  <meta property="og:video:width" content="1280" />
+  <meta property="og:video:height" content="720" />
+  ${duration ? `<meta property="video:duration" content="${duration}" />` : ""}` : `<meta property="og:type" content="article" />`}
   <meta property="og:url" content="${ogUrl}" />
   <meta property="og:title" content="${escapeHtml(ogTitle)}" />
   <meta property="og:description" content="${escapeHtml(ogDescription)}" />
@@ -153,7 +163,6 @@ serve(async (req) => {
   <meta property="og:locale" content="vi_VN" />
   ${organizationName ? `<meta property="article:author" content="${escapeHtml(organizationName)}" />` : ""}
   ${publishedTime ? `<meta property="article:published_time" content="${publishedTime}" />` : ""}
-  ${duration ? `<meta property="video:duration" content="${duration}" />` : ""}
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />

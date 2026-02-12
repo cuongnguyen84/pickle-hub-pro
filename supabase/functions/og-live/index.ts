@@ -45,7 +45,8 @@ serve(async (req) => {
         ended_at,
         created_at,
         organization_id,
-        tournament_id
+        tournament_id,
+        mux_playback_id
       `)
       .eq("id", livestreamId)
       .single();
@@ -145,6 +146,10 @@ serve(async (req) => {
     // OG URL uses clean share URL (proxied to this edge function via _redirects)
     const ogUrl = `https://share.thepicklehub.net/live/${livestreamId}`;
     
+    // Build og:type logic based on mux_playback_id
+    const hasVideo = !!livestream.mux_playback_id;
+    const videoUrl = hasVideo ? `https://stream.mux.com/${livestream.mux_playback_id}.m3u8` : null;
+
     // Published time
     const publishedTime = livestream.scheduled_start_at || livestream.created_at;
 
@@ -164,7 +169,11 @@ serve(async (req) => {
   <meta name="description" content="${escapeHtml(ogDescription)}" />
   
   <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="video.other" />
+  ${hasVideo ? `<meta property="og:type" content="video.other" />
+  <meta property="og:video" content="${escapeHtml(videoUrl!)}" />
+  <meta property="og:video:type" content="text/html" />
+  <meta property="og:video:width" content="1280" />
+  <meta property="og:video:height" content="720" />` : `<meta property="og:type" content="article" />`}
   <meta property="og:url" content="${ogUrl}" />
   <meta property="og:title" content="${escapeHtml(ogTitle)}" />
   <meta property="og:description" content="${escapeHtml(ogDescription)}" />
