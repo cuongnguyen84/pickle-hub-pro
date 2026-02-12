@@ -1,3 +1,0 @@
-# Proxy share URLs to edge functions for OG tag support
-/share/live/:id  https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-live?id=:id  200
-/share/video/:id  https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-video?id=:id  200
