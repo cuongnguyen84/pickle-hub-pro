@@ -24,10 +24,17 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  // Use clean domain URL - _redirects proxies to edge functions for OG tags
+  const SUPABASE_URL = "https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1";
+  
+  // Edge function URL for clipboard (Facebook/Zalo can read OG tags)
   const shareUrl = type === "live"
-    ? `https://thepicklehub.net/share/live/${id}`
-    : `https://thepicklehub.net/share/video/${id}`;
+    ? `${SUPABASE_URL}/og-live?id=${id}`
+    : `${SUPABASE_URL}/og-video?id=${id}`;
+  
+  // Clean display URL for UI
+  const displayUrl = type === "live"
+    ? `thepicklehub.net/share/live/${id}`
+    : `thepicklehub.net/share/video/${id}`;
 
   const copyToClipboard = async () => {
     try {
@@ -63,9 +70,13 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
         </DialogHeader>
 
         <div className="space-y-4">
-          <p className="text-sm text-foreground-secondary">
+          <p className="text-sm text-muted-foreground">
             {t.share.linkDesc}
           </p>
+
+          <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground break-all select-all">
+            {displayUrl}
+          </div>
           
           <Button
             onClick={copyToClipboard}
@@ -74,7 +85,7 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4 text-success" />
+                <Check className="w-4 h-4 text-green-500" />
                 {t.share.copied}
               </>
             ) : (
@@ -84,6 +95,10 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
               </>
             )}
           </Button>
+
+          <p className="text-xs text-muted-foreground text-center">
+            📷 Link sẽ hiển thị hình ảnh và tiêu đề khi chia sẻ trên Facebook/Zalo
+          </p>
         </div>
       </DialogContent>
     </Dialog>
