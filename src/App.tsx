@@ -42,6 +42,7 @@ const TeamMatchList = lazy(() => import("./pages/TeamMatchList"));
 const TeamMatchSetup = lazy(() => import("./pages/TeamMatchSetup"));
 const TeamMatchView = lazy(() => import("./pages/TeamMatchView"));
 const News = lazy(() => import("./pages/News"));
+const ShareRedirect = lazy(() => import("./pages/ShareRedirect"));
 
 // Doubles Elimination pages
 const DoublesEliminationList = lazy(() => import("./pages/DoublesEliminationList"));
@@ -135,6 +136,9 @@ const App = () => (
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/news" element={<News />} />
+                {/* Share redirect routes - for links shared on social media */}
+                <Route path="/share/live/:id" element={<ShareRedirect type="live" />} />
+                <Route path="/share/video/:id" element={<ShareRedirect type="video" />} />
                 {/* Tools routes */}
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/tools/quick-tables" element={<QuickTables />} />
