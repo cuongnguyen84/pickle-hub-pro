@@ -1,40 +1,19 @@
 
 
-# Fix DNS Conflict: Cloudflare Proxy vs Lovable Hosting
+## Sửa lỗi Share Link không hiển thị OG metadata trên Facebook
 
-## Problem
-Lovable custom domains require DNS records to point **directly** (DNS only / grey cloud) to `185.158.133.1`. When Cloudflare Proxy (orange cloud) is enabled, Cloudflare intercepts all traffic and Lovable cannot verify the domain -- causing the "DNS records not properly configured" error for the entire site.
+### Vấn đề
+Facebook Sharing Debugger trả về **response code 0** -- nghĩa là không đọc được nội dung từ `share.thepicklehub.net`. Nguyên nhân:
 
-However, Cloudflare Worker Routes **require** proxied DNS to function. This creates a fundamental conflict.
+1. **Worker thiếu `apikey` header** khi gọi Supabase edge function. Supabase yêu cầu header `apikey` (anon key) cho mọi request, kể cả khi `verify_jwt = false`. Không có header này, Supabase trả lỗi 401, Worker nhận lỗi và Facebook không đọc được OG tags.
 
-## Solution: Use a Subdomain for Share Links
+2. **`og:url` chưa được cập nhật** trong bản deploy -- vẫn dùng format cũ `thepicklehub.net/share/live/...` thay vì `share.thepicklehub.net/live/...`.
 
-Instead of proxying the main domain, create a dedicated subdomain `share.thepicklehub.net` that IS proxied through Cloudflare for the Worker, while keeping the main domain DNS-only for Lovable.
+### Giải pháp
 
-### Step 1: Fix Cloudflare DNS Records
+#### 1. Cập nhật Worker code trên Cloudflare (bạn tự làm)
 
-| Type | Name | Value | Proxy |
-|------|------|-------|-------|
-| A | `@` | 185.158.133.1 | **DNS only (grey cloud)** |
-| A | `www` | 185.158.133.1 | **DNS only (grey cloud)** |
-| A | `share` | 192.0.2.1 (dummy) | **Proxied (orange cloud)** |
-
-- The `share` subdomain uses a dummy IP because all traffic will be handled by the Worker (it never reaches the origin).
-
-### Step 2: Update Worker Route
-
-Change Worker Route from:
-```
-thepicklehub.net/share/*
-```
-To:
-```
-share.thepicklehub.net/*
-```
-
-### Step 3: Update Cloudflare Worker Code
-
-Update the Worker to handle paths without the `/share/` prefix since the subdomain itself represents the share context:
+Thêm `apikey` header vào Worker khi gọi Supabase:
 
 ```javascript
 export default {
@@ -42,7 +21,6 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Debug endpoint
     if (path === "/" || path === "/test") {
       return new Response("Share Worker is active!", {
         headers: { "Content-Type": "text/plain" }
@@ -51,85 +29,56 @@ export default {
 
     const userAgent = request.headers.get("User-Agent") || "";
     const supabaseBase = "https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1";
+    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5paml3eXB1Ym1rdm1qdWFmbWdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzMjA5MDcsImV4cCI6MjA4MTg5NjkwN30.v_pmxd3idyYRwGFcpxBc0fsZtlDYbFzxjxgkRGdyE8s";
 
-    // Handle /live/:id
+    async function proxyToEdge(functionName, id) {
+      try {
+        const resp = await fetch(
+          `${supabaseBase}/${functionName}?id=${id}`,
+          {
+            headers: {
+              "User-Agent": userAgent,
+              "apikey": supabaseAnonKey,
+              "Authorization": `Bearer ${supabaseAnonKey}`
+            }
+          }
+        );
+        const body = await resp.text();
+        return new Response(body, {
+          status: resp.status,
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "public, max-age=60, s-maxage=300"
+          }
+        });
+      } catch (e) {
+        return new Response("Proxy error", { status: 502 });
+      }
+    }
+
     const liveMatch = path.match(/^\/live\/(.+)$/);
-    if (liveMatch) {
-      try {
-        const resp = await fetch(
-          `${supabaseBase}/og-live?id=${liveMatch[1]}`,
-          { headers: { "User-Agent": userAgent } }
-        );
-        const body = await resp.text();
-        return new Response(body, {
-          status: resp.status,
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "public, max-age=60, s-maxage=300"
-          }
-        });
-      } catch (e) {
-        return new Response("Error proxying to og-live", { status: 502 });
-      }
-    }
+    if (liveMatch) return proxyToEdge("og-live", liveMatch[1]);
 
-    // Handle /video/:id
     const videoMatch = path.match(/^\/video\/(.+)$/);
-    if (videoMatch) {
-      try {
-        const resp = await fetch(
-          `${supabaseBase}/og-video?id=${videoMatch[1]}`,
-          { headers: { "User-Agent": userAgent } }
-        );
-        const body = await resp.text();
-        return new Response(body, {
-          status: resp.status,
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "public, max-age=60, s-maxage=300"
-          }
-        });
-      } catch (e) {
-        return new Response("Error proxying to og-video", { status: 502 });
-      }
-    }
+    if (videoMatch) return proxyToEdge("og-video", videoMatch[1]);
 
-    return new Response("Not found", { status: 404 });
-  }
+    const flexMatch = path.match(/^\/flex\/(.+)$/);
+    if (flexMatch) return proxyToEdge("og-flex-tournament", flexMatch[1]);
+
+    return new Response("Not Found", { status: 404 });
+  },
 };
 ```
 
-### Step 4: Update Edge Functions (code changes in this project)
+**Thay doi quan trong**: Them `apikey` va `Authorization` header -- day la nguyen nhan chinh lam Facebook khong doc duoc OG tags.
 
-Update the `og-live` and `og-video` Edge Functions to use the new share URL format:
-- Old: `https://thepicklehub.net/share/live/{id}`
-- New: `https://share.thepicklehub.net/live/{id}`
+#### 2. Re-deploy edge functions (Lovable tu dong lam)
 
-The `canonicalUrl` (redirect target) stays the same: `https://thepicklehub.net/live/{id}`
+Re-deploy `og-live` va `og-video` de cap nhat `og:url` sang format moi `share.thepicklehub.net/...`.
 
-Files to update:
-- `supabase/functions/og-live/index.ts` -- change `ogUrl` to use `share.thepicklehub.net`
-- `supabase/functions/og-video/index.ts` -- change `ogUrl` to use `share.thepicklehub.net`
+### Kiem tra sau khi hoan thanh
 
-### Step 5: Update ShareDialog in the app
-
-Update the share URL generation in the frontend to use `share.thepicklehub.net/live/{id}` instead of `thepicklehub.net/share/live/{id}`.
-
-### Step 6: Verification
-
-1. Main site `https://thepicklehub.net` should load normally again
-2. `https://share.thepicklehub.net/test` should return "Share Worker is active!"
-3. `https://share.thepicklehub.net/live/{id}` should return OG HTML for crawlers and redirect browsers
-4. Facebook Sharing Debugger should show correct OG metadata
-
-## Summary
-
-```text
-Before (broken):
-  thepicklehub.net (proxied) --> Cloudflare --> Lovable rejects = site down
-
-After (fixed):
-  thepicklehub.net (DNS only) --> Lovable directly = site works
-  share.thepicklehub.net (proxied) --> Cloudflare Worker --> Supabase Edge Functions = OG works
-```
+1. Mo `https://share.thepicklehub.net/live/e5c61e50-d121-4560-9c0a-6d978861d613` trong trinh duyet -- phai redirect toi trang chinh
+2. Test tren [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) -- phai hien thi title, description, thumbnail day du
+3. Test tuong tu voi mot video ID
 
