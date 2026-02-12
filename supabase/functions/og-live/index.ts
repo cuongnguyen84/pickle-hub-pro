@@ -137,8 +137,10 @@ serve(async (req) => {
       }
     }
     
-    // Canonical URL - the actual page URL (NOT the share URL)
+    // Canonical URL for redirect (where users end up)
     const canonicalUrl = `${SITE_URL}/live/${livestreamId}`;
+    // OG URL must point to THIS edge function so Facebook doesn't re-fetch the SPA
+    const ogUrl = `${SUPABASE_URL}/functions/v1/og-live?id=${livestreamId}`;
     
     // Published time
     const publishedTime = livestream.scheduled_start_at || livestream.created_at;
@@ -160,7 +162,7 @@ serve(async (req) => {
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="video.other" />
-  <meta property="og:url" content="${canonicalUrl}" />
+  <meta property="og:url" content="${ogUrl}" />
   <meta property="og:title" content="${escapeHtml(ogTitle)}" />
   <meta property="og:description" content="${escapeHtml(ogDescription)}" />
   <meta property="og:image" content="${escapeHtml(ogImage)}" />
