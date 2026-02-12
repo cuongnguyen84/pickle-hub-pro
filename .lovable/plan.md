@@ -1,62 +1,41 @@
 
 
-# Fix Share URL - Dung domain thepicklehub.net thay vi supabase.co
+# Fix OG Preview - Deploy Edge Functions va them default OG image
 
-## Van de hien tai
+## Nguyen nhan
 
-Link share hien tai:
-```
-https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-live?id=xxx
-```
-Nhin khong chuyen nghiep va khong an toan voi nguoi dung.
+1. **Edge function `og-live` CHUA DUOC DEPLOY** - Khi Facebook crawler follow redirect tu `/share/live/:id`, no nhan 404 tu edge function -> fallback ve `index.html` voi meta tags chung
+2. **Edge function `og-video` cung co the chua deploy** - Cung van de tuong tu
+3. **File `og-image.png` khong ton tai** trong thu muc `public/` - Neu livestream khong co thumbnail, se bi broken image
 
-## Giai phap: Dung `_redirects` file
+## Du lieu livestream da co
 
-Lovable hosting ho tro file `_redirects` (tuong tu Netlify). Ta se tao redirect tu URL dep sang edge function:
+Livestream `e5c61e50...` co day du data:
+- Title: "Alix, Jonathan Truong, Ben Johns, ALW | PPATour Cape Coral 2026"
+- Thumbnail: URL Google Drive (co the bi block boi Facebook - can kiem tra)
+- Status: scheduled
 
-```
-https://thepicklehub.net/share/live/xxx  ->  edge function og-live
-https://thepicklehub.net/share/video/xxx ->  edge function og-video
-```
+## Ke hoach xu ly
 
-Facebook crawler se follow redirect 302 va doc OG tags tu edge function. Nguoi dung thay URL dep `thepicklehub.net/share/live/...`.
+### Buoc 1: Deploy edge functions
+Deploy lai cac edge functions `og-live` va `og-video` de chung hoat dong.
 
-## Chi tiet thay doi
+### Buoc 2: Them default OG image
+Tao mot file `public/og-image.png` (hoac dung URL co san) lam fallback khi livestream khong co thumbnail.
 
-### 1. Tao `public/_redirects`
+### Buoc 3: Fix potential Google Drive thumbnail issue
+Thumbnail hien tai la URL Google Drive (`lh3.googleusercontent.com`). Facebook crawler co the khong load duoc image tu Google Drive. Can kiem tra va co fallback phu hop.
 
-```text
-/share/live/:id  https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-live?id=:id  302
-/share/video/:id  https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-video?id=:id  302
-```
+### Buoc 4: Test
+- Goi truc tiep edge function de xac nhan tra ve HTML voi OG tags dung
+- Test URL share tren Facebook Sharing Debugger
 
-### 2. Cap nhat `ShareDialog.tsx`
-
-Doi URL share tu:
-```
-https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-live?id=xxx
-```
-Thanh:
-```
-https://thepicklehub.net/share/live/xxx
-https://thepicklehub.net/share/video/xxx
-```
-
-### 3. Cap nhat OG edge functions (`og-live`, `og-video`)
-
-Sua `canonicalUrl` trong edge function de dam bao redirect dung ve trang xem thuc (`/live/xxx`, `/video/xxx`) khi nguoi dung click vao link.
-
-Khong can thay doi gi them vi logic hien tai da dung.
-
-## Tong ket
+## Files thay doi
 
 | File | Thay doi |
 |------|----------|
-| `public/_redirects` | Tao moi - redirect `/share/*` sang edge functions |
-| `src/components/share/ShareDialog.tsx` | Doi URL share sang `thepicklehub.net/share/...` |
+| `supabase/functions/og-live/index.ts` | Khong thay doi code, chi deploy |
+| `supabase/functions/og-video/index.ts` | Khong thay doi code, chi deploy |
 
-- Khong thay doi routing React
-- Khong tao page moi
-- Khong anh huong UI/UX hien tai
-- Facebook se doc duoc OG tags qua redirect
+Thao tac chinh: **Deploy edge functions** - khong can sua code.
 
