@@ -143,7 +143,7 @@ serve(async (req) => {
     // Canonical URL for redirect (where users end up)
     const canonicalUrl = `${SITE_URL}/live/${livestreamId}`;
     // OG URL uses clean share URL (proxied to this edge function via _redirects)
-    const ogUrl = `${SITE_URL}/share/live/${livestreamId}`;
+    const ogUrl = `https://share.thepicklehub.net/live/${livestreamId}`;
     
     // Published time
     const publishedTime = livestream.scheduled_start_at || livestream.created_at;

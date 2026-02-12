@@ -117,7 +117,7 @@ serve(async (req) => {
     // Canonical URL for redirect (where users end up)
     const canonicalUrl = `${SITE_URL}/video/${videoId}`;
     // OG URL uses clean share URL (proxied to this edge function via _redirects)
-    const ogUrl = `${SITE_URL}/share/video/${videoId}`;
+    const ogUrl = `https://share.thepicklehub.net/video/${videoId}`;
     
     // Published time and duration
     const publishedTime = video.published_at || video.created_at;
