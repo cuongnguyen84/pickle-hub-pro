@@ -1,50 +1,75 @@
 
 
-# Fix OG Tags - Facebook dang doc sai metadata
+# Fix OG Preview - Tach crawler va browser
 
-## Nguyen nhan
+## Van de
 
-Facebook Sharing Debugger cho thay:
-- Facebook truy cap edge function URL -> nhan HTML voi OG tags (200 OK)
-- Nhung `og:url` trong edge function tro den `thepicklehub.net/live/:id` (SPA)
-- Facebook **re-fetch URL trong og:url** de lay OG tags "chinh thuc"
-- SPA tra ve `index.html` voi OG tags chung (generic title, generic image)
-- Ket qua: Facebook hien thi thong tin chung thay vi thong tin livestream
+Facebook crawler follow **ca** `meta http-equiv="refresh"` lan redirect JS. Khi no redirect den SPA (`thepicklehub.net/live/:id`), SPA tra ve `index.html` voi OG tags chung -> Facebook hien thi thong tin trang chu thay vi livestream.
 
 ## Giai phap
 
-Doi `og:url` trong edge functions tu canonical SPA URL sang **chinh URL share** (edge function URL). Khi do Facebook se khong re-fetch URL khac ma doc OG tags truc tiep tu edge function.
+Trong edge functions (`og-live`, `og-video`), kiem tra User-Agent cua request:
+
+- **Neu la crawler** (Facebook, Zalo, Twitter, LinkedIn...): Tra ve HTML chi co OG tags, **KHONG** co `meta http-equiv="refresh"` va **KHONG** co JS redirect. Crawler doc OG tags va dung lai.
+- **Neu la browser thuong**: Tra ve HTML co OG tags + redirect ve SPA nhu binh thuong.
+
+### Cach phat hien crawler
+
+```text
+User-Agent chua mot trong cac tu khoa:
+- facebookexternalhit
+- Facebot
+- Twitterbot
+- LinkedInBot
+- Zalobot
+- Googlebot
+- bingbot
+- Slackbot
+- WhatsApp
+- Discordbot
+```
 
 ## Chi tiet thay doi
 
 ### 1. `supabase/functions/og-live/index.ts`
 
-- Doi `og:url` tu `thepicklehub.net/live/{id}` sang URL cua chinh edge function
-- Giu nguyen `meta http-equiv="refresh"` de redirect nguoi dung ve SPA
-- Giu nguyen `twitter:url` tro den SPA (Twitter khong re-fetch)
+- Them logic doc User-Agent tu request header
+- Neu la crawler: bo `meta http-equiv="refresh"` va `<script>window.location.replace(...)` khoi HTML
+- Neu la browser: giu nguyen redirect nhu hien tai
 
-Thay doi cu the:
-```
-// Truoc:
-og:url = "https://thepicklehub.net/live/{id}"
+Thay doi chinh:
+```text
+// Doc User-Agent
+const userAgent = req.headers.get("user-agent") || "";
+const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Zalobot|WhatsApp|Discordbot|Slackbot|bingbot|Googlebot/i.test(userAgent);
 
-// Sau:
-og:url = "https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1/og-live?id={id}"
+// Trong HTML template:
+// Chi them redirect khi KHONG phai crawler
+${isCrawler ? "" : `<meta http-equiv="refresh" content="0; url=${canonicalUrl}" />`}
+
+// Body:
+${isCrawler 
+  ? `<p>${ogTitle}</p>` 
+  : `<p>Redirecting...</p><script>window.location.replace("${canonicalUrl}");</script>`
+}
 ```
 
 ### 2. `supabase/functions/og-video/index.ts`
 
-- Tuong tu, doi `og:url` sang URL edge function
+Thay doi tuong tu nhu og-live.
 
-## Tong ket
+### 3. Deploy lai ca 2 functions
+
+## Ket qua mong doi
+
+- **Facebook/Zalo crawler**: Doc OG tags tu edge function, KHONG follow redirect -> hien thi dung title, description, thumbnail
+- **Nguoi dung click link**: Browser thuc thi redirect -> chuyen den trang livestream/video binh thuong
+- **Khong can thay doi code frontend**
+
+## Files thay doi
 
 | File | Thay doi |
 |------|----------|
-| `supabase/functions/og-live/index.ts` | Doi `og:url` sang edge function URL |
-| `supabase/functions/og-video/index.ts` | Doi `og:url` sang edge function URL |
-
-- Chi thay doi 1 dong trong moi file
-- Khong anh huong redirect (nguoi dung van duoc chuyen ve trang chinh)
-- Facebook se doc dung title, description, thumbnail tu edge function
-- Can deploy lai edge functions sau khi sua
+| `supabase/functions/og-live/index.ts` | Them crawler detection, conditional redirect |
+| `supabase/functions/og-video/index.ts` | Them crawler detection, conditional redirect |
 
