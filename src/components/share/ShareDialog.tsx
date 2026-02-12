@@ -24,12 +24,10 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const SUPABASE_URL = "https://nijiwypubmkvmjuafmgp.supabase.co/functions/v1";
-  
-  // Edge function URL for clipboard (Facebook/Zalo can read OG tags)
+  // Clean share URL - proxied to edge functions via _redirects
   const shareUrl = type === "live"
-    ? `${SUPABASE_URL}/og-live?id=${id}`
-    : `${SUPABASE_URL}/og-video?id=${id}`;
+    ? `https://thepicklehub.net/share/live/${id}`
+    : `https://thepicklehub.net/share/video/${id}`;
   
   // Clean display URL for UI
   const displayUrl = type === "live"
