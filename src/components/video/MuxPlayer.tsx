@@ -19,6 +19,7 @@ interface MuxPlayerProps {
   streamType?: "on-demand" | "live" | "ll-live" | "live:dvr";
   type?: "video" | "livestream";
   isLive?: boolean;
+  onPlayStateChange?: (playing: boolean) => void;
 }
 
 const MAX_RETRIES = 3;
@@ -34,6 +35,7 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
   streamType = "on-demand",
   type = "video",
   isLive = false,
+  onPlayStateChange,
 }, ref) => {
   const { t } = useI18n();
   const { toast } = useToast();
@@ -206,17 +208,19 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
     setIsReconnecting(false);
     setRetryCount(0);
     isPlayingRef.current = true;
-  }, []);
+    onPlayStateChange?.(true);
+  }, [onPlayStateChange]);
 
   const handlePause = useCallback(() => {
     console.log("[MuxPlayer] Pause event");
     isPlayingRef.current = false;
+    onPlayStateChange?.(false);
     // Clear stall detection when paused
     if (stallTimeoutRef.current) {
       clearTimeout(stallTimeoutRef.current);
       stallTimeoutRef.current = null;
     }
-  }, []);
+  }, [onPlayStateChange]);
 
   const handleError = useCallback((event: any) => {
     console.error("[MuxPlayer] Error event:", event);

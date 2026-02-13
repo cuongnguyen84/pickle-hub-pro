@@ -7,11 +7,12 @@ import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { LiveCard } from "@/components/content";
 import { MuxPlayer } from "@/components/video";
+import type { MuxPlayerHandle } from "@/components/video/MuxPlayer";
 import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
@@ -21,6 +22,10 @@ import { ShareDialog } from "@/components/share";
 import { DynamicMeta, EndedLivestreamSEO, VideoSchema } from "@/components/seo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { useLivestreamGate } from "@/hooks/useLivestreamGate";
+import { PreviewCountdown } from "@/components/video/PreviewCountdown";
+import { LivestreamGateOverlay } from "@/components/video/LivestreamGateOverlay";
 
 const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +33,8 @@ const WatchLive = () => {
   const { user } = useAuth();
   const viewRecorded = useRef(false);
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const playerRef = useRef<MuxPlayerHandle>(null);
 
   const { data: livestream, isLoading } = useLivestream(id!);
   const { data: viewCount = 0 } = useViewCount("livestream", id!);
@@ -39,6 +46,36 @@ const WatchLive = () => {
   // Only enabled when livestream is live
   const isLiveStatus = livestream?.status === "live";
   const { concurrentViewers, isConnected } = useLivePresence(id!, isLiveStatus);
+
+  // System settings for livestream gate
+  const { data: systemSettings } = useSystemSettings();
+  const isLiveStream = livestream?.status === "live";
+  const isReplay = livestream?.status === "ended";
+  const gateAppliesTo = systemSettings?.livestream_gate_applies_to ?? "all";
+  const gateEnabled = !!(
+    systemSettings?.require_login_livestream &&
+    (gateAppliesTo === "all" ||
+      (gateAppliesTo === "live" && isLiveStream) ||
+      (gateAppliesTo === "replay" && isReplay))
+  );
+
+  const { isGated, secondsRemaining, progress, showCountdown } = useLivestreamGate({
+    livestreamId: id!,
+    previewSeconds: systemSettings?.livestream_preview_seconds ?? 30,
+    isEnabled: gateEnabled,
+    isAuthenticated: !!user,
+    isPlaying: isVideoPlaying,
+  });
+
+  // Pause video when gated
+  useEffect(() => {
+    if (isGated && playerRef.current) {
+      playerRef.current.pause();
+    }
+  }, [isGated]);
+
+  const handleVideoPlay = useCallback(() => setIsVideoPlaying(true), []);
+  const handleVideoPause = useCallback(() => setIsVideoPlaying(false), []);
 
   const dateLocale = language === "vi" ? viLocale : enUS;
 
@@ -181,14 +218,18 @@ const WatchLive = () => {
         {/* Sticky Video Player for Mobile */}
         <div className="lg:hidden sticky top-14 z-40 -mx-4 sm:-mx-6 bg-background">
           <div className="aspect-video bg-surface-elevated overflow-hidden relative">
+            {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
+            {isGated && <LivestreamGateOverlay livestreamId={id!} />}
             {hasPlayback ? (
               <MuxPlayer
+                ref={playerRef}
                 playbackId={playbackId!}
                 title={livestream.title}
                 poster={livestream.thumbnail_url ?? undefined}
                 streamType={streamType}
                 type="livestream"
                 isLive={isLive}
+                onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
               />
             ) : isScheduled ? (
               <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
@@ -225,14 +266,18 @@ const WatchLive = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Video Player - Desktop only */}
             <div className="hidden lg:block aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
+              {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
+              {isGated && <LivestreamGateOverlay livestreamId={id!} />}
               {hasPlayback ? (
                 <MuxPlayer
+                  ref={playerRef}
                   playbackId={playbackId!}
                   title={livestream.title}
                   poster={livestream.thumbnail_url ?? undefined}
                   streamType={streamType}
                   type="livestream"
                   isLive={isLive}
+                  onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
                 />
               ) : isScheduled ? (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
