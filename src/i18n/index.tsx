@@ -47,12 +47,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
+const fallbackContext: I18nContextType = {
+  language: "vi",
+  setLanguage: () => {},
+  t: vi,
+};
+
 export function useI18n() {
   const context = useContext(I18nContext);
-  if (context === undefined) {
-    throw new Error("useI18n must be used within an I18nProvider");
-  }
-  return context;
+  return context ?? fallbackContext;
 }
 
 export function useTranslation() {
