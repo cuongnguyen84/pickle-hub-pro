@@ -1,61 +1,178 @@
 
-# Fix OG Type cho Edge Functions og-live va og-video
 
-## Van de
-Cac Edge Function `og-live` va `og-video` dang su dung `og:type = "video.other"` nhung khong cung cap day du cac the `og:video` bat buoc. Facebook se tu choi scrape trang khi gap `video.other` ma khong co video object hop le.
+# Ke hoach: Preview 30s + Login Gate cho Livestream
 
-## Giai phap
+## Tai sao phuong an nay tot hon?
 
-### 1. Sua `og-live/index.ts`
+- **Tang ty le chuyen doi**: Nguoi dung duoc "nem thu" noi dung, cam thay hap dan roi moi yeu cau dang ky - ty le dang ky cao hon gap 3-5 lan so voi chan ngay.
+- **Giu SEO**: Google bot van crawl duoc noi dung, khong anh huong ranking.
+- **Giam bounce rate**: Nguoi dung khong bi "shock" khi vao trang ma bi chan ngay.
+- **Tao cam giac FOMO**: Dang xem hay thi bi dung lai - dong luc dang ky rat manh.
 
-**Thay doi 1**: Them `mux_playback_id` vao query database (dong 38-49)
-- Them field `mux_playback_id` vao SELECT de kiem tra co video URL hay khong
+## Tinh nang de xuat
 
-**Thay doi 2**: Xay dung logic og:type thong minh (truoc khi generate HTML)
-- Neu livestream co `mux_playback_id` hop le → tao video URL dang `https://stream.mux.com/{playback_id}.m3u8`
-- Neu khong co → mac dinh `og:type = "article"`
+### Core: Preview Timer + Login Gate
+- Cho xem 30 giay (co the tuy chinh boi admin)
+- Hien countdown bar o phia tren video
+- Khi het thoi gian: pause video, hien overlay yeu cau dang nhap
+- Overlay co blur background + nut Dang nhap / Dang ky
 
-**Thay doi 3**: Thay doi phan OG tags trong HTML template (dong 166-167)
-- Thay the dong `<meta property="og:type" content="video.other" />` co dinh
-- Bang logic dieu kien:
-  - Co video URL:
-    ```
-    og:type = "video.other"
-    og:video = "{video_url}"
-    og:video:type = "text/html"  
-    og:video:width = "1280"
-    og:video:height = "720"
-    ```
-  - Khong co video URL:
-    ```
-    og:type = "article"
-    ```
+### Nang cao (tu van them)
 
-### 2. Sua `og-video/index.ts`
+1. **Admin cau hinh linh hoat**
+   - Toggle bat/tat toan he thong
+   - Tuy chinh thoi gian preview (15s / 30s / 60s / 120s)
+   - Chon ap dung cho: Chi livestream LIVE / Chi replay / Ca hai
 
-**Thay doi tuong tu**:
+2. **Countdown bar truc quan**
+   - Thanh progress bar nho o tren video
+   - Hien so giay con lai
+   - Doi mau tu xanh sang vang sang do khi gan het
 
-**Thay doi 1**: Them `mux_playback_id` vao query (dong 37-49)
+3. **Overlay thong minh khi het thoi gian**
+   - Pause video, lam mo (blur) man hinh
+   - Icon khoa + thong bao hap dan: "Dang ky mien phi de tiep tuc xem"
+   - 2 nut: "Dang nhap" va "Tao tai khoan mien phi"
+   - Redirect ve trang livestream sau khi dang nhap thanh cong
 
-**Thay doi 2**: Xay dung logic video URL
-- Neu video co `mux_playback_id` → tao URL `https://stream.mux.com/{playback_id}.m3u8`
+4. **Nho trang thai da xem**
+   - Luu vao localStorage: nguoi dung da xem preview cua livestream nay
+   - Tranh truong hop refresh trang lai duoc xem tiep 30s
 
-**Thay doi 3**: Thay doi OG tags trong HTML (dong 142)
-- Logic dieu kien giong og-live:
-  - Co `mux_playback_id` → dung `video.other` + day du og:video tags
-  - Khong co → dung `article`
+## Chi tiet ky thuat
 
-**Thay doi 4**: Loai bo dong `video:duration` rieng le (dong 156) vi no se duoc gop vao block og:video khi co video URL
+### Buoc 1: Database - Bang `system_settings`
 
-### 3. Tong ket cac the giu nguyen (khong thay doi)
-- `og:title`, `og:description`, `og:image`, `og:url`, `og:site_name`, `og:locale`
-- Twitter Card tags
-- Crawler detection logic
-- Redirect logic cho browser vs crawler
-- Response headers (`Content-Type: text/html; charset=utf-8`)
-- Cache headers
+Tao bang luu cau hinh he thong:
 
-## Ket qua mong doi
-- Tat ca link share scrape thanh cong tren Facebook va Zalo
-- Khong con Response code 0 do thieu video object
-- Tuong thich mo rong: khi co video thuc su (Mux playback) se tu dong hien thi dung og:type video
+```text
+system_settings
++----------------------------------+----------+
+| key (PK)                         | value    |
++----------------------------------+----------+
+| require_login_livestream         | true     |
+| livestream_preview_seconds       | 30       |
+| livestream_gate_applies_to       | "all"    |
++----------------------------------+----------+
+```
+
+RLS: Ai cung doc duoc, chi admin sua duoc.
+
+### Buoc 2: Hook `useSystemSettings`
+
+- Fetch settings tu `system_settings` bang React Query
+- Cache 5 phut (staleTime) de giam query
+- Cung cap mutation cho admin toggle
+
+### Buoc 3: Hook `useLivestreamGate`
+
+Hook rieng xu ly logic preview timer:
+
+```text
+Input: livestreamId, previewSeconds, isEnabled, isAuthenticated
+Output: {
+  isGated: boolean        // da het thoi gian preview chua
+  secondsRemaining: number // so giay con lai
+  progress: number         // 0-100% cho progress bar
+}
+```
+
+Logic:
+- Neu da dang nhap hoac setting tat -> khong gate
+- Bat dau dem nguoc khi video play
+- Pause timer khi video pause
+- Khi het thoi gian -> pause video, set isGated = true
+- Luu vao localStorage de tranh xem lai
+
+### Buoc 4: Component `LivestreamGateOverlay`
+
+Component hien thi khi het preview:
+- Full-screen overlay tren video player
+- Background blur + gradient toi
+- Icon Lock
+- Text: "Dang ky mien phi de tiep tuc xem"
+- Nut "Dang nhap" -> /login?redirect=/livestream/{id}
+- Nut "Tao tai khoan" -> /login?redirect=/livestream/{id}&tab=signup
+
+### Buoc 5: Component `PreviewCountdown`
+
+Thanh countdown o tren video:
+- Chi hien khi chua dang nhap va setting bat
+- Progress bar mong (4px) o top video
+- Text nho "Con X giay xem thu"
+- Mau: xanh (>50%) -> vang (20-50%) -> do (<20%)
+
+### Buoc 6: Tich hop vao `WatchLive.tsx`
+
+- Import `useLivestreamGate` va `useSystemSettings`
+- Truyen ref den MuxPlayer de co the pause video
+- Render `PreviewCountdown` trong video container
+- Render `LivestreamGateOverlay` khi `isGated = true`
+- Chat panel van hien thi nhung disable input khi chua dang nhap
+
+### Buoc 7: Admin UI - Trang System Settings
+
+Them section trong AdminOverview hoac tao trang rieng `/admin/settings`:
+- Card "Cai dat Livestream"
+  - Switch: Bat/tat yeu cau dang nhap
+  - Slider hoac Select: Thoi gian preview (15s/30s/60s/120s)
+  - Radio: Ap dung cho Live / Replay / Ca hai
+- Luu thay doi qua mutation voi toast xac nhan
+
+### Buoc 8: i18n
+
+Them key moi cho ca 2 ngon ngu (vi + en):
+- `live.previewEnded` - "Het thoi gian xem thu"
+- `live.signupToWatch` - "Dang ky mien phi de tiep tuc"
+- `live.loginToWatch` - "Dang nhap de xem"
+- `live.previewRemaining` - "Con {seconds}s xem thu"
+- `admin.settings.livestreamGate` - Cac label trong admin
+- `admin.settings.previewDuration` - Thoi gian preview
+
+## Luong nguoi dung
+
+```text
+Nguoi dung vao trang livestream
+        |
+        v
+Kiem tra: Da dang nhap?
+   |              |
+  Co             Khong
+   |              |
+   v              v
+Xem binh      Kiem tra setting
+thuong        require_login?
+                 |          |
+                Tat         Bat
+                 |          |
+                 v          v
+              Xem binh   Bat dau dem
+              thuong      nguoc 30s
+                            |
+                            v
+                         Het 30s
+                            |
+                            v
+                      Pause video
+                      Hien overlay
+                      "Dang ky de xem"
+                            |
+                     +------+------+
+                     |             |
+                  Dang nhap    Dang ky
+                     |             |
+                     v             v
+                  Redirect ve livestream
+                  Xem tiep tu dau
+```
+
+## Thu tu trien khai
+
+1. Database migration (system_settings)
+2. useSystemSettings hook
+3. useLivestreamGate hook
+4. PreviewCountdown component
+5. LivestreamGateOverlay component
+6. Tich hop vao WatchLive.tsx
+7. Admin settings UI
+8. i18n updates
