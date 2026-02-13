@@ -375,6 +375,11 @@ export interface Translations {
     totalViewsTooltip: string;
     hubTitle: string;
     hubDescription: string;
+    previewRemaining: string;
+    previewEnded: string;
+    signupToWatch: string;
+    loginToWatch: string;
+    createAccount: string;
     seo: {
       tournamentsTitle: string;
       tournamentsDesc: string;
@@ -545,6 +550,19 @@ export interface Translations {
       reject: string;
       hide: string;
       reportedContent: string;
+    };
+    settings: {
+      title: string;
+      livestreamGate: string;
+      requireLogin: string;
+      requireLoginDesc: string;
+      previewDuration: string;
+      previewDurationDesc: string;
+      appliesTo: string;
+      appliesToAll: string;
+      appliesToLive: string;
+      appliesToReplay: string;
+      savedSuccess: string;
     };
   };
   player: {
@@ -1637,6 +1655,11 @@ export const vi: Translations = {
     replay: "Xem lại",
     watchingTooltip: "Số người đang xem trực tiếp ngay bây giờ",
     totalViewsTooltip: "Tổng số lượt xem từ khi bắt đầu phát",
+    previewRemaining: "Còn {seconds}s xem thử",
+    previewEnded: "Hết thời gian xem thử",
+    signupToWatch: "Đăng ký miễn phí để tiếp tục xem",
+    loginToWatch: "Đăng nhập để xem",
+    createAccount: "Tạo tài khoản miễn phí",
     // SEO Hub content
     hubTitle: "Xem Livestream Pickleball",
     hubDescription: "Xem trực tiếp các giải pickleball trên ThePickleHub – điểm đến cho những ai yêu thích pickleball.",
@@ -1810,6 +1833,19 @@ export const vi: Translations = {
       reject: "Từ chối",
       hide: "Ẩn nội dung",
       reportedContent: "Nội dung bị báo cáo",
+    },
+    settings: {
+      title: "Cài đặt hệ thống",
+      livestreamGate: "Cài đặt Livestream",
+      requireLogin: "Yêu cầu đăng nhập để xem",
+      requireLoginDesc: "Người xem phải đăng nhập hoặc đăng ký để xem livestream sau thời gian xem thử",
+      previewDuration: "Thời gian xem thử",
+      previewDurationDesc: "Số giây cho phép xem trước khi yêu cầu đăng nhập",
+      appliesTo: "Áp dụng cho",
+      appliesToAll: "Tất cả",
+      appliesToLive: "Chỉ trực tiếp",
+      appliesToReplay: "Chỉ xem lại",
+      savedSuccess: "Đã lưu cài đặt thành công",
     },
   },
   player: {

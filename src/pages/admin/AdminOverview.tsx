@@ -3,15 +3,29 @@ import { useAdminStats, useRecentLivestreams, useRecentVideos } from "@/hooks/us
 import { useI18n } from "@/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Video, Radio, Eye } from "lucide-react";
+import { Building2, Video, Radio, Eye, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSystemSettings, useUpdateSystemSetting } from "@/hooks/useSystemSettings";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminOverview() {
   const { t } = useI18n();
+  const { toast } = useToast();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: liveStreams, isLoading: liveLoading } = useRecentLivestreams(5);
   const { data: recentVideos, isLoading: videosLoading } = useRecentVideos(5);
+  const { data: settings, isLoading: settingsLoading } = useSystemSettings();
+  const updateSetting = useUpdateSystemSetting();
+
+  const handleSettingChange = (key: string, value: any) => {
+    updateSetting.mutate({ key, value }, {
+      onSuccess: () => toast({ title: t.admin.settings.savedSuccess }),
+    });
+  };
 
   const statCards = [
     {
@@ -76,6 +90,76 @@ export default function AdminOverview() {
             </Card>
           ))}
         </div>
+
+        {/* System Settings */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Settings className="w-5 h-5 text-primary" />
+              {t.admin.settings.livestreamGate}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {settingsLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ) : (
+              <>
+                {/* Toggle require login */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium">{t.admin.settings.requireLogin}</Label>
+                    <p className="text-xs text-foreground-muted">{t.admin.settings.requireLoginDesc}</p>
+                  </div>
+                  <Switch
+                    checked={settings?.require_login_livestream ?? true}
+                    onCheckedChange={(checked) => handleSettingChange("require_login_livestream", checked)}
+                  />
+                </div>
+
+                {/* Preview duration */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">{t.admin.settings.previewDuration}</Label>
+                  <p className="text-xs text-foreground-muted">{t.admin.settings.previewDurationDesc}</p>
+                  <Select
+                    value={String(settings?.livestream_preview_seconds ?? 30)}
+                    onValueChange={(val) => handleSettingChange("livestream_preview_seconds", Number(val))}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15s</SelectItem>
+                      <SelectItem value="30">30s</SelectItem>
+                      <SelectItem value="60">60s</SelectItem>
+                      <SelectItem value="120">120s</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Applies to */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">{t.admin.settings.appliesTo}</Label>
+                  <Select
+                    value={settings?.livestream_gate_applies_to ?? "all"}
+                    onValueChange={(val) => handleSettingChange("livestream_gate_applies_to", val)}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t.admin.settings.appliesToAll}</SelectItem>
+                      <SelectItem value="live">{t.admin.settings.appliesToLive}</SelectItem>
+                      <SelectItem value="replay">{t.admin.settings.appliesToReplay}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Recent Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
