@@ -67,22 +67,26 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
     }
 
     const channelName = `livestream_presence:${livestreamId}`;
+    const adminKey = `admin_watcher_${Date.now()}`;
 
-    const channel = supabase.channel(`admin_viewer_list:${livestreamId}`, {
-      config: { presence: { key: `admin_watcher_${Date.now()}` } },
+    const channel = supabase.channel(channelName, {
+      config: {
+        presence: {
+          key: adminKey,
+        },
+      },
     });
 
     channelRef.current = channel;
 
-    // Listen to the same presence channel
-    const presenceChannel = supabase.channel(channelName);
-
-    presenceChannel
+    channel
       .on("presence", { event: "sync" }, async () => {
-        const state = presenceChannel.presenceState();
+        const state = channel.presenceState();
         const rawViewers: ViewerInfo[] = [];
 
         for (const [key, presences] of Object.entries(state)) {
+          // Skip admin watcher entries
+          if (key.startsWith("admin_watcher_")) continue;
           const presence = (presences as any[])[0];
           rawViewers.push({
             viewerId: key,
@@ -94,15 +98,21 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
         const enriched = await enrichViewers(rawViewers);
         setViewers(enriched);
       })
-      .subscribe((status) => {
+      .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
+          // Track admin presence so we join the channel properly
+          try {
+            await channel.track({ role: "admin", joined_at: new Date().toISOString() });
+          } catch (e) {
+            console.warn("[ViewerList] Admin track error:", e);
+          }
           setIsConnected(true);
         }
       });
 
     return () => {
-      supabase.removeChannel(presenceChannel);
       if (channelRef.current) {
+        channelRef.current.untrack().catch(() => {});
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
