@@ -497,6 +497,10 @@ export interface Translations {
       streamInfo: string;
     };
   };
+  geoBlock: {
+    title: string;
+    description: string;
+  };
   admin: {
     dashboard: string;
     overview: string;
@@ -563,6 +567,11 @@ export interface Translations {
       appliesToLive: string;
       appliesToReplay: string;
       savedSuccess: string;
+      geoBlock: string;
+      geoBlockEnabled: string;
+      geoBlockEnabledDesc: string;
+      blockedCountries: string;
+      blockedCountriesDesc: string;
     };
   };
   player: {
@@ -1846,7 +1855,16 @@ export const vi: Translations = {
       appliesToLive: "Chỉ trực tiếp",
       appliesToReplay: "Chỉ xem lại",
       savedSuccess: "Đã lưu cài đặt thành công",
+      geoBlock: "Chặn theo khu vực",
+      geoBlockEnabled: "Bật chặn khu vực",
+      geoBlockEnabledDesc: "Chặn người dùng từ các quốc gia được chọn xem livestream và video",
+      blockedCountries: "Quốc gia bị chặn",
+      blockedCountriesDesc: "Danh sách mã quốc gia (ISO 3166-1 alpha-2), cách nhau bởi dấu phẩy",
     },
+  },
+  geoBlock: {
+    title: "Nội dung không khả dụng",
+    description: "Nội dung này không khả dụng tại khu vực của bạn. / This content is not available in your region.",
   },
   player: {
     tapToPlayVideo: "Chạm để xem video",

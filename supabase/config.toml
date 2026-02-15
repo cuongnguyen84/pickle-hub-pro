@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.auto-archive-tournaments]
 verify_jwt = false
+
+[functions.geo-check]
+verify_jwt = false

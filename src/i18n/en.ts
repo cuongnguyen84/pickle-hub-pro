@@ -568,7 +568,16 @@ export const en: Translations = {
       appliesToLive: "Live only",
       appliesToReplay: "Replay only",
       savedSuccess: "Settings saved successfully",
+      geoBlock: "Geo Blocking",
+      geoBlockEnabled: "Enable Geo Blocking",
+      geoBlockEnabledDesc: "Block users from selected countries from watching livestreams and videos",
+      blockedCountries: "Blocked Countries",
+      blockedCountriesDesc: "List of country codes (ISO 3166-1 alpha-2), separated by commas",
     },
+  },
+  geoBlock: {
+    title: "Content Not Available",
+    description: "This content is not available in your region.",
   },
   player: {
     tapToPlayVideo: "Tap to play video",

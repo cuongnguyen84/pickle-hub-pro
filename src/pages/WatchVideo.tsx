@@ -12,6 +12,8 @@ import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
 import { ArrowLeft, Eye, Calendar, Clock, Play, BadgeCheck } from "lucide-react";
+import { useGeoBlock } from "@/hooks/useGeoBlock";
+import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
 import { ShareDialog } from "@/components/share";
@@ -23,6 +25,7 @@ const WatchVideo = () => {
   const { t, language } = useI18n();
   const { user } = useAuth();
   const viewRecorded = useRef(false);
+  const { isBlocked } = useGeoBlock();
 
   const { data: video, isLoading } = useVideo(id!);
   const { data: viewCount = 0 } = useViewCount("video", id!);
@@ -119,7 +122,8 @@ const WatchVideo = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Video Player - Auto aspect ratio */}
-            <div className="bg-black rounded-xl overflow-hidden">
+            <div className="bg-black rounded-xl overflow-hidden relative">
+              {isBlocked && <GeoBlockOverlay />}
               {hasStorageVideo ? (
                 // Storage-based video with adaptive aspect ratio
                 <AdaptiveVideoPlayer
