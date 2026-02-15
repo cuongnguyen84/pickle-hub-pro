@@ -573,6 +573,23 @@ export interface Translations {
       blockedCountries: string;
       blockedCountriesDesc: string;
     };
+    viewers: {
+      title: string;
+      description: string;
+      selectLivestream: string;
+      selectPlaceholder: string;
+      noActiveLivestreams: string;
+      viewerList: string;
+      viewer: string;
+      watching: string;
+      connected: string;
+      disconnected: string;
+      noViewers: string;
+      anonymous: string;
+      loggedIn: string;
+      joinedAt: string;
+      type: string;
+    };
   };
   player: {
     tapToPlayVideo: string;
@@ -1860,6 +1877,23 @@ export const vi: Translations = {
       geoBlockEnabledDesc: "Chặn người dùng từ các quốc gia được chọn xem livestream và video",
       blockedCountries: "Quốc gia bị chặn",
       blockedCountriesDesc: "Danh sách mã quốc gia (ISO 3166-1 alpha-2), cách nhau bởi dấu phẩy",
+    },
+    viewers: {
+      title: "Danh sách người xem",
+      description: "Xem realtime danh sách người đang xem livestream",
+      selectLivestream: "Chọn livestream",
+      selectPlaceholder: "Chọn livestream để xem danh sách...",
+      noActiveLivestreams: "Không có livestream nào đang phát",
+      viewerList: "Người xem",
+      viewer: "Người xem",
+      watching: "đang xem",
+      connected: "Đã kết nối",
+      disconnected: "Đang kết nối...",
+      noViewers: "Chưa có ai đang xem",
+      anonymous: "Ẩn danh",
+      loggedIn: "Đã đăng nhập",
+      joinedAt: "Tham gia lúc",
+      type: "Loại",
     },
   },
   geoBlock: {
