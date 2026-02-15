@@ -3,12 +3,13 @@ import { useAdminStats, useRecentLivestreams, useRecentVideos } from "@/hooks/us
 import { useI18n } from "@/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Video, Radio, Eye, Settings } from "lucide-react";
+import { Building2, Video, Radio, Eye, Settings, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useSystemSettings, useUpdateSystemSetting } from "@/hooks/useSystemSettings";
 import { useToast } from "@/hooks/use-toast";
 
@@ -155,6 +156,56 @@ export default function AdminOverview() {
                       <SelectItem value="replay">{t.admin.settings.appliesToReplay}</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Geo Blocking Settings */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Globe className="w-5 h-5 text-primary" />
+              {t.admin.settings.geoBlock}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {settingsLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ) : (
+              <>
+                {/* Toggle geo blocking */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium">{t.admin.settings.geoBlockEnabled}</Label>
+                    <p className="text-xs text-foreground-muted">{t.admin.settings.geoBlockEnabledDesc}</p>
+                  </div>
+                  <Switch
+                    checked={settings?.geo_block_enabled ?? true}
+                    onCheckedChange={(checked) => handleSettingChange("geo_block_enabled", checked)}
+                  />
+                </div>
+
+                {/* Blocked countries */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">{t.admin.settings.blockedCountries}</Label>
+                  <p className="text-xs text-foreground-muted">{t.admin.settings.blockedCountriesDesc}</p>
+                  <Input
+                    value={(settings?.blocked_countries ?? ["US"]).join(", ")}
+                    onChange={(e) => {
+                      const countries = e.target.value
+                        .split(",")
+                        .map((c) => c.trim().toUpperCase())
+                        .filter(Boolean);
+                      handleSettingChange("blocked_countries", countries);
+                    }}
+                    placeholder="US, CA, GB"
+                    className="w-[300px]"
+                  />
                 </div>
               </>
             )}

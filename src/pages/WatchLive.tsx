@@ -26,12 +26,15 @@ import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { useLivestreamGate } from "@/hooks/useLivestreamGate";
 import { PreviewCountdown } from "@/components/video/PreviewCountdown";
 import { LivestreamGateOverlay } from "@/components/video/LivestreamGateOverlay";
+import { useGeoBlock } from "@/hooks/useGeoBlock";
+import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
 
 const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
   const { user } = useAuth();
   const viewRecorded = useRef(false);
+  const { isBlocked } = useGeoBlock();
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const playerRef = useRef<MuxPlayerHandle>(null);
@@ -218,8 +221,9 @@ const WatchLive = () => {
         {/* Sticky Video Player for Mobile */}
         <div className="lg:hidden sticky top-14 z-40 -mx-4 sm:-mx-6 bg-background">
           <div className="aspect-video bg-surface-elevated overflow-hidden relative">
-            {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
-            {isGated && <LivestreamGateOverlay livestreamId={id!} />}
+              {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
+              {isBlocked && <GeoBlockOverlay />}
+              {isGated && <LivestreamGateOverlay livestreamId={id!} />}
             {hasPlayback ? (
               <MuxPlayer
                 ref={playerRef}
@@ -267,6 +271,7 @@ const WatchLive = () => {
             {/* Video Player - Desktop only */}
             <div className="hidden lg:block aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
               {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
+              {isBlocked && <GeoBlockOverlay />}
               {isGated && <LivestreamGateOverlay livestreamId={id!} />}
               {hasPlayback ? (
                 <MuxPlayer

@@ -4,11 +4,14 @@ import { useLivestream } from "@/hooks/useSupabaseData";
 import { MuxPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { useGeoBlock } from "@/hooks/useGeoBlock";
+import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
 
 const EmbedLive = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const viewRecorded = useRef(false);
+  const { isBlocked } = useGeoBlock();
 
   const showTitle = searchParams.get("title") !== "0";
   const autoplay = searchParams.get("autoplay") === "1";
@@ -64,6 +67,7 @@ const EmbedLive = () => {
     <div className="w-full h-full min-h-screen bg-black flex flex-col">
       {/* Video Player - Full screen */}
       <div className="flex-1 relative">
+        {isBlocked && <GeoBlockOverlay />}
         <MuxPlayer
           playbackId={playbackId!}
           title={livestream.title}

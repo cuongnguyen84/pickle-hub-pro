@@ -5,12 +5,16 @@ export interface SystemSettings {
   require_login_livestream: boolean;
   livestream_preview_seconds: number;
   livestream_gate_applies_to: "all" | "live" | "replay";
+  geo_block_enabled: boolean;
+  blocked_countries: string[];
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
   require_login_livestream: true,
   livestream_preview_seconds: 30,
   livestream_gate_applies_to: "all",
+  geo_block_enabled: true,
+  blocked_countries: ["US"],
 };
 
 async function fetchSystemSettings(): Promise<SystemSettings> {
