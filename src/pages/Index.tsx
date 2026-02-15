@@ -78,7 +78,7 @@ const Index = () => {
         <section className="container-wide section-spacing">
           <SectionHeader title={t.live.scheduled} href="/live" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {scheduledStreams.slice(0, 3).map((stream) => (
+            {scheduledStreams.slice(0, 3).map((stream, index) => (
               <LiveCardWithPresence
                 key={stream.id}
                 id={stream.id!}
@@ -89,6 +89,7 @@ const Index = () => {
                 status={stream.status as "live" | "scheduled" | "ended"}
                 thumbnail={stream.thumbnail_url ?? undefined}
                 scheduledStartAt={stream.scheduled_start_at}
+                priority={index === 0}
               />
             ))}
           </div>
