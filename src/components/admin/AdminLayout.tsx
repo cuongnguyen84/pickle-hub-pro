@@ -14,6 +14,7 @@ import {
   X,
   ChevronLeft,
   Key,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +32,7 @@ const navItems = [
   { path: "/admin/tournaments", icon: Trophy, labelKey: "tournaments" as const },
   { path: "/admin/moderation", icon: Shield, labelKey: "moderation" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
+  { path: "/admin/viewers", icon: Eye, labelKey: "viewers" as const },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -90,6 +92,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       tournaments: t.admin.tournaments,
       moderation: t.admin.moderation.title,
       apiKeys: "API Keys",
+      viewers: t.admin.viewers.title,
     };
     return labels[key] || key;
   };

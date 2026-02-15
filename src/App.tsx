@@ -74,6 +74,7 @@ const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminTournaments = lazy(() => import("./pages/admin/AdminTournaments"));
 const AdminApiKeys = lazy(() => import("./pages/admin/AdminApiKeys"));
 const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
+const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamViewers"));
 
 // Lazy load creator pages
 const CreatorOverview = lazy(() => import("./pages/creator/CreatorOverview"));
@@ -173,6 +174,7 @@ const App = () => (
                 <Route path="/admin/tournaments" element={<AdminTournaments />} />
                 <Route path="/admin/api-keys" element={<AdminApiKeys />} />
                 <Route path="/admin/moderation" element={<AdminModeration />} />
+                <Route path="/admin/viewers" element={<AdminLivestreamViewers />} />
                 {/* Creator routes */}
                 <Route path="/creator" element={<CreatorOverview />} />
                 <Route path="/creator/analytics" element={<CreatorAnalytics />} />

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 /**
@@ -13,6 +14,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
  * @returns Object with concurrentViewers count and isConnected status
  */
 export function useLivePresence(livestreamId: string, enabled: boolean = true) {
+  const { user } = useAuth();
   const [concurrentViewers, setConcurrentViewers] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -104,6 +106,7 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
               try {
                 await channel.track({
                   joined_at: new Date().toISOString(),
+                  user_id: user?.id ?? null,
                   user_agent: navigator.userAgent.slice(0, 100),
                 });
                 hasTrackedRef.current = true;
