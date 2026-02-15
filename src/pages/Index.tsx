@@ -20,8 +20,9 @@ const Index = () => {
   const { data: videos = [], isLoading: videosLoading } = useVideos({ limit: 8 });
   const { data: featuredNews = [] } = useFeaturedNews(3);
 
+  const streamsLoading = liveLoading || scheduledLoading;
   // Show scheduled section at top if no live streams
-  const showScheduledFirst = liveStreams.length === 0 && scheduledStreams.length > 0;
+  const showScheduledFirst = !streamsLoading && liveStreams.length === 0 && scheduledStreams.length > 0;
 
   return (
     <MainLayout>
@@ -97,10 +98,12 @@ const Index = () => {
       )}
 
       {/* Live Now Section - min-h prevents CLS when loading→empty */}
-      <section className="container-wide section-spacing">
+      <section className="container-wide section-spacing" style={{ minHeight: 200 }}>
         <SectionHeader title={t.home.sections.liveNow} href="/live" />
         
-        {!liveLoading && liveStreams.length > 0 ? (
+        {streamsLoading ? (
+          <EmptyState icon={Radio} title={t.home.noLive} className="opacity-0" />
+        ) : liveStreams.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {liveStreams.slice(0, 3).map((stream, index) => (
               <LiveCardWithPresence
@@ -116,10 +119,8 @@ const Index = () => {
               />
             ))}
           </div>
-        ) : !liveLoading ? (
-          <EmptyState icon={Radio} title={t.home.noLive} />
         ) : (
-          <div className="h-[120px]" />
+          <EmptyState icon={Radio} title={t.home.noLive} />
         )}
       </section>
 

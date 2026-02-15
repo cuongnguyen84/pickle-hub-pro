@@ -82,7 +82,7 @@ export function OpenRegistrationSection({ limit = 5, showViewAll = true }: OpenR
 
   if (isLoading) {
     return (
-      <section className="container-wide section-spacing">
+      <section className="container-wide section-spacing" style={{ minHeight: 200 }}>
         <SectionHeader title={t.quickTable.openRegistrationTitle} />
         <div className="grid gap-3">
           {[1, 2, 3].map((i) => (
@@ -94,7 +94,7 @@ export function OpenRegistrationSection({ limit = 5, showViewAll = true }: OpenR
   }
 
   if (tables.length === 0) {
-    return null; // Don't show section if no open registration tables
+    return null;
   }
 
   return (
