@@ -24,8 +24,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       if (stored === "vi" || stored === "en") {
         return stored;
       }
+      // Auto-detect: if browser language starts with "vi", use Vietnamese; otherwise English
+      const browserLang = navigator.language?.toLowerCase() ?? "";
+      return browserLang.startsWith("vi") ? "vi" : "en";
     }
-    return "vi"; // Default to Vietnamese
+    return "vi";
   });
 
   const setLanguage = useCallback((lang: Language) => {
