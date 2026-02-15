@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { useDeleteAccount } from "@/hooks/useDeleteAccount";
 import { useI18n } from "@/i18n";
 import MainLayout from "@/components/layout/MainLayout";
 import { DynamicMeta } from "@/components/seo";
@@ -14,17 +13,6 @@ import { UserAvatar } from "@/components/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { 
   LogOut, 
   Palette, 
@@ -36,25 +24,28 @@ import {
   Edit2,
   Check,
   X,
-  Trash2,
-  AlertTriangle
+  KeyRound
 } from "lucide-react";
 import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Account = () => {
   const { t } = useI18n();
+  const { toast } = useToast();
   const { user, signOut, loading: authLoading } = useAuth();
   const { isCreator, isLoading: creatorLoading } = useCreatorAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { profile, isLoading: profileLoading, uploadAvatar, updateProfile } = useUserProfile();
-  const deleteAccount = useDeleteAccount();
   const navigate = useNavigate();
   const location = useLocation();
   
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState("");
-  const [confirmDeleteText, setConfirmDeleteText] = useState("");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLoading = authLoading || creatorLoading || adminLoading || profileLoading;
@@ -84,7 +75,6 @@ const Account = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         return;
       }
@@ -96,6 +86,30 @@ const Account = () => {
     if (displayNameInput.trim()) {
       updateProfile.mutate({ display_name: displayNameInput.trim() });
       setIsEditingName(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: t.account.passwordTooShort, variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: t.account.passwordMismatch, variant: "destructive" });
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: t.account.passwordChanged });
+      setShowChangePassword(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch {
+      toast({ title: t.account.passwordChangeError, variant: "destructive" });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -113,7 +127,6 @@ const Account = () => {
     return null;
   }
 
-  // Determine role display
   const getRoleDisplay = () => {
     if (isAdmin) return { label: "Admin", color: "bg-destructive/20 text-destructive" };
     if (isCreator) return { label: "Creator", color: "bg-primary/20 text-primary" };
@@ -140,8 +153,6 @@ const Account = () => {
                   size="xl"
                   showBadge={true}
                 />
-                
-                {/* Upload overlay */}
                 <button
                   onClick={handleAvatarClick}
                   className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
@@ -234,7 +245,6 @@ const Account = () => {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              {/* Creator Studio Button */}
               {isCreator && (
                 <Button
                   onClick={() => navigate("/creator")}
@@ -246,7 +256,6 @@ const Account = () => {
                 </Button>
               )}
 
-              {/* Admin Dashboard Button */}
               {isAdmin && (
                 <Button
                   onClick={() => navigate("/admin")}
@@ -258,6 +267,50 @@ const Account = () => {
                 </Button>
               )}
 
+              {/* Change Password */}
+              <Button
+                onClick={() => setShowChangePassword(!showChangePassword)}
+                className="w-full"
+                variant="outline"
+              >
+                <KeyRound className="w-4 h-4 mr-2" />
+                {t.account.changePassword}
+              </Button>
+
+              {showChangePassword && (
+                <div className="space-y-3 p-4 rounded-lg bg-muted/50">
+                  <p className="text-xs text-foreground-muted">{t.account.changePasswordDescription}</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">{t.account.newPassword}</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">{t.account.confirmNewPassword}</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword || !newPassword || !confirmPassword}
+                    className="w-full"
+                  >
+                    {isChangingPassword && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {t.account.changePassword}
+                  </Button>
+                </div>
+              )}
+
               {/* Logout Button */}
               <Button
                 onClick={handleSignOut}
@@ -267,58 +320,6 @@ const Account = () => {
                 <LogOut className="w-4 h-4 mr-2" />
                 {t.nav.logout}
               </Button>
-
-              {/* Delete Account */}
-              <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    className="w-full"
-                    variant="destructive"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {t.account.deleteAccount}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-destructive" />
-                      {t.account.deleteAccountConfirm}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-4">
-                      <p>{t.account.deleteAccountWarning}</p>
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-delete">
-                          {t.account.typeToConfirm.replace("{text}", t.account.confirmText)}
-                        </Label>
-                        <Input
-                          id="confirm-delete"
-                          value={confirmDeleteText}
-                          onChange={(e) => setConfirmDeleteText(e.target.value)}
-                          placeholder={t.account.confirmText}
-                        />
-                      </div>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setConfirmDeleteText("")}>
-                      {t.common.cancel}
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => deleteAccount.mutate()}
-                      disabled={confirmDeleteText !== t.account.confirmText || deleteAccount.isPending}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {deleteAccount.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <Trash2 className="w-4 h-4 mr-2" />
-                      )}
-                      {t.account.deleteAccount}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </div>
         </div>
