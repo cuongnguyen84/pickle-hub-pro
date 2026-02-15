@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { Translations } from "./vi";
 import { vi } from "./vi";
 import { en } from "./en";
+import { supabase } from "@/integrations/supabase/client";
 
 type Language = "vi" | "en";
 
@@ -16,20 +17,60 @@ const translations: Record<Language, Translations> = { vi, en };
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 const STORAGE_KEY = "pickleball-hub-language"; // i18n storage key
+const GEO_LANG_KEY = "geo_detected_language"; // cache geo-detected language
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     if (typeof window !== "undefined") {
+      // 1. User explicitly chose a language
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === "vi" || stored === "en") {
         return stored;
       }
-      // Auto-detect: if browser language starts with "vi", use Vietnamese; otherwise English
-      const browserLang = navigator.language?.toLowerCase() ?? "";
-      return browserLang.startsWith("vi") ? "vi" : "en";
+      // 2. Previously geo-detected
+      const geoCached = sessionStorage.getItem(GEO_LANG_KEY);
+      if (geoCached === "vi" || geoCached === "en") {
+        return geoCached;
+      }
     }
+    // 3. Default to Vietnamese, will be overridden by geo-check
     return "vi";
   });
+
+  // Auto-detect language by IP country (only if user hasn't manually chosen)
+  useEffect(() => {
+    const userChosen = localStorage.getItem(STORAGE_KEY);
+    if (userChosen) return; // User already chose, don't override
+
+    const geoCached = sessionStorage.getItem(GEO_LANG_KEY);
+    if (geoCached) return; // Already detected this session
+
+    const detectByGeo = async () => {
+      try {
+        const cached = sessionStorage.getItem("geo_block_result");
+        let country: string | null = null;
+
+        if (cached) {
+          country = JSON.parse(cached).country;
+        } else {
+          const { data } = await supabase.functions.invoke("geo-check");
+          country = data?.country ?? null;
+          if (data) {
+            sessionStorage.setItem("geo_block_result", JSON.stringify(data));
+          }
+        }
+
+        const detectedLang: Language = country === "VN" ? "vi" : "en";
+        sessionStorage.setItem(GEO_LANG_KEY, detectedLang);
+        setLanguageState(detectedLang);
+        document.documentElement.lang = detectedLang;
+      } catch (err) {
+        console.error("[i18n] Geo detection failed:", err);
+      }
+    };
+
+    detectByGeo();
+  }, []);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
