@@ -100,37 +100,27 @@ const Index = () => {
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.liveNow} href="/live" />
         
-        <div className="min-h-[200px]">
-          {liveLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="aspect-video rounded-xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              ))}
-            </div>
-          ) : liveStreams.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {liveStreams.slice(0, 3).map((stream, index) => (
-                <LiveCardWithPresence
-                  key={stream.id}
-                  id={stream.id!}
-                  title={stream.title ?? ""}
-                  organizationName={stream.organization?.name ?? ""}
-                  organizationSlug={stream.organization?.slug}
-                  organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                  status={stream.status as "live" | "scheduled" | "ended"}
-                  thumbnail={stream.thumbnail_url ?? undefined}
-                  priority={index === 0}
-                />
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={Radio} title={t.home.noLive} />
-          )}
-        </div>
+        {!liveLoading && liveStreams.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {liveStreams.slice(0, 3).map((stream, index) => (
+              <LiveCardWithPresence
+                key={stream.id}
+                id={stream.id!}
+                title={stream.title ?? ""}
+                organizationName={stream.organization?.name ?? ""}
+                organizationSlug={stream.organization?.slug}
+                organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
+                status={stream.status as "live" | "scheduled" | "ended"}
+                thumbnail={stream.thumbnail_url ?? undefined}
+                priority={index === 0}
+              />
+            ))}
+          </div>
+        ) : !liveLoading ? (
+          <EmptyState icon={Radio} title={t.home.noLive} />
+        ) : (
+          <div className="h-[120px]" />
+        )}
       </section>
 
       {/* Open Registration Tournaments */}
