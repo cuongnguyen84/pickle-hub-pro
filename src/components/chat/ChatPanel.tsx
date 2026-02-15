@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
-  MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3
+  MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3,
+  Pin, X as XIcon
 } from "lucide-react";
 import { NicknameInput } from "./NicknameInput";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ interface ChatMessageItemProps {
   onMute: (userId: string, duration: number) => void;
   onRetry?: (tempId: string, message: string) => void;
   onCopy: (text: string) => void;
+  onPin?: (messageId: string) => void;
 }
 
 const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
@@ -54,6 +56,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   onMute,
   onRetry,
   onCopy,
+  onPin,
 }, ref) => {
   const { t } = useI18n();
   const isPending = message._pending;
@@ -137,6 +140,11 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
               {isModerator && (
                 <>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onPin?.(message.id)}>
+                    <Pin className="h-3 w-3 mr-2" />
+                    {t.chat.pin}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-xs">{t.chat.mute}</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => onMute(message.user_id, 10)}>
                     10 {t.chat.minutes}
@@ -193,6 +201,7 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   const [isComposing, setIsComposing] = useState(false);
   const [creatorCache, setCreatorCache] = useState<Record<string, boolean>>({});
   const [avatarCache, setAvatarCache] = useState<Record<string, string | null>>({});
+  const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -401,6 +410,53 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
     }
   }, [toast, t]);
 
+  // === Pinned message logic ===
+  useEffect(() => {
+    // Load pinned message
+    const loadPinned = async () => {
+      const { data } = await supabase
+        .from("chat_pinned_messages")
+        .select("*, chat_messages(*)")
+        .eq("livestream_id", livestreamId)
+        .maybeSingle();
+      if (data?.chat_messages) {
+        setPinnedMessage(data.chat_messages as unknown as ChatMessage);
+      } else {
+        setPinnedMessage(null);
+      }
+    };
+    loadPinned();
+
+    // Subscribe to realtime changes
+    const pinChannel = supabase
+      .channel(`chat_pin:${livestreamId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_pinned_messages", filter: `livestream_id=eq.${livestreamId}` },
+        () => { loadPinned(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(pinChannel); };
+  }, [livestreamId]);
+
+  const handlePinMessage = useCallback(async (messageId: string) => {
+    // Upsert: delete existing pin first, then insert new
+    await supabase.from("chat_pinned_messages").delete().eq("livestream_id", livestreamId);
+    const { error } = await supabase.from("chat_pinned_messages").insert({
+      livestream_id: livestreamId,
+      message_id: messageId,
+      pinned_by: user?.id || "",
+    });
+    if (error) {
+      toast({ title: t.common.error, variant: "destructive" });
+    }
+  }, [livestreamId, user, toast, t]);
+
+  const handleUnpinMessage = useCallback(async () => {
+    await supabase.from("chat_pinned_messages").delete().eq("livestream_id", livestreamId);
+  }, [livestreamId]);
+
   // Load older messages
   const handleLoadOlder = useCallback(async () => {
     setIsLoadingOlder(true);
@@ -497,6 +553,30 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
         </div>
       )}
 
+      {/* Pinned message */}
+      {pinnedMessage && (
+        <div className="px-3 py-2 bg-primary/10 border-b border-primary/20 shrink-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Pin className="h-3 w-3 text-primary" />
+            <span className="text-xs font-medium text-primary">{t.chat.pinnedMessage}</span>
+            {isModerator && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 ml-auto"
+                onClick={handleUnpinMessage}
+              >
+                <XIcon className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-foreground line-clamp-2">
+            <span className="font-medium text-primary">{pinnedMessage.display_name}: </span>
+            {pinnedMessage.message}
+          </p>
+        </div>
+      )}
+
       {/* Messages container - fixed height with internal scroll */}
       <div className="flex-1 relative min-h-0 overflow-hidden">
         <div 
@@ -542,6 +622,7 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
                   onMute={muteUser}
                   onRetry={retryMessage}
                   onCopy={handleCopy}
+                  onPin={isModerator ? handlePinMessage : undefined}
                 />
               ))
             )}

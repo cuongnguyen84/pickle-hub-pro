@@ -150,14 +150,15 @@ export interface Translations {
     };
   };
   account: {
-    deleteAccount: string;
-    deleteAccountDescription: string;
-    deleteAccountConfirm: string;
-    deleteAccountWarning: string;
-    deleteAccountSuccess: string;
-    deleteAccountError: string;
-    typeToConfirm: string;
-    confirmText: string;
+    changePassword: string;
+    changePasswordDescription: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+    passwordChanged: string;
+    passwordChangeError: string;
+    passwordMismatch: string;
+    passwordTooShort: string;
   };
   nav: {
     home: string;
@@ -681,6 +682,9 @@ export interface Translations {
     nicknameError: string;
     nicknameLengthError: string;
     nextEdit: string;
+    pin: string;
+    unpin: string;
+    pinnedMessage: string;
   };
   analytics: {
     title: string;
@@ -1456,14 +1460,15 @@ export const vi: Translations = {
     },
   },
   account: {
-    deleteAccount: "Xóa tài khoản",
-    deleteAccountDescription: "Xóa vĩnh viễn tài khoản và toàn bộ dữ liệu của bạn. Hành động này không thể hoàn tác.",
-    deleteAccountConfirm: "Xác nhận xóa tài khoản",
-    deleteAccountWarning: "Cảnh báo: Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn bao gồm hồ sơ, giải đấu, bình luận và các hoạt động khác.",
-    deleteAccountSuccess: "Tài khoản đã được xóa thành công",
-    deleteAccountError: "Không thể xóa tài khoản. Vui lòng thử lại.",
-    typeToConfirm: "Nhập \"{text}\" để xác nhận",
-    confirmText: "XOA TAI KHOAN",
+    changePassword: "Đổi mật khẩu",
+    changePasswordDescription: "Nhập mật khẩu mới để cập nhật tài khoản.",
+    currentPassword: "Mật khẩu hiện tại",
+    newPassword: "Mật khẩu mới",
+    confirmNewPassword: "Xác nhận mật khẩu mới",
+    passwordChanged: "Đổi mật khẩu thành công",
+    passwordChangeError: "Không thể đổi mật khẩu. Vui lòng thử lại.",
+    passwordMismatch: "Mật khẩu xác nhận không khớp",
+    passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
   },
   nav: {
     home: "Trang chủ",
@@ -1990,6 +1995,9 @@ export const vi: Translations = {
     nicknameError: "Lỗi biệt danh",
     nicknameLengthError: "Biệt danh phải từ 2-30 ký tự",
     nextEdit: "Lần đổi tiếp",
+    pin: "Ghim",
+    unpin: "Bỏ ghim",
+    pinnedMessage: "Tin nhắn được ghim",
   },
   analytics: {
     title: "Analytics",

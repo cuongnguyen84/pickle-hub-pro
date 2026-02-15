@@ -143,6 +143,52 @@ export type Database = {
           },
         ]
       }
+      chat_pinned_messages: {
+        Row: {
+          id: string
+          livestream_id: string
+          message_id: string
+          pinned_at: string
+          pinned_by: string
+        }
+        Insert: {
+          id?: string
+          livestream_id: string
+          message_id: string
+          pinned_at?: string
+          pinned_by: string
+        }
+        Update: {
+          id?: string
+          livestream_id?: string
+          message_id?: string
+          pinned_at?: string
+          pinned_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_pinned_messages_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: true
+            referencedRelation: "livestreams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_pinned_messages_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: true
+            referencedRelation: "public_livestreams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_pinned_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_room_settings: {
         Row: {
           is_chat_enabled: boolean

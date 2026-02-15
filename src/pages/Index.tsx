@@ -276,10 +276,10 @@ const Index = () => {
           <p>© 2024-{new Date().getFullYear()} ThePickleHub – Pickleball Tournaments, Livestream & Community</p>
           <div className="flex items-center gap-4">
             <a href="/terms" className="hover:text-foreground transition-colors">
-              Terms
+              {t.terms.title.replace(" – The Pickle Hub", "")}
             </a>
             <a href="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
+              {t.privacy.title.replace(" – The Pickle Hub", "")}
             </a>
             <a href="mailto:tapickleballvn@gmail.com" className="hover:text-foreground transition-colors">
               tapickleballvn@gmail.com
