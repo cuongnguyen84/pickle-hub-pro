@@ -4,15 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JQG63B6NX0"></script>
+    <!-- Google tag (gtag.js) - deferred to reduce unused JS on initial load -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-JQG63B6NX0', {
-        send_page_view: false
-      });
+      gtag('config', 'G-JQG63B6NX0', { send_page_view: false });
+      (function(){
+        var s = document.createElement('script');
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-JQG63B6NX0';
+        s.async = true;
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(function(){ document.head.appendChild(s); });
+        } else {
+          setTimeout(function(){ document.head.appendChild(s); }, 2000);
+        }
+      })();
     </script>
     
     <!-- iOS Web App Meta Tags -->
