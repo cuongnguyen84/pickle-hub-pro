@@ -64,10 +64,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const SM_HOST = Deno.env.get("RED5_SM_HOST")!;
+    // Strip protocol prefix if user included it in the secret
+    const rawHost = Deno.env.get("RED5_SM_HOST")!;
+    const SM_HOST = rawHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
     const SM_USER = Deno.env.get("RED5_SM_USER")!;
     const SM_PASS = Deno.env.get("RED5_SM_PASSWORD")!;
-    const NODE_GROUP = Deno.env.get("RED5_NODE_GROUP") || "default";
+    const NODE_GROUP = Deno.env.get("RED5_NODE_GROUP") || "Baseline";
 
     // Generate unique stream name
     const shortId = livestream_id.replace(/-/g, "").substring(0, 8);
