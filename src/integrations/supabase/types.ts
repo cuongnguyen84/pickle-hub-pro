@@ -1013,7 +1013,6 @@ export type Database = {
           created_at: string
           description: string | null
           ended_at: string | null
-          hls_url: string | null
           id: string
           mux_asset_id: string | null
           mux_asset_playback_id: string | null
@@ -1021,12 +1020,9 @@ export type Database = {
           mux_playback_id: string | null
           mux_stream_key: string | null
           organization_id: string
-          red5_server_url: string | null
-          red5_stream_name: string | null
           scheduled_start_at: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["livestream_status"]
-          streaming_provider: string | null
           thumbnail_url: string | null
           title: string
           tournament_id: string | null
@@ -1035,7 +1031,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           ended_at?: string | null
-          hls_url?: string | null
           id?: string
           mux_asset_id?: string | null
           mux_asset_playback_id?: string | null
@@ -1043,12 +1038,9 @@ export type Database = {
           mux_playback_id?: string | null
           mux_stream_key?: string | null
           organization_id: string
-          red5_server_url?: string | null
-          red5_stream_name?: string | null
           scheduled_start_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["livestream_status"]
-          streaming_provider?: string | null
           thumbnail_url?: string | null
           title: string
           tournament_id?: string | null
@@ -1057,7 +1049,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           ended_at?: string | null
-          hls_url?: string | null
           id?: string
           mux_asset_id?: string | null
           mux_asset_playback_id?: string | null
@@ -1065,12 +1056,9 @@ export type Database = {
           mux_playback_id?: string | null
           mux_stream_key?: string | null
           organization_id?: string
-          red5_server_url?: string | null
-          red5_stream_name?: string | null
           scheduled_start_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["livestream_status"]
-          streaming_provider?: string | null
           thumbnail_url?: string | null
           title?: string
           tournament_id?: string | null
@@ -2617,7 +2605,6 @@ export type Database = {
           created_at: string | null
           description: string | null
           ended_at: string | null
-          hls_url: string | null
           id: string | null
           mux_asset_id: string | null
           mux_asset_playback_id: string | null
@@ -2626,7 +2613,6 @@ export type Database = {
           scheduled_start_at: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["livestream_status"] | null
-          streaming_provider: string | null
           thumbnail_url: string | null
           title: string | null
           tournament_id: string | null
@@ -2635,7 +2621,6 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           ended_at?: string | null
-          hls_url?: string | null
           id?: string | null
           mux_asset_id?: string | null
           mux_asset_playback_id?: string | null
@@ -2644,7 +2629,6 @@ export type Database = {
           scheduled_start_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["livestream_status"] | null
-          streaming_provider?: string | null
           thumbnail_url?: string | null
           title?: string | null
           tournament_id?: string | null
@@ -2653,7 +2637,6 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           ended_at?: string | null
-          hls_url?: string | null
           id?: string | null
           mux_asset_id?: string | null
           mux_asset_playback_id?: string | null
@@ -2662,7 +2645,6 @@ export type Database = {
           scheduled_start_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["livestream_status"] | null
-          streaming_provider?: string | null
           thumbnail_url?: string | null
           title?: string | null
           tournament_id?: string | null
