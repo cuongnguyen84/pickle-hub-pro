@@ -206,6 +206,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
       <video
         ref={videoRef}
         className="w-full h-full"
+        controls
         playsInline
         poster={showOverlay ? undefined : poster}
         onPlay={handlePlay}
