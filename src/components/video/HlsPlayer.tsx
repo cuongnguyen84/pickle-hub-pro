@@ -3,7 +3,7 @@ import Hls from "hls.js";
 import { TapToPlayOverlay } from "./TapToPlayOverlay";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface HlsPlayerHandle {
@@ -41,6 +41,9 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
   const [hasError, setHasError] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [qualityLevels, setQualityLevels] = useState<{ height: number; index: number }[]>([]);
+  const [currentLevel, setCurrentLevel] = useState(-1); // -1 = auto
+  const [showQualityMenu, setShowQualityMenu] = useState(false);
 
   useImperativeHandle(ref, () => ({
     play: async () => {
@@ -90,10 +93,17 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
         }
       });
 
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log("[HlsPlayer] Manifest parsed, ready to play");
+      hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
+        console.log("[HlsPlayer] Manifest parsed, ready to play, levels:", data.levels.length);
         setIsReconnecting(false);
         setRetryCount(0);
+        // Extract available quality levels
+        const levels = data.levels
+          .map((level, index) => ({ height: level.height, index }))
+          .filter(l => l.height > 0)
+          .sort((a, b) => b.height - a.height);
+        setQualityLevels(levels);
+        setCurrentLevel(-1); // default to auto
       });
 
       hlsRef.current = hls;
@@ -157,6 +167,24 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
     onPlayStateChange?.(false);
   }, [onPlayStateChange]);
 
+  const handleQualityChange = useCallback((levelIndex: number) => {
+    if (hlsRef.current) {
+      hlsRef.current.currentLevel = levelIndex;
+      setCurrentLevel(levelIndex);
+    }
+    setShowQualityMenu(false);
+  }, []);
+
+  const getQualityLabel = (height: number) => {
+    if (height >= 2160) return "4K";
+    if (height >= 1440) return "1440p";
+    if (height >= 1080) return "1080p";
+    if (height >= 720) return "720p";
+    if (height >= 480) return "480p";
+    if (height >= 360) return "360p";
+    return `${height}p`;
+  };
+
   if (!hlsUrl) {
     return (
       <div className={`aspect-video bg-muted flex items-center justify-center rounded-xl ${className}`}>
@@ -200,6 +228,47 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
           >
             {t.common.retry}
           </Button>
+        </div>
+      )}
+
+      {/* Quality selector */}
+      {qualityLevels.length > 1 && !showOverlay && (
+        <div className="absolute top-3 right-3 z-30">
+          <button
+            onClick={() => setShowQualityMenu(prev => !prev)}
+            className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg transition-colors"
+            title="Chất lượng video"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+
+          {showQualityMenu && (
+            <div className="absolute top-full right-0 mt-1 bg-black/90 backdrop-blur-sm rounded-lg overflow-hidden min-w-[120px] shadow-lg border border-white/10">
+              <button
+                onClick={() => handleQualityChange(-1)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                  currentLevel === -1
+                    ? "text-primary bg-white/10 font-semibold"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                Tự động
+              </button>
+              {qualityLevels.map((level) => (
+                <button
+                  key={level.index}
+                  onClick={() => handleQualityChange(level.index)}
+                  className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                    currentLevel === level.index
+                      ? "text-primary bg-white/10 font-semibold"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  {getQualityLabel(level.height)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
