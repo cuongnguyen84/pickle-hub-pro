@@ -8,10 +8,9 @@ const corsHeaders = {
 /**
  * Ant Media Server Webhook Handler
  * 
- * Ant Media sends POST requests with JSON body when broadcast events occur.
+ * Ant Media sends POST requests when broadcast events occur.
+ * Content-Type: application/x-www-form-urlencoded or application/json
  * Key actions: "liveStreamStarted", "liveStreamEnded", "vodReady"
- * 
- * Body format: { id, action, streamName, ... }
  * 
  * Configure in Ant Media Dashboard → Application Settings → Webhook URL:
  * https://<supabase-project>.supabase.co/functions/v1/ant-media-webhook
@@ -22,7 +21,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
+    // Ant Media may send as JSON or form-urlencoded
+    const contentType = req.headers.get("content-type") || "";
+    let body: Record<string, string>;
+    
+    if (contentType.includes("application/json")) {
+      body = await req.json();
+    } else {
+      const text = await req.text();
+      body = Object.fromEntries(new URLSearchParams(text));
+    }
+
     const action = body.action;
     const streamId = body.id || body.streamName;
 
@@ -38,6 +47,8 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const antMediaServerUrl = Deno.env.get("ANT_MEDIA_SERVER_URL") || "";
+    const antMediaAppName = Deno.env.get("ANT_MEDIA_APP_NAME") || "LiveApp";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Handle stream started
@@ -80,6 +91,34 @@ Deno.serve(async (req) => {
         console.log(`[ant-media-webhook] Updated stream ${streamId} to ended, id: ${data[0].id}`);
       } else {
         console.log(`[ant-media-webhook] No live stream found with red5_stream_name: ${streamId}`);
+      }
+    }
+
+    // Handle VoD ready - recording of live stream is complete
+    if (action === "vodReady") {
+      const vodName = body.vodName;
+      console.log(`[ant-media-webhook] VoD ready for stream: ${streamId}, vodName: ${vodName}`);
+
+      if (vodName && antMediaServerUrl) {
+        // Build VoD URL: https://server:5443/AppName/streams/{vodName}
+        const vodUrl = `${antMediaServerUrl}/${antMediaAppName}/streams/${vodName}`;
+        console.log(`[ant-media-webhook] VoD URL: ${vodUrl}`);
+
+        const { data, error } = await supabase
+          .from("livestreams")
+          .update({ vod_url: vodUrl })
+          .eq("red5_stream_name", streamId)
+          .select("id");
+
+        if (error) {
+          console.error("[ant-media-webhook] Error saving VoD URL:", error);
+        } else if (data && data.length > 0) {
+          console.log(`[ant-media-webhook] Saved VoD URL for stream ${streamId}, id: ${data[0].id}`);
+        } else {
+          console.log(`[ant-media-webhook] No stream found with red5_stream_name: ${streamId}`);
+        }
+      } else {
+        console.log("[ant-media-webhook] Missing vodName or ANT_MEDIA_SERVER_URL, skipping VoD save");
       }
     }
 

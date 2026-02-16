@@ -1030,6 +1030,7 @@ export type Database = {
           thumbnail_url: string | null
           title: string
           tournament_id: string | null
+          vod_url: string | null
         }
         Insert: {
           created_at?: string
@@ -1052,6 +1053,7 @@ export type Database = {
           thumbnail_url?: string | null
           title: string
           tournament_id?: string | null
+          vod_url?: string | null
         }
         Update: {
           created_at?: string
@@ -1074,6 +1076,7 @@ export type Database = {
           thumbnail_url?: string | null
           title?: string
           tournament_id?: string | null
+          vod_url?: string | null
         }
         Relationships: [
           {
@@ -2630,6 +2633,7 @@ export type Database = {
           thumbnail_url: string | null
           title: string | null
           tournament_id: string | null
+          vod_url: string | null
         }
         Insert: {
           created_at?: string | null
@@ -2648,6 +2652,7 @@ export type Database = {
           thumbnail_url?: string | null
           title?: string | null
           tournament_id?: string | null
+          vod_url?: string | null
         }
         Update: {
           created_at?: string | null
@@ -2666,6 +2671,7 @@ export type Database = {
           thumbnail_url?: string | null
           title?: string | null
           tournament_id?: string | null
+          vod_url?: string | null
         }
         Relationships: [
           {

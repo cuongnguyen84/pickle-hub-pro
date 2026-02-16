@@ -6,7 +6,7 @@ import { useLivePresence } from "@/hooks/useLivePresence";
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { LiveCard } from "@/components/content";
-import { MuxPlayer, HlsPlayer } from "@/components/video";
+import { MuxPlayer, HlsPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import type { MuxPlayerHandle } from "@/components/video/MuxPlayer";
 import type { HlsPlayerHandle } from "@/components/video/HlsPlayer";
 import { ChatPanel } from "@/components/chat";
@@ -155,13 +155,17 @@ const WatchLive = () => {
   const streamingProvider = (livestream as any).streaming_provider as string | null;
   const useHlsPlayer = streamingProvider === "antmedia" || streamingProvider === "red5";
   const hlsUrl = (livestream as any).hls_url as string | null;
+  const vodUrl = (livestream as any).vod_url as string | null;
+  
+  // For ended Ant Media streams, use VoD URL (MP4) if available
+  const antMediaReplayUrl = isEnded && vodUrl ? vodUrl : null;
   
   // Use asset playback ID for ended streams (replay), otherwise use live playback ID
   const playbackId = isEnded && livestream.mux_asset_playback_id 
     ? livestream.mux_asset_playback_id 
     : livestream.mux_playback_id;
   
-  const hasPlayback = useHlsPlayer ? !!hlsUrl : !!playbackId;
+  const hasPlayback = useHlsPlayer ? (isEnded ? !!antMediaReplayUrl : !!hlsUrl) : !!playbackId;
   
   // Determine stream type: live for active streams, on-demand for replays
   const streamType = isLive ? "live" : "on-demand";
@@ -231,16 +235,24 @@ const WatchLive = () => {
               {isBlocked && <GeoBlockOverlay />}
               {isGated && <LivestreamGateOverlay livestreamId={id!} />}
             {hasPlayback ? (
-              useHlsPlayer && hlsUrl ? (
-                <HlsPlayer
-                  ref={playerRef as React.Ref<HlsPlayerHandle>}
-                  hlsUrl={hlsUrl}
-                  title={livestream.title}
-                  poster={livestream.thumbnail_url ?? undefined}
-                  type="livestream"
-                  isLive={isLive}
-                  onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
-                />
+              useHlsPlayer ? (
+                antMediaReplayUrl ? (
+                  <AdaptiveVideoPlayer
+                    src={antMediaReplayUrl}
+                    poster={livestream.thumbnail_url ?? undefined}
+                    className="w-full h-full"
+                  />
+                ) : (
+                  <HlsPlayer
+                    ref={playerRef as React.Ref<HlsPlayerHandle>}
+                    hlsUrl={hlsUrl!}
+                    title={livestream.title}
+                    poster={livestream.thumbnail_url ?? undefined}
+                    type="livestream"
+                    isLive={isLive}
+                    onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
+                  />
+                )
               ) : (
                 <MuxPlayer
                   ref={playerRef as React.Ref<MuxPlayerHandle>}
@@ -292,16 +304,24 @@ const WatchLive = () => {
               {isBlocked && <GeoBlockOverlay />}
               {isGated && <LivestreamGateOverlay livestreamId={id!} />}
               {hasPlayback ? (
-                useHlsPlayer && hlsUrl ? (
-                  <HlsPlayer
-                    ref={playerRef as React.Ref<HlsPlayerHandle>}
-                    hlsUrl={hlsUrl}
-                    title={livestream.title}
-                    poster={livestream.thumbnail_url ?? undefined}
-                    type="livestream"
-                    isLive={isLive}
-                    onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
-                  />
+                useHlsPlayer ? (
+                  antMediaReplayUrl ? (
+                    <AdaptiveVideoPlayer
+                      src={antMediaReplayUrl}
+                      poster={livestream.thumbnail_url ?? undefined}
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <HlsPlayer
+                      ref={playerRef as React.Ref<HlsPlayerHandle>}
+                      hlsUrl={hlsUrl!}
+                      title={livestream.title}
+                      poster={livestream.thumbnail_url ?? undefined}
+                      type="livestream"
+                      isLive={isLive}
+                      onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
+                    />
+                  )
                 ) : (
                   <MuxPlayer
                     ref={playerRef as React.Ref<MuxPlayerHandle>}
