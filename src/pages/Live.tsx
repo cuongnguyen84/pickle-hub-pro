@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { LiveCard, SectionHeader, EmptyState } from "@/components/content";
+import { LiveCard, ReplayCard, SectionHeader, EmptyState } from "@/components/content";
 import { SearchBar } from "@/components/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { useLivestreams } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
-import { Radio, Search } from "lucide-react";
+import { Radio, Search, PlayCircle } from "lucide-react";
 import { DynamicMeta } from "@/components/seo";
 
 const Live = () => {
@@ -17,9 +17,10 @@ const Live = () => {
 
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
   const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
+  const { data: endedStreams = [], isLoading: endedLoading } = useLivestreams("ended");
 
   // Filter by search
-  const { filteredLive, filteredScheduled, hasResults } = useMemo(() => {
+  const { filteredLive, filteredScheduled, filteredEnded, hasResults } = useMemo(() => {
     const filterBySearch = <T extends { title?: string | null; organization?: { name: string } | null }>(
       items: T[]
     ) => {
@@ -33,15 +34,18 @@ const Live = () => {
 
     const live = filterBySearch(liveStreams);
     const scheduled = filterBySearch(scheduledStreams);
+    // Only show ended streams that have a vod_url (replay available)
+    const ended = filterBySearch(endedStreams).filter((s: any) => s.vod_url);
 
     return {
       filteredLive: live,
       filteredScheduled: scheduled,
-      hasResults: live.length > 0 || scheduled.length > 0,
+      filteredEnded: ended,
+      hasResults: live.length > 0 || scheduled.length > 0 || ended.length > 0,
     };
-  }, [liveStreams, scheduledStreams, debouncedSearch]);
+  }, [liveStreams, scheduledStreams, endedStreams, debouncedSearch]);
 
-  const isLoading = liveLoading || scheduledLoading;
+  const isLoading = liveLoading || scheduledLoading || endedLoading;
   const hasSearch = debouncedSearch.length > 0;
 
   return (
@@ -125,6 +129,27 @@ const Live = () => {
                       organizationSlug={stream.organization?.slug}
                       organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
                       status={stream.status as "live" | "scheduled" | "ended"}
+                      thumbnail={stream.thumbnail_url ?? undefined}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Replay Section - Ended streams with VoD */}
+            {filteredEnded.length > 0 && (
+              <section className="mb-12">
+                <SectionHeader title={t.live.ended || "Replay"} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredEnded.map((stream) => (
+                    <LiveCard
+                      key={stream.id}
+                      id={stream.id!}
+                      title={stream.title ?? ""}
+                      organizationName={stream.organization?.name ?? ""}
+                      organizationSlug={stream.organization?.slug}
+                      organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
+                      status="ended"
                       thumbnail={stream.thumbnail_url ?? undefined}
                     />
                   ))}
