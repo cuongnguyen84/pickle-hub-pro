@@ -42,14 +42,19 @@ export default function CreatorLivestreamForm() {
     tournament_id: "",
     scheduled_start_at: "",
     status: "scheduled" as Enums<"livestream_status">,
+    streaming_provider: "antmedia" as "antmedia" | "mux",
     mux_live_stream_id: "",
     mux_playback_id: "",
     mux_stream_key: "",
     thumbnail_url: "",
+    hls_url: "",
+    ant_media_stream_id: "",
   });
 
   const [showStreamKey, setShowStreamKey] = useState(false);
   const [isCreatingMux, setIsCreatingMux] = useState(false);
+  const [isCreatingAntMedia, setIsCreatingAntMedia] = useState(false);
+  const [antMediaError, setAntMediaError] = useState<string | null>(null);
   const [muxError, setMuxError] = useState<string | null>(null);
 
   // Helper to format date to local datetime-local input format (YYYY-MM-DDTHH:mm)
@@ -65,6 +70,7 @@ export default function CreatorLivestreamForm() {
 
   useEffect(() => {
     if (livestream) {
+      const provider = (livestream as any).streaming_provider as string | null;
       setFormData({
         title: livestream.title,
         description: livestream.description ?? "",
@@ -73,10 +79,13 @@ export default function CreatorLivestreamForm() {
           ? formatToLocalDatetime(livestream.scheduled_start_at)
           : "",
         status: livestream.status,
+        streaming_provider: (provider === "mux" ? "mux" : "antmedia") as "antmedia" | "mux",
         mux_live_stream_id: livestream.mux_live_stream_id ?? "",
         mux_playback_id: livestream.mux_playback_id ?? "",
         mux_stream_key: livestream.mux_stream_key ?? "",
         thumbnail_url: livestream.thumbnail_url ?? "",
+        hls_url: (livestream as any).hls_url ?? "",
+        ant_media_stream_id: (livestream as any).red5_stream_name ?? "",
       });
     }
   }, [livestream]);
@@ -139,6 +148,44 @@ export default function CreatorLivestreamForm() {
     }
   };
 
+  const handleCreateAntMediaStream = async () => {
+    if (!formData.title.trim()) {
+      toast({ title: "Error", description: "Nhập tiêu đề trước khi tạo stream", variant: "destructive" });
+      return;
+    }
+
+    setIsCreatingAntMedia(true);
+    setAntMediaError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const response = await supabase.functions.invoke("ant-media-create-livestream", {
+        body: { title: formData.title },
+      });
+
+      if (response.error) throw new Error(response.error.message || "Failed to create Ant Media stream");
+      const data = response.data;
+      if (data.error) throw new Error(data.message || data.error);
+
+      setFormData(prev => ({
+        ...prev,
+        hls_url: data.hlsUrl || "",
+        ant_media_stream_id: data.streamId || "",
+      }));
+
+      toast({ title: "Ant Media Stream Created", description: "Thông tin streaming đã sẵn sàng." });
+    } catch (error) {
+      console.error("Ant Media creation error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create stream";
+      setAntMediaError(errorMessage);
+      toast({ title: "Lỗi tạo stream", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsCreatingAntMedia(false);
+    }
+  };
+
   const handleSubmit = async () => {
     const payload = {
       title: formData.title,
@@ -148,13 +195,25 @@ export default function CreatorLivestreamForm() {
         ? new Date(formData.scheduled_start_at).toISOString()
         : null,
       status: formData.status,
-      mux_live_stream_id: formData.mux_live_stream_id || null,
-      mux_playback_id: formData.mux_playback_id || null,
-      mux_stream_key: formData.mux_stream_key || null,
       thumbnail_url: formData.thumbnail_url || null,
       started_at: formData.status === "live" ? new Date().toISOString() : (isEditing ? livestream?.started_at : null),
       ended_at: formData.status === "ended" ? new Date().toISOString() : null,
+      streaming_provider: formData.streaming_provider,
+      hls_url: null as string | null,
+      red5_stream_name: null as string | null,
+      mux_live_stream_id: null as string | null,
+      mux_playback_id: null as string | null,
+      mux_stream_key: null as string | null,
     };
+
+    if (formData.streaming_provider === "antmedia") {
+      payload.hls_url = formData.hls_url || null;
+      payload.red5_stream_name = formData.ant_media_stream_id || null;
+    } else {
+      payload.mux_live_stream_id = formData.mux_live_stream_id || null;
+      payload.mux_playback_id = formData.mux_playback_id || null;
+      payload.mux_stream_key = formData.mux_stream_key || null;
+    }
 
     if (isEditing && id) {
       await updateLivestream.mutateAsync({ id, ...payload });
@@ -375,70 +434,166 @@ export default function CreatorLivestreamForm() {
           </CardContent>
         </Card>
 
-        {/* Mux Integration */}
+        {/* Streaming Provider Selection */}
         <Card className="bg-surface border-border-subtle">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-primary" />
-              Mux Livestream
+              Streaming Provider
             </CardTitle>
             <CardDescription>
-              Create a real Mux livestream to broadcast via OBS or other streaming software.
+              Chọn nền tảng streaming để phát trực tiếp qua OBS.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {!hasMuxCredentials ? (
-              <div className="space-y-4">
-                <Button
-                  type="button"
-                  onClick={handleCreateMuxLivestream}
-                  disabled={isCreatingMux || !formData.title.trim()}
-                  className="w-full sm:w-auto"
-                >
-                  {isCreatingMux && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  <Zap className="w-4 h-4 mr-2" />
-                  Create Mux Livestream
-                </Button>
-                
-                {!formData.title.trim() && (
-                  <p className="text-sm text-foreground-secondary">
-                    Enter a title first to create a Mux livestream.
-                  </p>
-                )}
+          <CardContent className="space-y-6">
+            {/* Provider selector */}
+            <div className="space-y-2">
+              <Label>Provider</Label>
+              <Select
+                value={formData.streaming_provider}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, streaming_provider: value as "antmedia" | "mux" })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="antmedia">Ant Media (AWS)</SelectItem>
+                  <SelectItem value="mux">Mux</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-                {muxError && (
-                  <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-                    <div className="text-sm text-destructive">{muxError}</div>
+            {/* Ant Media Section */}
+            {formData.streaming_provider === "antmedia" && (
+              <div className="space-y-4">
+                {!formData.ant_media_stream_id ? (
+                  <div className="space-y-4">
+                    <Button
+                      type="button"
+                      onClick={handleCreateAntMediaStream}
+                      disabled={isCreatingAntMedia || !formData.title.trim()}
+                      className="w-full sm:w-auto"
+                    >
+                      {isCreatingAntMedia && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      <Zap className="w-4 h-4 mr-2" />
+                      Tạo Ant Media Stream
+                    </Button>
+                    
+                    {!formData.title.trim() && (
+                      <p className="text-sm text-foreground-secondary">
+                        Nhập tiêu đề trước khi tạo stream.
+                      </p>
+                    )}
+
+                    {antMediaError && (
+                      <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                        <div className="text-sm text-destructive">{antMediaError}</div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                      <p className="text-sm text-primary font-medium">
+                        ✓ Ant Media stream đã sẵn sàng! Cấu hình OBS với thông tin bên dưới.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Stream ID</Label>
+                      <div className="flex items-center gap-2">
+                        <Input value={formData.ant_media_stream_id} readOnly className="font-mono text-sm" />
+                        <Button type="button" variant="outline" size="icon"
+                          onClick={() => copyToClipboard(formData.ant_media_stream_id, "Stream ID")}>
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>HLS Playback URL</Label>
+                      <div className="flex items-center gap-2">
+                        <Input value={formData.hls_url} readOnly className="font-mono text-sm" />
+                        <Button type="button" variant="outline" size="icon"
+                          onClick={() => copyToClipboard(formData.hls_url, "HLS URL")}>
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        RTMP URL (cho OBS)
+                        <span className="text-xs text-destructive font-normal">SENSITIVE</span>
+                      </Label>
+                      <p className="text-xs text-foreground-secondary">
+                        Trong OBS: Settings → Stream → Service: Custom → Nhập Server URL và Stream Key (là Stream ID ở trên)
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                  <p className="text-sm text-primary font-medium">
-                    ✓ Mux livestream ready! Configure your streaming software with the details below.
-                  </p>
-                </div>
+            )}
 
-                {/* Mux IDs (read-only display) */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label className="text-foreground-secondary">Live Stream ID</Label>
-                    <Input value={formData.mux_live_stream_id} readOnly className="font-mono text-sm" />
+            {/* Mux Section */}
+            {formData.streaming_provider === "mux" && (
+              <div className="space-y-4">
+                {!hasMuxCredentials ? (
+                  <div className="space-y-4">
+                    <Button
+                      type="button"
+                      onClick={handleCreateMuxLivestream}
+                      disabled={isCreatingMux || !formData.title.trim()}
+                      className="w-full sm:w-auto"
+                    >
+                      {isCreatingMux && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      <Zap className="w-4 h-4 mr-2" />
+                      Create Mux Livestream
+                    </Button>
+
+                    {!formData.title.trim() && (
+                      <p className="text-sm text-foreground-secondary">
+                        Enter a title first to create a Mux livestream.
+                      </p>
+                    )}
+
+                    {muxError && (
+                      <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                        <div className="text-sm text-destructive">{muxError}</div>
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground-secondary">Playback ID</Label>
-                    <Input value={formData.mux_playback_id} readOnly className="font-mono text-sm" />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                      <p className="text-sm text-primary font-medium">
+                        ✓ Mux livestream ready! Configure your streaming software with the details below.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label className="text-foreground-secondary">Live Stream ID</Label>
+                        <Input value={formData.mux_live_stream_id} readOnly className="font-mono text-sm" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-foreground-secondary">Playback ID</Label>
+                        <Input value={formData.mux_playback_id} readOnly className="font-mono text-sm" />
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Streaming Guide - Only show when we have credentials */}
-        {hasMuxCredentials && (
+        {/* Streaming Guide - Mux */}
+        {formData.streaming_provider === "mux" && hasMuxCredentials && (
           <Card className="bg-surface border-border-subtle">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -450,98 +605,43 @@ export default function CreatorLivestreamForm() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* RTMP URL */}
               <div className="space-y-2">
                 <Label>RTMP Server URL</Label>
                 <div className="flex items-center gap-2">
-                  <Input 
-                    value="rtmps://global-live.mux.com:443/app" 
-                    readOnly 
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      copyToClipboard("rtmps://global-live.mux.com:443/app", "RTMP URL")
-                    }
-                  >
+                  <Input value="rtmps://global-live.mux.com:443/app" readOnly className="font-mono text-sm" />
+                  <Button type="button" variant="outline" size="icon"
+                    onClick={() => copyToClipboard("rtmps://global-live.mux.com:443/app", "RTMP URL")}>
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
 
-              {/* Stream Key */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   Stream Key
                   <span className="text-xs text-destructive font-normal">SENSITIVE</span>
                 </Label>
                 <div className="flex items-center gap-2">
-                  <Input 
-                    type={showStreamKey ? "text" : "password"} 
-                    value={formData.mux_stream_key} 
-                    readOnly 
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowStreamKey(!showStreamKey)}
-                  >
+                  <Input type={showStreamKey ? "text" : "password"} value={formData.mux_stream_key} readOnly className="font-mono text-sm" />
+                  <Button type="button" variant="outline" size="icon" onClick={() => setShowStreamKey(!showStreamKey)}>
                     {showStreamKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => copyToClipboard(formData.mux_stream_key, "Stream Key")}
-                  >
+                  <Button type="button" variant="outline" size="icon" onClick={() => copyToClipboard(formData.mux_stream_key, "Stream Key")}>
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
                 <p className="text-xs text-destructive">
-                  ⚠️ Never share this key publicly. Anyone with this key can stream to your channel.
+                  ⚠️ Never share this key publicly.
                 </p>
               </div>
 
-              {/* Playback URL */}
               <div className="space-y-2">
                 <Label>Playback URL (HLS)</Label>
                 <div className="flex items-center gap-2">
-                  <Input
-                    value={`https://stream.mux.com/${formData.mux_playback_id}.m3u8`}
-                    readOnly
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      copyToClipboard(
-                        `https://stream.mux.com/${formData.mux_playback_id}.m3u8`,
-                        "Playback URL"
-                      )
-                    }
-                  >
+                  <Input value={`https://stream.mux.com/${formData.mux_playback_id}.m3u8`} readOnly className="font-mono text-sm" />
+                  <Button type="button" variant="outline" size="icon"
+                    onClick={() => copyToClipboard(`https://stream.mux.com/${formData.mux_playback_id}.m3u8`, "Playback URL")}>
                     <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    asChild
-                  >
-                    <a
-                      href={`https://stream.mux.com/${formData.mux_playback_id}.m3u8`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
                   </Button>
                 </div>
               </div>
