@@ -17,10 +17,10 @@ const Live = () => {
 
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
   const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
-  const { data: endedStreams = [], isLoading: endedLoading } = useLivestreams("ended");
+  // Removed: ended streams are shown on /videos page instead
 
   // Filter by search
-  const { filteredLive, filteredScheduled, filteredEnded, hasResults } = useMemo(() => {
+  const { filteredLive, filteredScheduled, hasResults } = useMemo(() => {
     const filterBySearch = <T extends { title?: string | null; organization?: { name: string } | null }>(
       items: T[]
     ) => {
@@ -34,18 +34,15 @@ const Live = () => {
 
     const live = filterBySearch(liveStreams);
     const scheduled = filterBySearch(scheduledStreams);
-    // Only show ended streams that have a vod_url (replay available)
-    const ended = filterBySearch(endedStreams).filter((s: any) => s.vod_url);
 
     return {
       filteredLive: live,
       filteredScheduled: scheduled,
-      filteredEnded: ended,
-      hasResults: live.length > 0 || scheduled.length > 0 || ended.length > 0,
+      hasResults: live.length > 0 || scheduled.length > 0,
     };
-  }, [liveStreams, scheduledStreams, endedStreams, debouncedSearch]);
+  }, [liveStreams, scheduledStreams, debouncedSearch]);
 
-  const isLoading = liveLoading || scheduledLoading || endedLoading;
+  const isLoading = liveLoading || scheduledLoading;
   const hasSearch = debouncedSearch.length > 0;
 
   return (
@@ -136,26 +133,6 @@ const Live = () => {
               </section>
             )}
 
-            {/* Replay Section - Ended streams with VoD */}
-            {filteredEnded.length > 0 && (
-              <section className="mb-12">
-                <SectionHeader title={t.live.ended || "Replay"} />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredEnded.map((stream) => (
-                    <LiveCard
-                      key={stream.id}
-                      id={stream.id!}
-                      title={stream.title ?? ""}
-                      organizationName={stream.organization?.name ?? ""}
-                      organizationSlug={stream.organization?.slug}
-                      organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                      status="ended"
-                      thumbnail={stream.thumbnail_url ?? undefined}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
           </>
         )}
 

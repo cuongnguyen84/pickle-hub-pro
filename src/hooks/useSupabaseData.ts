@@ -241,7 +241,7 @@ export function useTournamentContent(tournamentId: string) {
   });
 }
 
-// Fetch ended livestreams with playback (replays)
+// Fetch ended livestreams with playback (replays) - supports both Mux and Ant Media
 export function useReplays(options?: { limit?: number }) {
   return useQuery({
     queryKey: ["replays", options],
@@ -250,7 +250,7 @@ export function useReplays(options?: { limit?: number }) {
         .from("public_livestreams")
         .select(`*, organization:organizations(*)`)
         .eq("status", "ended")
-        .not("mux_playback_id", "is", null)
+        .or("mux_playback_id.not.is.null,vod_url.not.is.null")
         .order("ended_at", { ascending: false });
 
       if (options?.limit) {
