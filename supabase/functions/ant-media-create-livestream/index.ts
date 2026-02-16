@@ -72,16 +72,21 @@ Deno.serve(async (req) => {
     }
 
     // Create broadcast on Ant Media Server
-    const apiUrl = `${antMediaServerUrl}/${antMediaAppName}/rest/v2/broadcasts`;
+    const apiUrl = `${antMediaServerUrl}/${antMediaAppName}/rest/v2/broadcasts/create`;
+    const requestBody = JSON.stringify({
+      name: title,
+      type: "liveStream",
+    });
     console.log(`[ant-media] Creating broadcast at: ${apiUrl}`);
+    console.log(`[ant-media] Request body: ${requestBody}`);
 
     const antResponse = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: title,
-        type: "liveStream",
-      }),
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: requestBody,
     });
 
     if (!antResponse.ok) {
