@@ -111,7 +111,9 @@ Deno.serve(async (req) => {
     // ANT_MEDIA_SERVER_URL format: https://domain.com:5443
     const serverUrlObj = new URL(antMediaServerUrl);
     const rtmpHost = serverUrlObj.hostname;
+    // RTMP uses port 1935 by default
     const rtmpUrl = `rtmp://${rtmpHost}/${antMediaAppName}/${streamId}`;
+    // HLS URL uses the HTTPS server URL
     const hlsUrl = `${antMediaServerUrl}/${antMediaAppName}/streams/${streamId}.m3u8`;
 
     console.log(`[ant-media] Broadcast created: ${streamId}`);
