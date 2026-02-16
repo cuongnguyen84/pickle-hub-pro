@@ -6,8 +6,9 @@ import { useLivePresence } from "@/hooks/useLivePresence";
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { LiveCard } from "@/components/content";
-import { MuxPlayer } from "@/components/video";
+import { MuxPlayer, HlsPlayer } from "@/components/video";
 import type { MuxPlayerHandle } from "@/components/video/MuxPlayer";
+import type { HlsPlayerHandle } from "@/components/video/HlsPlayer";
 import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +38,7 @@ const WatchLive = () => {
   const { isBlocked } = useGeoBlock();
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const playerRef = useRef<MuxPlayerHandle>(null);
+  const playerRef = useRef<MuxPlayerHandle | HlsPlayerHandle>(null);
 
   const { data: livestream, isLoading } = useLivestream(id!);
   const { data: viewCount = 0 } = useViewCount("livestream", id!);
@@ -150,12 +151,17 @@ const WatchLive = () => {
   const isScheduled = livestream.status === "scheduled";
   const isEnded = livestream.status === "ended";
   
+  // Determine which player to use based on streaming_provider
+  const streamingProvider = (livestream as any).streaming_provider as string | null;
+  const useHlsPlayer = streamingProvider === "antmedia" || streamingProvider === "red5";
+  const hlsUrl = (livestream as any).hls_url as string | null;
+  
   // Use asset playback ID for ended streams (replay), otherwise use live playback ID
   const playbackId = isEnded && livestream.mux_asset_playback_id 
     ? livestream.mux_asset_playback_id 
     : livestream.mux_playback_id;
   
-  const hasPlayback = !!playbackId;
+  const hasPlayback = useHlsPlayer ? !!hlsUrl : !!playbackId;
   
   // Determine stream type: live for active streams, on-demand for replays
   const streamType = isLive ? "live" : "on-demand";
@@ -225,16 +231,28 @@ const WatchLive = () => {
               {isBlocked && <GeoBlockOverlay />}
               {isGated && <LivestreamGateOverlay livestreamId={id!} />}
             {hasPlayback ? (
-              <MuxPlayer
-                ref={playerRef}
-                playbackId={playbackId!}
-                title={livestream.title}
-                poster={livestream.thumbnail_url ?? undefined}
-                streamType={streamType}
-                type="livestream"
-                isLive={isLive}
-                onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
-              />
+              useHlsPlayer && hlsUrl ? (
+                <HlsPlayer
+                  ref={playerRef as React.Ref<HlsPlayerHandle>}
+                  hlsUrl={hlsUrl}
+                  title={livestream.title}
+                  poster={livestream.thumbnail_url ?? undefined}
+                  type="livestream"
+                  isLive={isLive}
+                  onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
+                />
+              ) : (
+                <MuxPlayer
+                  ref={playerRef as React.Ref<MuxPlayerHandle>}
+                  playbackId={playbackId!}
+                  title={livestream.title}
+                  poster={livestream.thumbnail_url ?? undefined}
+                  streamType={streamType}
+                  type="livestream"
+                  isLive={isLive}
+                  onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
+                />
+              )
             ) : isScheduled ? (
               <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
                 <Radio className="w-12 h-12 text-foreground-muted" />
@@ -274,16 +292,28 @@ const WatchLive = () => {
               {isBlocked && <GeoBlockOverlay />}
               {isGated && <LivestreamGateOverlay livestreamId={id!} />}
               {hasPlayback ? (
-                <MuxPlayer
-                  ref={playerRef}
-                  playbackId={playbackId!}
-                  title={livestream.title}
-                  poster={livestream.thumbnail_url ?? undefined}
-                  streamType={streamType}
-                  type="livestream"
-                  isLive={isLive}
-                  onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
-                />
+                useHlsPlayer && hlsUrl ? (
+                  <HlsPlayer
+                    ref={playerRef as React.Ref<HlsPlayerHandle>}
+                    hlsUrl={hlsUrl}
+                    title={livestream.title}
+                    poster={livestream.thumbnail_url ?? undefined}
+                    type="livestream"
+                    isLive={isLive}
+                    onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
+                  />
+                ) : (
+                  <MuxPlayer
+                    ref={playerRef as React.Ref<MuxPlayerHandle>}
+                    playbackId={playbackId!}
+                    title={livestream.title}
+                    poster={livestream.thumbnail_url ?? undefined}
+                    streamType={streamType}
+                    type="livestream"
+                    isLive={isLive}
+                    onPlayStateChange={(playing) => playing ? handleVideoPlay() : handleVideoPause()}
+                  />
+                )
               ) : isScheduled ? (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-muted gap-4">
                   <Radio className="w-12 h-12 text-foreground-muted" />
