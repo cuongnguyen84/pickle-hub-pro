@@ -94,7 +94,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
       });
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
-        console.log("[HlsPlayer] Manifest parsed, ready to play, levels:", data.levels.length);
+        console.log("[HlsPlayer] Manifest parsed, levels:", data.levels.length, data.levels.map(l => l.height));
         setIsReconnecting(false);
         setRetryCount(0);
         // Extract available quality levels
@@ -102,6 +102,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
           .map((level, index) => ({ height: level.height, index }))
           .filter(l => l.height > 0)
           .sort((a, b) => b.height - a.height);
+        console.log("[HlsPlayer] Quality levels detected:", levels);
         setQualityLevels(levels);
         setCurrentLevel(-1); // default to auto
       });
@@ -232,7 +233,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
       )}
 
       {/* Quality selector */}
-      {qualityLevels.length >= 1 && !showOverlay && (
+      {qualityLevels.length >= 1 && (
         <div className="absolute top-3 right-3 z-30">
           <button
             onClick={() => setShowQualityMenu(prev => !prev)}
