@@ -25,7 +25,7 @@ const Login = lazy(() => import("./pages/Login"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const WatchVideo = lazy(() => import("./pages/WatchVideo"));
 const WatchLive = lazy(() => import("./pages/WatchLive"));
-const Account = lazy(() => import("./pages/Account"));
+const Account = lazy(() => import("./pages/Account").catch(() => window.location.reload() as never));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Search = lazy(() => import("./pages/Search"));
 const OrganizationDetail = lazy(() => import("./pages/OrganizationDetail"));
