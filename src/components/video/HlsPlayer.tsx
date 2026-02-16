@@ -41,7 +41,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
   const [hasError, setHasError] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [qualityLevels, setQualityLevels] = useState<{ height: number; index: number }[]>([]);
+  const [qualityLevels, setQualityLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
   const [currentLevel, setCurrentLevel] = useState(-1); // -1 = auto
   const [showQualityMenu, setShowQualityMenu] = useState(false);
 
@@ -99,9 +99,8 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
         setRetryCount(0);
         // Extract available quality levels
         const levels = data.levels
-          .map((level, index) => ({ height: level.height, index }))
-          .filter(l => l.height > 0)
-          .sort((a, b) => b.height - a.height);
+          .map((level, index) => ({ height: level.height, bitrate: level.bitrate, index }))
+          .sort((a, b) => (b.height || b.bitrate) - (a.height || a.bitrate));
         console.log("[HlsPlayer] Quality levels detected:", levels);
         setQualityLevels(levels);
         setCurrentLevel(-1); // default to auto
@@ -176,14 +175,20 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
     setShowQualityMenu(false);
   }, []);
 
-  const getQualityLabel = (height: number) => {
-    if (height >= 2160) return "4K";
-    if (height >= 1440) return "1440p";
-    if (height >= 1080) return "1080p";
-    if (height >= 720) return "720p";
-    if (height >= 480) return "480p";
-    if (height >= 360) return "360p";
-    return `${height}p`;
+  const getQualityLabel = (height: number, bitrate: number) => {
+    if (height > 0) {
+      if (height >= 2160) return "4K";
+      if (height >= 1440) return "1440p";
+      if (height >= 1080) return "1080p";
+      if (height >= 720) return "720p";
+      if (height >= 480) return "480p";
+      if (height >= 360) return "360p";
+      return `${height}p`;
+    }
+    // Fallback to bitrate label
+    const kbps = Math.round(bitrate / 1000);
+    if (kbps >= 1000) return `${(kbps / 1000).toFixed(1)} Mbps`;
+    return `${kbps} kbps`;
   };
 
   if (!hlsUrl) {
@@ -265,7 +270,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
                       : "text-white hover:bg-white/10"
                   }`}
                 >
-                  {getQualityLabel(level.height)}
+                  {getQualityLabel(level.height, level.bitrate)}
                 </button>
               ))}
             </div>
