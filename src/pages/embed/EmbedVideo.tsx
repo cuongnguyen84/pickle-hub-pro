@@ -41,7 +41,7 @@ const EmbedVideo = () => {
       viewRecorded.current = true;
     };
 
-    const timer = setTimeout(recordView, 5000);
+    const timer = setTimeout(recordView, 3000);
     return () => clearTimeout(timer);
   }, [id, video?.organization_id]);
 

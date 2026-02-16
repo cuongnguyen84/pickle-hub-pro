@@ -101,8 +101,8 @@ const WatchLive = () => {
       }
     };
 
-    // Increased delay to reduce database writes during high traffic
-    const timer = setTimeout(recordView, 8000);
+    // 3s threshold for view counting
+    const timer = setTimeout(recordView, 3000);
     return () => clearTimeout(timer);
   }, [id, user?.id, livestream?.organization_id]);
 

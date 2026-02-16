@@ -56,8 +56,8 @@ const WatchVideo = () => {
       viewRecorded.current = true;
     };
 
-    // Delay to ensure user actually watches
-    const timer = setTimeout(recordView, 5000);
+    // 3s threshold for view counting
+    const timer = setTimeout(recordView, 3000);
     return () => clearTimeout(timer);
   }, [id, user?.id, video?.organization_id]);
 
