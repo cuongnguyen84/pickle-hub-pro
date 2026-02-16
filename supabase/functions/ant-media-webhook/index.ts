@@ -95,25 +95,48 @@ Deno.serve(async (req) => {
     }
 
     // Handle VoD ready - recording of live stream is complete
+    // Ant Media sends multiple vodReady events for each quality level.
+    // We prefer the highest quality: 1080p > 720p > 480p > original.
     if (action === "vodReady") {
       const vodName = body.vodName;
       console.log(`[ant-media-webhook] VoD ready for stream: ${streamId}, vodName: ${vodName}`);
 
       if (vodName && antMediaServerUrl) {
-        // Build VoD URL: https://server:5443/AppName/streams/{vodName}
-        const vodUrl = `${antMediaServerUrl}/${antMediaAppName}/streams/${vodName}`;
+        // Build VoD URL with .mp4 extension
+        const vodUrl = `${antMediaServerUrl}/${antMediaAppName}/streams/${vodName}.mp4`;
         console.log(`[ant-media-webhook] VoD URL: ${vodUrl}`);
 
-        const { data, error } = await supabase
-          .from("livestreams")
-          .update({ vod_url: vodUrl })
-          .eq("red5_stream_name", streamId)
-          .select("id");
+        // Determine quality priority from vodName suffix
+        // e.g. streamId_1080p2500kbps → 1080, streamId_720p2000kbps → 720, streamId (original) → 0
+        const qualityMatch = vodName.match(/_(\d+)p\d+kbps$/);
+        const newQuality = qualityMatch ? parseInt(qualityMatch[1], 10) : 0;
 
-        if (error) {
-          console.error("[ant-media-webhook] Error saving VoD URL:", error);
-        } else if (data && data.length > 0) {
-          console.log(`[ant-media-webhook] Saved VoD URL for stream ${streamId}, id: ${data[0].id}`);
+        // Check existing vod_url to see if we should overwrite
+        const { data: existing } = await supabase
+          .from("livestreams")
+          .select("id, vod_url")
+          .eq("red5_stream_name", streamId)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          const currentVodUrl = existing[0].vod_url || "";
+          const currentMatch = currentVodUrl.match(/_(\d+)p\d+kbps/);
+          const currentQuality = currentMatch ? parseInt(currentMatch[1], 10) : 0;
+
+          if (newQuality >= currentQuality) {
+            const { error } = await supabase
+              .from("livestreams")
+              .update({ vod_url: vodUrl })
+              .eq("id", existing[0].id);
+
+            if (error) {
+              console.error("[ant-media-webhook] Error saving VoD URL:", error);
+            } else {
+              console.log(`[ant-media-webhook] Saved VoD URL (${newQuality}p > ${currentQuality}p) for stream ${streamId}`);
+            }
+          } else {
+            console.log(`[ant-media-webhook] Skipping lower quality VoD (${newQuality}p < ${currentQuality}p)`);
+          }
         } else {
           console.log(`[ant-media-webhook] No stream found with red5_stream_name: ${streamId}`);
         }
