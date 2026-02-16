@@ -238,7 +238,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
       )}
 
       {/* Quality selector */}
-      {qualityLevels.length >= 1 && (
+      {qualityLevels.length > 1 && (
         <div className="absolute top-3 right-3 z-30">
           <button
             onClick={() => setShowQualityMenu(prev => !prev)}
