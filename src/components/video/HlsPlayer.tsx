@@ -44,6 +44,8 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
   const [qualityLevels, setQualityLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
   const [currentLevel, setCurrentLevel] = useState(-1); // -1 = auto
   const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [showControls, setShowControls] = useState(false);
+  const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useImperativeHandle(ref, () => ({
     play: async () => {
@@ -101,8 +103,12 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
         const levels = data.levels
           .map((level, index) => ({ height: level.height, bitrate: level.bitrate, index }))
           .sort((a, b) => (b.height || b.bitrate) - (a.height || a.bitrate));
-        console.log("[HlsPlayer] Quality levels detected:", levels);
-        setQualityLevels(levels);
+        // Deduplicate by height (Ant Media includes original + transcoded with same height)
+        const uniqueLevels = levels.filter((level, idx, arr) => 
+          level.height === 0 || arr.findIndex(l => l.height === level.height) === idx
+        );
+        console.log("[HlsPlayer] Quality levels detected:", uniqueLevels);
+        setQualityLevels(uniqueLevels);
         setCurrentLevel(-1); // default to auto
       });
 
@@ -175,6 +181,25 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
     setShowQualityMenu(false);
   }, []);
 
+  const handleVideoAreaClick = useCallback(() => {
+    if (showQualityMenu) {
+      setShowQualityMenu(false);
+      return;
+    }
+    setShowControls(true);
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    controlsTimerRef.current = setTimeout(() => {
+      setShowControls(false);
+      setShowQualityMenu(false);
+    }, 4000);
+  }, [showQualityMenu]);
+
+  useEffect(() => {
+    return () => {
+      if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    };
+  }, []);
+
   const getQualityLabel = (height: number, bitrate: number) => {
     if (height > 0) {
       if (height >= 2160) return "4K";
@@ -213,7 +238,10 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
   }
 
   return (
-    <div className={`relative aspect-video rounded-xl overflow-hidden ${className}`}>
+    <div 
+      className={`relative aspect-video rounded-xl overflow-hidden ${className}`}
+      onClick={handleVideoAreaClick}
+    >
       <TapToPlayOverlay
         type={type}
         isLive={isLive}
@@ -237,11 +265,18 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
         </div>
       )}
 
-      {/* Quality selector */}
-      {qualityLevels.length > 1 && (
-        <div className="absolute top-3 right-3 z-30">
+      {/* Quality selector - shows on tap */}
+      {qualityLevels.length > 1 && !showOverlay && (
+        <div 
+          className={`absolute top-3 right-3 z-30 transition-opacity duration-300 ${
+            showControls || showQualityMenu ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
           <button
-            onClick={() => setShowQualityMenu(prev => !prev)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowQualityMenu(prev => !prev);
+            }}
             className="bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg transition-colors"
             title="Chất lượng video"
           >
@@ -251,7 +286,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
           {showQualityMenu && (
             <div className="absolute top-full right-0 mt-1 bg-black/90 backdrop-blur-sm rounded-lg overflow-hidden min-w-[120px] shadow-lg border border-white/10">
               <button
-                onClick={() => handleQualityChange(-1)}
+                onClick={(e) => { e.stopPropagation(); handleQualityChange(-1); }}
                 className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                   currentLevel === -1
                     ? "text-primary bg-white/10 font-semibold"
@@ -263,7 +298,7 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
               {qualityLevels.map((level) => (
                 <button
                   key={level.index}
-                  onClick={() => handleQualityChange(level.index)}
+                  onClick={(e) => { e.stopPropagation(); handleQualityChange(level.index); }}
                   className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                     currentLevel === level.index
                       ? "text-primary bg-white/10 font-semibold"
