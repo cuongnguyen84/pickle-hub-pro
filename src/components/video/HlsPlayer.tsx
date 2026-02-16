@@ -121,7 +121,12 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
       await videoRef.current.play();
       setShowOverlay(false);
       setHasError(false);
-    } catch (error) {
+    } catch (error: any) {
+      // AbortError happens when video is removed from DOM during play() - ignore silently
+      if (error?.name === "AbortError") {
+        console.log("[HlsPlayer] Play aborted (element removed from DOM), ignoring");
+        return;
+      }
       console.error("[HlsPlayer] Play error:", error);
       toast({
         title: t.player.playbackError,
