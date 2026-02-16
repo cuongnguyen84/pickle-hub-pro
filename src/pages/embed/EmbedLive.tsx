@@ -1,7 +1,7 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { useLivestream } from "@/hooks/useSupabaseData";
-import { MuxPlayer, HlsPlayer } from "@/components/video";
+import { MuxPlayer, HlsPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
@@ -60,13 +60,15 @@ const EmbedLive = () => {
   const streamingProvider = (livestream as any).streaming_provider as string | null;
   const useHls = streamingProvider === "antmedia" || streamingProvider === "red5";
   const hlsUrl = (livestream as any).hls_url as string | null;
+  const vodUrl = (livestream as any).vod_url as string | null;
+  const antMediaReplayUrl = isEnded && vodUrl ? vodUrl : null;
   
   // Use asset playback ID for ended streams (replay), otherwise use live playback ID
   const playbackId = isEnded && livestream.mux_asset_playback_id 
     ? livestream.mux_asset_playback_id 
     : livestream.mux_playback_id;
     
-  const hasPlayback = useHls ? !!hlsUrl : !!playbackId;
+  const hasPlayback = useHls ? (isEnded ? !!antMediaReplayUrl : !!hlsUrl) : !!playbackId;
   const streamType = isLive ? "live" : "on-demand";
 
   if (!hasPlayback) {
@@ -82,15 +84,23 @@ const EmbedLive = () => {
       {/* Video Player - Full screen */}
       <div className="flex-1 relative">
         {isBlocked && <GeoBlockOverlay />}
-        {useHls && hlsUrl ? (
-          <HlsPlayer
-            hlsUrl={hlsUrl}
-            title={livestream.title}
-            poster={livestream.thumbnail_url ?? undefined}
-            type="livestream"
-            isLive={isLive}
-            className="w-full h-full absolute inset-0"
-          />
+        {useHls ? (
+          antMediaReplayUrl ? (
+            <AdaptiveVideoPlayer
+              src={antMediaReplayUrl}
+              poster={livestream.thumbnail_url ?? undefined}
+              className="w-full h-full absolute inset-0"
+            />
+          ) : hlsUrl ? (
+            <HlsPlayer
+              hlsUrl={hlsUrl}
+              title={livestream.title}
+              poster={livestream.thumbnail_url ?? undefined}
+              type="livestream"
+              isLive={isLive}
+              className="w-full h-full absolute inset-0"
+            />
+          ) : null
         ) : (
           <MuxPlayer
             playbackId={playbackId!}
