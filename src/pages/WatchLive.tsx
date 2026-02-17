@@ -381,8 +381,8 @@ const WatchLive = () => {
                 )}
               </Button>
               {!isChatCollapsed && (
-                <div className="mt-4">
-                  <ChatPanel livestreamId={livestream.id} className="h-[400px]" />
+                <div className="mt-2">
+                  <ChatPanel livestreamId={livestream.id} className="h-[400px]" hideHeader />
                 </div>
               )}
             </div>
