@@ -49,6 +49,7 @@ export default function CreatorLivestreamForm() {
     thumbnail_url: "",
     hls_url: "",
     ant_media_stream_id: "",
+    ant_media_rtmp_url: "",
   });
 
   const [showStreamKey, setShowStreamKey] = useState(false);
@@ -86,6 +87,7 @@ export default function CreatorLivestreamForm() {
         thumbnail_url: livestream.thumbnail_url ?? "",
         hls_url: (livestream as any).hls_url ?? "",
         ant_media_stream_id: (livestream as any).red5_stream_name ?? "",
+        ant_media_rtmp_url: (livestream as any).red5_server_url ?? "",
       });
     }
   }, [livestream]);
@@ -173,6 +175,7 @@ export default function CreatorLivestreamForm() {
         ...prev,
         hls_url: data.hlsUrl || "",
         ant_media_stream_id: data.streamId || "",
+        ant_media_rtmp_url: data.rtmpUrl || "",
       }));
 
       toast({ title: "Ant Media Stream Created", description: "Thông tin streaming đã sẵn sàng." });
@@ -201,6 +204,7 @@ export default function CreatorLivestreamForm() {
       streaming_provider: formData.streaming_provider,
       hls_url: null as string | null,
       red5_stream_name: null as string | null,
+      red5_server_url: null as string | null,
       mux_live_stream_id: null as string | null,
       mux_playback_id: null as string | null,
       mux_stream_key: null as string | null,
@@ -209,6 +213,7 @@ export default function CreatorLivestreamForm() {
     if (formData.streaming_provider === "antmedia") {
       payload.hls_url = formData.hls_url || null;
       payload.red5_stream_name = formData.ant_media_stream_id || null;
+      payload.red5_server_url = formData.ant_media_rtmp_url || null;
     } else {
       payload.mux_live_stream_id = formData.mux_live_stream_id || null;
       payload.mux_playback_id = formData.mux_playback_id || null;
@@ -526,11 +531,17 @@ export default function CreatorLivestreamForm() {
 
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
-                        RTMP URL (cho OBS)
-                        <span className="text-xs text-destructive font-normal">SENSITIVE</span>
+                        RTMP Server URL (cho OBS)
                       </Label>
+                      <div className="flex items-center gap-2">
+                        <Input value={formData.ant_media_rtmp_url || `rtmp://18.143.156.29/LiveApp/${formData.ant_media_stream_id}`} readOnly className="font-mono text-sm" />
+                        <Button type="button" variant="outline" size="icon"
+                          onClick={() => copyToClipboard(formData.ant_media_rtmp_url || `rtmp://18.143.156.29/LiveApp/${formData.ant_media_stream_id}`, "RTMP URL")}>
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
                       <p className="text-xs text-foreground-secondary">
-                        Trong OBS: Settings → Stream → Service: Custom → Nhập Server URL và Stream Key (là Stream ID ở trên)
+                        Trong OBS: Settings → Stream → Service: Custom → Server: nhập URL trên, Stream Key: nhập Stream ID ở trên.
                       </p>
                     </div>
                   </div>
