@@ -36,7 +36,7 @@ const WatchLive = () => {
   const { user } = useAuth();
   const viewRecorded = useRef(false);
   const { isBlocked } = useGeoBlock();
-  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
+  const [isChatCollapsed, setIsChatCollapsed] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const playerRef = useRef<MuxPlayerHandle | HlsPlayerHandle>(null);
 
