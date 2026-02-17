@@ -441,14 +441,25 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   }, [livestreamId]);
 
   const handlePinMessage = useCallback(async (messageId: string) => {
+    // Validate: skip pending/temp IDs (not valid UUIDs)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(messageId)) {
+      toast({ title: t.common.error, description: "Tin nhắn chưa được gửi xong, vui lòng thử lại.", variant: "destructive" });
+      return;
+    }
+    if (!user?.id) {
+      toast({ title: t.common.error, variant: "destructive" });
+      return;
+    }
     // Upsert: delete existing pin first, then insert new
     await supabase.from("chat_pinned_messages").delete().eq("livestream_id", livestreamId);
     const { error } = await supabase.from("chat_pinned_messages").insert({
       livestream_id: livestreamId,
       message_id: messageId,
-      pinned_by: user?.id || "",
+      pinned_by: user.id,
     });
     if (error) {
+      console.error('[ChatPanel] Pin error:', error);
       toast({ title: t.common.error, variant: "destructive" });
     }
   }, [livestreamId, user, toast, t]);
