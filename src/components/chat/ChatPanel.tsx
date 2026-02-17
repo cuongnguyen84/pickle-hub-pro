@@ -34,6 +34,7 @@ interface ChatPanelProps {
   livestreamId: string;
   className?: string;
   hideHeader?: boolean;
+  renderHeaderControls?: boolean;
 }
 
 interface ChatMessageItemProps {
@@ -66,6 +67,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   return (
     <div
       ref={ref}
+      data-message-id={message.id}
       className={cn(
         "group flex gap-2 px-3 py-1.5 hover:bg-muted/50 rounded transition-colors",
         isPending && "opacity-70",
@@ -175,7 +177,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
 });
 ChatMessageItem.displayName = "ChatMessageItem";
 
-export const ChatPanel = ({ livestreamId, className, hideHeader = false }: ChatPanelProps) => {
+export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderHeaderControls = false }: ChatPanelProps) => {
   const { t } = useI18n();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -527,6 +529,47 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false }: ChatP
   const chatDisabled = settings && !settings.is_chat_enabled;
   const inputDisabled = !!chatDisabled || !!isMuted;
 
+  // renderHeaderControls mode: only render the gear + count inline
+  if (renderHeaderControls) {
+    if (!isModerator) return null;
+    return (
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-xs text-foreground-muted">{messages.filter(m => !m._pending && !m._failed).length}</span>
+        {settings?.slow_mode_seconds && settings.slow_mode_seconds > 0 && (
+          <span className="text-xs text-foreground-muted flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {settings.slow_mode_seconds}s
+          </span>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Settings className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{t.chat.settings}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => updateSettings({ is_chat_enabled: !settings?.is_chat_enabled })}>
+              {settings?.is_chat_enabled ? t.chat.disableChat : t.chat.enableChat}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>{t.chat.slowMode}</DropdownMenuLabel>
+            {[0, 3, 5, 10, 30].map((seconds) => (
+              <DropdownMenuItem
+                key={seconds}
+                onClick={() => updateSettings({ slow_mode_seconds: seconds })}
+                className={cn(settings?.slow_mode_seconds === seconds && "bg-muted")}
+              >
+                {seconds === 0 ? t.chat.off : `${seconds}s`}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className={cn("flex flex-col h-full bg-surface rounded-xl border border-border", className)}>
@@ -547,47 +590,8 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false }: ChatP
 
   return (
     <div className={cn("flex flex-col h-full bg-surface rounded-xl border border-border overflow-hidden", className)}>
-      {/* Header - full or compact gear-only */}
-      {hideHeader ? (
-        isModerator && (
-          <div className="flex items-center justify-end px-3 py-1.5 border-b border-border shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-foreground-muted">{messages.filter(m => !m._pending && !m._failed).length}</span>
-              {settings?.slow_mode_seconds && settings.slow_mode_seconds > 0 && (
-                <span className="text-xs text-foreground-muted flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {settings.slow_mode_seconds}s
-                </span>
-              )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{t.chat.settings}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => updateSettings({ is_chat_enabled: !settings?.is_chat_enabled })}>
-                    {settings?.is_chat_enabled ? t.chat.disableChat : t.chat.enableChat}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>{t.chat.slowMode}</DropdownMenuLabel>
-                  {[0, 3, 5, 10, 30].map((seconds) => (
-                    <DropdownMenuItem
-                      key={seconds}
-                      onClick={() => updateSettings({ slow_mode_seconds: seconds })}
-                      className={cn(settings?.slow_mode_seconds === seconds && "bg-muted")}
-                    >
-                      {seconds === 0 ? t.chat.off : `${seconds}s`}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        )
-      ) : (
+      {/* Header */}
+      {!hideHeader && (
         <div className="flex items-center justify-between p-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-primary" />
@@ -648,25 +652,37 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false }: ChatP
 
       {/* Pinned message */}
       {pinnedMessage && (
-        <div className="px-3 py-2 bg-primary/10 border-b border-primary/20 shrink-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Pin className="h-3 w-3 text-primary" />
-            <span className="text-xs font-medium text-primary">{t.chat.pinnedMessage}</span>
+        <div
+          className="px-3 py-2 bg-primary/10 border-b border-primary/20 shrink-0 cursor-pointer hover:bg-primary/15 transition-colors"
+          onClick={() => {
+            // Scroll to pinned message in chat
+            const container = scrollContainerRef.current;
+            if (!container) return;
+            const el = container.querySelector(`[data-message-id="${pinnedMessage.id}"]`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('bg-primary/20');
+              setTimeout(() => el.classList.remove('bg-primary/20'), 2000);
+            }
+          }}
+        >
+          <div className="flex items-start gap-2">
+            <Pin className="h-3 w-3 text-primary shrink-0 mt-0.5" />
+            <p className="text-xs text-foreground line-clamp-2 flex-1">
+              <span className="font-medium text-primary">{pinnedMessage.display_name}: </span>
+              {pinnedMessage.message}
+            </p>
             {isModerator && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 ml-auto"
-                onClick={handleUnpinMessage}
+                className="h-5 w-5 shrink-0"
+                onClick={(e) => { e.stopPropagation(); handleUnpinMessage(); }}
               >
                 <XIcon className="h-3 w-3" />
               </Button>
             )}
           </div>
-          <p className="text-xs text-foreground line-clamp-2">
-            <span className="font-medium text-primary">{pinnedMessage.display_name}: </span>
-            {pinnedMessage.message}
-          </p>
         </div>
       )}
 
