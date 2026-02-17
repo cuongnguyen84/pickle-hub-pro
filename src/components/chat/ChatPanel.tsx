@@ -441,28 +441,67 @@ export const ChatPanel = ({ livestreamId, className }: ChatPanelProps) => {
   }, [livestreamId]);
 
   const handlePinMessage = useCallback(async (messageId: string) => {
-    // Validate: skip pending/temp IDs (not valid UUIDs)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(messageId)) {
-      toast({ title: t.common.error, description: "Tin nhắn chưa được gửi xong, vui lòng thử lại.", variant: "destructive" });
-      return;
-    }
     if (!user?.id) {
       toast({ title: t.common.error, variant: "destructive" });
       return;
     }
-    // Upsert: delete existing pin first, then insert new
-    await supabase.from("chat_pinned_messages").delete().eq("livestream_id", livestreamId);
+
+    // Resolve real DB message ID if this is a broadcast message
+    let resolvedId = messageId;
+    if (messageId.startsWith("broadcast-")) {
+      // Find the actual message from the messages list - it may have been reconciled
+      const msg = messages.find(m => m.id === messageId);
+      if (msg?.client_message_id) {
+        // Look up the real DB message by client_message_id
+        const { data } = await supabase
+          .from("chat_messages")
+          .select("id")
+          .eq("client_message_id", msg.client_message_id)
+          .eq("livestream_id", livestreamId)
+          .maybeSingle();
+        if (data?.id) {
+          resolvedId = data.id;
+        } else {
+          toast({ title: t.common.error, description: "Tin nhắn chưa được gửi xong, vui lòng thử lại.", variant: "destructive" });
+          return;
+        }
+      } else {
+        toast({ title: t.common.error, description: "Tin nhắn chưa được gửi xong, vui lòng thử lại.", variant: "destructive" });
+        return;
+      }
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(resolvedId)) {
+      toast({ title: t.common.error, description: "Tin nhắn chưa được gửi xong, vui lòng thử lại.", variant: "destructive" });
+      return;
+    }
+
+    // Optimistically update pinned message UI
+    const pinnedMsg = messages.find(m => m.id === messageId);
+    if (pinnedMsg) {
+      setPinnedMessage(pinnedMsg);
+    }
+
+    // Delete existing pin first, then insert - use await to avoid race condition
+    const { error: deleteError } = await supabase.from("chat_pinned_messages").delete().eq("livestream_id", livestreamId);
+    if (deleteError) {
+      console.error('[ChatPanel] Pin delete error:', deleteError);
+    }
+    
     const { error } = await supabase.from("chat_pinned_messages").insert({
       livestream_id: livestreamId,
-      message_id: messageId,
+      message_id: resolvedId,
       pinned_by: user.id,
     });
     if (error) {
       console.error('[ChatPanel] Pin error:', error);
       toast({ title: t.common.error, variant: "destructive" });
+      // Revert optimistic update
+      setPinnedMessage(null);
     }
-  }, [livestreamId, user, toast, t]);
+  }, [livestreamId, user, toast, t, messages]);
 
   const handleUnpinMessage = useCallback(async () => {
     await supabase.from("chat_pinned_messages").delete().eq("livestream_id", livestreamId);
