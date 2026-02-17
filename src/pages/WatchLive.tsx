@@ -365,24 +365,26 @@ const WatchLive = () => {
 
             {/* Mobile Chat Toggle */}
             <div className="lg:hidden">
-              <Button
-                variant="outline"
-                className="w-full flex items-center justify-between"
-                onClick={() => setIsChatCollapsed(!isChatCollapsed)}
-              >
-                <span className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4" />
-                  {t.chat.title}
-                </span>
-                {isChatCollapsed ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronUp className="w-4 h-4" />
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 flex items-center justify-between"
+                  onClick={() => setIsChatCollapsed(!isChatCollapsed)}
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    {t.chat.title}
+                  </span>
+                  {isChatCollapsed ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronUp className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
               {!isChatCollapsed && (
                 <div className="mt-2">
-                  <ChatPanel livestreamId={livestream.id} className="h-[400px]" hideHeader />
+                  <ChatPanel livestreamId={livestream.id} className="h-[400px]" hideHeader={false} />
                 </div>
               )}
             </div>
