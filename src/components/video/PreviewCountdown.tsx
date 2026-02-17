@@ -26,12 +26,6 @@ export function PreviewCountdown({ secondsRemaining, progress }: PreviewCountdow
           style={{ width: `${remainingPercent}%` }}
         />
       </div>
-      {/* Timer label */}
-      <div className="absolute top-2 right-3">
-        <span className="text-xs font-medium text-white bg-black/60 px-2 py-1 rounded-full backdrop-blur-sm">
-          {t.live.previewRemaining.replace("{seconds}", String(secondsRemaining))}
-        </span>
-      </div>
     </div>
   );
 }
