@@ -505,6 +505,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false }: ChatP
   }, [livestreamId, user, toast, t, messages]);
 
   const handleUnpinMessage = useCallback(async () => {
+    setPinnedMessage(null); // Optimistic update
     await supabase.from("chat_pinned_messages").delete().eq("livestream_id", livestreamId);
   }, [livestreamId]);
 
@@ -546,8 +547,47 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false }: ChatP
 
   return (
     <div className={cn("flex flex-col h-full bg-surface rounded-xl border border-border overflow-hidden", className)}>
-      {/* Header */}
-      {!hideHeader && (
+      {/* Header - full or compact gear-only */}
+      {hideHeader ? (
+        isModerator && (
+          <div className="flex items-center justify-end px-3 py-1.5 border-b border-border shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-foreground-muted">{messages.filter(m => !m._pending && !m._failed).length}</span>
+              {settings?.slow_mode_seconds && settings.slow_mode_seconds > 0 && (
+                <span className="text-xs text-foreground-muted flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {settings.slow_mode_seconds}s
+                </span>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{t.chat.settings}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => updateSettings({ is_chat_enabled: !settings?.is_chat_enabled })}>
+                    {settings?.is_chat_enabled ? t.chat.disableChat : t.chat.enableChat}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>{t.chat.slowMode}</DropdownMenuLabel>
+                  {[0, 3, 5, 10, 30].map((seconds) => (
+                    <DropdownMenuItem
+                      key={seconds}
+                      onClick={() => updateSettings({ slow_mode_seconds: seconds })}
+                      className={cn(settings?.slow_mode_seconds === seconds && "bg-muted")}
+                    >
+                      {seconds === 0 ? t.chat.off : `${seconds}s`}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        )
+      ) : (
         <div className="flex items-center justify-between p-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-primary" />
