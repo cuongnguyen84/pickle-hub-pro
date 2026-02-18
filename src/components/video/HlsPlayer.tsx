@@ -24,6 +24,15 @@ interface HlsPlayerProps {
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [2000, 4000, 8000];
 
+// Try fallback URLs if adaptive manifest fails
+const getFallbackUrl = (url: string): string | null => {
+  if (url.endsWith("_adaptive.m3u8")) {
+    // Try non-adaptive version
+    return url.replace("_adaptive.m3u8", ".m3u8");
+  }
+  return null;
+};
+
 export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
   hlsUrl,
   title,
@@ -41,11 +50,13 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
   const [hasError, setHasError] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [triedFallback, setTriedFallback] = useState(false);
   const [qualityLevels, setQualityLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
   const [currentLevel, setCurrentLevel] = useState(-1); // -1 = auto
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeUrlRef = useRef(hlsUrl);
 
   useImperativeHandle(ref, () => ({
     play: async () => {
@@ -56,9 +67,10 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
     },
   }));
 
-  const initHls = useCallback(() => {
+  const initHls = useCallback((urlOverride?: string) => {
     const video = videoRef.current;
-    if (!video || !hlsUrl) return;
+    const sourceUrl = urlOverride || activeUrlRef.current;
+    if (!video || !sourceUrl) return;
 
     // Cleanup previous instance
     if (hlsRef.current) {
@@ -72,20 +84,39 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
         lowLatencyMode: isLive,
         liveSyncDurationCount: isLive ? 3 : 3,
         liveMaxLatencyDurationCount: isLive ? 10 : Infinity,
+        xhrSetup: (xhr: XMLHttpRequest) => {
+          // Ensure CORS requests work properly
+          xhr.withCredentials = false;
+        },
       });
 
-      hls.loadSource(hlsUrl);
+      hls.loadSource(sourceUrl);
       hls.attachMedia(video);
+      console.log("[HlsPlayer] Loading source:", sourceUrl);
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
         console.error("[HlsPlayer] HLS error:", data.type, data.details);
         if (data.fatal) {
+          // Try fallback URL first (e.g., non-adaptive m3u8)
+          if (!triedFallback) {
+            const fallback = getFallbackUrl(sourceUrl);
+            if (fallback) {
+              console.log("[HlsPlayer] Trying fallback URL:", fallback);
+              hls.destroy();
+              setTriedFallback(true);
+              activeUrlRef.current = fallback;
+              initHls(fallback);
+              return;
+            }
+          }
           if (isLive && retryCount < MAX_RETRIES) {
             setIsReconnecting(true);
             const delay = RETRY_DELAYS[retryCount] || 8000;
             setTimeout(() => {
               hls.destroy();
               setRetryCount(prev => prev + 1);
+              setTriedFallback(false);
+              activeUrlRef.current = hlsUrl; // Reset to original URL
               initHls();
             }, delay);
           } else {
@@ -115,13 +146,15 @@ export const HlsPlayer = forwardRef<HlsPlayerHandle, HlsPlayerProps>(({
       hlsRef.current = hls;
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
       // Safari native HLS
-      video.src = hlsUrl;
+      video.src = sourceUrl;
     } else {
       setHasError(true);
     }
-  }, [hlsUrl, isLive, retryCount]);
+  }, [hlsUrl, isLive, retryCount, triedFallback]);
 
   useEffect(() => {
+    activeUrlRef.current = hlsUrl;
+    setTriedFallback(false);
     initHls();
     return () => {
       if (hlsRef.current) {
