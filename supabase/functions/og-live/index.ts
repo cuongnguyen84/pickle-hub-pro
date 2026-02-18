@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -12,7 +11,7 @@ const SITE_URL = "https://thepicklehub.net";
 const DEFAULT_OG_IMAGE = "https://thepicklehub.net/og-image.png";
 const SITE_NAME = "ThePickleHub";
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
