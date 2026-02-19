@@ -2807,6 +2807,16 @@ export type Database = {
         Args: { _team_id: string }
         Returns: number
       }
+      get_chat_leaderboard: {
+        Args: { _limit?: number; _livestream_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          message_count: number
+          rank: number
+          user_id: string
+        }[]
+      }
       get_org_analytics_summary: {
         Args: { _days?: number; _org_id: string }
         Returns: Json

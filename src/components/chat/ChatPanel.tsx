@@ -26,9 +26,12 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { EmojiPicker } from "./EmojiPicker";
+import { ChatterBadge } from "./ChatterBadge";
+import { ChatLeaderboardPanel } from "./ChatLeaderboardPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
+import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
 
 interface ChatPanelProps {
   livestreamId: string;
@@ -42,6 +45,7 @@ interface ChatMessageItemProps {
   isModerator: boolean;
   isCreator: boolean;
   avatarUrl: string | null;
+  chatterRank: number | null;
   onDelete: (id: string) => void;
   onMute: (userId: string, duration: number) => void;
   onRetry?: (tempId: string, message: string) => void;
@@ -54,6 +58,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   isModerator,
   isCreator,
   avatarUrl,
+  chatterRank,
   onDelete,
   onMute,
   onRetry,
@@ -91,6 +96,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
             {isCreator && (
               <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
             )}
+            <ChatterBadge rank={chatterRank} />
           </span>
           <span className="text-[10px] text-foreground-muted">
             {format(new Date(message.created_at), "HH:mm")}
@@ -196,6 +202,8 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     muteUser,
     loadOlderMessages,
   } = useLiveChat(livestreamId);
+
+  const { leaderboard, getChatterRank, isLoading: leaderboardLoading } = useChatLeaderboard(livestreamId);
 
   const [inputValue, setInputValue] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
@@ -686,6 +694,9 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
         </div>
       )}
 
+      {/* Leaderboard Panel */}
+      <ChatLeaderboardPanel leaderboard={leaderboard} isLoading={leaderboardLoading} />
+
       {/* Messages container - fixed height with internal scroll */}
       <div className="flex-1 relative min-h-0 overflow-hidden">
         <div 
@@ -727,6 +738,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                   isModerator={isModerator}
                   isCreator={creatorCache[message.user_id] ?? false}
                   avatarUrl={avatarCache[message.user_id] ?? message.avatar_url}
+                  chatterRank={getChatterRank(message.user_id)}
                   onDelete={deleteMessage}
                   onMute={muteUser}
                   onRetry={retryMessage}
