@@ -1,4 +1,4 @@
-import { Crown, Medal } from "lucide-react";
+import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatterBadgeProps {
@@ -21,11 +21,8 @@ export function ChatterBadge({ rank, className }: ChatterBadgeProps) {
   }
 
   return (
-    <Medal
-      className={cn("h-3.5 w-3.5 shrink-0", className)}
-      style={{ color: rank === 2 ? "#C0C0C0" : "#CD7F32" }}
-      fill={rank === 2 ? "#C0C0C0" : "#CD7F32"}
-      strokeWidth={1.5}
-    />
+    <span className={cn("text-sm leading-none shrink-0", className)}>
+      {rank === 2 ? "🥈" : "🥉"}
+    </span>
   );
 }
