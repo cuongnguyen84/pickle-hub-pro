@@ -543,7 +543,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     return (
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-xs text-foreground-muted">{messages.filter(m => !m._pending && !m._failed).length}</span>
-        {settings?.slow_mode_seconds && settings.slow_mode_seconds > 0 && (
+        {settings?.slow_mode_seconds != null && settings.slow_mode_seconds > 0 && (
           <span className="text-xs text-foreground-muted flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {settings.slow_mode_seconds}s
@@ -605,7 +605,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
             <MessageCircle className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">{t.chat.title}</span>
             <span className="text-xs text-foreground-muted">{messages.filter(m => !m._pending && !m._failed).length}</span>
-            {settings?.slow_mode_seconds && settings.slow_mode_seconds > 0 && (
+            {settings?.slow_mode_seconds != null && settings.slow_mode_seconds > 0 && (
               <span className="text-xs text-foreground-muted flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {settings.slow_mode_seconds}s
