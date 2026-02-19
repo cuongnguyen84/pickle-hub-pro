@@ -690,6 +690,8 @@ export const en: Translations = {
     pin: "Pin",
     unpin: "Unpin",
     pinnedMessage: "Pinned message",
+    topChatters: "Top chatters",
+    messages: "messages",
   },
   analytics: {
     title: "Analytics",

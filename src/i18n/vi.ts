@@ -685,6 +685,8 @@ export interface Translations {
     pin: string;
     unpin: string;
     pinnedMessage: string;
+    topChatters: string;
+    messages: string;
   };
   analytics: {
     title: string;
@@ -1998,6 +2000,8 @@ export const vi: Translations = {
     pin: "Ghim",
     unpin: "Bỏ ghim",
     pinnedMessage: "Tin nhắn được ghim",
+    topChatters: "Top chat",
+    messages: "tin nhắn",
   },
   analytics: {
     title: "Analytics",
