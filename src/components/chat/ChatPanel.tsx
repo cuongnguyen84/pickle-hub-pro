@@ -90,14 +90,14 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
       />
       
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-medium text-sm text-primary truncate max-w-[120px] inline-flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="font-medium text-sm text-primary truncate max-w-[150px]">
             {message.display_name}
-            {isCreator && (
-              <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
-            )}
-            <ChatterBadge rank={chatterRank} />
           </span>
+          {isCreator && (
+            <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+          )}
+          <ChatterBadge rank={chatterRank} />
           <span className="text-[10px] text-foreground-muted">
             {format(new Date(message.created_at), "HH:mm")}
           </span>
