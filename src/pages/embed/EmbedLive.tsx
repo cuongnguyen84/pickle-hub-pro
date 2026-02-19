@@ -33,7 +33,7 @@ const EmbedLive = () => {
       viewRecorded.current = true;
     };
 
-    const timer = setTimeout(recordView, 3000);
+    const timer = setTimeout(recordView, 1000);
     return () => clearTimeout(timer);
   }, [id, livestream?.organization_id]);
 

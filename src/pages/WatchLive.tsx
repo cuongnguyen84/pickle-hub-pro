@@ -101,8 +101,8 @@ const WatchLive = () => {
       }
     };
 
-    // 3s threshold for view counting
-    const timer = setTimeout(recordView, 3000);
+    // 1s threshold for view counting
+    const timer = setTimeout(recordView, 1000);
     return () => clearTimeout(timer);
   }, [id, user?.id, livestream?.organization_id]);
 
