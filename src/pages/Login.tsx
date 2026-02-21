@@ -177,6 +177,11 @@ const Login = () => {
         } else {
           // Show verification message since email confirmation is required
           setShowVerificationMessage(true);
+          console.log("[GA4] sign_up event fired!", { method: "email" });
+          trackEvent("sign_up", { method: "email" });
+          if (window.dataLayer) {
+            window.dataLayer.push({ event: "sign_up", method: "email" });
+          }
           toast({
             title: t.auth.signupSuccess,
           });
