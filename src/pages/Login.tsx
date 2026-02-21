@@ -78,6 +78,12 @@ const Login = () => {
         const result = await nativeGoogleSignIn();
         
         if (result.session) {
+          // Track sign_up for new native Google users
+          const createdAt = result.session.user?.created_at;
+          if (createdAt && (Date.now() - new Date(createdAt).getTime()) < 60000) {
+            console.log("[GA4] sign_up event fired! (google native)");
+            trackEvent("sign_up", { method: "google" });
+          }
           toast({ title: t.auth.loginSuccess });
           navigate(redirectUrl || "/", { replace: true });
         }

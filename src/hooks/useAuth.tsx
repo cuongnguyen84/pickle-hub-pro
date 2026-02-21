@@ -30,7 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
 
         // Track sign_up for new users (created within last 2 minutes)
-        if (event === "SIGNED_IN" && session?.user && !signupTrackedRef.current) {
+        // Handle both SIGNED_IN and INITIAL_SESSION (OAuth redirects may use either)
+        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user && !signupTrackedRef.current) {
           const createdAt = session.user.created_at;
           if (createdAt) {
             const ageMs = Date.now() - new Date(createdAt).getTime();
