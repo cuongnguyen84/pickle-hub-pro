@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useCallback, forwardRef, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, forwardRef, KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
   MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3,
-  Pin, X as XIcon
+  Pin, X as XIcon, Reply
 } from "lucide-react";
+import { MentionSuggestions, MentionUser, renderMessageWithMentions } from "./MentionSuggestions";
 import { NicknameInput } from "./NicknameInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ interface ChatMessageItemProps {
   onRetry?: (tempId: string, message: string) => void;
   onCopy: (text: string) => void;
   onPin?: (messageId: string) => void;
+  onReply?: (message: ChatMessage) => void;
 }
 
 const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
@@ -64,6 +66,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   onRetry,
   onCopy,
   onPin,
+  onReply,
 }, ref) => {
   const { t } = useI18n();
   const isPending = message._pending;
@@ -114,7 +117,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
             </span>
           )}
         </div>
-        <p className="text-sm text-foreground break-words whitespace-pre-wrap">{message.message}</p>
+        <p className="text-sm text-foreground break-words whitespace-pre-wrap">{renderMessageWithMentions(message.message)}</p>
         
         {/* Retry button for failed messages */}
         {isFailed && onRetry && (
@@ -133,7 +136,17 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
       
       {/* Actions dropdown - only for confirmed messages */}
       {!isPending && !isFailed && (
-        <div className="flex items-start shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-start shrink-0 opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+          {onReply && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => onReply(message)}
+            >
+              <Reply className="h-3 w-3" />
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -213,6 +226,9 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   const [creatorCache, setCreatorCache] = useState<Record<string, boolean>>({});
   const [avatarCache, setAvatarCache] = useState<Record<string, string | null>>({});
   const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -343,6 +359,66 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   // Prevent double-submit with ref
   const isSubmittingRef = useRef(false);
 
+  // Unique mention users from messages
+  const mentionUsers = useMemo<MentionUser[]>(() => {
+    const seen = new Set<string>();
+    return messages
+      .filter((m) => {
+        if (seen.has(m.user_id) || m._pending || m._failed) return false;
+        seen.add(m.user_id);
+        return true;
+      })
+      .map((m) => ({
+        user_id: m.user_id,
+        display_name: m.display_name,
+        avatar_url: avatarCache[m.user_id] ?? m.avatar_url,
+      }));
+  }, [messages, avatarCache]);
+
+  // Filtered mention users for keyboard nav
+  const filteredMentionUsers = useMemo(() => {
+    if (mentionQuery === null) return [];
+    return mentionUsers.filter((u) =>
+      u.display_name.toLowerCase().includes(mentionQuery.toLowerCase())
+    );
+  }, [mentionQuery, mentionUsers]);
+
+  // Detect @ mention in input
+  const handleInputChange = useCallback((value: string) => {
+    setInputValue(value);
+    const cursorPos = inputRef.current?.selectionStart || value.length;
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const atMatch = textBeforeCursor.match(/@([^\s@]*)$/);
+    if (atMatch) {
+      setMentionQuery(atMatch[1]);
+      setMentionIndex(0);
+    } else {
+      setMentionQuery(null);
+    }
+  }, []);
+
+  // Handle mention select
+  const handleMentionSelect = useCallback((mentionUser: MentionUser) => {
+    const cursorPos = inputRef.current?.selectionStart || inputValue.length;
+    const textBeforeCursor = inputValue.slice(0, cursorPos);
+    const atIndex = textBeforeCursor.lastIndexOf("@");
+    if (atIndex === -1) return;
+    const newValue = inputValue.slice(0, atIndex) + `@${mentionUser.display_name} ` + inputValue.slice(cursorPos);
+    setInputValue(newValue);
+    setMentionQuery(null);
+    requestAnimationFrame(() => {
+      const newPos = atIndex + mentionUser.display_name.length + 2;
+      inputRef.current?.setSelectionRange(newPos, newPos);
+      inputRef.current?.focus();
+    });
+  }, [inputValue]);
+
+  // Handle reply
+  const handleReply = useCallback((message: ChatMessage) => {
+    setReplyingTo(message);
+    inputRef.current?.focus();
+  }, []);
+
   // Handle form submit
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -350,13 +426,20 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     // Prevent double submission
     if (isSubmittingRef.current) return;
     
-    const value = inputValue.trim();
+    let value = inputValue.trim();
     if (!value) return;
+
+    // Prefix with @displayName if replying
+    if (replyingTo) {
+      value = `@${replyingTo.display_name} ${value}`;
+      setReplyingTo(null);
+    }
 
     isSubmittingRef.current = true;
 
     // Clear input immediately (optimistic)
     setInputValue("");
+    setMentionQuery(null);
     setAutoScroll(true);
     
     // Scroll to bottom when user sends
@@ -371,10 +454,34 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     setTimeout(() => {
       isSubmittingRef.current = false;
     }, 100);
-  }, [inputValue, sendMessage, scrollToBottom]);
+  }, [inputValue, replyingTo, sendMessage, scrollToBottom]);
 
   // Handle keyboard shortcuts - IME safe
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // Handle mention navigation
+    if (mentionQuery !== null && filteredMentionUsers.length > 0) {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev <= 0 ? filteredMentionUsers.length - 1 : prev - 1));
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev >= filteredMentionUsers.length - 1 ? 0 : prev + 1));
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleMentionSelect(filteredMentionUsers[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       // Don't send during IME composition (e.g., Vietnamese, Chinese, Japanese input)
       if (isComposing || e.nativeEvent.isComposing) {
@@ -744,6 +851,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                   onRetry={retryMessage}
                   onCopy={handleCopy}
                   onPin={isModerator ? handlePinMessage : undefined}
+                  onReply={user ? handleReply : undefined}
                 />
               ))
             )}
@@ -768,44 +876,76 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
       {/* Nickname & Input */}
       {user && <NicknameInput />}
       
-      <div className="p-3 border-t border-border shrink-0">
-        {!user ? (
-          <Link
-            to="/login"
-            className="block text-center text-sm text-primary hover:underline py-2"
-          >
-            {t.chat.signInToChat}
-          </Link>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <EmojiPicker 
-              onEmojiSelect={handleEmojiSelect} 
-              disabled={inputDisabled}
-            />
-            <Input
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onCompositionStart={handleCompositionStart}
-              onCompositionEnd={handleCompositionEnd}
-              placeholder={t.chat.placeholder}
-              disabled={inputDisabled}
-              maxLength={500}
-              className="flex-1 h-9 text-sm"
-              autoComplete="off"
-            />
+      <div className="border-t border-border shrink-0">
+        {/* Reply bar */}
+        {replyingTo && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 border-b border-border">
+            <Reply className="h-3 w-3 text-primary shrink-0" />
+            <span className="text-xs text-foreground-muted truncate flex-1">
+              Trả lời <span className="font-medium text-foreground">{replyingTo.display_name}</span>: {replyingTo.message.slice(0, 50)}{replyingTo.message.length > 50 ? "…" : ""}
+            </span>
             <Button
-              type="button"
+              variant="ghost"
               size="icon"
-              className="h-9 w-9 shrink-0"
-              disabled={!inputValue.trim() || inputDisabled}
-              onClick={() => handleSubmit()}
+              className="h-5 w-5 shrink-0"
+              onClick={() => setReplyingTo(null)}
             >
-              <Send className="h-4 w-4" />
+              <XIcon className="h-3 w-3" />
             </Button>
-          </form>
+          </div>
         )}
+
+        <div className="p-3">
+          {!user ? (
+            <Link
+              to="/login"
+              className="block text-center text-sm text-primary hover:underline py-2"
+            >
+              {t.chat.signInToChat}
+            </Link>
+          ) : (
+            <div className="relative">
+              {/* Mention suggestions */}
+              {mentionQuery !== null && (
+                <MentionSuggestions
+                  query={mentionQuery}
+                  users={mentionUsers}
+                  onSelect={handleMentionSelect}
+                  onClose={() => setMentionQuery(null)}
+                  selectedIndex={mentionIndex}
+                />
+              )}
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <EmojiPicker 
+                  onEmojiSelect={handleEmojiSelect} 
+                  disabled={inputDisabled}
+                />
+                <Input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onCompositionStart={handleCompositionStart}
+                  onCompositionEnd={handleCompositionEnd}
+                  placeholder={replyingTo ? `Trả lời ${replyingTo.display_name}...` : t.chat.placeholder}
+                  disabled={inputDisabled}
+                  maxLength={500}
+                  className="flex-1 h-9 text-sm"
+                  autoComplete="off"
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  disabled={!inputValue.trim() || inputDisabled}
+                  onClick={() => handleSubmit()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
