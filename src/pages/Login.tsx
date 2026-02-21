@@ -78,13 +78,6 @@ const Login = () => {
         const result = await nativeGoogleSignIn();
         
         if (result.session) {
-          // Track sign_up for new Google users
-          const isNewUser = result.session.user?.created_at && 
-            (Date.now() - new Date(result.session.user.created_at).getTime()) < 60000;
-          if (isNewUser) {
-            console.log("[GA4] sign_up event (google native)");
-            trackEvent("sign_up", { method: "google" });
-          }
           toast({ title: t.auth.loginSuccess });
           navigate(redirectUrl || "/", { replace: true });
         }
@@ -184,15 +177,6 @@ const Login = () => {
         } else {
           // Show verification message since email confirmation is required
           setShowVerificationMessage(true);
-          console.log("[GA4] sign_up event firing", typeof window.gtag);
-          trackEvent("sign_up", { method: "email" });
-          // Fallback: push directly to dataLayer in case gtag not ready
-          if (window.dataLayer) {
-            window.dataLayer.push({
-              event: "sign_up",
-              method: "email",
-            });
-          }
           toast({
             title: t.auth.signupSuccess,
           });
