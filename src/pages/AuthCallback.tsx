@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/utils/ga";
 import { Loader2 } from "lucide-react";
 
 /**
@@ -16,7 +17,6 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the session from URL hash (Supabase puts tokens there)
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -26,8 +26,14 @@ const AuthCallback = () => {
         }
 
         if (session) {
-          // Successfully authenticated
-          // Get redirect path from query params or default to home
+          // Track sign_up for new OAuth users (created within last 60s)
+          const createdAt = session.user?.created_at;
+          if (createdAt && (Date.now() - new Date(createdAt).getTime()) < 60000) {
+            const provider = session.user?.app_metadata?.provider || "oauth";
+            console.log("[GA4] sign_up event (oauth callback)", provider);
+            trackEvent("sign_up", { method: provider });
+          }
+
           const redirectTo = searchParams.get("redirect") || "/";
           navigate(redirectTo, { replace: true });
         } else {
