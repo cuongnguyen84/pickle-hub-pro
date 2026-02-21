@@ -1,107 +1,79 @@
 
 
-# Chat Leaderboard & Top Chatter Badges
+# Tính năng @ Mention và Trả lời Chat trong Livestream
 
-## Tong quan
+## Tổng quan
 
-Xay dung he thong xep hang nguoi chat tich cuc nhat trong moi buoi livestream, kem theo badge dac biet cho top 1, 2, 3. Dieu nay se tang tuong tac va tao dong luc cho nguoi xem tham gia chat nhieu hon.
+Thêm 2 tính năng vào khung chat livestream:
+1. **@ Mention**: Gõ `@` để tag tên người dùng trong chat, hiển thị danh sách gợi ý
+2. **Nút trả lời (Reply)**: Nút nhỏ bên cạnh mỗi dòng chat, khi nhấn sẽ tạo trạng thái "đang trả lời" phía trên ô nhập tin nhắn
 
-## Thiet ke Badge
+## Chi tiết thiết kế
 
-| Hang | Badge | Mau sac | Y nghia |
-|------|-------|---------|---------|
-| Top 1 | Crown (vuong mien) | Vang (#FFD700) | "Chat King/Queen" |
-| Top 2 | Medal (huy chuong) | Bac (#C0C0C0) | Runner-up |
-| Top 3 | Medal (huy chuong) | Dong (#CD7F32) | Third place |
+### 1. @ Mention
 
-Badge se hien thi nho gon ben canh ten nguoi dung trong moi tin nhan chat.
+- Khi user gõ `@` trong ô chat, hiển thị popup danh sách người dùng đang chat (lấy từ danh sách `messages` hiện có, dedupe theo `user_id`)
+- Popup hiện phía trên ô input, lọc theo ký tự sau `@`
+- Chọn user sẽ chèn `@displayName ` vào ô chat
+- Trong nội dung tin nhắn, phần `@tên` được highlight bằng màu primary, font bold
+- Không cần thay đổi database -- mention chỉ là text thuần trong message
 
-## Pham vi tinh diem
+### 2. Nút trả lời (Reply)
 
-- Dem so tin nhan **trong moi buoi livestream** (per-livestream leaderboard)
-- Chi tinh tin nhan chua bi xoa
-- Cap nhat realtime khi co tin nhan moi
+- Thêm nút Reply icon nhỏ (icon `Reply`) bên cạnh nút `...` (MoreHorizontal) trên mỗi dòng chat, hiện khi hover
+- Khi nhấn Reply:
+  - Hiển thị thanh "Đang trả lời [tên]: [nội dung rút gọn]" phía trên ô input, có nút X để hủy
+  - Tự động focus vào ô input
+  - Khi gửi, tin nhắn sẽ có prefix `@displayName ` ở đầu (reply thuần text, không cần DB schema mới)
+- Giữ nguyên layout chat hiện tại, nút reply nằm cùng hàng với dropdown `...`
 
-## Cac thay doi can thuc hien
+## Kế hoạch kỹ thuật
 
-### 1. Database - Tao RPC aggregation function
+### File cần tạo mới
 
-Tao mot database function `get_chat_leaderboard(livestream_id)` de tra ve top chatters theo so tin nhan. Su dung server-side aggregation pattern (khong fetch raw data ve client).
+**`src/components/chat/MentionSuggestions.tsx`**
+- Component popup hiển thị danh sách user gợi ý khi gõ `@`
+- Props: `query` (text sau @), `users` (danh sách unique users từ messages), `onSelect`, `onClose`
+- Hiển thị avatar + tên, lọc theo query
+- Hỗ trợ keyboard navigation (Up/Down/Enter/Escape)
+- Positioned absolute phía trên input
 
-### 2. Hook moi: `useChatLeaderboard`
+### File cần chỉnh sửa
 
-- Goi RPC `get_chat_leaderboard` khi mount
-- Luu cache top 3 user IDs vao mot Map de tra cuu nhanh O(1)
-- Tu dong cap nhat moi 30 giay hoac khi co tin nhan moi (de giam tai server)
-- Export ham `getChatterRank(userId)` tra ve 1, 2, 3, hoac null
+**`src/components/chat/ChatPanel.tsx`**
 
-### 3. Cap nhat ChatPanel
+1. **ChatMessageItem component** (dòng 56-183):
+   - Thêm prop `onReply: (message: ChatMessage) => void`
+   - Thêm nút Reply (icon `Reply` từ lucide) bên cạnh DropdownMenu trigger, cùng nằm trong div `opacity-0 group-hover:opacity-100`
+   - Nút chỉ hiện cho tin nhắn đã xác nhận (không pending/failed)
 
-- Import `useChatLeaderboard` trong `ChatPanel`
-- Truyen rank xuong `ChatMessageItem`
-- Hien thi badge icon (Crown/Medal) ben canh ten nguoi chat voi mau tuong ung
-- Badge hien thi nho (14x14px), nam giua ten va timestamp
+2. **ChatPanel component** (dòng 186+):
+   - Thêm state `replyingTo: ChatMessage | null` để track tin nhắn đang reply
+   - Thêm state và logic cho mention suggestions:
+     - Detect `@` trong input, extract query text
+     - Build unique users list từ messages
+     - Hiển thị `MentionSuggestions` khi đang gõ mention
+   - Khu vực input (dòng 771-808):
+     - Thêm thanh "Replying to..." phía trên form khi `replyingTo !== null`
+     - Khi submit reply: tự động prefix `@displayName ` vào tin nhắn
+     - Render `MentionSuggestions` component phía trên input
 
-### 4. Leaderboard Panel (tuy chon)
+3. **Render message content** (dòng 117):
+   - Parse và highlight các `@mention` trong text tin nhắn
+   - Tạo helper function `renderMessageWithMentions()` thay thế text thuần bằng JSX có highlight
 
-- Them mot khu vuc nho co the mo rong (collapsible) o dau khung chat
-- Hien thi top 5-10 chatters voi avatar, ten, so tin nhan
-- Top 3 co highlight dac biet
+**`src/components/chat/ChatMessageItem` interface** (dòng 43-54):
+   - Thêm `onReply` prop
 
-### 5. I18n
+### Không thay đổi
 
-- Them cac key dich cho "Top chatter", "messages" trong `en.ts` va `vi.ts`
+- Database schema: mention và reply đều là text thuần, không cần bảng mới
+- `useLiveChat.ts`: không cần thay đổi, `sendMessage` vẫn nhận string
+- Broadcast/realtime logic: giữ nguyên
 
-## Luu do xu ly
+### Thứ tự triển khai
 
-```text
-User gui tin nhan
-       |
-       v
-chat_messages table (INSERT)
-       |
-       v
-useChatLeaderboard (polling moi 30s)
-       |
-       v
-get_chat_leaderboard RPC
-  (GROUP BY user_id, COUNT(*))
-       |
-       v
-Top 3 Map -> ChatMessageItem
-       |
-       v
-Hien thi badge Crown/Medal
-```
-
-## Chi tiet ky thuat
-
-### Database Function (SQL)
-
-```sql
-CREATE FUNCTION get_chat_leaderboard(_livestream_id uuid, _limit int DEFAULT 10)
-RETURNS TABLE(user_id uuid, display_name text, avatar_url text, message_count bigint, rank bigint)
--- GROUP BY user_id on chat_messages
--- ORDER BY count DESC
--- LIMIT _limit
-```
-
-### Badge rendering trong ChatMessageItem
-
-```text
-[Avatar] TenNguoiDung [Crown icon vang] 14:30
-          Noi dung tin nhan...
-```
-
-- Top 1: Crown icon mau vang
-- Top 2: Medal icon mau bac  
-- Top 3: Medal icon mau dong
-- Cac nguoi khac: khong co badge
-
-### Performance
-
-- Su dung polling 30s thay vi realtime subscription de giam tai
-- Cache ket qua trong React state, chi fetch lai khi can
-- RPC chay tren server, chi tra ve 10 records (khong fetch tat ca messages)
-- Gioi han batch size khi fetch avatar/profile (da co san pattern)
+1. Tạo `MentionSuggestions.tsx`
+2. Cập nhật `ChatMessageItem` -- thêm nút Reply + highlight @mention trong nội dung
+3. Cập nhật `ChatPanel` -- thêm state reply, mention logic, UI thanh reply
 
