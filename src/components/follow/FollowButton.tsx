@@ -30,7 +30,7 @@ export const FollowButton = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [isOptimistic, setIsOptimistic] = useState<boolean | null>(null);
-  const { requestPermission } = usePushNotifications();
+  // Push permission is now requested automatically on app start
 
   const { data: isFollowing, isLoading } = useFollow(targetType, targetId, user?.id);
   const toggleFollow = useToggleFollow();
@@ -55,10 +55,7 @@ export const FollowButton = ({
         isCurrentlyFollowing: displayFollowing,
       });
 
-      // After first follow, request push notification permission (deferred)
-      if (!displayFollowing) {
-        requestPermission();
-      }
+      // Push permission is now requested automatically on app start
     } catch (error) {
       // Revert optimistic update on error
       setIsOptimistic(null);

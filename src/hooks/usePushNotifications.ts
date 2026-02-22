@@ -23,6 +23,29 @@ export const usePushNotifications = () => {
   const navigate = useNavigate();
   const registeredRef = useRef(false);
 
+  // Eager push init - request permission & register immediately on native app start
+  useEffect(() => {
+    if (!isNativeApp()) return;
+
+    console.log('🚀 INIT PUSH');
+
+    PushNotifications.requestPermissions().then(result => {
+      console.log('Permission result:', result);
+
+      if (result.receive === 'granted') {
+        PushNotifications.register();
+      }
+    });
+
+    PushNotifications.addListener('registration', token => {
+      console.log('🔥 FCM TOKEN:', token.value);
+    });
+
+    PushNotifications.addListener('registrationError', err => {
+      console.error('❌ Registration error:', err);
+    });
+  }, []);
+
   // Save token to database
   const saveToken = useCallback(async (token: string) => {
     if (!user?.id) return;
@@ -65,7 +88,6 @@ export const usePushNotifications = () => {
     switch (entityType) {
       case 'organization':
         if (relatedId) {
-          // Livestream notification - go to livestream
           navigate(`/livestream/${relatedId}`);
         }
         break;
@@ -75,27 +97,21 @@ export const usePushNotifications = () => {
         }
         break;
       default:
-        // Fallback to notifications page
         navigate('/notifications');
     }
   }, [navigate]);
 
-  // Register push notification listeners
+  // Register push notification listeners (for saving token + handling notifications)
   useEffect(() => {
     if (!isNativeApp() || !user?.id) return;
 
     let cleanup: (() => void) | undefined;
 
     const setupListeners = async () => {
-      // Listen for registration success
+      // Listen for registration success - save token to DB
       const regListener = await PushNotifications.addListener('registration', (token) => {
-        console.log('[Push] Registration token:', token.value);
+        console.log('[Push] Registration token (saving):', token.value);
         saveToken(token.value);
-      });
-
-      // Listen for registration errors
-      const regErrorListener = await PushNotifications.addListener('registrationError', (error) => {
-        console.error('[Push] Registration error:', error);
       });
 
       // Listen for notifications received in foreground
@@ -103,7 +119,6 @@ export const usePushNotifications = () => {
         'pushNotificationReceived',
         (notification) => {
           console.log('[Push] Foreground notification:', notification);
-          // Show a toast for foreground notifications
           toast(notification.title || 'Thông báo mới', {
             description: notification.body,
             action: notification.data?.entity_type
@@ -116,7 +131,7 @@ export const usePushNotifications = () => {
         }
       );
 
-      // Listen for notification taps (app opened from notification)
+      // Listen for notification taps
       const tapListener = await PushNotifications.addListener(
         'pushNotificationActionPerformed',
         (action) => {
@@ -127,7 +142,6 @@ export const usePushNotifications = () => {
 
       cleanup = () => {
         regListener.remove();
-        regErrorListener.remove();
         foregroundListener.remove();
         tapListener.remove();
       };
@@ -139,74 +153,6 @@ export const usePushNotifications = () => {
       cleanup?.();
     };
   }, [user?.id, saveToken, handleNotificationTap]);
-
-  /**
-   * Request push notification permission
-   * Call this at a meaningful moment (e.g., after user follows something)
-   * to avoid Apple rejection for premature permission requests
-   */
-  const requestPermission = useCallback(async () => {
-    if (!isNativeApp() || permissionRequested) return false;
-
-    try {
-      const permStatus = await PushNotifications.checkPermissions();
-      console.log('[Push] Current permission:', permStatus.receive);
-
-      if (permStatus.receive === 'granted') {
-        // Already granted, just register
-        if (!registeredRef.current) {
-          await PushNotifications.register();
-          registeredRef.current = true;
-        }
-        return true;
-      }
-
-      if (permStatus.receive === 'denied') {
-        console.log('[Push] Permission denied previously');
-        return false;
-      }
-
-      // Request permission
-      permissionRequested = true;
-      const result = await PushNotifications.requestPermissions();
-      console.log('[Push] Permission result:', result.receive);
-
-      if (result.receive === 'granted') {
-        await PushNotifications.register();
-        registeredRef.current = true;
-        return true;
-      }
-
-      return false;
-    } catch (e) {
-      console.error('[Push] Permission request error:', e);
-      return false;
-    }
-  }, []);
-
-  /**
-   * Auto-register if permission was previously granted
-   * Safe to call on app start
-   */
-  const autoRegisterIfGranted = useCallback(async () => {
-    if (!isNativeApp() || !user?.id || registeredRef.current) return;
-
-    try {
-      const permStatus = await PushNotifications.checkPermissions();
-      if (permStatus.receive === 'granted') {
-        console.log('[Push] Auto-registering (permission previously granted)');
-        await PushNotifications.register();
-        registeredRef.current = true;
-      }
-    } catch (e) {
-      console.error('[Push] Auto-register error:', e);
-    }
-  }, [user?.id]);
-
-  // Auto-register on mount if permission already granted
-  useEffect(() => {
-    autoRegisterIfGranted();
-  }, [autoRegisterIfGranted]);
 
   /**
    * Remove token when user logs out
@@ -226,7 +172,6 @@ export const usePushNotifications = () => {
   }, [user?.id]);
 
   return {
-    requestPermission,
     removeToken,
   };
 };
