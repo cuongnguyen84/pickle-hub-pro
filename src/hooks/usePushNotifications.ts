@@ -15,43 +15,24 @@ import { isNativeApp, getPlatform } from '@/lib/capacitor-utils';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-// Track if we've already requested permission this session
-let permissionRequested = false;
+// Store the latest token so we can save it once user is available
+let pendingToken: string | null = null;
 
 export const usePushNotifications = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const registeredRef = useRef(false);
 
-  // Eager push init - request permission & register immediately on native app start
-  useEffect(() => {
-    if (!isNativeApp()) return;
-
-    console.log('🚀 INIT PUSH');
-
-    PushNotifications.requestPermissions().then(result => {
-      console.log('Permission result:', result);
-
-      if (result.receive === 'granted') {
-        PushNotifications.register();
-      }
-    });
-
-    PushNotifications.addListener('registration', token => {
-      console.log('🔥 FCM TOKEN:', token.value);
-    });
-
-    PushNotifications.addListener('registrationError', err => {
-      console.error('❌ Registration error:', err);
-    });
-  }, []);
-
   // Save token to database
   const saveToken = useCallback(async (token: string) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('[Push] No user yet, storing pending token');
+      pendingToken = token;
+      return;
+    }
 
     const platform = getPlatform();
-    console.log('[Push] Saving token for platform:', platform);
+    console.log('[Push] Saving token for platform:', platform, 'user:', user.id);
 
     try {
       const { error } = await supabase
@@ -69,11 +50,20 @@ export const usePushNotifications = () => {
         console.error('[Push] Error saving token:', error);
       } else {
         console.log('[Push] Token saved successfully');
+        pendingToken = null;
       }
     } catch (e) {
       console.error('[Push] Exception saving token:', e);
     }
   }, [user?.id]);
+
+  // When user becomes available, save any pending token
+  useEffect(() => {
+    if (user?.id && pendingToken) {
+      console.log('[Push] User now available, saving pending token');
+      saveToken(pendingToken);
+    }
+  }, [user?.id, saveToken]);
 
   // Handle notification tap - navigate to relevant page
   const handleNotificationTap = useCallback((data: Record<string, unknown>) => {
@@ -101,21 +91,30 @@ export const usePushNotifications = () => {
     }
   }, [navigate]);
 
-  // Register push notification listeners (for saving token + handling notifications)
+  // Single setup: request permission, register, and listen for all events
   useEffect(() => {
-    if (!isNativeApp() || !user?.id) return;
+    if (!isNativeApp() || registeredRef.current) return;
+    registeredRef.current = true;
 
-    let cleanup: (() => void) | undefined;
+    console.log('🚀 INIT PUSH');
 
-    const setupListeners = async () => {
-      // Listen for registration success - save token to DB
-      const regListener = await PushNotifications.addListener('registration', (token) => {
-        console.log('[Push] Registration token (saving):', token.value);
+    let regListener: { remove: () => void } | undefined;
+    let errListener: { remove: () => void } | undefined;
+    let foregroundListener: { remove: () => void } | undefined;
+    let tapListener: { remove: () => void } | undefined;
+
+    const setup = async () => {
+      // Set up ALL listeners BEFORE calling register()
+      regListener = await PushNotifications.addListener('registration', (token) => {
+        console.log('🔥 FCM TOKEN:', token.value);
         saveToken(token.value);
       });
 
-      // Listen for notifications received in foreground
-      const foregroundListener = await PushNotifications.addListener(
+      errListener = await PushNotifications.addListener('registrationError', (err) => {
+        console.error('❌ Registration error:', err);
+      });
+
+      foregroundListener = await PushNotifications.addListener(
         'pushNotificationReceived',
         (notification) => {
           console.log('[Push] Foreground notification:', notification);
@@ -131,8 +130,7 @@ export const usePushNotifications = () => {
         }
       );
 
-      // Listen for notification taps
-      const tapListener = await PushNotifications.addListener(
+      tapListener = await PushNotifications.addListener(
         'pushNotificationActionPerformed',
         (action) => {
           console.log('[Push] Notification action:', action);
@@ -140,19 +138,24 @@ export const usePushNotifications = () => {
         }
       );
 
-      cleanup = () => {
-        regListener.remove();
-        foregroundListener.remove();
-        tapListener.remove();
-      };
+      // NOW request permission and register
+      const result = await PushNotifications.requestPermissions();
+      console.log('Permission result:', result);
+
+      if (result.receive === 'granted') {
+        PushNotifications.register();
+      }
     };
 
-    setupListeners();
+    setup();
 
     return () => {
-      cleanup?.();
+      regListener?.remove();
+      errListener?.remove();
+      foregroundListener?.remove();
+      tapListener?.remove();
     };
-  }, [user?.id, saveToken, handleNotificationTap]);
+  }, [saveToken, handleNotificationTap]);
 
   /**
    * Remove token when user logs out
