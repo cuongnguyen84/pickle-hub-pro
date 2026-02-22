@@ -183,11 +183,29 @@ const Login = () => {
         } else {
           // Show verification message since email confirmation is required
           setShowVerificationMessage(true);
-          console.log("[GA4] sign_up event fired!", { method: "email" });
+          
+          // GA4 sign_up tracking - multiple methods for reliability
+          console.log("[GA4] === SIGN_UP EVENT START ===");
+          console.log("[GA4] gtag available:", typeof window.gtag === 'function');
+          console.log("[GA4] dataLayer available:", !!window.dataLayer);
+          
+          // Method 1: trackEvent helper
           trackEvent("sign_up", { method: "email" });
+          
+          // Method 2: Direct gtag call
+          if (typeof window.gtag === 'function') {
+            window.gtag('event', 'sign_up', { method: 'email' });
+            console.log("[GA4] sign_up fired via gtag directly");
+          }
+          
+          // Method 3: dataLayer push
           if (window.dataLayer) {
             window.dataLayer.push({ event: "sign_up", method: "email" });
+            console.log("[GA4] sign_up pushed to dataLayer");
           }
+          
+          console.log("[GA4] === SIGN_UP EVENT END ===");
+          
           toast({
             title: t.auth.signupSuccess,
           });
