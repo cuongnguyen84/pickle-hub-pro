@@ -8,6 +8,7 @@ import { useFollow, useToggleFollow } from "@/hooks/useFollowData";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getLoginUrl } from "@/lib/auth-config";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface FollowButtonProps {
   targetType: "organization" | "tournament";
@@ -29,6 +30,7 @@ export const FollowButton = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [isOptimistic, setIsOptimistic] = useState<boolean | null>(null);
+  const { requestPermission } = usePushNotifications();
 
   const { data: isFollowing, isLoading } = useFollow(targetType, targetId, user?.id);
   const toggleFollow = useToggleFollow();
@@ -52,6 +54,11 @@ export const FollowButton = ({
         userId: user.id,
         isCurrentlyFollowing: displayFollowing,
       });
+
+      // After first follow, request push notification permission (deferred)
+      if (!displayFollowing) {
+        requestPermission();
+      }
     } catch (error) {
       // Revert optimistic update on error
       setIsOptimistic(null);
