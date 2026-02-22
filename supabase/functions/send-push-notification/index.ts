@@ -13,6 +13,87 @@ interface PushPayload {
   data?: Record<string, string>;
 }
 
+// --- FCM V1 Auth: Generate OAuth2 access token from service account ---
+
+function base64url(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function pemToArrayBuffer(pem: string): ArrayBuffer {
+  const b64 = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\n/g, "");
+  const binary = atob(b64);
+  const buf = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    buf[i] = binary.charCodeAt(i);
+  }
+  return buf.buffer;
+}
+
+async function createSignedJwt(
+  serviceAccount: { client_email: string; private_key: string; token_uri: string }
+): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: "RS256", typ: "JWT" };
+  const payload = {
+    iss: serviceAccount.client_email,
+    sub: serviceAccount.client_email,
+    aud: serviceAccount.token_uri,
+    iat: now,
+    exp: now + 3600,
+    scope: "https://www.googleapis.com/auth/firebase.messaging",
+  };
+
+  const encodedHeader = base64url(new TextEncoder().encode(JSON.stringify(header)));
+  const encodedPayload = base64url(new TextEncoder().encode(JSON.stringify(payload)));
+  const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+
+  const keyData = pemToArrayBuffer(serviceAccount.private_key);
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8",
+    keyData,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    cryptoKey,
+    new TextEncoder().encode(unsignedToken)
+  );
+
+  return `${unsignedToken}.${base64url(signature)}`;
+}
+
+async function getAccessToken(serviceAccount: {
+  client_email: string;
+  private_key: string;
+  token_uri: string;
+}): Promise<string> {
+  const jwt = await createSignedJwt(serviceAccount);
+
+  const resp = await fetch(serviceAccount.token_uri, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+  });
+
+  const data = await resp.json();
+  if (!resp.ok) {
+    console.error("OAuth token error:", data);
+    throw new Error(`Failed to get access token: ${data.error_description || data.error}`);
+  }
+  return data.access_token;
+}
+
+// --- Main handler ---
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -22,7 +103,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify caller is authenticated (internal call or admin)
+    // Verify caller is authenticated
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -30,6 +111,18 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Parse FCM service account
+    const fcmJsonStr = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON");
+    if (!fcmJsonStr) {
+      return new Response(
+        JSON.stringify({ error: "FCM_SERVICE_ACCOUNT_JSON not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const serviceAccount = JSON.parse(fcmJsonStr);
+    const projectId = serviceAccount.project_id;
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
@@ -64,68 +157,45 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Group tokens by platform
-    const iosTokens = tokens.filter((t) => t.platform === "ios").map((t) => t.token);
-    const androidTokens = tokens.filter((t) => t.platform === "android").map((t) => t.token);
+    // Get OAuth2 access token for FCM V1 API
+    const accessToken = await getAccessToken(serviceAccount);
+    const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
     let totalSent = 0;
     const errors: string[] = [];
 
-    // Send to FCM (Android) if FCM_SERVER_KEY is configured
-    const fcmServerKey = Deno.env.get("FCM_SERVER_KEY");
-    if (androidTokens.length > 0 && fcmServerKey) {
+    // Send to each token using FCM V1 API
+    for (const { token } of tokens) {
       try {
-        const fcmResponse = await fetch("https://fcm.googleapis.com/fcm/send", {
+        const message: Record<string, unknown> = {
+          message: {
+            token,
+            notification: { title, body },
+            data: data || {},
+          },
+        };
+
+        const fcmResponse = await fetch(fcmUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `key=${fcmServerKey}`,
+            Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({
-            registration_ids: androidTokens,
-            notification: { title, body },
-            data: data || {},
-          }),
+          body: JSON.stringify(message),
         });
-        const fcmResult = await fcmResponse.json();
-        totalSent += fcmResult.success || 0;
-        console.log("FCM result:", fcmResult);
-      } catch (e) {
-        console.error("FCM error:", e);
-        errors.push(`FCM: ${e.message}`);
-      }
-    }
 
-    // For iOS (APNs), we'll need APNs credentials
-    // For now, log tokens that would be sent
-    if (iosTokens.length > 0) {
-      console.log(`[APNs] Would send to ${iosTokens.length} iOS devices:`, { title, body, data });
-      // APNs integration requires:
-      // 1. APNs Auth Key (.p8) or certificates
-      // 2. Team ID, Key ID, Bundle ID
-      // TODO: Implement APNs sending when credentials are configured
-      
-      // For now, also try FCM for iOS (if using Firebase for iOS too)
-      if (fcmServerKey) {
-        try {
-          const fcmResponse = await fetch("https://fcm.googleapis.com/fcm/send", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `key=${fcmServerKey}`,
-            },
-            body: JSON.stringify({
-              registration_ids: iosTokens,
-              notification: { title, body },
-              data: data || {},
-            }),
-          });
-          const fcmResult = await fcmResponse.json();
-          totalSent += fcmResult.success || 0;
-        } catch (e) {
-          console.error("FCM iOS error:", e);
-          errors.push(`FCM iOS: ${e.message}`);
+        const result = await fcmResponse.json();
+
+        if (fcmResponse.ok) {
+          totalSent++;
+          console.log(`[FCM V1] Sent to token ${token.substring(0, 10)}...`);
+        } else {
+          console.error(`[FCM V1] Error for token ${token.substring(0, 10)}...:`, result);
+          errors.push(`Token ${token.substring(0, 10)}...: ${result.error?.message || "Unknown error"}`);
         }
+      } catch (e) {
+        console.error(`[FCM V1] Exception:`, e);
+        errors.push(`Token ${token.substring(0, 10)}...: ${e.message}`);
       }
     }
 
@@ -133,8 +203,6 @@ Deno.serve(async (req) => {
       JSON.stringify({
         sent: totalSent,
         total_tokens: tokens.length,
-        ios_tokens: iosTokens.length,
-        android_tokens: androidTokens.length,
         errors: errors.length > 0 ? errors : undefined,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
