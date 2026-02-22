@@ -92,29 +92,30 @@ export const usePushNotifications = () => {
   }, [navigate]);
 
   // Single setup: request permission, register, and listen for all events
+  // Use ref to store saveToken so listeners always use latest version
+  const saveTokenRef = useRef(saveToken);
+  saveTokenRef.current = saveToken;
+  const handleTapRef = useRef(handleNotificationTap);
+  handleTapRef.current = handleNotificationTap;
+
   useEffect(() => {
     if (!isNativeApp() || registeredRef.current) return;
     registeredRef.current = true;
 
     console.log('🚀 INIT PUSH');
 
-    let regListener: { remove: () => void } | undefined;
-    let errListener: { remove: () => void } | undefined;
-    let foregroundListener: { remove: () => void } | undefined;
-    let tapListener: { remove: () => void } | undefined;
-
     const setup = async () => {
       // Set up ALL listeners BEFORE calling register()
-      regListener = await PushNotifications.addListener('registration', (token) => {
+      await PushNotifications.addListener('registration', (token) => {
         console.log('🔥 FCM TOKEN:', token.value);
-        saveToken(token.value);
+        saveTokenRef.current(token.value);
       });
 
-      errListener = await PushNotifications.addListener('registrationError', (err) => {
+      await PushNotifications.addListener('registrationError', (err) => {
         console.error('❌ Registration error:', err);
       });
 
-      foregroundListener = await PushNotifications.addListener(
+      await PushNotifications.addListener(
         'pushNotificationReceived',
         (notification) => {
           console.log('[Push] Foreground notification:', notification);
@@ -123,18 +124,18 @@ export const usePushNotifications = () => {
             action: notification.data?.entity_type
               ? {
                   label: 'Xem',
-                  onClick: () => handleNotificationTap(notification.data || {}),
+                  onClick: () => handleTapRef.current(notification.data || {}),
                 }
               : undefined,
           });
         }
       );
 
-      tapListener = await PushNotifications.addListener(
+      await PushNotifications.addListener(
         'pushNotificationActionPerformed',
         (action) => {
           console.log('[Push] Notification action:', action);
-          handleNotificationTap(action.notification.data || {});
+          handleTapRef.current(action.notification.data || {});
         }
       );
 
@@ -142,20 +143,15 @@ export const usePushNotifications = () => {
       const result = await PushNotifications.requestPermissions();
       console.log('Permission result:', result);
 
-      if (result.receive === 'granted') {
-        PushNotifications.register();
-      }
+      // Always call register() - native side may have granted permission
+      // even if JS side reports denied (e.g. Firebase auto-registration)
+      PushNotifications.register();
     };
 
     setup();
 
-    return () => {
-      regListener?.remove();
-      errListener?.remove();
-      foregroundListener?.remove();
-      tapListener?.remove();
-    };
-  }, [saveToken, handleNotificationTap]);
+    // Do NOT remove listeners on cleanup - they must persist for the app lifetime
+  }, []);
 
   /**
    * Remove token when user logs out
