@@ -22,6 +22,8 @@ export const usePushNotifications = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const registeredRef = useRef(false);
+  const saveTokenRef = useRef<(token: string) => Promise<void>>(null as any);
+  const handleTapRef = useRef<(data: Record<string, unknown>) => void>(null as any);
 
   // Save token to database
   const saveToken = useCallback(async (token: string) => {
@@ -91,11 +93,8 @@ export const usePushNotifications = () => {
     }
   }, [navigate]);
 
-  // Single setup: request permission, register, and listen for all events
-  // Use ref to store saveToken so listeners always use latest version
-  const saveTokenRef = useRef(saveToken);
+  // Keep refs in sync with latest callbacks
   saveTokenRef.current = saveToken;
-  const handleTapRef = useRef(handleNotificationTap);
   handleTapRef.current = handleNotificationTap;
 
   useEffect(() => {
