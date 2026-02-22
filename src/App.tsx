@@ -8,6 +8,7 @@ import { I18nProvider } from "@/i18n";
 import { lazy, Suspense, Component, ReactNode } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
@@ -135,6 +136,12 @@ const DeepLinkInitializer = () => {
   return null;
 };
 
+// Component to initialize push notifications
+const PushNotificationInitializer = () => {
+  usePushNotifications();
+  return null;
+};
+
 // Component to track page views for GA4
 const PageTracker = () => {
   usePageTracking();
@@ -150,6 +157,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <DeepLinkInitializer />
+            <PushNotificationInitializer />
             <PageTracker />
             <ChunkErrorBoundary>
               <Suspense fallback={<PageLoader />}>

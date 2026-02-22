@@ -3,12 +3,12 @@
     "apps": [],
     "details": [
       {
-        "appIDs": ["TEAM_ID.net.thepicklehub.app"],
-        "paths": ["/auth/callback", "/auth/callback/*"]
+        "appIDs": ["5S49Q7AB7M.net.thepicklehub.app"],
+        "paths": ["/auth/callback", "/auth/callback/*", "/live/*", "/livestream/*", "/watch/*", "/tournament/*", "/tools/*"]
       }
     ]
   },
   "webcredentials": {
-    "apps": ["TEAM_ID.net.thepicklehub.app"]
+    "apps": ["5S49Q7AB7M.net.thepicklehub.app"]
   }
 }
