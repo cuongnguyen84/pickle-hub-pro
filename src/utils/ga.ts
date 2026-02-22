@@ -31,7 +31,13 @@ export const trackPageView = (path?: string): void => {
  */
 export const trackEvent = (eventName: string, params?: Record<string, unknown>): void => {
   if (typeof window.gtag === 'function') {
-    window.gtag('event', eventName, params);
+    window.gtag('event', eventName, {
+      ...params,
+      transport_type: 'beacon',
+    });
+    console.log(`[GA4] Event sent: ${eventName}`, params);
+  } else {
+    console.warn('[GA4] gtag not available, event not sent:', eventName);
   }
 };
 
