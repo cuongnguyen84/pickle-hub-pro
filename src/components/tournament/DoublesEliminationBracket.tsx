@@ -10,6 +10,7 @@ import { Match, Team, useDoublesElimination } from '@/hooks/useDoublesEliminatio
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useI18n } from '@/i18n';
 
 // Bracket connector component - draws the bracket lines like in traditional tournament brackets
 // Pattern: vertical line on left side of pair, horizontal line extending to next round
@@ -43,6 +44,8 @@ const DoublesEliminationBracket = ({
 }: DoublesEliminationBracketProps) => {
   const { checkAndAssignR3, checkAndGeneratePlayoff } = useDoublesElimination();
   const { toast } = useToast();
+  const { t } = useI18n();
+  const b = t.doublesElimination.bracket;
   const [isAssigningR3, setIsAssigningR3] = useState(false);
   const [isGeneratingPlayoff, setIsGeneratingPlayoff] = useState(false);
   
@@ -170,8 +173,8 @@ const DoublesEliminationBracket = ({
         const result = await checkAndGeneratePlayoff(tournamentId);
         if (result.generated) {
           toast({ 
-            title: "Đã tạo playoff", 
-            description: "Lịch thi đấu vòng playoff đã được tạo với seeding đúng." 
+            title: b.playoffCreated, 
+            description: b.playoffCreatedDesc 
           });
           onScoreUpdated?.(); // Reload to show new playoff matches
         }
@@ -187,29 +190,29 @@ const DoublesEliminationBracket = ({
     setIsAssigningR3(true);
     const result = await checkAndAssignR3(tournamentId);
     if (result.triggered) {
-      toast({ title: "Đã phân vòng 3", description: "Các VĐV đã được phân vào vòng tiếp theo." });
+      toast({ title: b.r3Assigned, description: b.r3AssignedDesc });
       onR3Assigned?.(result.tiedTeamsInfo);
       onScoreUpdated?.();
     } else if (result.error === 'NOT_ALL_MATCHES_COMPLETED') {
-      toast({ title: "Chưa hoàn thành", description: "Vui lòng hoàn thành tất cả trận đấu vòng 1 và vòng 2 trước.", variant: "destructive" });
+      toast({ title: b.waitingR1R2, description: b.waitingR1R2, variant: "destructive" });
     }
     setIsAssigningR3(false);
   };
 
   const getRoundLabel = (roundType: string, matchCount: number): string => {
     switch (roundType) {
-      case 'winner_r1': return 'Vòng 1 (Winner)';
-      case 'merge_r3': return 'Vòng 3 (Merge)';
-      case 'quarterfinal': return 'Tứ kết';
-      case 'semifinal': return 'Bán kết';
-      case 'final': return 'Chung kết';
+      case 'winner_r1': return `${b.round} 1 (Winner)`;
+      case 'merge_r3': return `${b.round} 3 (Merge)`;
+      case 'quarterfinal': return b.quarterFinal;
+      case 'semifinal': return b.semiFinal;
+      case 'final': return b.finals;
       case 'elimination':
-        if (matchCount === 1) return 'Chung kết';
-        if (matchCount === 2) return 'Bán kết';
-        if (matchCount <= 4) return 'Tứ kết';
-        if (matchCount <= 8) return 'Vòng 16';
-        return `Vòng ${matchCount * 2}`;
-      default: return `Vòng ${roundType}`;
+        if (matchCount === 1) return b.finals;
+        if (matchCount === 2) return b.semiFinal;
+        if (matchCount <= 4) return b.quarterFinal;
+        if (matchCount <= 8) return b.round16;
+        return `${b.round} ${matchCount * 2}`;
+      default: return `${b.round} ${roundType}`;
     }
   };
 
@@ -217,7 +220,7 @@ const DoublesEliminationBracket = ({
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          Chưa có bracket. Hãy hoàn tất cài đặt để tạo bracket.
+          {b.noBracket}
         </CardContent>
       </Card>
     );
@@ -234,7 +237,7 @@ const DoublesEliminationBracket = ({
             <div className="flex items-center justify-center gap-3">
               <Trophy className="w-8 h-8 text-primary" />
               <div className="text-center">
-                <div className="text-sm text-muted-foreground">Vô địch</div>
+                <div className="text-sm text-muted-foreground">{b.champion}</div>
                 <div className="text-2xl font-bold text-primary">{formatTeamName(champion)}</div>
               </div>
               <Trophy className="w-8 h-8 text-primary" />
@@ -291,7 +294,7 @@ const DoublesEliminationBracket = ({
                 className="ml-auto h-7 text-xs"
               >
                 <RefreshCw className={cn("w-3 h-3 mr-1", isAssigningR3 && "animate-spin")} />
-                Phân vòng 3
+                {b.assignR3}
               </Button>
             )}
           </div>
@@ -306,14 +309,14 @@ const DoublesEliminationBracket = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-5 rounded-full bg-emerald-500" />
-                        <span className="font-semibold text-sm text-foreground">Vòng 1</span>
+                        <span className="font-semibold text-sm text-foreground">{b.round} 1</span>
                       </div>
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                         {rounds.find(r => r.roundNumber === 1)?.matches.filter(m => m.status === 'completed').length || 0}/
                         {rounds.find(r => r.roundNumber === 1)?.matches.length || 0}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 ml-3">Winner Bracket</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 ml-3">{b.winnerBracket}</p>
                   </div>
                   <div className="flex flex-col gap-3">
                     {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
@@ -341,13 +344,13 @@ const DoublesEliminationBracket = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-5 rounded-full bg-amber-500" />
-                        <span className="font-semibold text-sm text-foreground">Vòng 2</span>
+                        <span className="font-semibold text-sm text-foreground">{b.round} 2</span>
                       </div>
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                         {loserMatches.filter(m => m.status === 'completed').length}/{loserMatches.length}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 ml-3">Loser Bracket</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 ml-3">{b.loserBracket}</p>
                   </div>
                   <div className="flex flex-col gap-3">
                     {loserMatches.map((match) => (
@@ -374,14 +377,14 @@ const DoublesEliminationBracket = ({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-1 h-5 rounded-full bg-blue-500" />
-                      <span className="font-semibold text-sm text-foreground">Vòng 3</span>
+                      <span className="font-semibold text-sm text-foreground">{b.round} 3</span>
                     </div>
                     <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                       {r3Rounds[0]?.matches.filter(m => m.status === 'completed').length || 0}/
                       {r3Rounds[0]?.matches.length || 0}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 ml-3">Sơ loại cuối</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 ml-3">{b.finalElimination}</p>
                 </div>
                 
                 {r3NeedsAssignment && r1Completed && r2Completed ? (
@@ -391,7 +394,7 @@ const DoublesEliminationBracket = ({
                       isAssigningR3 ? "animate-spin text-primary" : "text-muted-foreground"
                     )} />
                     <p className="text-xs text-muted-foreground">
-                      {isAssigningR3 ? "Đang phân vòng..." : "Chờ phân vòng"}
+                      {isAssigningR3 ? b.assigning : b.waitingAssignment}
                     </p>
                   </div>
                 ) : r3Rounds.length > 0 && r3Rounds[0].matches.length > 0 ? (
@@ -415,8 +418,8 @@ const DoublesEliminationBracket = ({
                   <div className="flex items-center justify-center py-6 text-center border border-dashed border-muted rounded-lg">
                     <p className="text-xs text-muted-foreground">
                       {!r1Completed || !r2Completed 
-                        ? "Chờ V1 & V2" 
-                        : "Không có trận"}
+                        ? b.waitingR1R2 
+                        : b.noMatches}
                     </p>
                   </div>
                 )}
@@ -524,8 +527,8 @@ const DoublesEliminationBracket = ({
                     <div>
                       <div className="text-center mb-2">
                         <Badge variant="default" className="px-3 py-1 bg-primary">
-                          <Trophy className="w-3 h-3 mr-1" />
-                          Chung kết
+                           <Trophy className="w-3 h-3 mr-1" />
+                          {b.finals}
                         </Badge>
                       </div>
                       <BracketMatchCard
@@ -546,7 +549,7 @@ const DoublesEliminationBracket = ({
                       <div>
                         <div className="text-center mb-2">
                           <Badge variant="outline" className="text-xs px-2 py-0.5 border-amber-500/50 text-amber-600 dark:text-amber-400">
-                            Tranh hạng 3
+                            {b.thirdPlace}
                           </Badge>
                         </div>
                         <BracketMatchCard
@@ -574,7 +577,7 @@ const DoublesEliminationBracket = ({
       {showPlayoffOnly && playoffRounds.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại.
+            {b.playoffNotReady}
           </CardContent>
         </Card>
       )}
