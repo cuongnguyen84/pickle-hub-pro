@@ -751,6 +751,8 @@ const LoserBracketCard = ({
   const { checkAndAssignR3 } = useDoublesElimination();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useI18n();
+  const b = t.doublesElimination.bracket;
   const [isEditing, setIsEditing] = useState(false);
   const [editScoreA, setEditScoreA] = useState(match.score_a?.toString() || '0');
   const [editScoreB, setEditScoreB] = useState(match.score_b?.toString() || '0');
@@ -821,7 +823,7 @@ const LoserBracketCard = ({
           .eq('id', loserId);
       }
 
-      toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
+      toast({ title: isMatchComplete ? b.matchSaved : b.scoreSaved });
       setIsEditing(false);
 
       // After R2 match completion, check if we need to assign R3
@@ -834,7 +836,7 @@ const LoserBracketCard = ({
         }
       }
     } catch (error) {
-      toast({ title: "Lỗi lưu điểm", variant: "destructive" });
+      toast({ title: b.scoreSaveError, variant: "destructive" });
       // Revert on error - trigger full reload
       onScoreUpdated?.();
     } finally {
@@ -856,7 +858,7 @@ const LoserBracketCard = ({
         isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/50 dark:bg-muted/30"
       )}>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
+          <span className="text-sm font-medium text-foreground">{b.match} {match.match_number}</span>
           {(match.court_number || match.start_time) && (
             <span className="text-[10px] text-muted-foreground">
               {match.court_number && `S${match.court_number}`}
@@ -874,7 +876,7 @@ const LoserBracketCard = ({
           )}
           {isCompleted && (
             <Badge variant="secondary" className="text-[10px] py-0 px-1 h-4">
-              Xong
+              {b.done}
             </Badge>
           )}
         </div>
@@ -900,7 +902,7 @@ const LoserBracketCard = ({
               </div>
             ) : sourceAMatchNum ? (
               <div className="text-muted-foreground text-sm italic">
-                Thua trận {sourceAMatchNum}
+                {b.loserOf} {sourceAMatchNum}
               </div>
             ) : (
               <div className="text-muted-foreground text-sm italic">TBD</div>
@@ -947,7 +949,7 @@ const LoserBracketCard = ({
               </div>
             ) : sourceBMatchNum ? (
               <div className="text-muted-foreground text-sm italic">
-                Thua trận {sourceBMatchNum}
+                {b.loserOf} {sourceBMatchNum}
               </div>
             ) : (
               <div className="text-muted-foreground text-sm italic">TBD</div>
@@ -990,7 +992,7 @@ const LoserBracketCard = ({
                 className="h-7 px-2"
               >
                 <X className="w-3 h-3 mr-1" />
-                Hủy
+                {b.cancel}
               </Button>
               <Button
                 size="sm"
@@ -999,7 +1001,7 @@ const LoserBracketCard = ({
                 className="h-7 px-2"
               >
                 <Check className="w-3 h-3 mr-1" />
-                Lưu
+                {b.save}
               </Button>
             </>
           ) : (
@@ -1012,7 +1014,7 @@ const LoserBracketCard = ({
                 className="h-7 px-2"
               >
                 <Play className="w-3 h-3 mr-1" />
-                Chấm
+                {b.openScoring}
               </Button>
               <Button
                 size="sm"
@@ -1022,7 +1024,7 @@ const LoserBracketCard = ({
                 className="h-7 px-2"
               >
                 <Pencil className="w-3 h-3 mr-1" />
-                Sửa
+                {b.editScore}
               </Button>
             </>
           )}
@@ -1059,6 +1061,8 @@ const BracketMatchCard = ({
 }: BracketMatchCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useI18n();
+  const b = t.doublesElimination.bracket;
   const [isEditing, setIsEditing] = useState(false);
   const [editScoreA, setEditScoreA] = useState(match.score_a?.toString() || '0');
   const [editScoreB, setEditScoreB] = useState(match.score_b?.toString() || '0');
@@ -1108,7 +1112,7 @@ const BracketMatchCard = ({
     const scoreB = parseInt(gameScoreB) || 0;
     
     if (scoreA === scoreB) {
-      toast({ title: "Điểm không được bằng nhau", variant: "destructive" });
+      toast({ title: b.tieNotAllowed, variant: "destructive" });
       setSaving(false);
       return;
     }
@@ -1193,7 +1197,7 @@ const BracketMatchCard = ({
         }
       }
 
-      toast({ title: matchComplete ? "Đã lưu kết quả trận đấu" : `Đã lưu Game ${gameNum}` });
+      toast({ title: matchComplete ? b.matchSaved : `${b.gameSaved} ${gameNum}` });
       setEditingGameIndex(null);
       
       // Trigger reload to update data and auto-generate next round if needed
@@ -1201,7 +1205,7 @@ const BracketMatchCard = ({
         onScoreUpdated?.();
       }
     } catch (error) {
-      toast({ title: "Lỗi lưu điểm", variant: "destructive" });
+      toast({ title: b.scoreSaveError, variant: "destructive" });
       onScoreUpdated?.();
     } finally {
       setSaving(false);
@@ -1286,7 +1290,7 @@ const BracketMatchCard = ({
           .eq('id', match.tournament_id);
       }
 
-      toast({ title: isMatchComplete ? "Đã lưu kết quả" : "Đã lưu điểm" });
+      toast({ title: isMatchComplete ? b.matchSaved : b.scoreSaved });
       setIsEditing(false);
       
       // Trigger reload to update data and auto-generate next round if needed
@@ -1294,7 +1298,7 @@ const BracketMatchCard = ({
         onScoreUpdated?.();
       }
     } catch (error) {
-      toast({ title: "Lỗi lưu điểm", variant: "destructive" });
+      toast({ title: b.scoreSaveError, variant: "destructive" });
       onScoreUpdated?.();
     } finally {
       setSaving(false);
@@ -1324,7 +1328,7 @@ const BracketMatchCard = ({
       )}>
         <div className="flex items-center gap-2">
           {!isFinal && !isThirdPlace && (
-            <span className="text-sm font-medium text-foreground">Trận {match.match_number}</span>
+            <span className="text-sm font-medium text-foreground">{b.match} {match.match_number}</span>
           )}
           {(match.court_number || match.start_time) && (
             <span className="text-[10px] text-muted-foreground">
@@ -1350,12 +1354,12 @@ const BracketMatchCard = ({
           {isFinal && (
             <Badge variant="default" className="text-xs py-0.5 px-2">
               <Trophy className="w-3 h-3 mr-1" />
-              CK
+              {b.finalBadge}
             </Badge>
           )}
           {isCompleted && !isFinal && (
             <Badge variant="secondary" className="text-[10px] py-0 px-1 h-4">
-              Xong
+              {b.done}
             </Badge>
           )}
         </div>
@@ -1466,7 +1470,7 @@ const BracketMatchCard = ({
                     !gameCompleted && !isEditingThis && "border-dashed border-muted-foreground/30",
                     canEditGame && !isEditingThis && "cursor-pointer hover:border-primary/50 hover:bg-primary/5"
                   )}
-                  title={canEditGame ? `Click để sửa Game ${gameIndex + 1}` : `Game ${gameIndex + 1}`}
+                  title={canEditGame ? `${b.clickGameToEdit} ${gameIndex + 1}` : `Game ${gameIndex + 1}`}
                 >
                   <div className="text-[8px] text-muted-foreground">G{gameIndex + 1}</div>
                   {isEditingThis ? (
@@ -1518,7 +1522,7 @@ const BracketMatchCard = ({
                 className="h-6 px-2 text-xs"
               >
                 <X className="w-3 h-3 mr-1" />
-                Hủy
+                {b.cancel}
               </Button>
               <Button
                 size="sm"
@@ -1527,21 +1531,21 @@ const BracketMatchCard = ({
                 className="h-6 px-2 text-xs"
               >
                 <Check className="w-3 h-3 mr-1" />
-                Lưu G{editingGameIndex + 1}
+                {b.saveGameN}{editingGameIndex + 1}
               </Button>
             </div>
           )}
           
           {editingGameIndex === null && canEdit && teamA && teamB && (
             <div className="text-[10px] text-muted-foreground text-center mt-1">
-              Click vào ô game để sửa điểm
+              {b.clickGameToEdit}
             </div>
           )}
           
           {/* Message when teams are not ready */}
           {editingGameIndex === null && canEdit && (!teamA || !teamB) && (
             <div className="text-[10px] text-muted-foreground text-center mt-1">
-              Chờ đủ 2 đội để chấm điểm
+              {b.waitingTeams}
             </div>
           )}
         </div>
@@ -1560,7 +1564,7 @@ const BracketMatchCard = ({
                 className="h-7 px-2"
               >
                 <X className="w-3 h-3 mr-1" />
-                Hủy
+                {b.cancel}
               </Button>
               <Button
                 size="sm"
@@ -1569,7 +1573,7 @@ const BracketMatchCard = ({
                 className="h-7 px-2"
               >
                 <Check className="w-3 h-3 mr-1" />
-                Lưu
+                {b.save}
               </Button>
             </>
           ) : (
@@ -1582,9 +1586,9 @@ const BracketMatchCard = ({
                 className="h-7 px-2"
               >
                 <Play className="w-3 h-3 mr-1" />
-                Chấm
+                {b.openScoring}
               </Button>
-              {/* For BO1: show "Sửa" button. For BO3/BO5: game slots are clickable instead */}
+              {/* For BO1: show edit button. For BO3/BO5: game slots are clickable instead */}
               {!isBestOf && (
                 <Button
                   size="sm"
@@ -1594,7 +1598,7 @@ const BracketMatchCard = ({
                   className="h-7 px-2"
                 >
                   <Pencil className="w-3 h-3 mr-1" />
-                  Sửa
+                  {b.editScore}
                 </Button>
               )}
             </>
