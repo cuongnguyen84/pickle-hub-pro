@@ -34,7 +34,7 @@ const QuickTables = () => {
 
   const [step, setStep] = useState<Step>("count");
   const [playerCount, setPlayerCount] = useState<number>(0);
-  const [tableName, setTableName] = useState("Tên giải đấu");
+  const [tableName, setTableName] = useState("");
   const [suggestedFormat, setSuggestedFormat] = useState<"round_robin" | "large_playoff" | null>(null);
   const [selectedFormat, setSelectedFormat] = useState<"round_robin" | "large_playoff" | null>(null);
   const [groupSuggestions, setGroupSuggestions] = useState<GroupSuggestion[]>([]);
@@ -137,9 +137,9 @@ const QuickTables = () => {
     if (table) {
       // If registration required, go to view page directly; otherwise setup page
       if (requiresRegistration) {
-        navigate(`/quick-tables/${table.share_id}`);
+        navigate(`/tools/quick-tables/${table.share_id}`);
       } else {
-        navigate(`/quick-tables/${table.share_id}/setup`);
+        navigate(`/tools/quick-tables/${table.share_id}/setup`);
       }
     }
   };
@@ -617,8 +617,8 @@ const QuickTables = () => {
                               key={table.id}
                               to={
                                 table.status === "setup"
-                                  ? `/quick-tables/${table.share_id}/setup`
-                                  : `/quick-tables/${table.share_id}`
+                                  ? `/tools/quick-tables/${table.share_id}/setup`
+                                  : `/tools/quick-tables/${table.share_id}`
                               }
                               className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                             >
@@ -736,8 +736,8 @@ const QuickTables = () => {
                               key={table.id}
                               to={
                                 table.status === "setup"
-                                  ? `/quick-tables/${table.share_id}/setup`
-                                  : `/quick-tables/${table.share_id}`
+                                  ? `/tools/quick-tables/${table.share_id}/setup`
+                                  : `/tools/quick-tables/${table.share_id}`
                               }
                               className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                             >

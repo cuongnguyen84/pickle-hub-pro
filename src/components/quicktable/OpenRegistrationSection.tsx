@@ -17,7 +17,7 @@ function OpenRegistrationCard({ table }: OpenRegistrationCardProps) {
   
   return (
     <Link
-      to={`/quick-tables/${table.share_id}`}
+      to={`/tools/quick-tables/${table.share_id}`}
       className="group block rounded-xl overflow-hidden card-interactive bg-background-surface border border-border-subtle hover:border-border"
     >
       <div className="p-4">

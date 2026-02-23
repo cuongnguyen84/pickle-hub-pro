@@ -141,7 +141,7 @@ export function BracketSetupDialog({
 
       toast.success('Đã tạo bảng đấu thành công!');
       onOpenChange(false);
-      navigate(`/quick-tables/${shareId}?tab=groups`);
+      navigate(`/tools/quick-tables/${shareId}?tab=groups`);
     } catch (error) {
       console.error('Error setting up table:', error);
       toast.error('Có lỗi xảy ra, vui lòng thử lại');
@@ -201,7 +201,7 @@ export function BracketSetupDialog({
 
       toast.success('Đã chia bảng thủ công thành công!');
       onOpenChange(false);
-      navigate(`/quick-tables/${shareId}?tab=groups`);
+      navigate(`/tools/quick-tables/${shareId}?tab=groups`);
     } catch (error) {
       console.error('Error setting up table with manual assignment:', error);
       toast.error('Có lỗi xảy ra, vui lòng thử lại');
