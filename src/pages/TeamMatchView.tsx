@@ -167,7 +167,7 @@ export default function TeamMatchView() {
   const handleCopyLink = () => {
     const shareUrl = `${window.location.origin}/tools/team-match/${tournament?.share_id}`;
     navigator.clipboard.writeText(shareUrl);
-    toast({ title: 'Đã sao chép link!' });
+    toast({ title: t.teamMatch.view.linkCopied });
   };
 
   const handleGenerateMatches = async () => {
@@ -225,11 +225,10 @@ export default function TeamMatchView() {
           .eq('id', match.id);
       }
       
-      toast({ title: 'Đã bắt đầu vòng ' + roundNumber });
-      // Refetch matches
-      window.location.reload(); // Simple refresh for now
+      toast({ title: t.teamMatch.view.roundStarted + ' ' + roundNumber });
+      window.location.reload();
     } catch (error) {
-      toast({ title: 'Lỗi', variant: 'destructive' });
+      toast({ title: t.teamMatch.view.errorOccurred, variant: 'destructive' });
     }
   };
 
@@ -278,8 +277,8 @@ export default function TeamMatchView() {
       setActiveTab('matches');
     } catch (error: any) {
       toast({
-        title: 'Lỗi tạo Playoff',
-        description: error.message || 'Đã có lỗi xảy ra',
+        title: t.teamMatch.view.errorOccurred,
+        description: error.message || t.teamMatch.view.errorOccurred,
         variant: 'destructive',
       });
     }
@@ -383,13 +382,13 @@ export default function TeamMatchView() {
       <MainLayout>
         <div className="container max-w-4xl py-12 text-center">
           <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2">Không tìm thấy giải đấu</h1>
+          <h1 className="text-2xl font-bold mb-2">{t.teamMatch.view.notFound}</h1>
           <p className="text-muted-foreground mb-6">
-            Giải đấu này không tồn tại hoặc đã bị xóa
+            {t.teamMatch.view.notFoundDesc}
           </p>
           <Button onClick={() => navigate('/tools/team-match')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Quay lại danh sách
+            {t.teamMatch.view.backToList}
           </Button>
         </div>
       </MainLayout>
@@ -415,7 +414,7 @@ export default function TeamMatchView() {
               <div className="flex items-center gap-3 mt-1 text-xs md:text-sm text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
-                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: viLocale })}
+                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: language === 'vi' ? viLocale : enUS })}
                 </span>
                 <span className="flex items-center gap-1">
                   <Users className="h-3.5 w-3.5" />
@@ -428,31 +427,31 @@ export default function TeamMatchView() {
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Button variant="outline" size="icon" onClick={handleCopyLink} title="Sao chép link">
+              <Button variant="outline" size="icon" onClick={handleCopyLink} title={t.teamMatch.view.copyLink}>
                 <Copy className="h-4 w-4" />
               </Button>
               {canManage && (
                 <>
-                  <Button variant="outline" size="icon" onClick={() => setShowSettingsDialog(true)} title="Cài đặt">
+                  <Button variant="outline" size="icon" onClick={() => setShowSettingsDialog(true)} title={t.teamMatch.view.settings}>
                     <Settings className="h-4 w-4" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="icon" className="text-destructive hover:bg-destructive/10" title="Xoá giải">
+                      <Button variant="outline" size="icon" className="text-destructive hover:bg-destructive/10" title={t.teamMatch.view.deleteBtn}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Xoá giải đấu?</AlertDialogTitle>
+                        <AlertDialogTitle>{t.teamMatch.view.deleteConfirm}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xoá vĩnh viễn.
+                          {t.teamMatch.view.deleteConfirmDesc}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                        <AlertDialogCancel>{t.teamMatch.view.cancelBtn}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDeleteTournament} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                          Xoá
+                          {t.teamMatch.view.deleteAction}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -470,10 +469,10 @@ export default function TeamMatchView() {
           return (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className={`grid w-full ${showStandingsTab ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-                <TabsTrigger value="teams">Đội</TabsTrigger>
-                <TabsTrigger value="matches">Trận đấu</TabsTrigger>
-                {showStandingsTab && <TabsTrigger value="standings">Xếp hạng</TabsTrigger>}
+                <TabsTrigger value="overview">{t.teamMatch.view.overview}</TabsTrigger>
+                <TabsTrigger value="teams">{t.teamMatch.view.teams}</TabsTrigger>
+                <TabsTrigger value="matches">{t.teamMatch.view.matches}</TabsTrigger>
+                {showStandingsTab && <TabsTrigger value="standings">{t.teamMatch.view.standings}</TabsTrigger>}
               </TabsList>
 
           <TabsContent value="overview" className="space-y-4 mt-4">
@@ -522,37 +521,37 @@ export default function TeamMatchView() {
             {isOwner && isGroupPlayoffFormat && tournament.status === 'registration' && !hasGroups && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Hành động BTC</CardTitle>
+                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
                   <CardDescription>
                     {pendingTeamsCount > 0 
-                      ? `Duyệt ${pendingTeamsCount} đội đang chờ trước khi chia bảng`
-                      : 'Chia bảng thi đấu hoặc mời thêm đội'}
+                      ? t.teamMatch.view.approvePendingFirst.replace('{count}', String(pendingTeamsCount))
+                      : t.teamMatch.view.inviteOrSchedule}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
                     <Mail className="h-4 w-4 mr-2" />
-                    Mời đội
+                    {t.teamMatch.view.inviteTeamBtn}
                   </Button>
                   <Button
                     onClick={() => setShowGroupSetupDialog(true)}
                     disabled={!canStartGroupSetup}
                   >
                     <LayoutGrid className="h-4 w-4 mr-2" />
-                    Chia bảng ({approvedTeamsCount} đội)
+                    {t.teamMatch.view.createGroupsBtn} ({approvedTeamsCount} {t.teamMatch.teams})
                   </Button>
                 </CardContent>
                 {pendingTeamsCount > 0 && (
                   <CardContent className="pt-0">
                     <p className="text-xs text-amber-600">
-                      ⚠️ Cần duyệt tất cả đội trước khi chia bảng
+                      ⚠️ {t.teamMatch.view.approveAllBeforeBracket}
                     </p>
                   </CardContent>
                 )}
                 {approvedTeamsCount < 6 && pendingTeamsCount === 0 && (
                   <CardContent className="pt-0">
                     <p className="text-xs text-amber-600">
-                      ⚠️ Cần ít nhất 6 đội để chia bảng
+                      ⚠️ {t.teamMatch.view.needMin6Groups}
                     </p>
                   </CardContent>
                 )}
@@ -563,30 +562,30 @@ export default function TeamMatchView() {
             {isOwner && isSingleElimination && tournament.status === 'registration' && !hasMatches && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Hành động BTC</CardTitle>
+                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
                   <CardDescription>
                     {pendingTeamsCount > 0 
-                      ? `Duyệt ${pendingTeamsCount} đội đang chờ trước khi tạo bracket`
-                      : 'Mời đội hoặc tạo bracket Single Elimination'}
+                      ? t.teamMatch.view.approvePendingBracket.replace('{count}', String(pendingTeamsCount))
+                      : t.teamMatch.view.inviteOrBracket}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
                     <Mail className="h-4 w-4 mr-2" />
-                    Mời đội
+                    {t.teamMatch.view.inviteTeamBtn}
                   </Button>
                   <Button
                     onClick={() => setShowSESetupDialog(true)}
                     disabled={pendingTeamsCount > 0 || approvedTeamsCount < 4}
                   >
                     <Trophy className="h-4 w-4 mr-2" />
-                    Sinh Bracket ({approvedTeamsCount} đội)
+                    {t.teamMatch.view.generateBracketBtn} ({approvedTeamsCount} {t.teamMatch.teams})
                   </Button>
                 </CardContent>
                 {pendingTeamsCount > 0 && (
                   <CardContent className="pt-0">
                     <p className="text-xs text-amber-600">
-                      ⚠️ Cần duyệt tất cả đội trước khi tạo bracket
+                      ⚠️ {t.teamMatch.view.approveAllBeforeBracket}
                     </p>
                   </CardContent>
                 )}
@@ -597,22 +596,22 @@ export default function TeamMatchView() {
             {isOwner && !isGroupPlayoffFormat && !isSingleElimination && tournament.status === 'registration' && !hasMatches && (
               <Card className="border-primary/50 bg-primary/5">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Hành động BTC</CardTitle>
+                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
                   <CardDescription>
-                    Mời đội hoặc tạo lịch thi đấu
+                    {t.teamMatch.view.inviteOrSchedule}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
                     <Mail className="h-4 w-4 mr-2" />
-                    Mời đội
+                    {t.teamMatch.view.inviteTeamBtn}
                   </Button>
                   <Button
                     onClick={() => setShowGenerateDialog(true)}
                     disabled={approvedTeamsCount < 2}
                   >
                     <Play className="h-4 w-4 mr-2" />
-                    Tạo lịch thi đấu
+                    {t.teamMatch.view.createScheduleBtn}
                   </Button>
                 </CardContent>
               </Card>
@@ -625,14 +624,14 @@ export default function TeamMatchView() {
               <Card className="border-dashed border-2">
                 <CardContent className="py-6 flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Đăng ký tham gia giải đấu</p>
+                    <p className="font-medium">{t.teamMatch.view.registerForTournament}</p>
                     <p className="text-sm text-muted-foreground">
-                      Tạo đội mới để tham gia
+                      {t.teamMatch.view.createTeamToJoin}
                     </p>
                   </div>
                   <Button onClick={() => setShowCreateTeam(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Tạo đội
+                    {t.teamMatch.view.createTeam}
                   </Button>
                 </CardContent>
               </Card>
@@ -663,9 +662,9 @@ export default function TeamMatchView() {
               <Card className="border-primary/50 bg-primary/5">
                 <CardContent className="py-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Tạo lịch thi đấu</p>
+                   <p className="font-medium">{t.teamMatch.view.createSchedule}</p>
                     <p className="text-sm text-muted-foreground">
-                      {approvedTeamsCount} đội đã sẵn sàng
+                      {t.teamMatch.view.teamsReadyForSchedule.replace('{count}', String(approvedTeamsCount))}
                     </p>
                   </div>
                   <Button 
@@ -673,7 +672,7 @@ export default function TeamMatchView() {
                     disabled={approvedTeamsCount < 2}
                   >
                     <Play className="h-4 w-4 mr-2" />
-                    Tạo lịch
+                    {t.teamMatch.view.createScheduleBtn}
                   </Button>
                 </CardContent>
               </Card>
@@ -684,9 +683,9 @@ export default function TeamMatchView() {
               <Card className="border-primary/50 bg-primary/5">
                 <CardContent className="py-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Sinh Bracket</p>
+                    <p className="font-medium">{t.teamMatch.view.generateBracketBtn}</p>
                     <p className="text-sm text-muted-foreground">
-                      {approvedTeamsCount} đội đã sẵn sàng (Single Elimination)
+                      {t.teamMatch.view.teamsReadySE.replace('{count}', String(approvedTeamsCount))}
                     </p>
                   </div>
                   <Button 
@@ -694,7 +693,7 @@ export default function TeamMatchView() {
                     disabled={approvedTeamsCount < 4 || pendingTeamsCount > 0}
                   >
                     <Trophy className="h-4 w-4 mr-2" />
-                    Sinh Bracket
+                    {t.teamMatch.view.generateBracketBtn}
                   </Button>
                 </CardContent>
               </Card>
@@ -705,9 +704,9 @@ export default function TeamMatchView() {
               <Card className="border-green-500/50 bg-green-500/5">
                 <CardContent className="py-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-green-600">Bắt đầu giải đấu</p>
+                    <p className="font-medium text-green-600">{t.teamMatch.view.startTournamentLabel}</p>
                     <p className="text-sm text-muted-foreground">
-                      Đã có {matches?.length} trận đấu được tạo
+                      {t.teamMatch.view.matchesGeneratedCount.replace('{count}', String(matches?.length))}
                     </p>
                   </div>
                   <Button 
@@ -715,7 +714,7 @@ export default function TeamMatchView() {
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <Play className="h-4 w-4 mr-2" />
-                    Bắt đầu
+                    {t.teamMatch.view.startBtn}
                   </Button>
                 </CardContent>
               </Card>
@@ -726,9 +725,9 @@ export default function TeamMatchView() {
               <Card className="border-yellow-500/50 bg-yellow-500/5">
                 <CardContent className="py-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-yellow-600">Tạo vòng Playoff</p>
+                    <p className="font-medium text-yellow-600">{t.teamMatch.view.createPlayoffTitle}</p>
                     <p className="text-sm text-muted-foreground">
-                      Vòng tròn đã hoàn thành - {standings.length} đội đủ điều kiện
+                      {t.teamMatch.view.roundRobinDone.replace('{count}', String(standings.length))}
                     </p>
                   </div>
                   <Button 
@@ -736,7 +735,7 @@ export default function TeamMatchView() {
                     className="bg-yellow-600 hover:bg-yellow-700"
                   >
                     <Trophy className="h-4 w-4 mr-2" />
-                    Tạo Playoff
+                    {t.teamMatch.view.createPlayoff}
                   </Button>
                 </CardContent>
               </Card>
@@ -747,7 +746,7 @@ export default function TeamMatchView() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  {isSingleElimination ? 'Bracket Loại Trực Tiếp' : 'Vòng Playoff'}
+                  {isSingleElimination ? t.teamMatch.view.seBracketTitle : t.teamMatch.view.playoffRound}
                 </h3>
                 <PlayoffBracket 
                   matches={playoffMatches}
@@ -770,7 +769,7 @@ export default function TeamMatchView() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Gamepad2 className="h-5 w-5" />
-                  Vòng bảng
+                  {t.teamMatch.view.groupStageTitle}
                 </h3>
                 <GroupMatchList 
                   tournamentId={tournament.id}
@@ -793,7 +792,7 @@ export default function TeamMatchView() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Gamepad2 className="h-5 w-5" />
-                  Vòng tròn
+                  {t.teamMatch.view.roundRobinTitle}
                 </h3>
                 <MatchList 
                   tournamentId={tournament.id}
@@ -816,8 +815,8 @@ export default function TeamMatchView() {
               <Card>
                 <CardContent className="py-12 text-center text-muted-foreground">
                   <Gamepad2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Chưa có trận đấu nào</p>
-                  <p className="text-sm mt-1">Lịch thi đấu sẽ được BTC tạo</p>
+                  <p>{t.teamMatch.view.noMatchesEmpty}</p>
+                  <p className="text-sm mt-1">{t.teamMatch.view.noMatchesScheduleDesc}</p>
                 </CardContent>
               </Card>
             )}
@@ -972,16 +971,15 @@ export default function TeamMatchView() {
         <AlertDialog open={showStartTournamentDialog} onOpenChange={setShowStartTournamentDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Bắt đầu giải đấu?</AlertDialogTitle>
+              <AlertDialogTitle>{t.teamMatch.view.startTournamentTitle}</AlertDialogTitle>
               <AlertDialogDescription>
-                Sau khi bắt đầu, giải đấu sẽ chuyển sang trạng thái "Đang diễn ra" và 
-                không thể thêm/xóa đội nữa.
+                {t.teamMatch.view.startTournamentDesc}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogCancel>{t.teamMatch.view.cancelBtn}</AlertDialogCancel>
               <AlertDialogAction onClick={handleStartTournament} disabled={isUpdatingStatus}>
-                Bắt đầu
+                {t.teamMatch.view.startBtn}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

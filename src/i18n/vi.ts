@@ -1013,6 +1013,26 @@ export interface Translations {
       deleteConfirmFull: string;
       recommended: string;
       confirm: string;
+      cancel: string;
+      move: string;
+      add: string;
+      save: string;
+      enterName: string;
+      enterTeam: string;
+      addToGroup: string;
+      moveToGroup: string;
+      selectTargetGroup: string;
+      addPlayerName: string;
+      addPlayerTeam: string;
+      editInlineScore: string;
+      inputInlineScore: string;
+      openScoringPage: string;
+      cancelEdit: string;
+      saveScore: string;
+      errorOccurred: string;
+      groupLabel: string;
+      winsLabel: string;
+      pointDiffLabel: string;
     };
     groups: {
       groups: string;
@@ -1204,6 +1224,19 @@ export interface Translations {
       inviteOrCreateSchedule: string;
       inviteOrBracket: string;
       needMinTeamsForBracket: string;
+      cancelBtn: string;
+      deleteAction: string;
+      errorOccurred: string;
+      roundRobinDone: string;
+      teamsReadyForSchedule: string;
+      teamsReadySE: string;
+      startTournamentLabel: string;
+      matchesGeneratedCount: string;
+      approveAllBeforeBracket: string;
+      needMin6Groups: string;
+      approvePendingFirst: string;
+      approvePendingBracket: string;
+      inviteOrSchedule: string;
     };
     roster: {
       title: string;
@@ -2446,6 +2479,26 @@ export const vi: Translations = {
       deleteConfirmFull: "Bạn có chắc chắn muốn xoá giải \"{name}\"? Tất cả dữ liệu sẽ bị xoá vĩnh viễn.",
       recommended: "Khuyến nghị",
       confirm: "Xác nhận",
+      cancel: "Hủy",
+      move: "Chuyển",
+      add: "Thêm",
+      save: "Lưu",
+      enterName: "Nhập tên",
+      enterTeam: "Nhập team",
+      addToGroup: "Thêm vào bảng",
+      moveToGroup: "Chuyển {name} sang bảng khác",
+      selectTargetGroup: "Chọn bảng đích",
+      addPlayerName: "Tên VĐV",
+      addPlayerTeam: "Team (không bắt buộc)",
+      editInlineScore: "Sửa",
+      inputInlineScore: "Nhập",
+      openScoringPage: "Chấm",
+      cancelEdit: "Hủy",
+      saveScore: "Lưu",
+      errorOccurred: "Có lỗi xảy ra",
+      groupLabel: "Bảng",
+      winsLabel: "thắng",
+      pointDiffLabel: "Hiệu số",
     },
     groups: {
       groups: "bảng",
@@ -2637,6 +2690,19 @@ export const vi: Translations = {
       inviteOrCreateSchedule: "Mời đội hoặc tạo lịch thi đấu",
       inviteOrBracket: "Mời đội hoặc tạo bracket Single Elimination",
       needMinTeamsForBracket: "Cần ít nhất 6 đội để chia bảng",
+      cancelBtn: "Huỷ",
+      deleteAction: "Xoá",
+      errorOccurred: "Lỗi",
+      roundRobinDone: "Vòng tròn đã hoàn thành — {count} đội đủ điều kiện",
+      teamsReadyForSchedule: "{count} đội đã sẵn sàng",
+      teamsReadySE: "{count} đội đã sẵn sàng (Single Elimination)",
+      startTournamentLabel: "Bắt đầu giải đấu",
+      matchesGeneratedCount: "{count} trận đấu được tạo",
+      approveAllBeforeBracket: "Cần duyệt tất cả đội trước khi tạo bracket",
+      needMin6Groups: "Cần ít nhất 6 đội để chia bảng",
+      approvePendingFirst: "Duyệt {count} đội đang chờ trước khi chia bảng",
+      approvePendingBracket: "Duyệt {count} đội đang chờ trước khi tạo bracket",
+      inviteOrSchedule: "Mời đội hoặc tạo lịch thi đấu",
     },
     roster: {
       title: "Danh sách thành viên",
