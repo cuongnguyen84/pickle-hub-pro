@@ -9,17 +9,12 @@ import { TeamRosterManager } from './TeamRosterManager';
 import { TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
+import { useI18n } from '@/i18n';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
   approved: 'bg-green-500/10 text-green-600 border-green-500/20',
   rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Chờ duyệt',
-  approved: 'Đã duyệt',
-  rejected: 'Từ chối',
 };
 
 interface TeamDetailSheetProps {
@@ -38,6 +33,14 @@ export function TeamDetailSheet({
   isOwner = false,
 }: TeamDetailSheetProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
+  const c = t.teamMatchComponents;
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending: c.statusPending,
+    approved: c.statusApproved,
+    rejected: c.statusRejected,
+  };
 
   if (!team) return null;
 
@@ -55,10 +58,10 @@ export function TeamDetailSheet({
           </div>
           <SheetDescription>
             {isOwner 
-              ? 'Quản lý đội hình với quyền BTC'
+              ? c.manageAsOrganizer
               : isCaptain
-                ? 'Bạn là đội trưởng của đội này'
-                : 'Xem thông tin đội'}
+                ? c.youAreCaptain
+                : c.viewTeamInfo}
           </SheetDescription>
         </SheetHeader>
 

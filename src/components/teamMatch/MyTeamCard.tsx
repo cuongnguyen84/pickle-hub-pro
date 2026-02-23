@@ -3,17 +3,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, Crown, Clock, Check, X, ChevronRight } from 'lucide-react';
 import { TeamMatchTeam, useTeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { useI18n } from '@/i18n';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
   approved: 'bg-green-500/10 text-green-600 border-green-500/20',
   rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Chờ duyệt',
-  approved: 'Đã duyệt',
-  rejected: 'Từ chối',
 };
 
 interface MyTeamCardProps {
@@ -24,6 +19,14 @@ interface MyTeamCardProps {
 
 export function MyTeamCard({ team, maxRosterSize, onManageClick }: MyTeamCardProps) {
   const { roster, isLoading } = useTeamMatchTeam(team.id);
+  const { t } = useI18n();
+  const c = t.teamMatchComponents;
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending: c.statusPending,
+    approved: c.statusApproved,
+    rejected: c.statusRejected,
+  };
   
   const rosterCount = roster.length;
   const isFull = rosterCount >= maxRosterSize;
@@ -34,7 +37,7 @@ export function MyTeamCard({ team, maxRosterSize, onManageClick }: MyTeamCardPro
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Crown className="h-4 w-4 text-amber-500" />
-            Đội của bạn
+            {c.yourTeam}
           </CardTitle>
           <Badge variant="outline" className={STATUS_COLORS[team.status]}>
             {team.status === 'approved' && <Check className="h-3 w-3 mr-1" />}
@@ -45,30 +48,27 @@ export function MyTeamCard({ team, maxRosterSize, onManageClick }: MyTeamCardPro
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Team name and status */}
         <div>
           <h3 className="text-lg font-semibold">{team.team_name}</h3>
           <p className="text-sm text-muted-foreground">
-            Bạn là đội trưởng của đội này
+            {c.youAreCaptain}
           </p>
         </div>
 
-        {/* Roster status */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-background border">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Thành viên</span>
+            <span className="text-sm">{c.members}</span>
           </div>
           <Badge variant={isFull ? 'default' : 'secondary'}>
             {rosterCount}/{maxRosterSize}
-            {isFull ? ' ✓ Đủ đội' : ' - Chưa đủ'}
+            {isFull ? ` ✓ ${c.rosterFull}` : ` - ${c.rosterIncomplete}`}
           </Badge>
         </div>
 
-        {/* Roster list - larger, easier to read on mobile */}
         {!isLoading && roster.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Danh sách thành viên:</p>
+            <p className="text-sm font-medium text-muted-foreground">{c.memberList}</p>
             <div className="space-y-2">
               {roster.map((member) => (
                 <div 
@@ -80,7 +80,7 @@ export function MyTeamCard({ team, maxRosterSize, onManageClick }: MyTeamCardPro
                     <span className="text-base font-medium">{member.player_name}</span>
                   </div>
                   <Badge variant="secondary" className="text-sm">
-                    {member.gender === 'male' ? 'Nam' : 'Nữ'}
+                    {member.gender === 'male' ? c.male : c.female}
                   </Badge>
                 </div>
               ))}
@@ -88,9 +88,8 @@ export function MyTeamCard({ team, maxRosterSize, onManageClick }: MyTeamCardPro
           </div>
         )}
 
-        {/* Action button */}
         <Button onClick={onManageClick} className="w-full">
-          Quản lý đội
+          {c.manageTeam}
           <ChevronRight className="h-4 w-4 ml-2" />
         </Button>
       </CardContent>

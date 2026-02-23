@@ -970,6 +970,7 @@ interface MatchRowProps {
 
 const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, formatPlayerName }: MatchRowProps) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
   const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
@@ -1027,7 +1028,7 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
             {match.court_id != null ? (
               <span className="flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" />
-                Sân {match.court_id}
+                {t.quickTable.view.court} {match.court_id}
               </span>
             ) : null}
             {match.start_at ? (
@@ -1103,7 +1104,7 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
                   className="h-9 px-3 text-sm"
                   onClick={handleCancel}
                 >
-                  Hủy
+                  {t.quickTable.view.cancelEdit}
                 </Button>
                 <Button 
                   size="sm" 
@@ -1111,7 +1112,7 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
                   onClick={handleSubmit}
                 >
                   <Check className="w-4 h-4 mr-1" />
-                  Lưu
+                  {t.quickTable.view.saveScore}
                 </Button>
               </>
             ) : (
@@ -1122,10 +1123,10 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
                   size="sm" 
                   className="h-8 px-3 text-xs"
                   onClick={handleOpenScoring}
-                  title="Mở trang chấm điểm"
+                  title={t.quickTable.view.openScoringPage}
                 >
                   <Play className="w-3 h-3 sm:mr-1" />
-                  <span className="hidden sm:inline">Chấm</span>
+                  <span className="hidden sm:inline">{t.quickTable.view.openScoringPage}</span>
                 </Button>
                 {/* Edit button */}
                 <Button 
@@ -1135,7 +1136,7 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
                   onClick={handleStartEdit}
                 >
                   <Pencil className="w-3 h-3 sm:mr-1" />
-                  <span className="hidden sm:inline">{isCompleted ? 'Sửa' : 'Nhập'}</span>
+                  <span className="hidden sm:inline">{isCompleted ? t.quickTable.view.editInlineScore : t.quickTable.view.inputInlineScore}</span>
                 </Button>
               </>
             )}
