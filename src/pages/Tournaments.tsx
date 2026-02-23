@@ -221,7 +221,7 @@ const Tournaments = () => {
               {registeredTournaments.map((tournament: any) => (
                 <Link
                   key={tournament.id}
-                  to={`/quick-tables/${tournament.share_id}`}
+                  to={`/tools/quick-tables/${tournament.share_id}`}
                   className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center flex-shrink-0">
@@ -288,7 +288,7 @@ const Tournaments = () => {
               {completedTournaments.slice(0, 5).map((tournament: any) => (
                 <Link
                   key={tournament.id}
-                  to={`/quick-tables/${tournament.share_id}`}
+                  to={`/tools/quick-tables/${tournament.share_id}`}
                   className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -359,7 +359,7 @@ const Tournaments = () => {
                     {displayItems.map((table) => (
                       <Link
                         key={table.id}
-                        to={`/quick-tables/${table.share_id}`}
+                        to={`/tools/quick-tables/${table.share_id}`}
                         className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">

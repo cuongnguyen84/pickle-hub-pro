@@ -203,7 +203,7 @@ const AppHeader = () => {
       </header>
       
       {/* Spacer for fixed header - includes safe area */}
-      <div className="h-14 md:h-16" style={{
+      <div className="h-14 md:h-16 box-content" style={{
       paddingTop: 'env(safe-area-inset-top)'
     }} />
     </>;

@@ -593,7 +593,7 @@ const MatchScoring = () => {
           <h1 className="text-xl font-bold mb-2">{t.quickTable.matchScoring.noPermission}</h1>
           <p className="text-muted-foreground mb-4">{t.quickTable.matchScoring.noPermissionDesc}</p>
           {table && (
-            <Button variant="outline" onClick={() => navigate(`/quick-tables/${table.share_id}`)}>
+            <Button variant="outline" onClick={() => navigate(`/tools/quick-tables/${table.share_id}`)}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t.quickTable.matchScoring.backToBracket}
             </Button>
@@ -615,7 +615,7 @@ const MatchScoring = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => table && navigate(`/quick-tables/${table.share_id}`)}
+            onClick={() => table && navigate(`/tools/quick-tables/${table.share_id}`)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t.quickTable.matchScoring.goBack}
