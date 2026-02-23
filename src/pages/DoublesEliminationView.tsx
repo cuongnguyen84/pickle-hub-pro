@@ -18,7 +18,7 @@ import {
   Calendar, Trash2 
 } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { vi as viLocale, enUS } from "date-fns/locale";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +31,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import DoublesEliminationBracket from "@/components/tournament/DoublesEliminationBracket";
+import { useI18n } from "@/i18n";
 
 export default function DoublesEliminationView() {
   const { shareId } = useParams<{ shareId: string }>();
@@ -39,6 +40,7 @@ export default function DoublesEliminationView() {
   const { isAdmin } = useAdminAuth();
   const { getTournamentByShareId, deleteTournament } = useDoublesElimination();
   const { toast } = useToast();
+  const { t, language } = useI18n();
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -48,7 +50,6 @@ export default function DoublesEliminationView() {
   const [canEdit, setCanEdit] = useState(false);
   const [activeTab, setActiveTab] = useState('preliminary');
 
-  // Referee management hook
   const {
     referees,
     loading: refereesLoading,
@@ -56,14 +57,13 @@ export default function DoublesEliminationView() {
     removeReferee,
   } = useDoublesEliminationReferees(tournament?.id);
 
-  // Check if preliminary rounds are complete (R3 completed)
   const preliminaryComplete = useMemo(() => {
     const r3Matches = matches.filter(m => m.round_number === 3);
     return r3Matches.length > 0 && r3Matches.every(m => m.status === 'completed');
   }, [matches]);
 
   const isCreator = user?.id === tournament?.creator_user_id;
-  const canManage = isCreator || isAdmin; // Admin or creator can manage
+  const canManage = isCreator || isAdmin;
 
   useEffect(() => {
     if (shareId) {
@@ -72,37 +72,19 @@ export default function DoublesEliminationView() {
     }
   }, [shareId]);
 
-  // Check edit permissions when user and tournament change
   useEffect(() => {
     const checkPermissions = async () => {
-      if (!user || !tournament) {
-        setCanEdit(false);
-        return;
-      }
-
-      // Admin can always edit
-      if (isAdmin) {
-        setCanEdit(true);
-        return;
-      }
-
-      const isCreatorUser = user.id === tournament.creator_user_id;
-      if (isCreatorUser) {
-        setCanEdit(true);
-        return;
-      }
-
-      // Check if user is a referee
+      if (!user || !tournament) { setCanEdit(false); return; }
+      if (isAdmin) { setCanEdit(true); return; }
+      if (user.id === tournament.creator_user_id) { setCanEdit(true); return; }
       const { data: refereeData } = await supabase
         .from('doubles_elimination_referees')
         .select('id')
         .eq('tournament_id', tournament.id)
         .eq('user_id', user.id)
         .single();
-
       setCanEdit(!!refereeData);
     };
-
     checkPermissions();
   }, [user, tournament, isAdmin]);
 
@@ -116,7 +98,6 @@ export default function DoublesEliminationView() {
     setLoading(false);
   };
 
-  // Soft reload - fetches data and merges without showing loading state
   const softReload = async () => {
     if (!shareId) return;
     const data = await getTournamentByShareId(shareId);
@@ -125,68 +106,43 @@ export default function DoublesEliminationView() {
     setMatches(data.matches);
   };
 
-  // Track if we just made an optimistic update to skip realtime reload
   const skipNextRealtimeRef = useRef(false);
 
-  // Optimistic update handler - updates local state without reload
   const handleMatchUpdated = (matchId: string, updates: Partial<Match>) => {
-    // Set flag to skip next realtime event (caused by our own update)
     skipNextRealtimeRef.current = true;
-    
     setMatches(prevMatches => 
-      prevMatches.map(m => 
-        m.id === matchId ? { ...m, ...updates } : m
-      )
+      prevMatches.map(m => m.id === matchId ? { ...m, ...updates } : m)
     );
-
-    // Reset flag after a short delay
-    setTimeout(() => {
-      skipNextRealtimeRef.current = false;
-    }, 2000);
+    setTimeout(() => { skipNextRealtimeRef.current = false; }, 2000);
   };
 
-  // Handler for R3 assignment notifications
   const handleR3Assigned = (tiedTeamsInfo?: { count: number; names: string[] }) => {
     if (tiedTeamsInfo) {
       toast({
-        title: "Đã phân vòng 3",
-        description: `Có ${tiedTeamsInfo.count} VĐV trùng hiệu số (${tiedTeamsInfo.names.join(', ')}). Chương trình đã ghép ngẫu nhiên 2 VĐV thi đấu trận sơ loại.`,
+        title: t.doublesElimination.view.r3AssignedTitle,
+        description: t.doublesElimination.view.r3TiedDesc
+          .replace('{count}', String(tiedTeamsInfo.count))
+          .replace('{names}', tiedTeamsInfo.names.join(', ')),
         duration: 8000
       });
     } else {
       toast({
-        title: "Đã phân vòng 3 & vòng 4",
-        description: "Các VĐV đã được phân vào vòng tiếp theo dựa trên hiệu số."
+        title: t.doublesElimination.view.r3AssignedTitle,
+        description: t.doublesElimination.view.r3NormalDesc
       });
     }
   };
 
   const setupRealtimeSubscription = () => {
     if (!shareId) return;
-
     const channel = supabase
       .channel(`doubles_elimination_${shareId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'doubles_elimination_matches'
-        },
-        () => {
-          // Skip reload if we just made an optimistic update
-          if (skipNextRealtimeRef.current) {
-            return;
-          }
-          // Use soft reload to avoid full page reload/loading state
-          softReload();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'doubles_elimination_matches' }, () => {
+        if (skipNextRealtimeRef.current) return;
+        softReload();
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   };
 
   const handleShare = async () => {
@@ -194,10 +150,10 @@ export default function DoublesEliminationView() {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      toast({ title: "Đã sao chép link!" });
+      toast({ title: t.doublesElimination.view.copied });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({ title: "Không thể sao chép", variant: "destructive" });
+      toast({ title: t.doublesElimination.view.copyError, variant: "destructive" });
     }
   };
 
@@ -205,14 +161,12 @@ export default function DoublesEliminationView() {
     if (!tournament) return;
     const result = await deleteTournament(tournament.id);
     if (result.success) {
-      toast({ title: "Đã xóa giải đấu" });
+      toast({ title: t.doublesElimination.view.deleteSuccess });
       navigate('/tools/doubles-elimination');
     } else {
-      toast({ title: "Lỗi xóa giải đấu", variant: "destructive" });
+      toast({ title: t.doublesElimination.view.deleteError, variant: "destructive" });
     }
   };
-
-  // Removed handleMatchClick - card click behavior removed, only buttons work
 
   if (loading) {
     return (
@@ -231,45 +185,45 @@ export default function DoublesEliminationView() {
     return (
       <MainLayout>
         <div className="container max-w-2xl mx-auto py-12 text-center">
-          <h2 className="text-xl font-semibold mb-4">Không tìm thấy giải đấu</h2>
+          <h2 className="text-xl font-semibold mb-4">{t.doublesElimination.view.notFound}</h2>
           <Button onClick={() => navigate('/tools/doubles-elimination')}>
-            Quay lại danh sách
+            {t.doublesElimination.view.backToList}
           </Button>
         </div>
       </MainLayout>
     );
   }
 
+  const dateLocale = language === 'vi' ? viLocale : enUS;
+
+  const statusLabel = tournament.status === 'setup' ? t.doublesElimination.status.setup : 
+    tournament.status === 'ongoing' ? t.doublesElimination.status.ongoing : t.doublesElimination.status.completed;
+
   return (
     <MainLayout>
       <DynamicMeta 
         title={`${tournament.name} - Doubles Elimination`}
-        description={`Giải đấu ${tournament.name} với ${tournament.team_count} đội`}
+        description={`${tournament.name} - ${tournament.team_count} ${t.doublesElimination.teams}`}
       />
       
       <div className="container max-w-6xl mx-auto py-6 px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => navigate('/tools/doubles-elimination')}
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate('/tools/doubles-elimination')}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{tournament.name}</h1>
                 <Badge variant={tournament.status === 'ongoing' ? 'default' : 'secondary'}>
-                  {tournament.status === 'setup' ? 'Cài đặt' : 
-                   tournament.status === 'ongoing' ? 'Đang diễn ra' : 'Hoàn thành'}
+                  {statusLabel}
                 </Badge>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <span className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  {tournament.team_count} đội
+                  {tournament.team_count} {t.doublesElimination.teams}
                 </span>
                 <span className="flex items-center gap-1">
                   <Trophy className="w-4 h-4" />
@@ -277,7 +231,7 @@ export default function DoublesEliminationView() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: vi })}
+                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
                 </span>
               </div>
             </div>
@@ -286,7 +240,7 @@ export default function DoublesEliminationView() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleShare}>
               {copied ? <Check className="w-4 h-4 mr-1" /> : <Share2 className="w-4 h-4 mr-1" />}
-              {copied ? 'Đã sao chép' : 'Chia sẻ'}
+              {copied ? t.doublesElimination.view.copied : t.doublesElimination.view.share}
             </Button>
             
             {canManage && (
@@ -298,15 +252,15 @@ export default function DoublesEliminationView() {
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Xóa giải đấu?</AlertDialogTitle>
+                    <AlertDialogTitle>{t.doublesElimination.view.deleteConfirm}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xóa vĩnh viễn.
+                      {t.doublesElimination.view.deleteConfirmDesc}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                    <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Xóa
+                      {t.common.delete}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -318,51 +272,38 @@ export default function DoublesEliminationView() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
-            <TabsTrigger value="preliminary">Sơ loại</TabsTrigger>
+            <TabsTrigger value="preliminary">{t.doublesElimination.view.preliminary}</TabsTrigger>
             <TabsTrigger 
               value="playoff"
               className={preliminaryComplete ? "bg-primary/20 text-primary font-semibold animate-pulse" : ""}
             >
               {preliminaryComplete && <Trophy className="w-3.5 h-3.5 mr-1.5" />}
-              Playoff
+              {t.doublesElimination.view.playoff}
             </TabsTrigger>
-            <TabsTrigger value="teams">Đội ({teams.length})</TabsTrigger>
-            {canManage && <TabsTrigger value="settings">Cài đặt</TabsTrigger>}
+            <TabsTrigger value="teams">{t.doublesElimination.view.teams} ({teams.length})</TabsTrigger>
+            {canManage && <TabsTrigger value="settings">{t.doublesElimination.view.settings}</TabsTrigger>}
           </TabsList>
 
-          {/* Preliminary Tab - Round 1, 2, 3 */}
           <TabsContent value="preliminary" className="space-y-6">
             <DoublesEliminationBracket 
-              matches={matches}
-              teams={teams}
-              tournamentId={tournament?.id}
-              showPreliminaryOnly={true}
-              canEdit={canEdit}
-              onScoreUpdated={softReload}
-              onMatchUpdated={handleMatchUpdated}
-              onR3Assigned={handleR3Assigned}
+              matches={matches} teams={teams} tournamentId={tournament?.id}
+              showPreliminaryOnly={true} canEdit={canEdit}
+              onScoreUpdated={softReload} onMatchUpdated={handleMatchUpdated} onR3Assigned={handleR3Assigned}
             />
           </TabsContent>
 
-          {/* Playoff Tab - Round 4+ */}
           <TabsContent value="playoff" className="space-y-6">
             <DoublesEliminationBracket 
-              matches={matches}
-              teams={teams}
-              tournamentId={tournament?.id}
-              showPlayoffOnly={true}
-              canEdit={canEdit}
-              onScoreUpdated={softReload}
-              onMatchUpdated={handleMatchUpdated}
-              onR3Assigned={handleR3Assigned}
+              matches={matches} teams={teams} tournamentId={tournament?.id}
+              showPlayoffOnly={true} canEdit={canEdit}
+              onScoreUpdated={softReload} onMatchUpdated={handleMatchUpdated} onR3Assigned={handleR3Assigned}
             />
           </TabsContent>
 
-          {/* Teams Tab */}
           <TabsContent value="teams">
             <Card>
               <CardHeader>
-                <CardTitle>Danh sách đội</CardTitle>
+                <CardTitle>{t.doublesElimination.view.teamList}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -392,7 +333,7 @@ export default function DoublesEliminationView() {
                           </div>
                         </div>
                         {team.status === 'eliminated' && (
-                          <Badge variant="secondary">Loại R{team.eliminated_at_round}</Badge>
+                          <Badge variant="secondary">{t.doublesElimination.view.eliminatedRound}{team.eliminated_at_round}</Badge>
                         )}
                       </div>
                     </div>
@@ -402,42 +343,36 @@ export default function DoublesEliminationView() {
             </Card>
           </TabsContent>
 
-          {/* Settings Tab */}
           {canManage && (
             <TabsContent value="settings" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Cài đặt giải đấu</CardTitle>
+                  <CardTitle>{t.doublesElimination.view.tournamentSettings}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-sm text-muted-foreground">Vòng ngoài</span>
+                      <span className="text-sm text-muted-foreground">{t.doublesElimination.earlyRounds}</span>
                       <div className="font-medium">{tournament.early_rounds_format.toUpperCase()}</div>
                     </div>
                     <div>
-                      <span className="text-sm text-muted-foreground">Bán kết+</span>
+                      <span className="text-sm text-muted-foreground">{t.doublesElimination.semifinalPlus}</span>
                       <div className="font-medium">{tournament.finals_format.toUpperCase()}</div>
                     </div>
                     <div>
-                      <span className="text-sm text-muted-foreground">Tranh hạng 3</span>
-                      <div className="font-medium">{tournament.has_third_place_match ? 'Có' : 'Không'}</div>
+                      <span className="text-sm text-muted-foreground">{t.doublesElimination.view.thirdPlaceMatch}</span>
+                      <div className="font-medium">{tournament.has_third_place_match ? t.doublesElimination.view.yes : t.doublesElimination.view.no}</div>
                     </div>
                     <div>
-                      <span className="text-sm text-muted-foreground">Số sân</span>
+                      <span className="text-sm text-muted-foreground">{t.doublesElimination.view.courts}</span>
                       <div className="font-medium">{tournament.court_count}</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Referee Management */}
               <RefereeManagement
-                referees={referees.map(r => ({
-                  id: r.id,
-                  email: r.email,
-                  display_name: r.display_name,
-                }))}
+                referees={referees.map(r => ({ id: r.id, email: r.email, display_name: r.display_name }))}
                 loading={refereesLoading}
                 onAddReferee={addRefereeByEmail}
                 onRemoveReferee={removeReferee}

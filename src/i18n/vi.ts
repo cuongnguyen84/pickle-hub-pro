@@ -1150,6 +1150,21 @@ export interface Translations {
       needMinTeams: string;
       matchesCreated: string;
       roundRobinComplete: string;
+      btcActions: string;
+      approveBeforeGroups: string;
+      groupStage: string;
+      roundRobin: string;
+      playoffRound: string;
+      seBracket: string;
+      noMatches: string;
+      noMatchesDesc: string;
+      startConfirm: string;
+      startConfirmDesc: string;
+      start: string;
+      teamsReady: string;
+      createSchedule: string;
+      deleteConfirm: string;
+      deleteConfirmDesc: string;
     };
     roster: {
       title: string;
@@ -1272,6 +1287,31 @@ export interface Translations {
       winner: string;
       saveSuccess: string;
       saveError: string;
+    };
+    view: {
+      notFound: string;
+      backToList: string;
+      preliminary: string;
+      playoff: string;
+      teams: string;
+      settings: string;
+      teamList: string;
+      tournamentSettings: string;
+      thirdPlaceMatch: string;
+      courts: string;
+      yes: string;
+      no: string;
+      share: string;
+      copied: string;
+      copyError: string;
+      deleteConfirm: string;
+      deleteConfirmDesc: string;
+      deleteSuccess: string;
+      deleteError: string;
+      eliminatedRound: string;
+      r3AssignedTitle: string;
+      r3TiedDesc: string;
+      r3NormalDesc: string;
     };
   };
   news: {
@@ -2465,6 +2505,21 @@ export const vi: Translations = {
       needMinTeams: "Cần ít nhất {count} đội",
       matchesCreated: "{count} trận đã tạo",
       roundRobinComplete: "Vòng tròn đã hoàn thành",
+      btcActions: "Hành động BTC",
+      approveBeforeGroups: "Duyệt {count} đội đang chờ trước khi chia bảng",
+      groupStage: "Vòng bảng",
+      roundRobin: "Vòng tròn",
+      playoffRound: "Vòng Playoff",
+      seBracket: "Bracket Loại Trực Tiếp",
+      noMatches: "Chưa có trận đấu nào",
+      noMatchesDesc: "Lịch thi đấu sẽ được BTC tạo",
+      startConfirm: "Bắt đầu giải đấu?",
+      startConfirmDesc: "Sau khi bắt đầu, giải đấu sẽ chuyển sang trạng thái \"Đang diễn ra\" và không thể thêm/xóa đội nữa.",
+      start: "Bắt đầu",
+      teamsReady: "{count} đội đã sẵn sàng",
+      createSchedule: "Tạo lịch thi đấu",
+      deleteConfirm: "Xoá giải đấu?",
+      deleteConfirmDesc: "Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xoá vĩnh viễn.",
     },
     roster: {
       title: "Danh sách thành viên",
@@ -2587,6 +2642,31 @@ export const vi: Translations = {
       winner: "Thắng",
       saveSuccess: "Đã lưu kết quả",
       saveError: "Lỗi khi lưu điểm",
+    },
+    view: {
+      notFound: "Không tìm thấy giải đấu",
+      backToList: "Quay lại danh sách",
+      preliminary: "Sơ loại",
+      playoff: "Playoff",
+      teams: "Đội",
+      settings: "Cài đặt",
+      teamList: "Danh sách đội",
+      tournamentSettings: "Cài đặt giải đấu",
+      thirdPlaceMatch: "Tranh hạng 3",
+      courts: "Số sân",
+      yes: "Có",
+      no: "Không",
+      share: "Chia sẻ",
+      copied: "Đã sao chép",
+      copyError: "Không thể sao chép",
+      deleteConfirm: "Xóa giải đấu?",
+      deleteConfirmDesc: "Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xóa vĩnh viễn.",
+      deleteSuccess: "Đã xóa giải đấu",
+      deleteError: "Lỗi xóa giải đấu",
+      eliminatedRound: "Loại R",
+      r3AssignedTitle: "Đã phân vòng 3",
+      r3TiedDesc: "Có {count} VĐV trùng hiệu số ({names}). Chương trình đã ghép ngẫu nhiên 2 VĐV thi đấu trận sơ loại.",
+      r3NormalDesc: "Các VĐV đã được phân vào vòng tiếp theo dựa trên hiệu số.",
     },
   },
   news: {
