@@ -35,7 +35,7 @@ const BottomNav = () => {
   // Calculate nav height - make it larger to avoid overlap with system nav
   const getNavHeight = () => {
     if (isAndroidDevice && isNative) return '72px'; // Taller for Android
-    if (isIOSDevice) return '60px';
+    if (isIOSDevice) return '68px';
     return '56px';
   };
 
@@ -55,8 +55,8 @@ const BottomNav = () => {
             const Icon = item.icon;
             
             // Larger icons for Android native
-            const iconSize = (isAndroidDevice && isNative) ? "w-6 h-6" : (isIOSDevice ? "w-5 h-5" : "w-[22px] h-[22px]");
-            const textSize = (isAndroidDevice && isNative) ? "text-xs" : (isIOSDevice ? "text-[10px]" : "text-[11px]");
+            const iconSize = (isAndroidDevice && isNative) ? "w-6 h-6" : (isIOSDevice ? "w-6 h-6" : "w-[22px] h-[22px]");
+            const textSize = (isAndroidDevice && isNative) ? "text-xs" : (isIOSDevice ? "text-[11px]" : "text-[11px]");
             
             return (
               <Link
