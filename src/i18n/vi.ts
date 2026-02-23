@@ -1459,6 +1459,70 @@ export interface Translations {
       whoDesc: string;
     };
   };
+  referee: {
+    title: string;
+    emailPlaceholder: string;
+    addBtn: string;
+    emptyState: string;
+    noName: string;
+    removeBtn: string;
+    description: string;
+    loading: string;
+  };
+  // TeamMatch sub-component strings
+  teamMatchComponents: {
+    statusPending: string;
+    statusApproved: string;
+    statusRejected: string;
+    yourTeam: string;
+    youAreCaptain: string;
+    members: string;
+    rosterFull: string;
+    rosterIncomplete: string;
+    memberList: string;
+    male: string;
+    female: string;
+    manageTeam: string;
+    manageAsOrganizer: string;
+    viewTeamInfo: string;
+    noTeams: string;
+    deleteTeamTitle: string;
+    deleteTeamDesc: string;
+    cancelBtn: string;
+    deleteBtn: string;
+    teamListTitle: string;
+    registeredTeams: string;
+    rosterStatus: string;
+    lineupDone: string;
+    // GroupMatchList
+    noMatchesInGroup: string;
+    noMatchesCreateSchedule: string;
+    noGroupsYet: string;
+    roundLabel: string;
+    startRound: string;
+    waitingLineup: string;
+    missingLineup: string;
+    scoreBtn: string;
+    notStarted: string;
+    liningUp: string;
+    live: string;
+    ended: string;
+    // CreateTeamDialog
+    createTeamTitle: string;
+    createTeamDesc: string;
+    teamNameLabel: string;
+    teamNameError: string;
+    captainNameLabel: string;
+    captainNameError: string;
+    // InviteTeamDialog
+    inviteCaptainEmail: string;
+    inviteCaptainEmailLabel: string;
+    inviteDesc: string;
+    inviteEmailError: string;
+    // GroupSetupDialog
+    groupSetupTitle: string;
+    groupSetupDesc: string;
+  };
 }
 
 // Vietnamese translations
@@ -2929,5 +2993,64 @@ export const vi: Translations = {
       whoTitle: "Ai nên dùng Flex Tournament?",
       whoDesc: "Dành cho BTC CLB, giải đấu tập luyện, thể thức đặc biệt, các giải có luật riêng hoặc sáng tạo.",
     },
+  },
+  referee: {
+    title: "Trọng tài",
+    emailPlaceholder: "Nhập email trọng tài",
+    addBtn: "Thêm",
+    emptyState: "Chưa có trọng tài nào. Thêm trọng tài để họ có thể nhập điểm.",
+    noName: "Không có tên",
+    removeBtn: "Gỡ",
+    description: "Trọng tài có thể nhập và sửa điểm tất cả các trận trong giải.",
+    loading: "Đang tải...",
+  },
+  teamMatchComponents: {
+    statusPending: "Chờ duyệt",
+    statusApproved: "Đã duyệt",
+    statusRejected: "Từ chối",
+    yourTeam: "Đội của bạn",
+    youAreCaptain: "Bạn là đội trưởng của đội này",
+    members: "Thành viên",
+    rosterFull: "Đủ đội",
+    rosterIncomplete: "Chưa đủ",
+    memberList: "Danh sách thành viên:",
+    male: "Nam",
+    female: "Nữ",
+    manageTeam: "Quản lý đội",
+    manageAsOrganizer: "Quản lý đội hình với quyền BTC",
+    viewTeamInfo: "Xem thông tin đội",
+    noTeams: "Chưa có đội nào",
+    deleteTeamTitle: "Xóa đội?",
+    deleteTeamDesc: "Bạn có chắc muốn xóa đội \"{name}\"? Hành động này không thể hoàn tác.",
+    cancelBtn: "Hủy",
+    deleteBtn: "Xóa",
+    teamListTitle: "Danh sách đội",
+    registeredTeams: "Giải đấu có {count} đội đã đăng ký",
+    rosterStatus: "Trạng thái",
+    lineupDone: "Đã line up",
+    noMatchesInGroup: "Chưa có trận đấu trong",
+    noMatchesCreateSchedule: "Chia bảng để tạo lịch thi đấu",
+    noGroupsYet: "Chưa chia bảng",
+    roundLabel: "Vòng",
+    startRound: "Bắt đầu",
+    waitingLineup: "Chờ line up",
+    missingLineup: "Chưa line up:",
+    scoreBtn: "Chấm",
+    notStarted: "Chưa bắt đầu",
+    liningUp: "Đang line up",
+    live: "LIVE",
+    ended: "Đã kết thúc",
+    createTeamTitle: "Tạo đội mới",
+    createTeamDesc: "Đăng ký đội của bạn để tham gia giải đấu. Bạn sẽ là đội trưởng.",
+    teamNameLabel: "Tên đội",
+    teamNameError: "Tên đội phải có ít nhất 2 ký tự",
+    captainNameLabel: "Tên đội trưởng (bạn)",
+    captainNameError: "Tên đội trưởng phải có ít nhất 2 ký tự",
+    inviteCaptainEmail: "Nhập email đội trưởng để mời đội tham gia giải. Đội sẽ được tự động duyệt.",
+    inviteCaptainEmailLabel: "Email đội trưởng",
+    inviteDesc: "Mời đội",
+    inviteEmailError: "Vui lòng nhập email đội trưởng",
+    groupSetupTitle: "Chia bảng thi đấu",
+    groupSetupDesc: "Chọn số bảng và xem trước cách chia đội",
   },
 };

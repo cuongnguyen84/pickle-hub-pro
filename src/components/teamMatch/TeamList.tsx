@@ -15,17 +15,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Users, Trash2, ChevronRight } from 'lucide-react';
 import { useTeamMatchTeams, useTeamMatchTeamManagement, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
+import { useI18n } from '@/i18n';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
   approved: 'bg-green-500/10 text-green-600 border-green-500/20',
   rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Chờ duyệt',
-  approved: 'Đã duyệt',
-  rejected: 'Từ chối',
 };
 
 interface TeamListProps {
@@ -37,6 +32,14 @@ interface TeamListProps {
 export function TeamList({ tournamentId, isOwner, onTeamClick }: TeamListProps) {
   const { data: teams, isLoading } = useTeamMatchTeams(tournamentId);
   const { deleteTeam, isDeletingTeam } = useTeamMatchTeamManagement();
+  const { t } = useI18n();
+  const c = t.teamMatchComponents;
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending: c.statusPending,
+    approved: c.statusApproved,
+    rejected: c.statusRejected,
+  };
 
   const handleDelete = async (teamId: string) => {
     await deleteTeam({ teamId, tournamentId });
@@ -52,7 +55,6 @@ export function TeamList({ tournamentId, isOwner, onTeamClick }: TeamListProps) 
     );
   }
 
-  // Filter out rejected teams for non-owner view
   const displayTeams = isOwner 
     ? teams?.filter(t => t.status !== 'rejected') || []
     : teams?.filter(t => t.status === 'approved') || [];
@@ -62,7 +64,7 @@ export function TeamList({ tournamentId, isOwner, onTeamClick }: TeamListProps) 
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
           <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Chưa có đội nào</p>
+          <p>{c.noTeams}</p>
         </CardContent>
       </Card>
     );
@@ -75,6 +77,8 @@ export function TeamList({ tournamentId, isOwner, onTeamClick }: TeamListProps) 
           key={team.id}
           team={team}
           isOwner={isOwner}
+          statusLabels={STATUS_LABELS}
+          c={c}
           onDelete={() => handleDelete(team.id)}
           onClick={() => onTeamClick?.(team)}
           isProcessing={isDeletingTeam}
@@ -87,6 +91,8 @@ export function TeamList({ tournamentId, isOwner, onTeamClick }: TeamListProps) 
 interface TeamCardProps {
   team: TeamMatchTeam;
   isOwner: boolean;
+  statusLabels: Record<string, string>;
+  c: any;
   onDelete?: () => void;
   onClick?: () => void;
   isProcessing?: boolean;
@@ -95,6 +101,8 @@ interface TeamCardProps {
 function TeamCard({
   team,
   isOwner,
+  statusLabels,
+  c,
   onDelete,
   onClick,
   isProcessing,
@@ -118,7 +126,7 @@ function TeamCard({
               </div>
               <div className="flex items-center gap-2 mt-0.5">
                 <Badge variant="outline" className={STATUS_COLORS[team.status]}>
-                  {STATUS_LABELS[team.status]}
+                  {statusLabels[team.status]}
                 </Badge>
               </div>
             </div>
@@ -138,18 +146,18 @@ function TeamCard({
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Xóa đội?</AlertDialogTitle>
+                    <AlertDialogTitle>{c.deleteTeamTitle}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Bạn có chắc muốn xóa đội "{team.team_name}"? Hành động này không thể hoàn tác.
+                      {c.deleteTeamDesc.replace('{name}', team.team_name)}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                    <AlertDialogCancel>{c.cancelBtn}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={onDelete}
                       className="bg-destructive text-destructive-foreground"
                     >
-                      Xóa
+                      {c.deleteBtn}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

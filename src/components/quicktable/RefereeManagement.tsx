@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Users, UserPlus, UserMinus, Mail, Loader2 } from 'lucide-react';
+import { useI18n } from '@/i18n';
 
 // Generic referee display type - works for both Quick Tables and Doubles Elimination
 interface RefereeDisplay {
@@ -25,6 +26,8 @@ export const RefereeManagement = ({
   onAddReferee,
   onRemoveReferee,
 }: RefereeManagementProps) => {
+  const { t } = useI18n();
+  const r = t.referee;
   const [email, setEmail] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -50,7 +53,7 @@ export const RefereeManagement = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Users className="w-4 h-4 text-primary" />
-          Trọng tài
+          {r.title}
           {referees.length > 0 && (
             <Badge variant="secondary" className="text-xs">
               {referees.length}
@@ -66,7 +69,7 @@ export const RefereeManagement = ({
             <Input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Nhập email trọng tài"
+              placeholder={r.emailPlaceholder}
               className="pl-9"
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             />
@@ -77,7 +80,7 @@ export const RefereeManagement = ({
             ) : (
               <>
                 <UserPlus className="w-4 h-4 mr-1" />
-                Thêm
+                {r.addBtn}
               </>
             )}
           </Button>
@@ -86,11 +89,11 @@ export const RefereeManagement = ({
         {/* Referee list */}
         {loading ? (
           <div className="text-sm text-foreground-muted text-center py-4">
-            Đang tải...
+            {r.loading}
           </div>
         ) : referees.length === 0 ? (
           <div className="text-sm text-foreground-muted text-center py-4">
-            Chưa có trọng tài nào. Thêm trọng tài để họ có thể nhập điểm.
+            {r.emptyState}
           </div>
         ) : (
           <div className="space-y-2">
@@ -101,7 +104,7 @@ export const RefereeManagement = ({
               >
                 <div className="min-w-0 flex-1">
                   <div className="font-medium text-sm truncate">
-                    {referee.display_name || 'Không có tên'}
+                    {referee.display_name || r.noName}
                   </div>
                   <div className="text-xs text-foreground-muted truncate">
                     {referee.email}
@@ -119,7 +122,7 @@ export const RefereeManagement = ({
                   ) : (
                     <>
                       <UserMinus className="w-4 h-4 mr-1" />
-                      Gỡ
+                      {r.removeBtn}
                     </>
                   )}
                 </Button>
@@ -129,7 +132,7 @@ export const RefereeManagement = ({
         )}
 
         <p className="text-xs text-foreground-muted">
-          Trọng tài có thể nhập và sửa điểm tất cả các trận trong giải.
+          {r.description}
         </p>
       </CardContent>
     </Card>

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gamepad2, Trophy, Clock, Play, ClipboardList, Check, AlertTriangle, Users, Radio } from 'lucide-react';
 import { useTeamMatchMatches, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchGroups, TeamMatchGroup } from '@/hooks/useTeamMatchGroups';
+import { useI18n } from '@/i18n';
 
 interface GroupMatchListProps {
   tournamentId: string;
@@ -18,13 +19,6 @@ interface GroupMatchListProps {
   onStartRound?: (roundNumber: number, groupId?: string) => void;
   onScoreMatch?: (match: TeamMatchMatch) => void;
 }
-
-const STATUS_CONFIG = {
-  pending: { label: 'Chưa bắt đầu', color: 'bg-muted text-muted-foreground', icon: Clock },
-  lineup: { label: 'Đang line up', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: ClipboardList },
-  in_progress: { label: 'LIVE', color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Radio },
-  completed: { label: 'Đã kết thúc', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Trophy },
-};
 
 export function GroupMatchList({ 
   tournamentId, 
@@ -38,6 +32,15 @@ export function GroupMatchList({
 }: GroupMatchListProps) {
   const { data: matches, isLoading: isLoadingMatches } = useTeamMatchMatches(tournamentId);
   const { data: groups, isLoading: isLoadingGroups } = useTeamMatchGroups(tournamentId);
+  const { t } = useI18n();
+  const c = t.teamMatchComponents;
+
+  const STATUS_CONFIG = {
+    pending: { label: c.notStarted, color: 'bg-muted text-muted-foreground', icon: Clock },
+    lineup: { label: c.liningUp, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: ClipboardList },
+    in_progress: { label: c.live, color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Radio },
+    completed: { label: c.ended, color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Trophy },
+  };
 
   if (isLoadingMatches || isLoadingGroups) {
     return (
@@ -54,8 +57,8 @@ export function GroupMatchList({
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
           <Gamepad2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Chưa có trận đấu nào</p>
-          <p className="text-sm mt-1">Chia bảng để tạo lịch thi đấu</p>
+          <p>{t.teamMatch.view.noMatches}</p>
+          <p className="text-sm mt-1">{c.noMatchesCreateSchedule}</p>
         </CardContent>
       </Card>
     );
@@ -77,12 +80,11 @@ export function GroupMatchList({
   const sortedGroups = groups?.sort((a, b) => a.display_order - b.display_order) || [];
 
   if (sortedGroups.length === 0) {
-    // Fallback to original behavior if no groups
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
           <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Chưa chia bảng</p>
+          <p>{c.noGroupsYet}</p>
         </CardContent>
       </Card>
     );
@@ -106,6 +108,8 @@ export function GroupMatchList({
             userTeamId={userTeamId}
             isOwner={isOwner}
             canEditScores={canEditScores}
+            statusConfig={STATUS_CONFIG}
+            c={c}
             onMatchClick={onMatchClick}
             onLineupClick={onLineupClick}
             onStartRound={(round) => onStartRound?.(round, group.id)}
@@ -124,6 +128,8 @@ function GroupMatches({
   userTeamId,
   isOwner,
   canEditScores,
+  statusConfig,
+  c,
   onMatchClick,
   onLineupClick,
   onStartRound,
@@ -134,6 +140,8 @@ function GroupMatches({
   userTeamId?: string;
   isOwner?: boolean;
   canEditScores?: boolean;
+  statusConfig: any;
+  c: any;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number) => void;
@@ -143,7 +151,7 @@ function GroupMatches({
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          <p>Chưa có trận đấu trong {group.name}</p>
+          <p>{c.noMatchesInGroup} {group.name}</p>
         </CardContent>
       </Card>
     );
@@ -185,7 +193,7 @@ function GroupMatches({
         return (
           <div key={round}>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-sm text-muted-foreground">Vòng {round}</h4>
+              <h4 className="font-semibold text-sm text-muted-foreground">{c.roundLabel} {round}</h4>
               
               {isOwner && !roundStarted && (
                 <div className="flex items-center gap-2">
@@ -196,12 +204,12 @@ function GroupMatches({
                       onClick={() => onStartRound?.(round)}
                     >
                       <Play className="h-3 w-3 mr-1" />
-                      Bắt đầu
+                      {c.startRound}
                     </Button>
                   ) : (
                     <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs">
                       <Clock className="h-3 w-3 mr-1" />
-                      Chờ line up
+                      {c.waitingLineup}
                     </Badge>
                   )}
                 </div>
@@ -212,27 +220,24 @@ function GroupMatches({
               <Alert className="mb-3">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  Chưa line up: {missingLineups.join(', ')}
+                  {c.missingLineup} {missingLineups.join(', ')}
                 </AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-2">
               {roundMatches.map((match) => {
-                const config = STATUS_CONFIG[match.status] || STATUS_CONFIG.pending;
+                const config = statusConfig[match.status] || statusConfig.pending;
                 const StatusIcon = config.icon;
                 const isMyMatch = userTeamId && (match.team_a_id === userTeamId || match.team_b_id === userTeamId);
                 const matchStarted = match.status === 'in_progress' || match.status === 'completed';
                 
-                // Check lineup needs for each team
                 const needsLineupA = !match.lineup_a_submitted && !matchStarted;
                 const needsLineupB = !match.lineup_b_submitted && !matchStarted;
                 
-                // Captain can lineup their own team, BTC can lineup any team
                 const canLineupA = needsLineupA && (isOwner || match.team_a_id === userTeamId);
                 const canLineupB = needsLineupB && (isOwner || match.team_b_id === userTeamId);
                 
-                // For showing "Đã line up" badge to captain
                 const isTeamA = match.team_a_id === userTeamId;
                 const myLineupSubmitted = isMyMatch && (isTeamA ? match.lineup_a_submitted : match.lineup_b_submitted);
                 
@@ -288,7 +293,7 @@ function GroupMatches({
                             {config.label}
                           </Badge>
                           
-                          {/* BTC lineup buttons - show A and B separately */}
+                          {/* BTC lineup buttons */}
                           {isOwner && (canLineupA || canLineupB) && (
                             <div className="flex gap-1">
                               {canLineupA && (
@@ -342,11 +347,11 @@ function GroupMatches({
                           {!isOwner && myLineupSubmitted && !matchStarted && (
                             <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
                               <Check className="h-3 w-3 mr-1" />
-                              Đã line up
+                              {c.lineupDone}
                             </Badge>
                           )}
                           
-                          {/* Referee Score Button - show when both lineups ready OR match started */}
+                          {/* Referee Score Button */}
                           {canEditScores && (
                             (match.lineup_a_submitted && match.lineup_b_submitted) || 
                             match.status === 'in_progress' || 
@@ -362,7 +367,7 @@ function GroupMatches({
                               }}
                             >
                               <Play className="h-3 w-3 mr-1" />
-                              Chấm
+                              {c.scoreBtn}
                             </Button>
                           )}
                         </div>
