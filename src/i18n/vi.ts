@@ -1003,6 +1003,16 @@ export interface Translations {
       wildcardDesc: string;
       selectExactly: string;
       courtsTimeUpdated: string;
+      notFound: string;
+      goBack: string;
+      group: string;
+      court: string;
+      inputScore: string;
+      loading: string;
+      deleteTournament: string;
+      deleteConfirmFull: string;
+      recommended: string;
+      confirm: string;
     };
     groups: {
       groups: string;
@@ -1165,6 +1175,35 @@ export interface Translations {
       createSchedule: string;
       deleteConfirm: string;
       deleteConfirmDesc: string;
+      notFound: string;
+      notFoundDesc: string;
+      backToList: string;
+      deleteBtn: string;
+      registerForTournament: string;
+      createTeamToJoin: string;
+      btcActionsTitle: string;
+      inviteTeamBtn: string;
+      createGroupsBtn: string;
+      generateBracketBtn: string;
+      roundStarted: string;
+      createPlayoffTitle: string;
+      createPlayoffDesc: string;
+      createScheduleBtn: string;
+      createScheduleDesc: string;
+      noMatchesEmpty: string;
+      noMatchesScheduleDesc: string;
+      startTournamentTitle: string;
+      startTournamentDesc: string;
+      startBtn: string;
+      teamsReadyCount: string;
+      generateScheduleBtn: string;
+      seBracketTitle: string;
+      groupStageTitle: string;
+      roundRobinTitle: string;
+      approveBeforeBracket: string;
+      inviteOrCreateSchedule: string;
+      inviteOrBracket: string;
+      needMinTeamsForBracket: string;
     };
     roster: {
       title: string;
@@ -1312,6 +1351,45 @@ export interface Translations {
       r3AssignedTitle: string;
       r3TiedDesc: string;
       r3NormalDesc: string;
+    };
+    bracket: {
+      round: string;
+      match: string;
+      winnerBracket: string;
+      loserBracket: string;
+      finalElimination: string;
+      champion: string;
+      finals: string;
+      thirdPlace: string;
+      quarterFinal: string;
+      semiFinal: string;
+      round16: string;
+      done: string;
+      openScoring: string;
+      editScore: string;
+      assignR3: string;
+      assigning: string;
+      waitingAssignment: string;
+      waitingR1R2: string;
+      noMatches: string;
+      noBracket: string;
+      playoffNotReady: string;
+      tieNotAllowed: string;
+      loserOf: string;
+      clickGameToEdit: string;
+      waitingTeams: string;
+      finalBadge: string;
+      scoreSaved: string;
+      matchSaved: string;
+      gameSaved: string;
+      scoreSaveError: string;
+      playoffCreated: string;
+      playoffCreatedDesc: string;
+      r3Assigned: string;
+      r3AssignedDesc: string;
+      cancel: string;
+      save: string;
+      saveGameN: string;
     };
   };
   news: {
@@ -2358,6 +2436,16 @@ export const vi: Translations = {
       wildcardDesc: "Chọn {count} VĐV hạng 3 để vào Playoff",
       selectExactly: "Vui lòng chọn đúng {count} người",
       courtsTimeUpdated: "Đã cập nhật sân & giờ thi đấu",
+      notFound: "Không tìm thấy bảng đấu",
+      goBack: "Quay lại",
+      group: "Bảng",
+      court: "Sân",
+      inputScore: "Nhập",
+      loading: "Đang tải...",
+      deleteTournament: "Xoá giải",
+      deleteConfirmFull: "Bạn có chắc chắn muốn xoá giải \"{name}\"? Tất cả dữ liệu sẽ bị xoá vĩnh viễn.",
+      recommended: "Khuyến nghị",
+      confirm: "Xác nhận",
     },
     groups: {
       groups: "bảng",
@@ -2520,6 +2608,35 @@ export const vi: Translations = {
       createSchedule: "Tạo lịch thi đấu",
       deleteConfirm: "Xoá giải đấu?",
       deleteConfirmDesc: "Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xoá vĩnh viễn.",
+      notFound: "Không tìm thấy giải đấu",
+      notFoundDesc: "Giải đấu này không tồn tại hoặc đã bị xóa",
+      backToList: "Quay lại danh sách",
+      deleteBtn: "Xoá giải",
+      registerForTournament: "Đăng ký tham gia giải đấu",
+      createTeamToJoin: "Tạo đội mới để tham gia",
+      btcActionsTitle: "Hành động BTC",
+      inviteTeamBtn: "Mời đội",
+      createGroupsBtn: "Chia bảng",
+      generateBracketBtn: "Sinh Bracket",
+      roundStarted: "Đã bắt đầu vòng",
+      createPlayoffTitle: "Tạo vòng Playoff",
+      createPlayoffDesc: "Vòng tròn đã hoàn thành",
+      createScheduleBtn: "Tạo lịch thi đấu",
+      createScheduleDesc: "Mời đội hoặc tạo lịch thi đấu",
+      noMatchesEmpty: "Chưa có trận đấu nào",
+      noMatchesScheduleDesc: "Lịch thi đấu sẽ được BTC tạo",
+      startTournamentTitle: "Bắt đầu giải đấu?",
+      startTournamentDesc: "Sau khi bắt đầu, giải đấu sẽ chuyển sang trạng thái \"Đang diễn ra\" và không thể thêm/xóa đội nữa.",
+      startBtn: "Bắt đầu",
+      teamsReadyCount: "đội đã sẵn sàng",
+      generateScheduleBtn: "Tạo lịch",
+      seBracketTitle: "Bracket Loại Trực Tiếp",
+      groupStageTitle: "Vòng bảng",
+      roundRobinTitle: "Vòng tròn",
+      approveBeforeBracket: "Cần duyệt tất cả đội trước khi tạo bracket",
+      inviteOrCreateSchedule: "Mời đội hoặc tạo lịch thi đấu",
+      inviteOrBracket: "Mời đội hoặc tạo bracket Single Elimination",
+      needMinTeamsForBracket: "Cần ít nhất 6 đội để chia bảng",
     },
     roster: {
       title: "Danh sách thành viên",
@@ -2667,6 +2784,45 @@ export const vi: Translations = {
       r3AssignedTitle: "Đã phân vòng 3",
       r3TiedDesc: "Có {count} VĐV trùng hiệu số ({names}). Chương trình đã ghép ngẫu nhiên 2 VĐV thi đấu trận sơ loại.",
       r3NormalDesc: "Các VĐV đã được phân vào vòng tiếp theo dựa trên hiệu số.",
+    },
+    bracket: {
+      round: "Vòng",
+      match: "Trận",
+      winnerBracket: "Winner Bracket",
+      loserBracket: "Loser Bracket",
+      finalElimination: "Sơ loại cuối",
+      champion: "Vô địch",
+      finals: "Chung kết",
+      thirdPlace: "Tranh hạng 3",
+      quarterFinal: "Tứ kết",
+      semiFinal: "Bán kết",
+      round16: "Vòng 16",
+      done: "Xong",
+      openScoring: "Chấm",
+      editScore: "Sửa",
+      assignR3: "Phân vòng 3",
+      assigning: "Đang phân vòng...",
+      waitingAssignment: "Chờ phân vòng",
+      waitingR1R2: "Chờ V1 & V2",
+      noMatches: "Không có trận",
+      noBracket: "Chưa có bracket. Hãy hoàn tất cài đặt để tạo bracket.",
+      playoffNotReady: "Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại.",
+      tieNotAllowed: "Điểm không được bằng nhau",
+      loserOf: "Thua trận",
+      clickGameToEdit: "Click vào ô game để sửa điểm",
+      waitingTeams: "Chờ đủ 2 đội để chấm điểm",
+      finalBadge: "CK",
+      scoreSaved: "Đã lưu điểm",
+      matchSaved: "Đã lưu kết quả",
+      gameSaved: "Đã lưu Game",
+      scoreSaveError: "Lỗi lưu điểm",
+      playoffCreated: "Đã tạo playoff",
+      playoffCreatedDesc: "Lịch thi đấu vòng playoff đã được tạo với seeding đúng.",
+      r3Assigned: "Đã phân vòng 3",
+      r3AssignedDesc: "Các VĐV đã được phân vào vòng tiếp theo.",
+      cancel: "Hủy",
+      save: "Lưu",
+      saveGameN: "Lưu G",
     },
   },
   news: {
