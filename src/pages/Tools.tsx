@@ -4,7 +4,7 @@ import { DynamicMeta, SoftwareApplicationSchema, ToolsHubSeoContent } from "@/co
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Users, Swords, Trophy, GitBranch, Sparkles } from "lucide-react";
+import { Users, Swords, Trophy, GitBranch, Sparkles, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MyRefereeTournaments } from "@/components/tools/MyRefereeTournaments";
 import { useAuth } from "@/hooks/useAuth";
@@ -89,6 +89,12 @@ const Tools = () => {
       description: t.tools.flexTournament.description,
       icon: <Sparkles className="w-6 h-6" />,
       href: "/tools/flex-tournament",
+    },
+    {
+      title: t.dashboard.title,
+      description: t.dashboard.description,
+      icon: <Monitor className="w-6 h-6" />,
+      href: "/tools/dashboard",
     },
   ];
 
