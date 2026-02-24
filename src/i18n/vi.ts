@@ -1523,6 +1523,31 @@ export interface Translations {
     groupSetupTitle: string;
     groupSetupDesc: string;
   };
+  dashboard: {
+    title: string;
+    description: string;
+    selectTournament: string;
+    court: string;
+    nowPlaying: string;
+    nextMatch: string;
+    available: string;
+    tvMode: string;
+    exitTvMode: string;
+    soundOn: string;
+    soundOff: string;
+    noActiveTournaments: string;
+    vs: string;
+    match: string;
+    score: string;
+    quickTable: string;
+    teamMatch: string;
+    doublesElimination: string;
+    autoRotate: string;
+    liveMatches: string;
+    upNext: string;
+    completed: string;
+    backToList: string;
+  };
 }
 
 // Vietnamese translations
@@ -3052,5 +3077,30 @@ export const vi: Translations = {
     inviteEmailError: "Vui lòng nhập email đội trưởng",
     groupSetupTitle: "Chia bảng thi đấu",
     groupSetupDesc: "Chọn số bảng và xem trước cách chia đội",
+  },
+  dashboard: {
+    title: "Bảng điều khiển trực tiếp",
+    description: "Theo dõi trạng thái sân và tỷ số realtime",
+    selectTournament: "Chọn giải đấu",
+    court: "Sân",
+    nowPlaying: "Đang thi đấu",
+    nextMatch: "Tiếp theo",
+    available: "Trống",
+    tvMode: "Chế độ TV",
+    exitTvMode: "Thoát chế độ TV",
+    soundOn: "Bật âm thanh",
+    soundOff: "Tắt âm thanh",
+    noActiveTournaments: "Không có giải đang diễn ra",
+    vs: "vs",
+    match: "Trận",
+    score: "Tỷ số",
+    quickTable: "Bảng đấu",
+    teamMatch: "Đối kháng",
+    doublesElimination: "Đấu loại đôi",
+    autoRotate: "Tự động xoay",
+    liveMatches: "Trận đang đấu",
+    upNext: "Sắp thi đấu",
+    completed: "Đã hoàn thành",
+    backToList: "Quay lại",
   },
 };
