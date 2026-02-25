@@ -132,47 +132,47 @@ function TVCard({ slide, t }: { slide: TVSlide; t: any }) {
   if (slide.type === "court" && slide.courtData) {
     const court = slide.courtData;
     return (
-      <div className="bg-white/5 rounded-2xl p-5 md:p-6 border border-white/10 flex flex-col">
+      <div className="bg-white/5 rounded-2xl p-6 md:p-8 border border-white/10 flex flex-col">
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-xl md:text-2xl font-bold">
+          <h2 className="text-2xl md:text-3xl font-bold">
             {t.dashboard.court} {court.courtNumber}
           </h2>
           {court.liveMatch && (
-            <Badge variant="destructive" className="animate-pulse text-xs px-2 py-0.5">LIVE</Badge>
+            <Badge variant="destructive" className="animate-pulse text-sm px-3 py-1">LIVE</Badge>
           )}
         </div>
 
         {court.liveMatch ? (
           <div className="flex-1 flex flex-col justify-center">
-            <div className="text-xs text-white/50 mb-2">{t.dashboard.nowPlaying}</div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-lg md:text-2xl font-bold flex-1 truncate">{court.liveMatch.teamA}</span>
-              <div className="flex items-center gap-2 text-2xl md:text-4xl font-bold tabular-nums">
+            <div className="text-sm text-white/50 mb-3">{t.dashboard.nowPlaying}</div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xl md:text-3xl font-bold flex-1 truncate">{court.liveMatch.teamA}</span>
+              <div className="flex items-center gap-3 text-4xl md:text-6xl font-bold tabular-nums">
                 <span>{court.liveMatch.scoreA ?? 0}</span>
                 <span className="text-white/30">:</span>
                 <span>{court.liveMatch.scoreB ?? 0}</span>
               </div>
-              <span className="text-lg md:text-2xl font-bold flex-1 text-right truncate">{court.liveMatch.teamB}</span>
+              <span className="text-xl md:text-3xl font-bold flex-1 text-right truncate">{court.liveMatch.teamB}</span>
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-lg text-white/30">
+          <div className="flex-1 flex items-center justify-center text-xl text-white/30">
             {t.dashboard.available}
           </div>
         )}
 
         {court.nextMatch && (
-          <div className="mt-3 bg-white/5 rounded-xl p-3 border border-white/5">
+          <div className="mt-4 bg-white/5 rounded-xl p-4 border border-white/5">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-white/50">{t.dashboard.nextMatch}</span>
+              <span className="text-sm text-white/50">{t.dashboard.nextMatch}</span>
               {court.nextMatch.startTime && (
-                <span className="text-xs text-white/50">{court.nextMatch.startTime}</span>
+                <span className="text-sm text-white/50">{court.nextMatch.startTime}</span>
               )}
             </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold truncate">{court.nextMatch.teamA}</span>
-              <span className="text-white/30 text-xs">{t.dashboard.vs}</span>
-              <span className="text-sm font-semibold text-right truncate">{court.nextMatch.teamB}</span>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-base md:text-lg font-semibold truncate">{court.nextMatch.teamA}</span>
+              <span className="text-white/30 text-sm">{t.dashboard.vs}</span>
+              <span className="text-base md:text-lg font-semibold text-right truncate">{court.nextMatch.teamB}</span>
             </div>
           </div>
         )}
@@ -184,20 +184,20 @@ function TVCard({ slide, t }: { slide: TVSlide; t: any }) {
     const match = slide.matchData;
     const isLive = match.status === "live" || match.status === "in_progress";
     return (
-      <div className="bg-white/5 rounded-2xl p-5 md:p-6 border border-white/10 flex flex-col justify-center">
+      <div className="bg-white/5 rounded-2xl p-6 md:p-8 border border-white/10 flex flex-col justify-center">
         {isLive ? (
-          <Badge variant="destructive" className="animate-pulse text-xs px-2 py-0.5 w-fit mb-3">LIVE</Badge>
+          <Badge variant="destructive" className="animate-pulse text-sm px-3 py-1 w-fit mb-4">LIVE</Badge>
         ) : (
-          <span className="text-xs text-white/50 mb-3 block">{t.dashboard.upNext}</span>
+          <span className="text-sm text-white/50 mb-4 block">{t.dashboard.upNext}</span>
         )}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-lg md:text-2xl font-bold flex-1 truncate">{match.teamA}</span>
-          <div className="flex items-center gap-2 text-2xl md:text-4xl font-bold tabular-nums">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xl md:text-3xl font-bold flex-1 truncate">{match.teamA}</span>
+          <div className="flex items-center gap-3 text-4xl md:text-6xl font-bold tabular-nums">
             <span>{match.scoreA ?? 0}</span>
             <span className="text-white/30">:</span>
             <span>{match.scoreB ?? 0}</span>
           </div>
-          <span className="text-lg md:text-2xl font-bold flex-1 text-right truncate">{match.teamB}</span>
+          <span className="text-xl md:text-3xl font-bold flex-1 text-right truncate">{match.teamB}</span>
         </div>
       </div>
     );
