@@ -40,48 +40,39 @@ const BottomNav = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      <div className="glass-strong border-t border-border-subtle">
-        <div 
-          className="flex items-center justify-around"
-          style={{ 
-            height: getNavHeight(),
-            paddingBottom: getBottomPadding()
-          }}
-        >
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path || 
-              (item.path !== "/" && location.pathname.startsWith(item.path));
-            const Icon = item.icon;
-            
-            // Larger icons for Android native
-            const iconSize = (isAndroidDevice && isNative) ? "w-6 h-6" : (isIOSDevice ? "w-6 h-6" : "w-[22px] h-[22px]");
-            const textSize = (isAndroidDevice && isNative) ? "text-xs" : (isIOSDevice ? "text-[11px]" : "text-[11px]");
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 px-4 py-2 min-w-[76px]",
-                  "transition-colors duration-200",
-                  isActive 
-                    ? "text-primary" 
-                    : "text-foreground-muted hover:text-foreground-secondary"
-                )}
-              >
-                <Icon 
-                  className={iconSize} 
-                  strokeWidth={isActive ? 2.5 : 1.8} 
-                />
-                <span className={cn(
-                  "font-medium",
-                  textSize
-                )}>{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background-elevated border-t border-border-subtle"
+      style={{ paddingBottom: getBottomPadding() }}
+    >
+      <div 
+        className="flex items-stretch justify-around"
+        style={{ minHeight: getNavHeight() }}
+      >
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path || 
+            (item.path !== "/" && location.pathname.startsWith(item.path));
+          const Icon = item.icon;
+          
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1.5 flex-1 py-3",
+                "transition-colors duration-200",
+                isActive 
+                  ? "text-primary" 
+                  : "text-foreground-muted hover:text-foreground-secondary"
+              )}
+            >
+              <Icon 
+                className="w-7 h-7" 
+                strokeWidth={isActive ? 2.5 : 1.8} 
+              />
+              <span className="text-xs font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
