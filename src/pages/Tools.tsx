@@ -15,9 +15,10 @@ interface ToolCardProps {
   icon: React.ReactNode;
   href?: string;
   comingSoon?: boolean;
+  highlight?: boolean;
 }
 
-const ToolCard = ({ title, description, icon, href, comingSoon }: ToolCardProps) => {
+const ToolCard = ({ title, description, icon, href, comingSoon, highlight }: ToolCardProps) => {
   const { t } = useI18n();
   
   const content = (
@@ -25,16 +26,25 @@ const ToolCard = ({ title, description, icon, href, comingSoon }: ToolCardProps)
       "h-full transition-all duration-200",
       comingSoon 
         ? "opacity-60 cursor-not-allowed" 
-        : "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
+        : "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 cursor-pointer",
+      highlight && "border-primary/60 bg-primary/5 shadow-lg shadow-primary/10 ring-1 ring-primary/20"
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+          <div className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center",
+            highlight ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+          )}>
             {icon}
           </div>
           {comingSoon && (
             <Badge variant="secondary" className="text-xs">
               {t.tools.comingSoon}
+            </Badge>
+          )}
+          {highlight && (
+            <Badge className="bg-primary/20 text-primary border-primary/30 text-xs animate-pulse">
+              Live
             </Badge>
           )}
         </div>
@@ -95,6 +105,7 @@ const Tools = () => {
       description: t.dashboard.description,
       icon: <Monitor className="w-6 h-6" />,
       href: "/tools/dashboard",
+      highlight: true,
     },
   ];
 
