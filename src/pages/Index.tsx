@@ -14,7 +14,7 @@ import { NewsCard } from "@/components/news/NewsCard";
 
 const Index = () => {
   const { t, language } = useI18n();
-  
+
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
   const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
   const { data: videos = [], isLoading: videosLoading } = useVideos({ limit: 8 });
@@ -27,13 +27,13 @@ const Index = () => {
   return (
     <MainLayout>
       {/* SEO Meta Tags */}
-      <DynamicMeta 
+      <DynamicMeta
         title="Pickleball Tournaments, Livestream & Community"
-        description={language === 'vi' 
-          ? "ThePickleHub là nền tảng pickleball toàn cầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!"
-          : "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant pickleball community. Watch livestreams, follow tournaments, and connect now!"
-        }
-      />
+        description={language === 'vi' ?
+        "ThePickleHub là nền tảng pickleball toàn cầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!" :
+        "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant pickleball community. Watch livestreams, follow tournaments, and connect now!"
+        } />
+
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero">
@@ -75,76 +75,76 @@ const Index = () => {
       </section>
 
       {/* Scheduled Section - Show at top if no live streams */}
-      {showScheduledFirst && (
-        <section className="container-wide section-spacing">
+      {showScheduledFirst &&
+      <section className="container-wide section-spacing">
           <SectionHeader title={t.live.scheduled} href="/live" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {scheduledStreams.slice(0, 3).map((stream, index) => (
-              <LiveCardWithPresence
-                key={stream.id}
-                id={stream.id!}
-                title={stream.title ?? ""}
-                organizationName={stream.organization?.name ?? ""}
-                organizationSlug={stream.organization?.slug}
-                organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                status={stream.status as "live" | "scheduled" | "ended"}
-                thumbnail={stream.thumbnail_url ?? undefined}
-                scheduledStartAt={stream.scheduled_start_at}
-                priority={index === 0}
-              />
-            ))}
+            {scheduledStreams.slice(0, 3).map((stream, index) =>
+          <LiveCardWithPresence
+            key={stream.id}
+            id={stream.id!}
+            title={stream.title ?? ""}
+            organizationName={stream.organization?.name ?? ""}
+            organizationSlug={stream.organization?.slug}
+            organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
+            status={stream.status as "live" | "scheduled" | "ended"}
+            thumbnail={stream.thumbnail_url ?? undefined}
+            scheduledStartAt={stream.scheduled_start_at}
+            priority={index === 0} />
+
+          )}
           </div>
         </section>
-      )}
+      }
 
       {/* Live Now Section - min-h prevents CLS when loading→empty */}
       <section className="container-wide section-spacing" style={{ minHeight: 200 }}>
         <SectionHeader title={t.home.sections.liveNow} href="/live" />
         
-        {streamsLoading ? (
-          <EmptyState icon={Radio} title={t.home.noLive} className="opacity-0" />
-        ) : liveStreams.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {liveStreams.slice(0, 3).map((stream, index) => (
-              <LiveCardWithPresence
-                key={stream.id}
-                id={stream.id!}
-                title={stream.title ?? ""}
-                organizationName={stream.organization?.name ?? ""}
-                organizationSlug={stream.organization?.slug}
-                organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                status={stream.status as "live" | "scheduled" | "ended"}
-                thumbnail={stream.thumbnail_url ?? undefined}
-                priority={index === 0}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyState icon={Radio} title={t.home.noLive} />
-        )}
+        {streamsLoading ?
+        <EmptyState icon={Radio} title={t.home.noLive} className="opacity-0" /> :
+        liveStreams.length > 0 ?
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {liveStreams.slice(0, 3).map((stream, index) =>
+          <LiveCardWithPresence
+            key={stream.id}
+            id={stream.id!}
+            title={stream.title ?? ""}
+            organizationName={stream.organization?.name ?? ""}
+            organizationSlug={stream.organization?.slug}
+            organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
+            status={stream.status as "live" | "scheduled" | "ended"}
+            thumbnail={stream.thumbnail_url ?? undefined}
+            priority={index === 0} />
+
+          )}
+          </div> :
+
+        <EmptyState icon={Radio} title={t.home.noLive} />
+        }
       </section>
 
       {/* Open Registration Tournaments */}
       <OpenRegistrationSection limit={5} showViewAll={true} />
 
       {/* Featured News - Only show if there are items */}
-      {featuredNews.length > 0 && (
-        <section className="container-wide section-spacing">
+      {featuredNews.length > 0 &&
+      <section className="container-wide section-spacing">
           <SectionHeader title={t.news.title} href="/news" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {featuredNews.map((item) => (
-              <NewsCard
-                key={item.id}
-                title={item.title}
-                summary={item.summary}
-                source={item.source}
-                sourceUrl={item.source_url}
-                publishedAt={item.published_at}
-              />
-            ))}
+            {featuredNews.map((item) =>
+          <NewsCard
+            key={item.id}
+            title={item.title}
+            summary={item.summary}
+            source={item.source}
+            sourceUrl={item.source_url}
+            publishedAt={item.published_at} />
+
+          )}
           </div>
         </section>
-      )}
+      }
 
       {/* Ad Slot */}
       <div className="container-wide">
@@ -155,66 +155,66 @@ const Index = () => {
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.latestVideos} href="/videos" />
         
-        {videosLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="space-y-3">
+        {videosLoading ?
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[1, 2, 3, 4].map((i) =>
+          <div key={i} className="space-y-3">
                 <Skeleton className="aspect-video rounded-xl" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
               </div>
-            ))}
-          </div>
-        ) : videos.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {videos.slice(0, 4).map((video) => (
-              <ContentCard
-                key={video.id}
-                id={video.id}
-                title={video.title}
-                duration={video.duration_seconds ?? 0}
-                views={0}
-                organizationName={video.organization?.name ?? ""}
-                organizationSlug={video.organization?.slug}
-                thumbnail={video.thumbnail_url ?? undefined}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyState icon={Play} title={t.home.noVideos} />
-        )}
+          )}
+          </div> :
+        videos.length > 0 ?
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {videos.slice(0, 4).map((video) =>
+          <ContentCard
+            key={video.id}
+            id={video.id}
+            title={video.title}
+            duration={video.duration_seconds ?? 0}
+            views={0}
+            organizationName={video.organization?.name ?? ""}
+            organizationSlug={video.organization?.slug}
+            thumbnail={video.thumbnail_url ?? undefined} />
+
+          )}
+          </div> :
+
+        <EmptyState icon={Play} title={t.home.noVideos} />
+        }
       </section>
 
       {/* Popular This Week */}
       <section className="container-wide section-spacing">
         <SectionHeader title={t.home.sections.popularThisWeek} href="/videos?sort=popular" />
         
-        {videosLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="space-y-3">
+        {videosLoading ?
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[1, 2, 3, 4].map((i) =>
+          <div key={i} className="space-y-3">
                 <Skeleton className="aspect-video rounded-xl" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
               </div>
-            ))}
-          </div>
-        ) : videos.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {videos.slice().reverse().slice(0, 4).map((video) => (
-              <ContentCard
-                key={video.id}
-                id={video.id}
-                title={video.title}
-                duration={video.duration_seconds ?? 0}
-                views={0}
-                organizationName={video.organization?.name ?? ""}
-                organizationSlug={video.organization?.slug}
-                thumbnail={video.thumbnail_url ?? undefined}
-              />
-            ))}
-          </div>
-        ) : null}
+          )}
+          </div> :
+        videos.length > 0 ?
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {videos.slice().reverse().slice(0, 4).map((video) =>
+          <ContentCard
+            key={video.id}
+            id={video.id}
+            title={video.title}
+            duration={video.duration_seconds ?? 0}
+            views={0}
+            organizationName={video.organization?.name ?? ""}
+            organizationSlug={video.organization?.slug}
+            thumbnail={video.thumbnail_url ?? undefined} />
+
+          )}
+          </div> :
+        null}
       </section>
 
       {/* SEO Content Section - Features Overview */}
@@ -281,14 +281,14 @@ const Index = () => {
             <a href="/privacy" className="hover:text-foreground transition-colors">
               {t.privacy.title.replace(" – The Pickle Hub", "")}
             </a>
-            <a href="mailto:tapickleballvn@gmail.com" className="hover:text-foreground transition-colors">
-              tapickleballvn@gmail.com
+            <a className="hover:text-foreground transition-colors" href="mailto:thepicklehub.net@gmail.com">
+              thepicklehub.net@gmail.com
             </a>
           </div>
         </div>
       </footer>
-    </MainLayout>
-  );
+    </MainLayout>);
+
 };
 
 export default Index;
