@@ -146,13 +146,13 @@ function TVCard({ slide, t }: { slide: TVSlide; t: any }) {
           <div className="flex-1 flex flex-col justify-center">
             <div className="text-sm text-white/50 mb-3">{t.dashboard.nowPlaying}</div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xl md:text-3xl font-bold flex-1 truncate">{court.liveMatch.teamA}</span>
-              <div className="flex items-center gap-3 text-4xl md:text-6xl font-bold tabular-nums">
+              <span className="text-2xl md:text-4xl font-bold flex-1 truncate">{court.liveMatch.teamA}</span>
+              <div className="flex items-center gap-3 text-5xl md:text-7xl font-bold tabular-nums">
                 <span>{court.liveMatch.scoreA ?? 0}</span>
                 <span className="text-white/30">:</span>
                 <span>{court.liveMatch.scoreB ?? 0}</span>
               </div>
-              <span className="text-xl md:text-3xl font-bold flex-1 text-right truncate">{court.liveMatch.teamB}</span>
+              <span className="text-2xl md:text-4xl font-bold flex-1 text-right truncate">{court.liveMatch.teamB}</span>
             </div>
           </div>
         ) : (
@@ -162,17 +162,17 @@ function TVCard({ slide, t }: { slide: TVSlide; t: any }) {
         )}
 
         {court.nextMatch && (
-          <div className="mt-4 bg-white/5 rounded-xl p-4 border border-white/5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-white/50">{t.dashboard.nextMatch}</span>
+          <div className="mt-4 bg-yellow-500/10 rounded-xl p-4 border border-yellow-500/30">
+            <div className="flex items-center justify-between mb-2">
+              <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/40 text-sm px-3 py-1">{t.dashboard.nextMatch}</Badge>
               {court.nextMatch.startTime && (
-                <span className="text-sm text-white/50">{court.nextMatch.startTime}</span>
+                <span className="text-base font-medium text-yellow-300/80">{court.nextMatch.startTime}</span>
               )}
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-base md:text-lg font-semibold truncate">{court.nextMatch.teamA}</span>
+              <span className="text-lg md:text-2xl font-bold truncate">{court.nextMatch.teamA}</span>
               <span className="text-white/30 text-sm">{t.dashboard.vs}</span>
-              <span className="text-base md:text-lg font-semibold text-right truncate">{court.nextMatch.teamB}</span>
+              <span className="text-lg md:text-2xl font-bold text-right truncate">{court.nextMatch.teamB}</span>
             </div>
           </div>
         )}
@@ -191,13 +191,13 @@ function TVCard({ slide, t }: { slide: TVSlide; t: any }) {
           <span className="text-sm text-white/50 mb-4 block">{t.dashboard.upNext}</span>
         )}
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xl md:text-3xl font-bold flex-1 truncate">{match.teamA}</span>
-          <div className="flex items-center gap-3 text-4xl md:text-6xl font-bold tabular-nums">
+          <span className="text-2xl md:text-4xl font-bold flex-1 truncate">{match.teamA}</span>
+          <div className="flex items-center gap-3 text-5xl md:text-7xl font-bold tabular-nums">
             <span>{match.scoreA ?? 0}</span>
             <span className="text-white/30">:</span>
             <span>{match.scoreB ?? 0}</span>
           </div>
-          <span className="text-xl md:text-3xl font-bold flex-1 text-right truncate">{match.teamB}</span>
+          <span className="text-2xl md:text-4xl font-bold flex-1 text-right truncate">{match.teamB}</span>
         </div>
       </div>
     );
