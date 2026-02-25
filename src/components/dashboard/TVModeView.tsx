@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
+import { X, RotateCw } from "lucide-react";
 import type { CourtData } from "@/hooks/useDashboardData";
 
 interface TVSlide {
@@ -19,12 +19,14 @@ interface TVModeViewProps {
   onExit: () => void;
 }
 
+const ITEMS_PER_PAGE = 6;
+
 export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, onExit }: TVModeViewProps) => {
   const { t } = useI18n();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [autoRotate, setAutoRotate] = useState(true);
 
-  // Build slides
+  // Build all slides
   const slides: TVSlide[] = [];
   if (courts.length > 0) {
     courts.forEach((c) => slides.push({ type: "court", courtData: c }));
@@ -36,19 +38,20 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
     nextMatches.forEach((m) => slides.push({ type: "match", matchData: m }));
   }
 
-  const totalSlides = slides.length || 1;
+  // Paginate into groups
+  const totalPages = Math.max(1, Math.ceil(slides.length / ITEMS_PER_PAGE));
 
-  // Auto rotate
+  // Auto rotate pages
   useEffect(() => {
-    if (!autoRotate || totalSlides <= 1) return;
+    if (!autoRotate || totalPages <= 1) return;
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % totalSlides);
+      setCurrentPage((prev) => (prev + 1) % totalPages);
     }, 10000);
     return () => clearInterval(timer);
-  }, [autoRotate, totalSlides]);
+  }, [autoRotate, totalPages]);
 
-  const goNext = useCallback(() => setCurrentIndex((p) => (p + 1) % totalSlides), [totalSlides]);
-  const goPrev = useCallback(() => setCurrentIndex((p) => (p - 1 + totalSlides) % totalSlides), [totalSlides]);
+  const goNext = useCallback(() => setCurrentPage((p) => (p + 1) % totalPages), [totalPages]);
+  const goPrev = useCallback(() => setCurrentPage((p) => (p - 1 + totalPages) % totalPages), [totalPages]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -62,13 +65,17 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
     return () => window.removeEventListener("keydown", handler);
   }, [onExit, goNext, goPrev]);
 
-  const slide = slides[currentIndex];
+  const pageSlides = slides.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
+  // Determine grid cols based on item count
+  const gridCols = pageSlides.length <= 2 ? "grid-cols-1 sm:grid-cols-2" 
+    : pageSlides.length <= 4 ? "grid-cols-2" 
+    : "grid-cols-2 lg:grid-cols-3";
 
   return (
     <div className="fixed inset-0 z-50 bg-black text-white flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-black/50">
-        <h1 className="text-2xl md:text-4xl font-bold truncate">{tournamentName}</h1>
+      <div className="flex items-center justify-between px-6 py-3 bg-black/50 shrink-0">
+        <h1 className="text-xl md:text-3xl font-bold truncate">{tournamentName}</h1>
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -79,105 +86,40 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
             <RotateCw className={`w-4 h-4 mr-1 ${autoRotate ? "animate-spin" : ""}`} />
             {t.dashboard.autoRotate}
           </Button>
-          <span className="text-sm text-white/60">
-            {currentIndex + 1} / {totalSlides}
-          </span>
+          {totalPages > 1 && (
+            <span className="text-sm text-white/60">
+              {currentPage + 1} / {totalPages}
+            </span>
+          )}
           <Button variant="ghost" size="icon" onClick={onExit} className="text-white hover:bg-white/10">
             <X className="w-5 h-5" />
           </Button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex items-center justify-center px-8">
-        {slide?.type === "court" && slide.courtData && (
-          <div className="w-full max-w-2xl">
-            <div className="flex items-center gap-3 mb-8">
-              <h2 className="text-3xl md:text-5xl font-bold">
-                {t.dashboard.court} {slide.courtData.courtNumber}
-              </h2>
-              {slide.courtData.liveMatch && (
-                <Badge variant="destructive" className="animate-pulse text-base px-3 py-1">LIVE</Badge>
-              )}
-            </div>
-
-            {slide.courtData.liveMatch ? (
-              <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-                <div className="text-sm text-white/50 mb-4">{t.dashboard.nowPlaying}</div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-2xl md:text-4xl font-bold flex-1">{slide.courtData.liveMatch.teamA}</span>
-                  <div className="flex items-center gap-3 text-4xl md:text-6xl font-bold tabular-nums">
-                    <span>{slide.courtData.liveMatch.scoreA ?? 0}</span>
-                    <span className="text-white/30">:</span>
-                    <span>{slide.courtData.liveMatch.scoreB ?? 0}</span>
-                  </div>
-                  <span className="text-2xl md:text-4xl font-bold flex-1 text-right">{slide.courtData.liveMatch.teamB}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-2xl text-white/30">{t.dashboard.available}</div>
-            )}
-
-            {slide.courtData.nextMatch && (
-              <div className="mt-6 bg-white/5 rounded-xl p-6 border border-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-white/50">{t.dashboard.nextMatch}</span>
-                  {slide.courtData.nextMatch.startTime && (
-                    <span className="text-sm text-white/50">{slide.courtData.nextMatch.startTime}</span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-xl font-semibold">{slide.courtData.nextMatch.teamA}</span>
-                  <span className="text-white/30">{t.dashboard.vs}</span>
-                  <span className="text-xl font-semibold text-right">{slide.courtData.nextMatch.teamB}</span>
-                </div>
-              </div>
-            )}
+      {/* Content Grid */}
+      <div className="flex-1 overflow-auto px-4 md:px-8 py-4">
+        {slides.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-2xl text-white/30">
+            {t.dashboard.noActiveTournaments}
           </div>
-        )}
-
-        {slide?.type === "match" && slide.matchData && (
-          <div className="w-full max-w-2xl">
-            <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-              {slide.matchData.status === "live" || slide.matchData.status === "in_progress" ? (
-                <Badge variant="destructive" className="animate-pulse text-base px-3 py-1 mb-4">LIVE</Badge>
-              ) : (
-                <span className="text-sm text-white/50 mb-4 block">{t.dashboard.upNext}</span>
-              )}
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-2xl md:text-4xl font-bold flex-1">{slide.matchData.teamA}</span>
-                <div className="flex items-center gap-3 text-4xl md:text-6xl font-bold tabular-nums">
-                  <span>{slide.matchData.scoreA ?? 0}</span>
-                  <span className="text-white/30">:</span>
-                  <span>{slide.matchData.scoreB ?? 0}</span>
-                </div>
-                <span className="text-2xl md:text-4xl font-bold flex-1 text-right">{slide.matchData.teamB}</span>
-              </div>
-            </div>
+        ) : (
+          <div className={`grid ${gridCols} gap-4 h-full auto-rows-fr`}>
+            {pageSlides.map((slide, i) => (
+              <TVCard key={`${currentPage}-${i}`} slide={slide} t={t} />
+            ))}
           </div>
         )}
       </div>
 
-      {/* Navigation arrows */}
-      {totalSlides > 1 && (
-        <>
-          <button onClick={goPrev} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition">
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <button onClick={goNext} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition">
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </>
-      )}
-
       {/* Dots */}
-      {totalSlides > 1 && (
-        <div className="flex justify-center gap-2 pb-6">
-          {slides.map((_, i) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 pb-4 shrink-0">
+          {Array.from({ length: totalPages }).map((_, i) => (
             <button
               key={i}
-              onClick={() => setCurrentIndex(i)}
-              className={`w-2.5 h-2.5 rounded-full transition ${i === currentIndex ? "bg-white" : "bg-white/30"}`}
+              onClick={() => setCurrentPage(i)}
+              className={`w-2.5 h-2.5 rounded-full transition ${i === currentPage ? "bg-white" : "bg-white/30"}`}
             />
           ))}
         </div>
@@ -185,3 +127,81 @@ export const TVModeView = ({ tournamentName, courts, liveMatches, nextMatches, o
     </div>
   );
 };
+
+function TVCard({ slide, t }: { slide: TVSlide; t: any }) {
+  if (slide.type === "court" && slide.courtData) {
+    const court = slide.courtData;
+    return (
+      <div className="bg-white/5 rounded-2xl p-5 md:p-6 border border-white/10 flex flex-col">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-xl md:text-2xl font-bold">
+            {t.dashboard.court} {court.courtNumber}
+          </h2>
+          {court.liveMatch && (
+            <Badge variant="destructive" className="animate-pulse text-xs px-2 py-0.5">LIVE</Badge>
+          )}
+        </div>
+
+        {court.liveMatch ? (
+          <div className="flex-1 flex flex-col justify-center">
+            <div className="text-xs text-white/50 mb-2">{t.dashboard.nowPlaying}</div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-lg md:text-2xl font-bold flex-1 truncate">{court.liveMatch.teamA}</span>
+              <div className="flex items-center gap-2 text-2xl md:text-4xl font-bold tabular-nums">
+                <span>{court.liveMatch.scoreA ?? 0}</span>
+                <span className="text-white/30">:</span>
+                <span>{court.liveMatch.scoreB ?? 0}</span>
+              </div>
+              <span className="text-lg md:text-2xl font-bold flex-1 text-right truncate">{court.liveMatch.teamB}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-lg text-white/30">
+            {t.dashboard.available}
+          </div>
+        )}
+
+        {court.nextMatch && (
+          <div className="mt-3 bg-white/5 rounded-xl p-3 border border-white/5">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-white/50">{t.dashboard.nextMatch}</span>
+              {court.nextMatch.startTime && (
+                <span className="text-xs text-white/50">{court.nextMatch.startTime}</span>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold truncate">{court.nextMatch.teamA}</span>
+              <span className="text-white/30 text-xs">{t.dashboard.vs}</span>
+              <span className="text-sm font-semibold text-right truncate">{court.nextMatch.teamB}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (slide.type === "match" && slide.matchData) {
+    const match = slide.matchData;
+    const isLive = match.status === "live" || match.status === "in_progress";
+    return (
+      <div className="bg-white/5 rounded-2xl p-5 md:p-6 border border-white/10 flex flex-col justify-center">
+        {isLive ? (
+          <Badge variant="destructive" className="animate-pulse text-xs px-2 py-0.5 w-fit mb-3">LIVE</Badge>
+        ) : (
+          <span className="text-xs text-white/50 mb-3 block">{t.dashboard.upNext}</span>
+        )}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-lg md:text-2xl font-bold flex-1 truncate">{match.teamA}</span>
+          <div className="flex items-center gap-2 text-2xl md:text-4xl font-bold tabular-nums">
+            <span>{match.scoreA ?? 0}</span>
+            <span className="text-white/30">:</span>
+            <span>{match.scoreB ?? 0}</span>
+          </div>
+          <span className="text-lg md:text-2xl font-bold flex-1 text-right truncate">{match.teamB}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
