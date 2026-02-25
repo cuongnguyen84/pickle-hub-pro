@@ -139,11 +139,14 @@
   html {
     @apply antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-color: hsl(220 15% 8%);
+    overscroll-behavior: none;
   }
 
   body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overscroll-behavior: none;
   }
 
   /* Typography scale */
