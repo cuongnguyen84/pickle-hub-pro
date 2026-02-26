@@ -829,6 +829,16 @@ export interface Translations {
       approved: string;
       rejected: string;
       rejectedMessage: string;
+      disclaimer: string;
+      pendingTitle: string;
+      pendingDesc: string;
+      approvedTitle: string;
+      approvedDesc: string;
+      approvedWaiting: string;
+      infoTitle: string;
+      infoName: string;
+      cancelConfirm: string;
+      cancelRegistration: string;
     };
     pairing: {
       pairUp: string;
@@ -2384,6 +2394,16 @@ export const vi: Translations = {
       approved: "Bạn đã được BTC duyệt",
       rejected: "Bạn đã bị từ chối tham gia giải",
       rejectedMessage: "Lý do",
+      disclaimer: "BTC dựa vào điểm tự khai và sẽ đối chiếu với các hệ điểm để ra quyết định cuối cùng trong trường hợp có tranh chấp.",
+      pendingTitle: "Đăng ký thành công!",
+      pendingDesc: "Đăng ký của bạn đang chờ BTC xem xét và phê duyệt.",
+      approvedTitle: "Đã được phê duyệt!",
+      approvedDesc: "Bạn đã được phê duyệt tham dự giải",
+      approvedWaiting: "Vui lòng chờ kết quả chia bảng từ BTC.",
+      infoTitle: "Thông tin đăng ký của bạn:",
+      infoName: "Tên",
+      cancelConfirm: "Bạn có chắc muốn hủy đăng ký?",
+      cancelRegistration: "Hủy đăng ký",
     },
     pairing: {
       pairUp: "Ghép đôi",
