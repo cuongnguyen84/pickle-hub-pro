@@ -72,6 +72,7 @@ export function useTeamMatchMatches(tournamentId: string | undefined) {
       return data as unknown as TeamMatchMatch[];
     },
     enabled: !!tournamentId,
+    refetchInterval: 15000,
   });
 }
 
