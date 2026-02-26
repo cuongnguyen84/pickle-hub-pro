@@ -557,30 +557,30 @@ export function DoublesRegistrationForm({
           {/* Basic Info */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="displayName">Tên hiển thị *</Label>
+              <Label htmlFor="displayName">{t.quickTable.registration.displayName} *</Label>
               <Input
                 id="displayName"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Nhập tên của bạn"
+                placeholder={t.quickTable.registration.displayName}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="team">Team / CLB (nếu có)</Label>
+              <Label htmlFor="team">{t.quickTable.registration.teamClub}</Label>
               <Input
                 id="team"
                 value={team}
                 onChange={(e) => setTeam(e.target.value)}
-                placeholder="VD: CLB Pickleball Quận 1"
+                placeholder={t.quickTable.exampleClub}
               />
             </div>
           </div>
 
           {/* Skill Level */}
           <div className="space-y-4">
-            <Label>Trình độ {requiresSkillLevel && '*'}</Label>
+            <Label>{t.quickTable.registration.skillLevel} {requiresSkillLevel && '*'}</Label>
             
             <RadioGroup
               value={ratingSystem}
@@ -590,24 +590,24 @@ export function DoublesRegistrationForm({
               <div className="flex items-start space-x-3">
                 <RadioGroupItem value="DUPR" id="dupr" />
                 <div className="flex-1">
-                  <Label htmlFor="dupr" className="cursor-pointer font-medium">DUPR</Label>
-                  <p className="text-sm text-muted-foreground">Hệ thống rating DUPR chính thức</p>
+                  <Label htmlFor="dupr" className="cursor-pointer font-medium">{t.quickTable.registration.dupr}</Label>
+                  <p className="text-sm text-muted-foreground">{t.quickTable.registration.duprDesc}</p>
                 </div>
               </div>
 
               <div className="flex items-start space-x-3">
                 <RadioGroupItem value="other" id="other" />
                 <div className="flex-1">
-                  <Label htmlFor="other" className="cursor-pointer font-medium">Hệ thống khác</Label>
-                  <p className="text-sm text-muted-foreground">UTPR, APP, hoặc hệ thống khác</p>
+                  <Label htmlFor="other" className="cursor-pointer font-medium">{t.quickTable.registration.otherSystem}</Label>
+                  <p className="text-sm text-muted-foreground">{t.quickTable.registration.otherSystemDesc}</p>
                 </div>
               </div>
 
               <div className="flex items-start space-x-3">
                 <RadioGroupItem value="none" id="none" />
                 <div className="flex-1">
-                  <Label htmlFor="none" className="cursor-pointer font-medium">Tôi chưa có rating</Label>
-                  <p className="text-sm text-muted-foreground">Bạn sẽ mô tả trình độ của mình</p>
+                  <Label htmlFor="none" className="cursor-pointer font-medium">{t.quickTable.registration.noRating}</Label>
+                  <p className="text-sm text-muted-foreground">{t.quickTable.registration.noRatingDesc}</p>
                 </div>
               </div>
             </RadioGroup>
@@ -615,7 +615,7 @@ export function DoublesRegistrationForm({
             {ratingSystem === 'DUPR' && (
               <div className="pl-6 space-y-3 border-l-2 border-primary/20">
                 <div className="space-y-2">
-                  <Label htmlFor="skillLevel">Điểm DUPR</Label>
+                  <Label htmlFor="skillLevel">{t.quickTable.registration.duprScore}</Label>
                   <Input
                     id="skillLevel"
                     type="number"
@@ -628,13 +628,13 @@ export function DoublesRegistrationForm({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="profileLink">Link hồ sơ DUPR</Label>
+                  <Label htmlFor="profileLink">{t.quickTable.registration.duprLink}</Label>
                   <Input
                     id="profileLink"
                     type="url"
                     value={profileLink}
                     onChange={(e) => setProfileLink(e.target.value)}
-                    placeholder="https://mydupr.com/profile/..."
+                    placeholder={t.quickTable.exampleDuprLink}
                   />
                 </div>
               </div>
@@ -643,17 +643,17 @@ export function DoublesRegistrationForm({
             {ratingSystem === 'other' && (
               <div className="pl-6 space-y-3 border-l-2 border-primary/20">
                 <div className="space-y-2">
-                  <Label htmlFor="otherSystemName">Tên hệ thống *</Label>
+                  <Label htmlFor="otherSystemName">{t.quickTable.registration.systemName} *</Label>
                   <Input
                     id="otherSystemName"
                     value={otherSystemName}
                     onChange={(e) => setOtherSystemName(e.target.value)}
-                    placeholder="VD: UTPR, APP, WPR..."
+                    placeholder={t.quickTable.registration.systemNamePlaceholder}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="skillLevelOther">Điểm trình độ</Label>
+                  <Label htmlFor="skillLevelOther">{t.quickTable.registration.skillScore}</Label>
                   <Input
                     id="skillLevelOther"
                     type="number"
@@ -662,7 +662,7 @@ export function DoublesRegistrationForm({
                     max="10"
                     value={skillLevel}
                     onChange={(e) => setSkillLevel(e.target.value)}
-                    placeholder="Nhập điểm"
+                    placeholder={t.quickTable.registration.skillScore}
                   />
                 </div>
               </div>
