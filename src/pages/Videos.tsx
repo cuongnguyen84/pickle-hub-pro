@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { useVideos, useTournaments } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
+import { useBatchViewCounts } from "@/hooks/useBatchViewCounts";
 import { Play, Search } from "lucide-react";
 
 const Videos = () => {
@@ -19,6 +20,10 @@ const Videos = () => {
 
   const { data: videos = [], isLoading: videosLoading } = useVideos();
   const { data: tournaments = [] } = useTournaments();
+
+  // Batch fetch view counts for all videos
+  const videoIds = useMemo(() => videos.map((v) => v.id), [videos]);
+  const viewCountsMap = useBatchViewCounts("video", videoIds);
 
   const filteredVideos = useMemo(() => {
     let processed = videos;
@@ -88,7 +93,7 @@ const Videos = () => {
                     id={video.id}
                     title={video.title}
                     duration={video.duration_seconds ?? 0}
-                    views={0}
+                    views={viewCountsMap[video.id] ?? 0}
                     organizationName={video.organization?.name ?? ""}
                     organizationSlug={video.organization?.slug}
                     thumbnail={video.thumbnail_url ?? undefined}
