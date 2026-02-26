@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList, MapPin, Trash2 } from 'lucide-react';
+import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList, MapPin, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import PlayoffBracket from '@/components/tournament/PlayoffBracket';
@@ -30,6 +30,7 @@ import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
 import DoublesRegistrationForm from '@/components/quicktable/DoublesRegistrationForm';
 import TeamManager from '@/components/quicktable/TeamManager';
 import { AIAssistantButton } from '@/components/ai';
+import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -105,6 +106,9 @@ const QuickTableView = () => {
   
   // Edit courts dialog
   const [showEditCourtsDialog, setShowEditCourtsDialog] = useState(false);
+  
+  // Refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadData = async () => {
     if (!shareId) return;
@@ -178,6 +182,16 @@ const QuickTableView = () => {
   };
 
   useEffect(() => { loadData(); }, [shareId, user]);
+
+  // Manual refresh handler
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await loadData();
+    setTimeout(() => setIsRefreshing(false), 600);
+  }, [loadData]);
+
+  // Layer 1 & 2: Visibility-change auto-refresh + polling fallback
+  useVisibilityRefresh(loadData, { minInterval: 5000, pollingInterval: 20000 });
 
   // Realtime subscription for live updates
   useEffect(() => {
@@ -509,6 +523,9 @@ const QuickTableView = () => {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
             <Button variant="outline" size="sm" onClick={handleShare}>
               <Share2 className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">{t.quickTable.view.shareSuccess.replace('!', '')}</span>

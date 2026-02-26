@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid, Mail, Trash2 } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid, Mail, Trash2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
@@ -29,7 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { vi as viLocale, enUS } from 'date-fns/locale';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { 
   CreateTeamDialog,
   TeamRegistrationDialog,
@@ -56,7 +56,9 @@ import {
 } from '@/components/teamMatch';
 import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
 import { useTeamMatchRealtime } from '@/hooks/useTeamMatchRealtime';
+import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
+import { useQueryClient } from '@tanstack/react-query';
 
 const STATUS_COLORS: Record<string, string> = {
   setup: 'bg-muted text-muted-foreground',
@@ -132,6 +134,26 @@ export default function TeamMatchView() {
   const [showSESetupDialog, setShowSESetupDialog] = useState(false);
   const [startRoundNumber, setStartRoundNumber] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Manual refresh handler
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['team-match-matches', tournament?.id] });
+    await queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournament?.id] });
+    await queryClient.invalidateQueries({ queryKey: ['team-match-tournament'] });
+    setTimeout(() => setIsRefreshing(false), 600);
+  }, [queryClient, tournament?.id]);
+
+  // Layer 1 & 2: Visibility-change auto-refresh + polling fallback
+  useVisibilityRefresh(
+    useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: ['team-match-matches', tournament?.id] });
+      queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournament?.id] });
+    }, [queryClient, tournament?.id]),
+    { minInterval: 5000, pollingInterval: 20000 }
+  );
   // For BTC lineup: track which team to lineup for
   const [lineupTeamId, setLineupTeamId] = useState<string | null>(null);
   // For scoring sheet
@@ -427,6 +449,9 @@ export default function TeamMatchView() {
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
+              <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing} title="Refresh">
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
               <Button variant="outline" size="icon" onClick={handleCopyLink} title={t.teamMatch.view.copyLink}>
                 <Copy className="h-4 w-4" />
               </Button>

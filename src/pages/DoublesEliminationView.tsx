@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { DynamicMeta } from "@/components/seo";
@@ -10,12 +10,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useDoublesElimination, Tournament, Team, Match } from "@/hooks/useDoublesElimination";
 import { useDoublesEliminationReferees } from "@/hooks/useDoublesEliminationReferees";
+import { useVisibilityRefresh } from "@/hooks/useVisibilityRefresh";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RefereeManagement } from "@/components/quicktable/RefereeManagement";
 import { 
   ArrowLeft, Share2, Check, Trophy, Users, 
-  Calendar, Trash2 
+  Calendar, Trash2, RefreshCw 
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
@@ -49,6 +50,7 @@ export default function DoublesEliminationView() {
   const [copied, setCopied] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [activeTab, setActiveTab] = useState('preliminary');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const {
     referees,
@@ -98,13 +100,23 @@ export default function DoublesEliminationView() {
     setLoading(false);
   };
 
-  const softReload = async () => {
+  const softReload = useCallback(async () => {
     if (!shareId) return;
     const data = await getTournamentByShareId(shareId);
     setTournament(data.tournament);
     setTeams(data.teams);
     setMatches(data.matches);
-  };
+  }, [shareId, getTournamentByShareId]);
+
+  // Manual refresh handler
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await softReload();
+    setTimeout(() => setIsRefreshing(false), 600);
+  }, [softReload]);
+
+  // Layer 1 & 2: Visibility-change auto-refresh + polling fallback
+  useVisibilityRefresh(softReload, { minInterval: 5000, pollingInterval: 20000 });
 
   const skipNextRealtimeRef = useRef(false);
 
@@ -238,6 +250,9 @@ export default function DoublesEliminationView() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
             <Button variant="outline" size="sm" onClick={handleShare}>
               {copied ? <Check className="w-4 h-4 mr-1" /> : <Share2 className="w-4 h-4 mr-1" />}
               {copied ? t.doublesElimination.view.copied : t.doublesElimination.view.share}
