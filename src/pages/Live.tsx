@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { LiveCard, ReplayCard, SectionHeader, EmptyState } from "@/components/content";
+import { LiveCard, SectionHeader, EmptyState } from "@/components/content";
 import { SearchBar } from "@/components/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
-import { useLivestreams } from "@/hooks/useSupabaseData";
+import { useLivestreams, useReplays } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
-import { Radio, Search, PlayCircle } from "lucide-react";
+import { Radio, Search, RotateCcw } from "lucide-react";
 import { DynamicMeta } from "@/components/seo";
 
 const Live = () => {
@@ -17,10 +17,9 @@ const Live = () => {
 
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
   const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
-  // Removed: ended streams are shown on /videos page instead
+  const { data: replays = [], isLoading: replaysLoading } = useReplays();
 
-  // Filter by search
-  const { filteredLive, filteredScheduled, hasResults } = useMemo(() => {
+  const { filteredLive, filteredScheduled, filteredReplays, hasResults } = useMemo(() => {
     const filterBySearch = <T extends { title?: string | null; organization?: { name: string } | null }>(
       items: T[]
     ) => {
@@ -34,15 +33,17 @@ const Live = () => {
 
     const live = filterBySearch(liveStreams);
     const scheduled = filterBySearch(scheduledStreams);
+    const reps = filterBySearch(replays);
 
     return {
       filteredLive: live,
       filteredScheduled: scheduled,
-      hasResults: live.length > 0 || scheduled.length > 0,
+      filteredReplays: reps,
+      hasResults: live.length > 0 || scheduled.length > 0 || reps.length > 0,
     };
-  }, [liveStreams, scheduledStreams, debouncedSearch]);
+  }, [liveStreams, scheduledStreams, replays, debouncedSearch]);
 
-  const isLoading = liveLoading || scheduledLoading;
+  const isLoading = liveLoading || scheduledLoading || replaysLoading;
   const hasSearch = debouncedSearch.length > 0;
 
   return (
@@ -53,7 +54,6 @@ const Live = () => {
         url="https://thepicklehub.net/livestream"
       />
       <div className="container-wide py-8">
-        {/* SEO Header Section - H1 giữ nguyên */}
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
             {t.live.hubTitle}
@@ -63,7 +63,6 @@ const Live = () => {
           </p>
         </header>
 
-        {/* Search Bar - Ngay dưới header */}
         <div className="mb-6">
           <SearchBar
             value={searchQuery}
@@ -72,7 +71,6 @@ const Live = () => {
           />
         </div>
 
-        {/* Loading State */}
         {isLoading ? (
           <div className="space-y-12">
             <section>
@@ -88,7 +86,7 @@ const Live = () => {
           <EmptyState icon={Search} title={t.search.noResults} />
         ) : (
           <>
-            {/* Live Now Section - Ưu tiên hiển thị đầu tiên */}
+            {/* Live Now */}
             <section className="mb-12">
               <SectionHeader title={t.home.sections.liveNow} />
               {filteredLive.length > 0 ? (
@@ -112,7 +110,7 @@ const Live = () => {
               )}
             </section>
 
-            {/* Scheduled Section - Thứ hai */}
+            {/* Scheduled */}
             {filteredScheduled.length > 0 && (
               <section className="mb-12">
                 <SectionHeader title={t.live.scheduled} />
@@ -133,12 +131,34 @@ const Live = () => {
               </section>
             )}
 
+            {/* Replays */}
+            <section className="mb-12">
+              <SectionHeader title={t.live.replay} />
+              {filteredReplays.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredReplays.map((stream) => (
+                    <LiveCard
+                      key={stream.id}
+                      id={stream.id!}
+                      title={stream.title ?? ""}
+                      organizationName={stream.organization?.name ?? ""}
+                      organizationSlug={stream.organization?.slug}
+                      organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
+                      status="ended"
+                      thumbnail={stream.thumbnail_url ?? undefined}
+                      isReplay
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState icon={RotateCcw} title={t.tournament.noReplays} />
+              )}
+            </section>
           </>
         )}
 
-        {/* SEO Content Section - Đưa xuống cuối, chia thành các blocks rõ ràng */}
+        {/* SEO Content */}
         <section className="mt-16 space-y-8">
-          {/* Block 1: Livestream Tournaments */}
           <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
             <h2 className="text-lg font-semibold text-foreground mb-3">
               {t.live.seo.tournamentsTitle}
@@ -150,8 +170,6 @@ const Live = () => {
               </Link>
             </p>
           </article>
-
-          {/* Block 2: Livestream from Creators */}
           <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
             <h2 className="text-lg font-semibold text-foreground mb-3">
               {t.live.seo.creatorsTitle}
@@ -160,8 +178,6 @@ const Live = () => {
               {t.live.seo.creatorsDesc}
             </p>
           </article>
-
-          {/* Block 3: Upcoming & Match Types */}
           <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
             <h2 className="text-lg font-semibold text-foreground mb-3">
               {t.live.seo.upcomingTitle}
