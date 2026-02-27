@@ -86,6 +86,7 @@ const AdminApiKeys = lazy(() => import("./pages/admin/AdminApiKeys"));
 const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
 const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamViewers"));
 const AdminPushNotification = lazy(() => import("./pages/admin/AdminPushNotification"));
+const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
 
 // Lazy load creator pages
 const CreatorOverview = lazy(() => import("./pages/creator/CreatorOverview"));
@@ -237,6 +238,7 @@ const App = () => (
                   <Route path="/admin/moderation" element={<AdminModeration />} />
                   <Route path="/admin/viewers" element={<AdminLivestreamViewers />} />
                   <Route path="/admin/push" element={<AdminPushNotification />} />
+                  <Route path="/admin/forum" element={<AdminForum />} />
                   {/* Creator routes */}
                   <Route path="/creator" element={<CreatorOverview />} />
                   <Route path="/creator/analytics" element={<CreatorAnalytics />} />

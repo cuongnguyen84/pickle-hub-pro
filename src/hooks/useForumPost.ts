@@ -143,3 +143,21 @@ export const useDeleteForumComment = () => {
     },
   });
 };
+
+export const useToggleHidePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ postId, isHidden }: { postId: string; isHidden: boolean }) => {
+      const { error } = await supabase
+        .from("forum_posts")
+        .update({ is_hidden: !isHidden } as any)
+        .eq("id", postId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["forum-post"] });
+    },
+  });
+};

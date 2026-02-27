@@ -16,6 +16,7 @@ import {
   Key,
   Eye,
   Bell,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,6 +36,7 @@ const navItems = [
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
   { path: "/admin/viewers", icon: Eye, labelKey: "viewers" as const },
   { path: "/admin/push", icon: Bell, labelKey: "push" as const },
+  { path: "/admin/forum", icon: MessageSquare, labelKey: "forum" as const },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -96,6 +98,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       apiKeys: "API Keys",
       viewers: t.admin.viewers.title,
       push: "Push Notification",
+      forum: t.forum.title,
     };
     return labels[key] || key;
   };

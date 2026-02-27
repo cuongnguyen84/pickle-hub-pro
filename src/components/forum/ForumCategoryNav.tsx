@@ -9,7 +9,7 @@ interface ForumCategoryNavProps {
 }
 
 const ForumCategoryNav = ({ activeSlug, onSelect }: ForumCategoryNavProps) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { data: categories = [] } = useForumCategories();
 
   return (
@@ -26,20 +26,23 @@ const ForumCategoryNav = ({ activeSlug, onSelect }: ForumCategoryNavProps) => {
         >
           {t.forum.allCategories}
         </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => onSelect(cat.slug)}
-            className={cn(
-              "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-              activeSlug === cat.slug
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-foreground-secondary hover:text-foreground hover:bg-muted/80"
-            )}
-          >
-            {cat.name}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const displayName = language === "en" && (cat as any).name_en ? (cat as any).name_en : cat.name;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => onSelect(cat.slug)}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                activeSlug === cat.slug
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground-secondary hover:text-foreground hover:bg-muted/80"
+              )}
+            >
+              {displayName}
+            </button>
+          );
+        })}
       </div>
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
