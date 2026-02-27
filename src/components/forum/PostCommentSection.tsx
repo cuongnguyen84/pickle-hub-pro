@@ -117,6 +117,21 @@ const PostCommentSection = ({ postId, postUserId, isQA }: PostCommentSectionProp
         {t.forum.comments} ({comments.length})
       </h3>
 
+      {comments.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">{t.forum.noCommentsYet}</p>
+      ) : (
+        <div className="space-y-3">
+          {comments.map((comment) => (
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              postUserId={postUserId}
+              isQA={isQA}
+            />
+          ))}
+        </div>
+      )}
+
       {user ? (
         <div className="space-y-2">
           <Textarea
@@ -140,21 +155,6 @@ const PostCommentSection = ({ postId, postUserId, isQA }: PostCommentSectionProp
         >
           {t.forum.loginToComment}
         </Link>
-      )}
-
-      {comments.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">{t.forum.noCommentsYet}</p>
-      ) : (
-        <div className="space-y-3">
-          {comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              postUserId={postUserId}
-              isQA={isQA}
-            />
-          ))}
-        </div>
       )}
     </div>
   );
