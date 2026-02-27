@@ -1021,6 +1021,7 @@ export type Database = {
           id: string
           is_best_answer: boolean
           like_count: number
+          parent_id: string | null
           post_id: string
           user_id: string
         }
@@ -1030,6 +1031,7 @@ export type Database = {
           id?: string
           is_best_answer?: boolean
           like_count?: number
+          parent_id?: string | null
           post_id: string
           user_id: string
         }
@@ -1039,10 +1041,18 @@ export type Database = {
           id?: string
           is_best_answer?: boolean
           like_count?: number
+          parent_id?: string | null
           post_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "forum_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "forum_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "forum_comments_post_id_fkey"
             columns: ["post_id"]

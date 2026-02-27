@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useForumComments, useCreateForumComment, useToggleBestAnswer, useDeleteForumComment, ForumComment } from "@/hooks/useForumPost";
@@ -6,7 +6,7 @@ import { useForumLike } from "@/hooks/useForumLike";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user";
-import { Heart, CheckCircle2, Trash2 } from "lucide-react";
+import { Heart, CheckCircle2, Trash2, Reply, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 import { Link } from "react-router-dom";
@@ -22,10 +22,12 @@ const CommentItem = ({
   comment,
   postUserId,
   isQA,
+  onReply,
 }: {
   comment: ForumComment;
   postUserId: string;
   isQA: boolean;
+  onReply: (comment: ForumComment) => void;
 }) => {
   const { t, language } = useI18n();
   const { user } = useAuth();
@@ -48,6 +50,15 @@ const CommentItem = ({
           {t.forum.bestAnswer}
         </div>
       )}
+
+      {/* Quoted parent comment */}
+      {comment.parent_id && comment.parent_content && (
+        <div className="mb-2 pl-3 border-l-2 border-primary/30 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground/70">{comment.parent_author_name}</span>
+          <p className="line-clamp-2 mt-0.5">{comment.parent_content}</p>
+        </div>
+      )}
+
       <div className="flex items-start gap-2">
         <UserAvatar avatarUrl={comment.author_avatar} displayName={comment.author_name} size="sm" />
         <div className="flex-1 min-w-0">
@@ -67,6 +78,15 @@ const CommentItem = ({
               <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-primary text-primary" : ""}`} />
               {comment.like_count}
             </button>
+            {user && (
+              <button
+                onClick={() => onReply(comment)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Reply className="w-3.5 h-3.5" />
+                {t.forum.reply}
+              </button>
+            )}
             {isQA && isPostOwner && (
               <button
                 onClick={() =>
@@ -102,12 +122,24 @@ const PostCommentSection = ({ postId, postUserId, isQA }: PostCommentSectionProp
   const { data: comments = [] } = useForumComments(postId);
   const createComment = useCreateForumComment();
   const [content, setContent] = useState("");
+  const [replyTo, setReplyTo] = useState<ForumComment | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleReply = (comment: ForumComment) => {
+    setReplyTo(comment);
+    setTimeout(() => textareaRef.current?.focus(), 100);
+  };
 
   const handleSubmit = () => {
     if (!content.trim() || !user) return;
     createComment.mutate(
-      { post_id: postId, user_id: user.id, content: content.trim() },
-      { onSuccess: () => setContent("") }
+      { post_id: postId, user_id: user.id, content: content.trim(), parent_id: replyTo?.id || null },
+      {
+        onSuccess: () => {
+          setContent("");
+          setReplyTo(null);
+        },
+      }
     );
   };
 
@@ -127,6 +159,7 @@ const PostCommentSection = ({ postId, postUserId, isQA }: PostCommentSectionProp
               comment={comment}
               postUserId={postUserId}
               isQA={isQA}
+              onReply={handleReply}
             />
           ))}
         </div>
@@ -134,10 +167,21 @@ const PostCommentSection = ({ postId, postUserId, isQA }: PostCommentSectionProp
 
       {user ? (
         <div className="space-y-2">
+          {replyTo && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+              <Reply className="w-3.5 h-3.5 text-primary" />
+              <span>{t.forum.replyingTo} <strong className="text-foreground">{replyTo.author_name}</strong></span>
+              <span className="flex-1 truncate text-muted-foreground/70">"{replyTo.content}"</span>
+              <button onClick={() => setReplyTo(null)} className="hover:text-foreground transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
           <Textarea
+            ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={t.forum.writeComment}
+            placeholder={replyTo ? `${t.forum.reply} @${replyTo.author_name}...` : t.forum.writeComment}
             rows={3}
           />
           <Button
