@@ -12,6 +12,7 @@ import { vi, enUS } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
 import ForumImageUpload from "@/components/forum/ForumImageUpload";
+import ImageLightbox from "@/components/forum/ImageLightbox";
 
 interface PostCommentSectionProps {
   postId: string;
@@ -36,6 +37,7 @@ const CommentItem = ({
   const { isLiked, toggleLike, isToggling } = useForumLike("comment", comment.id);
   const toggleBestAnswer = useToggleBestAnswer();
   const deleteComment = useDeleteForumComment();
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const isPostOwner = user?.id === postUserId;
   const isCommentOwner = user?.id === comment.user_id;
 
@@ -73,12 +75,13 @@ const CommentItem = ({
           {comment.image_urls && comment.image_urls.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {comment.image_urls.map((url, i) => (
-                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                  <img src={url} alt="" className="w-24 h-24 rounded-lg object-cover border" />
-                </a>
+                <button key={i} onClick={() => setLightboxSrc(url)} className="block">
+                  <img src={url} alt="" className="w-24 h-24 rounded-lg object-cover border cursor-pointer hover:opacity-80 transition-opacity" />
+                </button>
               ))}
             </div>
           )}
+          <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
           <div className="flex items-center gap-3 mt-2">
             <button
               onClick={() => toggleLike()}
