@@ -1601,6 +1601,9 @@ export interface Translations {
     pinPost: string;
     unpinPost: string;
     editPost: string;
+    reply: string;
+    replyingTo: string;
+    cancelReply: string;
   };
 }
 
@@ -3210,5 +3213,8 @@ export const vi: Translations = {
     pinPost: "Ghim bài",
     unpinPost: "Bỏ ghim",
     editPost: "Sửa bài viết",
+    reply: "Trả lời",
+    replyingTo: "Đang trả lời",
+    cancelReply: "Hủy",
   },
 };

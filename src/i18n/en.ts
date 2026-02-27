@@ -1606,5 +1606,8 @@ export const en: Translations = {
     pinPost: "Pin post",
     unpinPost: "Unpin post",
     editPost: "Edit post",
+    reply: "Reply",
+    replyingTo: "Replying to",
+    cancelReply: "Cancel",
   },
 };

@@ -9,8 +9,11 @@ export interface ForumComment {
   is_best_answer: boolean;
   like_count: number;
   created_at: string;
+  parent_id?: string | null;
   author_name?: string;
   author_avatar?: string;
+  parent_author_name?: string;
+  parent_content?: string;
 }
 
 export const useForumPost = (postId: string | undefined) => {
@@ -71,10 +74,14 @@ export const useForumComments = (postId: string | undefined) => {
 
       return data.map((comment: any) => {
         const profile = profileMap.get(comment.user_id);
+        const parentComment = comment.parent_id ? data.find((c: any) => c.id === comment.parent_id) : null;
+        const parentProfile = parentComment ? profileMap.get(parentComment.user_id) : null;
         return {
           ...comment,
           author_name: profile?.display_name || "Unknown",
           author_avatar: profile?.avatar_url || null,
+          parent_author_name: parentProfile?.display_name || (parentComment ? "Unknown" : undefined),
+          parent_content: parentComment?.content || undefined,
         } as ForumComment;
       });
     },
@@ -86,10 +93,10 @@ export const useCreateForumComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (comment: { post_id: string; user_id: string; content: string }) => {
+    mutationFn: async (comment: { post_id: string; user_id: string; content: string; parent_id?: string | null }) => {
       const { data, error } = await supabase
         .from("forum_comments")
-        .insert(comment)
+        .insert(comment as any)
         .select()
         .single();
       if (error) throw error;
