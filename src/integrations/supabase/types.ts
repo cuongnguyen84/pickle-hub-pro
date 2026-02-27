@@ -991,6 +991,7 @@ export type Database = {
           display_order: number
           id: string
           name: string
+          name_en: string | null
           slug: string
         }
         Insert: {
@@ -999,6 +1000,7 @@ export type Database = {
           display_order?: number
           id?: string
           name: string
+          name_en?: string | null
           slug: string
         }
         Update: {
@@ -1007,6 +1009,7 @@ export type Database = {
           display_order?: number
           id?: string
           name?: string
+          name_en?: string | null
           slug?: string
         }
         Relationships: []
@@ -1081,6 +1084,7 @@ export type Database = {
           created_at: string
           id: string
           image_urls: string[] | null
+          is_hidden: boolean
           is_pinned: boolean
           is_qa: boolean
           like_count: number
@@ -1096,6 +1100,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_urls?: string[] | null
+          is_hidden?: boolean
           is_pinned?: boolean
           is_qa?: boolean
           like_count?: number
@@ -1111,6 +1116,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_urls?: string[] | null
+          is_hidden?: boolean
           is_pinned?: boolean
           is_qa?: boolean
           like_count?: number
@@ -3108,7 +3114,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "viewer" | "creator" | "admin"
+      app_role: "viewer" | "creator" | "admin" | "moderator"
       content_status: "draft" | "published" | "hidden"
       follow_target_type: "organization" | "tournament"
       forum_like_target: "post" | "comment"
@@ -3274,7 +3280,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["viewer", "creator", "admin"],
+      app_role: ["viewer", "creator", "admin", "moderator"],
       content_status: ["draft", "published", "hidden"],
       follow_target_type: ["organization", "tournament"],
       forum_like_target: ["post", "comment"],

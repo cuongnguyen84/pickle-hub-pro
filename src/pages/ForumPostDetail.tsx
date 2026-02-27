@@ -4,12 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useForumPost } from "@/hooks/useForumPost";
 import { useDeleteForumPost, useTogglePinPost } from "@/hooks/useForumPosts";
+import { useToggleHidePost } from "@/hooks/useForumPost";
 import { useForumLike } from "@/hooks/useForumLike";
 import { PostCommentSection } from "@/components/forum";
 import { UserAvatar } from "@/components/user";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Heart, Pin, HelpCircle, Trash2, MoreVertical } from "lucide-react";
+import { ArrowLeft, Heart, Pin, HelpCircle, Trash2, MoreVertical, EyeOff, Eye } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
@@ -29,6 +30,7 @@ const ForumPostDetail = () => {
   const { isLiked, toggleLike, isToggling } = useForumLike("post", postId || "");
   const deletePost = useDeleteForumPost();
   const togglePin = useTogglePinPost();
+  const toggleHide = useToggleHidePost();
 
   const isOwner = user?.id === post?.user_id;
   const canManage = isOwner || isAdmin;
@@ -98,6 +100,12 @@ const ForumPostDetail = () => {
                     <DropdownMenuItem onClick={() => togglePin.mutate({ postId: post.id, isPinned: post.is_pinned })}>
                       <Pin className="w-4 h-4 mr-2" />
                       {post.is_pinned ? t.forum.unpinPost : t.forum.pinPost}
+                    </DropdownMenuItem>
+                  )}
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => toggleHide.mutate({ postId: post.id, isHidden: !!(post as any).is_hidden })}>
+                      {(post as any).is_hidden ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                      {(post as any).is_hidden ? "Hiện bài" : "Ẩn bài"}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={handleDelete} className="text-destructive">

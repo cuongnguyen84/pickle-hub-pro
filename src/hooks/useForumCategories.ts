@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface ForumCategory {
   id: string;
   name: string;
+  name_en: string | null;
   slug: string;
   description: string | null;
   display_order: number;
