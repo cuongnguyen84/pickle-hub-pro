@@ -984,6 +984,151 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      forum_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_best_answer: boolean
+          like_count: number
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_best_answer?: boolean
+          like_count?: number
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_best_answer?: boolean
+          like_count?: number
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_likes: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["forum_like_target"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["forum_like_target"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["forum_like_target"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      forum_posts: {
+        Row: {
+          category_id: string | null
+          comment_count: number
+          content: string
+          created_at: string
+          id: string
+          image_urls: string[] | null
+          is_pinned: boolean
+          is_qa: boolean
+          like_count: number
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          comment_count?: number
+          content: string
+          created_at?: string
+          id?: string
+          image_urls?: string[] | null
+          is_pinned?: boolean
+          is_qa?: boolean
+          like_count?: number
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          comment_count?: number
+          content?: string
+          created_at?: string
+          id?: string
+          image_urls?: string[] | null
+          is_pinned?: boolean
+          is_qa?: boolean
+          like_count?: number
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "forum_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       likes: {
         Row: {
           created_at: string
@@ -2919,6 +3064,10 @@ export type Database = {
         Args: { p_tournament_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_forum_post_owner: {
+        Args: { _post_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_quick_table_creator: {
         Args: { _table_id: string; _user_id: string }
         Returns: boolean
@@ -2962,6 +3111,7 @@ export type Database = {
       app_role: "viewer" | "creator" | "admin"
       content_status: "draft" | "published" | "hidden"
       follow_target_type: "organization" | "tournament"
+      forum_like_target: "post" | "comment"
       game_scoring_type: "rally21" | "sideout11"
       invitation_status:
         | "pending"
@@ -3127,6 +3277,7 @@ export const Constants = {
       app_role: ["viewer", "creator", "admin"],
       content_status: ["draft", "published", "hidden"],
       follow_target_type: ["organization", "tournament"],
+      forum_like_target: ["post", "comment"],
       game_scoring_type: ["rally21", "sideout11"],
       invitation_status: [
         "pending",

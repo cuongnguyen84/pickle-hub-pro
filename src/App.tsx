@@ -56,6 +56,11 @@ const FlexTournamentList = lazy(() => import("./pages/FlexTournamentList"));
 const FlexTournamentSetup = lazy(() => import("./pages/FlexTournamentSetup"));
 const FlexTournamentView = lazy(() => import("./pages/FlexTournamentView"));
 
+// Forum pages
+const Forum = lazy(() => import("./pages/Forum"));
+const ForumCategory = lazy(() => import("./pages/ForumCategory"));
+const ForumPostDetail = lazy(() => import("./pages/ForumPostDetail"));
+const ForumPostCreate = lazy(() => import("./pages/ForumPostCreate"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -185,6 +190,11 @@ const App = () => (
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/search" element={<Search />} />
                   <Route path="/news" element={<News />} />
+                  {/* Forum routes */}
+                  <Route path="/forum" element={<Forum />} />
+                  <Route path="/forum/:categorySlug" element={<ForumCategory />} />
+                  <Route path="/forum/post/:postId" element={<ForumPostDetail />} />
+                  <Route path="/forum/new" element={<ForumPostCreate />} />
                   {/* Share redirect routes - for links shared on social media */}
                   <Route path="/share/live/:id" element={<ShareRedirect type="live" />} />
                   <Route path="/share/video/:id" element={<ShareRedirect type="video" />} />
