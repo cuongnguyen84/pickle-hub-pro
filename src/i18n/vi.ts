@@ -1558,6 +1558,50 @@ export interface Translations {
     completed: string;
     backToList: string;
   };
+  forum: {
+    title: string;
+    navLabel: string;
+    createPost: string;
+    newPost: string;
+    allCategories: string;
+    trending: string;
+    latest: string;
+    pinned: string;
+    qa: string;
+    markAsQA: string;
+    bestAnswer: string;
+    markBestAnswer: string;
+    unmarkBestAnswer: string;
+    likes: string;
+    comments: string;
+    noPostsYet: string;
+    noCommentsYet: string;
+    writeComment: string;
+    postTitle: string;
+    postTitlePlaceholder: string;
+    postContent: string;
+    postContentPlaceholder: string;
+    selectCategory: string;
+    addTags: string;
+    addTagsPlaceholder: string;
+    attachImages: string;
+    maxImages: string;
+    publish: string;
+    publishing: string;
+    publishSuccess: string;
+    deletePost: string;
+    deletePostConfirm: string;
+    deleteComment: string;
+    loginToPost: string;
+    loginToComment: string;
+    by: string;
+    ago: string;
+    readMore: string;
+    backToForum: string;
+    pinPost: string;
+    unpinPost: string;
+    editPost: string;
+  };
 }
 
 // Vietnamese translations
@@ -3122,5 +3166,49 @@ export const vi: Translations = {
     upNext: "Sắp thi đấu",
     completed: "Đã hoàn thành",
     backToList: "Quay lại",
+  },
+  forum: {
+    title: "Diễn đàn",
+    navLabel: "Diễn đàn",
+    createPost: "Tạo bài viết",
+    newPost: "Bài viết mới",
+    allCategories: "Tất cả",
+    trending: "Nổi bật",
+    latest: "Mới nhất",
+    pinned: "Ghim",
+    qa: "Hỏi đáp",
+    markAsQA: "Đánh dấu Hỏi đáp",
+    bestAnswer: "Câu trả lời hay nhất",
+    markBestAnswer: "Chọn câu trả lời hay nhất",
+    unmarkBestAnswer: "Bỏ chọn câu trả lời",
+    likes: "thích",
+    comments: "bình luận",
+    noPostsYet: "Chưa có bài viết nào. Hãy là người đầu tiên!",
+    noCommentsYet: "Chưa có bình luận. Hãy là người đầu tiên trả lời!",
+    writeComment: "Viết bình luận...",
+    postTitle: "Tiêu đề",
+    postTitlePlaceholder: "Bạn muốn thảo luận về điều gì?",
+    postContent: "Nội dung",
+    postContentPlaceholder: "Chia sẻ suy nghĩ của bạn...",
+    selectCategory: "Chọn danh mục",
+    addTags: "Tag",
+    addTagsPlaceholder: "Thêm tag và nhấn Enter",
+    attachImages: "Đính kèm ảnh",
+    maxImages: "Tối đa 4 ảnh",
+    publish: "Đăng bài",
+    publishing: "Đang đăng...",
+    publishSuccess: "Đã đăng bài!",
+    deletePost: "Xóa bài viết",
+    deletePostConfirm: "Bạn có chắc muốn xóa bài viết này?",
+    deleteComment: "Xóa bình luận",
+    loginToPost: "Đăng nhập để tạo bài viết",
+    loginToComment: "Đăng nhập để bình luận",
+    by: "bởi",
+    ago: "trước",
+    readMore: "Xem thêm",
+    backToForum: "Quay lại Diễn đàn",
+    pinPost: "Ghim bài",
+    unpinPost: "Bỏ ghim",
+    editPost: "Sửa bài viết",
   },
 };
