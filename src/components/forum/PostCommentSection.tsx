@@ -11,6 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
+import ForumImageUpload from "@/components/forum/ForumImageUpload";
 
 interface PostCommentSectionProps {
   postId: string;
@@ -69,6 +70,15 @@ const CommentItem = ({
             </span>
           </div>
           <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+          {comment.image_urls && comment.image_urls.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {comment.image_urls.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                  <img src={url} alt="" className="w-24 h-24 rounded-lg object-cover border" />
+                </a>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-3 mt-2">
             <button
               onClick={() => toggleLike()}
@@ -122,6 +132,7 @@ const PostCommentSection = ({ postId, postUserId, isQA }: PostCommentSectionProp
   const { data: comments = [] } = useForumComments(postId);
   const createComment = useCreateForumComment();
   const [content, setContent] = useState("");
+  const [commentImages, setCommentImages] = useState<string[]>([]);
   const [replyTo, setReplyTo] = useState<ForumComment | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -133,10 +144,11 @@ const PostCommentSection = ({ postId, postUserId, isQA }: PostCommentSectionProp
   const handleSubmit = () => {
     if (!content.trim() || !user) return;
     createComment.mutate(
-      { post_id: postId, user_id: user.id, content: content.trim(), parent_id: replyTo?.id || null },
+      { post_id: postId, user_id: user.id, content: content.trim(), parent_id: replyTo?.id || null, image_urls: commentImages.length > 0 ? commentImages : undefined },
       {
         onSuccess: () => {
           setContent("");
+          setCommentImages([]);
           setReplyTo(null);
         },
       }
@@ -184,6 +196,7 @@ const PostCommentSection = ({ postId, postUserId, isQA }: PostCommentSectionProp
             placeholder={replyTo ? `${t.forum.reply} @${replyTo.author_name}...` : t.forum.writeComment}
             rows={3}
           />
+          <ForumImageUpload images={commentImages} onChange={setCommentImages} maxImages={2} />
           <Button
             onClick={handleSubmit}
             disabled={!content.trim() || createComment.isPending}

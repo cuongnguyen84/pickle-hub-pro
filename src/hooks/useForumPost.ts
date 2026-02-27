@@ -9,6 +9,7 @@ export interface ForumComment {
   is_best_answer: boolean;
   like_count: number;
   created_at: string;
+  image_urls?: string[];
   parent_id?: string | null;
   author_name?: string;
   author_avatar?: string;
@@ -93,7 +94,7 @@ export const useCreateForumComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (comment: { post_id: string; user_id: string; content: string; parent_id?: string | null }) => {
+    mutationFn: async (comment: { post_id: string; user_id: string; content: string; parent_id?: string | null; image_urls?: string[] }) => {
       const { data, error } = await supabase
         .from("forum_comments")
         .insert(comment as any)
