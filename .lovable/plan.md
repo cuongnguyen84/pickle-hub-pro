@@ -1,78 +1,97 @@
 
 
-## Problem
+## Forum Feature Plan
 
-When a tournament match is live in real life, the app may stop updating scores due to:
-- Supabase Realtime WebSocket silently disconnecting (network hiccup, mobile sleep/wake, background tab)
-- Polling not configured on tournament view pages (QuickTableView, DoublesEliminationView, TeamMatchView rely solely on Realtime + manual `loadData`)
-- Users on mobile have no way to manually trigger a refresh without reloading the entire page
+### Database Schema
 
-Currently, the three tournament view pages handle data differently:
-- **QuickTableView**: Realtime subscription on `quick_table_matches` + `quick_table_players`, calls `loadData()` on change. No polling fallback. No visibility-change reconnect.
-- **DoublesEliminationView**: Realtime with `skipNextRealtime` pattern + `softReload`. No polling fallback. No visibility-change reconnect.
-- **TeamMatchView**: Uses `useTeamMatchRealtime` hook (invalidates react-query). No visibility-change reconnect.
+**New tables:**
 
-## Solution: 3-layer resilience for all tournament views
+1. **`forum_categories`** — Admin-managed categories (Kỹ thuật, Tìm bạn chơi, Mua bán gear, Q&A, etc.)
+   - `id`, `name`, `slug`, `description`, `display_order`, `created_at`
+   - RLS: public SELECT, admin-only INSERT/UPDATE/DELETE
 
-### Layer 1: Visibility-change auto-refresh
-When the user returns to the app (tab focus, phone unlock, app foreground), automatically refetch data and resubscribe Realtime channels.
+2. **`forum_posts`** — User posts
+   - `id`, `user_id`, `category_id` (FK → forum_categories), `title`, `content` (text), `image_urls` (text[]), `tags` (text[]), `is_pinned` (boolean, default false), `is_qa` (boolean, default false — marks Q&A posts), `like_count` (integer, default 0), `comment_count` (integer, default 0), `created_at`, `updated_at`
+   - RLS: public SELECT, authenticated INSERT (user_id = auth.uid()), owner UPDATE/DELETE, admin can UPDATE (for pinning) and DELETE
 
-**Implementation**: Create a shared `useVisibilityRefresh` hook that:
-- Listens for `visibilitychange` event
-- On `visible`: calls a provided `onRefresh` callback
-- Debounces to avoid double-fires
+3. **`forum_comments`** — Replies to posts
+   - `id`, `post_id` (FK → forum_posts), `user_id`, `content`, `is_best_answer` (boolean, default false — for Q&A), `like_count` (integer, default 0), `created_at`
+   - RLS: public SELECT, authenticated INSERT, owner UPDATE/DELETE, post owner can UPDATE `is_best_answer`
 
-Apply this hook in all 3 view pages.
+4. **`forum_likes`** — Likes on posts and comments
+   - `id`, `user_id`, `target_type` (enum: 'post', 'comment'), `target_id`, `created_at`
+   - UNIQUE(user_id, target_type, target_id)
+   - RLS: public SELECT, authenticated INSERT/DELETE own
+   - Trigger to increment/decrement `like_count` on forum_posts/forum_comments
 
-### Layer 2: Polling fallback
-Add a background polling interval (every 15-20 seconds) as a safety net when Realtime is silently dead.
+**Storage:**
+- Create `forum-images` bucket (public) for post image uploads
 
-**Implementation**:
-- **QuickTableView**: Add a `setInterval` that calls `loadData()` every 20 seconds (only when document is visible)
-- **DoublesEliminationView**: Same pattern with `softReload()`
-- **TeamMatchView**: Already uses react-query, just add `refetchInterval: 15000` to the matches query in `useTeamMatchMatches`
+**Realtime:**
+- Enable realtime on `forum_posts` and `forum_comments` for live updates
 
-### Layer 3: Pull-to-refresh on mobile
-Add a manual "pull down to refresh" or a visible refresh button at the top of tournament view pages so users can force-sync.
+### Pages & Routes
 
-**Implementation**: Add a small refresh button in the tournament header area (next to share button) that calls `loadData()` / invalidates queries. Use `RefreshCw` icon with a spin animation during refresh.
+1. **`/forum`** — Forum home: category list + latest/trending posts feed
+2. **`/forum/:categorySlug`** — Posts filtered by category
+3. **`/forum/post/:postId`** — Post detail with comments
+4. **`/forum/new`** — Create new post (requires auth)
 
-## Files to change
+### Components
 
-### New file: `src/hooks/useVisibilityRefresh.ts`
-- Custom hook that fires a callback when document becomes visible again
-- Includes a minimum interval (e.g., 5 seconds) to avoid rapid re-fires
+- `src/pages/Forum.tsx` — Main forum page with category tabs + post list
+- `src/pages/ForumCategory.tsx` — Posts by category
+- `src/pages/ForumPostDetail.tsx` — Single post + comments
+- `src/pages/ForumPostCreate.tsx` — Create/edit post form
+- `src/components/forum/PostCard.tsx` — Post preview card (title, excerpt, author, likes, comments count, tags, pinned badge)
+- `src/components/forum/PostCommentSection.tsx` — Comments list + reply form, with "best answer" marking for Q&A
+- `src/components/forum/ForumCategoryNav.tsx` — Category navigation (horizontal tabs or sidebar)
+- `src/components/forum/TagFilter.tsx` — Tag chips for filtering
+- `src/components/forum/ForumImageUpload.tsx` — Image upload component using forum-images bucket
 
-### `src/pages/QuickTableView.tsx`
-- Add `useVisibilityRefresh` calling `loadData`
-- Add polling `setInterval` (20s) when document is visible
-- Add a refresh button (RefreshCw icon) in the header bar
+### Hooks
 
-### `src/pages/DoublesEliminationView.tsx`
-- Add `useVisibilityRefresh` calling `softReload`
-- Add polling `setInterval` (20s) when document is visible
-- Add a refresh button in the header bar
+- `src/hooks/useForumPosts.ts` — React Query for fetching/paginating posts, with category/tag filters
+- `src/hooks/useForumPost.ts` — Single post detail + comments
+- `src/hooks/useForumCategories.ts` — Fetch categories
+- `src/hooks/useForumLike.ts` — Like/unlike with optimistic updates
 
-### `src/pages/TeamMatchView.tsx`
-- Add `useVisibilityRefresh` that invalidates team-match queries
-- Add `refetchInterval: 15000` to match queries in `useTeamMatchMatches`
-- Add a refresh button in the header bar
+### Key Features
 
-### `src/hooks/useTeamMatchMatches.ts`
-- Add `refetchInterval: 15000` to the matches query
+- **Pinned posts**: Admin/Creator can pin posts to top of category or global feed
+- **Tags**: Free-form tags on posts, clickable to filter
+- **Images**: Up to 4 images per post, uploaded to storage bucket
+- **Q&A mode**: Post creator can toggle Q&A, then mark one comment as "best answer" (highlighted with green check)
+- **Like + Comment counts**: Denormalized counters updated via database triggers for performance
+- **Pagination**: Cursor-based infinite scroll on post lists
+- **i18n**: Add `forum` namespace to both `en.ts` and `vi.ts`
 
-### `src/i18n/en.ts` + `src/i18n/vi.ts`
-- Add key `common.refresh` or reuse existing patterns
+### Navigation
 
-## Technical detail: `useVisibilityRefresh` hook
+- Add "Forum" / "Diễn đàn" link to bottom nav and app header
+- Icon: `MessageSquare` from lucide-react
 
-```text
-useVisibilityRefresh(onRefresh, minInterval = 5000)
-  ├── listen: document.visibilitychange
-  ├── on visible: check if (now - lastRefresh) > minInterval
-  │   └── yes → call onRefresh(), update lastRefresh
-  └── cleanup: remove listener
-```
+### Files to create/modify
 
-This approach is non-invasive: it doesn't change existing Realtime logic, just adds safety nets on top.
+| Action | File |
+|--------|------|
+| Migration | New migration: tables, enums, triggers, storage bucket, RLS policies |
+| Create | `src/pages/Forum.tsx` |
+| Create | `src/pages/ForumCategory.tsx` |
+| Create | `src/pages/ForumPostDetail.tsx` |
+| Create | `src/pages/ForumPostCreate.tsx` |
+| Create | `src/components/forum/PostCard.tsx` |
+| Create | `src/components/forum/PostCommentSection.tsx` |
+| Create | `src/components/forum/ForumCategoryNav.tsx` |
+| Create | `src/components/forum/TagFilter.tsx` |
+| Create | `src/components/forum/ForumImageUpload.tsx` |
+| Create | `src/components/forum/index.ts` |
+| Create | `src/hooks/useForumPosts.ts` |
+| Create | `src/hooks/useForumPost.ts` |
+| Create | `src/hooks/useForumCategories.ts` |
+| Create | `src/hooks/useForumLike.ts` |
+| Modify | `src/App.tsx` — Add 4 forum routes |
+| Modify | `src/components/layout/BottomNav.tsx` — Add forum tab |
+| Modify | `src/components/layout/AppHeader.tsx` — Add forum link |
+| Modify | `src/i18n/en.ts` + `src/i18n/vi.ts` — Add forum translations |
 
