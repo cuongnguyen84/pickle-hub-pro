@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { logAuditEvent } from "@/hooks/useAuditLog";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type Tournament = Database["public"]["Tables"]["tournaments"]["Row"];
@@ -162,8 +163,16 @@ export function useUpdateUserRole() {
       const { error: insertError } = await supabase.from("user_roles").insert({ user_id: userId, role });
       if (insertError) throw insertError;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      logAuditEvent({
+        eventType: "ROLE_CHANGED",
+        eventCategory: "admin",
+        resourceType: "user",
+        resourceId: variables.userId,
+        severity: "warning",
+        metadata: { new_role: variables.role },
+      });
     },
   });
 }
@@ -275,9 +284,17 @@ export function useUpdateVideoStatus() {
       const { error } = await supabase.from("videos").update({ status }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "moderation", "videos"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      logAuditEvent({
+        eventType: variables.status === "hidden" ? "CONTENT_HIDDEN" : "CONTENT_RESTORED",
+        eventCategory: "admin",
+        resourceType: "video",
+        resourceId: variables.id,
+        severity: "warning",
+        metadata: { new_status: variables.status },
+      });
     },
   });
 }
@@ -293,9 +310,17 @@ export function useUpdateLivestreamStatus() {
       const { error } = await supabase.from("livestreams").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "moderation", "livestreams"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
+      logAuditEvent({
+        eventType: variables.status === "ended" ? "STREAM_STOPPED" : "STREAM_STARTED",
+        eventCategory: "admin",
+        resourceType: "stream",
+        resourceId: variables.id,
+        severity: "info",
+        metadata: { new_status: variables.status, source: "admin_moderation" },
+      });
     },
   });
 }
@@ -322,10 +347,17 @@ export function useDeleteLivestream() {
       const { error } = await supabase.from("livestreams").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "moderation", "livestreams"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
       queryClient.invalidateQueries({ queryKey: ["livestreams"] });
+      logAuditEvent({
+        eventType: "STREAM_DELETED",
+        eventCategory: "admin",
+        resourceType: "stream",
+        resourceId: id,
+        severity: "warning",
+      });
     },
   });
 }

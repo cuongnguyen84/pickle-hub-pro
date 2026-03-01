@@ -592,6 +592,10 @@ export const en: Translations = {
       joinedAt: "Joined at",
       type: "Type",
     },
+    auditLog: {
+      title: "Audit Log",
+      description: "System activity history",
+    },
   },
   geoBlock: {
     title: "Content Not Available",

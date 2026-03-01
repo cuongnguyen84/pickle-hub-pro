@@ -591,6 +591,10 @@ export interface Translations {
       joinedAt: string;
       type: string;
     };
+    auditLog: {
+      title: string;
+      description: string;
+    };
   };
   player: {
     tapToPlayVideo: string;
@@ -2198,6 +2202,10 @@ export const vi: Translations = {
       loggedIn: "Đã đăng nhập",
       joinedAt: "Tham gia lúc",
       type: "Loại",
+    },
+    auditLog: {
+      title: "Audit Log",
+      description: "Lịch sử hoạt động hệ thống",
     },
   },
   geoBlock: {
