@@ -87,6 +87,7 @@ const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
 const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamViewers"));
 const AdminPushNotification = lazy(() => import("./pages/admin/AdminPushNotification"));
 const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
+const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 
 // Lazy load creator pages
 const CreatorOverview = lazy(() => import("./pages/creator/CreatorOverview"));
@@ -239,6 +240,7 @@ const App = () => (
                   <Route path="/admin/viewers" element={<AdminLivestreamViewers />} />
                   <Route path="/admin/push" element={<AdminPushNotification />} />
                   <Route path="/admin/forum" element={<AdminForum />} />
+                  <Route path="/admin/audit-log" element={<AdminAuditLog />} />
                   {/* Creator routes */}
                   <Route path="/creator" element={<CreatorOverview />} />
                   <Route path="/creator/analytics" element={<CreatorAnalytics />} />
