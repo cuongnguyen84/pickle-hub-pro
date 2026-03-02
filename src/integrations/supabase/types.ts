@@ -57,6 +57,8 @@ export type Database = {
         Row: {
           actor_id: string | null
           actor_type: string
+          after_data: Json | null
+          before_data: Json | null
           created_at: string
           event_category: string
           event_type: string
@@ -71,6 +73,8 @@ export type Database = {
         Insert: {
           actor_id?: string | null
           actor_type?: string
+          after_data?: Json | null
+          before_data?: Json | null
           created_at?: string
           event_category: string
           event_type: string
@@ -85,6 +89,8 @@ export type Database = {
         Update: {
           actor_id?: string | null
           actor_type?: string
+          after_data?: Json | null
+          before_data?: Json | null
           created_at?: string
           event_category?: string
           event_type?: string
@@ -3165,18 +3171,32 @@ export type Database = {
         Returns: boolean
       }
       is_user_creator: { Args: { _user_id: string }; Returns: boolean }
-      log_audit_event: {
-        Args: {
-          _actor_type?: string
-          _event_category: string
-          _event_type: string
-          _metadata?: Json
-          _resource_id?: string
-          _resource_type?: string
-          _severity?: string
-        }
-        Returns: string
-      }
+      log_audit_event:
+        | {
+            Args: {
+              _actor_type?: string
+              _event_category: string
+              _event_type: string
+              _metadata?: Json
+              _resource_id?: string
+              _resource_type?: string
+              _severity?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _after_data?: Json
+              _before_data?: Json
+              _event_category: string
+              _event_type: string
+              _metadata?: Json
+              _resource_id?: string
+              _resource_type?: string
+              _severity?: string
+            }
+            Returns: undefined
+          }
       lookup_user_by_email: {
         Args: { lookup_email: string }
         Returns: {
