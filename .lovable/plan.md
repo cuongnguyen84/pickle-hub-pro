@@ -1,74 +1,49 @@
 
 
-## Plan: Audit Log System
+## Plan: Audit Log Phase 1 — Score Tracking + Before/After Diff
 
-### Đánh giá thiết kế
+### 1. Database Migration
 
-Thiết kế rất tốt và chuyên nghiệp. Một số điều chỉnh thực tế cho TPH:
+**Add columns to `audit_logs`:**
+- `before_data jsonb DEFAULT NULL` — snapshot trước khi thay đổi
+- `after_data jsonb DEFAULT NULL` — snapshot sau khi thay đổi
 
-1. **`actor_type` và `actor_role`**: Bỏ `actor_role` vì role có thể thay đổi theo thời gian — thay vào đó lưu role tại thời điểm event vào `metadata`. `actor_type` giữ nguyên nhưng dùng enum `text check` thay vì varchar.
+**Expand CHECK constraints:**
+- `severity`: thêm `'security'`
+- `event_category`: thêm `'match'`, `'player'`
+- `resource_type`: thêm `'match'`, `'game'`, `'player'`
 
-2. **`severity`**: Rất hay cho alert sau này. Giữ nguyên 3 cấp.
+**Update `log_audit_event()` function:** thêm 2 params `_before_data` và `_after_data`.
 
-3. **System events** (CPU, bandwidth, instance): TPH hiện không tự quản lý infra (dùng Mux/AntMedia managed), nên bỏ category `infra` ở phase 1. Tập trung `auth`, `stream`, `tournament`, `admin`.
+**Create score tracking triggers trên 4 bảng match:**
 
-4. **`user_agent`**: Hữu ích nhưng không lấy được từ client-side insert (RLS). Nên chỉ log trong edge functions hoặc triggers. Phase 1 có thể nullable và bỏ qua.
+| Table | Events logged | Severity |
+|-------|--------------|----------|
+| `quick_table_matches` | `MATCH_SCORE_UPDATED` (score change), `MATCH_COMPLETED` (winner set) | warning |
+| `doubles_elimination_matches` | `MATCH_SCORE_UPDATED`, `MATCH_COMPLETED` | warning |
+| `team_match_games` | `MATCH_SCORE_UPDATED` (game score change) | warning |
+| `flex_matches` | `MATCH_SCORE_UPDATED`, `MATCH_COMPLETED` | warning |
 
-### Schema cuối cùng
+Mỗi trigger lưu `before_data` (old scores) và `after_data` (new scores) để truy vết chỉnh sửa điểm số.
 
-```text
-audit_logs
-├── id (uuid, PK, default gen_random_uuid())
-├── created_at (timestamptz, default now())
-├── actor_id (uuid, nullable) — FK profiles
-├── actor_type (text) — 'user' | 'system' | 'webhook'
-├── event_type (text, NOT NULL) — 'USER_LOGIN_SUCCESS', 'STREAM_STARTED', etc.
-├── event_category (text, NOT NULL) — 'auth' | 'stream' | 'tournament' | 'admin'
-├── resource_type (text, nullable) — 'stream' | 'tournament' | 'match' | 'user'
-├── resource_id (text, nullable) — ID đối tượng (text để linh hoạt)
-├── severity (text, default 'info') — 'info' | 'warning' | 'critical'
-├── ip_address (text, nullable)
-├── user_agent (text, nullable)
-├── metadata (jsonb, default '{}')
-```
+### 2. Update Hook `useAuditLog.ts`
 
-### Implementation
+- Cập nhật `AuditLogEntry` interface thêm `before_data` và `after_data`
+- Cập nhật `logAuditEvent` helper thêm optional `beforeData` / `afterData` params
 
-#### 1. Migration
-- Tạo bảng `audit_logs` với index trên `event_category`, `event_type`, `created_at`, `actor_id`
-- RLS: chỉ admin SELECT, INSERT qua SECURITY DEFINER function
-- Function `log_audit_event()` — SECURITY DEFINER, tự lấy `auth.uid()`
+### 3. Update UI `AdminAuditLog.tsx`
 
-#### 2. Database triggers (Phase 1)
-- `livestreams` INSERT/UPDATE status → `STREAM_CREATED`, `STREAM_STARTED`, `STREAM_STOPPED`
-- `user_roles` INSERT/DELETE → `ROLE_CHANGED`
-- Triggers dùng `SECURITY DEFINER` để bypass RLS
-
-#### 3. Client-side logging qua RPC
-Gọi `log_audit_event()` trong các hook admin:
-- `useUpdateUserRole` → `ROLE_CHANGED`
-- `useUpdateUserQuota` → `QUOTA_UPDATED`
-- Moderation actions → `CONTENT_HIDDEN`, `CONTENT_RESTORED`
-
-#### 4. Admin UI — `/admin/audit-log`
-- Bảng log với cột: Thời gian, Actor, Event, Resource, Severity (badge màu)
-- Filter: event_category, severity, date range
-- Phân trang 50 records/page
-- Expandable row cho metadata JSON
-
-#### 5. Navigation
-- Thêm nav item `Audit Log` vào `AdminLayout` (icon: `ScrollText`)
+- Thêm `'match'` và `'player'` vào category filter
+- Thêm `'security'` vào severity filter
+- Khi expand row có `before_data`/`after_data`: hiển thị diff view (2 cột Before / After side-by-side) thay vì chỉ hiển thị metadata
+- Thêm color cho category `match` và `player`
+- Thêm color cho severity `security`
 
 ### Files
 
 | Action | File |
 |--------|------|
-| Migration | Tạo bảng, function, triggers, RLS, indexes |
-| Create | `src/pages/admin/AdminAuditLog.tsx` |
-| Create | `src/hooks/useAuditLog.ts` — query + RPC helper |
-| Modify | `src/components/admin/AdminLayout.tsx` — nav item |
-| Modify | `src/App.tsx` — route |
-| Modify | `src/hooks/useAdminData.ts` — gọi log sau mutations |
-| Modify | `src/hooks/useAdminQuota.ts` — gọi log sau mutation |
-| Modify | `src/i18n/vi.ts` + `src/i18n/en.ts` |
+| Migration | Add columns, update function, create 4 match triggers |
+| Modify | `src/hooks/useAuditLog.ts` — add before/after fields |
+| Modify | `src/pages/admin/AdminAuditLog.tsx` — diff view, new filters |
 
