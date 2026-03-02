@@ -23,6 +23,8 @@ export interface AuditLogEntry {
   ip_address: string | null;
   user_agent: string | null;
   metadata: Record<string, unknown>;
+  before_data: Record<string, unknown> | null;
+  after_data: Record<string, unknown> | null;
   actor_profile?: { display_name: string | null; email: string } | null;
 }
 
@@ -95,6 +97,8 @@ export async function logAuditEvent(params: {
   resourceId?: string;
   severity?: string;
   metadata?: Record<string, unknown>;
+  beforeData?: Record<string, unknown>;
+  afterData?: Record<string, unknown>;
 }) {
   try {
     await supabase.rpc("log_audit_event" as any, {
@@ -104,9 +108,10 @@ export async function logAuditEvent(params: {
       _resource_id: params.resourceId || null,
       _severity: params.severity || "info",
       _metadata: params.metadata || {},
+      _before_data: params.beforeData || null,
+      _after_data: params.afterData || null,
     });
   } catch (e) {
-    // Audit log failure should never break the main action
     console.warn("Audit log failed:", e);
   }
 }

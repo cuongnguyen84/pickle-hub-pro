@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useAuditLogs, AuditLogEntry } from "@/hooks/useAuditLog";
+import { AuditLogDiffView } from "@/components/admin/AuditLogDiffView";
 import { useI18n } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   info: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   warning: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   critical: "bg-red-500/10 text-red-600 border-red-500/20",
+  security: "bg-purple-500/10 text-purple-600 border-purple-500/20",
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -23,6 +25,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   stream: "bg-violet-500/10 text-violet-600 border-violet-500/20",
   tournament: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   admin: "bg-rose-500/10 text-rose-600 border-rose-500/20",
+  match: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
+  player: "bg-teal-500/10 text-teal-600 border-teal-500/20",
 };
 
 const PAGE_SIZE = 50;
@@ -82,6 +86,8 @@ export default function AdminAuditLog() {
                 <SelectItem value="stream">Stream</SelectItem>
                 <SelectItem value="tournament">Tournament</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="match">Match</SelectItem>
+                <SelectItem value="player">Player</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -97,6 +103,7 @@ export default function AdminAuditLog() {
                 <SelectItem value="info">Info</SelectItem>
                 <SelectItem value="warning">Warning</SelectItem>
                 <SelectItem value="critical">Critical</SelectItem>
+                <SelectItem value="security">Security</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -181,7 +188,8 @@ export default function AdminAuditLog() {
 }
 
 function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
-  const hasMetadata = entry.metadata && Object.keys(entry.metadata).length > 0;
+  const hasExpandable = (entry.metadata && Object.keys(entry.metadata).length > 0)
+    || entry.before_data || entry.after_data;
 
   const actorLabel = entry.actor_profile
     ? entry.actor_profile.display_name || entry.actor_profile.email
@@ -191,7 +199,7 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
     <Collapsible asChild>
       <>
         <CollapsibleTrigger asChild>
-          <TableRow className={hasMetadata ? "cursor-pointer hover:bg-muted/50" : ""}>
+          <TableRow className={hasExpandable ? "cursor-pointer hover:bg-muted/50" : ""}>
             <TableCell className="text-xs text-muted-foreground font-mono">
               {format(new Date(entry.created_at), "dd/MM/yy HH:mm:ss")}
             </TableCell>
@@ -221,17 +229,15 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
               </Badge>
             </TableCell>
             <TableCell>
-              {hasMetadata && <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+              {hasExpandable && <ChevronDown className="w-4 h-4 text-muted-foreground" />}
             </TableCell>
           </TableRow>
         </CollapsibleTrigger>
-        {hasMetadata && (
+        {hasExpandable && (
           <CollapsibleContent asChild>
             <TableRow className="bg-muted/30">
               <TableCell colSpan={6} className="p-4">
-                <pre className="text-xs font-mono bg-background p-3 rounded border overflow-x-auto max-h-48">
-                  {JSON.stringify(entry.metadata, null, 2)}
-                </pre>
+                <AuditLogDiffView entry={entry} />
               </TableCell>
             </TableRow>
           </CollapsibleContent>
