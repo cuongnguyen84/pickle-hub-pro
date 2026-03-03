@@ -14,7 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { getEmailRedirectUrl } from "@/lib/auth-config";
 import { isNativeApp } from "@/lib/capacitor-utils";
-import { nativeGoogleSignIn } from "@/hooks/useNativeGoogleAuth";
 
 const Login = () => {
   const { t } = useI18n();
@@ -72,34 +71,18 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      if (isNativeApp()) {
-        // ===== NATIVE: Use native Google Sign-In SDK =====
-        console.log("[OAuth] Using native Google Sign-In");
-        const result = await nativeGoogleSignIn();
-        
-        if (result.session) {
-          // Track sign_up for new native Google users
-          const createdAt = result.session.user?.created_at;
-          if (createdAt && (Date.now() - new Date(createdAt).getTime()) < 60000) {
-            console.log("[GA4] sign_up event fired! (google native)");
-            trackEvent("sign_up", { method: "google" });
-          }
-          toast({ title: t.auth.loginSuccess });
-          navigate(redirectUrl || "/", { replace: true });
-        }
-      } else {
-        // ===== WEB: Use OAuth redirect flow =====
-        console.log("[OAuth] Using web OAuth flow");
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: "https://thepicklehub.net/auth/callback",
-          },
-        });
+      // All platforms use Web OAuth redirect flow
+      // Native Google SDK has audience mismatch issues with Supabase
+      console.log("[OAuth] Using web OAuth flow for Google");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "https://thepicklehub.net/auth/callback",
+        },
+      });
 
-        if (error) {
-          throw error;
-        }
+      if (error) {
+        throw error;
       }
     } catch (err: any) {
       console.error("[OAuth] Error:", err);
