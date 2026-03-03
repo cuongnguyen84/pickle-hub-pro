@@ -69,7 +69,7 @@ const AppHeader = () => {
     label: t.nav.tournaments
   }];
   return <>
-      <header className={cn("fixed top-0 left-0 right-0 z-50 transition-all duration-300", "pt-[env(safe-area-inset-top)]", isScrolled || isMobileMenuOpen ? "glass-strong" : "bg-transparent")}>
+      <header className={cn("fixed top-0 left-0 right-0 z-50 transition-all duration-300", "pt-[env(safe-area-inset-top)] bg-background", isScrolled || isMobileMenuOpen ? "glass-strong" : "")}>
         <div className="container-wide">
           <div className="flex items-center justify-between h-14 md:h-16">
             {/* Logo */}
