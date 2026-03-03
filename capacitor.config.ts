@@ -28,7 +28,7 @@ const config: CapacitorConfig = {
     // Content inset adjustment for safe areas
     contentInset: 'automatic',
     // Background modes
-    backgroundColor: '#000000',
+    backgroundColor: '#111317',
     // Prefer using WKWebView with inline media playback
     preferredContentMode: 'mobile'
   },
@@ -38,7 +38,7 @@ const config: CapacitorConfig = {
     // Allow mixed content (HTTPS + potential HTTP resources)
     allowMixedContent: true,
     // Background color while loading
-    backgroundColor: '#000000',
+    backgroundColor: '#111317',
     // Capture all navigation
     captureInput: true,
     // WebView settings for video
@@ -52,7 +52,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: '#000000',
+      backgroundColor: '#111317',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
@@ -61,7 +61,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: 'DARK',
-      backgroundColor: '#000000'
+      backgroundColor: '#111317'
     },
     // Native Google Sign-In configuration using @capgo/capacitor-social-login
     SocialLogin: {
