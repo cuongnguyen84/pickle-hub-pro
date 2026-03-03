@@ -75,11 +75,12 @@ const Login = () => {
     try {
       if (isNativeApp()) {
         // Native: Open OAuth in SFSafariViewController to avoid disallowed_useragent
+        // Add native=1 param so AuthCallback knows to redirect via custom URL scheme
         console.log("[OAuth] Using Browser plugin for native Google OAuth");
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: "https://thepicklehub.net/auth/callback",
+            redirectTo: "https://thepicklehub.net/auth/callback?native=1",
             skipBrowserRedirect: true,
           },
         });

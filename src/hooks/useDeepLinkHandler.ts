@@ -110,12 +110,20 @@ export const useDeepLinkHandler = () => {
           // Parse the URL to extract tokens
           const urlObj = new URL(url);
           
-          // Check for tokens in hash (implicit flow) or query params (PKCE flow)
           let accessToken: string | null = null;
           let refreshToken: string | null = null;
 
-          // Try hash first (fragment)
-          if (urlObj.hash) {
+          // Check for encoded hash param (from native OAuth redirect)
+          const encodedHash = urlObj.searchParams.get('hash');
+          if (encodedHash) {
+            const decodedHash = decodeURIComponent(encodedHash);
+            const hashParams = new URLSearchParams(decodedHash.substring(1));
+            accessToken = hashParams.get('access_token');
+            refreshToken = hashParams.get('refresh_token');
+          }
+
+          // Try hash directly (fragment)
+          if (!accessToken && urlObj.hash) {
             const hashParams = new URLSearchParams(urlObj.hash.substring(1));
             accessToken = hashParams.get('access_token');
             refreshToken = hashParams.get('refresh_token');
@@ -156,7 +164,6 @@ export const useDeepLinkHandler = () => {
             }
           } else {
             console.log('[DeepLink] No tokens or code found in URL');
-            // Check for error in URL
             const error = urlObj.searchParams.get('error');
             const errorDescription = urlObj.searchParams.get('error_description');
             if (error) {
