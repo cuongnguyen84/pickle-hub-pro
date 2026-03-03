@@ -8,6 +8,7 @@ import { I18nProvider } from "@/i18n";
 import { lazy, Suspense, Component, ReactNode } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import BottomNav from "@/components/layout/BottomNav";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
@@ -171,6 +172,7 @@ const App = () => (
             <DeepLinkInitializer />
             <PushNotificationInitializer />
             <PageTracker />
+            <BottomNav />
             <ChunkErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
