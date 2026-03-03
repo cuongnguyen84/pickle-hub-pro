@@ -149,6 +149,29 @@
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overscroll-behavior: none;
+    position: relative;
+  }
+
+  /* Prevent black gaps on iOS overscroll bounce */
+  body::before,
+  body::after {
+    content: '';
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background-color: hsl(220 15% 8%);
+  }
+
+  body::before {
+    top: -100vh;
+    height: 100vh;
+  }
+
+  body::after {
+    bottom: -100vh;
+    height: 100vh;
   }
 
   /* Typography scale */
