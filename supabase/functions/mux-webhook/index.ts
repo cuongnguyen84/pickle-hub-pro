@@ -16,6 +16,78 @@ interface MuxWebhookEvent {
   };
 }
 
+// SECURITY: Verify Mux webhook signature using MUX_WEBHOOK_SECRET
+// Mux sends header: mux-signature: t=<timestamp>,v1=<signature>
+const verifyMuxSignature = async (rawBody: string, signatureHeader: string | null): Promise<boolean> => {
+  const secret = Deno.env.get("MUX_WEBHOOK_SECRET");
+  
+  if (!secret) {
+    console.warn("MUX_WEBHOOK_SECRET not configured, skipping signature verification");
+    return true; // Backward compat — allow if not yet configured
+  }
+  
+  if (!signatureHeader) {
+    console.error("No mux-signature header provided");
+    return false;
+  }
+  
+  try {
+    // Parse header: "t=<timestamp>,v1=<hex_signature>"
+    const parts: Record<string, string> = {};
+    for (const part of signatureHeader.split(",")) {
+      const [key, ...valueParts] = part.split("=");
+      parts[key.trim()] = valueParts.join("=");
+    }
+    
+    const timestamp = parts["t"];
+    const expectedSignature = parts["v1"];
+    
+    if (!timestamp || !expectedSignature) {
+      console.error("Missing timestamp or signature in mux-signature header");
+      return false;
+    }
+    
+    // Check timestamp tolerance (5 minutes)
+    const timestampAge = Math.abs(Date.now() / 1000 - parseInt(timestamp));
+    if (timestampAge > 300) {
+      console.error(`Mux signature timestamp too old: ${timestampAge}s`);
+      return false;
+    }
+    
+    // Compute HMAC-SHA256 of "timestamp.body"
+    const payload = `${timestamp}.${rawBody}`;
+    const encoder = new TextEncoder();
+    
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    
+    const signatureBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+    const computedHex = Array.from(new Uint8Array(signatureBytes))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+    
+    // Constant-time comparison
+    if (computedHex.length !== expectedSignature.length) {
+      return false;
+    }
+    
+    let result = 0;
+    for (let i = 0; i < computedHex.length; i++) {
+      result |= computedHex.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+    }
+    
+    return result === 0;
+  } catch (error) {
+    console.error("Mux signature verification error:", error);
+    return false;
+  }
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -23,8 +95,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.text();
-    const event: MuxWebhookEvent = JSON.parse(body);
+    const rawBody = await req.text();
+    
+    // SECURITY: Verify Mux webhook signature
+    const signatureHeader = req.headers.get("mux-signature");
+    const isValid = await verifyMuxSignature(rawBody, signatureHeader);
+    
+    if (!isValid) {
+      console.error("Invalid Mux webhook signature — request rejected");
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
+    const event: MuxWebhookEvent = JSON.parse(rawBody);
 
     console.log("Received Mux webhook:", event.type);
 
@@ -58,7 +143,6 @@ Deno.serve(async (req) => {
 
       console.log(`Updating livestream with mux_stream_id=${liveStreamId}, asset_id=${assetId}, playback_id=${assetPlaybackId}`);
 
-      // Find and update the livestream by mux_live_stream_id
       const { data, error } = await supabase
         .from("livestreams")
         .update({
@@ -89,7 +173,6 @@ Deno.serve(async (req) => {
       
       console.log(`Livestream ${liveStreamId} is now idle`);
 
-      // Update status to ended if still live
       const { error } = await supabase
         .from("livestreams")
         .update({

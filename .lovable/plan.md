@@ -1,49 +1,40 @@
 
+## 30-Day Security Hardening Plan
 
-## Plan: Audit Log Phase 1 — Score Tracking + Before/After Diff
+### Tuần 1-2: Security Hardening (P0)
 
-### 1. Database Migration
+| # | Task | Status | File(s) |
+|---|------|--------|---------|
+| 1 | `send-auth-email`: Xoá nhánh "manual request", verify HMAC với `SEND_EMAIL_HOOK_SECRET` | ✅ Done | `supabase/functions/send-auth-email/index.ts` |
+| 2 | `mux-webhook`: Thêm Mux signature verification (`MUX_WEBHOOK_SECRET`) | ✅ Done | `supabase/functions/mux-webhook/index.ts` |
+| 3 | `ant-media-webhook`: Thêm shared secret check (custom header/query param) | 🔲 Todo | `supabase/functions/ant-media-webhook/index.ts` |
+| 4 | `batch-view-events`: Bỏ nhận `viewer_user_id`/`organization_id` từ client, tự lookup từ `target_id`. Thêm rate limit | 🔲 Todo | `supabase/functions/batch-view-events/index.ts` |
 
-**Add columns to `audit_logs`:**
-- `before_data jsonb DEFAULT NULL` — snapshot trước khi thay đổi
-- `after_data jsonb DEFAULT NULL` — snapshot sau khi thay đổi
+### Tuần 2-3: Data Integrity (P1)
 
-**Expand CHECK constraints:**
-- `severity`: thêm `'security'`
-- `event_category`: thêm `'match'`, `'player'`
-- `resource_type`: thêm `'match'`, `'game'`, `'player'`
+| # | Task | Status | File(s) |
+|---|------|--------|---------|
+| 5 | `geo-check`: Chuyển sang HTTPS IP lookup service | 🔲 Todo | `supabase/functions/geo-check/index.ts` |
+| 6 | Audit Log Phase 2: diff view UI, export CSV/JSON, search | 🔲 Todo | `src/pages/admin/AdminAuditLog.tsx` |
+| 7 | Thêm audit events cho auth (login success/failed) | 🔲 Todo | `supabase/functions/send-auth-email/index.ts` |
 
-**Update `log_audit_event()` function:** thêm 2 params `_before_data` và `_after_data`.
+### Tuần 3-4: Code Quality (P2)
 
-**Create score tracking triggers trên 4 bảng match:**
+| # | Task | Status | File(s) |
+|---|------|--------|---------|
+| 8 | Refactor `useQuickTable.ts` — tách mutations ra file riêng | 🔲 Todo | `src/hooks/useQuickTable.ts` |
+| 9 | Refactor `useDoublesElimination.ts` — tách scoring logic | 🔲 Todo | `src/hooks/useDoublesElimination.ts` |
 
-| Table | Events logged | Severity |
-|-------|--------------|----------|
-| `quick_table_matches` | `MATCH_SCORE_UPDATED` (score change), `MATCH_COMPLETED` (winner set) | warning |
-| `doubles_elimination_matches` | `MATCH_SCORE_UPDATED`, `MATCH_COMPLETED` | warning |
-| `team_match_games` | `MATCH_SCORE_UPDATED` (game score change) | warning |
-| `flex_matches` | `MATCH_SCORE_UPDATED`, `MATCH_COMPLETED` | warning |
+---
 
-Mỗi trigger lưu `before_data` (old scores) và `after_data` (new scores) để truy vết chỉnh sửa điểm số.
+### Đánh giá AI Review (lưu lại)
 
-### 2. Update Hook `useAuditLog.ts`
-
-- Cập nhật `AuditLogEntry` interface thêm `before_data` và `after_data`
-- Cập nhật `logAuditEvent` helper thêm optional `beforeData` / `afterData` params
-
-### 3. Update UI `AdminAuditLog.tsx`
-
-- Thêm `'match'` và `'player'` vào category filter
-- Thêm `'security'` vào severity filter
-- Khi expand row có `before_data`/`after_data`: hiển thị diff view (2 cột Before / After side-by-side) thay vì chỉ hiển thị metadata
-- Thêm color cho category `match` và `player`
-- Thêm color cho severity `security`
-
-### Files
-
-| Action | File |
-|--------|------|
-| Migration | Add columns, update function, create 4 match triggers |
-| Modify | `src/hooks/useAuditLog.ts` — add before/after fields |
-| Modify | `src/pages/admin/AdminAuditLog.tsx` — diff view, new filters |
-
+| Tiêu chí | Điểm |
+|----------|------|
+| Architecture | 6.5/10 |
+| Code Quality | 6/10 |
+| Performance | 5.5/10 |
+| **Security** | **4/10** |
+| DevOps | 3/10 |
+| Business Fit | 8/10 |
+| Maintainability | 5.5/10 |

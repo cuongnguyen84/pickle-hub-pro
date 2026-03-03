@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import * as crypto from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -32,14 +31,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-webhook-secret",
 };
 
-// Manual request format (for testing or direct calls)
-interface ManualEmailRequest {
-  type: "signup" | "reset_password" | "magic_link";
-  email: string;
-  token?: string;
-  redirect_url?: string;
-}
-
 // Supabase Auth Hook format
 interface AuthHookPayload {
   user: {
@@ -61,6 +52,70 @@ interface AuthHookPayload {
   };
 }
 
+// SECURITY: Verify HMAC signature from Supabase Auth Hook
+const verifyWebhookSignature = async (payload: string, signatureHeader: string | null): Promise<boolean> => {
+  if (!SEND_EMAIL_HOOK_SECRET) {
+    console.warn("SEND_EMAIL_HOOK_SECRET not configured, skipping verification");
+    return true;
+  }
+  
+  if (!signatureHeader) {
+    console.error("No webhook signature header provided");
+    return false;
+  }
+  
+  try {
+    // Supabase Auth Hook sends signature as "v1,<base64_signature>"
+    const parts = signatureHeader.split(",");
+    if (parts.length < 2) {
+      console.error("Invalid signature format");
+      return false;
+    }
+    
+    const receivedSignature = parts.slice(1).join(",");
+    
+    // The secret from env may have "v1," prefix — strip it
+    let secretKey = SEND_EMAIL_HOOK_SECRET;
+    if (secretKey.startsWith("v1,")) {
+      secretKey = secretKey.substring(3);
+    }
+    const keyBytes = Uint8Array.from(atob(secretKey), c => c.charCodeAt(0));
+    
+    // Compute HMAC-SHA256
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyBytes,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    
+    const encoder = new TextEncoder();
+    const signatureBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+    const computedSignature = btoa(String.fromCharCode(...new Uint8Array(signatureBytes)));
+    
+    // Constant-time comparison
+    if (computedSignature.length !== receivedSignature.length) {
+      return false;
+    }
+    
+    let result = 0;
+    for (let i = 0; i < computedSignature.length; i++) {
+      result |= computedSignature.charCodeAt(i) ^ receivedSignature.charCodeAt(i);
+    }
+    
+    return result === 0;
+  } catch (error) {
+    console.error("Signature verification error:", error);
+    return false;
+  }
+};
+
+// Check if request is from Supabase Auth Hook
+const isAuthHookRequest = (body: any): body is AuthHookPayload => {
+  return body && typeof body === 'object' && 'user' in body && 'email_data' in body;
+};
+
 const getSignupEmailHtml = (confirmationUrl: string) => `
 <!DOCTYPE html>
 <html>
@@ -73,7 +128,6 @@ const getSignupEmailHtml = (confirmationUrl: string) => `
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="max-width: 480px; width: 100%; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
               <div style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 16px 24px; border-radius: 12px;">
@@ -81,8 +135,6 @@ const getSignupEmailHtml = (confirmationUrl: string) => `
               </div>
             </td>
           </tr>
-          
-          <!-- Content -->
           <tr>
             <td style="padding: 20px 40px;">
               <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
@@ -92,8 +144,6 @@ const getSignupEmailHtml = (confirmationUrl: string) => `
                 Cảm ơn bạn đã đăng ký tài khoản tại <strong>The Pickle Hub</strong>! 
                 Nhấn nút bên dưới để xác thực địa chỉ email của bạn.
               </p>
-              
-              <!-- Button -->
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td align="center" style="padding: 8px 0 24px;">
@@ -104,8 +154,6 @@ const getSignupEmailHtml = (confirmationUrl: string) => `
                   </td>
                 </tr>
               </table>
-              
-              <!-- Divider -->
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td style="padding: 16px 0; border-top: 1px solid #e4e4e7;">
@@ -120,8 +168,6 @@ const getSignupEmailHtml = (confirmationUrl: string) => `
               </table>
             </td>
           </tr>
-          
-          <!-- Footer -->
           <tr>
             <td style="padding: 20px 40px 40px;">
               <p style="margin: 0; font-size: 12px; color: #a1a1aa; text-align: center; line-height: 1.5;">
@@ -150,7 +196,6 @@ const getResetPasswordEmailHtml = (confirmationUrl: string) => `
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="max-width: 480px; width: 100%; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
               <div style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 16px 24px; border-radius: 12px;">
@@ -158,8 +203,6 @@ const getResetPasswordEmailHtml = (confirmationUrl: string) => `
               </div>
             </td>
           </tr>
-          
-          <!-- Content -->
           <tr>
             <td style="padding: 20px 40px;">
               <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
@@ -169,8 +212,6 @@ const getResetPasswordEmailHtml = (confirmationUrl: string) => `
                 Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản <strong>The Pickle Hub</strong>. 
                 Nhấn nút bên dưới để tạo mật khẩu mới.
               </p>
-              
-              <!-- Button -->
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td align="center" style="padding: 8px 0 24px;">
@@ -181,8 +222,6 @@ const getResetPasswordEmailHtml = (confirmationUrl: string) => `
                   </td>
                 </tr>
               </table>
-              
-              <!-- Warning -->
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td style="padding: 16px; background-color: #fef3c7; border-radius: 8px;">
@@ -194,8 +233,6 @@ const getResetPasswordEmailHtml = (confirmationUrl: string) => `
               </table>
             </td>
           </tr>
-          
-          <!-- Footer -->
           <tr>
             <td style="padding: 20px 40px 40px;">
               <p style="margin: 0; font-size: 12px; color: #a1a1aa; text-align: center; line-height: 1.5;">
@@ -224,7 +261,6 @@ const getMagicLinkEmailHtml = (confirmationUrl: string) => `
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="max-width: 480px; width: 100%; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
               <div style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 16px 24px; border-radius: 12px;">
@@ -232,8 +268,6 @@ const getMagicLinkEmailHtml = (confirmationUrl: string) => `
               </div>
             </td>
           </tr>
-          
-          <!-- Content -->
           <tr>
             <td style="padding: 20px 40px;">
               <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
@@ -243,8 +277,6 @@ const getMagicLinkEmailHtml = (confirmationUrl: string) => `
                 Nhấn nút bên dưới để đăng nhập vào tài khoản của bạn. 
                 Link này chỉ có hiệu lực trong 10 phút.
               </p>
-              
-              <!-- Button -->
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td align="center" style="padding: 8px 0 24px;">
@@ -257,8 +289,6 @@ const getMagicLinkEmailHtml = (confirmationUrl: string) => `
               </table>
             </td>
           </tr>
-          
-          <!-- Footer -->
           <tr>
             <td style="padding: 20px 40px 40px;">
               <p style="margin: 0; font-size: 12px; color: #a1a1aa; text-align: center; line-height: 1.5;">
@@ -287,7 +317,6 @@ const getInviteEmailHtml = (confirmationUrl: string) => `
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="max-width: 480px; width: 100%; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
               <div style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 16px 24px; border-radius: 12px;">
@@ -295,8 +324,6 @@ const getInviteEmailHtml = (confirmationUrl: string) => `
               </div>
             </td>
           </tr>
-          
-          <!-- Content -->
           <tr>
             <td style="padding: 20px 40px;">
               <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
@@ -306,8 +333,6 @@ const getInviteEmailHtml = (confirmationUrl: string) => `
                 Bạn đã được mời tham gia <strong>The Pickle Hub</strong>! 
                 Nhấn nút bên dưới để chấp nhận lời mời và thiết lập tài khoản của bạn.
               </p>
-              
-              <!-- Button -->
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td align="center" style="padding: 8px 0 24px;">
@@ -320,8 +345,6 @@ const getInviteEmailHtml = (confirmationUrl: string) => `
               </table>
             </td>
           </tr>
-          
-          <!-- Footer -->
           <tr>
             <td style="padding: 20px 40px 40px;">
               <p style="margin: 0; font-size: 12px; color: #a1a1aa; text-align: center; line-height: 1.5;">
@@ -350,7 +373,6 @@ const getEmailChangeEmailHtml = (confirmationUrl: string) => `
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="max-width: 480px; width: 100%; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
               <div style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 16px 24px; border-radius: 12px;">
@@ -358,8 +380,6 @@ const getEmailChangeEmailHtml = (confirmationUrl: string) => `
               </div>
             </td>
           </tr>
-          
-          <!-- Content -->
           <tr>
             <td style="padding: 20px 40px;">
               <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
@@ -369,8 +389,6 @@ const getEmailChangeEmailHtml = (confirmationUrl: string) => `
                 Bạn đã yêu cầu thay đổi địa chỉ email cho tài khoản <strong>The Pickle Hub</strong>. 
                 Nhấn nút bên dưới để xác nhận thay đổi.
               </p>
-              
-              <!-- Button -->
               <table role="presentation" style="width: 100%;">
                 <tr>
                   <td align="center" style="padding: 8px 0 24px;">
@@ -383,8 +401,6 @@ const getEmailChangeEmailHtml = (confirmationUrl: string) => `
               </table>
             </td>
           </tr>
-          
-          <!-- Footer -->
           <tr>
             <td style="padding: 20px 40px 40px;">
               <p style="margin: 0; font-size: 12px; color: #a1a1aa; text-align: center; line-height: 1.5;">
@@ -403,104 +419,85 @@ const getEmailChangeEmailHtml = (confirmationUrl: string) => `
 
 // Build confirmation URL for Supabase Auth
 const buildConfirmationUrl = (siteUrl: string, tokenHash: string, type: string, redirectTo: string): string => {
-  // Use Supabase's standard verification endpoint format
   const baseUrl = Deno.env.get("SUPABASE_URL") || siteUrl;
   return `${baseUrl}/auth/v1/verify?token=${tokenHash}&type=${type}&redirect_to=${encodeURIComponent(redirectTo)}`;
 };
 
-// Check if request is from Supabase Auth Hook
-const isAuthHookRequest = (body: any): body is AuthHookPayload => {
-  return body && typeof body === 'object' && 'user' in body && 'email_data' in body;
-};
-
-const handler = async (req: Request): Promise<Response> => {
+Deno.serve(async (req) => {
   console.log("send-auth-email function called");
   
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+    const body = JSON.parse(rawBody);
     
-    let email: string;
+    // SECURITY: Only accept Auth Hook requests from Supabase
+    if (!isAuthHookRequest(body)) {
+      console.error("Rejected non-Auth-Hook request");
+      return new Response(
+        JSON.stringify({ error: "Only Supabase Auth Hook requests are accepted" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    // SECURITY: Verify HMAC signature from Supabase Auth Hook
+    const signatureHeader = req.headers.get("x-supabase-webhook-secret");
+    const isValid = await verifyWebhookSignature(rawBody, signatureHeader);
+    
+    if (!isValid) {
+      console.error("Invalid webhook signature — request rejected");
+      return new Response(
+        JSON.stringify({ error: "Invalid webhook signature" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    const { user, email_data } = body;
+    const email = user.email;
+    
+    const confirmationUrl = buildConfirmationUrl(
+      email_data.site_url,
+      email_data.token_hash,
+      email_data.email_action_type,
+      email_data.redirect_to
+    );
+    
+    console.log(`Auth Hook - Type: ${email_data.email_action_type}, Email: ${email}`);
+    
     let subject: string;
     let html: string;
     
-    // Check if this is an Auth Hook request
-    if (isAuthHookRequest(body)) {
-      console.log("Processing Auth Hook request");
-      
-      const { user, email_data } = body;
-      email = user.email;
-      
-      // Build the confirmation URL using Supabase's format
-      const confirmationUrl = buildConfirmationUrl(
-        email_data.site_url,
-        email_data.token_hash,
-        email_data.email_action_type,
-        email_data.redirect_to
-      );
-      
-      console.log(`Auth Hook - Type: ${email_data.email_action_type}, Email: ${email}`);
-      
-      switch (email_data.email_action_type) {
-        case "signup":
-          subject = "Xác thực email - The Pickle Hub";
-          html = getSignupEmailHtml(confirmationUrl);
-          break;
-        case "recovery":
-          subject = "Đặt lại mật khẩu - The Pickle Hub";
-          html = getResetPasswordEmailHtml(confirmationUrl);
-          break;
-        case "magiclink":
-          subject = "Đăng nhập - The Pickle Hub";
-          html = getMagicLinkEmailHtml(confirmationUrl);
-          break;
-        case "invite":
-          subject = "Lời mời tham gia - The Pickle Hub";
-          html = getInviteEmailHtml(confirmationUrl);
-          break;
-        case "email_change":
-          subject = "Xác nhận thay đổi email - The Pickle Hub";
-          html = getEmailChangeEmailHtml(confirmationUrl);
-          break;
-        default:
-          console.log(`Unknown email type: ${email_data.email_action_type}, using signup template`);
-          subject = "The Pickle Hub";
-          html = getSignupEmailHtml(confirmationUrl);
-      }
-    } else {
-      // Manual request format (for testing)
-      console.log("Processing manual request");
-      
-      const { type, email: reqEmail, token, redirect_url } = body as ManualEmailRequest;
-      email = reqEmail;
-      
-      const redirectUrl = redirect_url || "https://thepicklehub.net/auth/callback";
-      const confirmationUrl = `${redirectUrl}?token=${token || ""}&type=${type}`;
-      
-      switch (type) {
-        case "signup":
-          subject = "Xác thực email - The Pickle Hub";
-          html = getSignupEmailHtml(confirmationUrl);
-          break;
-        case "reset_password":
-          subject = "Đặt lại mật khẩu - The Pickle Hub";
-          html = getResetPasswordEmailHtml(confirmationUrl);
-          break;
-        case "magic_link":
-          subject = "Đăng nhập - The Pickle Hub";
-          html = getMagicLinkEmailHtml(confirmationUrl);
-          break;
-        default:
-          throw new Error(`Unknown email type: ${type}`);
-      }
+    switch (email_data.email_action_type) {
+      case "signup":
+        subject = "Xác thực email - The Pickle Hub";
+        html = getSignupEmailHtml(confirmationUrl);
+        break;
+      case "recovery":
+        subject = "Đặt lại mật khẩu - The Pickle Hub";
+        html = getResetPasswordEmailHtml(confirmationUrl);
+        break;
+      case "magiclink":
+        subject = "Đăng nhập - The Pickle Hub";
+        html = getMagicLinkEmailHtml(confirmationUrl);
+        break;
+      case "invite":
+        subject = "Lời mời tham gia - The Pickle Hub";
+        html = getInviteEmailHtml(confirmationUrl);
+        break;
+      case "email_change":
+        subject = "Xác nhận thay đổi email - The Pickle Hub";
+        html = getEmailChangeEmailHtml(confirmationUrl);
+        break;
+      default:
+        console.log(`Unknown email type: ${email_data.email_action_type}, using signup template`);
+        subject = "The Pickle Hub";
+        html = getSignupEmailHtml(confirmationUrl);
     }
 
     const emailResponse = await sendEmail(email, subject, html);
-
     console.log("Email sent successfully:", emailResponse);
 
     return new Response(JSON.stringify({ success: true, data: emailResponse }), {
@@ -511,12 +508,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error("Error in send-auth-email function:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
-};
-
-serve(handler);
+});
