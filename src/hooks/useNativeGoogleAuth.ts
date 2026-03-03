@@ -9,12 +9,17 @@ import { SocialLogin } from '@capgo/capacitor-social-login';
 import { supabase } from '@/integrations/supabase/client';
 import { isNativeApp } from '@/lib/capacitor-utils';
 
-// Web Client ID for Google OAuth
+// Web Application Client ID for Google OAuth
+// IMPORTANT: This MUST be the Web client ID (not iOS or Android client ID)
+// so that the idToken "aud" claim matches what Supabase expects.
 const WEB_CLIENT_ID = '799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com';
 
 /**
  * Initialize Google Auth plugin (call once on app startup)
  * Only initializes on native platforms (iOS/Android)
+ * 
+ * On iOS: iOSServerClientId ensures the returned idToken has aud = WEB_CLIENT_ID
+ * On Android: webClientId serves the same purpose
  */
 export const initializeGoogleAuth = async () => {
   if (isNativeApp()) {
@@ -22,9 +27,11 @@ export const initializeGoogleAuth = async () => {
       await SocialLogin.initialize({
         google: {
           webClientId: WEB_CLIENT_ID,
+          // iOS: serverClientId controls the "aud" in the idToken
+          iOSServerClientId: WEB_CLIENT_ID,
         },
       });
-      console.log('[GoogleAuth] Initialized successfully');
+      console.log('[GoogleAuth] Initialized with Web Client ID:', WEB_CLIENT_ID);
     } catch (error) {
       console.error('[GoogleAuth] Initialization failed:', error);
     }
