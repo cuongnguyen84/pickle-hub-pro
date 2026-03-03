@@ -116,16 +116,36 @@ const Login = () => {
   const handleAppleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("apple", {
-        redirect_uri: window.location.origin,
-      });
-      if (error) throw error;
+      if (isNativeApp()) {
+        // Native: Open OAuth in external browser (same pattern as Google)
+        console.log("[OAuth] Using Browser plugin for native Apple OAuth");
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "apple",
+          options: {
+            redirectTo: "https://thepicklehub.net/auth/callback?native=1",
+            skipBrowserRedirect: true,
+          },
+        });
+
+        if (error) throw error;
+        if (data?.url) {
+          setOAuthInProgress(true);
+          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        }
+      } else {
+        // Web: Use Lovable managed OAuth
+        const { error } = await lovable.auth.signInWithOAuth("apple", {
+          redirect_uri: window.location.origin,
+        });
+        if (error) throw error;
+      }
     } catch (err: any) {
       toast({
         variant: "destructive",
         title: t.common.error,
         description: err.message || "Apple Sign-In failed",
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
