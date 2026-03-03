@@ -18,9 +18,9 @@ const MainLayout = ({ children, className }: MainLayoutProps) => {
     : (isIOSDevice ? 'pb-24' : 'pb-20');
 
   return (
-    <div className="min-h-screen min-h-[-webkit-fill-available] bg-background">
+    <div className="min-h-screen min-h-[-webkit-fill-available] bg-background flex flex-col">
       <AppHeader />
-      <main className={cn(bottomPadding, "md:pb-0", className)}>
+      <main className={cn("flex-1", bottomPadding, "md:pb-0", className)}>
         {children}
       </main>
     </div>
