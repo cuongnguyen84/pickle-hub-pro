@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -6,12 +6,10 @@ import { Loader2 } from "lucide-react";
 /**
  * Auth Callback Page
  * 
- * Handles OAuth callback from providers (Google, etc.)
- * 
  * For native iOS/Android:
- * - When opened in SFSafariViewController/Chrome Custom Tabs, 
- *   the ?native=1 param triggers a redirect to custom URL scheme
- *   so the main WebView can receive the tokens.
+ * - Supabase client auto-exchanges the PKCE code on page load.
+ * - We listen for the session, then redirect via custom URL scheme
+ *   with access_token + refresh_token so the WebView can set the session.
  * 
  * For web:
  * - Standard session handling via Supabase client.
@@ -19,46 +17,69 @@ import { Loader2 } from "lucide-react";
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const handledRef = useRef(false);
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        const isNativeFlow = searchParams.get("native") === "1";
+    const isNativeFlow = searchParams.get("native") === "1";
+
+    if (isNativeFlow) {
+      console.log("[AuthCallback] Native flow detected, waiting for session...");
+
+      // Function to redirect to app with tokens
+      const redirectToApp = (accessToken: string, refreshToken: string) => {
+        if (handledRef.current) return;
+        handledRef.current = true;
         
-        if (isNativeFlow) {
-          // We're in SFSafariViewController / external browser
-          // Extract tokens from URL hash or code from query params
-          // and redirect to custom URL scheme so the WebView can handle them
-          console.log("[AuthCallback] Native flow detected, redirecting to custom scheme");
-          
-          const hash = window.location.hash;
-          const currentUrl = new URL(window.location.href);
-          
-          // Build custom scheme URL with all auth params
-          let customUrl = "thepicklehub://auth/callback";
-          
-          // Check for code (PKCE flow)
-          const code = currentUrl.searchParams.get("code");
-          if (code) {
-            customUrl += `?code=${encodeURIComponent(code)}`;
-          }
-          
-          // Also pass hash params (implicit flow fallback)
-          if (hash && hash.length > 1) {
-            customUrl += (code ? "&" : "?") + "hash=" + encodeURIComponent(hash);
-          }
-          
-          console.log("[AuthCallback] Redirecting to:", customUrl);
-          
-          // Small delay to ensure page is loaded
+        const customUrl = `thepicklehub://auth/callback?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}`;
+        console.log("[AuthCallback] Redirecting to app with tokens");
+        window.location.href = customUrl;
+      };
+
+      // Listen for auth state change (Supabase will fire this after exchanging the code)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        console.log("[AuthCallback] Auth event in browser:", event, !!session);
+        if (session?.access_token && session?.refresh_token) {
+          subscription.unsubscribe();
+          // Small delay to ensure Supabase finishes internal state
           setTimeout(() => {
-            window.location.href = customUrl;
-          }, 500);
-          
-          return;
+            redirectToApp(session.access_token, session.refresh_token);
+          }, 300);
         }
-        
-        // Web flow: standard session handling
+      });
+
+      // Also check if session is already available (code may have been exchanged already)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.access_token && session?.refresh_token) {
+          subscription.unsubscribe();
+          redirectToApp(session.access_token, session.refresh_token);
+        }
+      });
+
+      // Safety timeout - if nothing happens after 10s, show error
+      const timeout = setTimeout(() => {
+        if (!handledRef.current) {
+          console.error("[AuthCallback] Timeout waiting for session");
+          // Try one more time
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.access_token && session?.refresh_token) {
+              redirectToApp(session.access_token, session.refresh_token);
+            } else {
+              // Redirect to app without tokens - polling will handle it
+              window.location.href = "thepicklehub://auth/callback?error=timeout";
+            }
+          });
+        }
+      }, 10000);
+
+      return () => {
+        subscription.unsubscribe();
+        clearTimeout(timeout);
+      };
+    }
+
+    // Web flow: standard session handling
+    const handleWebCallback = async () => {
+      try {
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -79,7 +100,7 @@ const AuthCallback = () => {
       }
     };
 
-    handleAuthCallback();
+    handleWebCallback();
   }, [navigate, searchParams]);
 
   return (
