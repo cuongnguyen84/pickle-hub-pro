@@ -226,11 +226,11 @@
 @layer components {
   /* Container */
   .container-narrow {
-    @apply max-w-5xl mx-auto px-4 md:px-6;
+    @apply max-w-5xl mx-auto px-4 md:px-6 w-full min-w-0;
   }
 
   .container-wide {
-    @apply max-w-7xl mx-auto px-4 md:px-6;
+    @apply max-w-7xl mx-auto px-4 md:px-6 w-full min-w-0;
   }
 
   /* Glass effect */

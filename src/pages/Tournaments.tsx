@@ -187,7 +187,7 @@ const Tournaments = () => {
         description="Professional pickleball tournament software for organizers. Create brackets, manage team matches, run round robin tournaments, and livestream your pickleball events with ThePickleHub."
         url="https://thepicklehub.net/tournaments"
       />
-      <div className="container-wide py-8">
+      <div className="container-wide py-8 w-full min-w-0">
         {/* SEO Header */}
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
