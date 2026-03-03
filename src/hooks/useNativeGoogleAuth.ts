@@ -27,7 +27,10 @@ export const initializeGoogleAuth = async () => {
       await SocialLogin.initialize({
         google: {
           webClientId: WEB_CLIENT_ID,
+          // iOS: The actual iOS client ID for the sign-in flow
+          iOSClientId: '574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli.apps.googleusercontent.com',
           // iOS: serverClientId controls the "aud" in the idToken
+          // MUST match Supabase's expected Web Client ID
           iOSServerClientId: WEB_CLIENT_ID,
         },
       });

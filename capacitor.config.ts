@@ -67,6 +67,11 @@ const config: CapacitorConfig = {
     SocialLogin: {
       google: {
         webClientId: '799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com',
+        // iOS: iOSClientId is the actual iOS client ID used for sign-in flow
+        iOSClientId: '574564887581-qhno3m28725a9c0c91tl2qp71fdv0lli.apps.googleusercontent.com',
+        // iOS: iOSServerClientId controls the "aud" claim in the idToken
+        // MUST match the Web Client ID configured in Supabase
+        iOSServerClientId: '799212701204-pnak3bsb956b9n8mfttct7r3uhmuphqp.apps.googleusercontent.com',
       }
     }
   }
