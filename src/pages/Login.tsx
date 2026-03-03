@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { getEmailRedirectUrl } from "@/lib/auth-config";
 import { isNativeApp } from "@/lib/capacitor-utils";
+import { Browser } from "@capacitor/browser";
+import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
 
 const Login = () => {
   const { t } = useI18n();
@@ -71,18 +73,32 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      // All platforms use Web OAuth redirect flow
-      // Native Google SDK has audience mismatch issues with Supabase
-      console.log("[OAuth] Using web OAuth flow for Google");
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: "https://thepicklehub.net/auth/callback",
-        },
-      });
+      if (isNativeApp()) {
+        // Native: Open OAuth in SFSafariViewController to avoid disallowed_useragent
+        console.log("[OAuth] Using Browser plugin for native Google OAuth");
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: "https://thepicklehub.net/auth/callback",
+            skipBrowserRedirect: true,
+          },
+        });
 
-      if (error) {
-        throw error;
+        if (error) throw error;
+        if (data?.url) {
+          setOAuthInProgress(true);
+          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+        }
+      } else {
+        // Web: Standard OAuth redirect
+        console.log("[OAuth] Using web OAuth flow for Google");
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: "https://thepicklehub.net/auth/callback",
+          },
+        });
+        if (error) throw error;
       }
     } catch (err: any) {
       console.error("[OAuth] Error:", err);
