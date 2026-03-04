@@ -3,7 +3,8 @@ import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Menu, X, Search, LogIn, LogOut, User, Palette, Shield } from "lucide-react";
+import { Menu, X, Search, LogIn, LogOut, User, Palette, Shield, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ const AppHeader = () => {
     isAdmin
   } = useAdminAuth();
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   useEffect(() => {
@@ -92,6 +94,15 @@ const AppHeader = () => {
 
             {/* Right side actions */}
             <div className="flex items-center gap-2">
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="p-2 rounded-md text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors duration-200"
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+
               {/* Language Switcher */}
               <button onClick={toggleLanguage} className="px-2 py-1 rounded-md text-xs font-medium text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors duration-200">
                 {language === "vi" ? "EN" : "VN"}
