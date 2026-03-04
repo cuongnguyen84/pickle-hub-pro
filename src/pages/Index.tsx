@@ -45,7 +45,7 @@ const Index = () => {
             </div>
             
             {/* H1 - Only one per page */}
-            <h1 className="text-foreground text-balance">
+            <h1 className="text-balance text-primary">
               {t.home.hero.mainTitle}
             </h1>
             
