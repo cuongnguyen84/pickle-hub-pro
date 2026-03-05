@@ -43,7 +43,7 @@ const Forum = () => {
   return (
     <MainLayout>
       <DynamicMeta title={`${t.forum.title} - The PickleHub`} description="Diễn đàn Pickleball" />
-      <div className="container-wide py-6 space-y-4 w-full min-w-0">
+      <div className="container-wide py-6 space-y-4 w-full min-w-0 flex-1">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
