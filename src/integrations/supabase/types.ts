@@ -1597,12 +1597,15 @@ export type Database = {
           bracket_position: string | null
           court_id: number | null
           created_at: string
+          current_set: number | null
           display_order: number
           group_id: string | null
           id: string
           is_playoff: boolean
           large_playoff_round: number | null
           live_referee_id: string | null
+          match_timer_elapsed_seconds: number | null
+          match_timer_started_at: string | null
           next_match_id: string | null
           next_match_slot: number | null
           player1_id: string | null
@@ -1611,11 +1614,16 @@ export type Database = {
           playoff_round: number | null
           rr_match_index: number | null
           rr_round_number: number | null
+          score_history: Json | null
           score1: number | null
           score2: number | null
+          serving_side: number | null
+          set_scores: Json | null
+          sides_swapped: boolean | null
           start_at: string | null
           status: Database["public"]["Enums"]["quick_match_status"]
           table_id: string
+          total_sets: number | null
           updated_at: string
           winner_id: string | null
         }
@@ -1623,12 +1631,15 @@ export type Database = {
           bracket_position?: string | null
           court_id?: number | null
           created_at?: string
+          current_set?: number | null
           display_order?: number
           group_id?: string | null
           id?: string
           is_playoff?: boolean
           large_playoff_round?: number | null
           live_referee_id?: string | null
+          match_timer_elapsed_seconds?: number | null
+          match_timer_started_at?: string | null
           next_match_id?: string | null
           next_match_slot?: number | null
           player1_id?: string | null
@@ -1637,11 +1648,16 @@ export type Database = {
           playoff_round?: number | null
           rr_match_index?: number | null
           rr_round_number?: number | null
+          score_history?: Json | null
           score1?: number | null
           score2?: number | null
+          serving_side?: number | null
+          set_scores?: Json | null
+          sides_swapped?: boolean | null
           start_at?: string | null
           status?: Database["public"]["Enums"]["quick_match_status"]
           table_id: string
+          total_sets?: number | null
           updated_at?: string
           winner_id?: string | null
         }
@@ -1649,12 +1665,15 @@ export type Database = {
           bracket_position?: string | null
           court_id?: number | null
           created_at?: string
+          current_set?: number | null
           display_order?: number
           group_id?: string | null
           id?: string
           is_playoff?: boolean
           large_playoff_round?: number | null
           live_referee_id?: string | null
+          match_timer_elapsed_seconds?: number | null
+          match_timer_started_at?: string | null
           next_match_id?: string | null
           next_match_slot?: number | null
           player1_id?: string | null
@@ -1663,11 +1682,16 @@ export type Database = {
           playoff_round?: number | null
           rr_match_index?: number | null
           rr_round_number?: number | null
+          score_history?: Json | null
           score1?: number | null
           score2?: number | null
+          serving_side?: number | null
+          set_scores?: Json | null
+          sides_swapped?: boolean | null
           start_at?: string | null
           status?: Database["public"]["Enums"]["quick_match_status"]
           table_id?: string
+          total_sets?: number | null
           updated_at?: string
           winner_id?: string | null
         }
@@ -2101,6 +2125,7 @@ export type Database = {
           courts: string[] | null
           created_at: string
           creator_user_id: string | null
+          default_sets: number | null
           format: Database["public"]["Enums"]["quick_table_format"]
           group_count: number | null
           id: string
@@ -2127,6 +2152,7 @@ export type Database = {
           courts?: string[] | null
           created_at?: string
           creator_user_id?: string | null
+          default_sets?: number | null
           format: Database["public"]["Enums"]["quick_table_format"]
           group_count?: number | null
           id?: string
@@ -2153,6 +2179,7 @@ export type Database = {
           courts?: string[] | null
           created_at?: string
           creator_user_id?: string | null
+          default_sets?: number | null
           format?: Database["public"]["Enums"]["quick_table_format"]
           group_count?: number | null
           id?: string

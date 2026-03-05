@@ -18,9 +18,27 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { Plus, Minus, RotateCcw, CheckCircle, ChevronRight, ArrowLeft, Radio, Lock } from 'lucide-react';
+import { Plus, Minus, Undo2, CheckCircle, ChevronRight, ArrowLeft, Radio, Lock, ArrowLeftRight, RefreshCw, Play, Pause, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+interface SetScore {
+  s1: number;
+  s2: number;
+}
+
+interface HistoryEntry {
+  action: 'score' | 'swap_sides' | 'swap_serve' | 'end_set';
+  player?: 1 | 2;
+  delta?: number;
+  set?: number;
+  prevServingSide?: number;
+  prevSidesSwapped?: boolean;
+  prevScore1?: number;
+  prevScore2?: number;
+  prevSetScores?: SetScore[];
+  prevCurrentSet?: number;
+}
 
 interface MatchData {
   id: string;
@@ -36,6 +54,14 @@ interface MatchData {
   display_order: number;
   live_referee_id: string | null;
   winner_id: string | null;
+  set_scores: SetScore[] | null;
+  current_set: number | null;
+  total_sets: number | null;
+  serving_side: number | null;
+  sides_swapped: boolean | null;
+  score_history: HistoryEntry[] | null;
+  match_timer_started_at: string | null;
+  match_timer_elapsed_seconds: number | null;
 }
 
 interface PlayerData {
@@ -53,11 +79,18 @@ interface TableData {
   creator_user_id: string | null;
   status: string;
   format: string;
+  is_doubles: boolean;
 }
 
 interface GroupData {
   id: string;
   name: string;
+}
+
+interface TeamData {
+  id: string;
+  player1_display_name: string;
+  player2_display_name: string | null;
 }
 
 const MatchScoring = () => {
@@ -71,25 +104,60 @@ const MatchScoring = () => {
   const [player1, setPlayer1] = useState<PlayerData | null>(null);
   const [player2, setPlayer2] = useState<PlayerData | null>(null);
   const [group, setGroup] = useState<GroupData | null>(null);
+  const [team1, setTeam1] = useState<TeamData | null>(null);
+  const [team2, setTeam2] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [canEdit, setCanEdit] = useState(false);
   const [isLiveOwner, setIsLiveOwner] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showEndDialog, setShowEndDialog] = useState(false);
+  const [showEndSetDialog, setShowEndSetDialog] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  // Local scores for optimistic updates
+  // Local state for optimistic updates
   const [localScore1, setLocalScore1] = useState<number>(0);
   const [localScore2, setLocalScore2] = useState<number>(0);
+  const [localSetScores, setLocalSetScores] = useState<SetScore[]>([]);
+  const [localCurrentSet, setLocalCurrentSet] = useState<number>(1);
+  const [localTotalSets, setLocalTotalSets] = useState<number>(1);
+  const [localServingSide, setLocalServingSide] = useState<number>(1);
+  const [localSidesSwapped, setLocalSidesSwapped] = useState<boolean>(false);
+  const [localHistory, setLocalHistory] = useState<HistoryEntry[]>([]);
+  const [timerStartedAt, setTimerStartedAt] = useState<string | null>(null);
+  const [timerElapsed, setTimerElapsed] = useState<number>(0);
+  const [displayTime, setDisplayTime] = useState<number>(0);
+  const [matchStarted, setMatchStarted] = useState(false);
+
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Timer display update
+  useEffect(() => {
+    if (timerStartedAt) {
+      const update = () => {
+        const elapsed = Math.floor((Date.now() - new Date(timerStartedAt).getTime()) / 1000);
+        setDisplayTime(timerElapsed + elapsed);
+      };
+      update();
+      timerIntervalRef.current = setInterval(update, 1000);
+      return () => { if (timerIntervalRef.current) clearInterval(timerIntervalRef.current); };
+    } else {
+      setDisplayTime(timerElapsed);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    }
+  }, [timerStartedAt, timerElapsed]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   // Load match data
   const loadMatchData = useCallback(async () => {
     if (!matchId) return;
-
     try {
-      // Fetch match
       const { data: matchData, error: matchError } = await supabase
         .from('quick_table_matches')
         .select('*')
@@ -102,66 +170,87 @@ const MatchScoring = () => {
         return;
       }
 
-      setMatch(matchData as MatchData);
-      setLocalScore1(matchData.score1 ?? 0);
-      setLocalScore2(matchData.score2 ?? 0);
+      const md = matchData as any;
+      setMatch(md as MatchData);
+      setLocalScore1(md.score1 ?? 0);
+      setLocalScore2(md.score2 ?? 0);
+      setLocalSetScores((md.set_scores as SetScore[]) ?? []);
+      setLocalCurrentSet(md.current_set ?? 1);
+      setLocalTotalSets(md.total_sets ?? 1);
+      setLocalServingSide(md.serving_side ?? 1);
+      setLocalSidesSwapped(md.sides_swapped ?? false);
+      setLocalHistory((md.score_history as HistoryEntry[]) ?? []);
+      setTimerStartedAt(md.match_timer_started_at ?? null);
+      setTimerElapsed(md.match_timer_elapsed_seconds ?? 0);
+      setMatchStarted(!!(md.match_timer_started_at || (md.match_timer_elapsed_seconds && md.match_timer_elapsed_seconds > 0) || md.score1 || md.score2));
 
       // Fetch table
       const { data: tableData } = await supabase
         .from('quick_tables')
-        .select('id, name, share_id, creator_user_id, status, format')
-        .eq('id', matchData.table_id)
+        .select('id, name, share_id, creator_user_id, status, format, is_doubles')
+        .eq('id', md.table_id)
         .maybeSingle();
-
       setTable(tableData as TableData);
 
       // Fetch players
-      if (matchData.player1_id) {
+      if (md.player1_id) {
         const { data: p1 } = await supabase
           .from('quick_table_players')
           .select('id, name, team, seed, group_id')
-          .eq('id', matchData.player1_id)
+          .eq('id', md.player1_id)
           .maybeSingle();
         setPlayer1(p1 as PlayerData);
       }
-
-      if (matchData.player2_id) {
+      if (md.player2_id) {
         const { data: p2 } = await supabase
           .from('quick_table_players')
           .select('id, name, team, seed, group_id')
-          .eq('id', matchData.player2_id)
+          .eq('id', md.player2_id)
           .maybeSingle();
         setPlayer2(p2 as PlayerData);
       }
 
-      // Fetch group if exists
-      if (matchData.group_id) {
+      // Fetch teams for doubles
+      if (tableData?.is_doubles) {
+        if (md.player1_id) {
+          const { data: t1 } = await supabase
+            .from('quick_table_teams')
+            .select('id, player1_display_name, player2_display_name, player1_user_id')
+            .eq('table_id', md.table_id)
+            .maybeSingle() as any;
+          setTeam1(t1 as TeamData);
+        }
+        if (md.player2_id) {
+          const { data: t2 } = await supabase
+            .from('quick_table_teams')
+            .select('id, player1_display_name, player2_display_name, player1_user_id')
+            .eq('table_id', md.table_id)
+            .maybeSingle() as any;
+          setTeam2(t2 as TeamData);
+        }
+      }
+
+      // Fetch group
+      if (md.group_id) {
         const { data: groupData } = await supabase
           .from('quick_table_groups')
           .select('id, name')
-          .eq('id', matchData.group_id)
+          .eq('id', md.group_id)
           .maybeSingle();
         setGroup(groupData as GroupData);
       }
-
     } catch (error) {
       console.error('Error loading match:', error);
       toast.error(t.quickTable.matchScoring.loadError);
     } finally {
       setLoading(false);
     }
-  }, [matchId, navigate]);
+  }, [matchId, navigate, t]);
 
   // Check permissions
   const checkPermissions = useCallback(async () => {
-    if (!user || !table || !match) {
-      setCanEdit(false);
-      return;
-    }
-
+    if (!user || !table || !match) { setCanEdit(false); return; }
     const isCreator = table.creator_user_id === user.id;
-
-    // Check if user is referee
     let isReferee = false;
     if (!isCreator) {
       const { data } = await supabase
@@ -172,19 +261,10 @@ const MatchScoring = () => {
         .maybeSingle();
       isReferee = !!data;
     }
-
-    const hasPermission = isCreator || isReferee;
-    setCanEdit(hasPermission);
-
-    // Check if this user is the live owner
+    setCanEdit(isCreator || isReferee);
     if (match.live_referee_id) {
-      if (match.live_referee_id === user.id) {
-        setIsLiveOwner(true);
-        setIsReadOnly(false);
-      } else {
-        setIsLiveOwner(false);
-        setIsReadOnly(true);
-      }
+      setIsLiveOwner(match.live_referee_id === user.id);
+      setIsReadOnly(match.live_referee_id !== user.id);
     } else {
       setIsLiveOwner(false);
       setIsReadOnly(false);
@@ -194,13 +274,11 @@ const MatchScoring = () => {
   // Claim live scoring
   const claimLiveScoring = useCallback(async () => {
     if (!matchId || !user || isLiveOwner) return;
-
     const { error } = await supabase
       .from('quick_table_matches')
-      .update({ live_referee_id: user.id })
+      .update({ live_referee_id: user.id } as any)
       .eq('id', matchId)
       .is('live_referee_id', null);
-
     if (!error) {
       setIsLiveOwner(true);
       setIsReadOnly(false);
@@ -208,60 +286,186 @@ const MatchScoring = () => {
     }
   }, [matchId, user, isLiveOwner, t]);
 
-  // Update score with debounce
-  const updateScore = useCallback(async (score1: number, score2: number) => {
+  // Persist state to DB with debounce
+  const persistState = useCallback(async (overrides: Record<string, any> = {}) => {
     if (!matchId || isReadOnly) return;
+    if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
 
-    // Clear any pending update
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-    }
-
-    // Debounce the database update to prevent race conditions
     updateTimeoutRef.current = setTimeout(async () => {
       setUpdating(true);
       try {
+        const updateData: any = {
+          score1: localScore1,
+          score2: localScore2,
+          set_scores: localSetScores,
+          current_set: localCurrentSet,
+          total_sets: localTotalSets,
+          serving_side: localServingSide,
+          sides_swapped: localSidesSwapped,
+          score_history: localHistory,
+          match_timer_started_at: timerStartedAt,
+          match_timer_elapsed_seconds: timerElapsed,
+          live_referee_id: user?.id || null,
+          ...overrides,
+        };
         const { error } = await supabase
           .from('quick_table_matches')
-          .update({
-            score1,
-            score2,
-            live_referee_id: user?.id || null,
-          })
+          .update(updateData)
           .eq('id', matchId);
-
         if (error) {
-          console.error('Error updating score:', error);
+          console.error('Error updating:', error);
           toast.error(t.quickTable.matchScoring.scoreUpdateError);
         }
       } finally {
         setUpdating(false);
       }
-    }, 100); // 100ms debounce
-  }, [matchId, user?.id, isReadOnly, t]);
+    }, 100);
+  }, [matchId, localScore1, localScore2, localSetScores, localCurrentSet, localTotalSets, localServingSide, localSidesSwapped, localHistory, timerStartedAt, timerElapsed, user?.id, isReadOnly, t]);
 
   // Score handlers
   const handleScoreChange = (player: 1 | 2, delta: number) => {
     if (isReadOnly || match?.status === 'completed') return;
 
+    const entry: HistoryEntry = {
+      action: 'score',
+      player,
+      delta,
+      set: localCurrentSet,
+      prevScore1: localScore1,
+      prevScore2: localScore2,
+    };
+
     if (player === 1) {
       const newScore = Math.max(0, localScore1 + delta);
       setLocalScore1(newScore);
-      updateScore(newScore, localScore2);
+      setLocalHistory(prev => [...prev, entry]);
+      setTimeout(() => persistState({ score1: newScore, score_history: [...localHistory, entry] }), 0);
     } else {
       const newScore = Math.max(0, localScore2 + delta);
       setLocalScore2(newScore);
-      updateScore(localScore1, newScore);
+      setLocalHistory(prev => [...prev, entry]);
+      setTimeout(() => persistState({ score2: newScore, score_history: [...localHistory, entry] }), 0);
     }
+  };
+
+  // Swap sides
+  const handleSwapSides = () => {
+    if (isReadOnly || match?.status === 'completed') return;
+    const entry: HistoryEntry = { action: 'swap_sides', prevSidesSwapped: localSidesSwapped };
+    const newVal = !localSidesSwapped;
+    setLocalSidesSwapped(newVal);
+    setLocalHistory(prev => [...prev, entry]);
+    persistState({ sides_swapped: newVal, score_history: [...localHistory, entry] });
+  };
+
+  // Swap serve
+  const handleSwapServe = () => {
+    if (isReadOnly || match?.status === 'completed') return;
+    const entry: HistoryEntry = { action: 'swap_serve', prevServingSide: localServingSide };
+    const newVal = localServingSide === 1 ? 2 : 1;
+    setLocalServingSide(newVal);
+    setLocalHistory(prev => [...prev, entry]);
+    persistState({ serving_side: newVal, score_history: [...localHistory, entry] });
+  };
+
+  // Undo
+  const handleUndo = () => {
+    if (isReadOnly || match?.status === 'completed' || localHistory.length === 0) return;
+    const last = localHistory[localHistory.length - 1];
+    const newHistory = localHistory.slice(0, -1);
+    setLocalHistory(newHistory);
+
+    const overrides: Record<string, any> = { score_history: newHistory };
+
+    switch (last.action) {
+      case 'score':
+        if (last.prevScore1 !== undefined) { setLocalScore1(last.prevScore1); overrides.score1 = last.prevScore1; }
+        if (last.prevScore2 !== undefined) { setLocalScore2(last.prevScore2); overrides.score2 = last.prevScore2; }
+        break;
+      case 'swap_sides':
+        if (last.prevSidesSwapped !== undefined) { setLocalSidesSwapped(last.prevSidesSwapped); overrides.sides_swapped = last.prevSidesSwapped; }
+        break;
+      case 'swap_serve':
+        if (last.prevServingSide !== undefined) { setLocalServingSide(last.prevServingSide); overrides.serving_side = last.prevServingSide; }
+        break;
+      case 'end_set':
+        if (last.prevScore1 !== undefined) { setLocalScore1(last.prevScore1); overrides.score1 = last.prevScore1; }
+        if (last.prevScore2 !== undefined) { setLocalScore2(last.prevScore2); overrides.score2 = last.prevScore2; }
+        if (last.prevSetScores) { setLocalSetScores(last.prevSetScores); overrides.set_scores = last.prevSetScores; }
+        if (last.prevCurrentSet !== undefined) { setLocalCurrentSet(last.prevCurrentSet); overrides.current_set = last.prevCurrentSet; }
+        break;
+    }
+    persistState(overrides);
+  };
+
+  // Timer toggle
+  const handleTimerToggle = () => {
+    if (isReadOnly || match?.status === 'completed') return;
+    if (timerStartedAt) {
+      // Pause
+      const elapsed = Math.floor((Date.now() - new Date(timerStartedAt).getTime()) / 1000);
+      const newElapsed = timerElapsed + elapsed;
+      setTimerElapsed(newElapsed);
+      setTimerStartedAt(null);
+      persistState({ match_timer_started_at: null, match_timer_elapsed_seconds: newElapsed });
+    } else {
+      // Start
+      const now = new Date().toISOString();
+      setTimerStartedAt(now);
+      setMatchStarted(true);
+      persistState({ match_timer_started_at: now });
+    }
+  };
+
+  // End set
+  const handleEndSet = () => {
+    if (isReadOnly || match?.status === 'completed') return;
+
+    const entry: HistoryEntry = {
+      action: 'end_set',
+      prevScore1: localScore1,
+      prevScore2: localScore2,
+      prevSetScores: [...localSetScores],
+      prevCurrentSet: localCurrentSet,
+    };
+
+    const newSetScores = [...localSetScores, { s1: localScore1, s2: localScore2 }];
+    const newCurrentSet = localCurrentSet + 1;
+
+    setLocalSetScores(newSetScores);
+    setLocalCurrentSet(newCurrentSet);
+    setLocalScore1(0);
+    setLocalScore2(0);
+    setLocalHistory(prev => [...prev, entry]);
+    setShowEndSetDialog(false);
+
+    persistState({
+      set_scores: newSetScores,
+      current_set: newCurrentSet,
+      score1: 0,
+      score2: 0,
+      score_history: [...localHistory, entry],
+    });
   };
 
   // Reset scores
   const handleReset = async () => {
     if (!matchId || isReadOnly) return;
-
     setLocalScore1(0);
     setLocalScore2(0);
-    await updateScore(0, 0);
+    setLocalSetScores([]);
+    setLocalCurrentSet(1);
+    setLocalHistory([]);
+    setTimerStartedAt(null);
+    setTimerElapsed(0);
+    setLocalServingSide(1);
+    setLocalSidesSwapped(false);
+    setMatchStarted(false);
+    await persistState({
+      score1: 0, score2: 0, set_scores: [], current_set: 1,
+      score_history: [], match_timer_started_at: null, match_timer_elapsed_seconds: 0,
+      serving_side: 1, sides_swapped: false,
+    });
     setShowResetDialog(false);
     toast.success(t.quickTable.matchScoring.resetSuccess);
   };
@@ -270,16 +474,39 @@ const MatchScoring = () => {
   const handleEndMatch = async () => {
     if (!matchId || !match || !table || isReadOnly) return;
 
-    // Determine winner
+    // Determine winner based on sets or score
     let winnerId: string | null = null;
-    if (localScore1 > localScore2 && player1) {
-      winnerId = player1.id;
-    } else if (localScore2 > localScore1 && player2) {
-      winnerId = player2.id;
+    if (localTotalSets > 1) {
+      // Count sets won
+      let sets1 = 0, sets2 = 0;
+      for (const s of localSetScores) {
+        if (s.s1 > s.s2) sets1++;
+        else if (s.s2 > s.s1) sets2++;
+      }
+      // Include current set if scores > 0
+      if (localScore1 > localScore2) sets1++;
+      else if (localScore2 > localScore1) sets2++;
+
+      if (sets1 > sets2 && player1) winnerId = player1.id;
+      else if (sets2 > sets1 && player2) winnerId = player2.id;
+    } else {
+      if (localScore1 > localScore2 && player1) winnerId = player1.id;
+      else if (localScore2 > localScore1 && player2) winnerId = player2.id;
+    }
+
+    // If current set has scores, save to set_scores
+    let finalSetScores = [...localSetScores];
+    if (localScore1 > 0 || localScore2 > 0) {
+      finalSetScores = [...localSetScores, { s1: localScore1, s2: localScore2 }];
     }
 
     try {
-      // Update match as completed
+      // Pause timer
+      let finalElapsed = timerElapsed;
+      if (timerStartedAt) {
+        finalElapsed = timerElapsed + Math.floor((Date.now() - new Date(timerStartedAt).getTime()) / 1000);
+      }
+
       const { error } = await supabase
         .from('quick_table_matches')
         .update({
@@ -288,25 +515,23 @@ const MatchScoring = () => {
           status: 'completed',
           winner_id: winnerId,
           live_referee_id: null,
-        })
+          set_scores: finalSetScores,
+          match_timer_started_at: null,
+          match_timer_elapsed_seconds: finalElapsed,
+        } as any)
         .eq('id', matchId);
 
       if (error) throw error;
 
-      // Update player stats for round robin
       if (!match.is_playoff && match.group_id) {
         await updatePlayerStats(table.id, match.group_id);
       }
-
-      // For playoff, update next match with winner
       if (match.is_playoff && winnerId) {
         await advanceWinnerToNextMatch(matchId, winnerId);
       }
 
       toast.success(t.quickTable.matchScoring.endMatchSuccess);
       setShowEndDialog(false);
-      
-      // Reload match data
       await loadMatchData();
     } catch (error) {
       console.error('Error ending match:', error);
@@ -316,31 +541,22 @@ const MatchScoring = () => {
 
   // Update player stats (for round robin)
   const updatePlayerStats = async (tableId: string, groupId: string) => {
-    // Fetch all completed matches in the group
     const { data: groupMatches } = await supabase
       .from('quick_table_matches')
       .select('*')
       .eq('table_id', tableId)
       .eq('group_id', groupId)
       .eq('status', 'completed');
-
     if (!groupMatches) return;
 
-    // Fetch players in this group
     const { data: groupPlayers } = await supabase
       .from('quick_table_players')
       .select('*')
       .eq('group_id', groupId);
-
     if (!groupPlayers) return;
 
-    // Calculate stats for each player
     for (const player of groupPlayers) {
-      let matchesPlayed = 0;
-      let matchesWon = 0;
-      let pointsFor = 0;
-      let pointsAgainst = 0;
-
+      let matchesPlayed = 0, matchesWon = 0, pointsFor = 0, pointsAgainst = 0;
       for (const m of groupMatches) {
         if (m.player1_id === player.id) {
           matchesPlayed++;
@@ -354,55 +570,36 @@ const MatchScoring = () => {
           if ((m.score2 || 0) > (m.score1 || 0)) matchesWon++;
         }
       }
-
       await supabase
         .from('quick_table_players')
-        .update({
-          matches_played: matchesPlayed,
-          matches_won: matchesWon,
-          points_for: pointsFor,
-          points_against: pointsAgainst,
-          // point_diff is a generated column, don't update it directly
-        })
+        .update({ matches_played: matchesPlayed, matches_won: matchesWon, points_for: pointsFor, points_against: pointsAgainst })
         .eq('id', player.id);
     }
   };
 
   // Advance winner to next match
   const advanceWinnerToNextMatch = async (currentMatchId: string, winnerId: string) => {
-    // Find next match info from current match
     const { data: currentMatch } = await supabase
       .from('quick_table_matches')
       .select('next_match_id, next_match_slot, playoff_round, table_id')
       .eq('id', currentMatchId)
       .maybeSingle();
-
     if (!currentMatch) return;
-
     if (currentMatch.next_match_id) {
       const updateField = currentMatch.next_match_slot === 1 ? 'player1_id' : 'player2_id';
-
       await supabase
         .from('quick_table_matches')
         .update({ [updateField]: winnerId })
         .eq('id', currentMatch.next_match_id);
     } else {
-      // No next match - check if this is the final match
-      // Get all matches in current round to verify it's the final
       const { data: currentRoundMatches } = await supabase
         .from('quick_table_matches')
         .select('id')
         .eq('table_id', currentMatch.table_id)
         .eq('is_playoff', true)
         .eq('playoff_round', currentMatch.playoff_round);
-
-      // If current round only has 1 match, this is the final
       if (currentRoundMatches && currentRoundMatches.length === 1) {
-        console.log('[advanceWinnerToNextMatch] Final match completed, marking tournament as completed');
-        await supabase
-          .from('quick_tables')
-          .update({ status: 'completed' })
-          .eq('id', currentMatch.table_id);
+        await supabase.from('quick_tables').update({ status: 'completed' }).eq('id', currentMatch.table_id);
       }
     }
   };
@@ -410,12 +607,8 @@ const MatchScoring = () => {
   // Navigate to next match
   const handleNextMatch = async () => {
     if (!match || !table) return;
-
-    // Find next match in same group or next playoff match
-    let nextMatch: MatchData | null = null;
-
+    let nextMatch: any = null;
     if (match.is_playoff) {
-      // For playoff, go to next match in bracket
       const { data } = await supabase
         .from('quick_table_matches')
         .select('*')
@@ -426,9 +619,8 @@ const MatchScoring = () => {
         .order('display_order', { ascending: true })
         .limit(1)
         .maybeSingle();
-      nextMatch = data as MatchData;
+      nextMatch = data;
     } else if (match.group_id) {
-      // For round robin, find next pending match in same group
       const { data } = await supabase
         .from('quick_table_matches')
         .select('*')
@@ -439,27 +631,16 @@ const MatchScoring = () => {
         .order('display_order', { ascending: true })
         .limit(1)
         .maybeSingle();
-      nextMatch = data as MatchData;
+      nextMatch = data;
     }
-
-    if (nextMatch) {
-      navigate(`/matches/${nextMatch.id}/score`);
-    } else {
-      toast.info(t.quickTable.matchScoring.noNextMatch);
-    }
+    if (nextMatch) navigate(`/matches/${nextMatch.id}/score`);
+    else toast.info(t.quickTable.matchScoring.noNextMatch);
   };
 
-  // Initial load
-  useEffect(() => {
-    loadMatchData();
-  }, [loadMatchData]);
+  // Effects
+  useEffect(() => { loadMatchData(); }, [loadMatchData]);
+  useEffect(() => { checkPermissions(); }, [checkPermissions]);
 
-  // Check permissions when data loads
-  useEffect(() => {
-    checkPermissions();
-  }, [checkPermissions]);
-
-  // Claim live scoring on mount if can edit
   useEffect(() => {
     if (canEdit && !isReadOnly && !isLiveOwner && match?.status !== 'completed') {
       claimLiveScoring();
@@ -469,111 +650,84 @@ const MatchScoring = () => {
   // Realtime subscription
   useEffect(() => {
     if (!matchId) return;
-
     const channel = supabase
       .channel(`match-scoring-${matchId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'quick_table_matches',
-          filter: `id=eq.${matchId}`,
-        },
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'quick_table_matches', filter: `id=eq.${matchId}` },
         (payload) => {
-          const newData = payload.new as MatchData;
-          setMatch(newData);
-          
-          // Only update local scores if not the live owner (to avoid conflicts)
-          if (newData.live_referee_id !== user?.id) {
-            setLocalScore1(newData.score1 ?? 0);
-            setLocalScore2(newData.score2 ?? 0);
+          const nd = payload.new as any;
+          setMatch(nd as MatchData);
+          if (nd.live_referee_id !== user?.id) {
+            setLocalScore1(nd.score1 ?? 0);
+            setLocalScore2(nd.score2 ?? 0);
+            setLocalSetScores((nd.set_scores as SetScore[]) ?? []);
+            setLocalCurrentSet(nd.current_set ?? 1);
+            setLocalServingSide(nd.serving_side ?? 1);
+            setLocalSidesSwapped(nd.sides_swapped ?? false);
+            setLocalHistory((nd.score_history as HistoryEntry[]) ?? []);
+            setTimerStartedAt(nd.match_timer_started_at ?? null);
+            setTimerElapsed(nd.match_timer_elapsed_seconds ?? 0);
           }
-          
-          // Update read-only status
-          if (newData.live_referee_id && newData.live_referee_id !== user?.id) {
-            setIsReadOnly(true);
-          } else if (!newData.live_referee_id) {
-            setIsReadOnly(false);
-          }
-        }
-      )
+          if (nd.live_referee_id && nd.live_referee_id !== user?.id) setIsReadOnly(true);
+          else if (!nd.live_referee_id) setIsReadOnly(false);
+        })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [matchId, user?.id]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
-    return () => {
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-    };
+    return () => { if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current); };
   }, []);
 
-  // Format round name
-  // Calculate total playoff rounds from matches data
+  // Round name
   const [totalPlayoffRounds, setTotalPlayoffRounds] = useState<number>(1);
-
   useEffect(() => {
     if (!match?.is_playoff || !table) return;
-    
-    // Calculate total playoff rounds based on number of matches in first round
     const fetchTotalRounds = async () => {
-      // Count matches in round 1 to determine bracket size
       const { data: round1Matches, count } = await supabase
         .from('quick_table_matches')
         .select('id', { count: 'exact' })
         .eq('table_id', table.id)
         .eq('is_playoff', true)
         .eq('playoff_round', 1);
-      
       const matchesInRound1 = count || round1Matches?.length || 1;
-      
-      // Calculate total rounds: log2(matchesInRound1 * 2)
-      // 4 matches in round 1 = 8 players = 3 rounds (quarterfinal, semifinal, final)
-      // 2 matches in round 1 = 4 players = 2 rounds (semifinal, final)
-      // 1 match in round 1 = 2 players = 1 round (final)
-      const totalRounds = Math.max(1, Math.ceil(Math.log2(matchesInRound1 * 2)));
-      setTotalPlayoffRounds(totalRounds);
+      setTotalPlayoffRounds(Math.max(1, Math.ceil(Math.log2(matchesInRound1 * 2))));
     };
-    
     fetchTotalRounds();
   }, [match?.is_playoff, table]);
 
   const getRoundName = () => {
     if (!match) return '';
-    
     if (match.is_playoff) {
       const currentRound = match.playoff_round || 1;
       const roundsFromFinal = totalPlayoffRounds - currentRound;
-      
-      // Map based on distance from final
-      if (roundsFromFinal === 0) {
-        return t.quickTable.matchScoring.final;
-      } else if (roundsFromFinal === 1) {
-        return t.quickTable.matchScoring.semiFinal;
-      } else if (roundsFromFinal === 2) {
-        return t.quickTable.matchScoring.quarterFinal;
-      } else {
-        return `${t.quickTable.matchScoring.round} ${currentRound}`;
-      }
+      if (roundsFromFinal === 0) return t.quickTable.matchScoring.final;
+      if (roundsFromFinal === 1) return t.quickTable.matchScoring.semiFinal;
+      if (roundsFromFinal === 2) return t.quickTable.matchScoring.quarterFinal;
+      return `${t.quickTable.matchScoring.round} ${currentRound}`;
     }
-    
     return group ? `${group.name} — ${t.quickTable.matchScoring.match} ${match.display_order + 1}` : `${t.quickTable.matchScoring.match} ${match.display_order + 1}`;
   };
 
-  // Format player display
-  const formatPlayer = (player: PlayerData | null) => {
-    if (!player) return { name: 'TBD', seed: null };
-    return {
-      name: player.name,
-      seed: player.seed,
-      team: player.team,
-    };
+  // Get display sides (swap-aware)
+  const getLeftPlayer = () => localSidesSwapped ? player2 : player1;
+  const getRightPlayer = () => localSidesSwapped ? player1 : player2;
+  const getLeftTeam = () => localSidesSwapped ? team2 : team1;
+  const getRightTeam = () => localSidesSwapped ? team1 : team2;
+  const getLeftScore = () => localSidesSwapped ? localScore2 : localScore1;
+  const getRightScore = () => localSidesSwapped ? localScore1 : localScore2;
+  const getLeftSide = (): 1 | 2 => localSidesSwapped ? 2 : 1;
+  const getRightSide = (): 1 | 2 => localSidesSwapped ? 1 : 2;
+
+  const formatPlayerName = (player: PlayerData | null) => player?.name ?? 'TBD';
+
+  // Count sets won
+  const getSetsWon = () => {
+    let s1 = 0, s2 = 0;
+    for (const s of localSetScores) {
+      if (s.s1 > s.s2) s1++;
+      else if (s.s2 > s.s1) s2++;
+    }
+    return { s1, s2 };
   };
 
   if (authLoading || loading) {
@@ -603,51 +757,75 @@ const MatchScoring = () => {
     );
   }
 
+  const leftPlayer = getLeftPlayer();
+  const rightPlayer = getRightPlayer();
+  const leftTeam = getLeftTeam();
+  const rightTeam = getRightTeam();
+  const leftScore = getLeftScore();
+  const rightScore = getRightScore();
+  const leftSide = getLeftSide();
+  const rightSide = getRightSide();
+  const setsWon = getSetsWon();
+  const isMultiSet = localTotalSets > 1;
+  const isCompleted = match?.status === 'completed';
+  const canInteract = !isCompleted && !isReadOnly;
+
   return (
     <MainLayout>
       <DynamicMeta 
-        title={`${t.quickTable.matchScoring.match} - ${formatPlayer(player1).name} vs ${formatPlayer(player2).name}`} 
+        title={`${t.quickTable.matchScoring.match} - ${formatPlayerName(player1)} vs ${formatPlayerName(player2)}`} 
         noindex={true} 
       />
-      <div className="container max-w-lg mx-auto py-6 px-4">
+      <div className="container max-w-lg mx-auto py-4 px-4 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => table && navigate(`/tools/quick-tables/${table.share_id}`)}
-          >
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={() => table && navigate(`/tools/quick-tables/${table.share_id}`)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t.quickTable.matchScoring.goBack}
           </Button>
-          {match?.status !== 'completed' && (
-            <Badge 
-              variant={isLiveOwner ? 'default' : 'secondary'}
-              className={cn(
-                'gap-1',
-                isLiveOwner && 'bg-destructive hover:bg-destructive/90 animate-pulse'
-              )}
-            >
+          {!isCompleted && (
+            <Badge variant={isLiveOwner ? 'default' : 'secondary'}
+              className={cn('gap-1', isLiveOwner && 'bg-destructive hover:bg-destructive/90 animate-pulse')}>
               <Radio className="w-3 h-3" />
               {t.quickTable.matchScoring.live}
             </Badge>
           )}
-          {match?.status === 'completed' && (
-            <Badge variant="outline">{t.quickTable.matchScoring.ended}</Badge>
-          )}
+          {isCompleted && <Badge variant="outline">{t.quickTable.matchScoring.ended}</Badge>}
         </div>
 
         {/* Match Info */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader className="py-3 text-center">
             <div className="text-sm text-muted-foreground">{table?.name}</div>
             <CardTitle className="text-lg">{getRoundName()}</CardTitle>
+            {isMultiSet && (
+              <div className="text-xs text-muted-foreground">{t.quickTable.matchScoring.bestOf} {localTotalSets}</div>
+            )}
           </CardHeader>
         </Card>
 
+        {/* Toolbar */}
+        {matchStarted && canInteract && (
+          <div className="flex gap-2 flex-wrap justify-center">
+            <Button variant="outline" size="sm" onClick={handleUndo} disabled={localHistory.length === 0 || updating}>
+              <Undo2 className="w-4 h-4 mr-1" />
+              {t.quickTable.matchScoring.undo}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSwapSides} disabled={updating}>
+              <ArrowLeftRight className="w-4 h-4 mr-1" />
+              {t.quickTable.matchScoring.swapSides}
+            </Button>
+            {isMultiSet && localCurrentSet < localTotalSets && (
+              <Button variant="outline" size="sm" onClick={() => setShowEndSetDialog(true)} disabled={updating}>
+                {t.quickTable.matchScoring.endSet}
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Read-only banner */}
-        {isReadOnly && match?.status !== 'completed' && (
-          <Card className="mb-4 bg-warning/10 border-warning/30">
+        {isReadOnly && !isCompleted && (
+          <Card className="bg-warning/10 border-warning/30">
             <CardContent className="py-3 flex items-center gap-2 text-warning-foreground">
               <Lock className="w-4 h-4" />
               <span className="text-sm">{t.quickTable.matchScoring.otherRefereeScoring}</span>
@@ -656,124 +834,150 @@ const MatchScoring = () => {
         )}
 
         {/* Scoreboard */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-3 gap-4 items-center">
-              {/* Player 1 */}
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            {/* Player names */}
+            <div className="grid grid-cols-3 gap-2 items-start">
               <div className="text-center">
-                <div className="font-semibold text-lg truncate">
-                  {formatPlayer(player1).name}
-                </div>
-                {formatPlayer(player1).seed && (
-                  <Badge variant="outline" className="text-xs mt-1">
-                    Seed {formatPlayer(player1).seed}
-                  </Badge>
+                <div className="font-semibold text-base truncate">{formatPlayerName(leftPlayer)}</div>
+                {table?.is_doubles && leftTeam && (
+                  <div className="text-xs text-muted-foreground truncate">
+                    {leftTeam.player2_display_name || ''}
+                  </div>
+                )}
+                {localServingSide === leftSide && matchStarted && (
+                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 {t.quickTable.matchScoring.serving}</Badge>
                 )}
               </div>
-
-              {/* Scores */}
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-5xl font-bold tabular-nums">{localScore1}</span>
-                <span className="text-2xl text-muted-foreground">—</span>
-                <span className="text-5xl font-bold tabular-nums">{localScore2}</span>
-              </div>
-
-              {/* Player 2 */}
+              <div className="text-center text-sm text-muted-foreground font-medium">VS</div>
               <div className="text-center">
-                <div className="font-semibold text-lg truncate">
-                  {formatPlayer(player2).name}
-                </div>
-                {formatPlayer(player2).seed && (
-                  <Badge variant="outline" className="text-xs mt-1">
-                    Seed {formatPlayer(player2).seed}
-                  </Badge>
+                <div className="font-semibold text-base truncate">{formatPlayerName(rightPlayer)}</div>
+                {table?.is_doubles && rightTeam && (
+                  <div className="text-xs text-muted-foreground truncate">
+                    {rightTeam.player2_display_name || ''}
+                  </div>
+                )}
+                {localServingSide === rightSide && matchStarted && (
+                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 {t.quickTable.matchScoring.serving}</Badge>
                 )}
               </div>
             </div>
 
-            {/* Score Controls */}
-            {match?.status !== 'completed' && !isReadOnly && (
-              <div className="grid grid-cols-2 gap-6 mt-8">
-                {/* Player 1 Controls */}
-                <div className="space-y-3">
-                  <Button 
-                    size="lg" 
-                    className="w-full h-16 text-2xl"
-                    onClick={() => handleScoreChange(1, 1)}
-                    disabled={updating}
-                  >
-                    <Plus className="w-6 h-6 mr-2" />
-                    +1
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="w-full h-12"
-                    onClick={() => handleScoreChange(1, -1)}
-                    disabled={localScore1 === 0 || updating}
-                  >
-                    <Minus className="w-5 h-5 mr-2" />
-                    -1
-                  </Button>
-                </div>
+            {/* Set scores table (multi-set) */}
+            {isMultiSet && localSetScores.length > 0 && (
+              <div className="flex justify-center gap-3 text-sm">
+                {localSetScores.map((s, i) => (
+                  <div key={i} className="text-center">
+                    <div className="text-xs text-muted-foreground">{t.quickTable.matchScoring.set} {i + 1}</div>
+                    <div className="font-mono">
+                      {localSidesSwapped ? `${s.s2}-${s.s1}` : `${s.s1}-${s.s2}`}
+                    </div>
+                  </div>
+                ))}
+                {localCurrentSet <= localTotalSets && (
+                  <div className="text-center">
+                    <div className="text-xs text-primary font-medium">{t.quickTable.matchScoring.set} {localCurrentSet}</div>
+                    <div className="font-mono text-primary">·-·</div>
+                  </div>
+                )}
+              </div>
+            )}
 
-                {/* Player 2 Controls */}
-                <div className="space-y-3">
-                  <Button 
-                    size="lg" 
-                    className="w-full h-16 text-2xl"
-                    onClick={() => handleScoreChange(2, 1)}
-                    disabled={updating}
-                  >
-                    <Plus className="w-6 h-6 mr-2" />
-                    +1
+            {/* Multi-set: sets won summary */}
+            {isMultiSet && (
+              <div className="flex justify-center gap-6 text-xs text-muted-foreground">
+                <span>{localSidesSwapped ? setsWon.s2 : setsWon.s1} {t.quickTable.matchScoring.setsWon}</span>
+                <span>{localSidesSwapped ? setsWon.s1 : setsWon.s2} {t.quickTable.matchScoring.setsWon}</span>
+              </div>
+            )}
+
+            {/* Current score (big) */}
+            <div className="flex items-center justify-center gap-4">
+              <span className="text-6xl font-bold tabular-nums">{leftScore}</span>
+              <span className="text-2xl text-muted-foreground">—</span>
+              <span className="text-6xl font-bold tabular-nums">{rightScore}</span>
+            </div>
+
+            {/* Timer + serving */}
+            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+              <button 
+                onClick={handleTimerToggle} 
+                disabled={!canInteract}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-1 rounded-full transition-colors",
+                  timerStartedAt 
+                    ? "bg-destructive/10 text-destructive" 
+                    : "bg-muted hover:bg-muted/80",
+                  !canInteract && "opacity-50"
+                )}
+              >
+                <Timer className="w-4 h-4" />
+                <span className="font-mono text-base">{formatTime(displayTime)}</span>
+                {timerStartedAt ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+              </button>
+            </div>
+
+            {/* Score Controls */}
+            {canInteract && (
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                {/* Left side controls */}
+                <div className="space-y-2">
+                  <Button size="lg" className="w-full h-16 text-2xl" onClick={() => handleScoreChange(leftSide, 1)} disabled={updating}>
+                    <Plus className="w-6 h-6 mr-1" /> +1
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="w-full h-12"
-                    onClick={() => handleScoreChange(2, -1)}
-                    disabled={localScore2 === 0 || updating}
-                  >
-                    <Minus className="w-5 h-5 mr-2" />
-                    -1
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => handleScoreChange(leftSide, -1)}
+                    disabled={(leftSide === 1 ? localScore1 : localScore2) === 0 || updating}>
+                    <Minus className="w-4 h-4 mr-1" /> -1
                   </Button>
                 </div>
+                {/* Right side controls */}
+                <div className="space-y-2">
+                  <Button size="lg" className="w-full h-16 text-2xl" onClick={() => handleScoreChange(rightSide, 1)} disabled={updating}>
+                    <Plus className="w-6 h-6 mr-1" /> +1
+                  </Button>
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => handleScoreChange(rightSide, -1)}
+                    disabled={(rightSide === 1 ? localScore1 : localScore2) === 0 || updating}>
+                    <Minus className="w-4 h-4 mr-1" /> -1
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Swap serve button (between score buttons) */}
+            {canInteract && (
+              <div className="flex justify-center">
+                <Button variant="ghost" size="sm" onClick={handleSwapServe} disabled={updating} className="gap-1">
+                  <RefreshCw className="w-4 h-4" />
+                  {t.quickTable.matchScoring.swapServe}
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Action Buttons */}
-        <div className="space-y-3">
-          {match?.status !== 'completed' && !isReadOnly && (
+        <div className="space-y-2">
+          {canInteract && !matchStarted && (
+            <Button className="w-full" onClick={handleTimerToggle}>
+              <Play className="w-4 h-4 mr-2" />
+              {t.quickTable.matchScoring.startMatch}
+            </Button>
+          )}
+
+          {canInteract && matchStarted && (
             <>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => setShowResetDialog(true)}
-                disabled={updating}
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
+              <Button variant="outline" className="w-full" onClick={() => setShowResetDialog(true)} disabled={updating}>
+                <RefreshCw className="w-4 h-4 mr-2" />
                 {t.quickTable.matchScoring.resetScore}
               </Button>
-
-              <Button 
-                className="w-full"
-                onClick={() => setShowEndDialog(true)}
-                disabled={updating}
-              >
+              <Button className="w-full" onClick={() => setShowEndDialog(true)} disabled={updating}>
                 <CheckCircle className="w-4 h-4 mr-2" />
                 {t.quickTable.matchScoring.endMatch}
               </Button>
             </>
           )}
 
-          <Button 
-            variant="secondary"
-            className="w-full"
-            onClick={handleNextMatch}
-          >
+          <Button variant="secondary" className="w-full" onClick={handleNextMatch}>
             {t.quickTable.matchScoring.nextMatch}
             <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
@@ -784,13 +988,29 @@ const MatchScoring = () => {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t.quickTable.matchScoring.resetConfirmTitle}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t.quickTable.matchScoring.resetConfirmDesc}
-              </AlertDialogDescription>
+              <AlertDialogDescription>{t.quickTable.matchScoring.resetConfirmDesc}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{t.quickTable.matchScoring.cancel}</AlertDialogCancel>
               <AlertDialogAction onClick={handleReset}>Reset</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* End Set Dialog */}
+        <AlertDialog open={showEndSetDialog} onOpenChange={setShowEndSetDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t.quickTable.matchScoring.endSetConfirmTitle}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t.quickTable.matchScoring.set} {localCurrentSet}: {localScore1} — {localScore2}
+                <br />
+                {t.quickTable.matchScoring.endSetConfirmDesc}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t.quickTable.matchScoring.cancel}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleEndSet}>{t.quickTable.matchScoring.confirm}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -801,6 +1021,13 @@ const MatchScoring = () => {
             <AlertDialogHeader>
               <AlertDialogTitle>{t.quickTable.matchScoring.endMatchConfirmTitle}</AlertDialogTitle>
               <AlertDialogDescription>
+                {isMultiSet && localSetScores.length > 0 && (
+                  <div className="mb-2">
+                    {localSetScores.map((s, i) => (
+                      <span key={i} className="mr-2">{t.quickTable.matchScoring.set} {i + 1}: {s.s1}-{s.s2}</span>
+                    ))}
+                  </div>
+                )}
                 {t.quickTable.matchScoring.finalResult}: {localScore1} — {localScore2}
                 {localScore1 > localScore2 && player1 && (
                   <div className="mt-2 font-medium">🏆 {t.quickTable.matchScoring.winner}: {player1.name}</div>

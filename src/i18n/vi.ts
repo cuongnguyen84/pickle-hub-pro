@@ -1091,6 +1091,25 @@ export interface Translations {
       endMatchError: string;
       nextMatch: string;
       noNextMatch: string;
+      // New keys for enhanced scoring
+      swapSides: string;
+      swapServe: string;
+      undo: string;
+      set: string;
+      start: string;
+      pause: string;
+      serving: string;
+      timeout: string;
+      endSet: string;
+      endSetConfirmTitle: string;
+      endSetConfirmDesc: string;
+      setWinner: string;
+      matchWinner: string;
+      bestOf: string;
+      setsWon: string;
+      currentSet: string;
+      timerRunning: string;
+      startMatch: string;
     };
   };
   // Team Match SEO
@@ -2707,6 +2726,25 @@ export const vi: Translations = {
       endMatchError: "Lỗi kết thúc trận đấu",
       nextMatch: "Trận tiếp theo",
       noNextMatch: "Không còn trận đấu tiếp theo",
+      // New keys for enhanced scoring
+      swapSides: "Đổi sân",
+      swapServe: "Đổi giao bóng",
+      undo: "Hoàn tác",
+      set: "Set",
+      start: "Bắt đầu",
+      pause: "Tạm dừng",
+      serving: "Giao bóng",
+      timeout: "Timeout",
+      endSet: "Kết thúc set",
+      endSetConfirmTitle: "Kết thúc set?",
+      endSetConfirmDesc: "Lưu điểm set này và chuyển sang set tiếp theo",
+      setWinner: "Thắng set",
+      matchWinner: "Thắng trận",
+      bestOf: "Best of",
+      setsWon: "set thắng",
+      currentSet: "Set hiện tại",
+      timerRunning: "Đang chạy",
+      startMatch: "Bắt đầu trận",
     },
   },
   // Team Match SEO
