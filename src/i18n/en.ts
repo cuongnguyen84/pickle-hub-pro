@@ -19,6 +19,7 @@ export const en: Translations = {
     copied: "Copied!",
     noResults: "No results",
     comingSoon: "Coming soon",
+    close: "Close",
   },
   privacy: {
     title: "Privacy Policy – The Pickle Hub",
@@ -315,7 +316,10 @@ export const en: Translations = {
     password: "Password",
     confirmPassword: "Confirm password",
     forgotPassword: "Forgot password?",
+    forgotPasswordDesc: "Enter your email to receive a password reset link.",
     resetPassword: "Reset password",
+    resetPasswordSent: "Password reset email sent",
+    resetPasswordSentDesc: "Please check your inbox (and spam folder) to reset your password.",
     orContinueWith: "or continue with",
     noAccount: "Don't have an account?",
     hasAccount: "Already have an account?",
@@ -333,6 +337,16 @@ export const en: Translations = {
     verificationSentDesc: "Please check your inbox (and spam folder) to verify your account.",
     emailAlreadyUsed: "Email already in use",
     emailAlreadyUsedDesc: "Please sign in or use a different email.",
+  },
+  moderation: {
+    block: "Block",
+    unblock: "Unblock",
+    blocked: "User blocked",
+    unblocked: "User unblocked",
+    blockedDesc: "You have blocked {name}. You won't see their content.",
+    unblockedDesc: "You have unblocked {name}.",
+    blockConfirm: "Are you sure you want to block this user? You won't see their content anymore.",
+    unblockConfirm: "Are you sure you want to unblock this user?",
   },
   home: {
     hero: {

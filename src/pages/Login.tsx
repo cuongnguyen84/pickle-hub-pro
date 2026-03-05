@@ -13,6 +13,7 @@ import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { getEmailRedirectUrl } from "@/lib/auth-config";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { isNativeApp } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
 import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
@@ -28,6 +29,10 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [sendingReset, setSendingReset] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   // Get redirect URL from query params
   const redirectUrl = searchParams.get("redirect");
@@ -66,6 +71,24 @@ const Login = () => {
       }
     } finally {
       setResendingEmail(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) return;
+    setSendingReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: getEmailRedirectUrl(),
+      });
+      if (error) {
+        toast({ variant: "destructive", title: t.common.error, description: error.message });
+      } else {
+        setResetSent(true);
+        toast({ title: t.auth.resetPasswordSent, description: t.auth.resetPasswordSentDesc });
+      }
+    } finally {
+      setSendingReset(false);
     }
   };
 
@@ -373,7 +396,15 @@ const Login = () => {
 
             {isLogin && (
               <div className="text-right">
-                <button type="button" className="text-sm text-primary hover:underline">
+                <button
+                  type="button"
+                  className="text-sm text-primary hover:underline"
+                  onClick={() => {
+                    setForgotEmail(email);
+                    setResetSent(false);
+                    setShowForgotPassword(true);
+                  }}
+                >
                   {t.auth.forgotPassword}
                 </button>
               </div>
@@ -417,6 +448,39 @@ const Login = () => {
           </p>
         </div>
       </main>
+
+      {/* Forgot Password Dialog */}
+      <AlertDialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.auth.forgotPassword}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {resetSent ? t.auth.resetPasswordSentDesc : t.auth.forgotPasswordDesc}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {!resetSent && (
+            <div className="space-y-2 py-2">
+              <Label htmlFor="forgot-email">{t.auth.email}</Label>
+              <Input
+                id="forgot-email"
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="email@example.com"
+              />
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>{resetSent ? t.common.close : t.common.cancel}</AlertDialogCancel>
+            {!resetSent && (
+              <AlertDialogAction onClick={handleForgotPassword} disabled={sendingReset || !forgotEmail}>
+                {sendingReset && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {t.auth.resetPassword}
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

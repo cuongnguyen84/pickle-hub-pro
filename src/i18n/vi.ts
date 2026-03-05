@@ -17,6 +17,7 @@ export interface Translations {
     copied: string;
     noResults: string;
     comingSoon: string;
+    close: string;
   };
   privacy: {
     title: string;
@@ -313,7 +314,10 @@ export interface Translations {
     password: string;
     confirmPassword: string;
     forgotPassword: string;
+    forgotPasswordDesc: string;
     resetPassword: string;
+    resetPasswordSent: string;
+    resetPasswordSentDesc: string;
     orContinueWith: string;
     noAccount: string;
     hasAccount: string;
@@ -331,6 +335,16 @@ export interface Translations {
     verificationSentDesc: string;
     emailAlreadyUsed: string;
     emailAlreadyUsedDesc: string;
+  };
+  moderation: {
+    block: string;
+    unblock: string;
+    blocked: string;
+    unblocked: string;
+    blockedDesc: string;
+    unblockedDesc: string;
+    blockConfirm: string;
+    unblockConfirm: string;
   };
   home: {
     hero: {
@@ -1668,6 +1682,7 @@ export const vi: Translations = {
     copied: "Đã sao chép!",
     noResults: "Không có kết quả",
     comingSoon: "Sắp ra mắt",
+    close: "Đóng",
   },
   privacy: {
     title: "Chính sách bảo mật – The Pickle Hub",
@@ -1964,7 +1979,10 @@ export const vi: Translations = {
     password: "Mật khẩu",
     confirmPassword: "Xác nhận mật khẩu",
     forgotPassword: "Quên mật khẩu?",
+    forgotPasswordDesc: "Nhập email của bạn để nhận liên kết đặt lại mật khẩu.",
     resetPassword: "Đặt lại mật khẩu",
+    resetPasswordSent: "Đã gửi email đặt lại mật khẩu",
+    resetPasswordSentDesc: "Vui lòng kiểm tra hộp thư đến (và thư rác) để đặt lại mật khẩu.",
     orContinueWith: "hoặc tiếp tục với",
     noAccount: "Chưa có tài khoản?",
     hasAccount: "Đã có tài khoản?",
@@ -1982,6 +2000,16 @@ export const vi: Translations = {
     verificationSentDesc: "Vui lòng kiểm tra hộp thư đến (và thư rác) để xác thực tài khoản.",
     emailAlreadyUsed: "Email đã được sử dụng",
     emailAlreadyUsedDesc: "Vui lòng đăng nhập hoặc sử dụng email khác.",
+  },
+  moderation: {
+    block: "Chặn",
+    unblock: "Bỏ chặn",
+    blocked: "Đã chặn người dùng",
+    unblocked: "Đã bỏ chặn người dùng",
+    blockedDesc: "Bạn đã chặn {name}. Bạn sẽ không thấy nội dung của họ.",
+    unblockedDesc: "Bạn đã bỏ chặn {name}.",
+    blockConfirm: "Bạn có chắc muốn chặn người dùng này? Bạn sẽ không thấy nội dung của họ nữa.",
+    unblockConfirm: "Bạn có chắc muốn bỏ chặn người dùng này?",
   },
   home: {
     hero: {
