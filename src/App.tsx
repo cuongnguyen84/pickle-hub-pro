@@ -106,7 +106,7 @@ const queryClient = new QueryClient();
 
 // Minimal loading fallback to avoid layout shift
 const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
+  <div className="flex-1 bg-background flex items-center justify-center" style={{ minHeight: '100dvh' }}>
     <div className="animate-pulse text-muted-foreground">Loading...</div>
   </div>
 );
