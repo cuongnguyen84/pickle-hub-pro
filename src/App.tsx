@@ -86,6 +86,7 @@ const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminTournaments = lazy(() => import("./pages/admin/AdminTournaments"));
 const AdminApiKeys = lazy(() => import("./pages/admin/AdminApiKeys"));
 const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
+const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamViewers"));
 const AdminPushNotification = lazy(() => import("./pages/admin/AdminPushNotification"));
 const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
@@ -241,6 +242,7 @@ const App = () => (
                     <Route path="/admin/tournaments" element={<AdminTournaments />} />
                     <Route path="/admin/api-keys" element={<AdminApiKeys />} />
                     <Route path="/admin/moderation" element={<AdminModeration />} />
+                    <Route path="/admin/reports" element={<AdminReports />} />
                     <Route path="/admin/viewers" element={<AdminLivestreamViewers />} />
                     <Route path="/admin/push" element={<AdminPushNotification />} />
                     <Route path="/admin/forum" element={<AdminForum />} />

@@ -18,6 +18,7 @@ import {
   Bell,
   MessageSquare,
   ScrollText,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +35,7 @@ const navItems = [
   { path: "/admin/users", icon: Users, labelKey: "users" as const },
   { path: "/admin/tournaments", icon: Trophy, labelKey: "tournaments" as const },
   { path: "/admin/moderation", icon: Shield, labelKey: "moderation" as const },
+  { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
   { path: "/admin/viewers", icon: Eye, labelKey: "viewers" as const },
   { path: "/admin/push", icon: Bell, labelKey: "push" as const },
@@ -97,6 +99,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       users: t.admin.users,
       tournaments: t.admin.tournaments,
       moderation: t.admin.moderation.title,
+      reports: "Báo cáo",
       apiKeys: "API Keys",
       viewers: t.admin.viewers.title,
       push: "Push Notification",

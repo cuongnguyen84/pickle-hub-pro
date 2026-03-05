@@ -149,6 +149,16 @@ export interface Translations {
       update: string;
     };
   };
+  report: {
+    report: string;
+    title: string;
+    description: string;
+    submit: string;
+    success: string;
+    error: string;
+    alreadyReported: string;
+    additionalInfo: string;
+  };
   account: {
     changePassword: string;
     changePasswordDescription: string;
@@ -159,6 +169,15 @@ export interface Translations {
     passwordChangeError: string;
     passwordMismatch: string;
     passwordTooShort: string;
+    deleteAccount: string;
+    deleteAccountTitle: string;
+    deleteAccountWarning: string;
+    deleteDataProfile: string;
+    deleteDataTournaments: string;
+    deleteDataContent: string;
+    deleteAccountIrreversible: string;
+    deleteConfirmInstruction: string;
+    deleteAccountConfirm: string;
   };
   nav: {
     home: string;
@@ -1781,6 +1800,16 @@ export const vi: Translations = {
       update: "Điều khoản có thể được cập nhật khi nền tảng phát triển.",
     },
   },
+  report: {
+    report: "Báo cáo",
+    title: "Báo cáo vi phạm",
+    description: "Vui lòng cho chúng tôi biết lý do bạn muốn báo cáo nội dung này.",
+    submit: "Gửi báo cáo",
+    success: "Đã gửi báo cáo. Chúng tôi sẽ xem xét sớm nhất.",
+    error: "Không thể gửi báo cáo. Vui lòng thử lại.",
+    alreadyReported: "Bạn đã báo cáo nội dung này rồi.",
+    additionalInfo: "Thông tin bổ sung...",
+  },
   account: {
     changePassword: "Đổi mật khẩu",
     changePasswordDescription: "Nhập mật khẩu mới để cập nhật tài khoản.",
@@ -1791,6 +1820,15 @@ export const vi: Translations = {
     passwordChangeError: "Không thể đổi mật khẩu. Vui lòng thử lại.",
     passwordMismatch: "Mật khẩu xác nhận không khớp",
     passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
+    deleteAccount: "Xóa tài khoản",
+    deleteAccountTitle: "Xóa tài khoản vĩnh viễn",
+    deleteAccountWarning: "Hành động này sẽ xóa vĩnh viễn tài khoản và tất cả dữ liệu của bạn, bao gồm:",
+    deleteDataProfile: "Thông tin hồ sơ và ảnh đại diện",
+    deleteDataTournaments: "Các giải đấu bạn đã tạo",
+    deleteDataContent: "Bình luận, lượt thích và dữ liệu tương tác",
+    deleteAccountIrreversible: "Hành động này không thể hoàn tác.",
+    deleteConfirmInstruction: "Nhập \"{word}\" để xác nhận:",
+    deleteAccountConfirm: "Xóa tài khoản",
   },
   nav: {
     home: "Trang chủ",
