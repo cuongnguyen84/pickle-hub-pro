@@ -4,6 +4,7 @@ import { useI18n } from "@/i18n";
 import { useLivestream, useLivestreams, useViewCount } from "@/hooks/useSupabaseData";
 import { useLivePresence } from "@/hooks/useLivePresence";
 import { LikeButton } from "@/components/content/LikeButton";
+import { ReportDialog } from "@/components/report";
 import { CommentSection } from "@/components/content/CommentSection";
 import { LiveCard } from "@/components/content";
 import { MuxPlayer, HlsPlayer, AdaptiveVideoPlayer } from "@/components/video";
@@ -496,6 +497,11 @@ const WatchLive = () => {
                   title={livestream.title ?? "Livestream"}
                   thumbnail={livestream.thumbnail_url ?? undefined}
                 />
+                <ReportDialog
+                  contentType="livestream"
+                  contentId={livestream.id}
+                  contentTitle={livestream.title ?? undefined}
+                />
               </div>
 
               {/* Description & SEO Content (100-200 words body content) */}
@@ -531,6 +537,16 @@ const WatchLive = () => {
                     {language === 'vi'
                       ? "Sử dụng tính năng chat để trò chuyện với người xem khác và chia sẻ cảm xúc về trận đấu."
                       : "Use the chat feature to interact with other viewers and share your thoughts about the match."
+                    }
+                  </p>
+                </div>
+
+                {/* Content Rights Disclosure - Apple compliance */}
+                <div className="text-xs text-foreground-muted border-t border-border pt-3 mt-3">
+                  <p>
+                    {language === 'vi'
+                      ? "Các buổi livestream được cung cấp bởi ban tổ chức giải đấu, những người có quyền phát sóng sự kiện của họ. ThePickleHub cung cấp hạ tầng nền tảng phát trực tuyến."
+                      : "Livestreams are provided by tournament organizers who have permission to broadcast their events. ThePickleHub provides the streaming platform infrastructure."
                     }
                   </p>
                 </div>
