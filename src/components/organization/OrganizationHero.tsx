@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useI18n } from "@/i18n";
 import { BadgeCheck, Building2, Share2, Users } from "lucide-react";
+import { ReportDialog } from "@/components/report";
 import { toast } from "sonner";
 import {
   Breadcrumb,
@@ -140,6 +141,7 @@ export const OrganizationHero = ({
                 {t.common.share}
               </Button>
               <FollowButton targetType="organization" targetId={id} />
+              <ReportDialog contentType="profile" contentId={id} contentTitle={name} />
             </div>
           </div>
         </div>

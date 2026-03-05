@@ -1,2 +1,3 @@
 export { UserAvatar } from "./UserAvatar";
 export { UserDisplayName } from "./UserDisplayName";
+export { BlockUserButton } from "./BlockUserButton";

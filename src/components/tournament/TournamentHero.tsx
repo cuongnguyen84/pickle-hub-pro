@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import { Trophy, Calendar, Share2 } from "lucide-react";
+import { ReportDialog } from "@/components/report";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -150,6 +151,7 @@ export const TournamentHero = ({
                 {t.common.share}
               </Button>
               <FollowButton targetType="tournament" targetId={id} />
+              <ReportDialog contentType="tournament" contentId={id} contentTitle={name} />
             </div>
           </div>
         </div>
