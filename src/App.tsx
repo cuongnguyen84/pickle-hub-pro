@@ -107,9 +107,9 @@ const queryClient = new QueryClient();
 
 // Minimal loading fallback that mirrors MainLayout shell to prevent layout shift
 const PageLoader = () => (
-  <div className="min-h-screen bg-background flex flex-col w-full max-w-[100vw] overflow-x-hidden" style={{ minHeight: '100dvh' }}>
+  <div className="h-full bg-background flex flex-col w-full max-w-[100vw] overflow-hidden">
     <AppHeader />
-    <main className="flex-1 flex flex-col items-center justify-center w-full">
+    <main className="flex-1 overflow-y-auto flex flex-col items-center justify-center w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="animate-pulse text-muted-foreground">Loading...</div>
     </main>
   </div>
@@ -140,9 +140,9 @@ class ChunkErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-background flex flex-col w-full" style={{ minHeight: '100dvh' }}>
+        <div className="h-full bg-background flex flex-col w-full overflow-hidden">
           <AppHeader />
-          <main className="flex-1 flex items-center justify-center">
+          <main className="flex-1 overflow-y-auto flex items-center justify-center" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="text-muted-foreground">Đang tải lại...</div>
           </main>
         </div>
