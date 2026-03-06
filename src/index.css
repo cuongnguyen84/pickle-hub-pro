@@ -141,8 +141,10 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     background-color: hsl(220 15% 8%);
     overscroll-behavior: none;
-    /* Ensure no black gaps on iOS native */
-    min-height: 100%;
+    -webkit-overflow-scrolling: touch;
+    /* Prevent iOS rubber-band from revealing gaps */
+    height: 100%;
+    overflow: hidden;
   }
 
   body {
@@ -150,13 +152,15 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overscroll-behavior: none;
     position: relative;
-    min-height: 100dvh;
+    height: 100%;
+    overflow: hidden;
   }
 
   #root {
     display: flex;
     flex-direction: column;
-    min-height: 100dvh;
+    height: 100%;
+    overflow: hidden;
   }
 
   /* Prevent black gaps on iOS overscroll bounce */
