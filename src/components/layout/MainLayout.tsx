@@ -18,9 +18,9 @@ const MainLayout = ({ children, className }: MainLayoutProps) => {
     : (isIOSDevice ? 'pb-24' : 'pb-20');
 
   return (
-    <div className="min-h-screen min-h-[-webkit-fill-available] bg-background flex flex-col w-full max-w-[100vw] overflow-x-hidden" style={{ minHeight: '100dvh' }}>
+    <div className="h-full flex flex-col w-full max-w-[100vw] overflow-hidden bg-background">
       <AppHeader />
-      <main className={cn("flex-1 flex flex-col w-full max-w-[100vw]", bottomPadding, "md:pb-0", className)}>
+      <main className={cn("flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch w-full max-w-[100vw]", bottomPadding, "md:pb-0", className)} style={{ WebkitOverflowScrolling: 'touch' }}>
         {children}
       </main>
     </div>
