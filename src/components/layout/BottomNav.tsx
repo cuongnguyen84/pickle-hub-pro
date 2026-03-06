@@ -44,19 +44,10 @@ const BottomNav = () => {
     <nav 
       className="fixed bottom-0 left-0 right-0 z-[9999] md:hidden bg-background-elevated border-t border-border-subtle"
       style={{ 
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         transform: 'translateZ(0)',
         WebkitTransform: 'translateZ(0)',
       }}
     >
-      {/* Extend background below safe area to prevent gap on iOS overscroll */}
-      <div 
-        className="absolute left-0 right-0 bg-background-elevated pointer-events-none"
-        style={{ 
-          bottom: '-100px', 
-          height: '100px',
-        }}
-      />
       <div 
         className="flex items-stretch justify-around"
         style={{ minHeight: getNavHeight() }}
