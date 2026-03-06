@@ -163,27 +163,7 @@
     overflow: hidden;
   }
 
-  /* Prevent black gaps on iOS overscroll bounce */
-  body::before,
-  body::after {
-    content: '';
-    position: fixed;
-    left: 0;
-    right: 0;
-    z-index: 9999;
-    pointer-events: none;
-    background-color: hsl(220 15% 8%);
-  }
 
-  body::before {
-    top: -100vh;
-    height: 100vh;
-  }
-
-  body::after {
-    bottom: -100vh;
-    height: 100vh;
-  }
 
   /* Typography scale */
   h1 {
