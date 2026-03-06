@@ -49,6 +49,14 @@ const BottomNav = () => {
         WebkitTransform: 'translateZ(0)',
       }}
     >
+      {/* Extend background below safe area to prevent gap on iOS overscroll */}
+      <div 
+        className="absolute left-0 right-0 bg-background-elevated pointer-events-none"
+        style={{ 
+          bottom: '-100px', 
+          height: '100px',
+        }}
+      />
       <div 
         className="flex items-stretch justify-around"
         style={{ minHeight: getNavHeight() }}
