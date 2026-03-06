@@ -10,6 +10,7 @@ import { lazy, Suspense, Component, ReactNode } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import BottomNav from "@/components/layout/BottomNav";
+import AppHeader from "@/components/layout/AppHeader";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
@@ -104,10 +105,13 @@ const CreatorTournaments = lazy(() => import("./pages/creator/CreatorTournaments
 
 const queryClient = new QueryClient();
 
-// Minimal loading fallback to avoid layout shift
+// Minimal loading fallback that mirrors MainLayout shell to prevent layout shift
 const PageLoader = () => (
-  <div className="flex-1 bg-background flex items-center justify-center" style={{ minHeight: '100dvh' }}>
-    <div className="animate-pulse text-muted-foreground">Loading...</div>
+  <div className="min-h-screen bg-background flex flex-col w-full max-w-[100vw] overflow-x-hidden" style={{ minHeight: '100dvh' }}>
+    <AppHeader />
+    <main className="flex-1 flex flex-col items-center justify-center w-full">
+      <div className="animate-pulse text-muted-foreground">Loading...</div>
+    </main>
   </div>
 );
 
@@ -136,8 +140,11 @@ class ChunkErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-muted-foreground">Đang tải lại...</div>
+        <div className="min-h-screen bg-background flex flex-col w-full" style={{ minHeight: '100dvh' }}>
+          <AppHeader />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-muted-foreground">Đang tải lại...</div>
+          </main>
         </div>
       );
     }
