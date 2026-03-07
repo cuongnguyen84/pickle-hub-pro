@@ -47,10 +47,17 @@ const BottomNav = () => {
         transform: 'translateZ(0)',
         WebkitTransform: 'translateZ(0)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        /* Extend background color 100px below to cover any overscroll gap */
-        boxShadow: '0 100px 0 0 hsl(var(--background-elevated)), 0 200px 0 0 hsl(var(--background-elevated))',
       }}
     >
+      {/* Extend background below the nav to cover iOS overscroll gap */}
+      <div 
+        className="absolute left-0 right-0 bg-background-elevated pointer-events-none"
+        style={{ 
+          top: 0,
+          bottom: '-200px',
+          zIndex: -1,
+        }}
+      />
       <div 
         className="flex items-stretch justify-around"
         style={{ minHeight: getNavHeight() }}
