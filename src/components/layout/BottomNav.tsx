@@ -46,6 +46,7 @@ const BottomNav = () => {
       style={{ 
         transform: 'translateZ(0)',
         WebkitTransform: 'translateZ(0)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
       <div 
@@ -63,7 +64,7 @@ const BottomNav = () => {
               to={item.path}
               className={cn(
                 "flex flex-col items-center justify-center gap-1.5 flex-1 py-3",
-                "transition-colors duration-200",
+                "transition-colors duration-200 relative",
                 isActive 
                   ? "text-primary" 
                   : "text-foreground-muted hover:text-foreground-secondary"
