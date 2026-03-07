@@ -47,6 +47,8 @@ const BottomNav = () => {
         transform: 'translateZ(0)',
         WebkitTransform: 'translateZ(0)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        /* Extend background color 100px below to cover any overscroll gap */
+        boxShadow: '0 100px 0 0 hsl(var(--background-elevated)), 0 200px 0 0 hsl(var(--background-elevated))',
       }}
     >
       <div 
