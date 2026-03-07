@@ -139,7 +139,7 @@
   html {
     @apply antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    background-color: hsl(220 15% 8%);
+    background-color: hsl(var(--background-elevated));
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
     /* Prevent iOS rubber-band from revealing gaps */
