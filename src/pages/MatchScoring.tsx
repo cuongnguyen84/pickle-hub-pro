@@ -8,6 +8,7 @@ import { DynamicMeta } from '@/components/seo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -18,7 +19,14 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { Plus, Minus, Undo2, CheckCircle, ChevronRight, ArrowLeft, Radio, Lock, ArrowLeftRight, RefreshCw, Play, Pause, Timer } from 'lucide-react';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plus, Minus, Undo2, CheckCircle, ChevronRight, ArrowLeft, Radio, Lock, ArrowLeftRight, RefreshCw, Play, Heart, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +36,7 @@ interface SetScore {
 }
 
 interface HistoryEntry {
-  action: 'score' | 'swap_sides' | 'swap_serve' | 'end_set';
+  action: 'score' | 'swap_sides' | 'swap_serve' | 'end_set' | 'timeout' | 'medical';
   player?: 1 | 2;
   delta?: number;
   set?: number;
@@ -38,6 +46,8 @@ interface HistoryEntry {
   prevScore2?: number;
   prevSetScores?: SetScore[];
   prevCurrentSet?: number;
+  prevServerNumber?: number;
+  side?: 1 | 2;
 }
 
 interface MatchData {
@@ -93,6 +103,8 @@ interface TeamData {
   player2_display_name: string | null;
 }
 
+const TIMEOUT_DURATION = 60; // 1 minute countdown
+
 const MatchScoring = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
@@ -124,34 +136,56 @@ const MatchScoring = () => {
   const [localServingSide, setLocalServingSide] = useState<number>(1);
   const [localSidesSwapped, setLocalSidesSwapped] = useState<boolean>(false);
   const [localHistory, setLocalHistory] = useState<HistoryEntry[]>([]);
-  const [timerStartedAt, setTimerStartedAt] = useState<string | null>(null);
-  const [timerElapsed, setTimerElapsed] = useState<number>(0);
-  const [displayTime, setDisplayTime] = useState<number>(0);
   const [matchStarted, setMatchStarted] = useState(false);
 
+  // Server number (1 or 2 - "tay 1" or "tay 2" in doubles)
+  const [serverNumber, setServerNumber] = useState<number>(2);
+
+  // Player notes
+  const [noteLeft, setNoteLeft] = useState('');
+  const [noteRight, setNoteRight] = useState('');
+
+  // Timeout & Medical
+  const [maxTimeouts, setMaxTimeouts] = useState<number>(2);
+  const [maxMedical] = useState<number>(1);
+  const [timeoutsUsed1, setTimeoutsUsed1] = useState<number>(0);
+  const [timeoutsUsed2, setTimeoutsUsed2] = useState<number>(0);
+  const [medicalUsed1, setMedicalUsed1] = useState<number>(0);
+  const [medicalUsed2, setMedicalUsed2] = useState<number>(0);
+  
+  // Timeout countdown
+  const [activeTimeout, setActiveTimeout] = useState<{ side: 1 | 2; type: 'timeout' | 'medical' } | null>(null);
+  const [countdownSeconds, setCountdownSeconds] = useState<number>(0);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Match timer (kept internally but not displayed as clock)
+  const [timerStartedAt, setTimerStartedAt] = useState<string | null>(null);
+  const [timerElapsed, setTimerElapsed] = useState<number>(0);
+
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timer display update
+  // Timeout countdown effect
   useEffect(() => {
-    if (timerStartedAt) {
-      const update = () => {
-        const elapsed = Math.floor((Date.now() - new Date(timerStartedAt).getTime()) / 1000);
-        setDisplayTime(timerElapsed + elapsed);
-      };
-      update();
-      timerIntervalRef.current = setInterval(update, 1000);
-      return () => { if (timerIntervalRef.current) clearInterval(timerIntervalRef.current); };
-    } else {
-      setDisplayTime(timerElapsed);
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    if (activeTimeout && countdownSeconds > 0) {
+      countdownRef.current = setInterval(() => {
+        setCountdownSeconds(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownRef.current!);
+            setActiveTimeout(null);
+            toast.info('⏰ Hết thời gian time out!');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
     }
-  }, [timerStartedAt, timerElapsed]);
+  }, [activeTimeout]);
 
-  const formatTime = (seconds: number) => {
+  const formatCountdown = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   // Load match data
@@ -326,6 +360,13 @@ const MatchScoring = () => {
   const handleScoreChange = (player: 1 | 2, delta: number) => {
     if (isReadOnly || match?.status === 'completed') return;
 
+    // Auto-start match on first score
+    if (!matchStarted) {
+      setMatchStarted(true);
+      const now = new Date().toISOString();
+      setTimerStartedAt(now);
+    }
+
     const entry: HistoryEntry = {
       action: 'score',
       player,
@@ -339,12 +380,12 @@ const MatchScoring = () => {
       const newScore = Math.max(0, localScore1 + delta);
       setLocalScore1(newScore);
       setLocalHistory(prev => [...prev, entry]);
-      setTimeout(() => persistState({ score1: newScore, score_history: [...localHistory, entry] }), 0);
+      setTimeout(() => persistState({ score1: newScore, score_history: [...localHistory, entry], match_timer_started_at: timerStartedAt || new Date().toISOString() }), 0);
     } else {
       const newScore = Math.max(0, localScore2 + delta);
       setLocalScore2(newScore);
       setLocalHistory(prev => [...prev, entry]);
-      setTimeout(() => persistState({ score2: newScore, score_history: [...localHistory, entry] }), 0);
+      setTimeout(() => persistState({ score2: newScore, score_history: [...localHistory, entry], match_timer_started_at: timerStartedAt || new Date().toISOString() }), 0);
     }
   };
 
@@ -361,11 +402,71 @@ const MatchScoring = () => {
   // Swap serve
   const handleSwapServe = () => {
     if (isReadOnly || match?.status === 'completed') return;
-    const entry: HistoryEntry = { action: 'swap_serve', prevServingSide: localServingSide };
+    const entry: HistoryEntry = { action: 'swap_serve', prevServingSide: localServingSide, prevServerNumber: serverNumber };
     const newVal = localServingSide === 1 ? 2 : 1;
     setLocalServingSide(newVal);
+    setServerNumber(1); // Reset server number when serve changes
     setLocalHistory(prev => [...prev, entry]);
     persistState({ serving_side: newVal, score_history: [...localHistory, entry] });
+  };
+
+  // Toggle server number (tay 1 / tay 2)
+  const handleToggleServerNumber = () => {
+    if (isReadOnly || match?.status === 'completed') return;
+    setServerNumber(prev => prev === 1 ? 2 : 1);
+  };
+
+  // Timeout handler
+  const handleTimeout = (side: 1 | 2) => {
+    if (isReadOnly || match?.status === 'completed') return;
+    if (side === 1 && timeoutsUsed1 >= maxTimeouts) {
+      toast.error('Đã hết lượt Time Out!');
+      return;
+    }
+    if (side === 2 && timeoutsUsed2 >= maxTimeouts) {
+      toast.error('Đã hết lượt Time Out!');
+      return;
+    }
+
+    if (side === 1) setTimeoutsUsed1(prev => prev + 1);
+    else setTimeoutsUsed2(prev => prev + 1);
+
+    const entry: HistoryEntry = { action: 'timeout', side };
+    setLocalHistory(prev => [...prev, entry]);
+
+    // Start countdown
+    setActiveTimeout({ side, type: 'timeout' });
+    setCountdownSeconds(TIMEOUT_DURATION);
+  };
+
+  // Medical handler
+  const handleMedical = (side: 1 | 2) => {
+    if (isReadOnly || match?.status === 'completed') return;
+    if (side === 1 && medicalUsed1 >= maxMedical) {
+      toast.error('Đã hết lượt Y tế!');
+      return;
+    }
+    if (side === 2 && medicalUsed2 >= maxMedical) {
+      toast.error('Đã hết lượt Y tế!');
+      return;
+    }
+
+    if (side === 1) setMedicalUsed1(prev => prev + 1);
+    else setMedicalUsed2(prev => prev + 1);
+
+    const entry: HistoryEntry = { action: 'medical', side };
+    setLocalHistory(prev => [...prev, entry]);
+
+    // Start countdown
+    setActiveTimeout({ side, type: 'medical' });
+    setCountdownSeconds(TIMEOUT_DURATION);
+  };
+
+  // Cancel active timeout countdown
+  const handleCancelCountdown = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setActiveTimeout(null);
+    setCountdownSeconds(0);
   };
 
   // Undo
@@ -387,6 +488,7 @@ const MatchScoring = () => {
         break;
       case 'swap_serve':
         if (last.prevServingSide !== undefined) { setLocalServingSide(last.prevServingSide); overrides.serving_side = last.prevServingSide; }
+        if (last.prevServerNumber !== undefined) { setServerNumber(last.prevServerNumber); }
         break;
       case 'end_set':
         if (last.prevScore1 !== undefined) { setLocalScore1(last.prevScore1); overrides.score1 = last.prevScore1; }
@@ -394,27 +496,16 @@ const MatchScoring = () => {
         if (last.prevSetScores) { setLocalSetScores(last.prevSetScores); overrides.set_scores = last.prevSetScores; }
         if (last.prevCurrentSet !== undefined) { setLocalCurrentSet(last.prevCurrentSet); overrides.current_set = last.prevCurrentSet; }
         break;
+      case 'timeout':
+        if (last.side === 1) setTimeoutsUsed1(prev => Math.max(0, prev - 1));
+        else if (last.side === 2) setTimeoutsUsed2(prev => Math.max(0, prev - 1));
+        break;
+      case 'medical':
+        if (last.side === 1) setMedicalUsed1(prev => Math.max(0, prev - 1));
+        else if (last.side === 2) setMedicalUsed2(prev => Math.max(0, prev - 1));
+        break;
     }
     persistState(overrides);
-  };
-
-  // Timer toggle
-  const handleTimerToggle = () => {
-    if (isReadOnly || match?.status === 'completed') return;
-    if (timerStartedAt) {
-      // Pause
-      const elapsed = Math.floor((Date.now() - new Date(timerStartedAt).getTime()) / 1000);
-      const newElapsed = timerElapsed + elapsed;
-      setTimerElapsed(newElapsed);
-      setTimerStartedAt(null);
-      persistState({ match_timer_started_at: null, match_timer_elapsed_seconds: newElapsed });
-    } else {
-      // Start
-      const now = new Date().toISOString();
-      setTimerStartedAt(now);
-      setMatchStarted(true);
-      persistState({ match_timer_started_at: now });
-    }
   };
 
   // End set
@@ -461,6 +552,13 @@ const MatchScoring = () => {
     setLocalServingSide(1);
     setLocalSidesSwapped(false);
     setMatchStarted(false);
+    setServerNumber(2);
+    setTimeoutsUsed1(0);
+    setTimeoutsUsed2(0);
+    setMedicalUsed1(0);
+    setMedicalUsed2(0);
+    setNoteLeft('');
+    setNoteRight('');
     await persistState({
       score1: 0, score2: 0, set_scores: [], current_set: 1,
       score_history: [], match_timer_started_at: null, match_timer_elapsed_seconds: 0,
@@ -477,13 +575,11 @@ const MatchScoring = () => {
     // Determine winner based on sets or score
     let winnerId: string | null = null;
     if (localTotalSets > 1) {
-      // Count sets won
       let sets1 = 0, sets2 = 0;
       for (const s of localSetScores) {
         if (s.s1 > s.s2) sets1++;
         else if (s.s2 > s.s1) sets2++;
       }
-      // Include current set if scores > 0
       if (localScore1 > localScore2) sets1++;
       else if (localScore2 > localScore1) sets2++;
 
@@ -501,7 +597,6 @@ const MatchScoring = () => {
     }
 
     try {
-      // Pause timer
       let finalElapsed = timerElapsed;
       if (timerStartedAt) {
         finalElapsed = timerElapsed + Math.floor((Date.now() - new Date(timerStartedAt).getTime()) / 1000);
@@ -730,6 +825,23 @@ const MatchScoring = () => {
     return { s1, s2 };
   };
 
+  // Timeout emoji indicators
+  const renderTimeoutIndicators = (used: number, max: number) => {
+    return Array.from({ length: max }, (_, i) => (
+      <span key={i} className={cn("text-lg", i < used ? "opacity-100" : "opacity-30")}>
+        ⏱️
+      </span>
+    ));
+  };
+
+  const renderMedicalIndicators = (used: number, max: number) => {
+    return Array.from({ length: max }, (_, i) => (
+      <span key={i} className={cn("text-lg", i < used ? "opacity-100" : "opacity-30")}>
+        🏥
+      </span>
+    ));
+  };
+
   if (authLoading || loading) {
     return (
       <MainLayout>
@@ -770,6 +882,10 @@ const MatchScoring = () => {
   const isCompleted = match?.status === 'completed';
   const canInteract = !isCompleted && !isReadOnly;
 
+  // Build score display string: "serving_score - receiving_score - server_number"
+  const servingScore = localServingSide === 1 ? localScore1 : localScore2;
+  const receivingScore = localServingSide === 1 ? localScore2 : localScore1;
+
   return (
     <MainLayout>
       <DynamicMeta 
@@ -804,6 +920,26 @@ const MatchScoring = () => {
           </CardHeader>
         </Card>
 
+        {/* Timeout Countdown Overlay */}
+        {activeTimeout && countdownSeconds > 0 && (
+          <Card className={cn(
+            "border-2",
+            activeTimeout.type === 'timeout' ? "border-yellow-500 bg-yellow-500/10" : "border-red-500 bg-red-500/10"
+          )}>
+            <CardContent className="py-4 text-center space-y-2">
+              <div className="text-sm font-medium">
+                {activeTimeout.type === 'timeout' ? '⏱️ TIME OUT' : '🏥 Y TẾ'} — {activeTimeout.side === leftSide ? formatPlayerName(leftPlayer) : formatPlayerName(rightPlayer)}
+              </div>
+              <div className="text-5xl font-bold font-mono tabular-nums">
+                {formatCountdown(countdownSeconds)}
+              </div>
+              <Button variant="outline" size="sm" onClick={handleCancelCountdown}>
+                Kết thúc sớm
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Toolbar */}
         {matchStarted && canInteract && (
           <div className="flex gap-2 flex-wrap justify-center">
@@ -836,9 +972,9 @@ const MatchScoring = () => {
         {/* Scoreboard */}
         <Card>
           <CardContent className="p-4 space-y-4">
-            {/* Player names */}
+            {/* Player names + notes */}
             <div className="grid grid-cols-3 gap-2 items-start">
-              <div className="text-center">
+              <div className="text-center space-y-1">
                 <div className="font-semibold text-base truncate">{formatPlayerName(leftPlayer)}</div>
                 {table?.is_doubles && leftTeam && (
                   <div className="text-xs text-muted-foreground truncate">
@@ -846,11 +982,16 @@ const MatchScoring = () => {
                   </div>
                 )}
                 {localServingSide === leftSide && matchStarted && (
-                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 {t.quickTable.matchScoring.serving}</Badge>
+                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 Giao</Badge>
                 )}
+                {/* Timeout/Medical indicators */}
+                <div className="flex justify-center gap-0.5 flex-wrap">
+                  {renderTimeoutIndicators(leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2, maxTimeouts)}
+                  {renderMedicalIndicators(leftSide === 1 ? medicalUsed1 : medicalUsed2, maxMedical)}
+                </div>
               </div>
               <div className="text-center text-sm text-muted-foreground font-medium">VS</div>
-              <div className="text-center">
+              <div className="text-center space-y-1">
                 <div className="font-semibold text-base truncate">{formatPlayerName(rightPlayer)}</div>
                 {table?.is_doubles && rightTeam && (
                   <div className="text-xs text-muted-foreground truncate">
@@ -858,10 +999,39 @@ const MatchScoring = () => {
                   </div>
                 )}
                 {localServingSide === rightSide && matchStarted && (
-                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 {t.quickTable.matchScoring.serving}</Badge>
+                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 Giao</Badge>
                 )}
+                {/* Timeout/Medical indicators */}
+                <div className="flex justify-center gap-0.5 flex-wrap">
+                  {renderTimeoutIndicators(rightSide === 1 ? timeoutsUsed1 : timeoutsUsed2, maxTimeouts)}
+                  {renderMedicalIndicators(rightSide === 1 ? medicalUsed1 : medicalUsed2, maxMedical)}
+                </div>
               </div>
             </div>
+
+            {/* Player notes */}
+            {canInteract && (
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Ghi chú VĐV trái..."
+                  value={noteLeft}
+                  onChange={(e) => setNoteLeft(e.target.value)}
+                  className="text-xs h-8"
+                />
+                <Input
+                  placeholder="Ghi chú VĐV phải..."
+                  value={noteRight}
+                  onChange={(e) => setNoteRight(e.target.value)}
+                  className="text-xs h-8"
+                />
+              </div>
+            )}
+            {!canInteract && (noteLeft || noteRight) && (
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div>{noteLeft}</div>
+                <div>{noteRight}</div>
+              </div>
+            )}
 
             {/* Set scores table (multi-set) */}
             {isMultiSet && localSetScores.length > 0 && (
@@ -891,31 +1061,96 @@ const MatchScoring = () => {
               </div>
             )}
 
-            {/* Current score (big) */}
-            <div className="flex items-center justify-center gap-4">
+            {/* Current score display: score1 - score2 - serverNumber */}
+            <div className="flex items-center justify-center gap-3">
               <span className="text-6xl font-bold tabular-nums">{leftScore}</span>
-              <span className="text-2xl text-muted-foreground">—</span>
+              <span className="text-2xl text-muted-foreground">–</span>
               <span className="text-6xl font-bold tabular-nums">{rightScore}</span>
+              {table?.is_doubles && matchStarted && (
+                <>
+                  <span className="text-2xl text-muted-foreground">–</span>
+                  <button
+                    onClick={handleToggleServerNumber}
+                    disabled={!canInteract}
+                    className={cn(
+                      "text-4xl font-bold tabular-nums px-3 py-1 rounded-lg transition-colors",
+                      "bg-primary/10 text-primary hover:bg-primary/20",
+                      !canInteract && "opacity-50 cursor-default"
+                    )}
+                    title="Tay giao (bấm để đổi)"
+                  >
+                    {serverNumber}
+                  </button>
+                </>
+              )}
             </div>
 
-            {/* Timer + serving */}
-            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-              <button 
-                onClick={handleTimerToggle} 
-                disabled={!canInteract}
-                className={cn(
-                  "flex items-center gap-1 px-3 py-1 rounded-full transition-colors",
-                  timerStartedAt 
-                    ? "bg-destructive/10 text-destructive" 
-                    : "bg-muted hover:bg-muted/80",
-                  !canInteract && "opacity-50"
+            {/* Serving side selector + swap serve */}
+            {canInteract && matchStarted && (
+              <div className="flex items-center justify-center gap-3">
+                <Button variant="ghost" size="sm" onClick={handleSwapServe} disabled={updating} className="gap-1">
+                  <RefreshCw className="w-4 h-4" />
+                  Đổi giao
+                </Button>
+                {table?.is_doubles && (
+                  <span className="text-xs text-muted-foreground">
+                    Tay {serverNumber} đang giao
+                  </span>
                 )}
-              >
-                <Timer className="w-4 h-4" />
-                <span className="font-mono text-base">{formatTime(displayTime)}</span>
-                {timerStartedAt ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-              </button>
-            </div>
+              </div>
+            )}
+
+            {/* Timeout & Medical buttons */}
+            {canInteract && matchStarted && (
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                {/* Left side timeout/medical */}
+                <div className="space-y-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-xs border-yellow-500/50 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/10"
+                    onClick={() => handleTimeout(leftSide)}
+                    disabled={(leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2) >= maxTimeouts || updating || !!activeTimeout}
+                  >
+                    <Timer className="w-3 h-3 mr-1" />
+                    Time Out ({leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2}/{maxTimeouts})
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-xs border-red-500/50 text-red-700 dark:text-red-400 hover:bg-red-500/10"
+                    onClick={() => handleMedical(leftSide)}
+                    disabled={(leftSide === 1 ? medicalUsed1 : medicalUsed2) >= maxMedical || updating || !!activeTimeout}
+                  >
+                    <Heart className="w-3 h-3 mr-1" />
+                    Y tế ({leftSide === 1 ? medicalUsed1 : medicalUsed2}/{maxMedical})
+                  </Button>
+                </div>
+                {/* Right side timeout/medical */}
+                <div className="space-y-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-xs border-yellow-500/50 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/10"
+                    onClick={() => handleTimeout(rightSide)}
+                    disabled={(rightSide === 1 ? timeoutsUsed1 : timeoutsUsed2) >= maxTimeouts || updating || !!activeTimeout}
+                  >
+                    <Timer className="w-3 h-3 mr-1" />
+                    Time Out ({rightSide === 1 ? timeoutsUsed1 : timeoutsUsed2}/{maxTimeouts})
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-xs border-red-500/50 text-red-700 dark:text-red-400 hover:bg-red-500/10"
+                    onClick={() => handleMedical(rightSide)}
+                    disabled={(rightSide === 1 ? medicalUsed1 : medicalUsed2) >= maxMedical || updating || !!activeTimeout}
+                  >
+                    <Heart className="w-3 h-3 mr-1" />
+                    Y tế ({rightSide === 1 ? medicalUsed1 : medicalUsed2}/{maxMedical})
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Score Controls */}
             {canInteract && (
@@ -942,23 +1177,59 @@ const MatchScoring = () => {
                 </div>
               </div>
             )}
-
-            {/* Swap serve button (between score buttons) */}
-            {canInteract && (
-              <div className="flex justify-center">
-                <Button variant="ghost" size="sm" onClick={handleSwapServe} disabled={updating} className="gap-1">
-                  <RefreshCw className="w-4 h-4" />
-                  {t.quickTable.matchScoring.swapServe}
-                </Button>
-              </div>
-            )}
           </CardContent>
         </Card>
+
+        {/* Timeout settings (before match starts) */}
+        {canInteract && !matchStarted && (
+          <Card>
+            <CardContent className="py-4 space-y-3">
+              <h4 className="text-sm font-semibold">Cài đặt trận đấu</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-muted-foreground">Số lần Time Out</label>
+                  <Select value={String(maxTimeouts)} onValueChange={(v) => setMaxTimeouts(Number(v))}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 lần</SelectItem>
+                      <SelectItem value="2">2 lần</SelectItem>
+                      <SelectItem value="3">3 lần</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Bên giao bóng</label>
+                  <Select value={String(localServingSide)} onValueChange={(v) => {
+                    const newVal = Number(v);
+                    setLocalServingSide(newVal);
+                    persistState({ serving_side: newVal });
+                  }}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">{formatPlayerName(localSidesSwapped ? player2 : player1)}</SelectItem>
+                      <SelectItem value="2">{formatPlayerName(localSidesSwapped ? player1 : player2)}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Y tế: mặc định 1 lần mỗi bên</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Action Buttons */}
         <div className="space-y-2">
           {canInteract && !matchStarted && (
-            <Button className="w-full" onClick={handleTimerToggle}>
+            <Button className="w-full" onClick={() => {
+              setMatchStarted(true);
+              const now = new Date().toISOString();
+              setTimerStartedAt(now);
+              persistState({ match_timer_started_at: now });
+            }}>
               <Play className="w-4 h-4 mr-2" />
               {t.quickTable.matchScoring.startMatch}
             </Button>
