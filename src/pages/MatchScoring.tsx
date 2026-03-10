@@ -400,15 +400,36 @@ const MatchScoring = () => {
     persistState({ sides_swapped: newVal, score_history: [...localHistory, entry] });
   };
 
-  // Swap serve
+  // Swap serve - rotation: A2 -> B1 -> B2 -> A1 -> A2 (cycle)
   const handleSwapServe = () => {
     if (isReadOnly || match?.status === 'completed') return;
     const entry: HistoryEntry = { action: 'swap_serve', prevServingSide: localServingSide, prevServerNumber: serverNumber };
-    const newVal = localServingSide === 1 ? 2 : 1;
-    setLocalServingSide(newVal);
-    setServerNumber(1); // Reset server number when serve changes
+    
+    let newSide = localServingSide;
+    let newServerNum = serverNumber;
+    
+    if (localServingSide === 1 && serverNumber === 2) {
+      // A2 -> B1
+      newSide = 2;
+      newServerNum = 1;
+    } else if (localServingSide === 2 && serverNumber === 1) {
+      // B1 -> B2
+      newSide = 2;
+      newServerNum = 2;
+    } else if (localServingSide === 2 && serverNumber === 2) {
+      // B2 -> A1
+      newSide = 1;
+      newServerNum = 1;
+    } else if (localServingSide === 1 && serverNumber === 1) {
+      // A1 -> A2
+      newSide = 1;
+      newServerNum = 2;
+    }
+    
+    setLocalServingSide(newSide);
+    setServerNumber(newServerNum);
     setLocalHistory(prev => [...prev, entry]);
-    persistState({ serving_side: newVal, score_history: [...localHistory, entry] });
+    persistState({ serving_side: newSide, score_history: [...localHistory, entry] });
   };
 
   // Toggle server number (tay 1 / tay 2)
