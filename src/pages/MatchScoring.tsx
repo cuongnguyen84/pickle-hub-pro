@@ -104,6 +104,7 @@ interface TeamData {
 }
 
 const TIMEOUT_DURATION = 60; // 1 minute countdown
+const MEDICAL_DURATION = 300; // 5 minutes countdown
 
 const MatchScoring = () => {
   const { matchId } = useParams<{ matchId: string }>();
