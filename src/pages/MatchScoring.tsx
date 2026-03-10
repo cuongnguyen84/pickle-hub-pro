@@ -479,9 +479,9 @@ const MatchScoring = () => {
     const entry: HistoryEntry = { action: 'medical', side };
     setLocalHistory(prev => [...prev, entry]);
 
-    // Start countdown
+    // Start countdown - medical is 5 minutes
     setActiveTimeout({ side, type: 'medical' });
-    setCountdownSeconds(TIMEOUT_DURATION);
+    setCountdownSeconds(MEDICAL_DURATION);
   };
 
   // Cancel active timeout countdown
