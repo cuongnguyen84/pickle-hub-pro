@@ -157,13 +157,13 @@ const MatchScoring = () => {
   // Timeout countdown
   const [activeTimeout, setActiveTimeout] = useState<{ side: 1 | 2; type: 'timeout' | 'medical' } | null>(null);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(0);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Match timer (kept internally but not displayed as clock)
   const [timerStartedAt, setTimerStartedAt] = useState<string | null>(null);
   const [timerElapsed, setTimerElapsed] = useState<number>(0);
 
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Timeout countdown effect
   useEffect(() => {
@@ -1202,43 +1202,58 @@ const MatchScoring = () => {
           </CardContent>
         </Card>
 
-        {/* Timeout settings (before match starts) */}
+        {/* Pre-match settings */}
         {canInteract && !matchStarted && (
           <Card>
-            <CardContent className="py-4 space-y-3">
+            <CardContent className="py-4 space-y-4">
               <h4 className="text-sm font-semibold">Cài đặt trận đấu</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-muted-foreground">Số lần Time Out</label>
-                  <Select value={String(maxTimeouts)} onValueChange={(v) => setMaxTimeouts(Number(v))}>
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 lần</SelectItem>
-                      <SelectItem value="2">2 lần</SelectItem>
-                      <SelectItem value="3">3 lần</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Bên giao bóng</label>
-                  <Select value={String(localServingSide)} onValueChange={(v) => {
-                    const newVal = Number(v);
-                    setLocalServingSide(newVal);
-                    persistState({ serving_side: newVal });
-                  }}>
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">{formatPlayerName(localSidesSwapped ? player2 : player1)}</SelectItem>
-                      <SelectItem value="2">{formatPlayerName(localSidesSwapped ? player1 : player2)}</SelectItem>
-                    </SelectContent>
-                  </Select>
+              
+              {/* Serving side selection - prominent */}
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground font-medium">Chọn bên giao bóng trước</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={localServingSide === 1 ? 'default' : 'outline'}
+                    className={cn('h-14 text-sm font-semibold flex flex-col gap-0.5', localServingSide === 1 && 'ring-2 ring-primary ring-offset-2')}
+                    onClick={() => {
+                      setLocalServingSide(1);
+                      persistState({ serving_side: 1 });
+                    }}
+                  >
+                    <span>🏓</span>
+                    <span>{formatPlayerName(localSidesSwapped ? player2 : player1)}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={localServingSide === 2 ? 'default' : 'outline'}
+                    className={cn('h-14 text-sm font-semibold flex flex-col gap-0.5', localServingSide === 2 && 'ring-2 ring-primary ring-offset-2')}
+                    onClick={() => {
+                      setLocalServingSide(2);
+                      persistState({ serving_side: 2 });
+                    }}
+                  >
+                    <span>🏓</span>
+                    <span>{formatPlayerName(localSidesSwapped ? player1 : player2)}</span>
+                  </Button>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Y tế: mặc định 1 lần mỗi bên</p>
+
+              {/* Timeout settings */}
+              <div>
+                <label className="text-xs text-muted-foreground">Số lần Time Out mỗi bên</label>
+                <Select value={String(maxTimeouts)} onValueChange={(v) => setMaxTimeouts(Number(v))}>
+                  <SelectTrigger className="h-8 text-sm mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 lần</SelectItem>
+                    <SelectItem value="2">2 lần</SelectItem>
+                    <SelectItem value="3">3 lần</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">Y tế: mặc định 1 lần mỗi bên (5 phút)</p>
             </CardContent>
           </Card>
         )}
