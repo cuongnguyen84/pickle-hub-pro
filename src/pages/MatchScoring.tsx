@@ -157,13 +157,13 @@ const MatchScoring = () => {
   // Timeout countdown
   const [activeTimeout, setActiveTimeout] = useState<{ side: 1 | 2; type: 'timeout' | 'medical' } | null>(null);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(0);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Match timer (kept internally but not displayed as clock)
   const [timerStartedAt, setTimerStartedAt] = useState<string | null>(null);
   const [timerElapsed, setTimerElapsed] = useState<number>(0);
 
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Timeout countdown effect
   useEffect(() => {
