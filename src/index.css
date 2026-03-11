@@ -139,10 +139,10 @@
   html {
     @apply antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Use background-elevated to match BottomNav - prevents iOS gap color mismatch */
     background-color: hsl(var(--background-elevated));
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    /* Prevent iOS rubber-band from revealing gaps */
     height: 100%;
     overflow: hidden;
   }
@@ -154,6 +154,8 @@
     position: relative;
     height: 100%;
     overflow: hidden;
+    /* Ensure the very bottom of the viewport has the nav color */
+    background-color: hsl(var(--background-elevated));
   }
 
   #root {
@@ -161,6 +163,8 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+    /* Main content area uses regular background */
+    background-color: hsl(var(--background));
   }
 
 
