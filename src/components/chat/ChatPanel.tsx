@@ -236,7 +236,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   const prevMessagesLengthRef = useRef(messages.length);
   // Track last fetch time to debounce user data fetching (for 1000+ viewers optimization)
   const lastFetchTimeRef = useRef<number>(0);
-  const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const fetchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch creator status and avatar for users in messages (optimized batch fetch)
   useEffect(() => {
