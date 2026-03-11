@@ -22,14 +22,12 @@ const config: CapacitorConfig = {
 
   // iOS-specific configuration
   ios: {
-    // Allow inline video playback (critical for livestreams)
     allowsLinkPreview: false,
     scrollEnabled: true,
-    // Content inset adjustment for safe areas
-    contentInset: 'automatic',
-    // Background modes
-    backgroundColor: '#111317',
-    // Prefer using WKWebView with inline media playback
+    // Let CSS handle safe areas entirely - prevent WKWebView from adding its own insets
+    contentInset: 'never',
+    // Match --background-elevated HSL(220, 13%, 11%) so no color mismatch at bottom
+    backgroundColor: '#181b20',
     preferredContentMode: 'mobile'
   },
 
