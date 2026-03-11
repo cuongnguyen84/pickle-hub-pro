@@ -48,9 +48,9 @@ export const MuxPlayer = forwardRef<MuxPlayerHandle, MuxPlayerProps>(({
 
   // Refs for health monitoring
   const lastCurrentTimeRef = useRef<number>(0);
-  const stallTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const healthCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlayingRef = useRef(false);
 
   // Cleanup function

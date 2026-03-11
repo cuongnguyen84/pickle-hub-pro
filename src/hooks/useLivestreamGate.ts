@@ -44,7 +44,7 @@ export function useLivestreamGate({
 }: UseLivestreamGateOptions): UseLivestreamGateResult {
   const [secondsRemaining, setSecondsRemaining] = useState(previewSeconds);
   const [isGated, setIsGated] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Skip gate entirely if authenticated or disabled
   const shouldGate = isEnabled && !isAuthenticated;

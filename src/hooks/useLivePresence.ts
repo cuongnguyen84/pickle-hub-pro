@@ -20,7 +20,7 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const hasTrackedRef = useRef(false);
   const retryCountRef = useRef(0);
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const MAX_RETRIES = 3;
   const RETRY_DELAYS = [2000, 4000, 8000]; // Exponential backoff

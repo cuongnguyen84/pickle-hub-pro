@@ -17,7 +17,7 @@ import { isNativeApp } from '@/lib/capacitor-utils';
 
 // Track if OAuth flow is in progress
 let oauthInProgress = false;
-let pollInterval: NodeJS.Timeout | null = null;
+let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 export const setOAuthInProgress = (value: boolean) => {
   oauthInProgress = value;
