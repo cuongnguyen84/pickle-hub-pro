@@ -1174,8 +1174,8 @@ const MatchScoring = () => {
               </div>
             )}
 
-            {/* Score Controls */}
-            {canInteract && (
+            {/* Score Controls - only after match started */}
+            {canInteract && matchStarted && (
               <div className="grid grid-cols-2 gap-4 pt-2">
                 {/* Left side controls */}
                 <div className="space-y-2">
