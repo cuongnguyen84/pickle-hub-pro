@@ -1055,8 +1055,8 @@ const MatchScoring = () => {
               </div>
             )}
 
-            {/* Set scores table (multi-set) */}
-            {isMultiSet && localSetScores.length > 0 && (
+            {/* Set scores table (multi-set) - only after match started */}
+            {matchStarted && isMultiSet && localSetScores.length > 0 && (
               <div className="flex justify-center gap-3 text-sm">
                 {localSetScores.map((s, i) => (
                   <div key={i} className="text-center">
@@ -1076,36 +1076,38 @@ const MatchScoring = () => {
             )}
 
             {/* Multi-set: sets won summary */}
-            {isMultiSet && (
+            {matchStarted && isMultiSet && (
               <div className="flex justify-center gap-6 text-xs text-muted-foreground">
                 <span>{localSidesSwapped ? setsWon.s2 : setsWon.s1} {t.quickTable.matchScoring.setsWon}</span>
                 <span>{localSidesSwapped ? setsWon.s1 : setsWon.s2} {t.quickTable.matchScoring.setsWon}</span>
               </div>
             )}
 
-            {/* Current score display: score1 - score2 - serverNumber */}
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-6xl font-bold tabular-nums">{leftScore}</span>
-              <span className="text-2xl text-muted-foreground">–</span>
-              <span className="text-6xl font-bold tabular-nums">{rightScore}</span>
-              {table?.is_doubles && matchStarted && (
-                <>
-                  <span className="text-2xl text-muted-foreground">–</span>
-                  <button
-                    onClick={handleToggleServerNumber}
-                    disabled={!canInteract}
-                    className={cn(
-                      "text-4xl font-bold tabular-nums px-3 py-1 rounded-lg transition-colors",
-                      "bg-primary/10 text-primary hover:bg-primary/20",
-                      !canInteract && "opacity-50 cursor-default"
-                    )}
-                    title="Tay giao (bấm để đổi)"
-                  >
-                    {serverNumber}
-                  </button>
-                </>
-              )}
-            </div>
+            {/* Current score display: score1 - score2 - serverNumber - only after match started */}
+            {matchStarted && (
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-6xl font-bold tabular-nums">{leftScore}</span>
+                <span className="text-2xl text-muted-foreground">–</span>
+                <span className="text-6xl font-bold tabular-nums">{rightScore}</span>
+                {table?.is_doubles && (
+                  <>
+                    <span className="text-2xl text-muted-foreground">–</span>
+                    <button
+                      onClick={handleToggleServerNumber}
+                      disabled={!canInteract}
+                      className={cn(
+                        "text-4xl font-bold tabular-nums px-3 py-1 rounded-lg transition-colors",
+                        "bg-primary/10 text-primary hover:bg-primary/20",
+                        !canInteract && "opacity-50 cursor-default"
+                      )}
+                      title="Tay giao (bấm để đổi)"
+                    >
+                      {serverNumber}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Serving side selector + swap serve */}
             {canInteract && matchStarted && (
