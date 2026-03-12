@@ -21,78 +21,61 @@ const BottomNav = () => {
   const isAndroidDevice = isAndroid();
   const isNative = isNativeApp();
 
-  // Calculate safe bottom padding based on platform
-  // Android navigation bar needs extra space to avoid overlap
+  // Keep safe area inside nav instead of drawing a large overlay that can hide content
   const getBottomPadding = () => {
     if (isAndroidDevice && isNative) {
-      return 'max(env(safe-area-inset-bottom, 16px), 16px)';
+      return 'max(env(safe-area-inset-bottom, 14px), 14px)';
     }
     if (isIOSDevice) {
-      return 'max(env(safe-area-inset-bottom, 0px), 8px)';
+      return 'env(safe-area-inset-bottom, 0px)';
     }
     return '0px';
   };
 
-  // Calculate nav height - make it larger to avoid overlap with system nav
   const getNavHeight = () => {
-    if (isAndroidDevice && isNative) return '72px'; // Taller for Android
+    if (isAndroidDevice && isNative) return '72px';
     if (isIOSDevice) return '68px';
     return '56px';
   };
 
   return (
-    <>
-      {/* 
-        Fixed spacer that fills the entire bottom of the screen behind everything.
-        This prevents ANY gap from showing regardless of scroll/bounce behavior.
-        Uses the same color as the nav bar so it's seamless.
-      */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-[9998] md:hidden bg-background-elevated pointer-events-none"
-        style={{ 
-          height: '50vh',
-          transform: 'translateY(50%)',
-        }}
-        aria-hidden="true"
-      />
-      <nav 
-        className="fixed bottom-0 left-0 right-0 z-[9999] md:hidden bg-background-elevated border-t border-border-subtle"
-        style={{ 
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        }}
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-[9999] md:hidden bg-background-elevated border-t border-border-subtle"
+      style={{
+        paddingBottom: getBottomPadding(),
+      }}
+    >
+      <div
+        className="flex items-stretch justify-around"
+        style={{ minHeight: getNavHeight() }}
       >
-        <div 
-          className="flex items-stretch justify-around"
-          style={{ minHeight: getNavHeight() }}
-        >
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path || 
-              (item.path !== "/" && location.pathname.startsWith(item.path));
-            const Icon = item.icon;
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1.5 flex-1 py-3",
-                  "transition-colors duration-200 relative",
-                  isActive 
-                    ? "text-primary" 
-                    : "text-foreground-muted hover:text-foreground-secondary"
-                )}
-              >
-                <Icon 
-                  className="w-7 h-7" 
-                  strokeWidth={isActive ? 2.5 : 1.8} 
-                />
-                <span className="text-xs font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-    </>
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path ||
+            (item.path !== "/" && location.pathname.startsWith(item.path));
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1.5 flex-1 py-3",
+                "transition-colors duration-200 relative",
+                isActive
+                  ? "text-primary"
+                  : "text-foreground-muted hover:text-foreground-secondary"
+              )}
+            >
+              <Icon
+                className="w-7 h-7"
+                strokeWidth={isActive ? 2.5 : 1.8}
+              />
+              <span className="text-xs font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 };
 

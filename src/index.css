@@ -139,31 +139,36 @@
   html {
     @apply antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    /* Use background-elevated to match BottomNav - prevents iOS gap color mismatch */
+    /* Match native container color and lock viewport to avoid iOS rubber-band gaps */
     background-color: hsl(var(--background-elevated));
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
     height: 100%;
     overflow: hidden;
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply text-foreground font-sans;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    overscroll-behavior: none;
-    position: relative;
-    height: 100%;
-    overflow: hidden;
-    /* Ensure the very bottom of the viewport has the nav color */
     background-color: hsl(var(--background-elevated));
+    overscroll-behavior: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
   }
 
   #root {
     display: flex;
     flex-direction: column;
+    position: fixed;
+    inset: 0;
+    width: 100%;
     height: 100%;
     overflow: hidden;
-    /* Main content area uses regular background */
     background-color: hsl(var(--background));
   }
 
