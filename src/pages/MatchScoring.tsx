@@ -1246,9 +1246,9 @@ const MatchScoring = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 lần</SelectItem>
-                    <SelectItem value="2">2 lần</SelectItem>
-                    <SelectItem value="3">3 lần</SelectItem>
+                    <SelectItem value="1">1</SelectItem>
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
