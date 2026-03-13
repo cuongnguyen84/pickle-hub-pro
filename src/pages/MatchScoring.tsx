@@ -245,23 +245,20 @@ const MatchScoring = () => {
         setPlayer2(p2 as PlayerData);
       }
 
-      // Fetch teams for doubles
+      // Fetch teams for doubles - match by player name
       if (tableData?.is_doubles) {
-        if (md.player1_id) {
-          const { data: t1 } = await supabase
-            .from('quick_table_teams')
-            .select('id, player1_display_name, player2_display_name, player1_user_id')
-            .eq('table_id', md.table_id)
-            .maybeSingle() as any;
-          setTeam1(t1 as TeamData);
-        }
-        if (md.player2_id) {
-          const { data: t2 } = await supabase
-            .from('quick_table_teams')
-            .select('id, player1_display_name, player2_display_name, player1_user_id')
-            .eq('table_id', md.table_id)
-            .maybeSingle() as any;
-          setTeam2(t2 as TeamData);
+        const { data: allTeams } = await supabase
+          .from('quick_table_teams')
+          .select('id, player1_display_name, player2_display_name')
+          .eq('table_id', md.table_id);
+        if (allTeams && allTeams.length > 0) {
+          // Match teams to players by player1_display_name
+          const p1Data = md.player1_id ? (await supabase.from('quick_table_players').select('name').eq('id', md.player1_id).maybeSingle()).data : null;
+          const p2Data = md.player2_id ? (await supabase.from('quick_table_players').select('name').eq('id', md.player2_id).maybeSingle()).data : null;
+          const t1 = p1Data ? allTeams.find(t => t.player1_display_name === p1Data.name) : null;
+          const t2 = p2Data ? allTeams.find(t => t.player1_display_name === p2Data.name) : null;
+          setTeam1((t1 as TeamData) ?? null);
+          setTeam2((t2 as TeamData) ?? null);
         }
       }
 
