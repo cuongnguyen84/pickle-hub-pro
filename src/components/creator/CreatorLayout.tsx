@@ -238,6 +238,7 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
             top: 'calc(3.5rem + env(safe-area-inset-top))',
             bottom: mobileBottomNavOffset,
           }}
+        >
           <nav className="p-4">
             <Link
               to="/"
