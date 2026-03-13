@@ -65,6 +65,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const isIOSDevice = isIOS();
   const isAndroidDevice = isAndroid();
   const isNative = isNativeApp();
+  const mobileBottomNavOffset = (isAndroidDevice && isNative)
+    ? 'calc(72px + max(env(safe-area-inset-bottom, 14px), 14px))'
+    : isIOSDevice
+      ? 'calc(68px + env(safe-area-inset-bottom, 0px))'
+      : '56px';
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -139,7 +144,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="h-full min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-[100dvh] min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-14 flex items-center gap-4 px-4"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -154,9 +159,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <span className="font-semibold">{t.admin.dashboard}</span>
       </header>
 
-      {/* Mobile spacer for fixed header */}
-      <div className="lg:hidden h-14 flex-shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
-
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -168,10 +170,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Mobile Drawer - shows remaining nav items + logout */}
       {sidebarOpen && (
         <aside
-          className="fixed top-14 left-0 z-50 w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden shadow-xl"
-          style={{ 
+          className="fixed left-0 z-50 w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden shadow-xl"
+          style={{
             top: 'calc(3.5rem + env(safe-area-inset-top))',
-            height: 'calc(100vh - 3.5rem - env(safe-area-inset-top))' 
+            bottom: mobileBottomNavOffset,
           }}
         >
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -328,7 +330,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        <main className="flex-1 min-h-0 p-4 md:p-6 lg:p-8 overflow-y-auto overscroll-y-contain pb-24 lg:pb-8">
+        <main
+          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-4 pb-24 pt-[calc(3.5rem+env(safe-area-inset-top)+1rem)] md:px-6 md:pb-28 md:pt-[calc(3.5rem+env(safe-area-inset-top)+1.5rem)] lg:px-8 lg:py-8 lg:pt-8"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           {children}
         </main>
       </div>

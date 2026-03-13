@@ -43,6 +43,11 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
   const isIOSDevice = isIOS();
   const isAndroidDevice = isAndroid();
   const isNative = isNativeApp();
+  const mobileBottomNavOffset = (isAndroidDevice && isNative)
+    ? 'calc(72px + max(env(safe-area-inset-bottom, 14px), 14px))'
+    : isIOSDevice
+      ? 'calc(68px + env(safe-area-inset-bottom, 0px))'
+      : '56px';
 
   // Loading state
   if (isLoading) {
@@ -109,7 +114,7 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
   }
 
   return (
-    <div className="h-full min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-[100dvh] min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
       {/* Mobile Header with menu toggle */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border-subtle pt-[env(safe-area-inset-top)]">
         <div className="flex items-center justify-between h-14 px-4">
@@ -128,9 +133,6 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
           <div className="w-9" /> {/* Spacer for centering */}
         </div>
       </div>
-
-      {/* Mobile spacer for fixed header */}
-      <div className="lg:hidden h-14 flex-shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
 
       {/* Mobile Tab Navigation */}
       <nav
@@ -230,7 +232,13 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
 
       {/* Mobile Drawer - Only Home link */}
       {sidebarOpen && (
-        <aside className="fixed top-14 left-0 z-50 w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden shadow-xl" style={{ height: 'calc(100vh - 3.5rem - env(safe-area-inset-top))' }}>
+        <aside
+          className="fixed left-0 z-50 w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden shadow-xl"
+          style={{
+            top: 'calc(3.5rem + env(safe-area-inset-top))',
+            bottom: mobileBottomNavOffset,
+          }}
+        >
           <nav className="p-4">
             <Link
               to="/"
@@ -245,8 +253,11 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
       )}
 
       {/* Main content */}
-      <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-24 lg:pb-0">
-        <div className="p-4 lg:p-8">
+      <main
+        className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-24 lg:pb-0"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div className="px-4 pb-4 pt-[calc(3.5rem+env(safe-area-inset-top)+1rem)] lg:p-8">
           {/* Page Header - Mobile friendly */}
           {(title || actions) && (
             <div className="mb-6">
