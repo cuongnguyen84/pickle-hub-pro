@@ -322,6 +322,21 @@ const QuickTables = () => {
                         </div>
                       </div>
 
+                      {/* Default sets selection */}
+                      <div className="space-y-1">
+                        <Label className="text-sm">{t.quickTable.matchScoring.defaultSets}</Label>
+                        <Select value={String(defaultSets)} onValueChange={(v) => setDefaultSets(Number(v))}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Best of 1</SelectItem>
+                            <SelectItem value="3">Best of 3</SelectItem>
+                            <SelectItem value="5">Best of 5</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div className="flex items-start space-x-3">
                         <Checkbox
                           id="requires-skill"
