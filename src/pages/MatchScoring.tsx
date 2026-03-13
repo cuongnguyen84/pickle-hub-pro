@@ -90,6 +90,7 @@ interface TableData {
   status: string;
   format: string;
   is_doubles: boolean;
+  default_sets: number | null;
 }
 
 interface GroupData {
