@@ -109,7 +109,7 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row w-full">
+    <div className="h-full min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
       {/* Mobile Header with menu toggle */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border-subtle pt-[env(safe-area-inset-top)]">
         <div className="flex items-center justify-between h-14 px-4">
