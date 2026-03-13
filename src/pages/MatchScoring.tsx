@@ -1205,7 +1205,7 @@ const MatchScoring = () => {
         {canInteract && !matchStarted && (
           <Card>
             <CardContent className="py-4 space-y-4">
-              <h4 className="text-sm font-semibold">Cài đặt trận đấu</h4>
+              <h4 className="text-sm font-semibold">{t.quickTable.matchScoring.matchSettings}</h4>
               
               {/* Serving side selection - prominent */}
               <div className="space-y-2">
