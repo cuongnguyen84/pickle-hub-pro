@@ -1240,7 +1240,7 @@ const MatchScoring = () => {
 
               {/* Timeout settings */}
               <div>
-                <label className="text-xs text-muted-foreground">Số lần Time Out mỗi bên</label>
+                <label className="text-xs text-muted-foreground">{t.quickTable.matchScoring.timeoutsPerSide}</label>
                 <Select value={String(maxTimeouts)} onValueChange={(v) => setMaxTimeouts(Number(v))}>
                   <SelectTrigger className="h-8 text-sm mt-1">
                     <SelectValue />
