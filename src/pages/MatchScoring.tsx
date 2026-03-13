@@ -1097,7 +1097,7 @@ const MatchScoring = () => {
                         "bg-primary/10 text-primary hover:bg-primary/20",
                         !canInteract && "opacity-50 cursor-default"
                       )}
-                      title="Tay giao (bấm để đổi)"
+                      title={t.quickTable.matchScoring.serverNumberTitle}
                     >
                       {serverNumber}
                     </button>
