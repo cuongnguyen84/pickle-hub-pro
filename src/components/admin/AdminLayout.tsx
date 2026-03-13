@@ -139,7 +139,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+    <div className="h-full min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-14 flex items-center gap-4 px-4"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -327,8 +327,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto pb-24 lg:pb-8">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        <main className="flex-1 min-h-0 p-4 md:p-6 lg:p-8 overflow-y-auto overscroll-y-contain pb-24 lg:pb-8">
           {children}
         </main>
       </div>
