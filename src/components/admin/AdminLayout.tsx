@@ -170,10 +170,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Mobile Drawer - shows remaining nav items + logout */}
       {sidebarOpen && (
         <aside
-          className="fixed top-14 left-0 z-50 w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden shadow-xl"
-          style={{ 
+          className="fixed left-0 z-50 w-64 bg-surface border-r border-border-subtle flex flex-col lg:hidden shadow-xl"
+          style={{
             top: 'calc(3.5rem + env(safe-area-inset-top))',
-            height: 'calc(100vh - 3.5rem - env(safe-area-inset-top))' 
+            bottom: mobileBottomNavOffset,
           }}
         >
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
