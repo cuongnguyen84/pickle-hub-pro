@@ -47,6 +47,7 @@ const QuickTables = () => {
   const [registrationMessage, setRegistrationMessage] = useState("");
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [isDoubles, setIsDoubles] = useState(true); // Default to doubles
+  const [defaultSets, setDefaultSets] = useState<number>(1);
 
   // User's tables
   const [userTables, setUserTables] = useState<QuickTable[]>([]);
