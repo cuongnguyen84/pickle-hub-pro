@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Play, RotateCcw, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { optimizeImageUrl } from "@/lib/image-utils";
 
 interface ReplayCardProps {
   id: string;
