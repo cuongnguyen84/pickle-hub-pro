@@ -1111,7 +1111,7 @@ const MatchScoring = () => {
               <div className="flex items-center justify-center gap-3">
                 <Button variant="ghost" size="sm" onClick={handleSwapServe} disabled={updating} className="gap-1">
                   <RefreshCw className="w-4 h-4" />
-                  Đổi giao
+                  {t.quickTable.matchScoring.swapServe}
                 </Button>
                 {table?.is_doubles && (
                   <span className="text-xs text-muted-foreground">
