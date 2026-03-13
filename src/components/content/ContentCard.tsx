@@ -71,7 +71,7 @@ const ContentCard = ({
       )}>
         {thumbnail ? (
           <img
-            src={thumbnail}
+            src={optimizeImageUrl(thumbnail, { width: 640 })}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
