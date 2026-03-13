@@ -173,7 +173,7 @@ const MatchScoring = () => {
           if (prev <= 1) {
             clearInterval(countdownRef.current!);
             setActiveTimeout(null);
-            toast.info('⏰ Hết thời gian time out!');
+            toast.info(`⏰ ${t.quickTable.matchScoring.timeoutExpired}`);
             return 0;
           }
           return prev - 1;
