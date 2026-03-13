@@ -466,7 +466,7 @@ const MatchScoring = () => {
       return;
     }
     if (side === 2 && medicalUsed2 >= maxMedical) {
-      toast.error('Đã hết lượt Y tế!');
+      toast.error(t.quickTable.matchScoring.medicalExhausted);
       return;
     }
 
