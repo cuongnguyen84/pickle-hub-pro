@@ -953,7 +953,7 @@ const MatchScoring = () => {
                 {formatCountdown(countdownSeconds)}
               </div>
               <Button variant="outline" size="sm" onClick={handleCancelCountdown}>
-                Kết thúc sớm
+                {t.quickTable.matchScoring.endEarly}
               </Button>
             </CardContent>
           </Card>
