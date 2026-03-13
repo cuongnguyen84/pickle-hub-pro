@@ -1038,7 +1038,7 @@ const MatchScoring = () => {
                   className="text-xs h-8"
                 />
                 <Input
-                  placeholder="Ghi chú VĐV phải..."
+                  placeholder={t.quickTable.matchScoring.noteRightPlaceholder}
                   value={noteRight}
                   onChange={(e) => setNoteRight(e.target.value)}
                   className="text-xs h-8"
