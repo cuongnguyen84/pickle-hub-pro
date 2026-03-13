@@ -8,6 +8,11 @@ const BottomNav = () => {
   const { t } = useI18n();
   const location = useLocation();
 
+  // Hide on admin and creator routes (they have their own nav)
+  if (location.pathname.startsWith("/admin") || location.pathname.startsWith("/creator")) {
+    return null;
+  }
+
   const navItems = [
     { path: "/", label: t.nav.home, icon: Home },
     { path: "/live", label: t.nav.live, icon: Radio },
