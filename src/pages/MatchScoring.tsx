@@ -1032,7 +1032,7 @@ const MatchScoring = () => {
             {canInteract && (
               <div className="grid grid-cols-2 gap-2">
                 <Input
-                  placeholder="Ghi chú VĐV trái..."
+                  placeholder={t.quickTable.matchScoring.noteLeftPlaceholder}
                   value={noteLeft}
                   onChange={(e) => setNoteLeft(e.target.value)}
                   className="text-xs h-8"
