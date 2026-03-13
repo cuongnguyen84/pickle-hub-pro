@@ -26,6 +26,7 @@ export function optimizeImageUrl(
   if (width) params.set('width', String(width));
   if (height) params.set('height', String(height));
   params.set('quality', String(quality));
+  params.set('format', 'webp');
 
   const separator = transformedUrl.includes('?') ? '&' : '?';
   return `${transformedUrl}${separator}${params.toString()}`;
