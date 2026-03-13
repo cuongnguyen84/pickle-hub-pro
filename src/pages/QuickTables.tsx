@@ -136,6 +136,10 @@ const QuickTables = () => {
     );
 
     if (table) {
+      // Update default_sets if not 1
+      if (defaultSets > 1) {
+        await supabase.from('quick_tables').update({ default_sets: defaultSets } as any).eq('id', table.id);
+      }
       // If registration required, go to view page directly; otherwise setup page
       if (requiresRegistration) {
         navigate(`/tools/quick-tables/${table.share_id}`);
