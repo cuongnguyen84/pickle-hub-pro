@@ -1143,6 +1143,21 @@ export interface Translations {
       currentSet: string;
       timerRunning: string;
       startMatch: string;
+      timeoutExpired: string;
+      timeoutExhausted: string;
+      medicalExhausted: string;
+      timeoutLabel: string;
+      medicalLabel: string;
+      endEarly: string;
+      noteLeftPlaceholder: string;
+      noteRightPlaceholder: string;
+      serverNumberTitle: string;
+      serverNumberServing: string;
+      matchSettings: string;
+      selectServingSide: string;
+      timeoutsPerSide: string;
+      medicalNote: string;
+      defaultSets: string;
     };
   };
   // Team Match SEO
