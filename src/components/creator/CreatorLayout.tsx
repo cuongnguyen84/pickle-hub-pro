@@ -4,9 +4,6 @@ import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { cn } from "@/lib/utils";
 import { getLoginUrl } from "@/lib/auth-config";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
-import { useCreatorAuth } from "@/hooks/useCreatorAuth";
-import { cn } from "@/lib/utils";
-import { getLoginUrl } from "@/lib/auth-config";
 import {
   LayoutDashboard,
   Video,
