@@ -155,6 +155,10 @@ const LiveCard = ({
                   src={optimizeImageUrl(organizationLogo, { width: 56, height: 56 })}
                   alt={organizationName}
                   className="w-4 h-4 rounded-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  width={16}
+                  height={16}
                 />
               ) : (
                 <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
