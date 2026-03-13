@@ -1143,6 +1143,21 @@ export interface Translations {
       currentSet: string;
       timerRunning: string;
       startMatch: string;
+      timeoutExpired: string;
+      timeoutExhausted: string;
+      medicalExhausted: string;
+      timeoutLabel: string;
+      medicalLabel: string;
+      endEarly: string;
+      noteLeftPlaceholder: string;
+      noteRightPlaceholder: string;
+      serverNumberTitle: string;
+      serverNumberServing: string;
+      matchSettings: string;
+      selectServingSide: string;
+      timeoutsPerSide: string;
+      medicalNote: string;
+      defaultSets: string;
     };
   };
   // Team Match SEO
@@ -2799,7 +2814,7 @@ export const vi: Translations = {
       set: "Set",
       start: "Bắt đầu",
       pause: "Tạm dừng",
-      serving: "Giao bóng",
+      serving: "Giao",
       timeout: "Timeout",
       endSet: "Kết thúc set",
       endSetConfirmTitle: "Kết thúc set?",
@@ -2811,6 +2826,21 @@ export const vi: Translations = {
       currentSet: "Set hiện tại",
       timerRunning: "Đang chạy",
       startMatch: "Bắt đầu trận",
+      timeoutExpired: "Hết thời gian time out!",
+      timeoutExhausted: "Đã hết lượt Time Out!",
+      medicalExhausted: "Đã hết lượt Y tế!",
+      timeoutLabel: "Time Out",
+      medicalLabel: "Y tế",
+      endEarly: "Kết thúc sớm",
+      noteLeftPlaceholder: "Ghi chú VĐV trái...",
+      noteRightPlaceholder: "Ghi chú VĐV phải...",
+      serverNumberTitle: "Tay giao (bấm để đổi)",
+      serverNumberServing: "Tay {n} đang giao",
+      matchSettings: "Cài đặt trận đấu",
+      selectServingSide: "Chọn bên giao bóng trước",
+      timeoutsPerSide: "Số lần Time Out mỗi bên",
+      medicalNote: "Y tế: mặc định 1 lần mỗi bên (5 phút)",
+      defaultSets: "Số set mặc định",
     },
   },
   // Team Match SEO

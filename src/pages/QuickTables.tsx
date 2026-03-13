@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { useI18n } from "@/i18n";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield, ClipboardList, ChevronDown } from "lucide-react";
@@ -47,6 +49,7 @@ const QuickTables = () => {
   const [registrationMessage, setRegistrationMessage] = useState("");
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [isDoubles, setIsDoubles] = useState(true); // Default to doubles
+  const [defaultSets, setDefaultSets] = useState<number>(1);
 
   // User's tables
   const [userTables, setUserTables] = useState<QuickTable[]>([]);
@@ -135,6 +138,10 @@ const QuickTables = () => {
     );
 
     if (table) {
+      // Update default_sets if not 1
+      if (defaultSets > 1) {
+        await supabase.from('quick_tables').update({ default_sets: defaultSets } as any).eq('id', table.id);
+      }
       // If registration required, go to view page directly; otherwise setup page
       if (requiresRegistration) {
         navigate(`/tools/quick-tables/${table.share_id}`);
@@ -239,7 +246,6 @@ const QuickTables = () => {
             </p>
           </header>
 
-
           {/* Step 1: Player Count */}
           {step === "count" && (
             <Card>
@@ -314,6 +320,21 @@ const QuickTables = () => {
                             {t.quickTable.doublesModeDesc || 'Players register as pairs and can invite partners via link'}
                           </p>
                         </div>
+                      </div>
+
+                      {/* Default sets selection */}
+                      <div className="space-y-1">
+                        <Label className="text-sm">{t.quickTable.matchScoring.defaultSets}</Label>
+                        <Select value={String(defaultSets)} onValueChange={(v) => setDefaultSets(Number(v))}>
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Best of 1</SelectItem>
+                            <SelectItem value="3">Best of 3</SelectItem>
+                            <SelectItem value="5">Best of 5</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="flex items-start space-x-3">

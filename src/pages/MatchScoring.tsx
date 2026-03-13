@@ -90,6 +90,7 @@ interface TableData {
   status: string;
   format: string;
   is_doubles: boolean;
+  default_sets: number | null;
 }
 
 interface GroupData {
@@ -173,7 +174,7 @@ const MatchScoring = () => {
           if (prev <= 1) {
             clearInterval(countdownRef.current!);
             setActiveTimeout(null);
-            toast.info('⏰ Hết thời gian time out!');
+            toast.info(`⏰ ${t.quickTable.matchScoring.timeoutExpired}`);
             return 0;
           }
           return prev - 1;
@@ -222,10 +223,17 @@ const MatchScoring = () => {
       // Fetch table
       const { data: tableData } = await supabase
         .from('quick_tables')
-        .select('id, name, share_id, creator_user_id, status, format, is_doubles')
+        .select('id, name, share_id, creator_user_id, status, format, is_doubles, default_sets')
         .eq('id', md.table_id)
         .maybeSingle();
       setTable(tableData as TableData);
+
+      // Apply table's default_sets to match if match still has default value
+      if (tableData?.default_sets && tableData.default_sets > 1 && (md.total_sets === 1 || !md.total_sets)) {
+        setLocalTotalSets(tableData.default_sets);
+        // Also persist to match
+        await supabase.from('quick_table_matches').update({ total_sets: tableData.default_sets } as any).eq('id', matchId);
+      }
 
       // Fetch players
       if (md.player1_id) {
@@ -245,23 +253,20 @@ const MatchScoring = () => {
         setPlayer2(p2 as PlayerData);
       }
 
-      // Fetch teams for doubles
+      // Fetch teams for doubles - match by player name
       if (tableData?.is_doubles) {
-        if (md.player1_id) {
-          const { data: t1 } = await supabase
-            .from('quick_table_teams')
-            .select('id, player1_display_name, player2_display_name, player1_user_id')
-            .eq('table_id', md.table_id)
-            .maybeSingle() as any;
-          setTeam1(t1 as TeamData);
-        }
-        if (md.player2_id) {
-          const { data: t2 } = await supabase
-            .from('quick_table_teams')
-            .select('id, player1_display_name, player2_display_name, player1_user_id')
-            .eq('table_id', md.table_id)
-            .maybeSingle() as any;
-          setTeam2(t2 as TeamData);
+        const { data: allTeams } = await supabase
+          .from('quick_table_teams')
+          .select('id, player1_display_name, player2_display_name')
+          .eq('table_id', md.table_id);
+        if (allTeams && allTeams.length > 0) {
+          // Match teams to players by player1_display_name
+          const p1Data = md.player1_id ? (await supabase.from('quick_table_players').select('name').eq('id', md.player1_id).maybeSingle()).data : null;
+          const p2Data = md.player2_id ? (await supabase.from('quick_table_players').select('name').eq('id', md.player2_id).maybeSingle()).data : null;
+          const t1 = p1Data ? allTeams.find(t => t.player1_display_name === p1Data.name) : null;
+          const t2 = p2Data ? allTeams.find(t => t.player1_display_name === p2Data.name) : null;
+          setTeam1((t1 as TeamData) ?? null);
+          setTeam2((t2 as TeamData) ?? null);
         }
       }
 
@@ -442,11 +447,11 @@ const MatchScoring = () => {
   const handleTimeout = (side: 1 | 2) => {
     if (isReadOnly || match?.status === 'completed') return;
     if (side === 1 && timeoutsUsed1 >= maxTimeouts) {
-      toast.error('Đã hết lượt Time Out!');
+      toast.error(t.quickTable.matchScoring.timeoutExhausted);
       return;
     }
     if (side === 2 && timeoutsUsed2 >= maxTimeouts) {
-      toast.error('Đã hết lượt Time Out!');
+      toast.error(t.quickTable.matchScoring.timeoutExhausted);
       return;
     }
 
@@ -465,11 +470,11 @@ const MatchScoring = () => {
   const handleMedical = (side: 1 | 2) => {
     if (isReadOnly || match?.status === 'completed') return;
     if (side === 1 && medicalUsed1 >= maxMedical) {
-      toast.error('Đã hết lượt Y tế!');
+      toast.error(t.quickTable.matchScoring.medicalExhausted);
       return;
     }
     if (side === 2 && medicalUsed2 >= maxMedical) {
-      toast.error('Đã hết lượt Y tế!');
+      toast.error(t.quickTable.matchScoring.medicalExhausted);
       return;
     }
 
@@ -950,13 +955,13 @@ const MatchScoring = () => {
           )}>
             <CardContent className="py-4 text-center space-y-2">
               <div className="text-sm font-medium">
-                {activeTimeout.type === 'timeout' ? '⏱️ TIME OUT' : '🏥 Y TẾ'} — {activeTimeout.side === leftSide ? formatPlayerName(leftPlayer) : formatPlayerName(rightPlayer)}
+                {activeTimeout.type === 'timeout' ? `⏱️ ${t.quickTable.matchScoring.timeoutLabel}` : `🏥 ${t.quickTable.matchScoring.medicalLabel}`} — {activeTimeout.side === leftSide ? formatPlayerName(leftPlayer) : formatPlayerName(rightPlayer)}
               </div>
               <div className="text-5xl font-bold font-mono tabular-nums">
                 {formatCountdown(countdownSeconds)}
               </div>
               <Button variant="outline" size="sm" onClick={handleCancelCountdown}>
-                Kết thúc sớm
+                {t.quickTable.matchScoring.endEarly}
               </Button>
             </CardContent>
           </Card>
@@ -1004,7 +1009,7 @@ const MatchScoring = () => {
                   </div>
                 )}
                 {localServingSide === leftSide && matchStarted && (
-                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 Giao</Badge>
+                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 {t.quickTable.matchScoring.serving}</Badge>
                 )}
                 {/* Timeout/Medical indicators */}
                 <div className="flex justify-center gap-0.5 flex-wrap">
@@ -1021,7 +1026,7 @@ const MatchScoring = () => {
                   </div>
                 )}
                 {localServingSide === rightSide && matchStarted && (
-                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 Giao</Badge>
+                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 {t.quickTable.matchScoring.serving}</Badge>
                 )}
                 {/* Timeout/Medical indicators */}
                 <div className="flex justify-center gap-0.5 flex-wrap">
@@ -1035,13 +1040,13 @@ const MatchScoring = () => {
             {canInteract && (
               <div className="grid grid-cols-2 gap-2">
                 <Input
-                  placeholder="Ghi chú VĐV trái..."
+                  placeholder={t.quickTable.matchScoring.noteLeftPlaceholder}
                   value={noteLeft}
                   onChange={(e) => setNoteLeft(e.target.value)}
                   className="text-xs h-8"
                 />
                 <Input
-                  placeholder="Ghi chú VĐV phải..."
+                  placeholder={t.quickTable.matchScoring.noteRightPlaceholder}
                   value={noteRight}
                   onChange={(e) => setNoteRight(e.target.value)}
                   className="text-xs h-8"
@@ -1100,7 +1105,7 @@ const MatchScoring = () => {
                         "bg-primary/10 text-primary hover:bg-primary/20",
                         !canInteract && "opacity-50 cursor-default"
                       )}
-                      title="Tay giao (bấm để đổi)"
+                      title={t.quickTable.matchScoring.serverNumberTitle}
                     >
                       {serverNumber}
                     </button>
@@ -1114,11 +1119,11 @@ const MatchScoring = () => {
               <div className="flex items-center justify-center gap-3">
                 <Button variant="ghost" size="sm" onClick={handleSwapServe} disabled={updating} className="gap-1">
                   <RefreshCw className="w-4 h-4" />
-                  Đổi giao
+                  {t.quickTable.matchScoring.swapServe}
                 </Button>
                 {table?.is_doubles && (
                   <span className="text-xs text-muted-foreground">
-                    Tay {serverNumber} đang giao
+                    {t.quickTable.matchScoring.serverNumberServing.replace('{n}', String(serverNumber))}
                   </span>
                 )}
               </div>
@@ -1137,7 +1142,7 @@ const MatchScoring = () => {
                     disabled={(leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2) >= maxTimeouts || updating || !!activeTimeout}
                   >
                     <Timer className="w-3 h-3 mr-1" />
-                    Time Out ({leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2}/{maxTimeouts})
+                    {t.quickTable.matchScoring.timeoutLabel} ({leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2}/{maxTimeouts})
                   </Button>
                   <Button 
                     variant="outline" 
@@ -1147,7 +1152,7 @@ const MatchScoring = () => {
                     disabled={(leftSide === 1 ? medicalUsed1 : medicalUsed2) >= maxMedical || updating || !!activeTimeout}
                   >
                     <Heart className="w-3 h-3 mr-1" />
-                    Y tế ({leftSide === 1 ? medicalUsed1 : medicalUsed2}/{maxMedical})
+                    {t.quickTable.matchScoring.medicalLabel} ({leftSide === 1 ? medicalUsed1 : medicalUsed2}/{maxMedical})
                   </Button>
                 </div>
                 {/* Right side timeout/medical */}
@@ -1160,7 +1165,7 @@ const MatchScoring = () => {
                     disabled={(rightSide === 1 ? timeoutsUsed1 : timeoutsUsed2) >= maxTimeouts || updating || !!activeTimeout}
                   >
                     <Timer className="w-3 h-3 mr-1" />
-                    Time Out ({rightSide === 1 ? timeoutsUsed1 : timeoutsUsed2}/{maxTimeouts})
+                    {t.quickTable.matchScoring.timeoutLabel} ({rightSide === 1 ? timeoutsUsed1 : timeoutsUsed2}/{maxTimeouts})
                   </Button>
                   <Button 
                     variant="outline" 
@@ -1170,7 +1175,7 @@ const MatchScoring = () => {
                     disabled={(rightSide === 1 ? medicalUsed1 : medicalUsed2) >= maxMedical || updating || !!activeTimeout}
                   >
                     <Heart className="w-3 h-3 mr-1" />
-                    Y tế ({rightSide === 1 ? medicalUsed1 : medicalUsed2}/{maxMedical})
+                    {t.quickTable.matchScoring.medicalLabel} ({rightSide === 1 ? medicalUsed1 : medicalUsed2}/{maxMedical})
                   </Button>
                 </div>
               </div>
@@ -1208,11 +1213,11 @@ const MatchScoring = () => {
         {canInteract && !matchStarted && (
           <Card>
             <CardContent className="py-4 space-y-4">
-              <h4 className="text-sm font-semibold">Cài đặt trận đấu</h4>
+              <h4 className="text-sm font-semibold">{t.quickTable.matchScoring.matchSettings}</h4>
               
               {/* Serving side selection - prominent */}
               <div className="space-y-2">
-                <label className="text-xs text-muted-foreground font-medium">Chọn bên giao bóng trước</label>
+                <label className="text-xs text-muted-foreground font-medium">{t.quickTable.matchScoring.selectServingSide}</label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     type="button"
@@ -1243,19 +1248,19 @@ const MatchScoring = () => {
 
               {/* Timeout settings */}
               <div>
-                <label className="text-xs text-muted-foreground">Số lần Time Out mỗi bên</label>
+                <label className="text-xs text-muted-foreground">{t.quickTable.matchScoring.timeoutsPerSide}</label>
                 <Select value={String(maxTimeouts)} onValueChange={(v) => setMaxTimeouts(Number(v))}>
                   <SelectTrigger className="h-8 text-sm mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 lần</SelectItem>
-                    <SelectItem value="2">2 lần</SelectItem>
-                    <SelectItem value="3">3 lần</SelectItem>
+                    <SelectItem value="1">1</SelectItem>
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-xs text-muted-foreground">Y tế: mặc định 1 lần mỗi bên (5 phút)</p>
+              <p className="text-xs text-muted-foreground">{t.quickTable.matchScoring.medicalNote}</p>
             </CardContent>
           </Card>
         )}
