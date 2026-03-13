@@ -26,6 +26,27 @@ const Index = () => {
   // Show scheduled section at top if no live streams
   const showScheduledFirst = !streamsLoading && liveStreams.length === 0 && scheduledStreams.length > 0;
 
+  // Preload LCP image as soon as data arrives so browser discovers it early
+  useEffect(() => {
+    const lcpStreams = showScheduledFirst ? scheduledStreams : liveStreams;
+    const lcpThumbnail = lcpStreams[0]?.thumbnail_url || videos[0]?.thumbnail_url;
+    if (!lcpThumbnail) return;
+
+    const existingPreload = document.querySelector(`link[rel="preload"][href="${lcpThumbnail}"]`);
+    if (existingPreload) return;
+
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = lcpThumbnail;
+    link.setAttribute("fetchpriority", "high");
+    document.head.appendChild(link);
+
+    return () => {
+      link.remove();
+    };
+  }, [showScheduledFirst, scheduledStreams, liveStreams, videos]);
+
   return (
     <MainLayout>
       {/* SEO Meta Tags */}
