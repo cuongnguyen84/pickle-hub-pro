@@ -39,7 +39,7 @@ const ReplayCard = ({
       <div className="relative aspect-video overflow-hidden rounded-xl bg-background-surface">
         {thumbnail ? (
           <img
-            src={thumbnail}
+            src={optimizeImageUrl(thumbnail, { width: 640 })}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
