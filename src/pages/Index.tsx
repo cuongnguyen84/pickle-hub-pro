@@ -98,11 +98,11 @@ const Index = () => {
       }
 
       {/* Live Now Section - min-h prevents CLS when loading→empty */}
-      <section className="container-wide section-spacing" style={{ minHeight: 200 }}>
+      <section className="container-wide section-spacing" style={{ minHeight: 348 }}>
         <SectionHeader title={t.home.sections.liveNow} href="/live" />
         
         {streamsLoading ?
-        <EmptyState icon={Radio} title={t.home.noLive} className="opacity-0" /> :
+        <EmptyState icon={Radio} title={t.home.noLive} className="invisible" /> :
         liveStreams.length > 0 ?
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {liveStreams.slice(0, 3).map((stream, index) =>
