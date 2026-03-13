@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Play, RotateCcw, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { optimizeImageUrl } from "@/lib/image-utils";
 
 interface ReplayCardProps {
   id: string;
@@ -38,7 +39,7 @@ const ReplayCard = ({
       <div className="relative aspect-video overflow-hidden rounded-xl bg-background-surface">
         {thumbnail ? (
           <img
-            src={thumbnail}
+            src={optimizeImageUrl(thumbnail, { width: 640 })}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
@@ -75,7 +76,7 @@ const ReplayCard = ({
             <div className="flex items-center gap-1.5">
               {organizationLogo ? (
                 <img
-                  src={organizationLogo}
+                  src={optimizeImageUrl(organizationLogo, { width: 56, height: 56 })}
                   alt={organizationName}
                   className="w-4 h-4 rounded-full object-cover"
                 />
