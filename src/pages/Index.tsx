@@ -75,24 +75,33 @@ const Index = () => {
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
       </section>
 
-      {/* Scheduled Section - Always in DOM to prevent CLS; hidden when not needed */}
-      <section className={cn("container-wide section-spacing", !showScheduledFirst && "hidden")}>
+      {/* Scheduled Section - show skeleton during loading to prevent CLS */}
+      <section className={cn("container-wide section-spacing", !streamsLoading && !showScheduledFirst && "hidden")} style={{ minHeight: streamsLoading ? 200 : undefined }}>
           <SectionHeader title={t.live.scheduled} href="/live" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {showScheduledFirst && scheduledStreams.slice(0, 3).map((stream, index) =>
-          <LiveCardWithPresence
-            key={stream.id}
-            id={stream.id!}
-            title={stream.title ?? ""}
-            organizationName={stream.organization?.name ?? ""}
-            organizationSlug={stream.organization?.slug}
-            organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-            status={stream.status as "live" | "scheduled" | "ended"}
-            thumbnail={stream.thumbnail_url ?? undefined}
-            scheduledStartAt={stream.scheduled_start_at}
-            priority={index === 0} />
-
-          )}
+            {streamsLoading ? (
+              [1, 2, 3].map((i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-video rounded-xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ))
+            ) : showScheduledFirst ? (
+              scheduledStreams.slice(0, 3).map((stream, index) => (
+                <LiveCardWithPresence
+                  key={stream.id}
+                  id={stream.id!}
+                  title={stream.title ?? ""}
+                  organizationName={stream.organization?.name ?? ""}
+                  organizationSlug={stream.organization?.slug}
+                  organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
+                  status={stream.status as "live" | "scheduled" | "ended"}
+                  thumbnail={stream.thumbnail_url ?? undefined}
+                  scheduledStartAt={stream.scheduled_start_at}
+                  priority={index === 0} />
+              ))
+            ) : null}
           </div>
         </section>
 
