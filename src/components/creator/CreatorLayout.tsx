@@ -114,7 +114,7 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
   }
 
   return (
-    <div className="h-full min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-[100dvh] min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
       {/* Mobile Header with menu toggle */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border-subtle pt-[env(safe-area-inset-top)]">
         <div className="flex items-center justify-between h-14 px-4">
@@ -133,9 +133,6 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
           <div className="w-9" /> {/* Spacer for centering */}
         </div>
       </div>
-
-      {/* Mobile spacer for fixed header */}
-      <div className="lg:hidden h-14 flex-shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
 
       {/* Mobile Tab Navigation */}
       <nav

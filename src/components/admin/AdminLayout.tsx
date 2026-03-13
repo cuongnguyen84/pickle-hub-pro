@@ -144,7 +144,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="h-full min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-[100dvh] min-h-0 w-full bg-background flex flex-col lg:flex-row overflow-hidden">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border h-14 flex items-center gap-4 px-4"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -158,9 +158,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </Button>
         <span className="font-semibold">{t.admin.dashboard}</span>
       </header>
-
-      {/* Mobile spacer for fixed header */}
-      <div className="lg:hidden h-14 flex-shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
 
       {/* Mobile overlay */}
       {sidebarOpen && (
