@@ -1167,7 +1167,7 @@ const MatchScoring = () => {
                     disabled={(rightSide === 1 ? medicalUsed1 : medicalUsed2) >= maxMedical || updating || !!activeTimeout}
                   >
                     <Heart className="w-3 h-3 mr-1" />
-                    Y tế ({rightSide === 1 ? medicalUsed1 : medicalUsed2}/{maxMedical})
+                    {t.quickTable.matchScoring.medicalLabel} ({rightSide === 1 ? medicalUsed1 : medicalUsed2}/{maxMedical})
                   </Button>
                 </div>
               </div>
