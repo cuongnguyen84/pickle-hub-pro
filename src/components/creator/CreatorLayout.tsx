@@ -133,8 +133,20 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
       <div className="lg:hidden h-14 flex-shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
 
       {/* Mobile Tab Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 glass-strong border-t border-border-subtle pb-safe">
-        <div className="flex items-center justify-around h-14">
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-background-elevated border-t border-border-subtle"
+        style={{
+          paddingBottom: (isAndroidDevice && isNative)
+            ? 'max(env(safe-area-inset-bottom, 14px), 14px)'
+            : isIOSDevice
+              ? 'env(safe-area-inset-bottom, 0px)'
+              : '0px',
+        }}
+      >
+        <div
+          className="flex items-stretch justify-around"
+          style={{ minHeight: isIOSDevice ? '68px' : (isAndroidDevice && isNative) ? '72px' : '56px' }}
+        >
           {sidebarLinks.map((link) => {
             const isActive = link.exact
               ? location.pathname === link.path
@@ -146,22 +158,20 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[64px]",
+                  "flex flex-col items-center justify-center gap-1.5 flex-1 py-3",
                   "transition-colors duration-200",
                   isActive
                     ? "text-primary"
                     : "text-foreground-muted hover:text-foreground-secondary"
                 )}
               >
-                <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+                <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 1.8} />
                 <span className="text-[10px] font-medium">{link.label}</span>
               </Link>
             );
           })}
         </div>
-      </div>
-
-      {/* Sidebar overlay for mobile (when hamburger menu is open) */}
+      </nav>
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
