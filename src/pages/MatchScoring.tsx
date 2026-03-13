@@ -1209,7 +1209,7 @@ const MatchScoring = () => {
               
               {/* Serving side selection - prominent */}
               <div className="space-y-2">
-                <label className="text-xs text-muted-foreground font-medium">Chọn bên giao bóng trước</label>
+                <label className="text-xs text-muted-foreground font-medium">{t.quickTable.matchScoring.selectServingSide}</label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     type="button"
