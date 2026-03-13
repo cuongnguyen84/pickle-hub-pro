@@ -223,10 +223,17 @@ const MatchScoring = () => {
       // Fetch table
       const { data: tableData } = await supabase
         .from('quick_tables')
-        .select('id, name, share_id, creator_user_id, status, format, is_doubles')
+        .select('id, name, share_id, creator_user_id, status, format, is_doubles, default_sets')
         .eq('id', md.table_id)
         .maybeSingle();
       setTable(tableData as TableData);
+
+      // Apply table's default_sets to match if match still has default value
+      if (tableData?.default_sets && tableData.default_sets > 1 && (md.total_sets === 1 || !md.total_sets)) {
+        setLocalTotalSets(tableData.default_sets);
+        // Also persist to match
+        await supabase.from('quick_table_matches').update({ total_sets: tableData.default_sets } as any).eq('id', matchId);
+      }
 
       // Fetch players
       if (md.player1_id) {
