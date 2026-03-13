@@ -947,7 +947,7 @@ const MatchScoring = () => {
           )}>
             <CardContent className="py-4 text-center space-y-2">
               <div className="text-sm font-medium">
-                {activeTimeout.type === 'timeout' ? '⏱️ TIME OUT' : '🏥 Y TẾ'} — {activeTimeout.side === leftSide ? formatPlayerName(leftPlayer) : formatPlayerName(rightPlayer)}
+                {activeTimeout.type === 'timeout' ? `⏱️ ${t.quickTable.matchScoring.timeoutLabel}` : `🏥 ${t.quickTable.matchScoring.medicalLabel}`} — {activeTimeout.side === leftSide ? formatPlayerName(leftPlayer) : formatPlayerName(rightPlayer)}
               </div>
               <div className="text-5xl font-bold font-mono tabular-nums">
                 {formatCountdown(countdownSeconds)}
