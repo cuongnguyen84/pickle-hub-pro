@@ -43,6 +43,11 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
   const isIOSDevice = isIOS();
   const isAndroidDevice = isAndroid();
   const isNative = isNativeApp();
+  const mobileBottomNavOffset = (isAndroidDevice && isNative)
+    ? 'calc(72px + max(env(safe-area-inset-bottom, 14px), 14px))'
+    : isIOSDevice
+      ? 'calc(68px + env(safe-area-inset-bottom, 0px))'
+      : '56px';
 
   // Loading state
   if (isLoading) {
