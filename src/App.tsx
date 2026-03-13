@@ -105,6 +105,10 @@ const CreatorTournaments = lazy(() => import("./pages/creator/CreatorTournaments
 
 const queryClient = new QueryClient();
 
+// Start fetching home page data immediately (before React renders)
+import { prefetchHomeData } from "@/lib/prefetch";
+prefetchHomeData(queryClient);
+
 // Minimal loading fallback that mirrors MainLayout shell to prevent layout shift
 const PageLoader = () => (
   <div className="h-full bg-background flex flex-col w-full max-w-[100vw] overflow-hidden">
