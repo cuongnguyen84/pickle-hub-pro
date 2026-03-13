@@ -1018,7 +1018,7 @@ const MatchScoring = () => {
                   </div>
                 )}
                 {localServingSide === rightSide && matchStarted && (
-                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 Giao</Badge>
+                  <Badge variant="secondary" className="text-xs mt-1 gap-1">🏓 {t.quickTable.matchScoring.serving}</Badge>
                 )}
                 {/* Timeout/Medical indicators */}
                 <div className="flex justify-center gap-0.5 flex-wrap">
