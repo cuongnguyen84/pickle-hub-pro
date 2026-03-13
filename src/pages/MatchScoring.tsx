@@ -443,7 +443,7 @@ const MatchScoring = () => {
       return;
     }
     if (side === 2 && timeoutsUsed2 >= maxTimeouts) {
-      toast.error('Đã hết lượt Time Out!');
+      toast.error(t.quickTable.matchScoring.timeoutExhausted);
       return;
     }
 
