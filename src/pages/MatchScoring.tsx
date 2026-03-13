@@ -1134,7 +1134,7 @@ const MatchScoring = () => {
                     disabled={(leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2) >= maxTimeouts || updating || !!activeTimeout}
                   >
                     <Timer className="w-3 h-3 mr-1" />
-                    Time Out ({leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2}/{maxTimeouts})
+                    {t.quickTable.matchScoring.timeoutLabel} ({leftSide === 1 ? timeoutsUsed1 : timeoutsUsed2}/{maxTimeouts})
                   </Button>
                   <Button 
                     variant="outline" 
