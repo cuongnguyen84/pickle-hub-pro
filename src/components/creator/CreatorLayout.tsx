@@ -40,6 +40,10 @@ export function CreatorLayout({ children, title, actions }: CreatorLayoutProps) 
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const isIOSDevice = isIOS();
+  const isAndroidDevice = isAndroid();
+  const isNative = isNativeApp();
+
   // Loading state
   if (isLoading) {
     return (
