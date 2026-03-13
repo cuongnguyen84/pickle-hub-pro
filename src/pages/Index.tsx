@@ -74,12 +74,11 @@ const Index = () => {
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
       </section>
 
-      {/* Scheduled Section - Show at top if no live streams */}
-      {showScheduledFirst &&
-      <section className="container-wide section-spacing">
+      {/* Scheduled Section - Always in DOM to prevent CLS; hidden when not needed */}
+      <section className={cn("container-wide section-spacing", !showScheduledFirst && "hidden")}>
           <SectionHeader title={t.live.scheduled} href="/live" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {scheduledStreams.slice(0, 3).map((stream, index) =>
+            {showScheduledFirst && scheduledStreams.slice(0, 3).map((stream, index) =>
           <LiveCardWithPresence
             key={stream.id}
             id={stream.id!}
@@ -95,7 +94,6 @@ const Index = () => {
           )}
           </div>
         </section>
-      }
 
       {/* Live Now Section - min-h prevents CLS when loading→empty */}
       <section className="container-wide section-spacing" style={{ minHeight: 348 }}>
