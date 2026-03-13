@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Play, Users, RotateCcw, BadgeCheck, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { optimizeImageUrl } from "@/lib/image-utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface LiveCardProps {
