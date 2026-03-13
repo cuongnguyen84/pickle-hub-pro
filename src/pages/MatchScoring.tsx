@@ -1252,7 +1252,7 @@ const MatchScoring = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-xs text-muted-foreground">Y tế: mặc định 1 lần mỗi bên (5 phút)</p>
+              <p className="text-xs text-muted-foreground">{t.quickTable.matchScoring.medicalNote}</p>
             </CardContent>
           </Card>
         )}
