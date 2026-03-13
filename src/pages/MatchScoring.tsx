@@ -439,7 +439,7 @@ const MatchScoring = () => {
   const handleTimeout = (side: 1 | 2) => {
     if (isReadOnly || match?.status === 'completed') return;
     if (side === 1 && timeoutsUsed1 >= maxTimeouts) {
-      toast.error('Đã hết lượt Time Out!');
+      toast.error(t.quickTable.matchScoring.timeoutExhausted);
       return;
     }
     if (side === 2 && timeoutsUsed2 >= maxTimeouts) {
