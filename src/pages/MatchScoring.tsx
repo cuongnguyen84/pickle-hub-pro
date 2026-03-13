@@ -1115,7 +1115,7 @@ const MatchScoring = () => {
                 </Button>
                 {table?.is_doubles && (
                   <span className="text-xs text-muted-foreground">
-                    Tay {serverNumber} đang giao
+                    {t.quickTable.matchScoring.serverNumberServing.replace('{n}', String(serverNumber))}
                   </span>
                 )}
               </div>
