@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { MainLayout } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import { SectionHeader, ContentCard, EmptyState, AdSlot } from "@/components/content";
