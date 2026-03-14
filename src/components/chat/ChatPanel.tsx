@@ -190,6 +190,29 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
                     {t.chat.pin}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  {/* Highlight submenu */}
+                  {highlight ? (
+                    <DropdownMenuItem onClick={() => onRemoveHighlight?.(message.user_id)}>
+                      <Star className="h-3 w-3 mr-2" />
+                      {t.chat.removeHighlight}
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <Star className="h-3 w-3 mr-2" />
+                        {t.chat.highlight}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {(Object.entries(HIGHLIGHT_PRESETS) as [HighlightType, typeof HIGHLIGHT_PRESETS[HighlightType]][]).map(([type, preset]) => (
+                          <DropdownMenuItem key={type} onClick={() => onHighlight?.(message.user_id, type)}>
+                            <span className="mr-2">{preset.icon}</span>
+                            {preset.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-xs">{t.chat.mute}</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => onMute(message.user_id, 10)}>
                     10 {t.chat.minutes}
