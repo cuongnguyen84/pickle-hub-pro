@@ -51,12 +51,15 @@ interface ChatMessageItemProps {
   isCreator: boolean;
   avatarUrl: string | null;
   chatterRank: number | null;
+  highlight?: ChatHighlight;
   onDelete: (id: string) => void;
   onMute: (userId: string, duration: number) => void;
   onRetry?: (tempId: string, message: string) => void;
   onCopy: (text: string) => void;
   onPin?: (messageId: string) => void;
   onReply?: (message: ChatMessage) => void;
+  onHighlight?: (userId: string, type: HighlightType) => void;
+  onRemoveHighlight?: (userId: string) => void;
 }
 
 const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
