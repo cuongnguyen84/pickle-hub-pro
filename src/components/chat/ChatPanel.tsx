@@ -68,12 +68,15 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   isCreator,
   avatarUrl,
   chatterRank,
+  highlight,
   onDelete,
   onMute,
   onRetry,
   onCopy,
   onPin,
   onReply,
+  onHighlight,
+  onRemoveHighlight,
 }, ref) => {
   const { t } = useI18n();
   const isPending = message._pending;
