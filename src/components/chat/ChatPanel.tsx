@@ -900,9 +900,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                     toast({ title: ok ? "✓ Đã highlight" : "Lỗi highlight", variant: ok ? "default" : "destructive" });
                   } : undefined}
                   onRemoveHighlight={isModerator ? async (userId) => {
-                    console.log('[ChatPanel] Remove highlight clicked for:', userId);
                     const ok = await removeHighlight(userId);
-                    console.log('[ChatPanel] Remove highlight result:', ok);
                     toast({ title: ok ? "✓ Đã bỏ highlight" : "Lỗi bỏ highlight", variant: ok ? "default" : "destructive" });
                   } : undefined}
                 />
