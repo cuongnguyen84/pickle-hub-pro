@@ -36,7 +36,6 @@ const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
   const { user } = useAuth();
-  const viewRecorded = useRef(false);
   const { isBlocked } = useGeoBlock();
   const [isChatCollapsed, setIsChatCollapsed] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
