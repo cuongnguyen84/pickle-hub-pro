@@ -140,6 +140,48 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_highlighted_users: {
+        Row: {
+          created_at: string
+          created_by: string
+          highlight_type: Database["public"]["Enums"]["chat_highlight_type"]
+          id: string
+          livestream_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          highlight_type?: Database["public"]["Enums"]["chat_highlight_type"]
+          id?: string
+          livestream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          highlight_type?: Database["public"]["Enums"]["chat_highlight_type"]
+          id?: string
+          livestream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_highlighted_users_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: false
+            referencedRelation: "livestreams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_highlighted_users_livestream_id_fkey"
+            columns: ["livestream_id"]
+            isOneToOne: false
+            referencedRelation: "public_livestreams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           avatar_url: string | null
@@ -3307,6 +3349,7 @@ export type Database = {
     }
     Enums: {
       app_role: "viewer" | "creator" | "admin" | "moderator"
+      chat_highlight_type: "vip" | "sponsor" | "special_guest"
       content_status: "draft" | "published" | "hidden"
       follow_target_type: "organization" | "tournament"
       forum_like_target: "post" | "comment"
@@ -3473,6 +3516,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["viewer", "creator", "admin", "moderator"],
+      chat_highlight_type: ["vip", "sponsor", "special_guest"],
       content_status: ["draft", "published", "hidden"],
       follow_target_type: ["organization", "tournament"],
       forum_like_target: ["post", "comment"],
