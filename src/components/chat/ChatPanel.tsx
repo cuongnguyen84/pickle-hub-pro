@@ -18,9 +18,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user";
 import { useLiveChat, ChatMessage } from "@/hooks/useLiveChat";
@@ -190,27 +187,25 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
                     {t.chat.pin}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  {/* Highlight submenu */}
+                  {/* Highlight options */}
                   {highlight ? (
-                    <DropdownMenuItem onClick={() => onRemoveHighlight?.(message.user_id)}>
+                    <DropdownMenuItem onSelect={() => onRemoveHighlight?.(message.user_id)}>
                       <Star className="h-3 w-3 mr-2" />
                       {t.chat.removeHighlight}
                     </DropdownMenuItem>
                   ) : (
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <Star className="h-3 w-3 mr-2" />
+                    <>
+                      <DropdownMenuLabel className="text-xs flex items-center gap-1">
+                        <Star className="h-3 w-3" />
                         {t.chat.highlight}
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {(Object.entries(HIGHLIGHT_PRESETS) as [HighlightType, typeof HIGHLIGHT_PRESETS[HighlightType]][]).map(([type, preset]) => (
-                          <DropdownMenuItem key={type} onClick={() => onHighlight?.(message.user_id, type)}>
-                            <span className="mr-2">{preset.icon}</span>
-                            {preset.label}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
+                      </DropdownMenuLabel>
+                      {(Object.entries(HIGHLIGHT_PRESETS) as [HighlightType, typeof HIGHLIGHT_PRESETS[HighlightType]][]).map(([type, preset]) => (
+                        <DropdownMenuItem key={type} onSelect={() => onHighlight?.(message.user_id, type)}>
+                          <span className="mr-2">{preset.icon}</span>
+                          {preset.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-xs">{t.chat.mute}</DropdownMenuLabel>
