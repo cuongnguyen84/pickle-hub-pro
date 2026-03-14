@@ -11,7 +11,6 @@ import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
 const EmbedLive = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const viewRecorded = useRef(false);
   const { isBlocked } = useGeoBlock();
 
   const showTitle = searchParams.get("title") !== "0";
