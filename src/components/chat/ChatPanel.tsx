@@ -81,6 +81,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   const { t } = useI18n();
   const isPending = message._pending;
   const isFailed = message._failed;
+  const highlightPreset = highlight ? HIGHLIGHT_PRESETS[highlight.highlight_type] : null;
 
   return (
     <div
