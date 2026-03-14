@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
   MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3,
-  Pin, X as XIcon, Reply
+  Pin, X as XIcon, Reply, Star
 } from "lucide-react";
 import { MentionSuggestions, MentionUser, renderMessageWithMentions } from "./MentionSuggestions";
 import { NicknameInput } from "./NicknameInput";
@@ -18,6 +18,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user";
 import { useLiveChat, ChatMessage } from "@/hooks/useLiveChat";
@@ -33,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
 import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
+import { useChatHighlights, HIGHLIGHT_PRESETS, HighlightType, ChatHighlight } from "@/hooks/useChatHighlights";
 
 interface ChatPanelProps {
   livestreamId: string;
@@ -47,12 +51,15 @@ interface ChatMessageItemProps {
   isCreator: boolean;
   avatarUrl: string | null;
   chatterRank: number | null;
+  highlight?: ChatHighlight;
   onDelete: (id: string) => void;
   onMute: (userId: string, duration: number) => void;
   onRetry?: (tempId: string, message: string) => void;
   onCopy: (text: string) => void;
   onPin?: (messageId: string) => void;
   onReply?: (message: ChatMessage) => void;
+  onHighlight?: (userId: string, type: HighlightType) => void;
+  onRemoveHighlight?: (userId: string) => void;
 }
 
 const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
@@ -61,16 +68,20 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   isCreator,
   avatarUrl,
   chatterRank,
+  highlight,
   onDelete,
   onMute,
   onRetry,
   onCopy,
   onPin,
   onReply,
+  onHighlight,
+  onRemoveHighlight,
 }, ref) => {
   const { t } = useI18n();
   const isPending = message._pending;
   const isFailed = message._failed;
+  const highlightPreset = highlight ? HIGHLIGHT_PRESETS[highlight.highlight_type] : null;
 
   return (
     <div
@@ -79,7 +90,8 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
       className={cn(
         "group flex gap-2 px-3 py-1.5 hover:bg-muted/50 rounded transition-colors",
         isPending && "opacity-70",
-        isFailed && "opacity-80 bg-destructive/5"
+        isFailed && "opacity-80 bg-destructive/5",
+        highlightPreset && highlightPreset.bgColor
       )}
     >
       {/* Avatar */}
@@ -94,11 +106,22 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1 flex-wrap">
-          <span className="font-medium text-sm text-primary truncate max-w-[150px]">
+          {highlightPreset && (
+            <span className="text-xs shrink-0">{highlightPreset.icon}</span>
+          )}
+          <span className={cn(
+            "font-medium text-sm truncate max-w-[150px]",
+            highlightPreset ? highlightPreset.color : "text-primary"
+          )}>
             {message.display_name}
           </span>
           {isCreator && (
             <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+          )}
+          {highlightPreset && (
+            <span className={cn("text-[10px] font-semibold px-1 py-0.5 rounded", highlightPreset.color, highlightPreset.bgColor)}>
+              {highlightPreset.label}
+            </span>
           )}
           <ChatterBadge rank={chatterRank} />
           <span className="text-[10px] text-foreground-muted">
@@ -167,6 +190,29 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
                     {t.chat.pin}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  {/* Highlight submenu */}
+                  {highlight ? (
+                    <DropdownMenuItem onClick={() => onRemoveHighlight?.(message.user_id)}>
+                      <Star className="h-3 w-3 mr-2" />
+                      {t.chat.removeHighlight}
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <Star className="h-3 w-3 mr-2" />
+                        {t.chat.highlight}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {(Object.entries(HIGHLIGHT_PRESETS) as [HighlightType, typeof HIGHLIGHT_PRESETS[HighlightType]][]).map(([type, preset]) => (
+                          <DropdownMenuItem key={type} onClick={() => onHighlight?.(message.user_id, type)}>
+                            <span className="mr-2">{preset.icon}</span>
+                            {preset.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-xs">{t.chat.mute}</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => onMute(message.user_id, 10)}>
                     10 {t.chat.minutes}
@@ -217,6 +263,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   } = useLiveChat(livestreamId);
 
   const { leaderboard, getChatterRank, isLoading: leaderboardLoading } = useChatLeaderboard(livestreamId);
+  const { getHighlight, highlightUser, removeHighlight } = useChatHighlights(livestreamId);
 
   const [inputValue, setInputValue] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
@@ -846,12 +893,15 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                   isCreator={creatorCache[message.user_id] ?? false}
                   avatarUrl={avatarCache[message.user_id] ?? message.avatar_url}
                   chatterRank={getChatterRank(message.user_id)}
+                  highlight={getHighlight(message.user_id)}
                   onDelete={deleteMessage}
                   onMute={muteUser}
                   onRetry={retryMessage}
                   onCopy={handleCopy}
                   onPin={isModerator ? handlePinMessage : undefined}
                   onReply={user ? handleReply : undefined}
+                  onHighlight={isModerator ? highlightUser : undefined}
+                  onRemoveHighlight={isModerator ? removeHighlight : undefined}
                 />
               ))
             )}
