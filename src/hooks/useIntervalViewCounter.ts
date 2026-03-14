@@ -8,11 +8,20 @@ interface UseIntervalViewCounterOptions {
   organizationId: string | null | undefined;
   source?: "embed";
   intervalMs?: number;
+  flushIntervalMs?: number;
+}
+
+interface PendingEvent {
+  target_type: "livestream" | "video";
+  target_id: string;
+  viewer_user_id: string | null;
+  organization_id: string | null;
+  source?: "embed";
 }
 
 /**
- * Records a view event every `intervalMs` (default 3s) of continuous viewing.
- * First event fires after the first interval, then repeats until unmount.
+ * Records view events by accumulating them client-side every `intervalMs` (default 10s)
+ * and flushing the batch to the edge function every `flushIntervalMs` (default 30s).
  */
 export function useIntervalViewCounter({
   targetType,
@@ -20,35 +29,60 @@ export function useIntervalViewCounter({
   viewerUserId,
   organizationId,
   source,
-  intervalMs = 3000,
+  intervalMs = 10000,
+  flushIntervalMs = 30000,
 }: UseIntervalViewCounterOptions) {
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pendingRef = useRef<PendingEvent[]>([]);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const flushRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!targetId) return;
 
-    const recordView = async () => {
+    const event: PendingEvent = {
+      target_type: targetType,
+      target_id: targetId,
+      viewer_user_id: viewerUserId ?? null,
+      organization_id: organizationId ?? null,
+      ...(source ? { source } : {}),
+    };
+
+    // Accumulate one event every intervalMs
+    tickRef.current = setInterval(() => {
+      pendingRef.current.push({ ...event });
+    }, intervalMs);
+
+    // Flush batch every flushIntervalMs
+    const flush = async () => {
+      if (pendingRef.current.length === 0) return;
+      const batch = [...pendingRef.current];
+      pendingRef.current = [];
+
       try {
-        await supabase.from("view_events").insert({
-          target_type: targetType,
-          target_id: targetId,
-          viewer_user_id: viewerUserId ?? null,
-          organization_id: organizationId ?? null,
-          ...(source ? { source } : {}),
+        await supabase.functions.invoke("batch-view-events", {
+          body: { events: batch },
         });
       } catch (err) {
-        console.error(`[useIntervalViewCounter] Error recording ${targetType} view:`, err);
+        // Put events back on failure
+        pendingRef.current.unshift(...batch);
+        console.error("[useIntervalViewCounter] flush error:", err);
       }
     };
 
-    // First view after intervalMs, then repeat
-    intervalRef.current = setInterval(recordView, intervalMs);
+    flushRef.current = setInterval(flush, flushIntervalMs);
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (tickRef.current) clearInterval(tickRef.current);
+      if (flushRef.current) clearInterval(flushRef.current);
+
+      // Flush remaining events on unmount
+      if (pendingRef.current.length > 0) {
+        const remaining = [...pendingRef.current];
+        pendingRef.current = [];
+        supabase.functions
+          .invoke("batch-view-events", { body: { events: remaining } })
+          .catch(() => {});
       }
     };
-  }, [targetType, targetId, viewerUserId, organizationId, source, intervalMs]);
+  }, [targetType, targetId, viewerUserId, organizationId, source, intervalMs, flushIntervalMs]);
 }
