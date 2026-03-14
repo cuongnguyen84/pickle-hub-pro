@@ -42,24 +42,13 @@ const WatchVideo = () => {
     return null;
   }, [video?.source, video?.storage_path]);
 
-  // Record view event (debounced - only once per session)
-  useEffect(() => {
-    if (!id || viewRecorded.current) return;
-
-    const recordView = async () => {
-      await supabase.from("view_events").insert({
-        target_type: "video",
-        target_id: id,
-        viewer_user_id: user?.id ?? null,
-        organization_id: video?.organization_id ?? null,
-      });
-      viewRecorded.current = true;
-    };
-
-    // 1s threshold for view counting
-    const timer = setTimeout(recordView, 1000);
-    return () => clearTimeout(timer);
-  }, [id, user?.id, video?.organization_id]);
+  // Record view events every 3 seconds of continuous viewing
+  useIntervalViewCounter({
+    targetType: "video",
+    targetId: id,
+    viewerUserId: user?.id ?? null,
+    organizationId: video?.organization_id ?? null,
+  });
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

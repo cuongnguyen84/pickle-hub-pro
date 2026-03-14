@@ -26,24 +26,14 @@ const EmbedVideo = () => {
     return null;
   }, [video?.source, video?.storage_path]);
 
-  // Record view event with embed source
-  useEffect(() => {
-    if (!id || viewRecorded.current) return;
-
-    const recordView = async () => {
-      await supabase.from("view_events").insert({
-        target_type: "video",
-        target_id: id,
-        viewer_user_id: null, // Embed viewers are anonymous
-        organization_id: video?.organization_id ?? null,
-        source: "embed",
-      });
-      viewRecorded.current = true;
-    };
-
-    const timer = setTimeout(recordView, 1000);
-    return () => clearTimeout(timer);
-  }, [id, video?.organization_id]);
+  // Record view events every 3 seconds with embed source
+  useIntervalViewCounter({
+    targetType: "video",
+    targetId: id,
+    viewerUserId: null,
+    organizationId: video?.organization_id ?? null,
+    source: "embed",
+  });
 
   const hasStorageVideo = video?.source === "storage" && !!storageVideoUrl;
   const hasMuxPlayback = !!video?.mux_playback_id;
