@@ -13,6 +13,7 @@ import type { HlsPlayerHandle } from "@/components/video/HlsPlayer";
 import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck, Eye } from "lucide-react";
@@ -35,7 +36,6 @@ const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
   const { user } = useAuth();
-  const viewRecorded = useRef(false);
   const { isBlocked } = useGeoBlock();
   const [isChatCollapsed, setIsChatCollapsed] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -84,28 +84,13 @@ const WatchLive = () => {
 
   const dateLocale = language === "vi" ? viLocale : enUS;
 
-  // Record view event (optimized: wait for livestream data to be ready, debounce)
-  useEffect(() => {
-    if (!id || viewRecorded.current || !livestream?.organization_id) return;
-
-    const recordView = async () => {
-      try {
-        await supabase.from("view_events").insert({
-          target_type: "livestream",
-          target_id: id,
-          viewer_user_id: user?.id ?? null,
-          organization_id: livestream.organization_id,
-        });
-        viewRecorded.current = true;
-      } catch (err) {
-        console.error('[WatchLive] Error recording view:', err);
-      }
-    };
-
-    // 1s threshold for view counting
-    const timer = setTimeout(recordView, 1000);
-    return () => clearTimeout(timer);
-  }, [id, user?.id, livestream?.organization_id]);
+  // Record view events every 3 seconds of continuous viewing
+  useIntervalViewCounter({
+    targetType: "livestream",
+    targetId: id,
+    viewerUserId: user?.id ?? null,
+    organizationId: livestream?.organization_id ?? null,
+  });
 
   if (isLoading) {
     return (

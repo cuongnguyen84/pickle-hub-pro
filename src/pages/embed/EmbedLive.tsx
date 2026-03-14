@@ -1,8 +1,8 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useEffect, useRef } from "react";
 import { useLivestream } from "@/hooks/useSupabaseData";
 import { MuxPlayer, HlsPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";
+import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { Loader2 } from "lucide-react";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
 import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
@@ -10,7 +10,6 @@ import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
 const EmbedLive = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const viewRecorded = useRef(false);
   const { isBlocked } = useGeoBlock();
 
   const showTitle = searchParams.get("title") !== "0";
@@ -18,24 +17,14 @@ const EmbedLive = () => {
 
   const { data: livestream, isLoading } = useLivestream(id!);
 
-  // Record view event with embed source
-  useEffect(() => {
-    if (!id || viewRecorded.current) return;
-
-    const recordView = async () => {
-      await supabase.from("view_events").insert({
-        target_type: "livestream",
-        target_id: id,
-        viewer_user_id: null, // Embed viewers are anonymous
-        organization_id: livestream?.organization_id ?? null,
-        source: "embed",
-      });
-      viewRecorded.current = true;
-    };
-
-    const timer = setTimeout(recordView, 1000);
-    return () => clearTimeout(timer);
-  }, [id, livestream?.organization_id]);
+  // Record view events every 3 seconds with embed source
+  useIntervalViewCounter({
+    targetType: "livestream",
+    targetId: id,
+    viewerUserId: null,
+    organizationId: livestream?.organization_id ?? null,
+    source: "embed",
+  });
 
   if (isLoading) {
     return (

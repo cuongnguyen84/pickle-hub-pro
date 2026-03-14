@@ -1,8 +1,9 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useEffect, useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { useVideo } from "@/hooks/useSupabaseData";
 import { MuxPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";
+import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { Loader2 } from "lucide-react";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
 import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
@@ -10,7 +11,6 @@ import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
 const EmbedVideo = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const viewRecorded = useRef(false);
   const { isBlocked } = useGeoBlock();
 
   const showTitle = searchParams.get("title") !== "0";
@@ -26,24 +26,14 @@ const EmbedVideo = () => {
     return null;
   }, [video?.source, video?.storage_path]);
 
-  // Record view event with embed source
-  useEffect(() => {
-    if (!id || viewRecorded.current) return;
-
-    const recordView = async () => {
-      await supabase.from("view_events").insert({
-        target_type: "video",
-        target_id: id,
-        viewer_user_id: null, // Embed viewers are anonymous
-        organization_id: video?.organization_id ?? null,
-        source: "embed",
-      });
-      viewRecorded.current = true;
-    };
-
-    const timer = setTimeout(recordView, 1000);
-    return () => clearTimeout(timer);
-  }, [id, video?.organization_id]);
+  // Record view events every 3 seconds with embed source
+  useIntervalViewCounter({
+    targetType: "video",
+    targetId: id,
+    viewerUserId: null,
+    organizationId: video?.organization_id ?? null,
+    source: "embed",
+  });
 
   const hasStorageVideo = video?.source === "storage" && !!storageVideoUrl;
   const hasMuxPlayback = !!video?.mux_playback_id;
