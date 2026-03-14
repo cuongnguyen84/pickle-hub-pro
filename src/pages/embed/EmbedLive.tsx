@@ -1,5 +1,4 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useParams, useSearchParams } from "react-router-dom";
 import { useLivestream } from "@/hooks/useSupabaseData";
 import { MuxPlayer, HlsPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";

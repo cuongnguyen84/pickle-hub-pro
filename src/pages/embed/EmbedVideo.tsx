@@ -1,5 +1,5 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useMemo } from "react";
 import { useVideo } from "@/hooks/useSupabaseData";
 import { MuxPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";
