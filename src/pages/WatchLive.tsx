@@ -13,6 +13,7 @@ import type { HlsPlayerHandle } from "@/components/video/HlsPlayer";
 import { ChatPanel } from "@/components/chat";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ArrowLeft, Radio, Calendar, Users, AlertCircle, MessageCircle, ChevronDown, ChevronUp, BadgeCheck, Eye } from "lucide-react";

@@ -3,6 +3,7 @@ import { useEffect, useRef, useMemo } from "react";
 import { useVideo } from "@/hooks/useSupabaseData";
 import { MuxPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { supabase } from "@/integrations/supabase/client";
+import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { Loader2 } from "lucide-react";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
 import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";

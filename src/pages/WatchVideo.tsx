@@ -8,6 +8,7 @@ import { ContentCard } from "@/components/content";
 import { MuxPlayer, AdaptiveVideoPlayer } from "@/components/video";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useIntervalViewCounter } from "@/hooks/useIntervalViewCounter";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
