@@ -108,8 +108,13 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
   const highlightUser = useCallback(
     async (userId: string, type: HighlightType): Promise<boolean> => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
+      if (!user) {
+        console.error('[ChatHighlights] No authenticated user');
+        return false;
+      }
 
+      console.log('[ChatHighlights] Highlighting user:', userId, 'type:', type, 'livestream:', livestreamId);
+      
       const { error } = await supabase.from("chat_highlighted_users").upsert(
         {
           livestream_id: livestreamId,
@@ -120,6 +125,9 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
         { onConflict: "livestream_id,user_id" }
       );
 
+      if (error) {
+        console.error('[ChatHighlights] Error highlighting user:', error);
+      }
       return !error;
     },
     [livestreamId]
