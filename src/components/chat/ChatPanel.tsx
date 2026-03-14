@@ -18,9 +18,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user";
 import { useLiveChat, ChatMessage } from "@/hooks/useLiveChat";
