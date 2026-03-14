@@ -135,12 +135,16 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
 
   const removeHighlight = useCallback(
     async (userId: string): Promise<boolean> => {
+      console.log('[ChatHighlights] Removing highlight for user:', userId);
       const { error } = await supabase
         .from("chat_highlighted_users")
         .delete()
         .eq("livestream_id", livestreamId)
         .eq("user_id", userId);
 
+      if (error) {
+        console.error('[ChatHighlights] Error removing highlight:', error);
+      }
       return !error;
     },
     [livestreamId]
