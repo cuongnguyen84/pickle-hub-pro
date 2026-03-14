@@ -87,14 +87,26 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
             const h = payload.new as ChatHighlight;
             setHighlights((prev) => new Map(prev).set(h.user_id, h));
           } else if (payload.eventType === "DELETE") {
-            const old = payload.old as { user_id?: string };
-            if (old.user_id) {
-              setHighlights((prev) => {
-                const next = new Map(prev);
-                next.delete(old.user_id!);
+            const old = payload.old as { id?: string; user_id?: string };
+            setHighlights((prev) => {
+              const next = new Map(prev);
+
+              if (old.user_id) {
+                next.delete(old.user_id);
                 return next;
-              });
-            }
+              }
+
+              if (old.id) {
+                for (const [uid, highlight] of next.entries()) {
+                  if (highlight.id === old.id) {
+                    next.delete(uid);
+                    break;
+                  }
+                }
+              }
+
+              return next;
+            });
           }
         }
       )
@@ -113,29 +125,36 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
         return false;
       }
 
-      console.log('[ChatHighlights] Highlighting user:', userId, 'type:', type, 'livestream:', livestreamId);
-      
-      const { error } = await supabase.from("chat_highlighted_users").upsert(
-        {
-          livestream_id: livestreamId,
-          user_id: userId,
-          highlight_type: type,
-          created_by: user.id,
-        },
-        { onConflict: "livestream_id,user_id" }
-      );
+      const { data, error } = await supabase
+        .from("chat_highlighted_users")
+        .upsert(
+          {
+            livestream_id: livestreamId,
+            user_id: userId,
+            highlight_type: type,
+            created_by: user.id,
+          },
+          { onConflict: "livestream_id,user_id" }
+        )
+        .select()
+        .single();
 
       if (error) {
         console.error('[ChatHighlights] Error highlighting user:', error);
+        return false;
       }
-      return !error;
+
+      if (data) {
+        setHighlights((prev) => new Map(prev).set(userId, data as ChatHighlight));
+      }
+
+      return true;
     },
     [livestreamId]
   );
 
   const removeHighlight = useCallback(
     async (userId: string): Promise<boolean> => {
-      console.log('[ChatHighlights] Removing highlight for user:', userId);
       const { error } = await supabase
         .from("chat_highlighted_users")
         .delete()
@@ -144,8 +163,16 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
 
       if (error) {
         console.error('[ChatHighlights] Error removing highlight:', error);
+        return false;
       }
-      return !error;
+
+      setHighlights((prev) => {
+        const next = new Map(prev);
+        next.delete(userId);
+        return next;
+      });
+
+      return true;
     },
     [livestreamId]
   );
