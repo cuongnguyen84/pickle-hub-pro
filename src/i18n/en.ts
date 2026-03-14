@@ -729,6 +729,8 @@ export const en: Translations = {
     pinnedMessage: "Pinned message",
     topChatters: "Top chatters",
     messages: "messages",
+    highlight: "Highlight user",
+    removeHighlight: "Remove highlight",
   },
   analytics: {
     title: "Analytics",

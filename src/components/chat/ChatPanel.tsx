@@ -893,12 +893,15 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                   isCreator={creatorCache[message.user_id] ?? false}
                   avatarUrl={avatarCache[message.user_id] ?? message.avatar_url}
                   chatterRank={getChatterRank(message.user_id)}
+                  highlight={getHighlight(message.user_id)}
                   onDelete={deleteMessage}
                   onMute={muteUser}
                   onRetry={retryMessage}
                   onCopy={handleCopy}
                   onPin={isModerator ? handlePinMessage : undefined}
                   onReply={user ? handleReply : undefined}
+                  onHighlight={isModerator ? highlightUser : undefined}
+                  onRemoveHighlight={isModerator ? removeHighlight : undefined}
                 />
               ))
             )}

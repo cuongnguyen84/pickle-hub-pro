@@ -2409,6 +2409,8 @@ export const vi: Translations = {
     pinnedMessage: "Tin nhắn được ghim",
     topChatters: "Top chat",
     messages: "tin nhắn",
+    highlight: "Đánh dấu nổi bật",
+    removeHighlight: "Bỏ đánh dấu",
   },
   analytics: {
     title: "Analytics",
