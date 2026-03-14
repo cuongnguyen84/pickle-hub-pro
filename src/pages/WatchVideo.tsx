@@ -25,7 +25,6 @@ const WatchVideo = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
   const { user } = useAuth();
-  const viewRecorded = useRef(false);
   const { isBlocked } = useGeoBlock();
 
   const { data: video, isLoading } = useVideo(id!);
