@@ -263,6 +263,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   } = useLiveChat(livestreamId);
 
   const { leaderboard, getChatterRank, isLoading: leaderboardLoading } = useChatLeaderboard(livestreamId);
+  const { getHighlight, highlightUser, removeHighlight } = useChatHighlights(livestreamId);
 
   const [inputValue, setInputValue] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
