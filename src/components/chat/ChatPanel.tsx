@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
   MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3,
-  Pin, X as XIcon, Reply
+  Pin, X as XIcon, Reply, Star
 } from "lucide-react";
 import { MentionSuggestions, MentionUser, renderMessageWithMentions } from "./MentionSuggestions";
 import { NicknameInput } from "./NicknameInput";
@@ -18,6 +18,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user";
 import { useLiveChat, ChatMessage } from "@/hooks/useLiveChat";
@@ -33,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
 import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
+import { useChatHighlights, HIGHLIGHT_PRESETS, HighlightType, ChatHighlight } from "@/hooks/useChatHighlights";
 
 interface ChatPanelProps {
   livestreamId: string;
