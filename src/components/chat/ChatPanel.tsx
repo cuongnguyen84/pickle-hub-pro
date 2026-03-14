@@ -900,8 +900,14 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                   onCopy={handleCopy}
                   onPin={isModerator ? handlePinMessage : undefined}
                   onReply={user ? handleReply : undefined}
-                  onHighlight={isModerator ? highlightUser : undefined}
-                  onRemoveHighlight={isModerator ? removeHighlight : undefined}
+                  onHighlight={isModerator ? async (userId, type) => {
+                    const ok = await highlightUser(userId, type);
+                    toast({ title: ok ? "✓ Đã highlight" : "Lỗi highlight", variant: ok ? "default" : "destructive" });
+                  } : undefined}
+                  onRemoveHighlight={isModerator ? async (userId) => {
+                    const ok = await removeHighlight(userId);
+                    toast({ title: ok ? "✓ Đã bỏ highlight" : "Lỗi bỏ highlight", variant: ok ? "default" : "destructive" });
+                  } : undefined}
                 />
               ))
             )}
