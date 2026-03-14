@@ -90,7 +90,8 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
       className={cn(
         "group flex gap-2 px-3 py-1.5 hover:bg-muted/50 rounded transition-colors",
         isPending && "opacity-70",
-        isFailed && "opacity-80 bg-destructive/5"
+        isFailed && "opacity-80 bg-destructive/5",
+        highlightPreset && highlightPreset.bgColor
       )}
     >
       {/* Avatar */}
