@@ -724,6 +724,8 @@ export interface Translations {
     pinnedMessage: string;
     topChatters: string;
     messages: string;
+    highlight: string;
+    removeHighlight: string;
   };
   analytics: {
     title: string;
