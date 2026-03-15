@@ -948,7 +948,6 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                 );
               })
             )}
-            )}
             <div ref={bottomRef} />
           </div>
         </div>
