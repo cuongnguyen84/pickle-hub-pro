@@ -418,6 +418,16 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     prevMessagesLengthRef.current = messages.length;
   }, [messages.length, autoScroll, isNearBottom, scrollToBottom]);
 
+  // Register message IDs for like tracking
+  useEffect(() => {
+    const confirmedIds = messages
+      .filter(m => !m._pending && !m._failed)
+      .map(m => m.id);
+    if (confirmedIds.length > 0) {
+      registerMessages(confirmedIds);
+    }
+  }, [messages, registerMessages]);
+
   // Initial scroll to bottom
   useEffect(() => {
     if (!isLoading && messages.length > 0) {
