@@ -15,12 +15,13 @@ export function useChatMessageLikes(livestreamId: string) {
   const { user } = useAuth();
   const [likesMap, setLikesMap] = useState<Record<string, LikeData>>({});
   const messageIdsRef = useRef<Set<string>>(new Set());
+  // Track message IDs with pending optimistic updates to avoid double-counting from realtime
+  const pendingOptimisticRef = useRef<Set<string>>(new Set());
 
   // Load likes for a batch of message IDs
   const loadLikes = useCallback(async (messageIds: string[]) => {
     if (messageIds.length === 0) return;
 
-    // Get counts per message
     const { data: allLikes } = await supabase
       .from("chat_message_likes")
       .select("message_id, user_id")
@@ -48,7 +49,7 @@ export function useChatMessageLikes(livestreamId: string) {
     loadLikes(newIds);
   }, [loadLikes]);
 
-  // Realtime subscription for like changes - update state directly from payload
+  // Realtime subscription for like changes
   useEffect(() => {
     const channel = supabase
       .channel(`chat_likes:${livestreamId}`)
@@ -57,7 +58,16 @@ export function useChatMessageLikes(livestreamId: string) {
         { event: "INSERT", schema: "public", table: "chat_message_likes" },
         (payload) => {
           const row = payload.new as { message_id: string; user_id: string };
-          if (row.message_id && messageIdsRef.current.has(row.message_id)) {
+          if (!row.message_id) return;
+          
+          // Skip if this is our own optimistic update (already applied)
+          if (user?.id === row.user_id && pendingOptimisticRef.current.has(row.message_id)) {
+            pendingOptimisticRef.current.delete(row.message_id);
+            return;
+          }
+
+          // Update count for any tracked message
+          if (messageIdsRef.current.has(row.message_id)) {
             setLikesMap(prev => {
               const current = prev[row.message_id] ?? { count: 0, liked: false };
               return {
@@ -76,7 +86,15 @@ export function useChatMessageLikes(livestreamId: string) {
         { event: "DELETE", schema: "public", table: "chat_message_likes" },
         (payload) => {
           const row = payload.old as { message_id: string; user_id: string };
-          if (row.message_id && messageIdsRef.current.has(row.message_id)) {
+          if (!row.message_id) return;
+
+          // Skip if this is our own optimistic update
+          if (user?.id === row.user_id && pendingOptimisticRef.current.has(row.message_id)) {
+            pendingOptimisticRef.current.delete(row.message_id);
+            return;
+          }
+
+          if (messageIdsRef.current.has(row.message_id)) {
             setLikesMap(prev => {
               const current = prev[row.message_id] ?? { count: 0, liked: false };
               return {
@@ -90,7 +108,9 @@ export function useChatMessageLikes(livestreamId: string) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[ChatLikes] Realtime channel status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -103,6 +123,9 @@ export function useChatMessageLikes(livestreamId: string) {
 
     const current = likesMap[messageId];
     const isLiked = current?.liked ?? false;
+
+    // Mark as pending optimistic to skip realtime echo
+    pendingOptimisticRef.current.add(messageId);
 
     // Optimistic update
     setLikesMap(prev => ({
@@ -127,6 +150,7 @@ export function useChatMessageLikes(livestreamId: string) {
       }
     } catch {
       // Revert on error
+      pendingOptimisticRef.current.delete(messageId);
       setLikesMap(prev => ({
         ...prev,
         [messageId]: {
