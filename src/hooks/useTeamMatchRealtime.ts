@@ -88,6 +88,7 @@ export function useTeamMatchRealtime(tournamentId: string | undefined) {
 
     return () => {
       supabase.removeChannel(matchesChannel);
+      supabase.removeChannel(teamsChannel);
       supabase.removeChannel(gamesChannel);
     };
   }, [tournamentId, queryClient]);
