@@ -58,6 +58,9 @@
     --input: 220 10% 18%;
     --ring: 175 65% 45%;
     
+    /* Creator verification badge */
+    --creator-badge: 210 100% 52%;
+    
     /* Radius */
     --radius: 0.75rem;
     
