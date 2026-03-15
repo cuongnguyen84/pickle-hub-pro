@@ -49,6 +49,8 @@ interface ChatMessageItemProps {
   avatarUrl: string | null;
   chatterRank: number | null;
   highlight?: ChatHighlight;
+  likeCount: number;
+  isLiked: boolean;
   onDelete: (id: string) => void;
   onMute: (userId: string, duration: number) => void;
   onRetry?: (tempId: string, message: string) => void;
@@ -57,6 +59,7 @@ interface ChatMessageItemProps {
   onReply?: (message: ChatMessage) => void;
   onHighlight?: (userId: string, type: HighlightType) => void;
   onRemoveHighlight?: (userId: string) => void;
+  onToggleLike?: (messageId: string) => void;
 }
 
 const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
