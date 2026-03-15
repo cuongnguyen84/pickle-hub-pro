@@ -2411,6 +2411,7 @@ export const vi: Translations = {
     messages: "tin nhắn",
     highlight: "Đánh dấu nổi bật",
     removeHighlight: "Bỏ đánh dấu",
+    like: "Thích",
   },
   analytics: {
     title: "Analytics",
