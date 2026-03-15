@@ -916,7 +916,9 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                 {t.chat.noMessages}
               </div>
             ) : (
-              messages.map((message) => (
+              messages.map((message) => {
+                const likeData = getLikeData(message.id);
+                return (
                 <ChatMessageItem
                   key={message.id}
                   message={message}
@@ -925,12 +927,15 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                   avatarUrl={avatarCache[message.user_id] ?? message.avatar_url}
                   chatterRank={getChatterRank(message.user_id)}
                   highlight={getHighlight(message.user_id)}
+                  likeCount={likeData.count}
+                  isLiked={likeData.liked}
                   onDelete={deleteMessage}
                   onMute={muteUser}
                   onRetry={retryMessage}
                   onCopy={handleCopy}
                   onPin={isModerator ? handlePinMessage : undefined}
                   onReply={user ? handleReply : undefined}
+                  onToggleLike={user ? toggleLike : undefined}
                   onHighlight={isModerator ? async (userId, type) => {
                     const ok = await highlightUser(userId, type);
                     toast({ title: ok ? "✓ Đã highlight" : "Lỗi highlight", variant: ok ? "default" : "destructive" });
