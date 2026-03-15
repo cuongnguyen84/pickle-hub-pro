@@ -726,6 +726,7 @@ export interface Translations {
     messages: string;
     highlight: string;
     removeHighlight: string;
+    like: string;
   };
   analytics: {
     title: string;
@@ -2411,6 +2412,7 @@ export const vi: Translations = {
     messages: "tin nhắn",
     highlight: "Đánh dấu nổi bật",
     removeHighlight: "Bỏ đánh dấu",
+    like: "Thích",
   },
   analytics: {
     title: "Analytics",

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
   MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3,
-  Pin, X as XIcon, Reply, Star
+  Pin, X as XIcon, Reply, Star, Heart
 } from "lucide-react";
 import { MentionSuggestions, MentionUser, renderMessageWithMentions } from "./MentionSuggestions";
 import { NicknameInput } from "./NicknameInput";
@@ -34,6 +34,7 @@ import { useLocation } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
 import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
 import { useChatHighlights, HIGHLIGHT_PRESETS, HighlightType, ChatHighlight } from "@/hooks/useChatHighlights";
+import { useChatMessageLikes } from "@/hooks/useChatMessageLike";
 
 interface ChatPanelProps {
   livestreamId: string;
@@ -49,6 +50,8 @@ interface ChatMessageItemProps {
   avatarUrl: string | null;
   chatterRank: number | null;
   highlight?: ChatHighlight;
+  likeCount: number;
+  isLiked: boolean;
   onDelete: (id: string) => void;
   onMute: (userId: string, duration: number) => void;
   onRetry?: (tempId: string, message: string) => void;
@@ -57,6 +60,7 @@ interface ChatMessageItemProps {
   onReply?: (message: ChatMessage) => void;
   onHighlight?: (userId: string, type: HighlightType) => void;
   onRemoveHighlight?: (userId: string) => void;
+  onToggleLike?: (messageId: string) => void;
 }
 
 const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
@@ -66,6 +70,8 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   avatarUrl,
   chatterRank,
   highlight,
+  likeCount,
+  isLiked,
   onDelete,
   onMute,
   onRetry,
@@ -74,6 +80,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
   onReply,
   onHighlight,
   onRemoveHighlight,
+  onToggleLike,
 }, ref) => {
   const { t } = useI18n();
   const isPending = message._pending;
@@ -139,6 +146,20 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
         </div>
         <p className="text-sm text-foreground break-words whitespace-pre-wrap">{renderMessageWithMentions(message.message)}</p>
         
+        {/* Like count display */}
+        {!isPending && !isFailed && likeCount > 0 && (
+          <button
+            onClick={() => onToggleLike?.(message.id)}
+            className="flex items-center gap-1 mt-0.5 group/like"
+          >
+            <Heart className={cn(
+              "h-3 w-3 transition-colors",
+              isLiked ? "fill-red-500 text-red-500" : "text-muted-foreground"
+            )} />
+            <span className="text-[11px] text-muted-foreground">{likeCount}</span>
+          </button>
+        )}
+
         {/* Retry button for failed messages */}
         {isFailed && onRetry && (
           <Button
@@ -157,6 +178,20 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
       {/* Actions dropdown - only for confirmed messages */}
       {!isPending && !isFailed && (
         <div className="flex items-start shrink-0 opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+          {/* Like button */}
+          {onToggleLike && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => onToggleLike(message.id)}
+            >
+              <Heart className={cn(
+                "h-3 w-3 transition-colors",
+                isLiked ? "fill-red-500 text-red-500" : ""
+              )} />
+            </Button>
+          )}
           {onReply && (
             <Button
               variant="ghost"
@@ -259,6 +294,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
 
   const { leaderboard, getChatterRank, isLoading: leaderboardLoading } = useChatLeaderboard(livestreamId);
   const { getHighlight, highlightUser, removeHighlight } = useChatHighlights(livestreamId);
+  const { registerMessages, toggleLike, getLikeData } = useChatMessageLikes(livestreamId);
 
   const [inputValue, setInputValue] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
@@ -381,6 +417,16 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     
     prevMessagesLengthRef.current = messages.length;
   }, [messages.length, autoScroll, isNearBottom, scrollToBottom]);
+
+  // Register message IDs for like tracking
+  useEffect(() => {
+    const confirmedIds = messages
+      .filter(m => !m._pending && !m._failed)
+      .map(m => m.id);
+    if (confirmedIds.length > 0) {
+      registerMessages(confirmedIds);
+    }
+  }, [messages, registerMessages]);
 
   // Initial scroll to bottom
   useEffect(() => {
@@ -880,7 +926,9 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                 {t.chat.noMessages}
               </div>
             ) : (
-              messages.map((message) => (
+              messages.map((message) => {
+                const likeData = getLikeData(message.id);
+                return (
                 <ChatMessageItem
                   key={message.id}
                   message={message}
@@ -889,12 +937,15 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                   avatarUrl={avatarCache[message.user_id] ?? message.avatar_url}
                   chatterRank={getChatterRank(message.user_id)}
                   highlight={getHighlight(message.user_id)}
+                  likeCount={likeData.count}
+                  isLiked={likeData.liked}
                   onDelete={deleteMessage}
                   onMute={muteUser}
                   onRetry={retryMessage}
                   onCopy={handleCopy}
                   onPin={isModerator ? handlePinMessage : undefined}
                   onReply={user ? handleReply : undefined}
+                  onToggleLike={user ? toggleLike : undefined}
                   onHighlight={isModerator ? async (userId, type) => {
                     const ok = await highlightUser(userId, type);
                     toast({ title: ok ? "✓ Đã highlight" : "Lỗi highlight", variant: ok ? "default" : "destructive" });
@@ -904,7 +955,8 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                     toast({ title: ok ? "✓ Đã bỏ highlight" : "Lỗi bỏ highlight", variant: ok ? "default" : "destructive" });
                   } : undefined}
                 />
-              ))
+                );
+              })
             )}
             <div ref={bottomRef} />
           </div>

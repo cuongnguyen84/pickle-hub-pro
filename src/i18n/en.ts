@@ -731,6 +731,7 @@ export const en: Translations = {
     messages: "messages",
     highlight: "Highlight user",
     removeHighlight: "Remove highlight",
+    like: "Like",
   },
   analytics: {
     title: "Analytics",
