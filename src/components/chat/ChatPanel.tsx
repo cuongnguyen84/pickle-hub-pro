@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   Send, Settings, Trash2, VolumeX, MessageCircle, Clock, AlertCircle, 
   MoreHorizontal, Copy, Flag, RefreshCw, ChevronDown, ChevronUp, BadgeCheck, Edit3,
-  Pin, X as XIcon, Reply, Star
+  Pin, X as XIcon, Reply, Star, Heart
 } from "lucide-react";
 import { MentionSuggestions, MentionUser, renderMessageWithMentions } from "./MentionSuggestions";
 import { NicknameInput } from "./NicknameInput";
