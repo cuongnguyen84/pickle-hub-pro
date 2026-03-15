@@ -7,8 +7,12 @@ interface UseIntervalViewCounterOptions {
   viewerUserId: string | null;
   organizationId: string | null | undefined;
   source?: "embed";
+  /** How often (ms) to accumulate a view event. Default: 30s */
   intervalMs?: number;
+  /** How often (ms) to flush the batch to the server. Default: 60s */
   flushIntervalMs?: number;
+  /** Max events per session to prevent inflation. Default: 20 (~10 min) */
+  maxEventsPerSession?: number;
 }
 
 interface PendingEvent {
@@ -20,8 +24,9 @@ interface PendingEvent {
 }
 
 /**
- * Records view events by accumulating them client-side every `intervalMs` (default 10s)
- * and flushing the batch to the edge function every `flushIntervalMs` (default 30s).
+ * Records view events by accumulating them client-side every `intervalMs` (default 30s)
+ * and flushing the batch to the edge function every `flushIntervalMs` (default 60s).
+ * Caps at `maxEventsPerSession` (default 20) to prevent view inflation.
  */
 export function useIntervalViewCounter({
   targetType,
@@ -29,15 +34,20 @@ export function useIntervalViewCounter({
   viewerUserId,
   organizationId,
   source,
-  intervalMs = 10000,
-  flushIntervalMs = 30000,
+  intervalMs = 30_000,
+  flushIntervalMs = 60_000,
+  maxEventsPerSession = 20,
 }: UseIntervalViewCounterOptions) {
   const pendingRef = useRef<PendingEvent[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const flushRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const totalSentRef = useRef(0);
 
   useEffect(() => {
     if (!targetId) return;
+
+    // Reset session counter when target changes
+    totalSentRef.current = 0;
 
     const event: PendingEvent = {
       target_type: targetType,
@@ -47,9 +57,11 @@ export function useIntervalViewCounter({
       ...(source ? { source } : {}),
     };
 
-    // Accumulate one event every intervalMs
+    // Accumulate one event every intervalMs (only if under cap)
     tickRef.current = setInterval(() => {
-      pendingRef.current.push({ ...event });
+      if (totalSentRef.current + pendingRef.current.length < maxEventsPerSession) {
+        pendingRef.current.push({ ...event });
+      }
     }, intervalMs);
 
     // Flush batch every flushIntervalMs
@@ -62,9 +74,11 @@ export function useIntervalViewCounter({
         await supabase.functions.invoke("batch-view-events", {
           body: { events: batch },
         });
+        totalSentRef.current += batch.length;
       } catch (err) {
-        // Put events back on failure
-        pendingRef.current.unshift(...batch);
+        // Put events back on failure (but respect cap)
+        const remaining = batch.slice(0, maxEventsPerSession - totalSentRef.current);
+        pendingRef.current.unshift(...remaining);
         console.error("[useIntervalViewCounter] flush error:", err);
       }
     };
@@ -77,12 +91,14 @@ export function useIntervalViewCounter({
 
       // Flush remaining events on unmount
       if (pendingRef.current.length > 0) {
-        const remaining = [...pendingRef.current];
+        const remaining = pendingRef.current.slice(0, maxEventsPerSession - totalSentRef.current);
         pendingRef.current = [];
-        supabase.functions
-          .invoke("batch-view-events", { body: { events: remaining } })
-          .catch(() => {});
+        if (remaining.length > 0) {
+          supabase.functions
+            .invoke("batch-view-events", { body: { events: remaining } })
+            .catch(() => {});
+        }
       }
     };
-  }, [targetType, targetId, viewerUserId, organizationId, source, intervalMs, flushIntervalMs]);
+  }, [targetType, targetId, viewerUserId, organizationId, source, intervalMs, flushIntervalMs, maxEventsPerSession]);
 }
