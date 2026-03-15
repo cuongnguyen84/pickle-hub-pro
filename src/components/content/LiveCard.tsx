@@ -182,7 +182,7 @@ const LiveCard = ({
                 <span className="line-clamp-1 inline-flex items-center gap-1">
                   {organizationName}
                   {isVerifiedCreator && (
-                    <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <BadgeCheck className="w-3.5 h-3.5 text-creator-badge shrink-0" />
                   )}
                 </span>
               )}

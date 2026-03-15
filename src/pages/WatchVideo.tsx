@@ -178,7 +178,7 @@ const WatchVideo = () => {
                     </Avatar>
                     <span className="inline-flex items-center gap-1">
                       {video.organization.name}
-                      <BadgeCheck className="w-4 h-4 text-primary" />
+                      <BadgeCheck className="w-4 h-4 text-creator-badge" />
                     </span>
                   </Link>
                 )}
