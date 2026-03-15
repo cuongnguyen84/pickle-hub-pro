@@ -39,6 +39,24 @@ export function useTeamMatchRealtime(tournamentId: string | undefined) {
       )
       .subscribe();
 
+    // Channel for teams updates
+    const teamsChannel = supabase
+      .channel(`team-match-teams:${tournamentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'team_match_teams',
+          filter: `tournament_id=eq.${tournamentId}`,
+        },
+        (payload) => {
+          console.log('[Realtime] team_match_teams changed:', payload.eventType);
+          queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
+        }
+      )
+      .subscribe();
+
     // Channel for games updates  
     const gamesChannel = supabase
       .channel(`team-match-games:${tournamentId}`)
