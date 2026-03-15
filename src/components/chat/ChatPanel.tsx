@@ -945,7 +945,9 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
                     toast({ title: ok ? "✓ Đã bỏ highlight" : "Lỗi bỏ highlight", variant: ok ? "default" : "destructive" });
                   } : undefined}
                 />
-              ))
+                );
+              })
+            )}
             )}
             <div ref={bottomRef} />
           </div>
