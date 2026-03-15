@@ -145,6 +145,20 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
         </div>
         <p className="text-sm text-foreground break-words whitespace-pre-wrap">{renderMessageWithMentions(message.message)}</p>
         
+        {/* Like count display */}
+        {!isPending && !isFailed && likeCount > 0 && (
+          <button
+            onClick={() => onToggleLike?.(message.id)}
+            className="flex items-center gap-1 mt-0.5 group/like"
+          >
+            <Heart className={cn(
+              "h-3 w-3 transition-colors",
+              isLiked ? "fill-red-500 text-red-500" : "text-muted-foreground"
+            )} />
+            <span className="text-[11px] text-muted-foreground">{likeCount}</span>
+          </button>
+        )}
+
         {/* Retry button for failed messages */}
         {isFailed && onRetry && (
           <Button
