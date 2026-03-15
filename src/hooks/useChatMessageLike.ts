@@ -48,18 +48,45 @@ export function useChatMessageLikes(livestreamId: string) {
     loadLikes(newIds);
   }, [loadLikes]);
 
-  // Realtime subscription for like changes
+  // Realtime subscription for like changes - update state directly from payload
   useEffect(() => {
     const channel = supabase
       .channel(`chat_likes:${livestreamId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "chat_message_likes" },
+        { event: "INSERT", schema: "public", table: "chat_message_likes" },
         (payload) => {
-          const messageId = (payload.new as any)?.message_id || (payload.old as any)?.message_id;
-          if (messageId && messageIdsRef.current.has(messageId)) {
-            // Reload just this message's likes
-            loadLikes([messageId]);
+          const row = payload.new as { message_id: string; user_id: string };
+          if (row.message_id && messageIdsRef.current.has(row.message_id)) {
+            setLikesMap(prev => {
+              const current = prev[row.message_id] ?? { count: 0, liked: false };
+              return {
+                ...prev,
+                [row.message_id]: {
+                  count: current.count + 1,
+                  liked: current.liked || (user?.id === row.user_id),
+                },
+              };
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "chat_message_likes" },
+        (payload) => {
+          const row = payload.old as { message_id: string; user_id: string };
+          if (row.message_id && messageIdsRef.current.has(row.message_id)) {
+            setLikesMap(prev => {
+              const current = prev[row.message_id] ?? { count: 0, liked: false };
+              return {
+                ...prev,
+                [row.message_id]: {
+                  count: Math.max(0, current.count - 1),
+                  liked: (user?.id === row.user_id) ? false : current.liked,
+                },
+              };
+            });
           }
         }
       )
@@ -68,7 +95,7 @@ export function useChatMessageLikes(livestreamId: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [livestreamId, loadLikes]);
+  }, [livestreamId, user?.id]);
 
   // Toggle like for a message
   const toggleLike = useCallback(async (messageId: string) => {
