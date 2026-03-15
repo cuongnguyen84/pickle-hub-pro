@@ -177,6 +177,20 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
       {/* Actions dropdown - only for confirmed messages */}
       {!isPending && !isFailed && (
         <div className="flex items-start shrink-0 opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+          {/* Like button */}
+          {onToggleLike && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => onToggleLike(message.id)}
+            >
+              <Heart className={cn(
+                "h-3 w-3 transition-colors",
+                isLiked ? "fill-red-500 text-red-500" : ""
+              )} />
+            </Button>
+          )}
           {onReply && (
             <Button
               variant="ghost"
