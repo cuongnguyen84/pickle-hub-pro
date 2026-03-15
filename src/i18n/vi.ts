@@ -726,6 +726,7 @@ export interface Translations {
     messages: string;
     highlight: string;
     removeHighlight: string;
+    like: string;
   };
   analytics: {
     title: string;
