@@ -76,6 +76,7 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         live: "hsl(var(--live))",
+        "creator-badge": "hsl(var(--creator-badge))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

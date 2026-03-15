@@ -113,7 +113,7 @@ const ChatMessageItem = forwardRef<HTMLDivElement, ChatMessageItemProps>(({
             {message.display_name}
           </span>
           {isCreator && (
-            <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+            <BadgeCheck className="h-3.5 w-3.5 text-creator-badge shrink-0" />
           )}
           {highlightPreset && (
             <span className={cn("text-[10px] font-semibold px-1 py-0.5 rounded", highlightPreset.color, highlightPreset.bgColor)}>

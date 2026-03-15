@@ -100,7 +100,7 @@ export const OrganizationHero = ({
                   <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground flex items-center gap-2">
                     {name}
                     {isVerifiedCreator && (
-                      <BadgeCheck className="w-6 h-6 md:w-7 md:h-7 text-primary shrink-0" />
+                      <BadgeCheck className="w-6 h-6 md:w-7 md:h-7 text-creator-badge shrink-0" />
                     )}
                   </h1>
                 </div>

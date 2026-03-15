@@ -20,7 +20,7 @@ export function UserDisplayName({
       {isCreator && (
         <BadgeCheck
           className={cn(
-            "h-4 w-4 text-primary shrink-0",
+            "h-4 w-4 text-creator-badge shrink-0",
             badgeClassName
           )}
         />
