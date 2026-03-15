@@ -34,6 +34,7 @@ import { useLocation } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
 import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
 import { useChatHighlights, HIGHLIGHT_PRESETS, HighlightType, ChatHighlight } from "@/hooks/useChatHighlights";
+import { useChatMessageLikes } from "@/hooks/useChatMessageLike";
 
 interface ChatPanelProps {
   livestreamId: string;
