@@ -105,5 +105,5 @@ export function useIntervalViewCounter({
         }
       }
     };
-  }, [targetType, targetId, viewerUserId, organizationId, source, intervalMs, flushIntervalMs, maxEventsPerSession]);
+  }, [targetType, targetId, viewerUserId, organizationId, source, isReplay, intervalMs, flushIntervalMs, maxEventsPerSession]);
 }
