@@ -93,15 +93,14 @@ const Live = () => {
               {filteredLive.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredLive.map((stream) => (
-                    <LiveCard
+                    <LiveCardWithPresence
                       key={stream.id}
                       id={stream.id!}
                       title={stream.title ?? ""}
-                      viewerCount={0}
                       organizationName={stream.organization?.name ?? ""}
                       organizationSlug={stream.organization?.slug}
                       organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                      status={stream.status as "live" | "scheduled" | "ended"}
+                      status="live"
                       thumbnail={stream.thumbnail_url ?? undefined}
                     />
                   ))}
