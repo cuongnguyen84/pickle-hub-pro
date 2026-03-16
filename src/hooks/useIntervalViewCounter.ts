@@ -37,6 +37,7 @@ export function useIntervalViewCounter({
   viewerUserId,
   organizationId,
   source,
+  isReplay = false,
   intervalMs = 30_000,
   flushIntervalMs = 60_000,
   maxEventsPerSession = 20,
