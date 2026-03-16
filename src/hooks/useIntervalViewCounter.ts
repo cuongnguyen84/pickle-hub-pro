@@ -23,6 +23,7 @@ interface PendingEvent {
   viewer_user_id: string | null;
   organization_id: string | null;
   source?: "embed";
+  is_replay?: boolean;
 }
 
 /**
