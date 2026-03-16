@@ -1,114 +1,77 @@
-# Kế hoạch nâng cấp Form chấm điểm trọng tài (MatchScoring)
-
-## Tổng quan
-
-Nâng cấp toàn diện trang `/matches/:matchId/score` dựa trên yêu cầu: tùy chọn hỗ trợ nhiều set, đồng hồ bấm giờ timeout (khi trọng tài bấm vào timeout bên vđv nào thì mới hiện đồng hồ bên đó), đổi sân/đổi giao bóng, hoàn tác (undo), và hỗ trợ đánh đôi (doubles). Giữ nguyên cách ghi điểm +1/-1.
-
----
-
-## 1. Thay đổi Database
-
-Thêm các cột mới vào bảng `quick_table_matches`:
 
 
-| Cột                           | Kiểu                      | Mục đích                                                                |
-| ----------------------------- | ------------------------- | ----------------------------------------------------------------------- |
-| `set_scores`                  | `jsonb`                   | Lưu điểm từng set, VD: `[{"s1":11,"s2":9},{"s1":7,"s2":11}]`            |
-| `current_set`                 | `integer` (default 1)     | Set đang thi đấu                                                        |
-| `total_sets`                  | `integer` (default 1)     | Tổng số set (1, 3, hoặc 5)                                              |
-| `serving_side`                | `integer` (default 1)     | Bên đang giao bóng (1 hoặc 2)                                           |
-| `sides_swapped`               | `boolean` (default false) | Đã đổi sân chưa                                                         |
-| `score_history`               | `jsonb`                   | Lịch sử thao tác để undo, VD: `[{"action":"score","player":1,"set":1}]` |
-| `match_timer_started_at`      | `timestamptz`             | Thời điểm bắt đầu đồng hồ                                               |
-| `match_timer_elapsed_seconds` | `integer` (default 0)     | Tổng giây đã trôi qua                                                   |
+## Phân tích 3 phiên livestream Texas Open (13-15/03/2026)
 
+### Tổng quan dữ liệu
 
----
+| Phiên | Thời lượng | View Events | Unique Viewers | Chat Messages |
+|---|---|---|---|---|
+| Quarterfinals (13/03) | ~3h18' | 1,688 | 180 | 264 |
+| **Semifinals (14/03)** | **~4h32'** | **169,950** | **219** | **438** |
+| Finals (15/03) | ~10h13' | 32,111 | 383 | 760 |
 
-## 2. Cấu trúc UI mới
+### Vấn đề nghiêm trọng: View inflation tại Semifinals
 
-```text
-┌──────────────────────────────────────────┐
-│ ← Quay lại    Tên giải / Vòng    🔴 LIVE │
-├──────────────────────────────────────────┤
-│  [Kết thúc]  [Hoàn tác ↩]  [Đổi sân]   │  ← Toolbar (hiện khi đã Bắt đầu)
-├──────────────────────────────────────────┤
-│                                          │
-│   Player1A          Player2A             │
-│   Player1B          Player2B             │  ← Doubles: 2 tên mỗi bên
-│                                          │
-│         SET 1   SET 2   SET 3            │
-│           11-9   7-11    ·-·             │  ← Bảng điểm các set
-│                                          │
-│              5  —  3                     │  ← Điểm set hiện tại (to)
-│                                          │
-│   ⏱ 05:23       Giao: Bên trái 🏓       │  ← Timer + serving indicator
-│                                          │
-├──────────────────────────────────────────┤
-│  [+1 Bên trái]              [+1 Bên phải]│  ← Nút cộng điểm chính
-│  [-1 Bên trái]   [Đổi giao]  [-1 Bên phải]│
-└──────────────────────────────────────────┘
-```
+Phiên Semifinals có **169,950 view events** nhưng chỉ **219 người dùng đăng nhập** -- trung bình **~660 events/người**. Top user tạo ra **14,717 events** (tương đương gửi 1 event mỗi ~1.1 giây trong suốt phiên).
+
+Nguyên nhân: phiên này chạy với cấu hình cũ (interval 10s, không giới hạn). Phiên Finals (đã áp dụng cấu hình mới 30s + cap 20) cho thấy tỷ lệ hợp lý hơn: 32,111 views / 383 users = ~84 events/user -- vẫn cao nhưng giảm đáng kể.
+
+**Tuy nhiên**, 84 events/user vẫn vượt xa giới hạn 20 events/session. Nguyên nhân: cap chỉ áp dụng per-session (mỗi lần mở tab), nếu user reload hoặc mở nhiều tab thì cap bị reset.
+
+### Đánh giá hệ thống
+
+**Hoạt động tốt:**
+- Streaming provider (Mux) ổn định qua cả 3 phiên dài (lên đến 10h)
+- Chat hoạt động tốt với 760 tin nhắn trong phiên Final
+- Tính năng like chat đã triển khai (max 5 likes/message)
+- Tăng trưởng viewers: Quarterfinals (180) → Semifinals (219) → Finals (383)
+
+**Cần cải tiến:**
+
+1. **View counting vẫn bị inflation** -- cap per-session không đủ, cần deduplicate phía server
+2. **Anonymous views chiếm tỷ lệ lớn** -- Semifinals có 25,255 anonymous events (không track được)
+3. **Replay views vẫn tích lũy** -- phiên Semifinals vẫn nhận events 2 ngày sau khi kết thúc (đến 16/03)
+4. **Chat engagement thấp** -- 438 chat / 219 viewers = chỉ ~2 tin/người
 
 ---
 
-## 3. Chi tiết triển khai
+### Đề xuất cải tiến
 
-### 3.1 Database Migration
+#### 1. Chống view inflation phía server (ưu tiên cao)
+- Trong edge function `batch-view-events`, thêm logic **deduplicate**: nếu cùng `viewer_user_id` + `target_id` đã có event trong 30 giây gần nhất thì bỏ qua
+- Với anonymous viewers: rate-limit dựa trên IP address (tối đa 1 event/30s/IP/target)
+- Thêm cột `viewer_ip` vào `view_events` để phát hiện abuse
 
-- Thêm các cột mới vào `quick_table_matches`
-- Cột `total_sets` cũng cần được cấu hình ở bảng `quick_tables` (thêm cột `default_sets` để BTC thiết lập trước)
+#### 2. Tách biệt live views vs replay views
+- Thêm trường `is_replay` vào `view_events` để phân biệt lượt xem live vs replay
+- Hiển thị riêng "Live viewers" và "Replay views" trên giao diện creator analytics
+- Ngừng tích lũy view events cho livestream đã ended sau 24h (chỉ tính replay views)
 
-### 3.2 Logic nhiều set
+#### 3. Hiển thị "concurrent viewers" thay vì tổng views
+- Tạo bảng `livestream_concurrent_snapshots` ghi lại số người xem đồng thời mỗi 30s
+- Hiển thị "X người đang xem" real-time trên LiveCard thay vì tổng view count
+- Dùng Supabase Presence (đã có `useLivePresence`) để đếm chính xác
 
-- Điểm `score1`/`score2` vẫn giữ cho set hiện tại (backward compatible)
-- `set_scores` lưu kết quả các set đã hoàn thành
-- Khi kết thúc 1 set: lưu điểm vào `set_scores`, reset `score1`/`score2` về 0, tăng `current_set`
-- Xác định người thắng trận: best of N (VD: thắng 2/3 set)
+#### 4. Tăng chat engagement
+- Thêm **chat reactions nhanh** (emoji bay lên như TikTok Live)
+- Thêm **polls/câu hỏi** cho creator tương tác với viewers
+- **Auto-highlight** tin nhắn được like nhiều nhất
 
-### 3.3 Đồng hồ bấm giờ
-
-- Nút "Bắt đầu" để start timer, lưu `match_timer_started_at`
-- Hiển thị thời gian trôi qua (MM:SS) tính từ `started_at` + `elapsed_seconds`
-- Khi pause: cập nhật `elapsed_seconds`, clear `started_at`
-
-### 3.4 Đổi sân & Đổi giao bóng
-
-- Nút "Đổi sân": toggle `sides_swapped` → hoán vị hiển thị bên trái/phải (không đổi data player1/player2)
-- Nút "Đổi giao": toggle `serving_side` (1↔2), hiển thị icon 🏓 bên đang giao
-
-### 3.5 Hoàn tác (Undo)
-
-- Mỗi thao tác (cộng/trừ điểm, đổi giao, đổi sân, kết thúc set) được push vào `score_history`
-- Nút "Hoàn tác": pop thao tác cuối và revert state tương ứng
-- Lưu history vào DB để đồng bộ realtime
-
-### 3.6 Hỗ trợ Doubles
-
-- Bảng `quick_table_matches` đã có `player1_id`/`player2_id` trỏ đến `quick_table_players`
-- Với doubles (bảng `quick_tables.is_doubles = true`): mỗi "player" thực chất là 1 team
-- Fetch thêm thông tin team từ `quick_table_teams` nếu `is_doubles`, hiển thị 2 tên mỗi bên
-
-### 3.7 Cập nhật i18n
-
-- Thêm các key mới cho EN/VI: "Đổi sân", "Đổi giao", "Hoàn tác", "Set", "Bắt đầu", v.v.
+#### 5. Dọn dẹp dữ liệu cũ
+- Chạy migration xóa hoặc aggregate view_events cũ (trước khi fix) để giảm tải database
+- Cập nhật `view_counts` cho các phiên cũ với con số chính xác hơn (dựa trên unique viewers)
 
 ---
 
-## 4. Các file cần sửa/tạo
+### Ưu tiên thực hiện
 
+| # | Cải tiến | Mức độ | Lý do |
+|---|---|---|---|
+| 1 | Server-side dedup view events | Cao | Dữ liệu hiện tại không đáng tin cậy |
+| 2 | Concurrent viewers display | Cao | UX quan trọng cho livestream |
+| 3 | Tách live vs replay views | Trung bình | Analytics chính xác hơn |
+| 4 | Chat engagement features | Trung bình | Tăng tương tác cộng đồng |
+| 5 | Dọn dẹp data cũ | Thấp | Maintenance |
 
-| File                         | Thay đổi                                                 |
-| ---------------------------- | -------------------------------------------------------- |
-| DB Migration                 | Thêm cột mới vào `quick_table_matches` và `quick_tables` |
-| `src/pages/MatchScoring.tsx` | Viết lại UI + logic chính                                |
-| `src/i18n/vi.ts`             | Thêm key dịch mới                                        |
-| `src/i18n/en.ts`             | Thêm key dịch mới                                        |
+Bạn muốn bắt đầu với cải tiến nào?
 
-
----
-
-## 5. Backward Compatibility
-
-- Các trận cũ có `total_sets = 1` và `set_scores = null` → hoạt động như hiện tại
-- Logic xác định winner vẫn dựa trên `score1 > score2` cho single-set, hoặc đếm set thắng cho multi-set
