@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { LiveCard, SectionHeader, EmptyState } from "@/components/content";
+import { SectionHeader, EmptyState } from "@/components/content";
+import LiveCardWithPresence from "@/components/content/LiveCardWithPresence";
 import { SearchBar } from "@/components/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";

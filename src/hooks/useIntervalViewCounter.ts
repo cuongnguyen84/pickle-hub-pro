@@ -7,6 +7,8 @@ interface UseIntervalViewCounterOptions {
   viewerUserId: string | null;
   organizationId: string | null | undefined;
   source?: "embed";
+  /** Whether this is a replay view (ended livestream) */
+  isReplay?: boolean;
   /** How often (ms) to accumulate a view event. Default: 30s */
   intervalMs?: number;
   /** How often (ms) to flush the batch to the server. Default: 60s */
