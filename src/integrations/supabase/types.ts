@@ -2994,28 +2994,34 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_replay: boolean
           organization_id: string | null
           source: string | null
           target_id: string
           target_type: Database["public"]["Enums"]["target_type"]
+          viewer_ip: string | null
           viewer_user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          is_replay?: boolean
           organization_id?: string | null
           source?: string | null
           target_id: string
           target_type: Database["public"]["Enums"]["target_type"]
+          viewer_ip?: string | null
           viewer_user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          is_replay?: boolean
           organization_id?: string | null
           source?: string | null
           target_id?: string
           target_type?: Database["public"]["Enums"]["target_type"]
+          viewer_ip?: string | null
           viewer_user_id?: string | null
         }
         Relationships: [
