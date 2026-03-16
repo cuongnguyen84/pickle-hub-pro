@@ -7,6 +7,8 @@ interface UseIntervalViewCounterOptions {
   viewerUserId: string | null;
   organizationId: string | null | undefined;
   source?: "embed";
+  /** Whether this is a replay view (ended livestream) */
+  isReplay?: boolean;
   /** How often (ms) to accumulate a view event. Default: 30s */
   intervalMs?: number;
   /** How often (ms) to flush the batch to the server. Default: 60s */
@@ -21,6 +23,7 @@ interface PendingEvent {
   viewer_user_id: string | null;
   organization_id: string | null;
   source?: "embed";
+  is_replay?: boolean;
 }
 
 /**
@@ -34,6 +37,7 @@ export function useIntervalViewCounter({
   viewerUserId,
   organizationId,
   source,
+  isReplay = false,
   intervalMs = 30_000,
   flushIntervalMs = 60_000,
   maxEventsPerSession = 20,
@@ -55,6 +59,7 @@ export function useIntervalViewCounter({
       viewer_user_id: viewerUserId ?? null,
       organization_id: organizationId ?? null,
       ...(source ? { source } : {}),
+      ...(isReplay ? { is_replay: true } : {}),
     };
 
     // Accumulate one event every intervalMs (only if under cap)
@@ -100,5 +105,5 @@ export function useIntervalViewCounter({
         }
       }
     };
-  }, [targetType, targetId, viewerUserId, organizationId, source, intervalMs, flushIntervalMs, maxEventsPerSession]);
+  }, [targetType, targetId, viewerUserId, organizationId, source, isReplay, intervalMs, flushIntervalMs, maxEventsPerSession]);
 }

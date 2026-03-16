@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { LiveCard, SectionHeader, EmptyState } from "@/components/content";
+import { SectionHeader, EmptyState } from "@/components/content";
+import LiveCardWithPresence from "@/components/content/LiveCardWithPresence";
 import { SearchBar } from "@/components/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
@@ -92,15 +93,14 @@ const Live = () => {
               {filteredLive.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredLive.map((stream) => (
-                    <LiveCard
+                    <LiveCardWithPresence
                       key={stream.id}
                       id={stream.id!}
                       title={stream.title ?? ""}
-                      viewerCount={0}
                       organizationName={stream.organization?.name ?? ""}
                       organizationSlug={stream.organization?.slug}
                       organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                      status={stream.status as "live" | "scheduled" | "ended"}
+                      status="live"
                       thumbnail={stream.thumbnail_url ?? undefined}
                     />
                   ))}
@@ -116,15 +116,16 @@ const Live = () => {
                 <SectionHeader title={t.live.scheduled} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredScheduled.map((stream) => (
-                    <LiveCard
+                    <LiveCardWithPresence
                       key={stream.id}
                       id={stream.id!}
                       title={stream.title ?? ""}
                       organizationName={stream.organization?.name ?? ""}
                       organizationSlug={stream.organization?.slug}
                       organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                      status={stream.status as "live" | "scheduled" | "ended"}
+                      status="scheduled"
                       thumbnail={stream.thumbnail_url ?? undefined}
+                      scheduledStartAt={stream.scheduled_start_at}
                     />
                   ))}
                 </div>
@@ -137,7 +138,7 @@ const Live = () => {
               {filteredReplays.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredReplays.map((stream) => (
-                    <LiveCard
+                    <LiveCardWithPresence
                       key={stream.id}
                       id={stream.id!}
                       title={stream.title ?? ""}

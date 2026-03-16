@@ -11,9 +11,15 @@ interface ViewEvent {
   viewer_user_id?: string | null;
   organization_id?: string | null;
   source?: string;
+  is_replay?: boolean;
+}
+
+interface InsertEvent extends ViewEvent {
+  viewer_ip?: string | null;
 }
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DEDUP_WINDOW_SECONDS = 30;
 
 function validateEvent(e: unknown): ViewEvent | null {
   if (!e || typeof e !== "object") return null;
@@ -26,7 +32,19 @@ function validateEvent(e: unknown): ViewEvent | null {
     viewer_user_id: (typeof ev.viewer_user_id === "string" ? ev.viewer_user_id : null),
     organization_id: (typeof ev.organization_id === "string" ? ev.organization_id : null),
     ...(typeof ev.source === "string" ? { source: ev.source } : {}),
+    is_replay: ev.is_replay === true,
   };
+}
+
+function getClientIp(req: Request): string | null {
+  // Supabase Edge Functions forward client IP via these headers
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -46,6 +64,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const clientIp = getClientIp(req);
     const body = await req.json();
 
     // Support both batch array and single event
@@ -75,9 +94,89 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[batch-view-events] Inserting ${validated.length} events`);
+    // --- Server-side deduplication ---
+    // Group events by unique (viewer_user_id || ip, target_id) to dedup
+    const dedupKeys = new Map<string, ViewEvent>();
+    for (const ev of validated) {
+      const viewerKey = ev.viewer_user_id || `ip:${clientIp || "unknown"}`;
+      const key = `${viewerKey}:${ev.target_id}`;
+      // Keep last event per key (they're all the same anyway)
+      dedupKeys.set(key, ev);
+    }
 
-    const { error } = await supabase.from("view_events").insert(validated);
+    const uniqueEvents = Array.from(dedupKeys.values());
+
+    // Check recent events in DB for each unique viewer+target pair
+    const cutoff = new Date(Date.now() - DEDUP_WINDOW_SECONDS * 1000).toISOString();
+    const eventsToInsert: InsertEvent[] = [];
+
+    // Batch check: for authenticated users
+    const authedEvents = uniqueEvents.filter(e => e.viewer_user_id);
+    const anonEvents = uniqueEvents.filter(e => !e.viewer_user_id);
+
+    if (authedEvents.length > 0) {
+      const userTargetPairs = authedEvents.map(e => ({
+        user_id: e.viewer_user_id!,
+        target_id: e.target_id,
+      }));
+
+      // Check all at once: find any recent events for these user+target combos
+      const { data: recentUserEvents } = await supabase
+        .from("view_events")
+        .select("viewer_user_id, target_id")
+        .gte("created_at", cutoff)
+        .not("viewer_user_id", "is", null)
+        .in("viewer_user_id", [...new Set(userTargetPairs.map(p => p.user_id))])
+        .in("target_id", [...new Set(userTargetPairs.map(p => p.target_id))]);
+
+      const recentSet = new Set(
+        (recentUserEvents ?? []).map(r => `${r.viewer_user_id}:${r.target_id}`)
+      );
+
+      for (const ev of authedEvents) {
+        if (!recentSet.has(`${ev.viewer_user_id}:${ev.target_id}`)) {
+          eventsToInsert.push({ ...ev, viewer_ip: clientIp });
+        }
+      }
+    }
+
+    if (anonEvents.length > 0 && clientIp) {
+      // Check recent anonymous events by IP
+      const { data: recentIpEvents } = await supabase
+        .from("view_events")
+        .select("viewer_ip, target_id")
+        .gte("created_at", cutoff)
+        .is("viewer_user_id", null)
+        .eq("viewer_ip", clientIp)
+        .in("target_id", [...new Set(anonEvents.map(e => e.target_id))]);
+
+      const recentIpSet = new Set(
+        (recentIpEvents ?? []).map(r => `${r.viewer_ip}:${r.target_id}`)
+      );
+
+      for (const ev of anonEvents) {
+        if (!recentIpSet.has(`${clientIp}:${ev.target_id}`)) {
+          eventsToInsert.push({ ...ev, viewer_ip: clientIp });
+        }
+      }
+    } else if (anonEvents.length > 0 && !clientIp) {
+      // No IP available, allow but mark
+      for (const ev of anonEvents) {
+        eventsToInsert.push({ ...ev, viewer_ip: null });
+      }
+    }
+
+    if (eventsToInsert.length === 0) {
+      console.log(`[batch-view-events] All ${validated.length} events deduplicated`);
+      return new Response(
+        JSON.stringify({ success: true, inserted: 0, deduplicated: validated.length }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`[batch-view-events] Inserting ${eventsToInsert.length}/${validated.length} events (${validated.length - eventsToInsert.length} deduped)`);
+
+    const { error } = await supabase.from("view_events").insert(eventsToInsert);
 
     if (error) {
       console.error("[batch-view-events] Insert error:", error);
@@ -88,7 +187,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, inserted: validated.length }),
+      JSON.stringify({ success: true, inserted: eventsToInsert.length, deduplicated: validated.length - eventsToInsert.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
