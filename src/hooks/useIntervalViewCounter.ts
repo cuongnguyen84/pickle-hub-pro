@@ -59,6 +59,7 @@ export function useIntervalViewCounter({
       viewer_user_id: viewerUserId ?? null,
       organization_id: organizationId ?? null,
       ...(source ? { source } : {}),
+      ...(isReplay ? { is_replay: true } : {}),
     };
 
     // Accumulate one event every intervalMs (only if under cap)
