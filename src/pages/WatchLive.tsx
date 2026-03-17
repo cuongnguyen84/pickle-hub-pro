@@ -84,7 +84,7 @@ const WatchLive = () => {
 
   const dateLocale = language === "vi" ? viLocale : enUS;
 
-  // Record view events every 3 seconds of continuous viewing
+  // Record view events every 30s, max 20/session (~10 min)
   useIntervalViewCounter({
     targetType: "livestream",
     targetId: id,

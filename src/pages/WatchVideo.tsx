@@ -42,7 +42,7 @@ const WatchVideo = () => {
     return null;
   }, [video?.source, video?.storage_path]);
 
-  // Record view events every 3 seconds of continuous viewing
+  // Record view events every 30s, max 20/session (~10 min)
   useIntervalViewCounter({
     targetType: "video",
     targetId: id,
