@@ -17,7 +17,7 @@ const EmbedLive = () => {
 
   const { data: livestream, isLoading } = useLivestream(id!);
 
-  // Record view events every 3 seconds with embed source
+  // Record view events every 30s, max 20/session (~10 min), embed source
   useIntervalViewCounter({
     targetType: "livestream",
     targetId: id,

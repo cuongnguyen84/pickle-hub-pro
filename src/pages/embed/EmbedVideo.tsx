@@ -26,7 +26,7 @@ const EmbedVideo = () => {
     return null;
   }, [video?.source, video?.storage_path]);
 
-  // Record view events every 3 seconds with embed source
+  // Record view events every 30s, max 20/session (~10 min), embed source
   useIntervalViewCounter({
     targetType: "video",
     targetId: id,
