@@ -152,7 +152,7 @@ const LiveCard = ({
             <div className="flex items-center gap-2 min-w-0">
               {organizationLogo ? (
                 <img
-                  src={optimizeImageUrl(organizationLogo, { width: 80, height: 80 })}
+                  src={organizationLogo}
                   alt={organizationName}
                   className="w-5 h-5 rounded-full object-cover shrink-0"
                   loading="lazy"
