@@ -1,15 +1,31 @@
+# Cải tiến hệ thống Livestream (16/03/2026)
 
+## Đã hoàn thành
 
-## Vấn đề
-Trên trang /live, phần thông tin creator bên dưới title card hiển thị avatar quá nhỏ (16x16px) và tên bị cắt ngắn ("TAPickleb...") do `line-clamp-1` trên container quá hẹp.
+### 1. ✅ Server-side dedup view events
+- Edge function `batch-view-events` giờ kiểm tra trùng lặp trong 30s window
+- Authenticated users: dedup theo `viewer_user_id + target_id`
+- Anonymous users: dedup theo `viewer_ip + target_id`
+- Thêm cột `viewer_ip` và `is_replay` vào `view_events`
+- Thêm index tối ưu cho dedup queries
 
-## Giải pháp
-Tăng kích thước avatar và cho phép tên creator hiển thị đầy đủ hơn trong LiveCard:
+### 2. ✅ Concurrent viewers trên Live page
+- Trang `/live` sử dụng `LiveCardWithPresence` thay vì `LiveCard` tĩnh
+- Livestream đang live hiển thị số người xem đồng thời real-time qua Supabase Presence
+- Scheduled streams hiển thị thời gian lên lịch
 
-### Thay đổi trong `src/components/content/LiveCard.tsx` (phần Info, dòng 144-195):
-1. **Avatar lớn hơn**: Tăng từ `w-4 h-4` (16px) lên `w-5 h-5` (20px), fallback text từ `text-[8px]` lên `text-[10px]`
-2. **Tên creator không bị cắt**: Bỏ `line-clamp-1`, thay bằng `truncate` trên container rộng hơn hoặc cho phép wrap text để hiển thị đầy đủ tên organization
-3. **Layout rõ ràng hơn**: Đảm bảo avatar + tên + badge check nằm trên cùng một hàng, tên được phép chiếm hết chiều rộng còn lại
+### 3. ✅ Tách live vs replay views
+- Client gửi `is_replay: true` khi xem replay (livestream ended)
+- Edge function lưu flag vào DB để phân tích riêng biệt
 
-Thay đổi nhỏ, chỉ ảnh hưởng CSS/class trong 1 file.
+### 4. ✅ Dọn dẹp dữ liệu view cũ
+- Cập nhật `view_counts` dựa trên unique viewers thay vì raw events
+- Semifinals: 169,950 → 338 (unique viewers)
+- Finals: 32,131 → 584 (unique viewers)
 
+## Chưa làm
+
+### 5. Tăng chat engagement (ưu tiên trung bình)
+- Chat reactions nhanh (emoji bay)
+- Polls/câu hỏi
+- Auto-highlight tin nhắn like nhiều
