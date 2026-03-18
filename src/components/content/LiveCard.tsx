@@ -147,7 +147,7 @@ const LiveCard = ({
           {title}
         </h3>
         
-        <div className="flex items-center gap-2 text-xs text-foreground-muted">
+        <div className="flex items-center gap-2 text-xs text-foreground-secondary">
           {organizationName && (
             <div className="flex items-center gap-2 min-w-0">
               {organizationLogo ? (
