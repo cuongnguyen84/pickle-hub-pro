@@ -149,20 +149,20 @@ const LiveCard = ({
         
         <div className="flex items-center gap-2 text-xs text-foreground-muted">
           {organizationName && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2 min-w-0">
               {organizationLogo ? (
                 <img
-                  src={optimizeImageUrl(organizationLogo, { width: 56, height: 56 })}
+                  src={optimizeImageUrl(organizationLogo, { width: 80, height: 80 })}
                   alt={organizationName}
-                  className="w-4 h-4 rounded-full object-cover"
+                  className="w-5 h-5 rounded-full object-cover shrink-0"
                   loading="lazy"
                   decoding="async"
-                  width={16}
-                  height={16}
+                  width={20}
+                  height={20}
                 />
               ) : (
-                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-[8px] font-medium text-primary">
+                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <span className="text-[10px] font-medium text-primary">
                     {organizationName.charAt(0).toUpperCase()}
                   </span>
                 </div>
@@ -171,16 +171,16 @@ const LiveCard = ({
                 <Link
                   to={`/org/${organizationSlug}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="line-clamp-1 hover:text-primary hover:underline inline-flex items-center gap-1"
+                  className="truncate hover:text-primary hover:underline inline-flex items-center gap-1 min-w-0"
                 >
-                  {organizationName}
+                  <span className="truncate">{organizationName}</span>
                   {isVerifiedCreator && (
                     <BadgeCheck className="w-3.5 h-3.5 text-creator-badge shrink-0" />
                   )}
                 </Link>
               ) : (
-                <span className="line-clamp-1 inline-flex items-center gap-1">
-                  {organizationName}
+                <span className="truncate inline-flex items-center gap-1 min-w-0">
+                  <span className="truncate">{organizationName}</span>
                   {isVerifiedCreator && (
                     <BadgeCheck className="w-3.5 h-3.5 text-creator-badge shrink-0" />
                   )}
