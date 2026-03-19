@@ -3258,6 +3258,13 @@ export type Database = {
         Args: { org_id: string }
         Returns: string
       }
+      get_organization_display_logos: {
+        Args: { org_ids: string[] }
+        Returns: {
+          display_logo: string
+          org_id: string
+        }[]
+      }
       get_public_profile: {
         Args: { profile_id: string }
         Returns: {
