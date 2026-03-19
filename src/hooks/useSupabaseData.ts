@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { fetchOrgDisplayLogos, attachOrgLogos } from "@/lib/fetch-org-logos";
 
 // Types
 type OrganizationWithLogo = Tables<"organizations"> & {
@@ -65,10 +66,8 @@ export function useVideo(id: string) {
       
       // Fetch display logo for organization
       if (video.organization && video.organization_id) {
-        const { data: logo } = await supabase.rpc("get_organization_display_logo", { 
-          org_id: video.organization_id 
-        });
-        video.organization.display_logo = logo as string | null;
+        const logoMap = await fetchOrgDisplayLogos([video.organization_id]);
+        attachOrgLogos([video], logoMap);
       }
       
       return video;
@@ -101,26 +100,12 @@ export function useLivestreams(status?: "live" | "scheduled" | "ended") {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Fetch display logos for each organization
       const livestreams = data as LivestreamWithLogo[];
       const orgIds = [...new Set(livestreams.map(l => l.organization_id).filter(Boolean))] as string[];
       
       if (orgIds.length > 0) {
-        // Get display logos (org logo or creator avatar)
-        const logoPromises = orgIds.map(async (orgId) => {
-          const { data: logo } = await supabase.rpc("get_organization_display_logo", { org_id: orgId });
-          return { orgId, logo: logo as string | null };
-        });
-        
-        const logos = await Promise.all(logoPromises);
-        const logoMap = Object.fromEntries(logos.map(l => [l.orgId, l.logo]));
-        
-        // Attach logos to organizations
-        livestreams.forEach(l => {
-          if (l.organization && l.organization_id) {
-            l.organization.display_logo = logoMap[l.organization_id] || l.organization.logo_url;
-          }
-        });
+        const logoMap = await fetchOrgDisplayLogos(orgIds);
+        attachOrgLogos(livestreams, logoMap);
       }
       
       return livestreams;
@@ -148,10 +133,8 @@ export function useLivestream(id: string) {
       
       // Fetch display logo for organization
       if (livestream.organization && livestream.organization_id) {
-        const { data: logo } = await supabase.rpc("get_organization_display_logo", { 
-          org_id: livestream.organization_id 
-        });
-        livestream.organization.display_logo = logo as string | null;
+        const logoMap = await fetchOrgDisplayLogos([livestream.organization_id]);
+        attachOrgLogos([livestream], logoMap);
       }
       
       return livestream;
@@ -261,21 +244,11 @@ export function useReplays(options?: { limit?: number }) {
       if (error) throw error;
       const replays = data as Livestream[];
 
-      // Fetch display logos for organizations
+      // Fetch display logos for organizations (single batch RPC)
       const orgIds = [...new Set(replays.map(r => r.organization_id).filter(Boolean))] as string[];
       if (orgIds.length > 0) {
-        const logoPromises = orgIds.map(async (orgId) => {
-          const { data: logo } = await supabase.rpc("get_organization_display_logo", { org_id: orgId });
-          return { orgId, logo: logo as string | null };
-        });
-        const logos = await Promise.all(logoPromises);
-        const logoMap: Record<string, string | null> = {};
-        logos.forEach(({ orgId, logo }) => { logoMap[orgId] = logo; });
-        replays.forEach(r => {
-          if (r.organization && r.organization_id) {
-            r.organization.display_logo = logoMap[r.organization_id] || r.organization.logo_url;
-          }
-        });
+        const logoMap = await fetchOrgDisplayLogos(orgIds);
+        attachOrgLogos(replays, logoMap);
       }
 
       return replays;
@@ -579,7 +552,26 @@ export function useApprovedRegistrations(tableId: string) {
   });
 }
 
-// Fetch tournaments user is registered for (active - not completed)
+// Type for quick_tables joined via foreign key
+interface JoinedQuickTable {
+  id: string;
+  name: string;
+  share_id: string;
+  status: string;
+  format: string;
+  player_count: number;
+  is_doubles: boolean;
+  created_at: string;
+  creator_user_id?: string;
+}
+
+type UserTournamentEntry = JoinedQuickTable & {
+  registrationId: string;
+  registrationStatus: string;
+  teamStatus?: string;
+  creator_display_name?: string;
+};
+
 // Supports both singles (quick_table_registrations) and doubles (quick_table_teams)
 export function useUserRegisteredTournaments(userId: string | undefined) {
   return useQuery({
@@ -639,11 +631,11 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
       // Collect all unique creator_user_ids
       const creatorIds = new Set<string>();
       singlesData.forEach(reg => {
-        const table = reg.quick_tables as any;
+        const table = reg.quick_tables as JoinedQuickTable | null;
         if (table?.creator_user_id) creatorIds.add(table.creator_user_id);
       });
       doublesData.forEach(team => {
-        const table = team.quick_tables as any;
+        const table = team.quick_tables as JoinedQuickTable | null;
         if (table?.creator_user_id) creatorIds.add(table.creator_user_id);
       });
       
@@ -661,19 +653,19 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
       }
       
       // Combine and deduplicate by table_id
-      const tableMap = new Map<string, any>();
+      const tableMap = new Map<string, UserTournamentEntry>();
       
       // Add singles registrations
       singlesData
-        .filter(reg => reg.quick_tables && (reg.quick_tables as any).status !== 'completed')
+        .filter(reg => reg.quick_tables && (reg.quick_tables as JoinedQuickTable).status !== 'completed')
         .forEach(reg => {
-          const table = reg.quick_tables as any;
-          const profile = profilesMap.get(table.creator_user_id);
+          const table = reg.quick_tables as JoinedQuickTable;
+          const profile = table.creator_user_id ? profilesMap.get(table.creator_user_id) : null;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: reg.id,
               registrationStatus: reg.status,
-              creator_display_name: profile?.display_name,
+              creator_display_name: profile?.display_name ?? undefined,
               ...table,
             });
           }
@@ -681,16 +673,16 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
       
       // Add doubles registrations
       doublesData
-        .filter(team => team.quick_tables && (team.quick_tables as any).status !== 'completed')
+        .filter(team => team.quick_tables && (team.quick_tables as JoinedQuickTable).status !== 'completed')
         .forEach(team => {
-          const table = team.quick_tables as any;
-          const profile = profilesMap.get(table.creator_user_id);
+          const table = team.quick_tables as JoinedQuickTable;
+          const profile = table.creator_user_id ? profilesMap.get(table.creator_user_id) : null;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: team.id,
               registrationStatus: team.btc_approved ? 'approved' : 'pending',
               teamStatus: team.team_status,
-              creator_display_name: profile?.display_name,
+              creator_display_name: profile?.display_name ?? undefined,
               ...table,
             });
           }
@@ -758,13 +750,13 @@ export function useUserCompletedTournaments(userId: string | undefined) {
       if (doublesError) throw doublesError;
       
       // Combine and deduplicate by table_id
-      const tableMap = new Map<string, any>();
+      const tableMap = new Map<string, UserTournamentEntry>();
       
       // Add singles registrations (completed tournaments only)
       singlesData
-        .filter(reg => reg.quick_tables && (reg.quick_tables as any).status === 'completed')
+        .filter(reg => reg.quick_tables && (reg.quick_tables as JoinedQuickTable).status === 'completed')
         .forEach(reg => {
-          const table = reg.quick_tables as any;
+          const table = reg.quick_tables as JoinedQuickTable;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: reg.id,
@@ -776,9 +768,9 @@ export function useUserCompletedTournaments(userId: string | undefined) {
       
       // Add doubles registrations (completed tournaments only)
       doublesData
-        .filter(team => team.quick_tables && (team.quick_tables as any).status === 'completed')
+        .filter(team => team.quick_tables && (team.quick_tables as JoinedQuickTable).status === 'completed')
         .forEach(team => {
-          const table = team.quick_tables as any;
+          const table = team.quick_tables as JoinedQuickTable;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: team.id,
