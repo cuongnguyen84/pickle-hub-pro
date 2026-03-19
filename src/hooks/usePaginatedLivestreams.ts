@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { fetchOrgDisplayLogos, attachOrgLogos } from "@/lib/fetch-org-logos";
 
 type OrganizationWithLogo = Tables<"organizations"> & {
   display_logo?: string | null;
