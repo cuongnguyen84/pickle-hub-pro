@@ -100,26 +100,12 @@ export function useLivestreams(status?: "live" | "scheduled" | "ended") {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Fetch display logos for each organization
       const livestreams = data as LivestreamWithLogo[];
       const orgIds = [...new Set(livestreams.map(l => l.organization_id).filter(Boolean))] as string[];
       
       if (orgIds.length > 0) {
-        // Get display logos (org logo or creator avatar)
-        const logoPromises = orgIds.map(async (orgId) => {
-          const { data: logo } = await supabase.rpc("get_organization_display_logo", { org_id: orgId });
-          return { orgId, logo: logo as string | null };
-        });
-        
-        const logos = await Promise.all(logoPromises);
-        const logoMap = Object.fromEntries(logos.map(l => [l.orgId, l.logo]));
-        
-        // Attach logos to organizations
-        livestreams.forEach(l => {
-          if (l.organization && l.organization_id) {
-            l.organization.display_logo = logoMap[l.organization_id] || l.organization.logo_url;
-          }
-        });
+        const logoMap = await fetchOrgDisplayLogos(orgIds);
+        attachOrgLogos(livestreams, logoMap);
       }
       
       return livestreams;
