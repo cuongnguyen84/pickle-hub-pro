@@ -133,10 +133,8 @@ export function useLivestream(id: string) {
       
       // Fetch display logo for organization
       if (livestream.organization && livestream.organization_id) {
-        const { data: logo } = await supabase.rpc("get_organization_display_logo", { 
-          org_id: livestream.organization_id 
-        });
-        livestream.organization.display_logo = logo as string | null;
+        const logoMap = await fetchOrgDisplayLogos([livestream.organization_id]);
+        attachOrgLogos([livestream], logoMap);
       }
       
       return livestream;
