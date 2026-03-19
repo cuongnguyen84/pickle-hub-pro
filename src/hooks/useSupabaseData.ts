@@ -66,10 +66,8 @@ export function useVideo(id: string) {
       
       // Fetch display logo for organization
       if (video.organization && video.organization_id) {
-        const { data: logo } = await supabase.rpc("get_organization_display_logo", { 
-          org_id: video.organization_id 
-        });
-        video.organization.display_logo = logo as string | null;
+        const logoMap = await fetchOrgDisplayLogos([video.organization_id]);
+        attachOrgLogos([video], logoMap);
       }
       
       return video;
