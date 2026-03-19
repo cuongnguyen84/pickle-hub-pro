@@ -244,21 +244,11 @@ export function useReplays(options?: { limit?: number }) {
       if (error) throw error;
       const replays = data as Livestream[];
 
-      // Fetch display logos for organizations
+      // Fetch display logos for organizations (single batch RPC)
       const orgIds = [...new Set(replays.map(r => r.organization_id).filter(Boolean))] as string[];
       if (orgIds.length > 0) {
-        const logoPromises = orgIds.map(async (orgId) => {
-          const { data: logo } = await supabase.rpc("get_organization_display_logo", { org_id: orgId });
-          return { orgId, logo: logo as string | null };
-        });
-        const logos = await Promise.all(logoPromises);
-        const logoMap: Record<string, string | null> = {};
-        logos.forEach(({ orgId, logo }) => { logoMap[orgId] = logo; });
-        replays.forEach(r => {
-          if (r.organization && r.organization_id) {
-            r.organization.display_logo = logoMap[r.organization_id] || r.organization.logo_url;
-          }
-        });
+        const logoMap = await fetchOrgDisplayLogos(orgIds);
+        attachOrgLogos(replays, logoMap);
       }
 
       return replays;
