@@ -631,11 +631,11 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
       // Collect all unique creator_user_ids
       const creatorIds = new Set<string>();
       singlesData.forEach(reg => {
-        const table = reg.quick_tables as any;
+        const table = reg.quick_tables as JoinedQuickTable | null;
         if (table?.creator_user_id) creatorIds.add(table.creator_user_id);
       });
       doublesData.forEach(team => {
-        const table = team.quick_tables as any;
+        const table = team.quick_tables as JoinedQuickTable | null;
         if (table?.creator_user_id) creatorIds.add(table.creator_user_id);
       });
       
@@ -653,19 +653,19 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
       }
       
       // Combine and deduplicate by table_id
-      const tableMap = new Map<string, any>();
+      const tableMap = new Map<string, UserTournamentEntry>();
       
       // Add singles registrations
       singlesData
-        .filter(reg => reg.quick_tables && (reg.quick_tables as any).status !== 'completed')
+        .filter(reg => reg.quick_tables && (reg.quick_tables as JoinedQuickTable).status !== 'completed')
         .forEach(reg => {
-          const table = reg.quick_tables as any;
-          const profile = profilesMap.get(table.creator_user_id);
+          const table = reg.quick_tables as JoinedQuickTable;
+          const profile = table.creator_user_id ? profilesMap.get(table.creator_user_id) : null;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: reg.id,
               registrationStatus: reg.status,
-              creator_display_name: profile?.display_name,
+              creator_display_name: profile?.display_name ?? undefined,
               ...table,
             });
           }
@@ -673,16 +673,16 @@ export function useUserRegisteredTournaments(userId: string | undefined) {
       
       // Add doubles registrations
       doublesData
-        .filter(team => team.quick_tables && (team.quick_tables as any).status !== 'completed')
+        .filter(team => team.quick_tables && (team.quick_tables as JoinedQuickTable).status !== 'completed')
         .forEach(team => {
-          const table = team.quick_tables as any;
-          const profile = profilesMap.get(table.creator_user_id);
+          const table = team.quick_tables as JoinedQuickTable;
+          const profile = table.creator_user_id ? profilesMap.get(table.creator_user_id) : null;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: team.id,
               registrationStatus: team.btc_approved ? 'approved' : 'pending',
               teamStatus: team.team_status,
-              creator_display_name: profile?.display_name,
+              creator_display_name: profile?.display_name ?? undefined,
               ...table,
             });
           }
