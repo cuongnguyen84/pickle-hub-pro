@@ -750,13 +750,13 @@ export function useUserCompletedTournaments(userId: string | undefined) {
       if (doublesError) throw doublesError;
       
       // Combine and deduplicate by table_id
-      const tableMap = new Map<string, any>();
+      const tableMap = new Map<string, UserTournamentEntry>();
       
       // Add singles registrations (completed tournaments only)
       singlesData
-        .filter(reg => reg.quick_tables && (reg.quick_tables as any).status === 'completed')
+        .filter(reg => reg.quick_tables && (reg.quick_tables as JoinedQuickTable).status === 'completed')
         .forEach(reg => {
-          const table = reg.quick_tables as any;
+          const table = reg.quick_tables as JoinedQuickTable;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: reg.id,
@@ -768,9 +768,9 @@ export function useUserCompletedTournaments(userId: string | undefined) {
       
       // Add doubles registrations (completed tournaments only)
       doublesData
-        .filter(team => team.quick_tables && (team.quick_tables as any).status === 'completed')
+        .filter(team => team.quick_tables && (team.quick_tables as JoinedQuickTable).status === 'completed')
         .forEach(team => {
-          const table = team.quick_tables as any;
+          const table = team.quick_tables as JoinedQuickTable;
           if (!tableMap.has(table.id)) {
             tableMap.set(table.id, {
               registrationId: team.id,
