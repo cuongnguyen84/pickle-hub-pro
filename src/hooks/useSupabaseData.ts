@@ -552,7 +552,26 @@ export function useApprovedRegistrations(tableId: string) {
   });
 }
 
-// Fetch tournaments user is registered for (active - not completed)
+// Type for quick_tables joined via foreign key
+interface JoinedQuickTable {
+  id: string;
+  name: string;
+  share_id: string;
+  status: string;
+  format: string;
+  player_count: number;
+  is_doubles: boolean;
+  created_at: string;
+  creator_user_id?: string;
+}
+
+type UserTournamentEntry = JoinedQuickTable & {
+  registrationId: string;
+  registrationStatus: string;
+  teamStatus?: string;
+  creator_display_name?: string;
+};
+
 // Supports both singles (quick_table_registrations) and doubles (quick_table_teams)
 export function useUserRegisteredTournaments(userId: string | undefined) {
   return useQuery({
