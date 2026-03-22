@@ -1702,6 +1702,7 @@ export const vi: Translations = {
     noResults: "Không có kết quả",
     comingSoon: "Sắp ra mắt",
     close: "Đóng",
+    loadMore: "Xem thêm",
   },
   privacy: {
     title: "Chính sách bảo mật – The Pickle Hub",
