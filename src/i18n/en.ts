@@ -20,6 +20,7 @@ export const en: Translations = {
     noResults: "No results",
     comingSoon: "Coming soon",
     close: "Close",
+    loadMore: "Load more",
   },
   privacy: {
     title: "Privacy Policy – The Pickle Hub",
