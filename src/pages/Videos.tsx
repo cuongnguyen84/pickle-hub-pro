@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout";
 import { ContentCard, SectionHeader, EmptyState } from "@/components/content";
-import { SearchBar, ContentFilters, type ContentType, type SortOption } from "@/components/search";
+import { SearchBar, ContentFilters, type SortOption } from "@/components/search";
+import { LoadMoreButton } from "@/components/content/LoadMoreButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
-import { useVideos, useTournaments } from "@/hooks/useSupabaseData";
+import { useTournaments } from "@/hooks/useSupabaseData";
+import { usePaginatedVideos } from "@/hooks/usePaginatedVideos";
 import { useDebounce } from "@/hooks/useSearch";
 import { useBatchViewCounts } from "@/hooks/useBatchViewCounts";
 import { Play, Search } from "lucide-react";
@@ -18,15 +20,26 @@ const Videos = () => {
 
   const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
 
-  const { data: videos = [], isLoading: videosLoading } = useVideos();
+  const {
+    data: videosData,
+    isLoading: videosLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = usePaginatedVideos();
+
   const { data: tournaments = [] } = useTournaments();
 
-  // Batch fetch view counts for all videos
-  const videoIds = useMemo(() => videos.map((v) => v.id), [videos]);
+  const allVideos = useMemo(
+    () => videosData?.pages.flatMap((p) => p.items) ?? [],
+    [videosData]
+  );
+
+  const videoIds = useMemo(() => allVideos.map((v) => v.id), [allVideos]);
   const viewCountsMap = useBatchViewCounts("video", videoIds);
 
   const filteredVideos = useMemo(() => {
-    let processed = videos;
+    let processed = allVideos;
 
     if (debouncedSearch) {
       processed = processed.filter((item) => {
@@ -41,7 +54,7 @@ const Videos = () => {
     }
 
     return processed;
-  }, [videos, debouncedSearch, selectedTournament]);
+  }, [allVideos, debouncedSearch, selectedTournament]);
 
   const hasSearch = debouncedSearch.length > 0;
 
@@ -86,20 +99,29 @@ const Videos = () => {
           <section className="mb-12">
             <SectionHeader title={t.home.sections.latestVideos} />
             {filteredVideos.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {filteredVideos.map((video) => (
-                  <ContentCard
-                    key={video.id}
-                    id={video.id}
-                    title={video.title}
-                    duration={video.duration_seconds ?? 0}
-                    views={viewCountsMap[video.id] ?? 0}
-                    organizationName={video.organization?.name ?? ""}
-                    organizationSlug={video.organization?.slug}
-                    thumbnail={video.thumbnail_url ?? undefined}
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {filteredVideos.map((video) => (
+                    <ContentCard
+                      key={video.id}
+                      id={video.id}
+                      title={video.title}
+                      duration={video.duration_seconds ?? 0}
+                      views={viewCountsMap[video.id] ?? 0}
+                      organizationName={video.organization?.name ?? ""}
+                      organizationSlug={video.organization?.slug}
+                      thumbnail={video.thumbnail_url ?? undefined}
+                    />
+                  ))}
+                </div>
+                {!hasSearch && (
+                  <LoadMoreButton
+                    onClick={() => fetchNextPage()}
+                    isLoading={isFetchingNextPage}
+                    hasMore={!!hasNextPage}
                   />
-                ))}
-              </div>
+                )}
+              </>
             ) : (
               <EmptyState icon={Play} title={t.home.noVideos} />
             )}
