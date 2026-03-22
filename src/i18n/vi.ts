@@ -18,6 +18,7 @@ export interface Translations {
     noResults: string;
     comingSoon: string;
     close: string;
+    loadMore: string;
   };
   privacy: {
     title: string;
