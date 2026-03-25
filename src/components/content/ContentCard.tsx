@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Play, Clock, Eye, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
-import { optimizeImageUrl } from "@/lib/image-utils";
+
 
 interface ContentCardProps {
   id: string;
