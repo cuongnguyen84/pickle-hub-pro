@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Play, Clock, Eye, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
-import { optimizeImageUrl } from "@/lib/image-utils";
+
 
 interface ContentCardProps {
   id: string;
@@ -71,7 +71,7 @@ const ContentCard = ({
       )}>
         {thumbnail ? (
           <img
-            src={optimizeImageUrl(thumbnail, { width: 640 })}
+            src={thumbnail}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
@@ -110,7 +110,7 @@ const ContentCard = ({
             <div className="flex items-center gap-1.5">
               {organizationLogo ? (
                 <img
-                  src={optimizeImageUrl(organizationLogo, { width: 56, height: 56 })}
+                  src={organizationLogo}
                   alt={organizationName}
                   className="w-4 h-4 rounded-full object-cover"
                 />

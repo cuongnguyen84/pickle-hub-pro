@@ -110,6 +110,7 @@ const Videos = () => {
                       views={viewCountsMap[video.id] ?? 0}
                       organizationName={video.organization?.name ?? ""}
                       organizationSlug={video.organization?.slug}
+                      organizationLogo={video.organization?.display_logo ?? video.organization?.logo_url ?? undefined}
                       thumbnail={video.thumbnail_url ?? undefined}
                     />
                   ))}
