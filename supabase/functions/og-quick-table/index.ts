@@ -21,12 +21,14 @@ Deno.serve(async (req) => {
     const shareId = url.searchParams.get("id");
     const userAgent = req.headers.get("user-agent") || "";
 
+    // Detect bots (Facebook, Zalo, Telegram, Twitter, etc.)
     const isBot = /facebookexternalhit|facebot|Facebot|zalobot|Twitterbot|TelegramBot|WhatsApp|LinkedInBot|Slackbot|Discordbot|Googlebot|bingbot/i.test(userAgent);
 
-    const canonicalUrl = shareId
-      ? `${SITE_URL}/tools/flex-tournament/${shareId}`
-      : `${SITE_URL}/tools/flex-tournament`;
+    const canonicalUrl = shareId 
+      ? `${SITE_URL}/tools/quick-tables/${shareId}` 
+      : `${SITE_URL}/tools/quick-tables`;
 
+    // Non-bot → redirect immediately
     if (!isBot) {
       return new Response(null, {
         status: 302,
@@ -34,24 +36,26 @@ Deno.serve(async (req) => {
       });
     }
 
+    // No shareId → list page OG
     if (!shareId) {
       return serveHtml({
-        title: "Flex Tournament - Custom Tournament Bracket Maker | ThePickleHub",
-        description: "Tạo bracket giải đấu pickleball linh hoạt với Flex Tournament. Tự do thiết kế format, quản lý nhóm, theo dõi điểm số real-time. Miễn phí, không cần đăng ký.",
+        title: "Quick Tournament – Tạo giải đấu pickleball nhanh | ThePickleHub",
+        description: "Tạo giải đấu pickleball round-robin nhanh chóng. Chia bảng tự động, quản lý điểm số real-time, playoff. Miễn phí trên ThePickleHub.",
         image: DEFAULT_OG_IMAGE,
         url: canonicalUrl,
       });
     }
 
+    // Fetch tournament data
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: tournament, error } = await supabase
-      .from("flex_tournaments")
-      .select("id, name, share_id, is_public, status, created_at")
+    const { data: table, error } = await supabase
+      .from("quick_tables")
+      .select("id, name, share_id, status, player_count, group_count, is_doubles, format, start_time")
       .eq("share_id", shareId)
       .single();
 
-    if (error || !tournament) {
+    if (error || !table) {
       return serveHtml({
         title: "Giải đấu không tồn tại | ThePickleHub",
         description: "Giải đấu này không tồn tại hoặc đã bị xóa.",
@@ -60,25 +64,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { count: playerCount } = await supabase
-      .from("flex_players")
+    // Get actual player count from quick_table_players
+    const { count: actualPlayerCount } = await supabase
+      .from("quick_table_players")
       .select("*", { count: "exact", head: true })
-      .eq("tournament_id", tournament.id);
+      .eq("table_id", table.id);
 
+    // Get match count
     const { count: matchCount } = await supabase
-      .from("flex_matches")
+      .from("quick_table_matches")
       .select("*", { count: "exact", head: true })
-      .eq("tournament_id", tournament.id);
+      .eq("table_id", table.id);
 
     const statusMap: Record<string, string> = {
-      active: "⚡ Đang diễn ra",
+      setup: "🔧 Đang thiết lập",
+      "group-stage": "⚡ Vòng bảng",
+      playoff: "🏆 Playoff",
       completed: "✅ Đã kết thúc",
-      setup: "🔧 Chuẩn bị",
     };
-    const statusText = statusMap[tournament.status] || tournament.status;
+    const statusText = statusMap[table.status] || table.status;
 
-    const ogTitle = `${tournament.name} | Flex Tournament`;
-    const ogDescription = `${statusText} • ${playerCount || 0} VĐV • ${matchCount || 0} trận đấu. Xem bracket và kết quả trực tiếp trên ThePickleHub.`;
+    const formatText = table.is_doubles ? "Đôi" : "Đơn";
+    const players = actualPlayerCount || table.player_count || 0;
+    const groups = table.group_count || 1;
+
+    const ogTitle = `${table.name} | Quick Tournament`;
+    const ogDescription = `${statusText} • ${formatText} • ${players} VĐV • ${groups} bảng • ${matchCount || 0} trận. Xem kết quả trực tiếp trên ThePickleHub.`;
 
     return serveHtml({
       title: ogTitle,
@@ -87,7 +98,7 @@ Deno.serve(async (req) => {
       url: canonicalUrl,
     });
   } catch (error) {
-    console.error("Error in og-flex-tournament:", error);
+    console.error("Error in og-quick-table:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
 });
