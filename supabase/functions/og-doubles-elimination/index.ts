@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
     const isBot = /facebookexternalhit|facebot|Facebot|zalobot|Twitterbot|TelegramBot|WhatsApp|LinkedInBot|Slackbot|Discordbot|Googlebot|bingbot/i.test(userAgent);
 
     const canonicalUrl = shareId
-      ? `${SITE_URL}/tools/flex-tournament/${shareId}`
-      : `${SITE_URL}/tools/flex-tournament`;
+      ? `${SITE_URL}/tools/doubles-elimination/${shareId}`
+      : `${SITE_URL}/tools/doubles-elimination`;
 
     if (!isBot) {
       return new Response(null, {
@@ -36,8 +36,8 @@ Deno.serve(async (req) => {
 
     if (!shareId) {
       return serveHtml({
-        title: "Flex Tournament - Custom Tournament Bracket Maker | ThePickleHub",
-        description: "Tạo bracket giải đấu pickleball linh hoạt với Flex Tournament. Tự do thiết kế format, quản lý nhóm, theo dõi điểm số real-time. Miễn phí, không cần đăng ký.",
+        title: "Doubles Elimination – Giải đấu loại trực tiếp đôi | ThePickleHub",
+        description: "Tạo bracket giải đấu loại trực tiếp dành cho đôi. Quản lý vòng sơ loại, playoff, theo dõi điểm số real-time. Miễn phí trên ThePickleHub.",
         image: DEFAULT_OG_IMAGE,
         url: canonicalUrl,
       });
@@ -46,8 +46,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { data: tournament, error } = await supabase
-      .from("flex_tournaments")
-      .select("id, name, share_id, is_public, status, created_at")
+      .from("doubles_elimination_tournaments")
+      .select("id, name, share_id, status, team_count, early_rounds_format, finals_format, created_at")
       .eq("share_id", shareId)
       .single();
 
@@ -60,25 +60,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { count: playerCount } = await supabase
-      .from("flex_players")
-      .select("*", { count: "exact", head: true })
-      .eq("tournament_id", tournament.id);
-
     const { count: matchCount } = await supabase
-      .from("flex_matches")
+      .from("doubles_elimination_matches")
       .select("*", { count: "exact", head: true })
       .eq("tournament_id", tournament.id);
 
     const statusMap: Record<string, string> = {
-      active: "⚡ Đang diễn ra",
+      setup: "🔧 Đang thiết lập",
+      ongoing: "⚡ Đang diễn ra",
       completed: "✅ Đã kết thúc",
-      setup: "🔧 Chuẩn bị",
     };
     const statusText = statusMap[tournament.status] || tournament.status;
 
-    const ogTitle = `${tournament.name} | Flex Tournament`;
-    const ogDescription = `${statusText} • ${playerCount || 0} VĐV • ${matchCount || 0} trận đấu. Xem bracket và kết quả trực tiếp trên ThePickleHub.`;
+    const ogTitle = `${tournament.name} | Doubles Elimination`;
+    const ogDescription = `${statusText} • ${tournament.team_count} đội • ${matchCount || 0} trận • ${(tournament.early_rounds_format || "bo1").toUpperCase()} / ${(tournament.finals_format || "bo3").toUpperCase()}. Xem bracket và kết quả trên ThePickleHub.`;
 
     return serveHtml({
       title: ogTitle,
@@ -87,7 +82,7 @@ Deno.serve(async (req) => {
       url: canonicalUrl,
     });
   } catch (error) {
-    console.error("Error in og-flex-tournament:", error);
+    console.error("Error in og-doubles-elimination:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
 });
