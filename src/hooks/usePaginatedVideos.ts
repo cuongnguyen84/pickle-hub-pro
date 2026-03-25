@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { fetchOrgDisplayLogos, attachOrgLogos } from "@/lib/fetch-org-logos";
 
 type OrganizationWithLogo = Tables<"organizations"> & {
   display_logo?: string | null;
@@ -36,14 +37,22 @@ export function usePaginatedVideos(options?: UsePaginatedVideosOptions) {
 
       const { data, error } = await query;
       if (error) throw error;
-      
+
+      const videos = data as Video[];
+
+      const orgIds = [...new Set(videos.map(v => v.organization_id).filter(Boolean))] as string[];
+      if (orgIds.length > 0) {
+        const logoMap = await fetchOrgDisplayLogos(orgIds);
+        attachOrgLogos(videos, logoMap);
+      }
+
       return {
-        items: data as Video[],
+        items: videos,
         nextPage: data.length === PAGE_SIZE ? pageParam + 1 : undefined,
       };
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 }
