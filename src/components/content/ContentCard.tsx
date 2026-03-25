@@ -110,7 +110,7 @@ const ContentCard = ({
             <div className="flex items-center gap-1.5">
               {organizationLogo ? (
                 <img
-                  src={optimizeImageUrl(organizationLogo, { width: 56, height: 56 })}
+                  src={organizationLogo}
                   alt={organizationName}
                   className="w-4 h-4 rounded-full object-cover"
                 />
