@@ -1030,7 +1030,7 @@ const MatchRow = ({ match, index, player1, player2, canEdit, onScoreUpdate, form
       {/* Top row: Match info + Players */}
       <div className="flex items-center gap-2 sm:gap-3 flex-1">
         {/* Match number + Court/Time info */}
-        <div className="flex flex-col items-start gap-0.5 w-12 sm:w-20 flex-shrink-0">
+        <div className="flex flex-col items-start gap-0.5 w-7 sm:w-14 flex-shrink-0">
           <div className="flex items-center gap-1">
             <span className="text-sm font-medium text-foreground-muted">{index + 1}</span>
             {isLive && !isCompleted && (
