@@ -158,7 +158,7 @@ export default function DoublesEliminationView() {
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/tools/doubles-elimination/${shareId}`;
+    const url = `https://share.thepicklehub.net/doubles-elimination/${shareId}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
