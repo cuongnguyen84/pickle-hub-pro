@@ -77,7 +77,7 @@ const FlexTournamentView = () => {
   });
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/tools/flex-tournament/${shareId}`;
+    const url = `https://share.thepicklehub.net/flex-tournament/${shareId}`;
     try {
       await navigator.clipboard.writeText(url);
       toast({ title: t.common.copied });
