@@ -25,7 +25,7 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
   const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
   const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
   const isCompleted = match.status === 'completed';
-  const isLive = !!(match as Record<string, unknown>).live_referee_id;
+  const isLive = !!('live_referee_id' in match && match.live_referee_id);
 
   const handleStartEdit = () => {
     setS1(match.score1?.toString() ?? '');
