@@ -23,7 +23,6 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
 import QuickTableMatchRow from '@/components/quicktable/QuickTableMatchRow';
-import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
 import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
