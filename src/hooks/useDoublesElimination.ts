@@ -185,7 +185,7 @@ export function useDoublesElimination() {
       const semifinalsFormat = (tournament.semifinals_format || 'bo3') as BestOfFormat;
       const finalsFormat = (tournament.finals_format || 'bo3') as BestOfFormat;
 
-      const matches: Array<Record<string, unknown>> = [];
+      const matches: any[] = [];
       let displayOrder = 0;
 
       // ROUND 1
