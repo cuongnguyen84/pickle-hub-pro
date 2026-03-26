@@ -816,7 +816,7 @@ const QuickTableView = () => {
               </Card>
             )}
             {hasPlayoff && (
-              <PlayoffBracketView
+              <QuickTablePlayoffView
                 matches={playoffMatches}
                 players={players}
                 groups={groups}
