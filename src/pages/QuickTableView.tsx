@@ -18,11 +18,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList, MapPin, Trash2, RefreshCw } from 'lucide-react';
+import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
 import QuickTableMatchRow from '@/components/quicktable/QuickTableMatchRow';
-import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
 import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
@@ -815,7 +815,7 @@ const QuickTableView = () => {
               </Card>
             )}
             {hasPlayoff && (
-              <PlayoffBracketView
+              <QuickTablePlayoffView
                 matches={playoffMatches}
                 players={players}
                 groups={groups}
