@@ -782,7 +782,7 @@ const QuickTableView = () => {
                         </CardHeader>
                         <CardContent className="space-y-3">
                           {groupMatches.map((match, idx) => (
-                            <MatchRow
+                            <QuickTableMatchRow
                               key={match.id}
                               match={match}
                               index={idx}
