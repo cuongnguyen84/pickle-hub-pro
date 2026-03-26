@@ -20,8 +20,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Share2, Trophy, Check, Clock, ChevronRight, Swords, Pencil, Settings, UserPlus, ArrowLeftRight, UserMinus, X, Radio, Play, ClipboardList, MapPin, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import PlayoffBracket from '@/components/tournament/PlayoffBracket';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
+import QuickTableMatchRow from '@/components/quicktable/QuickTableMatchRow';
+import QuickTablePlayoffView from '@/components/quicktable/QuickTablePlayoffView';
 import RegistrationForm from '@/components/quicktable/RegistrationForm';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import ApprovedPlayersList from '@/components/quicktable/ApprovedPlayersList';
