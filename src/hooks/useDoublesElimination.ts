@@ -768,7 +768,7 @@ export function useDoublesElimination() {
       const sfFormat = (tournament.semifinals_format || 'bo3') as BestOfFormat;
       const finalsFormat = (tournament.finals_format || 'bo3') as BestOfFormat;
 
-      const playoffMatchesData: Array<Record<string, unknown>> = [];
+      const playoffMatchesData: any[] = [];
       let displayOrder = matches.length;
 
       const now = new Date();
