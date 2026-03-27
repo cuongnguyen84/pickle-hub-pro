@@ -200,7 +200,7 @@ export const blogPosts: BlogPost[] = [
       },
       vi: {
         title: "Cách tạo Bracket giải Pickleball — Hướng dẫn từng bước",
-        metaTitle: "Cách tạo Bracket giải Pickleball | Hướng dẫn miễn phí 2025",
+        metaTitle: "Cách tạo Bracket giải Pickleball | Hướng dẫn miễn phí 2026",
         metaDescription: "Hướng dẫn tạo bracket giải pickleball cho vòng tròn, loại trực tiếp, và loại kép. Công cụ tạo bracket miễn phí với chấm điểm realtime.",
         sections: [
           {
