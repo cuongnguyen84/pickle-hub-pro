@@ -332,7 +332,7 @@ export const blogPosts: BlogPost[] = [
       },
       vi: {
         title: "Công cụ tạo vòng tròn Pickleball — Cách tổ chức giải vòng tròn hoàn hảo",
-        metaTitle: "Công cụ tạo vòng tròn Pickleball | Miễn phí & Hướng dẫn đầy đủ 2025",
+        metaTitle: "Công cụ tạo vòng tròn Pickleball | Miễn phí & Hướng dẫn đầy đủ 2026",
         metaDescription: "Công cụ tạo vòng tròn pickleball miễn phí với lịch tự động, xoay sân, và chấm điểm trực tiếp. Hướng dẫn tổ chức giải vòng tròn hoàn hảo.",
         sections: [
           {
