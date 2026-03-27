@@ -1,6 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, WebApplicationSchema, FlexTournamentSeoContent } from "@/components/seo";
+import { DynamicMeta, WebApplicationSchema, FlexTournamentSeoContent, ToolsInternalLinks } from "@/components/seo";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -236,6 +236,9 @@ const FlexTournamentList = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Internal Links */}
+        <ToolsInternalLinks currentTool="flex-tournament" />
 
         {/* SEO Content Section */}
         <FlexTournamentSeoContent />

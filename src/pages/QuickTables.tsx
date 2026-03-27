@@ -821,6 +821,9 @@ const QuickTables = () => {
           )}
         </div>
 
+          {/* Internal Links */}
+          <ToolsInternalLinks currentTool="quick-tables" />
+
           {/* SEO Content Section */}
           <QuickTablesSeoContent />
       </div>
