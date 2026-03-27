@@ -59,6 +59,10 @@ const FlexTournamentList = lazy(() => import("./pages/FlexTournamentList"));
 const FlexTournamentSetup = lazy(() => import("./pages/FlexTournamentSetup"));
 const FlexTournamentView = lazy(() => import("./pages/FlexTournamentView"));
 
+// Blog pages
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+
 // Forum pages
 const Forum = lazy(() => import("./pages/Forum"));
 const ForumCategory = lazy(() => import("./pages/ForumCategory"));
@@ -208,6 +212,9 @@ const App = () => (
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/news" element={<News />} />
+                    {/* Blog routes */}
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
                     {/* Forum routes */}
                     <Route path="/forum" element={<Forum />} />
                     <Route path="/forum/:categorySlug" element={<ForumCategory />} />

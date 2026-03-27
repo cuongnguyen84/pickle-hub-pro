@@ -49,6 +49,7 @@ const AppHeader = () => {
     { path: "/news", label: t.news.title },
     { path: "/forum", label: t.forum.navLabel },
     { path: "/tools", label: t.nav.tools },
+    { path: "/blog", label: "Blog" },
     { path: "/tournaments", label: t.nav.tournaments },
   ];
 
