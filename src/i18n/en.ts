@@ -200,8 +200,8 @@ export const en: Translations = {
     closeMenu: "Close menu",
   },
   tools: {
-    title: "Tools",
-    description: "Tools to help organize Pickleball tournaments",
+    title: "Free Pickleball Tournament Software & Bracket Generator",
+    description: "Free pickleball tournament software for organizers. Generate brackets, run round robin, MLP team matches & double elimination. Real-time scoring, mobile-friendly.",
     quickTable: {
       title: "Quick Bracket",
       description: "Round robin and playoff brackets for casual tournaments",

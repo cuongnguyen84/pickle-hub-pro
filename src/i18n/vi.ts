@@ -1882,8 +1882,8 @@ export const vi: Translations = {
     closeMenu: "Đóng menu",
   },
   tools: {
-    title: "Công cụ",
-    description: "Các công cụ hỗ trợ tổ chức giải đấu Pickleball",
+    title: "Phần mềm Tổ chức Giải Pickleball & Tạo Bracket Miễn Phí",
+    description: "Phần mềm tổ chức giải pickleball miễn phí. Tạo bracket, vòng tròn, MLP team match & loại kép. Chấm điểm realtime, tối ưu di động.",
     quickTable: {
       title: "Chia bảng nhanh",
       description: "Chia bảng vòng tròn, playoff cho giải đấu nghiệp dư",

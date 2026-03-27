@@ -112,14 +112,14 @@ const Tools = () => {
   return (
     <MainLayout>
       <DynamicMeta 
-        title="Pickleball Tournament Tools – Bracket Generator, Team Match & More"
-        description="Free pickleball tournament tools for organizers. Create round robin brackets, MLP team matches, double elimination brackets, and custom tournament formats. Mobile-friendly, real-time scoring."
+        title="Free Pickleball Tournament Software – Bracket Generator, Team Match & Scoring"
+        description="Free pickleball tournament software for organizers. Generate brackets, run round robin, MLP team matches & double elimination. Real-time scoring, mobile-friendly. No signup required."
         url="https://thepicklehub.net/tools"
         enableHreflang={true}
       />
       <SoftwareApplicationSchema
-        name="ThePickleHub Tournament Tools"
-        description="Free pickleball tournament management tools. Create brackets, manage round-robin groups, run team matches with MLP-style scoring, and organize doubles elimination tournaments."
+        name="ThePickleHub – Free Pickleball Tournament Software"
+        description="Free pickleball tournament software and bracket generator. Create round-robin brackets, MLP team matches, double elimination tournaments. Real-time scoring, mobile-friendly, no signup required."
         applicationCategory="SportsApplication"
         operatingSystem="Web"
         offers={{ price: "0", priceCurrency: "USD" }}
@@ -132,6 +132,11 @@ const Tools = () => {
           </h1>
           <p className="text-foreground-secondary">
             {t.tools.description}
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {language === "vi" 
+              ? "Tạo pickleball brackets, bracket maker miễn phí, phần mềm quản lý giải đấu cho CLB và BTC."
+              : "Create pickleball brackets with our free bracket maker. Tournament bracket generator for clubs, leagues, and organizers."}
           </p>
         </div>
 
