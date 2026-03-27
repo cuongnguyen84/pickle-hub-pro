@@ -145,7 +145,7 @@ export const blogPosts: BlogPost[] = [
     content: {
       en: {
         title: "How to Create a Pickleball Bracket — Step-by-Step Guide",
-        metaTitle: "How to Create a Pickleball Bracket | Free Step-by-Step Guide 2025",
+        metaTitle: "How to Create a Pickleball Bracket | Free Step-by-Step Guide 2026",
         metaDescription: "Learn how to create a pickleball bracket for round robin, single elimination, and double elimination tournaments. Free bracket generator with real-time scoring.",
         sections: [
           {
