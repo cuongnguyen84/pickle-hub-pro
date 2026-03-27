@@ -3,13 +3,20 @@ import { useI18n } from "@/i18n";
 import { Home, Radio, Trophy, Wrench, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
+import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 
 const BottomNav = () => {
   const { t } = useI18n();
   const location = useLocation();
+  const keyboardHeight = useKeyboardHeight();
 
   // Hide on admin and creator routes (they have their own nav)
   if (location.pathname.startsWith("/admin") || location.pathname.startsWith("/creator")) {
+    return null;
+  }
+
+  // Hide when virtual keyboard is open on mobile
+  if (keyboardHeight > 0) {
     return null;
   }
 
