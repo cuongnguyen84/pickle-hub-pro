@@ -42,7 +42,10 @@ const Forum = () => {
 
   return (
     <MainLayout>
-      <DynamicMeta title={`${t.forum.title} - The PickleHub`} description="Diễn đàn Pickleball" />
+      <DynamicMeta
+        title={`${t.forum.title} - ThePickleHub`}
+        description="Diễn đàn cộng đồng Pickleball Việt Nam. Thảo luận kỹ thuật, chia sẻ kinh nghiệm, tìm bạn chơi pickleball. Join the Vietnamese pickleball community forum."
+      />
       <div className="container-wide py-6 space-y-4 w-full min-w-0 flex-1">
         {/* Header */}
         <div className="flex items-center justify-between">

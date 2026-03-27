@@ -16,6 +16,7 @@ import {
 import { useDebounce } from "@/hooks/useSearch";
 import { Search as SearchIcon, Trophy, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DynamicMeta } from "@/components/seo";
 import { format } from "date-fns";
 
 type SearchTab = "all" | "videos" | "livestreams" | "tournaments";
