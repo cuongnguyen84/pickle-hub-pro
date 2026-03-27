@@ -501,146 +501,28 @@ export default function TeamMatchView() {
               </TabsList>
 
           <TabsContent value="overview" className="space-y-4 mt-4">
-            {/* Captain: Show team overview + all teams list */}
-            {userTeam && !isOwner && (
-              <>
-                <TeamOverviewCard
-                  team={userTeam}
-                  maxRosterSize={tournament.team_roster_size}
-                  totalTeamsRegistered={displayTeams.length}
-                />
-                {/* Captain can see all teams */}
-                <AllTeamsOverview
-                  teams={displayTeams}
-                  tournamentId={tournament.id}
-                  maxRosterSize={tournament.team_roster_size}
-                />
-              </>
-            )}
-
-            {/* BTC-only: Registered Teams Summary with approve actions */}
-            {isOwner && displayTeams.length > 0 && (
-              <RegisteredTeamsSummary
-                teams={displayTeams}
-                maxRosterSize={tournament.team_roster_size}
-                isOwner={isOwner}
-                tournamentId={tournament.id}
-                hasMatches={hasMatches}
-                onTeamClick={(team) => setSelectedTeam(team)}
-                onGenerateMatches={() => setShowGenerateDialog(true)}
-              />
-            )}
-
-            {/* Non-owner, non-captain: Show teams summary (view only) */}
-            {!isOwner && !userTeam && displayTeams.length > 0 && (
-              <RegisteredTeamsSummary
-                teams={displayTeams}
-                maxRosterSize={tournament.team_roster_size}
-                isOwner={false}
-                tournamentId={tournament.id}
-                onTeamClick={(team) => setSelectedTeam(team)}
-              />
-            )}
-
-            {/* Quick actions for owner - Group Playoff format - READ ONLY, no add team */}
-            {isOwner && isGroupPlayoffFormat && tournament.status === 'registration' && !hasGroups && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
-                  <CardDescription>
-                    {pendingTeamsCount > 0 
-                      ? t.teamMatch.view.approvePendingFirst.replace('{count}', String(pendingTeamsCount))
-                      : t.teamMatch.view.inviteOrSchedule}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.inviteTeamBtn}
-                  </Button>
-                  <Button
-                    onClick={() => setShowGroupSetupDialog(true)}
-                    disabled={!canStartGroupSetup}
-                  >
-                    <LayoutGrid className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.createGroupsBtn} ({approvedTeamsCount} {t.teamMatch.teams})
-                  </Button>
-                </CardContent>
-                {pendingTeamsCount > 0 && (
-                  <CardContent className="pt-0">
-                    <p className="text-xs text-amber-600">
-                      ⚠️ {t.teamMatch.view.approveAllBeforeBracket}
-                    </p>
-                  </CardContent>
-                )}
-                {approvedTeamsCount < 6 && pendingTeamsCount === 0 && (
-                  <CardContent className="pt-0">
-                    <p className="text-xs text-amber-600">
-                      ⚠️ {t.teamMatch.view.needMin6Groups}
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
-            )}
-
-            {/* Quick actions for owner - Single Elimination format - no add team */}
-            {isOwner && isSingleElimination && tournament.status === 'registration' && !hasMatches && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
-                  <CardDescription>
-                    {pendingTeamsCount > 0 
-                      ? t.teamMatch.view.approvePendingBracket.replace('{count}', String(pendingTeamsCount))
-                      : t.teamMatch.view.inviteOrBracket}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.inviteTeamBtn}
-                  </Button>
-                  <Button
-                    onClick={() => setShowSESetupDialog(true)}
-                    disabled={pendingTeamsCount > 0 || approvedTeamsCount < 4}
-                  >
-                    <Trophy className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.generateBracketBtn} ({approvedTeamsCount} {t.teamMatch.teams})
-                  </Button>
-                </CardContent>
-                {pendingTeamsCount > 0 && (
-                  <CardContent className="pt-0">
-                    <p className="text-xs text-amber-600">
-                      ⚠️ {t.teamMatch.view.approveAllBeforeBracket}
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
-            )}
-
-            {/* Quick actions for owner - Other formats (Round Robin) - no add team */}
-            {isOwner && !isGroupPlayoffFormat && !isSingleElimination && tournament.status === 'registration' && !hasMatches && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
-                  <CardDescription>
-                    {t.teamMatch.view.inviteOrSchedule}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.inviteTeamBtn}
-                  </Button>
-                  <Button
-                    onClick={() => setShowGenerateDialog(true)}
-                    disabled={approvedTeamsCount < 2}
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.createScheduleBtn}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            <TeamMatchOverviewTab
+              tournament={{
+                id: tournament.id,
+                format: tournament.format,
+                status: tournament.status,
+                team_roster_size: tournament.team_roster_size,
+                top_per_group: tournament.top_per_group,
+              }}
+              isOwner={isOwner}
+              userTeam={userTeam || null}
+              displayTeams={displayTeams}
+              hasMatches={!!hasMatches}
+              hasGroups={!!hasGroups}
+              approvedTeamsCount={approvedTeamsCount}
+              pendingTeamsCount={pendingTeamsCount}
+              canStartGroupSetup={canStartGroupSetup}
+              onTeamClick={(team) => setSelectedTeam(team)}
+              onGenerateMatches={() => setShowGenerateDialog(true)}
+              onShowInviteTeam={() => setShowInviteTeamDialog(true)}
+              onShowGroupSetup={() => setShowGroupSetupDialog(true)}
+              onShowSESetup={() => setShowSESetupDialog(true)}
+            />
           </TabsContent>
 
           <TabsContent value="teams" className="mt-4 space-y-4">
