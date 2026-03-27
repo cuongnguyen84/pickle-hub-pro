@@ -35,6 +35,7 @@ import { getLoginUrl } from "@/lib/auth-config";
 import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
 import { useChatHighlights, HIGHLIGHT_PRESETS, HighlightType, ChatHighlight } from "@/hooks/useChatHighlights";
 import { useChatMessageLikes } from "@/hooks/useChatMessageLike";
+import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 
 interface ChatPanelProps {
   livestreamId: string;
