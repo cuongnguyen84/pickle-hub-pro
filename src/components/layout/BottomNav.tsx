@@ -3,6 +3,7 @@ import { useI18n } from "@/i18n";
 import { Home, Radio, Trophy, Wrench, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
+import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 
 const BottomNav = () => {
   const { t } = useI18n();
