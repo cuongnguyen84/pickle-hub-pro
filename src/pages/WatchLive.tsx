@@ -31,12 +31,14 @@ import { PreviewCountdown } from "@/components/video/PreviewCountdown";
 import { LivestreamGateOverlay } from "@/components/video/LivestreamGateOverlay";
 import { useGeoBlock } from "@/hooks/useGeoBlock";
 import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
+import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 
 const WatchLive = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
   const { user } = useAuth();
   const { isBlocked } = useGeoBlock();
+  const keyboardHeight = useKeyboardHeight();
   const [isChatCollapsed, setIsChatCollapsed] = useState(true);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const playerRef = useRef<MuxPlayerHandle | HlsPlayerHandle>(null);
@@ -182,7 +184,7 @@ const WatchLive = () => {
     : [];
 
   return (
-    <MainLayout>
+    <MainLayout className={keyboardHeight > 0 ? "overflow-hidden" : undefined}>
       {/* Dynamic SEO tags - auto-generated from livestream data */}
       {/* Canonical URL points to /livestream/{id} for SEO */}
       <DynamicMeta
@@ -372,7 +374,11 @@ const WatchLive = () => {
               </div>
               {!isChatCollapsed && (
                 <div className="mt-2">
-                  <ChatPanel livestreamId={livestream.id} className="h-[400px]" hideHeader />
+                  <ChatPanel
+                    livestreamId={livestream.id}
+                    className={keyboardHeight > 0 ? "h-[280px]" : "h-[400px]"}
+                    hideHeader
+                  />
                 </div>
               )}
             </div>

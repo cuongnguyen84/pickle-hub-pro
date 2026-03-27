@@ -30,7 +30,6 @@ import { EmojiPicker } from "./EmojiPicker";
 import { ChatterBadge } from "./ChatterBadge";
 import { ChatLeaderboardPanel } from "./ChatLeaderboardPanel";
 import { supabase } from "@/integrations/supabase/client";
-import { useLocation } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
 import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
 import { useChatHighlights, HIGHLIGHT_PRESETS, HighlightType, ChatHighlight } from "@/hooks/useChatHighlights";
@@ -277,7 +276,6 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   const { t } = useI18n();
   const { toast } = useToast();
   const { user } = useAuth();
-  const location = useLocation();
   const keyboardHeight = useKeyboardHeight();
   const {
     messages,
@@ -402,6 +400,10 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     }
   }, []);
 
+  const focusInput = useCallback(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, []);
+
   // Handle new messages
   useEffect(() => {
     const newCount = messages.length - prevMessagesLengthRef.current;
@@ -499,15 +501,15 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     requestAnimationFrame(() => {
       const newPos = atIndex + mentionUser.display_name.length + 2;
       inputRef.current?.setSelectionRange(newPos, newPos);
-      inputRef.current?.focus();
+      focusInput();
     });
-  }, [inputValue]);
+  }, [focusInput, inputValue]);
 
   // Handle reply
   const handleReply = useCallback((message: ChatMessage) => {
     setReplyingTo(message);
-    inputRef.current?.focus();
-  }, []);
+    focusInput();
+  }, [focusInput]);
 
   // Handle form submit
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
@@ -538,13 +540,13 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     await sendMessage(value);
     
     // Refocus input
-    inputRef.current?.focus();
+    focusInput();
     
     // Reset after a short delay to allow for next message
     setTimeout(() => {
       isSubmittingRef.current = false;
     }, 100);
-  }, [inputValue, replyingTo, sendMessage, scrollToBottom]);
+  }, [focusInput, inputValue, replyingTo, sendMessage, scrollToBottom]);
 
   // Handle keyboard shortcuts - IME safe
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -604,9 +606,9 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     requestAnimationFrame(() => {
       const newPos = start + emoji.length;
       input.setSelectionRange(newPos, newPos);
-      input.focus();
+      focusInput();
     });
-  }, [inputValue]);
+  }, [focusInput, inputValue]);
 
   // Copy message to clipboard
   const handleCopy = useCallback(async (text: string) => {
