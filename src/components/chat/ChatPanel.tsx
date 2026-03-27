@@ -35,6 +35,7 @@ import { getLoginUrl } from "@/lib/auth-config";
 import { useChatLeaderboard } from "@/hooks/useChatLeaderboard";
 import { useChatHighlights, HIGHLIGHT_PRESETS, HighlightType, ChatHighlight } from "@/hooks/useChatHighlights";
 import { useChatMessageLikes } from "@/hooks/useChatMessageLike";
+import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 
 interface ChatPanelProps {
   livestreamId: string;
@@ -277,6 +278,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   const { toast } = useToast();
   const { user } = useAuth();
   const location = useLocation();
+  const keyboardHeight = useKeyboardHeight();
   const {
     messages,
     settings,
@@ -979,7 +981,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
       {/* Nickname & Input */}
       {user && <NicknameInput />}
       
-      <div className="border-t border-border shrink-0">
+      <div className="border-t border-border shrink-0" style={keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : undefined}>
         {/* Reply bar */}
         {replyingTo && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 border-b border-border">
