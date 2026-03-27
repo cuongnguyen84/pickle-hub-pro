@@ -25,7 +25,7 @@ interface TeamMatchMatchesTabProps {
   hasGroups: boolean;
   hasPlayoff: boolean;
   roundRobinComplete: boolean;
-  standings: Array<{ teamId: string }>;
+  standings: Array<{ team: { id: string } }>;
   approvedTeamsCount: number;
   pendingTeamsCount: number;
   userRole: { canEditScores: boolean };

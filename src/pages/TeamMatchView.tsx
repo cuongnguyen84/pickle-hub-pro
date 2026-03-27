@@ -38,6 +38,7 @@ import {
   MatchDetailSheet,
   GenerateMatchesDialog,
   StandingsTable,
+  TeamRosterDisplay,
   LineupSelectionSheet,
   PlayoffSetupDialog,
   GroupSetupDialog,
