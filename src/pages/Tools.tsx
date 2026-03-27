@@ -66,7 +66,7 @@ const ToolCard = ({ title, description, icon, href, comingSoon, highlight }: Too
 };
 
 const Tools = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
 
   const tools: ToolCardProps[] = [
