@@ -15,19 +15,28 @@ export const ToolsInternalLinks = ({ currentTool }: ToolsInternalLinksProps) => 
 
   const tools = [
     {
+      id: "hub" as const,
+      path: "/tools",
+      icon: Users,
+      title: language === "vi" ? "Tất cả công cụ giải đấu" : "All Tournament Tools",
+      description: language === "vi" 
+        ? "Phần mềm tổ chức giải pickleball miễn phí — bracket, team match, loại kép"
+        : "Free pickleball tournament software — brackets, team match, elimination",
+    },
+    {
       id: "quick-tables" as const,
       path: "/tools/quick-tables",
       icon: Users,
-      title: language === "vi" ? "Chia bảng nhanh" : "Quick Tables",
+      title: language === "vi" ? "Pickleball Bracket Generator" : "Pickleball Bracket Generator",
       description: language === "vi" 
-        ? "Chia bảng tự động, tạo lịch thi đấu round robin hoặc playoff"
+        ? "Tạo bracket tự động, lịch thi đấu round robin hoặc playoff"
         : "Auto bracket generator for round robin or playoff formats",
     },
     {
       id: "team-match" as const,
       path: "/tools/team-match",
       icon: Users,
-      title: language === "vi" ? "Đồng đội MLP" : "Team Match",
+      title: language === "vi" ? "MLP Team Match Software" : "MLP Team Match Software",
       description: language === "vi"
         ? "Thi đấu theo đội kiểu Major League Pickleball"
         : "MLP-style team competition with lineup management",
@@ -36,16 +45,16 @@ export const ToolsInternalLinks = ({ currentTool }: ToolsInternalLinksProps) => 
       id: "doubles-elimination" as const,
       path: "/tools/doubles-elimination",
       icon: Trophy,
-      title: language === "vi" ? "Loại trực tiếp đôi" : "Doubles Elimination",
+      title: language === "vi" ? "Double Elimination Bracket" : "Double Elimination Bracket",
       description: language === "vi"
-        ? "Bracket loại trực tiếp cho các giải đấu đôi"
-        : "Single elimination bracket for doubles tournaments",
+        ? "Bracket loại kép cho các giải đấu đôi pickleball"
+        : "Double elimination bracket for doubles pickleball tournaments",
     },
     {
       id: "flex-tournament" as const,
       path: "/tools/flex-tournament",
       icon: Layers,
-      title: language === "vi" ? "Giải đấu linh hoạt" : "Flex Tournament",
+      title: language === "vi" ? "Custom Tournament Bracket Maker" : "Custom Tournament Bracket Maker",
       description: language === "vi"
         ? "Tạo cấu trúc giải đấu tùy chỉnh, không giới hạn format"
         : "Create custom tournament structures with no format restrictions",
