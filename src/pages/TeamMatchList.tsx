@@ -11,7 +11,7 @@ import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { DynamicMeta, WebApplicationSchema, TeamMatchSeoContent } from '@/components/seo';
+import { DynamicMeta, WebApplicationSchema, TeamMatchSeoContent, ToolsInternalLinks } from '@/components/seo';
 import {
   AlertDialog,
   AlertDialogAction,
