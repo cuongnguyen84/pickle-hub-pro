@@ -3,7 +3,7 @@ import { useI18n } from "@/i18n";
 import { Users, Trophy, Layers } from "lucide-react";
 
 interface ToolsInternalLinksProps {
-  currentTool: "quick-tables" | "doubles-elimination" | "flex-tournament" | "team-match";
+  currentTool: "quick-tables" | "doubles-elimination" | "flex-tournament" | "team-match" | "hub";
 }
 
 /**
