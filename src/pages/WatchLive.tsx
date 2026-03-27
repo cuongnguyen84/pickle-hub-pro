@@ -81,6 +81,24 @@ const WatchLive = () => {
     }
   }, [isGated]);
 
+  useEffect(() => {
+    if (keyboardHeight <= 0) return;
+
+    const previousHtmlOverscroll = document.documentElement.style.overscrollBehaviorY;
+    const previousBodyOverscroll = document.body.style.overscrollBehaviorY;
+    const previousBodyTouchAction = document.body.style.touchAction;
+
+    document.documentElement.style.overscrollBehaviorY = "none";
+    document.body.style.overscrollBehaviorY = "none";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      document.documentElement.style.overscrollBehaviorY = previousHtmlOverscroll;
+      document.body.style.overscrollBehaviorY = previousBodyOverscroll;
+      document.body.style.touchAction = previousBodyTouchAction;
+    };
+  }, [keyboardHeight]);
+
   const handleVideoPlay = useCallback(() => setIsVideoPlaying(true), []);
   const handleVideoPause = useCallback(() => setIsVideoPlaying(false), []);
 
