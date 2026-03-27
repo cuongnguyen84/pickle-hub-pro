@@ -28,7 +28,7 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
-    slug: "best-pickleball-tournament-software-2025",
+    slug: "best-pickleball-tournament-software-2026",
     publishedDate: "2025-12-15",
     updatedDate: "2026-03-27",
     author: "The PickleHub Team",
@@ -37,16 +37,16 @@ export const blogPosts: BlogPost[] = [
     ctaLabel: { en: "Try Free Tournament Tools", vi: "Dùng thử miễn phí" },
     content: {
       en: {
-        title: "Best Pickleball Tournament Software in 2025 — Free Tools Compared",
-        metaTitle: "Best Pickleball Tournament Software 2025 | Free Bracket Tools Compared",
-        metaDescription: "Compare the best pickleball tournament software in 2025. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required.",
+        title: "Best Pickleball Tournament Software in 2026 — Free Tools Compared",
+        metaTitle: "Best Pickleball Tournament Software 2026 | Free Bracket Tools Compared",
+        metaDescription: "Compare the best pickleball tournament software in 2026. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required.",
         sections: [
           {
             heading: "Why You Need Pickleball-Specific Tournament Software",
-            content: "Running a pickleball tournament with spreadsheets or generic bracket makers is painful. Pickleball has unique requirements — court rotation, doubles pairing logic, rest time management, and format diversity (round robin, double elimination, MLP team matches) — that general-purpose tools simply don't handle well. In 2025, several platforms have emerged to solve these problems. Here's how they compare."
+            content: "Running a pickleball tournament with spreadsheets or generic bracket makers is painful. Pickleball has unique requirements — court rotation, doubles pairing logic, rest time management, and format diversity (round robin, double elimination, MLP team matches) — that general-purpose tools simply don't handle well. In 2026, several platforms have emerged to solve these problems. Here's how they compare."
           },
           {
-            heading: "Top Pickleball Tournament Software in 2025",
+            heading: "Top Pickleball Tournament Software in 2026",
             content: "We evaluated the most popular pickleball tournament platforms based on features, ease of use, pricing, and mobile experience. Here's our breakdown:",
             listItems: [
               "The Pickle Hub — Free, mobile-first platform with round robin bracket generator, MLP team match, double elimination, and flex tournament tools. Real-time scoring, referee mode, court scheduling. No signup required to create tournaments.",
@@ -70,7 +70,7 @@ export const blogPosts: BlogPost[] = [
           },
           {
             heading: "Why The Pickle Hub Stands Out",
-            content: "The Pickle Hub was built specifically for pickleball organizers who need powerful tools without the complexity or cost of enterprise platforms. Every tool is free, works on any device, and requires no technical expertise. You can create a complete tournament bracket in under 60 seconds. The platform supports four distinct tournament formats — Quick Tables (round robin), Team Match (MLP-style), Double Elimination, and Flex Tournament (custom formats) — making it the most versatile free option available in 2025."
+            content: "The Pickle Hub was built specifically for pickleball organizers who need powerful tools without the complexity or cost of enterprise platforms. Every tool is free, works on any device, and requires no technical expertise. You can create a complete tournament bracket in under 60 seconds. The platform supports four distinct tournament formats — Quick Tables (round robin), Team Match (MLP-style), Double Elimination, and Flex Tournament (custom formats) — making it the most versatile free option available in 2026."
           },
           {
             heading: "How to Choose the Right Tournament Software",
@@ -85,16 +85,16 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       vi: {
-        title: "Phần mềm tổ chức giải Pickleball tốt nhất 2025 — So sánh công cụ miễn phí",
-        metaTitle: "Phần mềm tổ chức giải Pickleball tốt nhất 2025 | So sánh công cụ tạo bracket miễn phí",
-        metaDescription: "So sánh phần mềm tổ chức giải pickleball tốt nhất 2025. Tạo bracket miễn phí, round robin, MLP team match cho ban tổ chức. Không cần đăng ký.",
+        title: "Phần mềm tổ chức giải Pickleball tốt nhất 2026 — So sánh công cụ miễn phí",
+        metaTitle: "Phần mềm tổ chức giải Pickleball tốt nhất 2026 | So sánh công cụ tạo bracket miễn phí",
+        metaDescription: "So sánh phần mềm tổ chức giải pickleball tốt nhất 2026. Tạo bracket miễn phí, round robin, MLP team match cho ban tổ chức. Không cần đăng ký.",
         sections: [
           {
             heading: "Tại sao cần phần mềm chuyên dụng cho giải Pickleball?",
-            content: "Tổ chức giải pickleball bằng Excel hay các công cụ bracket tổng hợp rất vất vả. Pickleball có những yêu cầu riêng — xoay sân, logic ghép đôi, quản lý thời gian nghỉ, và đa dạng thể thức (vòng tròn, loại kép, đồng đội MLP) — mà các nền tảng chung không xử lý tốt. Năm 2025, nhiều nền tảng chuyên biệt đã ra đời. Dưới đây là so sánh chi tiết."
+            content: "Tổ chức giải pickleball bằng Excel hay các công cụ bracket tổng hợp rất vất vả. Pickleball có những yêu cầu riêng — xoay sân, logic ghép đôi, quản lý thời gian nghỉ, và đa dạng thể thức (vòng tròn, loại kép, đồng đội MLP) — mà các nền tảng chung không xử lý tốt. Năm 2026, nhiều nền tảng chuyên biệt đã ra đời. Dưới đây là so sánh chi tiết."
           },
           {
-            heading: "Top phần mềm tổ chức giải Pickleball 2025",
+            heading: "Top phần mềm tổ chức giải Pickleball 2026",
             content: "Chúng tôi đánh giá các nền tảng phổ biến nhất dựa trên tính năng, dễ sử dụng, giá cả và trải nghiệm mobile:",
             listItems: [
               "The Pickle Hub — Miễn phí, ưu tiên mobile. Có round robin, MLP team match, loại kép, và flex tournament. Chấm điểm realtime, chế độ trọng tài, xếp lịch sân. Không cần đăng ký.",
@@ -118,7 +118,7 @@ export const blogPosts: BlogPost[] = [
           },
           {
             heading: "Tại sao The Pickle Hub nổi bật?",
-            content: "The Pickle Hub được xây dựng đặc biệt cho ban tổ chức pickleball cần công cụ mạnh mẽ mà không phức tạp hay tốn chi phí. Mọi công cụ đều miễn phí, hoạt động trên mọi thiết bị, không cần kiến thức kỹ thuật. Bạn có thể tạo bracket giải đấu hoàn chỉnh trong chưa đầy 60 giây. Nền tảng hỗ trợ 4 thể thức — Quick Tables (vòng tròn), Team Match (kiểu MLP), Double Elimination, và Flex Tournament (tùy chỉnh) — là lựa chọn miễn phí đa năng nhất năm 2025."
+            content: "The Pickle Hub được xây dựng đặc biệt cho ban tổ chức pickleball cần công cụ mạnh mẽ mà không phức tạp hay tốn chi phí. Mọi công cụ đều miễn phí, hoạt động trên mọi thiết bị, không cần kiến thức kỹ thuật. Bạn có thể tạo bracket giải đấu hoàn chỉnh trong chưa đầy 60 giây. Nền tảng hỗ trợ 4 thể thức — Quick Tables (vòng tròn), Team Match (kiểu MLP), Double Elimination, và Flex Tournament (tùy chỉnh) — là lựa chọn miễn phí đa năng nhất năm 2026."
           },
           {
             heading: "Cách chọn phần mềm phù hợp",
@@ -145,7 +145,7 @@ export const blogPosts: BlogPost[] = [
     content: {
       en: {
         title: "How to Create a Pickleball Bracket — Step-by-Step Guide",
-        metaTitle: "How to Create a Pickleball Bracket | Free Step-by-Step Guide 2025",
+        metaTitle: "How to Create a Pickleball Bracket | Free Step-by-Step Guide 2026",
         metaDescription: "Learn how to create a pickleball bracket for round robin, single elimination, and double elimination tournaments. Free bracket generator with real-time scoring.",
         sections: [
           {
@@ -200,7 +200,7 @@ export const blogPosts: BlogPost[] = [
       },
       vi: {
         title: "Cách tạo Bracket giải Pickleball — Hướng dẫn từng bước",
-        metaTitle: "Cách tạo Bracket giải Pickleball | Hướng dẫn miễn phí 2025",
+        metaTitle: "Cách tạo Bracket giải Pickleball | Hướng dẫn miễn phí 2026",
         metaDescription: "Hướng dẫn tạo bracket giải pickleball cho vòng tròn, loại trực tiếp, và loại kép. Công cụ tạo bracket miễn phí với chấm điểm realtime.",
         sections: [
           {
@@ -266,7 +266,7 @@ export const blogPosts: BlogPost[] = [
     content: {
       en: {
         title: "Pickleball Round Robin Generator — How to Run the Perfect Round Robin Tournament",
-        metaTitle: "Pickleball Round Robin Generator | Free Tool & Complete Guide 2025",
+        metaTitle: "Pickleball Round Robin Generator | Free Tool & Complete Guide 2026",
         metaDescription: "Free pickleball round robin generator with automatic scheduling, court rotation, and live scoring. Learn how to organize the perfect round robin tournament.",
         sections: [
           {
@@ -332,7 +332,7 @@ export const blogPosts: BlogPost[] = [
       },
       vi: {
         title: "Công cụ tạo vòng tròn Pickleball — Cách tổ chức giải vòng tròn hoàn hảo",
-        metaTitle: "Công cụ tạo vòng tròn Pickleball | Miễn phí & Hướng dẫn đầy đủ 2025",
+        metaTitle: "Công cụ tạo vòng tròn Pickleball | Miễn phí & Hướng dẫn đầy đủ 2026",
         metaDescription: "Công cụ tạo vòng tròn pickleball miễn phí với lịch tự động, xoay sân, và chấm điểm trực tiếp. Hướng dẫn tổ chức giải vòng tròn hoàn hảo.",
         sections: [
           {

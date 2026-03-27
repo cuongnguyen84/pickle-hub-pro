@@ -80,7 +80,7 @@ export const ToolsHubSeoContent = () => (
         Read our in-depth guides to get the most out of your pickleball events:
       </p>
       <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-        <li><Link to="/blog/best-pickleball-tournament-software-2025" className="text-primary hover:underline">Best Pickleball Tournament Software 2025</Link> — Compare free tools for organizing pickleball competitions.</li>
+        <li><Link to="/blog/best-pickleball-tournament-software-2026" className="text-primary hover:underline">Best Pickleball Tournament Software 2026</Link> — Compare free tools for organizing pickleball competitions.</li>
         <li><Link to="/blog/how-to-create-pickleball-bracket" className="text-primary hover:underline">How to Create a Pickleball Bracket</Link> — Step-by-step guide for round robin and elimination brackets.</li>
         <li><Link to="/blog/pickleball-round-robin-generator-guide" className="text-primary hover:underline">Pickleball Round Robin Generator Guide</Link> — Everything you need to run the perfect round robin tournament.</li>
       </ul>
