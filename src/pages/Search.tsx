@@ -84,6 +84,10 @@ const Search = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta
+        title={debouncedQuery ? `${t.search.title}: ${debouncedQuery}` : t.search.title}
+        noindex
+      />
       <div className="container-wide py-6 space-y-6">
         <div className="space-y-4">
           <h1 className="text-2xl font-bold text-foreground">{t.search.title}</h1>

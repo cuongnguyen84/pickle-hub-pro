@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio, Trophy, Users, Tv } from "lucide-react";
 import { OpenRegistrationSection } from "@/components/quicktable/OpenRegistrationSection";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, OrganizationSchema } from "@/components/seo";
 import { NewsCard } from "@/components/news/NewsCard";
 
 const Index = () => {
