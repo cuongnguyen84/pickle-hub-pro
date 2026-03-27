@@ -252,6 +252,9 @@ export default function TeamMatchList() {
           </Card>
         )}
 
+        {/* Internal Links */}
+        <ToolsInternalLinks currentTool="team-match" />
+
         {/* SEO Content Section */}
         <TeamMatchSeoContent />
       </div>

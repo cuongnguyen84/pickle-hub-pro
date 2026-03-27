@@ -237,6 +237,9 @@ const FlexTournamentList = () => {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Internal Links */}
+        <ToolsInternalLinks currentTool="flex-tournament" />
+
         {/* SEO Content Section */}
         <FlexTournamentSeoContent />
       </div>

@@ -237,6 +237,9 @@ export default function DoublesEliminationList() {
             </p>
           </CardContent>
         </Card>
+
+        {/* Internal Links */}
+        <ToolsInternalLinks currentTool="doubles-elimination" />
       </div>
     </MainLayout>
   );
