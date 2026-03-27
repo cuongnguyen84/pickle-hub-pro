@@ -7,4 +7,5 @@ export { WebApplicationSchema } from "./WebApplicationSchema";
 export { SportsEventSchema } from "./SportsEventSchema";
 export { OrganizationSchema } from "./OrganizationSchema";
 export { BreadcrumbSchema } from "./BreadcrumbSchema";
+export { ArticleSchema } from "./ArticleSchema";
 export { ToolsHubSeoContent, QuickTablesSeoContent, TeamMatchSeoContent, DoublesEliminationSeoContent, FlexTournamentSeoContent } from "./ToolsSeoContent";

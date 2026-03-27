@@ -212,6 +212,9 @@ const App = () => (
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/news" element={<News />} />
+                    {/* Blog routes */}
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
                     {/* Forum routes */}
                     <Route path="/forum" element={<Forum />} />
                     <Route path="/forum/:categorySlug" element={<ForumCategory />} />
