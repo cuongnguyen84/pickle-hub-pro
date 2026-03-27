@@ -9,6 +9,7 @@ import { useTournaments } from "@/hooks/useSupabaseData";
 import { usePaginatedVideos } from "@/hooks/usePaginatedVideos";
 import { useDebounce } from "@/hooks/useSearch";
 import { useBatchViewCounts } from "@/hooks/useBatchViewCounts";
+import { DynamicMeta } from "@/components/seo";
 import { Play, Search } from "lucide-react";
 
 const Videos = () => {
