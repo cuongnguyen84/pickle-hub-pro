@@ -279,8 +279,6 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
   const { user } = useAuth();
   const location = useLocation();
   const keyboardHeight = useKeyboardHeight();
-  const { user } = useAuth();
-  const location = useLocation();
   const {
     messages,
     settings,
