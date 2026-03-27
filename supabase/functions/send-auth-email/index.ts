@@ -349,7 +349,7 @@ const getInviteEmailHtml = (confirmationUrl: string) => `
             <td style="padding: 20px 40px 40px;">
               <p style="margin: 0; font-size: 12px; color: #a1a1aa; text-align: center; line-height: 1.5;">
                 Nếu bạn không mong đợi email này, bạn có thể bỏ qua nó.<br>
-                © 2025 The Pickle Hub. All rights reserved.
+                © 2026 The Pickle Hub. All rights reserved.
               </p>
             </td>
           </tr>
