@@ -266,7 +266,7 @@ export const blogPosts: BlogPost[] = [
     content: {
       en: {
         title: "Pickleball Round Robin Generator — How to Run the Perfect Round Robin Tournament",
-        metaTitle: "Pickleball Round Robin Generator | Free Tool & Complete Guide 2025",
+        metaTitle: "Pickleball Round Robin Generator | Free Tool & Complete Guide 2026",
         metaDescription: "Free pickleball round robin generator with automatic scheduling, court rotation, and live scoring. Learn how to organize the perfect round robin tournament.",
         sections: [
           {
