@@ -71,6 +71,20 @@ export const ToolsHubSeoContent = () => (
         Whether you're a club director running weekly round robins, a tournament director managing a 128-team bracket, or a referee scoring matches on the go — The Pickle Hub's tournament tools are designed for you. All tools are free, work on any device, and require no technical expertise. Create your first pickleball tournament bracket in under 60 seconds.
       </p>
     </div>
+
+    <div>
+      <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+        Learn More About Pickleball Tournament Organization
+      </h2>
+      <p className="text-muted-foreground mb-3">
+        Read our in-depth guides to get the most out of your pickleball events:
+      </p>
+      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+        <li><Link to="/blog/best-pickleball-tournament-software-2025" className="text-primary hover:underline">Best Pickleball Tournament Software 2025</Link> — Compare free tools for organizing pickleball competitions.</li>
+        <li><Link to="/blog/how-to-create-pickleball-bracket" className="text-primary hover:underline">How to Create a Pickleball Bracket</Link> — Step-by-step guide for round robin and elimination brackets.</li>
+        <li><Link to="/blog/pickleball-round-robin-generator-guide" className="text-primary hover:underline">Pickleball Round Robin Generator Guide</Link> — Everything you need to run the perfect round robin tournament.</li>
+      </ul>
+    </div>
   </section>
 );
 
