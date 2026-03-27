@@ -4,6 +4,7 @@ import { NewsCard } from "@/components/news/NewsCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Newspaper } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { DynamicMeta } from "@/components/seo";
 
 export default function News() {
   const { t } = useI18n();
