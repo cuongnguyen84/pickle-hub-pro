@@ -1,44 +1,85 @@
 
 
-# Fix: Video bị đẩy lên khi mở keyboard trên mobile
+# Tự động SEO cho ThePickleHub (Google + App Store)
 
-## Vấn đề
-Khi user focus vào ô chat trên mobile, virtual keyboard đẩy nội dung lên. Video player dùng `sticky top-14` nhưng do `#root` dùng `height: 100dvh` (dynamic viewport height), khi keyboard mở thì `dvh` co lại → video bị đẩy ra khỏi viewport.
+## Phân tích hiện trạng
 
-## Giải pháp
+### Đã có
+- `DynamicMeta` trên 27 pages (Index, Live, Tournaments, WatchLive, WatchVideo, Tools, Login, Account...)
+- Structured data: `SoftwareApplicationSchema`, `WebApplicationSchema`, `VideoSchema`, `SportsEventSchema`
+- `sitemap.xml`, `robots.txt`, canonical URLs, hreflang
+- OG tags + Twitter cards
+- App Links: `assetlinks.json` (Android), `apple-app-site-association` (iOS)
 
-### 1. Thêm `interactive-widget=overlays-content` vào viewport meta (index.html)
+### Thiếu / Cần cải thiện
+
+| Vấn đề | Trang |
+|---------|-------|
+| Không có `DynamicMeta` | `Videos.tsx`, `News.tsx`, `Search.tsx` |
+| Forum meta quá sơ sài | `Forum.tsx` - chỉ "Diễn đàn Pickleball" |
+| Thiếu trong sitemap | `/forum`, `/search` |
+| Không có `BreadcrumbList` schema | Tất cả các trang |
+| Không có `Organization` schema | Trang chủ |
+| Thiếu `lastmod` trong sitemap | Tất cả URLs |
+| App Store: thiếu Smart App Banner | `index.html` |
+
+## Kế hoạch thực hiện
+
+### 1. Thêm DynamicMeta cho 3 trang thiếu
+- **Videos.tsx**: title "Pickleball Videos & Replays", description tiếng Anh + tiếng Việt cho SEO
+- **News.tsx**: title "Pickleball News", description phù hợp
+- **Search.tsx**: title dynamic theo query, `noindex=true` (search pages không nên index)
+
+### 2. Cải thiện Forum SEO
+- Mô tả chi tiết hơn cho Forum page
+- Thêm `/forum` vào sitemap
+
+### 3. Tạo `OrganizationSchema` component
+Structured data cho Google Knowledge Panel:
+```json
+{
+  "@type": "Organization",
+  "name": "ThePickleHub",
+  "url": "https://thepicklehub.net",
+  "sameAs": ["social links..."]
+}
+```
+Render trên trang chủ (Index.tsx).
+
+### 4. Tạo `BreadcrumbSchema` component
+Google hiển thị breadcrumb trong search results. Thêm cho các trang chính: Videos, News, Forum, Tools, Tournaments.
+
+### 5. Cập nhật sitemap.xml
+- Thêm `/forum`
+- Thêm `lastmod` dates
+
+### 6. App Store SEO (Smart App Banner)
+Thêm vào `index.html`:
 ```html
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=overlays-content" />
+<meta name="apple-itunes-app" content="app-id=YOUR_APP_ID, app-argument=https://thepicklehub.net">
 ```
-Thuộc tính này báo trình duyệt: keyboard overlay lên content thay vì resize layout viewport. Layout viewport giữ nguyên → video không bị đẩy.
+Khi user mở trên iOS Safari → hiển thị banner "Open in App". Cần App Store ID thực tế.
 
-### 2. Xử lý chat input bị keyboard che (WatchLive.tsx + ChatPanel.tsx)
-Vì keyboard giờ overlay lên content, cần đảm bảo chat input area không bị che:
-
-- Trong `ChatPanel.tsx`: Khi input focused trên mobile, thêm padding-bottom bằng chiều cao keyboard (dùng `visualViewport` API)
-- Tạo hook `useKeyboardHeight()` để detect keyboard height qua `window.visualViewport.resize` event
-- Apply padding-bottom động cho chat container khi keyboard mở
-
-### 3. Tạo hook `useKeyboardHeight.ts`
-```typescript
-// Lắng nghe visualViewport resize để tính keyboard height
-// keyboardHeight = window.innerHeight - visualViewport.height
-// Return keyboardHeight (0 khi keyboard đóng)
+### 7. Android App Links TWA metadata
+Thêm `meta` tag cho Google Play:
+```html
+<meta name="google-play-app" content="app-id=net.thepicklehub.app">
 ```
 
-### 4. Áp dụng trong ChatPanel
-- Khi `keyboardHeight > 0` và input focused → thêm `paddingBottom: keyboardHeight` cho chat container
-- Đảm bảo scroll chat messages vẫn hiển thị đúng
+## Files thay đổi
+1. `src/pages/Videos.tsx` — thêm DynamicMeta
+2. `src/pages/News.tsx` — thêm DynamicMeta
+3. `src/pages/Search.tsx` — thêm DynamicMeta (noindex)
+4. `src/pages/Forum.tsx` — cải thiện description
+5. `src/components/seo/OrganizationSchema.tsx` — tạo mới
+6. `src/components/seo/BreadcrumbSchema.tsx` — tạo mới
+7. `src/components/seo/index.ts` — export mới
+8. `src/pages/Index.tsx` — thêm OrganizationSchema
+9. `public/sitemap.xml` — thêm /forum, lastmod
+10. `index.html` — thêm Smart App Banner + Google Play meta
 
-### Files thay đổi
-1. `index.html` — thêm `interactive-widget=overlays-content` vào viewport meta
-2. `src/hooks/useKeyboardHeight.ts` — hook mới detect keyboard height
-3. `src/components/chat/ChatPanel.tsx` — apply dynamic padding khi keyboard mở
-4. `src/pages/WatchLive.tsx` — có thể cần adjust mobile chat section
-
-### Rủi ro & Mitigation
-- `interactive-widget=overlays-content` có thể ảnh hưởng các form khác → kiểm tra Login, Forum, Account pages
-- Fallback: nếu `visualViewport` không available, dùng estimated keyboard height (~300px)
-- Chỉ apply keyboard padding trên mobile (`lg:` breakpoint trở lên không cần)
+## Lưu ý
+- Smart App Banner cần Apple App Store ID thực tế — sẽ hỏi bạn nếu đã có
+- Không thay đổi UI/UX, chỉ thêm meta tags và structured data
+- Tuân thủ SEO policy: không ảnh hưởng functional behavior
 
