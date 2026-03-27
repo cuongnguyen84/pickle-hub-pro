@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio, Trophy, Users, Tv } from "lucide-react";
 import { OpenRegistrationSection } from "@/components/quicktable/OpenRegistrationSection";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, OrganizationSchema } from "@/components/seo";
 import { NewsCard } from "@/components/news/NewsCard";
 
 const Index = () => {
@@ -56,7 +56,7 @@ const Index = () => {
         "ThePickleHub là nền tảng pickleball toàn cầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!" :
         "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant pickleball community. Watch livestreams, follow tournaments, and connect now!"
         } />
-
+      <OrganizationSchema />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero">

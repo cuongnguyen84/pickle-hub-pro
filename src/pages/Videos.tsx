@@ -9,6 +9,7 @@ import { useTournaments } from "@/hooks/useSupabaseData";
 import { usePaginatedVideos } from "@/hooks/usePaginatedVideos";
 import { useDebounce } from "@/hooks/useSearch";
 import { useBatchViewCounts } from "@/hooks/useBatchViewCounts";
+import { DynamicMeta } from "@/components/seo";
 import { Play, Search } from "lucide-react";
 
 const Videos = () => {
@@ -60,6 +61,10 @@ const Videos = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta
+        title={t.nav.videos}
+        description="Xem lại các trận pickleball hay nhất. Watch pickleball replays, highlights and match videos on ThePickleHub."
+      />
       <div className="container-wide py-8">
         <h1 className="text-2xl font-semibold mb-6">{t.nav.videos}</h1>
 
