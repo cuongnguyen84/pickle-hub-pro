@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, WebApplicationSchema, DoublesEliminationSeoContent } from "@/components/seo";
+import { DynamicMeta, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
