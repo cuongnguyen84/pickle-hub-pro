@@ -35,24 +35,20 @@ import {
   TeamRegistrationDialog,
   TeamList, 
   TeamDetailSheet,
-  MatchList,
   MatchDetailSheet,
   GenerateMatchesDialog,
   StandingsTable,
-  RegisteredTeamsSummary,
-  TeamOverviewCard,
   TeamRosterDisplay,
   LineupSelectionSheet,
-  AllTeamsOverview,
   PlayoffSetupDialog,
-  PlayoffBracket,
   GroupSetupDialog,
-  GroupMatchList,
   GroupStandingsTable,
   InviteTeamDialog,
   SingleEliminationSetupDialog,
   TeamMatchSettingsDialog,
   TeamMatchScoringSheet,
+  TeamMatchOverviewTab,
+  TeamMatchMatchesTab,
 } from '@/components/teamMatch';
 import { useTeamMatchRefereeManagement } from '@/hooks/useTeamMatchRefereeManagement';
 import { useTeamMatchRealtime } from '@/hooks/useTeamMatchRealtime';
@@ -501,146 +497,28 @@ export default function TeamMatchView() {
               </TabsList>
 
           <TabsContent value="overview" className="space-y-4 mt-4">
-            {/* Captain: Show team overview + all teams list */}
-            {userTeam && !isOwner && (
-              <>
-                <TeamOverviewCard
-                  team={userTeam}
-                  maxRosterSize={tournament.team_roster_size}
-                  totalTeamsRegistered={displayTeams.length}
-                />
-                {/* Captain can see all teams */}
-                <AllTeamsOverview
-                  teams={displayTeams}
-                  tournamentId={tournament.id}
-                  maxRosterSize={tournament.team_roster_size}
-                />
-              </>
-            )}
-
-            {/* BTC-only: Registered Teams Summary with approve actions */}
-            {isOwner && displayTeams.length > 0 && (
-              <RegisteredTeamsSummary
-                teams={displayTeams}
-                maxRosterSize={tournament.team_roster_size}
-                isOwner={isOwner}
-                tournamentId={tournament.id}
-                hasMatches={hasMatches}
-                onTeamClick={(team) => setSelectedTeam(team)}
-                onGenerateMatches={() => setShowGenerateDialog(true)}
-              />
-            )}
-
-            {/* Non-owner, non-captain: Show teams summary (view only) */}
-            {!isOwner && !userTeam && displayTeams.length > 0 && (
-              <RegisteredTeamsSummary
-                teams={displayTeams}
-                maxRosterSize={tournament.team_roster_size}
-                isOwner={false}
-                tournamentId={tournament.id}
-                onTeamClick={(team) => setSelectedTeam(team)}
-              />
-            )}
-
-            {/* Quick actions for owner - Group Playoff format - READ ONLY, no add team */}
-            {isOwner && isGroupPlayoffFormat && tournament.status === 'registration' && !hasGroups && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
-                  <CardDescription>
-                    {pendingTeamsCount > 0 
-                      ? t.teamMatch.view.approvePendingFirst.replace('{count}', String(pendingTeamsCount))
-                      : t.teamMatch.view.inviteOrSchedule}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.inviteTeamBtn}
-                  </Button>
-                  <Button
-                    onClick={() => setShowGroupSetupDialog(true)}
-                    disabled={!canStartGroupSetup}
-                  >
-                    <LayoutGrid className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.createGroupsBtn} ({approvedTeamsCount} {t.teamMatch.teams})
-                  </Button>
-                </CardContent>
-                {pendingTeamsCount > 0 && (
-                  <CardContent className="pt-0">
-                    <p className="text-xs text-amber-600">
-                      ⚠️ {t.teamMatch.view.approveAllBeforeBracket}
-                    </p>
-                  </CardContent>
-                )}
-                {approvedTeamsCount < 6 && pendingTeamsCount === 0 && (
-                  <CardContent className="pt-0">
-                    <p className="text-xs text-amber-600">
-                      ⚠️ {t.teamMatch.view.needMin6Groups}
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
-            )}
-
-            {/* Quick actions for owner - Single Elimination format - no add team */}
-            {isOwner && isSingleElimination && tournament.status === 'registration' && !hasMatches && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
-                  <CardDescription>
-                    {pendingTeamsCount > 0 
-                      ? t.teamMatch.view.approvePendingBracket.replace('{count}', String(pendingTeamsCount))
-                      : t.teamMatch.view.inviteOrBracket}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.inviteTeamBtn}
-                  </Button>
-                  <Button
-                    onClick={() => setShowSESetupDialog(true)}
-                    disabled={pendingTeamsCount > 0 || approvedTeamsCount < 4}
-                  >
-                    <Trophy className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.generateBracketBtn} ({approvedTeamsCount} {t.teamMatch.teams})
-                  </Button>
-                </CardContent>
-                {pendingTeamsCount > 0 && (
-                  <CardContent className="pt-0">
-                    <p className="text-xs text-amber-600">
-                      ⚠️ {t.teamMatch.view.approveAllBeforeBracket}
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
-            )}
-
-            {/* Quick actions for owner - Other formats (Round Robin) - no add team */}
-            {isOwner && !isGroupPlayoffFormat && !isSingleElimination && tournament.status === 'registration' && !hasMatches && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{t.teamMatch.view.btcActionsTitle}</CardTitle>
-                  <CardDescription>
-                    {t.teamMatch.view.inviteOrSchedule}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setShowInviteTeamDialog(true)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.inviteTeamBtn}
-                  </Button>
-                  <Button
-                    onClick={() => setShowGenerateDialog(true)}
-                    disabled={approvedTeamsCount < 2}
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.createScheduleBtn}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            <TeamMatchOverviewTab
+              tournament={{
+                id: tournament.id,
+                format: tournament.format,
+                status: tournament.status,
+                team_roster_size: tournament.team_roster_size,
+                top_per_group: tournament.top_per_group,
+              }}
+              isOwner={isOwner}
+              userTeam={userTeam || null}
+              displayTeams={displayTeams}
+              hasMatches={!!hasMatches}
+              hasGroups={!!hasGroups}
+              approvedTeamsCount={approvedTeamsCount}
+              pendingTeamsCount={pendingTeamsCount}
+              canStartGroupSetup={canStartGroupSetup}
+              onTeamClick={(team) => setSelectedTeam(team)}
+              onGenerateMatches={() => setShowGenerateDialog(true)}
+              onShowInviteTeam={() => setShowInviteTeamDialog(true)}
+              onShowGroupSetup={() => setShowGroupSetupDialog(true)}
+              onShowSESetup={() => setShowSESetupDialog(true)}
+            />
           </TabsContent>
 
           <TabsContent value="teams" className="mt-4 space-y-4">
@@ -682,169 +560,39 @@ export default function TeamMatchView() {
           </TabsContent>
 
           <TabsContent value="matches" className="mt-4 space-y-4">
-            {/* Generate matches action for owner - NOT for single elimination */}
-            {isOwner && !hasMatches && tournament.status !== 'completed' && !isSingleElimination && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardContent className="py-4 flex items-center justify-between">
-                  <div>
-                   <p className="font-medium">{t.teamMatch.view.createSchedule}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t.teamMatch.view.teamsReadyForSchedule.replace('{count}', String(approvedTeamsCount))}
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={() => setShowGenerateDialog(true)}
-                    disabled={approvedTeamsCount < 2}
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.createScheduleBtn}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Generate bracket action for owner - Single Elimination ONLY */}
-            {isOwner && !hasMatches && tournament.status !== 'completed' && isSingleElimination && (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardContent className="py-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{t.teamMatch.view.generateBracketBtn}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t.teamMatch.view.teamsReadySE.replace('{count}', String(approvedTeamsCount))}
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={() => setShowSESetupDialog(true)}
-                    disabled={approvedTeamsCount < 4 || pendingTeamsCount > 0}
-                  >
-                    <Trophy className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.generateBracketBtn}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Start tournament action */}
-            {isOwner && hasMatches && tournament.status === 'registration' && (
-              <Card className="border-green-500/50 bg-green-500/5">
-                <CardContent className="py-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-green-600">{t.teamMatch.view.startTournamentLabel}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t.teamMatch.view.matchesGeneratedCount.replace('{count}', String(matches?.length))}
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={() => setShowStartTournamentDialog(true)}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.startBtn}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Create Playoff action - show when round robin is complete */}
-            {isOwner && roundRobinComplete && !hasPlayoff && (
-              <Card className="border-yellow-500/50 bg-yellow-500/5">
-                <CardContent className="py-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-yellow-600">{t.teamMatch.view.createPlayoffTitle}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t.teamMatch.view.roundRobinDone.replace('{count}', String(standings.length))}
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={() => setShowPlayoffDialog(true)}
-                    className="bg-yellow-600 hover:bg-yellow-700"
-                  >
-                    <Trophy className="h-4 w-4 mr-2" />
-                    {t.teamMatch.view.createPlayoff}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Playoff/SE Bracket - Show for playoff matches */}
-            {playoffMatches.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-500" />
-                  {isSingleElimination ? t.teamMatch.view.seBracketTitle : t.teamMatch.view.playoffRound}
-                </h3>
-                <PlayoffBracket 
-                  matches={playoffMatches}
-                  userTeamId={userTeam?.id}
-                  isOwner={isOwner}
-                  canEditScores={userRole.canEditScores}
-                  onMatchClick={(match) => setSelectedMatch(match)}
-                  onLineupClick={(match, teamId) => {
-                    setLineupMatch(match);
-                    setLineupTeamId(teamId || null);
-                  }}
-                  onScoreMatch={(match) => setScoringMatch(match)}
-                  isSingleElimination={isSingleElimination}
-                />
-              </div>
-            )}
-
-            {/* Group-based Match List for rr_playoff format */}
-            {hasGroups && roundRobinMatches.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Gamepad2 className="h-5 w-5" />
-                  {t.teamMatch.view.groupStageTitle}
-                </h3>
-                <GroupMatchList 
-                  tournamentId={tournament.id}
-                  userTeamId={userTeam?.id}
-                  isOwner={isOwner}
-                  canEditScores={userRole.canEditScores}
-                  onMatchClick={(match) => setSelectedMatch(match)}
-                  onLineupClick={(match, teamId) => {
-                    setLineupMatch(match);
-                    setLineupTeamId(teamId || null);
-                  }}
-                  onStartRound={handleStartRound}
-                  onScoreMatch={(match) => setScoringMatch(match)}
-                />
-              </div>
-            )}
-
-            {/* Regular Round Robin Match List (no groups) */}
-            {!hasGroups && roundRobinMatches.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Gamepad2 className="h-5 w-5" />
-                  {t.teamMatch.view.roundRobinTitle}
-                </h3>
-                <MatchList 
-                  tournamentId={tournament.id}
-                  userTeamId={userTeam?.id}
-                  isOwner={isOwner}
-                  canEditScores={userRole.canEditScores}
-                  onMatchClick={(match) => setSelectedMatch(match)}
-                  onLineupClick={(match, teamId) => {
-                    setLineupMatch(match);
-                    setLineupTeamId(teamId || null);
-                  }}
-                  onStartRound={handleStartRound}
-                  onScoreMatch={(match) => setScoringMatch(match)}
-                />
-              </div>
-            )}
-
-            {/* Empty state */}
-            {!hasMatches && !isOwner && (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  <Gamepad2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>{t.teamMatch.view.noMatchesEmpty}</p>
-                  <p className="text-sm mt-1">{t.teamMatch.view.noMatchesScheduleDesc}</p>
-                </CardContent>
-              </Card>
-            )}
+            <TeamMatchMatchesTab
+              tournament={{
+                id: tournament.id,
+                format: tournament.format,
+                status: tournament.status,
+                has_dreambreaker: tournament.has_dreambreaker,
+                has_third_place_match: tournament.has_third_place_match,
+              }}
+              isOwner={isOwner}
+              userTeam={userTeam || null}
+              matches={matches}
+              hasMatches={!!hasMatches}
+              hasGroups={!!hasGroups}
+              hasPlayoff={hasPlayoff}
+              roundRobinComplete={roundRobinComplete}
+              standings={standings}
+              approvedTeamsCount={approvedTeamsCount}
+              pendingTeamsCount={pendingTeamsCount}
+              userRole={userRole}
+              isUpdatingStatus={isUpdatingStatus}
+              onGenerateMatches={() => setShowGenerateDialog(true)}
+              onShowSESetup={() => setShowSESetupDialog(true)}
+              onShowStartTournament={() => setShowStartTournamentDialog(true)}
+              onShowPlayoffDialog={() => setShowPlayoffDialog(true)}
+              onMatchClick={(match) => setSelectedMatch(match)}
+              onLineupClick={(match, teamId) => {
+                setLineupMatch(match);
+                setLineupTeamId(teamId || null);
+              }}
+              onStartRound={handleStartRound}
+              onScoreMatch={(match) => setScoringMatch(match)}
+              onStartTournament={handleStartTournament}
+            />
           </TabsContent>
 
           {showStandingsTab && (

@@ -24,3 +24,5 @@ export { PlayoffSetupDialog } from './PlayoffSetupDialog';
 export { PlayoffBracket } from './PlayoffBracket';
 export { SingleEliminationSetupDialog } from './SingleEliminationSetupDialog';
 export { TeamMatchSettingsDialog } from './TeamMatchSettingsDialog';
+export { TeamMatchOverviewTab } from './TeamMatchOverviewTab';
+export { TeamMatchMatchesTab } from './TeamMatchMatchesTab';
