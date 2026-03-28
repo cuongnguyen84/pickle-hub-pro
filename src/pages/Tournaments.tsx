@@ -536,7 +536,182 @@ const Tournaments = () => {
           </Card>
         )}
 
-        {isLoading ? (
+        {/* Doubles Elimination Section */}
+        {(activeDoubles.length > 0 || completedDoubles.length > 0) && (
+          <Card className="mb-6">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Doubles Elimination</h2>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={deTab === "active" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setDeTab("active"); setDeExpanded(false); }}
+                >
+                  {t.tournament.ongoing} ({activeDoubles.length})
+                </Button>
+                <Button
+                  variant={deTab === "completed" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setDeTab("completed"); setDeExpanded(false); }}
+                >
+                  {t.tournament.ended} ({completedDoubles.length})
+                </Button>
+              </div>
+            </div>
+            <div className="px-4 pb-4 space-y-2">
+              {(() => {
+                const items = deTab === "active" ? activeDoubles : completedDoubles;
+                const displayItems = deExpanded ? items : items.slice(0, 5);
+                if (items.length === 0) return (
+                  <p className="text-sm text-muted-foreground text-center py-4">{t.common.noResults}</p>
+                );
+                return (
+                  <>
+                    {displayItems.map((tournament) => (
+                      <Link
+                        key={tournament.id}
+                        to={`/tools/doubles-elimination/${tournament.share_id}`}
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Trophy className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{tournament.name}</div>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                              <Badge variant="secondary" className="gap-1 text-xs">
+                                <Users className="w-3 h-3" />
+                                <span>{tournament.team_count} {t.tournament.pairs}</span>
+                              </Badge>
+                              {tournament.creator_display_name && (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Mail className="w-3 h-3" />
+                                  <span className="truncate max-w-[150px]">{tournament.creator_display_name}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 pl-13 sm:pl-0">
+                          <Badge variant="outline" className={cn(
+                            "text-xs whitespace-nowrap",
+                            deTab === "active"
+                              ? "bg-primary/10 text-primary border-primary/30"
+                              : "bg-muted text-muted-foreground border-border"
+                          )}>
+                            {deTab === "active" ? t.tournament.ongoing : t.quickTable.status.completed}
+                          </Badge>
+                          <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                        </div>
+                      </Link>
+                    ))}
+                    {items.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={(e) => { e.preventDefault(); setDeExpanded(!deExpanded); }}
+                      >
+                        {deExpanded ? t.quickTable.showLess : `${t.quickTable.showMore} (${items.length})`}
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </Card>
+        )}
+
+        {/* Flex Tournament Section */}
+        {(activeFlex.length > 0 || completedFlex.length > 0) && (
+          <Card className="mb-6">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Flex Tournament</h2>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={flexTab === "active" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setFlexTab("active"); setFlexExpanded(false); }}
+                >
+                  {t.tournament.ongoing} ({activeFlex.length})
+                </Button>
+                <Button
+                  variant={flexTab === "completed" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => { setFlexTab("completed"); setFlexExpanded(false); }}
+                >
+                  {t.tournament.ended} ({completedFlex.length})
+                </Button>
+              </div>
+            </div>
+            <div className="px-4 pb-4 space-y-2">
+              {(() => {
+                const items = flexTab === "active" ? activeFlex : completedFlex;
+                const displayItems = flexExpanded ? items : items.slice(0, 5);
+                if (items.length === 0) return (
+                  <p className="text-sm text-muted-foreground text-center py-4">{t.common.noResults}</p>
+                );
+                return (
+                  <>
+                    {displayItems.map((tournament) => (
+                      <Link
+                        key={tournament.id}
+                        to={`/tools/flex-tournament/${tournament.share_id}`}
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Trophy className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{tournament.name}</div>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                              {tournament.creator_display_name && (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Mail className="w-3 h-3" />
+                                  <span className="truncate max-w-[150px]">{tournament.creator_display_name}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 pl-13 sm:pl-0">
+                          <Badge variant="outline" className={cn(
+                            "text-xs whitespace-nowrap",
+                            flexTab === "active"
+                              ? "bg-primary/10 text-primary border-primary/30"
+                              : "bg-muted text-muted-foreground border-border"
+                          )}>
+                            {flexTab === "active" ? t.tournament.ongoing : t.quickTable.status.completed}
+                          </Badge>
+                          <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                        </div>
+                      </Link>
+                    ))}
+                    {items.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={(e) => { e.preventDefault(); setFlexExpanded(!flexExpanded); }}
+                      >
+                        {flexExpanded ? t.quickTable.showLess : `${t.quickTable.showMore} (${items.length})`}
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </Card>
+        )}
+
           <div className="space-y-4">
             <Skeleton className="h-10 w-80 mb-6" />
             {[1, 2, 3].map((i) => (
