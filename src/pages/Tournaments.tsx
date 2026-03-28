@@ -28,11 +28,19 @@ const Tournaments = () => {
   const { data: openTeamMatchTournaments = [], isLoading: teamMatchLoading } = useOpenTeamMatchTournaments();
   const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 50 });
   const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 50 });
+  const { data: activeDoubles = [] } = useActiveDoublesElimination({ limit: 50 });
+  const { data: completedDoubles = [] } = useCompletedDoublesElimination({ limit: 50 });
+  const { data: activeFlex = [] } = useActiveFlexTournaments({ limit: 50 });
+  const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 50 });
   const { data: registeredTournaments = [], isLoading: registeredLoading } = useUserRegisteredTournaments(user?.id);
   const [qtExpanded, setQtExpanded] = useState(false);
   const [qtTab, setQtTab] = useState<"active" | "completed">("active");
   const [tmExpanded, setTmExpanded] = useState(false);
   const [tmTab, setTmTab] = useState<"active" | "completed">("active");
+  const [deExpanded, setDeExpanded] = useState(false);
+  const [deTab, setDeTab] = useState<"active" | "completed">("active");
+  const [flexExpanded, setFlexExpanded] = useState(false);
+  const [flexTab, setFlexTab] = useState<"active" | "completed">("active");
   const { data: completedTournaments = [], isLoading: completedLoading } = useUserCompletedTournaments(user?.id);
 
   // Filter tournaments by search
