@@ -357,7 +357,7 @@ const Tournaments = () => {
             </div>
             <div className="px-4 pb-4 space-y-2">
               {(() => {
-                const items = qtTab === "active" ? openRegistrationTables : completedQuickTables;
+                const items = qtTab === "active" ? activeQuickTables : completedQuickTables;
                 const displayItems = qtExpanded ? items : items.slice(0, 5);
                 if (items.length === 0) return (
                   <p className="text-sm text-muted-foreground text-center py-4">{t.common.noResults}</p>
