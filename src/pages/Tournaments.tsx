@@ -331,7 +331,7 @@ const Tournaments = () => {
         )}
 
         {/* Quick Tables Section - with tabs */}
-        {(openRegistrationTables.length > 0 || completedQuickTables.length > 0) && (
+        {(activeQuickTables.length > 0 || completedQuickTables.length > 0) && (
           <Card className="mb-6">
             <div className="p-4">
               <div className="flex items-center gap-2 mb-4">
