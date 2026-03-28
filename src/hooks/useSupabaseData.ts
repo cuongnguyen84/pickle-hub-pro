@@ -16,8 +16,13 @@ export {
   useOpenTeamMatchTournaments,
   useCompletedPublicQuickTables,
   useCompletedTeamMatchTournaments,
+  useActivePublicQuickTables,
+  useActiveDoublesElimination,
+  useCompletedDoublesElimination,
+  useActiveFlexTournaments,
+  useCompletedFlexTournaments,
 } from "./useTournamentData";
-export type { QuickTablePublic, TeamMatchTournamentPublic } from "./useTournamentData";
+export type { QuickTablePublic, TeamMatchTournamentPublic, DoublesEliminationPublic, FlexTournamentPublic } from "./useTournamentData";
 
 export {
   useLikesCount,
