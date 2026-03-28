@@ -1,76 +1,59 @@
 
 
-# Blog System với 2 ngôn ngữ (EN + VN)
+# Cải thiện ứng dụng ThePickleHub — Phân tích & Kế hoạch
 
-## Tổng quan
+## Vấn đề phát hiện
 
-Tạo hệ thống blog static (không cần database) với nội dung song ngữ EN/VN, sử dụng i18n system hiện có. 3 bài blog target từ khóa GSC có impressions cao nhưng rank thấp.
+### 1. Lỗi 404 trên iOS khi vào chi tiết giải đấu
 
-## Kiến trúc
+**Nguyên nhân**: Capacitor app load từ `https://thepicklehub.net` (WebView wrapper). Khi user navigate tới route như `/tournament/slug-name` hoặc `/tools/quick-tables/abc123`, nếu WebView refresh hoặc deep link trực tiếp, server cần trả về `index.html` cho mọi route (SPA fallback). Hiện tại không có file `_redirects` trong `public/` để cấu hình SPA fallback cho hosting.
 
-```text
-src/
-├── lib/blog-data.ts          → Blog metadata + content (EN/VN)
-├── pages/Blog.tsx             → Blog listing page
-├── pages/BlogPost.tsx         → Blog post renderer
-├── components/seo/
-│   └── ArticleSchema.tsx      → Article JSON-LD cho Rich Results
+**Giải pháp**: Thêm `public/_redirects` với rule `/* /index.html 200` — đây là chuẩn cho Lovable/Netlify hosting. Ngoài ra, cần kiểm tra Cloudflare config nếu domain chính đi qua Cloudflare.
+
+### 2. Giải đấu mới không hiển thị tại `/tournaments`
+
+**Nguyên nhân**: Trang `/tournaments` hiển thị Quick Tables chỉ khi `requires_registration = true` và `status = 'setup'`. Nhiều giải đấu mới tạo có `requires_registration = false` nên bị ẩn. Ví dụ: "DRH Pickleball Tournament", "Mad drops", "Pickle Ball The Pioneers" — tất cả đều `requires_registration = false` → không xuất hiện.
+
+**Giải pháp**: Mở rộng query để hiển thị tất cả Quick Tables public đang active (setup/group_stage/playoff), không chỉ những giải có registration. Tương tự cho Doubles Elimination và Flex Tournament — hiện tại hoàn toàn không có trên `/tournaments`.
+
+### 3. Thiếu Doubles Elimination & Flex Tournament trên `/tournaments`
+
+Trang `/tournaments` chỉ hiển thị Quick Tables và Team Match, nhưng không có Doubles Elimination và Flex Tournament. User tạo giải ở các format này sẽ không thấy chúng ở trang tổng hợp.
+
+---
+
+## Kế hoạch thực hiện
+
+### File thay đổi
+
+| File | Mô tả |
+|------|-------|
+| `public/_redirects` | **Tạo mới** — SPA fallback rule cho hosting |
+| `src/hooks/useTournamentData.ts` | Thêm hook `useActivePublicQuickTables()` thay thế `useOpenRegistrationTables()`, thêm hooks cho Doubles Elimination & Flex Tournament active/completed |
+| `src/pages/Tournaments.tsx` | Hiển thị tất cả giải public active (không chỉ registration), thêm sections cho Doubles Elimination & Flex Tournament |
+| `src/hooks/useSupabaseData.ts` | Export các hooks mới |
+
+### Chi tiết kỹ thuật
+
+**1. Tạo `public/_redirects`**
 ```
+/* /index.html 200
+```
+Đảm bảo mọi route đều trả về SPA index, fix lỗi 404 khi refresh/deep link trên iOS.
 
-## Chi tiết thực hiện
+**2. Mở rộng Quick Tables query**
+- Thêm hook `useActivePublicQuickTables()` — query `is_public = true` AND `status IN ('setup', 'group_stage', 'playoff')` (bỏ filter `requires_registration`)
+- Giữ nguyên `useOpenRegistrationTables()` cho backward compatibility
 
-### 1. Blog data structure (`src/lib/blog-data.ts`)
-- Mỗi post chứa `content.en` và `content.vi` (title, description, body sections)
-- Slug-based lookup, metadata (publishedDate, author, tags)
-- 3 bài:
-  - `best-pickleball-tournament-software-2025` → target "pickleball tournament software"
-  - `how-to-create-pickleball-bracket` → target "pickleball brackets"  
-  - `pickleball-round-robin-generator-guide` → target "pickleball round robin generator"
+**3. Thêm Doubles Elimination & Flex Tournament**
+- `useActiveDoublesElimination()` — query `doubles_elimination_tournaments` với `status IN ('active', 'ongoing')`
+- `useActiveFlexTournaments()` — query `flex_tournaments` với `status IN ('active', 'ongoing')`
+- `useCompletedDoublesElimination()` — status = 'completed'
+- `useCompletedFlexTournaments()` — status = 'completed'
 
-### 2. Blog listing page (`src/pages/Blog.tsx`)
-- Grid cards hiển thị title/description theo ngôn ngữ hiện tại
-- DynamicMeta + BreadcrumbSchema
-- Link đến từng post
-
-### 3. Blog post page (`src/pages/BlogPost.tsx`)
-- Render content theo `language` từ i18n context
-- DynamicMeta (title/description theo ngôn ngữ)
-- ArticleSchema JSON-LD
-- BreadcrumbSchema (Home > Blog > Post)
-- CTA buttons link về `/tools` và sub-tools
-- Internal links footer
-
-### 4. ArticleSchema (`src/components/seo/ArticleSchema.tsx`)
-- JSON-LD `@type: Article` với headline, datePublished, author, image
-- Hỗ trợ `inLanguage` dynamic theo ngôn ngữ hiện tại
-
-### 5. Routing & Navigation
-- `App.tsx`: thêm lazy routes `/blog`, `/blog/:slug`
-- `AppHeader.tsx`: thêm "Blog" vào navLinks
-- i18n: thêm `nav.blog` key cho EN/VN
-
-### 6. SEO updates
-- `sitemap.xml`: thêm `/blog` + 3 post URLs
-- `ToolsSeoContent.tsx`: thêm links đến blog posts
-- Barrel export `ArticleSchema` trong `seo/index.ts`
-
-## Files thay đổi
-
-| File | Action |
-|------|--------|
-| `src/lib/blog-data.ts` | Tạo mới |
-| `src/pages/Blog.tsx` | Tạo mới |
-| `src/pages/BlogPost.tsx` | Tạo mới |
-| `src/components/seo/ArticleSchema.tsx` | Tạo mới |
-| `src/App.tsx` | Thêm 2 routes |
-| `src/components/layout/AppHeader.tsx` | Thêm Blog nav link |
-| `src/i18n/vi.ts` | Thêm blog interface + VN strings |
-| `src/i18n/en.ts` | Thêm blog EN strings |
-| `src/components/seo/index.ts` | Export ArticleSchema |
-| `public/sitemap.xml` | Thêm blog URLs |
-| `src/components/seo/ToolsSeoContent.tsx` | Thêm links đến blog |
-
-## Nội dung blog
-
-Mỗi bài ~800-1200 words, keyword density tự nhiên, có CTA rõ ràng link về tools. Content tiếng Việt là bản dịch/localize đầy đủ (không phải tóm tắt), phù hợp để rank từ khóa tiếng Việt.
+**4. Cập nhật `/tournaments` page**
+- Thay section "Open Registration" thành "Active Quick Tables" với tabs active/completed
+- Thêm section Doubles Elimination (active/completed)
+- Thêm section Flex Tournament (active/completed)
+- Giữ nguyên Team Match section
 
