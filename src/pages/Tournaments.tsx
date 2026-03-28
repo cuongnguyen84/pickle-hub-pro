@@ -712,6 +712,7 @@ const Tournaments = () => {
           </Card>
         )}
 
+        {isLoading ? (
           <div className="space-y-4">
             <Skeleton className="h-10 w-80 mb-6" />
             {[1, 2, 3].map((i) => (
