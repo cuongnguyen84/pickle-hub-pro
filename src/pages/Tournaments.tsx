@@ -336,7 +336,7 @@ const Tournaments = () => {
             <div className="p-4">
               <div className="flex items-center gap-2 mb-4">
                 <ClipboardList className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">{t.quickTable.openRegistrationTournaments}</h2>
+                <h2 className="text-lg font-semibold text-foreground">Quick Table</h2>
               </div>
               <div className="flex gap-2">
                 <Button
