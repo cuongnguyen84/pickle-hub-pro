@@ -24,7 +24,7 @@ const Tournaments = () => {
   const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
 
   const { data: tournaments = [], isLoading } = useTournaments();
-  const { data: openRegistrationTables = [], isLoading: openRegLoading } = useOpenRegistrationTables();
+  const { data: activeQuickTables = [], isLoading: openRegLoading } = useActivePublicQuickTables();
   const { data: openTeamMatchTournaments = [], isLoading: teamMatchLoading } = useOpenTeamMatchTournaments();
   const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 50 });
   const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 50 });
