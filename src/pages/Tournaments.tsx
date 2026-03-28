@@ -344,7 +344,7 @@ const Tournaments = () => {
                   size="sm"
                   onClick={() => { setQtTab("active"); setQtExpanded(false); }}
                 >
-                  {t.tournament.openRegistration} ({openRegistrationTables.length})
+                  {t.tournament.ongoing} ({activeQuickTables.length})
                 </Button>
                 <Button
                   variant={qtTab === "completed" ? "default" : "outline"}
