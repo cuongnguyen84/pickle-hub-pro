@@ -8,4 +8,5 @@ export { SportsEventSchema } from "./SportsEventSchema";
 export { OrganizationSchema } from "./OrganizationSchema";
 export { BreadcrumbSchema } from "./BreadcrumbSchema";
 export { ArticleSchema } from "./ArticleSchema";
+export { FAQSchema } from "./FAQSchema";
 export { ToolsHubSeoContent, QuickTablesSeoContent, TeamMatchSeoContent, DoublesEliminationSeoContent, FlexTournamentSeoContent } from "./ToolsSeoContent";

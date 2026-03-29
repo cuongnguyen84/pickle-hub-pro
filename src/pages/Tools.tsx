@@ -1,6 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, SoftwareApplicationSchema, ToolsHubSeoContent } from "@/components/seo";
+import { DynamicMeta, SoftwareApplicationSchema, FAQSchema, ToolsHubSeoContent } from "@/components/seo";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
