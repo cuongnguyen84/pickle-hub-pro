@@ -973,7 +973,7 @@ export const blogPosts: BlogPost[] = [
         ]
       }
     }
-  }
+  },
   {
     slug: "pickleball-live-streaming-guide",
     publishedDate: "2026-03-29",
