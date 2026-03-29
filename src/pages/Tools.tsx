@@ -124,6 +124,13 @@ const Tools = () => {
         operatingSystem="Web"
         offers={{ price: "0", priceCurrency: "USD" }}
       />
+      <FAQSchema items={[
+        { question: "Is ThePickleHub tournament software free?", answer: "Yes, all tournament tools on ThePickleHub are completely free. You can create round robin brackets, double elimination tournaments, MLP team matches, and flex tournaments without any payment or subscription." },
+        { question: "Do I need to create an account to use the bracket generator?", answer: "No signup is required to create and manage tournaments. Anyone can create a bracket instantly. An account is only needed for advanced features like saving tournaments to your profile." },
+        { question: "What tournament formats does ThePickleHub support?", answer: "ThePickleHub supports four tournament formats: Quick Tables (round robin with optional playoffs), Team Match (MLP-style team competitions), Double Elimination (winner and loser brackets), and Flex Tournament (fully customizable format)." },
+        { question: "Can referees score matches from their phones?", answer: "Yes, ThePickleHub has a dedicated referee mode. Tournament organizers can assign referees who update match scores in real-time from any mobile device. All participants see live score updates." },
+        { question: "How many players can a tournament support?", answer: "Quick Tables support 4 to 200+ players with automatic group distribution. Double Elimination supports up to 128 teams. Team Match supports multiple teams with customizable roster sizes." },
+      ]} />
       <div className="container-wide py-8">
         {/* Header */}
         <div className="mb-8">

@@ -291,8 +291,8 @@ const Tournaments = () => {
               </div>
             </div>
             <div className="px-4 pb-4 space-y-2">
-              {completedTournaments.slice(0, 5).map((tournament: Record<string, unknown>) => {
-                const tm = tournament as { id: string; share_id: string; name: string; is_doubles: boolean; player_count: number };
+              {completedTournaments.slice(0, 5).map((tournament) => {
+                const tm = tournament;
                 return (
                   <Link
                     key={tm.id}
