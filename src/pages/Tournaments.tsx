@@ -233,8 +233,8 @@ const Tournaments = () => {
               </div>
             </div>
             <div className="px-4 pb-4 space-y-2">
-              {registeredTournaments.map((tournament: Record<string, unknown>) => {
-                const tm = tournament as { id: string; share_id: string; name: string; registrationStatus: string; status: string; is_doubles: boolean; player_count: number; creator_display_name?: string };
+              {registeredTournaments.map((tournament) => {
+                const tm = tournament;
                 return (
                   <Link
                     key={tm.id}
