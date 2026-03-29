@@ -397,6 +397,582 @@ export const blogPosts: BlogPost[] = [
         ]
       }
     }
+  },
+  {
+    slug: "pickleball-scoring-rules-guide",
+    publishedDate: "2026-03-15",
+    updatedDate: "2026-03-29",
+    author: "The PickleHub Team",
+    tags: ["scoring", "rules", "beginner"],
+    ctaPath: "/tools/quick-tables",
+    ctaLabel: { en: "Try Free Scoring Tool", vi: "Dùng thử chấm điểm miễn phí" },
+    content: {
+      en: {
+        title: "Pickleball Scoring Rules Explained — Complete Guide for Beginners & Tournament Play",
+        metaTitle: "Pickleball Scoring Rules 2026 | Complete Beginner & Tournament Guide",
+        metaDescription: "Learn pickleball scoring rules for singles, doubles, and tournament play. Rally scoring vs side-out explained. Free digital scoring tool included.",
+        sections: [
+          {
+            heading: "How Does Pickleball Scoring Work?",
+            content: "Pickleball scoring can be confusing for newcomers, but it follows a logical system once you understand the basics. There are two main scoring systems used in pickleball: traditional side-out scoring and rally scoring. The format you use depends on whether you're playing recreationally or in organized competition."
+          },
+          {
+            heading: "Traditional Side-Out Scoring (to 11)",
+            content: "The classic pickleball scoring system where only the serving team can score points. Games are played to 11 points, win by 2. In doubles, each team gets two serves (one for each player) before the serve passes to the opponents.",
+            listItems: [
+              "Only the serving team can score — If the receiving team wins the rally, they earn the serve but no point.",
+              "Win by 2 — The game continues past 11 until one team leads by 2 (e.g., 12-10, 13-11).",
+              "Score is called as three numbers in doubles — Server score, receiver score, server number (1 or 2). Example: '4-2-1' means serving team has 4, receiving team has 2, first server.",
+              "First serve exception — At the start of the game, only one player serves before the first side-out."
+            ]
+          },
+          {
+            heading: "Rally Scoring (to 21)",
+            content: "Rally scoring awards a point on every rally regardless of who served. This format is increasingly popular in professional and tournament play because it creates more predictable game lengths and faster-paced matches.",
+            listItems: [
+              "Every rally scores a point — Whether you serve or receive, winning the rally earns a point.",
+              "Games to 21, win by 2 — Higher point total but games often finish faster due to constant scoring.",
+              "Used in MLP and professional events — Major League Pickleball uses rally scoring exclusively.",
+              "Better for tournaments — Organizers prefer rally scoring because match duration is more predictable, making scheduling easier.",
+              "Freeze rule — Some formats freeze at 20-20, requiring side-out scoring for the final points."
+            ]
+          },
+          {
+            heading: "Singles vs Doubles Scoring Differences",
+            content: "While the fundamental scoring is the same, there are key differences between singles and doubles play:",
+            listItems: [
+              "Singles: Score is two numbers — Your score and opponent's score. Only one serve per side-out.",
+              "Singles: Serve position follows score — Even score = serve from right court. Odd score = serve from left court.",
+              "Doubles: Three-number score — Includes server number (1 or 2) to track which partner is serving.",
+              "Doubles: Both players serve — After the first server loses a rally, the second server takes over before the serve passes."
+            ]
+          },
+          {
+            heading: "Tournament Scoring Best Practices",
+            content: "When organizing a tournament, choosing the right scoring format matters for player experience and event timing:",
+            listItems: [
+              "Round robin events — Rally scoring to 21 keeps schedules predictable. Use time limits (20 minutes) as backup.",
+              "Elimination brackets — Best-of-3 games to 11 (side-out) is the standard for competitive play.",
+              "Recreational events — Games to 15 (rally) is a popular middle ground — fast enough for scheduling, long enough for fun.",
+              "Use digital scoring — Paper scorecards lead to errors. Digital tools like ThePickleHub's scorer eliminate disputes and provide live standings."
+            ]
+          },
+          {
+            heading: "Common Scoring Mistakes to Avoid",
+            content: "Even experienced players make these scoring errors during games and tournaments:",
+            listItems: [
+              "Forgetting server number — In doubles, always announce the full three-number score before serving.",
+              "Wrong court position — Players must be in the correct court (right or left) based on the score. Even score = right side for server.",
+              "Not switching sides — In singles, the server must switch sides after every point they score.",
+              "Score disputes — Without a referee or digital scorer, disagreements can derail a tournament. Always designate a scorekeeper."
+            ]
+          }
+        ]
+      },
+      vi: {
+        title: "Luật chấm điểm Pickleball — Hướng dẫn đầy đủ cho người mới và giải đấu",
+        metaTitle: "Luật chấm điểm Pickleball 2026 | Hướng dẫn cho người mới & giải đấu",
+        metaDescription: "Học luật chấm điểm pickleball cho đơn, đôi và giải đấu. Rally scoring vs side-out giải thích chi tiết. Công cụ chấm điểm số miễn phí.",
+        sections: [
+          {
+            heading: "Chấm điểm Pickleball hoạt động như thế nào?",
+            content: "Chấm điểm pickleball có thể gây bối rối cho người mới, nhưng hệ thống rất logic khi bạn hiểu cơ bản. Có hai hệ thống chấm điểm chính: side-out scoring truyền thống và rally scoring. Thể thức bạn dùng phụ thuộc vào chơi giải trí hay thi đấu chính thức."
+          },
+          {
+            heading: "Side-Out Scoring truyền thống (đến 11)",
+            content: "Hệ thống chấm điểm cổ điển nơi chỉ đội giao bóng mới được điểm. Trận chơi đến 11 điểm, thắng cách 2. Trong đôi, mỗi đội được hai lượt giao (mỗi người một lượt) trước khi giao chuyển sang đối thủ.",
+            listItems: [
+              "Chỉ đội giao bóng được điểm — Nếu đội nhận thắng rally, họ nhận giao nhưng không có điểm.",
+              "Thắng cách 2 — Trận tiếp tục quá 11 cho đến khi một đội dẫn 2 (ví dụ 12-10, 13-11).",
+              "Điểm gọi 3 số trong đôi — Điểm đội giao, điểm đội nhận, số người giao (1 hoặc 2). Ví dụ: '4-2-1'.",
+              "Ngoại lệ giao đầu — Đầu trận, chỉ một người giao trước side-out đầu tiên."
+            ]
+          },
+          {
+            heading: "Rally Scoring (đến 21)",
+            content: "Rally scoring cho điểm mỗi rally bất kể ai giao. Thể thức này ngày càng phổ biến trong thi đấu chuyên nghiệp vì tạo thời gian trận dự đoán được và nhịp nhanh hơn.",
+            listItems: [
+              "Mỗi rally đều tính điểm — Dù giao hay nhận, thắng rally là có điểm.",
+              "Đến 21, thắng cách 2 — Tổng điểm cao hơn nhưng trận thường kết thúc nhanh hơn.",
+              "Dùng trong MLP và giải chuyên nghiệp — Major League Pickleball dùng rally scoring.",
+              "Tốt hơn cho giải đấu — BTC thích rally scoring vì thời gian trận dự đoán được, dễ xếp lịch.",
+              "Luật freeze — Một số thể thức freeze ở 20-20, yêu cầu side-out cho điểm cuối."
+            ]
+          },
+          {
+            heading: "Khác biệt chấm điểm Đơn vs Đôi",
+            content: "Dù cơ bản giống nhau, có khác biệt quan trọng giữa đơn và đôi:",
+            listItems: [
+              "Đơn: Điểm 2 số — Điểm bạn và điểm đối thủ. Chỉ một lượt giao mỗi side-out.",
+              "Đơn: Vị trí giao theo điểm — Điểm chẵn = giao từ sân phải. Điểm lẻ = sân trái.",
+              "Đôi: Điểm 3 số — Bao gồm số người giao (1 hoặc 2).",
+              "Đôi: Cả hai giao — Sau khi người giao thứ nhất mất rally, người thứ hai tiếp quản."
+            ]
+          },
+          {
+            heading: "Best practices chấm điểm giải đấu",
+            content: "Khi tổ chức giải, chọn đúng thể thức chấm điểm ảnh hưởng đến trải nghiệm và thời gian:",
+            listItems: [
+              "Giải vòng tròn — Rally scoring đến 21 giữ lịch dự đoán được. Dùng giới hạn thời gian (20 phút) backup.",
+              "Giải loại trực tiếp — Bo3 đến 11 (side-out) là tiêu chuẩn cho thi đấu.",
+              "Giải phong trào — Đến 15 (rally) là trung gian phổ biến.",
+              "Dùng chấm điểm số — Phiếu giấy dễ sai. Công cụ số như ThePickleHub loại bỏ tranh cãi."
+            ]
+          },
+          {
+            heading: "Lỗi chấm điểm thường gặp cần tránh",
+            content: "Ngay cả người chơi kinh nghiệm cũng mắc các lỗi chấm điểm này:",
+            listItems: [
+              "Quên số người giao — Trong đôi, luôn đọc đủ 3 số trước khi giao.",
+              "Sai vị trí sân — Người chơi phải ở đúng sân (phải hoặc trái) theo điểm số.",
+              "Không đổi bên — Trong đơn, người giao phải đổi bên sau mỗi điểm ghi.",
+              "Tranh cãi điểm — Không có trọng tài hay chấm điểm số, bất đồng có thể phá hỏng giải."
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    slug: "how-to-organize-pickleball-tournament",
+    publishedDate: "2026-03-20",
+    updatedDate: "2026-03-29",
+    author: "The PickleHub Team",
+    tags: ["organize", "tournament", "guide"],
+    ctaPath: "/tools",
+    ctaLabel: { en: "Start Organizing Now", vi: "Bắt đầu tổ chức ngay" },
+    content: {
+      en: {
+        title: "How to Organize a Pickleball Tournament — The Complete Organizer's Checklist",
+        metaTitle: "How to Organize a Pickleball Tournament | Complete Checklist 2026",
+        metaDescription: "Step-by-step guide to organizing a pickleball tournament. Venue, format selection, registration, scheduling, scoring, and free tools. Everything you need to run a successful event.",
+        sections: [
+          {
+            heading: "Planning Your Pickleball Tournament",
+            content: "Organizing a pickleball tournament requires careful planning across multiple dimensions: venue, format, player management, scheduling, and day-of execution. Whether you're running a small club event with 8 players or a regional competition with 100+, this guide covers everything you need."
+          },
+          {
+            heading: "Step 1: Choose Your Venue and Date",
+            content: "The venue determines how many players you can accommodate and how smoothly your event runs:",
+            listItems: [
+              "Count available courts — Each court can handle approximately 4-6 matches per hour depending on game length.",
+              "Plan for weather — Outdoor events need a rain date or backup indoor venue. Communicate this clearly to registrants.",
+              "Check amenities — Restrooms, parking, shade/shelter, and water access are essential for player satisfaction.",
+              "Set the date — Avoid conflicts with major local events or holidays. Weekends are preferred; Saturday mornings work best for recreational events."
+            ]
+          },
+          {
+            heading: "Step 2: Select the Right Format",
+            content: "Your format choice depends on player count, available time, and event goals:",
+            listItems: [
+              "Round Robin (4-32 players) — Everyone plays everyone in their group. Maximum playing time. Best for social and recreational events.",
+              "Double Elimination (8-64 teams) — Two chances before elimination. Great for competitive events where fairness matters.",
+              "Team Match / MLP (4-16 teams) — Team-based competition with strategic lineup management. Exciting format for club rivalries.",
+              "Pool Play + Playoff — Combine round robin groups with elimination playoffs. Best of both worlds for medium-sized events."
+            ]
+          },
+          {
+            heading: "Step 3: Set Up Registration",
+            content: "A smooth registration process sets the tone for your event:",
+            orderedList: [
+              "Create your tournament using a digital tool (ThePickleHub's Quick Tables is free and instant).",
+              "Set player limits based on your court capacity and time available.",
+              "Collect skill levels if you plan to seed groups — DUPR ratings work well for competitive events.",
+              "Enable auto-approve for small events or manual approval for competitive ones where you need to verify skill levels.",
+              "Share the registration link via your club's communication channels (WhatsApp groups, Facebook, email)."
+            ]
+          },
+          {
+            heading: "Step 4: Day-of Execution",
+            content: "Tournament day is where preparation meets execution. Follow this timeline:",
+            orderedList: [
+              "Arrive 60 minutes early — Set up courts, test the scoring system, post bracket sheets or share digital links.",
+              "Player check-in (30 min before start) — Verify registrations, handle last-minute changes, assign court positions.",
+              "Briefing (5 min before start) — Explain format, scoring rules, court rotation, and where to check standings.",
+              "Run matches on schedule — Use time limits if needed. Have referees or designated scorekeepers for each court.",
+              "Update scores in real-time — Digital scoring lets all players follow standings from their phones.",
+              "Awards and wrap-up — Announce winners, take photos, thank sponsors and volunteers."
+            ]
+          },
+          {
+            heading: "Common Organizing Mistakes",
+            content: "Learn from others' mistakes to make your event stand out:",
+            listItems: [
+              "Too many players, too few courts — Rule of thumb: 8 players per court for a 3-hour round robin event.",
+              "No time limits — Without match time limits, one slow match delays the entire tournament.",
+              "Paper-based scoring — Loses accuracy and creates disputes. Use digital scoring tools.",
+              "No communication plan — Players need to know where to go, when to play, and how to check standings. A shared digital link solves this."
+            ]
+          }
+        ]
+      },
+      vi: {
+        title: "Cách tổ chức giải đấu Pickleball — Checklist đầy đủ cho ban tổ chức",
+        metaTitle: "Cách tổ chức giải Pickleball | Checklist đầy đủ 2026",
+        metaDescription: "Hướng dẫn từng bước tổ chức giải pickleball. Địa điểm, thể thức, đăng ký, lịch thi đấu, chấm điểm, và công cụ miễn phí. Mọi thứ bạn cần để chạy giải thành công.",
+        sections: [
+          {
+            heading: "Lên kế hoạch giải Pickleball",
+            content: "Tổ chức giải pickleball cần lên kế hoạch kỹ lưỡng nhiều mặt: địa điểm, thể thức, quản lý người chơi, lịch thi đấu, và thực hiện ngày thi. Dù bạn chạy giải CLB nhỏ 8 người hay giải vùng 100+, hướng dẫn này bao quát mọi thứ."
+          },
+          {
+            heading: "Bước 1: Chọn địa điểm và ngày",
+            content: "Địa điểm quyết định số người chơi và sự trơn tru của giải:",
+            listItems: [
+              "Đếm số sân — Mỗi sân xử lý khoảng 4-6 trận/giờ tùy thời lượng trận.",
+              "Lên kế hoạch thời tiết — Giải ngoài trời cần ngày dự phòng hoặc sân trong nhà backup.",
+              "Kiểm tra tiện ích — WC, bãi đỗ xe, bóng mát, nước uống cần thiết cho sự hài lòng.",
+              "Đặt ngày — Tránh xung đột sự kiện lớn. Cuối tuần được ưa chuộng; sáng thứ Bảy tốt nhất cho giải phong trào."
+            ]
+          },
+          {
+            heading: "Bước 2: Chọn thể thức phù hợp",
+            content: "Lựa chọn phụ thuộc số người, thời gian và mục tiêu:",
+            listItems: [
+              "Vòng tròn (4-32 người) — Ai cũng đấu với ai trong bảng. Thời gian chơi tối đa. Tốt cho giải phong trào.",
+              "Loại kép (8-64 đội) — Hai cơ hội trước khi bị loại. Tốt cho giải thi đấu công bằng.",
+              "Team Match / MLP (4-16 đội) — Thi đấu đồng đội với quản lý lineup chiến thuật.",
+              "Vòng bảng + Playoff — Kết hợp vòng tròn với loại trực tiếp. Tốt nhất cho giải trung bình."
+            ]
+          },
+          {
+            heading: "Bước 3: Thiết lập đăng ký",
+            content: "Quy trình đăng ký suôn sẻ tạo ấn tượng tốt cho giải:",
+            orderedList: [
+              "Tạo giải bằng công cụ số (Quick Tables của ThePickleHub miễn phí và tức thì).",
+              "Đặt giới hạn người chơi dựa trên sân và thời gian.",
+              "Thu thập trình độ nếu muốn seed bảng — DUPR hoạt động tốt cho giải thi đấu.",
+              "Bật tự động duyệt cho giải nhỏ hoặc duyệt tay cho giải cần xác minh trình độ.",
+              "Chia sẻ link đăng ký qua kênh CLB (WhatsApp, Facebook, email)."
+            ]
+          },
+          {
+            heading: "Bước 4: Thực hiện ngày thi đấu",
+            content: "Ngày thi đấu là nơi chuẩn bị gặp thực tế. Theo timeline này:",
+            orderedList: [
+              "Đến sớm 60 phút — Setup sân, test hệ thống chấm điểm, chia sẻ link số.",
+              "Check-in (30 phút trước) — Xác minh đăng ký, xử lý thay đổi phút cuối.",
+              "Briefing (5 phút trước) — Giải thích thể thức, luật chấm điểm, xoay sân, xem bảng xếp hạng.",
+              "Chạy trận đúng lịch — Dùng giới hạn thời gian nếu cần. Có trọng tài cho mỗi sân.",
+              "Cập nhật điểm realtime — Chấm điểm số cho mọi người theo dõi từ điện thoại.",
+              "Trao giải — Công bố người thắng, chụp ảnh, cảm ơn nhà tài trợ và tình nguyện viên."
+            ]
+          },
+          {
+            heading: "Lỗi tổ chức thường gặp",
+            content: "Học từ lỗi người khác để giải bạn nổi bật:",
+            listItems: [
+              "Quá nhiều người, quá ít sân — Quy tắc: 8 người/sân cho giải vòng tròn 3 giờ.",
+              "Không giới hạn thời gian — Không có time limit, một trận chậm làm trễ cả giải.",
+              "Chấm điểm giấy — Mất chính xác và gây tranh cãi. Dùng công cụ chấm điểm số.",
+              "Không có kế hoạch truyền thông — Người chơi cần biết đi đâu, chơi khi nào, xem bảng xếp hạng ở đâu."
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    slug: "pickleball-doubles-strategy-guide",
+    publishedDate: "2026-03-22",
+    updatedDate: "2026-03-29",
+    author: "The PickleHub Team",
+    tags: ["doubles", "strategy", "tips"],
+    ctaPath: "/tools/doubles-elimination",
+    ctaLabel: { en: "Create Doubles Bracket", vi: "Tạo bracket đôi" },
+    content: {
+      en: {
+        title: "Pickleball Doubles Strategy — Winning Tips for Tournament Players",
+        metaTitle: "Pickleball Doubles Strategy & Tips | Tournament Winning Guide 2026",
+        metaDescription: "Master pickleball doubles strategy for tournaments. Partner communication, court positioning, stacking, and when to attack the kitchen. Improve your doubles game today.",
+        sections: [
+          {
+            heading: "Why Doubles Strategy Matters in Tournaments",
+            content: "Pickleball doubles is the most popular format in tournament play. Unlike singles where individual athleticism dominates, doubles is a game of strategy, positioning, and partnership. The best doubles teams aren't always the most skilled individual players — they're the ones who communicate, move as a unit, and make smart tactical decisions under pressure."
+          },
+          {
+            heading: "Court Positioning: The Foundation of Good Doubles",
+            content: "Proper court positioning wins more points than power shots. Here are the fundamentals:",
+            listItems: [
+              "Move as a unit — Both partners should shift left and right together, maintaining roughly 10 feet between them. Never leave a gap in the middle.",
+              "Get to the kitchen line — The team that controls the non-volley zone (kitchen) line has the advantage. After the return of serve, both players should move forward together.",
+              "Avoid no-man's land — The area between the baseline and kitchen line is dangerous. Either be at the kitchen line or behind the baseline, not in between.",
+              "Cover your line — Each player is responsible for shots down their sideline. The middle is shared, and communication determines who takes it."
+            ]
+          },
+          {
+            heading: "Communication: The Biggest Doubles Advantage",
+            content: "The difference between a good doubles team and a great one is communication. Tournament-winning teams are constantly talking:",
+            listItems: [
+              "'Mine!' and 'Yours!' — Call every ball in the middle immediately. The player with the forehand in the middle typically takes it.",
+              "'Switch!' — After one player crosses to cover a shot, call switch so your partner covers the open side.",
+              "'Stay!' — Tell your partner to hold position when you're returning to cover your side.",
+              "Hand signals — Many competitive teams use hand signals before serves to coordinate poaching and movement.",
+              "Post-point huddles — After each point, a quick word about strategy keeps both players aligned."
+            ]
+          },
+          {
+            heading: "Stacking: Advanced Doubles Positioning",
+            content: "Stacking is an advanced technique where teams arrange themselves to keep each player on their preferred side of the court, regardless of who is serving:",
+            listItems: [
+              "Traditional stacking — Both players start on the same side, then slide into position after the serve or return.",
+              "Why stack — It keeps the stronger forehand player in the middle where most exchanges happen.",
+              "Half-stack — Only stack on certain serves when the positioning advantage is significant.",
+              "Practice is essential — Stacking requires coordination. Practice transitions until they're automatic."
+            ]
+          },
+          {
+            heading: "When to Attack in Doubles",
+            content: "Knowing when to be aggressive versus patient is a key tournament skill:",
+            listItems: [
+              "Attack high balls — Any ball above net height at the kitchen line should be put away with a decisive volley.",
+              "Dink when the ball is low — If the ball is below the net at the kitchen, dink it back and wait for a better opportunity.",
+              "Target the weaker player — In tournaments, it's strategy to target the less skilled opponent. This isn't rude — it's smart.",
+              "Use the third shot drop — The third shot (after serve and return) should be a soft drop into the kitchen, allowing your team to advance to the net.",
+              "Speed-up at the right time — A sudden fast shot (speed-up) works best when your opponents are reaching or off-balance."
+            ]
+          },
+          {
+            heading: "Tournament Doubles Format Tips",
+            content: "Understanding tournament formats helps you prepare your doubles strategy:",
+            listItems: [
+              "Round robin groups — You'll play multiple teams. Conserve energy in early matches; don't show all your tricks.",
+              "Double elimination — You have a safety net. Use the first match to scout opponents' weaknesses.",
+              "Seed consideration — If you're seeded high, expect to face strong teams in later rounds. Save your best play for when it matters.",
+              "Partner chemistry — Choose a partner you communicate well with, not just the most skilled player available."
+            ]
+          }
+        ]
+      },
+      vi: {
+        title: "Chiến thuật Pickleball đôi — Mẹo thắng cho người chơi giải đấu",
+        metaTitle: "Chiến thuật Pickleball đôi | Mẹo thắng giải 2026",
+        metaDescription: "Nắm vững chiến thuật pickleball đôi cho giải đấu. Giao tiếp đồng đội, vị trí sân, stacking, và khi nào tấn công kitchen. Cải thiện game đôi ngay hôm nay.",
+        sections: [
+          {
+            heading: "Tại sao chiến thuật đôi quan trọng trong giải đấu",
+            content: "Pickleball đôi là thể thức phổ biến nhất trong giải đấu. Khác với đơn nơi thể lực cá nhân chiếm ưu thế, đôi là trò chơi của chiến thuật, vị trí, và phối hợp đồng đội. Đội đôi tốt nhất không luôn là người chơi giỏi nhất — mà là đội giao tiếp tốt, di chuyển như một đơn vị, và ra quyết định thông minh dưới áp lực."
+          },
+          {
+            heading: "Vị trí sân: Nền tảng của đôi giỏi",
+            content: "Vị trí sân đúng thắng nhiều điểm hơn cú đánh mạnh:",
+            listItems: [
+              "Di chuyển như một đơn vị — Cả hai phải di chuyển trái phải cùng nhau, giữ khoảng 3m giữa hai người.",
+              "Tiến đến vạch kitchen — Đội kiểm soát vạch kitchen có lợi thế. Sau return, cả hai tiến lên cùng nhau.",
+              "Tránh vùng chết — Khu vực giữa baseline và kitchen nguy hiểm. Hoặc ở vạch kitchen hoặc sau baseline.",
+              "Che vạch biên — Mỗi người chịu trách nhiệm bóng xuống biên bên mình. Giữa sân chia sẻ qua giao tiếp."
+            ]
+          },
+          {
+            heading: "Giao tiếp: Lợi thế đôi lớn nhất",
+            content: "Khác biệt giữa đội đôi tốt và xuất sắc là giao tiếp. Đội vô địch liên tục nói chuyện:",
+            listItems: [
+              "'Mình!' và 'Bạn!' — Gọi mọi bóng giữa sân ngay lập tức.",
+              "'Đổi!' — Khi một người chạy sang che bóng, gọi đổi để đồng đội che bên trống.",
+              "'Giữ!' — Nói đồng đội giữ vị trí khi bạn quay lại che bên mình.",
+              "Tín hiệu tay — Nhiều đội dùng tín hiệu tay trước giao để phối hợp.",
+              "Trao đổi sau điểm — Vài từ về chiến thuật giữ cả hai cùng hướng."
+            ]
+          },
+          {
+            heading: "Stacking: Vị trí đôi nâng cao",
+            content: "Stacking là kỹ thuật nâng cao nơi đội sắp xếp để giữ mỗi người ở bên ưa thích:",
+            listItems: [
+              "Stacking truyền thống — Cả hai bắt đầu cùng bên, rồi trượt vào vị trí sau giao.",
+              "Tại sao stack — Giữ người có forehand mạnh ở giữa nơi nhiều rally xảy ra.",
+              "Half-stack — Chỉ stack ở một số giao khi lợi thế vị trí đáng kể.",
+              "Luyện tập là thiết yếu — Stacking cần phối hợp. Tập chuyển đổi cho đến khi tự động."
+            ]
+          },
+          {
+            heading: "Khi nào tấn công trong đôi",
+            content: "Biết khi nào tấn công vs kiên nhẫn là kỹ năng giải đấu quan trọng:",
+            listItems: [
+              "Tấn công bóng cao — Bóng trên mặt lưới ở kitchen nên đập quyết định.",
+              "Dink khi bóng thấp — Bóng dưới lưới ở kitchen, dink lại và chờ cơ hội tốt hơn.",
+              "Nhắm người yếu hơn — Trong giải, nhắm đối thủ kém hơn là chiến thuật, không phải bất lịch sự.",
+              "Dùng third shot drop — Quả thứ ba nên là drop mềm vào kitchen, cho đội tiến lên lưới.",
+              "Speed-up đúng lúc — Cú nhanh bất ngờ hiệu quả nhất khi đối thủ mất thăng bằng."
+            ]
+          },
+          {
+            heading: "Mẹo thể thức giải đôi",
+            content: "Hiểu thể thức giải giúp chuẩn bị chiến thuật đôi:",
+            listItems: [
+              "Vòng tròn — Chơi nhiều đội. Tiết kiệm năng lượng trận đầu; không lộ hết chiến thuật.",
+              "Loại kép — Có mạng an toàn. Dùng trận đầu trinh sát điểm yếu đối thủ.",
+              "Cân nhắc seed — Nếu seed cao, chuẩn bị gặp đội mạnh vòng sau. Dành game tốt nhất cho lúc cần.",
+              "Hợp cặp — Chọn đồng đội giao tiếp tốt, không chỉ người giỏi nhất có sẵn."
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    slug: "pickleball-tournament-formats-explained",
+    publishedDate: "2026-03-25",
+    updatedDate: "2026-03-29",
+    author: "The PickleHub Team",
+    tags: ["formats", "tournament", "comparison"],
+    ctaPath: "/tools",
+    ctaLabel: { en: "Explore All Formats", vi: "Khám phá tất cả thể thức" },
+    content: {
+      en: {
+        title: "Pickleball Tournament Formats Explained — Which One Should You Use?",
+        metaTitle: "Pickleball Tournament Formats Explained | Round Robin, Elimination & More",
+        metaDescription: "Complete guide to pickleball tournament formats: round robin, single elimination, double elimination, MLP team match, and flex tournaments. Choose the right format for your event.",
+        sections: [
+          {
+            heading: "Why Format Choice Matters",
+            content: "The tournament format you choose affects everything — how long your event runs, how many matches each player gets, how fair the competition feels, and how exciting the final rounds are. Choosing the wrong format is the most common mistake new organizers make. This guide explains every major pickleball tournament format so you can make the right choice."
+          },
+          {
+            heading: "Round Robin",
+            content: "In round robin, every player or team plays against every other participant in their group. It's the gold standard for recreational and club events.",
+            listItems: [
+              "Best for: Social events, club tournaments, 4-32 players who want maximum playing time.",
+              "How it works: Players are divided into groups. Everyone in a group plays each other. Winners determined by wins, then point differential as tiebreaker.",
+              "Pros: Everyone plays multiple matches. Most fair format for determining the best player. Great player satisfaction.",
+              "Cons: Time-intensive for large groups. A 6-player group needs 15 matches. Not as exciting for spectators as elimination.",
+              "Tip: Groups of 4-5 players are optimal. Add playoffs after round robin for a dramatic finish."
+            ]
+          },
+          {
+            heading: "Single Elimination",
+            content: "The simplest bracket format — lose once and you're out. Fast, dramatic, and easy to understand.",
+            listItems: [
+              "Best for: Large player counts (32+), time-limited events, spectator-friendly tournaments.",
+              "How it works: Players are seeded into a bracket. Winners advance, losers go home. Final match determines the champion.",
+              "Pros: Quick to complete. Easy to understand. Creates exciting do-or-die matches. Great for spectators.",
+              "Cons: Half the field plays only one match. One bad game and you're done. Not ideal for events where players paid to play.",
+              "Tip: Consider seeding carefully to avoid top players meeting in early rounds."
+            ]
+          },
+          {
+            heading: "Double Elimination",
+            content: "Lose twice before you're eliminated. A fairer version of elimination that gives everyone a second chance.",
+            listItems: [
+              "Best for: Competitive tournaments (8-64 teams) where fairness matters. Players who traveled for the event deserve more than one match.",
+              "How it works: Two brackets — winners and losers. Lose your first match and drop to the losers bracket. Lose again and you're out. The winners bracket champion and losers bracket champion play in the grand final.",
+              "Pros: Every team gets at least 2 matches. More fair than single elimination. Creates dramatic losers bracket runs.",
+              "Cons: Takes roughly 2x as many matches as single elimination. Requires more courts and time. Grand finals can be confusing (does the losers bracket champion need to beat the winners bracket champion twice?).",
+              "Tip: Use ThePickleHub's double elimination tool — it handles all the bracket logic automatically."
+            ]
+          },
+          {
+            heading: "MLP Team Match",
+            content: "Inspired by Major League Pickleball, team match is a team-based format where groups of players compete as a unit.",
+            listItems: [
+              "Best for: Club rivalries, organized leagues, events with 4-16 teams. When you want strategic depth beyond individual skill.",
+              "How it works: Teams of 4-8 players compete in a series of matches (men's doubles, women's doubles, mixed doubles, singles). The team with the most match wins advances.",
+              "Pros: Adds team strategy and lineup management. Creates camaraderie and team spirit. Exciting format for spectators.",
+              "Cons: Requires balanced teams (mix of genders and skill levels). More complex to organize. Needs more matches per round.",
+              "Tip: Use game templates to define the match order (e.g., Men's doubles → Women's doubles → Mixed → Dreambreaker)."
+            ]
+          },
+          {
+            heading: "Flex Tournament",
+            content: "A fully customizable format with no rules enforced. The organizer has complete control over structure.",
+            listItems: [
+              "Best for: Experimental formats, training sessions, events that don't fit standard categories.",
+              "How it works: The organizer creates players, teams, groups, and matches manually. No automatic scheduling — full creative freedom.",
+              "Pros: Ultimate flexibility. Can create any format imaginable. Good for unique event structures.",
+              "Cons: More work for the organizer. No automatic bracket generation. Requires planning upfront.",
+              "Tip: Use flex tournament when other formats are too restrictive. It's a blank canvas for creative organizers."
+            ]
+          },
+          {
+            heading: "Quick Comparison Table",
+            content: "Here's a summary to help you decide which format fits your event:",
+            listItems: [
+              "Round Robin → Max playing time, 4-32 players, 2-4 hours, high fairness, moderate excitement.",
+              "Single Elimination → Fastest, 8-128 players, 1-3 hours, low fairness, high excitement.",
+              "Double Elimination → Second chance, 8-64 teams, 3-6 hours, high fairness, high excitement.",
+              "Team Match → Team-based, 4-16 teams, 3-5 hours, medium fairness, very high excitement.",
+              "Flex → Custom, any size, varies, depends on design, depends on design."
+            ]
+          }
+        ]
+      },
+      vi: {
+        title: "Các thể thức giải Pickleball giải thích — Nên dùng thể thức nào?",
+        metaTitle: "Thể thức giải Pickleball giải thích | Vòng tròn, Loại trực tiếp & Khác",
+        metaDescription: "Hướng dẫn đầy đủ về thể thức giải pickleball: vòng tròn, loại trực tiếp, loại kép, MLP team match, và flex tournament. Chọn đúng thể thức cho sự kiện của bạn.",
+        sections: [
+          {
+            heading: "Tại sao chọn thể thức quan trọng",
+            content: "Thể thức giải bạn chọn ảnh hưởng mọi thứ — giải kéo dài bao lâu, mỗi người chơi được bao nhiêu trận, thi đấu công bằng ra sao, và vòng cuối hấp dẫn thế nào. Chọn sai thể thức là lỗi phổ biến nhất của BTC mới. Hướng dẫn này giải thích mọi thể thức chính."
+          },
+          {
+            heading: "Round Robin (Vòng tròn)",
+            content: "Trong vòng tròn, mọi người chơi hoặc đội đấu với tất cả trong bảng. Tiêu chuẩn vàng cho giải phong trào và CLB.",
+            listItems: [
+              "Tốt nhất cho: Giải phong trào, CLB, 4-32 người muốn chơi nhiều.",
+              "Cách hoạt động: Chia bảng. Mọi người trong bảng đấu nhau. Thắng quyết định bởi số trận thắng, hiệu số điểm tiebreak.",
+              "Ưu: Ai cũng chơi nhiều trận. Công bằng nhất. Người chơi hài lòng.",
+              "Nhược: Tốn thời gian cho bảng lớn. 6 người cần 15 trận. Không hấp dẫn khán giả bằng loại trực tiếp.",
+              "Mẹo: Bảng 4-5 người tối ưu. Thêm playoff sau vòng tròn cho kết thúc kịch tính."
+            ]
+          },
+          {
+            heading: "Single Elimination (Loại trực tiếp)",
+            content: "Thể thức bracket đơn giản nhất — thua một lần là bị loại. Nhanh, kịch tính, dễ hiểu.",
+            listItems: [
+              "Tốt nhất cho: Số lượng lớn (32+), giải giới hạn thời gian, giải hấp dẫn khán giả.",
+              "Cách hoạt động: Seed vào bracket. Thắng tiến, thua về nhà. Trận cuối xác định nhà vô địch.",
+              "Ưu: Xong nhanh. Dễ hiểu. Trận sống còn hấp dẫn.",
+              "Nhược: Nửa số người chỉ chơi 1 trận. Một trận tệ là xong. Không tốt khi người chơi trả tiền.",
+              "Mẹo: Cân nhắc kỹ seed để tránh người chơi top gặp nhau vòng đầu."
+            ]
+          },
+          {
+            heading: "Double Elimination (Loại kép)",
+            content: "Thua hai lần mới bị loại. Phiên bản công bằng hơn cho mọi người cơ hội thứ hai.",
+            listItems: [
+              "Tốt nhất cho: Giải thi đấu (8-64 đội) khi công bằng quan trọng.",
+              "Cách hoạt động: Hai nhánh — thắng và thua. Thua trận đầu rơi xuống nhánh thua. Thua lần nữa bị loại.",
+              "Ưu: Mỗi đội ít nhất 2 trận. Công bằng hơn. Nhánh thua kịch tính.",
+              "Nhược: Gấp đôi số trận. Cần nhiều sân và thời gian. Chung kết có thể gây bối rối.",
+              "Mẹo: Dùng công cụ loại kép của ThePickleHub — tự động xử lý mọi logic bracket."
+            ]
+          },
+          {
+            heading: "MLP Team Match (Đồng đội)",
+            content: "Lấy cảm hứng từ Major League Pickleball, team match là thể thức đồng đội nơi nhóm người chơi thi đấu như một đội.",
+            listItems: [
+              "Tốt nhất cho: Kình địch CLB, giải liên tục, 4-16 đội. Khi muốn chiều sâu chiến thuật.",
+              "Cách hoạt động: Đội 4-8 người thi đấu chuỗi trận (đôi nam, đôi nữ, hỗn hợp, đơn). Đội thắng nhiều trận tiến.",
+              "Ưu: Thêm chiến thuật đội và quản lý lineup. Tạo tinh thần đồng đội. Hấp dẫn khán giả.",
+              "Nhược: Cần đội cân bằng. Phức tạp hơn để tổ chức. Cần nhiều trận/vòng.",
+              "Mẹo: Dùng game templates để định nghĩa thứ tự trận."
+            ]
+          },
+          {
+            heading: "Flex Tournament (Tùy chỉnh)",
+            content: "Thể thức hoàn toàn tùy chỉnh không có luật áp đặt. BTC có toàn quyền kiểm soát cấu trúc.",
+            listItems: [
+              "Tốt nhất cho: Thể thức thử nghiệm, buổi tập, sự kiện không vừa danh mục chuẩn.",
+              "Cách hoạt động: BTC tạo người chơi, đội, bảng, trận đấu thủ công. Không lịch tự động.",
+              "Ưu: Linh hoạt tối đa. Tạo bất kỳ thể thức nào. Tốt cho cấu trúc sự kiện đặc biệt.",
+              "Nhược: Nhiều việc cho BTC. Không tạo bracket tự động. Cần lên kế hoạch trước.",
+              "Mẹo: Dùng flex tournament khi các thể thức khác quá hạn chế."
+            ]
+          },
+          {
+            heading: "Bảng so sánh nhanh",
+            content: "Tóm tắt giúp bạn quyết định thể thức phù hợp:",
+            listItems: [
+              "Vòng tròn → Chơi nhiều nhất, 4-32 người, 2-4 giờ, rất công bằng, hấp dẫn trung bình.",
+              "Loại trực tiếp → Nhanh nhất, 8-128 người, 1-3 giờ, ít công bằng, rất hấp dẫn.",
+              "Loại kép → Cơ hội 2, 8-64 đội, 3-6 giờ, rất công bằng, rất hấp dẫn.",
+              "Team Match → Đồng đội, 4-16 đội, 3-5 giờ, công bằng trung bình, cực hấp dẫn.",
+              "Flex → Tùy chỉnh, mọi kích thước, tùy thiết kế."
+            ]
+          }
+        ]
+      }
+    }
   }
 ];
 
