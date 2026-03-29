@@ -33,7 +33,7 @@ const Blog = () => {
         </p>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => {
+          {[...blogPosts].sort((a, b) => new Date(b.updatedDate).getTime() - new Date(a.updatedDate).getTime()).map((post) => {
             const content = language === "vi" ? post.content.vi : post.content.en;
             return (
               <Link
