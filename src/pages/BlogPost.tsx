@@ -1,6 +1,6 @@
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { getBlogPost } from "@/lib/blog-data";
+import { getBlogPost, getRelatedPosts } from "@/lib/blog-data";
 import { DynamicMeta, BreadcrumbSchema, ArticleSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const BlogPost = () => {
 
   const content = language === "vi" ? post.content.vi : post.content.en;
   const postUrl = `https://thepicklehub.net/blog/${post.slug}`;
+  const relatedPosts = getRelatedPosts(post.slug, 3);
 
   const breadcrumbItems = [
     { name: "Blog", url: "https://thepicklehub.net/blog" },
@@ -110,6 +111,41 @@ const BlogPost = () => {
             </Link>
           </Button>
         </div>
+
+        {/* Related Posts */}
+        {relatedPosts.length > 0 && (
+          <nav className="mt-12 pt-8 border-t border-border">
+            <h3 className="text-lg font-semibold text-foreground mb-4">
+              {language === "vi" ? "Bài viết liên quan" : "Related Posts"}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {relatedPosts.map((related) => {
+                const relatedContent = language === "vi" ? related.content.vi : related.content.en;
+                return (
+                  <Link
+                    key={related.slug}
+                    to={`/blog/${related.slug}`}
+                    className="group p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2">
+                      {relatedContent.title}
+                    </h4>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {relatedContent.metaDescription}
+                    </p>
+                    <div className="flex gap-1.5 mt-2">
+                      {related.tags.slice(0, 2).map((tag) => (
+                        <span key={tag} className="px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        )}
 
         {/* Internal links */}
         <nav className="mt-12 pt-8 border-t border-border">

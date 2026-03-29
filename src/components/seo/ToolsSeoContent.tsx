@@ -83,6 +83,10 @@ export const ToolsHubSeoContent = () => (
         <li><Link to="/blog/best-pickleball-tournament-software-2026" className="text-primary hover:underline">Best Pickleball Tournament Software 2026</Link> — Compare free tools for organizing pickleball competitions.</li>
         <li><Link to="/blog/how-to-create-pickleball-bracket" className="text-primary hover:underline">How to Create a Pickleball Bracket</Link> — Step-by-step guide for round robin and elimination brackets.</li>
         <li><Link to="/blog/pickleball-round-robin-generator-guide" className="text-primary hover:underline">Pickleball Round Robin Generator Guide</Link> — Everything you need to run the perfect round robin tournament.</li>
+        <li><Link to="/blog/free-pickleball-bracket-generator" className="text-primary hover:underline">Free Pickleball Bracket Generator</Link> — Create tournament brackets in 60 seconds with no signup required.</li>
+        <li><Link to="/blog/pickleball-bracket-templates" className="text-primary hover:underline">Pickleball Bracket Templates</Link> — Free templates for 4-64 players across all tournament formats.</li>
+        <li><Link to="/blog/mlp-format-explained" className="text-primary hover:underline">MLP Format Explained</Link> — Complete guide to Major League Pickleball team match rules and dreambreaker.</li>
+        <li><Link to="/blog/pickleball-live-streaming-guide" className="text-primary hover:underline">Pickleball Live Streaming Guide</Link> — How to watch and stream pickleball tournaments online for free.</li>
       </ul>
     </div>
   </section>

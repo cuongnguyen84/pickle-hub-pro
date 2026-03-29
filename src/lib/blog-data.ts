@@ -973,9 +973,576 @@ export const blogPosts: BlogPost[] = [
         ]
       }
     }
+  },
+  {
+    slug: "pickleball-live-streaming-guide",
+    publishedDate: "2026-03-29",
+    updatedDate: "2026-03-29",
+    author: "The PickleHub Team",
+    tags: ["livestream", "streaming", "guide"],
+    ctaPath: "/live",
+    ctaLabel: { en: "Watch Live Now", vi: "Xem trực tiếp ngay" },
+    content: {
+      en: {
+        title: "Pickleball Live Streaming — How to Watch & Stream Pickleball Online",
+        metaTitle: "Pickleball Live Streaming 2026 | How to Watch & Stream Online Free",
+        metaDescription: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with The Pickle Hub's free livestreaming platform.",
+        sections: [
+          {
+            heading: "Where to Watch Pickleball Live Streams in 2026",
+            content: "Pickleball live streaming has exploded in 2026 as the sport continues its rapid growth. Whether you want to watch professional MLP matches, local tournament action, or your friend's club event, there are more options than ever to catch live pickleball online. The Pickle Hub offers free pickleball live streaming for tournaments and events, making it easy for anyone to broadcast their games to players, fans, and family members who can't be courtside."
+          },
+          {
+            heading: "Best Platforms for Watching Pickleball Live",
+            content: "Several platforms now offer pickleball live streaming, each with different strengths:",
+            listItems: [
+              "The Pickle Hub — Free live streaming platform built specifically for pickleball. Organizers can stream tournaments with integrated chat, real-time scores, and tournament brackets all in one place. No subscription required.",
+              "YouTube Live — Many pickleball channels stream tournaments and exhibitions. Good discovery but no integrated scoring or bracket features.",
+              "MLP/PPA Official Streams — Professional leagues stream marquee events on their own platforms or partner channels. High production quality but limited to pro events.",
+              "Facebook Live — Common for local clubs and recreational tournaments. Easy to set up but lacks pickleball-specific features like court-by-court streaming."
+            ]
+          },
+          {
+            heading: "How to Live Stream Your Own Pickleball Tournament",
+            content: "You don't need expensive equipment or technical expertise to stream your pickleball event. Here's how to get started with The Pickle Hub's livestreaming platform:",
+            orderedList: [
+              "Create your tournament on The Pickle Hub — Set up your bracket using Quick Tables, Team Match, or any tournament format.",
+              "Set up your stream — Connect your camera or phone to the streaming platform. We support standard RTMP streaming from OBS, Streamyard, or direct mobile streaming.",
+              "Go live — Start your stream and share the link with participants and viewers. The stream page includes live chat, tournament bracket, and real-time scores.",
+              "Engage your audience — Viewers can chat, follow your organization, and get notified for future events. Build a community around your pickleball content."
+            ]
+          },
+          {
+            heading: "Equipment You Need for Pickleball Streaming",
+            content: "Starting a pickleball live stream doesn't require professional broadcasting gear. Here's what works at different budget levels:",
+            listItems: [
+              "Budget setup ($0-50) — Smartphone on a tripod, free streaming software. Good enough for club events and casual tournaments.",
+              "Mid-range setup ($200-500) — Action camera or webcam with external microphone. Better video quality and audio. Suitable for competitive events.",
+              "Professional setup ($1000+) — Multiple cameras, switching software, scoreboard overlays. For large tournaments and league events that want broadcast-quality production.",
+              "Internet connection — The most important factor. You need stable upload speed of at least 5 Mbps. Use wired ethernet when possible, or a dedicated mobile hotspot."
+            ]
+          },
+          {
+            heading: "Why Live Streaming Matters for Pickleball Growth",
+            content: "Live streaming isn't just about watching games — it's a powerful tool for growing the pickleball community. Streaming helps attract new players, sponsors, and media attention to your events.",
+            listItems: [
+              "Player recruitment — When people see exciting pickleball action online, they're motivated to try the sport and join local clubs.",
+              "Sponsor visibility — Livestreams give sponsors exposure beyond the physical venue, making sponsorship more valuable for tournaments.",
+              "Community building — Players who can't attend can still follow their friends and favorite teams. This keeps the community connected.",
+              "Event documentation — Livestream recordings become replays that players can rewatch, share on social media, and use for improvement."
+            ]
+          },
+          {
+            heading: "The Pickle Hub's Integrated Streaming Experience",
+            content: "What makes The Pickle Hub unique for pickleball streaming is the integration between live video, tournament management, and community features. Viewers don't just watch a video feed — they see live scores updating alongside the stream, browse the tournament bracket, chat with other viewers, and follow the organization for future event notifications. This creates a richer, more engaging experience than generic streaming platforms. And it's completely free for both streamers and viewers."
+          }
+        ]
+      },
+      vi: {
+        title: "Trực tiếp Pickleball — Cách xem và phát sóng trực tuyến",
+        metaTitle: "Xem trực tiếp Pickleball 2026 | Hướng dẫn phát sóng và xem miễn phí",
+        metaDescription: "Xem trực tiếp pickleball miễn phí. Hướng dẫn phát sóng giải đấu pickleball trực tuyến với nền tảng livestream miễn phí của The Pickle Hub.",
+        sections: [
+          {
+            heading: "Xem trực tiếp Pickleball ở đâu năm 2026?",
+            content: "Phát sóng trực tiếp pickleball đã bùng nổ năm 2026 khi môn thể thao tiếp tục phát triển nhanh chóng. Dù bạn muốn xem giải MLP chuyên nghiệp, giải đấu địa phương, hay sự kiện CLB của bạn bè, có nhiều lựa chọn hơn bao giờ hết để xem pickleball trực tiếp. The Pickle Hub cung cấp phát sóng trực tiếp pickleball miễn phí cho giải đấu và sự kiện, giúp bất kỳ ai cũng có thể phát trận đấu tới người chơi, fan hâm mộ và gia đình không thể có mặt tại sân."
+          },
+          {
+            heading: "Nền tảng tốt nhất để xem Pickleball trực tiếp",
+            content: "Nhiều nền tảng hiện cung cấp phát sóng trực tiếp pickleball, mỗi nền tảng có thế mạnh khác nhau:",
+            listItems: [
+              "The Pickle Hub — Nền tảng phát sóng miễn phí xây dựng riêng cho pickleball. BTC có thể stream giải với chat tích hợp, điểm số realtime, và bracket giải đấu tất cả trong một. Không cần đăng ký.",
+              "YouTube Live — Nhiều kênh pickleball stream giải và exhibition. Dễ tìm kiếm nhưng không có chấm điểm hay bracket tích hợp.",
+              "MLP/PPA Official Streams — Giải chuyên nghiệp stream trên nền tảng riêng. Chất lượng sản xuất cao nhưng chỉ giới hạn giải pro.",
+              "Facebook Live — Phổ biến cho CLB địa phương và giải phong trào. Dễ thiết lập nhưng thiếu tính năng chuyên cho pickleball."
+            ]
+          },
+          {
+            heading: "Cách phát sóng trực tiếp giải Pickleball của bạn",
+            content: "Bạn không cần thiết bị đắt tiền hay chuyên môn kỹ thuật để stream giải pickleball. Đây là cách bắt đầu với nền tảng livestream của The Pickle Hub:",
+            orderedList: [
+              "Tạo giải đấu trên The Pickle Hub — Thiết lập bracket bằng Quick Tables, Team Match, hoặc bất kỳ thể thức nào.",
+              "Cài đặt stream — Kết nối camera hoặc điện thoại. Hỗ trợ RTMP chuẩn từ OBS, Streamyard, hoặc stream trực tiếp từ mobile.",
+              "Bắt đầu phát — Bấm live và chia sẻ link. Trang stream bao gồm chat trực tiếp, bracket giải đấu, và điểm số realtime.",
+              "Tương tác khán giả — Người xem có thể chat, theo dõi tổ chức của bạn, và nhận thông báo cho sự kiện tương lai."
+            ]
+          },
+          {
+            heading: "Thiết bị cần thiết cho phát sóng Pickleball",
+            content: "Bắt đầu phát sóng trực tiếp pickleball không cần thiết bị phát sóng chuyên nghiệp. Đây là những gì hoạt động ở các mức ngân sách khác nhau:",
+            listItems: [
+              "Cơ bản ($0-50) — Smartphone trên chân máy, phần mềm streaming miễn phí. Đủ tốt cho sự kiện CLB và giải bình thường.",
+              "Trung bình ($200-500) — Action camera hoặc webcam với micro ngoài. Chất lượng video và âm thanh tốt hơn. Phù hợp giải thi đấu.",
+              "Chuyên nghiệp ($1000+) — Nhiều camera, phần mềm chuyển cảnh, overlay bảng điểm. Cho giải lớn muốn chất lượng phát sóng.",
+              "Kết nối internet — Yếu tố quan trọng nhất. Cần tốc độ upload ổn định ít nhất 5 Mbps. Dùng ethernet có dây khi có thể."
+            ]
+          },
+          {
+            heading: "Tại sao phát sóng trực tiếp quan trọng cho sự phát triển Pickleball",
+            content: "Phát sóng trực tiếp không chỉ để xem trận đấu — đó là công cụ mạnh mẽ để phát triển cộng đồng pickleball.",
+            listItems: [
+              "Thu hút người chơi — Khi mọi người thấy hành động pickleball hấp dẫn trực tuyến, họ có động lực thử và tham gia CLB.",
+              "Tăng giá trị tài trợ — Livestream cho nhà tài trợ tiếp cận khán giả ngoài địa điểm vật lý.",
+              "Xây dựng cộng đồng — Người chơi không tham dự vẫn có thể theo dõi bạn bè và đội yêu thích.",
+              "Lưu trữ sự kiện — Bản ghi livestream trở thành replay để người chơi xem lại, chia sẻ mạng xã hội."
+            ]
+          },
+          {
+            heading: "Trải nghiệm phát sóng tích hợp của The Pickle Hub",
+            content: "Điều làm The Pickle Hub đặc biệt cho phát sóng pickleball là sự tích hợp giữa video trực tiếp, quản lý giải đấu, và tính năng cộng đồng. Người xem không chỉ xem video — họ thấy điểm số cập nhật cùng stream, duyệt bracket giải, chat với người xem khác, và theo dõi tổ chức cho sự kiện tương lai. Hoàn toàn miễn phí cho cả người phát và người xem."
+          }
+        ]
+      }
+    }
+  },
+  {
+    slug: "mlp-format-explained",
+    publishedDate: "2026-03-29",
+    updatedDate: "2026-03-29",
+    author: "The PickleHub Team",
+    tags: ["mlp", "team-match", "format", "rules"],
+    ctaPath: "/tools/team-match",
+    ctaLabel: { en: "Create MLP Team Match", vi: "Tạo giải đồng đội MLP" },
+    content: {
+      en: {
+        title: "MLP Format Explained — Major League Pickleball Team Match Rules & How to Play",
+        metaTitle: "MLP Format Explained 2026 | Major League Pickleball Rules & Team Match Guide",
+        metaDescription: "Learn how the MLP format works in pickleball. Complete guide to Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.",
+        sections: [
+          {
+            heading: "What Is MLP Format in Pickleball?",
+            content: "MLP format (Major League Pickleball format) is a team-based competition structure where teams of players compete across multiple game types. Unlike individual tournaments where players compete solo or in fixed doubles pairs, MLP format creates team identity, strategic lineup decisions, and dramatic tiebreaker scenarios. The format has gained massive popularity since Major League Pickleball launched, and now clubs and recreational groups worldwide are adopting it for their own events."
+          },
+          {
+            heading: "How MLP Team Matches Work",
+            content: "Each team match in MLP format consists of multiple individual games played between two teams. The team that wins the most games wins the match. Here's the standard structure:",
+            orderedList: [
+              "Women's Doubles — Two women from each team compete. First game of the match.",
+              "Men's Doubles — Two men from each team compete. Second game.",
+              "Mixed Doubles — One man and one woman from each team. Third game.",
+              "Dreambreaker (if tied) — When teams split the first three games, a special tiebreaker determines the winner. All four team members play in a singles-style rotation format."
+            ]
+          },
+          {
+            heading: "The Dreambreaker — MLP's Signature Tiebreaker",
+            content: "The dreambreaker is what makes MLP format uniquely exciting. When a team match is tied after the standard games, the dreambreaker brings all players together for a dramatic finish.",
+            listItems: [
+              "All four team members participate — Players rotate in and out during the dreambreaker, creating a true team effort.",
+              "Rally scoring — Every rally scores a point, keeping the action fast-paced and unpredictable.",
+              "Game to 21 — The dreambreaker is played to 21 points, win by 2.",
+              "Strategic rotations — Teams must plan which players play together and in what order, adding a layer of strategy beyond pure skill.",
+              "Fan favorite — Dreambreakers consistently produce the most dramatic moments in MLP events."
+            ]
+          },
+          {
+            heading: "MLP Scoring Rules",
+            content: "MLP uses rally scoring across all games, which differs from traditional pickleball side-out scoring:",
+            listItems: [
+              "Rally scoring — Every rally earns a point regardless of who served. This creates faster, more predictable game lengths.",
+              "Games to 21 — Standard MLP games are played to 21 points, win by 2.",
+              "Freeze rule — At 20-20, some formats switch to side-out scoring where only the serving team can score. This prevents indefinite games.",
+              "Team match wins — The team winning the majority of individual games (2 out of 3, or winning the dreambreaker) wins the match.",
+              "Standings — Teams accumulate match wins and game differentials across the season or tournament."
+            ]
+          },
+          {
+            heading: "How to Organize Your Own MLP-Style Event",
+            content: "You don't need to be a professional league to run MLP format. The Pickle Hub's Team Match tool makes it easy for clubs and groups:",
+            orderedList: [
+              "Create a tournament — Choose the number of teams (4-16 recommended) and set the game template (which game types each match includes).",
+              "Register teams — Teams sign up with full rosters. Assign captains who will make lineup decisions.",
+              "Configure format — Choose round robin (everyone plays everyone), single elimination, or round robin + playoff.",
+              "Run matches — Captains submit lineups before each match. Referees score games in real-time.",
+              "Track standings — The system automatically calculates team standings, qualifications, and playoff seedings."
+            ]
+          },
+          {
+            heading: "MLP Format vs Other Pickleball Tournament Formats",
+            content: "Understanding when MLP format works best compared to other options:",
+            listItems: [
+              "MLP Team Match — Best for: 4-16 teams, team identity matters, strategic depth wanted. Requires 4+ players per team.",
+              "Round Robin (Quick Tables) — Best for: Individual player events, maximum playing time, simple setup. No team structure needed.",
+              "Double Elimination — Best for: Large competitive brackets, fairness through losers bracket. Individual or doubles pairs.",
+              "Flex Tournament — Best for: Custom formats that don't fit standard categories. Maximum organizer control."
+            ]
+          }
+        ]
+      },
+      vi: {
+        title: "Thể thức MLP giải thích — Luật thi đấu đồng đội Major League Pickleball",
+        metaTitle: "Thể thức MLP Pickleball 2026 | Luật đồng đội Major League Pickleball",
+        metaDescription: "Tìm hiểu thể thức MLP trong pickleball. Hướng dẫn đầy đủ về luật thi đấu đồng đội Major League Pickleball, dreambreaker, chiến thuật lineup.",
+        sections: [
+          {
+            heading: "Thể thức MLP trong Pickleball là gì?",
+            content: "Thể thức MLP (Major League Pickleball) là cấu trúc thi đấu theo đội mà các đội cạnh tranh qua nhiều loại trận. Khác với giải cá nhân, MLP tạo ra bản sắc đội, quyết định lineup chiến thuật, và kịch bản tiebreaker kịch tính. Thể thức này đã cực kỳ phổ biến kể từ khi Major League Pickleball ra đời, và giờ các CLB trên toàn thế giới đang áp dụng cho sự kiện riêng."
+          },
+          {
+            heading: "Trận đồng đội MLP diễn ra thế nào",
+            content: "Mỗi trận đồng đội MLP gồm nhiều game giữa hai đội. Đội thắng nhiều game hơn thắng trận. Đây là cấu trúc tiêu chuẩn:",
+            orderedList: [
+              "Đôi nữ — Hai nữ mỗi đội thi đấu. Game đầu tiên.",
+              "Đôi nam — Hai nam mỗi đội thi đấu. Game thứ hai.",
+              "Đôi hỗn hợp — Một nam một nữ mỗi đội. Game thứ ba.",
+              "Dreambreaker (nếu hòa) — Khi hai đội chia đều 3 game đầu, tiebreaker đặc biệt quyết định người thắng. Cả 4 thành viên đều tham gia."
+            ]
+          },
+          {
+            heading: "Dreambreaker — Tiebreaker đặc trưng của MLP",
+            content: "Dreambreaker là điều làm MLP đặc biệt hấp dẫn. Khi trận đồng đội hòa sau các game tiêu chuẩn, dreambreaker mang tất cả người chơi lại cho một kết thúc kịch tính.",
+            listItems: [
+              "Cả 4 thành viên tham gia — Người chơi xoay vào ra, tạo nỗ lực đội thực sự.",
+              "Rally scoring — Mỗi rally ghi điểm, giữ hành động nhanh và khó đoán.",
+              "Game tới 21 — Dreambreaker chơi tới 21 điểm, thắng cách 2.",
+              "Xoay chiến thuật — Đội phải lên kế hoạch ai chơi cùng ai và theo thứ tự nào.",
+              "Fan yêu thích — Dreambreaker luôn tạo ra những khoảnh khắc kịch tính nhất."
+            ]
+          },
+          {
+            heading: "Luật chấm điểm MLP",
+            content: "MLP sử dụng rally scoring cho tất cả game, khác với side-out scoring truyền thống:",
+            listItems: [
+              "Rally scoring — Mỗi rally ghi điểm bất kể ai giao. Tạo game nhanh hơn, dễ dự đoán thời gian.",
+              "Game tới 21 — Game MLP tiêu chuẩn chơi tới 21 điểm, thắng cách 2.",
+              "Luật freeze — Ở 20-20, một số thể thức chuyển sang side-out scoring. Ngăn game kéo dài vô tận.",
+              "Thắng trận đồng đội — Đội thắng đa số game (2/3, hoặc thắng dreambreaker) thắng trận.",
+              "Bảng xếp hạng — Đội tích lũy thắng trận và hiệu số game qua mùa giải hoặc giải đấu."
+            ]
+          },
+          {
+            heading: "Cách tổ chức sự kiện kiểu MLP của riêng bạn",
+            content: "Bạn không cần là giải chuyên nghiệp để chạy thể thức MLP. Công cụ Team Match của The Pickle Hub giúp CLB và nhóm dễ dàng tổ chức:",
+            orderedList: [
+              "Tạo giải đấu — Chọn số đội (khuyến nghị 4-16) và đặt template game.",
+              "Đăng ký đội — Đội đăng ký với roster đầy đủ. Chỉ định đội trưởng quyết định lineup.",
+              "Cấu hình thể thức — Chọn vòng tròn, loại trực tiếp, hoặc vòng tròn + playoff.",
+              "Chạy trận — Đội trưởng nộp lineup trước mỗi trận. Trọng tài chấm điểm realtime.",
+              "Theo dõi xếp hạng — Hệ thống tự động tính xếp hạng đội, vé playoff."
+            ]
+          },
+          {
+            heading: "MLP vs các thể thức giải Pickleball khác",
+            content: "Hiểu khi nào MLP phù hợp nhất so với các lựa chọn khác:",
+            listItems: [
+              "MLP Team Match — Tốt nhất cho: 4-16 đội, cần bản sắc đội, muốn chiến thuật sâu. Cần 4+ người/đội.",
+              "Round Robin (Quick Tables) — Tốt nhất cho: Giải cá nhân, chơi nhiều nhất, thiết lập đơn giản.",
+              "Loại kép — Tốt nhất cho: Bracket lớn thi đấu, công bằng qua nhánh thua.",
+              "Flex Tournament — Tốt nhất cho: Thể thức tùy chỉnh không vừa danh mục chuẩn."
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    slug: "free-pickleball-bracket-generator",
+    publishedDate: "2026-03-29",
+    updatedDate: "2026-03-29",
+    author: "The PickleHub Team",
+    tags: ["bracket", "generator", "free", "tool"],
+    ctaPath: "/tools/quick-tables",
+    ctaLabel: { en: "Create Free Bracket Now", vi: "Tạo bracket miễn phí ngay" },
+    content: {
+      en: {
+        title: "Free Pickleball Bracket Generator — Create Tournament Brackets in 60 Seconds",
+        metaTitle: "Free Pickleball Bracket Generator 2026 | Create Brackets in 60 Seconds",
+        metaDescription: "Create free pickleball tournament brackets instantly. Round robin, single elimination, and double elimination bracket generator with real-time scoring. No signup required.",
+        sections: [
+          {
+            heading: "What Is a Pickleball Bracket Generator?",
+            content: "A pickleball bracket generator is an online tool that automatically creates tournament brackets based on your player count, chosen format, and competition rules. Instead of spending hours drawing brackets on whiteboards or building complex spreadsheets, you enter your players and the tool generates a complete tournament schedule in seconds. The best bracket generators handle pickleball-specific needs like court rotation, rest time scheduling, and skill-based group seeding."
+          },
+          {
+            heading: "Why The Pickle Hub's Bracket Generator Is Free",
+            content: "Many bracket generators charge per tournament or require monthly subscriptions. The Pickle Hub's bracket generator is 100% free because we believe tournament organization shouldn't be a barrier to pickleball growth. Here's what you get at no cost:",
+            listItems: [
+              "Unlimited tournaments — Create as many brackets as you need. No per-event fees or monthly limits.",
+              "All formats included — Round robin, single elimination, double elimination, MLP team match, and custom flex tournaments.",
+              "Real-time scoring — Referees score matches from their phones. Standings update instantly for all participants.",
+              "No signup required — Start creating brackets immediately. No email verification, credit card, or account creation needed.",
+              "Shareable links — Every tournament gets a unique link. Share with players and they can view brackets and scores on any device.",
+              "Court scheduling — Automatic match ordering optimized for your available courts."
+            ]
+          },
+          {
+            heading: "How to Create a Pickleball Bracket in 60 Seconds",
+            content: "Creating a tournament bracket with The Pickle Hub is designed to be the fastest experience possible:",
+            orderedList: [
+              "Choose your format — Select Quick Tables for round robin, Double Elimination for competitive brackets, Team Match for MLP-style events, or Flex Tournament for custom formats.",
+              "Enter player count — Tell the system how many players or teams are competing (4 to 200+).",
+              "Add names — Enter player or team names. Optionally add skill levels for balanced seeding.",
+              "Generate — One click creates your complete bracket with match schedule, court assignments, and scoring interface.",
+              "Share & play — Copy the tournament link and share with all participants. They can view brackets and scores in real-time from any device."
+            ]
+          },
+          {
+            heading: "Bracket Formats Available",
+            content: "The Pickle Hub supports every major pickleball tournament format:",
+            listItems: [
+              "Round Robin — Everyone plays everyone in their group. Best for 4-32 players. Maximizes playing time. Most popular for recreational events.",
+              "Single Elimination — Lose once, you're out. Fast format for large player counts. Standard for competitive tournaments.",
+              "Double Elimination — Lose twice before elimination. Winner's and loser's bracket. Fairer for competitive events with 8-64 teams.",
+              "Pool Play + Playoff — Round robin groups feed into elimination playoffs. Combines guaranteed games with knockout excitement.",
+              "MLP Team Match — Team-based competition with lineup strategy, multiple game types, and dreambreaker tiebreakers.",
+              "Flex Tournament — Build any custom bracket structure. No format restrictions. Full organizer control."
+            ]
+          },
+          {
+            heading: "Free vs Paid Bracket Generators: What's the Difference?",
+            content: "We've compared The Pickle Hub's free bracket generator against paid alternatives so you can make an informed choice:",
+            listItems: [
+              "The Pickle Hub (Free) — All formats, unlimited tournaments, real-time scoring, referee mode, court scheduling, no signup. Best overall value.",
+              "Challonge (Free tier + Premium) — Generic bracket tool. Supports single/double elimination. Limited customization. No pickleball-specific features. Premium starts at $7.99/month.",
+              "Pickleball Brackets (Paid) — Pickleball-focused but charges per tournament. Limited to basic round robin and elimination.",
+              "PicklePlay (Subscription) — Full club management platform. Monthly subscription. More suited for league management than one-off events.",
+              "Tournament bracket generators (generic) — Many free options exist but none handle pickleball court rotation, rest scheduling, or sport-specific formats."
+            ]
+          },
+          {
+            heading: "Tips for Using a Bracket Generator Effectively",
+            content: "Get the most out of your bracket generator with these organizer tips:",
+            listItems: [
+              "Seed by skill — Enter player ratings so the system distributes top players evenly across groups. Prevents lopsided competition.",
+              "Right-size your groups — Groups of 4-5 players finish in 1-1.5 hours. Groups of 6+ take significantly longer. Plan accordingly.",
+              "Use referee mode — Assign dedicated scorekeepers to update results in real-time. Eliminates disputes and keeps the tournament flowing.",
+              "Share the link early — Send the tournament link to players before the event so they can see the format and know what to expect.",
+              "Enable playoffs — After round robin, automatically seed top finishers into elimination playoffs for an exciting conclusion."
+            ]
+          }
+        ]
+      },
+      vi: {
+        title: "Tạo Bracket Pickleball miễn phí — Bracket giải đấu trong 60 giây",
+        metaTitle: "Tạo Bracket Pickleball miễn phí 2026 | Tạo bracket trong 60 giây",
+        metaDescription: "Tạo bracket giải pickleball miễn phí tức thì. Vòng tròn, loại trực tiếp, loại kép với chấm điểm realtime. Không cần đăng ký.",
+        sections: [
+          {
+            heading: "Công cụ tạo Bracket Pickleball là gì?",
+            content: "Công cụ tạo bracket pickleball là công cụ trực tuyến tự động tạo bracket giải đấu dựa trên số người chơi, thể thức chọn, và luật thi đấu. Thay vì mất hàng giờ vẽ bracket trên bảng trắng hay xây dựng bảng tính phức tạp, bạn nhập người chơi và công cụ tạo lịch giải hoàn chỉnh trong vài giây."
+          },
+          {
+            heading: "Tại sao công cụ tạo Bracket của The Pickle Hub miễn phí",
+            content: "Nhiều công cụ tạo bracket tính phí theo giải hoặc yêu cầu đăng ký hàng tháng. Công cụ của The Pickle Hub miễn phí 100% vì chúng tôi tin rằng tổ chức giải đấu không nên là rào cản cho sự phát triển pickleball:",
+            listItems: [
+              "Giải đấu không giới hạn — Tạo bao nhiêu bracket tùy thích. Không phí theo sự kiện hay giới hạn hàng tháng.",
+              "Tất cả thể thức — Vòng tròn, loại trực tiếp, loại kép, MLP team match, và flex tournament tùy chỉnh.",
+              "Chấm điểm realtime — Trọng tài chấm từ điện thoại. Bảng xếp hạng cập nhật tức thì.",
+              "Không cần đăng ký — Bắt đầu tạo bracket ngay. Không cần email, thẻ tín dụng, hay tạo tài khoản.",
+              "Link chia sẻ — Mỗi giải có link riêng. Chia sẻ với người chơi để xem bracket và điểm trên mọi thiết bị.",
+              "Xếp lịch sân — Tự động tối ưu thứ tự trận cho số sân có sẵn."
+            ]
+          },
+          {
+            heading: "Cách tạo Bracket Pickleball trong 60 giây",
+            content: "Tạo bracket giải đấu với The Pickle Hub được thiết kế nhanh nhất có thể:",
+            orderedList: [
+              "Chọn thể thức — Quick Tables cho vòng tròn, Double Elimination cho bracket thi đấu, Team Match cho kiểu MLP, hoặc Flex Tournament cho tùy chỉnh.",
+              "Nhập số người chơi — Cho hệ thống biết bao nhiêu người hoặc đội (4 đến 200+).",
+              "Thêm tên — Nhập tên người chơi hoặc đội. Tùy chọn thêm mức kỹ năng để seed cân đối.",
+              "Tạo bracket — Một click tạo bracket hoàn chỉnh với lịch trận, phân sân, và giao diện chấm điểm.",
+              "Chia sẻ & chơi — Copy link giải và chia sẻ. Người chơi xem bracket và điểm realtime từ mọi thiết bị."
+            ]
+          },
+          {
+            heading: "Các thể thức Bracket có sẵn",
+            content: "The Pickle Hub hỗ trợ mọi thể thức giải pickleball phổ biến:",
+            listItems: [
+              "Vòng tròn — Ai cũng đấu với ai trong bảng. Tốt nhất cho 4-32 người. Chơi nhiều nhất. Phổ biến nhất cho giải phong trào.",
+              "Loại trực tiếp — Thua một lần, bị loại. Nhanh cho giải đông người. Chuẩn cho giải thi đấu.",
+              "Loại kép — Thua hai lần mới bị loại. Nhánh thắng và nhánh thua. Công bằng hơn cho 8-64 đội.",
+              "Pool Play + Playoff — Vòng tròn bảng rồi vào loại trực tiếp. Kết hợp đảm bảo trận và kịch tính knockout.",
+              "MLP Team Match — Thi đấu đồng đội với chiến thuật lineup, nhiều loại game, và dreambreaker.",
+              "Flex Tournament — Xây bracket tùy chỉnh bất kỳ. Không giới hạn thể thức."
+            ]
+          },
+          {
+            heading: "Miễn phí vs Trả phí: Khác biệt gì?",
+            content: "Chúng tôi so sánh công cụ miễn phí của The Pickle Hub với các lựa chọn trả phí:",
+            listItems: [
+              "The Pickle Hub (Miễn phí) — Tất cả thể thức, không giới hạn, chấm điểm realtime, chế độ trọng tài, xếp sân, không đăng ký. Giá trị tốt nhất.",
+              "Challonge (Miễn phí + Premium) — Công cụ bracket tổng hợp. Loại trực tiếp/kép. Không có tính năng pickleball. Premium từ $7.99/tháng.",
+              "Pickleball Brackets (Trả phí) — Chuyên pickleball nhưng tính phí theo giải. Giới hạn vòng tròn và loại trực tiếp cơ bản.",
+              "PicklePlay (Đăng ký) — Nền tảng quản lý CLB. Phí hàng tháng. Phù hợp hơn cho giải liên tục.",
+              "Công cụ bracket tổng hợp — Nhiều lựa chọn miễn phí nhưng không xử lý xoay sân, nghỉ, hay thể thức chuyên pickleball."
+            ]
+          },
+          {
+            heading: "Mẹo sử dụng công cụ tạo Bracket hiệu quả",
+            content: "Tận dụng tối đa công cụ tạo bracket với các mẹo sau:",
+            listItems: [
+              "Seed theo kỹ năng — Nhập rating để hệ thống phân đều người chơi mạnh. Tránh bảng chênh lệch.",
+              "Kích thước bảng phù hợp — Bảng 4-5 người xong trong 1-1.5 giờ. Bảng 6+ lâu hơn đáng kể.",
+              "Dùng chế độ trọng tài — Chỉ định người chấm điểm cập nhật realtime. Loại bỏ tranh cãi.",
+              "Chia sẻ link sớm — Gửi link giải cho người chơi trước sự kiện để họ biết thể thức.",
+              "Bật playoff — Sau vòng tròn, tự động seed người đứng đầu vào loại trực tiếp cho kết thúc hấp dẫn."
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    slug: "pickleball-bracket-templates",
+    publishedDate: "2026-03-29",
+    updatedDate: "2026-03-29",
+    author: "The PickleHub Team",
+    tags: ["bracket", "template", "tournament"],
+    ctaPath: "/tools/quick-tables",
+    ctaLabel: { en: "Use Free Bracket Template", vi: "Dùng mẫu bracket miễn phí" },
+    content: {
+      en: {
+        title: "Pickleball Bracket Templates — Free Templates for Every Tournament Format",
+        metaTitle: "Pickleball Bracket Templates 2026 | Free Download for 4-64 Players",
+        metaDescription: "Free pickleball bracket templates for round robin, single elimination, and double elimination. Templates for 4, 8, 16, 32, and 64 players with real-time scoring.",
+        sections: [
+          {
+            heading: "What Are Pickleball Bracket Templates?",
+            content: "Pickleball bracket templates are pre-built tournament structures that organizers can use to quickly set up competitions. Instead of designing brackets from scratch, templates provide ready-to-use formats for common player counts and tournament styles. The Pickle Hub offers interactive digital templates that go beyond static PDFs — our templates include real-time scoring, automatic standings, and shareable links for all participants."
+          },
+          {
+            heading: "Round Robin Bracket Templates",
+            content: "Round robin is the most popular format for recreational pickleball. Here are templates for common group sizes:",
+            listItems: [
+              "4-Player Round Robin — 6 matches total. Perfect for a quick evening session. Takes about 1 hour with 2 courts. Every player plays 3 matches.",
+              "5-Player Round Robin — 10 matches total. One player sits out each round (bye). About 1.5 hours with 2 courts. Good balance of playing time and event length.",
+              "6-Player Round Robin — 15 matches total. About 2 hours with 2 courts. Maximum recommended group size for time efficiency.",
+              "8-Player Round Robin — 28 matches total. About 3.5 hours with 2 courts. Consider splitting into two groups of 4 with crossover playoffs.",
+              "12-Player (3 groups of 4) — 18 matches across 3 groups, then playoff bracket. About 2.5 hours. Ideal for medium club events.",
+              "16-Player (4 groups of 4) — 24 matches across 4 groups, then playoff bracket. About 3 hours. Popular for competitive club tournaments."
+            ]
+          },
+          {
+            heading: "Single Elimination Bracket Templates",
+            content: "Single elimination brackets are straightforward — lose once and you're out. Templates for common sizes:",
+            listItems: [
+              "8-Team Single Elimination — 7 matches: 4 quarterfinals, 2 semifinals, 1 final. Quick format, about 2 hours.",
+              "16-Team Single Elimination — 15 matches across 4 rounds. About 3 hours with multiple courts. Standard competitive format.",
+              "32-Team Single Elimination — 31 matches across 5 rounds. Half-day event. Consider adding consolation brackets for eliminated teams.",
+              "64-Team Single Elimination — 63 matches across 6 rounds. Full-day event requiring 4+ courts. Major tournament format."
+            ]
+          },
+          {
+            heading: "Double Elimination Bracket Templates",
+            content: "Double elimination gives every team a second chance through the losers bracket. More complex but fairer:",
+            listItems: [
+              "8-Team Double Elimination — About 15 matches (winner's bracket + loser's bracket + grand final). Takes 3-4 hours.",
+              "16-Team Double Elimination — About 31 matches. Half-day event. Most popular size for competitive doubles tournaments.",
+              "32-Team Double Elimination — About 63 matches. Full-day event. Requires careful court scheduling to keep the event moving.",
+              "Grand Final structure — The winner's bracket champion faces the loser's bracket champion. If the loser's bracket team wins, a reset match is played."
+            ]
+          },
+          {
+            heading: "How to Use Templates on The Pickle Hub",
+            content: "Using a bracket template on The Pickle Hub is simpler than downloading a PDF — and far more powerful:",
+            orderedList: [
+              "Select your tool — Quick Tables for round robin, Double Elimination for elimination brackets, Team Match for MLP format.",
+              "Enter player count — The system automatically configures the optimal bracket structure for your group size.",
+              "Customize if needed — Adjust group sizes, add skill seeding, configure court count, or modify the playoff format.",
+              "Add player names — Enter names and the bracket populates instantly. No manual bracket drawing needed.",
+              "Go live — Share the tournament link. Players see their matches, scores update in real-time, and standings calculate automatically."
+            ]
+          },
+          {
+            heading: "Digital Templates vs Printable PDF Brackets",
+            content: "While printable PDF brackets still have their place, digital templates offer significant advantages for modern pickleball events:",
+            listItems: [
+              "Real-time updates — Scores and standings update instantly. No walking back to check a whiteboard.",
+              "Mobile access — Every player can view the bracket from their phone. No crowding around a posted bracket sheet.",
+              "Automatic calculations — Point differentials, tiebreakers, and playoff seedings calculate automatically. No manual math errors.",
+              "Easy sharing — One link gives everyone access. No printing, posting, or photographing bracket boards.",
+              "History and replays — Digital brackets are saved permanently. Review past tournaments, track player performance over time.",
+              "No erasing — Rain, wind, and accidental erasing can't destroy your bracket. Digital templates are permanent."
+            ]
+          }
+        ]
+      },
+      vi: {
+        title: "Mẫu Bracket Pickleball — Mẫu miễn phí cho mọi thể thức giải đấu",
+        metaTitle: "Mẫu Bracket Pickleball 2026 | Miễn phí cho 4-64 người chơi",
+        metaDescription: "Mẫu bracket pickleball miễn phí cho vòng tròn, loại trực tiếp, và loại kép. Mẫu cho 4, 8, 16, 32, và 64 người chơi với chấm điểm realtime.",
+        sections: [
+          {
+            heading: "Mẫu Bracket Pickleball là gì?",
+            content: "Mẫu bracket pickleball là cấu trúc giải đấu dựng sẵn mà ban tổ chức dùng để nhanh chóng thiết lập thi đấu. Thay vì thiết kế bracket từ đầu, mẫu cung cấp format sẵn cho số người chơi và thể thức phổ biến. The Pickle Hub cung cấp mẫu số tương tác vượt xa PDF tĩnh — mẫu của chúng tôi gồm chấm điểm realtime, bảng xếp hạng tự động, và link chia sẻ cho tất cả."
+          },
+          {
+            heading: "Mẫu Bracket vòng tròn",
+            content: "Vòng tròn là thể thức phổ biến nhất cho pickleball phong trào. Đây là mẫu cho các kích thước nhóm phổ biến:",
+            listItems: [
+              "Vòng tròn 4 người — 6 trận. Hoàn hảo cho buổi tối nhanh. Khoảng 1 giờ với 2 sân. Mỗi người chơi 3 trận.",
+              "Vòng tròn 5 người — 10 trận. Một người nghỉ mỗi vòng (bye). Khoảng 1.5 giờ với 2 sân.",
+              "Vòng tròn 6 người — 15 trận. Khoảng 2 giờ với 2 sân. Kích thước nhóm tối đa khuyến nghị.",
+              "Vòng tròn 8 người — 28 trận. Khoảng 3.5 giờ với 2 sân. Nên chia 2 bảng 4 người với playoff chéo.",
+              "12 người (3 bảng × 4) — 18 trận qua 3 bảng, rồi bracket playoff. Khoảng 2.5 giờ. Lý tưởng cho giải CLB vừa.",
+              "16 người (4 bảng × 4) — 24 trận qua 4 bảng, rồi bracket playoff. Khoảng 3 giờ. Phổ biến cho giải CLB thi đấu."
+            ]
+          },
+          {
+            heading: "Mẫu Bracket loại trực tiếp",
+            content: "Bracket loại trực tiếp đơn giản — thua một lần là bị loại. Mẫu cho các kích thước phổ biến:",
+            listItems: [
+              "Loại trực tiếp 8 đội — 7 trận: 4 tứ kết, 2 bán kết, 1 chung kết. Nhanh, khoảng 2 giờ.",
+              "Loại trực tiếp 16 đội — 15 trận qua 4 vòng. Khoảng 3 giờ. Thể thức thi đấu tiêu chuẩn.",
+              "Loại trực tiếp 32 đội — 31 trận qua 5 vòng. Nửa ngày. Cân nhắc bracket an ủi cho đội bị loại.",
+              "Loại trực tiếp 64 đội — 63 trận qua 6 vòng. Cả ngày, cần 4+ sân. Thể thức giải lớn."
+            ]
+          },
+          {
+            heading: "Mẫu Bracket loại kép",
+            content: "Loại kép cho mỗi đội cơ hội thứ hai qua nhánh thua. Phức tạp hơn nhưng công bằng hơn:",
+            listItems: [
+              "Loại kép 8 đội — Khoảng 15 trận. 3-4 giờ.",
+              "Loại kép 16 đội — Khoảng 31 trận. Nửa ngày. Kích thước phổ biến nhất cho giải đôi thi đấu.",
+              "Loại kép 32 đội — Khoảng 63 trận. Cả ngày. Cần xếp sân cẩn thận.",
+              "Chung kết — Nhà vô địch nhánh thắng gặp nhánh thua. Nếu đội nhánh thua thắng, chơi trận reset."
+            ]
+          },
+          {
+            heading: "Cách dùng mẫu trên The Pickle Hub",
+            content: "Dùng mẫu bracket trên The Pickle Hub đơn giản hơn tải PDF — và mạnh mẽ hơn nhiều:",
+            orderedList: [
+              "Chọn công cụ — Quick Tables cho vòng tròn, Double Elimination cho loại kép, Team Match cho MLP.",
+              "Nhập số người — Hệ thống tự động cấu hình bracket tối ưu cho nhóm của bạn.",
+              "Tùy chỉnh nếu cần — Điều chỉnh kích thước bảng, thêm seed kỹ năng, cấu hình số sân.",
+              "Thêm tên — Nhập tên và bracket tự điền. Không cần vẽ bracket thủ công.",
+              "Bắt đầu — Chia sẻ link giải. Người chơi xem trận, điểm cập nhật realtime, xếp hạng tự động."
+            ]
+          },
+          {
+            heading: "Mẫu số vs Bracket PDF in được",
+            content: "Mẫu số có nhiều lợi thế hơn bracket PDF truyền thống:",
+            listItems: [
+              "Cập nhật realtime — Điểm và xếp hạng cập nhật tức thì. Không phải đi kiểm tra bảng trắng.",
+              "Truy cập mobile — Mọi người xem bracket từ điện thoại. Không chen nhau quanh bảng bracket.",
+              "Tính toán tự động — Hiệu số, tiebreaker, seed playoff tính tự động. Không sai sót tính tay.",
+              "Dễ chia sẻ — Một link cho mọi người truy cập. Không in, dán, hay chụp ảnh bảng bracket.",
+              "Lịch sử và replay — Bracket số lưu vĩnh viễn. Xem lại giải cũ, theo dõi thành tích người chơi.",
+              "Không bị xóa — Mưa, gió, và xóa vô tình không thể phá hủy bracket. Mẫu số là vĩnh viễn."
+            ]
+          }
+        ]
+      }
+    }
   }
 ];
 
 export const getBlogPost = (slug: string): BlogPost | undefined => {
   return blogPosts.find((post) => post.slug === slug);
+};
+
+export const getRelatedPosts = (currentSlug: string, limit: number = 3): BlogPost[] => {
+  const current = getBlogPost(currentSlug);
+  if (!current) return [];
+  
+  const currentTags = new Set(current.tags);
+  
+  return blogPosts
+    .filter((post) => post.slug !== currentSlug)
+    .map((post) => ({
+      post,
+      sharedTags: post.tags.filter((tag) => currentTags.has(tag)).length,
+    }))
+    .sort((a, b) => b.sharedTags - a.sharedTags)
+    .slice(0, limit)
+    .map((item) => item.post);
 };
