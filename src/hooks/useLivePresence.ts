@@ -32,6 +32,10 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
+    if (healthCheckRef.current) {
+      clearInterval(healthCheckRef.current);
+      healthCheckRef.current = null;
+    }
     if (channelRef.current) {
       try {
         channelRef.current.untrack();
@@ -72,7 +76,6 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
       const subscriptionTimeout = setTimeout(() => {
         if (!hasTrackedRef.current) {
           console.warn("[Presence] Subscription timeout, proceeding without presence");
-          // Don't fail the whole page, just mark as not connected
           setIsConnected(false);
         }
       }, 10000);
@@ -88,12 +91,6 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
           } catch (err) {
             console.warn("[Presence] Sync error:", err);
           }
-        })
-        .on("presence", { event: "join" }, ({ key }) => {
-          console.log("[Presence] Viewer joined:", key);
-        })
-        .on("presence", { event: "leave" }, ({ key }) => {
-          console.log("[Presence] Viewer left:", key);
         })
         .subscribe(async (status, err) => {
           clearTimeout(subscriptionTimeout);
@@ -119,9 +116,9 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
             console.warn("[Presence] Channel error:", status, err);
             setIsConnected(false);
             
-            // Attempt to retry connection
+            // Attempt to retry connection with exponential backoff
             if (retryCountRef.current < MAX_RETRIES) {
-              const delay = RETRY_DELAYS[retryCountRef.current] || 8000;
+              const delay = getRetryDelay(retryCountRef.current);
               console.log(`[Presence] Retrying in ${delay}ms (attempt ${retryCountRef.current + 1}/${MAX_RETRIES})`);
               
               retryTimeoutRef.current = setTimeout(() => {
@@ -129,12 +126,33 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
                 cleanup();
                 setupChannel();
               }, delay);
+            } else {
+              // After max retries, try again after 60s as a last resort
+              console.warn("[Presence] Max retries exhausted, will retry in 60s");
+              retryTimeoutRef.current = setTimeout(() => {
+                retryCountRef.current = 0;
+                cleanup();
+                setupChannel();
+              }, 60000);
             }
           }
         });
     };
 
     setupChannel();
+
+    // Health check: if disconnected for too long, force reconnect
+    healthCheckRef.current = setInterval(() => {
+      if (channelRef.current) {
+        try {
+          const state = channelRef.current.presenceState();
+          const viewerCount = Object.keys(state).length;
+          setConcurrentViewers(viewerCount);
+        } catch {
+          // Channel may be in bad state, will be handled by error callback
+        }
+      }
+    }, 15000);
 
     // Cleanup: untrack and unsubscribe when component unmounts or livestream changes
     return cleanup;
