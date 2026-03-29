@@ -21,9 +21,10 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
   const hasTrackedRef = useRef(false);
   const retryCountRef = useRef(0);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const healthCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const MAX_RETRIES = 3;
-  const RETRY_DELAYS = [2000, 4000, 8000]; // Exponential backoff
+  const MAX_RETRIES = 10;
+  const getRetryDelay = (attempt: number) => Math.min(2000 * Math.pow(1.5, attempt), 30000);
 
   const cleanup = useCallback(() => {
     hasTrackedRef.current = false;
