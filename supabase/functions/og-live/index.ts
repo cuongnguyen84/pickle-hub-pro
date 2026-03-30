@@ -209,14 +209,12 @@ Deno.serve(async (req) => {
   
   <!-- DO NOT set canonical here - this is a redirect page, not the real content -->
   
-  ${isCrawler ? "" : `<!-- Redirect to actual page for browsers -->
-  <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />`}
+  <!-- Canonical points to the real page -->
+  <link rel="canonical" href="${canonicalUrl}" />
 </head>
 <body>
-  ${isCrawler 
-    ? `<p>${escapeHtml(ogTitle)}</p>` 
-    : `<p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(rawTitle)}</a>...</p>
-  <script>window.location.replace("${canonicalUrl}");</script>`}
+  <h1>${escapeHtml(ogTitle)}</h1>
+  <p>${escapeHtml(ogDescription)}</p>
 </body>
 </html>`;
 
