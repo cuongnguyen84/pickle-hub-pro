@@ -28,6 +28,19 @@ Deno.serve(async (req) => {
       return new Response("Missing livestream ID", { status: 400 });
     }
 
+    // For regular browsers: immediately 302 redirect to the actual page
+    // This avoids Supabase gateway overriding Content-Type to text/plain
+    if (!isCrawler) {
+      const redirectUrl = `${SITE_URL}/live/${livestreamId}`;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          "Location": redirectUrl,
+        },
+      });
+    }
+
     // Initialize Supabase client with service role key
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
