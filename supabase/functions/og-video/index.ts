@@ -173,14 +173,11 @@ serve(async (req) => {
   <meta name="twitter:description" content="${escapeHtml(ogDescription)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
   
-  ${isCrawler ? "" : `<!-- Redirect to actual page for browsers -->
-  <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />`}
+
 </head>
 <body>
-  ${isCrawler 
-    ? `<p>${escapeHtml(ogTitle)}</p>` 
-    : `<p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(rawTitle)}</a>...</p>
-  <script>window.location.replace("${canonicalUrl}");</script>`}
+  <h1>${escapeHtml(ogTitle)}</h1>
+  <p>${escapeHtml(ogDescription)}</p>
 </body>
 </html>`;
 
