@@ -1,40 +1,50 @@
+## Plan: Gate tất cả trang chi tiết giải đấu - yêu cầu đăng nhập
+
+### Tổng quan
+
+Chặn hoàn toàn truy cập vào trang chi tiết giải đấu nếu chưa đăng nhập. Người dùng chưa xác thực sẽ được redirect về trang Login với return URL để quay lại sau khi đăng nhập.
+
+### Phạm vi áp dụng
+
+5 trang chi tiết giải đấu:
+
+- `/qt/:shareId` — Quick Table View
+- `/doubles-elimination/:id` — Doubles Elimination View  
+- `/team-match/:id` — Team Match View
+- `/flex/:id` — Flex Tournament View
+- `/tournaments/:slug` — Tournament Detail (livestream/video content)
+
+### Thiết kế kỹ thuật
+
+**1. Tạo component `RequireAuth` (wrapper)**
+
+- File: `src/components/auth/RequireAuth.tsx`
+- Dùng `useAuth()` để check user
+- Nếu đang loading → hiển thị skeleton/spinner
+- Nếu chưa đăng nhập → `<Navigate to={/login?redirect=currentPath} replace />`
+- Nếu đã đăng nhập → render children
+
+**2. Wrap 5 route trong `App.tsx**`
+
+- Bọc các route tournament detail bằng `<RequireAuth>`
+- Không ảnh hưởng trang danh sách (Tournaments, QuickTables, etc.) — vẫn public
+
+**3. Thêm i18n keys**
+
+- Thêm key cho thông báo trên trang login khi redirect từ tournament (optional UX enhancement)
+
+### File thay đổi
 
 
-# Kế hoạch cải thiện tốc độ trang
+| File                                  | Thay đổi                           |
+| ------------------------------------- | ---------------------------------- |
+| `src/components/auth/RequireAuth.tsx` | **Tạo mới** — auth guard component |
+| `src/App.tsx`                         | Wrap 5 route bằng RequireAuth      |
 
-## Tổng quan
-7 thay đổi để giảm TTFB cho 76 URL slow page từ báo cáo Ahrefs. Tập trung vào edge functions (gộp queries), cache headers, build optimization, và lazy loading.
 
----
+### Lưu ý
 
-## Thay đổi chi tiết
-
-### 1. `supabase/functions/og-live/index.ts` — Gộp 3 queries → 1
-Hiện tại gọi tuần tự: `public_livestreams` → `organizations` → `tournaments` (3 round-trip). Sẽ dùng `Promise.all()` để chạy song song query org + tournament sau khi có livestream data. Tăng cache header lên `s-maxage=600`.
-
-### 2. `supabase/functions/og-video/index.ts` — Gộp queries + 302 redirect
-Tương tự og-live: dùng `Promise.all()` cho org + tournament queries. Thêm 302 redirect cho non-crawler (hiện dùng meta-refresh). Tăng cache `s-maxage=600`.
-
-### 3. `supabase/functions/og-organization/index.ts` — 302 redirect + cache
-Thêm 302 redirect cho non-crawler thay vì meta-refresh + JS redirect. Thêm `Cache-Control: s-maxage=600`.
-
-### 4. `supabase/functions/og-tournament/index.ts` — 302 redirect + cache  
-Tương tự og-organization: 302 redirect cho non-crawler, thêm cache headers.
-
-### 5. `vite.config.ts` — Tắt sourcemap production
-Đổi `sourcemap: true` → `sourcemap: false`. Giảm build output, tăng tốc build.
-
-### 6. `index.html` — Dọn duplicate meta tags
-Xóa duplicate `og:title`, `og:description`, `twitter:title`, `twitter:description` ở dòng 86-89 (đã có ở trên). Giảm ~500 bytes HTML.
-
-### 7. `src/pages/Index.tsx` — Lazy load OpenRegistrationSection & NewsCard
-Wrap `OpenRegistrationSection` và `NewsCard` trong `React.lazy()` + `Suspense` vì nằm dưới fold.
-
----
-
-## Kết quả dự kiến
-- Edge function pages (livestream, video): TTFB giảm 30-50% nhờ parallel queries + cache
-- Tất cả OG functions: CDN cache 10 phút thay vì 5 phút
-- Build size giảm nhờ tắt sourcemap
-- HTML initial payload giảm ~500 bytes
-
+- Không cần thay đổi database/RLS — đây là gate ở UI level
+- SEO: các trang tournament detail sẽ không crawlable bởi anonymous users. Nếu cần SEO cho các trang này, cần approach khác (server-side rendering hoặc cho phép xem partial content)
+- Trang danh sách giải đấu (`/tournaments`, `/tools/quick-tables`, etc.) vẫn public để user khám phá rồi mới cần đăng nhập khi click vào chi tiết
+- Cần redirect lại trang trước ngay sau khi đăng kí hoặc đăng nhập xong
