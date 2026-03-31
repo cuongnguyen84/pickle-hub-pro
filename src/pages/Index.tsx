@@ -148,7 +148,9 @@ const Index = () => {
       </section>
 
       {/* Open Registration Tournaments */}
-      <OpenRegistrationSection limit={5} showViewAll={true} />
+      <Suspense fallback={null}>
+        <OpenRegistrationSection limit={5} showViewAll={true} />
+      </Suspense>
 
       {/* Featured News - Only show if there are items */}
       {featuredNews.length > 0 &&
