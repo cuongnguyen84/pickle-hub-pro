@@ -234,7 +234,7 @@ const App = () => (
                     {/* Tools routes */}
                     <Route path="/tools" element={<Tools />} />
                     <Route path="/tools/quick-tables" element={<QuickTables />} />
-                    <Route path="/tools/quick-tables/:shareId" element={<QuickTableView />} />
+                    <Route path="/tools/quick-tables/:shareId" element={<RequireAuth><QuickTableView /></RequireAuth>} />
                     <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
                     {/* Team Match routes */}
                     <Route path="/tools/team-match" element={<TeamMatchList />} />
