@@ -29,6 +29,18 @@ serve(async (req) => {
       return new Response("Missing video ID", { status: 400 });
     }
 
+    // For regular browsers: immediately 302 redirect to the actual page
+    if (!isCrawler) {
+      const redirectUrl = `${SITE_URL}/video/${videoId}`;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          "Location": redirectUrl,
+        },
+      });
+    }
+
     // Initialize Supabase client with service role key
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
