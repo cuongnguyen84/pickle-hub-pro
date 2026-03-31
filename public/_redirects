@@ -1,1 +1,6 @@
+# 301 redirects for legacy paths (SEO link equity)
+/livestream/:id /live/:id 301
+/livestream /live 301
+
+# SPA fallback
 /* /index.html 200
