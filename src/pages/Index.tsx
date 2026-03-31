@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { MainLayout } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import { SectionHeader, ContentCard, EmptyState, AdSlot } from "@/components/content";
@@ -10,9 +10,10 @@ import { useFeaturedNews } from "@/hooks/useFeaturedNews";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio, Trophy, Users, Tv } from "lucide-react";
-import { OpenRegistrationSection } from "@/components/quicktable/OpenRegistrationSection";
 import { DynamicMeta, OrganizationSchema } from "@/components/seo";
-import { NewsCard } from "@/components/news/NewsCard";
+
+const OpenRegistrationSection = lazy(() => import("@/components/quicktable/OpenRegistrationSection").then(m => ({ default: m.OpenRegistrationSection })));
+const NewsCard = lazy(() => import("@/components/news/NewsCard").then(m => ({ default: m.NewsCard })));
 
 const Index = () => {
   const { t, language } = useI18n();
@@ -147,23 +148,26 @@ const Index = () => {
       </section>
 
       {/* Open Registration Tournaments */}
-      <OpenRegistrationSection limit={5} showViewAll={true} />
+      <Suspense fallback={null}>
+        <OpenRegistrationSection limit={5} showViewAll={true} />
+      </Suspense>
 
       {/* Featured News - Only show if there are items */}
       {featuredNews.length > 0 &&
       <section className="container-wide section-spacing">
           <SectionHeader title={t.news.title} href="/news" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {featuredNews.map((item) =>
-          <NewsCard
-            key={item.id}
-            title={item.title}
-            summary={item.summary}
-            source={item.source}
-            sourceUrl={item.source_url}
-            publishedAt={item.published_at} />
-
-          )}
+            <Suspense fallback={null}>
+              {featuredNews.map((item) =>
+            <NewsCard
+              key={item.id}
+              title={item.title}
+              summary={item.summary}
+              source={item.source}
+              sourceUrl={item.source_url}
+              publishedAt={item.published_at} />
+              )}
+            </Suspense>
           </div>
         </section>
       }

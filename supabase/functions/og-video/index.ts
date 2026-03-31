@@ -29,6 +29,18 @@ serve(async (req) => {
       return new Response("Missing video ID", { status: 400 });
     }
 
+    // For regular browsers: immediately 302 redirect to the actual page
+    if (!isCrawler) {
+      const redirectUrl = `${SITE_URL}/video/${videoId}`;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          "Location": redirectUrl,
+        },
+      });
+    }
+
     // Initialize Supabase client with service role key
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
@@ -55,27 +67,17 @@ serve(async (req) => {
       return new Response("Video not found", { status: 404 });
     }
 
-    // Fetch organization name
-    let organizationName = "";
-    if (video.organization_id) {
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("name")
-        .eq("id", video.organization_id)
-        .single();
-      organizationName = org?.name || "";
-    }
-
-    // Fetch tournament name if linked
-    let tournamentName = "";
-    if (video.tournament_id) {
-      const { data: tournament } = await supabase
-        .from("tournaments")
-        .select("name")
-        .eq("id", video.tournament_id)
-        .single();
-      tournamentName = tournament?.name || "";
-    }
+    // Fetch organization and tournament in parallel
+    const [orgResult, tournamentResult] = await Promise.all([
+      video.organization_id
+        ? supabase.from("organizations").select("name").eq("id", video.organization_id).single()
+        : Promise.resolve({ data: null }),
+      video.tournament_id
+        ? supabase.from("tournaments").select("name").eq("id", video.tournament_id).single()
+        : Promise.resolve({ data: null }),
+    ]);
+    const organizationName = orgResult.data?.name || "";
+    const tournamentName = tournamentResult.data?.name || "";
 
     // Build OG meta data with proper SEO format
     const rawTitle = video.title || "Video";
@@ -171,14 +173,11 @@ serve(async (req) => {
   <meta name="twitter:description" content="${escapeHtml(ogDescription)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
   
-  ${isCrawler ? "" : `<!-- Redirect to actual page for browsers -->
-  <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />`}
+
 </head>
 <body>
-  ${isCrawler 
-    ? `<p>${escapeHtml(ogTitle)}</p>` 
-    : `<p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(rawTitle)}</a>...</p>
-  <script>window.location.replace("${canonicalUrl}");</script>`}
+  <h1>${escapeHtml(ogTitle)}</h1>
+  <p>${escapeHtml(ogDescription)}</p>
 </body>
 </html>`;
 
@@ -187,7 +186,7 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "public, max-age=60, s-maxage=300",
+        "Cache-Control": "public, max-age=60, s-maxage=600",
       },
     });
   } catch (err) {

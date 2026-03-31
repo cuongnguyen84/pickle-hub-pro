@@ -26,6 +26,17 @@ serve(async (req) => {
       return new Response("Missing slug parameter", { status: 400 });
     }
 
+    const userAgent = req.headers.get("user-agent") || "";
+    const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Zalobot|WhatsApp|Discordbot|Slackbot|bingbot|Googlebot/i.test(userAgent);
+
+    // For regular browsers: immediately 302 redirect
+    if (!isCrawler) {
+      return new Response(null, {
+        status: 302,
+        headers: { ...corsHeaders, "Location": `${SITE_URL}/org/${slug}` },
+      });
+    }
+
     // Create Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -127,6 +138,7 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, max-age=60, s-maxage=600",
       },
     });
   } catch (error) {
