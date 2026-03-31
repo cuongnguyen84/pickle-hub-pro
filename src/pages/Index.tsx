@@ -157,16 +157,17 @@ const Index = () => {
       <section className="container-wide section-spacing">
           <SectionHeader title={t.news.title} href="/news" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {featuredNews.map((item) =>
-          <NewsCard
-            key={item.id}
-            title={item.title}
-            summary={item.summary}
-            source={item.source}
-            sourceUrl={item.source_url}
-            publishedAt={item.published_at} />
-
-          )}
+            <Suspense fallback={null}>
+              {featuredNews.map((item) =>
+            <NewsCard
+              key={item.id}
+              title={item.title}
+              summary={item.summary}
+              source={item.source}
+              sourceUrl={item.source_url}
+              publishedAt={item.published_at} />
+              )}
+            </Suspense>
           </div>
         </section>
       }
