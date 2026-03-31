@@ -212,7 +212,7 @@ const App = () => (
                     <Route path="/videos" element={<Videos />} />
                     <Route path="/watch/:id" element={<WatchVideo />} />
                     <Route path="/tournaments" element={<Tournaments />} />
-                    <Route path="/tournament/:slug" element={<TournamentDetail />} />
+                    <Route path="/tournament/:slug" element={<RequireAuth><TournamentDetail /></RequireAuth>} />
                     <Route path="/org/:slug" element={<OrganizationDetail />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
