@@ -243,7 +243,7 @@ const App = () => (
                     {/* Doubles Elimination routes */}
                     <Route path="/tools/doubles-elimination" element={<DoublesEliminationList />} />
                     <Route path="/tools/doubles-elimination/new" element={<DoublesEliminationSetup />} />
-                    <Route path="/tools/doubles-elimination/:shareId" element={<DoublesEliminationView />} />
+                    <Route path="/tools/doubles-elimination/:shareId" element={<RequireAuth><DoublesEliminationView /></RequireAuth>} />
                     <Route path="/tools/doubles-elimination/match/:matchId/score" element={<DoublesEliminationScoring />} />
                     {/* Flex Tournament routes */}
                     <Route path="/tools/flex-tournament" element={<FlexTournamentList />} />
