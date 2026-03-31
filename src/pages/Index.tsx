@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { MainLayout } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import { SectionHeader, ContentCard, EmptyState, AdSlot } from "@/components/content";
@@ -10,9 +10,10 @@ import { useFeaturedNews } from "@/hooks/useFeaturedNews";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio, Trophy, Users, Tv } from "lucide-react";
-import { OpenRegistrationSection } from "@/components/quicktable/OpenRegistrationSection";
 import { DynamicMeta, OrganizationSchema } from "@/components/seo";
-import { NewsCard } from "@/components/news/NewsCard";
+
+const OpenRegistrationSection = lazy(() => import("@/components/quicktable/OpenRegistrationSection").then(m => ({ default: m.OpenRegistrationSection })));
+const NewsCard = lazy(() => import("@/components/news/NewsCard").then(m => ({ default: m.NewsCard })));
 
 const Index = () => {
   const { t, language } = useI18n();
