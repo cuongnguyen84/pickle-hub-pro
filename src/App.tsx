@@ -16,6 +16,7 @@ import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
+import RequireAuth from "@/components/auth/RequireAuth";
 
 // Initialize Native Google Auth plugin on app startup
 initializeGoogleAuth();
@@ -211,7 +212,7 @@ const App = () => (
                     <Route path="/videos" element={<Videos />} />
                     <Route path="/watch/:id" element={<WatchVideo />} />
                     <Route path="/tournaments" element={<Tournaments />} />
-                    <Route path="/tournament/:slug" element={<TournamentDetail />} />
+                    <Route path="/tournament/:slug" element={<RequireAuth><TournamentDetail /></RequireAuth>} />
                     <Route path="/org/:slug" element={<OrganizationDetail />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
@@ -233,21 +234,21 @@ const App = () => (
                     {/* Tools routes */}
                     <Route path="/tools" element={<Tools />} />
                     <Route path="/tools/quick-tables" element={<QuickTables />} />
-                    <Route path="/tools/quick-tables/:shareId" element={<QuickTableView />} />
+                    <Route path="/tools/quick-tables/:shareId" element={<RequireAuth><QuickTableView /></RequireAuth>} />
                     <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
                     {/* Team Match routes */}
                     <Route path="/tools/team-match" element={<TeamMatchList />} />
                     <Route path="/tools/team-match/new" element={<TeamMatchSetup />} />
-                    <Route path="/tools/team-match/:id" element={<TeamMatchView />} />
+                    <Route path="/tools/team-match/:id" element={<RequireAuth><TeamMatchView /></RequireAuth>} />
                     {/* Doubles Elimination routes */}
                     <Route path="/tools/doubles-elimination" element={<DoublesEliminationList />} />
                     <Route path="/tools/doubles-elimination/new" element={<DoublesEliminationSetup />} />
-                    <Route path="/tools/doubles-elimination/:shareId" element={<DoublesEliminationView />} />
+                    <Route path="/tools/doubles-elimination/:shareId" element={<RequireAuth><DoublesEliminationView /></RequireAuth>} />
                     <Route path="/tools/doubles-elimination/match/:matchId/score" element={<DoublesEliminationScoring />} />
                     {/* Flex Tournament routes */}
                     <Route path="/tools/flex-tournament" element={<FlexTournamentList />} />
                     <Route path="/tools/flex-tournament/new" element={<FlexTournamentSetup />} />
-                    <Route path="/tools/flex-tournament/:shareId" element={<FlexTournamentView />} />
+                    <Route path="/tools/flex-tournament/:shareId" element={<RequireAuth><FlexTournamentView /></RequireAuth>} />
                     {/* Dashboard routes */}
                     <Route path="/tools/dashboard" element={<DashboardPicker />} />
                     <Route path="/tools/dashboard/:type/:id" element={<TournamentDashboard />} />
