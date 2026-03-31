@@ -195,12 +195,12 @@ const App = () => (
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={<Index />} />
-                    {/* Livestream routes - SEO primary */}
-                    <Route path="/livestream" element={<Live />} />
-                    <Route path="/livestream/:id" element={<WatchLive />} />
-                    {/* Legacy /live routes - redirect for backward compatibility */}
+                    {/* Primary livestream routes */}
                     <Route path="/live" element={<Live />} />
                     <Route path="/live/:id" element={<WatchLive />} />
+                    {/* Legacy /livestream routes - 301 redirect to /live */}
+                    <Route path="/livestream" element={<Navigate to="/live" replace />} />
+                    <Route path="/livestream/:id" element={<LivestreamRedirect />} />
                     <Route path="/videos" element={<Videos />} />
                     <Route path="/watch/:id" element={<WatchVideo />} />
                     <Route path="/tournaments" element={<Tournaments />} />
