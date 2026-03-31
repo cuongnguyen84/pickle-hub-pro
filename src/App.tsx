@@ -178,6 +178,13 @@ const PageTracker = () => {
   return null;
 };
 
+// Redirect component for /livestream/:id → /live/:id
+const LivestreamRedirect = () => {
+  const params = window.location.pathname.match(/\/livestream\/(.+)/);
+  const id = params?.[1] || "";
+  return <Navigate to={`/live/${id}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>

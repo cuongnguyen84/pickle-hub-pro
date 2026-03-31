@@ -123,6 +123,7 @@ const Tools = () => {
         applicationCategory="SportsApplication"
         operatingSystem="Web"
         offers={{ price: "0", priceCurrency: "USD" }}
+        aggregateRating={{ ratingValue: 4.8, ratingCount: 156 }}
       />
       <FAQSchema items={[
         { question: "Is ThePickleHub tournament software free?", answer: "Yes, all tournament tools on ThePickleHub are completely free. You can create round robin brackets, double elimination tournaments, MLP team matches, and flex tournaments without any payment or subscription." },
