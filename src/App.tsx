@@ -248,7 +248,7 @@ const App = () => (
                     {/* Flex Tournament routes */}
                     <Route path="/tools/flex-tournament" element={<FlexTournamentList />} />
                     <Route path="/tools/flex-tournament/new" element={<FlexTournamentSetup />} />
-                    <Route path="/tools/flex-tournament/:shareId" element={<FlexTournamentView />} />
+                    <Route path="/tools/flex-tournament/:shareId" element={<RequireAuth><FlexTournamentView /></RequireAuth>} />
                     {/* Dashboard routes */}
                     <Route path="/tools/dashboard" element={<DashboardPicker />} />
                     <Route path="/tools/dashboard/:type/:id" element={<TournamentDashboard />} />
