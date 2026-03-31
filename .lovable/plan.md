@@ -1,73 +1,40 @@
 
 
-# Phân tích keyword GSC & Kế hoạch hành động
+# Kế hoạch cải thiện tốc độ trang
 
-## Phân tích dữ liệu keyword
-
-Từ ảnh GSC, tôi nhận diện các cụm keyword chính và đối chiếu với blog hiện có:
-
-| Cụm keyword | Impressions cao | Đã có blog? | Hành động |
-|---|---|---|---|
-| "pickleball tournament software" | 80 imp, 3 clicks | ✅ Có | Thêm internal links |
-| "pickleball brackets" | 43 imp, 0 clicks | ✅ Có | Thêm internal links |
-| "round robin generator/schedule" | 15+ imp | ✅ Có | Thêm internal links |
-| **"pickleball live stream/streaming"** | 9 clicks, nhiều imp | ❌ CHƯA | **Tạo blog mới** |
-| **"mlp format/mlp pickleball format"** | Nhiều imp, 0 clicks | ❌ Chỉ 1 section nhỏ | **Tạo blog mới** |
-| **"pickleball bracket generator free"** | Nhiều variants | ❌ Chỉ mention | **Tạo blog mới** |
-| **"pickleball bracket template"** | Vài imp | ❌ CHƯA | **Tạo blog mới** |
-| "pickleball organize tools" | Vài imp | ✅ Có | OK |
-
-**Nhận xét quan trọng**: "pickleball live stream" có **9 clicks** — là keyword non-branded duy nhất có clicks đáng kể, nhưng **chưa có blog post nào** nhắm vào nó. Đây là cơ hội lớn nhất.
+## Tổng quan
+7 thay đổi để giảm TTFB cho 76 URL slow page từ báo cáo Ahrefs. Tập trung vào edge functions (gộp queries), cache headers, build optimization, và lazy loading.
 
 ---
 
-## Kế hoạch thực hiện
+## Thay đổi chi tiết
 
-### 1. Tạo 4 blog posts mới (file: `src/lib/blog-data.ts`)
+### 1. `supabase/functions/og-live/index.ts` — Gộp 3 queries → 1
+Hiện tại gọi tuần tự: `public_livestreams` → `organizations` → `tournaments` (3 round-trip). Sẽ dùng `Promise.all()` để chạy song song query org + tournament sau khi có livestream data. Tăng cache header lên `s-maxage=600`.
 
-**Blog 1: "Pickleball Live Streaming — How to Watch & Stream Pickleball Online"**
-- Target keywords: `pickleball live stream`, `pickleball live streaming`, `pickleball live`
-- Nội dung: Hướng dẫn xem livestream pickleball, các platform streaming, cách stream giải đấu
-- CTA → `/live`
+### 2. `supabase/functions/og-video/index.ts` — Gộp queries + 302 redirect
+Tương tự og-live: dùng `Promise.all()` cho org + tournament queries. Thêm 302 redirect cho non-crawler (hiện dùng meta-refresh). Tăng cache `s-maxage=600`.
 
-**Blog 2: "MLP Format Explained — Major League Pickleball Team Match Rules"**
-- Target keywords: `mlp format`, `mlp pickleball format`, `mlp format pickleball`
-- Nội dung: Chi tiết thể thức MLP, cách tổ chức team match, lineup, dreambreaker
-- CTA → `/tools/team-match`
+### 3. `supabase/functions/og-organization/index.ts` — 302 redirect + cache
+Thêm 302 redirect cho non-crawler thay vì meta-refresh + JS redirect. Thêm `Cache-Control: s-maxage=600`.
 
-**Blog 3: "Free Pickleball Bracket Generator — Create Brackets in 60 Seconds"**
-- Target keywords: `pickleball bracket generator`, `pickleball bracket generator free`, `free pickleball bracket maker`, `pickleball brackets app free`
-- Nội dung: So sánh bracket generators, hướng dẫn dùng Quick Tables, features
-- CTA → `/tools/quick-tables`
+### 4. `supabase/functions/og-tournament/index.ts` — 302 redirect + cache  
+Tương tự og-organization: 302 redirect cho non-crawler, thêm cache headers.
 
-**Blog 4: "Pickleball Bracket Templates — Download & Use Free Templates"**
-- Target keywords: `pickleball tournament bracket template`, `pickleball bracket template`, `bracket template`
-- Nội dung: Các mẫu bracket cho 4/8/16/32 người, round robin vs elimination templates
-- CTA → `/tools/quick-tables`
+### 5. `vite.config.ts` — Tắt sourcemap production
+Đổi `sourcemap: true` → `sourcemap: false`. Giảm build output, tăng tốc build.
 
-### 2. Thêm internal linking: Related Posts (file: `src/pages/BlogPost.tsx`)
+### 6. `index.html` — Dọn duplicate meta tags
+Xóa duplicate `og:title`, `og:description`, `twitter:title`, `twitter:description` ở dòng 86-89 (đã có ở trên). Giảm ~500 bytes HTML.
 
-Thêm section "Related Posts" ở cuối mỗi bài blog, hiển thị 3 bài liên quan dựa trên shared tags. Giúp:
-- Google crawl sâu hơn
-- Tăng thời gian trên trang
-- Truyền link equity giữa các bài
-
-### 3. Thêm internal links từ Tools → Blog (file: `src/components/seo/ToolsSeoContent.tsx`)
-
-Thêm links từ SEO content sections trên trang Tools trỏ về các blog posts liên quan. Ví dụ: section "Round Robin" link tới blog "pickleball-round-robin-generator".
-
-### 4. Cập nhật sitemap (file: `public/sitemap.xml`)
-
-Thêm URLs cho 4 blog posts mới.
+### 7. `src/pages/Index.tsx` — Lazy load OpenRegistrationSection & NewsCard
+Wrap `OpenRegistrationSection` và `NewsCard` trong `React.lazy()` + `Suspense` vì nằm dưới fold.
 
 ---
 
-## Tóm tắt files thay đổi
-
-| File | Thay đổi |
-|---|---|
-| `src/lib/blog-data.ts` | Thêm 4 blog posts mới |
-| `src/pages/BlogPost.tsx` | Thêm Related Posts section |
-| `src/components/seo/ToolsSeoContent.tsx` | Thêm internal links tới blog |
-| `public/sitemap.xml` | Thêm 4 URLs mới |
+## Kết quả dự kiến
+- Edge function pages (livestream, video): TTFB giảm 30-50% nhờ parallel queries + cache
+- Tất cả OG functions: CDN cache 10 phút thay vì 5 phút
+- Build size giảm nhờ tắt sourcemap
+- HTML initial payload giảm ~500 bytes
 
