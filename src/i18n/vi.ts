@@ -607,6 +607,9 @@ export interface Translations {
       geoBlockEnabledDesc: string;
       blockedCountries: string;
       blockedCountriesDesc: string;
+      tournamentGate: string;
+      requireLoginTournament: string;
+      requireLoginTournamentDesc: string;
     };
     viewers: {
       title: string;
@@ -2290,6 +2293,9 @@ export const vi: Translations = {
       geoBlockEnabledDesc: "Chặn người dùng từ các quốc gia được chọn xem livestream và video",
       blockedCountries: "Quốc gia bị chặn",
       blockedCountriesDesc: "Danh sách mã quốc gia (ISO 3166-1 alpha-2), cách nhau bởi dấu phẩy",
+      tournamentGate: "Truy cập chi tiết giải đấu",
+      requireLoginTournament: "Yêu cầu đăng nhập để xem chi tiết giải",
+      requireLoginTournamentDesc: "Người xem phải đăng nhập để xem trang chi tiết giải đấu (Quick Table, Team Match, Doubles Elimination, Flex Tournament)",
     },
     viewers: {
       title: "Danh sách người xem",
