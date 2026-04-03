@@ -162,6 +162,32 @@ export default function AdminOverview() {
           </CardContent>
         </Card>
 
+        {/* Tournament Detail Access */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Trophy className="w-5 h-5 text-primary" />
+              {t.admin.settings.tournamentGate}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {settingsLoading ? (
+              <Skeleton className="h-8 w-full" />
+            ) : (
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">{t.admin.settings.requireLoginTournament}</Label>
+                  <p className="text-xs text-foreground-muted">{t.admin.settings.requireLoginTournamentDesc}</p>
+                </div>
+                <Switch
+                  checked={settings?.require_login_tournament_detail ?? false}
+                  onCheckedChange={(checked) => handleSettingChange("require_login_tournament_detail", checked)}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Geo Blocking Settings */}
         <Card className="bg-card border-border">
           <CardHeader>
