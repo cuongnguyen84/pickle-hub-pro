@@ -7,6 +7,7 @@ export interface SystemSettings {
   livestream_gate_applies_to: "all" | "live" | "replay";
   geo_block_enabled: boolean;
   blocked_countries: string[];
+  require_login_tournament_detail: boolean;
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -15,6 +16,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
   livestream_gate_applies_to: "all",
   geo_block_enabled: true,
   blocked_countries: ["US"],
+  require_login_tournament_detail: false,
 };
 
 async function fetchSystemSettings(): Promise<SystemSettings> {

@@ -608,6 +608,9 @@ export const en: Translations = {
       geoBlockEnabledDesc: "Block users from selected countries from watching livestreams and videos",
       blockedCountries: "Blocked Countries",
       blockedCountriesDesc: "List of country codes (ISO 3166-1 alpha-2), separated by commas",
+      tournamentGate: "Tournament Detail Access",
+      requireLoginTournament: "Require login to view tournament details",
+      requireLoginTournamentDesc: "Viewers must log in to view tournament detail pages (Quick Table, Team Match, Doubles Elimination, Flex Tournament)",
     },
     viewers: {
       title: "Livestream Viewers",
