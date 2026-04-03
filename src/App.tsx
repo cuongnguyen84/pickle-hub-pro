@@ -240,7 +240,7 @@ const App = () => (
                     {/* Team Match routes */}
                     <Route path="/tools/team-match" element={<TeamMatchList />} />
                     <Route path="/tools/team-match/new" element={<TeamMatchSetup />} />
-                    <Route path="/tools/team-match/:id" element={<RequireAuth><TeamMatchView /></RequireAuth>} />
+                    <Route path="/tools/team-match/:id" element={<ConditionalAuth><TeamMatchView /></ConditionalAuth>} />
                     {/* Doubles Elimination routes */}
                     <Route path="/tools/doubles-elimination" element={<DoublesEliminationList />} />
                     <Route path="/tools/doubles-elimination/new" element={<DoublesEliminationSetup />} />
