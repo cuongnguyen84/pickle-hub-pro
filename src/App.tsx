@@ -17,6 +17,7 @@ import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
 import RequireAuth from "@/components/auth/RequireAuth";
+import ConditionalAuth from "@/components/auth/ConditionalAuth";
 
 // Initialize Native Google Auth plugin on app startup
 initializeGoogleAuth();
