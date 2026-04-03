@@ -607,6 +607,9 @@ export interface Translations {
       geoBlockEnabledDesc: string;
       blockedCountries: string;
       blockedCountriesDesc: string;
+      tournamentGate: string;
+      requireLoginTournament: string;
+      requireLoginTournamentDesc: string;
     };
     viewers: {
       title: string;
