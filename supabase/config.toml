@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.ant-media-create-livestream]
 verify_jwt = true
+
+[functions.prerender]
+verify_jwt = false
