@@ -1,58 +1,54 @@
 
 
-## Kế hoạch: Thêm toggle "Yêu cầu đăng nhập xem chi tiết giải" vào Admin Panel
+## Fix OAuth Login trên Custom Domain (Google + Apple)
 
-### Tổng quan
-Thêm setting `require_login_tournament_detail` vào system_settings, hiển thị toggle trong Admin Overview, và sử dụng setting này trong App.tsx để quyết định có wrap RequireAuth cho các trang chi tiết giải hay không.
+### Nguyên nhân gốc
 
-### Các bước thực hiện
+1. **Google (web)**: Code đang dùng `supabase.auth.signInWithOAuth` trực tiếp thay vì `lovable.auth.signInWithOAuth`. Lovable Cloud quản lý OAuth credentials — phải dùng Lovable managed flow.
+2. **Apple (web)**: Đã dùng `lovable.auth.signInWithOAuth` đúng, nhưng `redirect_uri: window.location.origin` trả về `https://thepicklehub.net` — domain này chưa được thêm vào allowed redirect URIs.
+3. **Native (iOS/Android)**: Dùng `supabase.auth.signInWithOAuth` trực tiếp là đúng (cần `skipBrowserRedirect`), nhưng `redirectTo` trỏ về `thepicklehub.net` cũng có thể gặp vấn đề.
 
-**1. Database migration** — Thêm row mới vào `system_settings`
-```sql
-INSERT INTO system_settings (key, value) 
-VALUES ('require_login_tournament_detail', 'false')
-ON CONFLICT (key) DO NOTHING;
-```
+### Thay đổi code: `src/pages/Login.tsx`
 
-**2. `src/hooks/useSystemSettings.ts`** — Thêm field mới vào interface và default
-- Thêm `require_login_tournament_detail: boolean` vào `SystemSettings`
-- Default: `false` (cho phép xem không cần đăng nhập)
-
-**3. `src/i18n/en.ts` + `src/i18n/vi.ts`** — Thêm i18n keys
-- `tournamentGate`: "Tournament Detail Access" / "Truy cập chi tiết giải"
-- `requireLoginTournament`: "Require login to view tournament details" / "Yêu cầu đăng nhập để xem chi tiết giải"
-- `requireLoginTournamentDesc`: mô tả ngắn
-
-**4. `src/pages/admin/AdminOverview.tsx`** — Thêm card settings mới
-Thêm một card "Tournament Access" giữa Livestream Settings và Geo Blocking, với một Switch toggle cho `require_login_tournament_detail`. Áp dụng cho 5 route: Tournament Detail, Quick Table, Team Match, Doubles Elimination, Flex Tournament.
-
-**5. `src/App.tsx`** — Conditional RequireAuth dựa trên setting
-Tạo component `ConditionalAuth` wrap children trong `RequireAuth` chỉ khi setting `require_login_tournament_detail` là `true`. Thay thế 5 chỗ `<RequireAuth>` bằng `<ConditionalAuth>`.
-
-### Chi tiết kỹ thuật
-
-**ConditionalAuth component** (trong App.tsx hoặc file riêng):
+**1. Google web flow (lines 117-126):** Chuyển sang dùng Lovable managed OAuth
 ```typescript
-function ConditionalAuth({ children }: { children: ReactNode }) {
-  const { data: settings, isLoading } = useSystemSettings();
-  
-  if (isLoading) return <PageLoader />;
-  if (settings?.require_login_tournament_detail) {
-    return <RequireAuth>{children}</RequireAuth>;
-  }
-  return <>{children}</>;
-}
+// Trước (sai)
+const { error } = await supabase.auth.signInWithOAuth({
+  provider: "google",
+  options: { redirectTo: "https://thepicklehub.net/auth/callback" },
+});
+
+// Sau (đúng)
+const { error } = await lovable.auth.signInWithOAuth("google", {
+  redirect_uri: window.location.origin,
+});
 ```
 
-**5 routes bị ảnh hưởng:**
-- `/tournament/:slug`
-- `/tools/quick-tables/:shareId`
-- `/tools/team-match/:id`
-- `/tools/doubles-elimination/:shareId`
-- `/tools/flex-tournament/:shareId`
+**2. Apple web flow (lines 160-162):** Giữ nguyên, đã đúng pattern. Chỉ cần thêm domain vào allowed URIs.
 
-### Bảo mật
-- Data đọc từ DB đều qua public SELECT policies → anonymous user vẫn đọc được
-- Actions write (scoring, registration) vẫn check auth ở tầng hook/mutation
-- Setting default `false` = mở public ngay sau deploy
+**3. Native flows (lines 99-115, 142-157):** Giữ nguyên dùng `supabase.auth.signInWithOAuth` với `skipBrowserRedirect` — đây là pattern đúng cho native. Chuyển `redirectTo` sang published URL để đảm bảo hoạt động:
+```typescript
+redirectTo: "https://pickle-hub-pro.lovable.app/auth/callback?native=1"
+```
+
+### Hướng dẫn thêm allowed redirect URI trong Lovable Cloud
+
+Bạn cần thực hiện bước này trong giao diện Lovable:
+
+1. Mở **Cloud view** (bạn đang ở đây rồi)
+2. Vào **Users** → click icon **gear** (Auth Settings)
+3. Trong phần **General settings** → tìm **URI allow list** (hoặc Redirect URLs)
+4. Thêm các URL sau:
+   - `https://thepicklehub.net`
+   - `https://thepicklehub.net/auth/callback`
+   - `https://www.thepicklehub.net`
+   - `https://www.thepicklehub.net/auth/callback`
+5. Đảm bảo **Site URL** được set là `https://thepicklehub.net`
+
+### Tổng kết thay đổi
+
+| File | Thay đổi |
+|------|----------|
+| `src/pages/Login.tsx` | Google web: chuyển sang `lovable.auth.signInWithOAuth`; Native redirectTo: dùng published URL |
+| Lovable Cloud Auth Settings | Thêm `thepicklehub.net` vào allowed redirect URIs |
 
