@@ -103,7 +103,7 @@ const Login = () => {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: "https://thepicklehub.net/auth/callback?native=1",
+            redirectTo: "https://pickle-hub-pro.lovable.app/auth/callback?native=1",
             skipBrowserRedirect: true,
           },
         });
@@ -115,12 +115,9 @@ const Login = () => {
         }
       } else {
         // Web: Standard OAuth redirect
-        console.log("[OAuth] Using web OAuth flow for Google");
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: "https://thepicklehub.net/auth/callback",
-          },
+        console.log("[OAuth] Using Lovable managed OAuth for Google");
+        const { error } = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: window.location.origin,
         });
         if (error) throw error;
       }
@@ -145,7 +142,7 @@ const Login = () => {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "apple",
           options: {
-            redirectTo: "https://thepicklehub.net/auth/callback?native=1",
+            redirectTo: "https://pickle-hub-pro.lovable.app/auth/callback?native=1",
             skipBrowserRedirect: true,
           },
         });
