@@ -39,17 +39,22 @@
  * - The consent screen will show your custom domain once Supabase custom domain is verified
  */
 
+const CANONICAL_SITE_URL = 'https://thepicklehub.net';
+
 /**
- * Get the site URL for auth redirects
- * Uses window.location.origin to ensure it works in all environments
+ * Get the site URL for auth redirects.
+ * Canonicalize the www host to the primary non-www domain so OAuth allow-lists stay consistent.
  */
 export const getSiteUrl = (): string => {
-  // In browser, use current origin
   if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'www.thepicklehub.net') {
+      return CANONICAL_SITE_URL;
+    }
+
     return window.location.origin;
   }
-  // Fallback for SSR/build time
-  return import.meta.env.VITE_SITE_URL || 'https://thepicklehub.net';
+
+  return import.meta.env.VITE_SITE_URL || CANONICAL_SITE_URL;
 };
 
 /**

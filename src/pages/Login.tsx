@@ -12,7 +12,7 @@ import { trackEvent } from "@/utils/ga";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { getEmailRedirectUrl } from "@/lib/auth-config";
+import { getEmailRedirectUrl, getSiteUrl } from "@/lib/auth-config";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { isNativeApp } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
@@ -33,6 +33,10 @@ const Login = () => {
   const [forgotEmail, setForgotEmail] = useState("");
   const [sendingReset, setSendingReset] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  const getOAuthErrorMessage = (error: unknown, fallback: string) => {
+    return error instanceof Error ? error.message : fallback;
+  };
 
   // Get redirect URL from query params
   const redirectUrl = searchParams.get("redirect");
@@ -117,16 +121,16 @@ const Login = () => {
         // Web: Standard OAuth redirect
         console.log("[OAuth] Using Lovable managed OAuth for Google");
         const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: window.location.origin,
+          redirect_uri: getSiteUrl(),
         });
         if (error) throw error;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[OAuth] Error:", err);
       toast({
         variant: "destructive",
         title: t.common.error,
-        description: err.message || "Google Sign-In failed",
+        description: getOAuthErrorMessage(err, "Google Sign-In failed"),
       });
     } finally {
       setIsSubmitting(false);
@@ -155,15 +159,15 @@ const Login = () => {
       } else {
         // Web: Use Lovable managed OAuth
         const { error } = await lovable.auth.signInWithOAuth("apple", {
-          redirect_uri: window.location.origin,
+          redirect_uri: getSiteUrl(),
         });
         if (error) throw error;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: t.common.error,
-        description: err.message || "Apple Sign-In failed",
+        description: getOAuthErrorMessage(err, "Apple Sign-In failed"),
       });
     } finally {
       setIsSubmitting(false);
