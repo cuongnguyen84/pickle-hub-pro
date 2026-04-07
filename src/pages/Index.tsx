@@ -56,7 +56,9 @@ const Index = () => {
         description={language === 'vi' ?
         "ThePickleHub là nền tảng pickleball toàn cầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!" :
         "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant pickleball community. Watch livestreams, follow tournaments, and connect now!"
-        } />
+        }
+        enableHreflang
+      />
       <OrganizationSchema />
 
       {/* Hero Section */}
