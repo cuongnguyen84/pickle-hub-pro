@@ -41,4 +41,4 @@ Disallow: /matches/
 Disallow: /join/
 
 # Sitemap location
-Sitemap: https://thepicklehub.net/sitemap.xml
+Sitemap: https://www.thepicklehub.net/sitemap.xml

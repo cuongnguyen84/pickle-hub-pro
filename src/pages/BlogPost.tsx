@@ -17,11 +17,11 @@ const BlogPost = () => {
   }
 
   const content = language === "vi" ? post.content.vi : post.content.en;
-  const postUrl = `https://thepicklehub.net/blog/${post.slug}`;
+  const postUrl = `https://www.thepicklehub.net/blog/${post.slug}`;
   const relatedPosts = getRelatedPosts(post.slug, 3);
 
   const breadcrumbItems = [
-    { name: "Blog", url: "https://thepicklehub.net/blog" },
+    { name: "Blog", url: "https://www.thepicklehub.net/blog" },
     { name: content.title, url: postUrl },
   ];
 

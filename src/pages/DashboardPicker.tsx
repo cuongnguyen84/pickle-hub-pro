@@ -36,7 +36,7 @@ const DashboardPicker = () => {
       <DynamicMeta
         title={`${t.dashboard.title} – The PickleHub`}
         description={t.dashboard.description}
-        url="https://thepicklehub.net/tools/dashboard"
+        url="https://www.thepicklehub.net/tools/dashboard"
       />
       <div className="container-wide py-8">
         <div className="flex items-center gap-3 mb-6">

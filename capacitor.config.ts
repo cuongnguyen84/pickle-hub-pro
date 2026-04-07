@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   
   // Production: Load directly from thepicklehub.net (WebView wrapper mode)
   server: {
-    url: 'https://thepicklehub.net',
+    url: 'https://www.thepicklehub.net',
     cleartext: true,
     // Allow navigation to external URLs (including OAuth providers)
     allowNavigation: [
@@ -85,12 +85,12 @@ export default config;
  * This app uses Universal Links (iOS) and App Links (Android) for OAuth
  * instead of custom URL schemes, because Lovable Cloud only supports https:// URLs.
  * 
- * OAuth flow: Google → https://thepicklehub.net/auth/callback → Native App
+ * OAuth flow: Google → https://www.thepicklehub.net/auth/callback → Native App
  * 
  * === iOS: Universal Links Setup ===
  * 
  * 1. Create file: ios/App/App/.well-known/apple-app-site-association (on web server)
- *    Or host at: https://thepicklehub.net/.well-known/apple-app-site-association
+ *    Or host at: https://www.thepicklehub.net/.well-known/apple-app-site-association
  *    Content:
  *    {
  *      "applinks": {
@@ -126,7 +126,7 @@ export default config;
  *      <data android:scheme="https" android:host="thepicklehub.net" android:pathPrefix="/auth/callback" />
  *    </intent-filter>
  * 
- * 2. Host assetlinks.json at: https://thepicklehub.net/.well-known/assetlinks.json
+ * 2. Host assetlinks.json at: https://www.thepicklehub.net/.well-known/assetlinks.json
  *    Content:
  *    [{
  *      "relation": ["delegate_permission/common.handle_all_urls"],

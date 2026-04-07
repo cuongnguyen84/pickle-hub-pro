@@ -209,13 +209,13 @@ const QuickTables = () => {
       <DynamicMeta 
         title="Pickleball Bracket Generator & Round Robin Tool"
         description="Free pickleball bracket generator for clubs and tournaments. Create round robin groups, playoff brackets, and elimination formats in seconds. Automatic group balancing, real-time scoring, mobile-friendly."
-        url="https://thepicklehub.net/tools/quick-tables"
+        url="https://www.thepicklehub.net/tools/quick-tables"
         enableHreflang={true}
       />
       <WebApplicationSchema
         name="Quick Tables - Pickleball Bracket Generator"
         description="Free pickleball bracket generator. Create round robin brackets with automatic group balancing, playoff brackets, and elimination formats in seconds."
-        url="https://thepicklehub.net/tools/quick-tables"
+        url="https://www.thepicklehub.net/tools/quick-tables"
         applicationCategory="SportsApplication"
         featureList={[
           "Round robin bracket generation",

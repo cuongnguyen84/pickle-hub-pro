@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     // Use centralized auth config for email redirect
-    const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://thepicklehub.net';
+    const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.thepicklehub.net';
     const redirectUrl = `${siteUrl}/`;
     
     const { error } = await supabase.auth.signUp({

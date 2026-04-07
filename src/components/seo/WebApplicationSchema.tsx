@@ -47,7 +47,7 @@ export const WebApplicationSchema = ({
       provider: {
         "@type": "Organization",
         name: "ThePickleHub",
-        url: "https://thepicklehub.net",
+        url: "https://www.thepicklehub.net",
       },
     };
 

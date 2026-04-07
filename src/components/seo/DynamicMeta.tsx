@@ -16,7 +16,7 @@ interface DynamicMetaProps {
 export const DynamicMeta = ({
   title,
   description = "ThePickleHub là nền tảng pickleball hàng đầu với livestream trực tiếp, giải đấu, bracket và cộng đồng pickleball sôi động.",
-  image = "https://thepicklehub.net/og-image.png",
+  image = "https://www.thepicklehub.net/og-image.png",
   type = "website",
   url,
   noindex = false,
@@ -96,7 +96,7 @@ export const DynamicMeta = ({
 
     // Hreflang tags for multilingual SEO
     if (enableHreflang) {
-      const baseUrl = "https://thepicklehub.net";
+      const baseUrl = "https://www.thepicklehub.net";
       const pathname = new URL(currentUrl).pathname;
 
       const updateHreflang = (hreflang: string, href: string) => {

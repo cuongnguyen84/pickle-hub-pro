@@ -142,7 +142,7 @@ const FlexTournamentView = () => {
       <DynamicMeta 
         title={seoTitle}
         description={seoDescription}
-        url={`https://thepicklehub.net/tools/flex-tournament/${shareId}`}
+        url={`https://www.thepicklehub.net/tools/flex-tournament/${shareId}`}
         noindex={!data.tournament.is_public} // Don't index private tournaments
       />
       <div className="container-wide py-4">

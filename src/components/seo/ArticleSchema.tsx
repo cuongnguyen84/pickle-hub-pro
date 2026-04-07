@@ -32,12 +32,12 @@ export const ArticleSchema = ({
       author: {
         "@type": "Organization",
         name: author,
-        url: "https://thepicklehub.net",
+        url: "https://www.thepicklehub.net",
       },
       publisher: {
         "@type": "Organization",
         name: "The PickleHub",
-        url: "https://thepicklehub.net",
+        url: "https://www.thepicklehub.net",
       },
       description,
       mainEntityOfPage: {

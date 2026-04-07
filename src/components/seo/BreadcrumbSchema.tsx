@@ -18,7 +18,7 @@ export const BreadcrumbSchema = ({ items }: BreadcrumbSchemaProps) => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "ThePickleHub", item: "https://thepicklehub.net" },
+        { "@type": "ListItem", position: 1, name: "ThePickleHub", item: "https://www.thepicklehub.net" },
         ...items.map((item, idx) => ({
           "@type": "ListItem",
           position: idx + 2,

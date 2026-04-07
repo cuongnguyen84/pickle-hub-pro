@@ -52,7 +52,7 @@ const Live = () => {
       <DynamicMeta 
         title="Pickleball Livestream | Watch Pickleball Tournaments Live"
         description="Watch live pickleball tournaments and matches on ThePickleHub. Stream pickleball events from top creators, professional tournaments, and community competitions in real-time."
-        url="https://thepicklehub.net/livestream"
+        url="https://www.thepicklehub.net/livestream"
       />
       <div className="container-wide py-8">
         <header className="mb-6">
