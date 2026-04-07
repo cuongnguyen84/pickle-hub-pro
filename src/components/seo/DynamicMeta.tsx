@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useI18n } from "@/i18n";
+import { normalizeImageUrl } from "@/lib/url-utils";
 
 interface DynamicMetaProps {
   title: string;
@@ -60,7 +61,7 @@ export const DynamicMeta = ({
     // Open Graph tags
     updateMeta("og:title", fullTitle);
     updateMeta("og:description", description);
-    updateMeta("og:image", image);
+    updateMeta("og:image", normalizeImageUrl(image) || "https://www.thepicklehub.net/og-image.png");
     updateMeta("og:type", type);
     updateMeta("og:url", currentUrl);
     updateMeta("og:site_name", "ThePickleHub");
@@ -69,7 +70,7 @@ export const DynamicMeta = ({
     // Twitter tags
     updateMeta("twitter:title", fullTitle, true);
     updateMeta("twitter:description", description, true);
-    updateMeta("twitter:image", image, true);
+    updateMeta("twitter:image", normalizeImageUrl(image) || "https://www.thepicklehub.net/og-image.png", true);
     updateMeta("twitter:card", "summary_large_image", true);
 
     // General meta
