@@ -43,12 +43,12 @@ const CANONICAL_SITE_URL = 'https://www.thepicklehub.net';
 
 /**
  * Get the site URL for auth redirects.
- * Canonicalize the www host to the primary non-www domain so OAuth allow-lists stay consistent.
+ * Canonicalize non-www to www so OAuth allow-lists stay consistent.
  */
 export const getSiteUrl = (): string => {
   if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'www.thepicklehub.net') {
-      return CANONICAL_SITE_URL;
+    if (window.location.hostname === 'thepicklehub.net') {
+      return CANONICAL_SITE_URL; // normalize non-www → www
     }
 
     return window.location.origin;
