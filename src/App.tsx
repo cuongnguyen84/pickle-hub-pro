@@ -205,7 +205,7 @@ const App = () => (
               <DeepLinkInitializer />
               <PushNotificationInitializer />
               <PageTracker />
-              <LanguageBanner />
+              
               <BottomNav />
               <ChunkErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
