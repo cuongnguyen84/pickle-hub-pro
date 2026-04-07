@@ -151,13 +151,13 @@ export default function TeamMatchList() {
       <DynamicMeta 
         title="Pickleball Team Match Tool – MLP Style Tournament Format"
         description="Create MLP-style pickleball team competitions. Features lineup management, dreambreaker games, rally scoring, and team standings. Free tool for clubs, leagues, and tournament organizers."
-        url="https://thepicklehub.net/tools/team-match"
+        url="https://www.thepicklehub.net/tools/team-match"
         enableHreflang={true}
       />
       <WebApplicationSchema
         name="Team Match - MLP Style Pickleball Tournament"
         description="Create team match competitions with MLP-style format. Features lineup management, dreambreaker games, rally scoring, and team tournament organization."
-        url="https://thepicklehub.net/tools/team-match"
+        url="https://www.thepicklehub.net/tools/team-match"
         applicationCategory="SportsApplication"
         featureList={[
           "MLP-style team format",

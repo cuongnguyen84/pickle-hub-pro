@@ -114,7 +114,7 @@ const Tools = () => {
       <DynamicMeta 
         title="Free Pickleball Tournament Software – Bracket Generator, Team Match & Scoring"
         description="Free pickleball tournament software for organizers. Generate brackets, run round robin, MLP team matches & double elimination. Real-time scoring, mobile-friendly. No signup required."
-        url="https://thepicklehub.net/tools"
+        url="https://www.thepicklehub.net/tools"
         enableHreflang={true}
       />
       <SoftwareApplicationSchema

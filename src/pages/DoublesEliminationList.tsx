@@ -73,13 +73,13 @@ export default function DoublesEliminationList() {
       <DynamicMeta 
         title="Pickleball Double Elimination Bracket Generator"
         description="Free double elimination bracket generator for pickleball tournaments. Create winners and losers brackets for 32-128+ teams. Automatic court scheduling, best-of-1/3/5 formats, referee assignment."
-        url="https://thepicklehub.net/tools/doubles-elimination"
+        url="https://www.thepicklehub.net/tools/doubles-elimination"
         enableHreflang={true}
       />
       <WebApplicationSchema
         name="Doubles Elimination Bracket Generator"
         description="Create doubles elimination brackets for pickleball tournaments. Support for 4-32 teams with best-of-1, best-of-3, or best-of-5 match formats."
-        url="https://thepicklehub.net/tools/doubles-elimination"
+        url="https://www.thepicklehub.net/tools/doubles-elimination"
         applicationCategory="SportsApplication"
         featureList={[
           "4-32 teams support",

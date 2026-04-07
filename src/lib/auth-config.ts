@@ -14,23 +14,23 @@
  * 
  * 2. Supabase Dashboard (via Lovable Cloud):
  *    - Enable Custom Domain for auth.thepicklehub.net
- *    - Set Site URL: https://thepicklehub.net
+ *    - Set Site URL: https://www.thepicklehub.net
  *    - Add Redirect URLs:
- *      - https://thepicklehub.net
- *      - https://thepicklehub.net/login
- *      - https://thepicklehub.net/auth/callback
+ *      - https://www.thepicklehub.net
+ *      - https://www.thepicklehub.net/login
+ *      - https://www.thepicklehub.net/auth/callback
  *      - https://auth.thepicklehub.net/auth/v1/callback
  * 
  * 3. Google Cloud Console (OAuth Consent Screen):
  *    - Authorized JavaScript origins:
- *      - https://thepicklehub.net
+ *      - https://www.thepicklehub.net
  *      - https://auth.thepicklehub.net
  *    - Authorized redirect URIs:
  *      - https://auth.thepicklehub.net/auth/v1/callback
  *      (After custom domain is verified, Google will show auth.thepicklehub.net instead of supabase.co)
  * 
  * 4. Environment Variables (optional, for future use):
- *    - VITE_SITE_URL=https://thepicklehub.net
+ *    - VITE_SITE_URL=https://www.thepicklehub.net
  *    - VITE_AUTH_DOMAIN=https://auth.thepicklehub.net
  * 
  * IMPORTANT NOTES:
@@ -39,7 +39,7 @@
  * - The consent screen will show your custom domain once Supabase custom domain is verified
  */
 
-const CANONICAL_SITE_URL = 'https://thepicklehub.net';
+const CANONICAL_SITE_URL = 'https://www.thepicklehub.net';
 
 /**
  * Get the site URL for auth redirects.
@@ -99,8 +99,8 @@ export const getLoginUrl = (currentPath?: string): string => {
  * Production URLs (for reference)
  */
 export const PRODUCTION_URLS = {
-  site: 'https://thepicklehub.net',
+  site: 'https://www.thepicklehub.net',
   authDomain: 'https://auth.thepicklehub.net', // Custom auth domain (after setup)
-  privacyPolicy: 'https://thepicklehub.net/privacy',
-  termsOfService: 'https://thepicklehub.net/terms', // TODO: Create terms page
+  privacyPolicy: 'https://www.thepicklehub.net/privacy',
+  termsOfService: 'https://www.thepicklehub.net/terms', // TODO: Create terms page
 } as const;

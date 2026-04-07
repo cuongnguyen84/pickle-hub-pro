@@ -212,7 +212,7 @@ const WatchLive = () => {
         type="video.other"
         creator={livestream.organization?.name}
         publishedTime={livestream.scheduled_start_at ?? livestream.created_at}
-        url={`https://thepicklehub.net/livestream/${id}`}
+        url={`https://www.thepicklehub.net/livestream/${id}`}
       />
       
       {/* VideoObject Schema for ended streams (helps Google Video indexing) */}
@@ -220,9 +220,9 @@ const WatchLive = () => {
         <VideoSchema
           name={livestream.title || "Pickleball Replay"}
           description={seoDescription}
-          thumbnailUrl={livestream.thumbnail_url || "https://thepicklehub.net/og-image.png"}
+          thumbnailUrl={livestream.thumbnail_url || "https://www.thepicklehub.net/og-image.png"}
           uploadDate={livestream.ended_at || livestream.created_at}
-          embedUrl={`https://thepicklehub.net/embed/live/${id}`}
+          embedUrl={`https://www.thepicklehub.net/embed/live/${id}`}
         />
       )}
       <div className="container-wide section-spacing">

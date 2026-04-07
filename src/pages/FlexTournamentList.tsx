@@ -52,13 +52,13 @@ const FlexTournamentList = () => {
       <DynamicMeta 
         title="Pickleball Flex Tournament – Custom Bracket Maker"
         description="Create flexible pickleball tournament brackets with custom groups, team play, singles, doubles, and mixed formats. Free tool with real-time scoring and live standings for any tournament structure."
-        url="https://thepicklehub.net/tools/flex-tournament"
+        url="https://www.thepicklehub.net/tools/flex-tournament"
         enableHreflang={true}
       />
       <WebApplicationSchema
         name="Flex Tournament - Custom Pickleball Bracket Maker"
         description="Create flexible pickleball tournament brackets with custom groups, team play, singles, doubles, and mixed formats. Real-time scoring and live standings."
-        url="https://thepicklehub.net/tools/flex-tournament"
+        url="https://www.thepicklehub.net/tools/flex-tournament"
         applicationCategory="SportsApplication"
         featureList={[
           "Custom group creation",

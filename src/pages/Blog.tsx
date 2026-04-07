@@ -9,7 +9,7 @@ const Blog = () => {
   const { language } = useI18n();
 
   const breadcrumbItems = [
-    { name: "Blog", url: "https://thepicklehub.net/blog" },
+    { name: "Blog", url: "https://www.thepicklehub.net/blog" },
   ];
 
   return (

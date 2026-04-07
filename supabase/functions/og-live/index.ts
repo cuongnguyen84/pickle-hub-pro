@@ -7,8 +7,8 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SITE_URL = "https://thepicklehub.net";
-const DEFAULT_OG_IMAGE = "https://thepicklehub.net/og-image.png";
+const SITE_URL = "https://www.thepicklehub.net";
+const DEFAULT_OG_IMAGE = "https://www.thepicklehub.net/og-image.png";
 const SITE_NAME = "ThePickleHub";
 
 Deno.serve(async (req) => {

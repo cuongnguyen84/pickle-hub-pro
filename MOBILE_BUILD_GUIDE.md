@@ -1,6 +1,6 @@
 # ThePickleHub Mobile App Build Guide
 
-> Native mobile app wrapper sử dụng Capacitor, load trực tiếp từ https://thepicklehub.net
+> Native mobile app wrapper sử dụng Capacitor, load trực tiếp từ https://www.thepicklehub.net
 
 ## 📋 Thông tin App
 
@@ -8,7 +8,7 @@
 |-------|-------|
 | App Name | ThePickleHub |
 | Bundle ID | `net.thepicklehub.app` |
-| Production URL | https://thepicklehub.net |
+| Production URL | https://www.thepicklehub.net |
 
 ---
 
@@ -226,7 +226,7 @@ Android: Sử dụng Foreground Service cho long-running tasks
 ### White screen on launch
 
 1. Check console logs: `npx cap run ios -l` 
-2. Verify https://thepicklehub.net accessible
+2. Verify https://www.thepicklehub.net accessible
 3. Check network_security_config
 
 ---
@@ -255,7 +255,7 @@ Android: Sử dụng Foreground Service cho long-running tasks
 
 Khi web app thay đổi → **Không cần rebuild native app!**
 
-App tự động load version mới từ https://thepicklehub.net
+App tự động load version mới từ https://www.thepicklehub.net
 
 Chỉ cần rebuild khi:
 - Thay đổi native config

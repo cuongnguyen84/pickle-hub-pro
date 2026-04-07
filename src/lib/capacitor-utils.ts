@@ -54,13 +54,13 @@ export const getPlatform = (): 'ios' | 'android' | 'web' => {
  * Production domain for OAuth redirect
  * Native apps use Universal Links / App Links to intercept this URL
  */
-export const NATIVE_OAUTH_REDIRECT_URL = 'https://thepicklehub.net/auth/callback';
+export const NATIVE_OAUTH_REDIRECT_URL = 'https://www.thepicklehub.net/auth/callback';
 
 /**
  * Get the OAuth redirect URL based on platform
  * 
  * APPROACH: Universal Links / App Links
- * - All platforms redirect to https://thepicklehub.net/auth/callback
+ * - All platforms redirect to https://www.thepicklehub.net/auth/callback
  * - Native apps configure Associated Domains (iOS) / App Links (Android) to intercept this URL
  * - This avoids the need for custom URL schemes which Lovable Cloud doesn't support
  */
