@@ -93,8 +93,8 @@ const ViBlogPost = () => {
         )}
 
         <div
-          className="prose prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: post.content_html }}
+          className="prose prose-lg dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:opacity-80 prose-table:border prose-table:border-border prose-th:bg-muted prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-border prose-h2:mt-12 prose-h2:text-foreground prose-h3:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-tr:even:bg-muted/30"
+          dangerouslySetInnerHTML={{ __html: normalizeImagesInHtml(post.content_html) }}
         />
 
         {faqItems.length > 0 && (
