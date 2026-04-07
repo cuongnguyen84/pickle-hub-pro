@@ -686,7 +686,12 @@ Deno.serve(async (req) => {
     if (path.startsWith("/tools")) return renderTools();
 
     // Blog
-    if (path === "/blog" || path.startsWith("/blog/")) return renderBlog();
+    // Blog post detail: /blog/:slug
+    match = path.match(/^\/blog\/([^/]+)$/);
+    if (match) return renderBlogPost(match[1]);
+
+    // Blog index
+    if (path === "/blog") return renderBlog();
 
     // Fallback
     return renderFallback(path);
