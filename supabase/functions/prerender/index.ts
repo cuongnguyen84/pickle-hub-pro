@@ -251,8 +251,27 @@ function htmlResponse(html: string, status = 200): Response {
 
 function absImage(url: string | null | undefined): string {
   if (!url) return DEFAULT_OG_IMAGE;
-  if (url.startsWith("http")) return url;
-  return `${SITE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  const normalized = normalizeImageUrl(url);
+  if (normalized.startsWith("http")) return normalized;
+  return `${SITE_URL}${normalized.startsWith("/") ? "" : "/"}${normalized}`;
+}
+
+function normalizeImageUrl(url: string): string {
+  if (!url) return "";
+  if (url.includes("googleusercontent.com")) return url;
+  const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileIdMatch) return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
+  const idParamMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (idParamMatch) return `https://lh3.googleusercontent.com/d/${idParamMatch[1]}`;
+  return url;
+}
+
+function normalizeImagesInHtml(html: string): string {
+  if (!html) return html;
+  return html.replace(
+    /<img([^>]*)\ssrc=["']([^"']+)["']/gi,
+    (_match: string, beforeSrc: string, src: string) => `<img${beforeSrc} src="${normalizeImageUrl(src)}"`,
+  );
 }
 
 // ─── Route Handlers ────────────────────────────────────────
