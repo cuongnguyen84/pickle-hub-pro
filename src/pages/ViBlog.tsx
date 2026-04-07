@@ -4,6 +4,7 @@ import { DynamicMeta, BreadcrumbSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Calendar, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { normalizeImageUrl } from "@/lib/url-utils";
 
 const ViBlog = () => {
   const { data: posts, isLoading } = usePublishedViBlogPosts();
@@ -47,7 +48,7 @@ const ViBlog = () => {
               >
                 {post.cover_image_url && (
                   <img
-                    src={post.cover_image_url}
+                    src={normalizeImageUrl(post.cover_image_url)}
                     alt={post.title}
                     className="w-full h-40 object-cover rounded-lg mb-4"
                     loading="lazy"
