@@ -11,7 +11,7 @@ import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import BottomNav from "@/components/layout/BottomNav";
 import AppHeader from "@/components/layout/AppHeader";
-import { LanguageBanner } from "@/components/layout/LanguageBanner";
+
 import { ViLanguageWrapper } from "@/components/layout/ViLanguageWrapper";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
