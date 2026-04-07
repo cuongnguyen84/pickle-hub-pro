@@ -9,6 +9,7 @@ type Language = "vi" | "en";
 interface I18nContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  setLanguageFromUrl: (lang: Language) => void;
   t: Translations;
 }
 
@@ -81,6 +82,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem(STORAGE_KEY, lang);
+    document.documentElement.lang = lang;
+  }, []);
+
+  // Set language from URL without persisting to localStorage
+  const setLanguageFromUrl = useCallback((lang: Language) => {
+    setLanguageState(lang);
     document.documentElement.lang = lang;
   }, []);
 
