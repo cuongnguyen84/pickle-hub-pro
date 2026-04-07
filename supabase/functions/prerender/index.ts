@@ -499,17 +499,83 @@ function renderTools(): Response {
   }));
 }
 
+const BLOG_POST_META: Record<string, { title: string; description: string }> = {
+  "best-pickleball-tournament-software-2026": {
+    title: "Best Pickleball Tournament Software 2026 | Free Bracket Tools Compared",
+    description: "Compare the best pickleball tournament software in 2026. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required.",
+  },
+  "how-to-create-pickleball-bracket": {
+    title: "How to Create a Pickleball Bracket | Free Step-by-Step Guide 2026",
+    description: "Learn how to create a pickleball bracket for round robin, single elimination, and double elimination tournaments. Free bracket generator with real-time scoring.",
+  },
+  "pickleball-round-robin-generator-guide": {
+    title: "Pickleball Round Robin Generator | Free Tool & Complete Guide 2026",
+    description: "Free pickleball round robin generator with automatic scheduling, court rotation, and live scoring. Learn how to organize the perfect round robin tournament.",
+  },
+  "pickleball-scoring-rules-guide": {
+    title: "Pickleball Scoring Rules 2026 | Complete Beginner & Tournament Guide",
+    description: "Learn pickleball scoring rules for singles, doubles, and tournament play. Rally scoring vs side-out explained. Free digital scoring tool included.",
+  },
+  "how-to-organize-pickleball-tournament": {
+    title: "How to Organize a Pickleball Tournament | Complete Checklist 2026",
+    description: "Step-by-step guide to organizing a pickleball tournament. Venue, format selection, registration, scheduling, scoring, and free tools.",
+  },
+  "pickleball-doubles-strategy-guide": {
+    title: "Pickleball Doubles Strategy & Tips | Tournament Winning Guide 2026",
+    description: "Master pickleball doubles strategy for tournaments. Partner communication, court positioning, stacking, and when to attack the kitchen.",
+  },
+  "pickleball-tournament-formats-explained": {
+    title: "Pickleball Tournament Formats Explained | Round Robin, Elimination & More",
+    description: "Complete guide to pickleball tournament formats: round robin, single elimination, double elimination, MLP team match, and flex tournaments.",
+  },
+  "pickleball-live-streaming-guide": {
+    title: "Pickleball Live Streaming 2026 | How to Watch & Stream Online Free",
+    description: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with The Pickle Hub's free livestreaming platform.",
+  },
+  "mlp-format-explained": {
+    title: "MLP Format Explained 2026 | Major League Pickleball Rules & Team Match Guide",
+    description: "Learn how the MLP format works in pickleball. Complete guide to Major League Pickleball team match rules, dreambreaker, lineup strategy.",
+  },
+  "free-pickleball-bracket-generator": {
+    title: "Free Pickleball Bracket Generator 2026 | Create Brackets in 60 Seconds",
+    description: "Create free pickleball tournament brackets instantly. Round robin, single elimination, and double elimination bracket generator with real-time scoring.",
+  },
+  "pickleball-bracket-templates": {
+    title: "Pickleball Bracket Templates 2026 | Free Download for 4-64 Players",
+    description: "Free pickleball bracket templates for round robin, single elimination, and double elimination. Templates for 4, 8, 16, 32, and 64 players.",
+  },
+};
+
+function renderBlogPost(slug: string): Response {
+  const meta = BLOG_POST_META[slug];
+  if (!meta) return renderFallback(`/blog/${slug}`);
+
+  return htmlResponse(buildHtml({
+    title: meta.title,
+    description: meta.description,
+    url: `${SITE_URL}/blog/${slug}`,
+    type: "article",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: meta.title,
+      description: meta.description,
+      url: `${SITE_URL}/blog/${slug}`,
+      publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    },
+  }));
+}
+
 function renderBlog(): Response {
+  const blogLinks = Object.entries(BLOG_POST_META)
+    .map(([slug, m]) => `<li><a href="${SITE_URL}/blog/${slug}">${escapeHtml(m.title)}</a></li>`)
+    .join("");
+
   return htmlResponse(buildHtml({
     title: "Pickleball Blog – Tips, News & Guides | ThePickleHub",
     description: "Read the latest pickleball articles: tournament tips, software reviews, strategy guides and community stories.",
     url: `${SITE_URL}/blog`,
-    bodyContent: `
-      <h2>Blog Posts</h2>
-      <ul>
-        <li><a href="${SITE_URL}/blog/best-pickleball-tournament-software-2026">Best Pickleball Tournament Software 2026</a></li>
-      </ul>
-    `,
+    bodyContent: `<h2>Blog Posts</h2><ul>${blogLinks}</ul>`,
   }));
 }
 
@@ -620,7 +686,33 @@ Deno.serve(async (req) => {
     if (path.startsWith("/tools")) return renderTools();
 
     // Blog
-    if (path === "/blog" || path.startsWith("/blog/")) return renderBlog();
+    // Blog post detail: /blog/:slug
+    match = path.match(/^\/blog\/([^/]+)$/);
+    if (match) return renderBlogPost(match[1]);
+
+    // Blog index
+    if (path === "/blog") return renderBlog();
+
+    // Livestream listing
+    if (path === "/livestream") return htmlResponse(buildHtml({
+      title: "Livestream Pickleball | ThePickleHub",
+      description: "Xem livestream pickleball trực tiếp. Các giải đấu, trận đấu đang phát sóng trực tuyến trên ThePickleHub.",
+      url: `${SITE_URL}/livestream`,
+    }));
+
+    // Privacy
+    if (path === "/privacy") return htmlResponse(buildHtml({
+      title: "Chính sách bảo mật | ThePickleHub",
+      description: "Chính sách bảo mật của ThePickleHub. Tìm hiểu cách chúng tôi thu thập, sử dụng và bảo vệ thông tin của bạn.",
+      url: `${SITE_URL}/privacy`,
+    }));
+
+    // Terms
+    if (path === "/terms") return htmlResponse(buildHtml({
+      title: "Điều khoản sử dụng | ThePickleHub",
+      description: "Điều khoản sử dụng của ThePickleHub. Các quy định khi sử dụng nền tảng pickleball ThePickleHub.",
+      url: `${SITE_URL}/terms`,
+    }));
 
     // Fallback
     return renderFallback(path);
