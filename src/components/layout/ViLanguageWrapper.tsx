@@ -6,17 +6,20 @@ interface ViLanguageWrapperProps {
 }
 
 /**
- * Sets i18n language to "vi" while mounted.
+ * Sets i18n language to "vi" while mounted, restores on unmount.
  * Wrap all /vi/* routes with this component.
  */
 export const ViLanguageWrapper = ({ children }: ViLanguageWrapperProps) => {
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguageFromUrl } = useI18n();
 
   useEffect(() => {
     if (language !== "vi") {
-      setLanguage("vi");
+      setLanguageFromUrl("vi");
     }
-  }, [language, setLanguage]);
+    return () => {
+      setLanguageFromUrl("en");
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <>{children}</>;
 };

@@ -98,6 +98,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const value: I18nContextType = {
     language,
     setLanguage,
+    setLanguageFromUrl,
     t: translations[language],
   };
 
@@ -107,6 +108,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 const fallbackContext: I18nContextType = {
   language: "vi",
   setLanguage: () => {},
+  setLanguageFromUrl: () => {},
   t: vi,
 };
 
