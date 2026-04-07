@@ -31,31 +31,32 @@ export interface FaqItem {
 export type ViBlogPostInsert = Omit<ViBlogPost, "id" | "created_at" | "updated_at">;
 export type ViBlogPostUpdate = Partial<ViBlogPostInsert> & { id: string };
 
-// Public: fetch published posts for blog index
+// Helper to access the non-typed table
+function viBlogTable() {
+  return (supabase as unknown as { from: (table: string) => ReturnType<typeof supabase.from> }).from("vi_blog_posts");
+}
+
 export function usePublishedViBlogPosts() {
   return useQuery({
     queryKey: ["vi-blog-posts", "published"],
     queryFn: async () => {
-      const { data, error } = await (supabase as ReturnType<typeof supabase["from"]>)
-        .from("vi_blog_posts")
+      const { data, error } = await viBlogTable()
         .select("id, slug, title, excerpt, cover_image_url, category, published_at, tags")
         .eq("status", "published")
         .order("published_at", { ascending: false });
       if (error) throw error;
-      return data as Pick<ViBlogPost, "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "tags">[];
+      return (data || []) as Pick<ViBlogPost, "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "tags">[];
     },
     staleTime: 5 * 60 * 1000,
   });
 }
 
-// Public: fetch single published post by slug
 export function useViBlogPostBySlug(slug: string | undefined) {
   return useQuery({
     queryKey: ["vi-blog-post", slug],
     queryFn: async () => {
       if (!slug) return null;
-      const { data, error } = await (supabase as ReturnType<typeof supabase["from"]>)
-        .from("vi_blog_posts")
+      const { data, error } = await viBlogTable()
         .select("*")
         .eq("slug", slug)
         .eq("status", "published")
@@ -68,29 +69,25 @@ export function useViBlogPostBySlug(slug: string | undefined) {
   });
 }
 
-// Admin: fetch all posts (including drafts)
 export function useAdminViBlogPosts() {
   return useQuery({
     queryKey: ["vi-blog-posts", "admin"],
     queryFn: async () => {
-      const { data, error } = await (supabase as ReturnType<typeof supabase["from"]>)
-        .from("vi_blog_posts")
+      const { data, error } = await viBlogTable()
         .select("*")
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data as ViBlogPost[];
+      return (data || []) as ViBlogPost[];
     },
   });
 }
 
-// Admin: fetch single post by id
 export function useAdminViBlogPostById(id: string | undefined) {
   return useQuery({
     queryKey: ["vi-blog-post", "admin", id],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await (supabase as ReturnType<typeof supabase["from"]>)
-        .from("vi_blog_posts")
+      const { data, error } = await viBlogTable()
         .select("*")
         .eq("id", id)
         .single();
@@ -101,13 +98,11 @@ export function useAdminViBlogPostById(id: string | undefined) {
   });
 }
 
-// Admin: create post
 export function useCreateViBlogPost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (post: ViBlogPostInsert) => {
-      const { data, error } = await (supabase as ReturnType<typeof supabase["from"]>)
-        .from("vi_blog_posts")
+      const { data, error } = await viBlogTable()
         .insert(post)
         .select()
         .single();
@@ -120,13 +115,11 @@ export function useCreateViBlogPost() {
   });
 }
 
-// Admin: update post
 export function useUpdateViBlogPost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: ViBlogPostUpdate) => {
-      const { data, error } = await (supabase as ReturnType<typeof supabase["from"]>)
-        .from("vi_blog_posts")
+      const { data, error } = await viBlogTable()
         .update(updates)
         .eq("id", id)
         .select()
@@ -136,19 +129,17 @@ export function useUpdateViBlogPost() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["vi-blog-posts"] });
-      queryClient.invalidateQueries({ queryKey: ["vi-blog-post", data.slug] });
-      queryClient.invalidateQueries({ queryKey: ["vi-blog-post", "admin", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["vi-blog-post", (data as ViBlogPost).slug] });
+      queryClient.invalidateQueries({ queryKey: ["vi-blog-post", "admin", (data as ViBlogPost).id] });
     },
   });
 }
 
-// Admin: delete post
 export function useDeleteViBlogPost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as ReturnType<typeof supabase["from"]>)
-        .from("vi_blog_posts")
+      const { error } = await viBlogTable()
         .delete()
         .eq("id", id);
       if (error) throw error;

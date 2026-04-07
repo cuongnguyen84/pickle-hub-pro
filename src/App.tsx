@@ -66,6 +66,8 @@ const FlexTournamentView = lazy(() => import("./pages/FlexTournamentView"));
 // Blog pages
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const ViBlog = lazy(() => import("./pages/ViBlog"));
+const ViBlogPost = lazy(() => import("./pages/ViBlogPost"));
 
 // Forum pages
 const Forum = lazy(() => import("./pages/Forum"));
@@ -100,6 +102,8 @@ const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamV
 const AdminPushNotification = lazy(() => import("./pages/admin/AdminPushNotification"));
 const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
+const AdminViBlog = lazy(() => import("./pages/admin/AdminViBlog"));
+const AdminViBlogEditor = lazy(() => import("./pages/admin/AdminViBlogEditor"));
 
 // Lazy load creator pages
 const CreatorOverview = lazy(() => import("./pages/creator/CreatorOverview"));
