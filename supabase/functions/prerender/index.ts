@@ -282,15 +282,21 @@ async function renderHome(supabase: Supabase): Promise<Response> {
     .map((v) => `<li><a href="${SITE_URL}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`)
     .join("");
 
-  const title = "ThePickleHub - Cộng đồng Pickleball Việt Nam";
+  const title = "ThePickleHub - Pickleball Tournaments, Livestream & Community";
   const description =
-    "Nền tảng pickleball hàng đầu Việt Nam: giải đấu PPA Tour Asia, livestream trực tiếp, công cụ tạo bracket miễn phí và cộng đồng sôi động cho mọi trình độ.";
+    "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant community. Watch livestreams, follow tournaments, and connect now!";
+
+  const hreflangMeta = `<link rel="alternate" hreflang="en" href="${SITE_URL}/"/>
+<link rel="alternate" hreflang="vi" href="${SITE_URL}/vi"/>
+<link rel="alternate" hreflang="x-default" href="${SITE_URL}/"/>`;
 
   return htmlResponse(
     buildHtml({
       title,
       description,
       url: SITE_URL,
+      lang: "en",
+      extraMeta: hreflangMeta,
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "Organization",
@@ -300,16 +306,16 @@ async function renderHome(supabase: Supabase): Promise<Response> {
         sameAs: [],
       },
       bodyContent: `
-        <p>ThePickleHub là điểm đến cho người yêu pickleball tại Việt Nam — từ người mới bắt đầu đến VĐV chuyên nghiệp.</p>
+        <p>ThePickleHub is the destination for pickleball lovers — from beginners to professional athletes.</p>
         <ul>
-          <li><a href="${SITE_URL}/tournaments">Lịch giải đấu</a> - Cập nhật mọi giải pickleball lớn tại Việt Nam và khu vực</li>
-          <li><a href="${SITE_URL}/livestream">Livestream</a> - Xem trực tiếp các trận đấu pickleball</li>
-          <li><a href="${SITE_URL}/tools">Công cụ tạo bracket</a> - Miễn phí, dùng được ngay</li>
-          <li><a href="${SITE_URL}/blog">Blog hướng dẫn</a> - Luật chơi, kỹ thuật, chiến thuật</li>
-          <li><a href="${SITE_URL}/forum">Diễn đàn</a> - Thảo luận với cộng đồng</li>
+          <li><a href="${SITE_URL}/tournaments">Tournament Schedule</a> - All major pickleball tournaments</li>
+          <li><a href="${SITE_URL}/livestream">Livestream</a> - Watch live pickleball matches</li>
+          <li><a href="${SITE_URL}/tools">Bracket Tools</a> - Free, ready to use</li>
+          <li><a href="${SITE_URL}/blog">Blog</a> - Rules, techniques, strategies</li>
+          <li><a href="${SITE_URL}/forum">Forum</a> - Community discussions</li>
         </ul>
         ${liveItems ? `<h2>Livestream</h2><ul>${liveItems}</ul>` : ""}
-        ${videoItems ? `<h2>Video mới</h2><ul>${videoItems}</ul>` : ""}
+        ${videoItems ? `<h2>Latest Videos</h2><ul>${videoItems}</ul>` : ""}
       `,
     }),
   );
