@@ -912,6 +912,69 @@ function render404(path: string): Response {
   );
 }
 
+// ─── Vietnamese Home ───────────────────────────────────────
+
+async function renderHomeVi(supabase: Supabase): Promise<Response> {
+  const [liveRes, videoRes] = await Promise.all([
+    supabase
+      .from("public_livestreams")
+      .select("id, title, status")
+      .in("status", ["live", "scheduled"])
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("videos")
+      .select("id, title")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(10),
+  ]);
+
+  const liveItems = (liveRes.data || [])
+    .map((l) => `<li><a href="${SITE_URL}/vi/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`)
+    .join("");
+  const videoItems = (videoRes.data || [])
+    .map((v) => `<li><a href="${SITE_URL}/vi/watch/${v.id}">${escapeHtml(v.title)}</a></li>`)
+    .join("");
+
+  const title = "ThePickleHub - Cộng đồng Pickleball Việt Nam";
+  const description =
+    "Nền tảng pickleball hàng đầu Việt Nam: giải đấu PPA Tour Asia, livestream trực tiếp, công cụ tạo bracket miễn phí và cộng đồng sôi động cho mọi trình độ.";
+
+  const hreflangMeta = `<link rel="alternate" hreflang="vi" href="${SITE_URL}/vi"/>
+<link rel="alternate" hreflang="en" href="${SITE_URL}/"/>
+<link rel="alternate" hreflang="x-default" href="${SITE_URL}/"/>`;
+
+  return htmlResponse(
+    buildHtml({
+      title,
+      description,
+      url: `${SITE_URL}/vi`,
+      lang: "vi",
+      extraMeta: hreflangMeta,
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "ThePickleHub",
+        url: SITE_URL,
+        logo: DEFAULT_OG_IMAGE,
+      },
+      bodyContent: `
+        <p>ThePickleHub là điểm đến cho người yêu pickleball tại Việt Nam — từ người mới bắt đầu đến VĐV chuyên nghiệp.</p>
+        <ul>
+          <li><a href="${SITE_URL}/vi/tournaments">Lịch giải đấu</a> - Cập nhật mọi giải pickleball lớn tại Việt Nam và khu vực</li>
+          <li><a href="${SITE_URL}/vi/livestream">Livestream</a> - Xem trực tiếp các trận đấu pickleball</li>
+          <li><a href="${SITE_URL}/vi/tools">Công cụ tạo bracket</a> - Miễn phí, dùng được ngay</li>
+          <li><a href="${SITE_URL}/vi/blog">Blog hướng dẫn</a> - Luật chơi, kỹ thuật, chiến thuật</li>
+          <li><a href="${SITE_URL}/vi/forum">Diễn đàn</a> - Thảo luận với cộng đồng</li>
+        </ul>
+        ${liveItems ? `<h2>Livestream</h2><ul>${liveItems}</ul>` : ""}
+        ${videoItems ? `<h2>Video mới</h2><ul>${videoItems}</ul>` : ""}
+      `,
+    }),
+  );
+}
+
 // ─── Router ────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -921,11 +984,25 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const path = url.searchParams.get("path") || "/";
+    const rawPath = url.searchParams.get("path") || "/";
+    const lang = detectLang(rawPath);
+    const path = stripLangPrefix(rawPath);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     let match: RegExpMatchArray | null;
+
+    // Vietnamese home page (special handling with hreflang)
+    if (lang === "vi" && (path === "/" || path === "")) {
+      return await renderHomeVi(supabase);
+    }
+
+    // For /vi/* paths that map to same EN content, render with lang="vi" and correct canonical
+    // For now, /vi/* pages use same content as EN but with Vietnamese header/footer/lang attribute
+    // Vietnamese-specific content will be added in future phases
+
+    // If it's a /vi/* path, we use the stripped path for routing but pass lang for rendering
+    // For simplicity in this phase, /vi/* static pages get a basic Vietnamese wrapper
 
     // Home
     if (path === "/" || path === "") return await renderHome(supabase);
@@ -994,7 +1071,8 @@ Deno.serve(async (req) => {
         buildHtml({
           title: "Livestream Pickleball | ThePickleHub",
           description: "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.",
-          url: `${SITE_URL}/livestream`,
+          url: `${SITE_URL}${rawPath}`,
+          lang,
         }),
       );
 
@@ -1002,9 +1080,10 @@ Deno.serve(async (req) => {
     if (path === "/privacy")
       return htmlResponse(
         buildHtml({
-          title: "Chính sách bảo mật | ThePickleHub",
+          title: lang === "vi" ? "Chính sách bảo mật | ThePickleHub" : "Privacy Policy | ThePickleHub",
           description: "Chính sách bảo mật của ThePickleHub - nền tảng pickleball Việt Nam. Tìm hiểu cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá nhân của bạn khi sử dụng dịch vụ.",
-          url: `${SITE_URL}/privacy`,
+          url: `${SITE_URL}${rawPath}`,
+          lang,
         }),
       );
 
@@ -1012,14 +1091,15 @@ Deno.serve(async (req) => {
     if (path === "/terms")
       return htmlResponse(
         buildHtml({
-          title: "Điều khoản sử dụng | ThePickleHub",
+          title: lang === "vi" ? "Điều khoản sử dụng | ThePickleHub" : "Terms of Service | ThePickleHub",
           description: "Điều khoản sử dụng của ThePickleHub - nền tảng pickleball Việt Nam. Đọc kỹ các quy định khi sử dụng dịch vụ livestream, công cụ bracket, blog và diễn đàn pickleball.",
-          url: `${SITE_URL}/terms`,
+          url: `${SITE_URL}${rawPath}`,
+          lang,
         }),
       );
 
     // Fallback → 404
-    return render404(path);
+    return render404(rawPath);
   } catch (err) {
     console.error("Prerender error:", err);
     return new Response("Internal server error", {
