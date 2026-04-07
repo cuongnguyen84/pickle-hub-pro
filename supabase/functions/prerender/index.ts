@@ -1013,7 +1013,7 @@ async function renderViBlogPost(supabase: Supabase, slug: string): Promise<Respo
       type: "article",
       lang: "vi",
       extraMeta,
-      bodyContent: `${bc}<article>${p.content_html}</article>${relatedSection}`,
+      bodyContent: `${bc}<article>${normalizeImagesInHtml(p.content_html)}</article>${relatedSection}`,
     }),
   );
 }
