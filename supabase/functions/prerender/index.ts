@@ -180,6 +180,7 @@ function buildHtml(opts: {
   jsonLd?: Record<string, unknown>;
   bodyContent?: string;
   extraMeta?: string;
+  lang?: Lang;
 }): string {
   const {
     title,
@@ -190,14 +191,20 @@ function buildHtml(opts: {
     jsonLd,
     bodyContent = "",
     extraMeta = "",
+    lang = "en",
   } = opts;
 
   const jsonLdScript = jsonLd
     ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`
     : "";
 
+  const htmlLang = lang === "vi" ? "vi" : "en";
+  const ogLocale = lang === "vi" ? "vi_VN" : "en_US";
+  const headerHtml = getHeaderHtml(lang);
+  const footerHtml = getFooterHtml(lang);
+
   return `<!DOCTYPE html>
-<html lang="vi">
+<html lang="${htmlLang}">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -210,7 +217,7 @@ function buildHtml(opts: {
 <meta property="og:description" content="${escapeHtml(description)}"/>
 <meta property="og:image" content="${escapeHtml(image)}"/>
 <meta property="og:site_name" content="${SITE_NAME}"/>
-<meta property="og:locale" content="vi_VN"/>
+<meta property="og:locale" content="${ogLocale}"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="${escapeHtml(title)}"/>
 <meta name="twitter:description" content="${escapeHtml(description)}"/>
@@ -219,13 +226,13 @@ ${extraMeta}
 ${jsonLdScript}
 </head>
 <body>
-${HEADER_HTML}
+${headerHtml}
 <main>
 <h1>${escapeHtml(title)}</h1>
 <p>${escapeHtml(description)}</p>
 ${bodyContent}
 </main>
-${FOOTER_HTML}
+${footerHtml}
 </body>
 </html>`;
 }
