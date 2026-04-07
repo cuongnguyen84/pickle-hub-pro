@@ -693,6 +693,27 @@ Deno.serve(async (req) => {
     // Blog index
     if (path === "/blog") return renderBlog();
 
+    // Livestream listing
+    if (path === "/livestream") return htmlResponse(buildHtml({
+      title: "Livestream Pickleball | ThePickleHub",
+      description: "Xem livestream pickleball trực tiếp. Các giải đấu, trận đấu đang phát sóng trực tuyến trên ThePickleHub.",
+      url: `${SITE_URL}/livestream`,
+    }));
+
+    // Privacy
+    if (path === "/privacy") return htmlResponse(buildHtml({
+      title: "Chính sách bảo mật | ThePickleHub",
+      description: "Chính sách bảo mật của ThePickleHub. Tìm hiểu cách chúng tôi thu thập, sử dụng và bảo vệ thông tin của bạn.",
+      url: `${SITE_URL}/privacy`,
+    }));
+
+    // Terms
+    if (path === "/terms") return htmlResponse(buildHtml({
+      title: "Điều khoản sử dụng | ThePickleHub",
+      description: "Điều khoản sử dụng của ThePickleHub. Các quy định khi sử dụng nền tảng pickleball ThePickleHub.",
+      url: `${SITE_URL}/terms`,
+    }));
+
     // Fallback
     return renderFallback(path);
   } catch (err) {
