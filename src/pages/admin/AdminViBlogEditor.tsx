@@ -249,8 +249,9 @@ export default function AdminViBlogEditor() {
           <div className="space-y-2">
             <Label>Ảnh cover (URL)</Label>
             <Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} placeholder="https://..." />
-            {coverImageUrl && (
-              <img src={coverImageUrl} alt="Cover preview" className="h-32 object-cover rounded-lg border border-border" />
+             {coverImageUrl && (
+              <img src={normalizeImageUrl(coverImageUrl)} alt="Cover preview" className="h-32 object-cover rounded-lg border border-border" />
+            )}
             )}
           </div>
 
