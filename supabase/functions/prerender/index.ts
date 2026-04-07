@@ -56,26 +56,71 @@ function buildMetaDescription(
   return rawDesc.slice(0, MAX_LENGTH - 3).trim() + "...";
 }
 
+// ─── Language Detection ────────────────────────────────────
+
+type Lang = "en" | "vi";
+
+function detectLang(path: string): Lang {
+  return path === "/vi" || path.startsWith("/vi/") ? "vi" : "en";
+}
+
+function stripLangPrefix(path: string): string {
+  if (path === "/vi") return "/";
+  if (path.startsWith("/vi/")) return path.substring(3);
+  return path;
+}
+
 // ─── Header / Footer / Breadcrumb ──────────────────────────
 
-const HEADER_HTML = `<header><nav>
-<a href="${SITE_URL}/">Trang chủ</a>
-<a href="${SITE_URL}/blog">Blog</a>
-<a href="${SITE_URL}/tools">Công cụ</a>
-<a href="${SITE_URL}/tournaments">Giải đấu</a>
-<a href="${SITE_URL}/livestream">Livestream</a>
-<a href="${SITE_URL}/news">Tin tức</a>
-<a href="${SITE_URL}/videos">Video</a>
-<a href="${SITE_URL}/forum">Diễn đàn</a>
+function getHeaderHtml(lang: Lang): string {
+  const prefix = lang === "vi" ? "/vi" : "";
+  if (lang === "vi") {
+    return `<header><nav>
+<a href="${SITE_URL}${prefix}/">Trang chủ</a>
+<a href="${SITE_URL}${prefix}/blog">Blog</a>
+<a href="${SITE_URL}${prefix}/tools">Công cụ</a>
+<a href="${SITE_URL}${prefix}/tournaments">Giải đấu</a>
+<a href="${SITE_URL}${prefix}/livestream">Livestream</a>
+<a href="${SITE_URL}${prefix}/news">Tin tức</a>
+<a href="${SITE_URL}${prefix}/videos">Video</a>
+<a href="${SITE_URL}${prefix}/forum">Diễn đàn</a>
 </nav></header>`;
+  }
+  return `<header><nav>
+<a href="${SITE_URL}/">Home</a>
+<a href="${SITE_URL}/blog">Blog</a>
+<a href="${SITE_URL}/tools">Tools</a>
+<a href="${SITE_URL}/tournaments">Tournaments</a>
+<a href="${SITE_URL}/livestream">Livestream</a>
+<a href="${SITE_URL}/news">News</a>
+<a href="${SITE_URL}/videos">Videos</a>
+<a href="${SITE_URL}/forum">Forum</a>
+</nav></header>`;
+}
 
-const FOOTER_HTML = `<footer>
-<p>&copy; 2026 ThePickleHub - Pickleball Tournaments, Livestream &amp; Community</p>
+function getFooterHtml(lang: Lang): string {
+  const prefix = lang === "vi" ? "/vi" : "";
+  if (lang === "vi") {
+    return `<footer>
+<p>&copy; 2026 ThePickleHub - Cộng đồng Pickleball Việt Nam</p>
 <nav>
-<a href="${SITE_URL}/privacy">Chính sách bảo mật</a>
-<a href="${SITE_URL}/terms">Điều khoản sử dụng</a>
+<a href="${SITE_URL}${prefix}/privacy">Chính sách bảo mật</a>
+<a href="${SITE_URL}${prefix}/terms">Điều khoản sử dụng</a>
 </nav>
 </footer>`;
+  }
+  return `<footer>
+<p>&copy; 2026 ThePickleHub - Pickleball Tournaments, Livestream &amp; Community</p>
+<nav>
+<a href="${SITE_URL}/privacy">Privacy Policy</a>
+<a href="${SITE_URL}/terms">Terms of Service</a>
+</nav>
+</footer>`;
+}
+
+// Keep backwards compat constants for existing code
+const HEADER_HTML = getHeaderHtml("en");
+const FOOTER_HTML = getFooterHtml("en");
 
 function breadcrumb(crumbs: { label: string; href?: string }[]): string {
   return `<nav aria-label="breadcrumb"><ol>${crumbs
