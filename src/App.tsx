@@ -66,6 +66,8 @@ const FlexTournamentView = lazy(() => import("./pages/FlexTournamentView"));
 // Blog pages
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const ViBlog = lazy(() => import("./pages/ViBlog"));
+const ViBlogPost = lazy(() => import("./pages/ViBlogPost"));
 
 // Forum pages
 const Forum = lazy(() => import("./pages/Forum"));
@@ -100,6 +102,8 @@ const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamV
 const AdminPushNotification = lazy(() => import("./pages/admin/AdminPushNotification"));
 const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
+const AdminViBlog = lazy(() => import("./pages/admin/AdminViBlog"));
+const AdminViBlogEditor = lazy(() => import("./pages/admin/AdminViBlogEditor"));
 
 // Lazy load creator pages
 const CreatorOverview = lazy(() => import("./pages/creator/CreatorOverview"));
@@ -277,6 +281,9 @@ const App = () => (
                     <Route path="/admin/push" element={<AdminPushNotification />} />
                     <Route path="/admin/forum" element={<AdminForum />} />
                     <Route path="/admin/audit-log" element={<AdminAuditLog />} />
+                    <Route path="/admin/vi-blog" element={<AdminViBlog />} />
+                    <Route path="/admin/vi-blog/new" element={<AdminViBlogEditor />} />
+                    <Route path="/admin/vi-blog/:id/edit" element={<AdminViBlogEditor />} />
                     {/* Creator routes */}
                     <Route path="/creator" element={<CreatorOverview />} />
                     <Route path="/creator/analytics" element={<CreatorAnalytics />} />
@@ -302,8 +309,8 @@ const App = () => (
                     <Route path="/vi/tournament/:slug" element={<ViLanguageWrapper><ConditionalAuth><TournamentDetail /></ConditionalAuth></ViLanguageWrapper>} />
                     <Route path="/vi/org/:slug" element={<ViLanguageWrapper><OrganizationDetail /></ViLanguageWrapper>} />
                     <Route path="/vi/news" element={<ViLanguageWrapper><News /></ViLanguageWrapper>} />
-                    <Route path="/vi/blog" element={<ViLanguageWrapper><Blog /></ViLanguageWrapper>} />
-                    <Route path="/vi/blog/:slug" element={<ViLanguageWrapper><BlogPost /></ViLanguageWrapper>} />
+                    <Route path="/vi/blog" element={<ViLanguageWrapper><ViBlog /></ViLanguageWrapper>} />
+                    <Route path="/vi/blog/:slug" element={<ViLanguageWrapper><ViBlogPost /></ViLanguageWrapper>} />
                     <Route path="/vi/forum" element={<ViLanguageWrapper><Forum /></ViLanguageWrapper>} />
                     <Route path="/vi/forum/:categorySlug" element={<ViLanguageWrapper><ForumCategory /></ViLanguageWrapper>} />
                     <Route path="/vi/forum/post/:postId" element={<ViLanguageWrapper><ForumPostDetail /></ViLanguageWrapper>} />

@@ -2894,6 +2894,72 @@ export type Database = {
         }
         Relationships: []
       }
+      vi_blog_posts: {
+        Row: {
+          alternate_en_slug: string | null
+          author_name: string | null
+          category: string | null
+          content_html: string
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          faq_items: Json | null
+          focus_keyword: string | null
+          id: string
+          meta_description: string
+          meta_title: string
+          published_at: string | null
+          related_post_slugs: string[] | null
+          slug: string
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alternate_en_slug?: string | null
+          author_name?: string | null
+          category?: string | null
+          content_html: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          faq_items?: Json | null
+          focus_keyword?: string | null
+          id?: string
+          meta_description: string
+          meta_title: string
+          published_at?: string | null
+          related_post_slugs?: string[] | null
+          slug: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alternate_en_slug?: string | null
+          author_name?: string | null
+          category?: string | null
+          content_html?: string
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          faq_items?: Json | null
+          focus_keyword?: string | null
+          id?: string
+          meta_description?: string
+          meta_title?: string
+          published_at?: string | null
+          related_post_slugs?: string[] | null
+          slug?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           created_at: string
