@@ -4,6 +4,7 @@ import { DynamicMeta, BreadcrumbSchema, ArticleSchema, FAQSchema } from "@/compo
 import MainLayout from "@/components/layout/MainLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
+import { normalizeImageUrl, normalizeImagesInHtml } from "@/lib/url-utils";
 
 const ViBlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -49,7 +50,7 @@ const ViBlogPost = () => {
       <DynamicMeta
         title={post.meta_title.replace(/ \| ThePickleHub$/, "")}
         description={post.meta_description}
-        image={post.cover_image_url || undefined}
+        image={normalizeImageUrl(post.cover_image_url) || undefined}
         type="article"
         enableHreflang={!!alternateEnUrl}
       />
@@ -86,15 +87,15 @@ const ViBlogPost = () => {
 
         {post.cover_image_url && (
           <img
-            src={post.cover_image_url}
+            src={normalizeImageUrl(post.cover_image_url)}
             alt={post.title}
             className="w-full h-auto rounded-xl mb-8 border border-border"
           />
         )}
 
         <div
-          className="prose prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: post.content_html }}
+          className="prose prose-lg dark:prose-invert max-w-none prose-a:text-primary prose-a:underline prose-a:underline-offset-2 hover:prose-a:opacity-80 prose-table:border prose-table:border-border prose-th:bg-muted prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-border prose-h2:mt-12 prose-h2:text-foreground prose-h3:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-tr:even:bg-muted/30"
+          dangerouslySetInnerHTML={{ __html: normalizeImagesInHtml(post.content_html) }}
         />
 
         {faqItems.length > 0 && (
