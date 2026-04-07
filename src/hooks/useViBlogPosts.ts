@@ -31,22 +31,54 @@ export interface FaqItem {
 export type ViBlogPostInsert = Omit<ViBlogPost, "id" | "created_at" | "updated_at">;
 export type ViBlogPostUpdate = Partial<ViBlogPostInsert> & { id: string };
 
-// Helper to access the non-typed table
-function viBlogTable() {
-  return (supabase as unknown as { from: (table: string) => ReturnType<typeof supabase.from> }).from("vi_blog_posts");
+// Use REST API directly for non-typed table
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+async function viBlogFetch<T>(
+  path: string,
+  options: {
+    method?: string;
+    headers?: Record<string, string>;
+    body?: unknown;
+    single?: boolean;
+  } = {},
+): Promise<T> {
+  const session = (await supabase.auth.getSession()).data.session;
+  const authHeader = session?.access_token
+    ? `Bearer ${session.access_token}`
+    : `Bearer ${SUPABASE_KEY}`;
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/vi_blog_posts${path}`, {
+    method: options.method || "GET",
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: authHeader,
+      "Content-Type": "application/json",
+      ...(options.single ? { Accept: "application/vnd.pgrst.object+json" } : {}),
+      ...(options.method === "POST" ? { Prefer: "return=representation" } : {}),
+      ...(options.method === "PATCH" ? { Prefer: "return=representation" } : {}),
+      ...options.headers,
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || err.error || res.statusText);
+  }
+
+  if (options.method === "DELETE") return undefined as T;
+  return res.json();
 }
 
 export function usePublishedViBlogPosts() {
   return useQuery({
     queryKey: ["vi-blog-posts", "published"],
-    queryFn: async () => {
-      const { data, error } = await viBlogTable()
-        .select("id, slug, title, excerpt, cover_image_url, category, published_at, tags")
-        .eq("status", "published")
-        .order("published_at", { ascending: false });
-      if (error) throw error;
-      return (data || []) as Pick<ViBlogPost, "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "tags">[];
-    },
+    queryFn: () =>
+      viBlogFetch<Pick<ViBlogPost, "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "tags">[]>(
+        "?select=id,slug,title,excerpt,cover_image_url,category,published_at,tags&status=eq.published&order=published_at.desc",
+      ),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -54,16 +86,11 @@ export function usePublishedViBlogPosts() {
 export function useViBlogPostBySlug(slug: string | undefined) {
   return useQuery({
     queryKey: ["vi-blog-post", slug],
-    queryFn: async () => {
-      if (!slug) return null;
-      const { data, error } = await viBlogTable()
-        .select("*")
-        .eq("slug", slug)
-        .eq("status", "published")
-        .single();
-      if (error) throw error;
-      return data as ViBlogPost;
-    },
+    queryFn: () =>
+      viBlogFetch<ViBlogPost>(
+        `?slug=eq.${encodeURIComponent(slug!)}&status=eq.published`,
+        { single: true },
+      ),
     enabled: !!slug,
     staleTime: 5 * 60 * 1000,
   });
@@ -72,28 +99,16 @@ export function useViBlogPostBySlug(slug: string | undefined) {
 export function useAdminViBlogPosts() {
   return useQuery({
     queryKey: ["vi-blog-posts", "admin"],
-    queryFn: async () => {
-      const { data, error } = await viBlogTable()
-        .select("*")
-        .order("updated_at", { ascending: false });
-      if (error) throw error;
-      return (data || []) as ViBlogPost[];
-    },
+    queryFn: () =>
+      viBlogFetch<ViBlogPost[]>("?select=*&order=updated_at.desc"),
   });
 }
 
 export function useAdminViBlogPostById(id: string | undefined) {
   return useQuery({
     queryKey: ["vi-blog-post", "admin", id],
-    queryFn: async () => {
-      if (!id) return null;
-      const { data, error } = await viBlogTable()
-        .select("*")
-        .eq("id", id)
-        .single();
-      if (error) throw error;
-      return data as ViBlogPost;
-    },
+    queryFn: () =>
+      viBlogFetch<ViBlogPost>(`?id=eq.${encodeURIComponent(id!)}`, { single: true }),
     enabled: !!id,
   });
 }
@@ -101,14 +116,8 @@ export function useAdminViBlogPostById(id: string | undefined) {
 export function useCreateViBlogPost() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (post: ViBlogPostInsert) => {
-      const { data, error } = await viBlogTable()
-        .insert(post)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as ViBlogPost;
-    },
+    mutationFn: (post: ViBlogPostInsert) =>
+      viBlogFetch<ViBlogPost[]>("", { method: "POST", body: post }).then((arr) => arr[0]),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vi-blog-posts"] });
     },
@@ -118,19 +127,17 @@ export function useCreateViBlogPost() {
 export function useUpdateViBlogPost() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: ViBlogPostUpdate) => {
-      const { data, error } = await viBlogTable()
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as ViBlogPost;
-    },
+    mutationFn: ({ id, ...updates }: ViBlogPostUpdate) =>
+      viBlogFetch<ViBlogPost[]>(`?id=eq.${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: updates,
+      }).then((arr) => arr[0]),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["vi-blog-posts"] });
-      queryClient.invalidateQueries({ queryKey: ["vi-blog-post", (data as ViBlogPost).slug] });
-      queryClient.invalidateQueries({ queryKey: ["vi-blog-post", "admin", (data as ViBlogPost).id] });
+      if (data) {
+        queryClient.invalidateQueries({ queryKey: ["vi-blog-post", data.slug] });
+        queryClient.invalidateQueries({ queryKey: ["vi-blog-post", "admin", data.id] });
+      }
     },
   });
 }
@@ -138,12 +145,8 @@ export function useUpdateViBlogPost() {
 export function useDeleteViBlogPost() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await viBlogTable()
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) =>
+      viBlogFetch<void>(`?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vi-blog-posts"] });
     },

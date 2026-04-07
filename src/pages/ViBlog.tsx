@@ -16,9 +16,8 @@ const ViBlog = () => {
   return (
     <MainLayout>
       <DynamicMeta
-        title="Blog Pickleball Việt Nam | ThePickleHub"
+        title="Blog Pickleball Việt Nam"
         description="Đọc blog pickleball Việt Nam: luật chơi, kỹ thuật, sân chơi, giải đấu, và mọi điều về cộng đồng pickleball Việt từ ThePickleHub."
-        lang="vi"
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 

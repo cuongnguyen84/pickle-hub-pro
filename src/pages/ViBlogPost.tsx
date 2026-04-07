@@ -32,7 +32,7 @@ const ViBlogPost = () => {
     );
   }
 
-  const alternateUrl = post.alternate_en_slug
+  const alternateEnUrl = post.alternate_en_slug
     ? `https://www.thepicklehub.net/blog/${post.alternate_en_slug}`
     : undefined;
 
@@ -47,11 +47,11 @@ const ViBlogPost = () => {
   return (
     <MainLayout>
       <DynamicMeta
-        title={post.meta_title}
+        title={post.meta_title.replace(/ \| ThePickleHub$/, "")}
         description={post.meta_description}
         image={post.cover_image_url || undefined}
-        lang="vi"
-        alternateUrl={alternateUrl}
+        type="article"
+        enableHreflang={!!alternateEnUrl}
       />
       <BreadcrumbSchema items={breadcrumbItems} />
       <ArticleSchema
