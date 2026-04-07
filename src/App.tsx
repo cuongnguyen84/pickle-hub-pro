@@ -291,6 +291,46 @@ const App = () => (
                     {/* Public pages */}
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />
+
+                    {/* Vietnamese /vi/* routes — same components, ViLanguageWrapper sets lang */}
+                    <Route path="/vi" element={<ViLanguageWrapper><Index /></ViLanguageWrapper>} />
+                    <Route path="/vi/live" element={<ViLanguageWrapper><Live /></ViLanguageWrapper>} />
+                    <Route path="/vi/live/:id" element={<ViLanguageWrapper><WatchLive /></ViLanguageWrapper>} />
+                    <Route path="/vi/videos" element={<ViLanguageWrapper><Videos /></ViLanguageWrapper>} />
+                    <Route path="/vi/watch/:id" element={<ViLanguageWrapper><WatchVideo /></ViLanguageWrapper>} />
+                    <Route path="/vi/tournaments" element={<ViLanguageWrapper><Tournaments /></ViLanguageWrapper>} />
+                    <Route path="/vi/tournament/:slug" element={<ViLanguageWrapper><ConditionalAuth><TournamentDetail /></ConditionalAuth></ViLanguageWrapper>} />
+                    <Route path="/vi/org/:slug" element={<ViLanguageWrapper><OrganizationDetail /></ViLanguageWrapper>} />
+                    <Route path="/vi/news" element={<ViLanguageWrapper><News /></ViLanguageWrapper>} />
+                    <Route path="/vi/blog" element={<ViLanguageWrapper><Blog /></ViLanguageWrapper>} />
+                    <Route path="/vi/blog/:slug" element={<ViLanguageWrapper><BlogPost /></ViLanguageWrapper>} />
+                    <Route path="/vi/forum" element={<ViLanguageWrapper><Forum /></ViLanguageWrapper>} />
+                    <Route path="/vi/forum/:categorySlug" element={<ViLanguageWrapper><ForumCategory /></ViLanguageWrapper>} />
+                    <Route path="/vi/forum/post/:postId" element={<ViLanguageWrapper><ForumPostDetail /></ViLanguageWrapper>} />
+                    <Route path="/vi/forum/new" element={<ViLanguageWrapper><ForumPostCreate /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools" element={<ViLanguageWrapper><Tools /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/quick-tables" element={<ViLanguageWrapper><QuickTables /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/quick-tables/:shareId" element={<ViLanguageWrapper><ConditionalAuth><QuickTableView /></ConditionalAuth></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/quick-tables/:shareId/setup" element={<ViLanguageWrapper><QuickTableSetup /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/team-match" element={<ViLanguageWrapper><TeamMatchList /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/team-match/new" element={<ViLanguageWrapper><TeamMatchSetup /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/team-match/:id" element={<ViLanguageWrapper><ConditionalAuth><TeamMatchView /></ConditionalAuth></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/doubles-elimination" element={<ViLanguageWrapper><DoublesEliminationList /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/doubles-elimination/new" element={<ViLanguageWrapper><DoublesEliminationSetup /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/doubles-elimination/:shareId" element={<ViLanguageWrapper><ConditionalAuth><DoublesEliminationView /></ConditionalAuth></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/doubles-elimination/match/:matchId/score" element={<ViLanguageWrapper><DoublesEliminationScoring /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/flex-tournament" element={<ViLanguageWrapper><FlexTournamentList /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/flex-tournament/new" element={<ViLanguageWrapper><FlexTournamentSetup /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/flex-tournament/:shareId" element={<ViLanguageWrapper><ConditionalAuth><FlexTournamentView /></ConditionalAuth></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/dashboard" element={<ViLanguageWrapper><DashboardPicker /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/dashboard/:type/:id" element={<ViLanguageWrapper><TournamentDashboard /></ViLanguageWrapper>} />
+                    <Route path="/vi/search" element={<ViLanguageWrapper><Search /></ViLanguageWrapper>} />
+                    <Route path="/vi/privacy" element={<ViLanguageWrapper><Privacy /></ViLanguageWrapper>} />
+                    <Route path="/vi/terms" element={<ViLanguageWrapper><Terms /></ViLanguageWrapper>} />
+                    <Route path="/vi/login" element={<ViLanguageWrapper><Login /></ViLanguageWrapper>} />
+                    <Route path="/vi/account" element={<ViLanguageWrapper><Account /></ViLanguageWrapper>} />
+                    <Route path="/vi/notifications" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
+
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
