@@ -34,9 +34,8 @@ const AppHeader = () => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const toggleLanguage = () => {
-    setLanguage(language === "vi" ? "en" : "vi");
-  };
+  // Language prefix for navigation links
+  const langPrefix = location.pathname === "/vi" || location.pathname.startsWith("/vi/") ? "/vi" : "";
 
   const handleSignOut = async () => {
     await signOut();

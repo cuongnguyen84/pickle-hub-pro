@@ -22,6 +22,12 @@ const GEO_LANG_KEY = "geo_detected_language"; // cache geo-detected language
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     if (typeof window !== "undefined") {
+      // 0. URL-based: /vi/* routes force Vietnamese
+      const path = window.location.pathname;
+      if (path === "/vi" || path.startsWith("/vi/")) {
+        return "vi";
+      }
+
       // 1. User explicitly chose a language
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === "vi" || stored === "en") {
@@ -33,8 +39,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         return geoCached;
       }
     }
-    // 3. Default to Vietnamese, will be overridden by geo-check
-    return "vi";
+    // 3. Default to English (EN routes are default)
+    return "en";
   });
 
   // Auto-detect language by IP country (only if user hasn't manually chosen)
