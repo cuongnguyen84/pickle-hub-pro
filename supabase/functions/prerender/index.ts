@@ -918,6 +918,110 @@ function render404(path: string): Response {
   );
 }
 
+// ─── Vietnamese Blog (from database) ───────────────────────
+
+async function renderViBlogPost(supabase: Supabase, slug: string): Promise<Response> {
+  const { data: post } = await supabase
+    .from("vi_blog_posts")
+    .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at")
+    .eq("slug", slug)
+    .eq("status", "published")
+    .single();
+
+  if (!post) return render404(`/vi/blog/${slug}`);
+
+  const url = `${SITE_URL}/vi/blog/${slug}`;
+  const p = post as { title: string; meta_title: string; meta_description: string; content_html: string; cover_image_url: string | null; faq_items: { question: string; answer: string }[] | null; alternate_en_slug: string | null; published_at: string | null; updated_at: string | null };
+
+  let extraMeta = "";
+  if (p.alternate_en_slug) {
+    extraMeta = `<link rel="alternate" hreflang="en" href="${SITE_URL}/blog/${p.alternate_en_slug}"/>
+<link rel="alternate" hreflang="vi" href="${url}"/>
+<link rel="alternate" hreflang="x-default" href="${SITE_URL}/blog/${p.alternate_en_slug}"/>`;
+  }
+
+  const articleSchema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: p.title,
+    description: p.meta_description,
+    image: absImage(p.cover_image_url),
+    datePublished: p.published_at,
+    dateModified: p.updated_at,
+    author: { "@type": "Organization", name: "ThePickleHub", url: SITE_URL },
+    publisher: { "@type": "Organization", name: "ThePickleHub", logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE } },
+    inLanguage: "vi-VN",
+  });
+  extraMeta += `\n<script type="application/ld+json">${articleSchema}</script>`;
+
+  if (p.faq_items && Array.isArray(p.faq_items) && p.faq_items.length > 0) {
+    const faqSchema = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: p.faq_items.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: { "@type": "Answer", text: item.answer },
+      })),
+    });
+    extraMeta += `\n<script type="application/ld+json">${faqSchema}</script>`;
+  }
+
+  const bc = breadcrumb([
+    { label: "Trang chủ", href: `${SITE_URL}/vi` },
+    { label: "Blog", href: `${SITE_URL}/vi/blog` },
+    { label: p.title },
+  ]);
+
+  const { data: related } = await supabase
+    .from("vi_blog_posts")
+    .select("slug, title")
+    .eq("status", "published")
+    .neq("slug", slug)
+    .limit(3);
+
+  const relatedItems = (related || []) as { slug: string; title: string }[];
+  const relatedSection = relatedItems.length > 0
+    ? `<section><h2>Bài viết liên quan</h2><ul>${relatedItems.map((r) => `<li><a href="${SITE_URL}/vi/blog/${r.slug}">${escapeHtml(r.title)}</a></li>`).join("")}</ul></section>`
+    : "";
+
+  return htmlResponse(
+    buildHtml({
+      title: buildTitle(p.meta_title.replace(/ \| ThePickleHub$/, "")),
+      description: p.meta_description,
+      url,
+      image: absImage(p.cover_image_url),
+      type: "article",
+      lang: "vi",
+      extraMeta,
+      bodyContent: `${bc}<article>${p.content_html}</article>${relatedSection}`,
+    }),
+  );
+}
+
+async function renderViBlogIndex(supabase: Supabase): Promise<Response> {
+  const { data: posts } = await supabase
+    .from("vi_blog_posts")
+    .select("slug, title, excerpt")
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(20);
+
+  const items = ((posts || []) as { slug: string; title: string; excerpt: string | null }[])
+    .map((p) => `<li><a href="${SITE_URL}/vi/blog/${p.slug}">${escapeHtml(p.title)}</a><p>${escapeHtml(p.excerpt || "")}</p></li>`)
+    .join("");
+
+  return htmlResponse(
+    buildHtml({
+      title: "Blog Pickleball Việt Nam | ThePickleHub",
+      description: "Đọc blog pickleball Việt Nam: luật chơi, kỹ thuật, sân chơi, giải đấu, và mọi điều về cộng đồng pickleball Việt từ ThePickleHub.",
+      url: `${SITE_URL}/vi/blog`,
+      lang: "vi",
+      bodyContent: items ? `<ul>${items}</ul>` : "",
+    }),
+  );
+}
+
 // ─── Vietnamese Home ───────────────────────────────────────
 
 async function renderHomeVi(supabase: Supabase): Promise<Response> {
