@@ -4,6 +4,7 @@ import { DynamicMeta, BreadcrumbSchema, ArticleSchema, FAQSchema } from "@/compo
 import MainLayout from "@/components/layout/MainLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
+import { normalizeImageUrl, normalizeImagesInHtml } from "@/lib/url-utils";
 
 const ViBlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -49,7 +50,7 @@ const ViBlogPost = () => {
       <DynamicMeta
         title={post.meta_title.replace(/ \| ThePickleHub$/, "")}
         description={post.meta_description}
-        image={post.cover_image_url || undefined}
+        image={normalizeImageUrl(post.cover_image_url) || undefined}
         type="article"
         enableHreflang={!!alternateEnUrl}
       />
@@ -86,7 +87,7 @@ const ViBlogPost = () => {
 
         {post.cover_image_url && (
           <img
-            src={post.cover_image_url}
+            src={normalizeImageUrl(post.cover_image_url)}
             alt={post.title}
             className="w-full h-auto rounded-xl mb-8 border border-border"
           />
