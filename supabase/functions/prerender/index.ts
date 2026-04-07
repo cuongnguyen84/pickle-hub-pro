@@ -1003,12 +1003,13 @@ Deno.serve(async (req) => {
       return await renderHomeVi(supabase);
     }
 
-    // For /vi/* paths that map to same EN content, render with lang="vi" and correct canonical
-    // For now, /vi/* pages use same content as EN but with Vietnamese header/footer/lang attribute
-    // Vietnamese-specific content will be added in future phases
-
-    // If it's a /vi/* path, we use the stripped path for routing but pass lang for rendering
-    // For simplicity in this phase, /vi/* static pages get a basic Vietnamese wrapper
+    // Vietnamese blog post detail (from database)
+    if (lang === "vi") {
+      let viMatch: RegExpMatchArray | null;
+      viMatch = path.match(/^\/blog\/([^/]+)$/);
+      if (viMatch) return await renderViBlogPost(supabase, viMatch[1]);
+      if (path === "/blog") return await renderViBlogIndex(supabase);
+    }
 
     // Home
     if (path === "/" || path === "") return await renderHome(supabase);
