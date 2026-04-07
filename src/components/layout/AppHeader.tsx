@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
@@ -34,23 +35,22 @@ const AppHeader = () => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const toggleLanguage = () => {
-    setLanguage(language === "vi" ? "en" : "vi");
-  };
+  // Language prefix for navigation links
+  const langPrefix = location.pathname === "/vi" || location.pathname.startsWith("/vi/") ? "/vi" : "";
 
   const handleSignOut = async () => {
     await signOut();
   };
 
   const navLinks = [
-    { path: "/", label: t.nav.home },
-    { path: "/live", label: t.nav.live },
-    { path: "/videos", label: t.nav.videos },
-    { path: "/news", label: t.news.title },
-    { path: "/forum", label: t.forum.navLabel },
-    { path: "/tools", label: t.nav.tools },
-    { path: "/blog", label: "Blog" },
-    { path: "/tournaments", label: t.nav.tournaments },
+    { path: `${langPrefix}/`, label: t.nav.home },
+    { path: `${langPrefix}/live`, label: t.nav.live },
+    { path: `${langPrefix}/videos`, label: t.nav.videos },
+    { path: `${langPrefix}/news`, label: t.news.title },
+    { path: `${langPrefix}/forum`, label: t.forum.navLabel },
+    { path: `${langPrefix}/tools`, label: t.nav.tools },
+    { path: `${langPrefix}/blog`, label: "Blog" },
+    { path: `${langPrefix}/tournaments`, label: t.nav.tournaments },
   ];
 
   return (
@@ -107,12 +107,7 @@ const AppHeader = () => {
             </button>
 
             {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              className="px-2 py-1 rounded-md text-xs font-medium text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors duration-200"
-            >
-              {language === "vi" ? "EN" : "VN"}
-            </button>
+            <LanguageSwitcher />
 
             {/* Notification Bell - Desktop */}
             <NotificationBell className="hidden md:block" />
