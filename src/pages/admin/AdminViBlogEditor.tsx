@@ -22,6 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ChevronLeft, Plus, Trash2, Eye, Save } from "lucide-react";
+import { normalizeImageUrl } from "@/lib/url-utils";
 
 const CATEGORIES = [
   { value: "beginner", label: "Người mới" },
