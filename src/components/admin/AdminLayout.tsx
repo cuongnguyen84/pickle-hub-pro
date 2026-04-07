@@ -44,6 +44,7 @@ const navItems = [
   { path: "/admin/push", icon: Bell, labelKey: "push" as const },
   { path: "/admin/forum", icon: MessageSquare, labelKey: "forum" as const },
   { path: "/admin/audit-log", icon: ScrollText, labelKey: "auditLog" as const },
+  { path: "/admin/vi-blog", icon: ScrollText, labelKey: "viBlog" as const },
 ];
 
 // Bottom tab items for mobile - show the most used ones
@@ -125,6 +126,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       push: "Push",
       forum: t.forum.title,
       auditLog: t.admin.auditLog?.title || "Audit Log",
+      viBlog: "Blog VI",
     };
     return labels[key] || key;
   };
