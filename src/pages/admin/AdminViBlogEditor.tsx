@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
@@ -22,6 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { ChevronLeft, Plus, Trash2, Eye, Save } from "lucide-react";
+import { normalizeImageUrl } from "@/lib/url-utils";
 
 const CATEGORIES = [
   { value: "beginner", label: "Người mới" },
@@ -249,7 +250,7 @@ export default function AdminViBlogEditor() {
             <Label>Ảnh cover (URL)</Label>
             <Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} placeholder="https://..." />
             {coverImageUrl && (
-              <img src={coverImageUrl} alt="Cover preview" className="h-32 object-cover rounded-lg border border-border" />
+              <img src={normalizeImageUrl(coverImageUrl)} alt="Cover preview" className="h-32 object-cover rounded-lg border border-border" />
             )}
           </div>
 
