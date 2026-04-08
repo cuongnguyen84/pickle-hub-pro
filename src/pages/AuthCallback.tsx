@@ -4,16 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 /**
- * Auth Callback Page
- * 
- * For native iOS/Android:
- * - Supabase client auto-exchanges the PKCE code on page load.
- * - We listen for the session, then redirect via custom URL scheme
- *   with access_token + refresh_token so the WebView can set the session.
- * 
- * For web:
- * - Standard session handling via Supabase client.
+ * Auth Callback Page — handles 3 flows:
+ *
+ * 1. NATIVE (iOS/Android): PKCE code exchange → deep link with tokens
+ * 2. OAUTH BROKER RETURN (on pickle-hub-pro.lovable.app):
+ *    Tokens in hash from OAuth broker + ?redirect=https://www.thepicklehub.net/
+ *    → set session → cross-domain handoff to custom domain
+ * 3. CROSS-DOMAIN HANDOFF RECEIVER (on thepicklehub.net):
+ *    Tokens in hash from lovable.app handoff + redirect path in hash
+ *    → setSession → navigate locally
  */
+
+const CUSTOM_DOMAIN_HOSTNAMES = new Set(["thepicklehub.net", "www.thepicklehub.net"]);
+
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -21,13 +24,15 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const isNativeFlow = searchParams.get("native") === "1";
-
-    // Check if this is a cross-domain token handoff (tokens in URL hash)
     const hashFragment = window.location.hash;
     const hasTokensInHash = hashFragment.includes("access_token=") && hashFragment.includes("refresh_token=");
+    const currentHostname = window.location.hostname;
+    const isOnCustomDomain = CUSTOM_DOMAIN_HOSTNAMES.has(currentHostname);
 
-    if (hasTokensInHash && !isNativeFlow) {
-      console.log("[AuthCallback] Cross-domain token handoff detected");
+    // ─── FLOW 3: Cross-domain handoff RECEIVER (on custom domain) ───
+    // URL: thepicklehub.net/auth/callback#access_token=...&refresh_token=...&redirect=/path
+    if (hasTokensInHash && isOnCustomDomain && !isNativeFlow) {
+      console.log("[AuthCallback] Cross-domain handoff receiver (custom domain)");
 
       const hashParams = new URLSearchParams(hashFragment.substring(1));
       const redirectPath = hashParams.get("redirect") || "/";
@@ -35,11 +40,10 @@ const AuthCallback = () => {
       const refreshToken = hashParams.get("refresh_token");
 
       if (accessToken && refreshToken) {
-        // Manually set session with the received tokens
         supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
-        }).then(({ data, error }) => {
+        }).then(({ error }) => {
           if (handledRef.current) return;
           handledRef.current = true;
 
@@ -57,11 +61,9 @@ const AuthCallback = () => {
         navigate("/", { replace: true });
       }
 
-      // Safety timeout
       const timeout = setTimeout(() => {
         if (!handledRef.current) {
           handledRef.current = true;
-          console.error("[AuthCallback] Token handoff timeout");
           navigate(redirectPath, { replace: true });
         }
       }, 5000);
@@ -69,32 +71,86 @@ const AuthCallback = () => {
       return () => clearTimeout(timeout);
     }
 
+    // ─── FLOW 2: OAuth broker return (on lovable.app published domain) ───
+    // URL: pickle-hub-pro.lovable.app/auth/callback?redirect=https://www.thepicklehub.net/#access_token=...
+    if (hasTokensInHash && !isOnCustomDomain && !isNativeFlow) {
+      console.log("[AuthCallback] OAuth broker return (published domain)");
+
+      const hashParams = new URLSearchParams(hashFragment.substring(1));
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      // redirect is in query string, NOT in hash
+      const redirectTo = searchParams.get("redirect") || "/";
+
+      if (accessToken && refreshToken) {
+        // Set session on this domain first
+        supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        }).then(({ error }) => {
+          if (handledRef.current) return;
+          handledRef.current = true;
+
+          if (error) {
+            console.error("[AuthCallback] setSession error:", error);
+            navigate("/", { replace: true });
+            return;
+          }
+
+          console.log("[AuthCallback] Session set, checking cross-domain redirect to:", redirectTo);
+
+          // If redirect target is a different domain, do cross-domain handoff
+          if (/^https?:\/\//i.test(redirectTo)) {
+            try {
+              const targetUrl = new URL(redirectTo);
+              if (targetUrl.hostname !== currentHostname) {
+                const handoffUrl = `${targetUrl.origin}/auth/callback#access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}&type=bearer&redirect=${encodeURIComponent(targetUrl.pathname + targetUrl.search)}`;
+                console.log("[AuthCallback] Cross-domain handoff → custom domain");
+                window.location.replace(handoffUrl);
+                return;
+              }
+            } catch {
+              // Invalid URL, fall through
+            }
+            window.location.replace(redirectTo);
+            return;
+          }
+
+          navigate(redirectTo, { replace: true });
+        });
+      } else {
+        navigate("/", { replace: true });
+      }
+
+      const timeout = setTimeout(() => {
+        if (!handledRef.current) {
+          handledRef.current = true;
+          navigate("/", { replace: true });
+        }
+      }, 5000);
+
+      return () => clearTimeout(timeout);
+    }
+
+    // ─── FLOW 1: Native app (PKCE) ───
     if (isNativeFlow) {
       console.log("[AuthCallback] Native flow detected, waiting for session...");
 
-      // Function to redirect to app with tokens
       const redirectToApp = (accessToken: string, refreshToken: string) => {
         if (handledRef.current) return;
         handledRef.current = true;
-        
         const customUrl = `thepicklehub://auth/callback?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}`;
         console.log("[AuthCallback] Redirecting to app with tokens");
         window.location.href = customUrl;
       };
 
-      // Listen for auth state change (Supabase will fire this after exchanging the code)
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        console.log("[AuthCallback] Auth event in browser:", event, !!session);
         if (session?.access_token && session?.refresh_token) {
           subscription.unsubscribe();
-          // Small delay to ensure Supabase finishes internal state
-          setTimeout(() => {
-            redirectToApp(session.access_token, session.refresh_token);
-          }, 300);
+          setTimeout(() => redirectToApp(session.access_token, session.refresh_token), 300);
         }
       });
 
-      // Also check if session is already available (code may have been exchanged already)
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.access_token && session?.refresh_token) {
           subscription.unsubscribe();
@@ -102,16 +158,12 @@ const AuthCallback = () => {
         }
       });
 
-      // Safety timeout - if nothing happens after 10s, show error
       const timeout = setTimeout(() => {
         if (!handledRef.current) {
-          console.error("[AuthCallback] Timeout waiting for session");
-          // Try one more time
           supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.access_token && session?.refresh_token) {
               redirectToApp(session.access_token, session.refresh_token);
             } else {
-              // Redirect to app without tokens - polling will handle it
               window.location.href = "thepicklehub://auth/callback?error=timeout";
             }
           });
@@ -124,29 +176,24 @@ const AuthCallback = () => {
       };
     }
 
-    // Web flow: wait for PKCE code exchange, then handle redirect
+    // ─── FLOW 0: Standard web PKCE (no tokens in hash, no native) ───
     const redirectTo = searchParams.get("redirect") || "/";
 
     const performRedirect = (session: { access_token: string; refresh_token: string }) => {
       if (handledRef.current) return;
       handledRef.current = true;
 
-      // If redirect target is an external URL (cross-domain),
-      // pass tokens so the target domain can restore the session
       if (/^https?:\/\//i.test(redirectTo)) {
         try {
           const targetUrl = new URL(redirectTo);
-          const currentHost = window.location.hostname;
-
-          // Only pass tokens when redirecting to a different domain
-          if (targetUrl.hostname !== currentHost) {
-            const tokenRedirectUrl = `${targetUrl.origin}/auth/callback#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}&type=bearer&redirect=${encodeURIComponent(targetUrl.pathname + targetUrl.search)}`;
+          if (targetUrl.hostname !== currentHostname) {
+            const handoffUrl = `${targetUrl.origin}/auth/callback#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}&type=bearer&redirect=${encodeURIComponent(targetUrl.pathname + targetUrl.search)}`;
             console.log("[AuthCallback] Cross-domain redirect with tokens");
-            window.location.replace(tokenRedirectUrl);
+            window.location.replace(handoffUrl);
             return;
           }
         } catch {
-          // Invalid URL, fall through to regular redirect
+          // fall through
         }
         window.location.replace(redirectTo);
         return;
@@ -155,16 +202,13 @@ const AuthCallback = () => {
       navigate(redirectTo, { replace: true });
     };
 
-    // Listen for auth state change (PKCE code exchange fires SIGNED_IN)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[AuthCallback] Web auth event:", event, !!session);
       if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
         subscription.unsubscribe();
         performRedirect(session);
       }
     });
 
-    // Also check if session is already available
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         subscription.unsubscribe();
@@ -172,12 +216,10 @@ const AuthCallback = () => {
       }
     });
 
-    // Safety timeout
     const timeout = setTimeout(() => {
       if (!handledRef.current) {
         handledRef.current = true;
         subscription.unsubscribe();
-        console.error("[AuthCallback] Web flow timeout");
         navigate(redirectTo, { replace: true });
       }
     }, 8000);
