@@ -14,6 +14,8 @@ import { DynamicMeta, OrganizationSchema } from "@/components/seo";
 
 const OpenRegistrationSection = lazy(() => import("@/components/quicktable/OpenRegistrationSection").then(m => ({ default: m.OpenRegistrationSection })));
 const NewsCard = lazy(() => import("@/components/news/NewsCard").then(m => ({ default: m.NewsCard })));
+const ViHomeBlogSection = lazy(() => import("@/components/content/ViHomeBlogSection").then(m => ({ default: m.ViHomeBlogSection })));
+const VietnameseContentTeaser = lazy(() => import("@/components/content/VietnameseContentTeaser").then(m => ({ default: m.VietnameseContentTeaser })));
 
 const Index = () => {
   const { t, language } = useI18n();
