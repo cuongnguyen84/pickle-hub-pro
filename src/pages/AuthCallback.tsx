@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { DynamicMeta } from "@/components/seo";
 import { Loader2 } from "lucide-react";
 
 /**
@@ -232,6 +233,10 @@ const AuthCallback = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <DynamicMeta title="The Pickle Hub - Đăng nhập" noindex={true} />
+      <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary mb-2">
+        <span className="text-primary-foreground font-bold text-xl">TPH</span>
+      </div>
       <Loader2 className="w-8 h-8 animate-spin text-primary" />
       <p className="text-foreground-muted">Đang xác thực...</p>
     </div>
