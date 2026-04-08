@@ -22,6 +22,55 @@ const AuthCallback = () => {
   useEffect(() => {
     const isNativeFlow = searchParams.get("native") === "1";
 
+    // Check if this is a cross-domain token handoff (tokens in URL hash)
+    const hashFragment = window.location.hash;
+    const hasTokensInHash = hashFragment.includes("access_token=") && hashFragment.includes("refresh_token=");
+
+    if (hasTokensInHash && !isNativeFlow) {
+      console.log("[AuthCallback] Cross-domain token handoff detected");
+
+      // Extract redirect path from hash params
+      const hashParams = new URLSearchParams(hashFragment.substring(1));
+      const redirectPath = hashParams.get("redirect") || "/";
+
+      // Supabase client auto-detects tokens in URL hash and sets session.
+      // Listen for the session to be set, then redirect.
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (handledRef.current) return;
+        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") && session) {
+          handledRef.current = true;
+          subscription.unsubscribe();
+          console.log("[AuthCallback] Session restored on custom domain, redirecting to:", redirectPath);
+          navigate(redirectPath, { replace: true });
+        }
+      });
+
+      // Fallback: check if session is already available
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (handledRef.current) return;
+        if (session) {
+          handledRef.current = true;
+          subscription.unsubscribe();
+          navigate(redirectPath, { replace: true });
+        }
+      });
+
+      // Safety timeout
+      const timeout = setTimeout(() => {
+        if (!handledRef.current) {
+          handledRef.current = true;
+          subscription.unsubscribe();
+          console.error("[AuthCallback] Token handoff timeout");
+          navigate(redirectPath, { replace: true });
+        }
+      }, 5000);
+
+      return () => {
+        subscription.unsubscribe();
+        clearTimeout(timeout);
+      };
+    }
+
     if (isNativeFlow) {
       console.log("[AuthCallback] Native flow detected, waiting for session...");
 
