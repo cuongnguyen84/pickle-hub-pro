@@ -1062,7 +1062,7 @@ async function renderViBlogIndex(supabase: Supabase): Promise<Response> {
 // ─── Vietnamese Home ───────────────────────────────────────
 
 async function renderHomeVi(supabase: Supabase): Promise<Response> {
-  const [liveRes, videoRes] = await Promise.all([
+  const [liveRes, videoRes, blogRes] = await Promise.all([
     supabase
       .from("public_livestreams")
       .select("id, title, status")
@@ -1075,6 +1075,12 @@ async function renderHomeVi(supabase: Supabase): Promise<Response> {
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("vi_blog_posts")
+      .select("slug, title, excerpt")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(6),
   ]);
 
   const liveItems = (liveRes.data || [])
@@ -1083,6 +1089,17 @@ async function renderHomeVi(supabase: Supabase): Promise<Response> {
   const videoItems = (videoRes.data || [])
     .map((v) => `<li><a href="${SITE_URL}/vi/watch/${v.id}">${escapeHtml(v.title)}</a></li>`)
     .join("");
+
+  const blogItems = (blogRes.data || [])
+    .map((b: { slug: string; title: string; excerpt: string | null }) =>
+      `<li><a href="${SITE_URL}/vi/blog/${b.slug}"><h3>${escapeHtml(b.title)}</h3><p>${escapeHtml(b.excerpt || "")}</p></a></li>`)
+    .join("");
+
+  const blogSection = blogItems
+    ? `<h2>Bài viết mới nhất</h2>
+<ul>${blogItems}</ul>
+<p><a href="${SITE_URL}/vi/blog">Xem tất cả bài viết →</a></p>`
+    : "";
 
   const title = "ThePickleHub - Cộng đồng Pickleball Việt Nam";
   const description =
@@ -1115,6 +1132,7 @@ async function renderHomeVi(supabase: Supabase): Promise<Response> {
           <li><a href="${SITE_URL}/vi/blog">Blog hướng dẫn</a> - Luật chơi, kỹ thuật, chiến thuật</li>
           <li><a href="${SITE_URL}/vi/forum">Diễn đàn</a> - Thảo luận với cộng đồng</li>
         </ul>
+        ${blogSection}
         ${liveItems ? `<h2>Livestream</h2><ul>${liveItems}</ul>` : ""}
         ${videoItems ? `<h2>Video mới</h2><ul>${videoItems}</ul>` : ""}
       `,
