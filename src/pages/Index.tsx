@@ -102,6 +102,13 @@ const Index = () => {
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
       </section>
 
+      {/* Vietnamese Blog Section - only on /vi */}
+      {language === 'vi' && (
+        <Suspense fallback={null}>
+          <ViHomeBlogSection />
+        </Suspense>
+      )}
+
       {/* Scheduled Section - only render when loaded and needed to avoid CLS */}
       {!streamsLoading && showScheduledFirst && (
         <section className="container-wide section-spacing">
@@ -246,6 +253,14 @@ const Index = () => {
           </div> :
         null}
       </section>
+
+
+      {/* Vietnamese Content Teaser - only on EN homepage */}
+      {language === 'en' && (
+        <Suspense fallback={null}>
+          <VietnameseContentTeaser />
+        </Suspense>
+      )}
 
       {/* SEO Content Section - Features Overview */}
       <section className="container-wide py-12 border-t border-border">
