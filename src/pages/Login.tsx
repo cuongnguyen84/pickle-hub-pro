@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { DynamicMeta } from "@/components/seo";
@@ -17,6 +18,48 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { isNativeApp } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
 import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
+
+type WebOAuthProvider = "google" | "apple";
+
+const PUBLISHED_OAUTH_BROKER_URL = "https://pickle-hub-pro.lovable.app/~oauth/initiate";
+const CUSTOM_DOMAIN_OAUTH_HOSTNAMES = new Set(["thepicklehub.net", "www.thepicklehub.net"]);
+
+const publishedDomainLovableAuth = createLovableAuth({
+  oauthBrokerUrl: PUBLISHED_OAUTH_BROKER_URL,
+});
+
+const signInWithManagedWebOAuth = async (
+  provider: WebOAuthProvider,
+  redirectUri: string,
+): Promise<{ error: Error | null; redirected?: boolean }> => {
+  const authClient =
+    typeof window !== "undefined" && CUSTOM_DOMAIN_OAUTH_HOSTNAMES.has(window.location.hostname)
+      ? publishedDomainLovableAuth
+      : null;
+
+  if (!authClient) {
+    return lovable.auth.signInWithOAuth(provider, {
+      redirect_uri: redirectUri,
+    });
+  }
+
+  const result = await authClient.signInWithOAuth(provider, {
+    redirect_uri: redirectUri,
+  });
+
+  if (result.redirected || result.error) {
+    return result;
+  }
+
+  try {
+    await supabase.auth.setSession(result.tokens);
+    return result;
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
+  }
+};
 
 const Login = () => {
   const { t } = useI18n();
@@ -101,9 +144,6 @@ const Login = () => {
 
     try {
       if (isNativeApp()) {
-        // Native: Open OAuth in SFSafariViewController to avoid disallowed_useragent
-        // Add native=1 param so AuthCallback knows to redirect via custom URL scheme
-        console.log("[OAuth] Using Browser plugin for native Google OAuth");
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
@@ -115,18 +155,13 @@ const Login = () => {
         if (error) throw error;
         if (data?.url) {
           setOAuthInProgress(true);
-          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+          await Browser.open({ url: data.url, presentationStyle: "popover" });
         }
       } else {
-        // Web: Standard OAuth redirect
-        console.log("[OAuth] Using Lovable managed OAuth for Google");
-        const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: "https://pickle-hub-pro.lovable.app",
-        });
+        const { error } = await signInWithManagedWebOAuth("google", getSiteUrl());
         if (error) throw error;
       }
     } catch (err: unknown) {
-      console.error("[OAuth] Error:", err);
       toast({
         variant: "destructive",
         title: t.common.error,
@@ -141,8 +176,6 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       if (isNativeApp()) {
-        // Native: Open OAuth in external browser (same pattern as Google)
-        console.log("[OAuth] Using Browser plugin for native Apple OAuth");
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "apple",
           options: {
@@ -154,13 +187,10 @@ const Login = () => {
         if (error) throw error;
         if (data?.url) {
           setOAuthInProgress(true);
-          await Browser.open({ url: data.url, presentationStyle: 'popover' });
+          await Browser.open({ url: data.url, presentationStyle: "popover" });
         }
       } else {
-        // Web: Use Lovable managed OAuth
-        const { error } = await lovable.auth.signInWithOAuth("apple", {
-          redirect_uri: "https://pickle-hub-pro.lovable.app",
-        });
+        const { error } = await signInWithManagedWebOAuth("apple", getSiteUrl());
         if (error) throw error;
       }
     } catch (err: unknown) {
