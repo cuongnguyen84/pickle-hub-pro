@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { ViBlogCard } from "./ViBlogCard";
-import { SectionHeader } from "./SectionHeader";
+
 
 export function ViHomeBlogSection() {
   const { data: posts, isLoading } = usePublishedViBlogPosts();
