@@ -14,6 +14,8 @@ import { DynamicMeta, OrganizationSchema } from "@/components/seo";
 
 const OpenRegistrationSection = lazy(() => import("@/components/quicktable/OpenRegistrationSection").then(m => ({ default: m.OpenRegistrationSection })));
 const NewsCard = lazy(() => import("@/components/news/NewsCard").then(m => ({ default: m.NewsCard })));
+const ViHomeBlogSection = lazy(() => import("@/components/content/ViHomeBlogSection").then(m => ({ default: m.ViHomeBlogSection })));
+const VietnameseContentTeaser = lazy(() => import("@/components/content/VietnameseContentTeaser").then(m => ({ default: m.VietnameseContentTeaser })));
 
 const Index = () => {
   const { t, language } = useI18n();
@@ -99,6 +101,13 @@ const Index = () => {
         {/* Decorative gradient */}
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
       </section>
+
+      {/* Vietnamese Blog Section - only on /vi */}
+      {language === 'vi' && (
+        <Suspense fallback={null}>
+          <ViHomeBlogSection />
+        </Suspense>
+      )}
 
       {/* Scheduled Section - only render when loaded and needed to avoid CLS */}
       {!streamsLoading && showScheduledFirst && (
@@ -244,6 +253,14 @@ const Index = () => {
           </div> :
         null}
       </section>
+
+
+      {/* Vietnamese Content Teaser - only on EN homepage */}
+      {language === 'en' && (
+        <Suspense fallback={null}>
+          <VietnameseContentTeaser />
+        </Suspense>
+      )}
 
       {/* SEO Content Section - Features Overview */}
       <section className="container-wide py-12 border-t border-border">
