@@ -279,7 +279,7 @@ function normalizeImagesInHtml(html: string): string {
 type Supabase = ReturnType<typeof createClient>;
 
 async function renderHome(supabase: Supabase): Promise<Response> {
-  const [liveRes, videoRes] = await Promise.all([
+  const [liveRes, videoRes, viBlogRes] = await Promise.all([
     supabase
       .from("public_livestreams")
       .select("id, title, status")
@@ -292,6 +292,12 @@ async function renderHome(supabase: Supabase): Promise<Response> {
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("vi_blog_posts")
+      .select("slug, title, excerpt")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(3),
   ]);
 
   const liveItems = (liveRes.data || [])
@@ -300,6 +306,17 @@ async function renderHome(supabase: Supabase): Promise<Response> {
   const videoItems = (videoRes.data || [])
     .map((v) => `<li><a href="${SITE_URL}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`)
     .join("");
+
+  const viBlogItems = (viBlogRes.data || [])
+    .map((b: { slug: string; title: string }) => `<li><a href="${SITE_URL}/vi/blog/${b.slug}" hreflang="vi">${escapeHtml(b.title)}</a></li>`)
+    .join("");
+
+  const viBlogSection = viBlogItems
+    ? `<h2>Pickleball in Vietnam 🇻🇳</h2>
+<p>Vietnamese pickleball content from our local team:</p>
+<ul>${viBlogItems}</ul>
+<p><a href="${SITE_URL}/vi" hreflang="vi">Visit Vietnamese site →</a></p>`
+    : "";
 
   const title = "ThePickleHub - Pickleball Tournaments, Livestream & Community";
   const description =
@@ -335,6 +352,7 @@ async function renderHome(supabase: Supabase): Promise<Response> {
         </ul>
         ${liveItems ? `<h2>Livestream</h2><ul>${liveItems}</ul>` : ""}
         ${videoItems ? `<h2>Latest Videos</h2><ul>${videoItems}</ul>` : ""}
+        ${viBlogSection}
       `,
     }),
   );
