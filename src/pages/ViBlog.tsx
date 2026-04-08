@@ -1,10 +1,8 @@
-import { Link } from "react-router-dom";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { DynamicMeta, BreadcrumbSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
-import { Calendar, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { normalizeImageUrl } from "@/lib/url-utils";
+import { ViBlogCard } from "@/components/content/ViBlogCard";
 
 const ViBlog = () => {
   const { data: posts, isLoading } = usePublishedViBlogPosts();
@@ -41,41 +39,7 @@ const ViBlog = () => {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
-              <Link
-                key={post.slug}
-                to={`/vi/blog/${post.slug}`}
-                className="group block rounded-xl border border-border bg-card p-6 transition-all duration-200 hover:border-primary/50 hover:shadow-lg"
-              >
-                {post.cover_image_url && (
-                  <img
-                    src={normalizeImageUrl(post.cover_image_url)}
-                    alt={post.title}
-                    className="w-full h-40 object-cover rounded-lg mb-4"
-                    loading="lazy"
-                  />
-                )}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {post.published_at && (
-                    <time dateTime={post.published_at}>
-                      {new Date(post.published_at).toLocaleDateString("vi-VN")}
-                    </time>
-                  )}
-                  {post.category && (
-                    <span className="bg-muted px-2 py-0.5 rounded text-xs">{post.category}</span>
-                  )}
-                </div>
-                <h2 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                  {post.title}
-                </h2>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                  {post.excerpt}
-                </p>
-                <div className="flex items-center gap-1 text-sm font-medium text-primary">
-                  Đọc tiếp
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
+              <ViBlogCard key={post.slug} post={post} />
             ))}
           </div>
         )}
