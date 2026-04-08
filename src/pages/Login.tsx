@@ -21,6 +21,31 @@ import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
 
 type WebOAuthProvider = "google" | "apple";
 
+/**
+ * ARCHITECTURE NOTE — DO NOT CHANGE without resolving the underlying conflict.
+ *
+ * OAuth redirect_uri is hardcoded to pickle-hub-pro.lovable.app instead of
+ * thepicklehub.net for the following reasons:
+ *
+ * 1. thepicklehub.net is served via a Cloudflare Worker that performs SEO
+ *    prerendering (bot detection + dynamic HTML). This Worker intercepts
+ *    ALL requests to the domain, including OAuth callback URLs.
+ *
+ * 2. Lovable Auth (cloud-auth-js) can only whitelist redirect_uri domains
+ *    that are configured as "native custom domains" in the Lovable platform.
+ *    This was confirmed by Lovable Support.
+ *
+ * 3. Setting thepicklehub.net as a native custom domain conflicts with the
+ *    Cloudflare Worker setup because Lovable expects to control DNS/TLS
+ *    directly, but the Worker proxy sits in front.
+ *
+ * 4. Therefore, OAuth must initiate and complete on pickle-hub-pro.lovable.app
+ *    (the published Lovable domain), then perform a cross-domain token handoff
+ *    to thepicklehub.net via AuthCallback.tsx (Flow 2 → Flow 3).
+ *
+ * If you need to change this, you must first resolve the conflict between
+ * Cloudflare Worker proxying and Lovable native custom domain requirements.
+ */
 const PUBLISHED_OAUTH_BROKER_URL = "https://pickle-hub-pro.lovable.app/~oauth/initiate";
 const PUBLISHED_OAUTH_CALLBACK_URL = "https://pickle-hub-pro.lovable.app/auth/callback";
 const CUSTOM_DOMAIN_OAUTH_HOSTNAMES = new Set(["thepicklehub.net", "www.thepicklehub.net"]);
@@ -88,6 +113,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [oauthRedirecting, setOauthRedirecting] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -159,6 +185,7 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
+    setOauthRedirecting(true);
 
     try {
       if (isNativeApp()) {
@@ -180,6 +207,7 @@ const Login = () => {
         if (error) throw error;
       }
     } catch (err: unknown) {
+      setOauthRedirecting(false);
       toast({
         variant: "destructive",
         title: t.common.error,
@@ -192,6 +220,7 @@ const Login = () => {
 
   const handleAppleSignIn = async () => {
     setIsSubmitting(true);
+    setOauthRedirecting(true);
     try {
       if (isNativeApp()) {
         const { data, error } = await supabase.auth.signInWithOAuth({
@@ -212,6 +241,7 @@ const Login = () => {
         if (error) throw error;
       }
     } catch (err: unknown) {
+      setOauthRedirecting(false);
       toast({
         variant: "destructive",
         title: t.common.error,
@@ -313,6 +343,19 @@ const Login = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (oauthRedirecting) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <DynamicMeta title="The Pickle Hub - Đăng nhập" noindex={true} />
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary mb-2">
+          <span className="text-primary-foreground font-bold text-xl">TPH</span>
+        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-foreground-muted text-sm">Đang chuyển đến trang đăng nhập an toàn...</p>
       </div>
     );
   }
