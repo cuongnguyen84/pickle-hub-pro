@@ -29,46 +29,44 @@ const AuthCallback = () => {
     if (hasTokensInHash && !isNativeFlow) {
       console.log("[AuthCallback] Cross-domain token handoff detected");
 
-      // Extract redirect path from hash params
       const hashParams = new URLSearchParams(hashFragment.substring(1));
       const redirectPath = hashParams.get("redirect") || "/";
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
 
-      // Supabase client auto-detects tokens in URL hash and sets session.
-      // Listen for the session to be set, then redirect.
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (handledRef.current) return;
-        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") && session) {
+      if (accessToken && refreshToken) {
+        // Manually set session with the received tokens
+        supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        }).then(({ data, error }) => {
+          if (handledRef.current) return;
           handledRef.current = true;
-          subscription.unsubscribe();
-          console.log("[AuthCallback] Session restored on custom domain, redirecting to:", redirectPath);
-          navigate(redirectPath, { replace: true });
-        }
-      });
 
-      // Fallback: check if session is already available
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (handledRef.current) return;
-        if (session) {
-          handledRef.current = true;
-          subscription.unsubscribe();
+          if (error) {
+            console.error("[AuthCallback] setSession error:", error);
+          } else {
+            console.log("[AuthCallback] Session restored on custom domain");
+          }
+
+          // Clear hash from URL and redirect
+          window.history.replaceState(null, "", window.location.pathname);
           navigate(redirectPath, { replace: true });
-        }
-      });
+        });
+      } else {
+        navigate("/", { replace: true });
+      }
 
       // Safety timeout
       const timeout = setTimeout(() => {
         if (!handledRef.current) {
           handledRef.current = true;
-          subscription.unsubscribe();
           console.error("[AuthCallback] Token handoff timeout");
           navigate(redirectPath, { replace: true });
         }
       }, 5000);
 
-      return () => {
-        subscription.unsubscribe();
-        clearTimeout(timeout);
-      };
+      return () => clearTimeout(timeout);
     }
 
     if (isNativeFlow) {
