@@ -1,5 +1,4 @@
 import { useEffect, lazy, Suspense } from "react";
-import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import { SectionHeader, ContentCard, EmptyState, AdSlot } from "@/components/content";
