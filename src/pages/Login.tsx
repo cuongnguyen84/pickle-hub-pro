@@ -121,7 +121,7 @@ const Login = () => {
         // Web: Standard OAuth redirect
         console.log("[OAuth] Using Lovable managed OAuth for Google");
         const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: "https://thepicklehub.net",
+          redirect_uri: "https://pickle-hub-pro.lovable.app",
         });
         if (error) throw error;
       }
@@ -159,7 +159,7 @@ const Login = () => {
       } else {
         // Web: Use Lovable managed OAuth
         const { error } = await lovable.auth.signInWithOAuth("apple", {
-          redirect_uri: "https://thepicklehub.net",
+          redirect_uri: "https://pickle-hub-pro.lovable.app",
         });
         if (error) throw error;
       }
