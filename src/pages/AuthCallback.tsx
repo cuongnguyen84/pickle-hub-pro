@@ -126,52 +126,68 @@ const AuthCallback = () => {
       };
     }
 
-    // Web flow: standard session handling
-    const handleWebCallback = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+    // Web flow: wait for PKCE code exchange, then handle redirect
+    const redirectTo = searchParams.get("redirect") || "/";
 
-        if (error) {
-          console.error("Auth callback error:", error);
-          navigate("/login?error=auth_failed", { replace: true });
-          return;
-        }
+    const performRedirect = (session: { access_token: string; refresh_token: string }) => {
+      if (handledRef.current) return;
+      handledRef.current = true;
 
-        if (session) {
-          const redirectTo = searchParams.get("redirect") || "/";
+      // If redirect target is an external URL (cross-domain),
+      // pass tokens so the target domain can restore the session
+      if (/^https?:\/\//i.test(redirectTo)) {
+        try {
+          const targetUrl = new URL(redirectTo);
+          const currentHost = window.location.hostname;
 
-          // If redirect target is an external URL (cross-domain),
-          // pass tokens so the target domain can restore the session
-          if (/^https?:\/\//i.test(redirectTo)) {
-            try {
-              const targetUrl = new URL(redirectTo);
-              const currentHost = window.location.hostname;
-
-              // Only pass tokens when redirecting to a different domain
-              if (targetUrl.hostname !== currentHost) {
-                const tokenRedirectUrl = `${targetUrl.origin}/auth/callback#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}&type=bearer&redirect=${encodeURIComponent(targetUrl.pathname + targetUrl.search)}`;
-                console.log("[AuthCallback] Cross-domain redirect with tokens");
-                window.location.replace(tokenRedirectUrl);
-                return;
-              }
-            } catch {
-              // Invalid URL, fall through to regular redirect
-            }
-            window.location.replace(redirectTo);
+          // Only pass tokens when redirecting to a different domain
+          if (targetUrl.hostname !== currentHost) {
+            const tokenRedirectUrl = `${targetUrl.origin}/auth/callback#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}&type=bearer&redirect=${encodeURIComponent(targetUrl.pathname + targetUrl.search)}`;
+            console.log("[AuthCallback] Cross-domain redirect with tokens");
+            window.location.replace(tokenRedirectUrl);
             return;
           }
-
-          navigate(redirectTo, { replace: true });
-        } else {
-          navigate("/login", { replace: true });
+        } catch {
+          // Invalid URL, fall through to regular redirect
         }
-      } catch (err) {
-        console.error("Auth callback exception:", err);
-        navigate("/login?error=auth_failed", { replace: true });
+        window.location.replace(redirectTo);
+        return;
       }
+
+      navigate(redirectTo, { replace: true });
     };
 
-    handleWebCallback();
+    // Listen for auth state change (PKCE code exchange fires SIGNED_IN)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[AuthCallback] Web auth event:", event, !!session);
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
+        subscription.unsubscribe();
+        performRedirect(session);
+      }
+    });
+
+    // Also check if session is already available
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        subscription.unsubscribe();
+        performRedirect(session);
+      }
+    });
+
+    // Safety timeout
+    const timeout = setTimeout(() => {
+      if (!handledRef.current) {
+        handledRef.current = true;
+        subscription.unsubscribe();
+        console.error("[AuthCallback] Web flow timeout");
+        navigate(redirectTo, { replace: true });
+      }
+    }, 8000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [navigate, searchParams]);
 
   return (
