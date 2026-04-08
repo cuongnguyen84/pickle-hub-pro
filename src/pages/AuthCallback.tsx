@@ -91,7 +91,23 @@ const AuthCallback = () => {
         if (session) {
           const redirectTo = searchParams.get("redirect") || "/";
 
+          // If redirect target is an external URL (cross-domain),
+          // pass tokens so the target domain can restore the session
           if (/^https?:\/\//i.test(redirectTo)) {
+            try {
+              const targetUrl = new URL(redirectTo);
+              const currentHost = window.location.hostname;
+
+              // Only pass tokens when redirecting to a different domain
+              if (targetUrl.hostname !== currentHost) {
+                const tokenRedirectUrl = `${targetUrl.origin}/auth/callback#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}&type=bearer&redirect=${encodeURIComponent(targetUrl.pathname + targetUrl.search)}`;
+                console.log("[AuthCallback] Cross-domain redirect with tokens");
+                window.location.replace(tokenRedirectUrl);
+                return;
+              }
+            } catch {
+              // Invalid URL, fall through to regular redirect
+            }
             window.location.replace(redirectTo);
             return;
           }
