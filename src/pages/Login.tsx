@@ -22,29 +22,47 @@ import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
 type WebOAuthProvider = "google" | "apple";
 
 const PUBLISHED_OAUTH_BROKER_URL = "https://pickle-hub-pro.lovable.app/~oauth/initiate";
+const PUBLISHED_OAUTH_CALLBACK_URL = "https://pickle-hub-pro.lovable.app/auth/callback";
 const CUSTOM_DOMAIN_OAUTH_HOSTNAMES = new Set(["thepicklehub.net", "www.thepicklehub.net"]);
 
 const publishedDomainLovableAuth = createLovableAuth({
   oauthBrokerUrl: PUBLISHED_OAUTH_BROKER_URL,
 });
 
+const getPostOAuthReturnUrl = (redirectPath: string | null): string => {
+  const siteUrl = getSiteUrl();
+
+  if (!redirectPath) {
+    return `${siteUrl}/`;
+  }
+
+  if (/^https?:\/\//i.test(redirectPath)) {
+    return redirectPath;
+  }
+
+  const normalizedPath = redirectPath.startsWith("/") ? redirectPath : `/${redirectPath}`;
+  return `${siteUrl}${normalizedPath}`;
+};
+
+const getPublishedOAuthRedirectUri = (redirectPath: string | null): string => {
+  return `${PUBLISHED_OAUTH_CALLBACK_URL}?redirect=${encodeURIComponent(getPostOAuthReturnUrl(redirectPath))}`;
+};
+
 const signInWithManagedWebOAuth = async (
   provider: WebOAuthProvider,
-  redirectUri: string,
+  redirectPath: string | null,
 ): Promise<{ error: Error | null; redirected?: boolean }> => {
-  const authClient =
-    typeof window !== "undefined" && CUSTOM_DOMAIN_OAUTH_HOSTNAMES.has(window.location.hostname)
-      ? publishedDomainLovableAuth
-      : null;
+  const isCustomDomain =
+    typeof window !== "undefined" && CUSTOM_DOMAIN_OAUTH_HOSTNAMES.has(window.location.hostname);
 
-  if (!authClient) {
+  if (!isCustomDomain) {
     return lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: redirectUri,
+      redirect_uri: getSiteUrl(),
     });
   }
 
-  const result = await authClient.signInWithOAuth(provider, {
-    redirect_uri: redirectUri,
+  const result = await publishedDomainLovableAuth.signInWithOAuth(provider, {
+    redirect_uri: getPublishedOAuthRedirectUri(redirectPath),
   });
 
   if (result.redirected || result.error) {
@@ -158,7 +176,7 @@ const Login = () => {
           await Browser.open({ url: data.url, presentationStyle: "popover" });
         }
       } else {
-        const { error } = await signInWithManagedWebOAuth("google", getSiteUrl());
+        const { error } = await signInWithManagedWebOAuth("google", redirectUrl);
         if (error) throw error;
       }
     } catch (err: unknown) {
@@ -190,7 +208,7 @@ const Login = () => {
           await Browser.open({ url: data.url, presentationStyle: "popover" });
         }
       } else {
-        const { error } = await signInWithManagedWebOAuth("apple", getSiteUrl());
+        const { error } = await signInWithManagedWebOAuth("apple", redirectUrl);
         if (error) throw error;
       }
     } catch (err: unknown) {

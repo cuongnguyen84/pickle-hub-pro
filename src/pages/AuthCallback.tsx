@@ -90,6 +90,12 @@ const AuthCallback = () => {
 
         if (session) {
           const redirectTo = searchParams.get("redirect") || "/";
+
+          if (/^https?:\/\//i.test(redirectTo)) {
+            window.location.replace(redirectTo);
+            return;
+          }
+
           navigate(redirectTo, { replace: true });
         } else {
           navigate("/login", { replace: true });
