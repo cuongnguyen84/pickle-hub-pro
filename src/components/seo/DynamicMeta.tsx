@@ -26,7 +26,11 @@ export const DynamicMeta = ({
   enableHreflang = false,
 }: DynamicMetaProps) => {
   const { language } = useI18n();
-  const currentUrl = url || window.location.href;
+  // Strip trailing slash for canonical consistency (except root "/")
+  const rawUrl = url || window.location.href;
+  const currentUrl = rawUrl.endsWith("/") && rawUrl.length > 1
+    ? rawUrl.replace(/\/+$/, "")
+    : rawUrl;
   const fullTitle = `${title} | ThePickleHub`;
 
   useEffect(() => {
