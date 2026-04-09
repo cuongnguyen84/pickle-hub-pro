@@ -344,6 +344,58 @@ const Tournaments = () => {
           </Card>
         )}
 
+        {/* Parent Tournaments (Multi-event) */}
+        {parentTournaments.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Layers className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">
+                {language === 'vi' ? 'Giải tổng (nhiều nội dung)' : 'Multi-Event Tournaments'}
+              </h2>
+            </div>
+            <div className="grid gap-3">
+              {parentTournaments.map((pt) => (
+                <Link
+                  key={pt.id}
+                  to={`/tools/quick-tables/parent/${pt.share_id}`}
+                  className="group block rounded-xl overflow-hidden card-interactive bg-background-surface border border-border-subtle hover:border-border"
+                >
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Layers className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                          {pt.name}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-foreground-muted">
+                          {pt.event_date && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {format(new Date(pt.event_date), 'dd/MM/yyyy')}
+                            </span>
+                          )}
+                          {pt.location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {pt.location}
+                            </span>
+                          )}
+                        </div>
+                        {pt.description && (
+                          <p className="text-sm text-foreground-muted mt-1 line-clamp-1">{pt.description}</p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Format sections using reusable component */}
         <TournamentFormatSection
           icon={<ClipboardList className="w-5 h-5 text-primary" />}
