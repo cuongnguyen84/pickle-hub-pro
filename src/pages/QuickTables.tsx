@@ -33,9 +33,15 @@ const QuickTables = () => {
   const { t, language } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { createTable, getUserTables, getUserQuotaInfo, loading } = useQuickTable();
   const { tables: refereeTables, loading: refereeTablesLoading } = useRefereeTables();
+  const { getUserParentTournaments } = useParentTournament();
   const [quotaInfo, setQuotaInfo] = useState<{ current_count: number; quota: number }>({ current_count: 0, quota: 3 });
+  const [showTypeSelection, setShowTypeSelection] = useState(false);
+  const [showCreateParent, setShowCreateParent] = useState(false);
+  const [parentTournaments, setParentTournaments] = useState<ParentTournament[]>([]);
+  const parentIdFromUrl = searchParams.get('parentId');
 
   const [step, setStep] = useState<Step>("count");
   const [playerCount, setPlayerCount] = useState<number>(0);
@@ -75,18 +81,20 @@ const QuickTables = () => {
         return;
       }
       setTablesLoading(true);
-      const [tables, quota] = await Promise.all([
+      const [tables, quota, parents] = await Promise.all([
         getUserTables(),
-        getUserQuotaInfo()
+        getUserQuotaInfo(),
+        getUserParentTournaments(),
       ]);
       setUserTables(tables);
       if (quota) {
         setQuotaInfo(quota);
       }
+      setParentTournaments(parents);
       setTablesLoading(false);
     };
     loadUserData();
-  }, [user, getUserTables, getUserQuotaInfo]);
+  }, [user, getUserTables, getUserQuotaInfo, getUserParentTournaments]);
 
   const handlePlayerCountSubmit = () => {
     if (playerCount < 2) return;
