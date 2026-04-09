@@ -1,48 +1,53 @@
 
 
-## Plan: Admin highlight cho Multi-Event Tournaments
+## Plan: Redesign Parent Tournament Card với expand preview sub-events
 
-### Ý tưởng highlight
+### Tổng quan
+Tách parent tournament card ra component riêng `ParentTournamentCard.tsx`, hiển thị Trophy icon, count badge, preview tối đa 3 sub-events với status badge, và link "more events". Bỏ badge "Nổi bật"/star.
 
-Thêm cột `is_featured` vào bảng `parent_tournaments`. Admin có thể bật/tắt highlight cho từng giải tổng. Trên trang `/tournaments`, giải được featured sẽ hiển thị nổi bật hơn với:
+### Files cần sửa
 
-- Border gradient màu primary (teal)
-- Badge "Featured" / "Nổi bật" 
-- Banner image hiển thị nếu có
-- Giải featured được đẩy lên đầu danh sách
+**1. `src/hooks/useParentTournament.ts`**
+- Thêm interface `ParentTournamentWithPreview` extend `ParentTournament` với `subEventCount` và `previewSubEvents[]`
+- Thêm function `getUserParentTournamentsWithPreview()`: query parent tournaments, rồi query `quick_tables` cho tất cả parent IDs (1 batch query), map sub-events vào từng parent (max 3 preview, sort: active status trước)
 
-### Các bước thực hiện
+**2. `src/components/quicktable/ParentTournamentCard.tsx`** (NEW)
+- Props: `ParentTournamentWithPreview`, `isOwner`, i18n
+- Header: Trophy icon (teal) + tên giải + count badge outline (teal)
+- Meta row: Calendar + date, MapPin + location
+- Divider `border-t border-border/50`
+- Sub-event list (max 3): bullet + name (truncate) + status badge (mapped colors)
+- "+ N nội dung khác" nếu > 3
+- Empty state nếu 0 sub-events, với CTA cho owner
+- Click header → navigate parent, click sub-event row → navigate sub-event (stopPropagation)
+- Card: `bg-card/80 p-5`
 
-**1. Database migration**
-- Thêm cột `is_featured BOOLEAN DEFAULT false` vào `parent_tournaments`
-- Admin có thể update qua RLS policy đã có
+**3. `src/pages/QuickTables.tsx`**
+- Import `ParentTournamentCard` và `ParentTournamentWithPreview`
+- Replace `getUserParentTournaments` với `getUserParentTournamentsWithPreview`
+- Replace inline parent card render (lines 846-885) với `<ParentTournamentCard />`
 
-**2. Admin UI (`src/pages/admin/AdminTournaments.tsx` hoặc tương tự)**
-- Thêm toggle featured cho từng parent tournament trong trang admin
-- Nếu chưa có section quản lý parent tournaments trong admin, tạo một section mới
+**4. `src/i18n/vi.ts` + `src/i18n/en.ts`**
+- Thêm keys: `moreEvents`, `noEventsYet`, `addFirstEvent`, `eventCount` (update existing), status keys `live`, `upcoming`
+- Type definitions update trong vi.ts
 
-**3. Cập nhật trang Tournaments (`src/pages/Tournaments.tsx`)**
-- Sort parent tournaments: `is_featured = true` lên đầu
-- Card featured có visual khác biệt:
-  - Border gradient primary
-  - Badge "Nổi bật" / "Featured"
-  - Hiển thị banner_url nếu có (cover image phía trên)
-- Card thường giữ nguyên style hiện tại
+**5. `src/pages/Tournaments.tsx`** (nếu có parent card) — bỏ badge "Nổi bật" / star icon, dùng cùng component mới
 
-### Technical details
+### Sub-event status badge mapping
+- `setup` → outline/grey → "Sắp diễn"/"Upcoming"
+- `group_stage` → secondary/blue → "Vòng bảng"/"Group stage"
+- `playoff` → secondary/orange → "Playoff"
+- `completed` → default/green → "Hoàn thành"/"Completed"
 
+### Data fetching approach
 ```text
--- Migration
-ALTER TABLE public.parent_tournaments 
-  ADD COLUMN is_featured BOOLEAN NOT NULL DEFAULT false;
+1. Query parent_tournaments WHERE creator_user_id = user.id
+2. Collect all parent IDs
+3. Single query: quick_tables WHERE parent_tournament_id IN (parentIds)
+   SELECT id, name, status, share_id, parent_tournament_id, created_at
+4. Group by parent_tournament_id in JS
+5. Sort: active statuses first, take top 3 as preview
 ```
 
-```text
-Tournaments.tsx: 
-  - Query sort: .order('is_featured', { ascending: false })
-                .order('created_at', { ascending: false })
-  - Featured card: gradient border, badge, banner image
-```
-
-**i18n keys cần thêm:** `tournament.featured` cho cả EN và VI
+Không N+1, chỉ 2 queries total.
 
