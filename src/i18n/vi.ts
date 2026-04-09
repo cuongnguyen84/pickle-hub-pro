@@ -458,6 +458,8 @@ export interface Translations {
       builtDesc: string;
     };
     openRegistration: string;
+    featured: string;
+    multiEvent: string;
     pairs: string;
     players: string;
   };
