@@ -652,13 +652,7 @@ async function renderQuickTable(supabase: Supabase, shareId: string): Promise<Re
       title,
       description: desc.slice(0, 160),
       url: `${SITE_URL}/tools/quick-tables/${shareId}`,
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "SportsEvent",
-        name: qt.name,
-        url: `${SITE_URL}/tools/quick-tables/${shareId}`,
-        sport: "Pickleball",
-      },
+      extraMeta: `<meta name="robots" content="noindex, follow"/>`,
       bodyContent: `${bc}${relatedToolLinks("quick-tables")}`,
     }),
   );
@@ -688,13 +682,7 @@ async function renderTeamMatch(supabase: Supabase, id: string): Promise<Response
       title,
       description: desc.slice(0, 160),
       url: `${SITE_URL}/tools/team-match/${id}`,
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "SportsEvent",
-        name: tm.name,
-        url: `${SITE_URL}/tools/team-match/${id}`,
-        sport: "Pickleball",
-      },
+      extraMeta: `<meta name="robots" content="noindex, follow"/>`,
       bodyContent: `${bc}${relatedToolLinks("team-match")}`,
     }),
   );
@@ -724,13 +712,7 @@ async function renderDoublesElimination(supabase: Supabase, shareId: string): Pr
       title,
       description: desc.slice(0, 160),
       url: `${SITE_URL}/tools/doubles-elimination/${shareId}`,
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "SportsEvent",
-        name: de.name,
-        url: `${SITE_URL}/tools/doubles-elimination/${shareId}`,
-        sport: "Pickleball",
-      },
+      extraMeta: `<meta name="robots" content="noindex, follow"/>`,
       bodyContent: `${bc}${relatedToolLinks("doubles-elimination")}`,
     }),
   );
@@ -760,13 +742,7 @@ async function renderFlexTournament(supabase: Supabase, shareId: string): Promis
       title,
       description: desc.slice(0, 160),
       url: `${SITE_URL}/tools/flex-tournament/${shareId}`,
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "SportsEvent",
-        name: ft.name,
-        url: `${SITE_URL}/tools/flex-tournament/${shareId}`,
-        sport: "Pickleball",
-      },
+      extraMeta: `<meta name="robots" content="noindex, follow"/>`,
       bodyContent: `${bc}${relatedToolLinks("flex-tournament")}`,
     }),
   );

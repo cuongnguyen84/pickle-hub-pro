@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DynamicMeta } from '@/components/seo';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -415,6 +416,11 @@ export default function TeamMatchView() {
 
   return (
     <MainLayout>
+      <DynamicMeta 
+        title={`${tournament.name} | Team Match`}
+        description={`${tournament.name} – Team Match Pickleball`}
+        noindex={true}
+      />
       <div className="container max-w-4xl py-6 space-y-6">
         {/* Sticky Header with Settings */}
         <div className="sticky top-14 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 py-3 border-b md:relative md:top-0 md:border-b-0 md:py-0 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none">

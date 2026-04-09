@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { MainLayout } from '@/components/layout';
+import { DynamicMeta } from '@/components/seo';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
 import { useRefereeManagement } from '@/hooks/useRefereeManagement';
 import { useRegistration, type Registration } from '@/hooks/useRegistration';
@@ -576,6 +577,11 @@ const QuickTableView = () => {
 
   return (
     <MainLayout>
+      <DynamicMeta 
+        title={`${table.name} | Quick Table`}
+        description={`${table.name} – ${table.player_count} VĐV`}
+        noindex={true}
+      />
       <div className="container-wide py-8">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">

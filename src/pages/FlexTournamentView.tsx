@@ -143,7 +143,7 @@ const FlexTournamentView = () => {
         title={seoTitle}
         description={seoDescription}
         url={`https://www.thepicklehub.net/tools/flex-tournament/${shareId}`}
-        noindex={!data.tournament.is_public} // Don't index private tournaments
+        noindex={true}
       />
       <div className="container-wide py-4">
         {/* Header */}
