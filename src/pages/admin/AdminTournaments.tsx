@@ -328,6 +328,67 @@ export default function AdminTournaments() {
             </CardContent>
           </Card>
         )}
+
+        {/* Parent Tournaments - Featured Toggle */}
+        <div className="mt-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Layers className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">{t.tournament.multiEvent}</h2>
+          </div>
+          {parentTournaments.length > 0 ? (
+            <div className="grid gap-3">
+              {parentTournaments.map((pt) => (
+                <Card key={pt.id} className="bg-card border-border">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        {pt.is_featured ? (
+                          <Star className="w-5 h-5 text-primary fill-primary" />
+                        ) : (
+                          <Layers className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-medium truncate">{pt.name}</h3>
+                          {pt.is_featured && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
+                              {t.tournament.featured}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-foreground-muted">
+                          {pt.event_date && (
+                            <span>{format(new Date(pt.event_date), 'dd/MM/yyyy')}</span>
+                          )}
+                          {pt.location && <span>• {pt.location}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Label htmlFor={`featured-${pt.id}`} className="text-xs text-foreground-muted">
+                          {t.tournament.featured}
+                        </Label>
+                        <Switch
+                          id={`featured-${pt.id}`}
+                          checked={pt.is_featured}
+                          disabled={togglingId === pt.id}
+                          onCheckedChange={() => toggleFeatured(pt)}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-card border-border">
+              <CardContent className="p-8 text-center">
+                <Layers className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
+                <p className="text-foreground-muted">Chưa có giải tổng nào</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );
