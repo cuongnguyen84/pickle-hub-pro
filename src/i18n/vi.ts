@@ -1113,6 +1113,9 @@ export interface Translations {
       subEventCount: string;
       viewParent: string;
       deleteParentConfirm: string;
+      moreEvents: string;
+      noEventsYet: string;
+      addFirstEvent: string;
     };
     playoffPreview: {
       title: string;
@@ -2841,6 +2844,9 @@ export const vi: Translations = {
       subEventCount: "{count} nội dung",
       viewParent: "Xem giải tổng",
       deleteParentConfirm: "Bạn phải xoá tất cả nội dung con trước khi xoá giải tổng.",
+      moreEvents: "+ {count} nội dung khác",
+      noEventsYet: "Chưa có nội dung nào",
+      addFirstEvent: "+ Thêm nội dung",
     },
     playoffPreview: {
       title: "Preview Bracket Playoff",

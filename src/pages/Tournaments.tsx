@@ -11,20 +11,21 @@ import { useTournaments, useActivePublicQuickTables, useUserRegisteredTournament
 import { useDebounce } from "@/hooks/useSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail, MapPin, Layers, Star } from "lucide-react";
+import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail, MapPin, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { DynamicMeta } from "@/components/seo";
 import { TournamentFormatSection } from "@/components/tournaments";
-import type { ParentTournament } from "@/hooks/useParentTournament";
+import type { ParentTournamentWithPreview, SubEventPreview } from "@/hooks/useParentTournament";
+import ParentTournamentCard from "@/components/quicktable/ParentTournamentCard";
 
 const Tournaments = () => {
   const { t, language } = useI18n();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
-  const [parentTournaments, setParentTournaments] = useState<ParentTournament[]>([]);
+  const [parentTournaments, setParentTournaments] = useState<ParentTournamentWithPreview[]>([]);
 
   const { data: tournaments = [], isLoading } = useTournaments();
   const { data: activeQuickTables = [] } = useActivePublicQuickTables();
@@ -40,13 +41,42 @@ const Tournaments = () => {
 
   useEffect(() => {
     const loadParents = async () => {
-      const { data } = await supabase
+      const { data: parents } = await supabase
         .from('parent_tournaments')
         .select('*')
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(20);
-      if (data) setParentTournaments(data as ParentTournament[]);
+      if (!parents || parents.length === 0) {
+        setParentTournaments([]);
+        return;
+      }
+      const parentIds = parents.map(p => p.id);
+      const { data: subEvents } = await supabase
+        .from('quick_tables')
+        .select('id, name, status, share_id, parent_tournament_id, created_at')
+        .in('parent_tournament_id', parentIds);
+
+      const statusPriority: Record<string, number> = {
+        group_stage: 0, playoff: 1, setup: 2, completed: 3,
+      };
+      const grouped = new Map<string, SubEventPreview[]>();
+      const counts = new Map<string, number>();
+      for (const se of (subEvents || [])) {
+        const pid = se.parent_tournament_id as string;
+        if (!grouped.has(pid)) grouped.set(pid, []);
+        grouped.get(pid)!.push({ id: se.id, name: se.name, status: se.status, share_id: se.share_id });
+        counts.set(pid, (counts.get(pid) || 0) + 1);
+      }
+      for (const [pid, events] of grouped) {
+        events.sort((a, b) => (statusPriority[a.status] ?? 99) - (statusPriority[b.status] ?? 99));
+        grouped.set(pid, events.slice(0, 3));
+      }
+      setParentTournaments(parents.map(p => ({
+        ...p,
+        subEventCount: counts.get(p.id) || 0,
+        previewSubEvents: grouped.get(p.id) || [],
+      })) as ParentTournamentWithPreview[]);
     };
     loadParents();
   }, []);
@@ -356,70 +386,11 @@ const Tournaments = () => {
             </div>
             <div className="grid gap-3">
               {parentTournaments.map((pt) => (
-                <Link
+                <ParentTournamentCard
                   key={pt.id}
-                  to={`/tools/quick-tables/parent/${pt.share_id}`}
-                  className={cn(
-                    "group block rounded-xl overflow-hidden card-interactive bg-background-surface border hover:border-border",
-                    pt.is_featured
-                      ? "border-primary/50 ring-1 ring-primary/20"
-                      : "border-border-subtle"
-                  )}
-                >
-                  {pt.is_featured && pt.banner_url && (
-                    <div className="w-full h-32 overflow-hidden">
-                      <img
-                        src={pt.banner_url}
-                        alt={pt.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
-                        pt.is_featured ? "bg-primary/20" : "bg-primary/10"
-                      )}>
-                        {pt.is_featured ? (
-                          <Star className="w-5 h-5 text-primary fill-primary" />
-                        ) : (
-                          <Layers className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                            {pt.name}
-                          </h3>
-                          {pt.is_featured && (
-                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
-                              {t.tournament.featured}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-foreground-muted">
-                          {pt.event_date && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {format(new Date(pt.event_date), 'dd/MM/yyyy')}
-                            </span>
-                          )}
-                          {pt.location && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {pt.location}
-                            </span>
-                          )}
-                        </div>
-                        {pt.description && (
-                          <p className="text-sm text-foreground-muted mt-1 line-clamp-1">{pt.description}</p>
-                        )}
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                </Link>
+                  parent={pt}
+                  isOwner={!!user && pt.creator_user_id === user.id}
+                />
               ))}
             </div>
           </div>
