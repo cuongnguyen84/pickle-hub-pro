@@ -15,15 +15,18 @@ interface QuickTableMatchRowProps {
   player2: QuickTablePlayer | undefined;
   canEdit: boolean;
   onScoreUpdate: (score1: number, score2: number) => void;
+  onCourtNameUpdate?: (courtName: string) => void;
   formatPlayerName: (player: QuickTablePlayer | undefined) => string;
 }
 
-export default function QuickTableMatchRow({ match, index, player1, player2, canEdit, onScoreUpdate, formatPlayerName }: QuickTableMatchRowProps) {
+export default function QuickTableMatchRow({ match, index, player1, player2, canEdit, onScoreUpdate, onCourtNameUpdate, formatPlayerName }: QuickTableMatchRowProps) {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [s1, setS1] = useState<string>(match.score1?.toString() ?? '');
   const [s2, setS2] = useState<string>(match.score2?.toString() ?? '');
+  const [editingCourtName, setEditingCourtName] = useState(false);
+  const [courtNameValue, setCourtNameValue] = useState(match.court_name ?? '');
   const isCompleted = match.status === 'completed';
   const isLive = !!('live_referee_id' in match && match.live_referee_id);
 
@@ -72,10 +75,77 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
             )}
           </div>
           <div className="flex flex-col text-[10px] sm:text-[11px] text-foreground-muted leading-tight">
-            {match.court_id != null && (
+            {(match.court_name || match.court_id != null) && (
               <span className="flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" />
-                {t.quickTable.view.court} {match.court_id}
+                {match.court_name || `${t.quickTable.view.court} ${match.court_id}`}
+              </span>
+            )}
+            {!match.court_name && match.court_id == null && canEdit && onCourtNameUpdate && (
+              editingCourtName ? (
+                <span className="flex items-center gap-1">
+                  <Input
+                    className="w-20 h-5 text-[10px] px-1 py-0"
+                    value={courtNameValue}
+                    onChange={(e) => setCourtNameValue(e.target.value)}
+                    onBlur={() => {
+                      if (courtNameValue.trim()) {
+                        onCourtNameUpdate(courtNameValue.trim());
+                      }
+                      setEditingCourtName(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && courtNameValue.trim()) {
+                        onCourtNameUpdate(courtNameValue.trim());
+                        setEditingCourtName(false);
+                      }
+                    }}
+                    placeholder={t.quickTable.view.courtNamePlaceholder}
+                    autoFocus
+                  />
+                </span>
+              ) : (
+                <button
+                  className="flex items-center gap-0.5 text-foreground-muted hover:text-foreground transition-colors"
+                  onClick={() => setEditingCourtName(true)}
+                >
+                  <MapPin className="w-3 h-3" />
+                  <span className="underline decoration-dashed">{t.quickTable.view.courtName}</span>
+                </button>
+              )
+            )}
+            {(match.court_name || match.court_id != null) && canEdit && onCourtNameUpdate && !editingCourtName && (
+              <button
+                className="text-foreground-muted hover:text-foreground transition-colors underline decoration-dashed"
+                onClick={() => {
+                  setCourtNameValue(match.court_name ?? '');
+                  setEditingCourtName(true);
+                }}
+              >
+                <Pencil className="w-2.5 h-2.5 inline mr-0.5" />
+              </button>
+            )}
+            {editingCourtName && (match.court_name || match.court_id != null) && (
+              <span className="flex items-center gap-1">
+                <Input
+                  className="w-20 h-5 text-[10px] px-1 py-0"
+                  value={courtNameValue}
+                  onChange={(e) => setCourtNameValue(e.target.value)}
+                  onBlur={() => {
+                    if (courtNameValue.trim()) {
+                      onCourtNameUpdate?.(courtNameValue.trim());
+                    }
+                    setEditingCourtName(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && courtNameValue.trim()) {
+                      onCourtNameUpdate?.(courtNameValue.trim());
+                      setEditingCourtName(false);
+                    }
+                  }}
+                  placeholder={t.quickTable.view.courtNamePlaceholder}
+                  autoFocus
+                />
               </span>
             )}
             {match.start_at && (

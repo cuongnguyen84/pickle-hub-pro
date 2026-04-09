@@ -446,6 +446,23 @@ export function useQuickTableMutations() {
     }
   }, []);
 
+  const updateCourtName = useCallback(async (
+    matchId: string,
+    courtName: string
+  ): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('quick_table_matches')
+        .update({ court_name: courtName })
+        .eq('id', matchId);
+
+      if (error) throw error;
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   return {
     addPlayers,
     createGroups,
@@ -460,5 +477,6 @@ export function useQuickTableMutations() {
     updateTableCourtSettings,
     reassignCourtsAndTimes,
     deleteTable,
+    updateCourtName,
   };
 }

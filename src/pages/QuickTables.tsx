@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuickTable, suggestGroupConfigs, type GroupSuggestion, type QuickTable } from "@/hooks/useQuickTable";
 import { useRefereeTables } from "@/hooks/useRefereeManagement";
+import { useParentTournament, type ParentTournament } from "@/hooks/useParentTournament";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield, ClipboardList, ChevronDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield, ClipboardList, ChevronDown, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { AIAssistantButton } from '@/components/ai';
@@ -23,6 +25,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent } from "@/components/seo";
 import { getLoginUrl } from "@/lib/auth-config";
+import CreateParentTournamentDialog from "@/components/quicktable/CreateParentTournamentDialog";
 
 type Step = "count" | "format" | "groups" | "players";
 
@@ -30,9 +33,15 @@ const QuickTables = () => {
   const { t, language } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { createTable, getUserTables, getUserQuotaInfo, loading } = useQuickTable();
   const { tables: refereeTables, loading: refereeTablesLoading } = useRefereeTables();
+  const { getUserParentTournaments } = useParentTournament();
   const [quotaInfo, setQuotaInfo] = useState<{ current_count: number; quota: number }>({ current_count: 0, quota: 3 });
+  const [showTypeSelection, setShowTypeSelection] = useState(false);
+  const [showCreateParent, setShowCreateParent] = useState(false);
+  const [parentTournaments, setParentTournaments] = useState<ParentTournament[]>([]);
+  const parentIdFromUrl = searchParams.get('parentId');
 
   const [step, setStep] = useState<Step>("count");
   const [playerCount, setPlayerCount] = useState<number>(0);
@@ -72,18 +81,20 @@ const QuickTables = () => {
         return;
       }
       setTablesLoading(true);
-      const [tables, quota] = await Promise.all([
+      const [tables, quota, parents] = await Promise.all([
         getUserTables(),
-        getUserQuotaInfo()
+        getUserQuotaInfo(),
+        getUserParentTournaments(),
       ]);
       setUserTables(tables);
       if (quota) {
         setQuotaInfo(quota);
       }
+      setParentTournaments(parents);
       setTablesLoading(false);
     };
     loadUserData();
-  }, [user, getUserTables, getUserQuotaInfo]);
+  }, [user, getUserTables, getUserQuotaInfo, getUserParentTournaments]);
 
   const handlePlayerCountSubmit = () => {
     if (playerCount < 2) return;
@@ -817,6 +828,47 @@ const QuickTables = () => {
                   </CardContent>
                 </Card>
               )}
+              {/* Parent Tournaments */}
+              {parentTournaments.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-primary" />
+                      {language === 'vi' ? 'Giải tổng' : 'Multi-event tournaments'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {parentTournaments.map((pt) => (
+                      <Link
+                        key={pt.id}
+                        to={`/tools/quick-tables/parent/${pt.share_id}`}
+                        className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{pt.name}</div>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground-muted mt-1">
+                              {pt.event_date && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(new Date(pt.event_date), "dd/MM/yyyy", { locale: vi })}
+                                </span>
+                              )}
+                              {pt.location && <span>{pt.location}</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="secondary">
+                              <Layers className="w-3 h-3 mr-1" />
+                              {t.quickTable.parentTournament.viewParent}
+                            </Badge>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
         </div>
@@ -827,6 +879,59 @@ const QuickTables = () => {
           {/* SEO Content Section */}
           <QuickTablesSeoContent />
       </div>
+
+      {/* Type Selection Dialog */}
+      <Dialog open={showTypeSelection} onOpenChange={setShowTypeSelection}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.quickTable.parentTournament.selectType}</DialogTitle>
+            <DialogDescription>
+              {language === 'vi' ? 'Chọn loại giải phù hợp với nhu cầu của bạn' : 'Choose the tournament type that fits your needs'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <button
+              className="w-full p-4 rounded-xl border-2 border-primary bg-primary/5 text-left transition-all hover:shadow-md"
+              onClick={() => {
+                setShowTypeSelection(false);
+                setStep("count");
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                  <Trophy className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold">{t.quickTable.parentTournament.singleTitle}</span>
+                    <Badge variant="default" className="text-xs">{t.quickTable.recommended}</Badge>
+                  </div>
+                  <p className="text-sm text-foreground-secondary">{t.quickTable.parentTournament.singleDesc}</p>
+                </div>
+              </div>
+            </button>
+            <button
+              className="w-full p-4 rounded-xl border-2 border-border text-left transition-all hover:border-primary/50 hover:shadow-md"
+              onClick={() => {
+                setShowTypeSelection(false);
+                setShowCreateParent(true);
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                  <Layers className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <span className="font-semibold">{t.quickTable.parentTournament.multiTitle}</span>
+                  <p className="text-sm text-foreground-secondary mt-1">{t.quickTable.parentTournament.multiDesc}</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <CreateParentTournamentDialog open={showCreateParent} onOpenChange={setShowCreateParent} />
     </MainLayout>
   );
 };

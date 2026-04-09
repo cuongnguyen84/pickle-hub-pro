@@ -1623,6 +1623,45 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_tournaments: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          creator_user_id: string
+          description: string | null
+          event_date: string | null
+          id: string
+          location: string | null
+          name: string
+          share_id: string
+          updated_at: string
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          creator_user_id: string
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          share_id?: string
+          updated_at?: string
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          creator_user_id?: string
+          description?: string | null
+          event_date?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          share_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1727,6 +1766,7 @@ export type Database = {
         Row: {
           bracket_position: string | null
           court_id: number | null
+          court_name: string | null
           created_at: string
           current_set: number | null
           display_order: number
@@ -1761,6 +1801,7 @@ export type Database = {
         Insert: {
           bracket_position?: string | null
           court_id?: number | null
+          court_name?: string | null
           created_at?: string
           current_set?: number | null
           display_order?: number
@@ -1795,6 +1836,7 @@ export type Database = {
         Update: {
           bracket_position?: string | null
           court_id?: number | null
+          court_name?: string | null
           created_at?: string
           current_set?: number | null
           display_order?: number
@@ -2265,6 +2307,7 @@ export type Database = {
           max_skill_level: number | null
           min_skill_level: number | null
           name: string
+          parent_tournament_id: string | null
           player_count: number
           registration_message: string | null
           requires_registration: boolean | null
@@ -2292,6 +2335,7 @@ export type Database = {
           max_skill_level?: number | null
           min_skill_level?: number | null
           name?: string
+          parent_tournament_id?: string | null
           player_count: number
           registration_message?: string | null
           requires_registration?: boolean | null
@@ -2319,6 +2363,7 @@ export type Database = {
           max_skill_level?: number | null
           min_skill_level?: number | null
           name?: string
+          parent_tournament_id?: string | null
           player_count?: number
           registration_message?: string | null
           requires_registration?: boolean | null
@@ -2332,7 +2377,15 @@ export type Database = {
           use_wildcard?: boolean | null
           wildcard_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quick_tables_parent_tournament_id_fkey"
+            columns: ["parent_tournament_id"]
+            isOneToOne: false
+            referencedRelation: "parent_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_settings: {
         Row: {

@@ -1087,6 +1087,42 @@ export interface Translations {
       groupLabel: string;
       winsLabel: string;
       pointDiffLabel: string;
+      courtName: string;
+      courtNamePlaceholder: string;
+      courtNameSaved: string;
+    };
+    parentTournament: {
+      selectType: string;
+      singleTitle: string;
+      singleDesc: string;
+      multiTitle: string;
+      multiDesc: string;
+      createParent: string;
+      parentName: string;
+      parentNamePlaceholder: string;
+      eventDate: string;
+      location: string;
+      locationPlaceholder: string;
+      description: string;
+      descriptionPlaceholder: string;
+      addSubEvent: string;
+      subEvents: string;
+      noSubEvents: string;
+      subEventCount: string;
+      viewParent: string;
+      deleteParentConfirm: string;
+    };
+    playoffPreview: {
+      title: string;
+      subtitle: string;
+      seed: string;
+      fromGroup: string;
+      conflictWarning: string;
+      clickToSwap: string;
+      autoResolve: string;
+      confirmBracket: string;
+      noConflicts: string;
+      unresolvedConflicts: string;
     };
     groups: {
       groups: string;
@@ -2777,6 +2813,42 @@ export const vi: Translations = {
       groupLabel: "Bảng",
       winsLabel: "thắng",
       pointDiffLabel: "Hiệu số",
+      courtName: "Tên sân",
+      courtNamePlaceholder: "VD: Sân 1, Court A",
+      courtNameSaved: "Đã lưu tên sân",
+    },
+    parentTournament: {
+      selectType: "Chọn loại giải",
+      singleTitle: "Giải đơn lẻ",
+      singleDesc: "Phù hợp cho giải nhỏ, giải club, giải giao hữu — chỉ có 1 nội dung thi đấu duy nhất.",
+      multiTitle: "Giải tổng (nhiều nội dung)",
+      multiDesc: "Phù hợp cho các đơn vị tổ chức giải lớn có nhiều nội dung con (ví dụ: Đôi Nam Mở rộng, Đôi Nữ U25, Đôi Nam Nữ Trên 35...).",
+      createParent: "Tạo giải tổng",
+      parentName: "Tên giải tổng",
+      parentNamePlaceholder: "VD: TPP Championship 2026",
+      eventDate: "Ngày thi đấu",
+      location: "Địa điểm",
+      locationPlaceholder: "VD: VNBC Quận 7, TP.HCM",
+      description: "Mô tả",
+      descriptionPlaceholder: "Giới thiệu về giải đấu...",
+      addSubEvent: "+ Thêm nội dung",
+      subEvents: "Nội dung thi đấu",
+      noSubEvents: "Chưa có nội dung nào. Nhấn \"+ Thêm nội dung\" để bắt đầu.",
+      subEventCount: "{count} nội dung",
+      viewParent: "Xem giải tổng",
+      deleteParentConfirm: "Bạn phải xoá tất cả nội dung con trước khi xoá giải tổng.",
+    },
+    playoffPreview: {
+      title: "Preview Bracket Playoff",
+      subtitle: "16 đội vào playoff — kiểm tra trước khi xác nhận",
+      seed: "Seed",
+      fromGroup: "Bảng",
+      conflictWarning: "Có cặp đấu cùng bảng!",
+      clickToSwap: "Nhấn vào 2 VĐV ở 2 cặp khác nhau để hoán đổi vị trí.",
+      autoResolve: "Tự động giải quyết",
+      confirmBracket: "Xác nhận bracket",
+      noConflicts: "Không có xung đột — sẵn sàng tạo bracket!",
+      unresolvedConflicts: "Không thể tự động giải quyết {count} cặp xung đột. Vui lòng hoán đổi thủ công.",
     },
     groups: {
       groups: "bảng",
