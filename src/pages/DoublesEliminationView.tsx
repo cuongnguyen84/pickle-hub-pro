@@ -216,6 +216,7 @@ export default function DoublesEliminationView() {
       <DynamicMeta 
         title={`${tournament.name} - Doubles Elimination`}
         description={`${tournament.name} - ${tournament.team_count} ${t.doublesElimination.teams}`}
+        noindex={true}
       />
       
       <div className="container max-w-6xl mx-auto py-6 px-4">
