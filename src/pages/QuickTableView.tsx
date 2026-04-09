@@ -345,6 +345,20 @@ const QuickTableView = () => {
   const handleStartPlayoff = () => {
     if (!table || !table.group_count) return;
 
+    // For 6-group tournaments, use global seeding with preview dialog
+    if (table.group_count === 6) {
+      try {
+        const seeded = generateGlobalSeeding(groups, players, matches);
+        const pairings = generateSeededPairings(seeded);
+        const resolved = resolveGroupConflicts(pairings);
+        setPreviewPairings(resolved.pairings);
+        setShowPlayoffPreview(true);
+      } catch (err) {
+        toast.error(t.quickTable.view.errorOccurred);
+      }
+      return;
+    }
+
     const { qualified, thirdPlace } = getQualifiedPlayers(groups, players, 2);
     const needed = getWildcardCount(table.group_count);
 
