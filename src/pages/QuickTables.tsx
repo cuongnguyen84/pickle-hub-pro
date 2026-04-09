@@ -846,44 +846,19 @@ const QuickTables = () => {
               )}
               {/* Parent Tournaments */}
               {parentTournaments.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-primary" />
-                      {language === 'vi' ? 'Giải tổng' : 'Multi-event tournaments'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {parentTournaments.map((pt) => (
-                      <Link
-                        key={pt.id}
-                        to={`/tools/quick-tables/parent/${pt.share_id}`}
-                        className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">{pt.name}</div>
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground-muted mt-1">
-                              {pt.event_date && (
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {format(new Date(pt.event_date), "dd/MM/yyyy", { locale: vi })}
-                                </span>
-                              )}
-                              {pt.location && <span>{pt.location}</span>}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Badge variant="secondary">
-                              <Layers className="w-3 h-3 mr-1" />
-                              {t.quickTable.parentTournament.viewParent}
-                            </Badge>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </CardContent>
-                </Card>
+                <div className="space-y-3">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-primary" />
+                    {language === 'vi' ? 'Giải tổng' : 'Multi-event tournaments'}
+                  </h3>
+                  {parentTournaments.map((pt) => (
+                    <ParentTournamentCard
+                      key={pt.id}
+                      parent={pt}
+                      isOwner={isParentOwner(pt)}
+                    />
+                  ))}
+                </div>
               )}
             </>
           )}
