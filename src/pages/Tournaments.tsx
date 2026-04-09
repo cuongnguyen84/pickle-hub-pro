@@ -20,10 +20,11 @@ import { TournamentFormatSection } from "@/components/tournaments";
 import type { ParentTournament } from "@/hooks/useParentTournament";
 
 const Tournaments = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
+  const [parentTournaments, setParentTournaments] = useState<ParentTournament[]>([]);
 
   const { data: tournaments = [], isLoading } = useTournaments();
   const { data: activeQuickTables = [] } = useActivePublicQuickTables();
@@ -36,6 +37,18 @@ const Tournaments = () => {
   const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 50 });
   const { data: registeredTournaments = [] } = useUserRegisteredTournaments(user?.id);
   const { data: completedTournaments = [] } = useUserCompletedTournaments(user?.id);
+
+  useEffect(() => {
+    const loadParents = async () => {
+      const { data } = await supabase
+        .from('parent_tournaments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (data) setParentTournaments(data as ParentTournament[]);
+    };
+    loadParents();
+  }, []);
 
   const filteredTournaments = useMemo(() => {
     if (!debouncedSearch) return tournaments;
