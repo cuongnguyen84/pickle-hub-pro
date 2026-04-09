@@ -413,6 +413,53 @@ const QuickTableView = () => {
     createPlayoffWithWildcards(qualified, wildcards);
   };
 
+  // Handle 6-group playoff preview confirmation
+  const handleConfirmPlayoffPreview = async (confirmedPairings: BracketPairing[]) => {
+    if (!table) return;
+
+    try {
+      // Build qualified + wildcards from pairings
+      const allSeededPlayers = new Map<string, BracketPairing['player1']>();
+      for (const p of confirmedPairings) {
+        allSeededPlayers.set(p.player1.playerId, p.player1);
+        allSeededPlayers.set(p.player2.playerId, p.player2);
+      }
+
+      const qualifiedPlayers: QuickTablePlayer[] = [];
+      const wildcardPlayers: QuickTablePlayer[] = [];
+
+      for (const sp of allSeededPlayers.values()) {
+        const player = players.find(pl => pl.id === sp.playerId);
+        if (!player) continue;
+        const updated = { ...player, playoff_seed: sp.seed };
+        if (sp.tier === 'wildcard') {
+          wildcardPlayers.push(updated);
+        } else {
+          qualifiedPlayers.push(updated);
+        }
+      }
+
+      await markPlayersQualified(qualifiedPlayers, wildcardPlayers);
+
+      // Convert pairings to bracket match format
+      const bracketMatches = confirmedPairings.map(p => ({
+        player1: players.find(pl => pl.id === p.player1.playerId) || null,
+        player2: players.find(pl => pl.id === p.player2.playerId) || null,
+        bracketPosition: p.matchNumber <= 4 ? 'upper' : 'lower',
+        matchNumber: p.matchNumber,
+      }));
+
+      await createPlayoffMatches(table.id, bracketMatches);
+      await updateTableStatus(table.id, 'playoff');
+
+      toast.success(t.quickTable.view.playoffCreated);
+      await loadData();
+      setActiveTab('playoff');
+    } catch {
+      toast.error(t.quickTable.view.errorOccurred);
+    }
+  };
+
   // Edit groups handlers
   const handleMovePlayer = async () => {
     if (!selectedPlayer || !targetGroupId || !table) return;
