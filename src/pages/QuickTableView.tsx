@@ -335,7 +335,8 @@ const QuickTableView = () => {
       .filter(p => p.group_id === groupId)
       .sort((a, b) => {
         if (b.matches_won !== a.matches_won) return b.matches_won - a.matches_won;
-        return b.point_diff - a.point_diff;
+        if (b.point_diff !== a.point_diff) return b.point_diff - a.point_diff;
+        return b.points_for - a.points_for;
       });
   };
 
