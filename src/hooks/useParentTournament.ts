@@ -18,6 +18,18 @@ export interface ParentTournament {
   updated_at: string;
 }
 
+export interface SubEventPreview {
+  id: string;
+  name: string;
+  status: string;
+  share_id: string;
+}
+
+export interface ParentTournamentWithPreview extends ParentTournament {
+  subEventCount: number;
+  previewSubEvents: SubEventPreview[];
+}
+
 export function useParentTournament() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -91,6 +103,57 @@ export function useParentTournament() {
       return null;
     }
   }, []);
+
+  const getUserParentTournamentsWithPreview = useCallback(async (): Promise<ParentTournamentWithPreview[]> => {
+    if (!user) return [];
+    try {
+      const { data: parents, error } = await supabase
+        .from('parent_tournaments')
+        .select('*')
+        .eq('creator_user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (!parents || parents.length === 0) return [];
+
+      const parentIds = parents.map(p => p.id);
+      const { data: subEvents } = await supabase
+        .from('quick_tables')
+        .select('id, name, status, share_id, parent_tournament_id, created_at')
+        .in('parent_tournament_id', parentIds);
+
+      const statusPriority: Record<string, number> = {
+        group_stage: 0,
+        playoff: 1,
+        setup: 2,
+        completed: 3,
+      };
+
+      const grouped = new Map<string, SubEventPreview[]>();
+      const counts = new Map<string, number>();
+
+      for (const se of (subEvents || [])) {
+        const pid = se.parent_tournament_id as string;
+        if (!grouped.has(pid)) grouped.set(pid, []);
+        grouped.get(pid)!.push({ id: se.id, name: se.name, status: se.status, share_id: se.share_id });
+        counts.set(pid, (counts.get(pid) || 0) + 1);
+      }
+
+      // Sort each group: active first, then take top 3
+      for (const [pid, events] of grouped) {
+        events.sort((a, b) => (statusPriority[a.status] ?? 99) - (statusPriority[b.status] ?? 99));
+        grouped.set(pid, events.slice(0, 3));
+      }
+
+      return parents.map(p => ({
+        ...(p as ParentTournament),
+        subEventCount: counts.get(p.id) || 0,
+        previewSubEvents: grouped.get(p.id) || [],
+      }));
+    } catch {
+      return [];
+    }
+  }, [user]);
 
   const getSubEventCount = useCallback(async (parentId: string): Promise<number> => {
     try {
