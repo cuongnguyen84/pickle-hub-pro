@@ -7,11 +7,7 @@ const ParentTournamentPage = () => {
 
   if (!shareId) return null;
 
-  return (
-    <MainLayout>
-      <ParentTournamentView shareId={shareId} />
-    </MainLayout>
-  );
+  return <ParentTournamentView shareId={shareId} />;
 };
 
 export default ParentTournamentPage;
