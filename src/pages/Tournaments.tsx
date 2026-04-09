@@ -386,70 +386,11 @@ const Tournaments = () => {
             </div>
             <div className="grid gap-3">
               {parentTournaments.map((pt) => (
-                <Link
+                <ParentTournamentCard
                   key={pt.id}
-                  to={`/tools/quick-tables/parent/${pt.share_id}`}
-                  className={cn(
-                    "group block rounded-xl overflow-hidden card-interactive bg-background-surface border hover:border-border",
-                    pt.is_featured
-                      ? "border-primary/50 ring-1 ring-primary/20"
-                      : "border-border-subtle"
-                  )}
-                >
-                  {pt.is_featured && pt.banner_url && (
-                    <div className="w-full h-32 overflow-hidden">
-                      <img
-                        src={pt.banner_url}
-                        alt={pt.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
-                        pt.is_featured ? "bg-primary/20" : "bg-primary/10"
-                      )}>
-                        {pt.is_featured ? (
-                          <Star className="w-5 h-5 text-primary fill-primary" />
-                        ) : (
-                          <Layers className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                            {pt.name}
-                          </h3>
-                          {pt.is_featured && (
-                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
-                              {t.tournament.featured}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-foreground-muted">
-                          {pt.event_date && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {format(new Date(pt.event_date), 'dd/MM/yyyy')}
-                            </span>
-                          )}
-                          {pt.location && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {pt.location}
-                            </span>
-                          )}
-                        </div>
-                        {pt.description && (
-                          <p className="text-sm text-foreground-muted mt-1 line-clamp-1">{pt.description}</p>
-                        )}
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                </Link>
+                  parent={pt}
+                  isOwner={!!user && pt.creator_user_id === user.id}
+                />
               ))}
             </div>
           </div>
