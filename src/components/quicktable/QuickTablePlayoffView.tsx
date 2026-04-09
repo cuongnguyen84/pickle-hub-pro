@@ -8,9 +8,17 @@ interface QuickTablePlayoffViewProps {
   groups: QuickTableGroup[];
   canEdit: boolean;
   onScoreUpdate: (matchId: string, score1: number, score2: number) => void;
+  onCourtNameUpdate?: (matchId: string, courtName: string) => void;
 }
 
-export default function QuickTablePlayoffView({ matches, players, groups, canEdit, onScoreUpdate }: QuickTablePlayoffViewProps) {
+export default function QuickTablePlayoffView({
+  matches,
+  players,
+  groups,
+  canEdit,
+  onScoreUpdate,
+  onCourtNameUpdate,
+}: QuickTablePlayoffViewProps) {
   const groupNames = useMemo(() => {
     const map = new Map<string, string>();
     groups.forEach(g => map.set(g.id, g.name));
@@ -40,6 +48,7 @@ export default function QuickTablePlayoffView({ matches, players, groups, canEdi
       players={playersWithSeed}
       canEdit={canEdit}
       onScoreUpdate={onScoreUpdate}
+      onCourtNameUpdate={onCourtNameUpdate}
       groupNames={groupNames}
     />
   );
