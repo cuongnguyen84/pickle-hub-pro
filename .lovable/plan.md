@@ -1,53 +1,55 @@
 
 
-## Plan: Redesign Parent Tournament Card với expand preview sub-events
+## Plan: Redesign Featured Parent Tournament Section
 
-### Tổng quan
-Tách parent tournament card ra component riêng `ParentTournamentCard.tsx`, hiển thị Trophy icon, count badge, preview tối đa 3 sub-events với status badge, và link "more events". Bỏ badge "Nổi bật"/star.
+### Hiện trạng
+- Admin đã có toggle `is_featured` trong `AdminTournaments.tsx` — giữ nguyên
+- Trên `Tournaments.tsx`, featured parent tournaments hiển thị giống card thường, không nổi bật
 
-### Files cần sửa
+### Thay đổi
 
-**1. `src/hooks/useParentTournament.ts`**
-- Thêm interface `ParentTournamentWithPreview` extend `ParentTournament` với `subEventCount` và `previewSubEvents[]`
-- Thêm function `getUserParentTournamentsWithPreview()`: query parent tournaments, rồi query `quick_tables` cho tất cả parent IDs (1 batch query), map sub-events vào từng parent (max 3 preview, sort: active status trước)
+**1. `src/pages/Tournaments.tsx`** — Tách featured vs non-featured parent tournaments
+- Featured parents: render riêng ở section đầu trang (trước registered tournaments), với design nổi bật
+- Non-featured parents: giữ nguyên section "Multi-event" hiện tại
 
-**2. `src/components/quicktable/ParentTournamentCard.tsx`** (NEW)
-- Props: `ParentTournamentWithPreview`, `isOwner`, i18n
-- Header: Trophy icon (teal) + tên giải + count badge outline (teal)
-- Meta row: Calendar + date, MapPin + location
-- Divider `border-t border-border/50`
-- Sub-event list (max 3): bullet + name (truncate) + status badge (mapped colors)
-- "+ N nội dung khác" nếu > 3
-- Empty state nếu 0 sub-events, với CTA cho owner
-- Click header → navigate parent, click sub-event row → navigate sub-event (stopPropagation)
-- Card: `bg-card/80 p-5`
+**2. Featured card design mới:**
+- Gradient border: `amber-500` → `orange-500` (warm gold tone, nổi bật hơn teal)
+- Background: subtle gradient `from-amber-500/5 via-transparent to-orange-500/5`
+- Badge "⚡ Nổi bật" / "⚡ Featured": amber/orange theme, nhỏ gọn
+- Banner image hiển thị full-width phía trên nếu có `banner_url`
+- Trophy icon màu amber thay vì teal
+- Sub-event preview vẫn hiển thị (dùng `ParentTournamentCard` nhưng với variant prop)
+- Subtle animated gradient shimmer border cho card featured
 
-**3. `src/pages/QuickTables.tsx`**
-- Import `ParentTournamentCard` và `ParentTournamentWithPreview`
-- Replace `getUserParentTournaments` với `getUserParentTournamentsWithPreview`
-- Replace inline parent card render (lines 846-885) với `<ParentTournamentCard />`
+**3. `src/components/quicktable/ParentTournamentCard.tsx`** — Thêm prop `variant`
+- `variant?: "default" | "featured"`
+- `featured`: áp dụng gradient border, amber icon, badge "Nổi bật", banner image
+- `default`: giữ nguyên style hiện tại
 
-**4. `src/i18n/vi.ts` + `src/i18n/en.ts`**
-- Thêm keys: `moreEvents`, `noEventsYet`, `addFirstEvent`, `eventCount` (update existing), status keys `live`, `upcoming`
-- Type definitions update trong vi.ts
+**4. `src/pages/admin/AdminTournaments.tsx`** — Cleanup
+- Thay icon `Star` bằng `Trophy` cho consistency
+- Bỏ badge "Nổi bật" text, chỉ giữ Switch toggle (đã đủ rõ)
 
-**5. `src/pages/Tournaments.tsx`** (nếu có parent card) — bỏ badge "Nổi bật" / star icon, dùng cùng component mới
+**5. i18n** — Không cần thêm key mới (đã có `tournament.featured`)
 
-### Sub-event status badge mapping
-- `setup` → outline/grey → "Sắp diễn"/"Upcoming"
-- `group_stage` → secondary/blue → "Vòng bảng"/"Group stage"
-- `playoff` → secondary/orange → "Playoff"
-- `completed` → default/green → "Hoàn thành"/"Completed"
+### Technical details
 
-### Data fetching approach
 ```text
-1. Query parent_tournaments WHERE creator_user_id = user.id
-2. Collect all parent IDs
-3. Single query: quick_tables WHERE parent_tournament_id IN (parentIds)
-   SELECT id, name, status, share_id, parent_tournament_id, created_at
-4. Group by parent_tournament_id in JS
-5. Sort: active statuses first, take top 3 as preview
+ParentTournamentCard:
+  variant="featured":
+    - Card wrapper: ring-2 ring-amber-500/40, bg-gradient-to-br from-amber-500/5 to-orange-500/5
+    - Trophy icon: text-amber-500
+    - Badge: "⚡ Featured" bg-amber-500/10 text-amber-500 border-amber-500/30
+    - Banner: rounded-t-lg overflow-hidden, aspect-[3/1] object-cover
+
+Tournaments.tsx:
+  - Split: featuredParents = parentTournaments.filter(p => p.is_featured)
+  - Render featured section trước other content
+  - Non-featured vẫn ở section Multi-event bên dưới
 ```
 
-Không N+1, chỉ 2 queries total.
+### Files cần sửa
+1. `src/components/quicktable/ParentTournamentCard.tsx` — thêm variant featured
+2. `src/pages/Tournaments.tsx` — tách featured section lên đầu
+3. `src/pages/admin/AdminTournaments.tsx` — cleanup Star → Trophy icon
 
