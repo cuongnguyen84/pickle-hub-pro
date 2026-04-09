@@ -153,6 +153,10 @@ const QuickTables = () => {
       if (defaultSets > 1) {
         await supabase.from('quick_tables').update({ default_sets: defaultSets } as any).eq('id', table.id);
       }
+      // Link to parent tournament if creating from parent context
+      if (parentIdFromUrl) {
+        await supabase.from('quick_tables').update({ parent_tournament_id: parentIdFromUrl }).eq('id', table.id);
+      }
       // If registration required, go to view page directly; otherwise setup page
       if (requiresRegistration) {
         navigate(`/tools/quick-tables/${table.share_id}`);
