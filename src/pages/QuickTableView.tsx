@@ -38,6 +38,7 @@ import {
   generateGlobalSeeding,
   generateSeededPairings,
   resolveGroupConflicts,
+  BYE_PLAYER_ID,
   type BracketPairing,
 } from '@/lib/quick-table-playoff';
 
@@ -419,11 +420,15 @@ const QuickTableView = () => {
     if (!table) return;
 
     try {
-      // Build qualified + wildcards from pairings
+      // Build qualified + wildcards from pairings (skip BYE slots)
       const allSeededPlayers = new Map<string, BracketPairing['player1']>();
       for (const p of confirmedPairings) {
-        allSeededPlayers.set(p.player1.playerId, p.player1);
-        allSeededPlayers.set(p.player2.playerId, p.player2);
+        if (p.player1.playerId !== BYE_PLAYER_ID) {
+          allSeededPlayers.set(p.player1.playerId, p.player1);
+        }
+        if (p.player2.playerId !== BYE_PLAYER_ID) {
+          allSeededPlayers.set(p.player2.playerId, p.player2);
+        }
       }
 
       const qualifiedPlayers: QuickTablePlayer[] = [];
@@ -442,10 +447,14 @@ const QuickTableView = () => {
 
       await markPlayersQualified(qualifiedPlayers, wildcardPlayers);
 
-      // Convert pairings to bracket match format
+      // Convert pairings to bracket match format (null for BYE slots)
       const bracketMatches = confirmedPairings.map(p => ({
-        player1: players.find(pl => pl.id === p.player1.playerId) || null,
-        player2: players.find(pl => pl.id === p.player2.playerId) || null,
+        player1: p.player1.playerId !== BYE_PLAYER_ID
+          ? (players.find(pl => pl.id === p.player1.playerId) || null)
+          : null,
+        player2: p.player2.playerId !== BYE_PLAYER_ID
+          ? (players.find(pl => pl.id === p.player2.playerId) || null)
+          : null,
         bracketPosition: p.matchNumber <= 4 ? 'upper' : 'lower',
         matchNumber: p.matchNumber,
       }));
