@@ -33,6 +33,13 @@ import TeamManager from '@/components/quicktable/TeamManager';
 import { AIAssistantButton } from '@/components/ai';
 import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
+import PlayoffPreviewDialog from '@/components/quicktable/PlayoffPreviewDialog';
+import {
+  generateGlobalSeeding,
+  generateSeededPairings,
+  resolveGroupConflicts,
+  type BracketPairing,
+} from '@/lib/quick-table-playoff';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -87,6 +94,10 @@ const QuickTableView = () => {
   const [selectedWildcards, setSelectedWildcards] = useState<string[]>([]);
   const [thirdPlacePlayers, setThirdPlacePlayers] = useState<QuickTablePlayer[]>([]);
   const [wildcardNeeded, setWildcardNeeded] = useState(0);
+
+  // Playoff preview dialog state (6-group seeded bracket)
+  const [showPlayoffPreview, setShowPlayoffPreview] = useState(false);
+  const [previewPairings, setPreviewPairings] = useState<BracketPairing[]>([]);
 
   // Team visibility - persisted in localStorage
   const [showTeam, setShowTeam] = useState(() => {
