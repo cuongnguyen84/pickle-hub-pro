@@ -463,6 +463,8 @@ export const en: Translations = {
       builtDesc: "Used by tournament directors and pickleball clubs worldwide, ThePickleHub's tournament software is built from real-world experience organizing competitive pickleball events. From amateur community tournaments to professional competitions, our platform scales to meet your needs with features like court scheduling, referee management, and automated standings calculations.",
     },
     openRegistration: "Open for registration",
+    featured: "Featured",
+    multiEvent: "Multi-Event Tournaments",
     pairs: "pairs",
     players: "players",
   },

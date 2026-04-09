@@ -458,6 +458,8 @@ export interface Translations {
       builtDesc: string;
     };
     openRegistration: string;
+    featured: string;
+    multiEvent: string;
     pairs: string;
     players: string;
   };
@@ -2184,6 +2186,8 @@ export const vi: Translations = {
       builtDesc: "Được sử dụng bởi các giám đốc giải đấu và câu lạc bộ pickleball trên toàn thế giới, phần mềm giải đấu của ThePickleHub được xây dựng từ kinh nghiệm thực tế tổ chức các sự kiện pickleball cạnh tranh. Từ giải phong trào đến giải chuyên nghiệp, nền tảng của chúng tôi mở rộng để đáp ứng nhu cầu với các tính năng như xếp sân, quản lý trọng tài và tính toán bảng xếp hạng tự động.",
     },
     openRegistration: "Đang mở đăng ký",
+    featured: "Nổi bật",
+    multiEvent: "Giải tổng (nhiều nội dung)",
     pairs: "đôi",
     players: "người",
   },

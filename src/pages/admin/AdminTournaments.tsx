@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useAdminTournaments, useCreateTournament, useUpdateTournament } from "@/hooks/useAdminData";
 import { useI18n } from "@/i18n";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -24,8 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trophy, Calendar } from "lucide-react";
+import { Plus, Pencil, Trophy, Calendar, Layers, Star } from "lucide-react";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import type { ParentTournament } from "@/hooks/useParentTournament";
 
 interface TournamentFormData {
   name: string;
@@ -53,6 +56,36 @@ export default function AdminTournaments() {
   const { data: tournaments, isLoading } = useAdminTournaments();
   const createTournament = useCreateTournament();
   const updateTournament = useUpdateTournament();
+  const [parentTournaments, setParentTournaments] = useState<ParentTournament[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadParentTournaments();
+  }, []);
+
+  const loadParentTournaments = async () => {
+    const { data } = await supabase
+      .from('parent_tournaments')
+      .select('*')
+      .order('is_featured', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (data) setParentTournaments(data as ParentTournament[]);
+  };
+
+  const toggleFeatured = async (pt: ParentTournament) => {
+    setTogglingId(pt.id);
+    const { error } = await supabase
+      .from('parent_tournaments')
+      .update({ is_featured: !pt.is_featured })
+      .eq('id', pt.id);
+    if (error) {
+      toast({ variant: "destructive", title: "Không thể cập nhật" });
+    } else {
+      toast({ title: pt.is_featured ? "Đã bỏ nổi bật" : "Đã đánh dấu nổi bật" });
+      await loadParentTournaments();
+    }
+    setTogglingId(null);
+  };
 
   const resetForm = () => {
     setFormData({
@@ -295,6 +328,67 @@ export default function AdminTournaments() {
             </CardContent>
           </Card>
         )}
+
+        {/* Parent Tournaments - Featured Toggle */}
+        <div className="mt-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Layers className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">{t.tournament.multiEvent}</h2>
+          </div>
+          {parentTournaments.length > 0 ? (
+            <div className="grid gap-3">
+              {parentTournaments.map((pt) => (
+                <Card key={pt.id} className="bg-card border-border">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        {pt.is_featured ? (
+                          <Star className="w-5 h-5 text-primary fill-primary" />
+                        ) : (
+                          <Layers className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-medium truncate">{pt.name}</h3>
+                          {pt.is_featured && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
+                              {t.tournament.featured}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-foreground-muted">
+                          {pt.event_date && (
+                            <span>{format(new Date(pt.event_date), 'dd/MM/yyyy')}</span>
+                          )}
+                          {pt.location && <span>• {pt.location}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Label htmlFor={`featured-${pt.id}`} className="text-xs text-foreground-muted">
+                          {t.tournament.featured}
+                        </Label>
+                        <Switch
+                          id={`featured-${pt.id}`}
+                          checked={pt.is_featured}
+                          disabled={togglingId === pt.id}
+                          onCheckedChange={() => toggleFeatured(pt)}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-card border-border">
+              <CardContent className="p-8 text-center">
+                <Layers className="w-12 h-12 text-foreground-muted mx-auto mb-3" />
+                <p className="text-foreground-muted">Chưa có giải tổng nào</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );

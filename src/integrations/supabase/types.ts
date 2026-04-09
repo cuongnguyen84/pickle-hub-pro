@@ -1631,6 +1631,7 @@ export type Database = {
           description: string | null
           event_date: string | null
           id: string
+          is_featured: boolean
           location: string | null
           name: string
           share_id: string
@@ -1643,6 +1644,7 @@ export type Database = {
           description?: string | null
           event_date?: string | null
           id?: string
+          is_featured?: boolean
           location?: string | null
           name: string
           share_id?: string
@@ -1655,6 +1657,7 @@ export type Database = {
           description?: string | null
           event_date?: string | null
           id?: string
+          is_featured?: boolean
           location?: string | null
           name?: string
           share_id?: string

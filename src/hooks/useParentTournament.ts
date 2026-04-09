@@ -13,6 +13,7 @@ export interface ParentTournament {
   event_date: string | null;
   location: string | null;
   share_id: string;
+  is_featured: boolean;
   created_at: string;
   updated_at: string;
 }
