@@ -198,6 +198,7 @@ export function useParentTournament() {
     loading,
     createParent,
     getUserParentTournaments,
+    getUserParentTournamentsWithPreview,
     getParentByShareId,
     getSubEventCount,
     deleteParent,
