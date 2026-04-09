@@ -54,7 +54,8 @@ const QuickTableView = () => {
     markPlayersQualified, updateTableStatus, isGroupStageComplete, getWildcardCount,
     isPlayoffRoundComplete, createNextPlayoffRound, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
-    updateTableCourtSettings, reassignCourtsAndTimes, deleteTable
+    updateTableCourtSettings, reassignCourtsAndTimes, deleteTable,
+    updateCourtName
   } = useQuickTable();
   const { isAdmin } = useAdminAuth();
   const { user } = useAuth();
@@ -862,6 +863,7 @@ const QuickTableView = () => {
                               player2={getPlayerById(match.player2_id)}
                               canEdit={canEditScores && !hasPlayoff}
                               onScoreUpdate={(s1, s2) => handleScoreUpdate(match.id, s1, s2)}
+                              onCourtNameUpdate={(courtName) => updateCourtName(match.id, courtName).then(() => loadData())}
                               formatPlayerName={formatPlayerName}
                             />
                           ))}
