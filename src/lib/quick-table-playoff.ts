@@ -14,7 +14,7 @@ export interface SeededPlayer {
   wins: number;
   pointDiff: number;
   pointsFor: number;
-  tier: 'winner' | 'runner_up' | 'wildcard';
+  tier: 'winner' | 'runner_up' | 'wildcard' | 'bye';
 }
 
 export interface BracketPairing {
@@ -27,6 +27,22 @@ export interface ConflictResolutionResult {
   pairings: BracketPairing[];
   hasConflicts: boolean;
   unresolvedPairs: number[];
+}
+
+/** Sentinel for BYE slots in the bracket */
+export const BYE_PLAYER_ID = '__BYE__';
+
+function createByePlayer(seed: number): SeededPlayer {
+  return {
+    playerId: BYE_PLAYER_ID,
+    name: 'BYE',
+    seed,
+    sourceGroupId: '__BYE_GROUP__',
+    wins: 0,
+    pointDiff: -Infinity,
+    pointsFor: 0,
+    tier: 'bye',
+  };
 }
 
 /**
@@ -76,11 +92,13 @@ function rankGroupPlayers(
 }
 
 /**
- * Generate global seeding for 6-group playoff (16 players).
+ * Generate global seeding for 6-group playoff (up to 16 players).
  *
  * Seeds 1-6:  group winners sorted by wins DESC, point_diff DESC
  * Seeds 7-12: runners-up sorted by wins DESC, point_diff DESC
- * Seeds 13-16: best 4 third-place, sorted by adjusted stats (vs top-2 only)
+ * Seeds 13-16: best 3rd-place (up to 4), sorted by adjusted stats (vs top-2 only)
+ *
+ * If fewer than 4 third-place players are available, BYE slots fill the remaining seeds.
  */
 export function generateGlobalSeeding(
   groups: QuickTableGroup[],
@@ -144,7 +162,8 @@ export function generateGlobalSeeding(
     return b.adjusted.adjustedPointsFor - a.adjusted.adjustedPointsFor;
   });
 
-  const best4Third = thirdPlaceWithAdjusted.slice(0, 4);
+  // Take up to 4 third-place players
+  const best3rd = thirdPlaceWithAdjusted.slice(0, 4);
 
   const seeded: SeededPlayer[] = [];
   let seed = 1;
@@ -173,7 +192,7 @@ export function generateGlobalSeeding(
       tier: 'runner_up',
     });
   }
-  for (const t of best4Third) {
+  for (const t of best3rd) {
     seeded.push({
       playerId: t.id,
       name: t.name,
@@ -184,6 +203,11 @@ export function generateGlobalSeeding(
       pointsFor: t.points_for,
       tier: 'wildcard',
     });
+  }
+
+  // Pad to 16 with BYE slots if needed
+  while (seeded.length < 16) {
+    seeded.push(createByePlayer(seed++));
   }
 
   return seeded;
@@ -211,6 +235,7 @@ export function generateSeededPairings(seeded: SeededPlayer[]): BracketPairing[]
 /**
  * Resolve group conflicts: if two players in a pairing come from the same group,
  * swap lower seeds between pairs to eliminate conflicts.
+ * BYE players never cause conflicts.
  *
  * Max recursion depth = 3 to prevent infinite loops.
  */
