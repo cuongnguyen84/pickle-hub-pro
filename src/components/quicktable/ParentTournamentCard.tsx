@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Calendar, MapPin, Plus } from "lucide-react";
+import { Trophy, Calendar, MapPin, Plus, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { ParentTournamentWithPreview } from "@/hooks/useParentTournament";
@@ -11,6 +11,7 @@ import { useI18n } from "@/i18n";
 interface ParentTournamentCardProps {
   parent: ParentTournamentWithPreview;
   isOwner: boolean;
+  variant?: "default" | "featured";
 }
 
 const STATUS_CONFIG: Record<string, { labelVi: string; labelEn: string; className: string }> = {
@@ -36,11 +37,12 @@ const STATUS_CONFIG: Record<string, { labelVi: string; labelEn: string; classNam
   },
 };
 
-const ParentTournamentCard = ({ parent, isOwner }: ParentTournamentCardProps) => {
+const ParentTournamentCard = ({ parent, isOwner, variant = "default" }: ParentTournamentCardProps) => {
   const navigate = useNavigate();
   const { language, t } = useI18n();
   const isVi = language === "vi";
   const pt = t.quickTable.parentTournament;
+  const isFeatured = variant === "featured";
 
   const handleHeaderClick = () => {
     navigate(`/tools/quick-tables/parent/${parent.share_id}`);
@@ -59,19 +61,56 @@ const ParentTournamentCard = ({ parent, isOwner }: ParentTournamentCardProps) =>
   const remaining = parent.subEventCount - parent.previewSubEvents.length;
 
   return (
-    <Card className="bg-card/80 p-5 space-y-3">
+    <Card
+      className={cn(
+        "p-5 space-y-3 relative overflow-hidden",
+        isFeatured
+          ? "bg-gradient-to-br from-amber-500/[0.07] via-card/90 to-orange-500/[0.07] ring-1 ring-amber-500/30"
+          : "bg-card/80"
+      )}
+    >
+      {/* Featured shimmer accent */}
+      {isFeatured && (
+        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-500 via-orange-400 to-amber-500" />
+      )}
+
+      {/* Banner image for featured */}
+      {isFeatured && parent.banner_url && (
+        <div className="-mx-5 -mt-5 mb-3">
+          <img
+            src={parent.banner_url}
+            alt={parent.name}
+            className="w-full aspect-[3/1] object-cover"
+          />
+        </div>
+      )}
+
       {/* Header — clickable to parent page */}
       <div className="cursor-pointer" onClick={handleHeaderClick}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Trophy className="w-5 h-5 text-primary shrink-0" />
+            <Trophy className={cn("w-5 h-5 shrink-0", isFeatured ? "text-amber-500" : "text-primary")} />
             <h3 className="text-lg font-semibold text-foreground truncate">
               {parent.name}
             </h3>
+            {isFeatured && (
+              <Badge
+                variant="outline"
+                className="shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 text-xs gap-1"
+              >
+                <Zap className="w-3 h-3" />
+                {t.tournament.featured}
+              </Badge>
+            )}
           </div>
           <Badge
             variant="outline"
-            className="shrink-0 border-primary/50 text-primary text-xs"
+            className={cn(
+              "shrink-0 text-xs",
+              isFeatured
+                ? "border-amber-500/40 text-amber-500"
+                : "border-primary/50 text-primary"
+            )}
           >
             {pt.subEventCount.replace("{count}", String(parent.subEventCount))}
           </Badge>
@@ -97,7 +136,7 @@ const ParentTournamentCard = ({ parent, isOwner }: ParentTournamentCardProps) =>
       </div>
 
       {/* Divider */}
-      <div className="border-t border-border/50" />
+      <div className={cn("border-t", isFeatured ? "border-amber-500/20" : "border-border/50")} />
 
       {/* Sub-event preview list */}
       {parent.previewSubEvents.length > 0 ? (
