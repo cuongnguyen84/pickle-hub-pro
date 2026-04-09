@@ -33,6 +33,13 @@ import TeamManager from '@/components/quicktable/TeamManager';
 import { AIAssistantButton } from '@/components/ai';
 import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
+import PlayoffPreviewDialog from '@/components/quicktable/PlayoffPreviewDialog';
+import {
+  generateGlobalSeeding,
+  generateSeededPairings,
+  resolveGroupConflicts,
+  type BracketPairing,
+} from '@/lib/quick-table-playoff';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -87,6 +94,10 @@ const QuickTableView = () => {
   const [selectedWildcards, setSelectedWildcards] = useState<string[]>([]);
   const [thirdPlacePlayers, setThirdPlacePlayers] = useState<QuickTablePlayer[]>([]);
   const [wildcardNeeded, setWildcardNeeded] = useState(0);
+
+  // Playoff preview dialog state (6-group seeded bracket)
+  const [showPlayoffPreview, setShowPlayoffPreview] = useState(false);
+  const [previewPairings, setPreviewPairings] = useState<BracketPairing[]>([]);
 
   // Team visibility - persisted in localStorage
   const [showTeam, setShowTeam] = useState(() => {
@@ -334,6 +345,20 @@ const QuickTableView = () => {
   const handleStartPlayoff = () => {
     if (!table || !table.group_count) return;
 
+    // For 6-group tournaments, use global seeding with preview dialog
+    if (table.group_count === 6) {
+      try {
+        const seeded = generateGlobalSeeding(groups, players, matches);
+        const pairings = generateSeededPairings(seeded);
+        const resolved = resolveGroupConflicts(pairings);
+        setPreviewPairings(resolved.pairings);
+        setShowPlayoffPreview(true);
+      } catch (err) {
+        toast.error(t.quickTable.view.errorOccurred);
+      }
+      return;
+    }
+
     const { qualified, thirdPlace } = getQualifiedPlayers(groups, players, 2);
     const needed = getWildcardCount(table.group_count);
 
@@ -386,6 +411,53 @@ const QuickTableView = () => {
     
     setShowWildcardDialog(false);
     createPlayoffWithWildcards(qualified, wildcards);
+  };
+
+  // Handle 6-group playoff preview confirmation
+  const handleConfirmPlayoffPreview = async (confirmedPairings: BracketPairing[]) => {
+    if (!table) return;
+
+    try {
+      // Build qualified + wildcards from pairings
+      const allSeededPlayers = new Map<string, BracketPairing['player1']>();
+      for (const p of confirmedPairings) {
+        allSeededPlayers.set(p.player1.playerId, p.player1);
+        allSeededPlayers.set(p.player2.playerId, p.player2);
+      }
+
+      const qualifiedPlayers: QuickTablePlayer[] = [];
+      const wildcardPlayers: QuickTablePlayer[] = [];
+
+      for (const sp of allSeededPlayers.values()) {
+        const player = players.find(pl => pl.id === sp.playerId);
+        if (!player) continue;
+        const updated = { ...player, playoff_seed: sp.seed };
+        if (sp.tier === 'wildcard') {
+          wildcardPlayers.push(updated);
+        } else {
+          qualifiedPlayers.push(updated);
+        }
+      }
+
+      await markPlayersQualified(qualifiedPlayers, wildcardPlayers);
+
+      // Convert pairings to bracket match format
+      const bracketMatches = confirmedPairings.map(p => ({
+        player1: players.find(pl => pl.id === p.player1.playerId) || null,
+        player2: players.find(pl => pl.id === p.player2.playerId) || null,
+        bracketPosition: p.matchNumber <= 4 ? 'upper' : 'lower',
+        matchNumber: p.matchNumber,
+      }));
+
+      await createPlayoffMatches(table.id, bracketMatches);
+      await updateTableStatus(table.id, 'playoff');
+
+      toast.success(t.quickTable.view.playoffCreated);
+      await loadData();
+      setActiveTab('playoff');
+    } catch {
+      toast.error(t.quickTable.view.errorOccurred);
+    }
   };
 
   // Edit groups handlers
@@ -903,6 +975,19 @@ const QuickTableView = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* 6-Group Playoff Preview Dialog */}
+        <PlayoffPreviewDialog
+          open={showPlayoffPreview}
+          onOpenChange={setShowPlayoffPreview}
+          initialPairings={previewPairings}
+          groupNames={(() => {
+            const map = new Map<string, string>();
+            groups.forEach(g => map.set(g.id, g.name));
+            return map;
+          })()}
+          onConfirm={handleConfirmPlayoffPreview}
+        />
 
         {/* Move Player Dialog */}
         <Dialog open={showMoveDialog} onOpenChange={setShowMoveDialog}>

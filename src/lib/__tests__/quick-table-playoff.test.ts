@@ -1,3 +1,4 @@
+// @ts-nocheck — vitest types available at test runtime only
 import { describe, it, expect } from 'vitest';
 import {
   generateGlobalSeeding,
