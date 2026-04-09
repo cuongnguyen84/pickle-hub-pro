@@ -103,6 +103,7 @@ export interface QuickTableMatch {
   created_at: string;
   updated_at: string;
   court_id: number | null;
+  court_name: string | null;
   start_at: string | null;
   rr_round_number: number | null;
   rr_match_index: number | null;
