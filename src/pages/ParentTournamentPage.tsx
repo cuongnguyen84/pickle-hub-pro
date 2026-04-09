@@ -1,5 +1,4 @@
 import { useParams } from 'react-router-dom';
-import { MainLayout } from '@/components/layout';
 import ParentTournamentView from '@/components/quicktable/ParentTournamentView';
 
 const ParentTournamentPage = () => {
@@ -7,11 +6,7 @@ const ParentTournamentPage = () => {
 
   if (!shareId) return null;
 
-  return (
-    <MainLayout>
-      <ParentTournamentView shareId={shareId} />
-    </MainLayout>
-  );
+  return <ParentTournamentView shareId={shareId} />;
 };
 
 export default ParentTournamentPage;

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout";
 import { EmptyState } from "@/components/content";
 import { SearchBar } from "@/components/search";
@@ -10,18 +10,21 @@ import { useI18n } from "@/i18n";
 import { useTournaments, useActivePublicQuickTables, useUserRegisteredTournaments, useUserCompletedTournaments, useOpenTeamMatchTournaments, useCompletedPublicQuickTables, useCompletedTeamMatchTournaments, useActiveDoublesElimination, useCompletedDoublesElimination, useActiveFlexTournaments, useCompletedFlexTournaments } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
 import { useAuth } from "@/hooks/useAuth";
-import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail, MapPin, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { DynamicMeta } from "@/components/seo";
 import { TournamentFormatSection } from "@/components/tournaments";
+import type { ParentTournament } from "@/hooks/useParentTournament";
 
 const Tournaments = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
+  const [parentTournaments, setParentTournaments] = useState<ParentTournament[]>([]);
 
   const { data: tournaments = [], isLoading } = useTournaments();
   const { data: activeQuickTables = [] } = useActivePublicQuickTables();
@@ -34,6 +37,18 @@ const Tournaments = () => {
   const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 50 });
   const { data: registeredTournaments = [] } = useUserRegisteredTournaments(user?.id);
   const { data: completedTournaments = [] } = useUserCompletedTournaments(user?.id);
+
+  useEffect(() => {
+    const loadParents = async () => {
+      const { data } = await supabase
+        .from('parent_tournaments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (data) setParentTournaments(data as ParentTournament[]);
+    };
+    loadParents();
+  }, []);
 
   const filteredTournaments = useMemo(() => {
     if (!debouncedSearch) return tournaments;
@@ -327,6 +342,58 @@ const Tournaments = () => {
               })}
             </div>
           </Card>
+        )}
+
+        {/* Parent Tournaments (Multi-event) */}
+        {parentTournaments.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Layers className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">
+                {language === 'vi' ? 'Giải tổng (nhiều nội dung)' : 'Multi-Event Tournaments'}
+              </h2>
+            </div>
+            <div className="grid gap-3">
+              {parentTournaments.map((pt) => (
+                <Link
+                  key={pt.id}
+                  to={`/tools/quick-tables/parent/${pt.share_id}`}
+                  className="group block rounded-xl overflow-hidden card-interactive bg-background-surface border border-border-subtle hover:border-border"
+                >
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Layers className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                          {pt.name}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-foreground-muted">
+                          {pt.event_date && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {format(new Date(pt.event_date), 'dd/MM/yyyy')}
+                            </span>
+                          )}
+                          {pt.location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {pt.location}
+                            </span>
+                          )}
+                        </div>
+                        {pt.description && (
+                          <p className="text-sm text-foreground-muted mt-1 line-clamp-1">{pt.description}</p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Format sections using reusable component */}
