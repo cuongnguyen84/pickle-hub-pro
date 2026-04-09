@@ -6,7 +6,8 @@ import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuickTable, suggestGroupConfigs, type GroupSuggestion, type QuickTable } from "@/hooks/useQuickTable";
 import { useRefereeTables } from "@/hooks/useRefereeManagement";
-import { useParentTournament, type ParentTournament } from "@/hooks/useParentTournament";
+import { useParentTournament, type ParentTournamentWithPreview } from "@/hooks/useParentTournament";
+import ParentTournamentCard from "@/components/quicktable/ParentTournamentCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,11 +37,11 @@ const QuickTables = () => {
   const [searchParams] = useSearchParams();
   const { createTable, getUserTables, getUserQuotaInfo, loading } = useQuickTable();
   const { tables: refereeTables, loading: refereeTablesLoading } = useRefereeTables();
-  const { getUserParentTournaments } = useParentTournament();
+  const { getUserParentTournamentsWithPreview, isOwner: isParentOwner } = useParentTournament();
   const [quotaInfo, setQuotaInfo] = useState<{ current_count: number; quota: number }>({ current_count: 0, quota: 3 });
   const [showTypeSelection, setShowTypeSelection] = useState(false);
   const [showCreateParent, setShowCreateParent] = useState(false);
-  const [parentTournaments, setParentTournaments] = useState<ParentTournament[]>([]);
+  const [parentTournaments, setParentTournaments] = useState<ParentTournamentWithPreview[]>([]);
   const parentIdFromUrl = searchParams.get('parentId');
 
   const [step, setStep] = useState<Step>("count");
@@ -84,7 +85,7 @@ const QuickTables = () => {
       const [tables, quota, parents] = await Promise.all([
         getUserTables(),
         getUserQuotaInfo(),
-        getUserParentTournaments(),
+        getUserParentTournamentsWithPreview(),
       ]);
       setUserTables(tables);
       if (quota) {
@@ -94,7 +95,7 @@ const QuickTables = () => {
       setTablesLoading(false);
     };
     loadUserData();
-  }, [user, getUserTables, getUserQuotaInfo, getUserParentTournaments]);
+  }, [user, getUserTables, getUserQuotaInfo, getUserParentTournamentsWithPreview]);
 
   const handlePlayerCountSubmit = () => {
     if (playerCount < 2) return;
