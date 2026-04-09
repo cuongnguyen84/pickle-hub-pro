@@ -905,6 +905,7 @@ const QuickTableView = () => {
                 groups={groups}
                 canEdit={canEditScores}
                 onScoreUpdate={(matchId, s1, s2) => handleScoreUpdate(matchId, s1, s2, true)}
+                onCourtNameUpdate={(matchId, courtName) => updateCourtName(matchId, courtName).then(() => loadData())}
               />
             )}
           </TabsContent>
