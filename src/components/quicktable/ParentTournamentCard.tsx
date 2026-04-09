@@ -93,20 +93,11 @@ const ParentTournamentCard = ({ parent, isOwner, variant = "default" }: ParentTo
             <h3 className="text-lg font-semibold text-foreground truncate">
               {parent.name}
             </h3>
-            {isFeatured && (
-              <Badge
-                variant="outline"
-                className="shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-500 text-xs gap-1"
-              >
-                <Zap className="w-3 h-3" />
-                {t.tournament.featured}
-              </Badge>
-            )}
           </div>
           <Badge
             variant="outline"
             className={cn(
-              "shrink-0 text-xs",
+              "shrink-0 text-xs whitespace-nowrap",
               isFeatured
                 ? "border-amber-500/40 text-amber-500"
                 : "border-primary/50 text-primary"
