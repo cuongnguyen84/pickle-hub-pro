@@ -10,4 +10,5 @@ export { CourtTimeSettings } from './CourtTimeSettings';
 export { default as EditCourtsDialog } from './EditCourtsDialog';
 export { default as DoublesRegistrationForm } from './DoublesRegistrationForm';
 export { default as TeamManager } from './TeamManager';
+export { default as ParentTournamentCard } from './ParentTournamentCard';
 export type { Referee } from '@/hooks/useRefereeManagement';
