@@ -87,17 +87,17 @@ const ParentTournamentCard = ({ parent, isOwner, variant = "default" }: ParentTo
 
       {/* Header — clickable to parent page */}
       <div className="cursor-pointer" onClick={handleHeaderClick}>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
             <Trophy className={cn("w-5 h-5 shrink-0", isFeatured ? "text-amber-500" : "text-primary")} />
-            <h3 className="text-lg font-semibold text-foreground truncate">
+            <h3 className="text-lg font-semibold text-foreground line-clamp-2">
               {parent.name}
             </h3>
           </div>
           <Badge
             variant="outline"
             className={cn(
-              "shrink-0 text-xs whitespace-nowrap",
+              "text-xs whitespace-nowrap w-fit",
               isFeatured
                 ? "border-amber-500/40 text-amber-500"
                 : "border-primary/50 text-primary"
