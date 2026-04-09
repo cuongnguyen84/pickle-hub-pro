@@ -828,6 +828,47 @@ const QuickTables = () => {
                   </CardContent>
                 </Card>
               )}
+              {/* Parent Tournaments */}
+              {parentTournaments.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-primary" />
+                      {language === 'vi' ? 'Giải tổng' : 'Multi-event tournaments'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {parentTournaments.map((pt) => (
+                      <Link
+                        key={pt.id}
+                        to={`/tools/quick-tables/parent/${pt.share_id}`}
+                        className="block p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{pt.name}</div>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground-muted mt-1">
+                              {pt.event_date && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(new Date(pt.event_date), "dd/MM/yyyy", { locale: vi })}
+                                </span>
+                              )}
+                              {pt.location && <span>{pt.location}</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="secondary">
+                              <Layers className="w-3 h-3 mr-1" />
+                              {t.quickTable.parentTournament.viewParent}
+                            </Badge>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
         </div>
@@ -838,6 +879,59 @@ const QuickTables = () => {
           {/* SEO Content Section */}
           <QuickTablesSeoContent />
       </div>
+
+      {/* Type Selection Dialog */}
+      <Dialog open={showTypeSelection} onOpenChange={setShowTypeSelection}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.quickTable.parentTournament.selectType}</DialogTitle>
+            <DialogDescription>
+              {language === 'vi' ? 'Chọn loại giải phù hợp với nhu cầu của bạn' : 'Choose the tournament type that fits your needs'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <button
+              className="w-full p-4 rounded-xl border-2 border-primary bg-primary/5 text-left transition-all hover:shadow-md"
+              onClick={() => {
+                setShowTypeSelection(false);
+                setStep("count");
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                  <Trophy className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold">{t.quickTable.parentTournament.singleTitle}</span>
+                    <Badge variant="default" className="text-xs">{t.quickTable.recommended}</Badge>
+                  </div>
+                  <p className="text-sm text-foreground-secondary">{t.quickTable.parentTournament.singleDesc}</p>
+                </div>
+              </div>
+            </button>
+            <button
+              className="w-full p-4 rounded-xl border-2 border-border text-left transition-all hover:border-primary/50 hover:shadow-md"
+              onClick={() => {
+                setShowTypeSelection(false);
+                setShowCreateParent(true);
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                  <Layers className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <span className="font-semibold">{t.quickTable.parentTournament.multiTitle}</span>
+                  <p className="text-sm text-foreground-secondary mt-1">{t.quickTable.parentTournament.multiDesc}</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <CreateParentTournamentDialog open={showCreateParent} onOpenChange={setShowCreateParent} />
     </MainLayout>
   );
 };
