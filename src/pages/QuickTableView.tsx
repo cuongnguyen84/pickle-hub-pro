@@ -976,6 +976,19 @@ const QuickTableView = () => {
           </DialogContent>
         </Dialog>
 
+        {/* 6-Group Playoff Preview Dialog */}
+        <PlayoffPreviewDialog
+          open={showPlayoffPreview}
+          onOpenChange={setShowPlayoffPreview}
+          initialPairings={previewPairings}
+          groupNames={(() => {
+            const map = new Map<string, string>();
+            groups.forEach(g => map.set(g.id, g.name));
+            return map;
+          })()}
+          onConfirm={handleConfirmPlayoffPreview}
+        />
+
         {/* Move Player Dialog */}
         <Dialog open={showMoveDialog} onOpenChange={setShowMoveDialog}>
           <DialogContent>
