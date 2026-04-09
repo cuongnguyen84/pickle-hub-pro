@@ -56,6 +56,36 @@ export default function AdminTournaments() {
   const { data: tournaments, isLoading } = useAdminTournaments();
   const createTournament = useCreateTournament();
   const updateTournament = useUpdateTournament();
+  const [parentTournaments, setParentTournaments] = useState<ParentTournament[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadParentTournaments();
+  }, []);
+
+  const loadParentTournaments = async () => {
+    const { data } = await supabase
+      .from('parent_tournaments')
+      .select('*')
+      .order('is_featured', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (data) setParentTournaments(data as ParentTournament[]);
+  };
+
+  const toggleFeatured = async (pt: ParentTournament) => {
+    setTogglingId(pt.id);
+    const { error } = await supabase
+      .from('parent_tournaments')
+      .update({ is_featured: !pt.is_featured })
+      .eq('id', pt.id);
+    if (error) {
+      toast({ variant: "destructive", title: "Không thể cập nhật" });
+    } else {
+      toast({ title: pt.is_featured ? "Đã bỏ nổi bật" : "Đã đánh dấu nổi bật" });
+      await loadParentTournaments();
+    }
+    setTogglingId(null);
+  };
 
   const resetForm = () => {
     setFormData({
