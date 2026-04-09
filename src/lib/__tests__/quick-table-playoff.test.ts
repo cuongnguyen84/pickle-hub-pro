@@ -61,6 +61,7 @@ function mockMatch(
     created_at: '',
     updated_at: '',
     court_id: null,
+    court_name: null,
     start_at: null,
     rr_round_number: null,
     rr_match_index: null,
