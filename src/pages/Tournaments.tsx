@@ -375,8 +375,30 @@ const Tournaments = () => {
           </Card>
         )}
 
-        {/* Parent Tournaments (Multi-event) */}
-        {parentTournaments.length > 0 && (
+        {/* Featured Parent Tournaments */}
+        {parentTournaments.filter(p => p.is_featured).length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              <h2 className="text-lg font-semibold text-foreground">
+                {t.tournament.featured}
+              </h2>
+            </div>
+            <div className="grid gap-3">
+              {parentTournaments.filter(p => p.is_featured).map((pt) => (
+                <ParentTournamentCard
+                  key={pt.id}
+                  parent={pt}
+                  isOwner={!!user && pt.creator_user_id === user.id}
+                  variant="featured"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Non-featured Parent Tournaments (Multi-event) */}
+        {parentTournaments.filter(p => !p.is_featured).length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-5 h-5 text-primary" />
@@ -385,7 +407,7 @@ const Tournaments = () => {
               </h2>
             </div>
             <div className="grid gap-3">
-              {parentTournaments.map((pt) => (
+              {parentTournaments.filter(p => !p.is_featured).map((pt) => (
                 <ParentTournamentCard
                   key={pt.id}
                   parent={pt}

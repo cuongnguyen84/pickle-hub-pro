@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trophy, Calendar, Layers, Star } from "lucide-react";
+import { Plus, Pencil, Trophy, Calendar, Layers } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import type { ParentTournament } from "@/hooks/useParentTournament";
@@ -342,11 +342,7 @@ export default function AdminTournaments() {
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        {pt.is_featured ? (
-                          <Star className="w-5 h-5 text-primary fill-primary" />
-                        ) : (
-                          <Layers className="w-5 h-5 text-primary" />
-                        )}
+                        <Trophy className="w-5 h-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
