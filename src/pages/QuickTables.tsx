@@ -252,9 +252,20 @@ const QuickTables = () => {
               <Users className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold mb-2">{t.quickTable.seo.pageTitle}</h1>
-            <p className="text-foreground-secondary">
+            <p className="text-foreground-secondary mb-4">
               {t.quickTable.seo.pageSubtitle}
             </p>
+            {step === "count" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setShowTypeSelection(true)}
+              >
+                <Layers className="w-4 h-4" />
+                {language === 'vi' ? 'Tạo giải tổng (nhiều nội dung)' : 'Create multi-event tournament'}
+              </Button>
+            )}
           </header>
 
           {/* Step 1: Player Count */}
