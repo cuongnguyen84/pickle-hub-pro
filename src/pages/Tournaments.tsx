@@ -11,7 +11,7 @@ import { useTournaments, useActivePublicQuickTables, useUserRegisteredTournament
 import { useDebounce } from "@/hooks/useSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail, MapPin, Layers } from "lucide-react";
+import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail, MapPin, Layers, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -43,6 +43,7 @@ const Tournaments = () => {
       const { data } = await supabase
         .from('parent_tournaments')
         .select('*')
+        .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(20);
       if (data) setParentTournaments(data as ParentTournament[]);
