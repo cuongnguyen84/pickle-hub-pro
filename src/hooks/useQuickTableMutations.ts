@@ -425,23 +425,19 @@ export function useQuickTableMutations() {
     }
   }, []);
 
-  const deleteTable = useCallback(async (tableId: string): Promise<boolean> => {
+  const updateCourtName = useCallback(async (
+    matchId: string,
+    courtName: string
+  ): Promise<boolean> => {
     try {
-      const { error } = await supabase.rpc('delete_quick_table', {
-        _table_id: tableId
-      });
-      
+      const { error } = await supabase
+        .from('quick_table_matches')
+        .update({ court_name: courtName })
+        .eq('id', matchId);
+
       if (error) throw error;
-      
-      toast.success('Đã xoá giải đấu');
       return true;
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : '';
-      if (msg.includes('Permission denied')) {
-        toast.error('Bạn không có quyền xoá giải đấu này');
-      } else {
-        toast.error('Không thể xoá giải đấu');
-      }
+    } catch {
       return false;
     }
   }, []);
@@ -460,5 +456,6 @@ export function useQuickTableMutations() {
     updateTableCourtSettings,
     reassignCourtsAndTimes,
     deleteTable,
+    updateCourtName,
   };
 }
