@@ -351,7 +351,7 @@ const Tournaments = () => {
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-semibold text-foreground">
-                {language === 'vi' ? 'Giải tổng (nhiều nội dung)' : 'Multi-Event Tournaments'}
+                {t.tournament.multiEvent}
               </h2>
             </div>
             <div className="grid gap-3">
@@ -359,17 +359,45 @@ const Tournaments = () => {
                 <Link
                   key={pt.id}
                   to={`/tools/quick-tables/parent/${pt.share_id}`}
-                  className="group block rounded-xl overflow-hidden card-interactive bg-background-surface border border-border-subtle hover:border-border"
+                  className={cn(
+                    "group block rounded-xl overflow-hidden card-interactive bg-background-surface border hover:border-border",
+                    pt.is_featured
+                      ? "border-primary/50 ring-1 ring-primary/20"
+                      : "border-border-subtle"
+                  )}
                 >
+                  {pt.is_featured && pt.banner_url && (
+                    <div className="w-full h-32 overflow-hidden">
+                      <img
+                        src={pt.banner_url}
+                        alt={pt.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Layers className="w-5 h-5 text-primary" />
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                        pt.is_featured ? "bg-primary/20" : "bg-primary/10"
+                      )}>
+                        {pt.is_featured ? (
+                          <Star className="w-5 h-5 text-primary fill-primary" />
+                        ) : (
+                          <Layers className="w-5 h-5 text-primary" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                          {pt.name}
-                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                            {pt.name}
+                          </h3>
+                          {pt.is_featured && (
+                            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
+                              {t.tournament.featured}
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-foreground-muted">
                           {pt.event_date && (
                             <span className="flex items-center gap-1">
