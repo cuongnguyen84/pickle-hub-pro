@@ -1118,6 +1118,9 @@ export const en: Translations = {
       subEventCount: "{count} events",
       viewParent: "View parent",
       deleteParentConfirm: "You must delete all sub-events before deleting the parent tournament.",
+      moreEvents: "+ {count} more events",
+      noEventsYet: "No events yet",
+      addFirstEvent: "+ Add event",
     },
     playoffPreview: {
       title: "Playoff Bracket Preview",
