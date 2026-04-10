@@ -212,7 +212,7 @@ const WatchLive = () => {
         type="video.other"
         creator={livestream.organization?.name}
         publishedTime={livestream.scheduled_start_at ?? livestream.created_at}
-        url={`https://www.thepicklehub.net/livestream/${id}`}
+        url={`https://www.thepicklehub.net/live/${id}`}
       />
       
       {/* VideoObject Schema for ended streams (helps Google Video indexing) */}
