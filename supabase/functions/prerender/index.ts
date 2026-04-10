@@ -464,7 +464,7 @@ ${orgName ? `<meta property="article:author" content="${escapeHtml(orgName)}"/>`
 
   const graphSchema = {
     "@context": "https://schema.org",
-    "@graph": [videoObjectSchema, broadcastEventSchema],
+    "@graph": [videoObjectSchema, sportsEventSchema],
   };
 
   // Breadcrumb
