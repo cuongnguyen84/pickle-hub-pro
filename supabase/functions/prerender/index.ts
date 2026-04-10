@@ -195,7 +195,7 @@ function buildHtml(opts: {
   } = opts;
 
   const jsonLdScript = jsonLd
-    ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`
+    ? `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")}</script>`
     : "";
 
   const htmlLang = lang === "vi" ? "vi" : "en";
