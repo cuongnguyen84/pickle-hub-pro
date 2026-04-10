@@ -432,27 +432,39 @@ ${orgName ? `<meta property="article:author" content="${escapeHtml(orgName)}"/>`
   if (durationIso) videoObjectSchema.duration = durationIso;
   if (videoUrl) videoObjectSchema.contentUrl = videoUrl;
 
-  const broadcastEventSchema: Record<string, unknown> = {
-    "@type": "BroadcastEvent",
+  const eventStatus = ls.status === "live"
+    ? "https://schema.org/EventScheduled"
+    : ls.status === "ended"
+      ? "https://schema.org/EventScheduled"
+      : "https://schema.org/EventScheduled";
+
+  const sportsEventSchema: Record<string, unknown> = {
+    "@type": "SportsEvent",
     "@id": `${pageUrl}#event`,
     name: rawTitle,
     description: desc,
-    isLiveBroadcast: isLive,
-    videoFormat: "HD",
-    publishedOn: {
-      "@type": "BroadcastService",
+    eventStatus,
+    eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
+    location: {
+      "@type": "VirtualLocation",
+      url: pageUrl,
+    },
+    organizer: {
+      "@type": "Organization",
       name: "ThePickleHub",
       url: SITE_URL,
     },
+    sport: "Pickleball",
   };
   if (ls.scheduled_start_at || ls.started_at) {
-    broadcastEventSchema.startDate = ls.started_at || ls.scheduled_start_at;
+    sportsEventSchema.startDate = ls.started_at || ls.scheduled_start_at;
   }
-  if (ls.ended_at) broadcastEventSchema.endDate = ls.ended_at;
+  if (ls.ended_at) sportsEventSchema.endDate = ls.ended_at;
+  if (ls.thumbnail_url) sportsEventSchema.image = absImage(ls.thumbnail_url);
 
   const graphSchema = {
     "@context": "https://schema.org",
-    "@graph": [videoObjectSchema, broadcastEventSchema],
+    "@graph": [videoObjectSchema, sportsEventSchema],
   };
 
   // Breadcrumb
