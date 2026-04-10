@@ -361,27 +361,48 @@ async function renderHome(supabase: Supabase): Promise<Response> {
 async function renderLive(supabase: Supabase, id: string): Promise<Response> {
   const { data: ls } = await supabase
     .from("public_livestreams")
-    .select("id, title, description, thumbnail_url, status, scheduled_start_at, ended_at, created_at, organization_id, tournament_id, mux_playback_id")
+    .select("id, title, description, thumbnail_url, status, scheduled_start_at, started_at, ended_at, created_at, organization_id, tournament_id, mux_playback_id")
     .eq("id", id)
     .single();
 
   if (!ls) return render404(`/live/${id}`);
 
   const [orgRes, tournRes] = await Promise.all([
-    ls.organization_id ? supabase.from("organizations").select("name").eq("id", ls.organization_id).single() : Promise.resolve({ data: null }),
+    ls.organization_id ? supabase.from("organizations").select("name, slug").eq("id", ls.organization_id).single() : Promise.resolve({ data: null }),
     ls.tournament_id ? supabase.from("tournaments").select("name").eq("id", ls.tournament_id).single() : Promise.resolve({ data: null }),
   ]);
   const orgName = orgRes.data?.name || "";
+  const orgSlug = orgRes.data?.slug || "";
   const tournName = tournRes.data?.name || "";
 
   const isEnded = ls.status === "ended";
+  const isLive = ls.status === "live";
   const suffix = isEnded ? "Pickleball Replay" : "Pickleball Livestream";
   const rawTitle = tournName ? `${tournName} – ${ls.title}` : ls.title;
   const title = buildTitle(rawTitle, ` | ${suffix}`);
   const desc = buildMetaDescription(ls.description, { type: "video", title: ls.title });
 
+  const pageUrl = `${SITE_URL}/live/${id}`;
+  const embedUrl = `${SITE_URL}/embed/live/${id}`;
   const videoUrl = ls.mux_playback_id ? `https://stream.mux.com/${ls.mux_playback_id}.m3u8` : null;
-  const extraMeta = videoUrl
+
+  // Calculate ISO 8601 duration from started_at/ended_at
+  let durationIso = "";
+  if (ls.started_at && ls.ended_at) {
+    const startMs = new Date(ls.started_at).getTime();
+    const endMs = new Date(ls.ended_at).getTime();
+    const diffSec = Math.max(0, Math.floor((endMs - startMs) / 1000));
+    if (diffSec > 0) {
+      const h = Math.floor(diffSec / 3600);
+      const m = Math.floor((diffSec % 3600) / 60);
+      const s = diffSec % 60;
+      durationIso = "PT" + (h > 0 ? `${h}H` : "") + (m > 0 ? `${m}M` : "") + `${s}S`;
+    }
+  }
+
+  // Robots meta for Flexible Sampling: allow rich snippets
+  const robotsMeta = `<meta name="robots" content="max-video-preview:-1, max-image-preview:large, max-snippet:-1"/>`;
+  const ogVideoMeta = videoUrl
     ? `<meta property="og:video" content="${escapeHtml(videoUrl)}"/>
 <meta property="og:video:type" content="text/html"/>
 <meta property="og:video:width" content="1280"/>
@@ -389,30 +410,95 @@ async function renderLive(supabase: Supabase, id: string): Promise<Response> {
 ${orgName ? `<meta property="article:author" content="${escapeHtml(orgName)}"/>` : ""}`
     : "";
 
+  // Combined @graph schema: VideoObject + BroadcastEvent
+  const videoObjectSchema: Record<string, unknown> = {
+    "@type": "VideoObject",
+    "@id": `${pageUrl}#video`,
+    name: rawTitle,
+    description: desc,
+    thumbnailUrl: absImage(ls.thumbnail_url),
+    uploadDate: ls.scheduled_start_at || ls.created_at,
+    isFamilyFriendly: true,
+    isAccessibleForFree: false,
+    hasPart: {
+      "@type": "Clip",
+      name: "Free preview",
+      startOffset: 0,
+      endOffset: 30,
+      url: pageUrl,
+    },
+    embedUrl,
+  };
+  if (durationIso) videoObjectSchema.duration = durationIso;
+  if (videoUrl) videoObjectSchema.contentUrl = videoUrl;
+
+  const broadcastEventSchema: Record<string, unknown> = {
+    "@type": "BroadcastEvent",
+    "@id": `${pageUrl}#event`,
+    name: rawTitle,
+    description: desc,
+    isLiveBroadcast: isLive,
+    videoFormat: "HD",
+    publishedOn: {
+      "@type": "BroadcastService",
+      name: "ThePickleHub",
+      url: SITE_URL,
+    },
+  };
+  if (ls.scheduled_start_at || ls.started_at) {
+    broadcastEventSchema.startDate = ls.started_at || ls.scheduled_start_at;
+  }
+  if (ls.ended_at) broadcastEventSchema.endDate = ls.ended_at;
+
+  const graphSchema = {
+    "@context": "https://schema.org",
+    "@graph": [videoObjectSchema, broadcastEventSchema],
+  };
+
+  // Breadcrumb
   const bc = breadcrumb([
     { label: "Trang chủ", href: SITE_URL },
     { label: "Livestream", href: `${SITE_URL}/livestream` },
     { label: ls.title },
   ]);
 
+  // Status text for body
+  const statusLabel = isLive ? "🔴 Đang phát trực tiếp" : isEnded ? "📹 Replay" : "📅 Sắp diễn ra";
+  const dateDisplay = ls.scheduled_start_at
+    ? new Date(ls.scheduled_start_at).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "";
+
+  // Expanded body content for Googlebot
+  const bodyContent = `${bc}
+<dl>
+${orgName ? `<dt>Tổ chức</dt><dd>${orgSlug ? `<a href="${SITE_URL}/org/${escapeHtml(orgSlug)}">${escapeHtml(orgName)}</a>` : escapeHtml(orgName)}</dd>` : ""}
+${tournName ? `<dt>Giải đấu</dt><dd>${escapeHtml(tournName)}</dd>` : ""}
+<dt>Trạng thái</dt><dd>${statusLabel}</dd>
+${dateDisplay ? `<dt>Thời gian</dt><dd>${dateDisplay}</dd>` : ""}
+</dl>
+${ls.description ? `<p>${escapeHtml(ls.description)}</p>` : ""}
+<p>Xem trực tiếp ${escapeHtml(ls.title)} trên ThePickleHub - nền tảng pickleball hàng đầu với livestream chất lượng cao, chat trực tiếp và replay đầy đủ.</p>
+<p>Đăng nhập để xem replay đầy đủ / Sign in to watch full replay.</p>
+<nav>
+<h2>Xem thêm</h2>
+<ul>
+${orgSlug ? `<li><a href="${SITE_URL}/org/${escapeHtml(orgSlug)}">${escapeHtml(orgName)} - Tất cả livestream</a></li>` : ""}
+<li><a href="${SITE_URL}/livestream">Tất cả livestream pickleball</a></li>
+<li><a href="${SITE_URL}/videos">Video pickleball</a></li>
+<li><a href="${SITE_URL}/tournaments">Giải đấu pickleball</a></li>
+</ul>
+</nav>`;
+
   return htmlResponse(
     buildHtml({
       title,
       description: desc,
-      url: `${SITE_URL}/live/${id}`,
+      url: pageUrl,
       image: absImage(ls.thumbnail_url),
       type: videoUrl ? "video.other" : "website",
-      extraMeta,
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "VideoObject",
-        name: ls.title,
-        description: desc,
-        thumbnailUrl: absImage(ls.thumbnail_url),
-        uploadDate: ls.created_at,
-        ...(videoUrl ? { contentUrl: videoUrl } : {}),
-      },
-      bodyContent: bc,
+      extraMeta: `${robotsMeta}\n${ogVideoMeta}`,
+      jsonLd: graphSchema,
+      bodyContent,
     }),
   );
 }

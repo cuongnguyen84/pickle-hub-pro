@@ -212,7 +212,7 @@ const WatchLive = () => {
         type="video.other"
         creator={livestream.organization?.name}
         publishedTime={livestream.scheduled_start_at ?? livestream.created_at}
-        url={`https://www.thepicklehub.net/livestream/${id}`}
+        url={`https://www.thepicklehub.net/live/${id}`}
       />
       
       {/* VideoObject Schema for ended streams (helps Google Video indexing) */}
@@ -237,7 +237,7 @@ const WatchLive = () => {
 
         {/* Sticky Video Player for Mobile */}
         <div className="lg:hidden sticky top-14 z-40 -mx-4 sm:-mx-6 bg-background">
-          <div className="aspect-video bg-surface-elevated overflow-hidden relative">
+          <div className="aspect-video bg-surface-elevated overflow-hidden relative paywall">
               {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
               {isBlocked && <GeoBlockOverlay />}
               {isGated && <LivestreamGateOverlay livestreamId={id!} />}
@@ -306,7 +306,7 @@ const WatchLive = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Video Player - Desktop only */}
-            <div className="hidden lg:block aspect-video bg-surface-elevated rounded-xl overflow-hidden relative">
+            <div className="hidden lg:block aspect-video bg-surface-elevated rounded-xl overflow-hidden relative paywall">
               {showCountdown && <PreviewCountdown secondsRemaining={secondsRemaining} progress={progress} />}
               {isBlocked && <GeoBlockOverlay />}
               {isGated && <LivestreamGateOverlay livestreamId={id!} />}
