@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/assets/*",
+    "/static/*",
+    "/_headers",
+    "/_redirects",
+    "/_routes.json",
+    "/favicon.ico",
+    "/og-image.png",
+    "/.well-known/*",
+    "/manifest.json"
+  ]
+}
