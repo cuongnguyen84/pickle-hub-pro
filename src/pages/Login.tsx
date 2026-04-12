@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { DynamicMeta } from "@/components/seo";
@@ -12,97 +11,11 @@ import { toast } from "@/hooks/use-toast";
 import { trackEvent } from "@/utils/ga";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { getEmailRedirectUrl, getSiteUrl } from "@/lib/auth-config";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { isNativeApp } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
 import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
-
-type WebOAuthProvider = "google" | "apple";
-
-/**
- * ARCHITECTURE NOTE — DO NOT CHANGE without resolving the underlying conflict.
- *
- * OAuth redirect_uri is hardcoded to pickle-hub-pro.lovable.app instead of
- * thepicklehub.net for the following reasons:
- *
- * 1. thepicklehub.net is served via a Cloudflare Worker that performs SEO
- *    prerendering (bot detection + dynamic HTML). This Worker intercepts
- *    ALL requests to the domain, including OAuth callback URLs.
- *
- * 2. Lovable Auth (cloud-auth-js) can only whitelist redirect_uri domains
- *    that are configured as "native custom domains" in the Lovable platform.
- *    This was confirmed by Lovable Support.
- *
- * 3. Setting thepicklehub.net as a native custom domain conflicts with the
- *    Cloudflare Worker setup because Lovable expects to control DNS/TLS
- *    directly, but the Worker proxy sits in front.
- *
- * 4. Therefore, OAuth must initiate and complete on pickle-hub-pro.lovable.app
- *    (the published Lovable domain), then perform a cross-domain token handoff
- *    to thepicklehub.net via AuthCallback.tsx (Flow 2 → Flow 3).
- *
- * If you need to change this, you must first resolve the conflict between
- * Cloudflare Worker proxying and Lovable native custom domain requirements.
- */
-const PUBLISHED_OAUTH_BROKER_URL = "https://pickle-hub-pro.lovable.app/~oauth/initiate";
-const PUBLISHED_OAUTH_CALLBACK_URL = "https://pickle-hub-pro.lovable.app/auth/callback";
-const CUSTOM_DOMAIN_OAUTH_HOSTNAMES = new Set(["thepicklehub.net", "www.thepicklehub.net"]);
-
-const publishedDomainLovableAuth = createLovableAuth({
-  oauthBrokerUrl: PUBLISHED_OAUTH_BROKER_URL,
-});
-
-const getPostOAuthReturnUrl = (redirectPath: string | null): string => {
-  const siteUrl = getSiteUrl();
-
-  if (!redirectPath) {
-    return `${siteUrl}/`;
-  }
-
-  if (/^https?:\/\//i.test(redirectPath)) {
-    return redirectPath;
-  }
-
-  const normalizedPath = redirectPath.startsWith("/") ? redirectPath : `/${redirectPath}`;
-  return `${siteUrl}${normalizedPath}`;
-};
-
-const getPublishedOAuthRedirectUri = (redirectPath: string | null): string => {
-  return `${PUBLISHED_OAUTH_CALLBACK_URL}?redirect=${encodeURIComponent(getPostOAuthReturnUrl(redirectPath))}`;
-};
-
-const signInWithManagedWebOAuth = async (
-  provider: WebOAuthProvider,
-  redirectPath: string | null,
-): Promise<{ error: Error | null; redirected?: boolean }> => {
-  const isCustomDomain =
-    typeof window !== "undefined" && CUSTOM_DOMAIN_OAUTH_HOSTNAMES.has(window.location.hostname);
-
-  if (!isCustomDomain) {
-    return lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: getSiteUrl(),
-    });
-  }
-
-  const result = await publishedDomainLovableAuth.signInWithOAuth(provider, {
-    redirect_uri: getPublishedOAuthRedirectUri(redirectPath),
-  });
-
-  if (result.redirected || result.error) {
-    return result;
-  }
-
-  try {
-    await supabase.auth.setSession(result.tokens);
-    return result;
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error : new Error(String(error)),
-    };
-  }
-};
 
 const Login = () => {
   const { t } = useI18n();
@@ -188,26 +101,31 @@ const Login = () => {
     setOauthRedirecting(true);
 
     try {
-      if (isNativeApp()) {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: "https://pickle-hub-pro.lovable.app/auth/callback?native=1",
-            skipBrowserRedirect: true,
-          },
-        });
+      const redirectTo = isNativeApp()
+        ? `${getSiteUrl()}/auth/callback?native=1`
+        : `${getSiteUrl()}/auth/callback`;
 
-        if (error) throw error;
-        if (data?.url) {
-          setOAuthInProgress(true);
-          await Browser.open({ url: data.url, presentationStyle: "popover" });
-        }
-      } else {
-        const { error } = await signInWithManagedWebOAuth("google", redirectUrl);
-        if (error) throw error;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: isNativeApp(),
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (isNativeApp() && data?.url) {
+        setOAuthInProgress(true);
+        await Browser.open({ url: data.url, presentationStyle: 'popover' });
       }
     } catch (err: unknown) {
       setOauthRedirecting(false);
+      console.error("[OAuth] Error:", err);
       toast({
         variant: "destructive",
         title: t.common.error,
@@ -222,23 +140,23 @@ const Login = () => {
     setIsSubmitting(true);
     setOauthRedirecting(true);
     try {
-      if (isNativeApp()) {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "apple",
-          options: {
-            redirectTo: "https://pickle-hub-pro.lovable.app/auth/callback?native=1",
-            skipBrowserRedirect: true,
-          },
-        });
+      const redirectTo = isNativeApp()
+        ? `${getSiteUrl()}/auth/callback?native=1`
+        : `${getSiteUrl()}/auth/callback`;
 
-        if (error) throw error;
-        if (data?.url) {
-          setOAuthInProgress(true);
-          await Browser.open({ url: data.url, presentationStyle: "popover" });
-        }
-      } else {
-        const { error } = await signInWithManagedWebOAuth("apple", redirectUrl);
-        if (error) throw error;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: isNativeApp(),
+        },
+      });
+
+      if (error) throw error;
+
+      if (isNativeApp() && data?.url) {
+        setOAuthInProgress(true);
+        await Browser.open({ url: data.url, presentationStyle: 'popover' });
       }
     } catch (err: unknown) {
       setOauthRedirecting(false);
@@ -305,29 +223,29 @@ const Login = () => {
         } else {
           // Show verification message since email confirmation is required
           setShowVerificationMessage(true);
-          
+
           // GA4 sign_up tracking - multiple methods for reliability
           console.log("[GA4] === SIGN_UP EVENT START ===");
           console.log("[GA4] gtag available:", typeof window.gtag === 'function');
           console.log("[GA4] dataLayer available:", !!window.dataLayer);
-          
+
           // Method 1: trackEvent helper
           trackEvent("sign_up", { method: "email" });
-          
+
           // Method 2: Direct gtag call
           if (typeof window.gtag === 'function') {
             window.gtag('event', 'sign_up', { method: 'email' });
             console.log("[GA4] sign_up fired via gtag directly");
           }
-          
+
           // Method 3: dataLayer push
           if (window.dataLayer) {
             window.dataLayer.push({ event: "sign_up", method: "email" });
             console.log("[GA4] sign_up pushed to dataLayer");
           }
-          
+
           console.log("[GA4] === SIGN_UP EVENT END ===");
-          
+
           toast({
             title: t.auth.signupSuccess,
           });
