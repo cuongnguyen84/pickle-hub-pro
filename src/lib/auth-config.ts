@@ -10,7 +10,7 @@
  * ========================================
  * 
  * 1. DNS Configuration:
- *    - Add CNAME record: auth.thepicklehub.net -> nijiwypubmkvmjuafmgp.supabase.co
+ *    - Add CNAME record: auth.thepicklehub.net -> ajvlcamxemgbxduhiqrl.supabase.co
  * 
  * 2. Supabase Dashboard (via Lovable Cloud):
  *    - Enable Custom Domain for auth.thepicklehub.net
@@ -34,7 +34,7 @@
  *    - VITE_AUTH_DOMAIN=https://auth.thepicklehub.net
  * 
  * IMPORTANT NOTES:
- * - DB/API calls still use VITE_SUPABASE_URL (nijiwypubmkvmjuafmgp.supabase.co)
+ * - DB/API calls still use VITE_SUPABASE_URL (ajvlcamxemgbxduhiqrl.supabase.co)
  * - Only OAuth flows will go through auth.thepicklehub.net after custom domain is set up
  * - The consent screen will show your custom domain once Supabase custom domain is verified
  */

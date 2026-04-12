@@ -11,7 +11,6 @@ import { toast } from "@/hooks/use-toast";
 import { trackEvent } from "@/utils/ga";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { getEmailRedirectUrl, getSiteUrl } from "@/lib/auth-config";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { isNativeApp } from "@/lib/capacitor-utils";
@@ -100,30 +99,27 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      if (isNativeApp()) {
-        // Native: Open OAuth in SFSafariViewController to avoid disallowed_useragent
-        // Add native=1 param so AuthCallback knows to redirect via custom URL scheme
-        console.log("[OAuth] Using Browser plugin for native Google OAuth");
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: "https://pickle-hub-pro.lovable.app/auth/callback?native=1",
-            skipBrowserRedirect: true,
-          },
-        });
+      const redirectTo = isNativeApp()
+        ? `${getSiteUrl()}/auth/callback?native=1`
+        : `${getSiteUrl()}/auth/callback`;
 
-        if (error) throw error;
-        if (data?.url) {
-          setOAuthInProgress(true);
-          await Browser.open({ url: data.url, presentationStyle: 'popover' });
-        }
-      } else {
-        // Web: Standard OAuth redirect
-        console.log("[OAuth] Using Lovable managed OAuth for Google");
-        const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: getSiteUrl(),
-        });
-        if (error) throw error;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: isNativeApp(),
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (isNativeApp() && data?.url) {
+        setOAuthInProgress(true);
+        await Browser.open({ url: data.url, presentationStyle: 'popover' });
       }
     } catch (err: unknown) {
       console.error("[OAuth] Error:", err);
@@ -140,28 +136,23 @@ const Login = () => {
   const handleAppleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      if (isNativeApp()) {
-        // Native: Open OAuth in external browser (same pattern as Google)
-        console.log("[OAuth] Using Browser plugin for native Apple OAuth");
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "apple",
-          options: {
-            redirectTo: "https://pickle-hub-pro.lovable.app/auth/callback?native=1",
-            skipBrowserRedirect: true,
-          },
-        });
+      const redirectTo = isNativeApp()
+        ? `${getSiteUrl()}/auth/callback?native=1`
+        : `${getSiteUrl()}/auth/callback`;
 
-        if (error) throw error;
-        if (data?.url) {
-          setOAuthInProgress(true);
-          await Browser.open({ url: data.url, presentationStyle: 'popover' });
-        }
-      } else {
-        // Web: Use Lovable managed OAuth
-        const { error } = await lovable.auth.signInWithOAuth("apple", {
-          redirect_uri: getSiteUrl(),
-        });
-        if (error) throw error;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: isNativeApp(),
+        },
+      });
+
+      if (error) throw error;
+
+      if (isNativeApp() && data?.url) {
+        setOAuthInProgress(true);
+        await Browser.open({ url: data.url, presentationStyle: 'popover' });
       }
     } catch (err: unknown) {
       toast({
