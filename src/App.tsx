@@ -148,6 +148,7 @@ class ChunkErrorBoundary extends Component<
       error.message.includes("Failed to fetch dynamically imported module") ||
       error.message.includes("Loading chunk") ||
       error.message.includes("ChunkLoadError");
+    console.error("[ChunkErrorBoundary] Caught error:", error.message, error.stack);
     if (isChunkError) {
       window.location.reload();
     }
@@ -169,6 +170,9 @@ class ChunkErrorBoundary extends Component<
             ) : (
               <div className="flex flex-col items-center gap-3">
                 <div className="text-muted-foreground">Đã xảy ra lỗi</div>
+                <div className="text-xs text-muted-foreground/60 max-w-md text-center break-all">
+                  {this.state.error?.message}
+                </div>
                 <button
                   onClick={() => this.setState({ hasError: false, error: null })}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm"
