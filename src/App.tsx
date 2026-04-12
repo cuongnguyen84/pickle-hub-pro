@@ -42,7 +42,6 @@ const Tools = lazy(() => import("./pages/Tools"));
 const QuickTables = lazy(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazy(() => import("./pages/QuickTableSetup"));
 const QuickTableView = lazy(() => import("./pages/QuickTableView"));
-const ParentTournamentPage = lazy(() => import("./pages/ParentTournamentPage"));
 const MatchScoring = lazy(() => import("./pages/MatchScoring"));
 const JoinTeam = lazy(() => import("./pages/JoinTeam"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -135,32 +134,49 @@ const PageLoader = () => (
 // Error boundary for lazy-loaded chunks (handles stale cache after deploy)
 class ChunkErrorBoundary extends Component<
   { children: ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; error: Error | null }
 > {
   constructor(props: { children: ReactNode }) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
   }
   componentDidCatch(error: Error) {
-    // If it's a chunk load error, reload the page to get fresh chunks
-    if (
+    const isChunkError =
       error.message.includes("Failed to fetch dynamically imported module") ||
       error.message.includes("Loading chunk") ||
-      error.message.includes("ChunkLoadError")
-    ) {
+      error.message.includes("ChunkLoadError");
+    if (isChunkError) {
       window.location.reload();
     }
   }
   render() {
     if (this.state.hasError) {
+      const isChunkError = this.state.error &&
+        (this.state.error.message.includes("Failed to fetch dynamically imported module") ||
+         this.state.error.message.includes("Loading chunk") ||
+         this.state.error.message.includes("ChunkLoadError"));
+      // For chunk errors, show loading (page will auto-reload via componentDidCatch)
+      // For other errors, show retry button so users aren't stuck
       return (
         <div className="h-full bg-background flex flex-col w-full overflow-hidden">
           <AppHeader />
           <main className="flex-1 overflow-y-auto flex items-center justify-center" style={{ WebkitOverflowScrolling: 'touch' }}>
-            <div className="text-muted-foreground">Đang tải lại...</div>
+            {isChunkError ? (
+              <div className="text-muted-foreground">Đang tải lại...</div>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <div className="text-muted-foreground">Đã xảy ra lỗi</div>
+                <button
+                  onClick={() => this.setState({ hasError: false, error: null })}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm"
+                >
+                  Thử lại
+                </button>
+              </div>
+            )}
           </main>
         </div>
       );
@@ -243,7 +259,6 @@ const App = () => (
                     {/* Tools routes */}
                     <Route path="/tools" element={<Tools />} />
                     <Route path="/tools/quick-tables" element={<QuickTables />} />
-                    <Route path="/tools/quick-tables/parent/:shareId" element={<ParentTournamentPage />} />
                     <Route path="/tools/quick-tables/:shareId" element={<ConditionalAuth><QuickTableView /></ConditionalAuth>} />
                     <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
                     {/* Team Match routes */}
@@ -319,7 +334,6 @@ const App = () => (
                     <Route path="/vi/forum/new" element={<ViLanguageWrapper><ForumPostCreate /></ViLanguageWrapper>} />
                     <Route path="/vi/tools" element={<ViLanguageWrapper><Tools /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/quick-tables" element={<ViLanguageWrapper><QuickTables /></ViLanguageWrapper>} />
-                    <Route path="/vi/tools/quick-tables/parent/:shareId" element={<ViLanguageWrapper><ParentTournamentPage /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/quick-tables/:shareId" element={<ViLanguageWrapper><ConditionalAuth><QuickTableView /></ConditionalAuth></ViLanguageWrapper>} />
                     <Route path="/vi/tools/quick-tables/:shareId/setup" element={<ViLanguageWrapper><QuickTableSetup /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/team-match" element={<ViLanguageWrapper><TeamMatchList /></ViLanguageWrapper>} />

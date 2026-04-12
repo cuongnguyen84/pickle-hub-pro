@@ -26,7 +26,6 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [oauthRedirecting, setOauthRedirecting] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -98,7 +97,6 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
-    setOauthRedirecting(true);
 
     try {
       const redirectTo = isNativeApp()
@@ -124,7 +122,6 @@ const Login = () => {
         await Browser.open({ url: data.url, presentationStyle: 'popover' });
       }
     } catch (err: unknown) {
-      setOauthRedirecting(false);
       console.error("[OAuth] Error:", err);
       toast({
         variant: "destructive",
@@ -138,7 +135,6 @@ const Login = () => {
 
   const handleAppleSignIn = async () => {
     setIsSubmitting(true);
-    setOauthRedirecting(true);
     try {
       const redirectTo = isNativeApp()
         ? `${getSiteUrl()}/auth/callback?native=1`
@@ -159,7 +155,6 @@ const Login = () => {
         await Browser.open({ url: data.url, presentationStyle: 'popover' });
       }
     } catch (err: unknown) {
-      setOauthRedirecting(false);
       toast({
         variant: "destructive",
         title: t.common.error,
@@ -223,29 +218,29 @@ const Login = () => {
         } else {
           // Show verification message since email confirmation is required
           setShowVerificationMessage(true);
-
+          
           // GA4 sign_up tracking - multiple methods for reliability
           console.log("[GA4] === SIGN_UP EVENT START ===");
           console.log("[GA4] gtag available:", typeof window.gtag === 'function');
           console.log("[GA4] dataLayer available:", !!window.dataLayer);
-
+          
           // Method 1: trackEvent helper
           trackEvent("sign_up", { method: "email" });
-
+          
           // Method 2: Direct gtag call
           if (typeof window.gtag === 'function') {
             window.gtag('event', 'sign_up', { method: 'email' });
             console.log("[GA4] sign_up fired via gtag directly");
           }
-
+          
           // Method 3: dataLayer push
           if (window.dataLayer) {
             window.dataLayer.push({ event: "sign_up", method: "email" });
             console.log("[GA4] sign_up pushed to dataLayer");
           }
-
+          
           console.log("[GA4] === SIGN_UP EVENT END ===");
-
+          
           toast({
             title: t.auth.signupSuccess,
           });
@@ -261,19 +256,6 @@ const Login = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (oauthRedirecting) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <DynamicMeta title="The Pickle Hub - Đăng nhập" noindex={true} />
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary mb-2">
-          <span className="text-primary-foreground font-bold text-xl">TPH</span>
-        </div>
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-foreground-muted text-sm">Đang chuyển đến trang đăng nhập an toàn...</p>
       </div>
     );
   }
