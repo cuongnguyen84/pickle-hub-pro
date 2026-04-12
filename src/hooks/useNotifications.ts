@@ -64,96 +64,105 @@ export function useNotificationRealtime(userId?: string) {
   useEffect(() => {
     if (!userId) return;
 
+    // Remove any existing channel with the same name to avoid
+    // "cannot add postgres_changes callbacks after subscribe()" error
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channelName = `notifications:${userId}:${Date.now()}`;
     console.log("[Notifications] Setting up realtime for user:", userId);
 
-    const channel = supabase
-      .channel(`notifications:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          console.log("[Notifications] New notification received:", payload.new);
-          const newNotification = payload.new as Notification;
+    try {
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            console.log("[Notifications] New notification received:", payload.new);
+            const newNotification = payload.new as Notification;
 
-          // Update notifications list
-          queryClient.setQueryData<Notification[]>(
-            ["notifications", userId],
-            (old) => {
-              if (!old) return [newNotification];
-              // Avoid duplicates
-              if (old.some((n) => n.id === newNotification.id)) return old;
-              return [newNotification, ...old];
-            }
-          );
+            queryClient.setQueryData<Notification[]>(
+              ["notifications", userId],
+              (old) => {
+                if (!old) return [newNotification];
+                if (old.some((n) => n.id === newNotification.id)) return old;
+                return [newNotification, ...old];
+              }
+            );
 
-          // Update unread count
-          queryClient.setQueryData<number>(
-            ["notifications-unread-count", userId],
-            (old) => (old ?? 0) + 1
-          );
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          console.log("[Notifications] Notification updated:", payload.new);
-          const updated = payload.new as Notification;
+            queryClient.setQueryData<number>(
+              ["notifications-unread-count", userId],
+              (old) => (old ?? 0) + 1
+            );
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            console.log("[Notifications] Notification updated:", payload.new);
+            const updated = payload.new as Notification;
 
-          queryClient.setQueryData<Notification[]>(
-            ["notifications", userId],
-            (old) => old?.map((n) => (n.id === updated.id ? updated : n)) ?? []
-          );
+            queryClient.setQueryData<Notification[]>(
+              ["notifications", userId],
+              (old) => old?.map((n) => (n.id === updated.id ? updated : n)) ?? []
+            );
 
-          // Recalculate unread count
-          queryClient.invalidateQueries({
-            queryKey: ["notifications-unread-count", userId],
-          });
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          console.log("[Notifications] Notification deleted:", payload.old);
-          const deleted = payload.old as Notification;
+            queryClient.invalidateQueries({
+              queryKey: ["notifications-unread-count", userId],
+            });
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "DELETE",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            console.log("[Notifications] Notification deleted:", payload.old);
+            const deleted = payload.old as Notification;
 
-          queryClient.setQueryData<Notification[]>(
-            ["notifications", userId],
-            (old) => old?.filter((n) => n.id !== deleted.id) ?? []
-          );
+            queryClient.setQueryData<Notification[]>(
+              ["notifications", userId],
+              (old) => old?.filter((n) => n.id !== deleted.id) ?? []
+            );
 
-          // Recalculate unread count
-          queryClient.invalidateQueries({
-            queryKey: ["notifications-unread-count", userId],
-          });
-        }
-      )
-      .subscribe((status) => {
-        console.log("[Notifications] Channel status:", status);
-      });
+            queryClient.invalidateQueries({
+              queryKey: ["notifications-unread-count", userId],
+            });
+          }
+        )
+        .subscribe((status) => {
+          console.log("[Notifications] Channel status:", status);
+        });
 
-    channelRef.current = channel;
+      channelRef.current = channel;
+    } catch (err) {
+      console.warn("[Notifications] Realtime setup failed:", err);
+    }
 
     return () => {
-      console.log("[Notifications] Cleaning up realtime channel");
-      supabase.removeChannel(channel);
-      channelRef.current = null;
+      if (channelRef.current) {
+        console.log("[Notifications] Cleaning up realtime channel");
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [userId, queryClient]);
 }
