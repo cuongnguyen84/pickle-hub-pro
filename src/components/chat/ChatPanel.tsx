@@ -639,7 +639,7 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
 
     // Subscribe to realtime changes
     const pinChannel = supabase
-      .channel(`chat_pin:${livestreamId}`)
+      .channel(`chat_pin:${livestreamId}:${Date.now()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "chat_pinned_messages", filter: `livestream_id=eq.${livestreamId}` },
