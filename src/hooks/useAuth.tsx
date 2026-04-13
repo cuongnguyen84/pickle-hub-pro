@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { getEmailVerificationRedirectUrl } from "@/lib/auth-config";
 import { trackEvent } from "@/utils/ga";
 
 interface AuthContextType {
@@ -69,9 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    // Use centralized auth config for email redirect
-    const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.thepicklehub.net';
-    const redirectUrl = `${siteUrl}/`;
+    const redirectUrl = getEmailVerificationRedirectUrl();
     
     const { error } = await supabase.auth.signUp({
       email,
