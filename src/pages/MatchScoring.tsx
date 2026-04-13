@@ -772,28 +772,33 @@ const MatchScoring = () => {
   // Realtime subscription
   useEffect(() => {
     if (!matchId) return;
-    const channel = supabase
-      .channel(`match-scoring-${matchId}:${Date.now()}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'quick_table_matches', filter: `id=eq.${matchId}` },
-        (payload) => {
-          const nd = payload.new as any;
-          setMatch(nd as MatchData);
-          if (nd.live_referee_id !== user?.id) {
-            setLocalScore1(nd.score1 ?? 0);
-            setLocalScore2(nd.score2 ?? 0);
-            setLocalSetScores((nd.set_scores as SetScore[]) ?? []);
-            setLocalCurrentSet(nd.current_set ?? 1);
-            setLocalServingSide(nd.serving_side ?? 1);
-            setLocalSidesSwapped(nd.sides_swapped ?? false);
-            setLocalHistory((nd.score_history as HistoryEntry[]) ?? []);
-            setTimerStartedAt(nd.match_timer_started_at ?? null);
-            setTimerElapsed(nd.match_timer_elapsed_seconds ?? 0);
-          }
-          if (nd.live_referee_id && nd.live_referee_id !== user?.id) setIsReadOnly(true);
-          else if (!nd.live_referee_id) setIsReadOnly(false);
-        })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`match-scoring-${matchId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'quick_table_matches', filter: `id=eq.${matchId}` },
+          (payload) => {
+            const nd = payload.new as any;
+            setMatch(nd as MatchData);
+            if (nd.live_referee_id !== user?.id) {
+              setLocalScore1(nd.score1 ?? 0);
+              setLocalScore2(nd.score2 ?? 0);
+              setLocalSetScores((nd.set_scores as SetScore[]) ?? []);
+              setLocalCurrentSet(nd.current_set ?? 1);
+              setLocalServingSide(nd.serving_side ?? 1);
+              setLocalSidesSwapped(nd.sides_swapped ?? false);
+              setLocalHistory((nd.score_history as HistoryEntry[]) ?? []);
+              setTimerStartedAt(nd.match_timer_started_at ?? null);
+              setTimerElapsed(nd.match_timer_elapsed_seconds ?? 0);
+            }
+            if (nd.live_referee_id && nd.live_referee_id !== user?.id) setIsReadOnly(true);
+            else if (!nd.live_referee_id) setIsReadOnly(false);
+          })
+        .subscribe();
+    } catch (err) {
+      console.warn("[MatchScoring] Realtime setup failed:", err);
+    }
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, [matchId, user?.id]);
 
   useEffect(() => {

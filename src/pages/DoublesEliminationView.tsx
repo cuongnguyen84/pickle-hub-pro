@@ -147,14 +147,19 @@ export default function DoublesEliminationView() {
 
   const setupRealtimeSubscription = () => {
     if (!shareId) return;
-    const channel = supabase
-      .channel(`doubles_elimination_${shareId}:${Date.now()}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'doubles_elimination_matches' }, () => {
-        if (skipNextRealtimeRef.current) return;
-        softReload();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`doubles_elimination_${shareId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'doubles_elimination_matches' }, () => {
+          if (skipNextRealtimeRef.current) return;
+          softReload();
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn("[DoublesElimination] Realtime setup failed:", err);
+    }
+    return () => { if (channel) supabase.removeChannel(channel); };
   };
 
   const handleShare = async () => {

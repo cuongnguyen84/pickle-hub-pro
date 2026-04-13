@@ -72,48 +72,53 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
     load();
 
     // Subscribe to realtime changes
-    const channel = supabase
-      .channel(`chat_highlights:${livestreamId}:${Date.now()}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "chat_highlighted_users",
-          filter: `livestream_id=eq.${livestreamId}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
-            const h = payload.new as ChatHighlight;
-            setHighlights((prev) => new Map(prev).set(h.user_id, h));
-          } else if (payload.eventType === "DELETE") {
-            const old = payload.old as { id?: string; user_id?: string };
-            setHighlights((prev) => {
-              const next = new Map(prev);
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`chat_highlights:${livestreamId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "chat_highlighted_users",
+            filter: `livestream_id=eq.${livestreamId}`,
+          },
+          (payload) => {
+            if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+              const h = payload.new as ChatHighlight;
+              setHighlights((prev) => new Map(prev).set(h.user_id, h));
+            } else if (payload.eventType === "DELETE") {
+              const old = payload.old as { id?: string; user_id?: string };
+              setHighlights((prev) => {
+                const next = new Map(prev);
 
-              if (old.user_id) {
-                next.delete(old.user_id);
-                return next;
-              }
+                if (old.user_id) {
+                  next.delete(old.user_id);
+                  return next;
+                }
 
-              if (old.id) {
-                for (const [uid, highlight] of next.entries()) {
-                  if (highlight.id === old.id) {
-                    next.delete(uid);
-                    break;
+                if (old.id) {
+                  for (const [uid, highlight] of next.entries()) {
+                    if (highlight.id === old.id) {
+                      next.delete(uid);
+                      break;
+                    }
                   }
                 }
-              }
 
-              return next;
-            });
+                return next;
+              });
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[ChatHighlights] Realtime setup failed:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [livestreamId]);
 

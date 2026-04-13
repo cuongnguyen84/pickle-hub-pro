@@ -212,38 +212,43 @@ const QuickTableView = () => {
   useEffect(() => {
     if (!table?.id) return;
 
-    const channel = supabase
-      .channel(`quick-table-${table.id}:${Date.now()}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quick_table_matches',
-          filter: `table_id=eq.${table.id}`
-        },
-        (payload) => {
-          console.log('[Realtime] Match update:', payload);
-          loadData();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quick_table_players',
-          filter: `table_id=eq.${table.id}`
-        },
-        (payload) => {
-          console.log('[Realtime] Player update:', payload);
-          loadData();
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`quick-table-${table.id}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quick_table_matches',
+            filter: `table_id=eq.${table.id}`
+          },
+          (payload) => {
+            console.log('[Realtime] Match update:', payload);
+            loadData();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quick_table_players',
+            filter: `table_id=eq.${table.id}`
+          },
+          (payload) => {
+            console.log('[Realtime] Player update:', payload);
+            loadData();
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[QuickTable] Realtime setup failed:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [table?.id]);
 

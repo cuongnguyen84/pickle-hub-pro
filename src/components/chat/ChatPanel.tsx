@@ -638,16 +638,21 @@ export const ChatPanel = ({ livestreamId, className, hideHeader = false, renderH
     loadPinned();
 
     // Subscribe to realtime changes
-    const pinChannel = supabase
-      .channel(`chat_pin:${livestreamId}:${Date.now()}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "chat_pinned_messages", filter: `livestream_id=eq.${livestreamId}` },
-        () => { loadPinned(); }
-      )
-      .subscribe();
+    let pinChannel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      pinChannel = supabase
+        .channel(`chat_pin:${livestreamId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "chat_pinned_messages", filter: `livestream_id=eq.${livestreamId}` },
+          () => { loadPinned(); }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[ChatPin] Realtime setup failed:", err);
+    }
 
-    return () => { supabase.removeChannel(pinChannel); };
+    return () => { if (pinChannel) supabase.removeChannel(pinChannel); };
   }, [livestreamId]);
 
   const handlePinMessage = useCallback(async (messageId: string) => {

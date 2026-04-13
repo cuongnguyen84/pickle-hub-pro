@@ -56,24 +56,29 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
     loadTeams();
 
     // Subscribe to realtime updates
-    const channel = supabase
-      .channel(`teams-${tableId}:${Date.now()}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quick_table_teams',
-          filter: `table_id=eq.${tableId}`,
-        },
-        () => {
-          loadTeams();
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`teams-${tableId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quick_table_teams',
+            filter: `table_id=eq.${tableId}`,
+          },
+          () => {
+            loadTeams();
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[TeamManager] Realtime setup failed:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [tableId]);
 

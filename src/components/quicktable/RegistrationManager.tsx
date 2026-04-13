@@ -57,24 +57,29 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
     loadRegistrations();
 
     // Subscribe to realtime updates
-    const channel = supabase
-      .channel(`registrations-${tableId}:${Date.now()}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quick_table_registrations',
-          filter: `table_id=eq.${tableId}`,
-        },
-        () => {
-          loadRegistrations();
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`registrations-${tableId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quick_table_registrations',
+            filter: `table_id=eq.${tableId}`,
+          },
+          () => {
+            loadRegistrations();
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[RegistrationManager] Realtime setup failed:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [tableId]);
 

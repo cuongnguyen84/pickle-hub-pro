@@ -214,26 +214,31 @@ export const useDashboardData = (type: DashboardType, id: string) => {
       filterCol = "tournament_id";
     }
 
-    const channel = supabase
-      .channel(`dashboard-${type}-${tournamentId}:${Date.now()}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table,
-          filter: `${filterCol}=eq.${tournamentId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({
-            queryKey: ["dashboard-matches", type, tournamentId],
-          });
-        }
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`dashboard-${type}-${tournamentId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table,
+            filter: `${filterCol}=eq.${tournamentId}`,
+          },
+          () => {
+            queryClient.invalidateQueries({
+              queryKey: ["dashboard-matches", type, tournamentId],
+            });
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[Dashboard] Realtime setup failed:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [type, tournamentId, queryClient]);
 

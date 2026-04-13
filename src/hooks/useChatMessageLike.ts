@@ -51,69 +51,74 @@ export function useChatMessageLikes(livestreamId: string) {
 
   // Realtime subscription for like changes
   useEffect(() => {
-    const channel = supabase
-      .channel(`chat_likes:${livestreamId}:${Date.now()}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "chat_message_likes" },
-        (payload) => {
-          const row = payload.new as { message_id: string; user_id: string };
-          if (!row.message_id) return;
-          
-          // Skip if this is our own optimistic update (already applied)
-          if (user?.id === row.user_id && pendingOptimisticRef.current.has(row.message_id)) {
-            pendingOptimisticRef.current.delete(row.message_id);
-            return;
-          }
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`chat_likes:${livestreamId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "chat_message_likes" },
+          (payload) => {
+            const row = payload.new as { message_id: string; user_id: string };
+            if (!row.message_id) return;
 
-          // Update count for any tracked message
-          if (messageIdsRef.current.has(row.message_id)) {
-            setLikesMap(prev => {
-              const current = prev[row.message_id] ?? { count: 0, liked: false };
-              return {
-                ...prev,
-                [row.message_id]: {
-                  count: current.count + 1,
-                  liked: current.liked || (user?.id === row.user_id),
-                },
-              };
-            });
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "chat_message_likes" },
-        (payload) => {
-          const row = payload.old as { message_id: string; user_id: string };
-          if (!row.message_id) return;
+            // Skip if this is our own optimistic update (already applied)
+            if (user?.id === row.user_id && pendingOptimisticRef.current.has(row.message_id)) {
+              pendingOptimisticRef.current.delete(row.message_id);
+              return;
+            }
 
-          // Skip if this is our own optimistic update
-          if (user?.id === row.user_id && pendingOptimisticRef.current.has(row.message_id)) {
-            pendingOptimisticRef.current.delete(row.message_id);
-            return;
+            // Update count for any tracked message
+            if (messageIdsRef.current.has(row.message_id)) {
+              setLikesMap(prev => {
+                const current = prev[row.message_id] ?? { count: 0, liked: false };
+                return {
+                  ...prev,
+                  [row.message_id]: {
+                    count: current.count + 1,
+                    liked: current.liked || (user?.id === row.user_id),
+                  },
+                };
+              });
+            }
           }
+        )
+        .on(
+          "postgres_changes",
+          { event: "DELETE", schema: "public", table: "chat_message_likes" },
+          (payload) => {
+            const row = payload.old as { message_id: string; user_id: string };
+            if (!row.message_id) return;
 
-          if (messageIdsRef.current.has(row.message_id)) {
-            setLikesMap(prev => {
-              const current = prev[row.message_id] ?? { count: 0, liked: false };
-              return {
-                ...prev,
-                [row.message_id]: {
-                  count: Math.max(0, current.count - 1),
-                  liked: (user?.id === row.user_id) ? false : current.liked,
-                },
-              };
-            });
+            // Skip if this is our own optimistic update
+            if (user?.id === row.user_id && pendingOptimisticRef.current.has(row.message_id)) {
+              pendingOptimisticRef.current.delete(row.message_id);
+              return;
+            }
+
+            if (messageIdsRef.current.has(row.message_id)) {
+              setLikesMap(prev => {
+                const current = prev[row.message_id] ?? { count: 0, liked: false };
+                return {
+                  ...prev,
+                  [row.message_id]: {
+                    count: Math.max(0, current.count - 1),
+                    liked: (user?.id === row.user_id) ? false : current.liked,
+                  },
+                };
+              });
+            }
           }
-        }
-      )
-      .subscribe((status) => {
-        console.log("[ChatLikes] Realtime channel status:", status);
-      });
+        )
+        .subscribe((status) => {
+          console.log("[ChatLikes] Realtime channel status:", status);
+        });
+    } catch (err) {
+      console.warn("[ChatLikes] Realtime setup failed:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [livestreamId, user?.id]);
 
