@@ -31,7 +31,6 @@ import RegisteredPlayersList from '@/components/quicktable/RegisteredPlayersList
 import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
 import DoublesRegistrationForm from '@/components/quicktable/DoublesRegistrationForm';
 import TeamManager from '@/components/quicktable/TeamManager';
-import { AIAssistantButton } from '@/components/ai';
 import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
 import PlayoffPreviewDialog from '@/components/quicktable/PlayoffPreviewDialog';
@@ -593,16 +592,6 @@ const QuickTableView = () => {
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2 flex-wrap">
               {table.name}
-              <AIAssistantButton 
-                screenName="quick-table-view" 
-                stepName={table.status === 'playoff' ? 'playoff' : 'group'}
-                contextData={{ 
-                  status: table.status,
-                  playerCount: players.length,
-                  groupCount: groups.length,
-                  playoffReady: groupStageComplete,
-                }}
-              />
             </h1>
             <div className="flex items-center gap-2 text-foreground-secondary flex-wrap text-sm">
               <Badge variant="outline" className="text-xs">

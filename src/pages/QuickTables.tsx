@@ -21,7 +21,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Users, Trophy, Zap, Check, ArrowRight, Info, LogIn, Calendar, Eye, Plus, ListTodo, Shield, ClipboardList, ChevronDown, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { AIAssistantButton } from '@/components/ai';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent } from "@/components/seo";
@@ -279,11 +278,6 @@ const QuickTables = () => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   {t.quickTable.step1Title}
-                  <AIAssistantButton 
-                    screenName="quick-table-setup" 
-                    stepName="info"
-                    contextData={{ quotaUsed: quotaInfo.current_count, quota: quotaInfo.quota, hasName: !!tableName.trim() }}
-                  />
                 </CardTitle>
                 <CardDescription>{t.quickTable.step1Desc}</CardDescription>
               </CardHeader>
