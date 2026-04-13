@@ -72,7 +72,7 @@ export const getOAuthRedirectUrl = (path: string = '/'): string => {
  * Get email verification redirect URL
  */
 export const getEmailRedirectUrl = (): string => {
-  return `${getSiteUrl()}/`;
+  return `${getSiteUrl()}/auth/reset-password`;
 };
 
 /**
