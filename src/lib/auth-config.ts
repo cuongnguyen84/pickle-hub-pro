@@ -69,10 +69,19 @@ export const getOAuthRedirectUrl = (path: string = '/'): string => {
 };
 
 /**
- * Get email verification redirect URL
+ * Redirect URL for password reset emails.
+ * User clicks → lands on /auth/reset-password to set new password.
  */
-export const getEmailRedirectUrl = (): string => {
+export const getPasswordResetRedirectUrl = (): string => {
   return `${getSiteUrl()}/auth/reset-password`;
+};
+
+/**
+ * Redirect URL for email verification (signup confirm).
+ * User clicks → lands on /auth/callback to complete signup.
+ */
+export const getEmailVerificationRedirectUrl = (): string => {
+  return `${getSiteUrl()}/auth/callback`;
 };
 
 /**
