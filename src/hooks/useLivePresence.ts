@@ -59,9 +59,9 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
       // Create a unique viewer ID for this session
       const viewerId = `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Channel name for this livestream's presence
-      const channelName = `livestream_presence:${livestreamId}`;
-      
+      // Channel name for this livestream's presence (unique to avoid resubscribe errors)
+      const channelName = `livestream_presence:${livestreamId}:${Date.now()}`;
+
       const channel = supabase.channel(channelName, {
         config: {
           presence: {

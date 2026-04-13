@@ -117,7 +117,13 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
   useEffect(() => {
     if (!livestreamId) return;
 
-    const channel = supabase.channel(`chat:unified:${livestreamId}`, {
+    // Remove existing channel to avoid "cannot add callbacks after subscribe()" error
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channel = supabase.channel(`chat:unified:${livestreamId}:${Date.now()}`, {
       config: { broadcast: { self: true } }
     });
 

@@ -42,6 +42,7 @@ const Tools = lazy(() => import("./pages/Tools"));
 const QuickTables = lazy(() => import("./pages/QuickTables"));
 const QuickTableSetup = lazy(() => import("./pages/QuickTableSetup"));
 const QuickTableView = lazy(() => import("./pages/QuickTableView"));
+const ParentTournamentPage = lazy(() => import("./pages/ParentTournamentPage"));
 const MatchScoring = lazy(() => import("./pages/MatchScoring"));
 const JoinTeam = lazy(() => import("./pages/JoinTeam"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -263,6 +264,7 @@ const App = () => (
                     {/* Tools routes */}
                     <Route path="/tools" element={<Tools />} />
                     <Route path="/tools/quick-tables" element={<QuickTables />} />
+                    <Route path="/tools/quick-tables/parent/:shareId" element={<ParentTournamentPage />} />
                     <Route path="/tools/quick-tables/:shareId" element={<ConditionalAuth><QuickTableView /></ConditionalAuth>} />
                     <Route path="/tools/quick-tables/:shareId/setup" element={<QuickTableSetup />} />
                     {/* Team Match routes */}
@@ -338,6 +340,7 @@ const App = () => (
                     <Route path="/vi/forum/new" element={<ViLanguageWrapper><ForumPostCreate /></ViLanguageWrapper>} />
                     <Route path="/vi/tools" element={<ViLanguageWrapper><Tools /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/quick-tables" element={<ViLanguageWrapper><QuickTables /></ViLanguageWrapper>} />
+                    <Route path="/vi/tools/quick-tables/parent/:shareId" element={<ViLanguageWrapper><ParentTournamentPage /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/quick-tables/:shareId" element={<ViLanguageWrapper><ConditionalAuth><QuickTableView /></ConditionalAuth></ViLanguageWrapper>} />
                     <Route path="/vi/tools/quick-tables/:shareId/setup" element={<ViLanguageWrapper><QuickTableSetup /></ViLanguageWrapper>} />
                     <Route path="/vi/tools/team-match" element={<ViLanguageWrapper><TeamMatchList /></ViLanguageWrapper>} />

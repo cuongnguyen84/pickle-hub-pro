@@ -66,7 +66,13 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
       return;
     }
 
-    const channelName = `livestream_presence:${livestreamId}`;
+    // Remove existing channel to avoid "cannot add callbacks after subscribe()" error
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channelName = `livestream_presence:${livestreamId}:admin:${Date.now()}`;
     const adminKey = `admin_watcher_${Date.now()}`;
 
     const channel = supabase.channel(channelName, {
