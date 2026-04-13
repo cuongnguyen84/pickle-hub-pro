@@ -57,6 +57,3 @@ verify_jwt = false
 [functions.geo-check]
 verify_jwt = false
 
-[functions.ant-media-create-livestream]
-verify_jwt = true
-
