@@ -267,6 +267,6 @@ Chỉ cần rebuild khi:
 ## 📚 Resources
 
 - [Capacitor Docs](https://capacitorjs.com/docs)
-- [Lovable Mobile Guide](https://docs.lovable.dev/tips-tricks/mobile-development)
+- [Capacitor Social Login](https://github.com/Cap-go/capacitor-social-login)
 - [App Store Guidelines](https://developer.apple.com/app-store/review/guidelines/)
 - [Play Store Guidelines](https://play.google.com/about/developer-content-policy/)

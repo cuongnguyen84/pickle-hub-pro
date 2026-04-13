@@ -12,7 +12,7 @@
  * 1. DNS Configuration:
  *    - Add CNAME record: auth.thepicklehub.net -> ajvlcamxemgbxduhiqrl.supabase.co
  * 
- * 2. Supabase Dashboard (via Lovable Cloud):
+ * 2. Supabase Dashboard:
  *    - Enable Custom Domain for auth.thepicklehub.net
  *    - Set Site URL: https://www.thepicklehub.net
  *    - Add Redirect URLs:
