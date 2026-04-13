@@ -1,0 +1,4 @@
+id;name;share_id;creator_user_id;team_count;has_third_place_match;early_rounds_format;finals_format;status;current_round;court_count;start_time;created_at;updated_at;semifinals_format
+4ddc016c-101f-4bb1-a20b-1012abc15ead;test1test11;3e9q66if;5040f0f2-f564-401c-9737-4b030b6371d7;36;false;bo1;bo5;ongoing;1;6;08:00;2026-01-22 08:59:42.566264+00;2026-01-22 08:59:44.703073+00;bo3
+b35ff087-54ab-462b-808d-6af342098f17;Tatest;rb8nnuaw;5d3284cb-fe10-46b1-bc9a-16b3b3fd228d;56;false;bo1;bo3;ongoing;1;10;08:00;2026-01-22 11:45:23.131522+00;2026-01-22 11:45:24.935178+00;bo1
+4082d0aa-3c84-4029-b64c-6982c94aa3e2;Giải Pickleball Xuân 2026;jezbma37;7bce2052-4383-4cd6-9056-1ec5813fcd4e;32;false;bo1;bo3;ongoing;1;1;;2026-01-29 05:31:50.507005+00;2026-01-29 05:31:52.525615+00;bo1

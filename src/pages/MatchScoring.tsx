@@ -773,7 +773,7 @@ const MatchScoring = () => {
   useEffect(() => {
     if (!matchId) return;
     const channel = supabase
-      .channel(`match-scoring-${matchId}`)
+      .channel(`match-scoring-${matchId}:${Date.now()}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'quick_table_matches', filter: `id=eq.${matchId}` },
         (payload) => {
           const nd = payload.new as any;

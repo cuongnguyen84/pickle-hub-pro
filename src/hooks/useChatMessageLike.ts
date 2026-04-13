@@ -52,7 +52,7 @@ export function useChatMessageLikes(livestreamId: string) {
   // Realtime subscription for like changes
   useEffect(() => {
     const channel = supabase
-      .channel(`chat_likes:${livestreamId}`)
+      .channel(`chat_likes:${livestreamId}:${Date.now()}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_message_likes" },
