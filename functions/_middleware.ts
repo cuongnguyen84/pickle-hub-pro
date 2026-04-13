@@ -33,7 +33,6 @@ interface Env {
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
   const url = new URL(request.url);
-  const ua = request.headers.get("user-agent") || "";
 
   // ─── 1. Apex → www redirect ───────────────────────────
   if (url.hostname === "thepicklehub.net") {
@@ -44,45 +43,38 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   // ─── 2. Bot detection ─────────────────────────────────
+  const ua = request.headers.get("user-agent") || "";
   const isBot = BOT_UA.test(ua);
-  console.log(`[MW] ${url.pathname} isBot=${isBot} ua="${ua.slice(0, 80)}"`);
 
   if (!isBot) {
-    const response = await next();
-    const headers = new Headers(response.headers);
-    headers.set("X-MW-Hit", "user");
-    headers.set("X-MW-UA", ua.slice(0, 50));
-    return new Response(response.body, { status: response.status, headers });
+    // Normal user → serve SPA
+    return next();
   }
 
-  // ─── 3. BOT PATH ──────────────────────────────────────
-  try {
-    const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
-    const cacheKey = `pr:v1:${url.pathname}`;
-    const noCache = url.searchParams.get("nocache") === "1";
+  // ─── 3. Bot path: KV cache + SSR render ───────────────
+  const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
+  const cacheKey = `pr:v1:${url.pathname}`;
+  const noCache = url.searchParams.get("nocache") === "1";
 
-    // KV cache check
-    if (!noCache && env.PRERENDER_CACHE) {
-      try {
-        const cached = await env.PRERENDER_CACHE.get(cacheKey);
-        if (cached) {
-          return new Response(cached, {
-            headers: {
-              "Content-Type": "text/html; charset=utf-8",
-              "Cache-Control": "public, max-age=3600",
-              "X-MW-Hit": "bot-cache-hit",
-              "X-Prerender-Cache": "HIT",
-              Vary: "User-Agent",
-            },
-          });
-        }
-      } catch (kvErr) {
-        console.error("[MW] KV read error:", kvErr);
+  if (!noCache && env.PRERENDER_CACHE) {
+    try {
+      const cached = await env.PRERENDER_CACHE.get(cacheKey);
+      if (cached) {
+        return new Response(cached, {
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "public, max-age=3600",
+            "X-Prerender-Cache": "HIT",
+            Vary: "User-Agent",
+          },
+        });
       }
+    } catch {
+      // KV read failed, continue to render
     }
+  }
 
-    // Render SSR
-    console.log(`[MW] Rendering ${url.pathname} for bot`);
+  try {
     const response = await routeAndRender(url.pathname, env, siteUrl);
 
     if (env.PRERENDER_CACHE && response.status === 200) {
@@ -93,7 +85,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const headers = new Headers(response.headers);
-    headers.set("X-MW-Hit", "bot-render");
     headers.set("X-Prerender-Cache", "MISS");
 
     return new Response(response.body, {
@@ -101,16 +92,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       headers,
     });
   } catch (err) {
-    console.error("[MW] Bot path error:", err);
-    // Return error info as header so we can debug from curl
-    const errMsg = err instanceof Error ? err.message : String(err);
-    const errStack = err instanceof Error ? (err.stack || "").slice(0, 200) : "";
-    const fallback = await next();
-    const headers = new Headers(fallback.headers);
-    headers.set("X-MW-Hit", "bot-error-fallback");
-    headers.set("X-MW-Error", errMsg.slice(0, 200));
-    headers.set("X-MW-Error-Stack", errStack.replace(/[\r\n]+/g, " "));
-    return new Response(fallback.body, { status: fallback.status, headers });
+    console.error("Prerender error:", err);
+    return next();
   }
 };
 
