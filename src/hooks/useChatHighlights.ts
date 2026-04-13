@@ -73,7 +73,7 @@ export const useChatHighlights = (livestreamId: string): UseChatHighlightsResult
 
     // Subscribe to realtime changes
     const channel = supabase
-      .channel(`chat_highlights:${livestreamId}:${Date.now()}`)
+      .channel(`chat_highlights:${livestreamId}`)
       .on(
         "postgres_changes",
         {

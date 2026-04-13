@@ -57,7 +57,7 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel(`teams-${tableId}:${Date.now()}`)
+      .channel(`teams-${tableId}`)
       .on(
         'postgres_changes',
         {

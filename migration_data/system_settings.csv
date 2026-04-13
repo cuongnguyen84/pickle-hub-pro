@@ -1,7 +1,0 @@
-key;value;updated_at
-livestream_gate_applies_to;all;2026-02-13 01:58:58.605747+00
-blocked_countries;"[""US""]";2026-02-15 08:58:55.955807+00
-require_login_livestream;true;2026-03-12 23:46:31.878+00
-geo_block_enabled;true;2026-03-12 23:46:35.593+00
-livestream_preview_seconds;15;2026-03-14 14:32:28.723+00
-require_login_tournament_detail;true;2026-04-09 01:32:02.213+00

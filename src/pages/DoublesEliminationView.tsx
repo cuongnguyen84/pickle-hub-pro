@@ -148,7 +148,7 @@ export default function DoublesEliminationView() {
   const setupRealtimeSubscription = () => {
     if (!shareId) return;
     const channel = supabase
-      .channel(`doubles_elimination_${shareId}:${Date.now()}`)
+      .channel(`doubles_elimination_${shareId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'doubles_elimination_matches' }, () => {
         if (skipNextRealtimeRef.current) return;
         softReload();

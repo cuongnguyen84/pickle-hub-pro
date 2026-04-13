@@ -213,7 +213,7 @@ const QuickTableView = () => {
     if (!table?.id) return;
 
     const channel = supabase
-      .channel(`quick-table-${table.id}:${Date.now()}`)
+      .channel(`quick-table-${table.id}`)
       .on(
         'postgres_changes',
         {

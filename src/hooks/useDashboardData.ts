@@ -215,7 +215,7 @@ export const useDashboardData = (type: DashboardType, id: string) => {
     }
 
     const channel = supabase
-      .channel(`dashboard-${type}-${tournamentId}:${Date.now()}`)
+      .channel(`dashboard-${type}-${tournamentId}`)
       .on(
         "postgres_changes",
         {

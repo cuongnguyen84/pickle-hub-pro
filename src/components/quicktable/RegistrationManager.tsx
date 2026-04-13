@@ -58,7 +58,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel(`registrations-${tableId}:${Date.now()}`)
+      .channel(`registrations-${tableId}`)
       .on(
         'postgres_changes',
         {

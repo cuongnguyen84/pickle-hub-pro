@@ -14,7 +14,7 @@ export function useTeamMatchRealtime(tournamentId: string | undefined) {
 
     // Channel for matches updates
     const matchesChannel = supabase
-      .channel(`team-match-matches:${tournamentId}:${Date.now()}`)
+      .channel(`team-match-matches:${tournamentId}`)
       .on(
         'postgres_changes',
         {
@@ -41,7 +41,7 @@ export function useTeamMatchRealtime(tournamentId: string | undefined) {
 
     // Channel for games updates  
     const gamesChannel = supabase
-      .channel(`team-match-games:${tournamentId}:${Date.now()}`)
+      .channel(`team-match-games:${tournamentId}`)
       .on(
         'postgres_changes',
         {
@@ -87,7 +87,7 @@ export function useTeamMatchMatchRealtime(matchId: string | undefined) {
 
     // Channel for this specific match
     const matchChannel = supabase
-      .channel(`team-match-match:${matchId}:${Date.now()}`)
+      .channel(`team-match-match:${matchId}`)
       .on(
         'postgres_changes',
         {
@@ -105,7 +105,7 @@ export function useTeamMatchMatchRealtime(matchId: string | undefined) {
 
     // Channel for games of this match
     const gamesChannel = supabase
-      .channel(`team-match-games-match:${matchId}:${Date.now()}`)
+      .channel(`team-match-games-match:${matchId}`)
       .on(
         'postgres_changes',
         {

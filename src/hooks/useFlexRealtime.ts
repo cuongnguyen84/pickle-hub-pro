@@ -36,7 +36,7 @@ export function useFlexRealtime({
     }
 
     const channel = supabase
-      .channel(`flex-tournament-${tournamentId}:${Date.now()}`)
+      .channel(`flex-tournament-${tournamentId}`)
       .on(
         'postgres_changes',
         {
