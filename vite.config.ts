@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => ({
           'vendor-charts': ['recharts'],
           'vendor-date': ['date-fns'],
           'vendor-capacitor': ['@capacitor/core', '@capacitor/app', '@capacitor/browser', '@capacitor/push-notifications', '@capacitor/splash-screen', '@capacitor/status-bar'],
+          'vendor-video': ['@mux/mux-player-react', 'hls.js'],
         },
       },
     },
