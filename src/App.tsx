@@ -31,6 +31,7 @@ const Tournaments = lazy(() => import("./pages/Tournaments"));
 const TournamentDetail = lazy(() => import("./pages/TournamentDetail"));
 const Login = lazy(() => import("./pages/Login"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const WatchVideo = lazy(() => import("./pages/WatchVideo"));
 const WatchLive = lazy(() => import("./pages/WatchLive"));
 const Account = lazy(() => import("./pages/Account"));
@@ -246,6 +247,7 @@ const App = () => (
                     <Route path="/org/:slug" element={<OrganizationDetail />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/auth/reset-password" element={<ResetPassword />} />
                     <Route path="/account" element={<Account />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />

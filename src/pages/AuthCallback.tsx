@@ -89,6 +89,16 @@ const AuthCallback = () => {
         }
 
         if (session) {
+          // Detect recovery flow: URL contains type=recovery in hash or query
+          const hash = window.location.hash;
+          const isRecovery = hash.includes("type=recovery")
+            || searchParams.get("type") === "recovery";
+
+          if (isRecovery) {
+            navigate("/auth/reset-password", { replace: true });
+            return;
+          }
+
           const redirectTo = searchParams.get("redirect") || "/";
           navigate(redirectTo, { replace: true });
         } else {

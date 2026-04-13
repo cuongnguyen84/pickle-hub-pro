@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { trackEvent } from "@/utils/ga";
 import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getEmailRedirectUrl, getSiteUrl } from "@/lib/auth-config";
+import { getEmailVerificationRedirectUrl, getPasswordResetRedirectUrl, getSiteUrl } from "@/lib/auth-config";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { isNativeApp } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
@@ -57,7 +57,7 @@ const Login = () => {
         type: "signup",
         email: email,
         options: {
-          emailRedirectTo: getEmailRedirectUrl(),
+          emailRedirectTo: getEmailVerificationRedirectUrl(),
         },
       });
       if (error) {
@@ -82,7 +82,7 @@ const Login = () => {
     setSendingReset(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-        redirectTo: getEmailRedirectUrl(),
+        redirectTo: getPasswordResetRedirectUrl(),
       });
       if (error) {
         toast({ variant: "destructive", title: t.common.error, description: error.message });
