@@ -34,6 +34,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
   const url = new URL(request.url);
 
+  console.log(`[MW] ${request.method} ${url.pathname} UA=${request.headers.get('user-agent')?.slice(0, 50)}`);
+
   // ─── 1. Apex → www redirect ───────────────────���───────────
   if (url.hostname === "thepicklehub.net") {
     return Response.redirect(
@@ -48,7 +50,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   if (!isBot) {
     // Normal user → serve SPA
-    return next();
+    const response = await next();
+    const headers = new Headers(response.headers);
+    headers.set("X-MW-Hit", "user");
+    return new Response(response.body, { status: response.status, headers });
   }
 
   // ─── 3. Bot path: check KV cache first ────────────────────
