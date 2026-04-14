@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { getBlogPost, getRelatedPosts } from "@/lib/blog-data";
-import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema } from "@/components/seo";
+import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema, HowToSchema } from "@/components/seo";
 import { useViBlogAlternate } from "@/hooks/useViBlogAlternate";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,14 @@ const BlogPost = () => {
         url={postUrl}
         inLanguage="en-US"
       />
+      {content.faqItems && <FAQSchema items={content.faqItems} />}
+      {content.howToSteps && (
+        <HowToSchema
+          name={content.title}
+          description={content.metaDescription}
+          steps={content.howToSteps}
+        />
+      )}
 
       <article className="container-wide py-8 md:py-12 max-w-3xl">
         <Link
@@ -104,9 +112,37 @@ const BlogPost = () => {
                   ))}
                 </ol>
               )}
+              {section.internalLinks && (
+                <ul className="space-y-2 mt-4">
+                  {section.internalLinks.map((link, i) => (
+                    <li key={i}>
+                      <Link to={link.path} className="text-primary hover:underline">
+                        {link.text}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           ))}
         </div>
+
+        {/* FAQ Section */}
+        {content.faqItems && (
+          <section className="mt-12 pt-8 border-t border-border">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-6">
+              {content.faqItems.map((item, idx) => (
+                <div key={idx}>
+                  <h3 className="font-semibold text-foreground mb-2">{item.question}</h3>
+                  <p className="text-muted-foreground text-sm">{item.answer}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* CTA */}
         <div className="mt-12 p-6 rounded-xl border border-primary/30 bg-primary/5 text-center">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, HreflangTags, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks } from "@/components/seo";
+import { DynamicMeta, HreflangTags, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,6 +89,13 @@ export default function DoublesEliminationList() {
           "Third place match option"
         ]}
       />
+      <FAQSchema items={[
+        { question: "What is the minimum number of teams for a double elimination bracket?", answer: "Double elimination works best with 8 or more teams, though the tool supports as few as 4. Below 8 teams, the bracket has very few losers bracket rounds, reducing the format's advantage over single elimination. For larger competitive events, 16–64 teams is the ideal range." },
+        { question: "Does the tool automatically move teams between winners and losers brackets?", answer: "Yes. All bracket progression is fully automatic. When you enter a match result, the winning team advances in the winners bracket and the losing team drops to the correct position in the losers bracket. No manual bracket management is needed — the system handles all seeding and advancement logic." },
+        { question: "Can I use different match formats in different rounds?", answer: "Yes. You can configure best-of-1 for early rounds to save time, then switch to best-of-3 for quarterfinals and semifinals, and best-of-5 for the grand final. Each round can have an independently configured match format, giving you full control over how your event flows." },
+        { question: "What happens if the losers bracket winner beats the winners bracket finalist in the grand final?", answer: "In true double elimination, a bracket reset (true final) is required because the winners bracket finalist has no losses yet. Our tool flags this scenario automatically and creates the bracket reset match. The team that wins the reset match is crowned champion with both teams having lost exactly once." },
+        { question: "Is double elimination fair for all skill levels?", answer: "Double elimination is one of the fairest competitive formats available because every team is guaranteed at least two matches before elimination. This is especially important for events where teams have traveled significant distances or paid registration fees — a single bad game doesn't end their tournament." },
+      ]} />
       
       <div className="container max-w-4xl mx-auto py-6 px-4">
         {/* Back to Tools */}
@@ -101,7 +108,7 @@ export default function DoublesEliminationList() {
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">{t.doublesElimination.title}</h1>
+          <h1 className="text-2xl font-bold mb-1">Pickleball Double Elimination Bracket Generator</h1>
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               {t.doublesElimination.description}

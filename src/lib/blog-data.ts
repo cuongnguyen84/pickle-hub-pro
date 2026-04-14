@@ -3,6 +3,7 @@ export interface BlogSection {
   content: string;
   listItems?: string[];
   orderedList?: string[];
+  internalLinks?: { text: string; path: string }[];
 }
 
 export interface BlogPostContent {
@@ -10,6 +11,8 @@ export interface BlogPostContent {
   metaTitle: string;
   metaDescription: string;
   sections: BlogSection[];
+  faqItems?: { question: string; answer: string }[];
+  howToSteps?: { name: string; text: string }[];
 }
 
 export interface BlogPost {
@@ -603,6 +606,86 @@ export const blogPosts: BlogPost[] = [
               "Paper-based scoring — Loses accuracy and creates disputes. Use digital scoring tools.",
               "No communication plan — Players need to know where to go, when to play, and how to check standings. A shared digital link solves this."
             ]
+          },
+          {
+            heading: "Step 5: Build Your Player Communication Plan",
+            content: "Clear communication before and during your event prevents confusion, reduces no-shows, and creates a professional experience. Set these up before registration opens:",
+            listItems: [
+              "Pre-event confirmation email — Send bracket assignments, court locations, and start times 48 hours before the event.",
+              "Day-of check-in process — Designate one table or person for check-in. Have a printed or digital player list ready.",
+              "Live standings link — Share your tournament tool link so players can follow bracket progress from their phones without asking the organizer.",
+              "Match announcement system — Use a whiteboard, speaker, or group chat to call matches. Never rely on players to self-report to courts.",
+              "Results communication — Post final standings in the group chat and send a follow-up message with results and photos."
+            ]
+          },
+          {
+            heading: "Step 6: Plan Your Budget and Entry Fees",
+            content: "Even free community events have costs. Mapping your budget early prevents surprises and helps you set appropriate entry fees:",
+            listItems: [
+              "Court rental — The biggest cost for most events. Indoor venues range widely; outdoor public courts may be free.",
+              "Balls and equipment — Budget for new balls (they wear out fast) and any net or scoring supplies.",
+              "Prizes and awards — Medal sets, gift cards, or trophies. Optional for casual events; expected for competitive ones.",
+              "Food and refreshments — Water is non-negotiable for outdoor events. Snacks are appreciated. Catering is optional.",
+              "Entry fee math — Divide total costs by expected player count and add a 15–20% buffer for last-minute dropouts. Most community events run profitably at $15–40 per player."
+            ]
+          },
+          {
+            heading: "Free Pickleball Tournament Tools for Every Format",
+            content: "ThePickleHub offers free tools that handle the entire tournament workflow — no sign-up required for basic use:",
+            internalLinks: [
+              { text: "Quick Tables — Round robin brackets for 2–200 players", path: "/tools/quick-tables" },
+              { text: "Double Elimination Bracket Generator — Winners and losers brackets for 4–32 teams", path: "/tools/doubles-elimination" },
+              { text: "MLP Team Match Format — Lineup management, dreambreaker, team standings", path: "/tools/team-match" },
+              { text: "Flex Tournament — Custom brackets for any non-standard format", path: "/tools/flex-tournament" }
+            ]
+          }
+        ],
+        faqItems: [
+          {
+            question: "How many courts do I need for a pickleball tournament?",
+            answer: "Plan for one court per 8 players for a 3-hour round robin event. For a 32-player tournament, 4 courts gives each player 4–5 matches with enough buffer for delays. Add one extra court if you're running time-limited matches under 15 minutes, since courts cycle faster."
+          },
+          {
+            question: "What is the best tournament format for beginners?",
+            answer: "Round robin is the best format for beginner-friendly events because every player is guaranteed multiple games regardless of skill level. No one is eliminated after one loss. For mixed skill levels, use seeded groups within the round robin so beginners play each other and advanced players are grouped separately."
+          },
+          {
+            question: "How far in advance should I plan a pickleball tournament?",
+            answer: "For a small club event (under 32 players), 2–3 weeks is enough time to secure courts, set up registration, and communicate with players. For a larger competitive event (64+ players, prizes, sponsors), plan 6–8 weeks ahead to allow time for promotion, bracket seeding based on DUPR ratings, and logistics coordination."
+          },
+          {
+            question: "Do I need special software to run a pickleball tournament?",
+            answer: "No paid software is required. Free tools like Quick Tables on ThePickleHub handle round robin scheduling, bracket generation, real-time scoring, and standings for events of most sizes. For more complex formats like double elimination or team match competitions, the platform also provides specialized tools at no cost."
+          },
+          {
+            question: "How do I handle ties in a pickleball round robin?",
+            answer: "Standard tiebreaker order for pickleball round robin: (1) head-to-head record between the tied players, (2) point differential in games played, (3) total points scored. If still tied, use a points-per-game average or coin flip for casual events. Always communicate the tiebreaker rules before the tournament starts to avoid disputes."
+          }
+        ],
+        howToSteps: [
+          {
+            name: "Choose your venue and date",
+            text: "Count available courts (plan 1 court per 8 players), check for parking and restrooms, and pick a weekend date that avoids local conflicts. Confirm court availability before opening registration."
+          },
+          {
+            name: "Select your tournament format",
+            text: "Choose round robin for maximum play time and casual events, double elimination for competitive fairness, team match for MLP-style team competition, or flex tournament for custom structures. Match format to player count and available time."
+          },
+          {
+            name: "Set up registration",
+            text: "Create your tournament in a free tool like Quick Tables, set a player cap based on courts and time, collect skill ratings if seeding is needed, and share the registration link through your club's communication channels."
+          },
+          {
+            name: "Build and communicate the schedule",
+            text: "Generate your bracket or round robin schedule, assign players to courts and match times, then distribute the schedule to all participants at least 48 hours before the event."
+          },
+          {
+            name: "Run the tournament day",
+            text: "Set up a check-in station, brief players on rules and match format, start matches on time, and maintain a real-time standings board or shared digital link so players can track progress without interrupting the organizer."
+          },
+          {
+            name: "Close out and follow up",
+            text: "Announce final standings, distribute prizes, take group photos, and send a post-event summary with results to all participants. Collect feedback to improve the next event."
           }
         ]
       },

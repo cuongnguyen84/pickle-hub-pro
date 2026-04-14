@@ -173,6 +173,34 @@ export const QuickTablesSeoContent = () => (
         <li><Link to="/tools" className="text-primary hover:underline">All pickleball tournament tools</Link> — Browse the complete suite of free tournament management tools.</li>
       </ul>
     </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-4">
+        Pickleball Bracket Generator FAQ
+      </h2>
+      <div className="space-y-5">
+        <div>
+          <p className="font-semibold text-foreground mb-1">Is Quick Tables free to use?</p>
+          <p className="text-muted-foreground">Yes — Quick Tables is completely free for clubs, organizers, and individual players. There are no ads, no subscriptions, and no signup required to view a bracket. An account is only needed to create and manage your own tournaments.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">How many players can Quick Tables handle?</p>
+          <p className="text-muted-foreground">Quick Tables supports 2 to 200 players. For 2–48 players, the round robin format automatically creates balanced groups. For 48+ players, the large playoff format uses an elimination bracket structure that scales to any size event.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Can I use Quick Tables for doubles pickleball tournaments?</p>
+          <p className="text-muted-foreground">Yes. Quick Tables supports both singles and doubles tournament formats. You can enter individual players or pair players as doubles teams before generating the bracket. The system handles group balancing and match scheduling identically for both formats.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Does Quick Tables work on mobile devices?</p>
+          <p className="text-muted-foreground">Fully mobile-friendly. The entire tool — from bracket creation to live scoring — is optimized for phones and tablets. Referees can update match scores from the court using any smartphone browser without installing an app.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">What's the difference between round robin and large playoff format?</p>
+          <p className="text-muted-foreground">Round robin means every player faces every other player in their group, maximizing court time for all participants. Large playoff uses a seeded single-elimination bracket for 48+ player events where time or court constraints make full round robin impractical. Both formats are free and generated instantly.</p>
+        </div>
+      </div>
+    </div>
   </section>
 );
 
@@ -253,6 +281,34 @@ export const TeamMatchSeoContent = () => (
         <li><Link to="/tools/flex-tournament" className="text-primary hover:underline">Flexible pickleball tournament formats</Link> — Build custom tournament structures for any scenario.</li>
         <li><Link to="/tools" className="text-primary hover:underline">All pickleball tournament tools</Link> — Explore the complete toolkit for pickleball event organizers.</li>
       </ul>
+    </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-4">
+        Pickleball Team Match FAQ
+      </h2>
+      <div className="space-y-5">
+        <div>
+          <p className="font-semibold text-foreground mb-1">What is the dreambreaker in a pickleball team match?</p>
+          <p className="text-muted-foreground">The dreambreaker is a tiebreaker format used when a team match is tied after all doubles and mixed doubles games. Each team selects one player for a sudden-death singles rally-scoring match. The first player to reach 21 points (win by 2) wins the match for their team. It's the MLP's signature finish to close matches.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">How many teams can compete in a Team Match tournament?</p>
+          <p className="text-muted-foreground">The Team Match tool supports 2 to 16 teams per event. You can run a simple head-to-head match between two clubs or a full league season with up to 16 teams across round robin and playoff stages.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Does Team Match support both round robin and playoff formats?</p>
+          <p className="text-muted-foreground">Yes. You can run a round robin league where every team plays each other, a single elimination playoff for rapid-fire competition, or a combined format with a round robin group stage that feeds into an elimination playoff. The system handles scheduling and standings automatically for all three options.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Can team captains manage their own lineups?</p>
+          <p className="text-muted-foreground">Yes. Captains can be assigned to their teams and given access to submit lineups before each match. This gives your competition strategic depth — captains decide which players compete in men's doubles, women's doubles, mixed doubles, and the dreambreaker based on the opposing team's lineup.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">What scoring system does the Team Match tool use?</p>
+          <p className="text-muted-foreground">Rally scoring is the default (every rally scores a point, regardless of who served), matching the MLP format. Traditional side-out scoring is also supported if your league prefers it. Game scores, team match scores, and standings are all tracked and displayed automatically.</p>
+        </div>
+      </div>
     </div>
   </section>
 );
@@ -336,6 +392,34 @@ export const DoublesEliminationSeoContent = () => (
         <li><Link to="/tools" className="text-primary hover:underline">All pickleball tournament tools</Link> — Browse the complete suite of free tools for pickleball organizers.</li>
       </ul>
     </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-4">
+        Pickleball Double Elimination FAQ
+      </h2>
+      <div className="space-y-5">
+        <div>
+          <p className="font-semibold text-foreground mb-1">What is the minimum number of teams for a double elimination bracket?</p>
+          <p className="text-muted-foreground">Double elimination works best with 8 or more teams, though the tool supports as few as 4. Below 8 teams, the bracket has very few losers bracket rounds, reducing the format's advantage over single elimination. For larger competitive events, 16–64 teams is the ideal range.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Does the tool automatically move teams between winners and losers brackets?</p>
+          <p className="text-muted-foreground">Yes. All bracket progression is fully automatic. When you enter a match result, the winning team advances in the winners bracket and the losing team drops to the correct position in the losers bracket. No manual bracket management is needed — the system handles all seeding and advancement logic.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Can I use different match formats in different rounds?</p>
+          <p className="text-muted-foreground">Yes. You can configure best-of-1 for early rounds to save time, then switch to best-of-3 for quarterfinals and semifinals, and best-of-5 for the grand final. Each round can have an independently configured match format, giving you full control over how your event flows.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">What happens if the losers bracket winner beats the winners bracket finalist in the grand final?</p>
+          <p className="text-muted-foreground">In true double elimination, a bracket reset (true final) is required because the winners bracket finalist has no losses yet. Our tool flags this scenario automatically and creates the bracket reset match. The team that wins the reset match is crowned champion with both teams having lost exactly once.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Is double elimination fair for all skill levels?</p>
+          <p className="text-muted-foreground">Double elimination is one of the fairest competitive formats available because every team is guaranteed at least two matches before elimination. This is especially important for events where teams have traveled significant distances or paid registration fees — a single bad game doesn't end their tournament. It also allows teams to warm up and improve as the event progresses.</p>
+        </div>
+      </div>
+    </div>
   </section>
 );
 
@@ -416,6 +500,32 @@ export const FlexTournamentSeoContent = () => (
         <li><Link to="/tools/doubles-elimination" className="text-primary hover:underline">Double elimination pickleball tournaments</Link> — Professional-grade brackets for large competitive events.</li>
         <li><Link to="/tools" className="text-primary hover:underline">All pickleball tournament tools</Link> — The complete free toolkit for organizing pickleball competitions.</li>
       </ul>
+    </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-6">Pickleball Flex Tournament FAQ</h2>
+      <div className="space-y-4">
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">What types of tournaments can I run with Flex Tournament?</h3>
+          <p className="text-muted-foreground">Flex Tournament supports any format you can design: singles, doubles, mixed doubles, team events, or combinations of all of these within a single tournament. You can create multiple groups with different player counts, define custom match formats per group, and structure your knockout rounds however you like. It's the only tool on The Pickle Hub with no restrictions on tournament structure.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Can Flex Tournament handle non-standard group sizes?</h3>
+          <p className="text-muted-foreground">Yes. Unlike Quick Tables (which is optimized for standard group sizes), Flex Tournament lets you create groups with any number of players or teams — 3, 5, 7, 11, or any other count. You manually assign matches within each group, so there are no algorithmic restrictions on group composition. This makes it ideal for odd-sized draws or events where players drop out mid-tournament.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">How is Flex Tournament different from Quick Tables?</h3>
+          <p className="text-muted-foreground">Quick Tables is optimized for standard round robin brackets — it auto-generates balanced schedules for 4–48 players in seconds. Flex Tournament gives you full manual control: you build every group, match, and scoring rule yourself. Quick Tables is faster for straightforward events; Flex Tournament is the right choice when your event structure doesn't fit standard round robin rules or when you need creative freedom over every detail.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Can I share my Flex Tournament bracket publicly?</h3>
+          <p className="text-muted-foreground">Yes. Each Flex Tournament has a public visibility toggle. When enabled, anyone with the link can view the bracket, group standings, and match scores in real-time — no account required. This is useful for sharing live updates with spectators, posting the link on social media, or embedding tournament results in a club newsletter. Organizers retain full control and can disable public access at any time.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Is Flex Tournament suitable for training sessions and clinic formats?</h3>
+          <p className="text-muted-foreground">It's one of the best tools for structured training. You can design rotating partner rounds, skill-based groupings, or drill-style match formats that standard bracket generators can't handle. Many coaches use Flex Tournament to run round-robin skill sessions where players rotate through different partners and opponents, with scores tracked in real-time to measure development progress over the session.</p>
+        </div>
+      </div>
     </div>
   </section>
 );

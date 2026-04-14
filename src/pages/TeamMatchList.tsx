@@ -11,7 +11,7 @@ import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { DynamicMeta, HreflangTags, WebApplicationSchema, TeamMatchSeoContent, ToolsInternalLinks } from '@/components/seo';
+import { DynamicMeta, HreflangTags, WebApplicationSchema, TeamMatchSeoContent, ToolsInternalLinks, FAQSchema } from '@/components/seo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -168,6 +168,13 @@ export default function TeamMatchList() {
           "Round robin and playoff formats"
         ]}
       />
+      <FAQSchema items={[
+        { question: "What is the dreambreaker in a pickleball team match?", answer: "The dreambreaker is a tiebreaker format used when a team match is tied after all doubles and mixed doubles games. Each team selects one player for a sudden-death singles rally-scoring match. The first player to reach 21 points (win by 2) wins the match for their team. It's the MLP's signature finish to close matches." },
+        { question: "How many teams can compete in a Team Match tournament?", answer: "The Team Match tool supports 2 to 16 teams per event. You can run a simple head-to-head match between two clubs or a full league season with up to 16 teams across round robin and playoff stages." },
+        { question: "Does Team Match support both round robin and playoff formats?", answer: "Yes. You can run a round robin league where every team plays each other, a single elimination playoff for rapid-fire competition, or a combined format with a round robin group stage that feeds into an elimination playoff. The system handles scheduling and standings automatically for all three options." },
+        { question: "Can team captains manage their own lineups?", answer: "Yes. Captains can be assigned to their teams and given access to submit lineups before each match. This gives your competition strategic depth — captains decide which players compete in men's doubles, women's doubles, mixed doubles, and the dreambreaker based on the opposing team's lineup." },
+        { question: "What scoring system does the Team Match tool use?", answer: "Rally scoring is the default (every rally scores a point, regardless of who served), matching the MLP format. Traditional side-out scoring is also supported if your league prefers it. Game scores, team match scores, and standings are all tracked and displayed automatically." },
+      ]} />
       <div className="container max-w-4xl py-6 space-y-6">
         {/* SEO Header */}
         <header className="mb-6">

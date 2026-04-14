@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { DynamicMeta, HreflangTags, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent } from "@/components/seo";
+import { DynamicMeta, HreflangTags, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent, FAQSchema } from "@/components/seo";
 import { getLoginUrl } from "@/lib/auth-config";
 import CreateParentTournamentDialog from "@/components/quicktable/CreateParentTournamentDialog";
 
@@ -197,12 +197,39 @@ const QuickTables = () => {
   if (!user) {
     return (
       <MainLayout>
+        <DynamicMeta
+          title="Pickleball Bracket Generator & Round Robin Tool"
+          description="Free pickleball bracket generator for clubs and tournaments. Create round robin groups, playoff brackets, and elimination formats in seconds. Automatic group balancing, real-time scoring, mobile-friendly."
+          url="https://www.thepicklehub.net/tools/quick-tables"
+        />
+        <HreflangTags enPath="/tools/quick-tables" />
+        <WebApplicationSchema
+          name="Quick Tables - Pickleball Bracket Generator"
+          description="Free pickleball bracket generator. Create round robin brackets with automatic group balancing, playoff brackets, and elimination formats in seconds."
+          url="https://www.thepicklehub.net/tools/quick-tables"
+          applicationCategory="SportsApplication"
+          featureList={[
+            "Round robin bracket generation",
+            "Automatic group balancing",
+            "Playoff bracket support",
+            "Player registration",
+            "Skill level tracking",
+            "Real-time scoring"
+          ]}
+        />
+        <FAQSchema items={[
+          { question: "Is Quick Tables free to use?", answer: "Yes — Quick Tables is completely free for clubs, organizers, and individual players. There are no ads, no subscriptions, and no signup required to view a bracket. An account is only needed to create and manage your own tournaments." },
+          { question: "How many players can Quick Tables handle?", answer: "Quick Tables supports 2 to 200 players. For 2–48 players, the round robin format automatically creates balanced groups. For 48+ players, the large playoff format uses an elimination bracket structure that scales to any size event." },
+          { question: "Can I use Quick Tables for doubles pickleball tournaments?", answer: "Yes. Quick Tables supports both singles and doubles tournament formats. You can enter individual players or pair players as doubles teams before generating the bracket. The system handles group balancing and match scheduling identically for both formats." },
+          { question: "Does Quick Tables work on mobile devices?", answer: "Fully mobile-friendly. The entire tool — from bracket creation to live scoring — is optimized for phones and tablets. Referees can update match scores from the court using any smartphone browser without installing an app." },
+          { question: "What's the difference between round robin and large playoff format?", answer: "Round robin means every player faces every other player in their group, maximizing court time for all participants. Large playoff uses a seeded single-elimination bracket for 48+ player events where time or court constraints make full round robin impractical. Both formats are free and generated instantly." },
+        ]} />
         <div className="container-wide py-8">
           <div className="max-w-lg mx-auto text-center">
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
               <Users className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">{t.quickTable.title}</h1>
+            <h1 className="text-2xl font-bold mb-2">Pickleball Quick Tables Generator</h1>
             <p className="text-foreground-secondary mb-6">
               {t.quickTable.description}
             </p>
@@ -214,6 +241,8 @@ const QuickTables = () => {
               </Button>
             </Link>
           </div>
+          <ToolsInternalLinks currentTool="quick-tables" />
+          <QuickTablesSeoContent />
         </div>
       </MainLayout>
     );
@@ -241,6 +270,13 @@ const QuickTables = () => {
           "Real-time scoring"
         ]}
       />
+      <FAQSchema items={[
+        { question: "Is Quick Tables free to use?", answer: "Yes — Quick Tables is completely free for clubs, organizers, and individual players. There are no ads, no subscriptions, and no signup required to view a bracket. An account is only needed to create and manage your own tournaments." },
+        { question: "How many players can Quick Tables handle?", answer: "Quick Tables supports 2 to 200 players. For 2–48 players, the round robin format automatically creates balanced groups. For 48+ players, the large playoff format uses an elimination bracket structure that scales to any size event." },
+        { question: "Can I use Quick Tables for doubles pickleball tournaments?", answer: "Yes. Quick Tables supports both singles and doubles tournament formats. You can enter individual players or pair players as doubles teams before generating the bracket. The system handles group balancing and match scheduling identically for both formats." },
+        { question: "Does Quick Tables work on mobile devices?", answer: "Fully mobile-friendly. The entire tool — from bracket creation to live scoring — is optimized for phones and tablets. Referees can update match scores from the court using any smartphone browser without installing an app." },
+        { question: "What's the difference between round robin and large playoff format?", answer: "Round robin means every player faces every other player in their group, maximizing court time for all participants. Large playoff uses a seeded single-elimination bracket for 48+ player events where time or court constraints make full round robin impractical. Both formats are free and generated instantly." },
+      ]} />
       <div className="container-wide py-8">
         <div className="max-w-2xl mx-auto space-y-8">
           {/* Back to Tools + Header */}
@@ -255,7 +291,7 @@ const QuickTables = () => {
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">{t.quickTable.seo.pageTitle}</h1>
+            <h1 className="text-2xl font-bold mb-2">Pickleball Quick Tables Generator</h1>
             <p className="text-foreground-secondary mb-4">
               {t.quickTable.seo.pageSubtitle}
             </p>

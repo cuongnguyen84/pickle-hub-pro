@@ -1,6 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, HreflangTags, WebApplicationSchema, FlexTournamentSeoContent, ToolsInternalLinks } from "@/components/seo";
+import { DynamicMeta, HreflangTags, WebApplicationSchema, FlexTournamentSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,13 @@ const FlexTournamentList = () => {
           "Mobile-friendly interface"
         ]}
       />
+      <FAQSchema items={[
+        { question: "What types of tournaments can I run with Flex Tournament?", answer: "Flex Tournament supports any format you can design: singles, doubles, mixed doubles, team events, or combinations of all of these within a single tournament. You can create multiple groups with different player counts, define custom match formats per group, and structure your knockout rounds however you like. It's the only tool on The Pickle Hub with no restrictions on tournament structure." },
+        { question: "Can Flex Tournament handle non-standard group sizes?", answer: "Yes. Unlike Quick Tables (which is optimized for standard group sizes), Flex Tournament lets you create groups with any number of players or teams — 3, 5, 7, 11, or any other count. You manually assign matches within each group, so there are no algorithmic restrictions on group composition." },
+        { question: "How is Flex Tournament different from Quick Tables?", answer: "Quick Tables is optimized for standard round robin brackets — it auto-generates balanced schedules for 4–48 players in seconds. Flex Tournament gives you full manual control: you build every group, match, and scoring rule yourself. Quick Tables is faster for straightforward events; Flex Tournament is the right choice when your event structure doesn't fit standard round robin rules." },
+        { question: "Can I share my Flex Tournament bracket publicly?", answer: "Yes. Each Flex Tournament has a public visibility toggle. When enabled, anyone with the link can view the bracket, group standings, and match scores in real-time — no account required. This is useful for sharing live updates with spectators, posting the link on social media, or embedding tournament results in a club newsletter." },
+        { question: "Is Flex Tournament suitable for training sessions and clinic formats?", answer: "It's one of the best tools for structured training. You can design rotating partner rounds, skill-based groupings, or drill-style match formats that standard bracket generators can't handle. Many coaches use Flex Tournament to run round-robin skill sessions where players rotate through different partners and opponents, with scores tracked in real-time." },
+      ]} />
       <div className="container-wide py-8">
         {/* Back to Tools */}
         <Link
@@ -83,7 +90,7 @@ const FlexTournamentList = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {t.tools.flexTournament.title}
+              Pickleball Flex Tournament Bracket Maker
             </h1>
             <p className="text-muted-foreground mt-1">
               {t.tools.flexTournament.subtitle}
