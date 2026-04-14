@@ -49,13 +49,36 @@ export default function AdminPushNotification() {
           return;
         }
       } else {
-        targetUserIds = userIds
+        const emailList = userIds
           .split(/[,\n]/)
-          .map((id) => id.trim())
+          .map((e) => e.trim())
           .filter(Boolean);
 
+        if (emailList.length === 0) {
+          toast.error("Vui lòng nhập ít nhất 1 email");
+          setSending(false);
+          return;
+        }
+
+        const { data: profiles, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, email")
+          .in("email", emailList);
+
+        if (profileError) throw profileError;
+
+        const foundEmails = new Set((profiles || []).map((p) => p.email));
+        const notFound = emailList.filter((e) => !foundEmails.has(e));
+        if (notFound.length > 0) {
+          toast.error(`Email không tồn tại trong hệ thống: ${notFound.join(", ")}`);
+          setSending(false);
+          return;
+        }
+
+        targetUserIds = (profiles || []).map((p) => p.id);
+
         if (targetUserIds.length === 0) {
-          toast.error("Vui lòng nhập ít nhất 1 User ID");
+          toast.error("Vui lòng nhập ít nhất 1 email");
           setSending(false);
           return;
         }
@@ -130,10 +153,10 @@ export default function AdminPushNotification() {
             {/* User IDs input */}
             {target === "specific" && (
               <div className="space-y-2">
-                <Label htmlFor="userIds">User IDs (cách nhau bởi dấu phẩy hoặc xuống dòng)</Label>
+                <Label htmlFor="userIds">Email (cách nhau bởi dấu phẩy hoặc xuống dòng)</Label>
                 <Textarea
                   id="userIds"
-                  placeholder="user-id-1, user-id-2..."
+                  placeholder="user@example.com, user2@example.com..."
                   value={userIds}
                   onChange={(e) => setUserIds(e.target.value)}
                   rows={3}
