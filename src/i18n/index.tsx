@@ -20,6 +20,17 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 const STORAGE_KEY = "pickleball-hub-language"; // i18n storage key
 const GEO_LANG_KEY = "geo_detected_language"; // cache geo-detected language
 
+/**
+ * html[lang] follows URL structure, not user preference.
+ * /vi and /vi/* → "vi", everything else → "en".
+ * This ensures bots and screen readers always see the correct page language
+ * regardless of geo-detection or stored language preferences.
+ */
+const getHtmlLangFromPath = (): "en" | "vi" => {
+  const path = window.location.pathname;
+  return path === "/vi" || path.startsWith("/vi/") ? "vi" : "en";
+};
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     if (typeof window !== "undefined") {
@@ -70,7 +81,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         const detectedLang: Language = country === "VN" ? "vi" : "en";
         sessionStorage.setItem(GEO_LANG_KEY, detectedLang);
         setLanguageState(detectedLang);
-        document.documentElement.lang = detectedLang;
+        document.documentElement.lang = getHtmlLangFromPath();
       } catch (err) {
         console.error("[i18n] Geo detection failed:", err);
       }
@@ -82,17 +93,17 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem(STORAGE_KEY, lang);
-    document.documentElement.lang = lang;
+    document.documentElement.lang = getHtmlLangFromPath();
   }, []);
 
   // Set language from URL without persisting to localStorage
   const setLanguageFromUrl = useCallback((lang: Language) => {
     setLanguageState(lang);
-    document.documentElement.lang = lang;
+    document.documentElement.lang = getHtmlLangFromPath();
   }, []);
 
   useEffect(() => {
-    document.documentElement.lang = language;
+    document.documentElement.lang = getHtmlLangFromPath();
   }, [language]);
 
   const value: I18nContextType = {
