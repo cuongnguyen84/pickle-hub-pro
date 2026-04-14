@@ -1,7 +1,8 @@
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { getBlogPost, getRelatedPosts } from "@/lib/blog-data";
-import { DynamicMeta, BreadcrumbSchema, ArticleSchema } from "@/components/seo";
+import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema } from "@/components/seo";
+import { useViBlogAlternate } from "@/hooks/useViBlogAlternate";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
@@ -11,6 +12,7 @@ const BlogPost = () => {
   const { language } = useI18n();
 
   const post = slug ? getBlogPost(slug) : undefined;
+  const { data: viSlug } = useViBlogAlternate(post?.slug);
 
   if (!post) {
     return <Navigate to="/blog" replace />;
@@ -28,6 +30,10 @@ const BlogPost = () => {
   return (
     <MainLayout>
       <DynamicMeta title={content.metaTitle} description={content.metaDescription} />
+      <HreflangTags
+        enPath={`/blog/${post.slug}`}
+        viPath={viSlug ? `/vi/blog/${viSlug}` : undefined}
+      />
       <BreadcrumbSchema items={breadcrumbItems} />
       <ArticleSchema
         headline={content.title}

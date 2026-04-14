@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { blogPosts } from "@/lib/blog-data";
-import { DynamicMeta, BreadcrumbSchema } from "@/components/seo";
+import { DynamicMeta, HreflangTags, BreadcrumbSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Calendar, ArrowRight } from "lucide-react";
 
@@ -20,6 +20,7 @@ const Blog = () => {
           ? "Hướng dẫn tổ chức giải pickleball, tạo bracket, round robin, và phần mềm giải đấu miễn phí."
           : "Guides on pickleball tournament organization, bracket creation, round robin scheduling, and free tournament software."}
       />
+      <HreflangTags enPath="/blog" viPath="/vi/blog" />
       <BreadcrumbSchema items={breadcrumbItems} />
 
       <div className="container-wide py-8 md:py-12">

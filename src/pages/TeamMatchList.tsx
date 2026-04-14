@@ -11,7 +11,7 @@ import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { DynamicMeta, WebApplicationSchema, TeamMatchSeoContent, ToolsInternalLinks } from '@/components/seo';
+import { DynamicMeta, HreflangTags, WebApplicationSchema, TeamMatchSeoContent, ToolsInternalLinks } from '@/components/seo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -148,12 +148,12 @@ export default function TeamMatchList() {
 
   return (
     <MainLayout>
-      <DynamicMeta 
+      <DynamicMeta
         title="Pickleball Team Match Tool – MLP Style Tournament Format"
         description="Create MLP-style pickleball team competitions. Features lineup management, dreambreaker games, rally scoring, and team standings. Free tool for clubs, leagues, and tournament organizers."
         url="https://www.thepicklehub.net/tools/team-match"
-        enableHreflang={true}
       />
+      <HreflangTags enPath="/tools/team-match" />
       <WebApplicationSchema
         name="Team Match - MLP Style Pickleball Tournament"
         description="Create team match competitions with MLP-style format. Features lineup management, dreambreaker games, rally scoring, and team tournament organization."

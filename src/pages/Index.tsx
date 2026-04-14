@@ -10,7 +10,7 @@ import { useFeaturedNews } from "@/hooks/useFeaturedNews";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio, Trophy, Users, Tv } from "lucide-react";
-import { DynamicMeta, OrganizationSchema } from "@/components/seo";
+import { DynamicMeta, HreflangTags, OrganizationSchema } from "@/components/seo";
 
 const OpenRegistrationSection = lazy(() => import("@/components/quicktable/OpenRegistrationSection").then(m => ({ default: m.OpenRegistrationSection })));
 const NewsCard = lazy(() => import("@/components/news/NewsCard").then(m => ({ default: m.NewsCard })));
@@ -59,8 +59,8 @@ const Index = () => {
         "ThePickleHub là nền tảng pickleball toàn cầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!" :
         "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant pickleball community. Watch livestreams, follow tournaments, and connect now!"
         }
-        enableHreflang
       />
+      <HreflangTags enPath="/" viPath="/vi" />
       <OrganizationSchema />
 
       {/* Hero Section */}

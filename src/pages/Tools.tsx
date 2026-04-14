@@ -1,6 +1,6 @@
 import { useI18n } from "@/i18n";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, SoftwareApplicationSchema, FAQSchema, ToolsHubSeoContent } from "@/components/seo";
+import { DynamicMeta, HreflangTags, SoftwareApplicationSchema, FAQSchema, ToolsHubSeoContent } from "@/components/seo";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -111,12 +111,12 @@ const Tools = () => {
 
   return (
     <MainLayout>
-      <DynamicMeta 
+      <DynamicMeta
         title="Free Pickleball Tournament Software – Bracket Generator, Team Match & Scoring"
         description="Free pickleball tournament software for organizers. Generate brackets, run round robin, MLP team matches & double elimination. Real-time scoring, mobile-friendly. No signup required."
         url="https://www.thepicklehub.net/tools"
-        enableHreflang={true}
       />
+      <HreflangTags enPath="/tools" viPath="/vi/tools" />
       <SoftwareApplicationSchema
         name="ThePickleHub – Free Pickleball Tournament Software"
         description="Free pickleball tournament software and bracket generator. Create round-robin brackets, MLP team matches, double elimination tournaments. Real-time scoring, mobile-friendly, no signup required."

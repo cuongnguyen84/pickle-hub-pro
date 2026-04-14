@@ -9,7 +9,7 @@ import { useI18n } from "@/i18n";
 import { useLivestreams, useReplays } from "@/hooks/useSupabaseData";
 import { useDebounce } from "@/hooks/useSearch";
 import { Radio, Search, RotateCcw } from "lucide-react";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, HreflangTags } from "@/components/seo";
 
 const Live = () => {
   const { t } = useI18n();
@@ -49,11 +49,12 @@ const Live = () => {
 
   return (
     <MainLayout>
-      <DynamicMeta 
+      <DynamicMeta
         title="Pickleball Livestream | Watch Pickleball Tournaments Live"
         description="Watch live pickleball tournaments and matches on ThePickleHub. Stream pickleball events from top creators, professional tournaments, and community competitions in real-time."
         url="https://www.thepicklehub.net/livestream"
       />
+      <HreflangTags enPath="/live" viPath="/vi/live" />
       <div className="container-wide py-8">
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">

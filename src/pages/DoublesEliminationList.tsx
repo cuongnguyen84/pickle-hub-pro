@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout";
-import { DynamicMeta, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks } from "@/components/seo";
+import { DynamicMeta, HreflangTags, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,12 +70,12 @@ export default function DoublesEliminationList() {
 
   return (
     <MainLayout>
-      <DynamicMeta 
+      <DynamicMeta
         title="Pickleball Double Elimination Bracket Generator"
         description="Free double elimination bracket generator for pickleball tournaments. Create winners and losers brackets for 32-128+ teams. Automatic court scheduling, best-of-1/3/5 formats, referee assignment."
         url="https://www.thepicklehub.net/tools/doubles-elimination"
-        enableHreflang={true}
       />
+      <HreflangTags enPath="/tools/doubles-elimination" />
       <WebApplicationSchema
         name="Doubles Elimination Bracket Generator"
         description="Create doubles elimination brackets for pickleball tournaments. Support for 4-32 teams with best-of-1, best-of-3, or best-of-5 match formats."

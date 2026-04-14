@@ -4,7 +4,7 @@ import { NewsCard } from "@/components/news/NewsCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Newspaper } from "lucide-react";
 import { useI18n } from "@/i18n";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, HreflangTags } from "@/components/seo";
 
 export default function News() {
   const { t } = useI18n();
@@ -16,6 +16,7 @@ export default function News() {
         title={t.news.title}
         description="Tin tức pickleball mới nhất tại Việt Nam và thế giới. Latest pickleball news, updates and stories on ThePickleHub."
       />
+      <HreflangTags enPath="/news" viPath="/vi/news" />
       <div className="container-wide py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold flex items-center gap-2">

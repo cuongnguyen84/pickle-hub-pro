@@ -11,7 +11,6 @@ interface DynamicMetaProps {
   noindex?: boolean;
   creator?: string;
   publishedTime?: string;
-  enableHreflang?: boolean;
 }
 
 export const DynamicMeta = ({
@@ -23,7 +22,6 @@ export const DynamicMeta = ({
   noindex = false,
   creator,
   publishedTime,
-  enableHreflang = false,
 }: DynamicMetaProps) => {
   const { language } = useI18n();
   // Strip trailing slash for canonical consistency (except root "/")
@@ -99,46 +97,11 @@ export const DynamicMeta = ({
     }
     canonical.href = currentUrl;
 
-    // Hreflang tags for multilingual SEO
-    if (enableHreflang) {
-      const baseUrl = "https://www.thepicklehub.net";
-      const pathname = new URL(currentUrl).pathname;
-
-      // Determine EN and VI paths from current pathname
-      const isViPath = pathname === "/vi" || pathname.startsWith("/vi/");
-      const enPath = isViPath ? (pathname.replace(/^\/vi/, "") || "/") : pathname;
-      const viPath = isViPath ? pathname : `/vi${pathname}`;
-
-      const updateHreflang = (hreflang: string, href: string) => {
-        let link = document.querySelector(
-          `link[rel="alternate"][hreflang="${hreflang}"]`
-        ) as HTMLLinkElement;
-
-        if (!link) {
-          link = document.createElement("link");
-          link.rel = "alternate";
-          link.hreflang = hreflang;
-          document.head.appendChild(link);
-        }
-        link.href = href;
-      };
-
-      updateHreflang("en", `${baseUrl}${enPath}`);
-      updateHreflang("vi", `${baseUrl}${viPath}`);
-      updateHreflang("x-default", `${baseUrl}${enPath}`);
-    }
-
     // Cleanup: Reset to default on unmount
     return () => {
       document.title = "ThePickleHub – Pickleball Tournaments, Livestream & Community";
-
-      // Cleanup hreflang tags
-      if (enableHreflang) {
-        const hreflangLinks = document.querySelectorAll('link[rel="alternate"][hreflang]');
-        hreflangLinks.forEach(link => link.remove());
-      }
     };
-  }, [fullTitle, description, image, type, currentUrl, noindex, creator, publishedTime, language, enableHreflang]);
+  }, [fullTitle, description, image, type, currentUrl, noindex, creator, publishedTime, language]);
 
   return null;
 };

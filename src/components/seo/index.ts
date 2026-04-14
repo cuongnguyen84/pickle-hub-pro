@@ -1,4 +1,5 @@
 export { DynamicMeta } from "./DynamicMeta";
+export { HreflangTags } from "./HreflangTags";
 export { EndedLivestreamSEO } from "./EndedLivestreamSEO";
 export { VideoSchema } from "./VideoSchema";
 export { ToolsInternalLinks } from "./ToolsInternalLinks";

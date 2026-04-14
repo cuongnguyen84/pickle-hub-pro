@@ -8,7 +8,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { getLoginUrl } from "@/lib/auth-config";
 import MainLayout from "@/components/layout/MainLayout";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, HreflangTags } from "@/components/seo";
 
 const Forum = () => {
   const { t } = useI18n();
@@ -46,6 +46,7 @@ const Forum = () => {
         title={`${t.forum.title} - ThePickleHub`}
         description="Diễn đàn cộng đồng Pickleball Việt Nam. Thảo luận kỹ thuật, chia sẻ kinh nghiệm, tìm bạn chơi pickleball. Join the Vietnamese pickleball community forum."
       />
+      <HreflangTags enPath="/forum" viPath="/vi/forum" />
       <div className="container-wide py-6 space-y-4 w-full min-w-0 flex-1">
         {/* Header */}
         <div className="flex items-center justify-between">

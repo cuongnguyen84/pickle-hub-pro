@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { DynamicMeta, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent } from "@/components/seo";
+import { DynamicMeta, HreflangTags, ToolsInternalLinks, WebApplicationSchema, QuickTablesSeoContent } from "@/components/seo";
 import { getLoginUrl } from "@/lib/auth-config";
 import CreateParentTournamentDialog from "@/components/quicktable/CreateParentTournamentDialog";
 
@@ -221,12 +221,12 @@ const QuickTables = () => {
 
   return (
     <MainLayout>
-      <DynamicMeta 
+      <DynamicMeta
         title="Pickleball Bracket Generator & Round Robin Tool"
         description="Free pickleball bracket generator for clubs and tournaments. Create round robin groups, playoff brackets, and elimination formats in seconds. Automatic group balancing, real-time scoring, mobile-friendly."
         url="https://www.thepicklehub.net/tools/quick-tables"
-        enableHreflang={true}
       />
+      <HreflangTags enPath="/tools/quick-tables" />
       <WebApplicationSchema
         name="Quick Tables - Pickleball Bracket Generator"
         description="Free pickleball bracket generator. Create round robin brackets with automatic group balancing, playoff brackets, and elimination formats in seconds."

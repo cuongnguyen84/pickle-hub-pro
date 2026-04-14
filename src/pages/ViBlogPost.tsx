@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useViBlogPostBySlug } from "@/hooks/useViBlogPosts";
-import { DynamicMeta, BreadcrumbSchema, ArticleSchema, FAQSchema } from "@/components/seo";
+import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
@@ -52,8 +52,13 @@ const ViBlogPost = () => {
         description={post.meta_description}
         image={normalizeImageUrl(post.cover_image_url) || undefined}
         type="article"
-        enableHreflang={!!alternateEnUrl}
       />
+      {post.alternate_en_slug && (
+        <HreflangTags
+          enPath={`/blog/${post.alternate_en_slug}`}
+          viPath={`/vi/blog/${post.slug}`}
+        />
+      )}
       <BreadcrumbSchema items={breadcrumbItems} />
       <ArticleSchema
         headline={post.title}

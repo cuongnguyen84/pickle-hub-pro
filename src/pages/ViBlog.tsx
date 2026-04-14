@@ -1,5 +1,5 @@
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
-import { DynamicMeta, BreadcrumbSchema } from "@/components/seo";
+import { DynamicMeta, HreflangTags, BreadcrumbSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ViBlogCard } from "@/components/content/ViBlogCard";
@@ -18,6 +18,7 @@ const ViBlog = () => {
         title="Blog Pickleball Việt Nam"
         description="Đọc blog pickleball Việt Nam: luật chơi, kỹ thuật, sân chơi, giải đấu, và mọi điều về cộng đồng pickleball Việt từ ThePickleHub."
       />
+      <HreflangTags enPath="/blog" viPath="/vi/blog" />
       <BreadcrumbSchema items={breadcrumbItems} />
 
       <div className="container-wide py-8 md:py-12">

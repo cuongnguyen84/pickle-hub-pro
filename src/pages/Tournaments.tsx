@@ -15,7 +15,7 @@ import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCirc
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { DynamicMeta } from "@/components/seo";
+import { DynamicMeta, HreflangTags } from "@/components/seo";
 import { TournamentFormatSection } from "@/components/tournaments";
 import type { ParentTournamentWithPreview, SubEventPreview } from "@/hooks/useParentTournament";
 import ParentTournamentCard from "@/components/quicktable/ParentTournamentCard";
@@ -250,11 +250,12 @@ const Tournaments = () => {
 
   return (
     <MainLayout>
-      <DynamicMeta 
+      <DynamicMeta
         title="Pickleball Tournament Software for Organizers"
         description="Professional pickleball tournament software for organizers. Create brackets, manage team matches, run round robin tournaments, and livestream your pickleball events with ThePickleHub."
         url="https://www.thepicklehub.net/tournaments"
       />
+      <HreflangTags enPath="/tournaments" viPath="/vi/tournaments" />
       <div className="container-wide py-8 w-full min-w-0">
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
