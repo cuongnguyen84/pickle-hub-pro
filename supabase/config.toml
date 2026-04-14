@@ -6,9 +6,6 @@ verify_jwt = true
 [functions.send-auth-email]
 verify_jwt = false
 
-[functions.ai-assistant]
-verify_jwt = true
-
 [functions.delete-account]
 verify_jwt = true
 
@@ -60,8 +57,3 @@ verify_jwt = false
 [functions.geo-check]
 verify_jwt = false
 
-[functions.ant-media-create-livestream]
-verify_jwt = true
-
-[functions.prerender]
-verify_jwt = false

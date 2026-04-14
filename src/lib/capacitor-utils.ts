@@ -62,7 +62,7 @@ export const NATIVE_OAUTH_REDIRECT_URL = 'https://www.thepicklehub.net/auth/call
  * APPROACH: Universal Links / App Links
  * - All platforms redirect to https://www.thepicklehub.net/auth/callback
  * - Native apps configure Associated Domains (iOS) / App Links (Android) to intercept this URL
- * - This avoids the need for custom URL schemes which Lovable Cloud doesn't support
+ * - This avoids the need for custom URL schemes (https:// URLs required for OAuth)
  */
 export const getOAuthRedirectForPlatform = (webRedirectUrl: string): string => {
   if (isNativeApp()) {

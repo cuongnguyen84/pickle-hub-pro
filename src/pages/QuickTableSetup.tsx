@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { AIAssistantButton } from '@/components/ai';
 import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand } from 'lucide-react';
 import { toast } from 'sonner';
 import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
@@ -420,15 +419,6 @@ const QuickTableSetup = () => {
                 <div>
                   <CardTitle className="text-lg flex items-center gap-2">
                     {t.quickTable.setup.inputPlayers}
-                    <AIAssistantButton 
-                      screenName="quick-table-setup" 
-                      stepName="players"
-                      contextData={{ 
-                        playerCount: filledPlayers.length,
-                        format: table.format,
-                        groupCount: table.group_count,
-                      }}
-                    />
                   </CardTitle>
                   <CardDescription>
                     {t.quickTable.setup.inputPlayersDesc}

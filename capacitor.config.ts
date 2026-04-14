@@ -48,7 +48,7 @@ const config: CapacitorConfig = {
   // Plugins configuration
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 500,
       launchAutoHide: true,
       backgroundColor: '#111317',
       androidSplashResourceName: 'splash',
@@ -83,7 +83,7 @@ export default config;
  * =====================================================
  * 
  * This app uses Universal Links (iOS) and App Links (Android) for OAuth
- * instead of custom URL schemes, because Lovable Cloud only supports https:// URLs.
+ * instead of custom URL schemes (OAuth providers require https:// redirect URLs).
  * 
  * OAuth flow: Google → https://www.thepicklehub.net/auth/callback → Native App
  * 
