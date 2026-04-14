@@ -19,8 +19,13 @@ import { useLocation } from "react-router-dom";
 export default function DoublesEliminationList() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t, language } = useI18n();
+  const { t, language, setLanguageFromUrl } = useI18n();
   const location = useLocation();
+
+  // EN route — force English regardless of persisted language state
+  useEffect(() => {
+    setLanguageFromUrl("en");
+  }, [setLanguageFromUrl]);
   const { getUserTournaments } = useDoublesElimination();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);

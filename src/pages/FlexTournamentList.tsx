@@ -10,7 +10,7 @@ import { Plus, Eye, Trash2, Globe, Lock, Loader2, ArrowLeft } from "lucide-react
 import { Link, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,9 +25,14 @@ import { useToast } from "@/hooks/use-toast";
 import { getLoginUrl } from "@/lib/auth-config";
 
 const FlexTournamentList = () => {
-  const { t, language } = useI18n();
+  const { t, language, setLanguageFromUrl } = useI18n();
   const { user } = useAuth();
   const location = useLocation();
+
+  // EN route — force English regardless of persisted language state
+  useEffect(() => {
+    setLanguageFromUrl("en");
+  }, [setLanguageFromUrl]);
   const { myTournaments, isLoadingTournaments, publicTournaments, isLoadingPublic, deleteTournament, isDeleting } = useFlexTournament();
   const navigate = useNavigate();
   const { toast } = useToast();

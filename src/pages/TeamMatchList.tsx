@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -142,8 +143,13 @@ import { useLocation } from 'react-router-dom';
 export default function TeamMatchList() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, setLanguageFromUrl } = useI18n();
   const location = useLocation();
+
+  // EN route — force English regardless of persisted language state
+  useEffect(() => {
+    setLanguageFromUrl("en");
+  }, [setLanguageFromUrl]);
   const { myTournaments, publicTournaments, isLoading, deleteTournament } = useTeamMatch();
 
   return (
@@ -182,7 +188,7 @@ export default function TeamMatchList() {
             <Button variant="ghost" size="icon" onClick={() => navigate('/tools')} className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-2xl font-bold">{t.teamMatch.pageTitle}</h1>
+            <h1 className="text-2xl font-bold">Pickleball Team Match Format</h1>
           </div>
           <div className="flex items-center justify-between gap-4 pl-10">
             <p className="text-sm text-muted-foreground">{t.teamMatch.pageSubtitle}</p>
