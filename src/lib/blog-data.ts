@@ -274,62 +274,161 @@ export const blogPosts: BlogPost[] = [
         sections: [
           {
             heading: "What Is a Pickleball Round Robin?",
-            content: "A round robin is a tournament format where every player or team plays against every other participant in their group. Unlike elimination brackets where you can be knocked out after one bad game, round robin guarantees multiple matches for everyone. This makes it the most popular format for recreational and club pickleball events — players pay to play, and they want to play as many games as possible."
+            content: "A round robin is a tournament format where every player or team plays against every other participant in their group. Unlike elimination brackets where you can be knocked out after one bad game, round robin guarantees multiple matches for everyone — making it the default format for recreational and club pickleball events worldwide. Here's what it looks like at different group sizes:",
+            listItems: [
+              "4-player group — 6 total matches. Every player faces the other 3. With 2 courts running, the entire group finishes in about 60-75 minutes. Ideal for warm-up events or skill-based mini-brackets.",
+              "6-player group — 15 total matches. Each player gets 5 games. With 2-3 courts, expect 2-2.5 hours. The sweet spot for recreational round robins — enough playing time without an all-day commitment.",
+              "8-player group — 28 total matches. Each player gets 7 games. Requires 3-4 courts and 3-4 hours to complete. Best for dedicated tournament days where maximum play time is the goal.",
+              "10-player group — 45 total matches. Rarely used as a single group due to time constraints. Better split into two 5-player groups with a playoff round.",
+              "Difference from elimination formats — In single elimination, half the field plays only one match. In double elimination, teams are guaranteed two, but still exit early. Round robin ensures every player gets their full slate of matches regardless of win-loss record. For players who've traveled to an event or paid an entry fee, this matters."
+            ]
           },
           {
             heading: "Why Use a Round Robin Generator?",
-            content: "Creating a round robin schedule by hand is surprisingly complex. With 6 players in a group, you need 15 unique matches scheduled across limited courts with proper rest between games. A round robin generator automates this instantly:",
+            content: "Creating a round robin schedule by hand is deceptively complex. A 6-player group requires 15 unique pairings scheduled so no player sits back-to-back, no court is double-booked, and rest intervals are balanced. For 8 players you're managing 28 matches. Scale to 16 players across multiple groups and you're coordinating 120 matches — spreadsheet-hostile territory where manual scheduling errors are nearly inevitable.",
             listItems: [
-              "Automatic match scheduling — Every possible pairing is created with optimized order to minimize court wait times.",
-              "Court rotation — Matches are distributed evenly across available courts so no court sits idle.",
-              "Rest time management — The generator ensures players have adequate rest between consecutive matches.",
-              "Balanced groups — When dividing players into multiple groups, the generator distributes skill levels evenly.",
-              "Instant standings — As scores are entered, the system calculates wins, losses, point differentials, and standings automatically."
+              "Court clashes — Two matches assigned to the same court at the same time. Easy to miss on a spreadsheet; impossible with a generator.",
+              "Back-to-back player scheduling — A player finishing Match 3 immediately forced onto Match 4 with no rest. Generators enforce configurable rest gaps automatically.",
+              "Unbalanced seeding — Placing all the strongest players in one group and weakest in another, producing a lopsided bracket. A generator distributes seeds across groups using snake seeding.",
+              "Miscounting match totals — Underestimating how many matches your event has leads to underbooked court time and events that run 90 minutes over schedule.",
+              "Standings calculation errors — Manual win-loss tracking is error-prone. Point differentials for tiebreakers are nearly impossible to track by hand across a large field.",
+              "The Pickleball Round Robin Generator at Quick Tables solves all of these automatically — enter player count, click generate, get a complete schedule with court assignments in under 10 seconds."
             ]
           },
           {
             heading: "How The Pickle Hub's Round Robin Generator Works",
-            content: "Quick Tables is our pickleball-specific round robin generator. Here's how to use it for your next event:",
+            content: "Quick Tables is a free pickleball-specific round robin generator that handles everything from schedule creation to live standings. No account required to generate brackets. Here's the full workflow:",
             orderedList: [
-              "Open Quick Tables — Visit the tool page. No account or download needed.",
-              "Set player count — Enter the total number of players. The tool supports 4 to 200+ participants.",
-              "Choose group configuration — Select how many groups to divide players into. Smaller groups (4-5) finish faster; larger groups (6-8) give more playing time.",
-              "Enter player names and seeds — Add names and optional skill ratings. The system distributes top seeds across groups for fair competition.",
-              "Generate schedule — Click generate and the tool creates every match with court assignments and suggested timing.",
-              "Run the tournament — As matches complete, enter scores. Standings update in real-time for all participants."
+              "Open the Pickleball Round Robin Generator — Navigate to Quick Tables at thepicklehub.net/tools/quick-tables. The tool loads instantly in your browser — no download, no signup for basic use.",
+              "Set your player count — Enter the total number of players or teams. The tool supports 2 to 200+ participants in a single event, automatically splitting large fields into multiple groups.",
+              "Choose singles or doubles format — Select whether matches are singles (1v1) or doubles (2v2). For rotating-partner doubles round robins, the tool handles partner assignment per round.",
+              "Configure group size — Set how many players per group. Groups of 4-5 finish fastest; groups of 6-8 give players more matches. The generator optimizes group balance automatically.",
+              "Enter player names and optional seeds — Add player names and skill ratings (DUPR scores work perfectly). The generator distributes top seeds across groups for competitive balance.",
+              "Auto-generate the full match schedule — Click generate. Every match is instantly created with court assignments and sequential round numbering. The schedule is shareable via link.",
+              "Run matches and capture scores — As rounds complete, enter scores directly in the tool. Win/loss records, point differentials, and standings update in real-time. Share the standings link with players so they can follow progress on their phones."
             ]
           },
           {
             heading: "Round Robin Math: How Many Matches Do You Need?",
-            content: "Understanding the math helps you plan your event timing. In round robin, the number of matches per group follows the formula: n × (n-1) / 2, where n is the number of players.",
+            content: "The formula for total matches in a round robin group is: n × (n-1) ÷ 2, where n is the number of players. Knowing this number before your event is critical for court booking and time planning. Use these estimates assuming 15-minute matches and 3-minute changeover time:",
             listItems: [
-              "4 players = 6 matches per group (approximately 1 hour with 2 courts)",
-              "5 players = 10 matches per group (approximately 1.5 hours with 2 courts)",
-              "6 players = 15 matches per group (approximately 2 hours with 2 courts)",
-              "8 players = 28 matches per group (approximately 3.5 hours with 2 courts)",
-              "For events with 16+ players, splitting into groups of 4-5 with playoffs is strongly recommended."
+              "4 players → 6 matches | 2 courts → ~60 min | 1 court → ~90 min",
+              "5 players → 10 matches | 2 courts → ~90 min | 1 court → ~150 min (includes byes)",
+              "6 players → 15 matches | 2 courts → ~120 min | 3 courts → ~90 min",
+              "8 players → 28 matches | 3 courts → ~150 min | 4 courts → ~120 min",
+              "10 players → 45 matches | 4 courts → ~190 min — recommended: split into two 5-player groups",
+              "12 players → 66 matches | 4 courts → ~280 min — recommended: split into three 4-player groups with playoff",
+              "16 players → 120 matches | 4 courts → ~500 min — always split. Four 4-player groups with playoff is the standard structure",
+              "Formula summary: n × (n-1) ÷ 2 for any group size. Double the match count and add 30% for court changeovers to get a realistic event duration estimate."
             ]
           },
           {
             heading: "Round Robin vs Other Pickleball Tournament Formats",
-            content: "Round robin isn't always the best choice. Here's when to use each format:",
+            content: "Round robin delivers maximum playing time but isn't always the right choice. Here's a practical comparison to help you pick the right format for your event structure and player count:",
             listItems: [
-              "Round Robin — Best for 4-32 players who want maximum playing time. Social and club events. When everyone should play at least 3-4 matches.",
-              "Double Elimination — Best for 32+ teams in competitive settings where fairness (second chance) matters more than playing time.",
-              "Team Match (MLP) — Best when you want team-based competition with strategic lineup decisions.",
-              "Flex Tournament — Best for non-standard formats that don't fit traditional categories."
+              "Round Robin — Best for: 4-32 players, recreational/club events, when everyone should play 4+ matches. Pros: guaranteed matches, social atmosphere, easy seeding. Cons: slow to crown a champion, grows unwieldy above 32 players.",
+              "Single Elimination — Best for: large fields (64+), when time is the primary constraint. Pros: fast to complete, dramatic knockout stakes. Cons: half the field plays only one match — poor value for players.",
+              "Double Elimination — Best for: 8-64 teams in competitive events where a second chance is valued. Pros: fairer than single elimination (every team plays at least twice), clear winner/loser bracket structure. Cons: higher match count than round robin, complex bracket management.",
+              "MLP Team Match — Best for: team-based competitions with 4-16 teams. Pros: strategic depth (lineup decisions), team identity, dreambreaker finish. Cons: requires roster management, unsuitable for individual events.",
+              "Flex Tournament — Best for: non-standard events that don't fit any of the above. Pros: fully customizable groups, match formats, and scoring. Cons: requires more manual configuration."
+            ],
+            internalLinks: [
+              { text: "Double Elimination Bracket Generator", path: "/tools/doubles-elimination" },
+              { text: "MLP Team Match Format Tool", path: "/tools/team-match" },
+              { text: "Flex Tournament — Custom Bracket Maker", path: "/tools/flex-tournament" }
             ]
           },
           {
             heading: "Pro Tips for Round Robin Organizers",
-            content: "Make your round robin tournament run like clockwork with these tips:",
+            content: "The difference between a chaotic round robin and a smooth one usually comes down to preparation and a few key rules. These tips come from running events across all group sizes:",
             listItems: [
-              "Start on time — Round robins have many matches. Every 5-minute delay compounds. Set a strict start time and enforce it.",
-              "Use a timer — Set match time limits (15-20 minutes) to keep the schedule moving, especially with large groups.",
-              "Display standings publicly — Use a projected screen or share the tournament link so everyone can see live standings. This increases excitement and engagement.",
-              "Plan for odd numbers — With 5 or 7 players, someone sits out each round. Our generator handles this automatically with bye scheduling.",
-              "Consider playoffs — After round robin, top finishers from each group can advance to a single elimination playoff for a dramatic finish."
+              "Enforce match time limits — 15 minutes for recreational games, 20 for competitive. Without time limits, one long match can push every subsequent round back by a cascading 5-10 minutes, turning a 3-hour event into a 5-hour one.",
+              "Never schedule back-to-back matches — Build at least one match gap between a player's appearances. In a 6-player group with 3 courts, this is automatic. In a 4-player group with 1 court, half the players will be sitting out each round — that's unavoidable and acceptable.",
+              "Snake-seed your groups — If you have DUPR ratings, rank players 1-N and snake them across groups (Group A gets seeds 1, 8, 9, 16; Group B gets 2, 7, 10, 15). This balances average group strength and prevents one runaway group.",
+              "Use a shared digital standings link — The Quick Tables generator produces a shareable link so players can view match schedules and current standings on their phones. This eliminates the queue of players asking 'who do I play next?'",
+              "Plan your tiebreaker rule before the event starts — Default order: (1) head-to-head if exactly two are tied, (2) point differential (points won minus points lost across all matches), (3) total points scored. Announce this before the first match or expect disputes.",
+              "For doubles round robins with rotating partners — Assign partners for each round in advance. Use the Quick Tables generator's partner rotation feature so players know their partner and opponent before each round starts.",
+              "Add a playoff round for events with multiple groups — After round robin completes, the top 1-2 finishers from each group advance to a short elimination bracket. This keeps late-stage play competitive and gives top players a meaningful finish beyond group standings."
             ]
+          },
+          {
+            heading: "Common Round Robin Mistakes to Avoid",
+            content: "Even experienced organizers make these errors. Knowing them in advance is the difference between a smooth event and one that runs two hours over schedule:",
+            listItems: [
+              "Too many players per group — Groups of 10+ create unmanageable match counts and all-day events. Split any group over 8 players into two smaller groups with a playoff.",
+              "Booking too few courts — Rule of thumb: one court per 4 players for a 3-hour round robin. Running a 16-player event on 2 courts will take 6+ hours.",
+              "No time limit on matches — The single most common cause of round robin events running over. Set 15-20 minute limits and enforce them from the first round.",
+              "Forgetting to seed across groups — Randomly assigning players to groups often concentrates strong players in one group, making standings in other groups meaningless. Always snake-seed.",
+              "Using paper scoring — Manual scorecards get lost, are misread, and produce tiebreaker disputes. Digital scoring with a live standings link eliminates 95% of post-match disputes."
+            ]
+          },
+          {
+            heading: "Pickleball Round Robin FAQ",
+            content: "Answers to the most common questions from tournament organizers and players about round robin format, scheduling, and tool setup.",
+            listItems: [
+              "How do you calculate the number of matches in a round robin? Use the formula n × (n-1) ÷ 2. For 6 players: 6 × 5 ÷ 2 = 15 matches. For 8 players: 8 × 7 ÷ 2 = 28 matches. For 10 players: 45 matches. This is the total for one group — multiply by the number of groups for your event total.",
+              "How long does a 16-player pickleball round robin take? If you run all 16 as one group (120 matches), budget 8+ hours — not practical. Standard approach: four groups of 4, each completing 6 matches in ~60-75 minutes with 2 courts per group, followed by a 4-team playoff. Total event time: approximately 3-3.5 hours.",
+              "Can you combine round robin with playoffs? Yes — this is the most popular structure for mid-size events. Run round robin in the morning to determine group rankings, then run a 4-8 team single or double elimination playoff in the afternoon. The Pickle Hub tools support this structure natively.",
+              "What's the best way to handle an odd number of players in round robin? A 'bye' is assigned to the extra player each round. That player sits out one round, then returns normally. A 5-player group needs 5 rounds (one player byes each round). The Quick Tables generator handles bye scheduling automatically.",
+              "Can you run a doubles round robin where partners rotate every match? Yes. Rotating-partner doubles round robins are popular at social events. Each player gets a different partner each round, creating a social mixing format. Generate the schedule in Quick Tables using the partner rotation setting.",
+              "Is round robin fair when players have different skill levels? It's fair in that everyone plays the same number of matches. But without seeded groups, beginners often face advanced players every match, which isn't enjoyable for either side. Solve this by splitting players into skill-based pools (e.g., 3.0-3.5 and 4.0+ groups) or use DUPR ratings to balance group composition."
+            ]
+          }
+        ],
+        faqItems: [
+          {
+            question: "How do you calculate the number of matches in a pickleball round robin?",
+            answer: "Use the formula n × (n-1) ÷ 2, where n is the number of players in the group. For 4 players: 6 matches. For 6 players: 15 matches. For 8 players: 28 matches. For 16 players: 120 matches — which is why large fields should always be split into smaller groups of 4-6 players."
+          },
+          {
+            question: "How long does a 16-player pickleball round robin take?",
+            answer: "If run as a single group (120 matches), expect 8+ hours — not practical for a day event. The standard structure is four groups of 4 players, each requiring ~60-75 minutes with 2 courts per group. After group play, a 4-team playoff adds another 45-60 minutes. Total event time: approximately 3-3.5 hours with 8 courts available."
+          },
+          {
+            question: "Can you combine round robin with playoffs in pickleball?",
+            answer: "Yes — this hybrid format is the most popular structure for mid-size events. Run round robin in the morning to determine group rankings, then a 4-8 team elimination playoff in the afternoon. It balances guaranteed play time (from round robin) with a clear champion (from playoffs). The Pickle Hub's Quick Tables tool supports this format."
+          },
+          {
+            question: "What's the best way to handle an odd number of players in round robin?",
+            answer: "Assign a bye each round to the extra player. In a 5-player group, one player sits out per round — across 5 rounds, every player byes once and plays 4 matches (same as the 4-player group format). A good round robin generator handles bye scheduling automatically so you don't need to manually track who sits out each round."
+          },
+          {
+            question: "Can you run a doubles round robin where partners rotate every match?",
+            answer: "Yes. Rotating-partner doubles round robins assign each player a different partner each round. It's popular for social mixing events because players get to pair with and compete against many different people. Use Quick Tables with the partner rotation setting enabled to auto-generate the pairings — manual scheduling for rotating partners is extremely complex."
+          },
+          {
+            question: "Is round robin fair when players have different skill levels?",
+            answer: "Round robin is fair in match count — everyone plays the same number of games. But without skill-based grouping, beginners face advanced players every match. The fix: split players into skill pools using DUPR ratings or self-reported level, then run round robin within each pool. This creates competitive, enjoyable matches at every skill level."
+          }
+        ],
+        howToSteps: [
+          {
+            name: "Open the Round Robin Generator",
+            text: "Navigate to Quick Tables at thepicklehub.net/tools/quick-tables. The tool loads in your browser instantly — no account required for basic bracket generation."
+          },
+          {
+            name: "Enter your player list",
+            text: "Add player names and optional skill ratings (DUPR scores or 2.5-5.0 level). The generator uses ratings to balance group composition using snake seeding."
+          },
+          {
+            name: "Choose singles or doubles format",
+            text: "Select whether matches are 1v1 (singles) or 2v2 (doubles). For rotating-partner doubles events, enable the partner rotation setting to auto-assign partners each round."
+          },
+          {
+            name: "Set group size and court count",
+            text: "Choose how many players per group (4-8 recommended) and how many courts are available. The generator calculates match counts and estimated duration automatically."
+          },
+          {
+            name: "Auto-generate the match schedule",
+            text: "Click generate. Every match is instantly created with court assignments and round numbering. The full schedule is available as a shareable link players can access on their phones."
+          },
+          {
+            name: "Run matches and enter scores",
+            text: "As rounds complete, enter scores directly into the tool. Win-loss records, point differentials, and head-to-head records update in real-time for all participants."
+          },
+          {
+            name: "View live standings and run playoff",
+            text: "Share the live standings link during the event. After group play, use the top finishers from each group to seed a playoff bracket for a final champion."
           }
         ]
       },
