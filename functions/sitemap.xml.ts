@@ -103,6 +103,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/blog", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/blog", "/vi/blog") },
     { loc: "/privacy", changefreq: "monthly", priority: "0.3" },
     { loc: "/terms", changefreq: "monthly", priority: "0.3" },
+    { loc: "/rss.xml", changefreq: "hourly", priority: "0.3" },
   ];
 
   try {
