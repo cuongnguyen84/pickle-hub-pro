@@ -1,13 +1,13 @@
 project_id = "ajvlcamxemgbxduhiqrl"
 
 [functions.mux-create-livestream]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-auth-email]
 verify_jwt = false
 
 [functions.delete-account]
-verify_jwt = true
+verify_jwt = false
 
 [functions.batch-view-events]
 verify_jwt = false
@@ -55,5 +55,11 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.geo-check]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.invite-team-to-tournament]
 verify_jwt = false
 
