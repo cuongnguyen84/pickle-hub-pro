@@ -42,14 +42,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // ─── 1b. share subdomain → noindex, pass through to SPA ──
-  if (url.hostname === "share.thepicklehub.net") {
-    const res = await next();
-    const headers = new Headers(res.headers);
-    headers.set("X-Robots-Tag", "noindex, nofollow");
-    return new Response(res.body, { status: res.status, headers });
-  }
-
   // ─── 2. Bot detection ─────────────────────────────────
   const ua = request.headers.get("user-agent") || "";
   const isBot = BOT_UA.test(ua);

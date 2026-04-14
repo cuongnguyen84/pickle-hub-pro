@@ -315,7 +315,7 @@ const QuickTableView = () => {
   };
 
   const handleShare = () => {
-    const shareUrl = `https://share.thepicklehub.net/quick-table/${shareId}`;
+    const shareUrl = `https://www.thepicklehub.net/tools/quick-tables/${shareId}`;
     navigator.clipboard.writeText(shareUrl);
     toast.success(t.quickTable.view.shareSuccess);
   };

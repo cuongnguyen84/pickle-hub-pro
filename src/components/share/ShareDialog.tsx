@@ -24,11 +24,8 @@ export const ShareDialog = ({ type, id, title, thumbnail, children }: ShareDialo
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  // Clean share URL - proxied to edge functions via _redirects
-  const shareUrl = `https://share.thepicklehub.net/${type}/${id}`;
-  
-  // Clean display URL for UI
-  const displayUrl = `share.thepicklehub.net/${type}/${id}`;
+  const shareUrl = `https://www.thepicklehub.net/${type}/${id}`;
+  const displayUrl = `www.thepicklehub.net/${type}/${id}`;
 
   const copyToClipboard = async () => {
     try {

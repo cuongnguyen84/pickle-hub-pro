@@ -145,8 +145,7 @@ Deno.serve(async (req) => {
     
     // Canonical URL for redirect (where users end up)
     const canonicalUrl = `${SITE_URL}/live/${livestreamId}`;
-    // OG URL uses clean share URL (proxied to this edge function via _redirects)
-    const ogUrl = `https://share.thepicklehub.net/live/${livestreamId}`;
+    const ogUrl = `https://www.thepicklehub.net/live/${livestreamId}`;
     
     // Build og:type logic based on mux_playback_id
     const hasVideo = !!livestream.mux_playback_id;

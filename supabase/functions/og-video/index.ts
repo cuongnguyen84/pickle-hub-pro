@@ -119,8 +119,7 @@ serve(async (req) => {
     
     // Canonical URL for redirect (where users end up)
     const canonicalUrl = `${SITE_URL}/video/${videoId}`;
-    // OG URL uses clean share URL (proxied to this edge function via _redirects)
-    const ogUrl = `https://share.thepicklehub.net/video/${videoId}`;
+    const ogUrl = `https://www.thepicklehub.net/video/${videoId}`;
     
     // Build og:type logic based on mux_playback_id
     const hasVideo = !!video.mux_playback_id;
