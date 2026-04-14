@@ -53,12 +53,10 @@ const ViBlogPost = () => {
         image={normalizeImageUrl(post.cover_image_url) || undefined}
         type="article"
       />
-      {post.alternate_en_slug && (
-        <HreflangTags
-          enPath={`/blog/${post.alternate_en_slug}`}
-          viPath={`/vi/blog/${post.slug}`}
-        />
-      )}
+      <HreflangTags
+        enPath={post.alternate_en_slug ? `/blog/${post.alternate_en_slug}` : undefined}
+        viPath={`/vi/blog/${post.slug}`}
+      />
       <BreadcrumbSchema items={breadcrumbItems} />
       <ArticleSchema
         headline={post.title}
