@@ -7,6 +7,18 @@ interface Env {
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
+  const url = new URL(context.request.url);
+
+  // Block all crawlers on the share subdomain
+  if (url.hostname === "share.thepicklehub.net") {
+    return new Response("User-agent: *\nDisallow: /\n", {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  }
+
   const siteUrl = context.env.CANONICAL_HOST || "https://www.thepicklehub.net";
 
   const body = `User-agent: *
