@@ -310,6 +310,8 @@ interface MailchimpCampaignCreatePayload {
     text_clicks: boolean;
     goal_tracking: boolean;
     ecomm360: boolean;
+    google_analytics: string;
+    clicktale: string;
   };
 }
 
@@ -483,7 +485,7 @@ Deno.serve(async (req) => {
       recipients: { list_id: audienceId },
       variate_settings: {
         winner_criteria: "clicks",
-        wait_time: 24,
+        wait_time: 240,
         test_size: 50,
         subject_lines: [subjectA, subjectB],
         from_names: ["Cường"],
@@ -498,9 +500,11 @@ Deno.serve(async (req) => {
       tracking: {
         opens: true,
         html_clicks: true,
-        text_clicks: false,
+        text_clicks: true,
         goal_tracking: false,
         ecomm360: false,
+        google_analytics: "",
+        clicktale: "",
       },
     };
 
