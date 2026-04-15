@@ -76,7 +76,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         return new Response(cached, {
           headers: {
             "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "public, max-age=3600",
+            "Cache-Control": "no-store",
             "X-Prerender-Cache": "HIT",
             Vary: "User-Agent",
           },
