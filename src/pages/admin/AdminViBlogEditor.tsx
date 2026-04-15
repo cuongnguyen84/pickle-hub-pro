@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
@@ -21,8 +21,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ChevronLeft, Plus, Trash2, Eye, Save } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, Eye, Save, Upload } from "lucide-react";
 import { normalizeImageUrl } from "@/lib/url-utils";
+import { useOgImageUpload } from "@/hooks/useOgImageUpload";
 
 const CATEGORIES = [
   { value: "beginner", label: "Người mới" },
@@ -53,6 +54,8 @@ export default function AdminViBlogEditor() {
   const { data: existingPost, isLoading } = useAdminViBlogPostById(isEdit ? id : undefined);
   const createMutation = useCreateViBlogPost();
   const updateMutation = useUpdateViBlogPost();
+  const ogImageUpload = useOgImageUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
@@ -247,8 +250,47 @@ export default function AdminViBlogEditor() {
 
           {/* Cover Image */}
           <div className="space-y-2">
-            <Label>Ảnh cover (URL)</Label>
-            <Input value={coverImageUrl} onChange={(e) => setCoverImageUrl(e.target.value)} placeholder="https://..." />
+            <Label>Ảnh cover (og:image)</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={ogImageUpload.isUploading || !slug}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                {ogImageUpload.isUploading ? "Đang upload…" : "Upload ảnh"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const url = await ogImageUpload.upload(file, slug);
+                  if (url) {
+                    setCoverImageUrl(url);
+                    toast.success("Ảnh đã upload thành công");
+                  }
+                  e.target.value = "";
+                }}
+              />
+              <Input
+                value={coverImageUrl}
+                onChange={(e) => setCoverImageUrl(e.target.value)}
+                placeholder="https://... (hoặc upload ảnh bên trái)"
+                className="flex-1"
+              />
+            </div>
+            {!slug && (
+              <p className="text-xs text-muted-foreground">Điền Slug trước rồi mới upload ảnh được</p>
+            )}
+            {ogImageUpload.error && (
+              <p className="text-xs text-destructive">{ogImageUpload.error}</p>
+            )}
             {coverImageUrl && (
               <img src={normalizeImageUrl(coverImageUrl)} alt="Cover preview" className="h-32 object-cover rounded-lg border border-border" />
             )}
