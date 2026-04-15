@@ -340,8 +340,14 @@ async function mailchimpRequest(
 // ---------------------------------------------------------------------------
 
 Deno.serve(async (req) => {
+  console.log("[send-blog-blast] invocation started", {
+    timestamp: new Date().toISOString(),
+    method: req.method,
+  });
+
   // Only POST
   if (req.method !== "POST") {
+    console.log("[send-blog-blast] skipped: not POST", { method: req.method });
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
       headers: { "Content-Type": "application/json" },
@@ -353,20 +359,21 @@ Deno.serve(async (req) => {
   if (webhookSecret) {
     const incoming = req.headers.get("x-webhook-secret");
     if (incoming !== webhookSecret) {
-      console.error("Invalid webhook secret");
+      console.error("[send-blog-blast] invalid webhook secret");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
   } else {
-    console.warn("MAILCHIMP_WEBHOOK_SECRET not set — skipping secret check");
+    console.warn("[send-blog-blast] MAILCHIMP_WEBHOOK_SECRET not set — skipping secret check");
   }
 
   let payload: SupabaseWebhookPayload;
   try {
     payload = await req.json();
   } catch {
+    console.error("[send-blog-blast] invalid JSON body");
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
@@ -374,10 +381,19 @@ Deno.serve(async (req) => {
   }
 
   const { type, table, record, old_record } = payload;
+  console.log("[send-blog-blast] webhook payload", {
+    type,
+    table,
+    record_id: (record as PostRecord)?.id,
+    record_slug: (record as PostRecord)?.slug,
+    record_status: (record as PostRecord)?.status,
+    old_status: (old_record as Partial<PostRecord> | null)?.status ?? null,
+  });
 
-  // Only handle UPDATE on vi_blog_posts
-  if (table !== "vi_blog_posts" || type !== "UPDATE") {
-    return new Response(JSON.stringify({ skipped: true, reason: "not a vi_blog_posts update" }), {
+  // Handle INSERT and UPDATE on vi_blog_posts; ignore DELETE and other tables
+  if (table !== "vi_blog_posts" || type === "DELETE") {
+    console.log("[send-blog-blast] skipped: not a vi_blog_posts INSERT/UPDATE", { type, table });
+    return new Response(JSON.stringify({ skipped: true, reason: "not a vi_blog_posts insert/update" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -386,8 +402,14 @@ Deno.serve(async (req) => {
   const post = record as PostRecord;
   const oldStatus = (old_record as Partial<PostRecord> | null)?.status ?? null;
 
-  // Only fire when status transitions to 'published'
+  // Only fire when status is 'published' and wasn't already published before
+  // For INSERT (old_record is null): oldStatus will be null — correctly passes through
+  // For UPDATE: skip if it was already published (e.g. editing an existing published post)
   if (post.status !== "published" || oldStatus === "published") {
+    console.log("[send-blog-blast] skipped: not a publish transition", {
+      current_status: post.status,
+      old_status: oldStatus,
+    });
     return new Response(JSON.stringify({ skipped: true, reason: "not a publish transition" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -396,7 +418,7 @@ Deno.serve(async (req) => {
 
   // Honour skip flag
   if (post.skip_email_blast === true) {
-    console.log(`Post ${post.slug}: skip_email_blast=true, skipping`);
+    console.log(`[send-blog-blast] skipped: skip_email_blast=true for ${post.slug}`);
     return new Response(JSON.stringify({ skipped: true, reason: "skip_email_blast" }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
