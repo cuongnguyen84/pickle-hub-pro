@@ -1,5 +1,8 @@
 project_id = "ajvlcamxemgbxduhiqrl"
 
+[functions.send-blog-blast]
+verify_jwt = false
+
 [functions.mux-create-livestream]
 verify_jwt = false
 
