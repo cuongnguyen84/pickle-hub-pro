@@ -118,6 +118,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     if (error) console.error("Error fetching vi_blog_posts:", error);
 
+    // Fetch public tournaments (exclude slugs with spaces/special chars that aren't URL-safe)
+    const { data: tournaments, error: tourError } = await supabase
+      .from("tournaments")
+      .select("slug, updated_at")
+      .order("start_date", { ascending: false })
+      .limit(50);
+
+    if (tourError) console.error("Error fetching tournaments:", tourError);
+
     // Build EN slug → VI slug lookup map
     const enToViSlug = new Map<string, string>();
     for (const post of viPosts || []) {
@@ -149,10 +158,25 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return buildUrlEntry({ loc: `${siteUrl}/vi/blog/${post.slug}`, lastmod, changefreq: "monthly", priority: "0.8", hreflang });
     });
 
+    // Build tournament entries — filter out slugs with spaces or special characters
+    const URL_SAFE_SLUG = /^[a-z0-9-]+$/;
+    const tournamentEntries = (tournaments || [])
+      .filter((t: any) => t.slug && URL_SAFE_SLUG.test(t.slug))
+      .map((t: any) => {
+        const lastmod = t.updated_at ? new Date(t.updated_at).toISOString().slice(0, 10) : TODAY;
+        return buildUrlEntry({
+          loc: `${siteUrl}/tournament/${t.slug}`,
+          lastmod,
+          changefreq: "weekly",
+          priority: "0.7",
+          hreflang: bilingual(`/tournament/${t.slug}`, `/vi/tournament/${t.slug}`),
+        });
+      });
+
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${[...staticEntries, ...enBlogEntries, ...viEntries].join("\n")}
+${[...staticEntries, ...enBlogEntries, ...viEntries, ...tournamentEntries].join("\n")}
 </urlset>`;
 
     return new Response(sitemap, {

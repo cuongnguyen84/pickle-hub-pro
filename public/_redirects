@@ -2,5 +2,8 @@
 /livestream/:id /live/:id 301
 /livestream /live 301
 
+# Blog post URL refresh (2025 → 2026)
+/blog/best-pickleball-tournament-software-2025  /blog/best-pickleball-tournament-software-2026  301
+
 # SPA fallback
 /* /index.html 200
