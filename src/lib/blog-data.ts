@@ -1931,7 +1931,7 @@ export const blogPosts: BlogPost[] = [
     tags: ["ppa tour", "live streaming", "watch live", "pickleball tv", "2026"],
     ctaPath: "/live",
     ctaLabel: { en: "Watch Free Tournaments", vi: "Xem giải đấu miễn phí" },
-    heroImage: { src: "/images/blog/how-to-watch-ppa-tour-live-2026-hero.webp", alt: "PPA Tour professional pickleball match being broadcast live with multiple camera angles and streaming overlay" },
+    heroImage: { src: "/images/blog/how-to-watch-ppa-tour-live-2026-hero.webp?v=2", alt: "PPA Tour professional pickleball match being broadcast live with multiple camera angles and streaming overlay" },
     content: {
       en: {
         title: "How to Watch PPA Tour Live in 2026 — Every Streaming Platform & Free Options",
