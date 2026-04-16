@@ -40,6 +40,7 @@ export const blogPosts: BlogPost[] = [
     tags: ["ppa tour asia", "tournament", "asia", "schedule", "guide"],
     ctaPath: "/tournaments",
     ctaLabel: { en: "Browse Tournaments", vi: "Xem các giải đấu" },
+    heroImage: { src: "/images/blog/ppa-tour-asia-2026-hero.webp", alt: "PPA Tour Asia 2026 professional pickleball tournament with multiple courts and packed stadium" },
     content: {
       en: {
         title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play",
@@ -53,6 +54,7 @@ export const blogPosts: BlogPost[] = [
           {
             heading: "Complete 2026 Tournament Schedule",
             content: "The 2026 PPA Tour Asia calendar features ten events spread from April through October across Vietnam, Malaysia, Macao, China, Japan, Singapore, and Hong Kong:",
+            image: { src: "/images/blog/ppa-tour-asia-2026-schedule-map.webp", alt: "Map of Asia showing all 10 PPA Tour Asia 2026 tournament stops from Hanoi to Hong Kong", caption: "PPA Tour Asia 2026 — 10 stops across 7 markets" },
             orderedList: [
               "MB Hanoi Cup — April 1–5, 2026 | Hanoi, Vietnam | Up to $300,000 prize money | My Dinh Indoor Athletics Arena | Nearly 800 players registered for the inaugural event of the season",
               "Panas Kuala Lumpur Open — May 13–17, 2026 | Kuala Lumpur, Malaysia | $50,000 prize money | PPA Asia 500 tier event",
@@ -76,10 +78,12 @@ export const blogPosts: BlogPost[] = [
           },
           {
             heading: "Play Where the Pros Play — How Amateurs Can Compete",
+            image: { src: "/images/blog/play-where-pros-play.webp", alt: "Amateur pickleball players experiencing PPA Tour Asia 2026 professional tournament atmosphere", caption: "Amateur players get to compete on the same professional courts at every PPA Tour Asia stop" },
             content: "One of PPA Tour Asia's signature features is the 'Play Where the Pros Play' experience. Unlike most professional sports tours, PPA Tour Asia runs amateur events alongside the pro draw at every stop. This means recreational players can compete on the same courts, under the same lights, and in the same venues as the pros. Amateur events include age categories and rating divisions so players of all levels can find competitive matches. Registration typically opens 6–8 weeks before each event through the official PPA Tour Asia website. Entry fees vary by event tier but are generally accessible for amateur players. This is a rare chance to experience professional-level tournament atmosphere while competing at your own skill level."
           },
           {
             heading: "Why Vietnam Is the Epicenter of Asian Pickleball",
+            image: { src: "/images/blog/vietnam-pickleball-epicenter.webp", alt: "Vibrant pickleball tournament venue in Vietnam with Vietnamese flags and enthusiastic crowds", caption: "Vietnam leads Asia in pickleball awareness with 88% recognition rate" },
             content: "Vietnam holds a special position in the PPA Tour Asia calendar — it's the only country with two stops (Hanoi and Ho Chi Minh City) in the 2026 season. The reason is clear: Vietnam leads Asia in pickleball awareness and participation. According to UPA Asia and YouGov research, 88% of Vietnamese respondents know about pickleball — the highest awareness rate of any country surveyed. Over 37% of Vietnam's population has played the sport at least once, and the country has more than 16 million monthly players. The 2025 MB Vietnam Cup in Da Nang set a Guinness World Record with 7,906 fans attending Saturday's matches, proving that Vietnam isn't just playing pickleball — it's creating a pickleball culture.",
             internalLinks: [
               { text: "Explore tournaments in Vietnam on ThePickleHub", path: "/tournaments" }

@@ -19,6 +19,7 @@ export const ArticleSchema = ({
   description,
   url,
   inLanguage,
+  image,
 }: ArticleSchemaProps) => {
   useEffect(() => {
     const id = "article-schema-jsonld";
