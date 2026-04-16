@@ -491,6 +491,7 @@ export function renderTools(siteUrl: string): Response {
 // ─── Blog ─────────────────────��───────────────────────────
 
 const BLOG_POST_META: Record<string, { title: string; description: string }> = {
+  "ppa-tour-asia-2026-complete-guide": { title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play", description: "Complete guide to PPA Tour Asia 2026 — all 10 tournament stops across Vietnam, Japan, Korea, Thailand & more. Schedule, prize money, registration, and how to watch live." },
   "best-pickleball-tournament-software-2026": { title: "Best Pickleball Tournament Software 2026", description: "Compare the best pickleball tournament software in 2026. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required." },
   "how-to-create-pickleball-bracket": { title: "How to Create a Pickleball Bracket", description: "Learn how to create a pickleball bracket for round robin, single elimination, and double elimination tournaments. Free bracket generator with real-time scoring." },
   "pickleball-round-robin-generator-guide": { title: "Pickleball Round Robin Generator Guide 2026", description: "Free pickleball round robin generator with automatic scheduling, court rotation, and live scoring. Learn how to organize the perfect round robin tournament." },
