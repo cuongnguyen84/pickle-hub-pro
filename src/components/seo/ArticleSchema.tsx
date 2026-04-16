@@ -8,6 +8,7 @@ interface ArticleSchemaProps {
   description: string;
   url: string;
   inLanguage: string;
+  image?: string;
 }
 
 export const ArticleSchema = ({
@@ -23,7 +24,7 @@ export const ArticleSchema = ({
     const id = "article-schema-jsonld";
     document.getElementById(id)?.remove();
 
-    const schema = {
+    const schema: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "Article",
       headline,
@@ -46,6 +47,9 @@ export const ArticleSchema = ({
       },
       inLanguage,
     };
+    if (image) {
+      schema.image = image;
+    }
 
     const script = document.createElement("script");
     script.id = id;
@@ -56,7 +60,7 @@ export const ArticleSchema = ({
     return () => {
       document.getElementById(id)?.remove();
     };
-  }, [headline, datePublished, dateModified, author, description, url, inLanguage]);
+  }, [headline, datePublished, dateModified, author, description, url, inLanguage, image]);
 
   return null;
 };

@@ -50,6 +50,7 @@ const BlogPost = () => {
         description={content.metaDescription}
         url={postUrl}
         inLanguage="en-US"
+        image={post.heroImage?.src}
       />
       {content.faqItems && <FAQSchema items={content.faqItems} />}
       {content.howToSteps && (
@@ -91,12 +92,35 @@ const BlogPost = () => {
           </div>
         </header>
 
+        {post.heroImage && (
+          <img
+            src={post.heroImage.src}
+            alt={post.heroImage.alt}
+            className="w-full rounded-lg mb-8"
+          />
+        )}
+
         <div className="prose-custom space-y-8">
           {content.sections.map((section, idx) => (
             <section key={idx}>
               <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
                 {section.heading}
               </h2>
+              {section.image && (
+                <figure className="my-4">
+                  <img
+                    src={section.image.src}
+                    alt={section.image.alt}
+                    className="w-full rounded-lg"
+                    loading="lazy"
+                  />
+                  {section.image.caption && (
+                    <figcaption className="text-xs text-muted-foreground mt-2 text-center italic">
+                      {section.image.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              )}
               <p className="text-muted-foreground mb-4">{section.content}</p>
               {section.listItems && (
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
