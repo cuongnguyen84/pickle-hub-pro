@@ -51,7 +51,8 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
       <p>ThePickleHub is the destination for pickleball lovers — from beginners to professional athletes.</p>
       <ul>
         <li><a href="${siteUrl}/tournaments">Tournament Schedule</a> - All major pickleball tournaments</li>
-        <li><a href="${siteUrl}/livestream">Livestream</a> - Watch live pickleball matches</li>
+        <li><a href="${siteUrl}/live">Live Matches</a> - Watch pickleball matches live right now</li>
+        <li><a href="${siteUrl}/livestream">Livestream Hub</a> - All upcoming and past livestreams</li>
         <li><a href="${siteUrl}/tools">Bracket Tools</a> - Free, ready to use</li>
         <li><a href="${siteUrl}/blog">Blog</a> - Rules, techniques, strategies</li>
         <li><a href="${siteUrl}/forum">Forum</a> - Community discussions</li>
@@ -88,6 +89,7 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
       <p>ThePickleHub là điểm đến cho người yêu pickleball tại Việt Nam — từ người mới bắt đầu đến VĐV chuyên nghiệp.</p>
       <ul>
         <li><a href="${siteUrl}/vi/tournaments">Lịch giải đấu</a></li>
+        <li><a href="${siteUrl}/vi/live">Trận đấu trực tiếp</a> - Xem pickleball trực tiếp ngay bây giờ</li>
         <li><a href="${siteUrl}/vi/livestream">Livestream</a></li>
         <li><a href="${siteUrl}/vi/tools">Công cụ tạo bracket</a></li>
         <li><a href="${siteUrl}/vi/blog">Blog hướng dẫn</a></li>
@@ -317,14 +319,14 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   }));
 }
 
-export async function renderTournaments(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
+export async function renderTournaments(supabase: SupabaseClient, siteUrl: string, rawPath = "/tournaments"): Promise<Response> {
   const { data: tournaments } = await supabase.from("tournaments").select("id, name, slug, status").in("status", ["ongoing", "upcoming"]).order("start_date", { ascending: false }).limit(20);
   const items = (tournaments || []).map((t: any) => `<li><a href="${siteUrl}/tournament/${t.slug}">${escapeHtml(t.name)}</a></li>`).join("");
 
   return htmlResponse(buildHtml({
     title: "Giải đấu Pickleball | ThePickleHub",
     description: "Danh sách các giải đấu pickleball đang diễn ra và sắp tới tại Việt Nam. Xem lịch thi đấu, bảng đấu, kết quả trực tiếp và đăng ký tham gia giải pickleball.",
-    url: `${siteUrl}/tournaments`,
+    url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Giải đấu</h2><ul>${items}</ul>` : "",
   }));
@@ -332,40 +334,40 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
 
 // ─── Videos / News / Forum list pages ─────────────────────
 
-export async function renderVideos(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
+export async function renderVideos(supabase: SupabaseClient, siteUrl: string, rawPath = "/videos"): Promise<Response> {
   const { data: videos } = await supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(20);
   const items = (videos || []).map((v: any) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
 
   return htmlResponse(buildHtml({
     title: "Video Pickleball | ThePickleHub",
     description: "Xem video pickleball chất lượng cao: highlight giải đấu, replay trận đấu, hướng dẫn kỹ thuật và chiến thuật chơi pickleball trên ThePickleHub.",
-    url: `${siteUrl}/videos`,
+    url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Video</h2><ul>${items}</ul>` : "",
   }));
 }
 
-export async function renderNews(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
+export async function renderNews(supabase: SupabaseClient, siteUrl: string, rawPath = "/news"): Promise<Response> {
   const { data: news } = await supabase.from("news_items").select("id, title, summary").eq("status", "published").order("published_at", { ascending: false }).limit(20);
   const items = (news || []).map((n: any) => `<li>${escapeHtml(n.title)}: ${escapeHtml(n.summary?.slice(0, 80) || "")}</li>`).join("");
 
   return htmlResponse(buildHtml({
     title: "Tin tức Pickleball | ThePickleHub",
     description: "Tin tức pickleball mới nhất tại Việt Nam và thế giới: kết quả giải đấu PPA Tour Asia, World Cup Pickleball, sự kiện cộng đồng, và phân tích chuyên sâu từ ThePickleHub.",
-    url: `${siteUrl}/news`,
+    url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Tin tức</h2><ul>${items}</ul>` : "",
   }));
 }
 
-export async function renderForum(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
+export async function renderForum(supabase: SupabaseClient, siteUrl: string, rawPath = "/forum"): Promise<Response> {
   const { data: posts } = await supabase.from("forum_posts").select("id, title").eq("is_hidden", false).order("created_at", { ascending: false }).limit(20);
   const items = (posts || []).map((p: any) => `<li><a href="${siteUrl}/forum/post/${p.id}">${escapeHtml(p.title)}</a></li>`).join("");
 
   return htmlResponse(buildHtml({
     title: "Diễn đàn Pickleball | ThePickleHub",
     description: "Diễn đàn pickleball Việt Nam lớn nhất - thảo luận kỹ thuật, review thiết bị, tìm sân chơi, kết nối VĐV. Tham gia cộng đồng pickleball ThePickleHub.",
-    url: `${siteUrl}/forum`,
+    url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Bài viết mới</h2><ul>${items}</ul>` : "",
   }));
@@ -464,11 +466,11 @@ export async function renderFlexTournament(supabase: SupabaseClient, shareId: st
 
 // ─── Tools hub ─────────────────────────────���──────────────
 
-export function renderTools(siteUrl: string): Response {
+export function renderTools(siteUrl: string, rawPath = "/tools"): Response {
   return htmlResponse(buildHtml({
     title: "Free Pickleball Tournament Tools | ThePickleHub",
     description: "Free pickleball tournament bracket generator, round robin scheduler, MLP team match manager, and doubles elimination tools. No signup required.",
-    url: `${siteUrl}/tools`,
+    url: `${siteUrl}${rawPath}`,
     siteUrl,
     jsonLd: {
       "@context": "https://schema.org",
@@ -485,6 +487,47 @@ export function renderTools(siteUrl: string): Response {
       <li><a href="${siteUrl}/tools/doubles-elimination">Doubles Elimination Bracket</a></li>
       <li><a href="${siteUrl}/tools/flex-tournament">Flex Tournament</a></li>
     </ul>`,
+  }));
+}
+
+const TOOL_PAGE_META: Record<string, { title: string; description: string }> = {
+  "quick-tables": {
+    title: "Quick Tables – Round Robin & Single Elimination | ThePickleHub",
+    description: "Free round robin and single elimination bracket generator for pickleball tournaments. Automatic scheduling, real-time scoring, shareable links. No signup required.",
+  },
+  "team-match": {
+    title: "Team Match – MLP Format Pickleball | ThePickleHub",
+    description: "Free MLP-style team match pickleball bracket tool. Manage team lineups, track singles and doubles results, and generate instant standings. No signup required.",
+  },
+  "doubles-elimination": {
+    title: "Doubles Elimination Bracket Generator | ThePickleHub",
+    description: "Free doubles elimination bracket generator for pickleball tournaments. Automatic bracket draw, real-time scoring, and shareable results pages. No signup required.",
+  },
+  "flex-tournament": {
+    title: "Flex Tournament Generator – Flexible Bracket | ThePickleHub",
+    description: "Free flex-format pickleball tournament generator. Customizable groups, flexible scheduling, and live scoring. Perfect for club and community events. No signup required.",
+  },
+};
+
+export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: string): Response {
+  const meta = TOOL_PAGE_META[toolSlug];
+  if (!meta) return renderTools(siteUrl, rawPath);
+
+  return htmlResponse(buildHtml({
+    title: meta.title,
+    description: meta.description,
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: meta.title,
+      applicationCategory: "SportsApplication",
+      operatingSystem: "Web",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    bodyContent: `<h2>${meta.title}</h2><p>${meta.description}</p>
+      <p><a href="${siteUrl}/tools">← All Tournament Tools</a></p>`,
   }));
 }
 

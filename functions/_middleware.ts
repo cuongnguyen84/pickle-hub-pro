@@ -16,7 +16,7 @@ import {
   renderVideos, renderNews, renderForum, renderForumPost,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
-  renderTools,
+  renderTools, renderToolPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
   renderLivestreamList, renderPrivacy, renderTerms,
@@ -148,16 +148,16 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   if (match) return await renderTournamentDetail(supabase, match[1], siteUrl);
 
   // Tournaments list
-  if (path === "/tournaments") return await renderTournaments(supabase, siteUrl);
+  if (path === "/tournaments") return await renderTournaments(supabase, siteUrl, rawPath);
 
   // Videos list
-  if (path === "/videos") return await renderVideos(supabase, siteUrl);
+  if (path === "/videos") return await renderVideos(supabase, siteUrl, rawPath);
 
   // News
-  if (path === "/news") return await renderNews(supabase, siteUrl);
+  if (path === "/news") return await renderNews(supabase, siteUrl, rawPath);
 
   // Forum
-  if (path === "/forum") return await renderForum(supabase, siteUrl);
+  if (path === "/forum") return await renderForum(supabase, siteUrl, rawPath);
 
   // Forum post
   match = path.match(/^\/forum\/post\/([^/]+)$/);
@@ -180,8 +180,14 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   match = path.match(/^\/tools\/flex-tournament\/([^/]+)$/);
   if (match) return await renderFlexTournament(supabase, match[1], siteUrl);
 
+  // Tool list pages (must come before catch-all)
+  if (path === "/tools/quick-tables") return renderToolPage("quick-tables", siteUrl, rawPath);
+  if (path === "/tools/team-match") return renderToolPage("team-match", siteUrl, rawPath);
+  if (path === "/tools/doubles-elimination") return renderToolPage("doubles-elimination", siteUrl, rawPath);
+  if (path === "/tools/flex-tournament") return renderToolPage("flex-tournament", siteUrl, rawPath);
+
   // Tools hub
-  if (path.startsWith("/tools")) return renderTools(siteUrl);
+  if (path.startsWith("/tools")) return renderTools(siteUrl, rawPath);
 
   // Blog post
   match = path.match(/^\/blog\/([^/]+)$/);
