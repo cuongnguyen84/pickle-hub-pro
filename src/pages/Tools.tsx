@@ -4,7 +4,7 @@ import { DynamicMeta, HreflangTags, SoftwareApplicationSchema, FAQSchema, ToolsH
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Users, Swords, Trophy, GitBranch, Sparkles, Monitor } from "lucide-react";
+import { Users, Swords, Trophy, GitBranch, Sparkles, Monitor, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MyRefereeTournaments } from "@/components/tools/MyRefereeTournaments";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,40 +16,59 @@ interface ToolCardProps {
   href?: string;
   comingSoon?: boolean;
   highlight?: boolean;
+  emoji?: string;
+  gradientClass?: string;
 }
 
-const ToolCard = ({ title, description, icon, href, comingSoon, highlight }: ToolCardProps) => {
-  const { t } = useI18n();
-  
+const ToolCard = ({ title, description, icon, href, comingSoon, highlight, emoji, gradientClass = "from-primary/20 to-primary/5" }: ToolCardProps) => {
+  const { t, language } = useI18n();
+
   const content = (
     <Card className={cn(
-      "h-full transition-all duration-200",
-      comingSoon 
-        ? "opacity-60 cursor-not-allowed" 
-        : "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 cursor-pointer",
-      highlight && "border-primary/60 bg-primary/5 shadow-lg shadow-primary/10 ring-1 ring-primary/20"
+      "group h-full transition-all duration-300 bg-transparent border-white/[0.06] backdrop-blur-xl overflow-hidden relative",
+      comingSoon
+        ? "opacity-50 cursor-not-allowed"
+        : "hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 cursor-pointer",
+      highlight && "border-primary/40 bg-primary/5 shadow-lg shadow-primary/10 ring-1 ring-primary/20"
     )}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+      {/* Gradient glow on hover */}
+      {!comingSoon && (
+        <div className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br pointer-events-none",
+          gradientClass
+        )} />
+      )}
+      <CardHeader className="pb-4 relative z-10">
+        <div className="flex items-start justify-between mb-1">
           <div className={cn(
-            "w-12 h-12 rounded-xl flex items-center justify-center",
-            highlight ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+            "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-300",
+            !comingSoon && "group-hover:scale-110",
+            highlight
+              ? "bg-gradient-to-br from-primary to-emerald-400 text-white shadow-lg shadow-primary/25"
+              : cn("bg-gradient-to-br shadow-lg", gradientClass)
           )}>
-            {icon}
+            {emoji ? <span className="text-2xl">{emoji}</span> : icon}
           </div>
           {comingSoon && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">
               {t.tools.comingSoon}
             </Badge>
           )}
           {highlight && (
-            <Badge className="bg-primary/20 text-primary border-primary/30 text-xs animate-pulse">
+            <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px] font-bold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse mr-1.5 inline-block" />
               Live
             </Badge>
           )}
         </div>
-        <CardTitle className="text-lg mt-3">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle className="text-lg mt-3 group-hover:text-primary transition-colors">{title}</CardTitle>
+        <CardDescription className="text-foreground-secondary/80 leading-relaxed">{description}</CardDescription>
+        {!comingSoon && (
+          <div className="flex items-center gap-1 text-sm font-medium text-primary mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {language === "vi" ? "Mở công cụ" : "Open tool"}
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          </div>
+        )}
       </CardHeader>
     </Card>
   );
@@ -74,36 +93,48 @@ const Tools = () => {
       title: t.tools.quickTable.title,
       description: t.tools.quickTable.description,
       icon: <Users className="w-6 h-6" />,
+      emoji: "🏓",
+      gradientClass: "from-emerald-500/20 to-emerald-500/5",
       href: "/tools/quick-tables",
     },
     {
       title: t.tools.teamMatch.title,
       description: t.tools.teamMatch.description,
       icon: <Swords className="w-6 h-6" />,
+      emoji: "⚔️",
+      gradientClass: "from-amber-500/20 to-amber-500/5",
       href: "/tools/team-match",
     },
     {
       title: t.tools.singleElimination.title,
       description: t.tools.singleElimination.description,
       icon: <Trophy className="w-6 h-6" />,
+      emoji: "🏆",
+      gradientClass: "from-yellow-500/20 to-yellow-500/5",
       comingSoon: true,
     },
     {
       title: t.tools.doublesElimination.title,
       description: t.tools.doublesElimination.description,
       icon: <GitBranch className="w-6 h-6" />,
+      emoji: "🔀",
+      gradientClass: "from-blue-500/20 to-blue-500/5",
       href: "/tools/doubles-elimination",
     },
     {
       title: t.tools.flexTournament.title,
       description: t.tools.flexTournament.description,
       icon: <Sparkles className="w-6 h-6" />,
+      emoji: "✨",
+      gradientClass: "from-purple-500/20 to-purple-500/5",
       href: "/tools/flex-tournament",
     },
     {
       title: t.dashboard.title,
       description: t.dashboard.description,
       icon: <Monitor className="w-6 h-6" />,
+      emoji: "📊",
+      gradientClass: "from-primary/20 to-emerald-400/5",
       href: "/tools/dashboard",
       highlight: true,
     },
@@ -135,7 +166,7 @@ const Tools = () => {
       <div className="container-wide py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gradient-brand mb-2">
             {t.tools.title}
           </h1>
           <p className="text-foreground-secondary">
@@ -149,7 +180,7 @@ const Tools = () => {
         </div>
 
         {/* Tools Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {tools.map((tool) => (
             <ToolCard key={tool.title} {...tool} />
           ))}
