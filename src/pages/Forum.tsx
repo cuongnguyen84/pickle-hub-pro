@@ -52,7 +52,7 @@ const Forum = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold">{t.forum.title}</h1>
+            <h1 className="text-2xl font-bold text-gradient-brand">{t.forum.title}</h1>
           </div>
           {user ? (
             <Button asChild size="sm" className="gap-1.5">

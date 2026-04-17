@@ -360,9 +360,12 @@ export interface Translations {
     sections: {
       liveNow: string;
       latestVideos: string;
+      trendingVideos: string;
       popularThisWeek: string;
       tournaments: string;
       organizations: string;
+      upcomingTournaments: string;
+      upcomingSubtitle: string;
     };
     noLive: string;
     noVideos: string;
@@ -2080,17 +2083,20 @@ export const vi: Translations = {
       title: "The Pickle Hub",
       subtitle: "Nền tảng media chuyên nghiệp về Pickleball",
       description: "Livestream trực tiếp và video theo yêu cầu từ các giải đấu hàng đầu",
-      cta: "Khám phá ngay",
-      badge: "Livestream & Video",
-      mainTitle: "ThePickleHub – Nền tảng Pickleball Toàn Cầu",
-      mainDescription: "Xem livestream trực tiếp các giải đấu pickleball, theo dõi bracket, và kết nối với cộng đồng pickleball khắp nơi trên thế giới.",
+      cta: "Khám phá giải đấu",
+      badge: "PPA TOUR ASIA 2026",
+      mainTitle: "Pickleball Đang Bùng Nổ Tại Châu Á",
+      mainDescription: "Xem trực tiếp các giải đấu, theo dõi bracket real-time, và kết nối với cộng đồng pickleball phát triển nhanh nhất.",
     },
     sections: {
       liveNow: "Đang phát trực tiếp",
       latestVideos: "Video mới nhất",
+      trendingVideos: "Video Trending",
       popularThisWeek: "Phổ biến tuần này",
       tournaments: "Giải đấu",
       organizations: "Tổ chức",
+      upcomingTournaments: "Giải Đấu Sắp Diễn Ra",
+      upcomingSubtitle: "Đăng ký ngay trước khi hết chỗ",
     },
     noLive: "Hiện không có livestream nào",
     noVideos: "Chưa có video nào",

@@ -8,7 +8,7 @@ export function VietnameseContentTeaser() {
 
   return (
     <section className="container-wide section-spacing">
-      <div className="bg-surface-elevated rounded-xl p-6 md:p-8">
+      <div className="glass-card p-6 md:p-8">
         <div className="flex items-center gap-3 mb-6">
           <span className="text-3xl">🇻🇳</span>
           <div>
@@ -25,7 +25,7 @@ export function VietnameseContentTeaser() {
               key={post.slug}
               to={`/vi/blog/${post.slug}`}
               hrefLang="vi"
-              className="block p-4 rounded-lg border border-border hover:border-primary/50 transition-colors"
+              className="block p-4 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-primary/30 transition-all duration-200"
             >
               <h3 className="font-semibold text-foreground line-clamp-2">{post.title}</h3>
               {post.excerpt && (

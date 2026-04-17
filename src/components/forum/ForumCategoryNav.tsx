@@ -21,7 +21,7 @@ const ForumCategoryNav = ({ activeSlug, onSelect }: ForumCategoryNavProps) => {
             "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
             !activeSlug
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-foreground-secondary hover:text-foreground hover:bg-muted/80"
+              : "bg-white/[0.04] border border-white/[0.06] text-foreground-secondary hover:text-foreground hover:bg-white/[0.08]"
           )}
         >
           {t.forum.allCategories}
@@ -36,7 +36,7 @@ const ForumCategoryNav = ({ activeSlug, onSelect }: ForumCategoryNavProps) => {
                 "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
                 activeSlug === cat.slug
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground-secondary hover:text-foreground hover:bg-muted/80"
+                  : "bg-white/[0.04] border border-white/[0.06] text-foreground-secondary hover:text-foreground hover:bg-white/[0.08]"
               )}
             >
               {displayName}

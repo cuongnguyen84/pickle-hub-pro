@@ -56,12 +56,12 @@ const LiveCard = ({
     <Link
       to={`/live/${id}`}
       className={cn(
-        "group block rounded-xl overflow-hidden card-interactive",
+        "group block glass-card overflow-hidden",
         className
       )}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden rounded-xl bg-background-surface">
+      <div className="relative aspect-video overflow-hidden bg-background-surface">
         {thumbnail ? (
           <img
             src={optimizeImageUrl(thumbnail, { width: 640 })}
@@ -142,11 +142,11 @@ const LiveCard = ({
       </div>
 
       {/* Info */}
-      <div className="pt-3 space-y-1">
+      <div className="p-3 space-y-1">
         <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-200">
           {title}
         </h3>
-        
+
         <div className="flex items-center gap-2 text-xs text-foreground-secondary">
           {organizationName && (
             <div className="flex items-center gap-2 min-w-0">

@@ -57,17 +57,19 @@ const AppHeader = () => {
     <header
       className={cn(
         "sticky top-0 left-0 right-0 z-50 transition-all duration-300",
-        "pt-[env(safe-area-inset-top)] bg-background border-b border-transparent",
+        "pt-[env(safe-area-inset-top)] border-b border-transparent",
         "transform-gpu",
-        isScrolled || isMobileMenuOpen ? "glass-strong border-border-subtle" : ""
+        isScrolled || isMobileMenuOpen
+          ? "bg-background/80 backdrop-blur-xl border-white/[0.06]"
+          : "bg-background"
       )}
     >
       <div className="container-wide">
         <div className="flex items-center justify-between h-14 md:h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 text-foreground font-semibold text-lg">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">TPH</span>
+            <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center">
+              <span className="text-white font-bold text-sm">TPH</span>
             </div>
             <span className="hidden sm:inline">{t.common.appName}</span>
           </Link>
@@ -83,10 +85,10 @@ const AppHeader = () => {
                   key={link.path}
                   to={link.path}
                   className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200",
+                    "px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "text-foreground bg-muted"
-                      : "text-foreground-secondary hover:text-foreground hover:bg-muted/50"
+                      ? "text-primary bg-primary/10"
+                      : "text-foreground-secondary hover:text-foreground hover:bg-white/5"
                   )}
                 >
                   {link.label}

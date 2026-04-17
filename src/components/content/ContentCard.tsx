@@ -60,13 +60,13 @@ const ContentCard = ({
     <Link
       to={`/watch/${id}`}
       className={cn(
-        "group block rounded-xl overflow-hidden card-interactive",
+        "group block glass-card overflow-hidden",
         className
       )}
     >
       {/* Thumbnail */}
       <div className={cn(
-        "relative overflow-hidden rounded-xl bg-background-surface",
+        "relative overflow-hidden bg-background-surface",
         type === "short" ? "aspect-[9/16]" : "aspect-video"
       )}>
         {thumbnail ? (
@@ -100,11 +100,11 @@ const ContentCard = ({
       </div>
 
       {/* Info */}
-      <div className="pt-3 space-y-1">
+      <div className="p-3 space-y-1">
         <h3 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-200">
           {title}
         </h3>
-        
+
         <div className="flex items-center gap-2 text-xs text-foreground-muted">
           {organizationName && (
             <div className="flex items-center gap-1.5">

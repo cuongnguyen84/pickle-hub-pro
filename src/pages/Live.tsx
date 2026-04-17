@@ -57,7 +57,7 @@ const Live = () => {
       <HreflangTags enPath="/live" viPath="/vi/live" />
       <div className="container-wide py-8">
         <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gradient-brand mb-2">
             {t.live.hubTitle}
           </h1>
           <p className="text-foreground-secondary max-w-3xl">
@@ -161,7 +161,7 @@ const Live = () => {
 
         {/* SEO Content */}
         <section className="mt-16 space-y-8">
-          <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
+          <article className="glass-card p-6">
             <h2 className="text-lg font-semibold text-foreground mb-3">
               {t.live.seo.tournamentsTitle}
             </h2>
@@ -172,7 +172,7 @@ const Live = () => {
               </Link>
             </p>
           </article>
-          <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
+          <article className="glass-card p-6">
             <h2 className="text-lg font-semibold text-foreground mb-3">
               {t.live.seo.creatorsTitle}
             </h2>
@@ -180,7 +180,7 @@ const Live = () => {
               {t.live.seo.creatorsDesc}
             </p>
           </article>
-          <article className="p-6 rounded-xl bg-background-surface border border-border-subtle">
+          <article className="glass-card p-6">
             <h2 className="text-lg font-semibold text-foreground mb-3">
               {t.live.seo.upcomingTitle}
             </h2>

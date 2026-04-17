@@ -140,7 +140,7 @@ const Tournaments = () => {
     return (
       <Link
         to={`/tournament/${tournament.slug}`}
-        className="group block rounded-xl overflow-hidden card-interactive bg-background-surface border border-border-subtle hover:border-border"
+        className="group block glass-card overflow-hidden"
       >
         <div className="p-5">
           <div className="flex items-start gap-4">
@@ -258,7 +258,7 @@ const Tournaments = () => {
       <HreflangTags enPath="/tournaments" viPath="/vi/tournaments" />
       <div className="container-wide py-8 w-full min-w-0">
         <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gradient-brand mb-2">
             {t.tournament.hubTitle}
           </h1>
           <p className="text-foreground-secondary max-w-3xl">
@@ -467,7 +467,7 @@ const Tournaments = () => {
           <EmptyState icon={Search} title={t.search.noResults} />
         ) : (
           <Tabs defaultValue="ongoing" className="w-full">
-            <TabsList className="mb-6 h-auto p-1 bg-background-surface">
+            <TabsList className="mb-6 h-auto p-1 bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm rounded-xl">
               <TabsTrigger value="ongoing" className="gap-2">
                 <span className="w-2 h-2 rounded-full bg-live animate-pulse" />
                 {t.tournament.ongoing}

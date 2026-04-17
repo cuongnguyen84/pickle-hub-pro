@@ -20,7 +20,7 @@ export function NewsCard({ title, summary, source, sourceUrl, publishedAt }: New
   };
 
   return (
-    <article className="group p-4 bg-surface border border-border-subtle rounded-lg hover:bg-surface-elevated hover:border-border transition-all duration-200">
+    <article className="group glass-card p-4">
       <a 
         href={sourceUrl} 
         target="_blank" 

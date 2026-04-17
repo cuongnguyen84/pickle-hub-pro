@@ -36,7 +36,7 @@ export const SearchBar = ({ value, onChange, placeholder, className }: SearchBar
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder ?? t.search.placeholder}
-        className="pl-9 pr-9 bg-background-surface border-border-subtle focus-visible:ring-0 focus-visible:ring-offset-0"
+        className="pl-9 pr-9 bg-white/[0.04] border-white/[0.08] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary/40"
       />
       {value && (
         <button

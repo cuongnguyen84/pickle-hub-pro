@@ -63,10 +63,10 @@ const ParentTournamentCard = ({ parent, isOwner, variant = "default" }: ParentTo
   return (
     <Card
       className={cn(
-        "p-5 space-y-3 relative overflow-hidden",
+        "p-5 space-y-3 relative overflow-hidden border-white/[0.06] backdrop-blur-xl",
         isFeatured
-          ? "bg-gradient-to-br from-amber-500/[0.07] via-card/90 to-orange-500/[0.07] ring-1 ring-amber-500/30"
-          : "bg-card/80"
+          ? "bg-gradient-to-br from-amber-500/[0.07] via-transparent to-orange-500/[0.07] ring-1 ring-amber-500/30"
+          : "bg-transparent"
       )}
     >
       {/* Featured shimmer accent */}

@@ -67,7 +67,7 @@ const Videos = () => {
       />
       <HreflangTags enPath="/videos" viPath="/vi/videos" />
       <div className="container-wide py-8">
-        <h1 className="text-2xl font-semibold mb-6">{t.nav.videos}</h1>
+        <h1 className="text-2xl font-semibold text-gradient-brand mb-6">{t.nav.videos}</h1>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <SearchBar

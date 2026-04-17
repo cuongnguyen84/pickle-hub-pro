@@ -42,7 +42,7 @@ export const TournamentFormatSection = ({
   const displayItems = expanded ? items : items.slice(0, 5);
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 bg-transparent border-white/[0.06] backdrop-blur-xl">
       <div className="p-4">
         <div className="flex items-center gap-2 mb-4">
           {icon}
@@ -74,7 +74,7 @@ export const TournamentFormatSection = ({
               <Link
                 key={item.id}
                 to={`${basePath}/${item.share_id}`}
-                className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-white/[0.06] hover:bg-white/[0.04] transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">

@@ -27,7 +27,7 @@ const PostCard = ({ post }: PostCardProps) => {
   return (
     <Link
       to={`/forum/post/${post.id}`}
-      className="block p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all duration-200 hover:shadow-sm"
+      className="block glass-card p-4"
     >
       <div className="flex items-start gap-3">
         <UserAvatar

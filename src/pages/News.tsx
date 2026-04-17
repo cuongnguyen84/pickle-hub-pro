@@ -19,8 +19,8 @@ export default function News() {
       <HreflangTags enPath="/news" viPath="/vi/news" />
       <div className="container-wide py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Newspaper className="w-6 h-6" />
+          <h1 className="text-2xl font-bold text-gradient-brand flex items-center gap-2">
+            <Newspaper className="w-6 h-6 text-primary" />
             {t.news.title}
           </h1>
           <p className="text-foreground-secondary mt-2">{t.news.subtitle}</p>

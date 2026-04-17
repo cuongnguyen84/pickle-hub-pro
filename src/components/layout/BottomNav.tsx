@@ -52,7 +52,7 @@ const BottomNav = () => {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-[9999] md:hidden bg-background-elevated border-t border-border-subtle"
+      className="fixed bottom-0 left-0 right-0 z-[9999] md:hidden bg-background-elevated/80 backdrop-blur-xl border-t border-white/[0.06]"
       style={{
         paddingBottom: getBottomPadding(),
       }}

@@ -21,7 +21,7 @@ const EmptyState = ({
       "flex flex-col items-center justify-center py-12 px-4 text-center",
       className
     )}>
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+      <div className="w-16 h-16 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center mb-4">
         <Icon className="w-8 h-8 text-foreground-muted" />
       </div>
       <h3 className="text-lg font-medium text-foreground mb-1">{title}</h3>
