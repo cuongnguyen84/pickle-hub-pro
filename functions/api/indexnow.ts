@@ -40,14 +40,21 @@ const STATIC_URLS = [
   `https://${HOST}/tools/dashboard`,
 ];
 
-// Blog slugs (EN) — add new slugs here when publishing
+// Blog slugs (EN) — keep in sync with src/lib/blog-data.ts and functions/sitemap.xml.ts
 const BLOG_SLUGS = [
-  "ppa-tour-asia-2026-complete-guide",
   "how-to-watch-ppa-tour-live-2026",
-  "pickleball-tournament-formats-explained",
-  "mlp-format-explained",
+  "ppa-tour-asia-2026-complete-guide",
+  "best-pickleball-tournament-software-2026",
   "how-to-create-pickleball-bracket",
-  "best-free-pickleball-tournament-software",
+  "pickleball-round-robin-generator-guide",
+  "pickleball-scoring-rules-guide",
+  "how-to-organize-pickleball-tournament",
+  "pickleball-doubles-strategy-guide",
+  "pickleball-tournament-formats-explained",
+  "pickleball-live-streaming-guide",
+  "mlp-format-explained",
+  "free-pickleball-bracket-generator",
+  "pickleball-bracket-templates",
 ];
 
 async function getViBlogSlugs(env: Env): Promise<string[]> {
