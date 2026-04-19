@@ -68,6 +68,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     "mlp-format-explained",
     "free-pickleball-bracket-generator",
     "pickleball-bracket-templates",
+    "pickleball-rules-complete-guide",
   ];
 
   const bilingual = (enPath: string, viPath: string) => [

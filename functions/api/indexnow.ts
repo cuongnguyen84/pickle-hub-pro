@@ -55,6 +55,7 @@ const BLOG_SLUGS = [
   "mlp-format-explained",
   "free-pickleball-bracket-generator",
   "pickleball-bracket-templates",
+  "pickleball-rules-complete-guide",
 ];
 
 async function getViBlogSlugs(env: Env): Promise<string[]> {
