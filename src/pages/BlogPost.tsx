@@ -1,25 +1,66 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { getBlogPost, getRelatedPosts } from "@/lib/blog-data";
+import { getBlogPost, getRelatedPosts, type BlogPost as BlogPostType } from "@/content/blog";
 import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema, HowToSchema } from "@/components/seo";
 import { useViBlogAlternate } from "@/hooks/useViBlogAlternate";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { setLanguageFromUrl } = useI18n();
 
+  // Post loads asynchronously (per-post chunks from src/content/blog/posts/)
+  const [post, setPost] = useState<BlogPostType | undefined | null>(null);
+
   // EN blog is always English — override any persisted "vi" language state.
   useEffect(() => {
     setLanguageFromUrl("en");
   }, [setLanguageFromUrl]);
 
-  const post = slug ? getBlogPost(slug) : undefined;
+  // Load post whenever slug changes
+  useEffect(() => {
+    let cancelled = false;
+    if (!slug) {
+      setPost(undefined);
+      return;
+    }
+    setPost(null); // loading
+    getBlogPost(slug).then((p) => {
+      if (!cancelled) setPost(p);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
   const { data: viSlug } = useViBlogAlternate(post?.slug);
 
+  // Loading state — show skeleton while post chunk downloads
+  if (post === null) {
+    return (
+      <MainLayout>
+        <article className="container-wide py-8 md:py-12 max-w-3xl">
+          <Skeleton className="h-6 w-24 mb-6" />
+          <Skeleton className="h-10 w-full mb-4" />
+          <Skeleton className="h-10 w-3/4 mb-6" />
+          <Skeleton className="h-4 w-48 mb-8" />
+          <Skeleton className="h-64 w-full mb-8 rounded-lg" />
+          <div className="space-y-6">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-full" />
+          </div>
+        </article>
+      </MainLayout>
+    );
+  }
+
+  // Not found after load — redirect
   if (!post) {
     return <Navigate to="/blog" replace />;
   }
@@ -97,6 +138,8 @@ const BlogPost = () => {
             src={post.heroImage.src}
             alt={post.heroImage.alt}
             className="w-full rounded-lg mb-8"
+            fetchPriority="high"
+            decoding="async"
           />
         )}
 
@@ -113,6 +156,7 @@ const BlogPost = () => {
                     alt={section.image.alt}
                     className="w-full rounded-lg"
                     loading="lazy"
+                    decoding="async"
                   />
                   {section.image.caption && (
                     <figcaption className="text-xs text-muted-foreground mt-2 text-center italic">
@@ -183,37 +227,34 @@ const BlogPost = () => {
           </Button>
         </div>
 
-        {/* Related Posts */}
+        {/* Related Posts — uses lightweight metadata */}
         {relatedPosts.length > 0 && (
           <nav className="mt-12 pt-8 border-t border-border">
             <h3 className="text-lg font-semibold text-foreground mb-4">
               Related Posts
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {relatedPosts.map((related) => {
-                const relatedContent = related.content.en;
-                return (
-                  <Link
-                    key={related.slug}
-                    to={`/blog/${related.slug}`}
-                    className="group p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors"
-                  >
-                    <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2">
-                      {relatedContent.title}
-                    </h4>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {relatedContent.metaDescription}
-                    </p>
-                    <div className="flex gap-1.5 mt-2">
-                      {related.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </Link>
-                );
-              })}
+              {relatedPosts.map((related) => (
+                <Link
+                  key={related.slug}
+                  to={`/blog/${related.slug}`}
+                  className="group p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                >
+                  <h4 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2">
+                    {related.titleEn}
+                  </h4>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {related.metaDescriptionEn}
+                  </p>
+                  <div className="flex gap-1.5 mt-2">
+                    {related.tags.slice(0, 2).map((tag) => (
+                      <span key={tag} className="px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </Link>
+              ))}
             </div>
           </nav>
         )}

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { blogPosts } from "@/lib/blog-data";
+import { blogMetadata } from "@/content/blog";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { normalizeImageUrl } from "@/lib/url-utils";
 
@@ -20,7 +20,7 @@ function getTagColor(tag: string): string {
 }
 
 export function EnHomeBlogSection() {
-  const posts = [...blogPosts]
+  const posts = [...blogMetadata]
     .sort((a, b) => new Date(b.updatedDate).getTime() - new Date(a.updatedDate).getTime())
     .slice(0, 3);
 
@@ -52,7 +52,6 @@ export function EnHomeBlogSection() {
         {/* Post cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {posts.map((post) => {
-            const content = post.content.en;
             return (
               <Link
                 key={post.slug}
@@ -86,12 +85,12 @@ export function EnHomeBlogSection() {
                 <div className="p-4">
                   {/* Title */}
                   <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                    {content.title}
+                    {post.titleEn}
                   </h3>
 
                   {/* Excerpt */}
                   <p className="text-sm text-foreground-secondary mt-2 line-clamp-2">
-                    {content.metaDescription}
+                    {post.metaDescriptionEn}
                   </p>
 
                   {/* Read more */}

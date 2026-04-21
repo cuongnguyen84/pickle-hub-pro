@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { blogPosts } from "@/lib/blog-data";
+import { blogMetadata } from "@/content/blog";
 import { DynamicMeta, HreflangTags, BreadcrumbSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Calendar, ArrowRight, Tag } from "lucide-react";
@@ -30,14 +30,17 @@ const Blog = () => {
     { name: "Blog", url: "https://www.thepicklehub.net/blog" },
   ];
 
-  const sortedPosts = [...blogPosts].sort(
+  const sortedPosts = [...blogMetadata].sort(
     (a, b) => new Date(b.updatedDate).getTime() - new Date(a.updatedDate).getTime()
   );
 
   // First post is featured
   const [featuredPost, ...otherPosts] = sortedPosts;
-  const featuredContent = featuredPost
-    ? (language === "vi" ? featuredPost.content.vi : featuredPost.content.en)
+  const featuredTitle = featuredPost
+    ? (language === "vi" ? featuredPost.titleVi : featuredPost.titleEn)
+    : null;
+  const featuredDesc = featuredPost
+    ? (language === "vi" ? featuredPost.metaDescriptionVi : featuredPost.metaDescriptionEn)
     : null;
 
   return (
@@ -62,7 +65,7 @@ const Blog = () => {
         </p>
 
         {/* Featured post — large card */}
-        {featuredPost && featuredContent && (
+        {featuredPost && featuredTitle && (
           <Link
             to={`/blog/${featuredPost.slug}`}
             className="group block glass-card overflow-hidden mb-8"
@@ -100,10 +103,10 @@ const Blog = () => {
                   ))}
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                  {featuredContent.title}
+                  {featuredTitle}
                 </h2>
                 <p className="text-foreground-secondary mb-4 line-clamp-3">
-                  {featuredContent.metaDescription}
+                  {featuredDesc}
                 </p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs text-foreground-secondary">
@@ -127,7 +130,8 @@ const Blog = () => {
         {/* Other posts grid */}
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {otherPosts.map((post) => {
-            const content = language === "vi" ? post.content.vi : post.content.en;
+            const title = language === "vi" ? post.titleVi : post.titleEn;
+            const description = language === "vi" ? post.metaDescriptionVi : post.metaDescriptionEn;
             return (
               <Link
                 key={post.slug}
@@ -182,10 +186,10 @@ const Blog = () => {
                     </time>
                   </div>
                   <h2 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                    {content.title}
+                    {title}
                   </h2>
                   <p className="text-sm text-foreground-secondary mb-4 line-clamp-2">
-                    {content.metaDescription}
+                    {description}
                   </p>
                   <div className="flex items-center gap-1 text-sm font-medium text-primary">
                     {language === "vi" ? "Đọc tiếp" : "Read more"}
