@@ -117,7 +117,33 @@ const CreatorSettings = lazy(() => import("./pages/creator/CreatorSettings"));
 const CreatorAnalytics = lazy(() => import("./pages/creator/CreatorAnalytics"));
 const CreatorTournaments = lazy(() => import("./pages/creator/CreatorTournaments"));
 
-const queryClient = new QueryClient();
+// Global React Query defaults tuned for mobile / iOS app.
+// - staleTime 30s: prevents refetch when navigating back within 30s (e.g., home → live → home)
+// - gcTime 5min: keeps data in cache for 5 minutes before garbage collection
+// - refetchOnWindowFocus false: avoid double-fetch when user switches tabs/apps
+// - refetchOnMount false: respect staleTime on remount (major mobile win)
+// - retry: skip retry on 4xx, max 2 retries with exponential backoff
+// Individual hooks can override these (e.g., live data uses staleTime: 30s already).
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: true,
+      retry: (failureCount, error: unknown) => {
+        const status = (error as { status?: number } | null)?.status;
+        if (status && status >= 400 && status < 500) return false;
+        return failureCount < 2;
+      },
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 // Start fetching home page data immediately (before React renders)
 import { prefetchHomeData } from "@/lib/prefetch";
