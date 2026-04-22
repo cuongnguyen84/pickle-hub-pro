@@ -20,6 +20,7 @@ import {
   ScrollText,
   Flag,
   MoreHorizontal,
+  BarChart2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +46,7 @@ const navItems = [
   { path: "/admin/forum", icon: MessageSquare, labelKey: "forum" as const },
   { path: "/admin/audit-log", icon: ScrollText, labelKey: "auditLog" as const },
   { path: "/admin/vi-blog", icon: ScrollText, labelKey: "viBlog" as const },
+  { path: "/admin/analytics", icon: BarChart2, labelKey: "analytics" as const },
 ];
 
 // Bottom tab items for mobile - show the most used ones
@@ -127,6 +129,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       forum: t.forum.title,
       auditLog: t.admin.auditLog?.title || "Audit Log",
       viBlog: "Blog VI",
+      analytics: "Analytics",
     };
     return labels[key] || key;
   };

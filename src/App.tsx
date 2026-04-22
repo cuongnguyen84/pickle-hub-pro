@@ -106,6 +106,7 @@ const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const AdminViBlog = lazy(() => import("./pages/admin/AdminViBlog"));
 const AdminViBlogEditor = lazy(() => import("./pages/admin/AdminViBlogEditor"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 
 // Lazy load creator pages
 const CreatorOverview = lazy(() => import("./pages/creator/CreatorOverview"));
@@ -335,6 +336,7 @@ const App = () => (
                     <Route path="/admin/vi-blog" element={<AdminViBlog />} />
                     <Route path="/admin/vi-blog/new" element={<AdminViBlogEditor />} />
                     <Route path="/admin/vi-blog/:id/edit" element={<AdminViBlogEditor />} />
+                    <Route path="/admin/analytics" element={<AdminAnalytics />} />
                     {/* Creator routes */}
                     <Route path="/creator" element={<CreatorOverview />} />
                     <Route path="/creator/analytics" element={<CreatorAnalytics />} />
