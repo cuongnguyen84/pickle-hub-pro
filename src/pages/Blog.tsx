@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { blogMetadata } from "@/content/blog";
+import { blogMetadata, type BlogPostMetadata } from "@/content/blog";
 import { DynamicMeta, HreflangTags, BreadcrumbSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Calendar, ArrowRight, Tag } from "lucide-react";
@@ -23,8 +24,83 @@ function getTagColor(tag: string): string {
   return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
 }
 
+function OtherBlogCard({ post, language }: { post: BlogPostMetadata; language: string }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const title = language === "vi" ? post.titleVi : post.titleEn;
+  const description = language === "vi" ? post.metaDescriptionVi : post.metaDescriptionEn;
+  const showImage = !!post.heroImage && !imgFailed;
+
+  return (
+    <Link
+      to={`/blog/${post.slug}`}
+      className="group block glass-card overflow-hidden"
+    >
+      {/* Thumbnail */}
+      {showImage ? (
+        <div className="relative h-44 overflow-hidden">
+          <img
+            src={normalizeImageUrl(post.heroImage!.src)}
+            alt={post.heroImage!.alt}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          {/* Tags overlay */}
+          <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+            {post.tags.slice(0, 2).map((tag) => (
+              <span
+                key={tag}
+                className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border backdrop-blur-sm ${getTagColor(tag)}`}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="h-44 bg-gradient-to-br from-primary/10 to-emerald-500/5 flex items-center justify-center relative">
+          <span className="text-4xl opacity-20">📝</span>
+          <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
+            {post.tags.slice(0, 2).map((tag) => (
+              <span
+                key={tag}
+                className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getTagColor(tag)}`}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Content */}
+      <div className="p-5">
+        <div className="flex items-center gap-2 text-xs text-foreground-secondary mb-2.5">
+          <Calendar className="w-3.5 h-3.5" />
+          <time dateTime={post.updatedDate}>
+            {new Date(post.updatedDate).toLocaleDateString(language === "vi" ? "vi-VN" : "en-US", {
+              year: "numeric", month: "short", day: "numeric"
+            })}
+          </time>
+        </div>
+        <h2 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+          {title}
+        </h2>
+        <p className="text-sm text-foreground-secondary mb-4 line-clamp-2">
+          {description}
+        </p>
+        <div className="flex items-center gap-1 text-sm font-medium text-primary">
+          {language === "vi" ? "Đọc tiếp" : "Read more"}
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 const Blog = () => {
   const { language } = useI18n();
+  const [featuredImgFailed, setFeaturedImgFailed] = useState(false);
 
   const breadcrumbItems = [
     { name: "Blog", url: "https://www.thepicklehub.net/blog" },
@@ -42,6 +118,8 @@ const Blog = () => {
   const featuredDesc = featuredPost
     ? (language === "vi" ? featuredPost.metaDescriptionVi : featuredPost.metaDescriptionEn)
     : null;
+
+  const showFeaturedImage = !!featuredPost?.heroImage && !featuredImgFailed;
 
   return (
     <MainLayout>
@@ -72,13 +150,14 @@ const Blog = () => {
           >
             <div className="grid md:grid-cols-2 gap-0">
               {/* Hero image */}
-              {featuredPost.heroImage ? (
+              {showFeaturedImage ? (
                 <div className="relative h-56 md:h-full min-h-[240px] overflow-hidden">
                   <img
-                    src={normalizeImageUrl(featuredPost.heroImage.src)}
-                    alt={featuredPost.heroImage.alt}
+                    src={normalizeImageUrl(featuredPost.heroImage!.src)}
+                    alt={featuredPost.heroImage!.alt}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="eager"
+                    onError={() => setFeaturedImgFailed(true)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/40" />
                 </div>
@@ -129,76 +208,9 @@ const Blog = () => {
 
         {/* Other posts grid */}
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {otherPosts.map((post) => {
-            const title = language === "vi" ? post.titleVi : post.titleEn;
-            const description = language === "vi" ? post.metaDescriptionVi : post.metaDescriptionEn;
-            return (
-              <Link
-                key={post.slug}
-                to={`/blog/${post.slug}`}
-                className="group block glass-card overflow-hidden"
-              >
-                {/* Thumbnail */}
-                {post.heroImage ? (
-                  <div className="relative h-44 overflow-hidden">
-                    <img
-                      src={normalizeImageUrl(post.heroImage.src)}
-                      alt={post.heroImage.alt}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    {/* Tags overlay */}
-                    <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-                      {post.tags.slice(0, 2).map((tag) => (
-                        <span
-                          key={tag}
-                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border backdrop-blur-sm ${getTagColor(tag)}`}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="h-44 bg-gradient-to-br from-primary/10 to-emerald-500/5 flex items-center justify-center relative">
-                    <span className="text-4xl opacity-20">📝</span>
-                    <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
-                      {post.tags.slice(0, 2).map((tag) => (
-                        <span
-                          key={tag}
-                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getTagColor(tag)}`}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 text-xs text-foreground-secondary mb-2.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <time dateTime={post.updatedDate}>
-                      {new Date(post.updatedDate).toLocaleDateString(language === "vi" ? "vi-VN" : "en-US", {
-                        year: "numeric", month: "short", day: "numeric"
-                      })}
-                    </time>
-                  </div>
-                  <h2 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                    {title}
-                  </h2>
-                  <p className="text-sm text-foreground-secondary mb-4 line-clamp-2">
-                    {description}
-                  </p>
-                  <div className="flex items-center gap-1 text-sm font-medium text-primary">
-                    {language === "vi" ? "Đọc tiếp" : "Read more"}
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+          {otherPosts.map((post) => (
+            <OtherBlogCard key={post.slug} post={post} language={language} />
+          ))}
         </div>
       </div>
     </MainLayout>

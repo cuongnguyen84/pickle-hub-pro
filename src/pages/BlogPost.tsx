@@ -12,6 +12,7 @@ import { ArrowLeft, Calendar, Tag } from "lucide-react";
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { setLanguageFromUrl } = useI18n();
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
 
   // Post loads asynchronously (per-post chunks from src/content/blog/posts/)
   const [post, setPost] = useState<BlogPostType | undefined | null>(null);
@@ -133,13 +134,14 @@ const BlogPost = () => {
           </div>
         </header>
 
-        {post.heroImage && (
+        {post.heroImage && !heroImgFailed && (
           <img
             src={post.heroImage.src}
             alt={post.heroImage.alt}
             className="w-full rounded-lg mb-8"
             fetchPriority="high"
             decoding="async"
+            onError={() => setHeroImgFailed(true)}
           />
         )}
 
