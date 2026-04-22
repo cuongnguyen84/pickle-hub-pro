@@ -66,7 +66,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   // ─── 4. Bot path: KV cache + SSR render ───────────────
   const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
-  const cacheKey = `pr:v1:${url.pathname}`;
+  const cacheKey = `pr:v2:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

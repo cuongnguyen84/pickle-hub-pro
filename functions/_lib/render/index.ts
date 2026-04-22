@@ -36,8 +36,8 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     ? `<h2>Pickleball in Vietnam</h2><p>Vietnamese pickleball content from our local team:</p><ul>${viBlogItems}</ul><p><a href="${siteUrl}/vi" hreflang="vi">Visit Vietnamese site</a></p>`
     : "";
 
-  const title = "ThePickleHub - Pickleball Tournaments, Livestream & Community";
-  const description = "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant community. Watch livestreams, follow tournaments, and connect now!";
+  const title = "ThePickleHub - Pickleball Tournaments, Livestream & News — Built for Asia";
+  const description = "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.";
 
   return htmlResponse(buildHtml({
     title,
@@ -78,8 +78,8 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
   const blogSection = blogItems ? `<h2>Bài viết mới nhất</h2><ul>${blogItems}</ul><p><a href="${siteUrl}/vi/blog">Xem tất cả bài viết</a></p>` : "";
 
   return htmlResponse(buildHtml({
-    title: "ThePickleHub - Cộng đồng Pickleball Việt Nam",
-    description: "Nền tảng pickleball hàng đầu Việt Nam: giải đấu PPA Tour Asia, livestream trực tiếp, công cụ tạo bracket miễn phí và cộng đồng sôi động cho mọi trình độ.",
+    title: "ThePickleHub - Giải đấu Pickleball, Livestream & Tin tức — Xây cho Châu Á",
+    description: "Nền tảng pickleball song ngữ duy nhất xây cho châu Á. Giải đấu, livestream và tin tức bằng tiếng Việt và tiếng Anh — miễn phí cho BTC và người chơi.",
     url: `${siteUrl}/vi`,
     siteUrl,
     lang: "vi",
