@@ -442,7 +442,24 @@ const Index = () => {
       <footer className="container-wide py-8 border-t border-border">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-foreground-muted">
           <p>©{new Date().getFullYear()} ThePickleHub – Pickleball Tournaments, Livestream & Community</p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            {/* Product Hunt badge — ThePickleHub launched 2026-04-21.
+                Uses inline SVG logo instead of PH embed-image endpoint because
+                PH's image endpoint requires a numeric post_id (not exposed via
+                the product-page share URL we received). This keeps the badge
+                self-contained, zero network, and lets us control styling. */}
+            <a
+              href="https://www.producthunt.com/products/thepicklehub?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-thepicklehub"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ThePickleHub on Product Hunt"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#da552f]/10 border border-[#da552f]/30 text-xs font-medium text-[#da552f] hover:bg-[#da552f]/20 transition-colors"
+            >
+              <svg viewBox="0 0 40 40" width="14" height="14" aria-hidden="true" fill="currentColor">
+                <path d="M20 40C31.046 40 40 31.046 40 20S31.046 0 20 0 0 8.954 0 20s8.954 20 20 20Zm-3-22h6a4 4 0 0 0 0-8h-6v8Zm0 4v10h-4V10h10a8 8 0 1 1 0 16h-6Z" />
+              </svg>
+              <span>Featured on Product Hunt</span>
+            </a>
             <a href="/terms" className="hover:text-foreground transition-colors">
               {t.terms.title.replace(" – The Pickle Hub", "")}
             </a>
