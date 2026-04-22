@@ -13,6 +13,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio, Trophy, Users, Tv, Calendar, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { DynamicMeta, HreflangTags, OrganizationSchema } from "@/components/seo";
+import { useHomepageStats } from "@/hooks/useHomepageStats";
+import { PPA_ASIA_STOPS } from "@/lib/constants";
 
 const OpenRegistrationSection = lazy(() => import("@/components/quicktable/OpenRegistrationSection").then(m => ({ default: m.OpenRegistrationSection })));
 const NewsCard = lazy(() => import("@/components/news/NewsCard").then(m => ({ default: m.NewsCard })));
@@ -28,6 +30,11 @@ const Index = () => {
   const { data: videos = [], isLoading: videosLoading } = useVideos({ limit: 8 });
   const { data: featuredNews = [] } = useFeaturedNews(3);
   const { data: allTournaments = [] } = useTournaments();
+  const { data: homepageStats } = useHomepageStats();
+  const totalUsers = homepageStats?.total_users ?? 0;
+  const totalTournaments = homepageStats?.total_tournaments ?? 0;
+  const formatStat = (n: number) =>
+    new Intl.NumberFormat(language === "vi" ? "vi-VN" : "en-US").format(n);
 
   // Tournaments for homepage section — prioritize upcoming/ongoing, fallback to recent ended
   const activeTournaments = allTournaments.filter((t) => t.status === "upcoming" || t.status === "ongoing");
@@ -192,21 +199,21 @@ const Index = () => {
             <div className="glass-card py-4 px-3 md:py-5 md:px-6 text-center">
               <div className="flex items-center justify-center gap-1.5 md:gap-2">
                 <span className="text-base md:text-xl">👥</span>
-                <span className="text-lg md:text-2xl font-bold text-foreground">1,669</span>
+                <span className="text-lg md:text-2xl font-bold text-foreground">{formatStat(totalUsers)}</span>
               </div>
               <div className="text-[10px] md:text-xs text-foreground-muted uppercase tracking-wider mt-1">{language === 'vi' ? 'Người chơi' : 'Players'}</div>
             </div>
             <div className="glass-card py-4 px-3 md:py-5 md:px-6 text-center">
               <div className="flex items-center justify-center gap-1.5 md:gap-2">
                 <span className="text-base md:text-xl">🏆</span>
-                <span className="text-lg md:text-2xl font-bold text-foreground">156</span>
+                <span className="text-lg md:text-2xl font-bold text-foreground">{formatStat(totalTournaments)}</span>
               </div>
               <div className="text-[10px] md:text-xs text-foreground-muted uppercase tracking-wider mt-1">{language === 'vi' ? 'Giải đấu' : 'Tournaments'}</div>
             </div>
             <div className="glass-card py-4 px-3 md:py-5 md:px-6 text-center">
               <div className="flex items-center justify-center gap-1.5 md:gap-2">
                 <span className="text-base md:text-xl">🌏</span>
-                <span className="text-lg md:text-2xl font-bold text-foreground">10</span>
+                <span className="text-lg md:text-2xl font-bold text-foreground">{PPA_ASIA_STOPS}</span>
               </div>
               <div className="text-[10px] md:text-xs text-foreground-muted uppercase tracking-wider mt-1">{language === 'vi' ? 'Điểm PPA Asia' : 'PPA Asia Stops'}</div>
             </div>
