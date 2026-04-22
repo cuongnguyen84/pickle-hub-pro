@@ -3,6 +3,7 @@ import AppHeader from "./AppHeader";
 import { cn } from "@/lib/utils";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MainLayoutProps {
@@ -16,7 +17,8 @@ const MainLayout = ({ children, className }: MainLayoutProps) => {
   const isNative = isNativeApp();
   const mainRef = useRef<HTMLElement>(null);
   const { isActive, indicatorWidth, indicatorSide, indicatorOpacity, isThresholdMet } = useSwipeNavigation(mainRef);
-  
+  usePresenceHeartbeat();
+
   const bottomPadding = (isAndroidDevice && isNative) 
     ? 'pb-28' 
     : (isIOSDevice ? 'pb-24' : 'pb-20');
