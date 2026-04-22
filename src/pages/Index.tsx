@@ -71,10 +71,10 @@ const Index = () => {
     <MainLayout>
       {/* SEO Meta Tags */}
       <DynamicMeta
-        title="Pickleball Tournaments, Livestream & Community"
+        title="Pickleball Tournaments, Livestream & News — Built for Asia"
         description={language === 'vi' ?
-        "ThePickleHub là nền tảng pickleball toàn cầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!" :
-        "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant pickleball community. Watch livestreams, follow tournaments, and connect now!"
+        "Nền tảng pickleball song ngữ duy nhất xây cho châu Á. Giải đấu, livestream và tin tức bằng tiếng Việt và tiếng Anh — miễn phí cho BTC và người chơi." :
+        "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players."
         }
       />
       <HreflangTags enPath="/" viPath="/vi" />
