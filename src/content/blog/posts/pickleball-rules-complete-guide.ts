@@ -8,7 +8,6 @@ const post: BlogPost = {
   tags: ["pickleball rules", "beginner", "kitchen rule", "serving", "scoring", "ppa tour asia"],
   ctaPath: "/tools/quick-tables",
   ctaLabel: { en: "Try Free Scoring Tool", vi: "Dùng thử chấm điểm miễn phí" },
-  heroImage: { src: "/images/blog/pickleball-rules-complete-guide-hero.webp", alt: "Pickleball court with players at the kitchen line showing the Non-Volley Zone and serving positions under PPA Tour Asia rules" },
   content: {
     en: {
       title: "Pickleball Rules 2026: The Complete Guide (With Asia's Hardest Calls Explained)",
