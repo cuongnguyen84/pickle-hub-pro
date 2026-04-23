@@ -10,8 +10,13 @@ const BottomNav = () => {
   const location = useLocation();
   const keyboardHeight = useKeyboardHeight();
 
-  // Hide on admin and creator routes (they have their own nav)
-  if (location.pathname.startsWith("/admin") || location.pathname.startsWith("/creator")) {
+  // Hide on admin, creator, preview, and embed routes (they have their own nav or no chrome)
+  if (
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/creator") ||
+    location.pathname.startsWith("/preview") ||
+    location.pathname.startsWith("/embed")
+  ) {
     return null;
   }
 

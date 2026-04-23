@@ -84,6 +84,9 @@ const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
 const EmbedLive = lazy(() => import("./pages/embed/EmbedLive"));
 const EmbedVideo = lazy(() => import("./pages/embed/EmbedVideo"));
 
+// Lazy load preview pages (design directions, feature-flagged, noindex)
+const PreviewTheLine = lazy(() => import("./pages/preview/TheLine"));
+
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
   import("./pages/redirects/QuickTableRedirects").then((m) => ({ default: m.QuickTableRedirect })),
@@ -320,6 +323,8 @@ const App = () => (
                     {/* Embed routes - no layout, minimal UI */}
                     <Route path="/embed/live/:id" element={<EmbedLive />} />
                     <Route path="/embed/video/:id" element={<EmbedVideo />} />
+                    {/* Preview routes - design direction exploration, noindex */}
+                    <Route path="/preview/the-line" element={<PreviewTheLine />} />
                     {/* Admin routes */}
                     <Route path="/admin" element={<AdminOverview />} />
                     <Route path="/admin/organizations" element={<AdminOrganizations />} />
