@@ -93,13 +93,14 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
   };
 
   return (
-    <>
+    <div className="tl-root">
       <DynamicMeta title={title} description={description} noindex />
 
-      <div className="tl-preview-banner">
-        ◆ Preview · Direction IV · The Line &nbsp;·&nbsp;
-        <Link to="/">Back to current design →</Link>
-      </div>
+      <div className="tl-scroll">
+        <div className="tl-preview-banner">
+          ◆ Preview · Direction IV · The Line &nbsp;·&nbsp;
+          <Link to="/">Back to current design →</Link>
+        </div>
 
       <nav className="tl-nav">
         <Link to="/preview/the-line" className="tl-brand">
@@ -294,7 +295,8 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
           </div>
         </div>
       </footer>
-    </>
+      </div>
+    </div>
   );
 };
 
