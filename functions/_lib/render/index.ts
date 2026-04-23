@@ -533,7 +533,13 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
 
 // ─── Blog ─────────────────────��───────────────────────────
 
+// Prerender metadata for bot-rendered EN blog posts. MUST stay in sync with
+// src/content/blog/posts/*.ts + src/content/blog/metadata.ts — if a slug is
+// missing here, Googlebot/Bingbot get a 404 even though the React app renders
+// fine for humans, and the URL cannot be indexed (verified 2026-04-23 with
+// the world-cup-pickleball-2026-da-nang post).
 const BLOG_POST_META: Record<string, { title: string; description: string }> = {
+  "pickleball-world-cup-2026-da-nang": { title: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch", description: "Pickleball World Cup 2026 comes to Da Nang, Vietnam (Aug 30 – Sep 6). Up to 80 nations and 4,000 athletes. Dates, venues, format, Vietnam team — complete guide." },
   "how-to-watch-ppa-tour-live-2026": { title: "How to Watch PPA Tour Live 2026 | Streaming Platforms, Schedules & Free Options", description: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS Sports, ESPN, and Fox Sports. Free YouTube highlights and ThePickleHub's free tournament livestreams included." },
   "ppa-tour-asia-2026-complete-guide": { title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play", description: "Complete guide to PPA Tour Asia 2026 — all 10 tournament stops across Vietnam, Japan, Korea, Thailand & more. Schedule, prize money, registration, and how to watch live." },
   "best-pickleball-tournament-software-2026": { title: "Best Pickleball Tournament Software 2026", description: "Compare the best pickleball tournament software in 2026. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required." },
