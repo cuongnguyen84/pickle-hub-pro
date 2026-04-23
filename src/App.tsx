@@ -96,6 +96,7 @@ const PreviewWatchVideo = lazy(() => import("./pages/preview/WatchVideo"));
 const PreviewRankings = lazy(() => import("./pages/preview/Rankings"));
 const PreviewOrgDetail = lazy(() => import("./pages/preview/OrganizationDetail"));
 const PreviewSearch = lazy(() => import("./pages/preview/Search"));
+const PreviewBracketLab = lazy(() => import("./pages/preview/BracketLab"));
 
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
@@ -345,6 +346,7 @@ const App = () => (
                     <Route path="/preview/the-line/rankings" element={<PreviewRankings />} />
                     <Route path="/preview/the-line/org/:slug" element={<PreviewOrgDetail />} />
                     <Route path="/preview/the-line/search" element={<PreviewSearch />} />
+                    <Route path="/preview/the-line/tools" element={<PreviewBracketLab />} />
                     {/* Admin routes */}
                     <Route path="/admin" element={<AdminOverview />} />
                     <Route path="/admin/organizations" element={<AdminOrganizations />} />

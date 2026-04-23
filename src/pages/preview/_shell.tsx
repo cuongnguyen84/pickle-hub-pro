@@ -13,7 +13,7 @@ import "@/styles/the-line.css";
  * - Children render INSIDE the chrome
  * ------------------------------------------------------------------------- */
 
-type Active = "live" | "tournaments" | "rankings" | "stories" | "stats" | "home";
+type Active = "live" | "tournaments" | "lab" | "rankings" | "stories" | "stats" | "home";
 
 export interface PreviewShellProps {
   title: string;
@@ -27,6 +27,7 @@ const STORAGE_KEY = "tl-theme-mode";
 const NAV_ITEMS: { label: string; to: string; key: Active }[] = [
   { label: "Live", to: "/preview/the-line/live", key: "live" },
   { label: "Tournaments", to: "/preview/the-line/tournaments", key: "tournaments" },
+  { label: "Bracket Lab", to: "/preview/the-line/tools", key: "lab" },
   { label: "Rankings", to: "/preview/the-line/rankings", key: "rankings" },
   { label: "Stories", to: "/preview/the-line/blog", key: "stories" },
 ];
@@ -151,6 +152,13 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
               </svg>
             )}
           </button>
+
+          <Link to="/preview/the-line/tools" className="tl-nav-cta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>Create bracket</span>
+          </Link>
 
           <Link to="/login" className="tl-nav-btn">Sign in</Link>
 
