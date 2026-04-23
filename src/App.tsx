@@ -169,6 +169,11 @@ class ChunkErrorBoundary extends Component<
     super(props);
     this.state = { hasError: false, error: null };
   }
+  componentDidMount() {
+    // Mounted without an immediate chunk error = stale cache resolved. Reset the
+    // reload counter so a future chunk error (next deploy) gets the full retry budget.
+    try { sessionStorage.removeItem("chunk-reload-count"); } catch {}
+  }
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
@@ -179,6 +184,23 @@ class ChunkErrorBoundary extends Component<
       error.message.includes("ChunkLoadError");
     console.error("[ChunkErrorBoundary] Caught error:", error.message, error.stack);
     if (isChunkError) {
+      // Safety: cap reloads so stale SW cache doesn't cause infinite reload loop.
+      // Repro: SW caches old index.html → new chunk 404 → boundary reload → SW serves
+      // same stale HTML → chunk 404 again → loop. Without this guard the admin dashboard
+      // was unreachable on 2026-04-23 after a chunk-name change.
+      const KEY = "chunk-reload-count";
+      const MAX_RELOADS = 2;
+      try {
+        const count = Number(sessionStorage.getItem(KEY) || "0");
+        if (count >= MAX_RELOADS) {
+          sessionStorage.removeItem(KEY);
+          // Let the error UI render instead of reloading again.
+          return;
+        }
+        sessionStorage.setItem(KEY, String(count + 1));
+      } catch {
+        // sessionStorage may be disabled (private mode, quota) — fall through to reload once.
+      }
       window.location.reload();
     }
   }
