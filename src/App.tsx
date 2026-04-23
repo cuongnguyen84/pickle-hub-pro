@@ -86,6 +86,12 @@ const EmbedVideo = lazy(() => import("./pages/embed/EmbedVideo"));
 
 // Lazy load preview pages (design directions, feature-flagged, noindex)
 const PreviewTheLine = lazy(() => import("./pages/preview/TheLine"));
+const PreviewLiveList = lazy(() => import("./pages/preview/LiveList"));
+const PreviewLiveWatch = lazy(() => import("./pages/preview/LiveWatch"));
+const PreviewTournamentsList = lazy(() => import("./pages/preview/TournamentsList"));
+const PreviewTournamentDetail = lazy(() => import("./pages/preview/TournamentDetail"));
+const PreviewBlogList = lazy(() => import("./pages/preview/BlogList"));
+const PreviewBlogPost = lazy(() => import("./pages/preview/BlogPostPage"));
 
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
@@ -325,6 +331,12 @@ const App = () => (
                     <Route path="/embed/video/:id" element={<EmbedVideo />} />
                     {/* Preview routes - design direction exploration, noindex */}
                     <Route path="/preview/the-line" element={<PreviewTheLine />} />
+                    <Route path="/preview/the-line/live" element={<PreviewLiveList />} />
+                    <Route path="/preview/the-line/live/:id" element={<PreviewLiveWatch />} />
+                    <Route path="/preview/the-line/tournaments" element={<PreviewTournamentsList />} />
+                    <Route path="/preview/the-line/tournament/:slug" element={<PreviewTournamentDetail />} />
+                    <Route path="/preview/the-line/blog" element={<PreviewBlogList />} />
+                    <Route path="/preview/the-line/blog/:slug" element={<PreviewBlogPost />} />
                     {/* Admin routes */}
                     <Route path="/admin" element={<AdminOverview />} />
                     <Route path="/admin/organizations" element={<AdminOrganizations />} />

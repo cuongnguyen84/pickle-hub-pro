@@ -1,51 +1,9 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments } from "@/hooks/useSupabaseData";
-import { useFeaturedNews } from "@/hooks/useFeaturedNews";
-import { DynamicMeta } from "@/components/seo/DynamicMeta";
-import "@/styles/the-line.css";
-
-/* ---------------------------------------------------------------------------
- * Preview route: /preview/the-line
- *
- * Feature-flagged Home page rendered in the new "The Line" aesthetic
- * (Direction IV). Fetches the SAME data as the production Home page so we
- * can evaluate layout, typography and density against real content.
- *
- * Scoped under [data-theme="the-line"] — no production style pollution.
- * ------------------------------------------------------------------------- */
-
-const formatDate = (iso: string | null | undefined): { d: string; m: string } => {
-  if (!iso) return { d: "—", m: "—" };
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return { d: "—", m: "—" };
-  return {
-    d: dt.getDate().toString().padStart(2, "0"),
-    m: dt.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-  };
-};
-
-const formatTime = (iso: string | null | undefined): string => {
-  if (!iso) return "";
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return "";
-  return dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-};
-
-const formatRelative = (iso: string | null | undefined): string => {
-  if (!iso) return "";
-  const dt = new Date(iso).getTime();
-  if (Number.isNaN(dt)) return "";
-  const diff = dt - Date.now();
-  const absMin = Math.abs(Math.round(diff / 60000));
-  if (absMin < 1) return "now";
-  if (absMin < 60) return diff > 0 ? `in ${absMin}m` : `${absMin}m ago`;
-  const hrs = Math.round(absMin / 60);
-  if (hrs < 24) return diff > 0 ? `in ${hrs}h` : `${hrs}h ago`;
-  const days = Math.round(hrs / 24);
-  return diff > 0 ? `in ${days}d` : `${days}d ago`;
-};
+import { blogMetadata } from "@/content/blog";
+import { PreviewShell, formatDate, formatTime, formatRelative } from "./_shell";
 
 const TICKER_FALLBACK = [
   "Waters vs Parenteau · 11–9 · W. Singles Final",
@@ -55,24 +13,18 @@ const TICKER_FALLBACK = [
 ];
 
 const TheLine = () => {
-  const { t } = useI18n();
+  const { language } = useI18n();
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
   const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
   const { data: allTournaments = [] } = useTournaments();
-  const { data: featuredNews = [], isLoading: newsLoading } = useFeaturedNews(3);
 
-  // Pin data-theme attribute only while mounted, strip on unmount
-  useEffect(() => {
-    const root = document.documentElement;
-    const prev = root.getAttribute("data-theme");
-    root.setAttribute("data-theme", "the-line");
-    return () => {
-      if (prev) root.setAttribute("data-theme", prev);
-      else root.removeAttribute("data-theme");
-    };
+  // Featured stories — pull 3 most recent blog posts (metadata only, lightweight)
+  const stories = useMemo(() => {
+    return [...blogMetadata]
+      .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
+      .slice(0, 3);
   }, []);
 
-  // Ticker content — derived from live streams if available, else fallback
   const tickerItems = useMemo(() => {
     if (liveStreams.length > 0) {
       const live = liveStreams.slice(0, 6).map((s) => ({
@@ -91,10 +43,8 @@ const TheLine = () => {
     return TICKER_FALLBACK.map((text) => ({ text, org: "" }));
   }, [liveStreams, scheduledStreams]);
 
-  // Featured match for hero — first live stream, fallback to next scheduled
   const featured = liveStreams[0] ?? scheduledStreams[0] ?? null;
 
-  // Upcoming tournaments — filter to active/upcoming, sort by start_date ascending
   const upcomingTournaments = useMemo(() => {
     const now = Date.now();
     return [...allTournaments]
@@ -118,50 +68,11 @@ const TheLine = () => {
   const upcomingCount = scheduledStreams.length;
 
   return (
-    <>
-      <DynamicMeta
-        title="The Line · Design Preview"
-        description="Preview of Direction IV — a proposed redesign of ThePickleHub for global audience."
-        noindex
-      />
-
-      <div className="tl-preview-banner">
-        ◆ Preview · Direction IV · The Line &nbsp;·&nbsp;
-        <Link to="/">Back to current design →</Link>
-      </div>
-
-      <nav className="tl-nav">
-        <Link to="/preview/the-line" className="tl-brand">
-          <span className="tl-brand-mark" aria-hidden="true" />
-          <span>
-            <em>Pickle</em> Hub
-          </span>
-        </Link>
-
-        <div className="tl-nav-links">
-          <a className="active">Live</a>
-          <a>Tournaments</a>
-          <a>Rankings</a>
-          <a>Stories</a>
-          <a>Stats</a>
-          <a>Shop</a>
-        </div>
-
-        <div className="tl-nav-right">
-          <button className="tl-nav-search" type="button" aria-label="Search">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
-            </svg>
-            <span>Search players, events…</span>
-            <kbd>⌘K</kbd>
-          </button>
-          <Link to="/login" className="tl-nav-btn">
-            Sign in
-          </Link>
-        </div>
-      </nav>
-
+    <PreviewShell
+      title="The Line · Design Preview"
+      description="Preview of Direction IV — a proposed redesign of ThePickleHub for global audience."
+      active="home"
+    >
       {/* Ticker */}
       <div className="tl-ticker" aria-label="Live scores ticker">
         <div className="tl-ticker-head">
@@ -173,12 +84,12 @@ const TheLine = () => {
             {[...tickerItems, ...tickerItems].map((item, idx) => (
               <span key={idx}>
                 <b>{item.text}</b>
-                {item.org ? (
+                {item.org && (
                   <>
                     <span className="sep"> · </span>
                     {item.org}
                   </>
-                ) : null}
+                )}
               </span>
             ))}
           </div>
@@ -224,19 +135,19 @@ const TheLine = () => {
               </p>
 
               <div className="tl-hero-ctas tl-up tl-d4">
-                <Link to="/live" className="tl-btn green">
+                <Link to="/preview/the-line/live" className="tl-btn green">
                   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
-                  {hasLiveData ? `Watch live · ${liveCount} court${liveCount === 1 ? "" : "s"}` : "Browse replays"}
+                  {hasLiveData ? `Watch live · ${liveCount} court${liveCount === 1 ? "" : "s"}` : "Browse broadcasts"}
                 </Link>
-                <Link to="/tournaments" className="tl-btn">
+                <Link to="/preview/the-line/tournaments" className="tl-btn">
                   See schedule →
                 </Link>
               </div>
             </div>
 
-            {/* Featured live scoreboard / upcoming card */}
+            {/* Featured live scoreboard */}
             <div className="tl-livecard tl-up tl-d3">
               <div className="tl-lc-head">
                 <span className={featured?.status === "live" ? "live" : ""}>
@@ -282,7 +193,7 @@ const TheLine = () => {
                         ? allTournaments.find((tn) => tn.id === featured.tournament_id)?.name ?? "Tournament match"
                         : "Live broadcast"}
                     </span>
-                    <Link to={`/live/${featured.id}`} className="watch">
+                    <Link to={`/preview/the-line/live/${featured.id}`} className="watch">
                       Watch →
                     </Link>
                   </div>
@@ -320,33 +231,21 @@ const TheLine = () => {
                     <span>Loading…</span>
                   </div>
                   <div className="tl-match-title">&nbsp;</div>
-                  <div className="tl-match-foot">
-                    <span>&nbsp;</span>
-                  </div>
+                  <div className="tl-match-foot"><span>&nbsp;</span></div>
                 </div>
               ))}
             </div>
           ) : liveStreams.length === 0 ? (
-            <div
-              className="tl-panel"
-              style={{
-                padding: "48px 20px",
-                textAlign: "center",
-                fontFamily: "Geist Mono",
-                fontSize: 13,
-                color: "var(--tl-fg-3)",
-                letterSpacing: "0.04em",
-              }}
-            >
+            <div className="tl-panel" style={{ padding: "48px 20px", textAlign: "center", fontFamily: "Geist Mono", fontSize: 13, color: "var(--tl-fg-3)", letterSpacing: "0.04em" }}>
               <div style={{ marginBottom: 12 }}>No live matches right now.</div>
-              <Link to="/live" className="tl-btn" style={{ fontSize: 13 }}>
+              <Link to="/preview/the-line/live" className="tl-btn" style={{ fontSize: 13 }}>
                 Browse all courts →
               </Link>
             </div>
           ) : (
             <div className="tl-match-grid">
               {liveStreams.slice(0, 9).map((stream) => (
-                <Link key={stream.id} to={`/live/${stream.id}`} className="tl-match">
+                <Link key={stream.id} to={`/preview/the-line/live/${stream.id}`} className="tl-match">
                   <div className="tl-match-head">
                     <span className="stat live">Live</span>
                     <span className="ctx">
@@ -378,21 +277,20 @@ const TheLine = () => {
             <p>Tournaments opening registration and scheduled streams from the next 30 days.</p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 20 }}>
-            <div className="tl-panel tl-panel--tournaments">
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 20 }} className="tl-schedule-grid">
+            <div className="tl-panel">
               <div className="tl-panel-head">
                 <h3>Tournaments</h3>
                 <span className="meta">{upcomingTournaments.length} upcoming</span>
               </div>
               {upcomingTournaments.length === 0 ? (
-                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>
-                  No scheduled tournaments
-                </div>
+                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>No scheduled tournaments</div>
               ) : (
                 upcomingTournaments.map((tourn) => {
                   const date = formatDate(tourn.start_date);
+                  const endDate = formatDate(tourn.end_date);
                   return (
-                    <Link key={tourn.id} to={`/tournament/${tourn.slug}`} className="tl-sched-row">
+                    <Link key={tourn.id} to={`/preview/the-line/tournament/${tourn.slug}`} className="tl-sched-row">
                       <div className="tl-sched-date">
                         <span className="d">{date.d}</span>
                         <span className="m">{date.m}</span>
@@ -404,7 +302,7 @@ const TheLine = () => {
                           {tourn.end_date && (
                             <>
                               <span className="sep">·</span>
-                              <span>Ends {formatDate(tourn.end_date).d} {formatDate(tourn.end_date).m}</span>
+                              <span>Ends {endDate.d} {endDate.m}</span>
                             </>
                           )}
                         </div>
@@ -426,18 +324,14 @@ const TheLine = () => {
                 <span className="meta">{scheduledStreams.length} scheduled</span>
               </div>
               {scheduledLoading ? (
-                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>
-                  Loading…
-                </div>
+                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>Loading…</div>
               ) : scheduledStreams.length === 0 ? (
-                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>
-                  No scheduled streams
-                </div>
+                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>No scheduled streams</div>
               ) : (
                 scheduledStreams.slice(0, 5).map((stream) => {
                   const date = formatDate(stream.scheduled_start_at);
                   return (
-                    <Link key={stream.id} to={`/live/${stream.id}`} className="tl-sched-row">
+                    <Link key={stream.id} to={`/preview/the-line/live/${stream.id}`} className="tl-sched-row">
                       <div className="tl-sched-date">
                         <span className="d">{date.d}</span>
                         <span className="m">{date.m}</span>
@@ -464,52 +358,38 @@ const TheLine = () => {
         </div>
       </section>
 
-      {/* News */}
+      {/* Stories (blog) — replaced news aggregator */}
       <section className="tl-section">
         <div className="tl-shell">
           <div className="tl-sec-head">
             <h2>
-              From the <em className="tl-serif">desk.</em>{" "}
-              <span className="sans">{featuredNews.length} stories</span>
+              From <em className="tl-serif">the desk.</em>{" "}
+              <span className="sans">{stories.length} stories</span>
             </h2>
-            <p>Curated coverage from across the pickleball ecosystem. Updated daily.</p>
+            <p>Longform coverage written by reporters and coaches. Updated regularly.</p>
           </div>
 
-          {newsLoading ? (
-            <div className="tl-news-grid">
-              {[0, 1, 2].map((n) => (
-                <div key={n} className="tl-news-item" style={{ opacity: 0.4 }}>
-                  <div className="tl-news-kicker">Loading…</div>
-                  <h3 className="tl-news-title">&nbsp;</h3>
-                  <p className="tl-news-summary">&nbsp;</p>
-                </div>
-              ))}
-            </div>
-          ) : featuredNews.length === 0 ? (
-            <div className="tl-lc-empty" style={{ padding: "48px 20px" }}>
-              No featured stories
-            </div>
+          {stories.length === 0 ? (
+            <div className="tl-lc-empty" style={{ padding: "48px 20px" }}>No stories yet</div>
           ) : (
             <div className="tl-news-grid">
-              {featuredNews.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tl-news-item"
-                >
-                  <div className="tl-news-kicker">◆ {item.source ?? "Story"}</div>
-                  <h3 className="tl-news-title">{item.title}</h3>
-                  <p className="tl-news-summary">{item.summary}</p>
+              {stories.map((post) => (
+                <Link key={post.slug} to={`/preview/the-line/blog/${post.slug}`} className="tl-news-item">
+                  <div className="tl-news-kicker">◆ {post.tags[0] ?? "Story"}</div>
+                  <h3 className="tl-news-title">{language === "vi" ? post.titleVi : post.titleEn}</h3>
+                  <p className="tl-news-summary">{language === "vi" ? post.metaDescriptionVi : post.metaDescriptionEn}</p>
                   <div className="tl-news-meta">
-                    <b>{item.published_at ? formatRelative(item.published_at) : ""}</b>
-                    <span>Read original →</span>
+                    <b>{post.author}</b>
+                    <span>{formatDate(post.publishedDate).full}</span>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           )}
+
+          <div style={{ textAlign: "center", marginTop: 28 }}>
+            <Link to="/preview/the-line/blog" className="tl-btn">See all stories →</Link>
+          </div>
         </div>
       </section>
 
@@ -552,56 +432,7 @@ const TheLine = () => {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="tl-footer">
-        <div className="tl-shell">
-          <div className="tl-foot-grid">
-            <div className="tl-foot-brand">
-              <h3>
-                <em style={{ fontFamily: "inherit" }}>Pickle</em> Hub
-              </h3>
-              <p>
-                Global coverage of professional pickleball. Headquartered in Ho Chi Minh City,
-                reporting from Austin, Naples, Barcelona, Singapore and elsewhere.
-              </p>
-            </div>
-
-            <div className="tl-foot-col">
-              <h4>Watch</h4>
-              <ul>
-                <li><Link to="/live">Live courts</Link></li>
-                <li><Link to="/videos">Replays</Link></li>
-                <li><Link to="/tournaments">Schedule</Link></li>
-              </ul>
-            </div>
-
-            <div className="tl-foot-col">
-              <h4>Compete</h4>
-              <ul>
-                <li><Link to="/tournaments">Tournaments</Link></li>
-                <li><Link to="/tools">Bracket tools</Link></li>
-                <li><Link to="/tools/quick-tables">Quick tables</Link></li>
-              </ul>
-            </div>
-
-            <div className="tl-foot-col">
-              <h4>Read</h4>
-              <ul>
-                <li><Link to="/blog">Stories</Link></li>
-                <li><Link to="/news">News</Link></li>
-                <li><Link to="/forum">Forum</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="tl-foot-bottom">
-            <span>© 2026 The Pickle Hub · Ho Chi Minh City</span>
-            <span>Preview · Direction IV · Not final design</span>
-          </div>
-        </div>
-      </footer>
-    </>
+    </PreviewShell>
   );
 };
 
