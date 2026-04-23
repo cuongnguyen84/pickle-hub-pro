@@ -4,18 +4,13 @@ import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments } from "@/hooks/useSupabaseData";
 import { blogMetadata } from "@/content/blog";
 import { PreviewShell, formatDate, formatTime, formatRelative } from "./_shell";
-
-const TICKER_FALLBACK = [
-  "Waters vs Parenteau · 11–9 · W. Singles Final",
-  "Johns / Johnson vs Staksrud / Newman · M. Doubles SF",
-  "McGuffin vs Duong · M. Singles R16 · in 22m",
-  "Kovalova / Cho vs Irvine / Tereschenko · Mixed D. QF",
-];
+import { Countdown } from "./_Countdown";
 
 const TheLine = () => {
   const { language } = useI18n();
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
   const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
+  const { data: endedStreams = [] } = useLivestreams("ended");
   const { data: allTournaments = [] } = useTournaments();
 
   // Featured stories — pull 3 most recent blog posts (metadata only, lightweight)
@@ -25,23 +20,28 @@ const TheLine = () => {
       .slice(0, 3);
   }, []);
 
+  // Ticker — live > scheduled > ended (recent), all pulled from real streams
   const tickerItems = useMemo(() => {
-    if (liveStreams.length > 0) {
-      const live = liveStreams.slice(0, 6).map((s) => ({
-        text: s.title ?? "Live match",
+    const items: { text: string; org: string }[] = [];
+    liveStreams.slice(0, 4).forEach((s) => {
+      items.push({ text: s.title ?? "Live match", org: s.organization?.name ?? "" });
+    });
+    scheduledStreams.slice(0, 2).forEach((s) => {
+      items.push({
+        text: `NEXT · ${s.title ?? "Upcoming"} · ${formatRelative(s.scheduled_start_at)}`,
         org: s.organization?.name ?? "",
-      }));
-      if (scheduledStreams.length > 0) {
-        const next = scheduledStreams[0];
-        live.push({
-          text: `NEXT · ${next.title ?? "Upcoming"} · ${formatRelative(next.scheduled_start_at)}`,
-          org: next.organization?.name ?? "",
+      });
+    });
+    if (items.length < 4) {
+      endedStreams.slice(0, 4 - items.length).forEach((s) => {
+        items.push({
+          text: `REPLAY · ${s.title ?? "Match"}`,
+          org: s.organization?.name ?? "",
         });
-      }
-      return live;
+      });
     }
-    return TICKER_FALLBACK.map((text) => ({ text, org: "" }));
-  }, [liveStreams, scheduledStreams]);
+    return items.length > 0 ? items : [{ text: "No broadcasts right now — check back soon", org: "" }];
+  }, [liveStreams, scheduledStreams, endedStreams]);
 
   const featured = liveStreams[0] ?? scheduledStreams[0] ?? null;
 
@@ -154,8 +154,11 @@ const TheLine = () => {
                   {featured?.status === "live" ? "Live" : featured?.status === "scheduled" ? "Upcoming" : "Featured"}
                 </span>
                 <span>
-                  {featured?.organization?.name ??
-                    (featured?.scheduled_start_at ? formatRelative(featured.scheduled_start_at) : "No match")}
+                  {featured?.status === "scheduled" && featured.scheduled_start_at ? (
+                    <Countdown to={featured.scheduled_start_at} pastLabel="Live now" />
+                  ) : (
+                    featured?.organization?.name ?? "No match"
+                  )}
                 </span>
               </div>
 
@@ -343,7 +346,7 @@ const TheLine = () => {
                           <span className="sep">·</span>
                           <span>{stream.organization?.name ?? "Broadcast"}</span>
                           <span className="sep">·</span>
-                          <span>{formatRelative(stream.scheduled_start_at)}</span>
+                          <Countdown to={stream.scheduled_start_at} pastLabel="Live now" />
                         </div>
                       </div>
                       <div className="tl-sched-right">

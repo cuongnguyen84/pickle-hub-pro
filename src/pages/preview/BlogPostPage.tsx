@@ -71,6 +71,25 @@ const BlogPostPage = () => {
               </div>
             </header>
 
+            {post.heroImage && (
+              <figure
+                style={{
+                  aspectRatio: "16 / 9",
+                  borderRadius: "var(--tl-radius-lg)",
+                  overflow: "hidden",
+                  margin: "0 0 48px",
+                  border: "1px solid var(--tl-border)",
+                }}
+              >
+                <img
+                  src={post.heroImage.src}
+                  alt={post.heroImage.alt}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  loading="eager"
+                />
+              </figure>
+            )}
+
             <article className="tl-longform">
               {content.sections.map((section, idx) => (
                 <section key={idx}>

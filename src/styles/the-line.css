@@ -7,6 +7,41 @@
 @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap");
 
 [data-theme="the-line"] {
+  /* -------------------------------------------------------------------
+   * Production token overrides — shadcn components (Button, Card, Badge,
+   * Dialog, etc.) use these via `hsl(var(--xxx))`. Overriding them inside
+   * the D4 scope means any production component rendered inside a page
+   * using data-theme="the-line" (e.g. MuxPlayer, ChatPanel) will
+   * automatically inherit D4 palette without code changes.
+   *
+   * This is also a preview of what the actual migration looks like:
+   * swap these tokens in index.css and the entire app recolors.
+   * ----------------------------------------------------------------- */
+  --background:          220 10% 3%;    /* #08090a */
+  --foreground:          42 23% 95%;    /* #f5f3ee */
+  --card:                220 7% 6%;     /* #0f1012 */
+  --card-foreground:     42 23% 95%;
+  --popover:             220 7% 6%;
+  --popover-foreground:  42 23% 95%;
+  --primary:             151 100% 36%;  /* #00b96b */
+  --primary-foreground:  220 10% 3%;
+  --secondary:           220 7% 8%;     /* #131416 */
+  --secondary-foreground: 42 23% 95%;
+  --muted:               225 8% 11%;    /* #1a1c1f */
+  --muted-foreground:    42 5% 51%;     /* #86837d */
+  --accent:              225 8% 11%;
+  --accent-foreground:   42 23% 95%;
+  --destructive:         4 100% 60%;    /* #ff4136 */
+  --destructive-foreground: 42 23% 95%;
+  --border:              225 9% 15%;    /* #22252a */
+  --input:               225 9% 15%;
+  --ring:                151 100% 36%;
+  --live:                4 100% 60%;
+  --surface:             220 7% 8%;
+  --surface-elevated:    225 8% 11%;
+  --foreground-secondary: 42 10% 75%;
+  --foreground-muted:    42 5% 51%;
+
   /* Neutral scale (dark-first) */
   --tl-bg:         #08090a;
   --tl-bg-elev:    #0f1012;

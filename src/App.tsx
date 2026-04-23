@@ -92,6 +92,7 @@ const PreviewTournamentsList = lazy(() => import("./pages/preview/TournamentsLis
 const PreviewTournamentDetail = lazy(() => import("./pages/preview/TournamentDetail"));
 const PreviewBlogList = lazy(() => import("./pages/preview/BlogList"));
 const PreviewBlogPost = lazy(() => import("./pages/preview/BlogPostPage"));
+const PreviewWatchVideo = lazy(() => import("./pages/preview/WatchVideo"));
 
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
@@ -337,6 +338,7 @@ const App = () => (
                     <Route path="/preview/the-line/tournament/:slug" element={<PreviewTournamentDetail />} />
                     <Route path="/preview/the-line/blog" element={<PreviewBlogList />} />
                     <Route path="/preview/the-line/blog/:slug" element={<PreviewBlogPost />} />
+                    <Route path="/preview/the-line/watch/:id" element={<PreviewWatchVideo />} />
                     {/* Admin routes */}
                     <Route path="/admin" element={<AdminOverview />} />
                     <Route path="/admin/organizations" element={<AdminOrganizations />} />

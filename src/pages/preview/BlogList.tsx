@@ -99,7 +99,16 @@ const BlogList = () => {
                   </div>
                   <div className="tl-blog-hero-visual">
                     <span className="tag">● Featured</span>
-                    <div className="court" />
+                    {featured.heroImage ? (
+                      <img
+                        src={featured.heroImage.src}
+                        alt={featured.heroImage.alt}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                        loading="eager"
+                      />
+                    ) : (
+                      <div className="court" />
+                    )}
                   </div>
                 </article>
               )}
