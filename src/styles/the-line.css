@@ -601,6 +601,78 @@
 }
 [data-theme="the-line"] .tl-news-meta b { color: var(--tl-fg-3); font-weight: 500; }
 
+/* ========== Stories grid with cover images (editorial card) ========== */
+[data-theme="the-line"] .tl-stories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+@media (max-width: 900px) { [data-theme="the-line"] .tl-stories-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; } }
+@media (max-width: 640px) { [data-theme="the-line"] .tl-stories-grid { grid-template-columns: 1fr; gap: 20px; } }
+
+[data-theme="the-line"] .tl-story {
+  background: var(--tl-bg);
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg);
+  overflow: hidden;
+  text-decoration: none; color: inherit;
+  display: flex; flex-direction: column;
+  transition: border-color 0.15s, transform 0.2s;
+}
+[data-theme="the-line"] .tl-story:hover {
+  border-color: var(--tl-border-2);
+  transform: translateY(-2px);
+}
+[data-theme="the-line"] .tl-story-img {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: linear-gradient(160deg, #1a2820 0%, #0f1a14 60%, #080a08 100%);
+}
+[data-theme="the-line"] .tl-story-img img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform 0.6s ease;
+}
+[data-theme="the-line"] .tl-story:hover .tl-story-img img { transform: scale(1.04); }
+[data-theme="the-line"] .tl-story-img::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(8, 9, 10, 0.5) 0%, transparent 45%);
+  pointer-events: none;
+}
+[data-theme="the-line"] .tl-story-tag {
+  position: absolute; bottom: 12px; left: 12px; z-index: 2;
+  font-family: "Geist Mono"; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 4px;
+  background: rgba(0, 185, 107, 0.9); color: var(--tl-bg);
+  backdrop-filter: blur(6px);
+}
+[data-theme="the-line"] .tl-story-body {
+  padding: 20px 22px 22px;
+  display: flex; flex-direction: column;
+  flex: 1;
+}
+[data-theme="the-line"] .tl-story-title {
+  font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
+  font-size: 22px; line-height: 1.18; letter-spacing: -0.015em;
+  color: var(--tl-fg); margin: 0 0 10px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+[data-theme="the-line"] .tl-story-summary {
+  font-size: 13.5px; color: var(--tl-fg-2); line-height: 1.5;
+  margin: 0 0 14px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+[data-theme="the-line"] .tl-story-foot {
+  margin-top: auto;
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-4);
+  letter-spacing: 0.04em; display: flex; gap: 10px; align-items: center;
+  padding-top: 12px; border-top: 1px solid var(--tl-border);
+}
+[data-theme="the-line"] .tl-story-foot b { color: var(--tl-fg-3); font-weight: 500; }
+
 /* ========== Manifesto ========== */
 [data-theme="the-line"] .tl-manifesto {
   padding: 96px 0;

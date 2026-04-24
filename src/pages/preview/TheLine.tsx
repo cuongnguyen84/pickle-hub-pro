@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments } from "@/hooks/useSupabaseData";
 import { blogMetadata } from "@/content/blog";
+import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
+import { normalizeImageUrl } from "@/lib/url-utils";
 import { PreviewShell, formatDate, formatTime, formatRelative } from "./_shell";
 import { Countdown } from "./_Countdown";
 
@@ -13,12 +15,54 @@ const TheLine = () => {
   const { data: endedStreams = [] } = useLivestreams("ended");
   const { data: allTournaments = [] } = useTournaments();
 
-  // Featured stories — pull 3 most recent blog posts (metadata only, lightweight)
-  const stories = useMemo(() => {
+  // VI published blog posts (Supabase) — only queried when on VI locale to save a request
+  const { data: viBlogPosts = [] } = usePublishedViBlogPosts();
+
+  // Featured stories — 6 most recent, language-aware:
+  //   EN: blogMetadata (static content with heroImage)
+  //   VI: usePublishedViBlogPosts (Supabase vi_blog_posts.cover_image_url)
+  // Normalized into a common shape so the render loop stays simple.
+  type Story = {
+    slug: string;
+    title: string;
+    summary: string;
+    tag: string | null;
+    image: string | null;
+    imageAlt: string;
+    author: string;
+    date: string | null;
+    href: string;
+  };
+
+  const stories: Story[] = useMemo(() => {
+    if (language === "vi") {
+      return viBlogPosts.slice(0, 6).map((p) => ({
+        slug: p.slug,
+        title: p.title,
+        summary: p.excerpt ?? "",
+        tag: p.category ?? (p.tags?.[0] ?? null),
+        image: p.cover_image_url,
+        imageAlt: p.title,
+        author: "The Pickle Hub",
+        date: p.published_at,
+        href: `/vi/blog/${p.slug}`,
+      }));
+    }
     return [...blogMetadata]
       .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
-      .slice(0, 3);
-  }, []);
+      .slice(0, 6)
+      .map((p) => ({
+        slug: p.slug,
+        title: p.titleEn,
+        summary: p.metaDescriptionEn,
+        tag: p.tags[0] ?? null,
+        image: p.heroImage?.src ?? null,
+        imageAlt: p.heroImage?.alt ?? p.titleEn,
+        author: p.author,
+        date: p.publishedDate,
+        href: `/preview/the-line/blog/${p.slug}`,
+      }));
+  }, [language, viBlogPosts]);
 
   // Ticker — live > scheduled > ended (recent), all pulled from real streams
   const tickerItems = useMemo(() => {
@@ -385,40 +429,56 @@ const TheLine = () => {
         </div>
       </section>
 
-      {/* Stories (blog) — replaced news aggregator */}
-      <section className="tl-section">
-        <div className="tl-shell">
-          <div className="tl-sec-head">
-            <h2>
-              From <em className="tl-serif">the desk.</em>{" "}
-              <span className="sans">{stories.length} stories</span>
-            </h2>
-            <p>Longform coverage written by reporters and coaches. Updated regularly.</p>
-          </div>
+      {/* Stories (blog) — editorial image card grid, language-aware */}
+      {stories.length > 0 && (
+        <section className="tl-section">
+          <div className="tl-shell">
+            <div className="tl-sec-head">
+              <h2>
+                From <em className="tl-serif">the desk.</em>{" "}
+                <span className="sans">{stories.length} stories</span>
+              </h2>
+              <p>Longform coverage written by reporters and coaches. Updated regularly.</p>
+            </div>
 
-          {stories.length === 0 ? (
-            <div className="tl-lc-empty" style={{ padding: "48px 20px" }}>No stories yet</div>
-          ) : (
-            <div className="tl-news-grid">
-              {stories.map((post) => (
-                <Link key={post.slug} to={`/preview/the-line/blog/${post.slug}`} className="tl-news-item">
-                  <div className="tl-news-kicker">◆ {post.tags[0] ?? "Story"}</div>
-                  <h3 className="tl-news-title">{language === "vi" ? post.titleVi : post.titleEn}</h3>
-                  <p className="tl-news-summary">{language === "vi" ? post.metaDescriptionVi : post.metaDescriptionEn}</p>
-                  <div className="tl-news-meta">
-                    <b>{post.author}</b>
-                    <span>{formatDate(post.publishedDate).full}</span>
+            <div className="tl-stories-grid">
+              {stories.map((story) => (
+                <Link key={story.slug} to={story.href} className="tl-story">
+                  <div className="tl-story-img">
+                    {story.image ? (
+                      <img
+                        src={normalizeImageUrl(story.image)}
+                        alt={story.imageAlt}
+                        loading="lazy"
+                      />
+                    ) : null}
+                    {story.tag && <span className="tl-story-tag">{story.tag}</span>}
+                  </div>
+                  <div className="tl-story-body">
+                    <h3 className="tl-story-title">{story.title}</h3>
+                    {story.summary && <p className="tl-story-summary">{story.summary}</p>}
+                    <div className="tl-story-foot">
+                      <b>{story.author}</b>
+                      {story.date && (
+                        <>
+                          <span>·</span>
+                          <span>{formatDate(story.date).full}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
-          )}
 
-          <div style={{ textAlign: "center", marginTop: 28 }}>
-            <Link to="/preview/the-line/blog" className="tl-btn">See all stories →</Link>
+            <div style={{ textAlign: "center", marginTop: 32 }}>
+              <Link to={language === "vi" ? "/vi/blog" : "/preview/the-line/blog"} className="tl-btn">
+                {language === "vi" ? "Xem tất cả bài viết →" : "See all stories →"}
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Manifesto */}
       <section className="tl-manifesto">
