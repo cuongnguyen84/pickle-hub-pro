@@ -2,9 +2,11 @@ import { useMemo, useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
+import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { blogMetadata } from "@/content/blog";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
+import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { PreviewShell, formatDate, formatTime, formatRelative } from "./_shell";
 import { Countdown } from "./_Countdown";
 
@@ -15,6 +17,7 @@ const TheLine = () => {
   const { data: endedStreams = [] } = useLivestreams("ended");
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
+  const { data: homeStats } = useHomepageStats();
 
   // VI published blog posts (Supabase) — only queried when on VI locale to save a request
   const { data: viBlogPosts = [] } = usePublishedViBlogPosts();
@@ -272,21 +275,25 @@ const TheLine = () => {
       </section>
 
       {/* Stats strip — trust signal, 3-column editorial numbers.
-          Values mirror production's homepage stats (see src/pages/Index.tsx).
-          Hardcoded because production hardcodes — no useHomepageStats hook exists. */}
+          Live from Supabase via get_homepage_stats RPC + PPA_ASIA_STOPS constant.
+          Dash placeholder while loading avoids CLS. */}
       <section className="tl-shell">
         <div className="tl-stats-strip">
           <div className="tl-stat-cell">
-            <span className="num">1,669</span>
+            <span className="num">
+              {homeStats ? homeStats.total_users.toLocaleString("en-US") : "—"}
+            </span>
             <span className="lbl">{language === "vi" ? "Người chơi" : "Players tracked"}</span>
           </div>
           <div className="tl-stat-cell">
-            <span className="num">156</span>
+            <span className="num">
+              {homeStats ? homeStats.total_tournaments.toLocaleString("en-US") : "—"}
+            </span>
             <span className="lbl">{language === "vi" ? "Giải đấu" : "Tournaments covered"}</span>
           </div>
           <div className="tl-stat-cell">
-            <span className="num">10</span>
-            <span className="lbl">{language === "vi" ? "Chặng PPA Asia 2026" : "PPA Asia stops · 2026"}</span>
+            <span className="num">{PPA_ASIA_STOPS}</span>
+            <span className="lbl">{language === "vi" ? "Chặng PPA Asia · 2026" : "PPA Asia stops · 2026"}</span>
           </div>
         </div>
       </section>
