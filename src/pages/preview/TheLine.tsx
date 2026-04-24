@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { useLivestreams, useTournaments } from "@/hooks/useSupabaseData";
+import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { blogMetadata } from "@/content/blog";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
@@ -14,6 +14,7 @@ const TheLine = () => {
   const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
   const { data: endedStreams = [] } = useLivestreams("ended");
   const { data: allTournaments = [] } = useTournaments();
+  const { data: videos = [] } = useVideos({ limit: 6 });
 
   // VI published blog posts (Supabase) — only queried when on VI locale to save a request
   const { data: viBlogPosts = [] } = usePublishedViBlogPosts();
@@ -335,7 +336,8 @@ const TheLine = () => {
         </div>
       </section>
 
-      {/* Schedule */}
+      {/* Schedule — hide entire section when both panels empty */}
+      {(upcomingTournaments.length > 0 || scheduledStreams.length > 0) && (
       <section className="tl-section">
         <div className="tl-shell">
           <div className="tl-sec-head">
@@ -349,14 +351,13 @@ const TheLine = () => {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 20 }} className="tl-schedule-grid">
+            {upcomingTournaments.length > 0 && (
             <div className="tl-panel">
               <div className="tl-panel-head">
                 <h3>Tournaments</h3>
                 <span className="meta">{upcomingTournaments.length} upcoming</span>
               </div>
-              {upcomingTournaments.length === 0 ? (
-                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>No scheduled tournaments</div>
-              ) : (
+              {(
                 upcomingTournaments.map((tourn) => {
                   const date = formatDate(tourn.start_date);
                   const endDate = formatDate(tourn.end_date);
@@ -388,7 +389,9 @@ const TheLine = () => {
                 })
               )}
             </div>
+            )}
 
+            {scheduledStreams.length > 0 && (
             <div className="tl-panel">
               <div className="tl-panel-head">
                 <h3>Streams</h3>
@@ -396,8 +399,6 @@ const TheLine = () => {
               </div>
               {scheduledLoading ? (
                 <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>Loading…</div>
-              ) : scheduledStreams.length === 0 ? (
-                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>No scheduled streams</div>
               ) : (
                 scheduledStreams.slice(0, 5).map((stream) => {
                   const date = formatDate(stream.scheduled_start_at);
@@ -425,9 +426,62 @@ const TheLine = () => {
                 })
               )}
             </div>
+            )}
           </div>
         </div>
       </section>
+      )}
+
+      {/* Courtside — video highlights. Hide entire section if 0 videos. */}
+      {videos.length > 0 && (
+        <section className="tl-section">
+          <div className="tl-shell">
+            <div className="tl-sec-head">
+              <h2>
+                <em className="tl-serif">Courtside.</em>{" "}
+                <span className="sans">{videos.length} highlights</span>
+              </h2>
+              <p>Match highlights, interviews, and behind-the-scenes from the court.</p>
+            </div>
+
+            <div className="tl-courtside-grid">
+              {videos.slice(0, 3).map((v) => (
+                <Link key={v.id} to={`/preview/the-line/watch/${v.id}`} className="tl-video-card">
+                  <div className="tl-video-thumb">
+                    {v.thumbnail_url ? <img src={v.thumbnail_url} alt={v.title} loading="lazy" /> : null}
+                    <div className="tl-video-play-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                    {v.duration_seconds ? (
+                      <span className="tl-video-duration">
+                        {Math.floor(v.duration_seconds / 60)}:{(v.duration_seconds % 60).toString().padStart(2, "0")}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="tl-video-body">
+                    <h3 className="tl-video-title">{v.title}</h3>
+                    <div className="tl-video-meta">
+                      <span>{v.organization?.name ?? ""}</span>
+                      {v.published_at && (
+                        <>
+                          <span>·</span>
+                          <span>{formatRelative(v.published_at)}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: 28 }}>
+              <Link to="/videos" className="tl-btn">View all videos →</Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Stories (blog) — editorial image card grid, language-aware */}
       {stories.length > 0 && (

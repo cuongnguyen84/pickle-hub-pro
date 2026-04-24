@@ -601,6 +601,79 @@
 }
 [data-theme="the-line"] .tl-news-meta b { color: var(--tl-fg-3); font-weight: 500; }
 
+/* ========== Courtside videos grid ========== */
+[data-theme="the-line"] .tl-courtside-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 900px) { [data-theme="the-line"] .tl-courtside-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { [data-theme="the-line"] .tl-courtside-grid { grid-template-columns: 1fr; } }
+
+[data-theme="the-line"] .tl-video-card {
+  background: var(--tl-bg);
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg);
+  overflow: hidden;
+  text-decoration: none; color: inherit;
+  display: flex; flex-direction: column;
+  transition: border-color 0.15s, transform 0.2s;
+}
+[data-theme="the-line"] .tl-video-card:hover {
+  border-color: var(--tl-border-2); transform: translateY(-2px);
+}
+[data-theme="the-line"] .tl-video-thumb {
+  position: relative; aspect-ratio: 16 / 9;
+  background: #050606;
+  overflow: hidden;
+}
+[data-theme="the-line"] .tl-video-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+[data-theme="the-line"] .tl-video-thumb::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(8,9,10,0.35) 0%, transparent 50%);
+  pointer-events: none;
+}
+[data-theme="the-line"] .tl-video-play-icon {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(245, 243, 238, 0.92);
+  color: var(--tl-bg);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+  transition: transform 0.2s;
+}
+[data-theme="the-line"] .tl-video-card:hover .tl-video-play-icon {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+[data-theme="the-line"] .tl-video-play-icon svg { width: 18px; height: 18px; fill: currentColor; margin-left: 2px; }
+
+[data-theme="the-line"] .tl-video-duration {
+  position: absolute; bottom: 10px; right: 10px;
+  font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+  padding: 3px 7px; border-radius: 4px;
+  background: rgba(8, 9, 10, 0.85); color: var(--tl-fg);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="the-line"] .tl-video-body {
+  padding: 16px 18px 18px;
+}
+[data-theme="the-line"] .tl-video-title {
+  font-size: 15px; font-weight: 500; color: var(--tl-fg);
+  letter-spacing: -0.005em; line-height: 1.35;
+  margin: 0 0 8px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+[data-theme="the-line"] .tl-video-meta {
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-3);
+  letter-spacing: 0.02em;
+  display: flex; gap: 8px; align-items: center;
+}
+
 /* ========== Stories grid with cover images (editorial card) ========== */
 [data-theme="the-line"] .tl-stories-grid {
   display: grid;
