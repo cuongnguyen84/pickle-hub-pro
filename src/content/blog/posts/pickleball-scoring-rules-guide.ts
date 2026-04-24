@@ -37,6 +37,10 @@ const post: BlogPost = {
             "Used in MLP and professional events — Major League Pickleball uses rally scoring exclusively.",
             "Better for tournaments — Organizers prefer rally scoring because match duration is more predictable, making scheduling easier.",
             "Freeze rule — Some formats freeze at 20-20, requiring side-out scoring for the final points."
+          ],
+          internalLinks: [
+            { text: "How MLP format uses rally scoring", path: "/blog/mlp-format-explained" },
+            { text: "Tournament formats that pair best with rally scoring", path: "/blog/pickleball-tournament-formats-explained" }
           ]
         },
         {
@@ -57,6 +61,11 @@ const post: BlogPost = {
             "Elimination brackets — Best-of-3 games to 11 (side-out) is the standard for competitive play.",
             "Recreational events — Games to 15 (rally) is a popular middle ground — fast enough for scheduling, long enough for fun.",
             "Use digital scoring — Paper scorecards lead to errors. Digital tools like ThePickleHub's scorer eliminate disputes and provide live standings."
+          ],
+          internalLinks: [
+            { text: "Full guide: How to organize a pickleball tournament", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "Free bracket generator for tournament scoring", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Complete pickleball rules (2026 official)", path: "/blog/pickleball-rules-complete-guide" }
           ]
         },
         {
@@ -99,6 +108,10 @@ const post: BlogPost = {
             "Dùng trong MLP và giải chuyên nghiệp — Major League Pickleball dùng rally scoring.",
             "Tốt hơn cho giải đấu — BTC thích rally scoring vì thời gian trận dự đoán được, dễ xếp lịch.",
             "Luật freeze — Một số thể thức freeze ở 20-20, yêu cầu side-out cho điểm cuối."
+          ],
+          internalLinks: [
+            { text: "Thể thức MLP dùng rally scoring như thế nào", path: "/blog/mlp-format-explained" },
+            { text: "Các thể thức giải đấu phù hợp rally scoring", path: "/blog/pickleball-tournament-formats-explained" }
           ]
         },
         {
@@ -119,6 +132,11 @@ const post: BlogPost = {
             "Giải loại trực tiếp — Bo3 đến 11 (side-out) là tiêu chuẩn cho thi đấu.",
             "Giải phong trào — Đến 15 (rally) là trung gian phổ biến.",
             "Dùng chấm điểm số — Phiếu giấy dễ sai. Công cụ số như ThePickleHub loại bỏ tranh cãi."
+          ],
+          internalLinks: [
+            { text: "Hướng dẫn đầy đủ: Cách tổ chức giải pickleball", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "Tạo bracket miễn phí cho giải đấu", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Luật Pickleball đầy đủ (chuẩn 2026)", path: "/blog/pickleball-rules-complete-guide" }
           ]
         },
         {

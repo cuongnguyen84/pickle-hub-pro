@@ -48,6 +48,10 @@ const post: BlogPost = {
             "Enter player names and optional seeds — Add player names and skill ratings (DUPR scores work perfectly). The generator distributes top seeds across groups for competitive balance.",
             "Auto-generate the full match schedule — Click generate. Every match is instantly created with court assignments and sequential round numbering. The schedule is shareable via link.",
             "Run matches and capture scores — As rounds complete, enter scores directly in the tool. Win/loss records, point differentials, and standings update in real-time. Share the standings link with players so they can follow progress on their phones."
+          ],
+          internalLinks: [
+            { text: "Rally vs side-out scoring rules for round robin events", path: "/blog/pickleball-scoring-rules-guide" },
+            { text: "Free bracket generator (all formats, same tool)", path: "/blog/free-pickleball-bracket-generator" }
           ]
         },
         {
@@ -62,6 +66,10 @@ const post: BlogPost = {
             "12 players → 66 matches | 4 courts → ~280 min — recommended: split into three 4-player groups with playoff",
             "16 players → 120 matches | 4 courts → ~500 min — always split. Four 4-player groups with playoff is the standard structure",
             "Formula summary: n × (n-1) ÷ 2 for any group size. Double the match count and add 30% for court changeovers to get a realistic event duration estimate."
+          ],
+          internalLinks: [
+            { text: "How to organize a pickleball tournament (full workflow)", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "All tournament formats compared side-by-side", path: "/blog/pickleball-tournament-formats-explained" }
           ]
         },
         {
@@ -204,6 +212,10 @@ const post: BlogPost = {
             "Nhập tên và seed — Thêm tên và mức kỹ năng tùy chọn. Hệ thống phân đều seed cao vào các bảng.",
             "Tạo lịch — Click tạo và công cụ lập mọi trận đấu với phân sân và thời gian gợi ý.",
             "Chạy giải — Khi trận xong, nhập điểm. Bảng xếp hạng cập nhật realtime cho tất cả."
+          ],
+          internalLinks: [
+            { text: "Luật rally vs side-out cho giải vòng tròn", path: "/blog/pickleball-scoring-rules-guide" },
+            { text: "Công cụ tạo Bracket miễn phí (mọi thể thức)", path: "/blog/free-pickleball-bracket-generator" }
           ]
         },
         {
@@ -215,6 +227,10 @@ const post: BlogPost = {
             "6 người = 15 trận mỗi bảng (khoảng 2 giờ với 2 sân)",
             "8 người = 28 trận mỗi bảng (khoảng 3.5 giờ với 2 sân)",
             "Giải 16+ người, nên chia bảng 4-5 người với playoff."
+          ],
+          internalLinks: [
+            { text: "Cách tổ chức giải pickleball (quy trình đầy đủ)", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "So sánh tất cả thể thức giải đấu", path: "/blog/pickleball-tournament-formats-explained" }
           ]
         },
         {

@@ -39,6 +39,10 @@ const post: BlogPost = {
             "Add names — Enter player or team names. Optionally add skill levels for balanced seeding.",
             "Generate — One click creates your complete bracket with match schedule, court assignments, and scoring interface.",
             "Share & play — Copy the tournament link and share with all participants. They can view brackets and scores in real-time from any device."
+          ],
+          internalLinks: [
+            { text: "Step-by-step: How to create a pickleball bracket", path: "/blog/how-to-create-pickleball-bracket" },
+            { text: "Printable bracket templates (free PDF downloads)", path: "/blog/pickleball-bracket-templates" }
           ]
         },
         {
@@ -51,6 +55,11 @@ const post: BlogPost = {
             "Pool Play + Playoff — Round robin groups feed into elimination playoffs. Combines guaranteed games with knockout excitement.",
             "MLP Team Match — Team-based competition with lineup strategy, multiple game types, and dreambreaker tiebreakers.",
             "Flex Tournament — Build any custom bracket structure. No format restrictions. Full organizer control."
+          ],
+          internalLinks: [
+            { text: "All tournament formats compared in depth", path: "/blog/pickleball-tournament-formats-explained" },
+            { text: "Dedicated Round Robin Generator guide", path: "/blog/pickleball-round-robin-generator-guide" },
+            { text: "MLP team match format rules & dreambreaker", path: "/blog/mlp-format-explained" }
           ]
         },
         {
@@ -107,6 +116,10 @@ const post: BlogPost = {
             "Thêm tên — Nhập tên người chơi hoặc đội. Tùy chọn thêm mức kỹ năng để seed cân đối.",
             "Tạo bracket — Một click tạo bracket hoàn chỉnh với lịch trận, phân sân, và giao diện chấm điểm.",
             "Chia sẻ & chơi — Copy link giải và chia sẻ. Người chơi xem bracket và điểm realtime từ mọi thiết bị."
+          ],
+          internalLinks: [
+            { text: "Hướng dẫn từng bước: Cách tạo bracket pickleball", path: "/blog/how-to-create-pickleball-bracket" },
+            { text: "Mẫu bracket in sẵn (PDF tải miễn phí)", path: "/blog/pickleball-bracket-templates" }
           ]
         },
         {
@@ -119,6 +132,11 @@ const post: BlogPost = {
             "Pool Play + Playoff — Vòng tròn bảng rồi vào loại trực tiếp. Kết hợp đảm bảo trận và kịch tính knockout.",
             "MLP Team Match — Thi đấu đồng đội với chiến thuật lineup, nhiều loại game, và dreambreaker.",
             "Flex Tournament — Xây bracket tùy chỉnh bất kỳ. Không giới hạn thể thức."
+          ],
+          internalLinks: [
+            { text: "So sánh chi tiết tất cả thể thức giải đấu", path: "/blog/pickleball-tournament-formats-explained" },
+            { text: "Hướng dẫn riêng Round Robin Generator", path: "/blog/pickleball-round-robin-generator-guide" },
+            { text: "Luật thể thức MLP & dreambreaker", path: "/blog/mlp-format-explained" }
           ]
         },
         {
