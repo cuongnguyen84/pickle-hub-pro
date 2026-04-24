@@ -134,6 +134,10 @@ const TheLine = () => {
                 Live scores that tick in real time. One subscription.
               </p>
 
+              <p className="tl-hero-subline tl-up tl-d3">
+                Nền tảng pickleball Việt Nam đầu tiên — tin tức PPA Tour, giải đấu, bracket miễn phí.
+              </p>
+
               <div className="tl-hero-ctas tl-up tl-d4">
                 <Link to="/preview/the-line/live" className="tl-btn green">
                   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -207,6 +211,26 @@ const TheLine = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats strip — trust signal, 3-column editorial numbers.
+          Values mirror production's homepage stats (see src/pages/Index.tsx).
+          Hardcoded because production hardcodes — no useHomepageStats hook exists. */}
+      <section className="tl-shell">
+        <div className="tl-stats-strip">
+          <div className="tl-stat-cell">
+            <span className="num">1,669</span>
+            <span className="lbl">{language === "vi" ? "Người chơi" : "Players tracked"}</span>
+          </div>
+          <div className="tl-stat-cell">
+            <span className="num">156</span>
+            <span className="lbl">{language === "vi" ? "Giải đấu" : "Tournaments covered"}</span>
+          </div>
+          <div className="tl-stat-cell">
+            <span className="num">10</span>
+            <span className="lbl">{language === "vi" ? "Chặng PPA Asia 2026" : "PPA Asia stops · 2026"}</span>
           </div>
         </div>
       </section>
