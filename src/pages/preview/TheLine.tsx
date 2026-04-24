@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
@@ -111,6 +111,17 @@ const TheLine = () => {
   const hasLiveData = liveStreams.length > 0;
   const liveCount = liveStreams.length;
   const upcomingCount = scheduledStreams.length;
+
+  // Newsletter form — UI-only success state. Wiring to Mailchimp/Resend
+  // pending a server-side subscribe endpoint; preview fakes success so
+  // design can be evaluated end-to-end.
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+  const onSubscribe = (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes("@")) return;
+    setSubscribed(true);
+  };
 
   return (
     <PreviewShell
@@ -533,6 +544,52 @@ const TheLine = () => {
           </div>
         </section>
       )}
+
+      {/* Newsletter — editorial convention ("Daily Brief") */}
+      <section className="tl-newsletter">
+        <div className="tl-shell">
+          <div className="tl-newsletter-inner">
+            <div className="tl-newsletter-kicker">◆ {language === "vi" ? "Bản tin hàng ngày" : "The Daily Brief"}</div>
+            <h3>
+              {language === "vi" ? (
+                <>Tin pickleball, <em className="tl-serif">mỗi sáng.</em></>
+              ) : (
+                <>Pickleball news, <em className="tl-serif">every morning.</em></>
+              )}
+            </h3>
+            <p>
+              {language === "vi"
+                ? "Tin tức, kết quả giải đấu, và phóng sự độc quyền — gửi hàng tuần. Không quảng cáo, không spam."
+                : "Pickleball news, tournament results, and exclusive reporting — delivered weekly. No ads, no spam."}
+            </p>
+
+            {subscribed ? (
+              <div className="tl-newsletter-success">
+                ✓ {language === "vi" ? "Đã đăng ký. Xem hộp thư của bạn." : "Subscribed. Check your inbox."}
+              </div>
+            ) : (
+              <form className="tl-newsletter-form" onSubmit={onSubscribe}>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder={language === "vi" ? "email@cua-ban.com" : "your@email.com"}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <button type="submit">
+                  {language === "vi" ? "Đăng ký" : "Subscribe"}
+                </button>
+              </form>
+            )}
+
+            <div className="tl-newsletter-privacy">
+              {language === "vi" ? "Có thể hủy đăng ký bất cứ lúc nào." : "Unsubscribe anytime."}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Manifesto */}
       <section className="tl-manifesto">
