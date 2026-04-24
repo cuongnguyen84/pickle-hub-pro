@@ -1,6 +1,8 @@
-import { ReactNode, useEffect, useState, useCallback, FormEvent } from "react";
+import { ReactNode, useEffect, useState, useCallback, useRef, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
+import { useI18n } from "@/i18n";
+import { useAuth } from "@/hooks/useAuth";
 import "@/styles/the-line.css";
 
 /* ---------------------------------------------------------------------------
@@ -34,9 +36,43 @@ const NAV_ITEMS: { label: string; to: string; key: Active }[] = [
 
 export const PreviewShell = ({ title, description, active, children }: PreviewShellProps) => {
   const navigate = useNavigate();
+  const { language, setLanguage } = useI18n();
+  const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mode, setMode] = useState<"dark" | "light">("dark");
   const [search, setSearch] = useState("");
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const avatarRef = useRef<HTMLDivElement>(null);
+
+  // Click outside / Escape closes avatar dropdown
+  useEffect(() => {
+    if (!avatarOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
+        setAvatarOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAvatarOpen(false);
+    };
+    window.addEventListener("mousedown", onClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [avatarOpen]);
+
+  // Derived user display values
+  const userEmail = user?.email ?? "";
+  const userName =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    (user?.user_metadata?.name as string | undefined) ??
+    userEmail.split("@")[0] ?? "";
+  const avatarUrl =
+    (user?.user_metadata?.avatar_url as string | undefined) ??
+    (user?.user_metadata?.picture as string | undefined) ?? "";
+  const userInitial = (userName || userEmail || "?").charAt(0).toUpperCase();
 
   // Pin theme + restore mode preference
   useEffect(() => {
@@ -134,6 +170,27 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
             <kbd>⌘K</kbd>
           </button>
 
+          {/* Language toggle (inline EN|VI) */}
+          <div className="tl-lang" role="group" aria-label="Language">
+            <button
+              type="button"
+              className={language === "en" ? "active" : ""}
+              onClick={() => setLanguage("en")}
+              aria-pressed={language === "en"}
+            >
+              EN
+            </button>
+            <span className="sep">|</span>
+            <button
+              type="button"
+              className={language === "vi" ? "active" : ""}
+              onClick={() => setLanguage("vi")}
+              aria-pressed={language === "vi"}
+            >
+              VI
+            </button>
+          </div>
+
           {/* Mode toggle */}
           <button
             className="tl-icon-btn"
@@ -157,10 +214,67 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            <span>Create bracket</span>
+            <span>{language === "vi" ? "Tạo bracket" : "Create bracket"}</span>
           </Link>
 
-          <Link to="/login" className="tl-nav-btn">Sign in</Link>
+          {user ? (
+            <>
+              {/* Notification bell */}
+              <Link
+                to="/notifications"
+                className="tl-icon-btn tl-bell"
+                aria-label="Notifications"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span className="tl-bell-dot" aria-hidden="true" />
+              </Link>
+
+              {/* Avatar + dropdown */}
+              <div ref={avatarRef} style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  className="tl-avatar"
+                  aria-label="Account menu"
+                  aria-expanded={avatarOpen}
+                  onClick={() => setAvatarOpen((p) => !p)}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" />
+                  ) : (
+                    <span>{userInitial}</span>
+                  )}
+                </button>
+                {avatarOpen && (
+                  <div className="tl-dropdown" role="menu">
+                    <div className="tl-dropdown-head">
+                      <div className="name">{userName || "Signed in"}</div>
+                      <div className="email">{userEmail}</div>
+                    </div>
+                    <Link to="/account" onClick={() => setAvatarOpen(false)}>Account</Link>
+                    <Link to="/creator" onClick={() => setAvatarOpen(false)}>Creator dashboard</Link>
+                    <Link to="/admin" onClick={() => setAvatarOpen(false)}>Admin</Link>
+                    <div className="divider" />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setAvatarOpen(false);
+                        await signOut();
+                      }}
+                    >
+                      {language === "vi" ? "Đăng xuất" : "Sign out"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <Link to="/login" className="tl-nav-btn">
+              {language === "vi" ? "Đăng nhập" : "Sign in"}
+            </Link>
+          )}
 
           {/* Mobile hamburger */}
           <button
@@ -235,14 +349,52 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
                   <span className="arr">→</span>
                 </Link>
               ))}
-              <Link to="/login" onClick={() => setMenuOpen(false)}>
-                <span>Sign in</span>
-                <span className="arr">→</span>
-              </Link>
+              {user ? (
+                <>
+                  <Link to="/account" onClick={() => setMenuOpen(false)}>
+                    <span>{language === "vi" ? "Tài khoản" : "Account"}</span>
+                    <span className="arr">→</span>
+                  </Link>
+                  <Link to="/notifications" onClick={() => setMenuOpen(false)}>
+                    <span>{language === "vi" ? "Thông báo" : "Notifications"}</span>
+                    <span className="arr">→</span>
+                  </Link>
+                </>
+              ) : (
+                <Link to="/login" onClick={() => setMenuOpen(false)}>
+                  <span>{language === "vi" ? "Đăng nhập" : "Sign in"}</span>
+                  <span className="arr">→</span>
+                </Link>
+              )}
             </div>
 
             <div className="tl-drawer-foot">
-              <span className="tl-drawer-foot-label">Appearance</span>
+              <span className="tl-drawer-foot-label">
+                {language === "vi" ? "Ngôn ngữ" : "Language"}
+              </span>
+              <div className="tl-lang" style={{ display: "inline-flex" }}>
+                <button
+                  type="button"
+                  className={language === "en" ? "active" : ""}
+                  onClick={() => setLanguage("en")}
+                >
+                  EN
+                </button>
+                <span className="sep">|</span>
+                <button
+                  type="button"
+                  className={language === "vi" ? "active" : ""}
+                  onClick={() => setLanguage("vi")}
+                >
+                  VI
+                </button>
+              </div>
+            </div>
+
+            <div className="tl-drawer-foot" style={{ marginTop: 0, paddingTop: 14 }}>
+              <span className="tl-drawer-foot-label">
+                {language === "vi" ? "Giao diện" : "Appearance"}
+              </span>
               <button className="tl-icon-btn" type="button" onClick={toggleMode} aria-label="Toggle mode">
                 {mode === "dark" ? (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16">
@@ -256,6 +408,21 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
                 )}
               </button>
             </div>
+
+            {user && (
+              <button
+                type="button"
+                onClick={async () => { setMenuOpen(false); await signOut(); }}
+                style={{
+                  marginTop: 8, padding: "10px 12px", borderRadius: 8,
+                  background: "transparent", border: "1px solid var(--tl-border)",
+                  color: "var(--tl-fg-2)", font: "inherit", fontSize: 13.5,
+                  cursor: "pointer", textAlign: "left",
+                }}
+              >
+                {language === "vi" ? "Đăng xuất" : "Sign out"}
+              </button>
+            )}
           </aside>
         </>
       )}

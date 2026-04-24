@@ -1773,6 +1773,94 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   margin: 14px 0 0; max-width: 54ch;
 }
 
+/* ========== Language toggle (inline EN|VI) ========== */
+[data-theme="the-line"] .tl-lang {
+  display: inline-flex; align-items: center; gap: 2px;
+  font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--tl-fg-3);
+  padding: 0 4px;
+}
+[data-theme="the-line"] .tl-lang button {
+  background: transparent; border: 0;
+  padding: 4px 6px; cursor: pointer;
+  font: inherit; color: var(--tl-fg-3);
+  transition: color 0.15s;
+  border-radius: 4px;
+}
+[data-theme="the-line"] .tl-lang button.active { color: var(--tl-fg); font-weight: 600; }
+[data-theme="the-line"] .tl-lang button:hover { color: var(--tl-fg); }
+[data-theme="the-line"] .tl-lang .sep { color: var(--tl-fg-4); }
+@media (max-width: 640px) { [data-theme="the-line"] .tl-lang { display: none; } }
+
+/* ========== Auth state: bell + avatar ========== */
+[data-theme="the-line"] .tl-bell {
+  position: relative;
+}
+[data-theme="the-line"] .tl-bell-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--tl-live);
+  border: 2px solid var(--tl-bg-elev);
+}
+[data-theme="the-line"] .tl-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--tl-border);
+  background: var(--tl-surface);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: "Instrument Serif"; font-style: italic;
+  font-size: 15px; color: var(--tl-green);
+  overflow: hidden; cursor: pointer;
+  transition: border-color 0.15s;
+  padding: 0;
+}
+[data-theme="the-line"] .tl-avatar:hover { border-color: var(--tl-green); }
+[data-theme="the-line"] .tl-avatar img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+
+/* ========== Avatar dropdown ========== */
+[data-theme="the-line"] .tl-dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  min-width: 220px;
+  background: var(--tl-bg-elev);
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius);
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 50;
+}
+[data-theme="the-line"] .tl-dropdown-head {
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid var(--tl-border); margin-bottom: 6px;
+}
+[data-theme="the-line"] .tl-dropdown-head .name {
+  font-size: 14px; font-weight: 500; color: var(--tl-fg);
+  letter-spacing: -0.005em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="the-line"] .tl-dropdown-head .email {
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-3);
+  margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-theme="the-line"] .tl-dropdown a,
+[data-theme="the-line"] .tl-dropdown button {
+  display: flex; width: 100%; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-radius: 6px;
+  color: var(--tl-fg-2); text-decoration: none; text-align: left;
+  font: inherit; font-size: 13.5px;
+  background: transparent; border: 0; cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+[data-theme="the-line"] .tl-dropdown a:hover,
+[data-theme="the-line"] .tl-dropdown button:hover {
+  background: var(--tl-surface); color: var(--tl-fg);
+}
+[data-theme="the-line"] .tl-dropdown .divider {
+  height: 1px; background: var(--tl-border); margin: 6px 0;
+}
+
 /* ========== Hero tagline (bilingual lead for VN audience) ========== */
 [data-theme="the-line"] .tl-hero-subline {
   font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
