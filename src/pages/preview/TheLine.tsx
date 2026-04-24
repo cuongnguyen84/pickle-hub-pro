@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
+import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 import { blogMetadata } from "@/content/blog";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
@@ -115,15 +116,34 @@ const TheLine = () => {
   const liveCount = liveStreams.length;
   const upcomingCount = scheduledStreams.length;
 
-  // Newsletter form — UI-only success state. Wiring to Mailchimp/Resend
-  // pending a server-side subscribe endpoint; preview fakes success so
-  // design can be evaluated end-to-end.
+  // Newsletter form wired to newsletter-subscribe edge function
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const subscribeMut = useNewsletterSubscribe();
   const onSubscribe = (e: FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !email.includes("@")) return;
-    setSubscribed(true);
+    setFormError(null);
+    const value = email.trim();
+    if (!value || !value.includes("@")) {
+      setFormError(language === "vi" ? "Email không hợp lệ." : "Invalid email address.");
+      return;
+    }
+    subscribeMut.mutate(
+      { email: value, language, source: "the-line-homepage" },
+      {
+        onSuccess: () => {
+          setSubscribed(true);
+          setEmail("");
+        },
+        onError: (err) => {
+          setFormError(
+            err.message ||
+            (language === "vi" ? "Có lỗi, thử lại sau." : "Something went wrong. Try again later."),
+          );
+        },
+      },
+    );
   };
 
   return (
@@ -599,20 +619,43 @@ const TheLine = () => {
                 ✓ {language === "vi" ? "Đã đăng ký. Xem hộp thư của bạn." : "Subscribed. Check your inbox."}
               </div>
             ) : (
-              <form className="tl-newsletter-form" onSubmit={onSubscribe}>
-                <input
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  placeholder={language === "vi" ? "email@cua-ban.com" : "your@email.com"}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <button type="submit">
-                  {language === "vi" ? "Đăng ký" : "Subscribe"}
-                </button>
-              </form>
+              <>
+                <form className="tl-newsletter-form" onSubmit={onSubscribe} noValidate>
+                  <input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder={language === "vi" ? "email@cua-ban.com" : "your@email.com"}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    aria-invalid={formError ? "true" : "false"}
+                    aria-label={language === "vi" ? "Địa chỉ email" : "Email address"}
+                  />
+                  <button
+                    type="submit"
+                    disabled={subscribeMut.isPending}
+                    aria-label={
+                      subscribeMut.isPending
+                        ? (language === "vi" ? "Đang gửi đăng ký" : "Submitting subscription")
+                        : (language === "vi" ? "Đăng ký nhận bản tin" : "Subscribe to newsletter")
+                    }
+                  >
+                    {subscribeMut.isPending
+                      ? "…"
+                      : language === "vi" ? "Đăng ký" : "Subscribe"}
+                  </button>
+                </form>
+                {formError && (
+                  <div
+                    className="tl-newsletter-success"
+                    style={{ color: "var(--tl-live)" }}
+                    role="alert"
+                  >
+                    {formError}
+                  </div>
+                )}
+              </>
             )}
 
             <div className="tl-newsletter-privacy">
