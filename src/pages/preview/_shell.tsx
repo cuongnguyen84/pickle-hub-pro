@@ -437,30 +437,31 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
                 <em style={{ fontFamily: "inherit" }}>Pickle</em> Hub
               </h3>
               <p>
-                Global coverage of professional pickleball. Headquartered in Ho Chi Minh City,
-                reporting from Austin, Naples, Barcelona, Singapore and elsewhere.
+                {language === "vi"
+                  ? "Đưa tin pickleball chuyên nghiệp toàn cầu. Trụ sở tại TP.HCM, tường thuật từ Austin, Naples, Barcelona, Singapore và nhiều thành phố khác."
+                  : "Global coverage of professional pickleball. Headquartered in Ho Chi Minh City, reporting from Austin, Naples, Barcelona, Singapore and elsewhere."}
               </p>
             </div>
             <div className="tl-foot-col">
-              <h4>Watch</h4>
+              <h4>{language === "vi" ? "XEM" : "Watch"}</h4>
               <ul>
-                <li><Link to="/preview/the-line/live">Live courts</Link></li>
-                <li><Link to="/preview/the-line/tournaments">Schedule</Link></li>
+                <li><Link to="/preview/the-line/live">{language === "vi" ? "Sân trực tiếp" : "Live courts"}</Link></li>
+                <li><Link to="/preview/the-line/tournaments">{language === "vi" ? "Lịch thi đấu" : "Schedule"}</Link></li>
               </ul>
             </div>
             <div className="tl-foot-col">
-              <h4>Compete</h4>
+              <h4>{language === "vi" ? "THI ĐẤU" : "Compete"}</h4>
               <ul>
-                <li><Link to="/preview/the-line/tournaments">Tournaments</Link></li>
-                <li><Link to="/preview/the-line/rankings">Rankings</Link></li>
-                <li><Link to="/tools">Bracket tools</Link></li>
+                <li><Link to="/preview/the-line/tournaments">{language === "vi" ? "Giải đấu" : "Tournaments"}</Link></li>
+                <li><Link to="/preview/the-line/rankings">{language === "vi" ? "Bảng xếp hạng" : "Rankings"}</Link></li>
+                <li><Link to="/tools">{language === "vi" ? "Công cụ bracket" : "Bracket tools"}</Link></li>
               </ul>
             </div>
             <div className="tl-foot-col">
-              <h4>Read</h4>
+              <h4>{language === "vi" ? "ĐỌC" : "Read"}</h4>
               <ul>
-                <li><Link to="/preview/the-line/blog">Stories</Link></li>
-                <li><Link to="/news">News</Link></li>
+                <li><Link to="/preview/the-line/blog">{language === "vi" ? "Bài viết" : "Stories"}</Link></li>
+                <li><Link to="/news">{language === "vi" ? "Tin tức" : "News"}</Link></li>
               </ul>
             </div>
           </div>
@@ -485,7 +486,11 @@ export const PreviewShell = ({ title, description, active, children }: PreviewSh
                 </svg>
               </a>
             </div>
-            <span>Preview · Direction IV · Not final design</span>
+            <span>
+              {language === "vi"
+                ? "Xem trước · Direction IV · Chưa phải thiết kế cuối"
+                : "Preview · Direction IV · Not final design"}
+            </span>
           </div>
         </div>
       </footer>

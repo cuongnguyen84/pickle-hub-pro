@@ -298,19 +298,27 @@ const TheLine = () => {
         </div>
       </section>
 
-      {/* Live courts */}
+      {/* Live courts — primary feature; keep the heading always visible as a
+          site-wide entry point. When no matches, show a single tight line of
+          fallback copy (not a verbose description) per Round 2 Issue 5. */}
       <section className="tl-section">
         <div className="tl-shell">
           <div className="tl-sec-head">
             <h2>
               Live <em className="tl-serif">courts.</em>{" "}
               <span className="sans">
-                {liveCount} {liveCount === 1 ? "match" : "matches"}
+                {liveCount} {language === "vi"
+                  ? (liveCount === 1 ? "trận" : "trận")
+                  : (liveCount === 1 ? "match" : "matches")}
               </span>
             </h2>
-            <p>
-              Every match streaming right now, pulled live from the database. Click through to watch with low-delay HLS.
-            </p>
+            {liveStreams.length > 0 && (
+              <p>
+                {language === "vi"
+                  ? "Mọi trận đấu đang phát sóng, lấy trực tiếp từ DB. Bấm để xem với HLS độ trễ thấp."
+                  : "Every match streaming right now, pulled live from the database. Click through to watch with low-delay HLS."}
+              </p>
+            )}
           </div>
 
           {liveLoading ? (
@@ -326,10 +334,26 @@ const TheLine = () => {
               ))}
             </div>
           ) : liveStreams.length === 0 ? (
-            <div className="tl-panel" style={{ padding: "48px 20px", textAlign: "center", fontFamily: "Geist Mono", fontSize: 13, color: "var(--tl-fg-3)", letterSpacing: "0.04em" }}>
-              <div style={{ marginBottom: 12 }}>No live matches right now.</div>
+            <div
+              className="tl-panel"
+              style={{
+                padding: "28px 20px",
+                textAlign: "center",
+                fontFamily: "Geist Mono",
+                fontSize: 13,
+                color: "var(--tl-fg-3)",
+                letterSpacing: "0.04em",
+                display: "flex", flexWrap: "wrap", justifyContent: "center",
+                alignItems: "center", gap: 14,
+              }}
+            >
+              <span>
+                {language === "vi"
+                  ? "Không có trận nào đang phát — quay lại vào ngày thi đấu."
+                  : "No matches streaming right now. Check back during match days."}
+              </span>
               <Link to="/preview/the-line/live" className="tl-btn" style={{ fontSize: 13 }}>
-                Browse all courts →
+                {language === "vi" ? "Xem tất cả sân →" : "Browse all courts →"}
               </Link>
             </div>
           ) : (
@@ -598,42 +622,82 @@ const TheLine = () => {
         </div>
       </section>
 
-      {/* Manifesto */}
+      {/* Manifesto — bilingual. Preserves italic serif emphasis structure
+          in both languages (line breaks anchor the editorial typography). */}
       <section className="tl-manifesto">
         <div className="tl-shell">
           <div className="tl-manifesto-inner">
-            <div className="num tl-mono">/ 04 — What we believe</div>
-            <h2>
-              Pickleball deserves <br />
-              the same <em className="tl-serif">care</em> <br />
-              <span className="dim">we'd give any sport</span> <br />
-              <span className="dim">with a century</span> <br />
-              <span className="dim">of reporting behind it.</span>
-            </h2>
+            {language === "vi" ? (
+              <>
+                <div className="num tl-mono">/ 04 — Tinh thần của chúng tôi</div>
+                <h2>
+                  Pickleball xứng đáng <br />
+                  có sự <em className="tl-serif">chăm sóc</em> <br />
+                  <span className="dim">như mọi môn thể thao</span> <br />
+                  <span className="dim">đã có cả thế kỷ</span> <br />
+                  <span className="dim">báo chí đứng sau.</span>
+                </h2>
 
-            <div className="grid">
-              <div className="item">
-                <h3>01 / Real journalism</h3>
-                <p>
-                  Match reports, player features, and analysis written by reporters who were{" "}
-                  <em>at the court.</em> No aggregation. No AI slop.
-                </p>
-              </div>
-              <div className="item">
-                <h3>02 / Every tour, one app</h3>
-                <p>
-                  PPA. APP. MLP. European Open. Asia Pacific Series. Vietnam National.
-                  Every bracket, every score, every court — <em>in one place.</em>
-                </p>
-              </div>
-              <div className="item">
-                <h3>03 / Built for players</h3>
-                <p>
-                  Find a partner, book a court, track your DUPR. Everything a player needs —{" "}
-                  <em>and nothing they don't.</em>
-                </p>
-              </div>
-            </div>
+                <div className="grid">
+                  <div className="item">
+                    <h3>01 / Báo chí thật</h3>
+                    <p>
+                      Tường thuật trận đấu, chân dung vận động viên, phân tích — viết bởi phóng viên{" "}
+                      <em>có mặt tại sân.</em> Không tổng hợp. No AI slop.
+                    </p>
+                  </div>
+                  <div className="item">
+                    <h3>02 / Mọi giải, một app</h3>
+                    <p>
+                      PPA. APP. MLP. European Open. Asia Pacific Series. Vietnam National.
+                      Mọi bracket, mọi tỉ số, mọi sân — <em>ở một nơi.</em>
+                    </p>
+                  </div>
+                  <div className="item">
+                    <h3>03 / Dành cho người chơi</h3>
+                    <p>
+                      Tìm bạn đánh, đặt sân, theo dõi DUPR. Tất cả những gì người chơi cần —{" "}
+                      <em>và không có thứ gì họ không cần.</em>
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="num tl-mono">/ 04 — What we believe</div>
+                <h2>
+                  Pickleball deserves <br />
+                  the same <em className="tl-serif">care</em> <br />
+                  <span className="dim">we'd give any sport</span> <br />
+                  <span className="dim">with a century</span> <br />
+                  <span className="dim">of reporting behind it.</span>
+                </h2>
+
+                <div className="grid">
+                  <div className="item">
+                    <h3>01 / Real journalism</h3>
+                    <p>
+                      Match reports, player features, and analysis written by reporters who were{" "}
+                      <em>at the court.</em> No aggregation. No AI slop.
+                    </p>
+                  </div>
+                  <div className="item">
+                    <h3>02 / Every tour, one app</h3>
+                    <p>
+                      PPA. APP. MLP. European Open. Asia Pacific Series. Vietnam National.
+                      Every bracket, every score, every court — <em>in one place.</em>
+                    </p>
+                  </div>
+                  <div className="item">
+                    <h3>03 / Built for players</h3>
+                    <p>
+                      Find a partner, book a court, track your DUPR. Everything a player needs —{" "}
+                      <em>and nothing they don't.</em>
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
