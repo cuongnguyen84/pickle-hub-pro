@@ -10,6 +10,24 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "tournament-organizer-hub",
+    publishedDate: "2026-04-25",
+    updatedDate: "2026-04-25",
+    author: "The PickleHub Team",
+    tags: ["organize", "tournament", "hub", "guide", "directory"],
+    ctaPath: "/tools",
+    ctaLabel: { en: "Open Free Tournament Tools", vi: "Mở công cụ tổ chức miễn phí" },
+    heroImage: {
+      src: "/images/blog/tournament-organizer-hub-hero.webp",
+      alt: "Pickleball tournament organizer hub — workflow from format selection through bracket generation, scoring, livestream, and software comparison"
+    },
+    titleEn: "Pickleball Tournament Organizer Hub — Every Guide, Tool & Format in One Place",
+    titleVi: "Hub Tổ chức giải Pickleball — Mọi hướng dẫn, công cụ và thể thức trong một trang",
+    metaTitleEn: "Pickleball Tournament Organizer Hub | Formats, Brackets, Tools 2026",
+    metaTitleVi: "Hub Tổ chức giải Pickleball | Thể thức, Bracket, Công cụ 2026",
+    metaDescriptionEn: "The complete hub for pickleball tournament organizers in 2026. Choose a format, build a bracket, manage scoring, livestream matches, and compare free software — all linked from one page.",
+    metaDescriptionVi: "Hub đầy đủ cho ban tổ chức giải pickleball 2026. Chọn thể thức, tạo bracket, quản lý điểm, livestream và so sánh phần mềm miễn phí — tất cả liên kết trong một trang.",
+  },  {
     slug: "pickleball-world-cup-2026-da-nang",
     publishedDate: "2026-04-23",
     updatedDate: "2026-04-23",
