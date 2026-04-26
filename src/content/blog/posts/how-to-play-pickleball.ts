@@ -18,6 +18,10 @@ const post: BlogPost = {
   tags: ["how to play pickleball", "beginner", "pickleball technique", "dink", "third shot drop", "asia"],
   ctaPath: "/tools/quick-tables",
   ctaLabel: { en: "Run Your First Game", vi: "Chấm điểm trận đầu tiên" },
+  heroImage: {
+    src: "/images/blog/how-to-play-pickleball-hero.webp",
+    alt: "How to play pickleball — beginner-friendly 7-day plan covering gear, grip, six core shots, and doubles strategy, taught to 200+ Vietnamese players in Hanoi and Ho Chi Minh City"
+  },
   content: {
     en: {
       title: "How to Play Pickleball: 7-Day Beginner Plan (Tested with 200+ Players in Vietnam)",
