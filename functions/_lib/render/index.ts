@@ -553,6 +553,9 @@ const BLOG_POST_META: Record<string, { title: string; description: string }> = {
   "mlp-format-explained": { title: "MLP Format Explained 2026 | Major League Pickleball", description: "Learn how the MLP format works in pickleball. Complete guide to Major League Pickleball team match rules, dreambreaker, lineup strategy." },
   "free-pickleball-bracket-generator": { title: "Free Pickleball Bracket Generator 2026", description: "Create free pickleball tournament brackets instantly. Round robin, single elimination, and double elimination bracket generator with real-time scoring." },
   "pickleball-bracket-templates": { title: "Pickleball Bracket Templates 2026 | Free Download", description: "Free pickleball bracket templates for round robin, single elimination, and double elimination. Templates for 4, 8, 16, 32, and 64 players." },
+  "pickleball-rules-complete-guide": { title: "Pickleball Rules 2026 | Complete Guide with Asia's Hardest Calls Explained", description: "The complete 2026 Pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus: the 5 calls that start fights in Asian tournaments — and how to settle them." },
+  "tournament-organizer-hub": { title: "Pickleball Tournament Organizer Hub | Formats, Brackets, Tools 2026", description: "The complete hub for pickleball tournament organizers in 2026. Choose a format, build a bracket, manage scoring, livestream matches, and compare free software — all linked from one page." },
+  "how-to-play-pickleball": { title: "How to Play Pickleball | 7-Day Beginner Plan Tested in Vietnam", description: "How to play pickleball as a beginner: gear to buy, correct grip, 6 core shots, and a 7-day practice plan that took 200+ Vietnamese players from zero to playing their first real match." },
 };
 
 export function renderBlogPost(slug: string, siteUrl: string): Response {
