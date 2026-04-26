@@ -40,7 +40,7 @@ const STATIC_URLS = [
   `https://${HOST}/tools/dashboard`,
 ];
 
-// Blog slugs (EN) — keep in sync with src/lib/blog-data.ts and functions/sitemap.xml.ts
+// Blog slugs (EN) — keep in sync with src/content/blog/metadata.ts and functions/sitemap.xml.ts
 const BLOG_SLUGS = [
   "how-to-watch-ppa-tour-live-2026",
   "ppa-tour-asia-2026-complete-guide",
@@ -56,6 +56,9 @@ const BLOG_SLUGS = [
   "free-pickleball-bracket-generator",
   "pickleball-bracket-templates",
   "pickleball-rules-complete-guide",
+  "pickleball-world-cup-2026-da-nang",
+  "tournament-organizer-hub",
+  "how-to-play-pickleball",
 ];
 
 async function getViBlogSlugs(env: Env): Promise<string[]> {
