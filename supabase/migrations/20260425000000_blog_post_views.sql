@@ -107,3 +107,16 @@ $$;
 GRANT EXECUTE ON FUNCTION get_blog_post_view_count(blog_lang, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_blog_post_view_counts_batch(JSONB) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_top_blog_posts(INTEGER, INTEGER) TO authenticated;
+
+-- Grant table-level INSERT to anon + authenticated.
+-- RLS policy "blog_post_views_insert" gates which rows pass, but Postgres
+-- requires table-level GRANT first — without this, anon clients hit
+-- error 42501 "permission denied for table" before any RLS check runs.
+-- (Discovered 2026-04-25 when curl with anon key returned 42501; SQL
+-- editor super-user worked because it bypasses both GRANT and RLS.)
+GRANT INSERT ON public.blog_post_views TO anon, authenticated;
+
+-- Force PostgREST to reload schema cache so the new table + enum + RPCs
+-- are recognized immediately. Without this, REST clients can hit cached
+-- "relation does not exist" or stale type metadata for several minutes.
+NOTIFY pgrst, 'reload schema';
