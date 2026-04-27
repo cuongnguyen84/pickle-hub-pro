@@ -797,4 +797,4 @@ const Index = () => {
   );
 };
 
-export default TheLine;
+export default Index;
