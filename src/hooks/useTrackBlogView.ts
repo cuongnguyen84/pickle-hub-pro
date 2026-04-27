@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const SESSION_KEY = "tph_blog_session";
@@ -65,6 +66,8 @@ function detectReferrerSource(): string {
 }
 
 export function useTrackBlogView(lang: "en" | "vi" | undefined, slug: string | undefined): void {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (!lang || !slug) return;
     if (wasRecentlyViewed(lang, slug)) return;
@@ -78,7 +81,7 @@ export function useTrackBlogView(lang: "en" | "vi" | undefined, slug: string | u
         } = await supabase.auth.getUser();
         if (cancelled) return;
 
-        await supabase.from("blog_post_views").insert({
+        const { error } = await supabase.from("blog_post_views").insert({
           lang,
           slug,
           viewer_user_id: user?.id ?? null,
@@ -86,10 +89,28 @@ export function useTrackBlogView(lang: "en" | "vi" | undefined, slug: string | u
           referrer_source: detectReferrerSource(),
         });
 
-        if (!cancelled) markViewed(lang, slug);
-      } catch {
-        // View tracking must never surface errors to the user
-        console.debug("[blog-view] failed to record view", { lang, slug });
+        if (cancelled) return;
+
+        if (error) {
+          console.debug("[blog-view] insert failed", { lang, slug, error });
+          return; // do NOT mark viewed if insert failed — let next mount retry
+        }
+
+        markViewed(lang, slug);
+
+        // Refresh display immediately so the badge ticks up without waiting
+        // for the 60s React Query staleTime. Without this, viewers see "0"
+        // even after their own view was recorded.
+        queryClient.invalidateQueries({
+          queryKey: ["blog-post-view-count", lang, slug],
+        });
+
+        // Also invalidate batch query used on list pages
+        queryClient.invalidateQueries({
+          queryKey: ["blog-post-view-counts-batch"],
+        });
+      } catch (err) {
+        console.debug("[blog-view] failed to record view", { lang, slug, err });
       }
     };
 
@@ -98,5 +119,5 @@ export function useTrackBlogView(lang: "en" | "vi" | undefined, slug: string | u
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [lang, slug]);
+  }, [lang, slug, queryClient]);
 }
