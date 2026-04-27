@@ -46,19 +46,58 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     siteUrl,
     lang: "en",
     extraMeta: `<link rel="alternate" hreflang="en" href="${siteUrl}/"/>\n<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/"/>`,
-    jsonLd: { "@context": "https://schema.org", "@type": "Organization", name: "ThePickleHub", url: siteUrl, logo: DEFAULT_OG_IMAGE, sameAs: [] },
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": `${siteUrl}#org`,
+          name: "ThePickleHub",
+          url: siteUrl,
+          logo: DEFAULT_OG_IMAGE,
+          description: "Editorial coverage of professional pickleball — PPA, APP, MLP, European Open, Asia Pacific Series. Bilingual Vietnamese-English. Headquartered in Ho Chi Minh City.",
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Ho Chi Minh City",
+            addressCountry: "VN",
+          },
+          sameAs: [
+            "https://www.facebook.com/ThePickleHub",
+            "https://www.instagram.com/thepicklehub",
+            "https://www.youtube.com/@thepicklehub",
+          ],
+        },
+        {
+          "@type": "WebSite",
+          "@id": `${siteUrl}#website`,
+          url: siteUrl,
+          name: "ThePickleHub",
+          publisher: { "@id": `${siteUrl}#org` },
+          potentialAction: {
+            "@type": "SearchAction",
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+            },
+            "query-input": "required name=search_term_string",
+          },
+        },
+      ],
+    },
     bodyContent: `
-      <p>ThePickleHub is the destination for pickleball lovers — from beginners to professional athletes.</p>
+      <p>ThePickleHub — editorial coverage of professional pickleball, headquartered in Ho Chi Minh City and reporting from PPA, APP, MLP, European Open, and Asia Pacific Series venues worldwide.</p>
       <ul>
-        <li><a href="${siteUrl}/tournaments">Tournament Schedule</a> - All major pickleball tournaments</li>
-        <li><a href="${siteUrl}/live">Live Matches</a> - Watch pickleball matches live right now</li>
-        <li><a href="${siteUrl}/livestream">Livestream Hub</a> - All upcoming and past livestreams</li>
-        <li><a href="${siteUrl}/tools">Bracket Tools</a> - Free, ready to use</li>
-        <li><a href="${siteUrl}/blog">Blog</a> - Rules, techniques, strategies</li>
-        <li><a href="${siteUrl}/forum">Forum</a> - Community discussions</li>
+        <li><a href="${siteUrl}/live">Live courts</a> — Watch matches streaming right now</li>
+        <li><a href="${siteUrl}/tournaments">Tournaments</a> — Schedules, brackets, results across PPA Asia and beyond</li>
+        <li><a href="${siteUrl}/tools">Bracket Lab</a> — Free tournament tools (round robin, single/double elimination, MLP)</li>
+        <li><a href="${siteUrl}/rankings">Rankings</a> — Player rankings (placeholder, coming soon)</li>
+        <li><a href="${siteUrl}/blog">Stories</a> — Match reports and longform coverage</li>
+        <li><a href="${siteUrl}/news">News</a> — Daily pickleball updates</li>
+        <li><a href="${siteUrl}/videos">Videos</a> — Match highlights (Courtside)</li>
+        <li><a href="${siteUrl}/forum">Forum</a> — Community discussions</li>
       </ul>
-      ${liveItems ? `<h2>Livestream</h2><ul>${liveItems}</ul>` : ""}
-      ${videoItems ? `<h2>Latest Videos</h2><ul>${videoItems}</ul>` : ""}
+      ${liveItems ? `<h2>Currently streaming</h2><ul>${liveItems}</ul>` : ""}
+      ${videoItems ? `<h2>Latest videos</h2><ul>${videoItems}</ul>` : ""}
       ${viBlogSection}
     `,
   }));
@@ -84,16 +123,55 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
     siteUrl,
     lang: "vi",
     extraMeta: `<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="en" href="${siteUrl}/"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/"/>`,
-    jsonLd: { "@context": "https://schema.org", "@type": "Organization", name: "ThePickleHub", url: siteUrl, logo: DEFAULT_OG_IMAGE },
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": `${siteUrl}#org`,
+          name: "ThePickleHub",
+          url: siteUrl,
+          logo: DEFAULT_OG_IMAGE,
+          description: "Đưa tin pickleball chuyên nghiệp toàn cầu — PPA, APP, MLP, European Open, Asia Pacific Series. Song ngữ Việt-Anh. Trụ sở tại TP.HCM.",
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Ho Chi Minh City",
+            addressCountry: "VN",
+          },
+          sameAs: [
+            "https://www.facebook.com/ThePickleHub",
+            "https://www.instagram.com/thepicklehub",
+            "https://www.youtube.com/@thepicklehub",
+          ],
+        },
+        {
+          "@type": "WebSite",
+          "@id": `${siteUrl}#website`,
+          url: siteUrl,
+          name: "ThePickleHub",
+          publisher: { "@id": `${siteUrl}#org` },
+          potentialAction: {
+            "@type": "SearchAction",
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+            },
+            "query-input": "required name=search_term_string",
+          },
+        },
+      ],
+    },
     bodyContent: `
-      <p>ThePickleHub là điểm đến cho người yêu pickleball tại Việt Nam — từ người mới bắt đầu đến VĐV chuyên nghiệp.</p>
+      <p>ThePickleHub — đưa tin pickleball chuyên nghiệp toàn cầu, trụ sở tại TP.HCM, tường thuật từ PPA, APP, MLP, European Open và Asia Pacific Series.</p>
       <ul>
-        <li><a href="${siteUrl}/vi/tournaments">Lịch giải đấu</a></li>
-        <li><a href="${siteUrl}/vi/live">Trận đấu trực tiếp</a> - Xem pickleball trực tiếp ngay bây giờ</li>
-        <li><a href="${siteUrl}/vi/livestream">Livestream</a></li>
-        <li><a href="${siteUrl}/vi/tools">Công cụ tạo bracket</a></li>
-        <li><a href="${siteUrl}/vi/blog">Blog hướng dẫn</a></li>
-        <li><a href="${siteUrl}/vi/forum">Diễn đàn</a></li>
+        <li><a href="${siteUrl}/vi/live">Sân trực tiếp</a> — Xem trận đấu đang diễn ra</li>
+        <li><a href="${siteUrl}/vi/tournaments">Giải đấu</a> — Lịch, bracket, kết quả</li>
+        <li><a href="${siteUrl}/vi/tools">Bracket Lab</a> — Công cụ tổ chức miễn phí</li>
+        <li><a href="${siteUrl}/vi/rankings">Bảng xếp hạng</a> — Sắp ra mắt</li>
+        <li><a href="${siteUrl}/vi/blog">Bài viết</a> — Tường thuật và bài chuyên sâu</li>
+        <li><a href="${siteUrl}/vi/news">Tin tức</a> — Cập nhật pickleball hàng ngày</li>
+        <li><a href="${siteUrl}/vi/videos">Video</a> — Highlights trận đấu</li>
+        <li><a href="${siteUrl}/vi/forum">Diễn đàn</a> — Thảo luận cộng đồng</li>
       </ul>
       ${blogSection}
       ${liveItems ? `<h2>Livestream</h2><ul>${liveItems}</ul>` : ""}

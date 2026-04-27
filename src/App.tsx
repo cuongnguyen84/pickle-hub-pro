@@ -18,6 +18,8 @@ import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
+// Legacy homepage — accessible at /legacy for 14-day rollback (REMOVE 2026-05-09)
+const IndexLegacy = lazy(() => import("./pages/Index.legacy"));
 import RequireAuth from "@/components/auth/RequireAuth";
 import ConditionalAuth from "@/components/auth/ConditionalAuth";
 
@@ -83,6 +85,20 @@ const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
 // Lazy load embed pages
 const EmbedLive = lazy(() => import("./pages/embed/EmbedLive"));
 const EmbedVideo = lazy(() => import("./pages/embed/EmbedVideo"));
+
+// Lazy load preview pages (design directions, feature-flagged, noindex)
+const PreviewTheLine = lazy(() => import("./pages/preview/TheLine"));
+const PreviewLiveList = lazy(() => import("./pages/preview/LiveList"));
+const PreviewLiveWatch = lazy(() => import("./pages/preview/LiveWatch"));
+const PreviewTournamentsList = lazy(() => import("./pages/preview/TournamentsList"));
+const PreviewTournamentDetail = lazy(() => import("./pages/preview/TournamentDetail"));
+const PreviewBlogList = lazy(() => import("./pages/preview/BlogList"));
+const PreviewBlogPost = lazy(() => import("./pages/preview/BlogPostPage"));
+const PreviewWatchVideo = lazy(() => import("./pages/preview/WatchVideo"));
+const PreviewRankings = lazy(() => import("./pages/preview/Rankings"));
+const PreviewOrgDetail = lazy(() => import("./pages/preview/OrganizationDetail"));
+const PreviewSearch = lazy(() => import("./pages/preview/Search"));
+const PreviewBracketLab = lazy(() => import("./pages/preview/BracketLab"));
 
 // Lazy load redirect pages
 const QuickTableRedirect = lazy(() =>
@@ -354,6 +370,21 @@ const App = () => (
                     {/* Embed routes - no layout, minimal UI */}
                     <Route path="/embed/live/:id" element={<EmbedLive />} />
                     <Route path="/embed/video/:id" element={<EmbedVideo />} />
+                    {/* Legacy homepage — rollback fallback (REMOVE 2026-05-09) */}
+                    <Route path="/legacy" element={<IndexLegacy />} />
+                    {/* Preview routes - design direction exploration, noindex */}
+                    <Route path="/preview/the-line" element={<PreviewTheLine />} />
+                    <Route path="/preview/the-line/live" element={<PreviewLiveList />} />
+                    <Route path="/preview/the-line/live/:id" element={<PreviewLiveWatch />} />
+                    <Route path="/preview/the-line/tournaments" element={<PreviewTournamentsList />} />
+                    <Route path="/preview/the-line/tournament/:slug" element={<PreviewTournamentDetail />} />
+                    <Route path="/preview/the-line/blog" element={<PreviewBlogList />} />
+                    <Route path="/preview/the-line/blog/:slug" element={<PreviewBlogPost />} />
+                    <Route path="/preview/the-line/watch/:id" element={<PreviewWatchVideo />} />
+                    <Route path="/preview/the-line/rankings" element={<PreviewRankings />} />
+                    <Route path="/preview/the-line/org/:slug" element={<PreviewOrgDetail />} />
+                    <Route path="/preview/the-line/search" element={<PreviewSearch />} />
+                    <Route path="/preview/the-line/tools" element={<PreviewBracketLab />} />
                     {/* Admin routes */}
                     <Route path="/admin" element={<AdminOverview />} />
                     <Route path="/admin/organizations" element={<AdminOrganizations />} />

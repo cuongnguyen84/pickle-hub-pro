@@ -46,6 +46,16 @@
     <!-- Preconnect for Google Drive images (common LCP element source) -->
     <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin />
     <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
+    <!-- Preload The Line critical Latin woff2 — eliminates Mobile LCP regression
+         (Phase 0 baseline showed 4.7s → 6.2s without preload). Hashes verified
+         from Google Fonts API on 2026-04-25; will need re-extraction if Google
+         updates the font versions. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="https://fonts.gstatic.com/s/geist/v4/gyByhwUxId8gMEwcGFWNOITd.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="https://fonts.gstatic.com/s/geistmono/v4/or3nQ6H-1_WfwkMZI_qYFrcdmhHkjko.woff2" />
     <!-- Google Fonts - non-render-blocking -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'" />
     <title>ThePickleHub – Pickleball Tournaments, Livestream &amp; News — Built for Asia</title>
@@ -54,8 +64,9 @@
     <meta name="keywords" content="pickleball, livestream pickleball, giải đấu pickleball, pickleball vietnam, bracket pickleball, cộng đồng pickleball">
     <link rel="canonical" href="https://www.thepicklehub.net/">
 
-    
-    
+    <!-- Static OG fallback for Facebook crawler (React DynamicMeta overwrites at runtime) -->
+    <meta property="og:title" content="ThePickleHub – Pickleball Tournaments, Livestream & News — Built for Asia" />
+    <meta property="og:description" content="The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.thepicklehub.net/" />
     <meta property="og:image" content="https://www.thepicklehub.net/og-image.png" />
@@ -64,8 +75,8 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@ThePickleHub" />
-    
-    
+    <meta name="twitter:title" content="ThePickleHub – Pickleball Tournaments, Livestream & News — Built for Asia" />
+    <meta name="twitter:description" content="The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players." />
     <meta name="twitter:image" content="https://www.thepicklehub.net/og-image.png" />
 
     <!-- Sitemap reference -->

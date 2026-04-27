@@ -8,53 +8,10 @@ import { blogMetadata } from "@/content/blog";
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
-import { TheLineLayout } from "@/components/layout/TheLineLayout";
-import { Countdown } from "@/pages/preview/_Countdown";
-import { HreflangTags, OrganizationSchema } from "@/components/seo";
+import { PreviewShell, formatDate, formatTime, formatRelative } from "./_shell";
+import { Countdown } from "./_Countdown";
 
-/**
- * Production homepage. Promoted from preview/the-line on 2026-04-25.
- * The preview source page src/pages/preview/TheLine.tsx remains intact
- * for the 14-day rollback window (cleanup commit on 2026-05-09).
- *
- * Helper utilities are imported from preview/ for now; they can be
- * promoted to a shared lib in a follow-up if other production pages
- * need them.
- */
-
-const formatDate = (iso: string | null | undefined): { d: string; m: string; full: string } => {
-  if (!iso) return { d: "—", m: "—", full: "" };
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return { d: "—", m: "—", full: "" };
-  return {
-    d: dt.getDate().toString().padStart(2, "0"),
-    m: dt.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-    full: dt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-  };
-};
-
-const formatTime = (iso: string | null | undefined): string => {
-  if (!iso) return "";
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return "";
-  return dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-};
-
-const formatRelative = (iso: string | null | undefined): string => {
-  if (!iso) return "";
-  const dt = new Date(iso).getTime();
-  if (Number.isNaN(dt)) return "";
-  const diff = dt - Date.now();
-  const absMin = Math.abs(Math.round(diff / 60000));
-  if (absMin < 1) return "now";
-  if (absMin < 60) return diff > 0 ? `in ${absMin}m` : `${absMin}m ago`;
-  const hrs = Math.round(absMin / 60);
-  if (hrs < 24) return diff > 0 ? `in ${hrs}h` : `${hrs}h ago`;
-  const days = Math.round(hrs / 24);
-  return diff > 0 ? `in ${days}d` : `${days}d ago`;
-};
-
-const Index = () => {
+const TheLine = () => {
   const { language } = useI18n();
   const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
   const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
@@ -108,7 +65,7 @@ const Index = () => {
         imageAlt: p.heroImage?.alt ?? p.titleEn,
         author: p.author,
         date: p.publishedDate,
-        href: `/blog/${p.slug}`,
+        href: `/preview/the-line/blog/${p.slug}`,
       }));
   }, [language, viBlogPosts]);
 
@@ -190,17 +147,11 @@ const Index = () => {
   };
 
   return (
-    <TheLineLayout
-      title={language === "vi"
-        ? "Pickleball Việt Nam — Giải đấu, Livestream & Tin tức"
-        : "Pickleball Tournaments, Livestream & News — Built for Asia"}
-      description={language === "vi"
-        ? "ThePickleHub — Đưa tin pickleball chuyên nghiệp toàn cầu. Tin tức PPA, APP, MLP, lịch giải, livestream, và bracket miễn phí. Trụ sở tại TP.HCM."
-        : "ThePickleHub — Editorial coverage of professional pickleball. PPA, APP, MLP news, schedules, livestreams, and free bracket tools. Headquartered in Ho Chi Minh City."}
+    <PreviewShell
+      title="The Line · Design Preview"
+      description="Preview of Direction IV — a proposed redesign of ThePickleHub for global audience."
       active="home"
     >
-      <HreflangTags enPath="/" viPath="/vi" />
-      <OrganizationSchema />
       {/* Ticker */}
       <div className="tl-ticker" aria-label="Live scores ticker">
         <div className="tl-ticker-head">
@@ -267,13 +218,13 @@ const Index = () => {
               </p>
 
               <div className="tl-hero-ctas tl-up tl-d4">
-                <Link to="/live" className="tl-btn green">
+                <Link to="/preview/the-line/live" className="tl-btn green">
                   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                   {hasLiveData ? `Watch live · ${liveCount} court${liveCount === 1 ? "" : "s"}` : "Browse broadcasts"}
                 </Link>
-                <Link to="/tournaments" className="tl-btn">
+                <Link to="/preview/the-line/tournaments" className="tl-btn">
                   See schedule →
                 </Link>
               </div>
@@ -328,7 +279,7 @@ const Index = () => {
                         ? allTournaments.find((tn) => tn.id === featured.tournament_id)?.name ?? "Tournament match"
                         : "Live broadcast"}
                     </span>
-                    <Link to={`/live/${featured.id}`} className="watch">
+                    <Link to={`/preview/the-line/live/${featured.id}`} className="watch">
                       Watch →
                     </Link>
                   </div>
@@ -421,14 +372,14 @@ const Index = () => {
                   ? "Không có trận nào đang phát — quay lại vào ngày thi đấu."
                   : "No matches streaming right now. Check back during match days."}
               </span>
-              <Link to="/live" className="tl-btn" style={{ fontSize: 13 }}>
+              <Link to="/preview/the-line/live" className="tl-btn" style={{ fontSize: 13 }}>
                 {language === "vi" ? "Xem tất cả sân →" : "Browse all courts →"}
               </Link>
             </div>
           ) : (
             <div className="tl-match-grid">
               {liveStreams.slice(0, 9).map((stream) => (
-                <Link key={stream.id} to={`/live/${stream.id}`} className="tl-match">
+                <Link key={stream.id} to={`/preview/the-line/live/${stream.id}`} className="tl-match">
                   <div className="tl-match-head">
                     <span className="stat live">Live</span>
                     <span className="ctx">
@@ -473,7 +424,7 @@ const Index = () => {
                   const date = formatDate(tourn.start_date);
                   const endDate = formatDate(tourn.end_date);
                   return (
-                    <Link key={tourn.id} to={`/tournament/${tourn.slug}`} className="tl-sched-row">
+                    <Link key={tourn.id} to={`/preview/the-line/tournament/${tourn.slug}`} className="tl-sched-row">
                       <div className="tl-sched-date">
                         <span className="d">{date.d}</span>
                         <span className="m">{date.m}</span>
@@ -514,7 +465,7 @@ const Index = () => {
                 scheduledStreams.slice(0, 5).map((stream) => {
                   const date = formatDate(stream.scheduled_start_at);
                   return (
-                    <Link key={stream.id} to={`/live/${stream.id}`} className="tl-sched-row">
+                    <Link key={stream.id} to={`/preview/the-line/live/${stream.id}`} className="tl-sched-row">
                       <div className="tl-sched-date">
                         <span className="d">{date.d}</span>
                         <span className="m">{date.m}</span>
@@ -557,7 +508,7 @@ const Index = () => {
 
             <div className="tl-courtside-grid">
               {videos.slice(0, 3).map((v) => (
-                <Link key={v.id} to={`/watch/${v.id}`} className="tl-video-card">
+                <Link key={v.id} to={`/preview/the-line/watch/${v.id}`} className="tl-video-card">
                   <div className="tl-video-thumb">
                     {v.thumbnail_url ? <img src={v.thumbnail_url} alt={v.title} loading="lazy" /> : null}
                     <div className="tl-video-play-icon">
@@ -637,7 +588,7 @@ const Index = () => {
             </div>
 
             <div style={{ textAlign: "center", marginTop: 32 }}>
-              <Link to={language === "vi" ? "/vi/blog" : "/blog"} className="tl-btn">
+              <Link to={language === "vi" ? "/vi/blog" : "/preview/the-line/blog"} className="tl-btn">
                 {language === "vi" ? "Xem tất cả bài viết →" : "See all stories →"}
               </Link>
             </div>
@@ -793,7 +744,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </TheLineLayout>
+    </PreviewShell>
   );
 };
 

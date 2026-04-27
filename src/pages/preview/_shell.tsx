@@ -1,0 +1,557 @@
+import { ReactNode, useEffect, useState, useCallback, useRef, FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { DynamicMeta } from "@/components/seo/DynamicMeta";
+import { useI18n } from "@/i18n";
+import { useAuth } from "@/hooks/useAuth";
+import "@/styles/the-line.css";
+
+/* ---------------------------------------------------------------------------
+ * Shared chrome for all /preview/the-line/* routes.
+ *
+ * - Pins data-theme="the-line" on <html> while mounted (cleans up on unmount)
+ * - Restores previous data-mode (light/dark) preference from localStorage
+ * - Provides: preview banner, nav, footer, DynamicMeta (noindex)
+ * - Mobile drawer with search, nav, mode toggle
+ * - Children render INSIDE the chrome
+ * ------------------------------------------------------------------------- */
+
+type Active = "live" | "tournaments" | "lab" | "rankings" | "stories" | "stats" | "home";
+
+export interface PreviewShellProps {
+  title: string;
+  description?: string;
+  active?: Active;
+  children: ReactNode;
+}
+
+const STORAGE_KEY = "tl-theme-mode";
+
+const NAV_ITEMS: { label: string; to: string; key: Active }[] = [
+  { label: "Live", to: "/preview/the-line/live", key: "live" },
+  { label: "Tournaments", to: "/preview/the-line/tournaments", key: "tournaments" },
+  { label: "Bracket Lab", to: "/preview/the-line/tools", key: "lab" },
+  { label: "Rankings", to: "/preview/the-line/rankings", key: "rankings" },
+  { label: "Stories", to: "/preview/the-line/blog", key: "stories" },
+];
+
+export const PreviewShell = ({ title, description, active, children }: PreviewShellProps) => {
+  const navigate = useNavigate();
+  const { language, setLanguage } = useI18n();
+  const { user, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mode, setMode] = useState<"dark" | "light">("dark");
+  const [search, setSearch] = useState("");
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const avatarRef = useRef<HTMLDivElement>(null);
+
+  // Click outside / Escape closes avatar dropdown
+  useEffect(() => {
+    if (!avatarOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
+        setAvatarOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAvatarOpen(false);
+    };
+    window.addEventListener("mousedown", onClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [avatarOpen]);
+
+  // Derived user display values
+  const userEmail = user?.email ?? "";
+  const userName =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    (user?.user_metadata?.name as string | undefined) ??
+    userEmail.split("@")[0] ?? "";
+  const avatarUrl =
+    (user?.user_metadata?.avatar_url as string | undefined) ??
+    (user?.user_metadata?.picture as string | undefined) ?? "";
+  const userInitial = (userName || userEmail || "?").charAt(0).toUpperCase();
+
+  // Pin theme + restore mode preference
+  useEffect(() => {
+    const root = document.documentElement;
+    const prevTheme = root.getAttribute("data-theme");
+    const prevMode = root.getAttribute("data-mode");
+    root.setAttribute("data-theme", "the-line");
+    const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    const initialMode = stored === "light" ? "light" : "dark";
+    setMode(initialMode);
+    if (initialMode === "light") root.setAttribute("data-mode", "light");
+    else root.removeAttribute("data-mode");
+
+    return () => {
+      if (prevTheme) root.setAttribute("data-theme", prevTheme);
+      else root.removeAttribute("data-theme");
+      if (prevMode) root.setAttribute("data-mode", prevMode);
+      else root.removeAttribute("data-mode");
+    };
+  }, []);
+
+  // Body scroll lock while drawer open
+  useEffect(() => {
+    const root = document.documentElement;
+    if (menuOpen) root.classList.add("tl-drawer-open");
+    else root.classList.remove("tl-drawer-open");
+    return () => root.classList.remove("tl-drawer-open");
+  }, [menuOpen]);
+
+  // Escape closes drawer
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  const toggleMode = useCallback(() => {
+    setMode((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      const root = document.documentElement;
+      if (next === "light") root.setAttribute("data-mode", "light");
+      else root.removeAttribute("data-mode");
+      localStorage.setItem(STORAGE_KEY, next);
+      return next;
+    });
+  }, []);
+
+  const onSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const q = search.trim();
+    if (q.length === 0) return;
+    setMenuOpen(false);
+    navigate(`/preview/the-line/search?q=${encodeURIComponent(q)}`);
+  };
+
+  return (
+    <div className="tl-root">
+      <DynamicMeta title={title} description={description} noindex />
+
+      <div className="tl-scroll">
+        <div className="tl-preview-banner">
+          ◆ Preview · Direction IV · The Line &nbsp;·&nbsp;
+          <Link to="/">Back to current design →</Link>
+        </div>
+
+      <nav className="tl-nav">
+        <Link to="/preview/the-line" className="tl-brand">
+          <span className="tl-brand-mark" aria-hidden="true" />
+          <span>
+            <em>Pickle</em> Hub
+          </span>
+        </Link>
+
+        <div className="tl-nav-links">
+          {NAV_ITEMS.map((item) => (
+            <Link key={item.key} to={item.to} className={active === item.key ? "active" : ""}>
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="tl-nav-right">
+          <button
+            className="tl-nav-search"
+            type="button"
+            aria-label="Search"
+            onClick={() => navigate("/preview/the-line/search")}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <span>Search players, events…</span>
+            <kbd>⌘K</kbd>
+          </button>
+
+          {/* Language toggle (inline EN|VI) */}
+          <div
+            className="tl-lang"
+            role="group"
+            aria-label={language === "vi" ? "Chọn ngôn ngữ" : "Choose language"}
+          >
+            <button
+              type="button"
+              className={language === "en" ? "active" : ""}
+              onClick={() => setLanguage("en")}
+              aria-pressed={language === "en"}
+              aria-label="English"
+            >
+              EN
+            </button>
+            <span className="sep" aria-hidden="true">|</span>
+            <button
+              type="button"
+              className={language === "vi" ? "active" : ""}
+              onClick={() => setLanguage("vi")}
+              aria-pressed={language === "vi"}
+              aria-label="Tiếng Việt"
+            >
+              VI
+            </button>
+          </div>
+
+          {/* Mode toggle */}
+          <button
+            className="tl-icon-btn"
+            type="button"
+            aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            onClick={toggleMode}
+          >
+            {mode === "dark" ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
+          </button>
+
+          <Link to="/preview/the-line/tools" className="tl-nav-cta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>{language === "vi" ? "Tạo bracket" : "Create bracket"}</span>
+          </Link>
+
+          {user ? (
+            <>
+              {/* Notification bell */}
+              <Link
+                to="/notifications"
+                className="tl-icon-btn tl-bell"
+                aria-label="Notifications"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span className="tl-bell-dot" aria-hidden="true" />
+              </Link>
+
+              {/* Avatar + dropdown */}
+              <div ref={avatarRef} style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  className="tl-avatar"
+                  aria-label="Account menu"
+                  aria-expanded={avatarOpen}
+                  onClick={() => setAvatarOpen((p) => !p)}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" />
+                  ) : (
+                    <span>{userInitial}</span>
+                  )}
+                </button>
+                {avatarOpen && (
+                  <div className="tl-dropdown" role="menu">
+                    <div className="tl-dropdown-head">
+                      <div className="name">{userName || "Signed in"}</div>
+                      <div className="email">{userEmail}</div>
+                    </div>
+                    <Link to="/account" onClick={() => setAvatarOpen(false)}>Account</Link>
+                    <Link to="/creator" onClick={() => setAvatarOpen(false)}>Creator dashboard</Link>
+                    <Link to="/admin" onClick={() => setAvatarOpen(false)}>Admin</Link>
+                    <div className="divider" />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setAvatarOpen(false);
+                        await signOut();
+                      }}
+                    >
+                      {language === "vi" ? "Đăng xuất" : "Sign out"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <Link to="/login" className="tl-nav-btn">
+              {language === "vi" ? "Đăng nhập" : "Sign in"}
+            </Link>
+          )}
+
+          {/* Mobile hamburger */}
+          <button
+            className="tl-icon-btn tl-menu-btn"
+            type="button"
+            aria-label="Open menu"
+            onClick={() => setMenuOpen(true)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      {/* Drawer */}
+      {menuOpen && (
+        <>
+          <div
+            className="tl-drawer-backdrop"
+            aria-hidden="true"
+            onClick={() => setMenuOpen(false)}
+          />
+          <aside className="tl-drawer" role="dialog" aria-label="Navigation menu">
+            <div className="tl-drawer-head">
+              <span className="tl-drawer-title">Menu</span>
+              <button
+                type="button"
+                className="tl-drawer-close"
+                aria-label="Close menu"
+                onClick={() => setMenuOpen(false)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M6 6l12 12M6 18L18 6" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={onSearch}>
+              <div className="tl-drawer-search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "var(--tl-fg-3)" }}>
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <input
+                  type="search"
+                  placeholder="Search players, events…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </form>
+
+            <div className="tl-drawer-nav">
+              <Link
+                to="/preview/the-line"
+                onClick={() => setMenuOpen(false)}
+                className={active === "home" ? "active" : ""}
+              >
+                <span>Home</span>
+                <span className="arr">→</span>
+              </Link>
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.key}
+                  to={item.to}
+                  onClick={() => setMenuOpen(false)}
+                  className={active === item.key ? "active" : ""}
+                >
+                  <span>{item.label}</span>
+                  <span className="arr">→</span>
+                </Link>
+              ))}
+              {user ? (
+                <>
+                  <Link to="/account" onClick={() => setMenuOpen(false)}>
+                    <span>{language === "vi" ? "Tài khoản" : "Account"}</span>
+                    <span className="arr">→</span>
+                  </Link>
+                  <Link to="/notifications" onClick={() => setMenuOpen(false)}>
+                    <span>{language === "vi" ? "Thông báo" : "Notifications"}</span>
+                    <span className="arr">→</span>
+                  </Link>
+                </>
+              ) : (
+                <Link to="/login" onClick={() => setMenuOpen(false)}>
+                  <span>{language === "vi" ? "Đăng nhập" : "Sign in"}</span>
+                  <span className="arr">→</span>
+                </Link>
+              )}
+            </div>
+
+            <div className="tl-drawer-foot">
+              <span className="tl-drawer-foot-label">
+                {language === "vi" ? "Ngôn ngữ" : "Language"}
+              </span>
+              <div className="tl-lang" style={{ display: "inline-flex" }}>
+                <button
+                  type="button"
+                  className={language === "en" ? "active" : ""}
+                  onClick={() => setLanguage("en")}
+                >
+                  EN
+                </button>
+                <span className="sep">|</span>
+                <button
+                  type="button"
+                  className={language === "vi" ? "active" : ""}
+                  onClick={() => setLanguage("vi")}
+                >
+                  VI
+                </button>
+              </div>
+            </div>
+
+            <div className="tl-drawer-foot" style={{ marginTop: 0, paddingTop: 14 }}>
+              <span className="tl-drawer-foot-label">
+                {language === "vi" ? "Giao diện" : "Appearance"}
+              </span>
+              <button className="tl-icon-btn" type="button" onClick={toggleMode} aria-label="Toggle mode">
+                {mode === "dark" ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {user && (
+              <button
+                type="button"
+                onClick={async () => { setMenuOpen(false); await signOut(); }}
+                style={{
+                  marginTop: 8, padding: "10px 12px", borderRadius: 8,
+                  background: "transparent", border: "1px solid var(--tl-border)",
+                  color: "var(--tl-fg-2)", font: "inherit", fontSize: 13.5,
+                  cursor: "pointer", textAlign: "left",
+                }}
+              >
+                {language === "vi" ? "Đăng xuất" : "Sign out"}
+              </button>
+            )}
+          </aside>
+        </>
+      )}
+
+      {children}
+
+      <footer className="tl-footer">
+        <div className="tl-shell">
+          <div className="tl-foot-grid">
+            <div className="tl-foot-brand">
+              <h3>
+                <em style={{ fontFamily: "inherit" }}>Pickle</em> Hub
+              </h3>
+              <p>
+                {language === "vi"
+                  ? "Đưa tin pickleball chuyên nghiệp toàn cầu. Trụ sở tại TP.HCM, tường thuật từ Austin, Naples, Barcelona, Singapore và nhiều thành phố khác."
+                  : "Global coverage of professional pickleball. Headquartered in Ho Chi Minh City, reporting from Austin, Naples, Barcelona, Singapore and elsewhere."}
+              </p>
+            </div>
+            <div className="tl-foot-col">
+              <h4>{language === "vi" ? "XEM" : "Watch"}</h4>
+              <ul>
+                <li><Link to="/preview/the-line/live">{language === "vi" ? "Sân trực tiếp" : "Live courts"}</Link></li>
+                <li><Link to="/preview/the-line/tournaments">{language === "vi" ? "Lịch thi đấu" : "Schedule"}</Link></li>
+              </ul>
+            </div>
+            <div className="tl-foot-col">
+              <h4>{language === "vi" ? "THI ĐẤU" : "Compete"}</h4>
+              <ul>
+                <li><Link to="/preview/the-line/tournaments">{language === "vi" ? "Giải đấu" : "Tournaments"}</Link></li>
+                <li><Link to="/preview/the-line/rankings">{language === "vi" ? "Bảng xếp hạng" : "Rankings"}</Link></li>
+                <li><Link to="/tools">{language === "vi" ? "Công cụ bracket" : "Bracket tools"}</Link></li>
+              </ul>
+            </div>
+            <div className="tl-foot-col">
+              <h4>{language === "vi" ? "ĐỌC" : "Read"}</h4>
+              <ul>
+                <li><Link to="/preview/the-line/blog">{language === "vi" ? "Bài viết" : "Stories"}</Link></li>
+                <li><Link to="/news">{language === "vi" ? "Tin tức" : "News"}</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="tl-foot-bottom">
+            <span>© 2026 The Pickle Hub · Ho Chi Minh City</span>
+            <div
+              className="tl-social"
+              role="group"
+              aria-label={language === "vi" ? "Mạng xã hội" : "Social channels"}
+            >
+              <a
+                href="https://www.facebook.com/ThePickleHub"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={language === "vi" ? "ThePickleHub trên Facebook" : "ThePickleHub on Facebook"}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M13.5 21v-8h2.7l.4-3.13H13.5V7.9c0-.9.25-1.52 1.55-1.52h1.66V3.57c-.29-.04-1.27-.12-2.42-.12-2.4 0-4.04 1.46-4.04 4.15v2.31H7.55V13h2.7v8h3.25z" />
+                </svg>
+              </a>
+              <a
+                href="https://www.instagram.com/thepicklehub"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={language === "vi" ? "ThePickleHub trên Instagram" : "ThePickleHub on Instagram"}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false">
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                </svg>
+              </a>
+              <a
+                href="https://www.youtube.com/@thepicklehub"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={language === "vi" ? "ThePickleHub trên YouTube" : "ThePickleHub on YouTube"}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M21.58 7.2a2.5 2.5 0 0 0-1.77-1.77C18.2 5 12 5 12 5s-6.2 0-7.81.43A2.5 2.5 0 0 0 2.42 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .42 4.8 2.5 2.5 0 0 0 1.77 1.77C5.8 19 12 19 12 19s6.2 0 7.81-.43a2.5 2.5 0 0 0 1.77-1.77A26 26 0 0 0 22 12a26 26 0 0 0-.42-4.8zM10 15V9l5.2 3L10 15z" />
+                </svg>
+              </a>
+            </div>
+            <span>
+              {language === "vi"
+                ? "Xem trước · Direction IV · Chưa phải thiết kế cuối"
+                : "Preview · Direction IV · Not final design"}
+            </span>
+          </div>
+        </div>
+      </footer>
+      </div>
+    </div>
+  );
+};
+
+export const formatDate = (iso: string | null | undefined): { d: string; m: string; full: string } => {
+  if (!iso) return { d: "—", m: "—", full: "" };
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return { d: "—", m: "—", full: "" };
+  return {
+    d: dt.getDate().toString().padStart(2, "0"),
+    m: dt.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    full: dt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+  };
+};
+
+export const formatTime = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return "";
+  return dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+};
+
+export const formatRelative = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  const dt = new Date(iso).getTime();
+  if (Number.isNaN(dt)) return "";
+  const diff = dt - Date.now();
+  const absMin = Math.abs(Math.round(diff / 60000));
+  if (absMin < 1) return "now";
+  if (absMin < 60) return diff > 0 ? `in ${absMin}m` : `${absMin}m ago`;
+  const hrs = Math.round(absMin / 60);
+  if (hrs < 24) return diff > 0 ? `in ${hrs}h` : `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  return diff > 0 ? `in ${days}d` : `${days}d ago`;
+};
