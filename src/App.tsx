@@ -165,14 +165,25 @@ class ChunkErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean; error: Error | null }
 > {
+  // REVIEW: counter reset delayed (was in componentDidMount, fired before child's
+  // lazy import attempt → defeated MAX_RELOADS cap → infinite reload loop on EN
+  // blog posts 2026-04-27). Now reset only after 5s of error-free mount.
+  private resetTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
   componentDidMount() {
-    // Mounted without an immediate chunk error = stale cache resolved. Reset the
-    // reload counter so a future chunk error (next deploy) gets the full retry budget.
-    try { sessionStorage.removeItem("chunk-reload-count"); } catch {}
+    // Defer reset — if a child's lazy import fails on mount, componentDidCatch
+    // fires before this timer and the counter is preserved so MAX_RELOADS holds.
+    // Only reset when no chunk error has fired for 5s = stale cache resolved.
+    this.resetTimer = setTimeout(() => {
+      try { sessionStorage.removeItem("chunk-reload-count"); } catch {}
+    }, 5000);
+  }
+  componentWillUnmount() {
+    if (this.resetTimer) clearTimeout(this.resetTimer);
   }
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
