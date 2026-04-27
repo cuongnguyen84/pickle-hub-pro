@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { usePublishedViBlogPosts, type ViBlogPost } from "@/hooks/useViBlogPosts";
 import { ArrowRight, ChevronRight } from "lucide-react";
+import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
+import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { useI18n } from "@/i18n";
 import { normalizeImageUrl } from "@/lib/url-utils";
 
@@ -20,7 +22,7 @@ type PostSummary = Pick<
   "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "tags"
 >;
 
-function ViBlogCard({ post }: { post: PostSummary }) {
+function ViBlogCard({ post, viewCount }: { post: PostSummary; viewCount?: number }) {
   const [imgFailed, setImgFailed] = useState(false);
   const catConfig = post.category ? CATEGORY_CONFIG[post.category] : null;
   const showImage = !!post.cover_image_url && !imgFailed;
@@ -80,10 +82,13 @@ function ViBlogCard({ post }: { post: PostSummary }) {
           </p>
         )}
 
-        {/* Read more */}
-        <div className="flex items-center gap-1 text-sm font-medium text-primary mt-3">
-          Đọc tiếp
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+        {/* Read more + view count */}
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center gap-1 text-sm font-medium text-primary">
+            Đọc tiếp
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          </div>
+          <ViewCountBadge count={viewCount} className="text-xs" />
         </div>
       </div>
     </Link>
@@ -92,6 +97,8 @@ function ViBlogCard({ post }: { post: PostSummary }) {
 
 export function ViHomeBlogSection() {
   const { data: posts, isLoading } = usePublishedViBlogPosts();
+  const viPairs = (posts ?? []).slice(0, 3).map((p) => ({ lang: "vi" as const, slug: p.slug }));
+  const viewCounts = useBlogPostViewCountsBatch(viPairs);
   const { language } = useI18n();
 
   if (isLoading || !posts || posts.length === 0) return null;
@@ -125,7 +132,11 @@ export function ViHomeBlogSection() {
         {/* Post cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {posts.slice(0, 3).map((post) => (
-            <ViBlogCard key={post.slug} post={post} />
+            <ViBlogCard
+              key={post.slug}
+              post={post}
+              viewCount={viewCounts[pairKey("vi", post.slug)]}
+            />
           ))}
         </div>
 

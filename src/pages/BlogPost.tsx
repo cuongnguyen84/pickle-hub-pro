@@ -5,6 +5,8 @@ import { getBlogPost, getRelatedPosts, type BlogPost as BlogPostType } from "@/c
 import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema, HowToSchema } from "@/components/seo";
 import { useViBlogAlternate } from "@/hooks/useViBlogAlternate";
 import { useTrackBlogView } from "@/hooks/useTrackBlogView";
+import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
+import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +43,7 @@ const BlogPost = () => {
 
   const { data: viSlug } = useViBlogAlternate(post?.slug);
   useTrackBlogView("en", post?.slug);
+  const { data: viewCount } = useBlogPostViewCount("en", post?.slug);
 
   // Loading state — show skeleton while post chunk downloads
   if (post === null) {
@@ -125,6 +128,7 @@ const BlogPost = () => {
                 Updated: {post.updatedDate}
               </time>
             </div>
+            <ViewCountBadge count={viewCount} />
             <div className="flex items-center gap-1.5">
               <Tag className="w-4 h-4" />
               {post.tags.map((tag) => (

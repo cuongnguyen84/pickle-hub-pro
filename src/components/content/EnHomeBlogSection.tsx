@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { blogMetadata, type BlogPostMetadata } from "@/content/blog";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { normalizeImageUrl } from "@/lib/url-utils";
+import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
+import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 
 // Tag color palette — same as Blog.tsx
 const TAG_COLORS = [
@@ -20,7 +22,7 @@ function getTagColor(tag: string): string {
   return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
 }
 
-function EnBlogCard({ post }: { post: BlogPostMetadata }) {
+function EnBlogCard({ post, viewCount }: { post: BlogPostMetadata; viewCount?: number }) {
   const [imgFailed, setImgFailed] = useState(false);
   const showImage = !!post.heroImage && !imgFailed;
 
@@ -65,10 +67,13 @@ function EnBlogCard({ post }: { post: BlogPostMetadata }) {
           {post.metaDescriptionEn}
         </p>
 
-        {/* Read more */}
-        <div className="flex items-center gap-1 text-sm font-medium text-primary mt-3">
-          Read more
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+        {/* Read more + view count */}
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center gap-1 text-sm font-medium text-primary">
+            Read more
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          </div>
+          <ViewCountBadge count={viewCount} className="text-xs" />
         </div>
       </div>
     </Link>
@@ -79,6 +84,9 @@ export function EnHomeBlogSection() {
   const posts = [...blogMetadata]
     .sort((a, b) => new Date(b.updatedDate).getTime() - new Date(a.updatedDate).getTime())
     .slice(0, 3);
+
+  const enPairs = posts.map((p) => ({ lang: "en" as const, slug: p.slug }));
+  const viewCounts = useBlogPostViewCountsBatch(enPairs);
 
   if (posts.length === 0) return null;
 
@@ -108,7 +116,11 @@ export function EnHomeBlogSection() {
         {/* Post cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {posts.map((post) => (
-            <EnBlogCard key={post.slug} post={post} />
+            <EnBlogCard
+              key={post.slug}
+              post={post}
+              viewCount={viewCounts[pairKey("en", post.slug)]}
+            />
           ))}
         </div>
 

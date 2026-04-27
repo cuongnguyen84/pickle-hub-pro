@@ -6,11 +6,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
 import { normalizeImageUrl, normalizeImagesInHtml } from "@/lib/url-utils";
 import { useTrackBlogView } from "@/hooks/useTrackBlogView";
+import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
+import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 
 const ViBlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading, error } = useViBlogPostBySlug(slug);
   useTrackBlogView("vi", slug);
+  const { data: viewCount } = useBlogPostViewCount("vi", slug);
 
   if (isLoading) {
     return (
@@ -88,6 +91,7 @@ const ViBlogPost = () => {
             </time>
           )}
           {post.author_name && <span>• {post.author_name}</span>}
+          <ViewCountBadge count={viewCount} />
         </div>
 
         {post.cover_image_url && (

@@ -6,6 +6,8 @@ import { DynamicMeta, HreflangTags, BreadcrumbSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Calendar, ArrowRight, Tag } from "lucide-react";
 import { normalizeImageUrl } from "@/lib/url-utils";
+import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
+import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 
 // Tag color palette
 const TAG_COLORS = [
@@ -24,7 +26,7 @@ function getTagColor(tag: string): string {
   return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
 }
 
-function OtherBlogCard({ post, language }: { post: BlogPostMetadata; language: string }) {
+function OtherBlogCard({ post, language, viewCount }: { post: BlogPostMetadata; language: string; viewCount?: number }) {
   const [imgFailed, setImgFailed] = useState(false);
   const title = language === "vi" ? post.titleVi : post.titleEn;
   const description = language === "vi" ? post.metaDescriptionVi : post.metaDescriptionEn;
@@ -82,6 +84,7 @@ function OtherBlogCard({ post, language }: { post: BlogPostMetadata; language: s
               year: "numeric", month: "short", day: "numeric"
             })}
           </time>
+          <ViewCountBadge count={viewCount} className="text-xs ml-auto" />
         </div>
         <h2 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
           {title}
@@ -112,6 +115,9 @@ const Blog = () => {
 
   // First post is featured
   const [featuredPost, ...otherPosts] = sortedPosts;
+
+  const enPairs = sortedPosts.map((p) => ({ lang: "en" as const, slug: p.slug }));
+  const viewCounts = useBlogPostViewCountsBatch(enPairs);
   const featuredTitle = featuredPost
     ? (language === "vi" ? featuredPost.titleVi : featuredPost.titleEn)
     : null;
@@ -195,6 +201,7 @@ const Blog = () => {
                         year: "numeric", month: "short", day: "numeric"
                       })}
                     </time>
+                    <ViewCountBadge count={viewCounts[pairKey("en", featuredPost.slug)]} className="text-xs" />
                   </div>
                   <div className="flex items-center gap-1 text-sm font-medium text-primary">
                     {language === "vi" ? "Đọc tiếp" : "Read more"}
@@ -209,7 +216,12 @@ const Blog = () => {
         {/* Other posts grid */}
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {otherPosts.map((post) => (
-            <OtherBlogCard key={post.slug} post={post} language={language} />
+            <OtherBlogCard
+              key={post.slug}
+              post={post}
+              language={language}
+              viewCount={viewCounts[pairKey("en", post.slug)]}
+            />
           ))}
         </div>
       </div>
