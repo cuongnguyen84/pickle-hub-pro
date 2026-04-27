@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTopBlogPosts } from "@/hooks/useTopBlogPosts";
 import { useQuery } from "@tanstack/react-query";
 import { subDays, format, eachDayOfInterval, parseISO } from "date-fns";
 import {
@@ -212,6 +213,9 @@ export default function AdminAnalytics() {
       };
     });
   }, [dailyRaw, startDate, endDate, days]);
+
+  // Top blog posts
+  const { data: topBlogPosts, isLoading: loadingTopBlog } = useTopBlogPosts(days);
 
   // Top content
   const { data: topContent, isLoading: loadingTop } = useQuery<TopContentRow[]>({
@@ -471,6 +475,63 @@ export default function AdminAnalytics() {
                         </td>
                         <td className="px-5 py-2.5 text-right font-medium tabular-nums">
                           {row.view_count.toLocaleString("vi-VN")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top blog posts table */}
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-5">
+            <CardTitle className="text-sm font-medium">
+              Bài blog xem nhiều nhất
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 pb-2">
+            {loadingTopBlog ? (
+              <div className="px-5 space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </div>
+            ) : !topBlogPosts || topBlogPosts.length === 0 ? (
+              <p className="text-sm text-muted-foreground px-5 py-4 text-center">
+                Chưa có dữ liệu trong kỳ này
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left text-xs text-muted-foreground font-medium px-5 py-2">#</th>
+                      <th className="text-left text-xs text-muted-foreground font-medium px-3 py-2">Lang</th>
+                      <th className="text-left text-xs text-muted-foreground font-medium px-3 py-2">Slug</th>
+                      <th className="text-right text-xs text-muted-foreground font-medium px-3 py-2">Lượt xem</th>
+                      <th className="text-right text-xs text-muted-foreground font-medium px-5 py-2">Unique</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topBlogPosts.map((row, idx) => (
+                      <tr key={`${row.lang}-${row.slug}`} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
+                        <td className="px-5 py-2.5 text-muted-foreground tabular-nums">{idx + 1}</td>
+                        <td className="px-3 py-2.5">
+                          <span className="inline-flex items-center gap-1 text-xs bg-muted rounded px-2 py-0.5 uppercase font-medium">
+                            {row.lang}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground max-w-[220px] truncate">
+                          {row.slug}
+                        </td>
+                        <td className="px-3 py-2.5 text-right font-medium tabular-nums">
+                          {Number(row.total_views).toLocaleString("vi-VN")}
+                        </td>
+                        <td className="px-5 py-2.5 text-right tabular-nums text-muted-foreground">
+                          {Number(row.unique_viewers).toLocaleString("vi-VN")}
                         </td>
                       </tr>
                     ))}

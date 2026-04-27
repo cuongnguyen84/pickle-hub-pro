@@ -31,9 +31,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, ExternalLink, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Search, Eye } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -52,6 +53,9 @@ export default function AdminViBlog() {
     if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  const viPairs = filtered.map((p) => ({ lang: "vi" as const, slug: p.slug }));
+  const viewCounts = useBlogPostViewCountsBatch(viPairs);
 
   const handleDelete = (id: string) => {
     deleteMutation.mutate(id, {
@@ -116,6 +120,7 @@ export default function AdminViBlog() {
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className="hidden md:table-cell">Danh mục</TableHead>
                   <TableHead className="hidden md:table-cell">Ngày đăng</TableHead>
+                  <TableHead className="hidden md:table-cell text-right">Lượt xem</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -138,6 +143,12 @@ export default function AdminViBlog() {
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
                       {post.published_at ? new Date(post.published_at).toLocaleDateString("vi-VN") : "—"}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-right tabular-nums text-muted-foreground text-sm">
+                      <span className="inline-flex items-center gap-1 justify-end">
+                        <Eye className="w-3.5 h-3.5" />
+                        {viewCounts[pairKey("vi", post.slug)]?.toLocaleString("vi-VN") ?? "—"}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
