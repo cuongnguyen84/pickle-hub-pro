@@ -18,6 +18,8 @@ import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
+// Legacy homepage — accessible at /legacy for 14-day rollback (REMOVE 2026-05-09)
+const IndexLegacy = lazy(() => import("./pages/Index.legacy"));
 import RequireAuth from "@/components/auth/RequireAuth";
 import ConditionalAuth from "@/components/auth/ConditionalAuth";
 
@@ -368,6 +370,8 @@ const App = () => (
                     {/* Embed routes - no layout, minimal UI */}
                     <Route path="/embed/live/:id" element={<EmbedLive />} />
                     <Route path="/embed/video/:id" element={<EmbedVideo />} />
+                    {/* Legacy homepage — rollback fallback (REMOVE 2026-05-09) */}
+                    <Route path="/legacy" element={<IndexLegacy />} />
                     {/* Preview routes - design direction exploration, noindex */}
                     <Route path="/preview/the-line" element={<PreviewTheLine />} />
                     <Route path="/preview/the-line/live" element={<PreviewLiveList />} />
