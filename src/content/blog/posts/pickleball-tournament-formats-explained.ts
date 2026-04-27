@@ -27,6 +27,9 @@ const post: BlogPost = {
             "Pros: Everyone plays multiple matches. Most fair format for determining the best player. Great player satisfaction.",
             "Cons: Time-intensive for large groups. A 6-player group needs 15 matches. Not as exciting for spectators as elimination.",
             "Tip: Groups of 4-5 players are optimal. Add playoffs after round robin for a dramatic finish."
+          ],
+          internalLinks: [
+            { text: "Step-by-step: Round Robin Generator guide", path: "/blog/pickleball-round-robin-generator-guide" }
           ]
         },
         {
@@ -60,6 +63,10 @@ const post: BlogPost = {
             "Pros: Adds team strategy and lineup management. Creates camaraderie and team spirit. Exciting format for spectators.",
             "Cons: Requires balanced teams (mix of genders and skill levels). More complex to organize. Needs more matches per round.",
             "Tip: Use game templates to define the match order (e.g., Men's doubles → Women's doubles → Mixed → Dreambreaker)."
+          ],
+          internalLinks: [
+            { text: "Deep dive: MLP Format Explained", path: "/blog/mlp-format-explained" },
+            { text: "Rally scoring rules (used in MLP)", path: "/blog/pickleball-scoring-rules-guide" }
           ]
         },
         {
@@ -82,6 +89,11 @@ const post: BlogPost = {
             "Double Elimination → Second chance, 8-64 teams, 3-6 hours, high fairness, high excitement.",
             "Team Match → Team-based, 4-16 teams, 3-5 hours, medium fairness, very high excitement.",
             "Flex → Custom, any size, varies, depends on design, depends on design."
+          ],
+          internalLinks: [
+            { text: "Free Pickleball Bracket Generator (all formats)", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "How to organize a pickleball tournament end-to-end", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "Tournament Organizer Hub — formats, brackets, scoring & livestream in one workflow", path: "/blog/tournament-organizer-hub" }
           ]
         }
       ]
@@ -104,6 +116,9 @@ const post: BlogPost = {
             "Ưu: Ai cũng chơi nhiều trận. Công bằng nhất. Người chơi hài lòng.",
             "Nhược: Tốn thời gian cho bảng lớn. 6 người cần 15 trận. Không hấp dẫn khán giả bằng loại trực tiếp.",
             "Mẹo: Bảng 4-5 người tối ưu. Thêm playoff sau vòng tròn cho kết thúc kịch tính."
+          ],
+          internalLinks: [
+            { text: "Hướng dẫn: Công cụ tạo vòng tròn (Round Robin Generator)", path: "/blog/pickleball-round-robin-generator-guide" }
           ]
         },
         {
@@ -137,6 +152,10 @@ const post: BlogPost = {
             "Ưu: Thêm chiến thuật đội và quản lý lineup. Tạo tinh thần đồng đội. Hấp dẫn khán giả.",
             "Nhược: Cần đội cân bằng. Phức tạp hơn để tổ chức. Cần nhiều trận/vòng.",
             "Mẹo: Dùng game templates để định nghĩa thứ tự trận."
+          ],
+          internalLinks: [
+            { text: "Tìm hiểu sâu: Thể thức MLP giải thích", path: "/blog/mlp-format-explained" },
+            { text: "Luật rally scoring (dùng trong MLP)", path: "/blog/pickleball-scoring-rules-guide" }
           ]
         },
         {
@@ -159,6 +178,11 @@ const post: BlogPost = {
             "Loại kép → Cơ hội 2, 8-64 đội, 3-6 giờ, rất công bằng, rất hấp dẫn.",
             "Team Match → Đồng đội, 4-16 đội, 3-5 giờ, công bằng trung bình, cực hấp dẫn.",
             "Flex → Tùy chỉnh, mọi kích thước, tùy thiết kế."
+          ],
+          internalLinks: [
+            { text: "Tạo Bracket Pickleball miễn phí (mọi thể thức)", path: "/blog/free-pickleball-bracket-generator" },
+            { text: "Cách tổ chức giải pickleball từ A-Z", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "Hub Tổ chức giải Pickleball — thể thức, bracket, chấm điểm & livestream", path: "/blog/tournament-organizer-hub" }
           ]
         }
       ]

@@ -13,6 +13,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Play, Radio, Trophy, Users, Tv, Calendar, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { DynamicMeta, HreflangTags, OrganizationSchema } from "@/components/seo";
+import { useHomepageStats } from "@/hooks/useHomepageStats";
+import { PPA_ASIA_STOPS } from "@/lib/constants";
 
 const OpenRegistrationSection = lazy(() => import("@/components/quicktable/OpenRegistrationSection").then(m => ({ default: m.OpenRegistrationSection })));
 const NewsCard = lazy(() => import("@/components/news/NewsCard").then(m => ({ default: m.NewsCard })));
@@ -28,6 +30,11 @@ const Index = () => {
   const { data: videos = [], isLoading: videosLoading } = useVideos({ limit: 8 });
   const { data: featuredNews = [] } = useFeaturedNews(3);
   const { data: allTournaments = [] } = useTournaments();
+  const { data: homepageStats } = useHomepageStats();
+  const totalUsers = homepageStats?.total_users ?? 0;
+  const totalTournaments = homepageStats?.total_tournaments ?? 0;
+  const formatStat = (n: number) =>
+    new Intl.NumberFormat(language === "vi" ? "vi-VN" : "en-US").format(n);
 
   // Tournaments for homepage section — prioritize upcoming/ongoing, fallback to recent ended
   const activeTournaments = allTournaments.filter((t) => t.status === "upcoming" || t.status === "ongoing");
@@ -64,10 +71,10 @@ const Index = () => {
     <MainLayout>
       {/* SEO Meta Tags */}
       <DynamicMeta
-        title="Pickleball Tournaments, Livestream & Community"
+        title="Pickleball Tournaments, Livestream & News — Built for Asia"
         description={language === 'vi' ?
-        "ThePickleHub là nền tảng pickleball toàn cầu với livestream trực tiếp các giải đấu, bracket chia bảng thông minh, và cộng đồng pickleball sôi động. Xem livestream, theo dõi giải đấu và kết nối ngay!" :
-        "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant pickleball community. Watch livestreams, follow tournaments, and connect now!"
+        "Nền tảng pickleball song ngữ duy nhất xây cho châu Á. Giải đấu, livestream và tin tức bằng tiếng Việt và tiếng Anh — miễn phí cho BTC và người chơi." :
+        "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players."
         }
       />
       <HreflangTags enPath="/" viPath="/vi" />
@@ -192,21 +199,21 @@ const Index = () => {
             <div className="glass-card py-4 px-3 md:py-5 md:px-6 text-center">
               <div className="flex items-center justify-center gap-1.5 md:gap-2">
                 <span className="text-base md:text-xl">👥</span>
-                <span className="text-lg md:text-2xl font-bold text-foreground">1,669</span>
+                <span className="text-lg md:text-2xl font-bold text-foreground">{formatStat(totalUsers)}</span>
               </div>
               <div className="text-[10px] md:text-xs text-foreground-muted uppercase tracking-wider mt-1">{language === 'vi' ? 'Người chơi' : 'Players'}</div>
             </div>
             <div className="glass-card py-4 px-3 md:py-5 md:px-6 text-center">
               <div className="flex items-center justify-center gap-1.5 md:gap-2">
                 <span className="text-base md:text-xl">🏆</span>
-                <span className="text-lg md:text-2xl font-bold text-foreground">156</span>
+                <span className="text-lg md:text-2xl font-bold text-foreground">{formatStat(totalTournaments)}</span>
               </div>
               <div className="text-[10px] md:text-xs text-foreground-muted uppercase tracking-wider mt-1">{language === 'vi' ? 'Giải đấu' : 'Tournaments'}</div>
             </div>
             <div className="glass-card py-4 px-3 md:py-5 md:px-6 text-center">
               <div className="flex items-center justify-center gap-1.5 md:gap-2">
                 <span className="text-base md:text-xl">🌏</span>
-                <span className="text-lg md:text-2xl font-bold text-foreground">10</span>
+                <span className="text-lg md:text-2xl font-bold text-foreground">{PPA_ASIA_STOPS}</span>
               </div>
               <div className="text-[10px] md:text-xs text-foreground-muted uppercase tracking-wider mt-1">{language === 'vi' ? 'Điểm PPA Asia' : 'PPA Asia Stops'}</div>
             </div>
@@ -442,7 +449,24 @@ const Index = () => {
       <footer className="container-wide py-8 border-t border-border">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-foreground-muted">
           <p>©{new Date().getFullYear()} ThePickleHub – Pickleball Tournaments, Livestream & Community</p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            {/* Product Hunt badge — ThePickleHub launched 2026-04-21.
+                Uses inline SVG logo instead of PH embed-image endpoint because
+                PH's image endpoint requires a numeric post_id (not exposed via
+                the product-page share URL we received). This keeps the badge
+                self-contained, zero network, and lets us control styling. */}
+            <a
+              href="https://www.producthunt.com/products/thepicklehub?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-thepicklehub"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ThePickleHub on Product Hunt"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#da552f]/10 border border-[#da552f]/30 text-xs font-medium text-[#da552f] hover:bg-[#da552f]/20 transition-colors"
+            >
+              <svg viewBox="0 0 40 40" width="14" height="14" aria-hidden="true" fill="currentColor">
+                <path d="M20 40C31.046 40 40 31.046 40 20S31.046 0 20 0 0 8.954 0 20s8.954 20 20 20Zm-3-22h6a4 4 0 0 0 0-8h-6v8Zm0 4v10h-4V10h10a8 8 0 1 1 0 16h-6Z" />
+              </svg>
+              <span>Featured on Product Hunt</span>
+            </a>
             <a href="/terms" className="hover:text-foreground transition-colors">
               {t.terms.title.replace(" – The Pickle Hub", "")}
             </a>

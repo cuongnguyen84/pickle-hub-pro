@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
+import { usePublishedViBlogPosts, type ViBlogPost } from "@/hooks/useViBlogPosts";
 import { ArrowRight, ChevronRight } from "lucide-react";
+import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
+import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { useI18n } from "@/i18n";
+import { normalizeImageUrl } from "@/lib/url-utils";
 
 // Category badge config — matches vi_blog_posts.category values
 const CATEGORY_CONFIG: Record<string, { label: string; className: string }> = {
@@ -13,8 +17,88 @@ const CATEGORY_CONFIG: Record<string, { label: string; className: string }> = {
   tips: { label: "MẸO HAY", className: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20" },
 };
 
+type PostSummary = Pick<
+  ViBlogPost,
+  "id" | "slug" | "title" | "excerpt" | "cover_image_url" | "category" | "published_at" | "tags"
+>;
+
+function ViBlogCard({ post, viewCount }: { post: PostSummary; viewCount?: number }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const catConfig = post.category ? CATEGORY_CONFIG[post.category] : null;
+  const showImage = !!post.cover_image_url && !imgFailed;
+
+  return (
+    <Link
+      to={`/vi/blog/${post.slug}`}
+      hrefLang="vi"
+      className="group block rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-primary/30 transition-all duration-200 overflow-hidden"
+    >
+      {/* Thumbnail */}
+      {showImage ? (
+        <div className="relative h-36 overflow-hidden">
+          <img
+            src={normalizeImageUrl(post.cover_image_url!)}
+            alt={post.title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          {catConfig && (
+            <div className="absolute bottom-2 left-2">
+              <span
+                className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border backdrop-blur-sm ${catConfig.className}`}
+              >
+                {catConfig.label}
+              </span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="relative h-36 bg-gradient-to-br from-primary/20 to-emerald-500/10 flex items-center justify-center">
+          <span className="text-4xl opacity-20">🇻🇳</span>
+          {catConfig && (
+            <div className="absolute bottom-2 left-2">
+              <span
+                className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${catConfig.className}`}
+              >
+                {catConfig.label}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="p-4">
+        {/* Title */}
+        <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+          {post.title}
+        </h3>
+
+        {/* Excerpt */}
+        {post.excerpt && (
+          <p className="text-sm text-foreground-secondary mt-2 line-clamp-2">
+            {post.excerpt}
+          </p>
+        )}
+
+        {/* Read more + view count */}
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center gap-1 text-sm font-medium text-primary">
+            Đọc tiếp
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          </div>
+          <ViewCountBadge count={viewCount} className="text-xs" />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export function ViHomeBlogSection() {
   const { data: posts, isLoading } = usePublishedViBlogPosts();
+  const viPairs = (posts ?? []).slice(0, 3).map((p) => ({ lang: "vi" as const, slug: p.slug }));
+  const viewCounts = useBlogPostViewCountsBatch(viPairs);
   const { language } = useI18n();
 
   if (isLoading || !posts || posts.length === 0) return null;
@@ -47,42 +131,13 @@ export function ViHomeBlogSection() {
 
         {/* Post cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {posts.slice(0, 3).map((post) => {
-            const catConfig = post.category ? CATEGORY_CONFIG[post.category] : null;
-            return (
-              <Link
-                key={post.slug}
-                to={`/vi/blog/${post.slug}`}
-                hrefLang="vi"
-                className="group block p-4 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-primary/30 transition-all duration-200"
-              >
-                {/* Category badge */}
-                {catConfig && (
-                  <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border mb-3 ${catConfig.className}`}>
-                    {catConfig.label}
-                  </span>
-                )}
-
-                {/* Title */}
-                <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                  {post.title}
-                </h3>
-
-                {/* Excerpt */}
-                {post.excerpt && (
-                  <p className="text-sm text-foreground-secondary mt-2 line-clamp-2">
-                    {post.excerpt}
-                  </p>
-                )}
-
-                {/* Read more */}
-                <div className="flex items-center gap-1 text-sm font-medium text-primary mt-3">
-                  Đọc tiếp
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
-            );
-          })}
+          {posts.slice(0, 3).map((post) => (
+            <ViBlogCard
+              key={post.slug}
+              post={post}
+              viewCount={viewCounts[pairKey("vi", post.slug)]}
+            />
+          ))}
         </div>
 
         {/* Mobile "View all" */}

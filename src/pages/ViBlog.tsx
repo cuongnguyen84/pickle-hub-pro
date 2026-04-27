@@ -3,9 +3,12 @@ import { DynamicMeta, HreflangTags, BreadcrumbSchema } from "@/components/seo";
 import MainLayout from "@/components/layout/MainLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ViBlogCard } from "@/components/content/ViBlogCard";
+import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
 
 const ViBlog = () => {
   const { data: posts, isLoading } = usePublishedViBlogPosts();
+  const viPairs = (posts ?? []).map((p) => ({ lang: "vi" as const, slug: p.slug }));
+  const viewCounts = useBlogPostViewCountsBatch(viPairs);
 
   const breadcrumbItems = [
     { name: "Trang chủ", url: "https://www.thepicklehub.net/vi" },
@@ -40,7 +43,11 @@ const ViBlog = () => {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
-              <ViBlogCard key={post.slug} post={post} />
+              <ViBlogCard
+                key={post.slug}
+                post={post}
+                viewCount={viewCounts[pairKey("vi", post.slug)]}
+              />
             ))}
           </div>
         )}

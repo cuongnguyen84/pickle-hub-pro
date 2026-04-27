@@ -36,8 +36,8 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     ? `<h2>Pickleball in Vietnam</h2><p>Vietnamese pickleball content from our local team:</p><ul>${viBlogItems}</ul><p><a href="${siteUrl}/vi" hreflang="vi">Visit Vietnamese site</a></p>`
     : "";
 
-  const title = "ThePickleHub - Pickleball Tournaments, Livestream & Community";
-  const description = "ThePickleHub is a global pickleball platform with live tournament streaming, smart bracket tools, and a vibrant community. Watch livestreams, follow tournaments, and connect now!";
+  const title = "ThePickleHub - Pickleball Tournaments, Livestream & News — Built for Asia";
+  const description = "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.";
 
   return htmlResponse(buildHtml({
     title,
@@ -78,8 +78,8 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
   const blogSection = blogItems ? `<h2>Bài viết mới nhất</h2><ul>${blogItems}</ul><p><a href="${siteUrl}/vi/blog">Xem tất cả bài viết</a></p>` : "";
 
   return htmlResponse(buildHtml({
-    title: "ThePickleHub - Cộng đồng Pickleball Việt Nam",
-    description: "Nền tảng pickleball hàng đầu Việt Nam: giải đấu PPA Tour Asia, livestream trực tiếp, công cụ tạo bracket miễn phí và cộng đồng sôi động cho mọi trình độ.",
+    title: "ThePickleHub - Giải đấu Pickleball, Livestream & Tin tức — Xây cho Châu Á",
+    description: "Nền tảng pickleball song ngữ duy nhất xây cho châu Á. Giải đấu, livestream và tin tức bằng tiếng Việt và tiếng Anh — miễn phí cho BTC và người chơi.",
     url: `${siteUrl}/vi`,
     siteUrl,
     lang: "vi",
@@ -533,7 +533,13 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
 
 // ─── Blog ─────────────────────��───────────────────────────
 
+// Prerender metadata for bot-rendered EN blog posts. MUST stay in sync with
+// src/content/blog/posts/*.ts + src/content/blog/metadata.ts — if a slug is
+// missing here, Googlebot/Bingbot get a 404 even though the React app renders
+// fine for humans, and the URL cannot be indexed (verified 2026-04-23 with
+// the world-cup-pickleball-2026-da-nang post).
 const BLOG_POST_META: Record<string, { title: string; description: string }> = {
+  "pickleball-world-cup-2026-da-nang": { title: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch", description: "Pickleball World Cup 2026 comes to Da Nang, Vietnam (Aug 30 – Sep 6). Up to 80 nations and 4,000 athletes. Dates, venues, format, Vietnam team — complete guide." },
   "how-to-watch-ppa-tour-live-2026": { title: "How to Watch PPA Tour Live 2026 | Streaming Platforms, Schedules & Free Options", description: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS Sports, ESPN, and Fox Sports. Free YouTube highlights and ThePickleHub's free tournament livestreams included." },
   "ppa-tour-asia-2026-complete-guide": { title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play", description: "Complete guide to PPA Tour Asia 2026 — all 10 tournament stops across Vietnam, Japan, Korea, Thailand & more. Schedule, prize money, registration, and how to watch live." },
   "best-pickleball-tournament-software-2026": { title: "Best Pickleball Tournament Software 2026", description: "Compare the best pickleball tournament software in 2026. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required." },
@@ -547,6 +553,9 @@ const BLOG_POST_META: Record<string, { title: string; description: string }> = {
   "mlp-format-explained": { title: "MLP Format Explained 2026 | Major League Pickleball", description: "Learn how the MLP format works in pickleball. Complete guide to Major League Pickleball team match rules, dreambreaker, lineup strategy." },
   "free-pickleball-bracket-generator": { title: "Free Pickleball Bracket Generator 2026", description: "Create free pickleball tournament brackets instantly. Round robin, single elimination, and double elimination bracket generator with real-time scoring." },
   "pickleball-bracket-templates": { title: "Pickleball Bracket Templates 2026 | Free Download", description: "Free pickleball bracket templates for round robin, single elimination, and double elimination. Templates for 4, 8, 16, 32, and 64 players." },
+  "pickleball-rules-complete-guide": { title: "Pickleball Rules 2026 | Complete Guide with Asia's Hardest Calls Explained", description: "The complete 2026 Pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus: the 5 calls that start fights in Asian tournaments — and how to settle them." },
+  "tournament-organizer-hub": { title: "Pickleball Tournament Organizer Hub | Formats, Brackets, Tools 2026", description: "The complete hub for pickleball tournament organizers in 2026. Choose a format, build a bracket, manage scoring, livestream matches, and compare free software — all linked from one page." },
+  "how-to-play-pickleball": { title: "How to Play Pickleball | 7-Day Beginner Plan Tested in Vietnam", description: "How to play pickleball as a beginner: gear to buy, correct grip, 6 core shots, and a 7-day practice plan that took 200+ Vietnamese players from zero to playing their first real match." },
 };
 
 export function renderBlogPost(slug: string, siteUrl: string): Response {

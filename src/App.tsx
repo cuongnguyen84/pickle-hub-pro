@@ -120,6 +120,7 @@ const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const AdminViBlog = lazy(() => import("./pages/admin/AdminViBlog"));
 const AdminViBlogEditor = lazy(() => import("./pages/admin/AdminViBlogEditor"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 
 // Lazy load creator pages
 const CreatorOverview = lazy(() => import("./pages/creator/CreatorOverview"));
@@ -178,9 +179,25 @@ class ChunkErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean; error: Error | null }
 > {
+  // REVIEW: counter reset delayed (was in componentDidMount, fired before child's
+  // lazy import attempt → defeated MAX_RELOADS cap → infinite reload loop on EN
+  // blog posts 2026-04-27). Now reset only after 5s of error-free mount.
+  private resetTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null };
+  }
+  componentDidMount() {
+    // Defer reset — if a child's lazy import fails on mount, componentDidCatch
+    // fires before this timer and the counter is preserved so MAX_RELOADS holds.
+    // Only reset when no chunk error has fired for 5s = stale cache resolved.
+    this.resetTimer = setTimeout(() => {
+      try { sessionStorage.removeItem("chunk-reload-count"); } catch {}
+    }, 5000);
+  }
+  componentWillUnmount() {
+    if (this.resetTimer) clearTimeout(this.resetTimer);
   }
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
@@ -192,6 +209,23 @@ class ChunkErrorBoundary extends Component<
       error.message.includes("ChunkLoadError");
     console.error("[ChunkErrorBoundary] Caught error:", error.message, error.stack);
     if (isChunkError) {
+      // Safety: cap reloads so stale SW cache doesn't cause infinite reload loop.
+      // Repro: SW caches old index.html → new chunk 404 → boundary reload → SW serves
+      // same stale HTML → chunk 404 again → loop. Without this guard the admin dashboard
+      // was unreachable on 2026-04-23 after a chunk-name change.
+      const KEY = "chunk-reload-count";
+      const MAX_RELOADS = 2;
+      try {
+        const count = Number(sessionStorage.getItem(KEY) || "0");
+        if (count >= MAX_RELOADS) {
+          sessionStorage.removeItem(KEY);
+          // Let the error UI render instead of reloading again.
+          return;
+        }
+        sessionStorage.setItem(KEY, String(count + 1));
+      } catch {
+        // sessionStorage may be disabled (private mode, quota) — fall through to reload once.
+      }
       window.location.reload();
     }
   }
@@ -362,6 +396,7 @@ const App = () => (
                     <Route path="/admin/vi-blog" element={<AdminViBlog />} />
                     <Route path="/admin/vi-blog/new" element={<AdminViBlogEditor />} />
                     <Route path="/admin/vi-blog/:id/edit" element={<AdminViBlogEditor />} />
+                    <Route path="/admin/analytics" element={<AdminAnalytics />} />
                     {/* Creator routes */}
                     <Route path="/creator" element={<CreatorOverview />} />
                     <Route path="/creator/analytics" element={<CreatorAnalytics />} />

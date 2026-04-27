@@ -53,7 +53,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
   const TODAY = new Date().toISOString().slice(0, 10);
 
-  // EN blog post slugs (static — kept in sync with src/lib/blog-data.ts)
+  // EN blog post slugs (static — kept in sync with src/content/blog/metadata.ts)
   const EN_BLOG_SLUGS = [
     "how-to-watch-ppa-tour-live-2026",
     "ppa-tour-asia-2026-complete-guide",
@@ -69,6 +69,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     "free-pickleball-bracket-generator",
     "pickleball-bracket-templates",
     "pickleball-rules-complete-guide",
+    "pickleball-world-cup-2026-da-nang",
+    "tournament-organizer-hub",
+    "how-to-play-pickleball",
   ];
 
   const bilingual = (enPath: string, viPath: string) => [

@@ -357,7 +357,7 @@ export const en: Translations = {
       cta: "Explore Tournaments",
       badge: "PPA TOUR ASIA 2026",
       mainTitle: "Pickleball Is Taking Over Asia",
-      mainDescription: "Watch live tournaments, follow brackets in real-time, and connect with the fastest-growing pickleball community.",
+      mainDescription: "Run bilingual tournaments, livestream matches, and follow pickleball news — the only platform built for Asia.",
     },
     sections: {
       liveNow: "Live now",

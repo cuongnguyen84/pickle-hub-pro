@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Calendar, ArrowRight } from "lucide-react";
 import { normalizeImageUrl } from "@/lib/url-utils";
+import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 
 interface ViBlogCardPost {
   slug: string;
@@ -13,9 +14,10 @@ interface ViBlogCardPost {
 
 interface ViBlogCardProps {
   post: ViBlogCardPost;
+  viewCount?: number;
 }
 
-export function ViBlogCard({ post }: ViBlogCardProps) {
+export function ViBlogCard({ post, viewCount }: ViBlogCardProps) {
   return (
     <Link
       to={`/vi/blog/${post.slug}`}
@@ -39,6 +41,7 @@ export function ViBlogCard({ post }: ViBlogCardProps) {
         {post.category && (
           <span className="bg-muted px-2 py-0.5 rounded text-xs">{post.category}</span>
         )}
+        <ViewCountBadge count={viewCount} className="text-xs ml-auto" />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
         {post.title}

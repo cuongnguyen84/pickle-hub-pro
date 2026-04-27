@@ -10,6 +10,60 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "how-to-play-pickleball",
+    publishedDate: "2026-04-26",
+    updatedDate: "2026-04-26",
+    author: "Cuong Nguyen",
+    tags: ["how to play pickleball", "beginner", "pickleball technique", "dink", "third shot drop", "asia"],
+    ctaPath: "/tools/quick-tables",
+    ctaLabel: { en: "Run Your First Game", vi: "Chấm điểm trận đầu tiên" },
+    heroImage: {
+      src: "/images/blog/how-to-play-pickleball-hero.webp",
+      alt: "How to play pickleball — beginner-friendly 7-day plan covering gear, grip, six core shots, and doubles strategy, taught to 200+ Vietnamese players in Hanoi and Ho Chi Minh City"
+    },
+    titleEn: "How to Play Pickleball: 7-Day Beginner Plan (Tested with 200+ Players in Vietnam)",
+    titleVi: "Cách chơi Pickleball cho người mới: Lộ trình 7 ngày từ 0 đến đánh được",
+    metaTitleEn: "How to Play Pickleball | 7-Day Beginner Plan Tested in Vietnam",
+    metaTitleVi: "Cách chơi Pickleball cho người mới | Lộ trình 7 ngày từ 0",
+    metaDescriptionEn: "How to play pickleball as a beginner: gear to buy, correct grip, 6 core shots, and a 7-day practice plan that took 200+ Vietnamese players from zero to playing their first real match.",
+    metaDescriptionVi: "Hướng dẫn cách chơi Pickleball cho người mới từ A đến Z: dụng cụ cần mua, kỹ thuật cơ bản, lộ trình 7 ngày tập luyện, lỗi thường gặp. Bắt đầu chơi tự tin sau 1 tuần.",
+  },  {
+    slug: "tournament-organizer-hub",
+    publishedDate: "2026-04-25",
+    updatedDate: "2026-04-25",
+    author: "The PickleHub Team",
+    tags: ["organize", "tournament", "hub", "guide", "directory"],
+    ctaPath: "/tools",
+    ctaLabel: { en: "Open Free Tournament Tools", vi: "Mở công cụ tổ chức miễn phí" },
+    heroImage: {
+      src: "/images/blog/tournament-organizer-hub-hero.webp",
+      alt: "Pickleball tournament organizer hub — workflow from format selection through bracket generation, scoring, livestream, and software comparison"
+    },
+    titleEn: "Pickleball Tournament Organizer Hub — Every Guide, Tool & Format in One Place",
+    titleVi: "Hub Tổ chức giải Pickleball — Mọi hướng dẫn, công cụ và thể thức trong một trang",
+    metaTitleEn: "Pickleball Tournament Organizer Hub | Formats, Brackets, Tools 2026",
+    metaTitleVi: "Hub Tổ chức giải Pickleball | Thể thức, Bracket, Công cụ 2026",
+    metaDescriptionEn: "The complete hub for pickleball tournament organizers in 2026. Choose a format, build a bracket, manage scoring, livestream matches, and compare free software — all linked from one page.",
+    metaDescriptionVi: "Hub đầy đủ cho ban tổ chức giải pickleball 2026. Chọn thể thức, tạo bracket, quản lý điểm, livestream và so sánh phần mềm miễn phí — tất cả liên kết trong một trang.",
+  },  {
+    slug: "pickleball-world-cup-2026-da-nang",
+    publishedDate: "2026-04-23",
+    updatedDate: "2026-04-23",
+    author: "The PickleHub Team",
+    tags: ["world cup pickleball", "da nang", "vietnam", "tournament", "asia", "2026", "guide"],
+    ctaPath: "/tournaments",
+    ctaLabel: { en: "Browse Tournaments", vi: "Xem các giải đấu" },
+    heroImage: {
+      src: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp",
+      alt: "Pickleball World Cup 2026 in Da Nang, Vietnam — Aug 30 to Sep 6, 2026, Tien Son Sports Palace, ~80 countries and 4,000 athletes"
+    },
+    titleEn: "Pickleball World Cup 2026 in Da Nang, Vietnam — Complete Guide",
+    titleVi: "World Cup Pickleball 2026 tại Đà Nẵng — Hướng dẫn đầy đủ",
+    metaTitleEn: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch",
+    metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Lịch thi đấu, Đội tuyển, Cách xem",
+    metaDescriptionEn: "Pickleball World Cup 2026 comes to Da Nang, Vietnam (Aug 30 – Sep 6). Up to 80 nations and 4,000 athletes. Dates, venues, format, Vietnam team — complete guide.",
+    metaDescriptionVi: "Đà Nẵng đăng cai World Cup Pickleball 2026 từ 30/8 – 6/9. Gần 80 quốc gia, 4.000 VĐV. Lịch thi đấu, địa điểm, đội tuyển Việt Nam — thông tin đầy đủ.",
+  },  {
     slug: "best-pickleball-tournament-software-2026",
     publishedDate: "2025-12-15",
     updatedDate: "2026-03-27",

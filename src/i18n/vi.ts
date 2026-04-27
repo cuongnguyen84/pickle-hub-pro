@@ -2086,7 +2086,7 @@ export const vi: Translations = {
       cta: "Khám phá giải đấu",
       badge: "PPA TOUR ASIA 2026",
       mainTitle: "Pickleball Đang Bùng Nổ Tại Châu Á",
-      mainDescription: "Xem trực tiếp các giải đấu, theo dõi bracket real-time, và kết nối với cộng đồng pickleball phát triển nhanh nhất.",
+      mainDescription: "Tổ chức giải song ngữ, xem livestream các trận đấu và theo dõi tin tức pickleball — nền tảng duy nhất xây cho châu Á.",
     },
     sections: {
       liveNow: "Đang phát trực tiếp",

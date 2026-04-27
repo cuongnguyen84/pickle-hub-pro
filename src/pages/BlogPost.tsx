@@ -4,6 +4,9 @@ import { useI18n } from "@/i18n";
 import { getBlogPost, getRelatedPosts, type BlogPost as BlogPostType } from "@/content/blog";
 import { DynamicMeta, HreflangTags, BreadcrumbSchema, ArticleSchema, FAQSchema, HowToSchema } from "@/components/seo";
 import { useViBlogAlternate } from "@/hooks/useViBlogAlternate";
+import { useTrackBlogView } from "@/hooks/useTrackBlogView";
+import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
+import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +15,7 @@ import { ArrowLeft, Calendar, Tag } from "lucide-react";
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { setLanguageFromUrl } = useI18n();
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
 
   // Post loads asynchronously (per-post chunks from src/content/blog/posts/)
   const [post, setPost] = useState<BlogPostType | undefined | null>(null);
@@ -38,6 +42,8 @@ const BlogPost = () => {
   }, [slug]);
 
   const { data: viSlug } = useViBlogAlternate(post?.slug);
+  useTrackBlogView("en", post?.slug);
+  const { data: viewCount } = useBlogPostViewCount("en", post?.slug);
 
   // Loading state — show skeleton while post chunk downloads
   if (post === null) {
@@ -122,6 +128,7 @@ const BlogPost = () => {
                 Updated: {post.updatedDate}
               </time>
             </div>
+            <ViewCountBadge count={viewCount} />
             <div className="flex items-center gap-1.5">
               <Tag className="w-4 h-4" />
               {post.tags.map((tag) => (
@@ -133,13 +140,14 @@ const BlogPost = () => {
           </div>
         </header>
 
-        {post.heroImage && (
+        {post.heroImage && !heroImgFailed && (
           <img
             src={post.heroImage.src}
             alt={post.heroImage.alt}
             className="w-full rounded-lg mb-8"
             fetchPriority="high"
             decoding="async"
+            onError={() => setHeroImgFailed(true)}
           />
         )}
 

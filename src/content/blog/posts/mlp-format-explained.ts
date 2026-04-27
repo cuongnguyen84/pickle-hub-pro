@@ -48,6 +48,10 @@ const post: BlogPost = {
             "Freeze rule — At 20-20, some formats switch to side-out scoring where only the serving team can score. This prevents indefinite games.",
             "Team match wins — The team winning the majority of individual games (2 out of 3, or winning the dreambreaker) wins the match.",
             "Standings — Teams accumulate match wins and game differentials across the season or tournament."
+          ],
+          internalLinks: [
+            { text: "Full pickleball scoring rules (rally vs side-out)", path: "/blog/pickleball-scoring-rules-guide" },
+            { text: "How to watch MLP & PPA Tour live in 2026", path: "/blog/how-to-watch-ppa-tour-live-2026" }
           ]
         },
         {
@@ -69,6 +73,11 @@ const post: BlogPost = {
             "Round Robin (Quick Tables) — Best for: Individual player events, maximum playing time, simple setup. No team structure needed.",
             "Double Elimination — Best for: Large competitive brackets, fairness through losers bracket. Individual or doubles pairs.",
             "Flex Tournament — Best for: Custom formats that don't fit standard categories. Maximum organizer control."
+          ],
+          internalLinks: [
+            { text: "Complete comparison: All pickleball tournament formats", path: "/blog/pickleball-tournament-formats-explained" },
+            { text: "Doubles strategy that wins dreambreakers", path: "/blog/pickleball-doubles-strategy-guide" },
+            { text: "Free bracket generator for MLP-style events", path: "/blog/free-pickleball-bracket-generator" }
           ]
         }
       ]
@@ -112,6 +121,10 @@ const post: BlogPost = {
             "Luật freeze — Ở 20-20, một số thể thức chuyển sang side-out scoring. Ngăn game kéo dài vô tận.",
             "Thắng trận đồng đội — Đội thắng đa số game (2/3, hoặc thắng dreambreaker) thắng trận.",
             "Bảng xếp hạng — Đội tích lũy thắng trận và hiệu số game qua mùa giải hoặc giải đấu."
+          ],
+          internalLinks: [
+            { text: "Luật chấm điểm Pickleball đầy đủ (rally vs side-out)", path: "/blog/pickleball-scoring-rules-guide" },
+            { text: "Cách xem MLP & PPA Tour trực tiếp 2026", path: "/blog/how-to-watch-ppa-tour-live-2026" }
           ]
         },
         {
@@ -133,6 +146,11 @@ const post: BlogPost = {
             "Round Robin (Quick Tables) — Tốt nhất cho: Giải cá nhân, chơi nhiều nhất, thiết lập đơn giản.",
             "Loại kép — Tốt nhất cho: Bracket lớn thi đấu, công bằng qua nhánh thua.",
             "Flex Tournament — Tốt nhất cho: Thể thức tùy chỉnh không vừa danh mục chuẩn."
+          ],
+          internalLinks: [
+            { text: "So sánh đầy đủ: Các thể thức giải Pickleball", path: "/blog/pickleball-tournament-formats-explained" },
+            { text: "Chiến thuật đôi chiến thắng dreambreaker", path: "/blog/pickleball-doubles-strategy-guide" },
+            { text: "Tạo bracket miễn phí cho sự kiện kiểu MLP", path: "/blog/free-pickleball-bracket-generator" }
           ]
         }
       ]
