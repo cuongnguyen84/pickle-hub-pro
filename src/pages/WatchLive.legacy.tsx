@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { MainLayout } from "@/components/layout";
 import { useI18n } from "@/i18n";
 import { useLivestream, useLivestreams, useViewCount } from "@/hooks/useSupabaseData";
 import { useLivePresence } from "@/hooks/useLivePresence";
@@ -32,7 +32,11 @@ import { useGeoBlock } from "@/hooks/useGeoBlock";
 import { GeoBlockOverlay } from "@/components/video/GeoBlockOverlay";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 
-const WatchLive = () => {
+/**
+ * Legacy WatchLive — archived 2026-04-28 during detail-page cutover.
+ * Accessible at /live-watch-legacy/:id for 14-day rollback. Cleanup 2026-05-09.
+ */
+const WatchLiveLegacy = () => {
   const { id } = useParams<{ id: string }>();
   const { t, language } = useI18n();
   const { user } = useAuth();
@@ -114,8 +118,8 @@ const WatchLive = () => {
 
   if (isLoading) {
     return (
-      <TheLineLayout title={t.live.live} active="live">
-        <div className="tl-shell" style={{ paddingTop: 32, paddingBottom: 80 }}>
+      <MainLayout>
+        <div className="container-wide section-spacing">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <Skeleton className="aspect-video rounded-xl" />
@@ -124,20 +128,20 @@ const WatchLive = () => {
             </div>
           </div>
         </div>
-      </TheLineLayout>
+      </MainLayout>
     );
   }
 
   if (!livestream) {
     return (
-      <TheLineLayout title={t.errors.notFound} active="live">
-        <div className="tl-shell" style={{ paddingTop: 32, paddingBottom: 80, textAlign: "center" }}>
+      <MainLayout>
+        <div className="container-wide section-spacing text-center">
           <h1 className="text-2xl font-semibold">{t.errors.notFound}</h1>
           <Link to="/live" className="text-primary hover:underline mt-4 inline-block">
             {t.errors.goHome}
           </Link>
         </div>
-      </TheLineLayout>
+      </MainLayout>
     );
   }
 
@@ -192,7 +196,7 @@ const WatchLive = () => {
     : [];
 
   return (
-    <TheLineLayout title={livestream.title ?? t.live.live} description={seoDescription} active="live">
+    <MainLayout className={keyboardHeight > 0 ? "overflow-hidden" : undefined}>
       {/* Dynamic SEO tags - auto-generated from livestream data */}
       {/* Canonical URL points to /livestream/{id} for SEO */}
       <DynamicMeta
@@ -558,8 +562,8 @@ const WatchLive = () => {
           </div>
         </div>
       </div>
-    </TheLineLayout>
+    </MainLayout>
   );
 };
 
-export default WatchLive;
+export default WatchLiveLegacy;

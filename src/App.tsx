@@ -28,6 +28,8 @@ const VideosLegacy = lazy(() => import("./pages/Videos.legacy"));
 const NewsLegacy = lazy(() => import("./pages/News.legacy"));
 const ForumLegacy = lazy(() => import("./pages/Forum.legacy"));
 const ToolsLegacy = lazy(() => import("./pages/Tools.legacy"));
+// Phase 4 detail-page legacy fallbacks (REMOVE 2026-05-09)
+const WatchLiveLegacy = lazy(() => import("./pages/WatchLive.legacy"));
 import RequireAuth from "@/components/auth/RequireAuth";
 import ConditionalAuth from "@/components/auth/ConditionalAuth";
 
@@ -388,6 +390,7 @@ const App = () => (
                     <Route path="/news-legacy" element={<NewsLegacy />} />
                     <Route path="/forum-legacy" element={<ForumLegacy />} />
                     <Route path="/tools-legacy" element={<ToolsLegacy />} />
+                    <Route path="/live-watch-legacy/:id" element={<WatchLiveLegacy />} />
                     {/* Preview routes - design direction exploration, noindex */}
                     <Route path="/preview/the-line" element={<PreviewTheLine />} />
                     <Route path="/preview/the-line/live" element={<PreviewLiveList />} />
