@@ -1,6 +1,5 @@
 import { useMemo, useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Users, Trophy, Globe } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
@@ -349,27 +348,32 @@ const Index = () => {
           Dash placeholder while loading avoids CLS. */}
       <section className="tl-shell">
         <div className="tl-stats-strip">
-          <div className="tl-stat-cell">
-            <Users className="tl-stat-icon" aria-hidden="true" />
+          <div className="tl-stat-col">
+            <span className="tl-stat-accent" aria-hidden="true" />
+            <span className="tl-stat-emoji" aria-hidden="true">👥</span>
             <span className="num">
               {homeStats ? homeStats.total_users.toLocaleString("en-US") : "—"}
             </span>
-            <span className="lbl">
-              <span className="tl-stat-dot live" aria-hidden="true" />
-              {language === "vi" ? "Người chơi" : "Players tracked"}
+            <span className="tl-stat-pill">
+              <span className="tl-stat-dot" aria-hidden="true" />
+              {language === "vi" ? "NGƯỜI CHƠI · LIVE" : "PLAYERS · LIVE"}
             </span>
           </div>
-          <div className="tl-stat-cell">
-            <Trophy className="tl-stat-icon" aria-hidden="true" />
+          <div className="tl-stat-col">
+            <span className="tl-stat-accent" aria-hidden="true" />
+            <span className="tl-stat-emoji" aria-hidden="true">🏆</span>
             <span className="num">
               {homeStats ? homeStats.total_tournaments.toLocaleString("en-US") : "—"}
             </span>
-            <span className="lbl">{language === "vi" ? "Giải đấu" : "Tournaments covered"}</span>
+            <span className="tl-stat-pill">
+              {language === "vi" ? "GIẢI ĐẤU" : "TOURNAMENTS"}
+            </span>
           </div>
-          <div className="tl-stat-cell">
-            <Globe className="tl-stat-icon" aria-hidden="true" />
+          <div className="tl-stat-col">
+            <span className="tl-stat-accent" aria-hidden="true" />
+            <span className="tl-stat-emoji" aria-hidden="true">🌏</span>
             <span className="num">{PPA_ASIA_STOPS}</span>
-            <span className="lbl">{language === "vi" ? "Chặng PPA Asia · 2026" : "PPA Asia stops · 2026"}</span>
+            <span className="tl-stat-pill">PPA ASIA · 2026</span>
           </div>
         </div>
       </section>
