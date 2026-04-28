@@ -1,5 +1,6 @@
 import { useMemo, useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { Users, Trophy, Globe } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
@@ -349,18 +350,24 @@ const Index = () => {
       <section className="tl-shell">
         <div className="tl-stats-strip">
           <div className="tl-stat-cell">
+            <Users className="tl-stat-icon" aria-hidden="true" />
             <span className="num">
               {homeStats ? homeStats.total_users.toLocaleString("en-US") : "—"}
             </span>
-            <span className="lbl">{language === "vi" ? "Người chơi" : "Players tracked"}</span>
+            <span className="lbl">
+              <span className="tl-stat-dot live" aria-hidden="true" />
+              {language === "vi" ? "Người chơi" : "Players tracked"}
+            </span>
           </div>
           <div className="tl-stat-cell">
+            <Trophy className="tl-stat-icon" aria-hidden="true" />
             <span className="num">
               {homeStats ? homeStats.total_tournaments.toLocaleString("en-US") : "—"}
             </span>
             <span className="lbl">{language === "vi" ? "Giải đấu" : "Tournaments covered"}</span>
           </div>
           <div className="tl-stat-cell">
+            <Globe className="tl-stat-icon" aria-hidden="true" />
             <span className="num">{PPA_ASIA_STOPS}</span>
             <span className="lbl">{language === "vi" ? "Chặng PPA Asia · 2026" : "PPA Asia stops · 2026"}</span>
           </div>
