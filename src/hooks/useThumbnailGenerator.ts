@@ -1,6 +1,21 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+
+/**
+ * Extract the storage path (e.g. "org/<uuid>/videos/<id>.mp4") from a
+ * Supabase Storage public URL. Returns null if the URL doesn't match the
+ * expected pattern (e.g. external URL passed in by mistake).
+ *
+ *   Input:  https://<ref>.supabase.co/storage/v1/object/public/videos/org/abc/videos/def.mp4
+ *   Output: "org/abc/videos/def.mp4"
+ */
+const extractVideoStoragePath = (videoUrl: string): string | null => {
+  const match = videoUrl.match(/\/storage\/v1\/object\/(?:public|sign)\/videos\/([^?]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
 interface ThumbnailState {
   isGenerating: boolean;
   thumbnailUrl: string | null;
@@ -113,25 +128,72 @@ const canvasToJpegBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
 
 /* Single attempt — caller wraps in retry loop. */
 const captureThumbnailOnce = async (videoUrl: string): Promise<Blob> => {
-  // Step 1: try to fetch video as blob first to dodge CORS taint. If the
-  // file is big or fetch fails, fall back to direct URL with crossOrigin.
+  // Goal: get the video bytes into a same-origin object URL so canvas
+  // drawImage doesn't taint. Strategy in priority order:
+  //
+  //   (1) Edge function proxy — server-side service_role download,
+  //       streams back with Access-Control-Allow-Origin: *. Bypasses
+  //       Supabase Storage edge CORS quirks entirely. Phase 2 fix.
+  //   (2) Direct fetch from Storage URL — works when CDN edge actually
+  //       emits CORS headers (most cases). Phase 1 fallback.
+  //   (3) Direct <video src=cross-origin-url> with crossOrigin=anonymous —
+  //       last resort, succeeds only if CDN emits CORS *. Original.
+  //
+  // (1) skipped above 150MB to avoid burning edge-function bandwidth on
+  // huge files; (2) does the size check too.
   let videoSrc = videoUrl;
   let objectUrl: string | null = null;
 
-  try {
-    const head = await fetch(videoUrl, { method: "HEAD" }).catch(() => null);
-    const sizeMb = head ? Number(head.headers.get("content-length") ?? 0) / 1_048_576 : 0;
-    if (sizeMb > 0 && sizeMb <= MAX_BLOB_FETCH_MB) {
-      const res = await fetch(videoUrl);
-      if (!res.ok) throw new Error(`Video fetch ${res.status}`);
-      const blob = await res.blob();
-      objectUrl = URL.createObjectURL(blob);
-      videoSrc = objectUrl;
+  // Strategy (1) — edge function proxy
+  const storagePath = extractVideoStoragePath(videoUrl);
+  if (storagePath) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (accessToken) {
+        const proxyUrl = `${SUPABASE_URL}/functions/v1/video-thumbnail-proxy?path=${encodeURIComponent(storagePath)}`;
+
+        // HEAD probe size — proxy returns content-length, skip if too big
+        const head = await fetch(proxyUrl, {
+          method: "HEAD",
+          headers: { authorization: `Bearer ${accessToken}` },
+        }).catch(() => null);
+        const sizeMb = head?.ok ? Number(head.headers.get("content-length") ?? 0) / 1_048_576 : 0;
+
+        if (head?.ok && sizeMb > 0 && sizeMb <= MAX_BLOB_FETCH_MB) {
+          const res = await fetch(proxyUrl, {
+            headers: { authorization: `Bearer ${accessToken}` },
+          });
+          if (res.ok) {
+            const blob = await res.blob();
+            objectUrl = URL.createObjectURL(blob);
+            videoSrc = objectUrl;
+          }
+        }
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("[Thumbnail] Proxy fetch failed, falling back:", (err as Error).message);
     }
-  } catch {
-    // Blob fallback failed — use direct URL with crossOrigin and hope CORS
-    videoSrc = videoUrl;
-    objectUrl = null;
+  }
+
+  // Strategy (2) — direct fetch from Storage URL (Phase 1 fallback path)
+  if (!objectUrl) {
+    try {
+      const head = await fetch(videoUrl, { method: "HEAD" }).catch(() => null);
+      const sizeMb = head ? Number(head.headers.get("content-length") ?? 0) / 1_048_576 : 0;
+      if (sizeMb > 0 && sizeMb <= MAX_BLOB_FETCH_MB) {
+        const res = await fetch(videoUrl);
+        if (!res.ok) throw new Error(`Video fetch ${res.status}`);
+        const blob = await res.blob();
+        objectUrl = URL.createObjectURL(blob);
+        videoSrc = objectUrl;
+      }
+    } catch {
+      // Strategy (3) — direct <video src=> with crossOrigin (last resort)
+      videoSrc = videoUrl;
+      objectUrl = null;
+    }
   }
 
   const video = document.createElement("video");
