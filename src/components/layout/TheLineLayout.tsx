@@ -379,6 +379,23 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               )}
             </div>
 
+            {/* Secondary nav — pages not in the 5 primary nav items but useful for mobile discoverability */}
+            <div className="tl-drawer-nav-secondary">
+              <div className="tl-drawer-section-label">{language === "vi" ? "Khám phá thêm" : "More"}</div>
+              <Link to="/videos" onClick={() => setMenuOpen(false)}>
+                <span>{language === "vi" ? "Video" : "Videos"}</span>
+                <span className="arr">→</span>
+              </Link>
+              <Link to="/news" onClick={() => setMenuOpen(false)}>
+                <span>{language === "vi" ? "Tin tức" : "News"}</span>
+                <span className="arr">→</span>
+              </Link>
+              <Link to="/forum" onClick={() => setMenuOpen(false)}>
+                <span>{language === "vi" ? "Diễn đàn" : "Forum"}</span>
+                <span className="arr">→</span>
+              </Link>
+            </div>
+
             <div className="tl-drawer-foot">
               <span className="tl-drawer-foot-label">
                 {language === "vi" ? "Ngôn ngữ" : "Language"}
