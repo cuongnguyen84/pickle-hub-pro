@@ -131,3 +131,63 @@ const channelName = `chat:unified:${id}:${Date.now()}-${Math.random().toString(3
 Collision probability drops from ~1/1000 per ms to ~1/10^14.
 
 **Helper:** `src/lib/uniqueChannelId.ts` exposes `uniqueChannelSuffix()` — reuse across all hooks creating realtime channels.
+
+---
+
+## Service Worker: NEVER precache `index.html`; clear cache on chunk error
+
+**Occurrence (1 — production /tournaments stuck "Đang tải lại..."):**
+- Workbox config precached `**/*.{js,css,html,...}` (CacheFirst). After deploy, SW served OLD cached `index.html` referencing OLD chunk URLs. CDN had only NEW chunks → SPA fallback `/* /index.html 200` returned NEW HTML for OLD chunk URL → browser parsed HTML as JS → `Unexpected token '<'` → ChunkErrorBoundary fired → reload → loop until MAX_RELOADS=2 hit → stuck. Fixed `9425f6a` (SW config) + `03e84b4` (ChunkErrorBoundary clear cache).
+
+**Symptom:** Production SPA users (specifically those on existing tabs from before deploy) stuck on "Đang tải lại..." (Loading...) screen. Network tab shows JS files returning HTML. Console shows `Unexpected token '<'` errors.
+
+**Cause:** SW precache HTML serves stale shell; SPA fallback returns HTML for missing chunk URLs; browser type-confuses HTML for JS.
+
+**Rule (3 layers required):**
+
+1. **Workbox: exclude HTML from precache:**
+```ts
+// vite.config.ts workbox section
+globPatterns: ["**/*.{js,css,ico,png,svg,woff,woff2}"],  // NO html
+globIgnores: ["**/index.html"],
+skipWaiting: true,
+clientsClaim: true,
+runtimeCaching: [{
+  urlPattern: ({ request }) => request.mode === "navigate",
+  handler: "NetworkFirst",
+  options: { networkTimeoutSeconds: 3 },
+}],
+```
+
+2. **ChunkErrorBoundary: clear ALL caches + unregister SW BEFORE reload:**
+```ts
+async componentDidCatch(error: Error) {
+  if (isChunkError(error)) {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    if (navigator.serviceWorker) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    window.location.reload();
+  }
+}
+```
+
+3. **`pwa.ts`: listen `controllerchange`:**
+```ts
+let reloading = false;
+navigator.serviceWorker?.addEventListener("controllerchange", () => {
+  if (reloading) return;
+  reloading = true;
+  window.location.reload();
+});
+```
+
+**Detection patterns to catch in error message:**
+- `Failed to fetch dynamically imported module`
+- `Loading chunk`
+- `ChunkLoadError`
+- `Unexpected token '<'` (HTML-served-as-JS fingerprint)
