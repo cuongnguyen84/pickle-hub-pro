@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
-import { Play, Clock, Eye, BadgeCheck } from "lucide-react";
+import { Play, Eye, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 
 
 interface ContentCardProps {
   id: string;
   title: string;
   thumbnail?: string;
+  /** Storage path on the `videos` bucket — used as fallback when thumbnail is missing (renders <video> first frame) */
+  storagePath?: string | null;
   duration?: number;
   views?: number;
   organizationName?: string;
@@ -44,6 +47,7 @@ const ContentCard = ({
   id,
   title,
   thumbnail,
+  storagePath,
   duration,
   views,
   organizationName,
@@ -69,14 +73,13 @@ const ContentCard = ({
         "relative overflow-hidden bg-background-surface",
         type === "short" ? "aspect-[9/16]" : "aspect-video"
       )}>
-        {thumbnail ? (
-          <img
-            src={thumbnail}
-            alt={title}
+        {thumbnail || storagePath ? (
+          <VideoThumbnail
+            thumbnailUrl={thumbnail}
+            storagePath={storagePath}
+            title={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-            decoding="async"
-            sizes={type === "short" ? "(max-width: 640px) 50vw, 25vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
+            showIconFallback={false}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

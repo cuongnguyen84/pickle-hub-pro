@@ -256,6 +256,7 @@ const WatchVideo = () => {
                     organizationName={relatedVideo.organization?.name ?? ""}
                     organizationSlug={relatedVideo.organization?.slug}
                     thumbnail={relatedVideo.thumbnail_url ?? undefined}
+                    storagePath={relatedVideo.storage_path}
                   />
                 ))}
             </div>

@@ -153,6 +153,7 @@ const Search = () => {
                               id={video.id}
                               title={video.title}
                               thumbnail={video.thumbnail_url ?? undefined}
+                              storagePath={video.storage_path}
                               duration={video.duration_seconds ?? undefined}
                               type={video.type}
                               organizationName={video.organization?.name}
@@ -214,6 +215,7 @@ const Search = () => {
                               id={video.id}
                               title={video.title}
                               thumbnail={video.thumbnail_url ?? undefined}
+                              storagePath={video.storage_path}
                               duration={video.duration_seconds ?? undefined}
                               type={video.type}
                               organizationName={video.organization?.name}

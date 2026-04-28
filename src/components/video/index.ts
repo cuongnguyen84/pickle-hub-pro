@@ -5,3 +5,4 @@ export type { HlsPlayerHandle } from "./HlsPlayer";
 export { TapToPlayOverlay } from "./TapToPlayOverlay";
 export { VideoUploader } from "./VideoUploader";
 export { default as AdaptiveVideoPlayer } from "./AdaptiveVideoPlayer";
+export { VideoThumbnail } from "./VideoThumbnail";

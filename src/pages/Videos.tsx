@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useVideos } from "@/hooks/useSupabaseData";
-import { supabase } from "@/integrations/supabase/client";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { formatRelative } from "./preview/_shell";
 
 type Filter = "all" | "long" | "short";
@@ -109,18 +109,12 @@ const Videos = () => {
               {items.map((v) => (
                 <Link key={v.id} to={`/watch/${v.id}`} className="tl-video-card">
                   <div className="tl-video-thumb">
-                    {v.thumbnail_url ? (
-                      <img src={v.thumbnail_url} alt={v.title} loading="lazy" />
-                    ) : v.storage_path ? (
-                      <video
-                        src={supabase.storage.from("videos").getPublicUrl(v.storage_path).data.publicUrl}
-                        preload="metadata"
-                        muted
-                        playsInline
-                        aria-label={v.title}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    ) : null}
+                    <VideoThumbnail
+                      thumbnailUrl={v.thumbnail_url}
+                      storagePath={v.storage_path}
+                      title={v.title}
+                      showIconFallback={false}
+                    />
                     <div className="tl-video-play-icon">
                       <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M8 5v14l11-7z" />

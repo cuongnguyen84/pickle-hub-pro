@@ -347,6 +347,7 @@ const OrganizationDetail = () => {
                         organizationLogo={organization.display_logo ?? organization.logo_url ?? undefined}
                         isVerifiedCreator
                         thumbnail={video.thumbnail_url ?? undefined}
+                        storagePath={video.storage_path}
                       />
                     ))}
                   </div>

@@ -33,8 +33,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Video, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 
 export default function CreatorVideos() {
   const { organizationId } = useCreatorAuth();
@@ -124,15 +125,11 @@ export default function CreatorVideos() {
                 className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-border-subtle hover:bg-muted transition-colors"
               >
                 <div className="w-20 h-14 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {video.thumbnail_url ? (
-                    <img
-                      src={video.thumbnail_url}
-                      alt={video.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Video className="w-5 h-5 text-foreground-muted" />
-                  )}
+                  <VideoThumbnail
+                    thumbnailUrl={video.thumbnail_url}
+                    storagePath={video.storage_path}
+                    title={video.title}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground text-sm truncate">
@@ -247,15 +244,11 @@ export default function CreatorVideos() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-16 h-10 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {video.thumbnail_url ? (
-                            <img
-                              src={video.thumbnail_url}
-                              alt={video.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Video className="w-5 h-5 text-foreground-muted" />
-                          )}
+                          <VideoThumbnail
+                            thumbnailUrl={video.thumbnail_url}
+                            storagePath={video.storage_path}
+                            title={video.title}
+                          />
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium text-foreground truncate">
