@@ -636,9 +636,27 @@ const BLOG_POST_META: Record<string, { title: string; description: string }> = {
   "how-to-play-pickleball": { title: "How to Play Pickleball | 7-Day Beginner Plan Tested in Vietnam", description: "How to play pickleball as a beginner: gear to buy, correct grip, 6 core shots, and a 7-day practice plan that took 200+ Vietnamese players from zero to playing their first real match." },
 };
 
-export function renderBlogPost(slug: string, siteUrl: string): Response {
+export async function renderBlogPost(supabase: SupabaseClient, slug: string, siteUrl: string): Promise<Response> {
   const meta = BLOG_POST_META[slug];
   if (!meta) return render404(`/blog/${slug}`, siteUrl);
+
+  // Look up Vietnamese alternate (returns null if no VI translation exists).
+  // Required for reciprocal hreflang — Ahrefs Site Audit 2026-04-24 flagged
+  // "Missing reciprocal hreflang (no return-tag)" because EN page wasn't
+  // emitting <link hreflang="vi"> back to its VI counterpart even when one
+  // existed. The VI side already emits hreflang en correctly via renderViBlogPost.
+  const { data: viPost } = await supabase
+    .from("vi_blog_posts")
+    .select("slug")
+    .eq("alternate_en_slug", slug)
+    .eq("status", "published")
+    .maybeSingle();
+
+  const enUrl = `${siteUrl}/blog/${slug}`;
+  const viSlug = (viPost as { slug: string } | null)?.slug;
+  const extraMeta = viSlug
+    ? `<link rel="alternate" hreflang="en" href="${enUrl}"/>\n<link rel="alternate" hreflang="vi" href="${siteUrl}/vi/blog/${viSlug}"/>\n<link rel="alternate" hreflang="x-default" href="${enUrl}"/>`
+    : `<link rel="alternate" hreflang="en" href="${enUrl}"/>\n<link rel="alternate" hreflang="x-default" href="${enUrl}"/>`;
 
   const title = buildTitle(meta.title, " | ThePickleHub");
   const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Blog", href: `${siteUrl}/blog` }, { label: meta.title }]);
@@ -646,10 +664,11 @@ export function renderBlogPost(slug: string, siteUrl: string): Response {
   return htmlResponse(buildHtml({
     title,
     description: meta.description,
-    url: `${siteUrl}/blog/${slug}`,
+    url: enUrl,
     siteUrl,
     type: "article",
-    jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", headline: title, description: meta.description, url: `${siteUrl}/blog/${slug}`, publisher: { "@type": "Organization", name: "ThePickleHub", url: siteUrl } },
+    extraMeta,
+    jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", headline: title, description: meta.description, url: enUrl, publisher: { "@type": "Organization", name: "ThePickleHub", url: siteUrl } },
     bodyContent: `${bc}${relatedBlogLinks(slug, siteUrl)}`,
   }));
 }

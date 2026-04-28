@@ -191,7 +191,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
 
   // Blog post
   match = path.match(/^\/blog\/([^/]+)$/);
-  if (match) return renderBlogPost(match[1], siteUrl);
+  if (match) return await renderBlogPost(supabase, match[1], siteUrl);
 
   // Blog index
   if (path === "/blog") return renderBlog(siteUrl);
