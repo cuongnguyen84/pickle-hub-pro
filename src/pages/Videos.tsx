@@ -1,141 +1,142 @@
-import { useState, useMemo } from "react";
-import { MainLayout } from "@/components/layout";
-import { ContentCard, SectionHeader, EmptyState } from "@/components/content";
-import { SearchBar, ContentFilters, type SortOption } from "@/components/search";
-import { LoadMoreButton } from "@/components/content/LoadMoreButton";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { useTournaments } from "@/hooks/useSupabaseData";
-import { usePaginatedVideos } from "@/hooks/usePaginatedVideos";
-import { useDebounce } from "@/hooks/useSearch";
-import { useBatchViewCounts } from "@/hooks/useBatchViewCounts";
-import { DynamicMeta, HreflangTags } from "@/components/seo";
-import { Play, Search } from "lucide-react";
+import { useVideos } from "@/hooks/useSupabaseData";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { formatRelative } from "./preview/_shell";
+
+type Filter = "all" | "long" | "short";
+
+const formatDuration = (seconds: number | null | undefined): string => {
+  if (!seconds || seconds < 0) return "";
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  if (hrs > 0) return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
 
 const Videos = () => {
-  const { t } = useI18n();
+  const { language } = useI18n();
+  const [filter, setFilter] = useState<Filter>("all");
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [selectedTournament, setSelectedTournament] = useState("all");
+  const { data: videos = [], isLoading } = useVideos({ limit: 60 });
 
-  const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
+  const counts = useMemo(() => ({
+    all: videos.length,
+    long: videos.filter((v) => v.type === "long").length,
+    short: videos.filter((v) => v.type === "short").length,
+  }), [videos]);
 
-  const {
-    data: videosData,
-    isLoading: videosLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = usePaginatedVideos();
-
-  const { data: tournaments = [] } = useTournaments();
-
-  const allVideos = useMemo(
-    () => videosData?.pages.flatMap((p) => p.items) ?? [],
-    [videosData]
-  );
-
-  const videoIds = useMemo(() => allVideos.map((v) => v.id), [allVideos]);
-  const viewCountsMap = useBatchViewCounts("video", videoIds);
-
-  const filteredVideos = useMemo(() => {
-    let processed = allVideos;
-
-    if (debouncedSearch) {
-      processed = processed.filter((item) => {
-        const title = item.title?.toLowerCase() ?? "";
-        const orgName = item.organization?.name?.toLowerCase() ?? "";
-        return title.includes(debouncedSearch) || orgName.includes(debouncedSearch);
-      });
-    }
-
-    if (selectedTournament !== "all") {
-      processed = processed.filter((item) => item.tournament_id === selectedTournament);
-    }
-
-    return processed;
-  }, [allVideos, debouncedSearch, selectedTournament]);
-
-  const hasSearch = debouncedSearch.length > 0;
+  const items = useMemo(() => {
+    if (filter === "all") return videos;
+    return videos.filter((v) => v.type === filter);
+  }, [filter, videos]);
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title={t.nav.videos}
-        description="Xem lại các trận pickleball hay nhất. Watch pickleball replays, highlights and match videos on ThePickleHub."
-      />
-      <HreflangTags enPath="/videos" viPath="/vi/videos" />
-      <div className="container-wide py-8">
-        <h1 className="text-2xl font-semibold text-gradient-brand mb-6">{t.nav.videos}</h1>
+    <TheLineLayout
+      title={language === "vi" ? "Video" : "Videos"}
+      description={language === "vi"
+        ? "Highlights, phỏng vấn và behind-the-scenes — pickleball từ PPA Tour Asia và xa hơn."
+        : "Match highlights, interviews, and behind-the-scenes coverage from PPA Tour Asia and beyond."}
+    >
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to={language === "vi" ? "/vi" : "/"}>{language === "vi" ? "Trang chủ" : "Home"}</Link>
+          <span className="sep">/</span>
+          <span className="current">{language === "vi" ? "Video" : "Videos"}</span>
+        </nav>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-8">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            className="flex-1"
-          />
-          <ContentFilters
-            contentType="video"
-            onContentTypeChange={() => {}}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            tournaments={tournaments}
-            selectedTournament={selectedTournament}
-            onTournamentChange={setSelectedTournament}
-            showTournamentFilter
-            showSortFilter={false}
-          />
-        </div>
-
-        {videosLoading ? (
-          <div className="space-y-12">
-            <section>
-              <Skeleton className="h-7 w-32 mb-4" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="aspect-video rounded-xl" />
-                ))}
-              </div>
-            </section>
-          </div>
-        ) : filteredVideos.length === 0 && hasSearch ? (
-          <EmptyState icon={Search} title={t.search.noResults} />
-        ) : (
-          <section className="mb-12">
-            <SectionHeader title={t.home.sections.latestVideos} />
-            {filteredVideos.length > 0 ? (
+        <header className="tl-page-head">
+          <div className="kicker">◆ Courtside</div>
+          <h1>
+            {language === "vi" ? (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                  {filteredVideos.map((video) => (
-                    <ContentCard
-                      key={video.id}
-                      id={video.id}
-                      title={video.title}
-                      duration={video.duration_seconds ?? 0}
-                      views={viewCountsMap[video.id] ?? 0}
-                      organizationName={video.organization?.name ?? ""}
-                      organizationSlug={video.organization?.slug}
-                      organizationLogo={video.organization?.display_logo ?? video.organization?.logo_url ?? undefined}
-                      thumbnail={video.thumbnail_url ?? undefined}
-                    />
-                  ))}
-                </div>
-                {!hasSearch && (
-                  <LoadMoreButton
-                    onClick={() => fetchNextPage()}
-                    isLoading={isFetchingNextPage}
-                    hasMore={!!hasNextPage}
-                  />
-                )}
+                Highlights, <em className="tl-serif">phỏng vấn,</em> <br />
+                <span className="dim">và</span> <span className="sans">behind the scenes.</span>
               </>
             ) : (
-              <EmptyState icon={Play} title={t.home.noVideos} />
+              <>
+                Highlights, <em className="tl-serif">interviews,</em> <br />
+                <span className="dim">and</span> <span className="sans">behind the scenes.</span>
+              </>
             )}
-          </section>
-        )}
+          </h1>
+          <p>
+            {language === "vi"
+              ? "Mọi video pickleball trong một cuộn — từ chung kết đến phỏng vấn sau trận và clip ngắn từ sân."
+              : "Every pickleball video in one feed — from finals coverage to post-match interviews and short clips from the court."}
+          </p>
+        </header>
+
+        <div className="tl-filters">
+          {([
+            { key: "all", labelEn: "All", labelVi: "Tất cả" },
+            { key: "long", labelEn: "Highlights", labelVi: "Highlights" },
+            { key: "short", labelEn: "Shorts", labelVi: "Clip ngắn" },
+          ] as const).map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`tl-filter ${filter === f.key ? "active" : ""}`}
+              onClick={() => setFilter(f.key)}
+            >
+              {language === "vi" ? f.labelVi : f.labelEn}
+              <span className="count">{counts[f.key]}</span>
+            </button>
+          ))}
+        </div>
+
+        <div style={{ paddingBottom: 80 }}>
+          {isLoading ? (
+            <div className="tl-empty">
+              <p style={{ fontFamily: "Geist Mono", fontSize: 12, letterSpacing: "0.04em" }}>
+                {language === "vi" ? "Đang tải…" : "Loading videos…"}
+              </p>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="tl-empty">
+              <h3>{language === "vi" ? "Chưa có video." : "No videos yet."}</h3>
+              <p>
+                {language === "vi"
+                  ? "Quay lại sau — đội ngũ ThePickleHub đăng video mới mỗi tuần."
+                  : "Check back soon — the ThePickleHub team publishes new videos every week."}
+              </p>
+            </div>
+          ) : (
+            <div className="tl-courtside-grid">
+              {items.map((v) => (
+                <Link key={v.id} to={`/watch/${v.id}`} className="tl-video-card">
+                  <div className="tl-video-thumb">
+                    {v.thumbnail_url ? <img src={v.thumbnail_url} alt={v.title} loading="lazy" /> : null}
+                    <div className="tl-video-play-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                    {v.duration_seconds ? (
+                      <span className="tl-video-duration">{formatDuration(v.duration_seconds)}</span>
+                    ) : null}
+                  </div>
+                  <div className="tl-video-body">
+                    <h3 className="tl-video-title">{v.title}</h3>
+                    <div className="tl-video-meta">
+                      <span>{v.organization?.name ?? ""}</span>
+                      {v.published_at && (
+                        <>
+                          <span>·</span>
+                          <span>{formatRelative(v.published_at)}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 
