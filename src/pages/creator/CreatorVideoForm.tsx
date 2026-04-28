@@ -79,18 +79,38 @@ export default function CreatorVideoForm() {
         videoUrl: uploadHook.videoUrl,
       });
       
-      // Auto-generate thumbnail if not already set
+      // Auto-generate thumbnail if not already set. Hook handles internal
+      // retry / multi-frame sampling / CORS-safe blob fallback. We surface
+      // success or actionable failure so the user isn't left with a black
+      // card and no idea what to do next.
       if (!formData.thumbnail_url) {
         const videoId = id || uploadHook.storagePath.split("/").pop()?.split(".")[0] || Date.now().toString();
-        thumbnailHook.generateThumbnail(uploadHook.videoUrl, videoId).then((url) => {
-          if (url) {
-            setFormData((prev) => ({ ...prev, thumbnail_url: url }));
+        thumbnailHook
+          .generateThumbnail(uploadHook.videoUrl, videoId)
+          .then((url) => {
+            if (url) {
+              setFormData((prev) => ({ ...prev, thumbnail_url: url }));
+              toast({
+                title: "Thumbnail generated",
+                description: "Thumbnail đã được tạo tự động từ video",
+              });
+            } else {
+              toast({
+                title: "Auto-thumbnail failed",
+                description: "Bấm \"Tạo lại thumbnail\" để thử lại, hoặc dán URL ảnh thủ công.",
+                variant: "destructive",
+              });
+            }
+          })
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.error("[Thumbnail] Auto-generate threw:", err);
             toast({
-              title: "Thumbnail generated",
-              description: "Thumbnail đã được tạo tự động từ video",
+              title: "Auto-thumbnail failed",
+              description: err?.message || "Vui lòng thử lại bằng nút \"Tạo lại thumbnail\".",
+              variant: "destructive",
             });
-          }
-        });
+          });
       }
     }
   }, [uploadHook.storagePath, uploadHook.videoUrl]);
