@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
+import { uniqueChannelSuffix } from "@/lib/uniqueChannelId";
 import type { ChatMessage, ChatSettings, ChatMute } from "./useLiveChat";
 
 const MESSAGES_LIMIT = 50;
@@ -123,7 +124,7 @@ export function useChatMessages(livestreamId: string): UseChatMessagesResult {
       channelRef.current = null;
     }
 
-    const channel = supabase.channel(`chat:unified:${livestreamId}:${Date.now()}`, {
+    const channel = supabase.channel(`chat:unified:${livestreamId}:${uniqueChannelSuffix()}`, {
       config: { broadcast: { self: true } }
     });
 

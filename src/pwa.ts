@@ -21,9 +21,15 @@ export function initPwa() {
   const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {
-      // Auto-update on next load — no user prompt needed.
-      // Could show a toast here instead if we want users to opt in.
-      updateSW(true);
+      // New version available. updateSW(true) calls skipWaiting +
+      // reloads — fast path. Explicit window.location.reload() as a
+      // fallback for browsers that ignore the Workbox auto-reload.
+      // Combined with workbox skipWaiting + clientsClaim + NetworkFirst
+      // on navigations, users see the new shell on first load after
+      // deploy instead of "flash of old UI then phantom reload".
+      updateSW(true).catch(() => {
+        window.location.reload();
+      });
     },
     onOfflineReady() {
       // Site is cached and ready for offline use.

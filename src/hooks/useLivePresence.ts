@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { uniqueChannelSuffix } from "@/lib/uniqueChannelId";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 /**
@@ -56,11 +57,12 @@ export function useLivePresence(livestreamId: string, enabled: boolean = true) {
     }
 
     const setupChannel = () => {
-      // Create a unique viewer ID for this session
-      const viewerId = `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Channel name for this livestream's presence (unique to avoid resubscribe errors)
-      const channelName = `livestream_presence:${livestreamId}:${Date.now()}`;
+      // Single shared suffix for both viewer ID + channel name. Combines
+      // Date.now() with random base36 so two effects firing in the same
+      // millisecond don't collide on a Supabase channel name.
+      const sfx = uniqueChannelSuffix();
+      const viewerId = `viewer_${sfx}`;
+      const channelName = `livestream_presence:${livestreamId}:${sfx}`;
 
       const channel = supabase.channel(channelName, {
         config: {

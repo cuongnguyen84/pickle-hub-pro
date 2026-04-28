@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelSuffix } from "@/lib/uniqueChannelId";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 interface ViewerInfo {
@@ -72,8 +73,9 @@ export function useLiveViewerList(livestreamId: string, enabled: boolean = true)
       channelRef.current = null;
     }
 
-    const channelName = `livestream_presence:${livestreamId}:admin:${Date.now()}`;
-    const adminKey = `admin_watcher_${Date.now()}`;
+    const sfx = uniqueChannelSuffix();
+    const channelName = `livestream_presence:${livestreamId}:admin:${sfx}`;
+    const adminKey = `admin_watcher_${sfx}`;
 
     const channel = supabase.channel(channelName, {
       config: {

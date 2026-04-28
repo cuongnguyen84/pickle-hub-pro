@@ -60,14 +60,32 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        // Precache build assets (JS, CSS, HTML, fonts)
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        // Precache hashed build assets only — EXCLUDE index.html so users
+        // always get the freshest shell after deploy. Prevents the "flash
+        // of old UI then auto-reload" pattern that surfaced post Phase 4.
+        globPatterns: ["**/*.{js,css,ico,png,svg,woff,woff2}"],
         // Don't precache huge chunks — let them lazy load on demand
-        globIgnores: ["**/vendor-video*", "**/blog-data*"],
+        globIgnores: ["**/vendor-video*", "**/blog-data*", "**/index.html"],
         // Max single-file precache size
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         cleanupOutdatedCaches: true,
+        // Force the new SW to take control immediately on activate
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
+          // Navigation requests (HTML shell) — NetworkFirst with short
+          // timeout. Online users always see the latest shell, offline
+          // users still get a recent cached copy.
+          {
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "html-shell",
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 5, maxAgeSeconds: 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           // Supabase REST — NetworkFirst with fast timeout
           {
             urlPattern: /^https:\/\/ajvlcamxemgbxduhiqrl\.supabase\.co\/rest\//,
