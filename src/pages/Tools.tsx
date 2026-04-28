@@ -153,8 +153,9 @@ const Tools = () => {
             <em className="tl-serif">pickleball</em> <span className="sans">bracket.</span>
           </h1>
           <p>
-            Run a round-robin, double-elim, flex or team match in the browser.
-            Live scoring on your phone. Shareable link for viewers. Printable bracket. No apps, no signup, no catch.
+            A free pickleball tournament bracket generator — round robin, single and double elimination,
+            MLP team match, and flex format. Live scoring on your phone, shareable scoreboard URL,
+            printable bracket. No apps, no signup, no catch.
           </p>
           <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
             <Link to="/tools/quick-tables" className="tl-btn green">
@@ -265,6 +266,46 @@ const Tools = () => {
                 <span className="cta">Set up match →</span>
               </div>
             </Link>
+          </div>
+        </section>
+
+        {/* SEO pillar copy — explains what Bracket Lab is for crawlers + new visitors.
+            Targets commercial keywords already ranking on Bing top-10 (pickleball
+            bracket generator, round robin, double elimination, MLP team match) so
+            Google catches up. Phase 2 Item B, 2026-04-28. */}
+        <section style={{ marginBottom: 56 }}>
+          <div className="tl-sec-head">
+            <h2>
+              What <em className="tl-serif">Bracket Lab</em>{" "}
+              <span className="sans">actually does.</span>
+            </h2>
+          </div>
+          <div
+            style={{
+              maxWidth: "68ch",
+              margin: "0 auto",
+              color: "var(--tl-fg-2)",
+              fontSize: 16,
+              lineHeight: 1.7,
+            }}
+          >
+            <p style={{ marginBottom: 16 }}>
+              Bracket Lab is a free pickleball tournament bracket generator built for clubs,
+              weekend organizers, and pro events across Asia. Pick a format — round robin,
+              single elimination, double elimination, MLP team match, or a fully custom flex
+              tournament — and the tool builds the bracket, schedules matches, rotates courts,
+              and tracks live scores. Share a single link with players and spectators; print a
+              wall bracket if you need one.
+            </p>
+            <p>
+              No signup. No download. No 14-day trial that turns into a $99/month subscription.
+              Built and maintained by{" "}
+              <Link to="/blog/tournament-organizer-hub" style={{ color: "var(--tl-green)" }}>
+                ThePickleHub
+              </Link>
+              , a bilingual Vietnamese-English platform reporting on PPA Tour Asia, MLP, and the
+              regional pro circuit.
+            </p>
           </div>
         </section>
 

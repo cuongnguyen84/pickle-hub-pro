@@ -50,6 +50,9 @@ const post: BlogPost = {
             "Plan for rest time — Schedule at least one round gap between consecutive matches for the same player. Our tools do this by default.",
             "Have a backup plan — If players drop out, round robin is more forgiving than elimination brackets. You can remove a player and the system adjusts.",
             "Use referee mode — Designate scorekeepers who update matches in real-time. This eliminates disputes and keeps the tournament moving."
+          ],
+          internalLinks: [
+            { text: "Or download free printable bracket templates (4–64 players)", path: "/blog/pickleball-bracket-templates" }
           ]
         },
         {

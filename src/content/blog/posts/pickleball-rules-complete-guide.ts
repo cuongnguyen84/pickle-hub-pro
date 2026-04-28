@@ -16,7 +16,10 @@ const post: BlogPost = {
       sections: [
         {
           heading: "Why Another Pickleball Rules Guide?",
-          content: "Pickleball has exploded across Asia. Vietnam alone went from a few thousand players in 2023 to over 500,000 in early 2026. PPA Tour Asia is now staging pro events in Hanoi, Bangkok, Singapore, and Manila. But most English rulebooks are written for US players, and the calls that spark arguments in Asian tournaments — especially around the kitchen rule and serving mechanics — need a clearer explanation than 'just read the USA Pickleball rulebook.' This guide covers the complete 2026 rules, then ends with the five most-disputed calls we've seen across ThePickleHub's coverage of PPA Tour Asia — and exactly how to settle them."
+          content: "Pickleball has exploded across Asia. Vietnam alone went from a few thousand players in 2023 to over 500,000 in early 2026. PPA Tour Asia is now staging pro events in Hanoi, Bangkok, Singapore, and Manila. But most English rulebooks are written for US players, and the calls that spark arguments in Asian tournaments — especially around the kitchen rule and serving mechanics — need a clearer explanation than 'just read the USA Pickleball rulebook.' This guide covers the complete 2026 rules, then ends with the five most-disputed calls we've seen across ThePickleHub's coverage of PPA Tour Asia — and exactly how to settle them.",
+          internalLinks: [
+            { text: "First time hitting a pickleball? Try our 7-day beginner plan", path: "/blog/how-to-play-pickleball" }
+          ]
         },
         {
           heading: "What Is Pickleball?",

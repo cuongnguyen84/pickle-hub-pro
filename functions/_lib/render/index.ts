@@ -552,12 +552,33 @@ export function renderTools(siteUrl: string, rawPath = "/tools"): Response {
     siteUrl,
     jsonLd: {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      name: "ThePickleHub Tournament Tools",
-      applicationCategory: "SportsApplication",
-      operatingSystem: "Web",
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-      aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "120" },
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": `${siteUrl}/tools#app`,
+          name: "Bracket Lab — Free Pickleball Tournament Bracket Generator",
+          url: `${siteUrl}/tools`,
+          applicationCategory: "SportsApplication",
+          operatingSystem: "Web",
+          browserRequirements: "Requires JavaScript. Requires HTML5.",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          description: "Free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, flex format. Live scoring, shareable scoreboard, no signup.",
+          // Note: aggregateRating intentionally omitted. Google Rich Results
+          // requires verified user reviews; previous fake "4.8 / 120 reviews"
+          // value (removed 2026-04-28) was non-compliant. Re-add only when we
+          // ship real review collection.
+        },
+        {
+          "@type": "ItemList",
+          "@id": `${siteUrl}/tools#formats`,
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Quick Tables (Round Robin)", url: `${siteUrl}/tools/quick-tables` },
+            { "@type": "ListItem", position: 2, name: "Doubles Elimination Bracket", url: `${siteUrl}/tools/doubles-elimination` },
+            { "@type": "ListItem", position: 3, name: "Flex Tournament", url: `${siteUrl}/tools/flex-tournament` },
+            { "@type": "ListItem", position: 4, name: "Team Match (MLP Format)", url: `${siteUrl}/tools/team-match` },
+          ],
+        },
+      ],
     },
     bodyContent: `<h2>Tournament Tools</h2><ul>
       <li><a href="${siteUrl}/tools/quick-tables">Quick Tables – Round Robin &amp; Single Elimination</a></li>

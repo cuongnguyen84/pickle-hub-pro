@@ -83,6 +83,10 @@ const post: BlogPost = {
             "Summer Championship (June–July): Peak season with weekly events across the US",
             "Fall Major Events (August–September): Traditional competitive season nationwide",
             "Year-End Championships (October–November): Season-ending tournaments and finals"
+          ],
+          internalLinks: [
+            { text: "PPA Tour Asia 2026 — full schedule, prize money, venues", path: "/blog/ppa-tour-asia-2026-complete-guide" },
+            { text: "Pickleball World Cup 2026 in Da Nang — 80 nations, country teams", path: "/blog/pickleball-world-cup-2026-da-nang" }
           ]
         },
         {

@@ -93,6 +93,7 @@ const post: BlogPost = {
           internalLinks: [
             { text: "Free Pickleball Bracket Generator (all formats)", path: "/blog/free-pickleball-bracket-generator" },
             { text: "How to organize a pickleball tournament end-to-end", path: "/blog/how-to-organize-pickleball-tournament" },
+            { text: "Picked your format? Build the bracket step-by-step", path: "/blog/how-to-create-pickleball-bracket" },
             { text: "Tournament Organizer Hub — formats, brackets, scoring & livestream in one workflow", path: "/blog/tournament-organizer-hub" }
           ]
         }

@@ -59,6 +59,9 @@ const post: BlogPost = {
             "Run matches on schedule — Use time limits if needed. Have referees or designated scorekeepers for each court.",
             "Update scores in real-time — Digital scoring lets all players follow standings from their phones.",
             "Awards and wrap-up — Announce winners, take photos, thank sponsors and volunteers."
+          ],
+          internalLinks: [
+            { text: "Stream the matches live — free pickleball livestreaming guide", path: "/blog/pickleball-live-streaming-guide" }
           ]
         },
         {
@@ -100,7 +103,8 @@ const post: BlogPost = {
             { text: "Quick Tables — Round robin brackets for 2–200 players", path: "/tools/quick-tables" },
             { text: "Double Elimination Bracket Generator — Winners and losers brackets for 4–32 teams", path: "/tools/doubles-elimination" },
             { text: "MLP Team Match Format — Lineup management, dreambreaker, team standings", path: "/tools/team-match" },
-            { text: "Flex Tournament — Custom brackets for any non-standard format", path: "/tools/flex-tournament" }
+            { text: "Flex Tournament — Custom brackets for any non-standard format", path: "/tools/flex-tournament" },
+            { text: "Compare the best pickleball tournament software in 2026 — paid vs free", path: "/blog/best-pickleball-tournament-software-2026" }
           ]
         }
       ],

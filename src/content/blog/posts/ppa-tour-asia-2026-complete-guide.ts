@@ -78,7 +78,8 @@ const post: BlogPost = {
             "Social media: Follow @ppatourasia on Instagram and Facebook for daily updates"
           ],
           internalLinks: [
-            { text: "Try ThePickleHub's free tournament tools", path: "/tools" }
+            { text: "Try ThePickleHub's free tournament tools", path: "/tools" },
+            { text: "How to watch PPA Tour live in 2026 — full streaming + free options", path: "/blog/how-to-watch-ppa-tour-live-2026" }
           ]
         },
         {
