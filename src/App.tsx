@@ -188,10 +188,24 @@ const PageLoader = () => (
   </div>
 );
 
+// Helper: detect a "chunk error" — covers both classic Vite/webpack chunk
+// load failures AND the SPA-fallback signature (HTML served as JS → parser
+// hits "<" first character).
+const isChunkErrorMessage = (msg: string | undefined): boolean => {
+  if (!msg) return false;
+  return (
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("Loading chunk") ||
+    msg.includes("ChunkLoadError") ||
+    msg.includes("Unexpected token '<'") ||
+    msg.includes("Unexpected token <")
+  );
+};
+
 // Error boundary for lazy-loaded chunks (handles stale cache after deploy)
 class ChunkErrorBoundary extends Component<
   { children: ReactNode },
-  { hasError: boolean; error: Error | null }
+  { hasError: boolean; error: Error | null; giveUp: boolean }
 > {
   // REVIEW: counter reset delayed (was in componentDidMount, fired before child's
   // lazy import attempt → defeated MAX_RELOADS cap → infinite reload loop on EN
@@ -200,7 +214,7 @@ class ChunkErrorBoundary extends Component<
 
   constructor(props: { children: ReactNode }) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, giveUp: false };
   }
   componentDidMount() {
     // Defer reset — if a child's lazy import fails on mount, componentDidCatch
@@ -216,47 +230,69 @@ class ChunkErrorBoundary extends Component<
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
-  componentDidCatch(error: Error) {
-    const isChunkError =
-      error.message.includes("Failed to fetch dynamically imported module") ||
-      error.message.includes("Loading chunk") ||
-      error.message.includes("ChunkLoadError");
+  async componentDidCatch(error: Error) {
     console.error("[ChunkErrorBoundary] Caught error:", error.message, error.stack);
-    if (isChunkError) {
-      // Safety: cap reloads so stale SW cache doesn't cause infinite reload loop.
-      // Repro: SW caches old index.html → new chunk 404 → boundary reload → SW serves
-      // same stale HTML → chunk 404 again → loop. Without this guard the admin dashboard
-      // was unreachable on 2026-04-23 after a chunk-name change.
-      const KEY = "chunk-reload-count";
-      const MAX_RELOADS = 2;
-      try {
-        const count = Number(sessionStorage.getItem(KEY) || "0");
-        if (count >= MAX_RELOADS) {
-          sessionStorage.removeItem(KEY);
-          // Let the error UI render instead of reloading again.
-          return;
-        }
-        sessionStorage.setItem(KEY, String(count + 1));
-      } catch {
-        // sessionStorage may be disabled (private mode, quota) — fall through to reload once.
+    if (!isChunkErrorMessage(error.message)) return;
+
+    // Eagerly clear caches + unregister SW BEFORE reload. Existing users
+    // with a pre-9425f6a SW have OLD index.html precached referencing
+    // OLD chunk hashes — when the SW serves stale HTML, browser fetches
+    // OLD chunk URLs, CDN SPA-fallback returns NEW HTML, parser hits "<"
+    // → loop. Blowing the cache breaks the loop after one reload.
+    try {
+      if (typeof caches !== "undefined") {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
       }
-      window.location.reload();
+      if (navigator.serviceWorker) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+    } catch {
+      // Storage may be disabled (private mode, quota) — fall through to reload anyway.
     }
+
+    // Cap reloads so a truly broken deploy doesn't loop forever. After
+    // MAX_RELOADS we render a manual "Tải lại trang" button (see render()).
+    const KEY = "chunk-reload-count";
+    const MAX_RELOADS = 3;
+    let count = 0;
+    try { count = Number(sessionStorage.getItem(KEY) || "0"); } catch {}
+
+    if (count >= MAX_RELOADS) {
+      try { sessionStorage.removeItem(KEY); } catch {}
+      this.setState({ giveUp: true });
+      return;
+    }
+
+    try { sessionStorage.setItem(KEY, String(count + 1)); } catch {}
+    window.location.reload();
   }
   render() {
     if (this.state.hasError) {
-      const isChunkError = this.state.error &&
-        (this.state.error.message.includes("Failed to fetch dynamically imported module") ||
-         this.state.error.message.includes("Loading chunk") ||
-         this.state.error.message.includes("ChunkLoadError"));
-      // For chunk errors, show loading (page will auto-reload via componentDidCatch)
-      // For other errors, show retry button so users aren't stuck
+      const chunkErr = isChunkErrorMessage(this.state.error?.message);
       return (
         <div className="h-full bg-background flex flex-col w-full overflow-hidden">
           <AppHeader />
           <main className="flex-1 overflow-y-auto flex items-center justify-center" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {isChunkError ? (
+            {chunkErr && !this.state.giveUp ? (
               <div className="text-muted-foreground">Đang tải lại...</div>
+            ) : chunkErr && this.state.giveUp ? (
+              <div className="flex flex-col items-center gap-3 max-w-sm text-center px-4">
+                <div className="text-muted-foreground">
+                  Trang không thể tải. Có thể trình duyệt đang dùng phiên bản cũ.
+                </div>
+                <button
+                  onClick={() => {
+                    try { sessionStorage.clear(); } catch {}
+                    window.location.href =
+                      window.location.pathname + "?_cb=" + Date.now();
+                  }}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm"
+                >
+                  Tải lại trang
+                </button>
+              </div>
             ) : (
               <div className="flex flex-col items-center gap-3">
                 <div className="text-muted-foreground">Đã xảy ra lỗi</div>
@@ -264,7 +300,7 @@ class ChunkErrorBoundary extends Component<
                   {this.state.error?.message}
                 </div>
                 <button
-                  onClick={() => this.setState({ hasError: false, error: null })}
+                  onClick={() => this.setState({ hasError: false, error: null, giveUp: false })}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm"
                 >
                   Thử lại

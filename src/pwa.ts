@@ -18,6 +18,18 @@ export function initPwa() {
     return;
   }
 
+  // When a new SW takes control mid-session (via clientsClaim from workbox
+  // config), force-reload so the page picks up fresh chunks matching the
+  // new index.html shell. Without this, users with the pre-9425f6a SW saw
+  // a stuck-reload loop on lazy routes because the OLD SW kept serving
+  // OLD index.html that referenced no-longer-existent chunk hashes.
+  let reloadingFromSW = false;
+  navigator.serviceWorker?.addEventListener("controllerchange", () => {
+    if (reloadingFromSW) return;
+    reloadingFromSW = true;
+    window.location.reload();
+  });
+
   const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {
