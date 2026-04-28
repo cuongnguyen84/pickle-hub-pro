@@ -2,10 +2,93 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams } from "@/hooks/useSupabaseData";
+import type { Livestream } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { formatTime, formatRelative } from "./preview/_shell";
 
 type Filter = "all" | "live" | "scheduled" | "ended";
+
+interface MatchCardProps {
+  stream: Livestream;
+  language: "en" | "vi";
+}
+
+/* Inner card so each row gets its own onError fallback state without
+   leaking imgFailed into the page-level component. */
+const MatchCard = ({ stream, language }: MatchCardProps) => {
+  const [imgFailed, setImgFailed] = useState(false);
+  const showImg = stream.thumbnail_url && !imgFailed;
+
+  const overlay =
+    stream.status === "live" ? (
+      <span className="tl-match-thumb-overlay live">{language === "vi" ? "Trực tiếp" : "Live"}</span>
+    ) : stream.status === "scheduled" ? (
+      <span className="tl-match-thumb-overlay upcoming">
+        ● {language === "vi" ? "Sắp diễn ra" : "Scheduled"}
+      </span>
+    ) : (
+      <span className="tl-match-thumb-overlay replay">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+        {language === "vi" ? "Replay" : "Replay"}
+      </span>
+    );
+
+  const head =
+    stream.status === "live" ? (
+      <div className="tl-match-head">
+        <span className="stat live">{language === "vi" ? "Trực tiếp" : "Live"}</span>
+        <span className="ctx">
+          {stream.started_at ? formatTime(stream.started_at) : language === "vi" ? "Đang sóng" : "On air"}
+        </span>
+      </div>
+    ) : stream.status === "scheduled" ? (
+      <div className="tl-match-head">
+        <span className="stat upcoming">● {language === "vi" ? "Sắp diễn ra" : "Scheduled"}</span>
+        <span className="ctx">{formatRelative(stream.scheduled_start_at)}</span>
+      </div>
+    ) : (
+      <div className="tl-match-head">
+        <span className="stat final">{language === "vi" ? "Replay" : "Replay"}</span>
+        <span className="ctx">
+          {stream.ended_at ? formatRelative(stream.ended_at) : language === "vi" ? "Đã kết thúc" : "Ended"}
+        </span>
+      </div>
+    );
+
+  return (
+    <Link to={`/live/${stream.id}`} className="tl-match">
+      <div className="tl-match-thumb">
+        {showImg ? (
+          <img
+            src={stream.thumbnail_url!}
+            alt={stream.title ?? ""}
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="tl-match-thumb-placeholder" aria-hidden="true" />
+        )}
+        {overlay}
+      </div>
+      <div className="tl-match-body">
+        {head}
+        <h3 className="tl-match-title">
+          {stream.title ?? (language === "vi" ? "Trận chưa có tên" : "Untitled match")}
+        </h3>
+        <div className="tl-match-foot">
+          <span className="org">{stream.organization?.name ?? (language === "vi" ? "Phát sóng" : "Broadcast")}</span>
+          <span className="v">
+            {stream.status === "live"
+              ? language === "vi" ? "Xem →" : "Watch →"
+              : stream.status === "scheduled"
+              ? language === "vi" ? "Nhắc tôi →" : "Notify →"
+              : language === "vi" ? "Replay →" : "Replay →"}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+};
 
 const Live = () => {
   const { language } = useI18n();
@@ -33,30 +116,7 @@ const Live = () => {
     }
   }, [filter, live, scheduled, ended]);
 
-  const renderMatchHead = (stream: typeof live[number]) => {
-    if (stream.status === "live") {
-      return (
-        <div className="tl-match-head">
-          <span className="stat live">Live</span>
-          <span className="ctx">{stream.started_at ? formatTime(stream.started_at) : "On air"}</span>
-        </div>
-      );
-    }
-    if (stream.status === "scheduled") {
-      return (
-        <div className="tl-match-head">
-          <span className="stat upcoming">● Scheduled</span>
-          <span className="ctx">{formatRelative(stream.scheduled_start_at)}</span>
-        </div>
-      );
-    }
-    return (
-      <div className="tl-match-head">
-        <span className="stat final">Replay</span>
-        <span className="ctx">{stream.ended_at ? formatRelative(stream.ended_at) : "Ended"}</span>
-      </div>
-    );
-  };
+  // Match head + thumbnail rendering moved into <MatchCard /> at top of file.
 
   return (
     <TheLineLayout
@@ -138,20 +198,7 @@ const Live = () => {
           ) : (
             <div className="tl-match-grid">
               {items.slice(0, 24).map((stream) => (
-                <Link key={stream.id} to={`/live/${stream.id}`} className="tl-match">
-                  {renderMatchHead(stream)}
-                  <h3 className="tl-match-title">{stream.title ?? (language === "vi" ? "Trận chưa có tên" : "Untitled match")}</h3>
-                  <div className="tl-match-foot">
-                    <span className="org">{stream.organization?.name ?? (language === "vi" ? "Phát sóng" : "Broadcast")}</span>
-                    <span className="v">
-                      {stream.status === "live"
-                        ? (language === "vi" ? "Xem →" : "Watch →")
-                        : stream.status === "scheduled"
-                        ? (language === "vi" ? "Nhắc tôi →" : "Notify →")
-                        : (language === "vi" ? "Replay →" : "Replay →")}
-                    </span>
-                  </div>
-                </Link>
+                <MatchCard key={stream.id} stream={stream} language={language} />
               ))}
             </div>
           )}
