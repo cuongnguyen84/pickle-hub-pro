@@ -171,7 +171,9 @@ const post: BlogPost = {
           heading: "Vì sao chọn Đà Nẵng? Vì sao Việt Nam?",
           content: "Việc Việt Nam được chọn phản ánh quỹ đạo phát triển thần kỳ của môn này tại đây. Pickleball bùng nổ tại Việt Nam từ cuối năm 2023; doanh số thiết bị pickleball ước tính đạt khoảng 20 triệu USD trong nửa đầu năm 2025 (tăng 13 lần so với cùng kỳ), và DUPR ghi nhận mức tăng 184% về số lượng VĐV Việt Nam và hoạt động thi đấu vào cuối năm 2025. Lợi thế của Đà Nẵng dựa trên ba trụ cột. Thứ nhất, PPA Tour Asia – MB Vietnam Cup 2025 thu hút khoảng 600 pro, trong đó có Ben Johns và Tyson McGuffin. Thứ hai, kỷ lục Guinness với 7.906 khán giả ngày 4/10/2025 (phá kỷ lục cũ 5.522) đã được vinh danh là \"Game of the Year\" tại Vietnam Pickleball Awards. Thứ ba, Đà Nẵng có hạ tầng tổ chức sự kiện quốc tế đã được kiểm chứng — Da Nang International Marathon, IRONMAN Vietnam, và các trận bóng đá giao hữu đẳng cấp quốc tế. Sau chuyến khảo sát tháng 3/2026, ông Cabieses công khai nhận xét rằng ông \"rất ngạc nhiên khi Đà Nẵng là một thành phố đẹp như vậy, rất phù hợp đăng cai World Cup Pickleball.\"",
           internalLinks: [
-            { text: "Xem hướng dẫn đầy đủ PPA Tour Asia 2026", path: "/vi/blog/ppa-tour-asia-2026-complete-guide" }
+            // EN-only — no VI version of PPA Tour Asia post yet. Linking to /vi/...
+            // returned 404 (Ahrefs Site Audit 2026-04-24, "404 page" issue +1 NEW).
+            { text: "Xem hướng dẫn đầy đủ PPA Tour Asia 2026 (English)", path: "/blog/ppa-tour-asia-2026-complete-guide" }
           ]
         },
         {
