@@ -11,6 +11,7 @@ import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/pages/preview/_Countdown";
 import { HreflangTags, OrganizationSchema } from "@/components/seo";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Production homepage. Promoted from preview/the-line on 2026-04-25.
@@ -570,7 +571,18 @@ const Index = () => {
               {videos.slice(0, 3).map((v) => (
                 <Link key={v.id} to={`/watch/${v.id}`} className="tl-video-card">
                   <div className="tl-video-thumb">
-                    {v.thumbnail_url ? <img src={v.thumbnail_url} alt={v.title} loading="lazy" /> : null}
+                    {v.thumbnail_url ? (
+                      <img src={v.thumbnail_url} alt={v.title} loading="lazy" />
+                    ) : v.storage_path ? (
+                      <video
+                        src={supabase.storage.from("videos").getPublicUrl(v.storage_path).data.publicUrl}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        aria-label={v.title}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : null}
                     <div className="tl-video-play-icon">
                       <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M8 5v14l11-7z" />
