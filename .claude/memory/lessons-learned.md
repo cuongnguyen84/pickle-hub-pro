@@ -74,3 +74,41 @@ matches the new `const <Name>` declaration. Run before every commit that renames
 ```bash
 node -e "const f=require('fs').readFileSync('src/pages/X.tsx','utf8'); const c=f.match(/const (\w+) = /)[1]; const e=f.match(/export default (\w+);/)[1]; if(c!==e) throw new Error(`mismatch: const=${c} export=${e}`)"
 ```
+
+---
+
+## Storage RLS: Admin bypass MUST be OUTER OR, not AND-last
+
+**Occurrence (1 — videos bucket blocked admin uploads):**
+- Migration `20251222113744` for `videos` bucket: policy required `bucket_id = 'videos' AND folder[1]='org' AND folder[2]=user_org_id AND (is_creator OR is_admin)`. Admin uploading to other org's folder → folder check fail → reject. Fixed `88df78b` mirrors `thumbnails` bucket pattern.
+
+**Symptom:** Admin user (with `is_admin()=true`) gets `new row violates row-level security policy` on storage upload, even when uploading to any org folder.
+
+**Cause:** Admin bypass placed AS AND-clause inside structured constraint:
+```sql
+WITH CHECK (
+  bucket_id = '<bucket>'
+  AND folder[1] = 'org'
+  AND folder[2] = user_org_id  -- ← admin still constrained here
+  AND (is_creator OR is_admin)
+)
+```
+The `is_admin` check only relaxes role, not folder constraint.
+
+**Rule:** Admin bypass MUST be the OUTER OR — admin completely skips folder check:
+```sql
+WITH CHECK (
+  bucket_id = '<bucket>'
+  AND auth.uid() IS NOT NULL
+  AND (
+    public.is_admin()  -- ← admin bypass first, no folder constraint
+    OR (
+      public.is_creator()
+      AND folder[1] = 'org'
+      AND folder[2] = public.get_user_organization_id(auth.uid())::text
+    )
+  )
+)
+```
+
+**Reference template:** `thumbnails` bucket policies in `20251222132621_280522dc-73b7-4732-a9a9-5aa6242f6ef3.sql` — copy pattern for any new bucket.
