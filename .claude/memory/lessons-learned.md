@@ -52,3 +52,25 @@ WHERE table_schema = 'public' AND table_name = '<your_new_table>'
 ORDER BY grantee, privilege_type;
 ```
 Expected: rows for `authenticated` with at least SELECT/INSERT/UPDATE/DELETE.
+
+---
+
+## Migration: Rename component → MUST update `export default`
+
+**Occurrence (1 — broke production 30 min):**
+- Phase 2 C1 cutover (commit before `6595ba8`): renamed `const TheLine = ...` → `const Index = ...` in `src/pages/Index.tsx` but left `export default TheLine;` at line 800. Production hit `ReferenceError: TheLine is not defined` → site stuck "Loading..." 30 minutes until hotfix `6595ba8`.
+
+**Symptom:** Production blank page or "Loading..." stuck indefinitely. Console: `ReferenceError: <OldName> is not defined`.
+
+**Cause:** When renaming a top-level React component (`const X = () => {}`), the `export default X;` line at end of file references the OLD name. JS module load fails before component renders. Vite dev server may catch via HMR, production build does not.
+
+**Rule:** When renaming a component declaration, ALWAYS verify:
+```bash
+git grep -n 'export default' src/pages/<file>.tsx
+```
+matches the new `const <Name>` declaration. Run before every commit that renames component.
+
+**One-liner check post-rename:**
+```bash
+node -e "const f=require('fs').readFileSync('src/pages/X.tsx','utf8'); const c=f.match(/const (\w+) = /)[1]; const e=f.match(/export default (\w+);/)[1]; if(c!==e) throw new Error(`mismatch: const=${c} export=${e}`)"
+```
