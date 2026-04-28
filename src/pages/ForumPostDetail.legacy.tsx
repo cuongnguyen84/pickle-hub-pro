@@ -15,11 +15,15 @@ import { ReportDialog } from "@/components/report";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
-import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import MainLayout from "@/components/layout/MainLayout";
 import { DynamicMeta } from "@/components/seo";
 import { toast } from "@/hooks/use-toast";
 
-const ForumPostDetail = () => {
+/**
+ * Legacy ForumPostDetail — archived 2026-04-28 during detail-page cutover.
+ * Accessible at /forum-post-legacy/:postId for 14-day rollback. Cleanup 2026-05-09.
+ */
+const ForumPostDetailLegacy = () => {
   const { postId } = useParams();
   const { t, language } = useI18n();
   const { user } = useAuth();
@@ -48,27 +52,26 @@ const ForumPostDetail = () => {
 
   if (isLoading) {
     return (
-      <TheLineLayout title={t.forum.title}>
-        <div className="tl-shell" style={{ paddingTop: 32, paddingBottom: 80 }}>
+      <MainLayout>
+        <div className="container-wide py-6">
           <div className="h-64 rounded-xl bg-muted animate-pulse" />
         </div>
-      </TheLineLayout>
+      </MainLayout>
     );
   }
 
   if (!post) {
     return (
-      <TheLineLayout title={t.errors.notFound}>
-        <div className="tl-shell" style={{ paddingTop: 64, paddingBottom: 80, textAlign: "center", color: "var(--tl-fg-3)" }}>
-          {language === "vi" ? "Không tìm thấy bài viết" : "Post not found"}
-        </div>
-      </TheLineLayout>
+      <MainLayout>
+        <div className="container-wide py-12 text-center text-muted-foreground">Post not found</div>
+      </MainLayout>
     );
   }
 
   return (
-    <TheLineLayout title={post.title} description={post.content.substring(0, 160)}>
-      <div className="tl-shell space-y-6" style={{ maxWidth: "880px", paddingTop: 24, paddingBottom: 80 }}>
+    <MainLayout>
+      <DynamicMeta title={`${post.title} - ${t.forum.title}`} description={post.content.substring(0, 160)} />
+      <div className="container-wide max-w-3xl py-6 space-y-6">
         {/* Back */}
         <Link to="/forum" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" />
@@ -171,8 +174,8 @@ const ForumPostDetail = () => {
         {/* Comments */}
         <PostCommentSection postId={post.id} postUserId={post.user_id} isQA={post.is_qa} />
       </div>
-    </TheLineLayout>
+    </MainLayout>
   );
 };
 
-export default ForumPostDetail;
+export default ForumPostDetailLegacy;

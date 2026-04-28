@@ -31,6 +31,7 @@ const ToolsLegacy = lazy(() => import("./pages/Tools.legacy"));
 // Phase 4 detail-page legacy fallbacks (REMOVE 2026-05-09)
 const WatchLiveLegacy = lazy(() => import("./pages/WatchLive.legacy"));
 const TournamentDetailLegacy = lazy(() => import("./pages/TournamentDetail.legacy"));
+const ForumPostDetailLegacy = lazy(() => import("./pages/ForumPostDetail.legacy"));
 import RequireAuth from "@/components/auth/RequireAuth";
 import ConditionalAuth from "@/components/auth/ConditionalAuth";
 
@@ -393,6 +394,7 @@ const App = () => (
                     <Route path="/tools-legacy" element={<ToolsLegacy />} />
                     <Route path="/live-watch-legacy/:id" element={<WatchLiveLegacy />} />
                     <Route path="/tournament-legacy/:slug" element={<ConditionalAuth><TournamentDetailLegacy /></ConditionalAuth>} />
+                    <Route path="/forum-post-legacy/:postId" element={<ForumPostDetailLegacy />} />
                     {/* Preview routes - design direction exploration, noindex */}
                     <Route path="/preview/the-line" element={<PreviewTheLine />} />
                     <Route path="/preview/the-line/live" element={<PreviewLiveList />} />
