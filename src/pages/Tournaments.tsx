@@ -1,507 +1,449 @@
-import { useState, useMemo, useEffect } from "react";
-import { MainLayout } from "@/components/layout";
-import { EmptyState } from "@/components/content";
-import { SearchBar } from "@/components/search";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { useI18n } from "@/i18n";
-import { useTournaments, useActivePublicQuickTables, useUserRegisteredTournaments, useUserCompletedTournaments, useOpenTeamMatchTournaments, useCompletedPublicQuickTables, useCompletedTeamMatchTournaments, useActiveDoublesElimination, useCompletedDoublesElimination, useActiveFlexTournaments, useCompletedFlexTournaments } from "@/hooks/useSupabaseData";
-import { useDebounce } from "@/hooks/useSearch";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Calendar, ChevronRight, Search, Users, ClipboardList, CheckCircle2, Clock, User, Mail, MapPin, Layers } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { DynamicMeta, HreflangTags } from "@/components/seo";
-import { TournamentFormatSection } from "@/components/tournaments";
-import type { ParentTournamentWithPreview, SubEventPreview } from "@/hooks/useParentTournament";
-import ParentTournamentCard from "@/components/quicktable/ParentTournamentCard";
+import {
+  useTournaments,
+  useLivestreams,
+  useOpenRegistrationTables,
+  useActivePublicQuickTables,
+  useCompletedPublicQuickTables,
+  useActiveDoublesElimination,
+  useCompletedDoublesElimination,
+  useActiveFlexTournaments,
+  useCompletedFlexTournaments,
+  useOpenTeamMatchTournaments,
+  useCompletedTeamMatchTournaments,
+} from "@/hooks/useSupabaseData";
+import { useUserRegisteredTournaments, useUserCompletedTournaments } from "@/hooks/useInteractionData";
+import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { formatDate, formatRelative } from "./preview/_shell";
+
+type Tab = "watch" | "community";
+type Fmt = "quick-tables" | "doubles-elim" | "flex" | "team-match";
+
+const STATUS_LABEL: Record<string, { cls: "active" | "setup" | "completed" | "registration"; label: string }> = {
+  setup: { cls: "setup", label: "Setup" },
+  registration: { cls: "registration", label: "Registering" },
+  group_stage: { cls: "active", label: "Group stage" },
+  playoff: { cls: "active", label: "Playoffs" },
+  ongoing: { cls: "active", label: "Live" },
+  active: { cls: "active", label: "Live" },
+  completed: { cls: "completed", label: "Completed" },
+};
 
 const Tournaments = () => {
-  const { t, language } = useI18n();
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
-  const [parentTournaments, setParentTournaments] = useState<ParentTournamentWithPreview[]>([]);
+  const { language } = useI18n();
+  const [tab, setTab] = useState<Tab>("watch");
 
-  const { data: tournaments = [], isLoading } = useTournaments();
-  const { data: activeQuickTables = [] } = useActivePublicQuickTables();
-  const { data: openTeamMatchTournaments = [] } = useOpenTeamMatchTournaments();
-  const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 50 });
-  const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 50 });
-  const { data: activeDoubles = [] } = useActiveDoublesElimination({ limit: 50 });
-  const { data: completedDoubles = [] } = useCompletedDoublesElimination({ limit: 50 });
-  const { data: activeFlex = [] } = useActiveFlexTournaments({ limit: 50 });
-  const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 50 });
-  const { data: registeredTournaments = [] } = useUserRegisteredTournaments(user?.id);
-  const { data: completedTournaments = [] } = useUserCompletedTournaments(user?.id);
+  // Pro (Watch) data
+  const { data: tournaments = [], isLoading: tournamentsLoading } = useTournaments();
+  const { data: liveStreams = [] } = useLivestreams("live");
 
-  useEffect(() => {
-    const loadParents = async () => {
-      const { data: parents } = await supabase
-        .from('parent_tournaments')
-        .select('*')
-        .order('is_featured', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(20);
-      if (!parents || parents.length === 0) {
-        setParentTournaments([]);
-        return;
-      }
-      const parentIds = parents.map(p => p.id);
-      const { data: subEvents } = await supabase
-        .from('quick_tables')
-        .select('id, name, status, share_id, parent_tournament_id, created_at')
-        .in('parent_tournament_id', parentIds);
+  // Community data — all 4 formats, active + completed
+  const { data: openRegTables = [] } = useOpenRegistrationTables({ limit: 20 });
+  const { data: activeQuickTables = [] } = useActivePublicQuickTables({ limit: 20 });
+  const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 10 });
 
-      const statusPriority: Record<string, number> = {
-        group_stage: 0, playoff: 1, setup: 2, completed: 3,
-      };
-      const grouped = new Map<string, SubEventPreview[]>();
-      const counts = new Map<string, number>();
-      for (const se of (subEvents || [])) {
-        const pid = se.parent_tournament_id as string;
-        if (!grouped.has(pid)) grouped.set(pid, []);
-        grouped.get(pid)!.push({ id: se.id, name: se.name, status: se.status, share_id: se.share_id });
-        counts.set(pid, (counts.get(pid) || 0) + 1);
-      }
-      for (const [pid, events] of grouped) {
-        events.sort((a, b) => (statusPriority[a.status] ?? 99) - (statusPriority[b.status] ?? 99));
-        grouped.set(pid, events.slice(0, 3));
-      }
-      setParentTournaments(parents.map(p => ({
-        ...p,
-        subEventCount: counts.get(p.id) || 0,
-        previewSubEvents: grouped.get(p.id) || [],
-      })) as ParentTournamentWithPreview[]);
-    };
-    loadParents();
-  }, []);
+  const { data: openTeamMatches = [] } = useOpenTeamMatchTournaments({ limit: 20 });
+  const { data: completedTeamMatches = [] } = useCompletedTeamMatchTournaments({ limit: 10 });
 
-  const filteredTournaments = useMemo(() => {
-    if (!debouncedSearch) return tournaments;
-    return tournaments.filter((tournament) => {
-      const name = tournament.name?.toLowerCase() ?? "";
-      const description = tournament.description?.toLowerCase() ?? "";
-      return name.includes(debouncedSearch) || description.includes(debouncedSearch);
+  const { data: activeDoublesElim = [] } = useActiveDoublesElimination({ limit: 20 });
+  const { data: completedDoublesElim = [] } = useCompletedDoublesElimination({ limit: 10 });
+
+  const { data: activeFlex = [] } = useActiveFlexTournaments({ limit: 20 });
+  const { data: completedFlex = [] } = useCompletedFlexTournaments({ limit: 10 });
+
+  // User's brackets
+  const { data: userRegistered = [] } = useUserRegisteredTournaments(user?.id);
+  const { data: userCompleted = [] } = useUserCompletedTournaments(user?.id);
+
+  const liveProCount = useMemo(
+    () => new Set(liveStreams.map((s) => s.tournament_id).filter(Boolean)).size,
+    [liveStreams],
+  );
+
+  const communityCount =
+    activeQuickTables.length + openRegTables.length +
+    openTeamMatches.length +
+    activeDoublesElim.length +
+    activeFlex.length;
+
+  const sortedPro = useMemo(() => {
+    return [...tournaments].sort((a, b) => {
+      const order: Record<string, number> = { ongoing: 0, upcoming: 1, ended: 2 };
+      const ao = order[a.status] ?? 3;
+      const bo = order[b.status] ?? 3;
+      if (ao !== bo) return ao - bo;
+      const as = a.start_date ? new Date(a.start_date).getTime() : Infinity;
+      const bs = b.start_date ? new Date(b.start_date).getTime() : Infinity;
+      return a.status === "ended" ? bs - as : as - bs;
     });
-  }, [tournaments, debouncedSearch]);
+  }, [tournaments]);
 
-  const ongoingTournaments = filteredTournaments.filter((t) => t.status === "ongoing");
-  const upcomingTournaments = filteredTournaments.filter((t) => t.status === "upcoming");
-  const endedTournaments = filteredTournaments.filter((t) => t.status === "ended");
-
-  const hasSearch = debouncedSearch.length > 0;
-  const hasResults = filteredTournaments.length > 0;
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "setup": return t.quickTable.status.setup;
-      case "group_stage": return t.quickTable.status.groupStage;
-      case "playoff": return t.quickTable.status.playoff;
-      case "completed": return t.quickTable.status.completed;
-      default: return status;
-    }
-  };
-
-  const getStatusVariant = (status: string): "default" | "secondary" | "outline" => {
-    switch (status) {
-      case "completed": return "default";
-      case "playoff":
-      case "group_stage": return "secondary";
-      default: return "outline";
-    }
-  };
-
-  const TournamentCard = ({ tournament }: { tournament: typeof tournaments[0] }) => {
-    const statusConfig = {
-      ongoing: {
-        color: "bg-live/90 text-foreground border-live/50",
-        text: t.tournament.ongoing,
-        dotClass: "bg-foreground animate-pulse",
-      },
-      upcoming: {
-        color: "bg-primary/90 text-primary-foreground border-primary/50",
-        text: t.tournament.upcoming,
-        dotClass: null,
-      },
-      ended: {
-        color: "bg-muted text-foreground-muted border-border",
-        text: t.tournament.ended,
-        dotClass: null,
-      },
-    };
-
-    const config = statusConfig[tournament.status];
-
-    return (
-      <Link
-        to={`/tournament/${tournament.slug}`}
-        className="group block glass-card overflow-hidden"
-      >
-        <div className="p-5">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Trophy className="w-7 h-7 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge 
-                  variant="outline"
-                  className={cn("px-2 py-0.5 text-xs font-medium border", config.color)}
-                >
-                  {config.dotClass && (
-                    <span className={cn("w-1.5 h-1.5 rounded-full mr-1.5", config.dotClass)} />
-                  )}
-                  {config.text}
-                </Badge>
-              </div>
-              <h3 className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors mb-2">
-                {tournament.name}
-              </h3>
-              {tournament.description && (
-                <p className="text-sm text-foreground-muted line-clamp-2 mb-3">
-                  {tournament.description}
-                </p>
-              )}
-              {(tournament.start_date || tournament.end_date) && (
-                <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
-                  <Calendar className="w-4 h-4" />
-                  <span>
-                    {tournament.start_date && format(new Date(tournament.start_date), "dd/MM/yyyy")}
-                    {tournament.start_date && tournament.end_date && " – "}
-                    {tournament.end_date && format(new Date(tournament.end_date), "dd/MM/yyyy")}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-              <ChevronRight className="w-5 h-5 text-foreground-muted" />
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  };
-
-  const TournamentGrid = ({ items }: { items: typeof tournaments }) => {
-    if (items.length === 0) {
-      return (
-        <EmptyState icon={Trophy} title={t.common.noResults} description={t.tournament.checkBackLater} />
-      );
-    }
-    return (
-      <div className="grid gap-4">
-        {items.map((tournament) => (
-          <TournamentCard key={tournament.id} tournament={tournament} />
-        ))}
-      </div>
-    );
-  };
-
-  const renderQuickTableMeta = (item: Record<string, unknown>) => {
-    const table = item as { is_doubles?: boolean; player_count?: number };
-    return table.is_doubles ? (
-      <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
-        <Users className="w-3 h-3" />
-        <span>{table.player_count} {t.tournament.pairs}</span>
-      </Badge>
-    ) : (
-      <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
-        <User className="w-3 h-3" />
-        <span>{table.player_count} {t.tournament.players}</span>
-      </Badge>
-    );
-  };
-
-  const renderTeamMatchMeta = (item: Record<string, unknown>) => {
-    const tm = item as { team_count?: number; team_roster_size?: number; format?: string };
-    const getFormatLabel = (f: string) => {
-      switch (f) {
-        case 'round_robin': return t.teamMatch.formatRoundRobin;
-        case 'single_elimination': return t.teamMatch.formatSingleElim;
-        case 'rr_playoff': return t.teamMatch.formatRrPlayoff;
-        default: return f;
-      }
-    };
-    return (
-      <>
-        <Badge variant="secondary" className="gap-1 text-xs bg-purple-100 text-purple-700 border-purple-200">
-          <Users className="w-3 h-3" />
-          <span>{tm.team_count} {t.teamMatch.teams} × {tm.team_roster_size}</span>
-        </Badge>
-        {tm.format && <span className="text-xs text-muted-foreground">{getFormatLabel(tm.format)}</span>}
-      </>
-    );
-  };
-
-  const renderDoublesMeta = (item: Record<string, unknown>) => {
-    const de = item as { team_count?: number };
-    return (
-      <Badge variant="secondary" className="gap-1 text-xs">
-        <Users className="w-3 h-3" />
-        <span>{de.team_count} {t.tournament.pairs}</span>
-      </Badge>
-    );
-  };
+  const userBrackets = [...userRegistered, ...userCompleted];
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title="Pickleball Tournament Software for Organizers"
-        description="Professional pickleball tournament software for organizers. Create brackets, manage team matches, run round robin tournaments, and livestream your pickleball events with ThePickleHub."
-        url="https://www.thepicklehub.net/tournaments"
-      />
-      <HreflangTags enPath="/tournaments" viPath="/vi/tournaments" />
-      <div className="container-wide py-8 w-full min-w-0">
-        <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gradient-brand mb-2">
-            {t.tournament.hubTitle}
+    <TheLineLayout
+      title={language === "vi" ? "Giải đấu" : "Tournaments"}
+      description={language === "vi"
+        ? "Giải đấu pickleball chuyên nghiệp PPA, APP, MLP và cộng đồng — bracket miễn phí cho ban tổ chức và người chơi."
+        : "Professional and community pickleball tournaments — PPA, APP, MLP, and free brackets for organizers."}
+      active="tournaments"
+    >
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="sep">/</span>
+          <span className="current">Tournaments</span>
+        </nav>
+
+        <header className="tl-page-head">
+          <div className="kicker">◆ Watch or play — your call</div>
+          <h1>
+            Tournaments <em className="tl-serif">worth</em> <br />
+            <span className="dim">watching,</span> <span className="sans">or running.</span>
           </h1>
-          <p className="text-foreground-secondary max-w-3xl">
-            {t.tournament.hubDescription}
+          <p>
+            Professional broadcasts from PPA, APP, MLP and regional tours — and
+            community brackets you or anyone can spin up in under a minute.
           </p>
         </header>
 
-        <div className="mb-8">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} className="max-w-md" />
+        {/* 2 hero cards — Watch / Play */}
+        <div className="tl-hub-cards">
+          <Link to="#" className="tl-hub-card" onClick={(e) => { e.preventDefault(); setTab("watch"); }}>
+            <div className="tl-hub-kicker">
+              <span className="dot" />
+              <span>Watch the pros</span>
+            </div>
+            <h2 className="tl-hub-title">
+              Every tour, <span className="sans">one feed.</span>
+            </h2>
+            <p className="tl-hub-desc">
+              Live broadcasts, brackets and replays from the world's pickleball tours.
+              One subscription, 4K on flagship courts.
+            </p>
+            <div className="tl-hub-stats">
+              <div>
+                <span className="n">{tournaments.length}</span>
+                tournaments
+              </div>
+              <div>
+                <span className="n">{liveProCount}</span>
+                {liveProCount === 1 ? "live now" : "live now"}
+              </div>
+              <div>
+                <span className="n">{liveStreams.length}</span>
+                broadcasts
+              </div>
+            </div>
+            <span className="tl-hub-arrow">Browse pro tours →</span>
+          </Link>
+
+          <Link to="/tools" className="tl-hub-card accent">
+            <div className="tl-hub-kicker">
+              <span className="dot" />
+              <span>Run your own</span>
+            </div>
+            <h2 className="tl-hub-title">
+              60 seconds <span className="sans">to a bracket.</span>
+            </h2>
+            <p className="tl-hub-desc">
+              Quick Tables, Doubles Elim, Flex, Team Match. Free. No signup for viewers.
+              Scoreboard, shareable link, printable bracket.
+            </p>
+            <div className="tl-hub-stats">
+              <div>
+                <span className="n">{communityCount}</span>
+                active now
+              </div>
+              <div>
+                <span className="n">4</span>
+                formats
+              </div>
+              <div>
+                <span className="n">60s</span>
+                setup
+              </div>
+            </div>
+            <span className="tl-hub-arrow">Open Bracket Lab →</span>
+          </Link>
         </div>
 
-        {/* User's Registered Tournaments */}
-        {user && registeredTournaments.length > 0 && (
-          <Card className="mb-6">
-            <div className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                <h2 className="text-lg font-semibold text-foreground">{t.quickTable.yourRegisteredTournaments}</h2>
-              </div>
-            </div>
-            <div className="px-4 pb-4 space-y-2">
-              {registeredTournaments.map((tournament) => {
-                const tm = tournament;
-                return (
-                  <Link
-                    key={tm.id}
-                    to={`/tools/quick-tables/${tm.share_id}`}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-green-600/10 flex items-center justify-center flex-shrink-0">
-                      <Trophy className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium truncate max-w-[180px]">{tm.name}</span>
-                        <Badge 
-                          variant={tm.registrationStatus === 'approved' ? 'default' : 'outline'}
-                          className={cn("text-xs shrink-0", tm.registrationStatus === 'approved' ? 'bg-green-600' : '')}
-                        >
-                          {tm.registrationStatus === 'approved' ? t.quickTable.approved : t.quickTable.pending}
-                        </Badge>
-                        <Badge variant={getStatusVariant(tm.status)} className="text-xs shrink-0">
-                          {getStatusLabel(tm.status)}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        {tm.is_doubles ? (
-                          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{tm.player_count} {t.tournament.pairs}</span>
-                        ) : (
-                          <span className="flex items-center gap-1"><User className="w-3 h-3" />{tm.player_count} {t.tournament.players}</span>
-                        )}
-                        {tm.creator_display_name && (
-                          <>
-                            <span className="text-muted-foreground/50">•</span>
-                            <span className="flex items-center gap-1 truncate max-w-[120px]">
-                              <Mail className="w-3 h-3 shrink-0" />{tm.creator_display_name}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
-                  </Link>
-                );
-              })}
-            </div>
-          </Card>
-        )}
+        {/* Tabs */}
+        <div className="tl-tabs">
+          <button
+            type="button"
+            className={`tl-tab ${tab === "watch" ? "active" : ""}`}
+            onClick={() => setTab("watch")}
+          >
+            Watch<span className="count">{tournaments.length}</span>
+          </button>
+          <button
+            type="button"
+            className={`tl-tab ${tab === "community" ? "active" : ""}`}
+            onClick={() => setTab("community")}
+          >
+            Community<span className="count">{communityCount}</span>
+          </button>
+        </div>
 
-        {/* User's Completed Tournaments */}
-        {user && completedTournaments.length > 0 && (
-          <Card className="mb-6">
-            <div className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock className="w-5 h-5 text-foreground-muted" />
-                <h2 className="text-lg font-semibold text-foreground">{t.quickTable.yourCompletedTournaments}</h2>
+        {/* Tab panels */}
+        <div style={{ paddingBottom: 80 }}>
+          {tab === "watch" ? (
+            tournamentsLoading ? (
+              <div className="tl-empty">
+                <p style={{ fontFamily: "Geist Mono", fontSize: 12, letterSpacing: "0.04em" }}>Loading tournaments…</p>
               </div>
-            </div>
-            <div className="px-4 pb-4 space-y-2">
-              {completedTournaments.slice(0, 5).map((tournament) => {
-                const tm = tournament;
-                return (
-                  <Link
-                    key={tm.id}
-                    to={`/tools/quick-tables/${tm.share_id}`}
-                    className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                        <Trophy className="w-5 h-5 text-foreground-muted" />
+            ) : sortedPro.length === 0 ? (
+              <div className="tl-empty">
+                <h3>No pro tournaments yet.</h3>
+                <p>Creators haven't scheduled any broadcasts in this window. Check back soon.</p>
+              </div>
+            ) : (
+              <div className="tl-list">
+                {sortedPro.map((t) => {
+                  const date = formatDate(t.start_date);
+                  const endDate = formatDate(t.end_date);
+                  const hasLive = liveStreams.some((s) => s.tournament_id === t.id);
+                  return (
+                    <Link key={t.id} to={`/tournament/${t.slug}`} className="tl-list-item">
+                      <div className="tl-li-date">
+                        <span className="d">{date.d}</span>
+                        <span className="m">{date.m}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{tm.name}</div>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {tm.is_doubles ? (
-                            <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 border-blue-200">
-                              <Users className="w-3 h-3" /><span>{tm.player_count} {t.tournament.pairs}</span>
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="gap-1 text-xs bg-orange-100 text-orange-700 border-orange-200">
-                              <User className="w-3 h-3" /><span>{tm.player_count} {t.tournament.players}</span>
-                            </Badge>
+                      <div className="tl-li-body">
+                        <h3>{t.name}</h3>
+                        <div className="meta">
+                          <span>{t.status}</span>
+                          {t.end_date && (
+                            <>
+                              <span className="sep">·</span>
+                              <span>Ends {endDate.d} {endDate.m}</span>
+                            </>
                           )}
                         </div>
                       </div>
+                      <div className="tl-li-right">
+                        <span
+                          style={{
+                            color: hasLive ? "var(--tl-live)" :
+                              t.status === "ongoing" ? "var(--tl-live)" :
+                              t.status === "upcoming" ? "var(--tl-green)" :
+                              "var(--tl-fg-3)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {hasLive ? "● Live now" :
+                           t.status === "ongoing" ? "● Ongoing" :
+                           t.status === "upcoming" ? "Register" :
+                           "View results"}
+                        </span>
+                      </div>
+                      <span className="tl-li-arrow">→</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            // Community tab
+            <>
+              {/* Your brackets */}
+              {user && userBrackets.length > 0 && (
+                <section className="tl-format-section">
+                  <div className="tl-format-section-head">
+                    <div>
+                      <h3>Your brackets</h3>
+                      <p className="desc">Tournaments you've registered for or completed.</p>
                     </div>
-                    <div className="flex items-center gap-2 pl-13 sm:pl-0">
-                      <Badge variant="default" className="text-xs">{t.quickTable.status.completed}</Badge>
-                      <ChevronRight className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+                    <div className="right">
+                      <span className="count-pill">{userBrackets.length}</span>
                     </div>
+                  </div>
+                  <div className="tl-list" style={{ ["--fc-accent" as string]: "#00b96b" } as React.CSSProperties}>
+                    {userBrackets.slice(0, 8).map((b) => {
+                      const status = STATUS_LABEL[b.status] ?? { cls: "active", label: b.status };
+                      return (
+                        <Link
+                          key={b.id}
+                          to={`/tools/quick-tables/${b.share_id}`}
+                          className="tl-bracket-row"
+                          style={{ ["--fc-accent" as string]: "#00b96b" } as React.CSSProperties}
+                        >
+                          <div className="tl-br-fmt" />
+                          <div className="tl-br-body">
+                            <h4 className="tl-br-name">{b.name}</h4>
+                            <div className="tl-br-meta">
+                              <span>Quick Table</span>
+                              <span className="sep">·</span>
+                              <span>{b.is_doubles ? "Doubles" : "Singles"}</span>
+                              <span className="sep">·</span>
+                              <span>{b.player_count} players</span>
+                            </div>
+                          </div>
+                          <div className="tl-br-creator">
+                            {b.creator_display_name ?? "—"}
+                          </div>
+                          <span className={`tl-br-status ${status.cls}`}>{status.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Quick Tables */}
+              <FormatSection
+                fmt="quick-tables"
+                title="Quick Tables"
+                desc="Round robin groups with auto playoffs. 4 to 32 players. Most popular format."
+                count={activeQuickTables.length + openRegTables.length}
+                active={[...openRegTables, ...activeQuickTables]}
+                completed={completedQuickTables}
+                renderMeta={(t: any) => `${t.is_doubles ? "Doubles" : "Singles"} · ${t.player_count} players · ${t.format ?? "Round robin"}`}
+                linkBase="/tools/quick-tables"
+                createLink="/tools/quick-tables"
+              />
+
+              {/* Doubles Elimination */}
+              <FormatSection
+                fmt="doubles-elim"
+                title="Doubles Elimination"
+                desc="Double elimination bracket — lose once, fall to losers bracket, fight back to the final."
+                count={activeDoublesElim.length}
+                active={activeDoublesElim}
+                completed={completedDoublesElim}
+                renderMeta={(t: any) => `${t.team_count} teams · Double elim`}
+                linkBase="/tools/doubles-elimination"
+                createLink="/tools/doubles-elimination/new"
+              />
+
+              {/* Flex */}
+              <FormatSection
+                fmt="flex"
+                title="Flex Format"
+                desc="Custom bracket — define rounds, pools, seeding rules. For non-standard events."
+                count={activeFlex.length}
+                active={activeFlex}
+                completed={completedFlex}
+                renderMeta={(_t: any) => "Flex · Custom format"}
+                linkBase="/tools/flex-tournament"
+                createLink="/tools/flex-tournament/new"
+              />
+
+              {/* Team Match */}
+              <FormatSection
+                fmt="team-match"
+                title="Team Match"
+                desc="MLP-style team competitions — Dreambreaker tiebreaker included."
+                count={openTeamMatches.length}
+                active={openTeamMatches}
+                completed={completedTeamMatches}
+                renderMeta={(t: any) => `${t.team_count} teams · ${t.team_roster_size}/team`}
+                linkBase="/tools/team-match"
+                createLink="/tools/team-match/new"
+                useIdLink
+              />
+
+              {/* Empty state */}
+              {communityCount === 0 && (
+                <div className="tl-empty">
+                  <h3>No community brackets running right now.</h3>
+                  <p>Be the first. Spin up a bracket in under a minute.</p>
+                  <Link to="/tools" className="tl-btn green">
+                    Open Bracket Lab →
                   </Link>
-                );
-              })}
-            </div>
-          </Card>
-        )}
-
-        {/* Featured Parent Tournaments */}
-        {parentTournaments.filter(p => p.is_featured).length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              <h2 className="text-lg font-semibold text-foreground">
-                {t.tournament.featured}
-              </h2>
-            </div>
-            <div className="grid gap-3">
-              {parentTournaments.filter(p => p.is_featured).map((pt) => (
-                <ParentTournamentCard
-                  key={pt.id}
-                  parent={pt}
-                  isOwner={!!user && pt.creator_user_id === user.id}
-                  variant="featured"
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Non-featured Parent Tournaments (Multi-event) */}
-        {parentTournaments.filter(p => !p.is_featured).length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Layers className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">
-                {t.tournament.multiEvent}
-              </h2>
-            </div>
-            <div className="grid gap-3">
-              {parentTournaments.filter(p => !p.is_featured).map((pt) => (
-                <ParentTournamentCard
-                  key={pt.id}
-                  parent={pt}
-                  isOwner={!!user && pt.creator_user_id === user.id}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Format sections using reusable component */}
-        <TournamentFormatSection
-          icon={<ClipboardList className="w-5 h-5 text-primary" />}
-          title="Quick Table"
-          activeItems={activeQuickTables}
-          completedItems={completedQuickTables}
-          basePath="/tools/quick-tables"
-          renderMeta={renderQuickTableMeta}
-        />
-
-        <TournamentFormatSection
-          icon={<Users className="w-5 h-5 text-primary" />}
-          title={t.teamMatch.publicTournaments}
-          activeItems={openTeamMatchTournaments}
-          completedItems={completedTeamMatches}
-          basePath="/tools/team-match"
-          renderMeta={renderTeamMatchMeta}
-        />
-
-        <TournamentFormatSection
-          icon={<Trophy className="w-5 h-5 text-primary" />}
-          title="Doubles Elimination"
-          activeItems={activeDoubles}
-          completedItems={completedDoubles}
-          basePath="/tools/doubles-elimination"
-          renderMeta={renderDoublesMeta}
-        />
-
-        <TournamentFormatSection
-          icon={<Trophy className="w-5 h-5 text-primary" />}
-          title="Flex Tournament"
-          activeItems={activeFlex}
-          completedItems={completedFlex}
-          basePath="/tools/flex-tournament"
-        />
-
-        {/* Main tournaments (events) */}
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-80 mb-6" />
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-36 rounded-xl" />
-            ))}
-          </div>
-        ) : !hasResults && hasSearch ? (
-          <EmptyState icon={Search} title={t.search.noResults} />
-        ) : (
-          <Tabs defaultValue="ongoing" className="w-full">
-            <TabsList className="mb-6 h-auto p-1 bg-white/[0.04] border border-white/[0.06] backdrop-blur-sm rounded-xl">
-              <TabsTrigger value="ongoing" className="gap-2">
-                <span className="w-2 h-2 rounded-full bg-live animate-pulse" />
-                {t.tournament.ongoing}
-                <span className="px-1.5 py-0.5 rounded-full bg-muted text-foreground-muted text-xs">
-                  {ongoingTournaments.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="upcoming" className="gap-2">
-                {t.tournament.upcoming}
-                <span className="px-1.5 py-0.5 rounded-full bg-muted text-foreground-muted text-xs">
-                  {upcomingTournaments.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="ended" className="gap-2">
-                {t.tournament.ended}
-                <span className="px-1.5 py-0.5 rounded-full bg-muted text-foreground-muted text-xs">
-                  {endedTournaments.length}
-                </span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="ongoing">
-              <TournamentGrid items={ongoingTournaments} />
-            </TabsContent>
-            <TabsContent value="upcoming">
-              <TournamentGrid items={upcomingTournaments} />
-            </TabsContent>
-            <TabsContent value="ended">
-              <TournamentGrid items={endedTournaments} />
-            </TabsContent>
-          </Tabs>
-        )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
+  );
+};
+
+/* ---- Shared format-section component (community) ---- */
+interface FormatSectionProps {
+  fmt: Fmt;
+  title: string;
+  desc: string;
+  count: number;
+  active: Array<any>;
+  completed: Array<any>;
+  renderMeta: (t: any) => string;
+  linkBase: string;
+  createLink: string;
+  useIdLink?: boolean;
+}
+
+const FormatSection = ({
+  fmt,
+  title,
+  desc,
+  count,
+  active,
+  completed,
+  renderMeta,
+  linkBase,
+  createLink,
+  useIdLink,
+}: FormatSectionProps) => {
+  const display = [...active, ...completed].slice(0, 8);
+  if (display.length === 0) return null;
+
+  const accentVar = `--fc-accent-${fmt}`;
+  const accent =
+    fmt === "quick-tables" ? "#00b96b" :
+    fmt === "doubles-elim" ? "#e9b649" :
+    fmt === "flex" ? "#4f9bff" :
+    "#ff7a4d";
+
+  return (
+    <section className="tl-format-section">
+      <div className="tl-format-section-head">
+        <div>
+          <h3>{title}</h3>
+          <p className="desc">{desc}</p>
+        </div>
+        <div className="right">
+          <span className="count-pill">{count} active</span>
+          <Link to={createLink} className="create">Create →</Link>
+        </div>
+      </div>
+
+      <div className="tl-list">
+        {display.map((t) => {
+          const status = STATUS_LABEL[t.status] ?? { cls: "active" as const, label: t.status };
+          const href = useIdLink ? `${linkBase}/${t.id}` : `${linkBase}/${t.share_id}`;
+          return (
+            <Link
+              key={t.id}
+              to={href}
+              className="tl-bracket-row"
+              style={{ ["--fc-accent" as string]: accent } as React.CSSProperties}
+            >
+              <div className="tl-br-fmt" />
+              <div className="tl-br-body">
+                <h4 className="tl-br-name">{t.name}</h4>
+                <div className="tl-br-meta">
+                  <span>{renderMeta(t)}</span>
+                  <span className="sep">·</span>
+                  <span>{formatRelative(t.created_at)}</span>
+                </div>
+              </div>
+              <div className="tl-br-creator">
+                {t.creator_display_name ?? "—"}
+              </div>
+              <span className={`tl-br-status ${status.cls}`}>{status.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 };
 
