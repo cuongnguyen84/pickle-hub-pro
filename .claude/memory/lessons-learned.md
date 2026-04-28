@@ -191,3 +191,27 @@ navigator.serviceWorker?.addEventListener("controllerchange", () => {
 - `Loading chunk`
 - `ChunkLoadError`
 - `Unexpected token '<'` (HTML-served-as-JS fingerprint)
+
+---
+
+## Cowork session: ALWAYS `git fetch` before suggesting next code change
+
+**Reason:** When user pastes Claude Code output during a Cowork session, the assistant's local working tree is often N commits behind `origin/main`. Suggesting code changes against stale state leads to incorrect line numbers, missing files, or duplicate work.
+
+**Rule:** Every time the user pastes Claude Code's output (or any indication code shipped), run:
+```bash
+cd <repo>
+git fetch origin
+git log origin/main --oneline -5
+```
+And read any newly-added files referenced in the output BEFORE drafting next prompt.
+
+**Don't:**
+- Assume previous file content still matches what's on `origin/main`
+- Reference line numbers from local cached state
+- Recommend changes to files Claude Code may have just deleted/refactored
+
+**Do:**
+- `git fetch` + `git log` first thing on every output paste
+- `git show origin/main:<path>` to read latest before suggesting edits
+- Verify shipped commit SHA matches what user reports
