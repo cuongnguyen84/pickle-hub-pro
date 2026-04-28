@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Cowork session artifacts
+.claude/worktrees/
+.claude/settings.local.json
+
+# Supabase CLI temp
+supabase/.temp/
