@@ -25,7 +25,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Cách chơi Pickleball cho người mới: Lộ trình 7 ngày từ 0 đến đánh được",
     metaTitleEn: "How to Play Pickleball | 7-Day Beginner Plan Tested in Vietnam",
     metaTitleVi: "Cách chơi Pickleball cho người mới | Lộ trình 7 ngày từ 0",
-    metaDescriptionEn: "How to play pickleball as a beginner: gear to buy, correct grip, 6 core shots, and a 7-day practice plan that took 200+ Vietnamese players from zero to playing their first real match.",
+    metaDescriptionEn: "How to play pickleball: beginner gear, grip, 6 core shots, and a 7-day practice plan tested with 200+ Vietnamese players. Start playing in week one.",
     metaDescriptionVi: "Hướng dẫn cách chơi Pickleball cho người mới từ A đến Z: dụng cụ cần mua, kỹ thuật cơ bản, lộ trình 7 ngày tập luyện, lỗi thường gặp. Bắt đầu chơi tự tin sau 1 tuần.",
   },  {
     slug: "tournament-organizer-hub",
@@ -43,7 +43,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Hub Tổ chức giải Pickleball — Mọi hướng dẫn, công cụ và thể thức trong một trang",
     metaTitleEn: "Pickleball Tournament Organizer Hub | Formats, Brackets, Tools 2026",
     metaTitleVi: "Hub Tổ chức giải Pickleball | Thể thức, Bracket, Công cụ 2026",
-    metaDescriptionEn: "The complete hub for pickleball tournament organizers in 2026. Choose a format, build a bracket, manage scoring, livestream matches, and compare free software — all linked from one page.",
+    metaDescriptionEn: "Pickleball tournament organizer hub 2026: choose a format, build brackets, manage scoring, livestream, and compare free software — all from one page.",
     metaDescriptionVi: "Hub đầy đủ cho ban tổ chức giải pickleball 2026. Chọn thể thức, tạo bracket, quản lý điểm, livestream và so sánh phần mềm miễn phí — tất cả liên kết trong một trang.",
   },  {
     slug: "pickleball-world-cup-2026-da-nang",
@@ -61,7 +61,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "World Cup Pickleball 2026 tại Đà Nẵng — Hướng dẫn đầy đủ",
     metaTitleEn: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch",
     metaTitleVi: "World Cup Pickleball 2026 Đà Nẵng | Lịch thi đấu, Đội tuyển, Cách xem",
-    metaDescriptionEn: "Pickleball World Cup 2026 comes to Da Nang, Vietnam (Aug 30 – Sep 6). Up to 80 nations and 4,000 athletes. Dates, venues, format, Vietnam team — complete guide.",
+    metaDescriptionEn: "Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). Up to 80 nations, 4,000 athletes. Dates, venues, format, Vietnam team.",
     metaDescriptionVi: "Đà Nẵng đăng cai World Cup Pickleball 2026 từ 30/8 – 6/9. Gần 80 quốc gia, 4.000 VĐV. Lịch thi đấu, địa điểm, đội tuyển Việt Nam — thông tin đầy đủ.",
   },  {
     slug: "best-pickleball-tournament-software-2026",
@@ -76,7 +76,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Phần mềm tổ chức giải Pickleball tốt nhất 2026 — So sánh công cụ miễn phí",
     metaTitleEn: "Best Pickleball Tournament Software 2026 | Free Bracket Tools Compared",
     metaTitleVi: "Phần mềm tổ chức giải Pickleball tốt nhất 2026 | So sánh công cụ tạo bracket miễn phí",
-    metaDescriptionEn: "Compare the best pickleball tournament software in 2026. Free bracket generators, round robin tools, and MLP team match platforms for organizers. No signup required.",
+    metaDescriptionEn: "Compare the best pickleball tournament software in 2026: free bracket generators, round robin tools, MLP team match platforms. No signup.",
     metaDescriptionVi: "So sánh phần mềm tổ chức giải pickleball tốt nhất 2026. Tạo bracket miễn phí, round robin, MLP team match cho ban tổ chức. Không cần đăng ký.",
   },  {
     slug: "free-pickleball-bracket-generator",
@@ -91,7 +91,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Tạo Bracket Pickleball miễn phí — Bracket giải đấu trong 60 giây",
     metaTitleEn: "Free Pickleball Bracket Generator 2026 | Create Brackets in 60 Seconds",
     metaTitleVi: "Tạo Bracket Pickleball miễn phí 2026 | Tạo bracket trong 60 giây",
-    metaDescriptionEn: "Create free pickleball tournament brackets instantly. Round robin, single elimination, and double elimination bracket generator with real-time scoring. No signup required.",
+    metaDescriptionEn: "Free pickleball bracket generator: round robin, single + double elimination, with real-time scoring. Build a tournament bracket in 60 seconds.",
     metaDescriptionVi: "Tạo bracket giải pickleball miễn phí tức thì. Vòng tròn, loại trực tiếp, loại kép với chấm điểm realtime. Không cần đăng ký.",
   },  {
     slug: "how-to-create-pickleball-bracket",
@@ -106,7 +106,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Cách tạo Bracket giải Pickleball — Hướng dẫn từng bước",
     metaTitleEn: "How to Create a Pickleball Bracket | Free Step-by-Step Guide 2026",
     metaTitleVi: "Cách tạo Bracket giải Pickleball | Hướng dẫn miễn phí 2026",
-    metaDescriptionEn: "Learn how to create a pickleball bracket for round robin, single elimination, and double elimination tournaments. Free bracket generator with real-time scoring.",
+    metaDescriptionEn: "How to create a pickleball bracket for round robin, single elimination, and double elimination — with a free bracket generator + live scoring.",
     metaDescriptionVi: "Hướng dẫn tạo bracket giải pickleball cho vòng tròn, loại trực tiếp, và loại kép. Công cụ tạo bracket miễn phí với chấm điểm realtime.",
   },  {
     slug: "how-to-organize-pickleball-tournament",
@@ -121,7 +121,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Cách tổ chức giải đấu Pickleball — Checklist đầy đủ cho ban tổ chức",
     metaTitleEn: "How to Organize a Pickleball Tournament | Complete Checklist 2026",
     metaTitleVi: "Cách tổ chức giải Pickleball | Checklist đầy đủ 2026",
-    metaDescriptionEn: "Step-by-step guide to organizing a pickleball tournament. Venue, format selection, registration, scheduling, scoring, and free tools. Everything you need to run a successful event.",
+    metaDescriptionEn: "Step-by-step guide to organize a pickleball tournament: venue, format, registration, scheduling, scoring, and free tools to run the event.",
     metaDescriptionVi: "Hướng dẫn từng bước tổ chức giải pickleball. Địa điểm, thể thức, đăng ký, lịch thi đấu, chấm điểm, và công cụ miễn phí. Mọi thứ bạn cần để chạy giải thành công.",
   },  {
     slug: "how-to-watch-ppa-tour-live-2026",
@@ -136,7 +136,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Cách Xem PPA Tour Trực Tiếp Năm 2026 — Tất Cả Nền Tảng & Tùy Chọn Miễn Phí",
     metaTitleEn: "How to Watch PPA Tour Live 2026 | Streaming Platforms, Schedules & Free Options",
     metaTitleVi: "Xem PPA Tour Trực Tiếp 2026 | Nền Tảng, Lịch Trình & Tùy Chọn Miễn Phí",
-    metaDescriptionEn: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS Sports, ESPN, and Fox Sports. Free YouTube highlights and ThePickleHub's free tournament livestreams included.",
+    metaDescriptionEn: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS, ESPN, and Fox Sports. Plus free YouTube highlights + ThePickleHub livestreams.",
     metaDescriptionVi: "Xem PPA Tour trực tiếp năm 2026 trên PBTV, Amazon Prime, CBS Sports, ESPN và Fox Sports. Bao gồm highlights YouTube miễn phí và livestream miễn phí từ ThePickleHub.",
   },  {
     slug: "mlp-format-explained",
@@ -151,7 +151,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Thể thức MLP giải thích — Luật thi đấu đồng đội Major League Pickleball",
     metaTitleEn: "MLP Format Explained 2026 | Major League Pickleball Rules & Team Match Guide",
     metaTitleVi: "Thể thức MLP Pickleball 2026 | Luật đồng đội Major League Pickleball",
-    metaDescriptionEn: "Learn how the MLP format works in pickleball. Complete guide to Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.",
+    metaDescriptionEn: "MLP format explained: Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.",
     metaDescriptionVi: "Tìm hiểu thể thức MLP trong pickleball. Hướng dẫn đầy đủ về luật thi đấu đồng đội Major League Pickleball, dreambreaker, chiến thuật lineup.",
   },  {
     slug: "pickleball-bracket-templates",
@@ -166,7 +166,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Mẫu Bracket Pickleball — Mẫu miễn phí cho mọi thể thức giải đấu",
     metaTitleEn: "Pickleball Bracket Templates 2026 | Free Download for 4-64 Players",
     metaTitleVi: "Mẫu Bracket Pickleball 2026 | Miễn phí cho 4-64 người chơi",
-    metaDescriptionEn: "Free pickleball bracket templates for round robin, single elimination, and double elimination. Templates for 4, 8, 16, 32, and 64 players with real-time scoring.",
+    metaDescriptionEn: "Free pickleball bracket templates for round robin, single + double elimination. Sizes for 4, 8, 16, 32, 64 players with live scoring.",
     metaDescriptionVi: "Mẫu bracket pickleball miễn phí cho vòng tròn, loại trực tiếp, và loại kép. Mẫu cho 4, 8, 16, 32, và 64 người chơi với chấm điểm realtime.",
   },  {
     slug: "pickleball-doubles-strategy-guide",
@@ -181,7 +181,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Chiến thuật Pickleball đôi — Mẹo thắng cho người chơi giải đấu",
     metaTitleEn: "Pickleball Doubles Strategy & Tips | Tournament Winning Guide 2026",
     metaTitleVi: "Chiến thuật Pickleball đôi | Mẹo thắng giải 2026",
-    metaDescriptionEn: "Master pickleball doubles strategy for tournaments. Partner communication, court positioning, stacking, and when to attack the kitchen. Improve your doubles game today.",
+    metaDescriptionEn: "Pickleball doubles strategy for tournaments: partner communication, court positioning, stacking, and when to attack the kitchen line.",
     metaDescriptionVi: "Nắm vững chiến thuật pickleball đôi cho giải đấu. Giao tiếp đồng đội, vị trí sân, stacking, và khi nào tấn công kitchen. Cải thiện game đôi ngay hôm nay.",
   },  {
     slug: "pickleball-live-streaming-guide",
@@ -211,7 +211,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Công cụ tạo vòng tròn Pickleball — Cách tổ chức giải vòng tròn hoàn hảo",
     metaTitleEn: "Pickleball Round Robin Generator | Free Tool & Complete Guide 2026",
     metaTitleVi: "Công cụ tạo vòng tròn Pickleball | Miễn phí & Hướng dẫn đầy đủ 2026",
-    metaDescriptionEn: "Free pickleball round robin generator with automatic scheduling, court rotation, and live scoring. Learn how to organize the perfect round robin tournament.",
+    metaDescriptionEn: "Free pickleball round robin generator with auto scheduling, court rotation, and live scoring. Organize a perfect round robin tournament.",
     metaDescriptionVi: "Công cụ tạo vòng tròn pickleball miễn phí với lịch tự động, xoay sân, và chấm điểm trực tiếp. Hướng dẫn tổ chức giải vòng tròn hoàn hảo.",
   },  {
     slug: "pickleball-rules-complete-guide",
@@ -226,7 +226,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Luật Pickleball 2026 — Hướng dẫn đầy đủ (kèm 5 tình huống tranh cãi nhất ở châu Á)",
     metaTitleEn: "Pickleball Rules 2026 | Complete Guide with Asia's Hardest Calls Explained",
     metaTitleVi: "Luật Pickleball 2026 | Hướng dẫn đầy đủ và 5 tình huống tranh cãi nhất ở châu Á",
-    metaDescriptionEn: "The complete 2026 Pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus: the 5 calls that start fights in Asian tournaments — and how to settle them.",
+    metaDescriptionEn: "The 2026 pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus 5 disputed calls in Asian tournaments.",
     metaDescriptionVi: "Luật Pickleball 2026 đầy đủ: giao bóng, luật hai lần nảy, kitchen/NVZ, tính điểm, lỗi. Kèm 5 tình huống gây tranh cãi nhất ở các giải châu Á và cách xử lý đúng luật.",
   },  {
     slug: "pickleball-scoring-rules-guide",
@@ -256,7 +256,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Các thể thức giải Pickleball giải thích — Nên dùng thể thức nào?",
     metaTitleEn: "Pickleball Tournament Formats Explained | Round Robin, Elimination & More",
     metaTitleVi: "Thể thức giải Pickleball giải thích | Vòng tròn, Loại trực tiếp & Khác",
-    metaDescriptionEn: "Complete guide to pickleball tournament formats: round robin, single elimination, double elimination, MLP team match, and flex tournaments. Choose the right format for your event.",
+    metaDescriptionEn: "Pickleball tournament formats explained: round robin, single + double elimination, MLP team match, flex. Choose the right format for your event.",
     metaDescriptionVi: "Hướng dẫn đầy đủ về thể thức giải pickleball: vòng tròn, loại trực tiếp, loại kép, MLP team match, và flex tournament. Chọn đúng thể thức cho sự kiện của bạn.",
   },  {
     slug: "ppa-tour-asia-2026-complete-guide",
