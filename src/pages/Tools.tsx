@@ -1,202 +1,397 @@
-import { useI18n } from "@/i18n";
-import { MainLayout } from "@/components/layout";
-import { DynamicMeta, HreflangTags, SoftwareApplicationSchema, FAQSchema, ToolsHubSeoContent } from "@/components/seo";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Users, Swords, Trophy, GitBranch, Sparkles, Monitor, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { MyRefereeTournaments } from "@/components/tools/MyRefereeTournaments";
-import { useAuth } from "@/hooks/useAuth";
-
-interface ToolCardProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  href?: string;
-  comingSoon?: boolean;
-  highlight?: boolean;
-  emoji?: string;
-  gradientClass?: string;
-}
-
-const ToolCard = ({ title, description, icon, href, comingSoon, highlight, emoji, gradientClass = "from-primary/20 to-primary/5" }: ToolCardProps) => {
-  const { t, language } = useI18n();
-
-  const content = (
-    <Card className={cn(
-      "group h-full transition-all duration-300 bg-transparent border-white/[0.06] backdrop-blur-xl overflow-hidden relative",
-      comingSoon
-        ? "opacity-50 cursor-not-allowed"
-        : "hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 cursor-pointer",
-      highlight && "border-primary/40 bg-primary/5 shadow-lg shadow-primary/10 ring-1 ring-primary/20"
-    )}>
-      {/* Gradient glow on hover */}
-      {!comingSoon && (
-        <div className={cn(
-          "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br pointer-events-none",
-          gradientClass
-        )} />
-      )}
-      <CardHeader className="pb-4 relative z-10">
-        <div className="flex items-start justify-between mb-1">
-          <div className={cn(
-            "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-300",
-            !comingSoon && "group-hover:scale-110",
-            highlight
-              ? "bg-gradient-to-br from-primary to-emerald-400 text-white shadow-lg shadow-primary/25"
-              : cn("bg-gradient-to-br shadow-lg", gradientClass)
-          )}>
-            {emoji ? <span className="text-2xl">{emoji}</span> : icon}
-          </div>
-          {comingSoon && (
-            <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">
-              {t.tools.comingSoon}
-            </Badge>
-          )}
-          {highlight && (
-            <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px] font-bold uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse mr-1.5 inline-block" />
-              Live
-            </Badge>
-          )}
-        </div>
-        <CardTitle className="text-lg mt-3 group-hover:text-primary transition-colors">{title}</CardTitle>
-        <CardDescription className="text-foreground-secondary/80 leading-relaxed">{description}</CardDescription>
-        {!comingSoon && (
-          <div className="flex items-center gap-1 text-sm font-medium text-primary mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            {language === "vi" ? "Mở công cụ" : "Open tool"}
-            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-          </div>
-        )}
-      </CardHeader>
-    </Card>
-  );
-
-  if (comingSoon || !href) {
-    return content;
-  }
-
-  return (
-    <Link to={href} className="block h-full">
-      {content}
-    </Link>
-  );
-};
+import { useI18n } from "@/i18n";
+import {
+  useActivePublicQuickTables,
+  useActiveDoublesElimination,
+  useActiveFlexTournaments,
+  useOpenTeamMatchTournaments,
+  useOpenRegistrationTables,
+  useCompletedPublicQuickTables,
+} from "@/hooks/useSupabaseData";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { formatRelative } from "./preview/_shell";
 
 const Tools = () => {
-  const { t, language } = useI18n();
-  const { user } = useAuth();
+  const { language } = useI18n();
+  const { data: activeQuickTables = [] } = useActivePublicQuickTables({ limit: 20 });
+  const { data: openRegTables = [] } = useOpenRegistrationTables({ limit: 20 });
+  const { data: completedQuickTables = [] } = useCompletedPublicQuickTables({ limit: 20 });
 
-  const tools: ToolCardProps[] = [
-    {
-      title: t.tools.quickTable.title,
-      description: t.tools.quickTable.description,
-      icon: <Users className="w-6 h-6" />,
-      emoji: "🏓",
-      gradientClass: "from-emerald-500/20 to-emerald-500/5",
-      href: "/tools/quick-tables",
-    },
-    {
-      title: t.tools.teamMatch.title,
-      description: t.tools.teamMatch.description,
-      icon: <Swords className="w-6 h-6" />,
-      emoji: "⚔️",
-      gradientClass: "from-amber-500/20 to-amber-500/5",
-      href: "/tools/team-match",
-    },
-    {
-      title: t.tools.singleElimination.title,
-      description: t.tools.singleElimination.description,
-      icon: <Trophy className="w-6 h-6" />,
-      emoji: "🏆",
-      gradientClass: "from-yellow-500/20 to-yellow-500/5",
-      comingSoon: true,
-    },
-    {
-      title: t.tools.doublesElimination.title,
-      description: t.tools.doublesElimination.description,
-      icon: <GitBranch className="w-6 h-6" />,
-      emoji: "🔀",
-      gradientClass: "from-blue-500/20 to-blue-500/5",
-      href: "/tools/doubles-elimination",
-    },
-    {
-      title: t.tools.flexTournament.title,
-      description: t.tools.flexTournament.description,
-      icon: <Sparkles className="w-6 h-6" />,
-      emoji: "✨",
-      gradientClass: "from-purple-500/20 to-purple-500/5",
-      href: "/tools/flex-tournament",
-    },
-    {
-      title: t.dashboard.title,
-      description: t.dashboard.description,
-      icon: <Monitor className="w-6 h-6" />,
-      emoji: "📊",
-      gradientClass: "from-primary/20 to-emerald-400/5",
-      href: "/tools/dashboard",
-      highlight: true,
-    },
-  ];
+  const { data: activeDoublesElim = [] } = useActiveDoublesElimination({ limit: 20 });
+  const { data: activeFlex = [] } = useActiveFlexTournaments({ limit: 20 });
+  const { data: openTeamMatches = [] } = useOpenTeamMatchTournaments({ limit: 20 });
+
+  // Social proof stats
+  const activeCount =
+    activeQuickTables.length +
+    openRegTables.length +
+    activeDoublesElim.length +
+    activeFlex.length +
+    openTeamMatches.length;
+
+  const createdThisWeek = useMemo(() => {
+    const weekAgo = Date.now() - 7 * 86400_000;
+    const all = [...activeQuickTables, ...activeDoublesElim, ...activeFlex, ...openTeamMatches, ...completedQuickTables, ...openRegTables];
+    return all.filter((t) => t.created_at && new Date(t.created_at).getTime() > weekAgo).length;
+  }, [activeQuickTables, openRegTables, activeDoublesElim, activeFlex, openTeamMatches, completedQuickTables]);
+
+  // Combined recent activity (newest first)
+  const recentActivity = useMemo(() => {
+    type Row = {
+      id: string;
+      name: string;
+      fmt: "quick-tables" | "doubles-elim" | "flex" | "team-match";
+      fmtLabel: string;
+      meta: string;
+      creator?: string;
+      href: string;
+      status: string;
+      created_at: string | null;
+    };
+
+    const rows: Row[] = [];
+
+    [...openRegTables, ...activeQuickTables].forEach((t) => {
+      rows.push({
+        id: `qt-${t.id}`,
+        name: t.name,
+        fmt: "quick-tables",
+        fmtLabel: "Quick Table",
+        meta: `${t.is_doubles ? "Doubles" : "Singles"} · ${t.player_count} players`,
+        creator: t.creator_display_name,
+        href: `/tools/quick-tables/${t.share_id}`,
+        status: t.status,
+        created_at: t.created_at,
+      });
+    });
+
+    activeDoublesElim.forEach((t) => {
+      rows.push({
+        id: `de-${t.id}`,
+        name: t.name,
+        fmt: "doubles-elim",
+        fmtLabel: "Doubles Elim",
+        meta: `${t.team_count} teams`,
+        creator: t.creator_display_name,
+        href: `/tools/doubles-elimination/${t.share_id}`,
+        status: t.status,
+        created_at: t.created_at,
+      });
+    });
+
+    activeFlex.forEach((t) => {
+      rows.push({
+        id: `fx-${t.id}`,
+        name: t.name,
+        fmt: "flex",
+        fmtLabel: "Flex",
+        meta: "Custom format",
+        creator: t.creator_display_name,
+        href: `/tools/flex-tournament/${t.share_id}`,
+        status: t.status,
+        created_at: t.created_at,
+      });
+    });
+
+    openTeamMatches.forEach((t) => {
+      rows.push({
+        id: `tm-${t.id}`,
+        name: t.name,
+        fmt: "team-match",
+        fmtLabel: "Team Match",
+        meta: `${t.team_count} teams · ${t.team_roster_size}/team`,
+        creator: t.creator_display_name,
+        href: `/tools/team-match/${t.id}`,
+        status: t.status,
+        created_at: t.created_at,
+      });
+    });
+
+    return rows
+      .sort((a, b) => {
+        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return tb - ta;
+      })
+      .slice(0, 12);
+  }, [activeQuickTables, openRegTables, activeDoublesElim, activeFlex, openTeamMatches]);
+
+  const formatAccent = (fmt: string) =>
+    fmt === "quick-tables" ? "#00b96b" :
+    fmt === "doubles-elim" ? "#e9b649" :
+    fmt === "flex" ? "#4f9bff" :
+    fmt === "team-match" ? "#ff7a4d" :
+    "#00b96b";
+
+  const statusClass = (status: string): "active" | "setup" | "completed" | "registration" => {
+    if (status === "setup") return "setup";
+    if (status === "registration") return "registration";
+    if (status === "completed") return "completed";
+    return "active";
+  };
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title="Free Pickleball Tournament Software – Bracket Generator, Team Match & Scoring"
-        description="Free pickleball tournament software for organizers. Generate brackets, run round robin, MLP team matches & double elimination. Real-time scoring, mobile-friendly. No signup required."
-        url="https://www.thepicklehub.net/tools"
-      />
-      <HreflangTags enPath="/tools" viPath="/vi/tools" />
-      <SoftwareApplicationSchema
-        name="ThePickleHub – Free Pickleball Tournament Software"
-        description="Free pickleball tournament software and bracket generator. Create round-robin brackets, MLP team matches, double elimination tournaments. Real-time scoring, mobile-friendly, no signup required."
-        applicationCategory="SportsApplication"
-        operatingSystem="Web"
-        offers={{ price: "0", priceCurrency: "USD" }}
-        aggregateRating={{ ratingValue: 4.8, ratingCount: 156 }}
-      />
-      <FAQSchema items={[
-        { question: "Is ThePickleHub tournament software free?", answer: "Yes, all tournament tools on ThePickleHub are completely free. You can create round robin brackets, double elimination tournaments, MLP team matches, and flex tournaments without any payment or subscription." },
-        { question: "Do I need to create an account to use the bracket generator?", answer: "No signup is required to create and manage tournaments. Anyone can create a bracket instantly. An account is only needed for advanced features like saving tournaments to your profile." },
-        { question: "What tournament formats does ThePickleHub support?", answer: "ThePickleHub supports four tournament formats: Quick Tables (round robin with optional playoffs), Team Match (MLP-style team competitions), Double Elimination (winner and loser brackets), and Flex Tournament (fully customizable format)." },
-        { question: "Can referees score matches from their phones?", answer: "Yes, ThePickleHub has a dedicated referee mode. Tournament organizers can assign referees who update match scores in real-time from any mobile device. All participants see live score updates." },
-        { question: "How many players can a tournament support?", answer: "Quick Tables support 4 to 200+ players with automatic group distribution. Double Elimination supports up to 128 teams. Team Match supports multiple teams with customizable roster sizes." },
-      ]} />
-      <div className="container-wide py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gradient-brand mb-2">
-            {t.tools.title}
+    <TheLineLayout
+      title={language === "vi" ? "Bracket Lab" : "Bracket Lab"}
+      description={language === "vi"
+        ? "Công cụ tổ chức giải đấu pickleball miễn phí — round robin, single/double elimination, MLP team match, Flex format. Không cần đăng ký."
+        : "Free pickleball tournament tools — round robin, single/double elimination, MLP team match, Flex format. No signup. Shareable scoreboard."}
+      active="lab"
+    >
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to="/">Home</Link>
+          <span className="sep">/</span>
+          <span className="current">Bracket Lab</span>
+        </nav>
+
+        <header className="tl-page-head">
+          <div className="kicker">◆ The killer feature · Free · No signup</div>
+          <h1>
+            60 seconds <span className="dim">to a</span> <br />
+            <em className="tl-serif">pickleball</em> <span className="sans">bracket.</span>
           </h1>
-          <p className="text-foreground-secondary">
-            {t.tools.description}
+          <p>
+            Run a round-robin, double-elim, flex or team match in the browser.
+            Live scoring on your phone. Shareable link for viewers. Printable bracket. No apps, no signup, no catch.
           </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {language === "vi" 
-              ? "Tạo pickleball brackets, bracket maker miễn phí, phần mềm quản lý giải đấu cho CLB và BTC."
-              : "Create pickleball brackets with our free bracket maker. Tournament bracket generator for clubs, leagues, and organizers."}
-          </p>
-        </div>
-
-        {/* Tools Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {tools.map((tool) => (
-            <ToolCard key={tool.title} {...tool} />
-          ))}
-        </div>
-
-        {/* Referee Tournaments Section */}
-        {user && (
-          <div className="mt-8">
-            <MyRefereeTournaments />
+          <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap" }}>
+            <Link to="/tools/quick-tables" className="tl-btn green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Start a Quick Table →
+            </Link>
+            <Link to="/tools/doubles-elimination/new" className="tl-btn">Or Double Elimination</Link>
           </div>
-        )}
+        </header>
 
-        {/* SEO Content Section */}
-        <ToolsHubSeoContent />
+        {/* Social proof stats */}
+        <section className="tl-stats-row" style={{ marginTop: 40 }}>
+          <div className="tl-stat-box">
+            <div className="lbl">Active right now</div>
+            <div className="val"><span className="green">{activeCount}</span></div>
+            <div className="sub">Brackets in progress</div>
+          </div>
+          <div className="tl-stat-box">
+            <div className="lbl">Created this week</div>
+            <div className="val">{createdThisWeek}</div>
+            <div className="sub">Last 7 days</div>
+          </div>
+          <div className="tl-stat-box">
+            <div className="lbl">Formats</div>
+            <div className="val">4</div>
+            <div className="sub">Round robin · Elim · Flex · Team</div>
+          </div>
+          <div className="tl-stat-box">
+            <div className="lbl">Setup time</div>
+            <div className="val">~60s</div>
+            <div className="sub">From click to first match</div>
+          </div>
+        </section>
+
+        {/* Format cards */}
+        <section style={{ marginBottom: 48 }}>
+          <div className="tl-sec-head">
+            <h2>
+              Pick a <em className="tl-serif">format.</em>{" "}
+              <span className="sans">Four ways to bracket.</span>
+            </h2>
+            <p>Every format is free and runs in the browser. Start setup, share link, start scoring.</p>
+          </div>
+
+          <div className="tl-format-grid">
+            <Link to="/tools/quick-tables" className="tl-format-card" data-fmt="quick-tables">
+              <div className="tl-format-head">
+                <div className="tl-format-kicker">◆ Round robin · 4-32 players</div>
+                <span className="tl-format-badge">Most popular</span>
+              </div>
+              <h3 className="tl-format-title">Quick Tables</h3>
+              <p className="tl-format-desc">
+                Group stage → auto playoffs. Singles or doubles. The workhorse format
+                for club events, weekend tournaments and practice sessions.
+              </p>
+              <div className="tl-format-foot">
+                <span>{activeQuickTables.length + openRegTables.length} running</span>
+                <span className="cta">Start a table →</span>
+              </div>
+            </Link>
+
+            <Link to="/tools/doubles-elimination/new" className="tl-format-card" data-fmt="doubles-elim">
+              <div className="tl-format-head">
+                <div className="tl-format-kicker">◆ Double elim · 4-32 teams</div>
+                <span className="tl-format-badge">Best of</span>
+              </div>
+              <h3 className="tl-format-title">Doubles Elimination</h3>
+              <p className="tl-format-desc">
+                Lose once, drop to losers bracket. Fight back to the final.
+                Perfect for a Saturday with 16 teams and stakes on the line.
+              </p>
+              <div className="tl-format-foot">
+                <span>{activeDoublesElim.length} running</span>
+                <span className="cta">Create bracket →</span>
+              </div>
+            </Link>
+
+            <Link to="/tools/flex-tournament/new" className="tl-format-card" data-fmt="flex">
+              <div className="tl-format-head">
+                <div className="tl-format-kicker">◆ Custom rules · Any size</div>
+                <span className="tl-format-badge">Advanced</span>
+              </div>
+              <h3 className="tl-format-title">Flex Format</h3>
+              <p className="tl-format-desc">
+                Define your own rounds, pools and seeding rules. For non-standard events
+                like king of the court, ladder challenge, or multi-day festivals.
+              </p>
+              <div className="tl-format-foot">
+                <span>{activeFlex.length} running</span>
+                <span className="cta">Open flex builder →</span>
+              </div>
+            </Link>
+
+            <Link to="/tools/team-match/new" className="tl-format-card" data-fmt="team-match">
+              <div className="tl-format-head">
+                <div className="tl-format-kicker">◆ MLP format · 2 teams</div>
+                <span className="tl-format-badge">Pro-level</span>
+              </div>
+              <h3 className="tl-format-title">Team Match</h3>
+              <p className="tl-format-desc">
+                MLP-style team vs team with Dreambreaker tiebreaker. Women's doubles,
+                men's doubles, mixed x2 — exactly how Major League Pickleball runs it.
+              </p>
+              <div className="tl-format-foot">
+                <span>{openTeamMatches.length} running</span>
+                <span className="cta">Set up match →</span>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* Extra tools / utilities */}
+        <section style={{ marginBottom: 56 }}>
+          <div className="tl-sec-head">
+            <h2>
+              Plus <em className="tl-serif">utilities.</em>{" "}
+            </h2>
+          </div>
+          <div className="tl-format-grid">
+            <Link to="/tools/dashboard" className="tl-format-card" data-fmt="dashboard">
+              <div className="tl-format-head">
+                <div className="tl-format-kicker">◆ Analytics · Any tournament</div>
+              </div>
+              <h3 className="tl-format-title">Dashboard</h3>
+              <p className="tl-format-desc">
+                Real-time stats view for any bracket — pin it on a laptop at the scoring table
+                for organizers. Match queue, court assignments, player standings.
+              </p>
+              <div className="tl-format-foot">
+                <span>For organizers</span>
+                <span className="cta">Open dashboard →</span>
+              </div>
+            </Link>
+
+            <Link to="/matches/new" className="tl-format-card" data-fmt="scoring">
+              <div className="tl-format-head">
+                <div className="tl-format-kicker">◆ Single match · No bracket</div>
+              </div>
+              <h3 className="tl-format-title">Match Scoring</h3>
+              <p className="tl-format-desc">
+                Just need to score one match? Open a scoreboard on your phone,
+                track points to 11 or 15, save the result or share.
+              </p>
+              <div className="tl-format-foot">
+                <span>Standalone</span>
+                <span className="cta">Score a match →</span>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* Live activity feed */}
+        <section style={{ marginBottom: 80 }}>
+          <div className="tl-sec-head">
+            <h2>
+              Running <em className="tl-serif">right now.</em>{" "}
+              <span className="sans">{recentActivity.length}</span>
+            </h2>
+            <p>Latest community brackets — real people, running real tournaments, right this minute.</p>
+          </div>
+
+          {recentActivity.length === 0 ? (
+            <div className="tl-empty">
+              <h3>No public brackets running at the moment.</h3>
+              <p>Be the first. Spin up a Quick Table — setup takes about a minute.</p>
+              <Link to="/tools/quick-tables" className="tl-btn green">Start a Quick Table →</Link>
+            </div>
+          ) : (
+            <div className="tl-list">
+              {recentActivity.map((row) => (
+                <Link
+                  key={row.id}
+                  to={row.href}
+                  className="tl-bracket-row"
+                  style={{ ["--fc-accent" as string]: formatAccent(row.fmt) } as React.CSSProperties}
+                >
+                  <div className="tl-br-fmt" />
+                  <div className="tl-br-body">
+                    <h4 className="tl-br-name">{row.name}</h4>
+                    <div className="tl-br-meta">
+                      <span>{row.fmtLabel}</span>
+                      <span className="sep">·</span>
+                      <span>{row.meta}</span>
+                      <span className="sep">·</span>
+                      <span>{formatRelative(row.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className="tl-br-creator">{row.creator ?? "—"}</div>
+                  <span className={`tl-br-status ${statusClass(row.status)}`}>{row.status}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Bottom CTA */}
+        <section
+          style={{
+            padding: "48px 36px",
+            background: "var(--tl-surface)",
+            border: "1px solid var(--tl-border)",
+            borderRadius: "var(--tl-radius-lg)",
+            textAlign: "center",
+            marginBottom: 80,
+          }}
+        >
+          <div
+            className="tl-mono"
+            style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--tl-green)", marginBottom: 12 }}
+          >
+            ◆ One more thing
+          </div>
+          <h3
+            style={{
+              fontFamily: "Instrument Serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(28px, 3.4vw, 44px)",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.05,
+              margin: "0 0 16px",
+            }}
+          >
+            Your bracket, on your phone. Your scoreboard, on a TV.
+          </h3>
+          <p style={{ fontSize: 15.5, color: "var(--tl-fg-2)", maxWidth: "52ch", margin: "0 auto 24px", lineHeight: 1.55 }}>
+            Every bracket auto-generates a read-only scoreboard URL perfect for casting to a TV
+            at the venue. Players score on phones, spectators watch on screens.
+          </p>
+          <Link to="/tools/quick-tables" className="tl-btn green">
+            Try it free →
+          </Link>
+        </section>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 
