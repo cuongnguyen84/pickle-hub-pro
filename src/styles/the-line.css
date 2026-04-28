@@ -824,6 +824,41 @@
 }
 [data-theme="the-line"] .tl-social a svg { width: 15px; height: 15px; }
 
+/* ========== News list (newspaper-style vertical) ========== */
+[data-theme="the-line"] .tl-news-list {
+  border-top: 1px solid var(--tl-border);
+}
+[data-theme="the-line"] .tl-news-row {
+  display: block; padding: 24px 0;
+  border-bottom: 1px solid var(--tl-border);
+  text-decoration: none; color: inherit;
+  transition: background 0.15s;
+}
+[data-theme="the-line"] .tl-news-row:hover { background: var(--tl-bg-elev); padding-left: 12px; padding-right: 12px; margin-left: -12px; margin-right: -12px; }
+[data-theme="the-line"] .tl-news-row-kicker {
+  font-family: "Geist Mono"; font-size: 10.5px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--tl-green); margin-bottom: 10px;
+}
+[data-theme="the-line"] .tl-news-row-title {
+  font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
+  font-size: clamp(20px, 2.4vw, 28px); line-height: 1.2;
+  letter-spacing: -0.015em; color: var(--tl-fg);
+  margin: 0 0 10px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+[data-theme="the-line"] .tl-news-row-summary {
+  font-size: 15px; color: var(--tl-fg-2); line-height: 1.55;
+  margin: 0 0 12px; max-width: 70ch;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+[data-theme="the-line"] .tl-news-row-meta {
+  font-family: "Geist Mono"; font-size: 11px; color: var(--tl-fg-3);
+  letter-spacing: 0.04em;
+  display: flex; gap: 10px; align-items: center;
+}
+[data-theme="the-line"] .tl-news-row-meta .sep { color: var(--tl-fg-4); }
+
 /* ========== Manifesto ========== */
 [data-theme="the-line"] .tl-manifesto {
   padding: 96px 0;
