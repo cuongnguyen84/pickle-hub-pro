@@ -112,3 +112,22 @@ WITH CHECK (
 ```
 
 **Reference template:** `thumbnails` bucket policies in `20251222132621_280522dc-73b7-4732-a9a9-5aa6242f6ef3.sql` — copy pattern for any new bucket.
+
+---
+
+## Supabase Realtime: Channel name MUST include random suffix, not just `Date.now()`
+
+**Occurrence (1 — `/live/:id` intermittent broken):**
+- 3 hooks (`useChatMessages`, `useLivePresence`, `useLiveViewerList`) used pattern `chat:unified:${livestreamId}:${Date.now()}` for channel name. When 2 useEffect re-runs land in same millisecond (StrictMode, fast WebSocket reconnect, navigation burst), the channel name collides → Supabase JS client deduplicates → second `.on('postgres_changes', ...)` fires AFTER `.subscribe()` → `cannot add postgres_changes callbacks for realtime:chat:unified:<id>:<ts> after subscribe()`. Fixed `9425f6a`.
+
+**Symptom:** Console error `cannot add 'postgres_changes' callbacks for <channel> after subscribe()`. Page may render but realtime updates stop working.
+
+**Cause:** `Date.now()` resolves to milliseconds. React re-renders can land within same ms in production. Two `supabase.channel(name)` calls with identical name reuse the same WS channel internally.
+
+**Rule:** Always combine `Date.now()` with random base36 suffix:
+```ts
+const channelName = `chat:unified:${id}:${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+```
+Collision probability drops from ~1/1000 per ms to ~1/10^14.
+
+**Helper:** `src/lib/uniqueChannelId.ts` exposes `uniqueChannelSuffix()` — reuse across all hooks creating realtime channels.
