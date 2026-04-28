@@ -91,7 +91,7 @@ const Index = () => {
         tag: p.category ?? (p.tags?.[0] ?? null),
         image: p.cover_image_url,
         imageAlt: p.title,
-        author: "The Pickle Hub",
+        author: "The PickleHub",
         date: p.published_at,
         href: `/vi/blog/${p.slug}`,
       }));

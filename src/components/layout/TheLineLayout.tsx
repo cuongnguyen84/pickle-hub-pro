@@ -145,10 +145,10 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
       <div className="tl-scroll">
       <nav className="tl-nav">
-        <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand">
+        <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="The PickleHub home">
           <span className="tl-brand-mark" aria-hidden="true" />
-          <span>
-            <em>Pickle</em> Hub
+          <span className="tl-brand-text">
+            The <em>Pickle</em>Hub
           </span>
         </Link>
 
@@ -462,7 +462,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
           <div className="tl-foot-grid">
             <div className="tl-foot-brand">
               <h3>
-                <em style={{ fontFamily: "inherit" }}>Pickle</em> Hub
+                The <em style={{ fontFamily: "inherit" }}>Pickle</em>Hub
               </h3>
               <p>
                 {language === "vi"
@@ -495,7 +495,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             </div>
           </div>
           <div className="tl-foot-bottom">
-            <span>© 2026 The Pickle Hub · Ho Chi Minh City</span>
+            <span>© 2026 The PickleHub · Ho Chi Minh City</span>
             <div
               className="tl-social"
               role="group"
