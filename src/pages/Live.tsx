@@ -1,199 +1,163 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
-import { SectionHeader, EmptyState } from "@/components/content";
-import LiveCardWithPresence from "@/components/content/LiveCardWithPresence";
-import { SearchBar } from "@/components/search";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
-import { useLivestreams, useReplays } from "@/hooks/useSupabaseData";
-import { useDebounce } from "@/hooks/useSearch";
-import { Radio, Search, RotateCcw } from "lucide-react";
-import { DynamicMeta, HreflangTags } from "@/components/seo";
+import { useLivestreams } from "@/hooks/useSupabaseData";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { formatTime, formatRelative } from "./preview/_shell";
+
+type Filter = "all" | "live" | "scheduled" | "ended";
 
 const Live = () => {
-  const { t } = useI18n();
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery.toLowerCase().trim(), 300);
+  const { language } = useI18n();
+  const [filter, setFilter] = useState<Filter>("all");
 
-  const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
-  const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
-  const { data: replays = [], isLoading: replaysLoading } = useReplays();
+  const { data: live = [], isLoading: liveLoading } = useLivestreams("live");
+  const { data: scheduled = [], isLoading: schedLoading } = useLivestreams("scheduled");
+  const { data: ended = [], isLoading: endedLoading } = useLivestreams("ended");
 
-  const { filteredLive, filteredScheduled, filteredReplays, hasResults } = useMemo(() => {
-    const filterBySearch = <T extends { title?: string | null; organization?: { name: string } | null }>(
-      items: T[]
-    ) => {
-      if (!debouncedSearch) return items;
-      return items.filter((item) => {
-        const title = item.title?.toLowerCase() ?? "";
-        const orgName = item.organization?.name?.toLowerCase() ?? "";
-        return title.includes(debouncedSearch) || orgName.includes(debouncedSearch);
-      });
-    };
+  const counts = {
+    all: live.length + scheduled.length + ended.length,
+    live: live.length,
+    scheduled: scheduled.length,
+    ended: ended.length,
+  };
 
-    const live = filterBySearch(liveStreams);
-    const scheduled = filterBySearch(scheduledStreams);
-    const reps = filterBySearch(replays);
+  const isLoading = liveLoading || schedLoading || endedLoading;
 
-    return {
-      filteredLive: live,
-      filteredScheduled: scheduled,
-      filteredReplays: reps,
-      hasResults: live.length > 0 || scheduled.length > 0 || reps.length > 0,
-    };
-  }, [liveStreams, scheduledStreams, replays, debouncedSearch]);
+  const items = useMemo(() => {
+    switch (filter) {
+      case "live": return live;
+      case "scheduled": return scheduled;
+      case "ended": return ended;
+      default: return [...live, ...scheduled, ...ended.slice(0, 12)];
+    }
+  }, [filter, live, scheduled, ended]);
 
-  const isLoading = liveLoading || scheduledLoading || replaysLoading;
-  const hasSearch = debouncedSearch.length > 0;
+  const renderMatchHead = (stream: typeof live[number]) => {
+    if (stream.status === "live") {
+      return (
+        <div className="tl-match-head">
+          <span className="stat live">Live</span>
+          <span className="ctx">{stream.started_at ? formatTime(stream.started_at) : "On air"}</span>
+        </div>
+      );
+    }
+    if (stream.status === "scheduled") {
+      return (
+        <div className="tl-match-head">
+          <span className="stat upcoming">● Scheduled</span>
+          <span className="ctx">{formatRelative(stream.scheduled_start_at)}</span>
+        </div>
+      );
+    }
+    return (
+      <div className="tl-match-head">
+        <span className="stat final">Replay</span>
+        <span className="ctx">{stream.ended_at ? formatRelative(stream.ended_at) : "Ended"}</span>
+      </div>
+    );
+  };
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title="Pickleball Livestream | Watch Pickleball Tournaments Live"
-        description="Watch live pickleball tournaments and matches on ThePickleHub. Stream pickleball events from top creators, professional tournaments, and community competitions in real-time."
-        url="https://www.thepicklehub.net/livestream"
-      />
-      <HreflangTags enPath="/live" viPath="/vi/live" />
-      <div className="container-wide py-8">
-        <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gradient-brand mb-2">
-            {t.live.hubTitle}
+    <TheLineLayout
+      title={language === "vi" ? "Sân trực tiếp" : "Live courts"}
+      description={language === "vi"
+        ? "Trận đấu pickleball đang phát sóng, lịch sắp tới và replay tuần qua."
+        : "Pickleball matches streaming right now, upcoming within 24 hours, and replays from the past week."}
+      active="live"
+    >
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to={language === "vi" ? "/vi" : "/"}>{language === "vi" ? "Trang chủ" : "Home"}</Link>
+          <span className="sep">/</span>
+          <span className="current">{language === "vi" ? "Sân trực tiếp" : "Live courts"}</span>
+        </nav>
+
+        <header className="tl-page-head">
+          <div className="kicker">◆ {language === "vi" ? "Mục lục phát sóng" : "Live broadcast index"}</div>
+          <h1>
+            {language === "vi" ? (
+              <>
+                Mọi sân, <br />
+                <span className="dim">mọi bracket,</span> <br />
+                <span className="sans">một màn hình.</span>
+              </>
+            ) : (
+              <>
+                Every court, <br />
+                <span className="dim">every bracket,</span> <br />
+                <span className="sans">on one screen.</span>
+              </>
+            )}
           </h1>
-          <p className="text-foreground-secondary max-w-3xl">
-            {t.live.hubDescription}
+          <p>
+            {language === "vi"
+              ? "Trận đang phát sóng, sắp diễn ra trong 24h tới, và replay tuần qua. Pull thẳng từ DB — không cache."
+              : "Matches streaming right now, upcoming within the next 24 hours, and replays from the past week. Pulled live from the database — no cache."}
           </p>
         </header>
 
-        <div className="mb-6">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            className="max-w-md"
-          />
+        <div className="tl-filters">
+          {([
+            { key: "all", labelEn: "All", labelVi: "Tất cả" },
+            { key: "live", labelEn: "Live", labelVi: "Trực tiếp" },
+            { key: "scheduled", labelEn: "Upcoming", labelVi: "Sắp tới" },
+            { key: "ended", labelEn: "Replays", labelVi: "Replay" },
+          ] as const).map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`tl-filter ${filter === f.key ? "active" : ""}`}
+              onClick={() => setFilter(f.key)}
+            >
+              {language === "vi" ? f.labelVi : f.labelEn}
+              <span className="count">{counts[f.key]}</span>
+            </button>
+          ))}
         </div>
 
-        {isLoading ? (
-          <div className="space-y-12">
-            <section>
-              <Skeleton className="h-7 w-32 mb-4" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="aspect-video rounded-xl" />
-                ))}
-              </div>
-            </section>
-          </div>
-        ) : !hasResults && hasSearch ? (
-          <EmptyState icon={Search} title={t.search.noResults} />
-        ) : (
-          <>
-            {/* Live Now */}
-            <section className="mb-12">
-              <SectionHeader title={t.home.sections.liveNow} />
-              {filteredLive.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredLive.map((stream) => (
-                    <LiveCardWithPresence
-                      key={stream.id}
-                      id={stream.id!}
-                      title={stream.title ?? ""}
-                      organizationName={stream.organization?.name ?? ""}
-                      organizationSlug={stream.organization?.slug}
-                      organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                      status="live"
-                      thumbnail={stream.thumbnail_url ?? undefined}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState icon={Radio} title={t.home.noLive} />
-              )}
-            </section>
-
-            {/* Scheduled */}
-            {filteredScheduled.length > 0 && (
-              <section className="mb-12">
-                <SectionHeader title={t.live.scheduled} />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredScheduled.map((stream) => (
-                    <LiveCardWithPresence
-                      key={stream.id}
-                      id={stream.id!}
-                      title={stream.title ?? ""}
-                      organizationName={stream.organization?.name ?? ""}
-                      organizationSlug={stream.organization?.slug}
-                      organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                      status="scheduled"
-                      thumbnail={stream.thumbnail_url ?? undefined}
-                      scheduledStartAt={stream.scheduled_start_at}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Replays */}
-            <section className="mb-12">
-              <SectionHeader title={t.live.replay} />
-              {filteredReplays.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredReplays.map((stream) => (
-                    <LiveCardWithPresence
-                      key={stream.id}
-                      id={stream.id!}
-                      title={stream.title ?? ""}
-                      organizationName={stream.organization?.name ?? ""}
-                      organizationSlug={stream.organization?.slug}
-                      organizationLogo={stream.organization?.display_logo ?? stream.organization?.logo_url ?? undefined}
-                      status="ended"
-                      thumbnail={stream.thumbnail_url ?? undefined}
-                      isReplay
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState icon={RotateCcw} title={t.tournament.noReplays} />
-              )}
-            </section>
-          </>
-        )}
-
-        {/* SEO Content */}
-        <section className="mt-16 space-y-8">
-          <article className="glass-card p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-3">
-              {t.live.seo.tournamentsTitle}
-            </h2>
-            <p className="text-foreground-secondary">
-              {t.live.seo.tournamentsDesc}{" "}
-              <Link to="/tournaments" className="text-primary hover:underline">
-                {t.tournament.title}
+        <div style={{ paddingBottom: 80 }}>
+          {isLoading ? (
+            <div className="tl-empty">
+              <p style={{ fontFamily: "Geist Mono", fontSize: 12, letterSpacing: "0.04em" }}>
+                {language === "vi" ? "Đang tải…" : "Loading live courts…"}
+              </p>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="tl-empty">
+              <h3>{language === "vi" ? "Không có trận trong mục này." : "No matches in this view."}</h3>
+              <p>
+                {language === "vi"
+                  ? "Thử filter khác. Sân chỉ sáng đèn khi có giải đang diễn ra — xem lịch sắp tới."
+                  : "Try a different filter. Live courts light up during active tournaments — check the schedule for what's coming up."}
+              </p>
+              <Link to="/tournaments" className="tl-btn">
+                {language === "vi" ? "Xem lịch giải →" : "See tournament schedule →"}
               </Link>
-            </p>
-          </article>
-          <article className="glass-card p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-3">
-              {t.live.seo.creatorsTitle}
-            </h2>
-            <p className="text-foreground-secondary">
-              {t.live.seo.creatorsDesc}
-            </p>
-          </article>
-          <article className="glass-card p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-3">
-              {t.live.seo.upcomingTitle}
-            </h2>
-            <p className="text-foreground-secondary">
-              {t.live.seo.upcomingDesc}{" "}
-              <Link to="/tools/quick-tables" className="text-primary hover:underline">
-                {t.tools.quickTable.title}
-              </Link>
-            </p>
-          </article>
-        </section>
+            </div>
+          ) : (
+            <div className="tl-match-grid">
+              {items.slice(0, 24).map((stream) => (
+                <Link key={stream.id} to={`/live/${stream.id}`} className="tl-match">
+                  {renderMatchHead(stream)}
+                  <h3 className="tl-match-title">{stream.title ?? (language === "vi" ? "Trận chưa có tên" : "Untitled match")}</h3>
+                  <div className="tl-match-foot">
+                    <span className="org">{stream.organization?.name ?? (language === "vi" ? "Phát sóng" : "Broadcast")}</span>
+                    <span className="v">
+                      {stream.status === "live"
+                        ? (language === "vi" ? "Xem →" : "Watch →")
+                        : stream.status === "scheduled"
+                        ? (language === "vi" ? "Nhắc tôi →" : "Notify →")
+                        : (language === "vi" ? "Replay →" : "Replay →")}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 
