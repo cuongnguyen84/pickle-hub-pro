@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { MainLayout } from "@/components/layout";
 import { ContentCard, LiveCard, EmptyState } from "@/components/content";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +9,11 @@ import { useTournamentBySlug, useTournamentContent } from "@/hooks/useSupabaseDa
 import { TournamentHero, ContentSection, CourtTabs } from "@/components/tournament";
 import { Trophy, Radio, Clock, RotateCcw, Play } from "lucide-react";
 
-const TournamentDetail = () => {
+/**
+ * Legacy TournamentDetail — archived 2026-04-28 during detail-page cutover.
+ * Accessible at /tournament-legacy/:slug for 14-day rollback. Cleanup 2026-05-09.
+ */
+const TournamentDetailLegacy = () => {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useI18n();
   
@@ -48,8 +52,8 @@ const TournamentDetail = () => {
 
   if (tournamentLoading) {
     return (
-      <TheLineLayout title={t.nav.tournaments} active="tournaments">
-        <div className="tl-shell" style={{ paddingTop: 32, paddingBottom: 80 }}>
+      <MainLayout>
+        <div className="container-wide py-8">
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-12 w-96 mb-4" />
           <Skeleton className="h-6 w-64 mb-8" />
@@ -66,14 +70,14 @@ const TournamentDetail = () => {
             ))}
           </div>
         </div>
-      </TheLineLayout>
+      </MainLayout>
     );
   }
 
   if (!tournament) {
     return (
-      <TheLineLayout title={t.errors.notFound} active="tournaments">
-        <div className="tl-shell" style={{ paddingTop: 64, paddingBottom: 80, textAlign: "center" }}>
+      <MainLayout>
+        <div className="container-wide py-16 text-center">
           <Trophy className="w-16 h-16 mx-auto mb-4 text-foreground-muted" />
           <h1 className="text-xl font-semibold mb-2">{t.errors.notFound}</h1>
           <p className="text-foreground-muted mb-6">{t.errors.notFoundDesc}</p>
@@ -81,18 +85,14 @@ const TournamentDetail = () => {
             {t.nav.tournaments}
           </Link>
         </div>
-      </TheLineLayout>
+      </MainLayout>
     );
   }
 
   const hasAnyContent = liveStreams.length > 0 || scheduledStreams.length > 0 || replays.length > 0 || videos.length > 0;
 
   return (
-    <TheLineLayout
-      title={tournament.name}
-      description={tournament.description ?? undefined}
-      active="tournaments"
-    >
+    <MainLayout>
       {/* Hero Section */}
       <TournamentHero
         id={tournament.id}
@@ -266,8 +266,8 @@ const TournamentDetail = () => {
           </div>
         )}
       </div>
-    </TheLineLayout>
+    </MainLayout>
   );
 };
 
-export default TournamentDetail;
+export default TournamentDetailLegacy;
