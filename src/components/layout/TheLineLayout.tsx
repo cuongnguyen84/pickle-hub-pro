@@ -44,6 +44,15 @@ const NAV_ITEMS: { label: string; to: string; key: Active }[] = [
   { label: "Stories", to: "/blog", key: "stories" },
 ];
 
+/**
+ * Prefix path with /vi when active language is Vietnamese so primary nav
+ * keeps users in their language tree. Mirrors the pattern used in the
+ * footer (line ~492). All listed routes have /vi/* equivalents in App.tsx
+ * routing — verified 2026-04-29.
+ */
+const localizedPath = (path: string, language: "vi" | "en"): string =>
+  language === "vi" ? `/vi${path}` : path;
+
 export const TheLineLayout = ({ title, description, noindex = false, active, children }: TheLineLayoutProps) => {
   const navigate = useNavigate();
   const { language, setLanguage } = useI18n();
@@ -154,7 +163,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
         <div className="tl-nav-links">
           {NAV_ITEMS.map((item) => (
-            <Link key={item.key} to={item.to} className={active === item.key ? "active" : ""}>
+            <Link
+              key={item.key}
+              to={localizedPath(item.to, language)}
+              className={active === item.key ? "active" : ""}
+            >
               {item.label}
             </Link>
           ))}
@@ -352,7 +365,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.key}
-                  to={item.to}
+                  to={localizedPath(item.to, language)}
                   onClick={() => setMenuOpen(false)}
                   className={active === item.key ? "active" : ""}
                 >
@@ -382,15 +395,15 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             {/* Secondary nav — pages not in the 5 primary nav items but useful for mobile discoverability */}
             <div className="tl-drawer-nav-secondary">
               <div className="tl-drawer-section-label">{language === "vi" ? "Khám phá thêm" : "More"}</div>
-              <Link to="/videos" onClick={() => setMenuOpen(false)}>
+              <Link to={localizedPath("/videos", language)} onClick={() => setMenuOpen(false)}>
                 <span>{language === "vi" ? "Video" : "Videos"}</span>
                 <span className="arr">→</span>
               </Link>
-              <Link to="/news" onClick={() => setMenuOpen(false)}>
+              <Link to={localizedPath("/news", language)} onClick={() => setMenuOpen(false)}>
                 <span>{language === "vi" ? "Tin tức" : "News"}</span>
                 <span className="arr">→</span>
               </Link>
-              <Link to="/forum" onClick={() => setMenuOpen(false)}>
+              <Link to={localizedPath("/forum", language)} onClick={() => setMenuOpen(false)}>
                 <span>{language === "vi" ? "Diễn đàn" : "Forum"}</span>
                 <span className="arr">→</span>
               </Link>
