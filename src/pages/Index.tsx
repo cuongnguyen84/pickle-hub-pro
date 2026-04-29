@@ -10,7 +10,7 @@ import { normalizeImageUrl } from "@/lib/url-utils";
 import { PPA_ASIA_STOPS } from "@/lib/constants";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/pages/preview/_Countdown";
-import { HreflangTags, OrganizationSchema } from "@/components/seo";
+import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 
 /**
@@ -201,7 +201,15 @@ const Index = () => {
       active="home"
     >
       <HreflangTags enPath="/" viPath="/vi" />
-      <OrganizationSchema />
+      {/*
+        Note (2026-04-29): client-side <OrganizationSchema /> removed.
+        Bot prerender already emits a richer Organization + WebSite JSON-LD
+        graph in functions/_lib/render/index.ts:renderHome (with address,
+        sameAs, EN description). Client component duplicated it with a
+        thinner VI-only description, which Google "Live URL Inspection"
+        would surface as duplicate Organization markup.
+        Refs: growth-tasks/POST-CUTOVER-CHECKLIST-2026-04-28.md section E.
+      */}
       {/* Ticker */}
       <div className="tl-ticker" aria-label="Live scores ticker">
         <div className="tl-ticker-head">
