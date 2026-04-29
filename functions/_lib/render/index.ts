@@ -36,7 +36,7 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     ? `<h2>Pickleball in Vietnam</h2><p>Vietnamese pickleball content from our local team:</p><ul>${viBlogItems}</ul><p><a href="${siteUrl}/vi" hreflang="vi">Visit Vietnamese site</a></p>`
     : "";
 
-  const title = "ThePickleHub - Pickleball Tournaments, Livestream & News — Built for Asia";
+  const title = "ThePickleHub – Pickleball Asia: Live, Brackets & News";
   const description = "The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.";
 
   return htmlResponse(buildHtml({
@@ -117,7 +117,7 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
   const blogSection = blogItems ? `<h2>Bài viết mới nhất</h2><ul>${blogItems}</ul><p><a href="${siteUrl}/vi/blog">Xem tất cả bài viết</a></p>` : "";
 
   return htmlResponse(buildHtml({
-    title: "ThePickleHub - Giải đấu Pickleball, Livestream & Tin tức — Xây cho Châu Á",
+    title: "ThePickleHub – Pickleball Châu Á: Live & Giải đấu",
     description: "Nền tảng pickleball song ngữ duy nhất xây cho châu Á. Giải đấu, livestream và tin tức bằng tiếng Việt và tiếng Anh — miễn phí cho BTC và người chơi.",
     url: `${siteUrl}/vi`,
     siteUrl,
@@ -431,7 +431,7 @@ export async function renderNews(supabase: SupabaseClient, siteUrl: string, rawP
 
   return htmlResponse(buildHtml({
     title: "Tin tức Pickleball | ThePickleHub",
-    description: "Tin tức pickleball mới nhất tại Việt Nam và thế giới: kết quả giải đấu PPA Tour Asia, World Cup Pickleball, sự kiện cộng đồng, và phân tích chuyên sâu từ ThePickleHub.",
+    description: "Tin pickleball mới nhất Việt Nam và thế giới: PPA Tour Asia, World Cup, sự kiện cộng đồng, phân tích chuyên sâu — ThePickleHub.",
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Tin tức</h2><ul>${items}</ul>` : "",
@@ -607,7 +607,7 @@ export function renderTools(siteUrl: string, rawPath = "/tools"): Response {
 const TOOL_PAGE_META: Record<string, { title: string; description: string }> = {
   "quick-tables": {
     title: "Quick Tables – Round Robin & Single Elimination | ThePickleHub",
-    description: "Free round robin and single elimination bracket generator for pickleball tournaments. Automatic scheduling, real-time scoring, shareable links. No signup required.",
+    description: "Free round-robin & single elimination bracket generator. Auto-scheduling, real-time scoring, shareable links. No signup — ThePickleHub.",
   },
   "team-match": {
     title: "Team Match – MLP Format Pickleball | ThePickleHub",
@@ -615,11 +615,11 @@ const TOOL_PAGE_META: Record<string, { title: string; description: string }> = {
   },
   "doubles-elimination": {
     title: "Doubles Elimination Bracket Generator | ThePickleHub",
-    description: "Free doubles elimination bracket generator for pickleball tournaments. Automatic bracket draw, real-time scoring, and shareable results pages. No signup required.",
+    description: "Free doubles elimination bracket generator. Auto bracket draw, live scoring, shareable results. No signup — ThePickleHub.",
   },
   "flex-tournament": {
     title: "Flex Tournament Generator – Flexible Bracket | ThePickleHub",
-    description: "Free flex-format pickleball tournament generator. Customizable groups, flexible scheduling, and live scoring. Perfect for club and community events. No signup required.",
+    description: "Free flex-format tournament generator. Custom groups, flexible scheduling, live scoring. Perfect for clubs — ThePickleHub.",
   },
 };
 
@@ -655,7 +655,7 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
 const BLOG_POST_META: Record<string, { title: string; description: string }> = {
   "pickleball-world-cup-2026-da-nang": { title: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch", description: "Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). Up to 80 nations, 4,000 athletes. Dates, venues, format, Vietnam team." },
   "how-to-watch-ppa-tour-live-2026": { title: "How to Watch PPA Tour Live 2026 | Streaming Platforms, Schedules & Free Options", description: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS, ESPN, and Fox Sports. Plus free YouTube highlights + ThePickleHub livestreams." },
-  "ppa-tour-asia-2026-complete-guide": { title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play", description: "Complete guide to PPA Tour Asia 2026 — all 10 tournament stops across Vietnam, Japan, Korea, Thailand & more. Schedule, prize money, registration, and how to watch live." },
+  "ppa-tour-asia-2026-complete-guide": { title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play", description: "PPA Tour Asia 2026 complete guide — 10 tournament stops in Vietnam, Japan, Korea, Thailand. Schedule, prize money, registration, live streams." },
   "best-pickleball-tournament-software-2026": { title: "Best Pickleball Tournament Software 2026", description: "Compare the best pickleball tournament software in 2026: free bracket generators, round robin tools, MLP team match platforms. No signup." },
   "how-to-create-pickleball-bracket": { title: "How to Create a Pickleball Bracket", description: "How to create a pickleball bracket for round robin, single elimination, and double elimination — with a free bracket generator + live scoring." },
   "pickleball-round-robin-generator-guide": { title: "Pickleball Round Robin Generator Guide 2026", description: "Free pickleball round robin generator with auto scheduling, court rotation, and live scoring. Organize a perfect round robin tournament." },
@@ -818,7 +818,7 @@ export function renderLivestreamList(siteUrl: string, rawPath: string, lang: Lan
 export function renderPrivacy(siteUrl: string, rawPath: string, lang: Lang): Response {
   return htmlResponse(buildHtml({
     title: lang === "vi" ? "Chính sách bảo mật | ThePickleHub" : "Privacy Policy | ThePickleHub",
-    description: "Chính sách bảo mật của ThePickleHub - nền tảng pickleball Việt Nam.",
+    description: "Chính sách bảo mật ThePickleHub — cách thu thập, lưu trữ, sử dụng dữ liệu cá nhân, cookie và quyền của người dùng pickleball Việt Nam.",
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     lang,
@@ -828,7 +828,7 @@ export function renderPrivacy(siteUrl: string, rawPath: string, lang: Lang): Res
 export function renderTerms(siteUrl: string, rawPath: string, lang: Lang): Response {
   return htmlResponse(buildHtml({
     title: lang === "vi" ? "Điều khoản sử dụng | ThePickleHub" : "Terms of Service | ThePickleHub",
-    description: "Điều khoản sử dụng của ThePickleHub - nền tảng pickleball Việt Nam.",
+    description: "Điều khoản sử dụng ThePickleHub — quy định tài khoản, livestream, bracket, nội dung người dùng, sở hữu trí tuệ trên nền tảng pickleball Việt Nam.",
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     lang,

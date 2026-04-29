@@ -99,7 +99,7 @@ export const DynamicMeta = ({
 
     // Cleanup: Reset to default on unmount
     return () => {
-      document.title = "ThePickleHub – Pickleball Tournaments, Livestream & Community";
+      document.title = "ThePickleHub – Pickleball Asia: Live, Brackets & News";
     };
   }, [fullTitle, description, image, type, currentUrl, noindex, creator, publishedTime, language]);
 

@@ -194,7 +194,7 @@ const Index = () => {
     <TheLineLayout
       title={language === "vi"
         ? "Pickleball Việt Nam — Giải đấu, Livestream & Tin tức"
-        : "Pickleball Tournaments, Livestream & News — Built for Asia"}
+        : "Pickleball Asia: Live, Brackets & News"}
       description={language === "vi"
         ? "ThePickleHub — Đưa tin pickleball chuyên nghiệp toàn cầu. Tin tức PPA, APP, MLP, lịch giải, livestream, và bracket miễn phí. Trụ sở tại TP.HCM."
         : "ThePickleHub — Editorial coverage of professional pickleball. PPA, APP, MLP news, schedules, livestreams, and free bracket tools. Headquartered in Ho Chi Minh City."}
