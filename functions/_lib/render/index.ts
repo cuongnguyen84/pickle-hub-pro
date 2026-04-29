@@ -580,12 +580,27 @@ export function renderTools(siteUrl: string, rawPath = "/tools"): Response {
         },
       ],
     },
-    bodyContent: `<h2>Tournament Tools</h2><ul>
-      <li><a href="${siteUrl}/tools/quick-tables">Quick Tables – Round Robin &amp; Single Elimination</a></li>
-      <li><a href="${siteUrl}/tools/team-match">Team Match – MLP Format</a></li>
-      <li><a href="${siteUrl}/tools/doubles-elimination">Doubles Elimination Bracket</a></li>
-      <li><a href="${siteUrl}/tools/flex-tournament">Flex Tournament</a></li>
-    </ul>`,
+    // Bot-visible body — mirrors hero + pillar copy from src/pages/Tools.tsx
+    // (lines 151-159 hero, 277-308 'What Bracket Lab actually does' section).
+    // Without this, Googlebot only saw a 4-link skeleton and missed the
+    // commercial keywords commit dd05713 added to the React source. Bing's
+    // bot runs JS so it already saw the copy, but Googlebot is SSR-only.
+    // Verified 2026-04-29 (curl `-A "Googlebot" /tools` was 5056 chars vs
+    // 7361 for homepage). Keep this block in sync if Tools.tsx hero or
+    // pillar prose changes — set a search alert for "free pickleball
+    // tournament bracket generator".
+    bodyContent: `<h1>60 seconds to a pickleball bracket.</h1>
+<p>A free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, and flex format. Live scoring on your phone, shareable scoreboard URL, printable bracket. No apps, no signup, no catch.</p>
+<h2>Tournament formats</h2>
+<ul>
+  <li><a href="${siteUrl}/tools/quick-tables">Quick Tables – Round Robin &amp; Single Elimination</a></li>
+  <li><a href="${siteUrl}/tools/team-match">Team Match – MLP Format</a></li>
+  <li><a href="${siteUrl}/tools/doubles-elimination">Doubles Elimination Bracket</a></li>
+  <li><a href="${siteUrl}/tools/flex-tournament">Flex Tournament</a></li>
+</ul>
+<h2>What Bracket Lab actually does</h2>
+<p>Bracket Lab is a free pickleball tournament bracket generator built for clubs, weekend organizers, and pro events across Asia. Pick a format — round robin, single elimination, double elimination, MLP team match, or a fully custom flex tournament — and the tool builds the bracket, schedules matches, rotates courts, and tracks live scores. Share a single link with players and spectators; print a wall bracket if you need one.</p>
+<p>No signup. No download. No 14-day trial that turns into a $99/month subscription. Built and maintained by <a href="${siteUrl}/blog/tournament-organizer-hub">ThePickleHub</a>, a bilingual Vietnamese-English platform reporting on PPA Tour Asia, MLP, and the regional pro circuit.</p>`,
   }));
 }
 
