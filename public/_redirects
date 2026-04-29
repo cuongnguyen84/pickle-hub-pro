@@ -5,5 +5,24 @@
 # Blog post URL refresh (2025 → 2026)
 /blog/best-pickleball-tournament-software-2025  /blog/best-pickleball-tournament-software-2026  301
 
+# 301 redirect VI broken slugs to EN counterparts (Ahrefs 404 fix 2026-04-29)
+# Future: replace với VI bài thực khi viết
+/vi/blog/luat-pickleball                            /blog/pickleball-rules-complete-guide              301
+/vi/blog/luat-pickleball-2026                       /blog/pickleball-rules-complete-guide              301
+/vi/blog/luat-cham-diem-pickleball                  /blog/pickleball-scoring-rules-guide               301
+/vi/blog/cach-tao-bracket-pickleball                /blog/how-to-create-pickleball-bracket             301
+/vi/blog/mau-bracket-pickleball                     /blog/pickleball-bracket-templates                 301
+/vi/blog/tao-bracket-pickleball-mien-phi            /blog/free-pickleball-bracket-generator            301
+/vi/blog/tao-vong-tron-pickleball                   /blog/pickleball-round-robin-generator-guide       301
+/vi/blog/cac-the-thuc-giai-pickleball               /blog/pickleball-tournament-formats-explained      301
+/vi/blog/cach-to-chuc-giai-pickleball               /blog/how-to-organize-pickleball-tournament        301
+/vi/blog/phan-mem-to-chuc-giai-pickleball-tot-nhat  /blog/best-pickleball-tournament-software-2026     301
+/vi/blog/chien-thuat-pickleball-doi                 /blog/pickleball-doubles-strategy-guide            301
+/vi/blog/truc-tiep-pickleball                       /blog/pickleball-live-streaming-guide              301
+/vi/blog/cach-xem-ppa-tour-truc-tiep                /blog/how-to-watch-ppa-tour-live-2026              301
+/vi/blog/ppa-tour-asia-2026                         /blog/ppa-tour-asia-2026-complete-guide            301
+/vi/blog/ppa-tour-asia-2026-complete-guide          /blog/ppa-tour-asia-2026-complete-guide            301
+/vi/blog/the-thuc-mlp                               /blog/mlp-format-explained                         301
+
 # SPA fallback
 /* /index.html 200

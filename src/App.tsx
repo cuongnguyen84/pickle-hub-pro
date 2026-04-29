@@ -82,7 +82,6 @@ const FlexTournamentView = lazy(() => import("./pages/FlexTournamentView"));
 // Blog pages
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
-const ViBlog = lazy(() => import("./pages/ViBlog"));
 const ViBlogPost = lazy(() => import("./pages/ViBlogPost"));
 
 // Forum pages
@@ -485,7 +484,7 @@ const App = () => (
                     <Route path="/vi/tournament/:slug" element={<ViLanguageWrapper><ConditionalAuth><TournamentDetail /></ConditionalAuth></ViLanguageWrapper>} />
                     <Route path="/vi/org/:slug" element={<ViLanguageWrapper><OrganizationDetail /></ViLanguageWrapper>} />
                     <Route path="/vi/news" element={<ViLanguageWrapper><News /></ViLanguageWrapper>} />
-                    <Route path="/vi/blog" element={<ViLanguageWrapper><ViBlog /></ViLanguageWrapper>} />
+                    <Route path="/vi/blog" element={<ViLanguageWrapper><Blog /></ViLanguageWrapper>} />
                     <Route path="/vi/blog/:slug" element={<ViLanguageWrapper><ViBlogPost /></ViLanguageWrapper>} />
                     <Route path="/vi/forum" element={<ViLanguageWrapper><Forum /></ViLanguageWrapper>} />
                     <Route path="/vi/forum/:categorySlug" element={<ViLanguageWrapper><ForumCategory /></ViLanguageWrapper>} />
