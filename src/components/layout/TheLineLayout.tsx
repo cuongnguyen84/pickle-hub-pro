@@ -345,10 +345,9 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 </svg>
                 <input
                   type="search"
-                  placeholder="Search players, events…"
+                  placeholder={language === "vi" ? "Tìm vận động viên, giải đấu…" : "Search players, events…"}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  autoFocus
                 />
               </div>
             </form>

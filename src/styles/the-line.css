@@ -1238,10 +1238,30 @@
 }
 
 /* ========== Stories grid with cover images (editorial card) ========== */
+/* Asymmetric editorial layout: featured first story spans 2 columns
+   on desktop (≥1100px), giving it a wide hero image + larger title.
+   Subsequent stories occupy single cells. Mobile stays single-column. */
 [data-theme="the-line"] .tl-stories-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
+}
+@media (min-width: 1100px) {
+  [data-theme="the-line"] .tl-stories-grid > .tl-story:first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  [data-theme="the-line"] .tl-stories-grid > .tl-story:first-child .tl-story-img {
+    aspect-ratio: 16 / 9;
+  }
+  [data-theme="the-line"] .tl-stories-grid > .tl-story:first-child .tl-story-title {
+    font-size: 32px;
+    -webkit-line-clamp: 4;
+  }
+  [data-theme="the-line"] .tl-stories-grid > .tl-story:first-child .tl-story-summary {
+    font-size: 15px;
+    -webkit-line-clamp: 4;
+  }
 }
 @media (max-width: 900px) { [data-theme="the-line"] .tl-stories-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; } }
 @media (max-width: 640px) { [data-theme="the-line"] .tl-stories-grid { grid-template-columns: 1fr; gap: 20px; } }
