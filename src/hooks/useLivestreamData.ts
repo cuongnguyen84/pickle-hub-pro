@@ -19,10 +19,17 @@ export function useLivestreams(status?: "live" | "scheduled" | "ended") {
   return useQuery({
     queryKey: ["livestreams", status],
     queryFn: async () => {
+      // Ended replays are surfaced with most-recent-first ordering;
+      // live/scheduled (and the unfiltered case) keep earliest-first.
       let query = supabase
         .from("public_livestreams")
-        .select(`*, organization:organizations(*)`)
-        .order("scheduled_start_at", { ascending: true });
+        .select(`*, organization:organizations(*)`);
+
+      if (status === "ended") {
+        query = query.order("ended_at", { ascending: false, nullsFirst: false });
+      } else {
+        query = query.order("scheduled_start_at", { ascending: true });
+      }
 
       if (status) {
         query = query.eq("status", status);
