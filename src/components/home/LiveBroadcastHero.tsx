@@ -156,7 +156,10 @@ export function LiveBroadcastHero({ featured, language, tournamentName, isLoadin
   const isScheduled = featured.status === "scheduled";
   const isEnded = featured.status === "ended";
 
-  const tournamentLabel = tournamentName ?? featured.organization?.name ?? "Live broadcast";
+  const tournamentLabel =
+    tournamentName
+    ?? featured.organization?.name
+    ?? (language === "vi" ? "Phát sóng" : "Live broadcast");
 
   return (
     <article

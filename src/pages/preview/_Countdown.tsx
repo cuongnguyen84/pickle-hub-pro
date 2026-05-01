@@ -7,13 +7,15 @@ interface CountdownProps {
   /** Show a bullet prefix like "●" */
   prefix?: string;
   className?: string;
+  /** Locale for "in X" / "trong X" prefix and unit labels */
+  language?: "en" | "vi";
 }
 
 /**
  * Real-time countdown to an ISO timestamp. Updates every second.
  * Falls back to "—" if `to` is missing or invalid.
  */
-export const Countdown = ({ to, pastLabel = "Starting now", prefix, className }: CountdownProps) => {
+export const Countdown = ({ to, pastLabel = "Starting now", prefix, className, language = "en" }: CountdownProps) => {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -42,13 +44,15 @@ export const Countdown = ({ to, pastLabel = "Starting now", prefix, className }:
   const mins = Math.floor((diff % 3600_000) / 60_000);
   const secs = Math.floor((diff % 60_000) / 1000);
 
+  const isVi = language === "vi";
   let label: string;
-  if (days > 0) label = `${days}d ${hours}h`;
-  else if (hours > 0) label = `${hours}h ${mins.toString().padStart(2, "0")}m`;
-  else if (mins > 0) label = `${mins}m ${secs.toString().padStart(2, "0")}s`;
-  else label = `${secs}s`;
+  if (days > 0) label = isVi ? `${days} ngày ${hours} giờ` : `${days}d ${hours}h`;
+  else if (hours > 0) label = isVi ? `${hours} giờ ${mins.toString().padStart(2, "0")} phút` : `${hours}h ${mins.toString().padStart(2, "0")}m`;
+  else if (mins > 0) label = isVi ? `${mins} phút ${secs.toString().padStart(2, "0")} giây` : `${mins}m ${secs.toString().padStart(2, "0")}s`;
+  else label = isVi ? `${secs} giây` : `${secs}s`;
 
-  return <span className={className}>{prefix ? `${prefix} ` : ""}in {label}</span>;
+  const prefixWord = isVi ? "trong" : "in";
+  return <span className={className}>{prefix ? `${prefix} ` : ""}{prefixWord} {label}</span>;
 };
 
 export default Countdown;

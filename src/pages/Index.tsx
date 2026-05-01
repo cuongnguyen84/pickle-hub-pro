@@ -45,18 +45,29 @@ const formatTime = (iso: string | null | undefined): string => {
   return dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 };
 
-const formatRelative = (iso: string | null | undefined): string => {
+const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"): string => {
   if (!iso) return "";
   const dt = new Date(iso).getTime();
   if (Number.isNaN(dt)) return "";
   const diff = dt - Date.now();
   const absMin = Math.abs(Math.round(diff / 60000));
-  if (absMin < 1) return "now";
-  if (absMin < 60) return diff > 0 ? `in ${absMin}m` : `${absMin}m ago`;
+  const isVi = lang === "vi";
+  if (absMin < 1) return isVi ? "vừa xong" : "now";
+  if (absMin < 60) {
+    return isVi
+      ? (diff > 0 ? `trong ${absMin} phút` : `${absMin} phút trước`)
+      : (diff > 0 ? `in ${absMin}m` : `${absMin}m ago`);
+  }
   const hrs = Math.round(absMin / 60);
-  if (hrs < 24) return diff > 0 ? `in ${hrs}h` : `${hrs}h ago`;
+  if (hrs < 24) {
+    return isVi
+      ? (diff > 0 ? `trong ${hrs} giờ` : `${hrs} giờ trước`)
+      : (diff > 0 ? `in ${hrs}h` : `${hrs}h ago`);
+  }
   const days = Math.round(hrs / 24);
-  return diff > 0 ? `in ${days}d` : `${days}d ago`;
+  return isVi
+    ? (diff > 0 ? `trong ${days} ngày` : `${days} ngày trước`)
+    : (diff > 0 ? `in ${days}d` : `${days}d ago`);
 };
 
 const Index = () => {
@@ -128,25 +139,33 @@ const Index = () => {
   // Ticker — live > scheduled > ended (recent), all pulled from real streams
   const tickerItems = useMemo(() => {
     const items: { text: string; org: string }[] = [];
+    const tNext = language === "vi" ? "TIẾP THEO" : "NEXT";
+    const tReplay = language === "vi" ? "REPLAY" : "REPLAY";
+    const tLiveMatch = language === "vi" ? "Trận trực tiếp" : "Live match";
+    const tUpcoming = language === "vi" ? "Sắp tới" : "Upcoming";
+    const tMatch = language === "vi" ? "Trận đấu" : "Match";
+    const tEmpty = language === "vi"
+      ? "Hiện không có trận nào — quay lại sau"
+      : "No broadcasts right now — check back soon";
     liveStreams.slice(0, 4).forEach((s) => {
-      items.push({ text: s.title ?? "Live match", org: s.organization?.name ?? "" });
+      items.push({ text: s.title ?? tLiveMatch, org: s.organization?.name ?? "" });
     });
     scheduledStreams.slice(0, 2).forEach((s) => {
       items.push({
-        text: `NEXT · ${s.title ?? "Upcoming"} · ${formatRelative(s.scheduled_start_at)}`,
+        text: `${tNext} · ${s.title ?? tUpcoming} · ${formatRelative(s.scheduled_start_at, language)}`,
         org: s.organization?.name ?? "",
       });
     });
     if (items.length < 4) {
       endedStreams.slice(0, 4 - items.length).forEach((s) => {
         items.push({
-          text: `REPLAY · ${s.title ?? "Match"}`,
+          text: `${tReplay} · ${s.title ?? tMatch}`,
           org: s.organization?.name ?? "",
         });
       });
     }
-    return items.length > 0 ? items : [{ text: "No broadcasts right now — check back soon", org: "" }];
-  }, [liveStreams, scheduledStreams, endedStreams]);
+    return items.length > 0 ? items : [{ text: tEmpty, org: "" }];
+  }, [liveStreams, scheduledStreams, endedStreams, language]);
 
   const featured = liveStreams[0] ?? scheduledStreams[0] ?? null;
 
@@ -224,10 +243,10 @@ const Index = () => {
         Refs: growth-tasks/POST-CUTOVER-CHECKLIST-2026-04-28.md section E.
       */}
       {/* Ticker */}
-      <div className="tl-ticker" aria-label="Live scores ticker">
+      <div className="tl-ticker" aria-label={language === "vi" ? "Bảng điểm trực tiếp" : "Live scores ticker"}>
         <div className="tl-ticker-head">
           <span className="dot" aria-hidden="true" />
-          Live
+          {language === "vi" ? "Trực tiếp" : "Live"}
         </div>
         <div className="tl-ticker-body">
           <div className="tl-ticker-track">
@@ -254,38 +273,64 @@ const Index = () => {
               <div className="tl-eyebrow tl-up tl-d1">
                 <span className="pip" aria-hidden="true" />
                 <span>
-                  {hasLiveData
-                    ? `Live · ${liveCount} match${liveCount === 1 ? "" : "es"}`
-                    : "Broadcast · Next 24h"}
+                  {language === "vi"
+                    ? (hasLiveData
+                        ? `Trực tiếp · ${liveCount} trận`
+                        : "Phát sóng · 24h tới")
+                    : (hasLiveData
+                        ? `Live · ${liveCount} match${liveCount === 1 ? "" : "es"}`
+                        : "Broadcast · Next 24h")}
                 </span>
                 <span className="sep">/</span>
-                <span>{upcomingCount} scheduled</span>
+                <span>
+                  {language === "vi"
+                    ? `${upcomingCount} sắp diễn ra`
+                    : `${upcomingCount} scheduled`}
+                </span>
               </div>
 
               <h1 className="tl-hero-title tl-up tl-d2">
-                {hasLiveData ? (
-                  <>
-                    Every court, <br />
-                    <span className="dim">every bracket,</span> <br />
-                    one screen.
-                  </>
+                {language === "vi" ? (
+                  hasLiveData ? (
+                    <>
+                      Mọi sân, <br />
+                      <span className="dim">mọi bracket,</span> <br />
+                      một màn hình.
+                    </>
+                  ) : (
+                    <>
+                      Pickleball, <br />
+                      đưa tin <span className="dim">đúng cách</span> <br />
+                      <span className="dim">một môn thể thao xứng đáng.</span>
+                    </>
+                  )
                 ) : (
-                  <>
-                    Pickleball, <br />
-                    covered <span className="dim">the way</span> <br />
-                    serious sport <span className="dim">should be.</span>
-                  </>
+                  hasLiveData ? (
+                    <>
+                      Every court, <br />
+                      <span className="dim">every bracket,</span> <br />
+                      one screen.
+                    </>
+                  ) : (
+                    <>
+                      Pickleball, <br />
+                      covered <span className="dim">the way</span> <br />
+                      serious sport <span className="dim">should be.</span>
+                    </>
+                  )
                 )}
               </h1>
 
               <p className="tl-hero-lede tl-up tl-d3">
-                Global coverage of professional pickleball — PPA, APP, MLP, European Open,
-                Asia Pacific Series. Real match reports by reporters at the court.
-                Live scores that tick in real time. One subscription.
+                {language === "vi"
+                  ? "Đưa tin pickleball chuyên nghiệp toàn cầu — PPA, APP, MLP, European Open, Asia Pacific Series. Tường thuật trận đấu thật bởi phóng viên có mặt tại sân. Tỷ số live cập nhật theo thời gian thực. Một tài khoản duy nhất."
+                  : "Global coverage of professional pickleball — PPA, APP, MLP, European Open, Asia Pacific Series. Real match reports by reporters at the court. Live scores that tick in real time. One subscription."}
               </p>
 
               <p className="tl-hero-subline tl-up tl-d3">
-                Nền tảng pickleball Việt Nam đầu tiên — tin tức PPA Tour, giải đấu, bracket miễn phí.
+                {language === "vi"
+                  ? "Nền tảng pickleball Việt Nam đầu tiên — tin tức PPA Tour, giải đấu, bracket miễn phí."
+                  : "Vietnam's first pickleball platform — PPA Tour news, tournaments, and free brackets."}
               </p>
 
               <div className="tl-hero-ctas tl-up tl-d4">
@@ -293,10 +338,12 @@ const Index = () => {
                   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
-                  {hasLiveData ? `Watch live · ${liveCount} court${liveCount === 1 ? "" : "s"}` : "Browse broadcasts"}
+                  {language === "vi"
+                    ? (hasLiveData ? `Xem trực tiếp · ${liveCount} sân` : "Khám phá phát sóng")
+                    : (hasLiveData ? `Watch live · ${liveCount} court${liveCount === 1 ? "" : "s"}` : "Browse broadcasts")}
                 </Link>
                 <Link to="/tournaments" className="tl-btn">
-                  See schedule →
+                  {language === "vi" ? "Xem lịch giải →" : "See schedule →"}
                 </Link>
               </div>
             </div>
@@ -360,12 +407,17 @@ const Index = () => {
         <div className="tl-shell">
           <div className="tl-sec-head">
             <h2>
-              Live <em className="tl-serif">courts.</em>{" "}
-              <span className="sans">
-                {liveCount} {language === "vi"
-                  ? (liveCount === 1 ? "trận" : "trận")
-                  : (liveCount === 1 ? "match" : "matches")}
-              </span>
+              {language === "vi" ? (
+                <>
+                  Sân <em className="tl-serif">trực tiếp.</em>{" "}
+                  <span className="sans">{liveCount} trận</span>
+                </>
+              ) : (
+                <>
+                  Live <em className="tl-serif">courts.</em>{" "}
+                  <span className="sans">{liveCount} match{liveCount === 1 ? "" : "es"}</span>
+                </>
+              )}
             </h2>
             {liveStreams.length > 0 && (
               <p>
@@ -381,7 +433,7 @@ const Index = () => {
               {[0, 1, 2].map((n) => (
                 <div key={n} className="tl-match" style={{ opacity: 0.4 }}>
                   <div className="tl-match-head">
-                    <span>Loading…</span>
+                    <span>{language === "vi" ? "Đang tải…" : "Loading…"}</span>
                   </div>
                   <div className="tl-match-title">&nbsp;</div>
                   <div className="tl-match-foot"><span>&nbsp;</span></div>
@@ -416,15 +468,21 @@ const Index = () => {
               {liveStreams.slice(0, 9).map((stream) => (
                 <Link key={stream.id} to={`/live/${stream.id}`} className="tl-match">
                   <div className="tl-match-head">
-                    <span className="stat live">Live</span>
+                    <span className="stat live">{language === "vi" ? "Trực tiếp" : "Live"}</span>
                     <span className="ctx">
-                      {stream.started_at ? formatTime(stream.started_at) : "On air"}
+                      {stream.started_at
+                        ? formatTime(stream.started_at)
+                        : (language === "vi" ? "Đang phát" : "On air")}
                     </span>
                   </div>
-                  <h3 className="tl-match-title">{stream.title ?? "Untitled match"}</h3>
+                  <h3 className="tl-match-title">
+                    {stream.title ?? (language === "vi" ? "Trận chưa có tên" : "Untitled match")}
+                  </h3>
                   <div className="tl-match-foot">
-                    <span className="org">{stream.organization?.name ?? "Broadcast"}</span>
-                    <span className="v">Watch →</span>
+                    <span className="org">
+                      {stream.organization?.name ?? (language === "vi" ? "Phát sóng" : "Broadcast")}
+                    </span>
+                    <span className="v">{language === "vi" ? "Xem →" : "Watch →"}</span>
                   </div>
                 </Link>
               ))}
@@ -439,20 +497,39 @@ const Index = () => {
         <div className="tl-shell">
           <div className="tl-sec-head">
             <h2>
-              Coming <em className="tl-serif">up.</em>{" "}
-              <span className="sans">
-                {upcomingTournaments.length + scheduledStreams.length} events
-              </span>
+              {language === "vi" ? (
+                <>
+                  Sắp <em className="tl-serif">diễn ra.</em>{" "}
+                  <span className="sans">
+                    {upcomingTournaments.length + scheduledStreams.length} sự kiện
+                  </span>
+                </>
+              ) : (
+                <>
+                  Coming <em className="tl-serif">up.</em>{" "}
+                  <span className="sans">
+                    {upcomingTournaments.length + scheduledStreams.length} events
+                  </span>
+                </>
+              )}
             </h2>
-            <p>Tournaments opening registration and scheduled streams from the next 30 days.</p>
+            <p>
+              {language === "vi"
+                ? "Giải đấu đang mở đăng ký và stream lên lịch trong 30 ngày tới."
+                : "Tournaments opening registration and scheduled streams from the next 30 days."}
+            </p>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 20 }} className="tl-schedule-grid">
             {upcomingTournaments.length > 0 && (
             <div className="tl-panel">
               <div className="tl-panel-head">
-                <h3>Tournaments</h3>
-                <span className="meta">{upcomingTournaments.length} upcoming</span>
+                <h3>{language === "vi" ? "Giải đấu" : "Tournaments"}</h3>
+                <span className="meta">
+                  {language === "vi"
+                    ? `${upcomingTournaments.length} sắp tới`
+                    : `${upcomingTournaments.length} upcoming`}
+                </span>
               </div>
               {(
                 upcomingTournaments.map((tourn) => {
@@ -467,11 +544,15 @@ const Index = () => {
                       <div className="tl-sched-body">
                         <h4>{tourn.name}</h4>
                         <div className="meta">
-                          <span>Status: {tourn.status}</span>
+                          <span>{language === "vi" ? `Trạng thái: ${tourn.status}` : `Status: ${tourn.status}`}</span>
                           {tourn.end_date && (
                             <>
                               <span className="sep">·</span>
-                              <span>Ends {endDate.d} {endDate.m}</span>
+                              <span>
+                                {language === "vi"
+                                  ? `Kết thúc ${endDate.d} ${endDate.m}`
+                                  : `Ends ${endDate.d} ${endDate.m}`}
+                              </span>
                             </>
                           )}
                         </div>
@@ -491,11 +572,17 @@ const Index = () => {
             {scheduledStreams.length > 0 && (
             <div className="tl-panel">
               <div className="tl-panel-head">
-                <h3>Streams</h3>
-                <span className="meta">{scheduledStreams.length} scheduled</span>
+                <h3>{language === "vi" ? "Phát sóng" : "Streams"}</h3>
+                <span className="meta">
+                  {language === "vi"
+                    ? `${scheduledStreams.length} sắp tới`
+                    : `${scheduledStreams.length} scheduled`}
+                </span>
               </div>
               {scheduledLoading ? (
-                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>Loading…</div>
+                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>
+                  {language === "vi" ? "Đang tải…" : "Loading…"}
+                </div>
               ) : (
                 scheduledStreams.slice(0, 5).map((stream) => {
                   const date = formatDate(stream.scheduled_start_at);
@@ -506,17 +593,21 @@ const Index = () => {
                         <span className="m">{date.m}</span>
                       </div>
                       <div className="tl-sched-body">
-                        <h4>{stream.title ?? "Upcoming stream"}</h4>
+                        <h4>{stream.title ?? (language === "vi" ? "Stream sắp tới" : "Upcoming stream")}</h4>
                         <div className="meta">
                           <span>{formatTime(stream.scheduled_start_at)}</span>
                           <span className="sep">·</span>
-                          <span>{stream.organization?.name ?? "Broadcast"}</span>
+                          <span>{stream.organization?.name ?? (language === "vi" ? "Phát sóng" : "Broadcast")}</span>
                           <span className="sep">·</span>
-                          <Countdown to={stream.scheduled_start_at} pastLabel="Live now" />
+                          <Countdown
+                            to={stream.scheduled_start_at}
+                            pastLabel={language === "vi" ? "Đang phát" : "Live now"}
+                            language={language}
+                          />
                         </div>
                       </div>
                       <div className="tl-sched-right">
-                        <span className="tag">Stream</span>
+                        <span className="tag">{language === "vi" ? "Phát sóng" : "Stream"}</span>
                       </div>
                     </Link>
                   );
@@ -535,10 +626,18 @@ const Index = () => {
           <div className="tl-shell">
             <div className="tl-sec-head">
               <h2>
-                <em className="tl-serif">Courtside.</em>{" "}
-                <span className="sans">{videos.length} highlights</span>
+                <em className="tl-serif">{language === "vi" ? "Sân đấu." : "Courtside."}</em>{" "}
+                <span className="sans">
+                  {language === "vi"
+                    ? `${videos.length} clip nổi bật`
+                    : `${videos.length} highlights`}
+                </span>
               </h2>
-              <p>Match highlights, interviews, and behind-the-scenes from the court.</p>
+              <p>
+                {language === "vi"
+                  ? "Highlights trận đấu, phỏng vấn và behind-the-scenes ngay tại sân."
+                  : "Match highlights, interviews, and behind-the-scenes from the court."}
+              </p>
             </div>
 
             <div className="tl-courtside-grid">
@@ -569,7 +668,7 @@ const Index = () => {
                       {v.published_at && (
                         <>
                           <span>·</span>
-                          <span>{formatRelative(v.published_at)}</span>
+                          <span>{formatRelative(v.published_at, language)}</span>
                         </>
                       )}
                     </div>
@@ -579,7 +678,9 @@ const Index = () => {
             </div>
 
             <div style={{ textAlign: "center", marginTop: 28 }}>
-              <Link to="/videos" className="tl-btn">View all videos →</Link>
+              <Link to="/videos" className="tl-btn">
+                {language === "vi" ? "Xem tất cả video →" : "View all videos →"}
+              </Link>
             </div>
           </div>
         </section>
@@ -591,10 +692,23 @@ const Index = () => {
           <div className="tl-shell">
             <div className="tl-sec-head">
               <h2>
-                From <em className="tl-serif">the desk.</em>{" "}
-                <span className="sans">{stories.length} stories</span>
+                {language === "vi" ? (
+                  <>
+                    Từ <em className="tl-serif">tòa soạn.</em>{" "}
+                    <span className="sans">{stories.length} bài viết</span>
+                  </>
+                ) : (
+                  <>
+                    From <em className="tl-serif">the desk.</em>{" "}
+                    <span className="sans">{stories.length} stories</span>
+                  </>
+                )}
               </h2>
-              <p>Longform coverage written by reporters and coaches. Updated regularly.</p>
+              <p>
+                {language === "vi"
+                  ? "Phóng sự dài kỳ, viết bởi phóng viên và HLV. Cập nhật thường xuyên."
+                  : "Longform coverage written by reporters and coaches. Updated regularly."}
+              </p>
             </div>
 
             <div className="tl-stories-grid">
