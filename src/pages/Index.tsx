@@ -575,6 +575,24 @@ const Index = () => {
                       <div className="tl-sched-body">
                         <h4>{tourn.name}</h4>
                         <div className="meta">
+                          {(tourn as { organization?: { name?: string | null } | null }).organization?.name && (
+                            <>
+                              <span className="org-line">
+                                {(tourn as { organization?: { name?: string | null } | null }).organization?.name}
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  className="tl-trust-tick"
+                                  fill="currentColor"
+                                  aria-label={language === "vi" ? "Nhà tổ chức xác minh" : "Verified organizer"}
+                                >
+                                  <path d="M9 12l2 2 4-4M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" strokeWidth="0" />
+                                  <circle cx="12" cy="12" r="10" fill="currentColor" />
+                                  <path d="M8 12.5l2.5 2.5L16 9.5" stroke="var(--tl-bg)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                                </svg>
+                              </span>
+                              <span className="sep">·</span>
+                            </>
+                          )}
                           <span>{language === "vi" ? `Trạng thái: ${tourn.status}` : `Status: ${tourn.status}`}</span>
                           {tourn.end_date && (
                             <>

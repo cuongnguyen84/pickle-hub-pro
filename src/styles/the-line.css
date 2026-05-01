@@ -1134,6 +1134,23 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 [data-theme="the-line"] .tl-sched-body .meta .sep { color: var(--tl-fg-4); margin: 0 6px; }
+[data-theme="the-line"] .tl-sched-body .meta .org-line {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--tl-fg-2);
+}
+
+/* Trust tick — small filled green checkmark next to organizer name.
+   Convention: every tournament with an organization is treated as
+   verified; per .claude/memory if a DB-backed is_verified column ever
+   lands, gate the render on that. The icon itself is inline SVG to
+   avoid pulling another lucide import in this hot homepage chunk. */
+[data-theme="the-line"] .tl-trust-tick {
+  width: 12px; height: 12px;
+  color: var(--tl-green);
+  flex: none;
+  position: relative;
+  top: -1px;
+}
 [data-theme="the-line"] .tl-sched-right {
   text-align: right;
   font-family: "Geist Mono"; font-size: 11px; letter-spacing: 0.04em;

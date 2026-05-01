@@ -24,7 +24,7 @@ export function useTournaments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tournaments")
-        .select("*")
+        .select("*, organization:organizations(id, name, slug, logo_url)")
         .order("start_date", { ascending: false });
 
       if (error) throw error;
