@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Livestream } from "@/hooks/useSupabaseData";
+import { useLivePresence } from "@/hooks/useLivePresence";
 
 /**
  * Bold broadcast-style hero card for the homepage live/upcoming match.
@@ -129,6 +130,15 @@ const CountdownBig = ({ to, language }: { to: string; language: "en" | "vi" }) =
 };
 
 export function LiveBroadcastHero({ featured, language, tournamentName, isLoading }: Props) {
+  // Live concurrent viewer count via Supabase Presence. Only enabled when
+  // there's a live match featured — Presence spins up a Realtime channel
+  // and tracks this user as a viewer, so the homepage hero participates
+  // in the same count as the watch page itself.
+  const { concurrentViewers } = useLivePresence(
+    featured?.id ?? "",
+    Boolean(featured && featured.status === "live"),
+  );
+
   if (isLoading && !featured) {
     return (
       <div className="tl-live-hero loading" aria-busy="true">
@@ -185,18 +195,33 @@ export function LiveBroadcastHero({ featured, language, tournamentName, isLoadin
             </>
           )}
         </div>
-        <div className="tl-lh-timecode">
-          {isLive && featured.started_at ? (
-            <OnAirTicker startedAt={featured.started_at} />
-          ) : isScheduled && featured.scheduled_start_at ? (
-            <span>
-              {language === "vi" ? "TRONG" : "STARTS IN"}
+        <div className="tl-lh-meta">
+          {isLive && concurrentViewers > 0 && (
+            <span className="tl-lh-viewers" aria-label={
+              language === "vi"
+                ? `${concurrentViewers} người đang xem`
+                : `${concurrentViewers} watching now`
+            }>
+              <span className="tl-lh-eye" aria-hidden="true">◉</span>
+              <span className="tl-lh-viewers-num">{concurrentViewers.toLocaleString("en-US")}</span>
+              <span className="tl-lh-viewers-lbl">
+                {language === "vi" ? "ĐANG XEM" : "WATCHING"}
+              </span>
             </span>
-          ) : isEnded && featured.ended_at ? (
-            <span>
-              {language === "vi" ? "ĐÃ KẾT THÚC" : "ENDED"}
-            </span>
-          ) : null}
+          )}
+          <div className="tl-lh-timecode">
+            {isLive && featured.started_at ? (
+              <OnAirTicker startedAt={featured.started_at} />
+            ) : isScheduled && featured.scheduled_start_at ? (
+              <span>
+                {language === "vi" ? "TRONG" : "STARTS IN"}
+              </span>
+            ) : isEnded && featured.ended_at ? (
+              <span>
+                {language === "vi" ? "ĐÃ KẾT THÚC" : "ENDED"}
+              </span>
+            ) : null}
+          </div>
         </div>
         <span className="tl-lh-scanline" aria-hidden="true" />
       </header>

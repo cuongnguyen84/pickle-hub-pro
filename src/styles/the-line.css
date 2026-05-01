@@ -601,6 +601,50 @@
   font-weight: 500;
 }
 
+/* Right-side meta cluster — viewer count + on-air timecode share
+   the same row, separated by a thin divider. */
+[data-theme="the-line"] .tl-lh-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+[data-theme="the-line"] .tl-lh-viewers {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 12px;
+  border-right: 1px solid var(--lh-line);
+}
+
+[data-theme="the-line"] .tl-lh-eye {
+  font-size: 9px;
+  color: var(--lh-green);
+  position: relative;
+  top: -1px;
+  animation: tl-lh-eye-blink 2.4s ease-in-out infinite;
+}
+@keyframes tl-lh-eye-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+[data-theme="the-line"] .tl-lh-viewers-num {
+  font-feature-settings: "tnum", "zero";
+  color: var(--lh-fg);
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+[data-theme="the-line"] .tl-lh-viewers-lbl {
+  color: var(--lh-fg-3);
+  letter-spacing: 0.16em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="the-line"] .tl-lh-eye { animation: none; }
+}
+
 /* Animated scanline below the bar — ticker-tape feel */
 [data-theme="the-line"] .tl-lh-scanline {
   position: absolute;
