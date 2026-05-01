@@ -215,3 +215,29 @@ And read any newly-added files referenced in the output BEFORE drafting next pro
 - `git fetch` + `git log` first thing on every output paste
 - `git show origin/main:<path>` to read latest before suggesting edits
 - Verify shipped commit SHA matches what user reports
+
+---
+
+## React: hook calls MUST precede every conditional return
+
+**Occurrence (1 — burger menu froze homepage on iOS):**
+- Commit `726f48b` added `useLivestreams("live")` inside `BottomNav` AFTER existing early returns for `/admin`, `/creator`, `/preview`, `/embed` paths and `keyboardHeight > 0`. When user opened the drawer, the autofocused search input opened the iOS keyboard, `useKeyboardHeight() > 0` flipped the component to early-return-null, and the new render called fewer hooks than the previous one. React threw "Rendered fewer hooks than expected" and the subtree crashed — visible to user as a frozen page on burger tap. Hotfix `c2fb8ec` hoisted the hook above the early returns.
+
+**Symptom:** Page appears to freeze or go blank after a state change that triggers a conditional return in a component that started rendering normally. Console error: `Rendered fewer hooks than expected. This may be caused by an accidental early return statement.`
+
+**Cause:** React tracks hook calls by call-order, not by name. If a render path executes 3 hooks one render and 4 the next, React loses its place and crashes the component (and often its subtree). New hooks added during a refactor are easy to drop into the wrong slot — especially when the existing function has guard `return null;` lines for unrelated reasons.
+
+**Rule:** Every `useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`, `useQuery`, custom hook, etc. MUST be called BEFORE the first conditional `return` in the function body. Order:
+1. All hook calls (top of function)
+2. Derived values + memoization
+3. Conditional early returns
+4. Render JSX
+
+**Verify before commit:**
+```bash
+# eslint-plugin-react-hooks catches this if installed:
+npx eslint --rule 'react-hooks/rules-of-hooks: error' src/components/<File>.tsx
+```
+Project already has eslint config — confirm `react-hooks/rules-of-hooks` is `"error"` not `"warn"` in `eslint.config.js`. A `"warn"` will only show in dev console; `"error"` fails CI.
+
+**When tempted to put a hook after a guard:** the guard is for the user's UX (skip render), not for the hook's correctness. Hooks must always run; just discard their result if you don't need it.
