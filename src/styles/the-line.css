@@ -2575,6 +2575,20 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   letter-spacing: -0.005em;
 }
 
+/* Bottom-nav Live-tab pulse — small red dot on Radio icon when liveCount > 0.
+   Outer ring is the page bg color so the dot reads cleanly against any
+   nav cell whether active or not. */
+.tl-bn-live-dot {
+  animation: tl-bn-live-blink 1.6s ease-out infinite;
+}
+@keyframes tl-bn-live-blink {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.15); opacity: 0.85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tl-bn-live-dot { animation: none; }
+}
+
 /* ========== Live pulse strip (trust signals as activity chips) ==========
    Replaced the v2 emoji-stat strip (commit 45f78b5). The 3-col
    editorial number layout looked decorative but read as static —

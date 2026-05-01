@@ -3,6 +3,7 @@ import { useI18n } from "@/i18n";
 import { Home, Radio, Trophy, Wrench, MessageSquare } from "lucide-react";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
+import { useLivestreams } from "@/hooks/useSupabaseData";
 
 /**
  * Mobile bottom nav, redesigned to match The Line editorial system used
@@ -46,9 +47,15 @@ const BottomNav = () => {
     return null;
   }
 
+  // Live count for the Live tab badge. Reuses the cached useLivestreams
+  // query (30s default staleTime) so this is essentially free on pages
+  // that already render the homepage or /live.
+  const { data: liveStreams = [] } = useLivestreams("live");
+  const liveCount = liveStreams.length;
+
   const navItems = [
     { path: "/", label: t.nav.home, icon: Home },
-    { path: "/live", label: t.nav.live, icon: Radio },
+    { path: "/live", label: t.nav.live, icon: Radio, liveBadge: liveCount > 0 },
     { path: "/tools", label: t.nav.tools, icon: Wrench },
     { path: "/forum", label: t.forum.navLabel, icon: MessageSquare },
     { path: "/tournaments", label: t.nav.tournaments, icon: Trophy },
@@ -126,7 +133,25 @@ const BottomNav = () => {
                   }}
                 />
               )}
-              <Icon size={20} strokeWidth={1.5} aria-hidden="true" />
+              <span style={{ position: "relative", display: "inline-flex" }}>
+                <Icon size={20} strokeWidth={1.5} aria-hidden="true" />
+                {item.liveBadge && (
+                  <span
+                    aria-hidden="true"
+                    className="tl-bn-live-dot"
+                    style={{
+                      position: "absolute",
+                      top: -3,
+                      right: -5,
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "var(--tl-live, #ff4136)",
+                      boxShadow: "0 0 0 2px var(--tl-bg, #08090a)",
+                    }}
+                  />
+                )}
+              </span>
               <span
                 style={{
                   fontFamily:
