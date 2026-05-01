@@ -268,7 +268,7 @@ const Index = () => {
       {/* Hero */}
       <section className="tl-hero">
         <div className="tl-shell">
-          <div className="tl-hero-grid">
+          <div className={`tl-hero-grid${featured ? " tl-hero-grid--featured" : ""}`}>
             <div>
               <div className="tl-eyebrow tl-up tl-d1">
                 <span className="pip" aria-hidden="true" />
@@ -323,14 +323,8 @@ const Index = () => {
 
               <p className="tl-hero-lede tl-up tl-d3">
                 {language === "vi"
-                  ? "Đưa tin pickleball chuyên nghiệp toàn cầu — PPA, APP, MLP, European Open, Asia Pacific Series. Tường thuật trận đấu thật bởi phóng viên có mặt tại sân. Tỷ số live cập nhật theo thời gian thực. Một tài khoản duy nhất."
-                  : "Global coverage of professional pickleball — PPA, APP, MLP, European Open, Asia Pacific Series. Real match reports by reporters at the court. Live scores that tick in real time. One subscription."}
-              </p>
-
-              <p className="tl-hero-subline tl-up tl-d3">
-                {language === "vi"
-                  ? "Nền tảng pickleball Việt Nam đầu tiên — tin tức PPA Tour, giải đấu, bracket miễn phí."
-                  : "Vietnam's first pickleball platform — PPA Tour news, tournaments, and free brackets."}
+                  ? "Phóng viên tại sân. Tỷ số live thời gian thực. Một tài khoản — mọi giải."
+                  : "Reporters at the court. Live scores that tick. One subscription, every tour."}
               </p>
 
               <div className="tl-hero-ctas tl-up tl-d4">

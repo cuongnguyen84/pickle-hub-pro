@@ -248,6 +248,10 @@
 }
 @media (max-width: 1000px) {
   [data-theme="the-line"] .tl-hero-grid { grid-template-columns: 1fr; gap: 36px; align-items: start; }
+  /* When a live/scheduled match is featured, push the broadcast card
+     above the hero copy on mobile so it's the first thing users see. */
+  [data-theme="the-line"] .tl-hero-grid--featured > div:first-child  { order: 2; }
+  [data-theme="the-line"] .tl-hero-grid--featured > div:nth-child(2) { order: 1; }
 }
 
 [data-theme="the-line"] .tl-eyebrow {
