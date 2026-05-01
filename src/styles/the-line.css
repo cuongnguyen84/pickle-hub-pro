@@ -331,6 +331,38 @@
   color: var(--tl-fg);
   margin: 0 0 24px;
   max-width: 16ch;
+  will-change: transform;
+}
+
+/* Scroll-driven parallax — subtle upward drift as the page scrolls,
+   creating depth between the hero title and the rest of the layout.
+   Uses CSS scroll-driven animations (Chrome 115+, Safari 17.4+, iOS 18+).
+   Browsers without support keep the title static. */
+@supports (animation-timeline: scroll()) {
+  [data-theme="the-line"] .tl-hero-title {
+    animation: tl-hero-title-drift linear both;
+    animation-timeline: scroll(nearest);
+    animation-range: 0 480px;
+  }
+  [data-theme="the-line"] .tl-hero-lede {
+    animation: tl-hero-lede-drift linear both;
+    animation-timeline: scroll(nearest);
+    animation-range: 0 480px;
+  }
+}
+@keyframes tl-hero-title-drift {
+  from { transform: translateY(0);     opacity: 1;    }
+  to   { transform: translateY(-28px); opacity: 0.85; }
+}
+@keyframes tl-hero-lede-drift {
+  from { transform: translateY(0);     opacity: 1;    }
+  to   { transform: translateY(-14px); opacity: 0.7;  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @supports (animation-timeline: scroll()) {
+    [data-theme="the-line"] .tl-hero-title,
+    [data-theme="the-line"] .tl-hero-lede { animation: none; }
+  }
 }
 [data-theme="the-line"] .tl-hero-title .dim { color: var(--tl-fg-3); }
 [data-theme="the-line"] .tl-hero-title .sans {
