@@ -8,6 +8,9 @@ import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { normalizeImageUrl } from "@/lib/url-utils";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { formatDate } from "./preview/_shell";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 /* Normalized post shape so EN (static metadata) and VI (Supabase
    vi_blog_posts) can share a single render path. */
@@ -29,6 +32,11 @@ const Blog = () => {
   const [filter, setFilter] = useState<string | null>(null);
 
   const { data: viPosts = [] } = usePublishedViBlogPosts();
+
+  const queryClient = useQueryClient();
+  const ptrState = usePullToRefresh(async () => {
+    await queryClient.invalidateQueries();
+  });
 
   const posts: UnifiedPost[] = useMemo(() => {
     if (language === "vi") {
@@ -99,6 +107,7 @@ const Blog = () => {
         : "Longform pickleball coverage, analysis, and how-to guides — written by reporters at the court."}
       active="stories"
     >
+      <PullToRefreshIndicator state={ptrState} />
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
           <Link to={language === "vi" ? "/vi" : "/"}>{language === "vi" ? "Trang chủ" : "Home"}</Link>

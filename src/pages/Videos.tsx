@@ -5,6 +5,9 @@ import { useVideos } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { formatRelative } from "./preview/_shell";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 type Filter = "all" | "long" | "short";
 
@@ -22,6 +25,11 @@ const Videos = () => {
   const [filter, setFilter] = useState<Filter>("all");
 
   const { data: videos = [], isLoading } = useVideos({ limit: 60 });
+
+  const queryClient = useQueryClient();
+  const ptrState = usePullToRefresh(async () => {
+    await queryClient.invalidateQueries();
+  });
 
   const counts = useMemo(() => ({
     all: videos.length,
@@ -41,6 +49,7 @@ const Videos = () => {
         ? "Highlights, phỏng vấn và behind-the-scenes — pickleball từ PPA Tour Asia và xa hơn."
         : "Match highlights, interviews, and behind-the-scenes coverage from PPA Tour Asia and beyond."}
     >
+      <PullToRefreshIndicator state={ptrState} />
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
           <Link to={language === "vi" ? "/vi" : "/"}>{language === "vi" ? "Trang chủ" : "Home"}</Link>

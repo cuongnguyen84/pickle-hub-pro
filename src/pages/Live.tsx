@@ -5,6 +5,9 @@ import { useLivestreams } from "@/hooks/useSupabaseData";
 import type { Livestream } from "@/hooks/useSupabaseData";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { formatTime, formatRelative } from "./preview/_shell";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 type Filter = "all" | "live" | "scheduled" | "ended";
 
@@ -98,6 +101,11 @@ const Live = () => {
   const { data: scheduled = [], isLoading: schedLoading } = useLivestreams("scheduled");
   const { data: ended = [], isLoading: endedLoading } = useLivestreams("ended");
 
+  const queryClient = useQueryClient();
+  const ptrState = usePullToRefresh(async () => {
+    await queryClient.invalidateQueries();
+  });
+
   const counts = {
     all: live.length + scheduled.length + ended.length,
     live: live.length,
@@ -126,6 +134,7 @@ const Live = () => {
         : "Pickleball matches streaming right now, upcoming within 24 hours, and replays from the past week."}
       active="live"
     >
+      <PullToRefreshIndicator state={ptrState} />
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
           <Link to={language === "vi" ? "/vi" : "/"}>{language === "vi" ? "Trang chủ" : "Home"}</Link>

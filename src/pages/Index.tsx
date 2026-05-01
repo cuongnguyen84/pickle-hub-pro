@@ -12,6 +12,9 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Countdown } from "@/pages/preview/_Countdown";
 import { HreflangTags } from "@/components/seo";
 import { VideoThumbnail } from "@/components/video/VideoThumbnail";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 /**
  * Production homepage. Promoted from preview/the-line on 2026-04-25.
@@ -66,6 +69,14 @@ const Index = () => {
 
   // VI published blog posts (Supabase) — only queried when on VI locale to save a request
   const { data: viBlogPosts = [] } = usePublishedViBlogPosts();
+
+  const queryClient = useQueryClient();
+  const ptrState = usePullToRefresh(async () => {
+    // No queryKey filter → React Query only refetches queries with active
+    // observers, which on this page is exactly the data we render. Avoids
+    // maintaining a per-page key allowlist.
+    await queryClient.invalidateQueries();
+  });
 
   // Featured stories — 6 most recent, language-aware:
   //   EN: blogMetadata (static content with heroImage)
@@ -200,6 +211,7 @@ const Index = () => {
         : "ThePickleHub — Editorial coverage of professional pickleball. PPA, APP, MLP news, schedules, livestreams, and free bracket tools. Headquartered in Ho Chi Minh City."}
       active="home"
     >
+      <PullToRefreshIndicator state={ptrState} />
       <HreflangTags enPath="/" viPath="/vi" />
       {/*
         Note (2026-04-29): client-side <OrganizationSchema /> removed.

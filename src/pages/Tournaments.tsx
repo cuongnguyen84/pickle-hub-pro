@@ -18,6 +18,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { formatDate, formatRelative } from "./preview/_shell";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 type Tab = "watch" | "community";
 type Fmt = "quick-tables" | "doubles-elim" | "flex" | "team-match";
@@ -59,6 +62,11 @@ const Tournaments = () => {
   const { data: userRegistered = [] } = useUserRegisteredTournaments(user?.id);
   const { data: userCompleted = [] } = useUserCompletedTournaments(user?.id);
 
+  const queryClient = useQueryClient();
+  const ptrState = usePullToRefresh(async () => {
+    await queryClient.invalidateQueries();
+  });
+
   const liveProCount = useMemo(
     () => new Set(liveStreams.map((s) => s.tournament_id).filter(Boolean)).size,
     [liveStreams],
@@ -92,6 +100,7 @@ const Tournaments = () => {
         : "Professional and community pickleball tournaments — PPA, APP, MLP, and free brackets for organizers."}
       active="tournaments"
     >
+      <PullToRefreshIndicator state={ptrState} />
       <div className="tl-shell">
         <nav className="tl-breadcrumb">
           <Link to="/">Home</Link>
