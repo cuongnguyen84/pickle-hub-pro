@@ -156,7 +156,16 @@ export function LiveBroadcastHero({ featured, language, tournamentName, isLoadin
   if (isLoading && !featured) {
     return (
       <div className="tl-live-hero loading" aria-busy="true">
-        <div className="tl-lh-skeleton" />
+        <div className="tl-lh-sk-bar">
+          <span className="tl-lh-sk sk-status" />
+          <span className="tl-lh-sk sk-tc" />
+        </div>
+        <span className="tl-lh-sk sk-kicker" />
+        <div className="tl-lh-sk-title">
+          <span className="tl-lh-sk sk-round" />
+          <span className="tl-lh-sk sk-players" />
+        </div>
+        <span className="tl-lh-sk sk-cta" />
       </div>
     );
   }

@@ -860,17 +860,44 @@
   margin-top: 4px;
 }
 
-/* ── Loading skeleton ── */
+/* ── Loading skeleton ── shaped placeholders that mirror the real
+   layout so layout shift is zero when data lands. */
 [data-theme="the-line"] .tl-live-hero.loading { min-height: 360px; }
-[data-theme="the-line"] .tl-lh-skeleton {
-  width: 100%; height: 100%; min-height: 320px;
+
+[data-theme="the-line"] .tl-lh-sk {
+  display: block;
   background: linear-gradient(90deg,
-    color-mix(in srgb, var(--lh-fg) 2%, transparent) 0%,
-    color-mix(in srgb, var(--lh-fg) 6%, transparent) 50%,
-    color-mix(in srgb, var(--lh-fg) 2%, transparent) 100%);
+    color-mix(in srgb, var(--lh-fg) 4%, transparent) 0%,
+    color-mix(in srgb, var(--lh-fg) 9%, transparent) 50%,
+    color-mix(in srgb, var(--lh-fg) 4%, transparent) 100%);
   background-size: 200% 100%;
   animation: tl-lh-shimmer 1.6s ease-in-out infinite;
-  border-radius: 4px;
+  border-radius: 3px;
+}
+
+[data-theme="the-line"] .tl-lh-sk-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--lh-line);
+}
+[data-theme="the-line"] .tl-lh-sk-bar .sk-status { width: 90px; height: 11px; border-radius: 999px; }
+[data-theme="the-line"] .tl-lh-sk-bar .sk-tc     { width: 110px; height: 11px; border-radius: 2px; }
+
+[data-theme="the-line"] .tl-lh-sk.sk-kicker {
+  width: 60%; height: 11px; border-radius: 2px;
+  margin-left: 14px;
+}
+
+[data-theme="the-line"] .tl-lh-sk-title {
+  padding-left: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+[data-theme="the-line"] .tl-lh-sk-title .sk-round   { width: 30%; height: 14px; border-radius: 2px; }
+[data-theme="the-line"] .tl-lh-sk-title .sk-players { width: 85%; height: 36px; border-radius: 4px; }
+
+[data-theme="the-line"] .tl-lh-sk.sk-cta {
+  width: 100%; height: 52px; border-radius: 4px;
+  margin-top: auto;
 }
 @keyframes tl-lh-shimmer {
   0%   { background-position: -100% 0; }
