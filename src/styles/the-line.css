@@ -2504,98 +2504,123 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   letter-spacing: -0.005em;
 }
 
-/* ========== Stats strip (trust signal — 3-col) ========== */
-[data-theme="the-line"] .tl-stats-strip {
+/* ========== Live pulse strip (trust signals as activity chips) ==========
+   Replaced the v2 emoji-stat strip (commit 45f78b5). The 3-col
+   editorial number layout looked decorative but read as static —
+   numbers floated alone, no story. This chip strip lets each signal
+   be its own pill with icon + value + label inline, and adds a
+   live-pulse chip when liveCount > 0 so the strip itself becomes
+   "what's happening right now" rather than "site totals". */
+[data-theme="the-line"] .tl-pulse-strip {
   border-top: 1px solid var(--tl-border);
   border-bottom: 1px solid var(--tl-border);
-  padding: 40px 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-}
-@media (max-width: 640px) {
-  [data-theme="the-line"] .tl-stats-strip { padding: 28px 0; }
-}
-/* v2 — XL emoji + accent bar + tag pill. Replaces lucide icon variant
-   from commit 55b2591. Aligned to D4 palette: project accent is
-   --tl-green = #00b96b (rgba 0,185,107). */
-[data-theme="the-line"] .tl-stat-col {
-  position: relative;
-  text-align: center;
-  padding: 16px 12px;
-  border-right: 1px solid var(--tl-border);
+  padding: 18px 0;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
-  gap: 14px;
-}
-[data-theme="the-line"] .tl-stat-col:last-child { border-right: 0; }
-
-/* 3px × 28px accent bar, offset above the column edge */
-[data-theme="the-line"] .tl-stat-accent {
-  position: absolute;
-  top: -16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px; height: 3px;
-  background: var(--tl-green);
+  justify-content: flex-start;
 }
 
-/* 42px native-color emoji with subtle green drop-shadow */
-[data-theme="the-line"] .tl-stat-emoji {
-  font-size: 42px;
+[data-theme="the-line"] .tl-pulse-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--tl-border);
+  background: var(--tl-bg-elev);
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--tl-fg);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+[data-theme="the-line"] a.tl-pulse-chip:hover {
+  border-color: var(--tl-fg-3);
+  background: var(--tl-surface);
+  transform: translateY(-1px);
+}
+
+[data-theme="the-line"] .tl-pulse-ico {
+  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--tl-fg-3);
+  position: relative;
+  top: -1px;
+}
+
+[data-theme="the-line"] .tl-pulse-value {
+  font-family: "Instrument Serif", "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 22px;
   line-height: 1;
-  filter: drop-shadow(0 2px 10px rgba(0, 185, 107, 0.3));
-}
-
-/* Hero number — bumped from clamp(36-60) to fixed 56px */
-[data-theme="the-line"] .tl-stat-col .num {
-  font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
-  font-size: 56px;
-  line-height: 1; letter-spacing: -0.01em;
   color: var(--tl-fg);
   font-variant-numeric: tabular-nums;
-  display: block;
+  letter-spacing: -0.01em;
 }
 
-/* Square tag pill — editorial, no border-radius */
-[data-theme="the-line"] .tl-stat-pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: "Geist Mono"; font-size: 10px; font-weight: 500;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  padding: 4px 10px;
-  background: rgba(0, 185, 107, 0.15);
-  color: #5dcaa5;
-  border-radius: 0;
+[data-theme="the-line"] .tl-pulse-label {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tl-fg-3);
+  position: relative;
+  top: -1px;
 }
 
-/* Pulse dot — only inside Players pill */
-[data-theme="the-line"] .tl-stat-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--tl-green);
-  box-shadow: 0 0 0 0 rgba(0, 185, 107, 0.6);
-  animation: tl-stat-pulse 2s ease-in-out infinite;
+/* LIVE chip — red border, pulsing dot, slightly bolder */
+[data-theme="the-line"] .tl-pulse-chip.is-live {
+  border-color: color-mix(in srgb, var(--tl-live, #ff4136) 50%, transparent);
+  background: color-mix(in srgb, var(--tl-live, #ff4136) 10%, var(--tl-bg-elev));
+}
+[data-theme="the-line"] .tl-pulse-chip.is-live .tl-pulse-label {
+  color: var(--tl-live, #ff4136);
+}
+[data-theme="the-line"] .tl-pulse-chip.is-live:hover {
+  border-color: var(--tl-live, #ff4136);
+  background: color-mix(in srgb, var(--tl-live, #ff4136) 18%, var(--tl-bg-elev));
+}
+
+[data-theme="the-line"] .tl-pulse-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--tl-live, #ff4136);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--tl-live, #ff4136) 60%, transparent);
+  animation: tl-pulse-strip-blink 1.4s ease-out infinite;
   flex: none;
+  position: relative;
+  top: -1px;
 }
-
-@keyframes tl-stat-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(0, 185, 107, 0.6); }
-  70%  { box-shadow: 0 0 0 8px rgba(0, 185, 107, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 185, 107, 0); }
+@keyframes tl-pulse-strip-blink {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent); transform: scale(1); }
+  70%  { box-shadow: 0 0 0 8px color-mix(in srgb, currentColor 0%, transparent); transform: scale(1.05); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, transparent); transform: scale(1); }
 }
+[data-theme="the-line"] .tl-pulse-dot { color: var(--tl-live, #ff4136); }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-theme="the-line"] .tl-stat-dot {
-    animation: none;
-    box-shadow: 0 0 0 0 rgba(0, 185, 107, 0);
-  }
+  [data-theme="the-line"] .tl-pulse-dot { animation: none; }
 }
 
-/* Mobile — scale down hero number + emoji, reposition accent */
 @media (max-width: 640px) {
-  [data-theme="the-line"] .tl-stat-col .num { font-size: 44px; }
-  [data-theme="the-line"] .tl-stat-emoji { font-size: 36px; }
-  [data-theme="the-line"] .tl-stat-accent { top: -10px; }
+  [data-theme="the-line"] .tl-pulse-strip {
+    padding: 14px 0;
+    gap: 8px;
+    /* Allow horizontal scroll on tight viewports rather than wrapping
+       to ugly 2-row layouts when there are 4-5 chips. */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  [data-theme="the-line"] .tl-pulse-strip::-webkit-scrollbar { display: none; }
+  [data-theme="the-line"] .tl-pulse-chip { padding: 7px 12px; flex: 0 0 auto; }
+  [data-theme="the-line"] .tl-pulse-value { font-size: 19px; }
+  [data-theme="the-line"] .tl-pulse-label { font-size: 9.5px; letter-spacing: 0.12em; }
 }
 
 /* ========== Nav green CTA (Create bracket) ========== */

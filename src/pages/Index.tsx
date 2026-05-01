@@ -371,37 +371,52 @@ const Index = () => {
         );
       })()}
 
-      {/* Stats strip — trust signal, 3-column editorial numbers.
-          Live from Supabase via get_homepage_stats RPC + PPA_ASIA_STOPS constant.
-          Dash placeholder while loading avoids CLS. */}
+      {/* Live pulse strip — chips that tell what's happening RIGHT NOW.
+          Live count chip pulses red when active; data signals follow. */}
       <section className="tl-shell">
-        <div className="tl-stats-strip">
-          <div className="tl-stat-col">
-            <span className="tl-stat-accent" aria-hidden="true" />
-            <span className="tl-stat-emoji" aria-hidden="true">👥</span>
-            <span className="num">
-              {homeStats ? homeStats.total_users.toLocaleString("en-US") : "—"}
-            </span>
-            <span className="tl-stat-pill">
-              <span className="tl-stat-dot" aria-hidden="true" />
-              {language === "vi" ? "NGƯỜI CHƠI · LIVE" : "PLAYERS · LIVE"}
-            </span>
-          </div>
-          <div className="tl-stat-col">
-            <span className="tl-stat-accent" aria-hidden="true" />
-            <span className="tl-stat-emoji" aria-hidden="true">🏆</span>
-            <span className="num">
+        <div className="tl-pulse-strip" role="list">
+          {liveCount > 0 && (
+            <Link to="/live" className="tl-pulse-chip is-live" role="listitem">
+              <span className="tl-pulse-dot" aria-hidden="true" />
+              <span className="tl-pulse-value">{liveCount}</span>
+              <span className="tl-pulse-label">
+                {language === "vi"
+                  ? (liveCount === 1 ? "TRẬN ĐANG LIVE" : "TRẬN ĐANG LIVE")
+                  : (liveCount === 1 ? "LIVE NOW" : "LIVE NOW")}
+              </span>
+            </Link>
+          )}
+          {upcomingCount > 0 && (
+            <Link to="/live" className="tl-pulse-chip" role="listitem">
+              <span className="tl-pulse-ico" aria-hidden="true">◷</span>
+              <span className="tl-pulse-value">{upcomingCount}</span>
+              <span className="tl-pulse-label">
+                {language === "vi" ? "SẮP TỚI" : "UPCOMING"}
+              </span>
+            </Link>
+          )}
+          <Link to="/tournaments" className="tl-pulse-chip" role="listitem">
+            <span className="tl-pulse-ico" aria-hidden="true">◇</span>
+            <span className="tl-pulse-value">
               {homeStats ? homeStats.total_tournaments.toLocaleString("en-US") : "—"}
             </span>
-            <span className="tl-stat-pill">
+            <span className="tl-pulse-label">
               {language === "vi" ? "GIẢI ĐẤU" : "TOURNAMENTS"}
             </span>
+          </Link>
+          <div className="tl-pulse-chip" role="listitem">
+            <span className="tl-pulse-ico" aria-hidden="true">◉</span>
+            <span className="tl-pulse-value">
+              {homeStats ? homeStats.total_users.toLocaleString("en-US") : "—"}
+            </span>
+            <span className="tl-pulse-label">
+              {language === "vi" ? "NGƯỜI CHƠI" : "PLAYERS"}
+            </span>
           </div>
-          <div className="tl-stat-col">
-            <span className="tl-stat-accent" aria-hidden="true" />
-            <span className="tl-stat-emoji" aria-hidden="true">🌏</span>
-            <span className="num">{PPA_ASIA_STOPS}</span>
-            <span className="tl-stat-pill">PPA ASIA · 2026</span>
+          <div className="tl-pulse-chip" role="listitem">
+            <span className="tl-pulse-ico" aria-hidden="true">◎</span>
+            <span className="tl-pulse-value">{PPA_ASIA_STOPS}</span>
+            <span className="tl-pulse-label">PPA ASIA · 2026</span>
           </div>
         </div>
       </section>
