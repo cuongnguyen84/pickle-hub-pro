@@ -58,6 +58,20 @@ const formatHMS = (totalSeconds: number): string => {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 };
 
+const formatEndedLabel = (endedAt: string | null | undefined, lang: "en" | "vi"): string => {
+  if (!endedAt) return lang === "vi" ? "ĐÃ KẾT THÚC" : "ENDED";
+  const diff = Date.now() - new Date(endedAt).getTime();
+  if (Number.isNaN(diff) || diff < 0) return lang === "vi" ? "ĐÃ KẾT THÚC" : "ENDED";
+  const mins = Math.floor(diff / 60_000);
+  const hrs = Math.floor(diff / 3600_000);
+  const days = Math.floor(diff / 86400_000);
+  const isVi = lang === "vi";
+  if (mins < 1) return isVi ? "VỪA KẾT THÚC" : "JUST ENDED";
+  if (mins < 60) return isVi ? `VỪA KẾT THÚC · ${mins} PHÚT` : `JUST ENDED · ${mins}M AGO`;
+  if (hrs < 24) return isVi ? `KẾT THÚC · ${hrs} GIỜ TRƯỚC` : `ENDED · ${hrs}H AGO`;
+  return isVi ? `KẾT THÚC · ${days} NGÀY TRƯỚC` : `ENDED · ${days}D AGO`;
+};
+
 /* ──────────────── ON-AIR TIMECODE (counts up from started_at) ──────────────── */
 const OnAirTicker = ({ startedAt }: { startedAt: string | null | undefined }) => {
   const [now, setNow] = useState(() => Date.now());
@@ -216,10 +230,8 @@ export function LiveBroadcastHero({ featured, language, tournamentName, isLoadin
               <span>
                 {language === "vi" ? "TRONG" : "STARTS IN"}
               </span>
-            ) : isEnded && featured.ended_at ? (
-              <span>
-                {language === "vi" ? "ĐÃ KẾT THÚC" : "ENDED"}
-              </span>
+            ) : isEnded ? (
+              <span>{formatEndedLabel(featured.ended_at, language)}</span>
             ) : null}
           </div>
         </div>

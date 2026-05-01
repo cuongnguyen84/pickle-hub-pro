@@ -167,7 +167,17 @@ const Index = () => {
     return items.length > 0 ? items : [{ text: tEmpty, org: "" }];
   }, [liveStreams, scheduledStreams, endedStreams, language]);
 
-  const featured = liveStreams[0] ?? scheduledStreams[0] ?? null;
+  // Featured cascade: live first, then upcoming, then a recent replay
+  // (≤7 days old) so the homepage stays alive between events instead of
+  // showing the empty-state mark whenever nothing is on right now.
+  const recentReplay = useMemo(() => {
+    return endedStreams.find((s) => {
+      if (!s.ended_at) return false;
+      const age = Date.now() - new Date(s.ended_at).getTime();
+      return age >= 0 && age < 7 * 24 * 60 * 60 * 1000;
+    }) ?? null;
+  }, [endedStreams]);
+  const featured = liveStreams[0] ?? scheduledStreams[0] ?? recentReplay ?? null;
 
   const upcomingTournaments = useMemo(() => {
     const now = Date.now();
