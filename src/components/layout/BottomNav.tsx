@@ -33,6 +33,13 @@ const BottomNav = () => {
   const { t } = useI18n();
   const location = useLocation();
   const keyboardHeight = useKeyboardHeight();
+  // Live count for the Live tab badge. Must be called BEFORE any early
+  // returns or React detects a hook-count mismatch when the component
+  // toggles between "render normally" and "return null" (e.g. keyboard
+  // opens after the drawer search input autofocuses) and crashes the
+  // whole tree — that was the "menu button freezes the page" regression.
+  const { data: liveStreams = [] } = useLivestreams("live");
+  const liveCount = liveStreams.length;
 
   if (
     location.pathname.startsWith("/admin") ||
@@ -46,12 +53,6 @@ const BottomNav = () => {
   if (keyboardHeight > 0) {
     return null;
   }
-
-  // Live count for the Live tab badge. Reuses the cached useLivestreams
-  // query (30s default staleTime) so this is essentially free on pages
-  // that already render the homepage or /live.
-  const { data: liveStreams = [] } = useLivestreams("live");
-  const liveCount = liveStreams.length;
 
   const navItems = [
     { path: "/", label: t.nav.home, icon: Home },
