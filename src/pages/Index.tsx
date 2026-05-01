@@ -15,6 +15,7 @@ import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { LiveBroadcastHero } from "@/components/home/LiveBroadcastHero";
 
 /**
  * Production homepage. Promoted from preview/the-line on 2026-04-25.
@@ -300,65 +301,18 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Featured live scoreboard */}
-            <div className="tl-livecard tl-up tl-d3">
-              <div className="tl-lc-head">
-                <span className={featured?.status === "live" ? "live" : ""}>
-                  {featured?.status === "live" ? "Live" : featured?.status === "scheduled" ? "Upcoming" : "Featured"}
-                </span>
-                <span>
-                  {featured?.status === "scheduled" && featured.scheduled_start_at ? (
-                    <Countdown to={featured.scheduled_start_at} pastLabel="Live now" />
-                  ) : (
-                    featured?.organization?.name ?? "No match"
-                  )}
-                </span>
-              </div>
-
-              {featured ? (
-                <>
-                  <div className="tl-lc-body">
-                    <div className="tl-lc-row leader">
-                      <span className="tl-lc-seed">●</span>
-                      <div className="tl-lc-name">
-                        <span className="name-text">{featured.title ?? "Match"}</span>
-                      </div>
-                      <div className="tl-lc-sets">
-                        <span className="tl-lc-set current">
-                          {featured.status === "live" ? "LIVE" : ""}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="tl-lc-row" style={{ paddingTop: 14, borderTop: "1px solid var(--tl-border)", marginTop: 6 }}>
-                      <span className="tl-lc-seed" />
-                      <div
-                        className="tl-mono"
-                        style={{ fontSize: 11, color: "var(--tl-fg-3)", letterSpacing: "0.04em", textTransform: "uppercase" }}
-                      >
-                        {featured.description
-                          ? featured.description.slice(0, 80) + (featured.description.length > 80 ? "…" : "")
-                          : featured.scheduled_start_at
-                          ? `Scheduled · ${formatTime(featured.scheduled_start_at)}`
-                          : "Pickleball match"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tl-lc-footer">
-                    <span className="meta">
-                      {featured.tournament_id
-                        ? allTournaments.find((tn) => tn.id === featured.tournament_id)?.name ?? "Tournament match"
-                        : "Live broadcast"}
-                    </span>
-                    <Link to={`/live/${featured.id}`} className="watch">
-                      Watch →
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <div className="tl-lc-empty">
-                  {liveLoading || scheduledLoading ? "Loading live data…" : "No live matches right now"}
-                </div>
-              )}
+            {/* Featured live broadcast — bold dark inverted card */}
+            <div className="tl-up tl-d3">
+              <LiveBroadcastHero
+                featured={featured}
+                language={language}
+                tournamentName={
+                  featured?.tournament_id
+                    ? allTournaments.find((tn) => tn.id === featured.tournament_id)?.name ?? null
+                    : null
+                }
+                isLoading={liveLoading || scheduledLoading}
+              />
             </div>
           </div>
         </div>

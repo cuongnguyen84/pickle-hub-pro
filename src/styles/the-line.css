@@ -398,6 +398,355 @@
   letter-spacing: 0.04em; text-transform: uppercase;
 }
 
+/* ============================================================
+   LIVE BROADCAST HERO  (.tl-live-hero)
+   --------------------------------------------------------
+   Dark inverted broadcast card — same in both light and dark
+   page themes so the inversion is intentional in light mode
+   and natural in dark mode. "Broadcast booth" aesthetic:
+   pulsing on-air dot, scanline sweep, on-air timecode,
+   big italic-serif player names, full-width green CTA.
+   ============================================================ */
+[data-theme="the-line"] .tl-live-hero {
+  --lh-bg:          #0a0c0b;
+  --lh-bg-2:        #11150f;
+  --lh-fg:          #f7f5ef;
+  --lh-fg-2:        #b8b6ad;
+  --lh-fg-3:        #6e6c63;
+  --lh-line:        rgba(247, 245, 239, 0.08);
+  --lh-line-strong: rgba(247, 245, 239, 0.18);
+  --lh-green:       #00cf78;
+  --lh-green-glow:  rgba(0, 207, 120, 0.28);
+  --lh-red:         #ff3b30;
+
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(0, 207, 120, 0.06), transparent 65%),
+    linear-gradient(180deg, var(--lh-bg-2) 0%, var(--lh-bg) 100%);
+  color: var(--lh-fg);
+  border: 1px solid var(--lh-line-strong);
+  border-radius: 6px;
+  padding: 22px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 360px;
+}
+
+/* Subtle film-grain on top of the card. Pure CSS noise via SVG bg. */
+[data-theme="the-line"] .tl-live-hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.45;
+  mix-blend-mode: overlay;
+}
+
+/* Vertical hairline marker — broadcast control-room visual reference. */
+[data-theme="the-line"] .tl-live-hero::after {
+  content: "";
+  position: absolute;
+  top: 70px; bottom: 18px; left: 22px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--lh-line-strong), transparent 80%);
+  z-index: 0;
+}
+
+[data-theme="the-line"] .tl-live-hero > * { position: relative; z-index: 1; }
+
+/* ── Status bar ── */
+[data-theme="the-line"] .tl-lh-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--lh-line);
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lh-fg-2);
+  position: relative;
+}
+
+[data-theme="the-line"] .tl-lh-status {
+  display: inline-flex; align-items: center; gap: 9px;
+}
+[data-theme="the-line"] .tl-live-hero.is-live .tl-lh-status-label { color: var(--lh-red); }
+[data-theme="the-line"] .tl-live-hero.is-scheduled .tl-lh-status-label { color: var(--lh-fg); }
+[data-theme="the-line"] .tl-live-hero.is-ended .tl-lh-status-label { color: var(--lh-fg-2); }
+
+[data-theme="the-line"] .tl-lh-pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--lh-red);
+  box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.6);
+  animation: tl-lh-pulse 1.4s ease-out infinite;
+}
+@keyframes tl-lh-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.55); transform: scale(1); }
+  70%  { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); transform: scale(1.05); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); transform: scale(1); }
+}
+
+[data-theme="the-line"] .tl-lh-ring {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1.5px solid var(--lh-fg);
+  background: transparent;
+}
+
+[data-theme="the-line"] .tl-lh-replay-ico {
+  font-size: 11px; color: var(--lh-fg-2);
+}
+
+[data-theme="the-line"] .tl-lh-timecode {
+  font-feature-settings: "tnum", "zero";
+  color: var(--lh-fg);
+  letter-spacing: 0.16em;
+  font-weight: 500;
+}
+
+/* Animated scanline below the bar — ticker-tape feel */
+[data-theme="the-line"] .tl-lh-scanline {
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--lh-green) 30%,
+    var(--lh-green) 60%,
+    transparent 100%);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: tl-lh-scanline-sweep 3.2s linear infinite;
+  opacity: 0.7;
+}
+[data-theme="the-line"] .tl-live-hero.is-scheduled .tl-lh-scanline,
+[data-theme="the-line"] .tl-live-hero.is-ended .tl-lh-scanline { display: none; }
+@keyframes tl-lh-scanline-sweep {
+  0%   { background-position: -40% 0; opacity: 0; }
+  20%  { opacity: 0.7; }
+  80%  { opacity: 0.7; }
+  100% { background-position: 140% 0; opacity: 0; }
+}
+
+/* ── Tournament kicker ── */
+[data-theme="the-line"] .tl-lh-kicker {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lh-fg-3);
+  padding-left: 14px;  /* align after the vertical hairline */
+}
+[data-theme="the-line"] .tl-lh-kicker-mark {
+  color: var(--lh-green);
+  font-size: 8px;
+}
+
+/* ── Match title block ── */
+[data-theme="the-line"] .tl-lh-title {
+  padding-left: 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+[data-theme="the-line"] .tl-lh-round {
+  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--lh-fg-2);
+}
+[data-theme="the-line"] .tl-lh-players {
+  margin: 0;
+  font-family: "Instrument Serif", "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(28px, 6.6vw, 44px);
+  line-height: 1.02;
+  letter-spacing: -0.018em;
+  color: var(--lh-fg);
+  /* Slight magazine-cover overshoot — pull below baseline */
+  margin-top: 2px;
+}
+[data-theme="the-line"] .tl-lh-players em {
+  font-style: italic;
+}
+
+/* ── Countdown grid (scheduled state) ── */
+[data-theme="the-line"] .tl-lh-countdown {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 16px 0 4px 14px;
+  border-top: 1px solid var(--lh-line);
+  border-bottom: 1px solid var(--lh-line);
+}
+[data-theme="the-line"] .tl-lh-countdown:has(.tl-lh-cd-cell:nth-child(4)) {
+  grid-template-columns: repeat(4, 1fr);
+}
+[data-theme="the-line"] .tl-lh-cd-cell {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 0;
+}
+[data-theme="the-line"] .tl-lh-cd-num {
+  font-family: "Instrument Serif", "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(28px, 7vw, 44px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--lh-fg);
+  font-feature-settings: "tnum", "zero";
+}
+[data-theme="the-line"] .tl-lh-cd-lbl {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lh-fg-3);
+  font-style: normal;
+}
+[data-theme="the-line"] .tl-lh-countdown.live {
+  display: inline-flex; gap: 10px; align-items: baseline;
+  border: none; padding: 8px 0 0 14px;
+}
+[data-theme="the-line"] .tl-lh-countdown.live .tl-lh-cd-num {
+  font-size: 18px; color: var(--lh-green); font-style: normal;
+}
+
+/* ── CTA ── */
+[data-theme="the-line"] .tl-lh-cta {
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+[data-theme="the-line"] .tl-lh-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 4px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  cursor: pointer;
+}
+[data-theme="the-line"] .tl-lh-btn svg {
+  width: 14px; height: 14px;
+}
+[data-theme="the-line"] .tl-lh-btn-arrow {
+  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+[data-theme="the-line"] .tl-lh-btn:hover .tl-lh-btn-arrow { transform: translateX(4px); }
+
+[data-theme="the-line"] .tl-lh-btn.primary.live {
+  background: var(--lh-green);
+  color: #062014;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 0 0 1px rgba(0, 207, 120, 0.4),
+    0 12px 32px -10px var(--lh-green-glow);
+}
+[data-theme="the-line"] .tl-lh-btn.primary.live:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 0 0 1px var(--lh-green),
+    0 16px 40px -10px var(--lh-green-glow);
+}
+
+[data-theme="the-line"] .tl-lh-btn.outlined {
+  background: transparent;
+  color: var(--lh-fg);
+  border: 1px solid var(--lh-line-strong);
+}
+[data-theme="the-line"] .tl-lh-btn.outlined:hover {
+  background: rgba(247, 245, 239, 0.04);
+  border-color: var(--lh-fg);
+}
+
+/* ── Ambient glow at bottom (live only) ── */
+[data-theme="the-line"] .tl-lh-glow {
+  position: absolute;
+  left: 50%; bottom: -40%;
+  width: 140%; height: 60%;
+  background: radial-gradient(ellipse at center, var(--lh-green-glow) 0%, transparent 60%);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+  animation: tl-lh-glow-breathe 4.5s ease-in-out infinite;
+}
+[data-theme="the-line"] .tl-live-hero.is-scheduled .tl-lh-glow,
+[data-theme="the-line"] .tl-live-hero.is-ended .tl-lh-glow,
+[data-theme="the-line"] .tl-live-hero.empty .tl-lh-glow { display: none; }
+@keyframes tl-lh-glow-breathe {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+/* ── Empty state ── */
+[data-theme="the-line"] .tl-live-hero.empty {
+  align-items: center; justify-content: center;
+  text-align: center; min-height: 280px;
+  gap: 14px;
+}
+[data-theme="the-line"] .tl-live-hero.empty::after { display: none; }
+[data-theme="the-line"] .tl-lh-empty-mark {
+  font-size: 36px; color: var(--lh-fg-3); font-family: "Instrument Serif"; font-style: italic;
+}
+[data-theme="the-line"] .tl-lh-empty-label {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--lh-fg-2);
+}
+[data-theme="the-line"] .tl-lh-empty-cta {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--lh-green); text-decoration: none;
+  border-bottom: 1px solid var(--lh-green);
+  padding-bottom: 2px;
+  margin-top: 4px;
+}
+
+/* ── Loading skeleton ── */
+[data-theme="the-line"] .tl-live-hero.loading { min-height: 360px; }
+[data-theme="the-line"] .tl-lh-skeleton {
+  width: 100%; height: 100%; min-height: 320px;
+  background: linear-gradient(90deg,
+    rgba(247, 245, 239, 0.02) 0%,
+    rgba(247, 245, 239, 0.05) 50%,
+    rgba(247, 245, 239, 0.02) 100%);
+  background-size: 200% 100%;
+  animation: tl-lh-shimmer 1.6s ease-in-out infinite;
+  border-radius: 4px;
+}
+@keyframes tl-lh-shimmer {
+  0%   { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="the-line"] .tl-lh-pulse,
+  [data-theme="the-line"] .tl-lh-scanline,
+  [data-theme="the-line"] .tl-lh-glow,
+  [data-theme="the-line"] .tl-lh-skeleton {
+    animation: none;
+  }
+}
+
 /* ========== Sections ========== */
 [data-theme="the-line"] .tl-section {
   padding: 56px 0;
