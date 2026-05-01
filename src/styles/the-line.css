@@ -238,8 +238,63 @@
 [data-theme="the-line"] .tl-hero {
   padding: 72px 0 56px;
   border-bottom: 1px solid var(--tl-border);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
 }
 @media (max-width: 800px) { [data-theme="the-line"] .tl-hero { padding: 40px 0 36px; } }
+
+/* Featured-match background — blurred Mux thumbnail behind the hero,
+   crossfaded into the page bg via a vertical gradient. Adds visual
+   atmosphere without competing with text. Only active when --hero-bg-image
+   is set (i.e. there's a live or scheduled match with a thumbnail). */
+[data-theme="the-line"] .tl-hero--has-bg::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: var(--hero-bg-image);
+  background-size: cover;
+  background-position: center;
+  filter: blur(48px) saturate(1.15);
+  transform: scale(1.18);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+  animation: tl-hero-bg-drift 36s ease-in-out infinite alternate;
+}
+[data-theme="the-line"] .tl-hero--has-bg::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tl-bg) 55%, transparent) 0%,
+    color-mix(in srgb, var(--tl-bg) 80%, transparent) 55%,
+    var(--tl-bg) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+[data-theme="the-line"] .tl-hero--has-bg > .tl-shell { position: relative; z-index: 1; }
+
+@keyframes tl-hero-bg-drift {
+  0%   { transform: scale(1.18) translate(0%, 0%); }
+  100% { transform: scale(1.22) translate(-1.4%, -0.8%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="the-line"] .tl-hero--has-bg::before { animation: none; }
+}
+
+/* Light mode: lighter overlay so the cream substrate shows through */
+[data-theme="the-line"][data-mode="light"] .tl-hero--has-bg::before {
+  opacity: 0.4;
+}
+[data-theme="the-line"][data-mode="light"] .tl-hero--has-bg::after {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tl-bg) 55%, transparent) 0%,
+    color-mix(in srgb, var(--tl-bg) 82%, transparent) 55%,
+    var(--tl-bg) 100%
+  );
+}
 
 [data-theme="the-line"] .tl-hero-grid {
   display: grid;

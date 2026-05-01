@@ -266,7 +266,17 @@ const Index = () => {
       </div>
 
       {/* Hero */}
-      <section className="tl-hero">
+      {(() => {
+        const heroBg =
+          featured?.thumbnail_url
+          ?? (featured?.mux_playback_id
+              ? `https://image.mux.com/${featured.mux_playback_id}/thumbnail.jpg?width=1280&height=720&fit_mode=smartcrop`
+              : null);
+        return (
+      <section
+        className={`tl-hero${heroBg ? " tl-hero--has-bg" : ""}`}
+        style={heroBg ? ({ "--hero-bg-image": `url("${heroBg}")` } as React.CSSProperties) : undefined}
+      >
         <div className="tl-shell">
           <div className={`tl-hero-grid${featured ? " tl-hero-grid--featured" : ""}`}>
             <div>
@@ -358,6 +368,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+        );
+      })()}
 
       {/* Stats strip — trust signal, 3-column editorial numbers.
           Live from Supabase via get_homepage_stats RPC + PPA_ASIA_STOPS constant.
