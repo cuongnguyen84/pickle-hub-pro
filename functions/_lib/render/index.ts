@@ -397,7 +397,7 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   }));
 }
 
-export async function renderTournaments(supabase: SupabaseClient, siteUrl: string, rawPath = "/tournaments"): Promise<Response> {
+export async function renderTournaments(supabase: SupabaseClient, siteUrl: string, rawPath = "/tournaments", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: tournaments } = await supabase.from("tournaments").select("id, name, slug, status").in("status", ["ongoing", "upcoming"]).order("start_date", { ascending: false }).limit(20);
   const items = (tournaments || []).map((t: any) => `<li><a href="${siteUrl}/tournament/${t.slug}">${escapeHtml(t.name)}</a></li>`).join("");
 
@@ -407,12 +407,13 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Giải đấu</h2><ul>${items}</ul>` : "",
+    lang,
   }));
 }
 
 // ─── Videos / News / Forum list pages ─────────────────────
 
-export async function renderVideos(supabase: SupabaseClient, siteUrl: string, rawPath = "/videos"): Promise<Response> {
+export async function renderVideos(supabase: SupabaseClient, siteUrl: string, rawPath = "/videos", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: videos } = await supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(20);
   const items = (videos || []).map((v: any) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
 
@@ -422,10 +423,11 @@ export async function renderVideos(supabase: SupabaseClient, siteUrl: string, ra
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Video</h2><ul>${items}</ul>` : "",
+    lang,
   }));
 }
 
-export async function renderNews(supabase: SupabaseClient, siteUrl: string, rawPath = "/news"): Promise<Response> {
+export async function renderNews(supabase: SupabaseClient, siteUrl: string, rawPath = "/news", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: news } = await supabase.from("news_items").select("id, title, summary").eq("status", "published").order("published_at", { ascending: false }).limit(20);
   const items = (news || []).map((n: any) => `<li>${escapeHtml(n.title)}: ${escapeHtml(n.summary?.slice(0, 80) || "")}</li>`).join("");
 
@@ -435,10 +437,11 @@ export async function renderNews(supabase: SupabaseClient, siteUrl: string, rawP
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Tin tức</h2><ul>${items}</ul>` : "",
+    lang,
   }));
 }
 
-export async function renderForum(supabase: SupabaseClient, siteUrl: string, rawPath = "/forum"): Promise<Response> {
+export async function renderForum(supabase: SupabaseClient, siteUrl: string, rawPath = "/forum", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: posts } = await supabase.from("forum_posts").select("id, title").eq("is_hidden", false).order("created_at", { ascending: false }).limit(20);
   const items = (posts || []).map((p: any) => `<li><a href="${siteUrl}/forum/post/${p.id}">${escapeHtml(p.title)}</a></li>`).join("");
 
@@ -448,6 +451,7 @@ export async function renderForum(supabase: SupabaseClient, siteUrl: string, raw
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     bodyContent: items ? `<h2>Bài viết mới</h2><ul>${items}</ul>` : "",
+    lang,
   }));
 }
 
@@ -544,7 +548,7 @@ export async function renderFlexTournament(supabase: SupabaseClient, shareId: st
 
 // ─── Tools hub ─────────────────────────────���──────────────
 
-export function renderTools(siteUrl: string, rawPath = "/tools"): Response {
+export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "vi" = "en"): Response {
   return htmlResponse(buildHtml({
     title: "Free Pickleball Tournament Tools | ThePickleHub",
     description: "Free pickleball tournament bracket generator, round robin scheduler, MLP team match manager, and doubles elimination tools. No signup required.",
@@ -589,7 +593,10 @@ export function renderTools(siteUrl: string, rawPath = "/tools"): Response {
     // 7361 for homepage). Keep this block in sync if Tools.tsx hero or
     // pillar prose changes — set a search alert for "free pickleball
     // tournament bracket generator".
-    bodyContent: `<h1>60 seconds to a pickleball bracket.</h1>
+    // H2 (not H1) here — buildHtml already emits <h1>${title}</h1>
+    // at the top of <main>; a second H1 in bodyContent caused Ahrefs
+    // Site Audit to flag /tools + /vi/tools as "Multiple H1 tags".
+    bodyContent: `<h2>60 seconds to a pickleball bracket.</h2>
 <p>A free pickleball tournament bracket generator — round robin, single and double elimination, MLP team match, and flex format. Live scoring on your phone, shareable scoreboard URL, printable bracket. No apps, no signup, no catch.</p>
 <h2>Tournament formats</h2>
 <ul>
@@ -601,6 +608,7 @@ export function renderTools(siteUrl: string, rawPath = "/tools"): Response {
 <h2>What Bracket Lab actually does</h2>
 <p>Bracket Lab is a free pickleball tournament bracket generator built for clubs, weekend organizers, and pro events across Asia. Pick a format — round robin, single elimination, double elimination, MLP team match, or a fully custom flex tournament — and the tool builds the bracket, schedules matches, rotates courts, and tracks live scores. Share a single link with players and spectators; print a wall bracket if you need one.</p>
 <p>No signup. No download. No 14-day trial that turns into a $99/month subscription. Built and maintained by <a href="${siteUrl}/blog/tournament-organizer-hub">ThePickleHub</a>, a bilingual Vietnamese-English platform reporting on PPA Tour Asia, MLP, and the regional pro circuit.</p>`,
+    lang,
   }));
 }
 
@@ -623,9 +631,9 @@ const TOOL_PAGE_META: Record<string, { title: string; description: string }> = {
   },
 };
 
-export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: string): Response {
+export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: string, lang: "en" | "vi" = "en"): Response {
   const meta = TOOL_PAGE_META[toolSlug];
-  if (!meta) return renderTools(siteUrl, rawPath);
+  if (!meta) return renderTools(siteUrl, rawPath, lang);
 
   return htmlResponse(buildHtml({
     title: meta.title,

@@ -148,16 +148,16 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   if (match) return await renderTournamentDetail(supabase, match[1], siteUrl);
 
   // Tournaments list
-  if (path === "/tournaments") return await renderTournaments(supabase, siteUrl, rawPath);
+  if (path === "/tournaments") return await renderTournaments(supabase, siteUrl, rawPath, lang);
 
   // Videos list
-  if (path === "/videos") return await renderVideos(supabase, siteUrl, rawPath);
+  if (path === "/videos") return await renderVideos(supabase, siteUrl, rawPath, lang);
 
   // News
-  if (path === "/news") return await renderNews(supabase, siteUrl, rawPath);
+  if (path === "/news") return await renderNews(supabase, siteUrl, rawPath, lang);
 
   // Forum
-  if (path === "/forum") return await renderForum(supabase, siteUrl, rawPath);
+  if (path === "/forum") return await renderForum(supabase, siteUrl, rawPath, lang);
 
   // Forum post
   match = path.match(/^\/forum\/post\/([^/]+)$/);
@@ -181,13 +181,13 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   if (match) return await renderFlexTournament(supabase, match[1], siteUrl);
 
   // Tool list pages (must come before catch-all)
-  if (path === "/tools/quick-tables") return renderToolPage("quick-tables", siteUrl, rawPath);
-  if (path === "/tools/team-match") return renderToolPage("team-match", siteUrl, rawPath);
-  if (path === "/tools/doubles-elimination") return renderToolPage("doubles-elimination", siteUrl, rawPath);
-  if (path === "/tools/flex-tournament") return renderToolPage("flex-tournament", siteUrl, rawPath);
+  if (path === "/tools/quick-tables") return renderToolPage("quick-tables", siteUrl, rawPath, lang);
+  if (path === "/tools/team-match") return renderToolPage("team-match", siteUrl, rawPath, lang);
+  if (path === "/tools/doubles-elimination") return renderToolPage("doubles-elimination", siteUrl, rawPath, lang);
+  if (path === "/tools/flex-tournament") return renderToolPage("flex-tournament", siteUrl, rawPath, lang);
 
   // Tools hub
-  if (path.startsWith("/tools")) return renderTools(siteUrl, rawPath);
+  if (path.startsWith("/tools")) return renderTools(siteUrl, rawPath, lang);
 
   // Blog post
   match = path.match(/^\/blog\/([^/]+)$/);
