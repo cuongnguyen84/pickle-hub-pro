@@ -283,6 +283,16 @@
   [data-theme="the-line"] .tl-hero--has-bg::before { animation: none; }
 }
 
+/* Pause expensive animations when the hero scrolls off-screen.
+   Toggled by IntersectionObserver in src/pages/Index.tsx so we
+   don't keep burning GPU on idle background effects. */
+[data-theme="the-line"] .tl-hero[data-offscreen="true"]::before {
+  animation-play-state: paused;
+}
+[data-theme="the-line"] .tl-hero[data-offscreen="true"] .tl-lh-glow {
+  animation-play-state: paused;
+}
+
 /* Light mode: lighter overlay so the cream substrate shows through */
 [data-theme="the-line"][data-mode="light"] .tl-hero--has-bg::before {
   opacity: 0.4;

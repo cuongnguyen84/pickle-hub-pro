@@ -1,4 +1,4 @@
-import { useMemo, useState, FormEvent } from "react";
+import { useEffect, useMemo, useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
@@ -89,6 +89,29 @@ const Index = () => {
     // maintaining a per-page key allowlist.
     await queryClient.invalidateQueries();
   });
+
+  // Pause hero bg drift + ambient glow when the hero scrolls off-screen.
+  // Effects keep ticking otherwise and burn battery on long sessions.
+  // Toggles a data-offscreen attribute on .tl-hero; CSS pauses the
+  // relevant animations when present.
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>(".tl-hero");
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.removeAttribute("data-offscreen");
+          } else {
+            entry.target.setAttribute("data-offscreen", "true");
+          }
+        }
+      },
+      { rootMargin: "200px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   // Featured stories — 6 most recent, language-aware:
   //   EN: blogMetadata (static content with heroImage)
