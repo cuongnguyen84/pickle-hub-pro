@@ -473,6 +473,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
         <div className="tl-shell">
           <div className="tl-foot-grid">
             <div className="tl-foot-brand">
+              <div className="tl-foot-tagline">
+                {language === "vi"
+                  ? <>Phóng viên. <em>Vợt.</em> Tường thuật thật.</>
+                  : <>Reporters. <em>Rackets.</em> Real coverage.</>}
+              </div>
               <h3>
                 The <em style={{ fontFamily: "inherit" }}>Pickle</em>Hub
               </h3>
