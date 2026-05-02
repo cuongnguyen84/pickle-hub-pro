@@ -92,8 +92,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     if (env.PRERENDER_CACHE && response.status === 200) {
       const html = await response.clone().text();
+      // 6h TTL (was 1h). Bumped 2026-05-02 after Ahrefs Site Audit
+      // flagged 10 URLs at >1s loading — most were cold-cache hits where
+      // a fresh prerender (Cloudflare cold start + Tokyo Supabase round
+      // trip) totals ~1s. Crawlers don't need fresh-fresh data; humans
+      // get the SPA in real time. 6h cache keeps bot view warm across
+      // typical crawler revisit cycles without serving stale data to
+      // users.
       context.waitUntil(
-        env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: 3600 }),
+        env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: 21600 }),
       );
     }
 

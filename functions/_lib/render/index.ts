@@ -732,12 +732,24 @@ export function renderBlog(siteUrl: string): Response {
 // ─── Vietnamese Blog (database) ───────────────────────────
 
 export async function renderViBlogPost(supabase: SupabaseClient, slug: string, siteUrl: string): Promise<Response> {
-  const { data: post } = await supabase
-    .from("vi_blog_posts")
-    .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .single();
+  // Fire post + related queries in parallel — `related` doesn't depend on
+  // post data (filters by slug !== current), so waiting for post first is
+  // wasted latency. Saves ~200-300ms for bot-prerender on cold cache.
+  const [postRes, relatedRes] = await Promise.all([
+    supabase
+      .from("vi_blog_posts")
+      .select("title, meta_title, meta_description, content_html, cover_image_url, faq_items, alternate_en_slug, published_at, updated_at")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .single(),
+    supabase
+      .from("vi_blog_posts")
+      .select("slug, title")
+      .eq("status", "published")
+      .neq("slug", slug)
+      .limit(3),
+  ]);
+  const post = postRes.data;
 
   if (!post) return render404(`/vi/blog/${slug}`, siteUrl);
 
@@ -778,8 +790,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
 
   const bc = breadcrumb([{ label: "Trang chủ", href: `${siteUrl}/vi` }, { label: "Blog", href: `${siteUrl}/vi/blog` }, { label: p.title }]);
 
-  const { data: related } = await supabase.from("vi_blog_posts").select("slug, title").eq("status", "published").neq("slug", slug).limit(3);
-  const relatedItems = (related || []) as { slug: string; title: string }[];
+  const relatedItems = (relatedRes.data || []) as { slug: string; title: string }[];
   const relatedSection = relatedItems.length > 0
     ? `<section><h2>Bài viết liên quan</h2><ul>${relatedItems.map((r) => `<li><a href="${siteUrl}/vi/blog/${r.slug}">${escapeHtml(r.title)}</a></li>`).join("")}</ul></section>`
     : "";
