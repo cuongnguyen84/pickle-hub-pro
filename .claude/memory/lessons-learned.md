@@ -241,3 +241,20 @@ npx eslint --rule 'react-hooks/rules-of-hooks: error' src/components/<File>.tsx
 Project already has eslint config — confirm `react-hooks/rules-of-hooks` is `"error"` not `"warn"` in `eslint.config.js`. A `"warn"` will only show in dev console; `"error"` fails CI.
 
 **When tempted to put a hook after a guard:** the guard is for the user's UX (skip render), not for the hook's correctness. Hooks must always run; just discard their result if you don't need it.
+
+---
+
+## TODO: Live presence channel scaling concern (homepage hero)
+
+**Status:** open. Identified Round 2 audit P2-J / R2-11 (2026-05-02), deferred — needs traffic-data + RPC schema work to ship properly.
+
+**Concern:** `useLivePresence(featured.id, isLive)` in `src/components/home/LiveBroadcastHero.tsx` opens a Supabase Realtime presence channel per homepage visitor when a live match is featured. With 1000s of users landing on `/` simultaneously during a major broadcast, that's 1000s of channels with their own track/sync overhead. Counts work correctly today; concern is scale.
+
+**Constraints / why we didn't fix yet:**
+- The viewer-count display IS a meaningful social-proof win shipped in Round 1 (commit `f091067`); disabling it loses the feature.
+- The clean fix needs a single broadcast-style "stats" channel (one channel, all subscribers receive viewer count, no per-user track) — not the same primitive as the watch-page presence which DOES need per-user track for the chat sidebar viewer list.
+- Or: a poll-based RPC `get_live_viewer_counts(livestream_ids[]) → {id, count}[]` cached at DB layer, called every 15-30s. No Realtime channel from the homepage at all.
+
+**When to revisit:** after concurrent homepage traffic exceeds ~500 simultaneous (check GA4 realtime users + Supabase Realtime channel count). At that scale the cost shows up. Until then the per-user channel is fine.
+
+**Reference:** `.claude/memory/` other rules don't apply here — this is a pure scaling question, not a correctness or security one.
