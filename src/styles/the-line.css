@@ -261,6 +261,16 @@
   z-index: 0;
   animation: tl-hero-bg-drift 36s ease-in-out infinite alternate;
 }
+/* Mobile: reduce blur radius + scale + skip Ken Burns drift to keep
+   compositor cost low on mid-tier Android. Same atmosphere, ~40%
+   cheaper to repaint per scroll frame. */
+@media (max-width: 800px) {
+  [data-theme="the-line"] .tl-hero--has-bg::before {
+    filter: blur(24px) saturate(1.1);
+    transform: scale(1.08);
+    animation: none;
+  }
+}
 [data-theme="the-line"] .tl-hero--has-bg::after {
   content: "";
   position: absolute; inset: 0;
