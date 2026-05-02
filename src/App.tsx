@@ -107,6 +107,7 @@ const PreviewBlogList = lazy(() => import("./pages/preview/BlogList"));
 const PreviewBlogPost = lazy(() => import("./pages/preview/BlogPostPage"));
 const PreviewWatchVideo = lazy(() => import("./pages/preview/WatchVideo"));
 const PreviewRankings = lazy(() => import("./pages/preview/Rankings"));
+const Rankings = lazy(() => import("./pages/Rankings"));
 const PreviewOrgDetail = lazy(() => import("./pages/preview/OrganizationDetail"));
 const PreviewSearch = lazy(() => import("./pages/preview/Search"));
 const PreviewBracketLab = lazy(() => import("./pages/preview/BracketLab"));
@@ -375,6 +376,8 @@ const App = () => (
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/news" element={<News />} />
+                    <Route path="/rankings" element={<Rankings />} />
+                    <Route path="/vi/rankings" element={<Rankings />} />
                     {/* Blog routes */}
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogPost />} />
