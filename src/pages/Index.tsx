@@ -45,6 +45,20 @@ const formatTime = (iso: string | null | undefined): string => {
   return dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 };
 
+/* ISO 8601 week-of-year — used as the editorial issue number on the
+   Stories section. Each calendar week is one "issue" of the publication. */
+const isoWeekNumber = (d = new Date()): number => {
+  const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNr = (target.getUTCDay() + 6) % 7;
+  target.setUTCDate(target.getUTCDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setUTCMonth(0, 1);
+  if (target.getUTCDay() !== 4) {
+    target.setUTCMonth(0, 1 + ((4 - target.getUTCDay()) + 7) % 7);
+  }
+  return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+};
+
 const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"): string => {
   if (!iso) return "";
   const dt = new Date(iso).getTime();
@@ -866,20 +880,18 @@ const Index = () => {
               <h2>
                 {language === "vi" ? (
                   <>
-                    Từ <em className="tl-serif">tòa soạn.</em>{" "}
-                    <span className="sans">{stories.length} bài viết</span>
+                    Tuần này. <em className="tl-serif">N°{isoWeekNumber()}</em>
                   </>
                 ) : (
                   <>
-                    From <em className="tl-serif">the desk.</em>{" "}
-                    <span className="sans">{stories.length} stories</span>
+                    This week. <em className="tl-serif">N°{isoWeekNumber()}</em>
                   </>
                 )}
               </h2>
               <p>
                 {language === "vi"
-                  ? "Phóng sự dài kỳ, viết bởi phóng viên và HLV. Cập nhật thường xuyên."
-                  : "Longform coverage written by reporters and coaches. Updated regularly."}
+                  ? "Phóng sự dài kỳ — phóng viên, HLV, và những người có mặt khi câu chuyện diễn ra."
+                  : "Longform reporting — by reporters, coaches, and people who were there when the story happened."}
               </p>
             </div>
 
