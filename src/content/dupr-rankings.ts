@@ -9,10 +9,9 @@
  * Each scope has 4 formats (men's singles, women's singles, men's
  * doubles, women's doubles); top 25 per format.
  *
- * This is a static snapshot. To refresh: run scripts/parse-dupr.py
- * (TODO write) or replace this file. Phase 2 plan: Supabase edge
- * function `dupr-ingest` runs daily, writes to a `dupr_rankings`
- * table, and the page reads from DB instead of this static module.
+ * Refresh by running scripts/parse-dupr.py and committing the diff.
+ * Phase 2 plan: replace with a `dupr-ingest` Supabase edge function +
+ * `dupr_rankings` table that the page reads from at runtime.
  */
 
 export type DuprFormat = "mens-singles" | "womens-singles" | "mens-doubles" | "womens-doubles";
@@ -34,7 +33,7 @@ export interface DuprPlayer {
 
 export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> = {
   "open": {
-    "mens-singles": [
+    "mens-doubles": [
       {
         "rank": 1,
         "name": "Ben Johns",
@@ -186,7 +185,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 6.352
       }
     ],
-    "womens-singles": [
+    "womens-doubles": [
       {
         "rank": 1,
         "name": "Anna Leigh Waters",
@@ -338,7 +337,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.912
       }
     ],
-    "mens-doubles": [
+    "mens-singles": [
       {
         "rank": 1,
         "name": "Hunter Johnson",
@@ -490,7 +489,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 6.231
       }
     ],
-    "womens-doubles": [
+    "womens-singles": [
       {
         "rank": 1,
         "name": "Anna Leigh Waters",
@@ -644,7 +643,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
     ]
   },
   "junior": {
-    "mens-singles": [
+    "mens-doubles": [
       {
         "rank": 1,
         "name": "John Goins",
@@ -796,7 +795,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.424
       }
     ],
-    "womens-singles": [
+    "womens-doubles": [
       {
         "rank": 1,
         "name": "Nicola Schoeman",
@@ -948,7 +947,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 4.992
       }
     ],
-    "mens-doubles": [
+    "mens-singles": [
       {
         "rank": 1,
         "name": "John Goins",
@@ -1100,7 +1099,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.242
       }
     ],
-    "womens-doubles": [
+    "womens-singles": [
       {
         "rank": 1,
         "name": "Kiora Kunimoto",
@@ -1254,7 +1253,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
     ]
   },
   "asia": {
-    "mens-singles": [
+    "mens-doubles": [
       {
         "rank": 1,
         "name": "Armaan Bhatia",
@@ -1406,7 +1405,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.697
       }
     ],
-    "womens-singles": [
+    "womens-doubles": [
       {
         "rank": 1,
         "name": "Aibika Kalsarieva",
@@ -1558,7 +1557,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.256
       }
     ],
-    "mens-doubles": [
+    "mens-singles": [
       {
         "rank": 1,
         "name": "Nam Ly Hoang",
@@ -1710,7 +1709,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.367
       }
     ],
-    "womens-doubles": [
+    "womens-singles": [
       {
         "rank": 1,
         "name": "Chao Yi Wang",
@@ -1864,7 +1863,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
     ]
   },
   "north-america": {
-    "mens-singles": [
+    "mens-doubles": [
       {
         "rank": 1,
         "name": "Ben Johns",
@@ -2016,7 +2015,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 6.289
       }
     ],
-    "womens-singles": [
+    "womens-doubles": [
       {
         "rank": 1,
         "name": "Anna Leigh Waters",
@@ -2168,7 +2167,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.847
       }
     ],
-    "mens-doubles": [
+    "mens-singles": [
       {
         "rank": 1,
         "name": "Christopher Haworth",
@@ -2320,7 +2319,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 6.121
       }
     ],
-    "womens-doubles": [
+    "womens-singles": [
       {
         "rank": 1,
         "name": "Anna Leigh Waters",
@@ -2474,7 +2473,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
     ]
   },
   "south-america": {
-    "mens-singles": [
+    "mens-doubles": [
       {
         "rank": 1,
         "name": "Gabriel Tardio",
@@ -2626,7 +2625,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.301
       }
     ],
-    "womens-singles": [
+    "womens-doubles": [
       {
         "rank": 1,
         "name": "Mariana Humberg",
@@ -2778,7 +2777,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 4.534
       }
     ],
-    "mens-doubles": [
+    "mens-singles": [
       {
         "rank": 1,
         "name": "Federico Staksrud",
@@ -2930,7 +2929,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 4.637
       }
     ],
-    "womens-doubles": [
+    "womens-singles": [
       {
         "rank": 1,
         "name": "Mariana Humberg",
@@ -2976,7 +2975,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
     ]
   },
   "australia-oceania": {
-    "mens-singles": [
+    "mens-doubles": [
       {
         "rank": 1,
         "name": "George Wall",
@@ -3128,7 +3127,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.287
       }
     ],
-    "womens-singles": [
+    "womens-doubles": [
       {
         "rank": 1,
         "name": "Danni-Elle Townsend",
@@ -3280,7 +3279,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 4.975
       }
     ],
-    "mens-doubles": [
+    "mens-singles": [
       {
         "rank": 1,
         "name": "Christopher Crouch",
@@ -3432,7 +3431,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 4.943
       }
     ],
-    "womens-doubles": [
+    "womens-singles": [
       {
         "rank": 1,
         "name": "Seone Mendez",
@@ -3586,7 +3585,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
     ]
   },
   "europe": {
-    "mens-singles": [
+    "mens-doubles": [
       {
         "rank": 1,
         "name": "Andrei Daescu",
@@ -3738,7 +3737,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.727
       }
     ],
-    "womens-singles": [
+    "womens-doubles": [
       {
         "rank": 1,
         "name": "Tina Pisnik",
@@ -3890,7 +3889,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.265
       }
     ],
-    "mens-doubles": [
+    "mens-singles": [
       {
         "rank": 1,
         "name": "Jaume Martinez Vich",
@@ -4042,7 +4041,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rating": 5.445
       }
     ],
-    "womens-doubles": [
+    "womens-singles": [
       {
         "rank": 1,
         "name": "Domenika Turkovic",
@@ -4196,6 +4195,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
     ]
   }
 };
+
 
 export const DUPR_SCOPES: { key: DuprScope; labelEn: string; labelVi: string; group: "global" | "continent" }[] = [
   { key: "open",              labelEn: "Open",                labelVi: "Mở rộng",         group: "global" },

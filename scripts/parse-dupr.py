@@ -35,7 +35,15 @@ OUTPUT = REPO_ROOT / "src" / "content" / "dupr-rankings.ts"
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15"
 
 CONTINENTS = ["asia", "north-america", "south-america", "australia-oceania", "europe"]
-FORMATS = ["mens-singles", "womens-singles", "mens-doubles", "womens-doubles"]
+
+# DUPR's Webflow page renders the 4 ranking-collection blocks in
+# this order — confirmed by checking signature top players' ratings
+# against publicly-known Singles vs Doubles values (e.g. Ben Johns
+# top-rated entry was 7.094 = doubles range, not singles).
+# Earlier mapping (Singles first) caused names + ratings to appear
+# under the wrong format on the homepage.
+DUPR_TAB_ORDER = ["mens-doubles", "womens-doubles", "mens-singles", "womens-singles"]
+
 TOP_N = 25
 
 
@@ -76,8 +84,8 @@ def main() -> int:
         return 1
 
     groups: dict[str, dict[str, list[dict]]] = {
-        "open":   {fmt: main_cols[i] for i, fmt in enumerate(FORMATS)},
-        "junior": {fmt: main_cols[i + 8] for i, fmt in enumerate(FORMATS)},
+        "open":   {fmt: main_cols[i] for i, fmt in enumerate(DUPR_TAB_ORDER)},
+        "junior": {fmt: main_cols[i + 8] for i, fmt in enumerate(DUPR_TAB_ORDER)},
     }
 
     for slug in CONTINENTS:
@@ -85,9 +93,9 @@ def main() -> int:
         cont_cols = parse_collections(fetch(f"https://www.dupr.com/continental-rankings/{slug}"))
         if len(cont_cols) < 4:
             print(f"  WARN: {slug} has only {len(cont_cols)} collections — filling empty", file=sys.stderr)
-            groups[slug] = {fmt: [] for fmt in FORMATS}
+            groups[slug] = {fmt: [] for fmt in DUPR_TAB_ORDER}
         else:
-            groups[slug] = {fmt: cont_cols[i] for i, fmt in enumerate(FORMATS)}
+            groups[slug] = {fmt: cont_cols[i] for i, fmt in enumerate(DUPR_TAB_ORDER)}
 
     today = __import__("datetime").date.today().isoformat()
 
