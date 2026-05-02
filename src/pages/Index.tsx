@@ -453,8 +453,8 @@ const Index = () => {
             {liveStreams.length > 0 && (
               <p>
                 {language === "vi"
-                  ? "Mọi trận đấu đang phát sóng, lấy trực tiếp từ DB. Bấm để xem với HLS độ trễ thấp."
-                  : "Every match streaming right now, pulled live from the database. Click through to watch with low-delay HLS."}
+                  ? "Mọi trận đang sóng. Phóng viên có mặt tại sân. Một cú chạm là vào."
+                  : "Every match on air. Reporters at the court. One tap and you're in."}
               </p>
             )}
           </div>
@@ -522,6 +522,87 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Manifesto — moved up from end-of-page (Round 2 audit P0-A).
+          Brand thesis arrives early, while user is still scrolling.
+          Kicker renumbered / 04 → / 02 to match new position. */}
+      <section className="tl-manifesto">
+        <div className="tl-shell">
+          <div className="tl-manifesto-inner">
+            {language === "vi" ? (
+              <>
+                <div className="num tl-mono">/ 02 — Tinh thần của chúng tôi</div>
+                <h2>
+                  Pickleball xứng đáng <br />
+                  có sự <em className="tl-serif">chăm sóc</em> <br />
+                  <span className="dim">như mọi môn thể thao</span> <br />
+                  <span className="dim">đã có cả thế kỷ</span> <br />
+                  <span className="dim">báo chí đứng sau.</span>
+                </h2>
+
+                <div className="grid">
+                  <div className="item">
+                    <h3>01 / Báo chí thật</h3>
+                    <p>
+                      Tường thuật trận đấu, chân dung vận động viên, phân tích — viết bởi phóng viên{" "}
+                      <em>có mặt tại sân.</em> Không tổng hợp. No AI slop.
+                    </p>
+                  </div>
+                  <div className="item">
+                    <h3>02 / Mọi giải, một app</h3>
+                    <p>
+                      PPA. APP. MLP. European Open. Asia Pacific Series. Vietnam National.
+                      Mọi bracket, mọi tỉ số, mọi sân — <em>ở một nơi.</em>
+                    </p>
+                  </div>
+                  <div className="item">
+                    <h3>03 / Dành cho người chơi</h3>
+                    <p>
+                      Tìm bạn đánh, đặt sân, theo dõi DUPR. Tất cả những gì người chơi cần —{" "}
+                      <em>và không có thứ gì họ không cần.</em>
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="num tl-mono">/ 02 — What we believe</div>
+                <h2>
+                  Pickleball deserves <br />
+                  the same <em className="tl-serif">care</em> <br />
+                  <span className="dim">we'd give any sport</span> <br />
+                  <span className="dim">with a century</span> <br />
+                  <span className="dim">of reporting behind it.</span>
+                </h2>
+
+                <div className="grid">
+                  <div className="item">
+                    <h3>01 / Real journalism</h3>
+                    <p>
+                      Match reports, player features, and analysis written by reporters who were{" "}
+                      <em>at the court.</em> No aggregation. No AI slop.
+                    </p>
+                  </div>
+                  <div className="item">
+                    <h3>02 / Every tour, one app</h3>
+                    <p>
+                      PPA. APP. MLP. European Open. Asia Pacific Series. Vietnam National.
+                      Every bracket, every score, every court — <em>in one place.</em>
+                    </p>
+                  </div>
+                  <div className="item">
+                    <h3>03 / Built for players</h3>
+                    <p>
+                      Find a partner, book a court, track your DUPR. Everything a player needs —{" "}
+                      <em>and nothing they don't.</em>
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Schedule — hide entire section when both panels empty */}
       {(upcomingTournaments.length > 0 || scheduledStreams.length > 0) && (
       <section className="tl-section">
@@ -546,8 +627,8 @@ const Index = () => {
             </h2>
             <p>
               {language === "vi"
-                ? "Giải đấu đang mở đăng ký và stream lên lịch trong 30 ngày tới."
-                : "Tournaments opening registration and scheduled streams from the next 30 days."}
+                ? "Lịch giải, lịch sóng — 30 ngày kế tiếp, sắp xếp theo thứ tự có mặt."
+                : "Brackets and broadcasts — the next 30 days, in the order they hit the court."}
             </p>
           </div>
 
@@ -813,8 +894,8 @@ const Index = () => {
             </h3>
             <p>
               {language === "vi"
-                ? "Tin tức, kết quả giải đấu, và phóng sự độc quyền — gửi hàng tuần. Không quảng cáo, không spam."
-                : "Pickleball news, tournament results, and exclusive reporting — delivered weekly. No ads, no spam."}
+                ? "Trận đấu, phỏng vấn, phân tích — viết bởi phóng viên có mặt tại sân. Mỗi sáng thứ Tư, vào hộp thư của bạn."
+                : "Match reports, interviews, analysis — written by reporters at the court. In your inbox every Wednesday morning."}
             </p>
 
             {subscribed ? (
@@ -868,85 +949,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Manifesto — bilingual. Preserves italic serif emphasis structure
-          in both languages (line breaks anchor the editorial typography). */}
-      <section className="tl-manifesto">
-        <div className="tl-shell">
-          <div className="tl-manifesto-inner">
-            {language === "vi" ? (
-              <>
-                <div className="num tl-mono">/ 04 — Tinh thần của chúng tôi</div>
-                <h2>
-                  Pickleball xứng đáng <br />
-                  có sự <em className="tl-serif">chăm sóc</em> <br />
-                  <span className="dim">như mọi môn thể thao</span> <br />
-                  <span className="dim">đã có cả thế kỷ</span> <br />
-                  <span className="dim">báo chí đứng sau.</span>
-                </h2>
-
-                <div className="grid">
-                  <div className="item">
-                    <h3>01 / Báo chí thật</h3>
-                    <p>
-                      Tường thuật trận đấu, chân dung vận động viên, phân tích — viết bởi phóng viên{" "}
-                      <em>có mặt tại sân.</em> Không tổng hợp. No AI slop.
-                    </p>
-                  </div>
-                  <div className="item">
-                    <h3>02 / Mọi giải, một app</h3>
-                    <p>
-                      PPA. APP. MLP. European Open. Asia Pacific Series. Vietnam National.
-                      Mọi bracket, mọi tỉ số, mọi sân — <em>ở một nơi.</em>
-                    </p>
-                  </div>
-                  <div className="item">
-                    <h3>03 / Dành cho người chơi</h3>
-                    <p>
-                      Tìm bạn đánh, đặt sân, theo dõi DUPR. Tất cả những gì người chơi cần —{" "}
-                      <em>và không có thứ gì họ không cần.</em>
-                    </p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="num tl-mono">/ 04 — What we believe</div>
-                <h2>
-                  Pickleball deserves <br />
-                  the same <em className="tl-serif">care</em> <br />
-                  <span className="dim">we'd give any sport</span> <br />
-                  <span className="dim">with a century</span> <br />
-                  <span className="dim">of reporting behind it.</span>
-                </h2>
-
-                <div className="grid">
-                  <div className="item">
-                    <h3>01 / Real journalism</h3>
-                    <p>
-                      Match reports, player features, and analysis written by reporters who were{" "}
-                      <em>at the court.</em> No aggregation. No AI slop.
-                    </p>
-                  </div>
-                  <div className="item">
-                    <h3>02 / Every tour, one app</h3>
-                    <p>
-                      PPA. APP. MLP. European Open. Asia Pacific Series. Vietnam National.
-                      Every bracket, every score, every court — <em>in one place.</em>
-                    </p>
-                  </div>
-                  <div className="item">
-                    <h3>03 / Built for players</h3>
-                    <p>
-                      Find a partner, book a court, track your DUPR. Everything a player needs —{" "}
-                      <em>and nothing they don't.</em>
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
     </TheLineLayout>
   );
 };
