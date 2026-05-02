@@ -966,6 +966,56 @@
   }
 }
 
+/* ========== Pull-quote breath section ==========
+   Editorial moment between data grids. Oversized italic serif quote
+   floats inside the shell with generous vertical breathing room.
+   No border, no card — just type on substrate, like a magazine spread. */
+[data-theme="the-line"] .tl-pullquote {
+  padding: 88px 0;
+  border-top: 1px solid var(--tl-border);
+  border-bottom: 1px solid var(--tl-border);
+}
+@media (max-width: 800px) {
+  [data-theme="the-line"] .tl-pullquote { padding: 56px 0; }
+}
+[data-theme="the-line"] .tl-pullquote-text {
+  margin: 0 auto;
+  max-width: 22ch;
+  font-family: "Instrument Serif", "Times New Roman", serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: clamp(28px, 4.5vw, 48px);
+  line-height: 1.15;
+  letter-spacing: -0.018em;
+  color: var(--tl-fg);
+  text-align: left;
+  position: relative;
+  padding-left: 0.6em;
+}
+[data-theme="the-line"] .tl-pullquote-text em {
+  font-style: italic;
+}
+[data-theme="the-line"] .tl-pullquote-mark {
+  position: absolute;
+  left: -0.05em;
+  top: -0.1em;
+  font-size: 1.4em;
+  line-height: 1;
+  color: var(--tl-green);
+  font-style: italic;
+  font-family: "Instrument Serif", serif;
+}
+[data-theme="the-line"] .tl-pullquote-attr {
+  margin: 22px auto 0;
+  max-width: 22ch;
+  padding-left: 0.6em;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tl-fg-3);
+}
+
 /* ========== Unified empty-state card ==========
    Used by Live Courts and Coming Up empty states so the page has a
    single visual language for "nothing here right now". Mirrors the

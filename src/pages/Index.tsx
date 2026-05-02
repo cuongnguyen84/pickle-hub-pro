@@ -833,6 +833,31 @@ const Index = () => {
         </section>
       )}
 
+      {/* Pull-quote — editorial breath between the video grid and the
+          stories grid (R2-5 from Round 2 audit). Reinforces the "reporter
+          at the court" thesis between two data-heavy content sections. */}
+      <section className="tl-pullquote" aria-hidden="true">
+        <div className="tl-shell">
+          <blockquote className="tl-pullquote-text">
+            <span className="tl-pullquote-mark">"</span>
+            {language === "vi" ? (
+              <>
+                Câu chuyện hay nhất xảy ra <em className="tl-serif">giữa hai pha bóng</em>
+                {" "}— và chúng tôi cũng có mặt ở đó.
+              </>
+            ) : (
+              <>
+                The best stories happen <em className="tl-serif">between the points</em>
+                {" "}— and we're there for those too.
+              </>
+            )}
+          </blockquote>
+          <div className="tl-pullquote-attr">
+            {language === "vi" ? "— TÒA SOẠN THEPICKLEHUB" : "— THE PICKLEHUB DESK"}
+          </div>
+        </div>
+      </section>
+
       {/* Stories (blog) — editorial image card grid, language-aware */}
       {stories.length > 0 && (
         <section className="tl-section">
