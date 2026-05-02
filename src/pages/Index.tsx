@@ -446,7 +446,7 @@ const Index = () => {
               {language === "vi" ? "NGƯỜI CHƠI" : "PLAYERS"}
             </span>
           </div>
-          <div className="tl-pulse-chip" role="listitem">
+          <div className="tl-pulse-chip tl-pulse-chip--secondary" role="listitem">
             <span className="tl-pulse-ico" aria-hidden="true">◎</span>
             <span className="tl-pulse-value">{PPA_ASIA_STOPS}</span>
             <span className="tl-pulse-label">PPA ASIA · 2026</span>

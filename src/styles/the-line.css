@@ -321,10 +321,13 @@
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 56px; align-items: end;
 }
-@media (max-width: 1000px) {
+@media (max-width: 900px) {
   [data-theme="the-line"] .tl-hero-grid { grid-template-columns: 1fr; gap: 36px; align-items: start; }
   /* When a live/scheduled match is featured, push the broadcast card
-     above the hero copy on mobile so it's the first thing users see. */
+     above the hero copy on mobile so it's the first thing users see.
+     Breakpoint tightened 1000px → 900px (R2-6) so iPad mini (768-1024
+     viewport range) keeps the side-by-side desktop grid where it
+     still has room for it. */
   [data-theme="the-line"] .tl-hero-grid--featured > div:first-child  { order: 2; }
   [data-theme="the-line"] .tl-hero-grid--featured > div:nth-child(2) { order: 1; }
 }
@@ -2898,6 +2901,12 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   [data-theme="the-line"] .tl-pulse-chip { padding: 7px 12px; flex: 0 0 auto; }
   [data-theme="the-line"] .tl-pulse-value { font-size: 19px; }
   [data-theme="the-line"] .tl-pulse-label { font-size: 9.5px; letter-spacing: 0.12em; }
+}
+/* Below 480px, hide the secondary "PPA ASIA · 2026" chip — it's
+   the lowest-information of the strip on a phone where every pixel
+   counts. The remaining 3-4 chips fit a single horizontal row. */
+@media (max-width: 480px) {
+  [data-theme="the-line"] .tl-pulse-chip--secondary { display: none; }
 }
 
 /* ========== Nav green CTA (Create bracket) ========== */
