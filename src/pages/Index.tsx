@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, FormEvent } from "react";
+import { useEffect, useMemo, useState, FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
@@ -237,6 +237,81 @@ const Index = () => {
   const hasLiveData = liveStreams.length > 0;
   const liveCount = liveStreams.length;
   const upcomingCount = scheduledStreams.length;
+
+  // Unified Coming-up timeline (R2-9). Tournaments + scheduled streams
+  // merged into one chronological list so users see "what's next"
+  // without scanning two columns. Each item carries everything the row
+  // needs to render — kind tag, date, link, meta line.
+  type ScheduleItem = {
+    id: string;
+    dateIso: string | null | undefined;
+    title: string;
+    href: string;
+    orgName: string | null;
+    metaLine: ReactNode;
+    tagLabel: string;
+    tagCls: string;
+  };
+  const scheduleItems = useMemo<ScheduleItem[]>(() => {
+    const items: ScheduleItem[] = [];
+    upcomingTournaments.forEach((tourn) => {
+      const endDate = formatDate(tourn.end_date);
+      items.push({
+        id: `t-${tourn.id}`,
+        dateIso: tourn.start_date,
+        title: tourn.name,
+        href: `/tournament/${tourn.slug}`,
+        orgName:
+          (tourn as { organization?: { name?: string | null } | null }).organization?.name ?? null,
+        metaLine: (
+          <>
+            <span>{language === "vi" ? `Trạng thái: ${tourn.status}` : `Status: ${tourn.status}`}</span>
+            {tourn.end_date && (
+              <>
+                <span className="sep">·</span>
+                <span>
+                  {language === "vi"
+                    ? `Kết thúc ${endDate.d} ${endDate.m}`
+                    : `Ends ${endDate.d} ${endDate.m}`}
+                </span>
+              </>
+            )}
+          </>
+        ),
+        tagLabel: language === "vi" ? "GIẢI" : "BRACKET",
+        tagCls: tourn.status === "ongoing" ? "live" : tourn.status === "upcoming" ? "active" : "",
+      });
+    });
+    scheduledStreams.slice(0, 5).forEach((stream) => {
+      items.push({
+        id: `s-${stream.id}`,
+        dateIso: stream.scheduled_start_at,
+        title: stream.title ?? (language === "vi" ? "Stream sắp tới" : "Upcoming stream"),
+        href: `/live/${stream.id}`,
+        orgName: stream.organization?.name ?? null,
+        metaLine: (
+          <>
+            <span>{formatTime(stream.scheduled_start_at)}</span>
+            <span className="sep">·</span>
+            <Countdown
+              to={stream.scheduled_start_at}
+              pastLabel={language === "vi" ? "Đang phát" : "Live now"}
+              language={language}
+            />
+          </>
+        ),
+        tagLabel: language === "vi" ? "STREAM" : "STREAM",
+        tagCls: "",
+      });
+    });
+    // Sort chronologically by start date (ascending). Items with no date sink last.
+    items.sort((a, b) => {
+      const aT = a.dateIso ? new Date(a.dateIso).getTime() : Infinity;
+      const bT = b.dateIso ? new Date(b.dateIso).getTime() : Infinity;
+      return aT - bT;
+    });
+    return items.slice(0, 8);
+  }, [upcomingTournaments, scheduledStreams, language]);
 
   // Newsletter form wired to newsletter-subscribe edge function
   const [email, setEmail] = useState("");
@@ -634,8 +709,9 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Schedule — hide entire section when both panels empty */}
-      {(upcomingTournaments.length > 0 || scheduledStreams.length > 0) && (
+      {/* Schedule — single unified timeline now (R2-9). Always renders so
+          even an empty state ("No upcoming events yet") gives users a stable
+          anchor instead of the section disappearing entirely. */}
       <section className="tl-section">
         <div className="tl-shell">
           <div className="tl-sec-head">
@@ -644,14 +720,14 @@ const Index = () => {
                 <>
                   Sắp <em className="tl-serif">diễn ra.</em>{" "}
                   <span className="sans">
-                    {upcomingTournaments.length + scheduledStreams.length} sự kiện
+                    {scheduleItems.length} sự kiện
                   </span>
                 </>
               ) : (
                 <>
                   Coming <em className="tl-serif">up.</em>{" "}
                   <span className="sans">
-                    {upcomingTournaments.length + scheduledStreams.length} events
+                    {scheduleItems.length} events
                   </span>
                 </>
               )}
@@ -663,123 +739,65 @@ const Index = () => {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 20 }} className="tl-schedule-grid">
-            {upcomingTournaments.length > 0 && (
-            <div className="tl-panel">
-              <div className="tl-panel-head">
-                <h3>{language === "vi" ? "Giải đấu" : "Tournaments"}</h3>
-                <span className="meta">
-                  {language === "vi"
-                    ? `${upcomingTournaments.length} sắp tới`
-                    : `${upcomingTournaments.length} upcoming`}
-                </span>
-              </div>
-              {(
-                upcomingTournaments.map((tourn) => {
-                  const date = formatDate(tourn.start_date);
-                  const endDate = formatDate(tourn.end_date);
-                  return (
-                    <Link key={tourn.id} to={`/tournament/${tourn.slug}`} className="tl-sched-row">
-                      <div className="tl-sched-date">
-                        <span className="d">{date.d}</span>
-                        <span className="m">{date.m}</span>
-                      </div>
-                      <div className="tl-sched-body">
-                        <h4>{tourn.name}</h4>
-                        <div className="meta">
-                          {(tourn as { organization?: { name?: string | null } | null }).organization?.name && (
-                            <>
-                              <span className="org-line">
-                                {(tourn as { organization?: { name?: string | null } | null }).organization?.name}
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  className="tl-trust-tick"
-                                  fill="currentColor"
-                                  aria-label={language === "vi" ? "Nhà tổ chức xác minh" : "Verified organizer"}
-                                >
-                                  <path d="M9 12l2 2 4-4M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" strokeWidth="0" />
-                                  <circle cx="12" cy="12" r="10" fill="currentColor" />
-                                  <path d="M8 12.5l2.5 2.5L16 9.5" stroke="var(--tl-bg)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                                </svg>
-                              </span>
-                              <span className="sep">·</span>
-                            </>
-                          )}
-                          <span>{language === "vi" ? `Trạng thái: ${tourn.status}` : `Status: ${tourn.status}`}</span>
-                          {tourn.end_date && (
-                            <>
-                              <span className="sep">·</span>
-                              <span>
-                                {language === "vi"
-                                  ? `Kết thúc ${endDate.d} ${endDate.m}`
-                                  : `Ends ${endDate.d} ${endDate.m}`}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="tl-sched-right">
-                        <span className={`tag ${tourn.status === "ongoing" ? "live" : tourn.status === "upcoming" ? "active" : ""}`}>
-                          {tourn.status}
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-            )}
-
-            {scheduledStreams.length > 0 && (
-            <div className="tl-panel">
-              <div className="tl-panel-head">
-                <h3>{language === "vi" ? "Phát sóng" : "Streams"}</h3>
-                <span className="meta">
-                  {language === "vi"
-                    ? `${scheduledStreams.length} sắp tới`
-                    : `${scheduledStreams.length} scheduled`}
-                </span>
-              </div>
-              {scheduledLoading ? (
-                <div className="tl-lc-empty" style={{ padding: "32px 20px" }}>
-                  {language === "vi" ? "Đang tải…" : "Loading…"}
+          {/* Unified chronological timeline (R2-9). Tournaments + scheduled
+              streams interleaved by date, single column, kind tag distinguishes
+              the two. Replaces the previous 2-panel grid which forced users
+              to scan both columns to find what's happening tomorrow. */}
+          <div className="tl-schedule-list">
+            {scheduleItems.length === 0 ? (
+              <div className="tl-empty-card">
+                <div className="tl-empty-card-mark" aria-hidden="true">◌</div>
+                <div className="tl-empty-card-label">
+                  {language === "vi" ? "Chưa có sự kiện sắp tới" : "No upcoming events yet"}
                 </div>
-              ) : (
-                scheduledStreams.slice(0, 5).map((stream) => {
-                  const date = formatDate(stream.scheduled_start_at);
-                  return (
-                    <Link key={stream.id} to={`/live/${stream.id}`} className="tl-sched-row">
-                      <div className="tl-sched-date">
-                        <span className="d">{date.d}</span>
-                        <span className="m">{date.m}</span>
+                <div className="tl-empty-card-hint">
+                  {language === "vi"
+                    ? "Lịch sẽ cập nhật khi giải mở đăng ký hoặc stream được lên lịch."
+                    : "Schedule fills as brackets open registration and streams get scheduled."}
+                </div>
+              </div>
+            ) : (
+              scheduleItems.map((item) => {
+                const date = formatDate(item.dateIso);
+                return (
+                  <Link key={item.id} to={item.href} className="tl-sched-row">
+                    <div className="tl-sched-date">
+                      <span className="d">{date.d}</span>
+                      <span className="m">{date.m}</span>
+                    </div>
+                    <div className="tl-sched-body">
+                      <h4>{item.title}</h4>
+                      <div className="meta">
+                        {item.orgName && (
+                          <>
+                            <span className="org-line">
+                              {item.orgName}
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="tl-trust-tick"
+                                fill="currentColor"
+                                aria-label={language === "vi" ? "Nhà tổ chức xác minh" : "Verified organizer"}
+                              >
+                                <circle cx="12" cy="12" r="10" fill="currentColor" />
+                                <path d="M8 12.5l2.5 2.5L16 9.5" stroke="var(--tl-bg)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                              </svg>
+                            </span>
+                            <span className="sep">·</span>
+                          </>
+                        )}
+                        {item.metaLine}
                       </div>
-                      <div className="tl-sched-body">
-                        <h4>{stream.title ?? (language === "vi" ? "Stream sắp tới" : "Upcoming stream")}</h4>
-                        <div className="meta">
-                          <span>{formatTime(stream.scheduled_start_at)}</span>
-                          <span className="sep">·</span>
-                          <span>{stream.organization?.name ?? (language === "vi" ? "Phát sóng" : "Broadcast")}</span>
-                          <span className="sep">·</span>
-                          <Countdown
-                            to={stream.scheduled_start_at}
-                            pastLabel={language === "vi" ? "Đang phát" : "Live now"}
-                            language={language}
-                          />
-                        </div>
-                      </div>
-                      <div className="tl-sched-right">
-                        <span className="tag">{language === "vi" ? "Phát sóng" : "Stream"}</span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
+                    </div>
+                    <div className="tl-sched-right">
+                      <span className={`tag ${item.tagCls}`}>{item.tagLabel}</span>
+                    </div>
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>
       </section>
-      )}
 
       {/* Courtside — video highlights. Hide entire section if 0 videos. */}
       {videos.length > 0 && (

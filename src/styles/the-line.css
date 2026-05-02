@@ -2359,12 +2359,20 @@
   color: var(--tl-fg-3);
 }
 
-/* ========== Schedule grid 2→1 col on mobile ========== */
-@media (max-width: 900px) {
-  [data-theme="the-line"] .tl-schedule-grid {
-    grid-template-columns: 1fr !important;
-  }
+/* ========== Schedule unified timeline (R2-9) ==========
+   Replaces the old 2-panel grid (.tl-schedule-grid + .tl-panel pair).
+   Single chronological list of upcoming brackets and broadcasts. The
+   row chrome (.tl-sched-row, .tl-sched-date, .tl-sched-body) stays
+   the same — only the wrapper changes. */
+[data-theme="the-line"] .tl-schedule-list {
+  border: 1px solid var(--tl-border);
+  border-radius: var(--tl-radius-lg);
+  background: var(--tl-bg);
+  overflow: hidden;
 }
+/* Old class kept as a no-op selector to avoid breaking any external
+   scripts that might reference it; the JSX no longer emits this node. */
+[data-theme="the-line"] .tl-schedule-grid { display: contents; }
 
 /* ========== Light mode parity ==========
  * Toggle by setting data-mode="light" on the <html> element.
