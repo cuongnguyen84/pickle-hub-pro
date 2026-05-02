@@ -495,25 +495,19 @@ const Index = () => {
               ))}
             </div>
           ) : liveStreams.length === 0 ? (
-            <div
-              className="tl-panel"
-              style={{
-                padding: "28px 20px",
-                textAlign: "center",
-                fontFamily: "Geist Mono",
-                fontSize: 13,
-                color: "var(--tl-fg-3)",
-                letterSpacing: "0.04em",
-                display: "flex", flexWrap: "wrap", justifyContent: "center",
-                alignItems: "center", gap: 14,
-              }}
-            >
-              <span>
+            <div className="tl-empty-card">
+              <div className="tl-empty-card-mark" aria-hidden="true">◌</div>
+              <div className="tl-empty-card-label">
                 {language === "vi"
-                  ? "Không có trận nào đang phát — quay lại vào ngày thi đấu."
-                  : "No matches streaming right now. Check back during match days."}
-              </span>
-              <Link to="/live" className="tl-btn" style={{ fontSize: 13 }}>
+                  ? "Không có trận nào đang sóng"
+                  : "No match on air right now"}
+              </div>
+              <div className="tl-empty-card-hint">
+                {language === "vi"
+                  ? "Quay lại vào ngày thi đấu — hoặc xem lịch sắp tới."
+                  : "Check back on match days — or browse what's coming up."}
+              </div>
+              <Link to="/live" className="tl-empty-card-cta">
                 {language === "vi" ? "Xem tất cả sân →" : "Browse all courts →"}
               </Link>
             </div>
