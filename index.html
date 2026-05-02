@@ -56,8 +56,19 @@
       href="https://fonts.gstatic.com/s/geist/v4/gyByhwUxId8gMEwcGFWNOITd.woff2" />
     <link rel="preload" as="font" type="font/woff2" crossorigin
       href="https://fonts.gstatic.com/s/geistmono/v4/or3nQ6H-1_WfwkMZI_qYFrcdmhHkjko.woff2" />
-    <!-- Google Fonts - non-render-blocking -->
+    <!-- Google Fonts - non-render-blocking. The Line family is hoisted
+         from the @import in the-line.css so the @font-face declarations
+         arrive in parallel with main bundle download — preloaded woff2s
+         above can be used as soon as the CSS is parsed, eliminating the
+         FOUT window we otherwise pay (R2-8 from Round 2 audit). -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap"
+      media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" />
+    </noscript>
     <title>ThePickleHub – Pickleball Asia: Live, Brackets &amp; News</title>
     <meta name="description" content="The only bilingual pickleball platform built for Asia. Tournaments, livestream, and news in Vietnamese and English — free for organizers and players.">
     <meta name="author" content="ThePickleHub" />

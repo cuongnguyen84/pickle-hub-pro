@@ -1,10 +1,12 @@
 /* ============================================================================
  * The Line — Preview theme (Direction 04)
  * Scoped under [data-theme="the-line"]. Does not leak into production styles.
- * Fonts loaded via @import here so only preview route pays the cost.
+ * Fonts loaded from index.html as a non-blocking <link rel="stylesheet"
+ * media="print" onload="this.media='all'"> — see R2-8. The original
+ * @import here forced an extra round-trip after the-line.css arrived.
  * ========================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap");
+/* @import removed — fonts now load from index.html non-blocking link */
 
 [data-theme="the-line"] {
   /* -------------------------------------------------------------------
