@@ -105,9 +105,26 @@ export function validateScores(
     else bWins++;
   }
 
-  const target = Math.ceil(teamA.length / 2);
-  if (aWins < target && bWins < target) {
+  // Best-of-N: a team needs floor(N/2) + 1 game wins to win the series.
+  //   N=1 → 1 (1-0)
+  //   N=2 → 2 (2-0; 1-1 is unfinished)
+  //   N=3 → 2 (2-0 or 2-1)
+  //   N=4 → 3 (3-0, 3-1; 2-2 is unfinished)
+  //   N=5 → 3 (3-0, 3-1, 3-2)
+  // The previous Math.ceil(N/2) formula was wrong for even N (it allowed
+  // 1-1 in 2-game submissions and 2-2 in 4-game submissions to "win") —
+  // Codex bot caught this on PR #4.
+  const required = Math.floor(teamA.length / 2) + 1;
+  if (aWins < required && bWins < required) {
     return { valid: false, reason: "Chưa đội nào thắng đủ số game cần thiết." };
+  }
+
+  // Defensive: with the corrected required threshold, both teams reaching
+  // it simultaneously is mathematically impossible (would require sum of
+  // wins to exceed games_played). Guard anyway so a future refactor can't
+  // silently regress to the original bug.
+  if (aWins === bWins) {
+    return { valid: false, reason: "Hòa game count — cần thêm game tie-breaker." };
   }
 
   return {
