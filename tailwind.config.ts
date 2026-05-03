@@ -30,6 +30,14 @@ export default {
           "Roboto",
           "sans-serif",
         ],
+        // Score display + match scoreboard. Bet #1 spec §6 (Brand & Visual).
+        mono: [
+          "JetBrains Mono",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "monospace",
+        ],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -77,6 +85,29 @@ export default {
         },
         live: "hsl(var(--live))",
         "creator-badge": "hsl(var(--creator-badge))",
+        // ─── Bet #1 social brand tokens (spec §6, locked palette) ─────────
+        // Court green primary + vermillion CTA. Hex values intentional —
+        // they live alongside the existing HSL token system but don't
+        // override it; reach for `social-*` only inside Bet #1 surfaces.
+        social: {
+          primary:        "#00B86B",
+          "primary-dark": "#008C52",
+          accent:         "#FF6B35",
+          neutral: {
+            900: "#0A0E0F",
+            700: "#2A3133",
+            500: "#6B7378",
+            300: "#D5DADC",
+            100: "#F5F7F8",
+          },
+          bg:          "#FFFFFF",
+          "bg-elevated": "#F9FAFB",
+          success:  "#00B86B",
+          warning:  "#F59E0B",
+          error:    "#EF4444",
+          verified: "#0EA5E9",
+          pending:  "#F59E0B",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

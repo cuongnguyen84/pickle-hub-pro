@@ -72,3 +72,32 @@ verify_jwt = false
 [functions.invite-team-to-tournament]
 verify_jwt = false
 
+# ─── Bet #1 social layer (Sprint 1 skeletons) ──────────────────────────────
+# verify_jwt = false per the existing ES256/HS256 workaround. Each function
+# verifies the bearer token internally via supabase.auth.getUser() —
+# helper at supabase/functions/_shared/auth.ts.
+
+[functions.match-create]
+verify_jwt = false
+
+[functions.match-confirm]
+verify_jwt = false
+
+[functions.dupr-link]
+verify_jwt = false
+
+[functions.dupr-sync]
+verify_jwt = false
+
+[functions.feed-generate]
+verify_jwt = false
+
+[functions.leaderboard-compute]
+verify_jwt = false
+
+[functions.notification-send]
+verify_jwt = false
+
+[functions.match-expire]
+verify_jwt = false
+
