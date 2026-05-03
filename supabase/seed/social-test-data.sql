@@ -98,6 +98,9 @@ VALUES
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'::UUID, '00000000-0000-0000-0000-000000000000', 'ghost2-test@thepicklehub.test',     crypt('TestPass123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::JSONB, '{}'::JSONB, 'authenticated', 'authenticated', NOW(), NOW(), '', '', '', '');
 
 -- ─── 3. PROFILES  (10 users, mix of DUPR/non-DUPR/ghost) ──────────────────
+-- Supabase projects ship a `handle_new_user()` trigger that auto-creates
+-- a profile row when auth.users inserts. We UPSERT (ON CONFLICT) so our
+-- seed values overwrite the trigger-defaulted row instead of erroring.
 INSERT INTO public.profiles (
   id, email, username, display_name, avatar_url, bio, city, country,
   dominant_hand, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at,
@@ -116,7 +119,24 @@ VALUES
   ('88888888-8888-4888-8888-888888888888', 'dinhmai-test@thepicklehub.test',   'dinhmai-test',    'Đinh Mai Linh',  NULL, 'Mixed + women''s doubles.',                  'HCMC',    'VN', 'left',  NULL,    NULL, NULL, NULL, 4.00, FALSE, FALSE, FALSE, 'vi'),
   -- 9-10: ghost profiles (logged into a match by someone else)
   ('99999999-9999-4999-8999-999999999999', 'ghost1-test@thepicklehub.test',    'khachphuc-test',  'Khách Phúc',     NULL, NULL,                                         'Hà Nội',  'VN', NULL,    NULL,    NULL, NULL, NULL, NULL, FALSE, FALSE, TRUE,  'vi'),
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'ghost2-test@thepicklehub.test',    'khachminh-test',  'Khách Minh',     NULL, NULL,                                         'Đà Nẵng', 'VN', NULL,    NULL,    NULL, NULL, NULL, NULL, FALSE, FALSE, TRUE,  'vi');
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'ghost2-test@thepicklehub.test',    'khachminh-test',  'Khách Minh',     NULL, NULL,                                         'Đà Nẵng', 'VN', NULL,    NULL,    NULL, NULL, NULL, NULL, FALSE, FALSE, TRUE,  'vi')
+ON CONFLICT (id) DO UPDATE SET
+  email             = EXCLUDED.email,
+  username          = EXCLUDED.username,
+  display_name      = EXCLUDED.display_name,
+  bio               = EXCLUDED.bio,
+  city              = EXCLUDED.city,
+  country           = EXCLUDED.country,
+  dominant_hand     = EXCLUDED.dominant_hand,
+  dupr_id           = EXCLUDED.dupr_id,
+  dupr_singles      = EXCLUDED.dupr_singles,
+  dupr_doubles      = EXCLUDED.dupr_doubles,
+  dupr_synced_at    = EXCLUDED.dupr_synced_at,
+  self_rating       = EXCLUDED.self_rating,
+  is_pro            = EXCLUDED.is_pro,
+  is_verified       = EXCLUDED.is_verified,
+  is_ghost          = EXCLUDED.is_ghost,
+  preferred_language = EXCLUDED.preferred_language;
 
 -- ─── 4. VENUES (5 hardcoded realistic, 1 verified) ────────────────────────
 INSERT INTO public.venues (
