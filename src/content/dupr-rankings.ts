@@ -1,5 +1,5 @@
 /**
- * DUPR rankings snapshot — parsed from www.dupr.com on 2026-05-02.
+ * DUPR rankings snapshot — parsed from www.dupr.com on 2026-05-04.
  *
  * Source pages:
  *   - https://www.dupr.com/rankings (Open + Junior)
@@ -4214,4 +4214,4 @@ export const DUPR_FORMATS: { key: DuprFormat; labelEn: string; labelVi: string }
   { key: "womens-doubles", labelEn: "Women's Doubles", labelVi: "Đôi nữ" },
 ];
 
-export const DUPR_LAST_UPDATED = "2026-05-02";
+export const DUPR_LAST_UPDATED = "2026-05-04";
