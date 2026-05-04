@@ -1,8 +1,14 @@
-// Barrel export — Bet #1 Sprint 2 wizard hooks (steps 1-3)
+// Barrel export — Bet #1 Sprint 2 wizard hooks
 export { useNearbyVenues } from "./useNearbyVenues";
 export { useRecentVenues } from "./useRecentVenues";
 export { useSearchVenues } from "./useSearchVenues";
 export { useRecentPartners } from "./useRecentPartners";
 export { useSearchPlayers } from "./useSearchPlayers";
+export { useMatchCreate } from "./useMatchCreate";
 export { useDebounce } from "./useDebounce";
-export type { Venue, PlayerProfile } from "./types";
+export type {
+  Venue,
+  PlayerProfile,
+  MatchCreateInput,
+  MatchCreateResponse,
+} from "./types";
