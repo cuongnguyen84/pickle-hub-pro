@@ -89,6 +89,9 @@ const Forum = lazy(() => import("./pages/Forum"));
 const ForumCategory = lazy(() => import("./pages/ForumCategory"));
 const ForumPostDetail = lazy(() => import("./pages/ForumPostDetail"));
 const ForumPostCreate = lazy(() => import("./pages/ForumPostCreate"));
+
+// Bet #1 social — Sprint 2
+const MatchCheckIn = lazy(() => import("./pages/MatchCheckIn"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -373,6 +376,8 @@ const App = () => (
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/auth/reset-password" element={<ResetPassword />} />
                     <Route path="/account" element={<Account />} />
+                    {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
+                    <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/news" element={<News />} />

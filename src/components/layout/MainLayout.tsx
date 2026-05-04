@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import AppHeader from "./AppHeader";
+import MatchFAB from "./MatchFAB";
 import { cn } from "@/lib/utils";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -53,6 +54,7 @@ const MainLayout = ({ children, className }: MainLayoutProps) => {
           </div>
         )}
       </main>
+      <MatchFAB />
     </div>
   );
 };
