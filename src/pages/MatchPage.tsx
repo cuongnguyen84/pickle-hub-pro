@@ -95,7 +95,14 @@ function applyClientSeo(match: MatchDetail) {
   ensureMeta('meta[property="og:description"]', { property: "og:description", content: description });
   ensureMeta('meta[property="og:url"]', { property: "og:url", content: url });
   ensureMeta('meta[property="og:type"]', { property: "og:type", content: "article" });
+  // OG image — Phase 3B.3 og-image-match function (Cloudflare proxy at /og/match/{slug}.png)
+  const ogImage = `${SITE}/og/match/${encodeURIComponent(match.slug)}.png`;
+  ensureMeta('meta[property="og:image"]', { property: "og:image", content: ogImage });
+  ensureMeta('meta[property="og:image:width"]', { property: "og:image:width", content: "1200" });
+  ensureMeta('meta[property="og:image:height"]', { property: "og:image:height", content: "630" });
+  ensureMeta('meta[property="og:image:type"]', { property: "og:image:type", content: "image/png" });
   ensureMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
+  ensureMeta('meta[name="twitter:image"]', { name: "twitter:image", content: ogImage });
   ensureMeta('meta[name="twitter:title"]', { name: "twitter:title", content: title });
   ensureMeta('meta[name="twitter:description"]', { name: "twitter:description", content: description });
 
