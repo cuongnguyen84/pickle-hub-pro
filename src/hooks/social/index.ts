@@ -12,3 +12,6 @@ export type {
   MatchCreateInput,
   MatchCreateResponse,
 } from "./types";
+
+export { useMatch, useMatchConfirm, useMatchDispute } from "./useMatch";
+export type { MatchDetail, MatchParticipant, VerificationStatus } from "./useMatch";
