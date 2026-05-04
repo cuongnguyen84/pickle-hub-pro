@@ -100,4 +100,6 @@ verify_jwt = false
 
 [functions.match-expire]
 verify_jwt = false
+# Daily at 21:00 UTC = 04:00 ICT (UTC+7); sweeps pending > 7 days → expired.
+schedule = "0 21 * * *"
 
