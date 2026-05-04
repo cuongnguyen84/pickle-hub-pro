@@ -15,3 +15,11 @@ export type {
 
 export { useMatch, useMatchConfirm, useMatchDispute } from "./useMatch";
 export type { MatchDetail, MatchParticipant, VerificationStatus } from "./useMatch";
+
+export {
+  useSocialNotifications,
+  useSocialUnreadCount,
+  useMarkSocialAsRead,
+  useMarkAllSocialAsRead,
+} from "./useNotifications";
+export type { SocialNotification } from "./useNotifications";
