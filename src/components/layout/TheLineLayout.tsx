@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { SocialNotificationBell } from "@/components/social/notifications";
 import "@/styles/the-line.css";
 
 /* ---------------------------------------------------------------------------
@@ -255,6 +256,9 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 </svg>
                 <span className="tl-bell-dot" aria-hidden="true" />
               </Link>
+
+              {/* Bet #1 social: separate bell for match/social notifications */}
+              <SocialNotificationBell className="tl-icon-btn" />
 
               {/* Avatar + dropdown */}
               <div ref={avatarRef} style={{ position: "relative" }}>
