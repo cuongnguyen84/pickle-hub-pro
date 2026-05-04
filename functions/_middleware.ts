@@ -14,6 +14,7 @@ import {
   renderLive, renderVideo,
   renderTournamentDetail, renderTournaments,
   renderVideos, renderNews, renderForum, renderForumPost,
+  renderMatch,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage,
@@ -153,6 +154,10 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Tournament detail
   match = path.match(/^\/tournament\/([^/]+)$/);
   if (match) return await renderTournamentDetail(supabase, match[1], siteUrl);
+
+  // Match permalink (Sprint 2 Phase 3B.3)
+  match = path.match(/^\/tran-dau\/([^/]+)$/);
+  if (match && match[1] !== "moi") return await renderMatch(supabase, match[1], siteUrl);
 
   // Tournaments list
   if (path === "/tournaments") return await renderTournaments(supabase, siteUrl, rawPath, lang);

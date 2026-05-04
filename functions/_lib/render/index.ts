@@ -877,3 +877,188 @@ export function render404(path: string, siteUrl: string): Response {
     bodyContent: `<p>Trang bạn tìm không tồn tại.</p><p><a href="${siteUrl}/">Quay lại trang chủ</a></p>`,
   }), 404);
 }
+
+// ─── Match permalink ─────────────────────────────────────
+//
+// /tran-dau/{slug} — public match page (RLS matches.is_public read).
+// Renders SSR HTML matching the client-side SEO produced by
+// src/pages/MatchPage.tsx#applyClientSeo so bots see a complete
+// SportsEvent + meta tags identical to what humans see post-hydration.
+
+interface MatchSeoParticipant {
+  team: "a" | "b";
+  position: number | null;
+  username: string | null;
+  display_name: string | null;
+}
+
+function fmtScoreCompact(a: number[], b: number[]): string {
+  return a.map((s, i) => `${s}-${b[i] ?? 0}`).join(" ");
+}
+
+function fmtMatchDateVN(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function fmtMatchFormatVi(format: string): string {
+  if (format === "singles") return "Đơn";
+  if (format === "mixed") return "Đôi nam-nữ";
+  return "Đôi";
+}
+
+export async function renderMatch(
+  supabase: SupabaseClient,
+  slug: string,
+  siteUrl: string,
+): Promise<Response> {
+  // Mirrors useMatch hook query shape (src/hooks/social/useMatch.ts)
+  const { data: matchRow } = await supabase
+    .from("matches")
+    .select(
+      `id, slug, format, played_at, team_a_score, team_b_score, winning_team,
+       venue_id, venue_name_override, court_number,
+       venues:venue_id ( slug, name, city )`,
+    )
+    .eq("slug", slug)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (!matchRow) return render404(`/tran-dau/${slug}`, siteUrl);
+
+  const m = matchRow as Record<string, unknown>;
+  const venue = m.venues as { slug: string; name: string; city: string } | null;
+  const venueName = venue?.name ?? (m.venue_name_override as string | null) ?? "";
+  const venueCity = venue?.city ?? "";
+
+  const { data: parts } = await supabase
+    .from("match_participants")
+    .select(
+      `team, position,
+       profile:profiles!match_participants_player_id_fkey ( username, display_name )`,
+    )
+    .eq("match_id", m.id as string)
+    .order("team", { ascending: true })
+    .order("position", { ascending: true });
+
+  const participants: MatchSeoParticipant[] = (parts ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    const p = (r.profile ?? {}) as { username?: string | null; display_name?: string | null };
+    return {
+      team: r.team as "a" | "b",
+      position: (r.position as number) ?? null,
+      username: p.username ?? null,
+      display_name: p.display_name ?? null,
+    };
+  });
+
+  const teamA = participants.filter((p) => p.team === "a");
+  const teamB = participants.filter((p) => p.team === "b");
+  const p1Name = teamA[0]?.display_name ?? teamA[0]?.username ?? "?";
+  const p2Name = teamB[0]?.display_name ?? teamB[0]?.username ?? "?";
+
+  const teamALabel = teamA
+    .map((p) => p.display_name ?? p.username ?? "?")
+    .filter(Boolean)
+    .join(" & ") || p1Name;
+  const teamBLabel = teamB
+    .map((p) => p.display_name ?? p.username ?? "?")
+    .filter(Boolean)
+    .join(" & ") || p2Name;
+
+  const playedAt = m.played_at as string;
+  const teamAScore = (m.team_a_score as number[]) || [];
+  const teamBScore = (m.team_b_score as number[]) || [];
+  const winningTeam = m.winning_team as "a" | "b" | null;
+  const format = m.format as string;
+
+  const score = fmtScoreCompact(teamAScore, teamBScore);
+  const date = fmtMatchDateVN(playedAt);
+  const fmtLabel = fmtMatchFormatVi(format);
+  const venueLabel = venueName ? venueName : "";
+
+  // Title matches client-side applyClientSeo exactly
+  const rawTitle = `${p1Name} vs ${p2Name}, ${score}${venueLabel ? ` — ${venueLabel}` : ""}, ${date}`;
+  const title = buildTitle(rawTitle, " | ThePickleHub");
+
+  const description = buildMetaDescription(
+    `Trận pickleball ${fmtLabel} ngày ${date}${venueLabel ? ` tại ${venueLabel}` : ""}, kết quả ${score}.`,
+    { type: "default", title: `${p1Name} vs ${p2Name}` },
+  );
+
+  const winnerName = winningTeam === "a" ? p1Name : p2Name;
+
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    name: `${p1Name} vs ${p2Name}`,
+    sport: "Pickleball",
+    startDate: playedAt,
+    url: `${siteUrl}/tran-dau/${slug}`,
+    description,
+    competitor: [
+      { "@type": "Person", name: p1Name },
+      { "@type": "Person", name: p2Name },
+    ],
+  };
+  if (winnerName && winningTeam) {
+    jsonLd.winner = { "@type": "Person", name: winnerName };
+  }
+  if (venueLabel) {
+    jsonLd.location = {
+      "@type": "SportsActivityLocation",
+      name: venueLabel,
+      ...(venueCity ? { address: venueCity } : {}),
+    };
+  }
+
+  const bc = breadcrumb([
+    { label: "Trang chủ", href: siteUrl },
+    { label: "Trận đấu" },
+    { label: `${p1Name} vs ${p2Name}` },
+  ]);
+
+  // Bot-readable body with the same data the user gets — keeps the prerender
+  // honest (no cloaking) and gives Google a text excerpt to preview.
+  const bodyContent = `${bc}
+<h1>${escapeHtml(`${teamALabel} vs ${teamBLabel}`)}</h1>
+<p><strong>${escapeHtml(date)}</strong>${venueLabel ? ` · ${escapeHtml(venueLabel)}` : ""}${venueCity ? `, ${escapeHtml(venueCity)}` : ""}</p>
+<p>Hình thức: ${escapeHtml(fmtLabel)}</p>
+<p>Tỉ số: <strong>${escapeHtml(score)}</strong></p>
+${winnerName ? `<p>Người thắng: <strong>${escapeHtml(winnerName)}</strong></p>` : ""}`;
+
+  // OG image points to the og-image-match function (Phase 3B.3 deliverable 3).
+  // Even when that endpoint doesn't exist yet, og:image is harmless — bots
+  // fall back to absent-image rendering rather than failing the page.
+  const ogImage = `${siteUrl}/og/match/${encodeURIComponent(slug)}.png`;
+
+  const extraMeta = [
+    `<meta property="og:image:width" content="1200"/>`,
+    `<meta property="og:image:height" content="630"/>`,
+    `<meta property="og:image:type" content="image/png"/>`,
+    `<meta name="twitter:image" content="${escapeHtml(ogImage)}"/>`,
+  ].join("\n");
+
+  return htmlResponse(
+    buildHtml({
+      title,
+      description,
+      url: `${siteUrl}/tran-dau/${slug}`,
+      siteUrl,
+      image: ogImage,
+      type: "article",
+      jsonLd,
+      bodyContent,
+      extraMeta,
+      lang: "vi",
+    }),
+  );
+}
