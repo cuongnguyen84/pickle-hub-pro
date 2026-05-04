@@ -1,21 +1,21 @@
 // ============================================================================
-// SocialNotificationBell — Sprint 2 Phase 3B.2
+// UnifiedNotificationBell — Sprint 2 Phase 3B.2 follow-up
 // ----------------------------------------------------------------------------
-// Bell + unread-count badge. Desktop: Popover. Mobile: bottom Drawer.
-// Mounted in AppHeader next to the existing legacy NotificationBell.
+// Single bell for legacy + social notifications combined. Replaces the two
+// separate bells previously mounted in AppHeader + TheLineLayout.
 // ============================================================================
 
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSocialUnreadCount } from "@/hooks/social";
+import { useUnifiedUnreadCount } from "@/hooks/social";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import NotificationList from "./NotificationList";
 
-interface SocialNotificationBellProps {
+interface UnifiedNotificationBellProps {
   className?: string;
 }
 
@@ -31,18 +31,12 @@ const useIsMobile = () => {
   return mobile;
 };
 
-const Trigger = ({
-  unread,
-  highlight,
-}: {
-  unread: number;
-  highlight: boolean;
-}) => (
+const Trigger = ({ unread, highlight }: { unread: number; highlight: boolean }) => (
   <Button
     variant="ghost"
     size="icon"
     className={cn("relative", highlight && "animate-bounce")}
-    aria-label="Thông báo trận đấu"
+    aria-label="Thông báo"
   >
     <Bell className={cn("h-5 w-5", highlight && "text-social-primary")} />
     {unread > 0 && (
@@ -60,14 +54,13 @@ const Trigger = ({
   </Button>
 );
 
-export const SocialNotificationBell = ({ className }: SocialNotificationBellProps) => {
+export const UnifiedNotificationBell = ({ className }: UnifiedNotificationBellProps) => {
   const { user } = useAuth();
-  const { data: unread = 0 } = useSocialUnreadCount();
+  const { data: unread = 0 } = useUnifiedUnreadCount();
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(false);
   const isMobile = useIsMobile();
 
-  // Animate when unread count increases
   useEffect(() => {
     if (unread > 0) {
       setHighlight(true);
@@ -113,4 +106,4 @@ export const SocialNotificationBell = ({ className }: SocialNotificationBellProp
   );
 };
 
-export default SocialNotificationBell;
+export default UnifiedNotificationBell;

@@ -10,8 +10,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { NotificationBell } from "@/components/notifications";
-import { SocialNotificationBell } from "@/components/social/notifications";
+import { UnifiedNotificationBell } from "@/components/social/notifications";
 import { getLoginUrl } from "@/lib/auth-config";
 
 const AppHeader = () => {
@@ -113,8 +112,7 @@ const AppHeader = () => {
             <LanguageSwitcher />
 
             {/* Notification Bell - Desktop */}
-            <NotificationBell className="hidden md:block" />
-            <SocialNotificationBell className="hidden md:block" />
+            <UnifiedNotificationBell className="hidden md:block" />
 
             {/* Search - Desktop */}
             <Link
@@ -177,7 +175,7 @@ const AppHeader = () => {
             )}
 
             {/* Mobile: social bell (visible on small screens, before hamburger) */}
-            {user && <SocialNotificationBell className="md:hidden" />}
+            {user && <UnifiedNotificationBell className="md:hidden" />}
 
             {/* Mobile Menu Toggle */}
             <button

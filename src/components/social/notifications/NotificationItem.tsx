@@ -1,35 +1,51 @@
 // ============================================================================
-// NotificationItem — Sprint 2 Phase 3B.2
-// Type-specific icon + title + body + time-ago + unread dot.
+// NotificationItem — Sprint 2 Phase 3B.2 (unified)
+// ----------------------------------------------------------------------------
+// Source-specific + type-specific icon + title + body + time-ago + unread dot.
+// Consumes UnifiedNotification (legacy + social merged).
 // ============================================================================
 
-import { Bell, CheckCircle2, AlertTriangle, Heart, MessageCircle } from "lucide-react";
+import { Bell, CheckCircle2, AlertTriangle, Heart, MessageCircle, Radio, Calendar, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatVietnameseTimeAgo } from "@/lib/social";
-import type { SocialNotification } from "@/hooks/social";
+import type { UnifiedNotification } from "@/hooks/social";
 
 interface IconConf {
   Icon: typeof Bell;
   className: string;
 }
 
-const TYPE_ICON: Record<string, IconConf> = {
-  match_confirm_needed: { Icon: Bell,         className: "text-yellow-600 dark:text-yellow-400" },
+// Source 'social' — match-related types
+const SOCIAL_ICON: Record<string, IconConf> = {
+  match_confirm_needed: { Icon: Bell,          className: "text-yellow-600 dark:text-yellow-400" },
   match_verified:        { Icon: CheckCircle2, className: "text-blue-600 dark:text-blue-400" },
   match_disputed:        { Icon: AlertTriangle,className: "text-destructive" },
+  match_expired:         { Icon: Trophy,       className: "text-muted-foreground" },
   kudos_received:        { Icon: Heart,        className: "text-pink-600 dark:text-pink-400" },
   comment_received:      { Icon: MessageCircle,className: "text-social-primary" },
 };
 
+// Source 'legacy' — livestream / forum types
+const LEGACY_ICON: Record<string, IconConf> = {
+  livestream_live:       { Icon: Radio,        className: "text-destructive" },
+  livestream_scheduled:  { Icon: Calendar,     className: "text-primary" },
+  forum_reply:           { Icon: MessageCircle,className: "text-primary" },
+};
+
 const DEFAULT_ICON: IconConf = { Icon: Bell, className: "text-muted-foreground" };
 
+function pickIcon(n: UnifiedNotification): IconConf {
+  const map = n.source === "legacy" ? LEGACY_ICON : SOCIAL_ICON;
+  return map[n.type] ?? DEFAULT_ICON;
+}
+
 interface NotificationItemProps {
-  notification: SocialNotification;
+  notification: UnifiedNotification;
   onClick: () => void;
 }
 
 export const NotificationItem = ({ notification, onClick }: NotificationItemProps) => {
-  const conf = TYPE_ICON[notification.type] ?? DEFAULT_ICON;
+  const conf = pickIcon(notification);
   const { Icon } = conf;
   return (
     <button

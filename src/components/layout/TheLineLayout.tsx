@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
-import { SocialNotificationBell } from "@/components/social/notifications";
+import { UnifiedNotificationBell } from "@/components/social/notifications";
 import "@/styles/the-line.css";
 
 /* ---------------------------------------------------------------------------
@@ -244,21 +244,8 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
           {user ? (
             <>
-              {/* Notification bell */}
-              <Link
-                to="/notifications"
-                className="tl-icon-btn tl-bell"
-                aria-label="Notifications"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-                <span className="tl-bell-dot" aria-hidden="true" />
-              </Link>
-
-              {/* Bet #1 social: separate bell for match/social notifications */}
-              <SocialNotificationBell className="tl-icon-btn" />
+              {/* Unified notification bell — legacy + social merged (Sprint 2 Phase 3B.2 unify) */}
+              <UnifiedNotificationBell className="tl-icon-btn" />
 
               {/* Avatar + dropdown */}
               <div ref={avatarRef} style={{ position: "relative" }}>

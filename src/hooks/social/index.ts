@@ -23,3 +23,12 @@ export {
   useMarkAllSocialAsRead,
 } from "./useNotifications";
 export type { SocialNotification } from "./useNotifications";
+
+export {
+  useUnifiedNotifications,
+  useUnifiedUnreadCount,
+  useMarkUnifiedAsRead,
+  useMarkAllUnifiedAsRead,
+  useUnifiedNotificationsBundle,
+} from "./useUnifiedNotifications";
+export type { UnifiedNotification, NotificationSource } from "./useUnifiedNotifications";
