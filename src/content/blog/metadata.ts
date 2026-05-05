@@ -10,6 +10,24 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-tour-wars-2023-explained",
+    publishedDate: "2026-05-05",
+    updatedDate: "2026-05-05",
+    author: "Cuong Nguyen",
+    tags: ["tour wars", "ppa tour", "mlp", "upa", "professional pickleball", "history", "gold contract", "asia"],
+    ctaPath: "/blog/app-tour-vs-ppa-tour-contracts-2026",
+    ctaLabel: { en: "Read: APP Tour vs PPA Tour Contracts in 2026", vi: "Đọc tiếp: Hợp đồng APP Tour vs PPA Tour 2026" },
+    heroImage: {
+      src: "/images/blog/pickleball-tour-wars-2023-hero.webp",
+      alt: "Pickleball Tour Wars 2023 — the 10-day signing frenzy in August 2023 between PPA Tour and Major League Pickleball that reshaped professional pickleball, created exclusive Gold Contracts, and set the stage for the 2024 UPA merger"
+    },
+    titleEn: "Pickleball Tour Wars 2023: The 10 Days That Reshaped Pro Pickleball Forever",
+    titleVi: "Tour Wars 2023: 10 ngày thay đổi pickleball chuyên nghiệp mãi mãi",
+    metaTitleEn: "Pickleball Tour Wars 2023 Explained | 10 Days That Changed Pro Pickleball",
+    metaTitleVi: "Tour Wars 2023 | 10 ngày định hình pickleball pro hiện đại",
+    metaDescriptionEn: "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today.",
+    metaDescriptionVi: "Tour Wars 2023: PPA và MLP đua ký 150 VĐV trong 10 ngày, tạo Gold Contract mãi mãi, dẫn đến sáp nhập UPA — và ý nghĩa cho VĐV Việt Nam hôm nay.",
+  },  {
     slug: "app-tour-vs-ppa-tour-contracts-2026",
     publishedDate: "2026-05-05",
     updatedDate: "2026-05-05",
