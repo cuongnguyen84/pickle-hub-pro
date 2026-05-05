@@ -10,6 +10,24 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "app-tour-vs-ppa-tour-contracts-2026",
+    publishedDate: "2026-05-05",
+    updatedDate: "2026-05-05",
+    author: "Cuong Nguyen",
+    tags: ["app tour", "ppa tour", "professional pickleball", "contracts", "quang duong", "asia", "global pickleball alliance"],
+    ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
+    ctaLabel: { en: "Read the PPA Tour Asia 2026 Guide", vi: "Đọc hướng dẫn PPA Tour Asia 2026" },
+    heroImage: {
+      src: "/images/blog/app-tour-vs-ppa-tour-contracts-hero.webp",
+      alt: "APP Tour vs PPA Tour 2026 contract comparison — APP's open free-agent model versus PPA's exclusive multi-year deals, with Quang Duong's APP signing as a case study from Vietnam"
+    },
+    titleEn: "APP Tour vs PPA Tour: How Pickleball's Two Pro Contracts Actually Work in 2026",
+    titleVi: "Hợp đồng APP Tour vs PPA Tour: Hai cách tổ chức pro pickleball năm 2026",
+    metaTitleEn: "APP Tour vs PPA Tour 2026 | Contracts, Money & Exclusivity Compared",
+    metaTitleVi: "APP Tour vs PPA Tour 2026 | Hợp đồng, tiền thưởng, độc quyền",
+    metaDescriptionEn: "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained.",
+    metaDescriptionVi: "So sánh APP Tour vs PPA Tour 2026: hợp đồng, tiền thưởng, điều khoản độc quyền, Global Pickleball Alliance, và hợp đồng APP của Quang Dương.",
+  },  {
     slug: "how-to-play-pickleball",
     publishedDate: "2026-04-26",
     updatedDate: "2026-04-26",
