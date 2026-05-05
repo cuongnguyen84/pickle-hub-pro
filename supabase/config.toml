@@ -100,6 +100,9 @@ verify_jwt = false
 
 [functions.match-expire]
 verify_jwt = false
-# Daily at 21:00 UTC = 04:00 ICT (UTC+7); sweeps pending > 7 days → expired.
-schedule = "0 21 * * *"
+# Cron schedule activated manually via Supabase Dashboard → Database → Cron Jobs
+# (older Supabase CLI versions reject a schedule key here; the dashboard cron
+# is the source of truth — daily at 21:00 UTC = 04:00 ICT, sweeps pending > 7d
+# matches → expired).
+# schedule = "0 21 * * *"
 
