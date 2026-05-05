@@ -55,6 +55,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   // EN blog post slugs (static — kept in sync with src/content/blog/metadata.ts)
   const EN_BLOG_SLUGS = [
+    "pickleball-tour-wars-2023-explained",
+    "app-tour-vs-ppa-tour-contracts-2026",
     "how-to-watch-ppa-tour-live-2026",
     "ppa-tour-asia-2026-complete-guide",
     "best-pickleball-tournament-software-2026",
