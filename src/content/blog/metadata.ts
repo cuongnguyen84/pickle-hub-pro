@@ -10,6 +10,42 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-tour-wars-2023-explained",
+    publishedDate: "2026-05-05",
+    updatedDate: "2026-05-05",
+    author: "Cuong Nguyen",
+    tags: ["tour wars", "ppa tour", "mlp", "upa", "professional pickleball", "history", "gold contract", "asia"],
+    ctaPath: "/blog/app-tour-vs-ppa-tour-contracts-2026",
+    ctaLabel: { en: "Read: APP Tour vs PPA Tour Contracts in 2026", vi: "Đọc tiếp: Hợp đồng APP Tour vs PPA Tour 2026" },
+    heroImage: {
+      src: "/images/blog/pickleball-tour-wars-2023-hero.webp",
+      alt: "Pickleball Tour Wars 2023 — the 10-day signing frenzy in August 2023 between PPA Tour and Major League Pickleball that reshaped professional pickleball, created exclusive Gold Contracts, and set the stage for the 2024 UPA merger"
+    },
+    titleEn: "Pickleball Tour Wars 2023: The 10 Days That Reshaped Pro Pickleball Forever",
+    titleVi: "Tour Wars 2023: 10 ngày thay đổi pickleball chuyên nghiệp mãi mãi",
+    metaTitleEn: "Pickleball Tour Wars 2023 Explained | 10 Days That Changed Pro Pickleball",
+    metaTitleVi: "Tour Wars 2023 | 10 ngày định hình pickleball pro hiện đại",
+    metaDescriptionEn: "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today.",
+    metaDescriptionVi: "Tour Wars 2023: PPA và MLP đua ký 150 VĐV trong 10 ngày, tạo Gold Contract mãi mãi, dẫn đến sáp nhập UPA — và ý nghĩa cho VĐV Việt Nam hôm nay.",
+  },  {
+    slug: "app-tour-vs-ppa-tour-contracts-2026",
+    publishedDate: "2026-05-05",
+    updatedDate: "2026-05-05",
+    author: "Cuong Nguyen",
+    tags: ["app tour", "ppa tour", "professional pickleball", "contracts", "quang duong", "asia", "global pickleball alliance"],
+    ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
+    ctaLabel: { en: "Read the PPA Tour Asia 2026 Guide", vi: "Đọc hướng dẫn PPA Tour Asia 2026" },
+    heroImage: {
+      src: "/images/blog/app-tour-vs-ppa-tour-contracts-hero.webp",
+      alt: "APP Tour vs PPA Tour 2026 contract comparison — APP's open free-agent model versus PPA's exclusive multi-year deals, with Quang Duong's APP signing as a case study from Vietnam"
+    },
+    titleEn: "APP Tour vs PPA Tour: How Pickleball's Two Pro Contracts Actually Work in 2026",
+    titleVi: "Hợp đồng APP Tour vs PPA Tour: Hai cách tổ chức pro pickleball năm 2026",
+    metaTitleEn: "APP Tour vs PPA Tour 2026 | Contracts, Money & Exclusivity Compared",
+    metaTitleVi: "APP Tour vs PPA Tour 2026 | Hợp đồng, tiền thưởng, độc quyền",
+    metaDescriptionEn: "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained.",
+    metaDescriptionVi: "So sánh APP Tour vs PPA Tour 2026: hợp đồng, tiền thưởng, điều khoản độc quyền, Global Pickleball Alliance, và hợp đồng APP của Quang Dương.",
+  },  {
     slug: "how-to-play-pickleball",
     publishedDate: "2026-04-26",
     updatedDate: "2026-04-26",
