@@ -661,6 +661,8 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
 // fine for humans, and the URL cannot be indexed (verified 2026-04-23 with
 // the world-cup-pickleball-2026-da-nang post).
 const BLOG_POST_META: Record<string, { title: string; description: string }> = {
+  "pickleball-tour-wars-2023-explained": { title: "Pickleball Tour Wars 2023 Explained | 10 Days That Changed Pro Pickleball", description: "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today." },
+  "app-tour-vs-ppa-tour-contracts-2026": { title: "APP Tour vs PPA Tour 2026 | Contracts, Money & Exclusivity Compared", description: "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained." },
   "pickleball-world-cup-2026-da-nang": { title: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch", description: "Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). Up to 80 nations, 4,000 athletes. Dates, venues, format, Vietnam team." },
   "how-to-watch-ppa-tour-live-2026": { title: "How to Watch PPA Tour Live 2026 | Streaming Platforms, Schedules & Free Options", description: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS, ESPN, and Fox Sports. Plus free YouTube highlights + ThePickleHub livestreams." },
   "ppa-tour-asia-2026-complete-guide": { title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play", description: "PPA Tour Asia 2026 complete guide — 10 tournament stops in Vietnam, Japan, Korea, Thailand. Schedule, prize money, registration, live streams." },
