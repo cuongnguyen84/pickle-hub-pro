@@ -6,3 +6,5 @@ export * from "./username-generator";
 export * from "./score-validation";
 export * from "./slug";
 export * from "./device-meta";
+
+export { formatVietnameseTimeAgo } from "./time-ago";

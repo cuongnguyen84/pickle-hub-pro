@@ -100,6 +100,20 @@ verify_jwt = false
 
 [functions.match-expire]
 verify_jwt = false
-# Daily at 21:00 UTC = 04:00 ICT (UTC+7); sweeps pending > 7 days → expired.
-schedule = "0 21 * * *"
+# Cron schedule activated manually via Supabase Dashboard → Database → Cron Jobs
+# (older Supabase CLI versions reject a schedule key here; the dashboard cron
+# is the source of truth — daily at 21:00 UTC = 04:00 ICT, sweeps pending > 7d
+# matches → expired).
+# schedule = "0 21 * * *"
 
+[functions.sitemap]
+verify_jwt = false
+# Public endpoint — robots/Googlebot/social crawlers must reach without auth.
+# CF Pages /sitemap*.xml routes use service role key internally; this Supabase
+# endpoint is a backup direct-access path.
+
+[functions.og-image-match]
+verify_jwt = false
+# Public endpoint — Facebook/Twitter/LinkedIn/Slack scrapers must fetch the
+# 1200×630 PNG when a /tran-dau/{slug} URL is shared. CF Pages /og/match/*
+# proxies + caches in KV (7d TTL) — see functions/og/match/[slug].png.ts.
