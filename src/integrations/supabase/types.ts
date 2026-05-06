@@ -837,6 +837,81 @@ export type Database = {
         }
         Relationships: []
       }
+      dupr_rating_history: {
+        Row: {
+          dupr_doubles: number | null
+          dupr_singles: number | null
+          id: string
+          profile_id: string
+          recorded_at: string | null
+          source: string
+        }
+        Insert: {
+          dupr_doubles?: number | null
+          dupr_singles?: number | null
+          id?: string
+          profile_id: string
+          recorded_at?: string | null
+          source?: string
+        }
+        Update: {
+          dupr_doubles?: number | null
+          dupr_singles?: number | null
+          id?: string
+          profile_id?: string
+          recorded_at?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dupr_rating_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dupr_rating_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dupr_sync_runs: {
+        Row: {
+          duration_ms: number | null
+          error_summary: string | null
+          finished_at: string | null
+          id: string
+          profiles_failed: number
+          profiles_ok: number
+          profiles_total: number
+          started_at: string
+        }
+        Insert: {
+          duration_ms?: number | null
+          error_summary?: string | null
+          finished_at?: string | null
+          id?: string
+          profiles_failed?: number
+          profiles_ok?: number
+          profiles_total?: number
+          started_at?: string
+        }
+        Update: {
+          duration_ms?: number | null
+          error_summary?: string | null
+          finished_at?: string | null
+          id?: string
+          profiles_failed?: number
+          profiles_ok?: number
+          profiles_total?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
       flex_group_items: {
         Row: {
           created_at: string
@@ -2225,6 +2300,9 @@ export type Database = {
           dominant_hand: string | null
           dupr_doubles: number | null
           dupr_id: string | null
+          dupr_last_attempt_at: string | null
+          dupr_last_error: string | null
+          dupr_profile_url: string | null
           dupr_singles: number | null
           dupr_synced_at: string | null
           email: string
@@ -2232,6 +2310,8 @@ export type Database = {
           is_ghost: boolean | null
           is_pro: boolean | null
           is_verified: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_step: number | null
           organization_id: string | null
           phone: string | null
           preferred_language: string | null
@@ -2251,6 +2331,9 @@ export type Database = {
           dominant_hand?: string | null
           dupr_doubles?: number | null
           dupr_id?: string | null
+          dupr_last_attempt_at?: string | null
+          dupr_last_error?: string | null
+          dupr_profile_url?: string | null
           dupr_singles?: number | null
           dupr_synced_at?: string | null
           email: string
@@ -2258,6 +2341,8 @@ export type Database = {
           is_ghost?: boolean | null
           is_pro?: boolean | null
           is_verified?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_step?: number | null
           organization_id?: string | null
           phone?: string | null
           preferred_language?: string | null
@@ -2277,6 +2362,9 @@ export type Database = {
           dominant_hand?: string | null
           dupr_doubles?: number | null
           dupr_id?: string | null
+          dupr_last_attempt_at?: string | null
+          dupr_last_error?: string | null
+          dupr_profile_url?: string | null
           dupr_singles?: number | null
           dupr_synced_at?: string | null
           email?: string
@@ -2284,6 +2372,8 @@ export type Database = {
           is_ghost?: boolean | null
           is_pro?: boolean | null
           is_verified?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_step?: number | null
           organization_id?: string | null
           phone?: string | null
           preferred_language?: string | null
@@ -4298,6 +4388,37 @@ export type Database = {
           org_id: string
         }[]
       }
+      get_player_match_history: {
+        Args: { p_limit?: number; p_offset?: number; p_player_id: string }
+        Returns: {
+          format: string
+          match_id: string
+          match_type: string
+          participants: Json
+          played_at: string
+          player_team: string
+          player_won: boolean
+          slug: string
+          team_a_score: number[]
+          team_b_score: number[]
+          venue_name: string
+          winning_team: string
+        }[]
+      }
+      get_player_stats: {
+        Args: { p_username: string }
+        Returns: {
+          current_streak: number
+          followers_count: number
+          following_count: number
+          last_5_form: string
+          losses: number
+          profile_id: string
+          total_matches: number
+          win_rate: number
+          wins: number
+        }[]
+      }
       get_public_profile: {
         Args: { profile_id: string }
         Returns: {
@@ -4312,6 +4433,18 @@ export type Database = {
           avatar_url: string
           display_name: string
           id: string
+        }[]
+      }
+      get_suggested_follows: {
+        Args: { p_limit?: number; p_viewer_id: string }
+        Returns: {
+          avatar_url: string
+          city: string
+          display_name: string
+          dupr_doubles: number
+          id: string
+          reason: string
+          username: string
         }[]
       }
       get_top_blog_posts: {
@@ -4423,6 +4556,19 @@ export type Database = {
       respond_pair_request: {
         Args: { _accept: boolean; _request_id: string }
         Returns: Json
+      }
+      search_players: {
+        Args: { p_exclude_id?: string; p_limit?: number; p_query: string }
+        Returns: {
+          avatar_url: string
+          city: string
+          display_name: string
+          dupr_doubles: number
+          id: string
+          is_ghost: boolean
+          is_verified: boolean
+          username: string
+        }[]
       }
       set_user_quota: {
         Args: { _new_quota: number; _user_id: string }
