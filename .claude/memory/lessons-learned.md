@@ -258,3 +258,54 @@ Project already has eslint config — confirm `react-hooks/rules-of-hooks` is `"
 **When to revisit:** after concurrent homepage traffic exceeds ~500 simultaneous (check GA4 realtime users + Supabase Realtime channel count). At that scale the cost shows up. Until then the per-user channel is fine.
 
 **Reference:** `.claude/memory/` other rules don't apply here — this is a pure scaling question, not a correctness or security one.
+
+---
+
+## EN blog post: 4 files MUST stay in sync
+
+**Recurring bug (3 occurrences as of 2026-05-05):**
+- `pickleball-world-cup-2026-da-nang` (2026-04-23) — bot 404, fixed by adding to `BLOG_POST_META`
+- `pickleball-tour-wars-2023-explained` (2026-05-05) — same bot 404, same fix
+- `app-tour-vs-ppa-tour-contracts-2026` (2026-05-05) — same bot 404, same fix
+
+Plus a parallel sitemap miss confirmed by GSC URL Inspection 2026-05-05 ("Không phát hiện sơ đồ trang web giới thiệu nào") for both 2026-05-05 posts before commit `61b4fa8`.
+
+**Symptom:** New EN blog post renders fine for humans (React SPA) but Googlebot/Bingbot get 404 on `/blog/<slug>`. Or, post is reachable but GSC URL Inspection reports no referring sitemap → crawl priority degraded.
+
+**Cause:** Bots hit the Cloudflare Pages prerender path (`functions/_lib/render/index.ts`), which uses two hardcoded dictionaries:
+1. `BLOG_POST_META: Record<string, {title, description}>` — controls whether a blog slug renders at all for bots. Missing entry = 404.
+2. `EN_BLOG_SLUGS` in `functions/sitemap.xml.ts` — controls whether the slug appears in `/sitemap.xml`. Missing entry = no referring sitemap, GSC crawl priority degraded.
+
+Both are independent of `src/content/blog/metadata.ts` (used by SPA list pages) and `src/content/blog/posts/<slug>.ts` (used by SPA detail page). Shipping a new post by adding only the SPA files leaves the bot path broken.
+
+**Rule:** Every new EN blog post MUST update all 4 files in the same commit (or in a 4-commit batch before deploy):
+1. `src/content/blog/posts/<slug>.ts` — full content (SPA detail page)
+2. `src/content/blog/metadata.ts` — list-page metadata (SPA list/related)
+3. `functions/_lib/render/index.ts` — `BLOG_POST_META` dict (bot prerender)
+4. `functions/sitemap.xml.ts` — `EN_BLOG_SLUGS` array (sitemap)
+
+**Verify before merging to main:**
+```bash
+SLUG=<your-new-slug>
+grep "$SLUG" src/content/blog/posts/$SLUG.ts \
+            src/content/blog/metadata.ts \
+            functions/_lib/render/index.ts \
+            functions/sitemap.xml.ts | wc -l
+# Expect ≥4 (one match per file at minimum).
+```
+
+Post-deploy verify (2-3 min after Cloudflare Pages build):
+```bash
+curl -sI -A "Googlebot" https://www.thepicklehub.net/blog/$SLUG | head -1
+# Expect: HTTP/2 200 (NOT 404)
+
+curl -s https://www.thepicklehub.net/sitemap.xml | grep "$SLUG"
+# Expect: one <loc> line with the slug.
+```
+
+**VI counterpart**: VI posts use `vi_blog_posts` Supabase table — different code path. The 4-file sync rule applies to EN posts only. VI posts need: `growth-tasks/sql/<date>-vi-<slug>.sql` insert + verify SELECT.
+
+**Reference commits:**
+- `7c888a2` — fix BLOG_POST_META for the 2 May 5 posts
+- `61b4fa8` — fix EN_BLOG_SLUGS for the 2 May 5 posts
+- `3d165d1` — original incident with `pickleball-world-cup-2026-da-nang` (the inline `// Verified 2026-04-23` comment in `_lib/render/index.ts` documents that fix)
