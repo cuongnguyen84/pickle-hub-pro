@@ -1,8 +1,5 @@
 import { useState, useEffect, Dispatch } from "react";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -21,31 +18,39 @@ interface Props {
 }
 
 const SKILL_LEVELS: Array<{
+  num: string;
   value: "beginner" | "intermediate" | "advanced" | "pro";
   label: string;
   description: string;
 }> = [
-  {
-    value: "beginner",
-    label: "Người mới",
-    description: "Mới bắt đầu, đang học",
-  },
-  {
-    value: "intermediate",
-    label: "Trung bình",
-    description: "Đã chơi 3-12 tháng",
-  },
-  {
-    value: "advanced",
-    label: "Khá",
-    description: "1+ năm, tham gia giải địa phương",
-  },
-  {
-    value: "pro",
-    label: "Chuyên nghiệp",
-    description: "Top 100 VN hoặc tournament regular",
-  },
+  { num: "01", value: "beginner", label: "NGƯỜI MỚI", description: "Mới bắt đầu, đang học" },
+  { num: "02", value: "intermediate", label: "TRUNG BÌNH", description: "Đã chơi 3-12 tháng" },
+  { num: "03", value: "advanced", label: "KHÁ", description: "1+ năm, tham gia giải địa phương" },
+  { num: "04", value: "pro", label: "CHUYÊN NGHIỆP", description: "Top 100 VN hoặc tournament regular" },
 ];
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "transparent",
+  border: "none",
+  borderBottom: "1px solid var(--tl-border)",
+  borderRadius: 0,
+  padding: "10px 0",
+  fontSize: 18,
+  fontFamily: "inherit",
+  color: "var(--tl-fg)",
+  outline: "none",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "'Geist Mono', monospace",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--tl-fg-3)",
+  marginBottom: 8,
+};
 
 export function ProfileSetup({ state, dispatch, userId }: Props) {
   const { toast } = useToast();
@@ -53,8 +58,6 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [usernamePreview, setUsernamePreview] = useState<string>("");
 
-  // Live preview the slug as user types — actual collision check happens
-  // at submit time via generateUsername's isAvailable predicate.
   useEffect(() => {
     const slug = slugifyDisplayName(state.profile.display_name);
     setUsernamePreview(slug || "");
@@ -96,7 +99,6 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
 
     setSubmitting(true);
     try {
-      // Generate a unique username — collision check via Supabase profiles.
       const username = await generateUsername(displayName, {
         isAvailable: async (candidate) => {
           const { data, error: lookupError } = await supabase
@@ -109,10 +111,6 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
         },
       });
 
-      // Persist Step 1 fields. skill_level column added by the
-      // 20260508000000_sprint3_phase3a_skill_level_venue migration; the
-      // validation guard above ensures state.profile.skill_level is one
-      // of the 4 enum values before reaching this point.
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
@@ -123,9 +121,7 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
         })
         .eq("id", userId);
 
-      if (updateError) {
-        throw updateError;
-      }
+      if (updateError) throw updateError;
 
       dispatch({
         type: "SET_PROFILE",
@@ -146,22 +142,39 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
   };
 
   return (
-    <section aria-labelledby="step-1-heading" className="space-y-6">
-      <header>
-        <h2 id="step-1-heading" className="text-xl font-semibold">
-          Bắt đầu hồ sơ
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tên hiển thị + trình độ để cộng đồng nhận ra bạn.
-        </p>
-      </header>
+    <section aria-labelledby="step-1-heading">
+      <h2
+        id="step-1-heading"
+        style={{
+          fontFamily: "'Instrument Serif', serif",
+          fontStyle: "italic",
+          fontWeight: 400,
+          fontSize: "clamp(36px, 5vw, 56px)",
+          lineHeight: 1,
+          letterSpacing: "-0.02em",
+          color: "var(--tl-fg)",
+          margin: "0 0 12px",
+        }}
+      >
+        Bắt đầu hồ sơ.
+      </h2>
+      <p
+        style={{
+          fontSize: 16,
+          color: "var(--tl-fg-2)",
+          margin: "0 0 32px",
+          lineHeight: 1.55,
+        }}
+      >
+        Tên hiển thị + trình độ để cộng đồng nhận ra bạn.
+      </p>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="display_name">
-            Tên hiển thị <span className="text-destructive">*</span>
-          </Label>
-          <Input
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: 28 }}>
+          <label htmlFor="display_name" style={labelStyle}>
+            Tên hiển thị <span style={{ color: "var(--tl-green)" }}>*</span>
+          </label>
+          <input
             id="display_name"
             type="text"
             value={state.profile.display_name}
@@ -172,61 +185,128 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
             maxLength={50}
             disabled={submitting}
             autoFocus
+            style={inputStyle}
           />
           {usernamePreview && (
-            <p className="text-xs text-muted-foreground">
-              URL hồ sơ:{" "}
-              <span className="font-mono text-foreground">
-                thepicklehub.net/nguoi-choi/{usernamePreview}
-              </span>
-              <span className="ml-1 text-muted-foreground">
-                (mã định danh sẽ thêm tự động nếu trùng)
-              </span>
+            <p
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                fontStyle: "italic",
+                fontSize: 14,
+                color: "var(--tl-fg-3)",
+                marginTop: 8,
+              }}
+            >
+              thepicklehub.net/nguoi-choi/
+              <span style={{ color: "var(--tl-fg-2)" }}>{usernamePreview}</span>
             </p>
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label>
-            Trình độ <span className="text-destructive">*</span>
-          </Label>
-          <div className="grid grid-cols-1 gap-2">
-            {SKILL_LEVELS.map((skill) => (
-              <button
-                key={skill.value}
-                type="button"
-                onClick={() => handleSkillSelect(skill.value)}
-                disabled={submitting}
-                className={`text-left rounded-lg border-2 p-3 transition-colors ${
-                  state.profile.skill_level === skill.value
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-foreground/30"
-                }`}
-              >
-                <div className="font-medium">{skill.label}</div>
-                <div className="text-xs text-muted-foreground">
-                  {skill.description}
-                </div>
-              </button>
-            ))}
+        <div style={{ marginBottom: 28 }}>
+          <div style={labelStyle}>
+            Trình độ <span style={{ color: "var(--tl-green)" }}>*</span>
           </div>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {SKILL_LEVELS.map((skill, i) => {
+              const active = state.profile.skill_level === skill.value;
+              return (
+                <li
+                  key={skill.value}
+                  style={{
+                    borderTop: i === 0 ? "1px solid var(--tl-border)" : "none",
+                    borderBottom: "1px solid var(--tl-border)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSkillSelect(skill.value)}
+                    disabled={submitting}
+                    aria-pressed={active}
+                    style={{
+                      width: "100%",
+                      background: active
+                        ? "rgba(0, 185, 107, 0.06)"
+                        : "transparent",
+                      border: "none",
+                      padding: "14px 0",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "baseline",
+                      gap: 16,
+                      color: "inherit",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "'Geist Mono', monospace",
+                        fontSize: 11,
+                        letterSpacing: "0.06em",
+                        color: active ? "var(--tl-green)" : "var(--tl-fg-3)",
+                      }}
+                    >
+                      {skill.num}
+                    </span>
+                    <span style={{ flex: 1 }}>
+                      <span
+                        style={{
+                          fontFamily: "'Geist Mono', monospace",
+                          fontSize: 13,
+                          letterSpacing: "0.06em",
+                          color: active ? "var(--tl-fg)" : "var(--tl-fg-2)",
+                          marginRight: 12,
+                        }}
+                      >
+                        {skill.label}
+                      </span>
+                      <span style={{ color: "var(--tl-fg-3)", fontSize: 14 }}>
+                        {skill.description}
+                      </span>
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: "50%",
+                        border: "1px solid",
+                        borderColor: active ? "var(--tl-green)" : "var(--tl-border)",
+                        background: active ? "var(--tl-green)" : "transparent",
+                        flexShrink: 0,
+                      }}
+                    />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
 
         {error && (
-          <p className="text-sm text-destructive" role="alert">
+          <p
+            role="alert"
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              color: "var(--tl-red, #ef4444)",
+              fontSize: 16,
+              margin: "0 0 16px",
+            }}
+          >
             {error}
           </p>
         )}
 
-        <Button
+        <button
           type="submit"
-          className="w-full"
-          size="lg"
+          className="tl-btn primary"
           disabled={submitting}
+          style={{ width: "100%" }}
         >
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Tiếp tục
-        </Button>
+        </button>
       </form>
     </section>
   );

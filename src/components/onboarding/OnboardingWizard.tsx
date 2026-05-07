@@ -147,8 +147,10 @@ export function OnboardingWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-md px-4 py-6">
+    // No min-h-screen / bg-background here — host page (TheLineLayout) owns
+    // viewport height + theme tokens. Wizard sits inside tl-scroll naturally.
+    <div className="tl-shell" style={{ paddingBottom: 56 }}>
+      <div style={{ maxWidth: 540, margin: "0 auto", padding: "32px 0" }}>
         <OnboardingProgress currentStep={state.currentStep} />
         <div className="mt-6">
           {state.currentStep === 1 && (

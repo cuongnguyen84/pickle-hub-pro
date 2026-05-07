@@ -15,7 +15,9 @@ export interface VenueSearchResult {
  * - Empty query returns no results (we don't want to dump the global venue
  *   list before the user types).
  * - Short queries (<2 chars) also bail to keep DB load down.
- * - ILIKE on both name + name_vi covers Vietnamese and English entries.
+ * - ILIKE on name, name_vi, city, district — covers Vietnamese + English
+ *   names AND lets users find venues by typing a city ("Hà Nội") or
+ *   district ("Cầu Giấy") when they don't remember the venue name.
  * - Limit 10 — picker shows a short list, user can refine.
  */
 export function useVenueSearch(query: string) {
@@ -28,7 +30,9 @@ export function useVenueSearch(query: string) {
       const { data, error } = await supabase
         .from("venues")
         .select("id, name, name_vi, city, district")
-        .or(`name.ilike.${pattern},name_vi.ilike.${pattern}`)
+        .or(
+          `name.ilike.${pattern},name_vi.ilike.${pattern},city.ilike.${pattern},district.ilike.${pattern}`,
+        )
         .order("name", { ascending: true })
         .limit(10);
       if (error) throw error;

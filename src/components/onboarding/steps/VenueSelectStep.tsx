@@ -1,8 +1,5 @@
 import { useState, useEffect, Dispatch } from "react";
-import { Loader2, MapPin, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Loader2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useVenueSearch } from "@/hooks/onboarding/useVenueSearch";
@@ -16,6 +13,29 @@ interface Props {
   }>;
   userId: string;
 }
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "transparent",
+  border: "none",
+  borderBottom: "1px solid var(--tl-border)",
+  borderRadius: 0,
+  padding: "10px 0",
+  fontSize: 18,
+  fontFamily: "inherit",
+  color: "var(--tl-fg)",
+  outline: "none",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "'Geist Mono', monospace",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--tl-fg-3)",
+  marginBottom: 8,
+};
 
 export function VenueSelectStep({ state, dispatch, userId }: Props) {
   const { toast } = useToast();
@@ -33,9 +53,6 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
     setSubmitting(true);
     setError(null);
     try {
-      // favorite_venue_id added by 20260508000000_sprint3_phase3a migration.
-      // On skip we explicitly null it out so a user who selected then changed
-      // their mind doesn't get a stale FK from a previous step entry.
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
@@ -92,122 +109,222 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
     );
   };
 
-  const handleSkip = () => {
-    advanceStep(null, true);
-  };
+  const handleSkip = () => advanceStep(null, true);
 
   return (
-    <section aria-labelledby="step-3-heading" className="space-y-6">
-      <header>
-        <h2 id="step-3-heading" className="text-xl font-semibold">
-          Sân pickleball yêu thích?
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Chọn sân bạn hay chơi nhất. Cộng đồng dễ tìm bạn cùng sân.
-        </p>
-      </header>
+    <section aria-labelledby="step-3-heading">
+      <h2
+        id="step-3-heading"
+        style={{
+          fontFamily: "'Instrument Serif', serif",
+          fontStyle: "italic",
+          fontWeight: 400,
+          fontSize: "clamp(36px, 5vw, 56px)",
+          lineHeight: 1,
+          letterSpacing: "-0.02em",
+          color: "var(--tl-fg)",
+          margin: "0 0 12px",
+        }}
+      >
+        Sân yêu thích.
+      </h2>
+      <p
+        style={{
+          fontSize: 16,
+          color: "var(--tl-fg-2)",
+          margin: "0 0 32px",
+          lineHeight: 1.55,
+        }}
+      >
+        Chọn sân bạn hay chơi nhất. Cộng đồng dễ tìm bạn cùng sân.
+      </p>
 
       {state.venue.venue_id && state.venue.venue_name ? (
-        <div className="rounded-lg border-2 border-primary bg-primary/5 p-4">
-          <div className="flex items-start gap-3">
-            <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-            <div className="flex-1">
-              <div className="font-medium">{state.venue.venue_name}</div>
-              <div className="text-xs text-muted-foreground">Đã chọn</div>
+        <div
+          style={{
+            borderTop: "1px solid var(--tl-green)",
+            borderBottom: "1px solid var(--tl-border)",
+            padding: "16px 0",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <Check
+            className="h-5 w-5"
+            style={{ color: "var(--tl-green)", flexShrink: 0 }}
+          />
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 11,
+                letterSpacing: "0.08em",
+                color: "var(--tl-green)",
+                textTransform: "uppercase",
+                marginBottom: 2,
+              }}
+            >
+              Đã chọn
             </div>
-            <Button variant="ghost" size="sm" onClick={handleClear}>
-              Đổi
-            </Button>
+            <div style={{ fontSize: 16, color: "var(--tl-fg)" }}>
+              {state.venue.venue_name}
+            </div>
           </div>
+          <button
+            type="button"
+            className="tl-btn"
+            onClick={handleClear}
+            style={{ fontSize: 13 }}
+          >
+            Đổi
+          </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <Label htmlFor="venue_search">Tìm sân</Label>
-            <Input
+        <>
+          <div style={{ marginBottom: 24 }}>
+            <label htmlFor="venue_search" style={labelStyle}>
+              Tìm sân
+            </label>
+            <input
               id="venue_search"
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tên sân, quận, thành phố..."
               disabled={submitting}
+              style={inputStyle}
             />
           </div>
 
           {isLoading && debouncedQuery && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <p
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                fontStyle: "italic",
+                color: "var(--tl-fg-3)",
+                fontSize: 14,
+              }}
+            >
               Đang tìm...
-            </div>
+            </p>
           )}
 
           {!isLoading && venues && venues.length === 0 && debouncedQuery && (
-            <p className="text-sm text-muted-foreground">
+            <p
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                fontStyle: "italic",
+                color: "var(--tl-fg-3)",
+                fontSize: 16,
+                padding: "16px 0",
+              }}
+            >
               Không tìm thấy sân nào. Có thể bỏ qua bước này.
             </p>
           )}
 
           {venues && venues.length > 0 && (
-            <ul className="space-y-2" role="listbox">
-              {venues.map((v) => (
-                <li key={v.id}>
+            <ul
+              style={{ listStyle: "none", margin: "16px 0 0", padding: 0 }}
+              role="listbox"
+            >
+              {venues.map((v, i) => (
+                <li
+                  key={v.id}
+                  style={{
+                    borderTop: i === 0 ? "1px solid var(--tl-border)" : "none",
+                    borderBottom: "1px solid var(--tl-border)",
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => handleSelect(v.id, v.name_vi || v.name)}
                     disabled={submitting}
-                    className="w-full rounded-lg border-2 border-border p-3 text-left transition-colors hover:border-foreground/30"
+                    style={{
+                      width: "100%",
+                      background: "transparent",
+                      border: "none",
+                      padding: "14px 0",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      color: "inherit",
+                    }}
                   >
-                    <div className="flex items-start gap-3">
-                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {v.name_vi || v.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {[v.district, v.city].filter(Boolean).join(", ")}
-                        </div>
-                      </div>
+                    <div
+                      style={{
+                        fontSize: 16,
+                        color: "var(--tl-fg)",
+                        marginBottom: 2,
+                      }}
+                    >
+                      {v.name_vi || v.name}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "'Geist Mono', monospace",
+                        fontSize: 11,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "var(--tl-fg-3)",
+                      }}
+                    >
+                      {[v.district, v.city].filter(Boolean).join(" · ")}
                     </div>
                   </button>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </>
       )}
 
       {error && (
-        <p className="text-sm text-destructive" role="alert">
+        <p
+          role="alert"
+          style={{
+            fontFamily: "'Instrument Serif', serif",
+            fontStyle: "italic",
+            color: "var(--tl-red, #ef4444)",
+            fontSize: 16,
+            margin: "16px 0 0",
+          }}
+        >
           {error}
         </p>
       )}
 
-      <div className="space-y-2 pt-2">
-        <Button
+      <div style={{ marginTop: 28 }}>
+        <button
           type="button"
-          className="w-full"
-          size="lg"
+          className="tl-btn primary"
           onClick={handleSave}
           disabled={submitting || !state.venue.venue_id}
+          style={{ width: "100%", marginBottom: 8 }}
         >
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Lưu sân yêu thích
-        </Button>
-        <Button
+        </button>
+        <button
           type="button"
-          variant="ghost"
-          className="w-full"
+          className="tl-btn"
           onClick={handleSkip}
           disabled={submitting}
+          style={{
+            width: "100%",
+            border: "none",
+            fontStyle: "italic",
+            fontFamily: "'Instrument Serif', serif",
+            fontSize: 16,
+          }}
         >
           Bỏ qua
-        </Button>
+        </button>
       </div>
     </section>
   );
 }
 
-/** Tiny in-file debouncer — 300ms feels right for typeahead UX. */
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
