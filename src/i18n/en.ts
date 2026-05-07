@@ -338,6 +338,11 @@ export const en: Translations = {
     verificationSentDesc: "Please check your inbox (and spam folder) to verify your account.",
     emailAlreadyUsed: "Email already in use",
     emailAlreadyUsedDesc: "Please sign in or use a different email.",
+    tagline: "Pickleball, one account — every tournament.",
+    continueWithApple: "Sign in with Apple",
+    dividerWithEmail: "OR CONTINUE WITH EMAIL",
+    privacyPolicy: "PRIVACY POLICY",
+    passwordMinError: "Password needs at least 8 characters",
   },
   moderation: {
     block: "Block",

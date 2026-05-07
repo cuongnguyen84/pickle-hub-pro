@@ -336,6 +336,12 @@ export interface Translations {
     verificationSentDesc: string;
     emailAlreadyUsed: string;
     emailAlreadyUsedDesc: string;
+    // Sprint 3 PR #11 redesign — editorial Login surface
+    tagline: string;
+    continueWithApple: string;
+    dividerWithEmail: string;
+    privacyPolicy: string;
+    passwordMinError: string;
   };
   moderation: {
     block: string;
@@ -2067,6 +2073,11 @@ export const vi: Translations = {
     verificationSentDesc: "Vui lòng kiểm tra hộp thư đến (và thư rác) để xác thực tài khoản.",
     emailAlreadyUsed: "Email đã được sử dụng",
     emailAlreadyUsedDesc: "Vui lòng đăng nhập hoặc sử dụng email khác.",
+    tagline: "Pickleball, một tài khoản — mọi giải.",
+    continueWithApple: "Đăng nhập với Apple",
+    dividerWithEmail: "HOẶC TIẾP TỤC VỚI EMAIL",
+    privacyPolicy: "CHÍNH SÁCH BẢO MẬT",
+    passwordMinError: "Mật khẩu cần ít nhất 8 ký tự",
   },
   moderation: {
     block: "Chặn",

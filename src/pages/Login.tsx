@@ -394,7 +394,7 @@ const Login = () => {
 
           <div className="tl-eyebrow" style={{ justifyContent: "center" }}>
             <span className="pip" />
-            <span>{isLogin ? "ĐĂNG NHẬP" : "ĐĂNG KÝ"}</span>
+            <span>{(isLogin ? t.auth.login : t.auth.signup).toUpperCase()}</span>
           </div>
 
           <h1
@@ -410,7 +410,7 @@ const Login = () => {
               textAlign: "center",
             }}
           >
-            {isLogin ? "Đăng nhập" : "Đăng ký"}.
+            {isLogin ? t.auth.login : t.auth.signup}.
           </h1>
           <p
             style={{
@@ -420,7 +420,7 @@ const Login = () => {
               margin: "0 0 32px",
             }}
           >
-            Pickleball, một tài khoản — mọi giải.
+            {t.auth.tagline}
           </p>
 
           {/* Verification Message */}
@@ -469,7 +469,7 @@ const Login = () => {
                 <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                 <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
-              Tiếp tục với Google
+              {t.auth.continueWithGoogle}
             </button>
 
             <button
@@ -482,7 +482,7 @@ const Login = () => {
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
               </svg>
-              Đăng nhập với Apple
+              {t.auth.continueWithApple}
             </button>
           </div>
 
@@ -501,7 +501,7 @@ const Login = () => {
             }}
           >
             <span style={{ flex: 1, height: 1, background: "var(--tl-border)" }} />
-            <span>HOẶC TIẾP TỤC VỚI EMAIL</span>
+            <span>{t.auth.dividerWithEmail}</span>
             <span style={{ flex: 1, height: 1, background: "var(--tl-border)" }} />
           </div>
 
@@ -522,7 +522,7 @@ const Login = () => {
             </div>
 
             <div>
-              <Label htmlFor="password" style={labelStyle}>Mật khẩu</Label>
+              <Label htmlFor="password" style={labelStyle}>{t.auth.password}</Label>
               <Input
                 id="password"
                 type="password"
@@ -544,7 +544,7 @@ const Login = () => {
                     marginTop: 6,
                   }}
                 >
-                  Mật khẩu cần ít nhất 8 ký tự
+                  {t.auth.passwordMinError}
                 </p>
               )}
             </div>
@@ -568,7 +568,7 @@ const Login = () => {
                     cursor: "pointer",
                   }}
                 >
-                  Quên mật khẩu?
+                  {t.auth.forgotPassword}
                 </button>
               </div>
             )}
@@ -585,9 +585,9 @@ const Login = () => {
                   {t.common.loading}
                 </>
               ) : isLogin ? (
-                "Đăng nhập"
+                t.auth.login
               ) : (
-                "Đăng ký"
+                t.auth.signup
               )}
             </button>
           </form>
@@ -603,7 +603,7 @@ const Login = () => {
               margin: "24px 0 12px",
             }}
           >
-            {isLogin ? "Chưa có tài khoản?" : "Đã có tài khoản?"}{" "}
+            {isLogin ? t.auth.noAccount : t.auth.hasAccount}{" "}
             <button
               type="button"
               onClick={() => {
@@ -623,7 +623,7 @@ const Login = () => {
                 textUnderlineOffset: 2,
               }}
             >
-              {isLogin ? "Đăng ký" : "Đăng nhập"}
+              {isLogin ? t.auth.signup : t.auth.login}
             </button>
           </p>
 
@@ -643,7 +643,7 @@ const Login = () => {
               to="/privacy"
               style={{ color: "inherit", textDecoration: "none" }}
             >
-              CHÍNH SÁCH BẢO MẬT
+              {t.auth.privacyPolicy}
             </Link>
           </p>
         </div>
