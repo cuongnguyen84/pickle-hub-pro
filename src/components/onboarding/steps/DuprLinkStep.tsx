@@ -1,8 +1,5 @@
 import { useState, Dispatch } from "react";
-import { Loader2, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useDuprLink } from "@/hooks/onboarding/useDuprLink";
@@ -15,6 +12,29 @@ interface Props {
     payload?: Partial<OnboardingState["dupr"]>;
   }>;
 }
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "transparent",
+  border: "none",
+  borderBottom: "1px solid var(--tl-border)",
+  borderRadius: 0,
+  padding: "10px 0",
+  fontSize: 18,
+  fontFamily: "inherit",
+  color: "var(--tl-fg)",
+  outline: "none",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "'Geist Mono', monospace",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--tl-fg-3)",
+  marginBottom: 8,
+};
 
 export function DuprLinkStep({ state, dispatch }: Props) {
   const { toast } = useToast();
@@ -36,7 +56,6 @@ export function DuprLinkStep({ state, dispatch }: Props) {
   ) => {
     setAdvancing(true);
     try {
-      // Persist onboarding_step = 2 regardless of save vs skip.
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error("Not authenticated");
       const { error: updateError } = await supabase
@@ -119,12 +138,7 @@ export function DuprLinkStep({ state, dispatch }: Props) {
 
   const handleSkip = () => {
     advanceStep(
-      {
-        dupr_id: "",
-        dupr_singles: null,
-        dupr_doubles: null,
-        saved: false,
-      },
+      { dupr_id: "", dupr_singles: null, dupr_doubles: null, saved: false },
       true,
     );
   };
@@ -132,26 +146,45 @@ export function DuprLinkStep({ state, dispatch }: Props) {
   const submitting = linkLoading || advancing;
 
   return (
-    <section aria-labelledby="step-2-heading" className="space-y-6">
-      <header>
-        <h2 id="step-2-heading" className="text-xl font-semibold">
-          Bạn có DUPR rating?
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          DUPR là chuẩn rating quốc tế. Tự nhập rating để cộng đồng biết level.
-        </p>
-        <p className="mt-2 inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-          <Info className="h-3 w-3" />
-          Auto-sync DUPR sắp ra mắt. Hiện tại nhập manual.
-        </p>
-      </header>
+    <section aria-labelledby="step-2-heading">
+      <h2
+        id="step-2-heading"
+        style={{
+          fontFamily: "'Instrument Serif', serif",
+          fontStyle: "italic",
+          fontWeight: 400,
+          fontSize: "clamp(36px, 5vw, 56px)",
+          lineHeight: 1,
+          letterSpacing: "-0.02em",
+          color: "var(--tl-fg)",
+          margin: "0 0 12px",
+        }}
+      >
+        Liên kết <span style={{ fontStyle: "normal" }}>DUPR.</span>
+      </h2>
+      <p style={{ fontSize: 16, color: "var(--tl-fg-2)", margin: "0 0 8px", lineHeight: 1.55 }}>
+        Tự nhập rating để cộng đồng biết level của bạn.
+      </p>
+      <p
+        style={{
+          fontFamily: "'Geist Mono', monospace",
+          fontSize: 11,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          color: "var(--tl-fg-4)",
+          margin: "0 0 32px",
+        }}
+      >
+        ◆ Auto-sync DUPR sắp ra mắt — hiện tại nhập manual.
+      </p>
 
-      <form onSubmit={handleSave} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="dupr_doubles">
-            Điểm DUPR Doubles <span className="text-destructive">*</span>
-          </Label>
-          <Input
+      <form onSubmit={handleSave}>
+        <div style={{ marginBottom: 24 }}>
+          <label htmlFor="dupr_doubles" style={labelStyle}>
+            Điểm DUPR Doubles{" "}
+            <span style={{ color: "var(--tl-green)" }}>*</span>
+          </label>
+          <input
             id="dupr_doubles"
             type="number"
             step="0.01"
@@ -162,12 +195,15 @@ export function DuprLinkStep({ state, dispatch }: Props) {
             onChange={(e) => setDuprDoubles(e.target.value)}
             placeholder="VD: 4.20"
             disabled={submitting}
+            style={inputStyle}
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="dupr_singles">Điểm DUPR Singles (tùy chọn)</Label>
-          <Input
+        <div style={{ marginBottom: 24 }}>
+          <label htmlFor="dupr_singles" style={labelStyle}>
+            Điểm DUPR Singles (tùy chọn)
+          </label>
+          <input
             id="dupr_singles"
             type="number"
             step="0.01"
@@ -178,50 +214,75 @@ export function DuprLinkStep({ state, dispatch }: Props) {
             onChange={(e) => setDuprSingles(e.target.value)}
             placeholder="VD: 4.05"
             disabled={submitting}
+            style={inputStyle}
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="dupr_id">DUPR ID (tùy chọn)</Label>
-          <Input
+        <div style={{ marginBottom: 28 }}>
+          <label htmlFor="dupr_id" style={labelStyle}>
+            DUPR ID (tùy chọn)
+          </label>
+          <input
             id="dupr_id"
             type="text"
             value={duprId}
             onChange={(e) => setDuprId(e.target.value)}
             placeholder="VD: V6Y5XP"
             disabled={submitting}
+            style={inputStyle}
           />
-          <p className="text-xs text-muted-foreground">
-            Tìm trong URL DUPR profile của bạn (mở app DUPR → tap tên bạn).
+          <p
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              fontSize: 14,
+              color: "var(--tl-fg-3)",
+              marginTop: 8,
+            }}
+          >
+            Tìm trong URL DUPR profile của bạn.
           </p>
         </div>
 
         {error && (
-          <p className="text-sm text-destructive" role="alert">
+          <p
+            role="alert"
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              color: "var(--tl-red, #ef4444)",
+              fontSize: 16,
+              margin: "0 0 16px",
+            }}
+          >
             {error}
           </p>
         )}
 
-        <div className="space-y-2 pt-2">
-          <Button
-            type="submit"
-            className="w-full"
-            size="lg"
-            disabled={submitting}
-          >
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Lưu rating
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full"
-            onClick={handleSkip}
-            disabled={submitting}
-          >
-            Bỏ qua bước này
-          </Button>
-        </div>
+        <button
+          type="submit"
+          className="tl-btn primary"
+          disabled={submitting}
+          style={{ width: "100%", marginBottom: 8 }}
+        >
+          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Lưu rating
+        </button>
+        <button
+          type="button"
+          className="tl-btn"
+          onClick={handleSkip}
+          disabled={submitting}
+          style={{
+            width: "100%",
+            border: "none",
+            fontStyle: "italic",
+            fontFamily: "'Instrument Serif', serif",
+            fontSize: 16,
+          }}
+        >
+          Bỏ qua bước này
+        </button>
       </form>
     </section>
   );

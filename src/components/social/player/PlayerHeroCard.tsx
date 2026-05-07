@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BadgeCheck, MapPin, Share2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BadgeCheck, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { PlayerProfile } from "@/hooks/social/usePlayerProfile";
@@ -10,28 +9,18 @@ interface PlayerHeroCardProps {
   player: PlayerProfile;
 }
 
-const SKILL_BADGES: Record<
-  string,
-  { label: string; cls: string }
-> = {
-  beginner: {
-    label: "Người mới",
-    cls: "bg-muted text-muted-foreground",
-  },
-  intermediate: {
-    label: "Trung bình",
-    cls: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  },
-  advanced: {
-    label: "Khá",
-    cls: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-  },
-  pro: {
-    label: "Chuyên nghiệp",
-    cls: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  },
+const SKILL_LABELS: Record<string, string> = {
+  beginner: "Người mới",
+  intermediate: "Trung bình",
+  advanced: "Khá",
+  pro: "Chuyên nghiệp",
 };
 
+/**
+ * Editorial hero matching TheLine aesthetic. No card border — uses tl-page-head
+ * pattern (italic serif h1 + tl-eyebrow tag + dim metadata line). Avatar floats
+ * top-right on desktop, on top on mobile.
+ */
 export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
   const { toast } = useToast();
   const [favoriteVenue, setFavoriteVenue] = useState<{
@@ -39,7 +28,6 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
     slug: string;
   } | null>(null);
 
-  // Resolve favorite_venue_id → venue name for the "Sân hay chơi" pill.
   useEffect(() => {
     if (!player.favorite_venue_id) {
       setFavoriteVenue(null);
@@ -88,96 +76,168 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
     }
   };
 
-  const skill = player.skill_level ? SKILL_BADGES[player.skill_level] : null;
+  const skillLabel = player.skill_level
+    ? SKILL_LABELS[player.skill_level]
+    : null;
+  const displayName = player.display_name ?? player.username ?? "";
+  const meta = [
+    player.username && `@${player.username}`,
+    player.city,
+    skillLabel,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6">
-      <div className="flex items-start gap-4">
-        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-background bg-muted shadow-md">
-          {player.avatar_url ? (
-            <img
-              src={player.avatar_url}
-              alt={player.display_name ?? player.username ?? ""}
-              className="h-full w-full object-cover"
-              loading="eager"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted-foreground">
-              {(player.display_name ?? player.username ?? "?")
-                .charAt(0)
-                .toUpperCase()}
-            </div>
-          )}
-        </div>
+    <header className="tl-page-head" style={{ padding: "32px 0 28px" }}>
+      <div className="tl-eyebrow" aria-hidden="true">
+        <span className="pip" />
+        <span>NGƯỜI CHƠI</span>
+        {player.dupr_doubles != null && (
+          <>
+            <span className="sep">·</span>
+            <span>DUPR {player.dupr_doubles.toFixed(2)}</span>
+          </>
+        )}
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <h1 className="flex items-center gap-2 text-2xl font-bold leading-tight">
-            <span className="truncate">
-              {player.display_name ?? player.username}
-            </span>
+      <div
+        style={{
+          display: "flex",
+          gap: 24,
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ flex: "1 1 60%", minWidth: 240 }}>
+          <h1 style={{ marginBottom: 12 }}>
+            <span style={{ display: "inline" }}>{displayName}</span>
             {player.is_verified && (
               <BadgeCheck
-                className="h-5 w-5 shrink-0 text-blue-500"
+                className="ml-2 inline h-6 w-6"
+                style={{ color: "var(--tl-green)", verticalAlign: "middle" }}
                 aria-label="Đã xác thực"
               />
             )}
             {player.is_pro && (
-              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+              <span
+                className="ml-2 align-middle inline-block rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-widest"
+                style={{
+                  background: "var(--tl-cream, rgba(245, 228, 198, 0.12))",
+                  color: "var(--tl-fg)",
+                  verticalAlign: "middle",
+                }}
+              >
                 PRO
               </span>
             )}
           </h1>
-          <p className="text-sm text-muted-foreground">@{player.username}</p>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {skill && (
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${skill.cls}`}
-              >
-                {skill.label}
-              </span>
-            )}
-            {player.city && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3" />
-                {player.city}
-              </span>
-            )}
-          </div>
-
+          <p
+            className="tl-caps"
+            style={{
+              color: "var(--tl-fg-3)",
+              fontSize: 12,
+              fontFamily: "'Geist Mono', monospace",
+              marginBottom: 8,
+            }}
+          >
+            {meta}
+          </p>
           {favoriteVenue && (
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p
+              style={{
+                fontFamily: "'Instrument Serif', serif",
+                fontStyle: "italic",
+                fontSize: 18,
+                color: "var(--tl-fg-2)",
+                margin: "12px 0 0",
+              }}
+            >
               Sân hay chơi:{" "}
               <Link
                 to={`/san/${favoriteVenue.slug}`}
-                className="text-foreground underline-offset-2 hover:underline"
+                style={{
+                  color: "var(--tl-fg)",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
               >
                 {favoriteVenue.name}
               </Link>
             </p>
           )}
-
           {player.bio && (
-            <p className="mt-3 text-sm text-foreground/90">{player.bio}</p>
+            <p
+              style={{
+                color: "var(--tl-fg-2)",
+                fontSize: 15,
+                lineHeight: 1.55,
+                margin: "16px 0 0",
+                maxWidth: "54ch",
+              }}
+            >
+              {player.bio}
+            </p>
+          )}
+
+          <div className="tl-hero-ctas" style={{ marginTop: 24 }}>
+            <button
+              type="button"
+              className="tl-btn"
+              onClick={handleShare}
+              aria-label="Chia sẻ hồ sơ"
+            >
+              <Share2 className="h-4 w-4" />
+              Chia sẻ
+            </button>
+            <button
+              type="button"
+              className="tl-btn primary"
+              disabled
+              title="Phase 3C — coming soon"
+            >
+              + Theo dõi
+            </button>
+          </div>
+        </div>
+
+        <div
+          style={{
+            flex: "0 0 auto",
+            width: 120,
+            height: 120,
+            borderRadius: "50%",
+            overflow: "hidden",
+            border: "1px solid var(--tl-border)",
+            background: "var(--tl-surface, rgba(255,255,255,0.04))",
+          }}
+        >
+          {player.avatar_url ? (
+            <img
+              src={player.avatar_url}
+              alt={displayName}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              loading="eager"
+            />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "'Instrument Serif', serif",
+                fontStyle: "italic",
+                fontSize: 48,
+                color: "var(--tl-fg-3)",
+              }}
+            >
+              {(displayName || "?").charAt(0).toUpperCase()}
+            </div>
           )}
         </div>
       </div>
-
-      <div className="mt-4 flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleShare}
-          className="gap-1.5"
-        >
-          <Share2 className="h-4 w-4" />
-          Chia sẻ
-        </Button>
-        {/* Phase 3C will replace this slot with a real FollowButton. */}
-        <Button variant="default" size="sm" disabled className="gap-1.5">
-          + Theo dõi
-        </Button>
-      </div>
-    </section>
+    </header>
   );
 }

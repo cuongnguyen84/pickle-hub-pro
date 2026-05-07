@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
-import { DynamicMeta } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
 
 /**
  * /onboarding — Sprint 3 Phase 3A 4-step wizard host page.
@@ -33,9 +33,11 @@ const Onboarding = () => {
 
   if (authLoading || (user && profileLoading)) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <TheLineLayout title="Đang tải" noindex>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </TheLineLayout>
     );
   }
 
@@ -48,13 +50,9 @@ const Onboarding = () => {
   }
 
   return (
-    <>
-      <DynamicMeta
-        title="Hoàn thiện hồ sơ — ThePickleHub"
-        noindex
-      />
+    <TheLineLayout title="Hoàn thiện hồ sơ" noindex>
       <OnboardingWizard />
-    </>
+    </TheLineLayout>
   );
 };
 
