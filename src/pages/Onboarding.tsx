@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -18,6 +19,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 const Onboarding = () => {
   const { user, loading: authLoading } = useAuth();
   const { profile, isLoading: profileLoading } = useUserProfile();
+  const { language } = useI18n();
   const navigate = useNavigate();
 
   // Cast widens useUserProfile's narrow TS interface to include the Sprint 3
@@ -33,7 +35,7 @@ const Onboarding = () => {
 
   if (authLoading || (user && profileLoading)) {
     return (
-      <TheLineLayout title="Đang tải" noindex>
+      <TheLineLayout title={language === "vi" ? "Đang tải" : "Loading"} noindex>
         <div className="flex min-h-[60vh] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -50,7 +52,10 @@ const Onboarding = () => {
   }
 
   return (
-    <TheLineLayout title="Hoàn thiện hồ sơ" noindex>
+    <TheLineLayout
+      title={language === "vi" ? "Hoàn thiện hồ sơ" : "Complete your profile"}
+      noindex
+    >
       <OnboardingWizard />
     </TheLineLayout>
   );

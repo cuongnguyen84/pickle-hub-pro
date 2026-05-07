@@ -1,6 +1,7 @@
 import { useState, useEffect, Dispatch } from "react";
 import { Loader2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useVenueSearch } from "@/hooks/onboarding/useVenueSearch";
 import type { OnboardingState } from "../OnboardingWizard";
@@ -39,6 +40,7 @@ const labelStyle: React.CSSProperties = {
 
 export function VenueSelectStep({ state, dispatch, userId }: Props) {
   const { toast } = useToast();
+  const { language } = useI18n();
   const [query, setQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,11 +74,13 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
       });
       dispatch({ type: "GO_NEXT" });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Lỗi";
+      const fallback = language === "vi" ? "Lỗi" : "Error";
+      const msg = err instanceof Error ? err.message : fallback;
       setError(msg);
       toast({
         variant: "destructive",
-        title: "Không thể chuyển bước",
+        title:
+          language === "vi" ? "Không thể chuyển bước" : "Couldn't continue",
         description: msg,
       });
     } finally {
@@ -100,7 +104,9 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
 
   const handleSave = () => {
     if (!state.venue.venue_id || !state.venue.venue_name) {
-      setError("Vui lòng chọn sân");
+      setError(
+        language === "vi" ? "Vui lòng chọn sân" : "Please pick a venue",
+      );
       return;
     }
     advanceStep(
@@ -126,7 +132,7 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
           margin: "0 0 12px",
         }}
       >
-        Sân yêu thích.
+        {language === "vi" ? "Sân yêu thích." : "Favorite venue."}
       </h2>
       <p
         style={{
@@ -136,7 +142,9 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
           lineHeight: 1.55,
         }}
       >
-        Chọn sân bạn hay chơi nhất. Cộng đồng dễ tìm bạn cùng sân.
+        {language === "vi"
+          ? "Chọn sân bạn hay chơi nhất. Cộng đồng dễ tìm bạn cùng sân."
+          : "Pick the venue you play at most. Other players will find you there."}
       </p>
 
       {state.venue.venue_id && state.venue.venue_name ? (
@@ -165,7 +173,7 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
                 marginBottom: 2,
               }}
             >
-              Đã chọn
+              {language === "vi" ? "Đã chọn" : "Selected"}
             </div>
             <div style={{ fontSize: 16, color: "var(--tl-fg)" }}>
               {state.venue.venue_name}
@@ -177,21 +185,25 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
             onClick={handleClear}
             style={{ fontSize: 13 }}
           >
-            Đổi
+            {language === "vi" ? "Đổi" : "Change"}
           </button>
         </div>
       ) : (
         <>
           <div style={{ marginBottom: 24 }}>
             <label htmlFor="venue_search" style={labelStyle}>
-              Tìm sân
+              {language === "vi" ? "Tìm sân" : "Search venues"}
             </label>
             <input
               id="venue_search"
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tên sân, quận, thành phố..."
+              placeholder={
+                language === "vi"
+                  ? "Tên sân, quận, thành phố..."
+                  : "Name, district, city..."
+              }
               disabled={submitting}
               style={inputStyle}
             />
@@ -206,7 +218,7 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
                 fontSize: 14,
               }}
             >
-              Đang tìm...
+              {language === "vi" ? "Đang tìm..." : "Searching..."}
             </p>
           )}
 
@@ -220,7 +232,9 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
                 padding: "16px 0",
               }}
             >
-              Không tìm thấy sân nào. Có thể bỏ qua bước này.
+              {language === "vi"
+                ? "Không tìm thấy sân nào. Có thể bỏ qua bước này."
+                : "No venues found. Feel free to skip this step."}
             </p>
           )}
 
@@ -303,7 +317,7 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
           style={{ width: "100%", marginBottom: 8 }}
         >
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Lưu sân yêu thích
+          {language === "vi" ? "Lưu sân yêu thích" : "Save favorite venue"}
         </button>
         <button
           type="button"
@@ -318,7 +332,7 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
             fontSize: 16,
           }}
         >
-          Bỏ qua
+          {language === "vi" ? "Bỏ qua" : "Skip"}
         </button>
       </div>
     </section>
