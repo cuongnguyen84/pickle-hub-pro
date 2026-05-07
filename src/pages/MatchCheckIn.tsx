@@ -10,7 +10,7 @@
 import { useReducer, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, X } from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -186,8 +186,8 @@ const MatchCheckIn = () => {
   };
 
   return (
-    <MainLayout className="bg-social-bg-elevated dark:bg-social-neutral-900">
-      <div className="mx-auto flex h-full w-full max-w-2xl flex-col px-4 py-4 md:py-8">
+    <TheLineLayout title="Tạo trận đấu" noindex>
+      <div className="mx-auto flex w-full max-w-2xl flex-col bg-social-bg-elevated px-4 py-4 dark:bg-social-neutral-900 md:py-8">
         {/* ─── Header: progress + abandon ────────────────────────────── */}
         <div className="flex items-center gap-3 pb-4">
           <Button
@@ -328,7 +328,7 @@ const MatchCheckIn = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 
