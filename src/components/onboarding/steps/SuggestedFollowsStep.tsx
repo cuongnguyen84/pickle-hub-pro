@@ -1,6 +1,5 @@
 import { useState, Dispatch } from "react";
 import { Loader2, UserPlus, UserCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSuggestedFollows } from "@/hooks/onboarding/useSuggestedFollows";
@@ -18,9 +17,9 @@ interface Props {
 }
 
 const REASON_LABELS: Record<string, string> = {
-  played_together: "Đã chơi cùng",
-  same_city: "Cùng thành phố",
-  verified_pro: "Pro verified",
+  played_together: "ĐÃ CHƠI CÙNG",
+  same_city: "CÙNG THÀNH PHỐ",
+  verified_pro: "PRO VERIFIED",
 };
 
 export function SuggestedFollowsStep({
@@ -48,10 +47,6 @@ export function SuggestedFollowsStep({
       type: "SET_FOLLOWS",
       payload: { selected_user_ids: next },
     });
-
-    // Optimistic write to social_follows. If it errors we revert in the
-    // hook; the wizard state may briefly disagree with DB state but the
-    // final completion step re-syncs.
     toggle.mutate({ followedId, follow: !isSelected });
   };
 
@@ -89,60 +84,147 @@ export function SuggestedFollowsStep({
   };
 
   return (
-    <section aria-labelledby="step-4-heading" className="space-y-6">
-      <header>
-        <h2 id="step-4-heading" className="text-xl font-semibold">
-          Theo dõi cộng đồng
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Theo dõi 5-10 người để xem trận đấu và kết nối.
-        </p>
-      </header>
+    <section aria-labelledby="step-4-heading">
+      <h2
+        id="step-4-heading"
+        style={{
+          fontFamily: "'Instrument Serif', serif",
+          fontStyle: "italic",
+          fontWeight: 400,
+          fontSize: "clamp(36px, 5vw, 56px)",
+          lineHeight: 1,
+          letterSpacing: "-0.02em",
+          color: "var(--tl-fg)",
+          margin: "0 0 12px",
+        }}
+      >
+        Theo dõi <span style={{ fontStyle: "normal" }}>cộng đồng.</span>
+      </h2>
+      <p
+        style={{
+          fontSize: 16,
+          color: "var(--tl-fg-2)",
+          margin: "0 0 32px",
+          lineHeight: 1.55,
+        }}
+      >
+        Theo dõi 5-10 người để xem trận đấu và kết nối.
+      </p>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div style={{ display: "flex", justifyContent: "center", padding: 32 }}>
+          <Loader2
+            className="h-5 w-5 animate-spin"
+            style={{ color: "var(--tl-fg-3)" }}
+          />
         </div>
       ) : !suggestions || suggestions.length === 0 ? (
-        <p className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
-          Chưa có gợi ý ở khu vực bạn. Bạn có thể tìm và theo dõi sau từ trang
-          hồ sơ.
+        <p
+          style={{
+            fontFamily: "'Instrument Serif', serif",
+            fontStyle: "italic",
+            color: "var(--tl-fg-3)",
+            fontSize: 16,
+            padding: "16px 0",
+          }}
+        >
+          Chưa có gợi ý ở khu vực bạn. Tìm và theo dõi sau từ trang hồ sơ.
         </p>
       ) : (
-        <ul className="space-y-3">
-          {suggestions.map((s) => {
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {suggestions.map((s, i) => {
             const isSelected = selected.includes(s.id);
             return (
               <li
                 key={s.id}
-                className="flex items-center gap-3 rounded-lg border border-border p-3"
+                style={{
+                  borderTop: i === 0 ? "1px solid var(--tl-border)" : "none",
+                  borderBottom: "1px solid var(--tl-border)",
+                  padding: "14px 0",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                }}
               >
-                <div className="h-10 w-10 shrink-0 rounded-full bg-muted overflow-hidden">
-                  {s.avatar_url && (
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    background: "var(--tl-surface, rgba(255,255,255,0.04))",
+                    flexShrink: 0,
+                  }}
+                >
+                  {s.avatar_url ? (
                     <img
                       src={s.avatar_url}
                       alt=""
-                      className="h-full w-full object-cover"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
                       loading="lazy"
                     />
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        width: "100%",
+                        height: "100%",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: "'Instrument Serif', serif",
+                        fontStyle: "italic",
+                        color: "var(--tl-fg-3)",
+                      }}
+                    >
+                      {(s.display_name || s.username).charAt(0).toUpperCase()}
+                    </div>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{s.display_name}</div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>@{s.username}</span>
-                    {s.dupr_doubles && <span>· DUPR {s.dupr_doubles}</span>}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 15,
+                      color: "var(--tl-fg)",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {s.display_name}
                   </div>
-                  <span className="mt-1 inline-block rounded-md bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {REASON_LABELS[s.reason] ?? s.reason}
-                  </span>
+                  <div
+                    style={{
+                      fontFamily: "'Geist Mono', monospace",
+                      fontSize: 11,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: "var(--tl-fg-3)",
+                      display: "flex",
+                      gap: 6,
+                      flexWrap: "wrap",
+                      marginTop: 2,
+                    }}
+                  >
+                    <span>@{s.username}</span>
+                    {s.dupr_doubles != null && (
+                      <span>· DUPR {s.dupr_doubles}</span>
+                    )}
+                    <span style={{ color: "var(--tl-green)" }}>
+                      · {REASON_LABELS[s.reason] ?? s.reason}
+                    </span>
+                  </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant={isSelected ? "secondary" : "default"}
+                <button
+                  type="button"
+                  className={isSelected ? "tl-btn primary" : "tl-btn"}
                   onClick={() => handleToggle(s.id)}
                   disabled={completing}
                   aria-pressed={isSelected}
+                  style={{ flexShrink: 0, fontSize: 13, padding: "8px 12px" }}
                 >
                   {isSelected ? (
                     <>
@@ -155,35 +237,52 @@ export function SuggestedFollowsStep({
                       Theo dõi
                     </>
                   )}
-                </Button>
+                </button>
               </li>
             );
           })}
         </ul>
       )}
 
-      <p className="text-center text-xs text-muted-foreground">
-        Đã chọn {selected.length} người
+      <p
+        style={{
+          fontFamily: "'Geist Mono', monospace",
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--tl-fg-3)",
+          textAlign: "center",
+          margin: "20px 0",
+        }}
+      >
+        ĐÃ CHỌN {selected.length} NGƯỜI
       </p>
 
       {error && (
-        <p className="text-sm text-destructive" role="alert">
+        <p
+          role="alert"
+          style={{
+            fontFamily: "'Instrument Serif', serif",
+            fontStyle: "italic",
+            color: "var(--tl-red, #ef4444)",
+            fontSize: 16,
+            margin: "0 0 16px",
+          }}
+        >
           {error}
         </p>
       )}
 
-      <div className="space-y-2 pt-2">
-        <Button
-          type="button"
-          className="w-full"
-          size="lg"
-          onClick={() => handleComplete(selected.length === 0)}
-          disabled={completing}
-        >
-          {completing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Hoàn tất
-        </Button>
-      </div>
+      <button
+        type="button"
+        className="tl-btn primary"
+        onClick={() => handleComplete(selected.length === 0)}
+        disabled={completing}
+        style={{ width: "100%" }}
+      >
+        {completing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Hoàn tất
+      </button>
     </section>
   );
 }
