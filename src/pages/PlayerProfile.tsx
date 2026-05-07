@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DynamicMeta } from "@/components/seo";
+import MainLayout from "@/components/layout/MainLayout";
 import { usePlayerProfile } from "@/hooks/social/usePlayerProfile";
 import { usePlayerStats } from "@/hooks/social/usePlayerStats";
 import { usePlayerMatchHistory } from "@/hooks/social/usePlayerMatchHistory";
@@ -82,11 +82,13 @@ const PlayerProfile = () => {
   // ─── Loading ─────────────────────────────────────────────────────────────
   if (profileQuery.isLoading) {
     return (
-      <div className="mx-auto max-w-2xl p-4 space-y-4">
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
+      <MainLayout>
+        <div className="mx-auto max-w-2xl space-y-4 p-4">
+          <Skeleton className="h-40 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+      </MainLayout>
     );
   }
 
@@ -94,7 +96,7 @@ const PlayerProfile = () => {
   const profile = profileQuery.data;
   if (!profile) {
     return (
-      <>
+      <MainLayout>
         <DynamicMeta
           title="Không tìm thấy người chơi"
           description="Hồ sơ người chơi không tồn tại trên ThePickleHub."
@@ -109,7 +111,7 @@ const PlayerProfile = () => {
             <Link to="/">Về trang chủ</Link>
           </Button>
         </div>
-      </>
+      </MainLayout>
     );
   }
 
@@ -119,7 +121,7 @@ const PlayerProfile = () => {
     : `${profile.display_name ?? profile.username} (@${profile.username})`;
 
   return (
-    <>
+    <MainLayout>
       <DynamicMeta
         title={pageTitle}
         description={heroDescription}
@@ -127,7 +129,7 @@ const PlayerProfile = () => {
         type="website"
         url={`https://www.thepicklehub.net/nguoi-choi/${profile.username}`}
       />
-      <div className="mx-auto max-w-2xl space-y-6 p-4 pb-12">
+      <div className="mx-auto max-w-2xl space-y-6 p-4">
         <PlayerHeroCard player={profile} />
         <PlayerStats stats={statsQuery.data} loading={statsQuery.isLoading} />
         <DuprRatingChart
@@ -141,7 +143,7 @@ const PlayerProfile = () => {
           matchesQuery={matchesQuery}
         />
       </div>
-    </>
+    </MainLayout>
   );
 };
 
