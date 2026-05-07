@@ -4,19 +4,19 @@ import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { DynamicMeta } from "@/components/seo";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent } from "@/utils/ga";
-import { Mail, Lock, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmailVerificationRedirectUrl, getPasswordResetRedirectUrl, getSiteUrl } from "@/lib/auth-config";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { isNativeApp } from "@/lib/capacitor-utils";
 import { Browser } from "@capacitor/browser";
 import { setOAuthInProgress } from "@/hooks/useDeepLinkHandler";
+import "@/styles/the-line.css";
 
 const Login = () => {
   const { t } = useI18n();
@@ -55,6 +55,19 @@ const Login = () => {
     const targetUrl = onboarded ? redirectUrl || "/" : "/onboarding";
     navigate(targetUrl, { replace: true });
   }, [user, authLoading, profileLoading, profile, navigate, redirectUrl]);
+
+  // Pin TheLine theme tokens on the document while Login is mounted so the
+  // page picks up data-theme="the-line" CSS without needing TheLineLayout
+  // (Login has its own minimal chrome — just the back-to-home link).
+  useEffect(() => {
+    const root = document.documentElement;
+    const prevTheme = root.getAttribute("data-theme");
+    root.setAttribute("data-theme", "the-line");
+    return () => {
+      if (prevTheme) root.setAttribute("data-theme", prevTheme);
+      else root.removeAttribute("data-theme");
+    };
+  }, []);
 
   const handleResendVerification = async () => {
     if (!email) return;
@@ -268,40 +281,140 @@ const Login = () => {
     );
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    background: "transparent",
+    border: "none",
+    borderBottom: "1px solid var(--tl-border)",
+    borderRadius: 0,
+    padding: "12px 0",
+    fontSize: 18,
+    fontFamily: "inherit",
+    color: "var(--tl-fg)",
+    outline: "none",
+  };
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: 11,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: "var(--tl-fg-3)",
+    marginBottom: 8,
+  };
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "var(--tl-bg)",
+        color: "var(--tl-fg)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <DynamicMeta title={isLogin ? t.auth.login : t.auth.signup} noindex={true} />
-      {/* Header */}
-      <header className="p-4">
+
+      <header style={{ padding: 16 }}>
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-foreground-secondary hover:text-foreground transition-colors"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            color: "var(--tl-fg-3)",
+            fontSize: 13,
+            textDecoration: "none",
+            fontFamily: "'Geist Mono', monospace",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">{t.errors.goHome}</span>
+          <span>{t.errors.goHome}</span>
         </Link>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-sm space-y-6">
-          {/* Logo */}
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4">
-              <span className="text-primary-foreground font-bold text-lg">TPH</span>
-            </div>
-            <h1 className="text-2xl font-semibold text-foreground">{isLogin ? t.auth.login : t.auth.signup}</h1>
+      <main
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+        }}
+      >
+        <div style={{ width: "100%", maxWidth: 420 }}>
+          {/* Wordmark */}
+          <Link
+            to="/"
+            style={{
+              display: "block",
+              textAlign: "center",
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: 32,
+              color: "var(--tl-fg)",
+              textDecoration: "none",
+              marginBottom: 32,
+              letterSpacing: "-0.015em",
+            }}
+            aria-label="The PickleHub"
+          >
+            The <em>Pickle</em>
+            <span style={{ fontStyle: "normal", fontFamily: "'Geist', sans-serif" }}>
+              Hub
+            </span>
+          </Link>
+
+          <div className="tl-eyebrow" style={{ justifyContent: "center" }}>
+            <span className="pip" />
+            <span>{isLogin ? "ĐĂNG NHẬP" : "ĐĂNG KÝ"}</span>
           </div>
+
+          <h1
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(40px, 6vw, 64px)",
+              lineHeight: 1,
+              letterSpacing: "-0.02em",
+              color: "var(--tl-fg)",
+              margin: "0 0 8px",
+              textAlign: "center",
+            }}
+          >
+            {isLogin ? "Đăng nhập" : "Đăng ký"}.
+          </h1>
+          <p
+            style={{
+              fontSize: 15,
+              color: "var(--tl-fg-2)",
+              textAlign: "center",
+              margin: "0 0 32px",
+            }}
+          >
+            Pickleball, một tài khoản — mọi giải.
+          </p>
 
           {/* Verification Message */}
           {showVerificationMessage && (
-            <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-              <p className="text-sm text-foreground mb-3">
+            <div
+              style={{
+                padding: 16,
+                borderTop: "1px solid var(--tl-green)",
+                borderBottom: "1px solid var(--tl-border)",
+                marginBottom: 24,
+              }}
+            >
+              <p style={{ fontSize: 14, color: "var(--tl-fg)", margin: "0 0 12px" }}>
                 {isLogin ? t.auth.emailNotVerifiedDesc : t.auth.verificationSentDesc}
               </p>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                type="button"
+                className="tl-btn"
                 onClick={handleResendVerification}
                 disabled={resendingEmail || !email}
               >
@@ -313,137 +426,200 @@ const Login = () => {
                 ) : (
                   t.auth.resendVerification
                 )}
-              </Button>
+              </button>
             </div>
           )}
 
-          {/* Google Sign In */}
-          <Button
-            variant="outline"
-            className="w-full gap-3"
-            size="lg"
-            onClick={handleGoogleSignIn}
-            disabled={isSubmitting}
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            {t.auth.continueWithGoogle}
-          </Button>
+          {/* OAuth */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <button
+              type="button"
+              className="tl-btn"
+              onClick={handleGoogleSignIn}
+              disabled={isSubmitting}
+              style={{ width: "100%", justifyContent: "center", padding: "12px 18px" }}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              </svg>
+              Tiếp tục với Google
+            </button>
 
-          {/* Apple Sign In */}
-          <Button
-            variant="outline"
-            className="w-full gap-3"
-            size="lg"
-            onClick={handleAppleSignIn}
-            disabled={isSubmitting}
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-            </svg>
-            Đăng nhập với Apple
-          </Button>
-
-          <div className="flex items-center gap-4">
-            <Separator className="flex-1" />
-            <span className="text-sm text-foreground-muted">{t.auth.orContinueWith}</span>
-            <Separator className="flex-1" />
+            <button
+              type="button"
+              className="tl-btn"
+              onClick={handleAppleSignIn}
+              disabled={isSubmitting}
+              style={{ width: "100%", justifyContent: "center", padding: "12px 18px" }}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+              </svg>
+              Đăng nhập với Apple
+            </button>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t.auth.email}</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  placeholder="email@example.com"
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
+          {/* Editorial divider */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              margin: "28px 0",
+              fontFamily: "'Geist Mono', monospace",
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--tl-fg-4)",
+            }}
+          >
+            <span style={{ flex: 1, height: 1, background: "var(--tl-border)" }} />
+            <span>HOẶC TIẾP TỤC VỚI EMAIL</span>
+            <span style={{ flex: 1, height: 1, background: "var(--tl-border)" }} />
+          </div>
+
+          {/* Email/password form */}
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div>
+              <Label htmlFor="email" style={labelStyle}>{t.auth.email}</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@example.com"
+                required
+                disabled={isSubmitting}
+                style={inputStyle}
+              />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">{t.auth.password}</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  placeholder="••••••••••••"
-                  required
-                  minLength={8}
-                  disabled={isSubmitting}
-                />
-                {!isLogin && password.length > 0 && password.length < 8 && (
-                  <p className="text-xs text-destructive mt-1">Password must be at least 8 characters</p>
-                )}
-              </div>
+            <div>
+              <Label htmlFor="password" style={labelStyle}>Mật khẩu</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                required
+                minLength={8}
+                disabled={isSubmitting}
+                style={inputStyle}
+              />
+              {!isLogin && password.length > 0 && password.length < 8 && (
+                <p
+                  style={{
+                    fontFamily: "'Instrument Serif', serif",
+                    fontStyle: "italic",
+                    fontSize: 13,
+                    color: "var(--tl-red, #ef4444)",
+                    marginTop: 6,
+                  }}
+                >
+                  Mật khẩu cần ít nhất 8 ký tự
+                </p>
+              )}
             </div>
 
             {isLogin && (
-              <div className="text-right">
+              <div style={{ textAlign: "right", marginTop: -12 }}>
                 <button
                   type="button"
-                  className="text-sm text-primary hover:underline"
                   onClick={() => {
                     setForgotEmail(email);
                     setResetSent(false);
                     setShowForgotPassword(true);
                   }}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--tl-fg-3)",
+                    fontFamily: "'Instrument Serif', serif",
+                    fontStyle: "italic",
+                    fontSize: 14,
+                    cursor: "pointer",
+                  }}
                 >
-                  {t.auth.forgotPassword}
+                  Quên mật khẩu?
                 </button>
               </div>
             )}
 
-            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="tl-btn primary"
+              disabled={isSubmitting}
+              style={{ width: "100%", justifyContent: "center", padding: "12px 18px" }}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {t.common.loading}
                 </>
               ) : isLogin ? (
-                t.auth.login
+                "Đăng nhập"
               ) : (
-                t.auth.signup
+                "Đăng ký"
               )}
-            </Button>
+            </button>
           </form>
 
           {/* Toggle login/signup */}
-          <p className="text-center text-sm text-foreground-secondary">
-            {isLogin ? t.auth.noAccount : t.auth.hasAccount}{" "}
+          <p
+            style={{
+              textAlign: "center",
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              fontSize: 15,
+              color: "var(--tl-fg-3)",
+              margin: "24px 0 12px",
+            }}
+          >
+            {isLogin ? "Chưa có tài khoản?" : "Đã có tài khoản?"}{" "}
             <button
               type="button"
               onClick={() => {
                 setIsLogin(!isLogin);
                 setShowVerificationMessage(false);
               }}
-              className="text-primary hover:underline font-medium"
               disabled={isSubmitting}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--tl-green)",
+                fontFamily: "inherit",
+                fontStyle: "italic",
+                fontSize: 15,
+                cursor: "pointer",
+                textDecoration: "underline",
+                textUnderlineOffset: 2,
+              }}
             >
-              {isLogin ? t.nav.signup : t.nav.login}
+              {isLogin ? "Đăng ký" : "Đăng nhập"}
             </button>
           </p>
 
-          {/* Privacy Policy Link */}
-          <p className="text-center text-xs text-foreground-muted pt-4">
-            <Link to="/privacy" className="hover:underline">
-              {t.privacy.title.replace(" – The Pickle Hub", "")}
+          {/* Privacy */}
+          <p
+            style={{
+              textAlign: "center",
+              fontFamily: "'Geist Mono', monospace",
+              fontSize: 11,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--tl-fg-4)",
+              marginTop: 16,
+            }}
+          >
+            <Link
+              to="/privacy"
+              style={{ color: "inherit", textDecoration: "none" }}
+            >
+              CHÍNH SÁCH BẢO MẬT
             </Link>
           </p>
         </div>
