@@ -50,17 +50,29 @@ Deno.serve(async (req) => {
   }
 
   // ─── 0. Auth gate ─────────────────────────────────────────────────────
-  // Service-role-only endpoint. Cron invocation passes the project's
-  // service_role key in the Authorization header; reject everyone else
-  // so the public URL can't be hammered. Compare against env var so
-  // rotation is seamless (just bump SUPABASE_SERVICE_ROLE_KEY in Function
-  // Settings, no code change needed).
+  // Cron-only endpoint. Caller must pass a shared CRON_SECRET in the
+  // Authorization header. Set the secret in Function Settings → Secrets
+  // (any random string), then reference it from the cron SQL job. This
+  // keeps the auth check independent of Supabase service_role key
+  // rotations / new secret_key migration.
+  //
+  // If CRON_SECRET is not set, the function falls back to checking
+  // SUPABASE_SERVICE_ROLE_KEY for backwards compat — but production
+  // setups should always set CRON_SECRET explicitly.
+  const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
   const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const auth = req.headers.get("Authorization") ?? "";
-  const expected = `Bearer ${SERVICE_ROLE_KEY}`;
-  if (!SERVICE_ROLE_KEY || auth !== expected) {
+
+  const expectedCron = CRON_SECRET ? `Bearer ${CRON_SECRET}` : "";
+  const expectedService = SERVICE_ROLE_KEY ? `Bearer ${SERVICE_ROLE_KEY}` : "";
+
+  const ok =
+    (expectedCron && auth === expectedCron) ||
+    (expectedService && auth === expectedService);
+
+  if (!ok) {
     return jsonResponse(
-      { error: "unauthorized", code: "service_role_required" },
+      { error: "unauthorized", code: "cron_secret_required" },
       401,
     );
   }
