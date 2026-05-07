@@ -2306,6 +2306,7 @@ export type Database = {
           dupr_singles: number | null
           dupr_synced_at: string | null
           email: string
+          favorite_venue_id: string | null
           id: string
           is_ghost: boolean | null
           is_pro: boolean | null
@@ -2317,6 +2318,7 @@ export type Database = {
           preferred_language: string | null
           preferred_paddle: string | null
           self_rating: number | null
+          skill_level: string | null
           tournament_create_quota: number
           username: string | null
         }
@@ -2337,6 +2339,7 @@ export type Database = {
           dupr_singles?: number | null
           dupr_synced_at?: string | null
           email: string
+          favorite_venue_id?: string | null
           id: string
           is_ghost?: boolean | null
           is_pro?: boolean | null
@@ -2348,6 +2351,7 @@ export type Database = {
           preferred_language?: string | null
           preferred_paddle?: string | null
           self_rating?: number | null
+          skill_level?: string | null
           tournament_create_quota?: number
           username?: string | null
         }
@@ -2368,6 +2372,7 @@ export type Database = {
           dupr_singles?: number | null
           dupr_synced_at?: string | null
           email?: string
+          favorite_venue_id?: string | null
           id?: string
           is_ghost?: boolean | null
           is_pro?: boolean | null
@@ -2379,10 +2384,18 @@ export type Database = {
           preferred_language?: string | null
           preferred_paddle?: string | null
           self_rating?: number | null
+          skill_level?: string | null
           tournament_create_quota?: number
           username?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_favorite_venue_id_fkey"
+            columns: ["favorite_venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_organization_id_fkey"
             columns: ["organization_id"]
