@@ -109,14 +109,16 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
         },
       });
 
-      // Persist Step 1 fields. skill_level isn't yet a profiles column —
-      // store it as the first kudos-like surface in onboarding_step state
-      // for now; Phase 3B may add a dedicated column.
+      // Persist Step 1 fields. skill_level column added by the
+      // 20260508000000_sprint3_phase3a_skill_level_venue migration; the
+      // validation guard above ensures state.profile.skill_level is one
+      // of the 4 enum values before reaching this point.
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
           display_name: displayName,
           username,
+          skill_level: state.profile.skill_level,
           onboarding_step: 1,
         })
         .eq("id", userId);

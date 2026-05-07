@@ -33,9 +33,15 @@ export function VenueSelectStep({ state, dispatch, userId }: Props) {
     setSubmitting(true);
     setError(null);
     try {
+      // favorite_venue_id added by 20260508000000_sprint3_phase3a migration.
+      // On skip we explicitly null it out so a user who selected then changed
+      // their mind doesn't get a stale FK from a previous step entry.
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ onboarding_step: 3 })
+        .update({
+          favorite_venue_id: venue?.id ?? null,
+          onboarding_step: 3,
+        })
         .eq("id", userId);
       if (updateError) throw updateError;
 
