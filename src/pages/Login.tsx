@@ -275,8 +275,25 @@ const Login = () => {
   // Show loading while checking auth state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div
+        className="tl-root"
+        style={{ background: "var(--tl-bg)", color: "var(--tl-fg)" }}
+      >
+        <div className="tl-scroll">
+          <div
+            style={{
+              minHeight: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Loader2
+              className="w-8 h-8 animate-spin"
+              style={{ color: "var(--tl-fg-3)" }}
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -304,17 +321,24 @@ const Login = () => {
   };
 
   return (
+    // tl-root + tl-scroll wrap is required because production html/body/#root
+    // are position:fixed; overflow:hidden (native-shell model — see the-line.css
+    // line 2569). Without our own scroll container the page can't scroll past
+    // the viewport on either desktop or mobile.
     <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--tl-bg)",
-        color: "var(--tl-fg)",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      className="tl-root"
+      style={{ background: "var(--tl-bg)", color: "var(--tl-fg)" }}
     >
       <DynamicMeta title={isLogin ? t.auth.login : t.auth.signup} noindex={true} />
 
+      <div className="tl-scroll">
+        <div
+          style={{
+            minHeight: "100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
       <header style={{ padding: 16 }}>
         <Link
           to="/"
@@ -624,6 +648,8 @@ const Login = () => {
           </p>
         </div>
       </main>
+        </div>
+      </div>
 
       {/* Forgot Password Dialog */}
       <AlertDialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
