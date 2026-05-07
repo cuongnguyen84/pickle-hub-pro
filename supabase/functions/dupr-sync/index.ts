@@ -49,9 +49,25 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ─── 0. Auth gate ─────────────────────────────────────────────────────
+  // Service-role-only endpoint. Cron invocation passes the project's
+  // service_role key in the Authorization header; reject everyone else
+  // so the public URL can't be hammered. Compare against env var so
+  // rotation is seamless (just bump SUPABASE_SERVICE_ROLE_KEY in Function
+  // Settings, no code change needed).
+  const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const auth = req.headers.get("Authorization") ?? "";
+  const expected = `Bearer ${SERVICE_ROLE_KEY}`;
+  if (!SERVICE_ROLE_KEY || auth !== expected) {
+    return jsonResponse(
+      { error: "unauthorized", code: "service_role_required" },
+      401,
+    );
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    SERVICE_ROLE_KEY,
   );
 
   const startedAtMs = Date.now();
