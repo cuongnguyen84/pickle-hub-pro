@@ -95,6 +95,8 @@ const MatchCheckIn = lazy(() => import("./pages/MatchCheckIn"));
 const MatchPage = lazy(() => import("./pages/MatchPage"));
 // Bet #1 social — Sprint 3 Phase 3A
 const Onboarding = lazy(() => import("./pages/Onboarding"));
+// Bet #1 social — Sprint 3 Phase 3B
+const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -385,6 +387,8 @@ const App = () => (
                     <Route path="/tran-dau/:slug" element={<MatchPage />} />
                     {/* Bet #1 Sprint 3 Phase 3A: onboarding wizard (auth + onboard-state handled inline) */}
                     <Route path="/onboarding" element={<Onboarding />} />
+                    {/* Bet #1 Sprint 3 Phase 3B: public PlayerProfile (no auth wrapper) */}
+                    <Route path="/nguoi-choi/:username" element={<PlayerProfile />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/news" element={<News />} />
