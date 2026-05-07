@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { DynamicMeta } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading, signIn, signUp } = useAuth();
+  // Sprint 3 Phase 3A: post-auth redirect respects onboarding state.
+  const { profile, isLoading: profileLoading } = useUserProfile();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,14 +43,18 @@ const Login = () => {
   // Get redirect URL from query params
   const redirectUrl = searchParams.get("redirect");
 
-  // Redirect if already logged in
+  // Redirect if already logged in. Sprint 3 Phase 3A: incomplete onboarding
+  // bounces the user to /onboarding instead of the requested redirect target.
   useEffect(() => {
-    if (user && !authLoading) {
-      // Redirect to saved URL or home
-      const targetUrl = redirectUrl || "/";
-      navigate(targetUrl, { replace: true });
-    }
-  }, [user, authLoading, navigate, redirectUrl]);
+    if (!user || authLoading) return;
+    // Wait for profile fetch so we can read onboarding_completed_at.
+    if (profileLoading) return;
+    const onboarded = (
+      profile as { onboarding_completed_at?: string | null } | null | undefined
+    )?.onboarding_completed_at;
+    const targetUrl = onboarded ? redirectUrl || "/" : "/onboarding";
+    navigate(targetUrl, { replace: true });
+  }, [user, authLoading, profileLoading, profile, navigate, redirectUrl]);
 
   const handleResendVerification = async () => {
     if (!email) return;
@@ -194,9 +201,10 @@ const Login = () => {
           toast({
             title: t.auth.loginSuccess,
           });
-          // Redirect to saved URL or home
-          const targetUrl = redirectUrl || "/";
-          navigate(targetUrl, { replace: true });
+          // Redirect handled by the post-auth useEffect above (which checks
+          // onboarding_completed_at via useUserProfile). Removing the manual
+          // navigate here so unboarded users are bounced to /onboarding
+          // instead of "/".
         }
       } else {
         const { error } = await signUp(email, password);
