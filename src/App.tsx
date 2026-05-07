@@ -186,13 +186,13 @@ const queryClient = new QueryClient({
 import { prefetchHomeData } from "@/lib/prefetch";
 prefetchHomeData(queryClient);
 
-// Minimal loading fallback that mirrors MainLayout shell to prevent layout shift
+// Minimal route-transition fallback. Previously rendered the full MainLayout
+// shell (AppHeader + nav) which flashed the legacy chrome between TheLine
+// pages. Now: just a centered spinner on the page background — no header,
+// no nav, no text.
 const PageLoader = () => (
-  <div className="h-full bg-background flex flex-col w-full max-w-[100vw] overflow-hidden">
-    <AppHeader />
-    <main className="flex-1 overflow-y-auto flex flex-col items-center justify-center w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
-      <div className="animate-pulse text-muted-foreground">Loading...</div>
-    </main>
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
   </div>
 );
 
