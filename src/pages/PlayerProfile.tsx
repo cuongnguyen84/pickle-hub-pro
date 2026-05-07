@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DynamicMeta } from "@/components/seo";
-import MainLayout from "@/components/layout/MainLayout";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { usePlayerProfile } from "@/hooks/social/usePlayerProfile";
 import { usePlayerStats } from "@/hooks/social/usePlayerStats";
 import { usePlayerMatchHistory } from "@/hooks/social/usePlayerMatchHistory";
@@ -82,13 +81,13 @@ const PlayerProfile = () => {
   // ─── Loading ─────────────────────────────────────────────────────────────
   if (profileQuery.isLoading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Đang tải hồ sơ" noindex>
         <div className="mx-auto max-w-2xl space-y-4 p-4">
           <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-24 w-full rounded-xl" />
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -96,12 +95,11 @@ const PlayerProfile = () => {
   const profile = profileQuery.data;
   if (!profile) {
     return (
-      <MainLayout>
-        <DynamicMeta
-          title="Không tìm thấy người chơi"
-          description="Hồ sơ người chơi không tồn tại trên ThePickleHub."
-          noindex
-        />
+      <TheLineLayout
+        title="Không tìm thấy người chơi"
+        description="Hồ sơ người chơi không tồn tại trên ThePickleHub."
+        noindex
+      >
         <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 p-8 text-center">
           <h1 className="text-2xl font-semibold">Không tìm thấy người chơi</h1>
           <p className="text-sm text-muted-foreground">
@@ -111,7 +109,7 @@ const PlayerProfile = () => {
             <Link to="/">Về trang chủ</Link>
           </Button>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -121,14 +119,7 @@ const PlayerProfile = () => {
     : `${profile.display_name ?? profile.username} (@${profile.username})`;
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title={pageTitle}
-        description={heroDescription}
-        image={profile.avatar_url ?? undefined}
-        type="website"
-        url={`https://www.thepicklehub.net/nguoi-choi/${profile.username}`}
-      />
+    <TheLineLayout title={pageTitle} description={heroDescription}>
       <div className="mx-auto max-w-2xl space-y-6 p-4">
         <PlayerHeroCard player={profile} />
         <PlayerStats stats={statsQuery.data} loading={statsQuery.isLoading} />
@@ -143,7 +134,7 @@ const PlayerProfile = () => {
           matchesQuery={matchesQuery}
         />
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 
