@@ -11,6 +11,7 @@ import { useReducer, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, X } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -114,23 +115,33 @@ function reducer(state: CheckInState, action: Action): CheckInState {
   }
 }
 
-const STEPS: { id: number; title: string; subtitle: string }[] = [
+type StepMeta = { id: number; title: string; subtitle: string };
+const STEPS_VI: StepMeta[] = [
   { id: 1, title: "Sân & thời gian", subtitle: "Chọn sân nơi diễn ra trận" },
   { id: 2, title: "Định dạng",       subtitle: "Đôi, đơn hay mixed?" },
   { id: 3, title: "Người chơi",      subtitle: "Ai tham gia 2 đội?" },
   { id: 4, title: "Tỷ số",           subtitle: "Nhập điểm từng game" },
   { id: 5, title: "Xem lại",         subtitle: "Kiểm tra và lưu" },
 ];
+const STEPS_EN: StepMeta[] = [
+  { id: 1, title: "Venue & time",  subtitle: "Where the match was played" },
+  { id: 2, title: "Format",        subtitle: "Doubles, singles, or mixed?" },
+  { id: 3, title: "Players",       subtitle: "Who's on each team?" },
+  { id: 4, title: "Score",         subtitle: "Enter game-by-game scores" },
+  { id: 5, title: "Review",        subtitle: "Check and save" },
+];
 
 const MatchCheckIn = () => {
   const navigate = useNavigate();
+  const { language } = useI18n();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [confirmAbandon, setConfirmAbandon] = useState(false);
   const matchCreate = useMatchCreate();
+  const STEPS = language === "vi" ? STEPS_VI : STEPS_EN;
 
   const stepMeta = useMemo(
     () => STEPS.find((s) => s.id === state.currentStep) ?? STEPS[0],
-    [state.currentStep],
+    [state.currentStep, STEPS],
   );
 
   const progressValue = (state.currentStep / TOTAL_STEPS) * 100;
@@ -186,27 +197,37 @@ const MatchCheckIn = () => {
   };
 
   return (
-    <TheLineLayout title="Tạo trận đấu" noindex>
+    <TheLineLayout
+      title={language === "vi" ? "Tạo trận đấu" : "Log match"}
+      noindex
+    >
       <div className="mx-auto flex w-full max-w-2xl flex-col bg-social-bg-elevated px-4 py-4 dark:bg-social-neutral-900 md:py-8">
         {/* ─── Header: progress + abandon ────────────────────────────── */}
         <div className="flex items-center gap-3 pb-4">
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Bỏ"
+            aria-label={language === "vi" ? "Bỏ" : "Cancel"}
             onClick={() => setConfirmAbandon(true)}
           >
             <X className="h-5 w-5" />
           </Button>
           <div className="flex-1">
             <div className="mb-1 flex items-baseline justify-between text-xs text-muted-foreground">
-              <span>Bước {state.currentStep}/{TOTAL_STEPS}</span>
+              <span>
+                {language === "vi" ? "Bước" : "Step"} {state.currentStep}/
+                {TOTAL_STEPS}
+              </span>
               <span className="hidden sm:inline">{stepMeta.subtitle}</span>
             </div>
             <Progress
               value={progressValue}
               className="h-1.5 [&>div]:bg-social-primary"
-              aria-label={`Tiến trình: bước ${state.currentStep} trên ${TOTAL_STEPS}`}
+              aria-label={
+                language === "vi"
+                  ? `Tiến trình: bước ${state.currentStep} trên ${TOTAL_STEPS}`
+                  : `Progress: step ${state.currentStep} of ${TOTAL_STEPS}`
+              }
             />
           </div>
         </div>
@@ -280,7 +301,7 @@ const MatchCheckIn = () => {
               className="gap-1"
             >
               <ArrowLeft className="h-4 w-4" />
-              Quay lại
+              {language === "vi" ? "Quay lại" : "Back"}
             </Button>
             <Button
               onClick={() => dispatch({ type: "NEXT" })}
@@ -290,7 +311,7 @@ const MatchCheckIn = () => {
                 !stepValid && "opacity-50",
               )}
             >
-              Tiếp tục
+              {language === "vi" ? "Tiếp tục" : "Continue"}
             </Button>
           </div>
         )}
@@ -302,7 +323,9 @@ const MatchCheckIn = () => {
               className="gap-1"
             >
               <ArrowLeft className="h-4 w-4" />
-              Quay lại bước 4 (sửa tỷ số)
+              {language === "vi"
+                ? "Quay lại bước 4 (sửa tỷ số)"
+                : "Back to step 4 (edit score)"}
             </Button>
           </div>
         )}
@@ -312,18 +335,24 @@ const MatchCheckIn = () => {
       <AlertDialog open={confirmAbandon} onOpenChange={setConfirmAbandon}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Bỏ check-in?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {language === "vi" ? "Bỏ check-in?" : "Abandon check-in?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Toàn bộ thông tin trận đấu chưa lưu sẽ mất. Bạn có chắc muốn thoát?
+              {language === "vi"
+                ? "Toàn bộ thông tin trận đấu chưa lưu sẽ mất. Bạn có chắc muốn thoát?"
+                : "All unsaved match info will be lost. Are you sure you want to leave?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Tiếp tục check-in</AlertDialogCancel>
+            <AlertDialogCancel>
+              {language === "vi" ? "Tiếp tục check-in" : "Keep going"}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleAbandon}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Thoát
+              {language === "vi" ? "Thoát" : "Leave"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
