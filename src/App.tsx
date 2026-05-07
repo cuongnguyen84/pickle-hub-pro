@@ -93,6 +93,8 @@ const ForumPostCreate = lazy(() => import("./pages/ForumPostCreate"));
 // Bet #1 social — Sprint 2
 const MatchCheckIn = lazy(() => import("./pages/MatchCheckIn"));
 const MatchPage = lazy(() => import("./pages/MatchPage"));
+// Bet #1 social — Sprint 3 Phase 3A
+const Onboarding = lazy(() => import("./pages/Onboarding"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -381,6 +383,8 @@ const App = () => (
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />
                     {/* Bet #1: match permalink (Vietnamese canonical /tran-dau/:slug) */}
                     <Route path="/tran-dau/:slug" element={<MatchPage />} />
+                    {/* Bet #1 Sprint 3 Phase 3A: onboarding wizard (auth + onboard-state handled inline) */}
+                    <Route path="/onboarding" element={<Onboarding />} />
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/news" element={<News />} />
