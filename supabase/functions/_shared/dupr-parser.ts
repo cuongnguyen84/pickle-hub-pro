@@ -1,14 +1,27 @@
 // ============================================================================
 // _shared/dupr-parser.ts — DUPR profile scrape helpers
 // ----------------------------------------------------------------------------
-// Pure helpers (no Deno-only imports) so the same file is importable from:
-//   - Deno edge functions (dupr-link, dupr-sync)
-//   - Vitest unit tests (Node) — see __tests__/dupr-parser.test.ts
+// DEPRECATED for Sprint 3 Phase 2 (2026-05-07).
 //
-// Hybrid scrape strategy: Phase 2 uses best-effort HTML scrape of public DUPR
-// profile pages (https://mydupr.com/dupr/players/<id>). Phase 5+ may swap in
-// the official DUPR API once partnership is in place. parseDuprProfile() is
-// the swap point — keep its signature stable.
+// Original purpose: parse DUPR HTML profile pages for ratings.
+// Pivoted: DUPR public pages are a Vite/React SPA (empty <div id="root">
+// shell on first paint) and DUPR's underlying API requires per-user Bearer
+// auth. Rating ingest moved to manual user input — see
+// supabase/functions/_shared/dupr-validation.ts and the dupr-link function.
+//
+// Functions kept here for reference + Sprint 5+ revival when DUPR
+// partnership lands:
+//
+//   - parseDuprInput        — STILL USED. Validates DUPR ID/URL format
+//                             (called by dupr-validation.normalizeDuprUrl).
+//   - parseDuprProfile      — RESERVED. Re-enable in dupr-sync once we have
+//                             rendered HTML or partnership API responses.
+//   - fetchDuprProfile      — RESERVED. Re-enable in dupr-sync alongside
+//                             parseDuprProfile.
+//
+// When reviving: stamp dupr_rating_history.source = 'dupr_official' instead
+// of 'manual' so the UI can switch the "self-reported" badge to "DUPR
+// Official".
 // ============================================================================
 
 /**

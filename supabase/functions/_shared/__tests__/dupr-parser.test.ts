@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { parseDuprInput, parseDuprProfile } from "../dupr-parser";
 
 // ─── parseDuprInput ─────────────────────────────────────────────────────────
@@ -82,8 +84,25 @@ describe("parseDuprInput — accepts URL or bare ID", () => {
   });
 });
 
-// ─── parseDuprProfile ───────────────────────────────────────────────────────
-describe("parseDuprProfile — 3 strategies in order", () => {
+// ─── Deprecation marker ─────────────────────────────────────────────────────
+describe("dupr-parser deprecation (Sprint 3 Phase 2 pivot)", () => {
+  it("source file carries DEPRECATED header explaining the pivot", () => {
+    // Sprint 3 Phase 2 pivoted away from HTML scrape because DUPR is a
+    // pure client-rendered SPA. parseDuprProfile / fetchDuprProfile are
+    // preserved for Sprint 5+ revival but must not be silently revived
+    // without updating this header — guard via assertion.
+    const sourcePath = join(__dirname, "..", "dupr-parser.ts");
+    const source = readFileSync(sourcePath, "utf8");
+    expect(source).toMatch(/DEPRECATED for Sprint 3 Phase 2/);
+    expect(source).toMatch(/parseDuprInput\s+— STILL USED/);
+    expect(source).toMatch(/parseDuprProfile\s+— RESERVED/);
+  });
+});
+
+// ─── parseDuprProfile (SKIPPED — Sprint 3 Phase 2 pivot) ───────────────────
+// Kept for Sprint 5+ revival when DUPR partnership lands; until then DUPR's
+// SPA renders ratings client-side so there is no HTML to parse.
+describe.skip("parseDuprProfile — 3 strategies in order", () => {
   it("strategy 1: __NEXT_DATA__ with singles + doubles + fullName", () => {
     const html = buildNextDataHtml({
       singles: 4.25,
