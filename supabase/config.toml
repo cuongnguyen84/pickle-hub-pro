@@ -85,9 +85,16 @@ verify_jwt = false
 
 [functions.dupr-link]
 verify_jwt = false
+# User-facing; JWT verified internally via _shared/auth.getAuthUser
+# (ES256/HS256 workaround — see CLAUDE.md).
 
 [functions.dupr-sync]
 verify_jwt = false
+# Cron schedule activated manually via Supabase Dashboard → Database → Cron Jobs
+# (older Supabase CLI versions reject a schedule key here; the dashboard cron
+# is the source of truth — daily at 20:00 UTC = 03:00 ICT next day, refreshes
+# up to 100 oldest-synced DUPR profiles per run).
+# schedule = "0 20 * * *"
 
 [functions.feed-generate]
 verify_jwt = false
