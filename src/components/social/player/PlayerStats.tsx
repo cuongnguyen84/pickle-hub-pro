@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useI18n } from "@/i18n";
 import type { PlayerStatsRow } from "@/hooks/social/usePlayerStats";
 
 interface PlayerStatsProps {
@@ -13,6 +14,7 @@ interface PlayerStatsProps {
  * matching the Rankings + Tournaments aesthetic.
  */
 export function PlayerStats({ stats, loading }: PlayerStatsProps) {
+  const { language } = useI18n();
   if (loading) {
     return (
       <section style={{ padding: "32px 0" }}>
@@ -31,16 +33,20 @@ export function PlayerStats({ stats, loading }: PlayerStatsProps) {
       <section style={{ padding: "32px 0", borderTop: "1px solid var(--tl-border)" }}>
         <div className="tl-eyebrow" aria-hidden="true">
           <span className="pip" />
-          <span>THÀNH TÍCH</span>
+          <span>{language === "vi" ? "THÀNH TÍCH" : "STATS"}</span>
         </div>
         <div className="tl-empty-card" style={{ marginTop: 12 }}>
           <div className="tl-empty-card-mark" aria-hidden="true">◌</div>
-          <div className="tl-empty-card-label">Chưa có trận đấu</div>
+          <div className="tl-empty-card-label">
+            {language === "vi" ? "Chưa có trận đấu" : "No matches yet"}
+          </div>
           <div className="tl-empty-card-hint">
-            Log trận đầu tiên để theo dõi tiến triển trên ThePickleHub.
+            {language === "vi"
+              ? "Log trận đầu tiên để theo dõi tiến triển trên ThePickleHub."
+              : "Log your first match to track progress on ThePickleHub."}
           </div>
           <Link to="/tran-dau/moi" className="tl-empty-card-cta">
-            + Log trận đầu
+            {language === "vi" ? "+ Log trận đầu" : "+ Log first match"}
           </Link>
         </div>
       </section>
@@ -67,7 +73,7 @@ export function PlayerStats({ stats, loading }: PlayerStatsProps) {
     >
       <div className="tl-eyebrow" aria-hidden="true">
         <span className="pip" />
-        <span>THÀNH TÍCH</span>
+        <span>{language === "vi" ? "THÀNH TÍCH" : "STATS"}</span>
       </div>
       <div
         style={{
@@ -83,14 +89,14 @@ export function PlayerStats({ stats, loading }: PlayerStatsProps) {
           sub={`${stats.wins ?? 0}W — ${stats.losses ?? 0}L`}
         />
         <StatCell
-          label="TỔNG TRẬN"
+          label={language === "vi" ? "TỔNG TRẬN" : "MATCHES"}
           value={`${stats.total_matches ?? 0}`}
-          sub="đã verified"
+          sub={language === "vi" ? "đã verified" : "verified"}
         />
         <StatCell
-          label="PHONG ĐỘ"
+          label={language === "vi" ? "PHONG ĐỘ" : "FORM"}
           value={<FormSparkline form={stats.last_5_form ?? ""} />}
-          sub="5 trận gần nhất"
+          sub={language === "vi" ? "5 trận gần nhất" : "Last 5 matches"}
         />
         <StatCell
           label="STREAK"
@@ -109,10 +115,16 @@ export function PlayerStats({ stats, loading }: PlayerStatsProps) {
           }
           sub={
             streak > 0
-              ? "thắng liên tiếp"
+              ? language === "vi"
+                ? "thắng liên tiếp"
+                : "wins in a row"
               : streak < 0
-                ? "thua liên tiếp"
-                : "không liên tiếp"
+                ? language === "vi"
+                  ? "thua liên tiếp"
+                  : "losses in a row"
+                : language === "vi"
+                  ? "không liên tiếp"
+                  : "no streak"
           }
         />
       </div>

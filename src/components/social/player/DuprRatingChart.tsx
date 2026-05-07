@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { useI18n } from "@/i18n";
 import type { DuprHistoryRow } from "@/hooks/social/useDuprRatingHistory";
 
 interface Props {
@@ -31,6 +32,7 @@ interface ChartPoint {
  * inside the section.
  */
 export function DuprRatingChart({ history, loading }: Props) {
+  const { language } = useI18n();
   const points: ChartPoint[] = useMemo(
     () =>
       history.map((h) => {
@@ -58,9 +60,11 @@ export function DuprRatingChart({ history, loading }: Props) {
 
   const hasSinglesSeries = points.some((p) => p.singles != null);
 
+  const sectionLabel = language === "vi" ? "DUPR — 30 NGÀY" : "DUPR — 30 DAYS";
+
   if (loading) {
     return (
-      <Section>
+      <Section label={sectionLabel}>
         <div style={{ display: "flex", justifyContent: "center", padding: 32 }}>
           <Loader2
             className="h-5 w-5 animate-spin"
@@ -73,7 +77,7 @@ export function DuprRatingChart({ history, loading }: Props) {
 
   if (points.length < 2) {
     return (
-      <Section>
+      <Section label={sectionLabel}>
         <p
           style={{
             fontFamily: "'Instrument Serif', serif",
@@ -83,14 +87,16 @@ export function DuprRatingChart({ history, loading }: Props) {
             margin: 0,
           }}
         >
-          Cần thêm dữ liệu để vẽ biểu đồ.
+          {language === "vi"
+            ? "Cần thêm dữ liệu để vẽ biểu đồ."
+            : "Need more data points to render this chart."}
         </p>
       </Section>
     );
   }
 
   return (
-    <Section>
+    <Section label={sectionLabel}>
       <div style={{ height: 220, width: "100%" }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
@@ -150,7 +156,13 @@ export function DuprRatingChart({ history, loading }: Props) {
   );
 }
 
-function Section({ children }: { children: React.ReactNode }) {
+function Section({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <section
       style={{
@@ -160,7 +172,7 @@ function Section({ children }: { children: React.ReactNode }) {
     >
       <div className="tl-eyebrow" aria-hidden="true">
         <span className="pip" />
-        <span>DUPR — 30 NGÀY</span>
+        <span>{label}</span>
       </div>
       {children}
     </section>

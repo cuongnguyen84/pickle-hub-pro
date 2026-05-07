@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BadgeCheck, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import type { PlayerProfile } from "@/hooks/social/usePlayerProfile";
 
@@ -9,11 +10,17 @@ interface PlayerHeroCardProps {
   player: PlayerProfile;
 }
 
-const SKILL_LABELS: Record<string, string> = {
+const SKILL_LABELS_VI: Record<string, string> = {
   beginner: "Người mới",
   intermediate: "Trung bình",
   advanced: "Khá",
   pro: "Chuyên nghiệp",
+};
+const SKILL_LABELS_EN: Record<string, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+  pro: "Pro",
 };
 
 /**
@@ -23,6 +30,7 @@ const SKILL_LABELS: Record<string, string> = {
  */
 export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
   const { toast } = useToast();
+  const { language } = useI18n();
   const [favoriteVenue, setFavoriteVenue] = useState<{
     name: string;
     slug: string;
@@ -66,19 +74,23 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
     }
     try {
       await navigator.clipboard.writeText(url);
-      toast({ title: "Đã sao chép link hồ sơ" });
+      toast({
+        title:
+          language === "vi"
+            ? "Đã sao chép link hồ sơ"
+            : "Profile link copied",
+      });
     } catch {
       toast({
         variant: "destructive",
-        title: "Không thể sao chép",
+        title: language === "vi" ? "Không thể sao chép" : "Couldn't copy",
         description: url,
       });
     }
   };
 
-  const skillLabel = player.skill_level
-    ? SKILL_LABELS[player.skill_level]
-    : null;
+  const skillMap = language === "vi" ? SKILL_LABELS_VI : SKILL_LABELS_EN;
+  const skillLabel = player.skill_level ? skillMap[player.skill_level] : null;
   const displayName = player.display_name ?? player.username ?? "";
   const meta = [
     player.username && `@${player.username}`,
@@ -92,7 +104,7 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
     <header className="tl-page-head" style={{ padding: "32px 0 28px" }}>
       <div className="tl-eyebrow" aria-hidden="true">
         <span className="pip" />
-        <span>NGƯỜI CHƠI</span>
+        <span>{language === "vi" ? "NGƯỜI CHƠI" : "PLAYER"}</span>
         {player.dupr_doubles != null && (
           <>
             <span className="sep">·</span>
@@ -116,7 +128,7 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
               <BadgeCheck
                 className="ml-2 inline h-6 w-6"
                 style={{ color: "var(--tl-green)", verticalAlign: "middle" }}
-                aria-label="Đã xác thực"
+                aria-label={language === "vi" ? "Đã xác thực" : "Verified"}
               />
             )}
             {player.is_pro && (
@@ -153,7 +165,7 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
                 margin: "12px 0 0",
               }}
             >
-              Sân hay chơi:{" "}
+              {language === "vi" ? "Sân hay chơi:" : "Home court:"}{" "}
               <Link
                 to={`/san/${favoriteVenue.slug}`}
                 style={{
@@ -185,10 +197,12 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
               type="button"
               className="tl-btn"
               onClick={handleShare}
-              aria-label="Chia sẻ hồ sơ"
+              aria-label={
+                language === "vi" ? "Chia sẻ hồ sơ" : "Share profile"
+              }
             >
               <Share2 className="h-4 w-4" />
-              Chia sẻ
+              {language === "vi" ? "Chia sẻ" : "Share"}
             </button>
             <button
               type="button"
@@ -196,7 +210,7 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
               disabled
               title="Phase 3C — coming soon"
             >
-              + Theo dõi
+              {language === "vi" ? "+ Theo dõi" : "+ Follow"}
             </button>
           </div>
         </div>

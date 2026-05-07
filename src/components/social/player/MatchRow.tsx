@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useI18n } from "@/i18n";
 import type { PlayerMatchHistoryRow } from "@/hooks/social/usePlayerMatchHistory";
 
 interface MatchRowProps {
@@ -16,10 +17,15 @@ interface ParticipantSlim {
   is_ghost: boolean;
 }
 
-const FORMAT_LABELS: Record<string, string> = {
+const FORMAT_LABELS_VI: Record<string, string> = {
   singles: "Đơn",
   doubles: "Đôi",
   mixed: "Đôi nam-nữ",
+};
+const FORMAT_LABELS_EN: Record<string, string> = {
+  singles: "Singles",
+  doubles: "Doubles",
+  mixed: "Mixed",
 };
 
 /**
@@ -28,6 +34,7 @@ const FORMAT_LABELS: Record<string, string> = {
  * tabular-nums score, W/L pill colored by tl-green / tl-red.
  */
 export function MatchRow({ match, viewerPlayerId }: MatchRowProps) {
+  const { language } = useI18n();
   const participants = (match.participants ?? []) as unknown as
     | ParticipantSlim[]
     | null;
@@ -35,6 +42,7 @@ export function MatchRow({ match, viewerPlayerId }: MatchRowProps) {
   const teamB = participants?.filter((p) => p.team === "b") ?? [];
   const dateLabel = formatDate(match.played_at);
   const winnerSide = match.winning_team;
+  const FORMAT_LABELS = language === "vi" ? FORMAT_LABELS_VI : FORMAT_LABELS_EN;
 
   return (
     <Link
@@ -45,7 +53,11 @@ export function MatchRow({ match, viewerPlayerId }: MatchRowProps) {
         textDecoration: "none",
         color: "inherit",
       }}
-      aria-label={`Xem trận ngày ${dateLabel}`}
+      aria-label={
+        language === "vi"
+          ? `Xem trận ngày ${dateLabel}`
+          : `View match on ${dateLabel}`
+      }
     >
       <div
         className="tl-caps"

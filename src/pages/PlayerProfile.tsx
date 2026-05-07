@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { useI18n } from "@/i18n";
 import { usePlayerProfile } from "@/hooks/social/usePlayerProfile";
 import { usePlayerStats } from "@/hooks/social/usePlayerStats";
 import { usePlayerMatchHistory } from "@/hooks/social/usePlayerMatchHistory";
@@ -15,6 +16,7 @@ import { MatchHistoryTabs } from "@/components/social/player/MatchHistoryTabs";
 const JSONLD_ID = "player-profile-jsonld";
 
 const PlayerProfile = () => {
+  const { language } = useI18n();
   const { username } = useParams<{ username: string }>();
   const profileQuery = usePlayerProfile(username);
   const statsQuery = usePlayerStats(username);
@@ -81,7 +83,10 @@ const PlayerProfile = () => {
   // ─── Loading ─────────────────────────────────────────────────────────────
   if (profileQuery.isLoading) {
     return (
-      <TheLineLayout title="Đang tải hồ sơ" noindex>
+      <TheLineLayout
+        title={language === "vi" ? "Đang tải hồ sơ" : "Loading profile"}
+        noindex
+      >
         <div className="mx-auto max-w-2xl space-y-4 p-4">
           <Skeleton className="h-40 w-full rounded-xl" />
           <Skeleton className="h-24 w-full rounded-xl" />
@@ -94,26 +99,32 @@ const PlayerProfile = () => {
   // ─── 404: missing or ghost ───────────────────────────────────────────────
   const profile = profileQuery.data;
   if (!profile) {
+    const notFoundTitle =
+      language === "vi" ? "Không tìm thấy người chơi" : "Player not found";
+    const notFoundDesc =
+      language === "vi"
+        ? "Hồ sơ người chơi không tồn tại trên ThePickleHub."
+        : "Player profile does not exist on ThePickleHub.";
     return (
-      <TheLineLayout
-        title="Không tìm thấy người chơi"
-        description="Hồ sơ người chơi không tồn tại trên ThePickleHub."
-        noindex
-      >
+      <TheLineLayout title={notFoundTitle} description={notFoundDesc} noindex>
         <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 p-8 text-center">
-          <h1 className="text-2xl font-semibold">Không tìm thấy người chơi</h1>
+          <h1 className="text-2xl font-semibold">{notFoundTitle}</h1>
           <p className="text-sm text-muted-foreground">
-            Username "{username}" chưa có ai dùng, hoặc hồ sơ đã bị ẩn.
+            {language === "vi"
+              ? `Username "${username}" chưa có ai dùng, hoặc hồ sơ đã bị ẩn.`
+              : `Username "${username}" isn't claimed yet, or the profile is hidden.`}
           </p>
           <Button asChild variant="outline">
-            <Link to="/">Về trang chủ</Link>
+            <Link to="/">
+              {language === "vi" ? "Về trang chủ" : "Back home"}
+            </Link>
           </Button>
         </div>
       </TheLineLayout>
     );
   }
 
-  const heroDescription = buildMetaDescription(profile, statsQuery.data);
+  const heroDescription = buildMetaDescription(profile, statsQuery.data, language);
   const pageTitle = profile.dupr_doubles
     ? `${profile.display_name ?? profile.username} (@${profile.username}) — DUPR ${profile.dupr_doubles}`
     : `${profile.display_name ?? profile.username} (@${profile.username})`;
@@ -122,7 +133,7 @@ const PlayerProfile = () => {
     <TheLineLayout title={pageTitle} description={heroDescription}>
       <div className="tl-shell" style={{ paddingBottom: 56 }}>
         <nav className="tl-breadcrumb">
-          <Link to="/">Trang chủ</Link>
+          <Link to="/">{language === "vi" ? "Trang chủ" : "Home"}</Link>
           <span className="sep">/</span>
           <span className="current">@{profile.username}</span>
         </nav>
@@ -146,17 +157,23 @@ const PlayerProfile = () => {
 function buildMetaDescription(
   profile: { display_name: string | null; username: string; city: string | null; dupr_doubles: number | null },
   stats: { wins?: number; losses?: number } | null | undefined,
+  language: "vi" | "en",
 ): string {
   const name = profile.display_name ?? profile.username;
-  const where = profile.city ? `tại ${profile.city}` : "";
-  const rating = profile.dupr_doubles
-    ? ` với DUPR ${profile.dupr_doubles}`
-    : "";
-  const record =
+  const recordText =
     stats && (stats.wins || stats.losses)
-      ? ` ${stats.wins ?? 0}W-${stats.losses ?? 0}L trên ThePickleHub.`
+      ? ` ${stats.wins ?? 0}W-${stats.losses ?? 0}L`
       : "";
-  return `${name} là pickleball player${where ? ` ${where}` : ""}${rating}.${record}`.trim();
+  if (language === "vi") {
+    const where = profile.city ? ` tại ${profile.city}` : "";
+    const rating = profile.dupr_doubles ? ` với DUPR ${profile.dupr_doubles}` : "";
+    const trail = recordText ? `${recordText} trên ThePickleHub.` : "";
+    return `${name} là pickleball player${where}${rating}.${trail}`.trim();
+  }
+  const where = profile.city ? ` based in ${profile.city}` : "";
+  const rating = profile.dupr_doubles ? ` with a DUPR of ${profile.dupr_doubles}` : "";
+  const trail = recordText ? `${recordText} on ThePickleHub.` : "";
+  return `${name} is a pickleball player${where}${rating}.${trail}`.trim();
 }
 
 export default PlayerProfile;
