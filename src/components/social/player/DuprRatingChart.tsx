@@ -24,6 +24,12 @@ interface ChartPoint {
   source: string;
 }
 
+/**
+ * Editorial chart section — eyebrow tag, hairline divider top, Recharts
+ * lines using TheLine green token for the doubles series + dim color for
+ * singles. No card border around the chart itself; it lives directly
+ * inside the section.
+ */
 export function DuprRatingChart({ history, loading }: Props) {
   const points: ChartPoint[] = useMemo(
     () =>
@@ -40,7 +46,6 @@ export function DuprRatingChart({ history, loading }: Props) {
     [history],
   );
 
-  // Pad y-domain by 0.2 around the data range so a flat line isn't centered.
   const yDomain = useMemo(() => {
     const values = points.flatMap((p) =>
       [p.doubles, p.singles].filter((v): v is number => v != null),
@@ -55,67 +60,74 @@ export function DuprRatingChart({ history, loading }: Props) {
 
   if (loading) {
     return (
-      <section className="rounded-xl border border-border bg-card p-6">
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      <Section>
+        <div style={{ display: "flex", justifyContent: "center", padding: 32 }}>
+          <Loader2
+            className="h-5 w-5 animate-spin"
+            style={{ color: "var(--tl-fg-3)" }}
+          />
         </div>
-      </section>
+      </Section>
     );
   }
 
   if (points.length < 2) {
     return (
-      <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          DUPR — 30 ngày
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Cần thêm dữ liệu để vẽ biểu đồ. Cập nhật DUPR rating ở{" "}
-          <span className="font-medium">Cài đặt → DUPR</span> để theo dõi tiến
-          triển.
+      <Section>
+        <p
+          style={{
+            fontFamily: "'Instrument Serif', serif",
+            fontStyle: "italic",
+            fontSize: 18,
+            color: "var(--tl-fg-3)",
+            margin: 0,
+          }}
+        >
+          Cần thêm dữ liệu để vẽ biểu đồ.
         </p>
-      </section>
+      </Section>
     );
   }
 
   return (
-    <section className="rounded-xl border border-border bg-card p-4">
-      <h2 className="px-2 pb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        DUPR — 30 ngày
-      </h2>
-      <div className="h-48 w-full">
+    <Section>
+      <div style={{ height: 220, width: "100%" }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={points} margin={{ left: 0, right: 8, top: 4, bottom: 4 }}>
-            <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
+          <LineChart
+            data={points}
+            margin={{ left: 0, right: 8, top: 4, bottom: 4 }}
+          >
+            <CartesianGrid stroke="var(--tl-border)" strokeDasharray="3 3" />
             <XAxis
               dataKey="dateLabel"
-              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 11, fill: "var(--tl-fg-3)" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               domain={yDomain}
-              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 11, fill: "var(--tl-fg-3)" }}
               axisLine={false}
               tickLine={false}
               width={32}
             />
             <Tooltip
               contentStyle={{
-                background: "hsl(var(--popover))",
-                border: "1px solid hsl(var(--border))",
+                background: "var(--tl-bg)",
+                border: "1px solid var(--tl-border)",
                 borderRadius: 8,
                 fontSize: 12,
+                color: "var(--tl-fg)",
               }}
-              labelStyle={{ color: "hsl(var(--muted-foreground))" }}
+              labelStyle={{ color: "var(--tl-fg-3)" }}
             />
             <Line
               type="monotone"
               dataKey="doubles"
               name="Doubles"
-              stroke="hsl(var(--primary))"
+              stroke="var(--tl-green)"
               strokeWidth={2}
-              dot={{ r: 3 }}
+              dot={{ r: 3, fill: "var(--tl-green)" }}
               activeDot={{ r: 5 }}
               connectNulls
             />
@@ -124,7 +136,7 @@ export function DuprRatingChart({ history, loading }: Props) {
                 type="monotone"
                 dataKey="singles"
                 name="Singles"
-                stroke="hsl(var(--muted-foreground))"
+                stroke="var(--tl-fg-3)"
                 strokeWidth={1.5}
                 strokeDasharray="4 3"
                 dot={{ r: 2 }}
@@ -134,6 +146,23 @@ export function DuprRatingChart({ history, loading }: Props) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+    </Section>
+  );
+}
+
+function Section({ children }: { children: React.ReactNode }) {
+  return (
+    <section
+      style={{
+        padding: "32px 0",
+        borderTop: "1px solid var(--tl-border)",
+      }}
+    >
+      <div className="tl-eyebrow" aria-hidden="true">
+        <span className="pip" />
+        <span>DUPR — 30 NGÀY</span>
+      </div>
+      {children}
     </section>
   );
 }

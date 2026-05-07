@@ -120,7 +120,12 @@ const PlayerProfile = () => {
 
   return (
     <TheLineLayout title={pageTitle} description={heroDescription}>
-      <div className="mx-auto max-w-2xl space-y-6 p-4">
+      <div className="tl-shell" style={{ paddingBottom: 56 }}>
+        <nav className="tl-breadcrumb">
+          <Link to="/">Trang chủ</Link>
+          <span className="sep">/</span>
+          <span className="current">@{profile.username}</span>
+        </nav>
         <PlayerHeroCard player={profile} />
         <PlayerStats stats={statsQuery.data} loading={statsQuery.isLoading} />
         <DuprRatingChart
