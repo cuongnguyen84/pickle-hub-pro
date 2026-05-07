@@ -1,43 +1,38 @@
 // ============================================================================
-// dupr-sync — Sprint 3 Phase 2 full implementation
+// dupr-sync — Sprint 3 Phase 2 (backfill mode, 2026-05-07)
 // ----------------------------------------------------------------------------
-// Cron: daily 03:00 UTC+7 (= 20:00 UTC previous day) — see config.toml.
+// Original Phase 2A purpose: refresh DUPR ratings via HTML scrape of the
+// public profile pages. Pivoted to backfill-only because:
+//   - DUPR public pages are a Vite/React SPA (empty <div id="root"> shell)
+//   - DUPR's underlying API requires per-user Bearer auth
+//   - Partnership pending; ETA 2-6 months → defer scrape revival to Sprint 5+
 //
-// Logic:
-//   1. Open a dupr_sync_runs row.
-//   2. Pick up to 100 profiles where dupr_id IS NOT NULL and dupr_synced_at
-//      is null or > 24h old (oldest first, NULL first).
-//   3. Re-scrape each via fetchDuprProfile + parseDuprProfile, throttled
-//      500ms between requests so we don't hammer DUPR.
-//   4. On success: update profiles + append dupr_rating_history snapshot.
-//      On failure: set dupr_last_error, leave dupr_synced_at unchanged.
-//   5. Backfill match_participants.dupr_rating_before / after for matches
-//      played in the last 30 days where the field is still NULL — uses the
-//      synced profile_ids' newly-stored history.
-//   6. Close the dupr_sync_runs row with totals + duration.
+// Current behavior: read dupr_rating_history rows (source='manual' or future
+// 'dupr_official') and backfill match_participants.dupr_rating_before /
+// dupr_rating_after for matches played in the last 90 days where those
+// fields are still NULL. This makes Phase 3 PlayerProfile + MatchPage
+// dupr-rating columns useful even without an active scrape.
 //
-// Cron is graceful: per-profile failures are logged but never throw.
+// When DUPR partnership lands (Sprint 5+):
+//   1. Re-add fetch + parse step BEFORE the backfill (history rows stamped
+//      source='dupr_official' instead of 'manual').
+//   2. Add dupr_synced_at refresh logic.
+//   3. parseDuprProfile / fetchDuprProfile in _shared/dupr-parser.ts are
+//      preserved for that revival.
+//
+// Cron: daily 03:00 UTC+7 (= 20:00 UTC previous day) via Supabase Dashboard.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
-import {
-  parseDuprProfile,
-  fetchDuprProfile,
-} from "../_shared/dupr-parser.ts";
 
-const PROFILES_PER_RUN = 100;
-const THROTTLE_MS_BETWEEN_FETCH = 500;
-const BACKFILL_WINDOW_DAYS = 30;
-
-interface ProfileRow {
-  id: string;
-  dupr_id: string | null;
-  dupr_profile_url: string | null;
-}
+const BACKFILL_WINDOW_DAYS = 90;
+const HISTORY_BUFFER_DAYS = 60; // extra lookback for "before" rating queries
+const UPDATE_BATCH_SIZE = 50;
 
 interface MatchParticipantRow {
+  id: string;
   match_id: string;
   player_id: string;
   matches: { played_at: string } | null;
@@ -62,7 +57,7 @@ Deno.serve(async (req) => {
   const startedAtMs = Date.now();
   const startedAtIso = new Date(startedAtMs).toISOString();
 
-  // ─── 1. Open sync-run log ─────────────────────────────────────────────
+  // ─── 1. Open sync-run log ───────────────────────────────────────────────
   const { data: runRow, error: runError } = await supabase
     .from("dupr_sync_runs")
     .insert({ started_at: startedAtIso, profiles_total: 0 })
@@ -78,21 +73,15 @@ Deno.serve(async (req) => {
   }
   const syncRunId = runRow.id;
 
-  // ─── 2. Pick profiles needing refresh ─────────────────────────────────
-  const cutoffIso = new Date(
-    startedAtMs - 24 * 60 * 60 * 1000,
-  ).toISOString();
-
+  // ─── 2. List profiles that have a manual DUPR rating ────────────────────
   const { data: profiles, error: pickError } = await supabase
     .from("profiles")
-    .select("id, dupr_id, dupr_profile_url")
-    .not("dupr_id", "is", null)
-    .or(`dupr_synced_at.is.null,dupr_synced_at.lt.${cutoffIso}`)
-    .order("dupr_synced_at", { ascending: true, nullsFirst: true })
-    .limit(PROFILES_PER_RUN);
+    .select("id")
+    .not("dupr_doubles", "is", null)
+    .not("dupr_synced_at", "is", null);
 
   if (pickError) {
-    await closeRun(supabase, syncRunId, startedAtMs, 0, 0, 0, [
+    await closeRun(supabase, syncRunId, startedAtMs, 0, 0, [
       `pick_failed: ${pickError.message}`,
     ]);
     return jsonResponse(
@@ -101,155 +90,58 @@ Deno.serve(async (req) => {
     );
   }
 
-  const profilesTotal = profiles?.length ?? 0;
+  const profileIds = (profiles ?? []).map((p: { id: string }) => p.id);
+  const profilesTotal = profileIds.length;
+
   if (profilesTotal === 0) {
-    await closeRun(supabase, syncRunId, startedAtMs, 0, 0, 0, []);
+    await closeRun(supabase, syncRunId, startedAtMs, 0, 0, []);
     return jsonResponse({
       sync_run_id: syncRunId,
       profiles_total: 0,
-      profiles_ok: 0,
-      profiles_failed: 0,
+      matches_backfilled: 0,
       duration_ms: Date.now() - startedAtMs,
-      note: "no profiles due for sync",
+      note: "Backfill mode — DUPR API integration deferred to Sprint 5+ pending partnership",
     });
   }
 
-  // ─── 3. Refresh each profile (throttled) ──────────────────────────────
+  // ─── 3. Backfill match_participants ─────────────────────────────────────
+  let matchesBackfilled = 0;
   const errors: string[] = [];
-  const syncedIds: string[] = [];
-  let profilesOk = 0;
-  let profilesFailed = 0;
 
-  for (let i = 0; i < (profiles as ProfileRow[]).length; i++) {
-    const p = (profiles as ProfileRow[])[i];
-    if (i > 0) await sleep(THROTTLE_MS_BETWEEN_FETCH);
-
-    const url =
-      p.dupr_profile_url ?? `https://mydupr.com/dupr/players/${p.dupr_id}`;
-
-    try {
-      const { html, status } = await fetchDuprProfile(url);
-      if (status < 200 || status >= 300) {
-        await markFailed(supabase, p.id, `http_${status}`);
-        errors.push(`${p.id}:http_${status}`);
-        profilesFailed++;
-        continue;
-      }
-
-      const parsed = parseDuprProfile(html);
-      if (
-        !parsed ||
-        (parsed.singles === null && parsed.doubles === null)
-      ) {
-        await markFailed(supabase, p.id, "parse_failed");
-        errors.push(`${p.id}:parse_failed`);
-        profilesFailed++;
-        continue;
-      }
-
-      const syncedAt = new Date().toISOString();
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          dupr_singles: parsed.singles,
-          dupr_doubles: parsed.doubles,
-          dupr_synced_at: syncedAt,
-          dupr_profile_url: url,
-          dupr_last_error: null,
-        })
-        .eq("id", p.id);
-
-      if (updateError) {
-        await markFailed(supabase, p.id, `update:${updateError.message}`);
-        errors.push(`${p.id}:update`);
-        profilesFailed++;
-        continue;
-      }
-
-      const { error: historyError } = await supabase
-        .from("dupr_rating_history")
-        .insert({
-          profile_id: p.id,
-          source: "dupr_scrape",
-          dupr_singles: parsed.singles,
-          dupr_doubles: parsed.doubles,
-        });
-
-      if (historyError) {
-        // Non-fatal — profile updated successfully, history is bonus.
-        console.warn(`history insert ${p.id}:`, historyError.message);
-      }
-
-      profilesOk++;
-      syncedIds.push(p.id);
-    } catch (e) {
-      await markFailed(supabase, p.id, `exception:${String(e)}`);
-      errors.push(`${p.id}:exception`);
-      profilesFailed++;
-    }
+  try {
+    matchesBackfilled = await backfillRatings(supabase, profileIds);
+  } catch (e) {
+    console.warn("backfill exception:", e);
+    errors.push(`backfill:${String(e)}`);
   }
 
-  // ─── 4. Backfill match_participants.dupr_rating_before/after ──────────
-  if (syncedIds.length > 0) {
-    try {
-      await backfillRatings(supabase, syncedIds);
-    } catch (e) {
-      console.warn("backfill failed:", e);
-      errors.push(`backfill:${String(e)}`);
-    }
-  }
-
-  // ─── 5. Close sync-run log ────────────────────────────────────────────
+  // ─── 4. Close sync-run log ──────────────────────────────────────────────
   await closeRun(
     supabase,
     syncRunId,
     startedAtMs,
     profilesTotal,
-    profilesOk,
-    profilesFailed,
+    matchesBackfilled,
     errors,
   );
 
   return jsonResponse({
     sync_run_id: syncRunId,
     profiles_total: profilesTotal,
-    profiles_ok: profilesOk,
-    profiles_failed: profilesFailed,
+    matches_backfilled: matchesBackfilled,
     duration_ms: Date.now() - startedAtMs,
+    note: "Backfill mode — DUPR API integration deferred to Sprint 5+ pending partnership",
   });
 });
 
 // ─── helpers ───────────────────────────────────────────────────────────────
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-async function markFailed(
-  supabase: SupabaseClient,
-  profileId: string,
-  reason: string,
-): Promise<void> {
-  try {
-    await supabase
-      .from("profiles")
-      .update({
-        dupr_last_error: reason.substring(0, 500),
-        dupr_last_attempt_at: new Date().toISOString(),
-      })
-      .eq("id", profileId);
-  } catch (e) {
-    console.warn("markFailed:", e);
-  }
-}
 
 async function closeRun(
   supabase: SupabaseClient,
   runId: string,
   startedAtMs: number,
   profilesTotal: number,
-  profilesOk: number,
-  profilesFailed: number,
+  matchesBackfilled: number,
   errors: string[],
 ): Promise<void> {
   const finishedAtMs = Date.now();
@@ -258,8 +150,8 @@ async function closeRun(
     .update({
       finished_at: new Date(finishedAtMs).toISOString(),
       profiles_total: profilesTotal,
-      profiles_ok: profilesOk,
-      profiles_failed: profilesFailed,
+      profiles_ok: matchesBackfilled, // repurposed: rows backfilled this run
+      profiles_failed: 0, // never fail per-profile in backfill mode
       duration_ms: finishedAtMs - startedAtMs,
       error_summary:
         errors.length === 0
@@ -270,29 +162,33 @@ async function closeRun(
 }
 
 /**
- * Per-profile backfill of match_participants.dupr_rating_before / after.
+ * For each profile in `syncedIds`, find match_participants in the last
+ * BACKFILL_WINDOW_DAYS where dupr_rating_before is still NULL, then look
+ * up the closest before / at-or-after dupr_rating_history snapshot and
+ * update the row.
  *
- * Strategy: for each synced profile, find recent match_participants where
- * the rating fields are NULL, then for each one look up the closest
- * dupr_rating_history snapshot before / after the match's played_at.
+ * Pre-fetches all rating history for the synced profiles (within the
+ * window + a 60-day buffer for "before" lookups) and buckets by profile_id
+ * for O(matches) downstream lookup. Updates batched in groups of 50 to
+ * keep transaction sizes reasonable.
  *
- * Uses doubles rating as the canonical "match rating" (most pickleball
- * matches in our app are doubles). Singles backfill not in scope.
+ * Returns the number of match_participants rows updated.
  */
 async function backfillRatings(
   supabase: SupabaseClient,
   syncedIds: string[],
-): Promise<void> {
+): Promise<number> {
+  if (syncedIds.length === 0) return 0;
+
+  const nowMs = Date.now();
   const windowCutoffIso = new Date(
-    Date.now() - BACKFILL_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+    nowMs - BACKFILL_WINDOW_DAYS * 24 * 60 * 60 * 1000,
   ).toISOString();
-
-  // Pre-fetch all rating history for synced profiles within the window
-  // (+ a small buffer for "before" lookups). Sort newest-first.
   const historyCutoffIso = new Date(
-    Date.now() - (BACKFILL_WINDOW_DAYS + 60) * 24 * 60 * 60 * 1000,
+    nowMs - (BACKFILL_WINDOW_DAYS + HISTORY_BUFFER_DAYS) * 24 * 60 * 60 * 1000,
   ).toISOString();
 
+  // History bucket: profile_id → DESC-sorted snapshots within window.
   const { data: history, error: histError } = await supabase
     .from("dupr_rating_history")
     .select("profile_id, dupr_doubles, recorded_at")
@@ -304,7 +200,6 @@ async function backfillRatings(
     throw new Error(`history_fetch: ${histError.message}`);
   }
 
-  // Group history by profile_id for O(1) lookup per match.
   const historyByProfile = new Map<string, HistoryRow[]>();
   for (const h of (history as HistoryRow[]) ?? []) {
     if (!historyByProfile.has(h.profile_id)) {
@@ -313,10 +208,13 @@ async function backfillRatings(
     historyByProfile.get(h.profile_id)!.push(h);
   }
 
-  // Pull match_participants needing backfill.
+  // Match_participants in scope: needs backfill, recent verified match,
+  // player synced.
   const { data: parts, error: partsError } = await supabase
     .from("match_participants")
-    .select("match_id, player_id, matches!inner(played_at, verification_status, is_public)")
+    .select(
+      "id, match_id, player_id, matches!inner(played_at, verification_status, is_public)",
+    )
     .in("player_id", syncedIds)
     .is("dupr_rating_before", null)
     .gte("matches.played_at", windowCutoffIso)
@@ -327,8 +225,7 @@ async function backfillRatings(
   }
 
   const updates: Array<{
-    match_id: string;
-    player_id: string;
+    id: string;
     before: number | null;
     after: number | null;
   }> = [];
@@ -342,7 +239,10 @@ async function backfillRatings(
 
     let before: number | null = null;
     let after: number | null = null;
-    // history is sorted DESC by recorded_at — first entry < playedAt is "before".
+    // History DESC by recorded_at — first entry < playedAt is "before"
+    // (closest snapshot strictly before the match). For "after" we want
+    // the EARLIEST snapshot at-or-after playedAt → keep overwriting on each
+    // match so the loop's last assignment is the smallest qualifying time.
     for (const h of profileHistory) {
       const recMs = new Date(h.recorded_at).getTime();
       if (recMs < playedMs && before === null) {
@@ -350,29 +250,29 @@ async function backfillRatings(
       }
       if (recMs >= playedMs) {
         after = h.dupr_doubles;
-        // keep iterating — profileHistory is DESC, so we want the LAST one >= playedMs (= earliest after)
       }
     }
 
-    updates.push({
-      match_id: p.match_id,
-      player_id: p.player_id,
-      before,
-      after,
-    });
+    if (before !== null || after !== null) {
+      updates.push({ id: p.id, before, after });
+    }
   }
 
-  // Apply each update. We don't have a bulk upsert API for composite-key
-  // updates, so loop sequentially. ~5 rows/profile expected = manageable.
-  for (const u of updates) {
-    if (u.before === null && u.after === null) continue;
-    await supabase
-      .from("match_participants")
-      .update({
-        dupr_rating_before: u.before,
-        dupr_rating_after: u.after,
-      })
-      .eq("match_id", u.match_id)
-      .eq("player_id", u.player_id);
+  // Apply updates in batches of UPDATE_BATCH_SIZE.
+  for (let i = 0; i < updates.length; i += UPDATE_BATCH_SIZE) {
+    const slice = updates.slice(i, i + UPDATE_BATCH_SIZE);
+    await Promise.all(
+      slice.map((u) =>
+        supabase
+          .from("match_participants")
+          .update({
+            dupr_rating_before: u.before,
+            dupr_rating_after: u.after,
+          })
+          .eq("id", u.id),
+      ),
+    );
   }
+
+  return updates.length;
 }
