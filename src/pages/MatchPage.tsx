@@ -12,7 +12,7 @@
 import { useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Loader2, ChevronLeft } from "lucide-react";
-import MainLayout from "@/components/layout/MainLayout";
+import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { useMatch } from "@/hooks/social";
 import MatchHeader from "@/components/social/match/MatchHeader";
@@ -144,18 +144,22 @@ const MatchPage = () => {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex h-full items-center justify-center p-8">
+      <TheLineLayout title="Đang tải trận đấu" noindex>
+        <div className="flex min-h-[60vh] items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-social-primary" />
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (error || !match) {
     return (
-      <MainLayout>
-        <div className="mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-4 p-8 text-center">
+      <TheLineLayout
+        title="Không tìm thấy trận đấu"
+        description="Trận này có thể đã bị xóa hoặc URL không đúng."
+        noindex
+      >
+        <div className="mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 p-8 text-center">
           <h1 className="text-2xl font-bold">Không tìm thấy trận đấu</h1>
           <p className="text-sm text-muted-foreground">
             Trận này có thể đã bị xóa hoặc URL không đúng.
@@ -164,35 +168,46 @@ const MatchPage = () => {
             <Link to="/">Về trang chủ</Link>
           </Button>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
+  // For the success branch we still want TheLineLayout's DynamicMeta to set
+  // the canonical title + description before JS hydration finishes; the
+  // post-mount applyClientSeo() useEffect then refines OG image / canonical /
+  // JSON-LD with match-specific values that DynamicMeta doesn't cover.
+  const seo = buildSeo(match);
+  // buildSeo's title already ends with " | ThePickleHub"; DynamicMeta would
+  // append the same suffix, doubling it. Strip before passing.
+  const titleNoSuffix = seo.title.replace(/ \| ThePickleHub$/, "");
+
   return (
-    <MainLayout className="bg-social-bg-elevated dark:bg-social-neutral-900">
-      <div className="mx-auto flex h-full w-full max-w-2xl flex-col gap-4 px-4 py-4 md:py-8">
-        <div>
-          <Button asChild variant="ghost" size="sm" className="-ml-2 gap-1">
-            <Link to="/">
-              <ChevronLeft className="h-4 w-4" />
-              Trang chủ
-            </Link>
-          </Button>
-        </div>
-        <MatchHeader match={match} />
-        <MatchScoreboard match={match} />
-        <MatchVerifyBanner match={match} />
-        <MatchActions match={match} />
-        {match.notes && (
-          <div className="rounded-xl border bg-card p-3 text-sm">
-            <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
-              Ghi chú
-            </div>
-            <p className="whitespace-pre-wrap">{match.notes}</p>
+    <TheLineLayout title={titleNoSuffix} description={seo.description}>
+      <div className="bg-social-bg-elevated dark:bg-social-neutral-900">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-4 md:py-8">
+          <div>
+            <Button asChild variant="ghost" size="sm" className="-ml-2 gap-1">
+              <Link to="/">
+                <ChevronLeft className="h-4 w-4" />
+                Trang chủ
+              </Link>
+            </Button>
           </div>
-        )}
+          <MatchHeader match={match} />
+          <MatchScoreboard match={match} />
+          <MatchVerifyBanner match={match} />
+          <MatchActions match={match} />
+          {match.notes && (
+            <div className="rounded-xl border bg-card p-3 text-sm">
+              <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
+                Ghi chú
+              </div>
+              <p className="whitespace-pre-wrap">{match.notes}</p>
+            </div>
+          )}
+        </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 
