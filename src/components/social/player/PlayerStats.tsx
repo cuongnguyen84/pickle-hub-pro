@@ -94,11 +94,6 @@ export function PlayerStats({ stats, loading }: PlayerStatsProps) {
           sub={language === "vi" ? "đã verified" : "verified"}
         />
         <StatCell
-          label={language === "vi" ? "PHONG ĐỘ" : "FORM"}
-          value={<FormSparkline form={stats.last_5_form ?? ""} />}
-          sub={language === "vi" ? "5 trận gần nhất" : "Last 5 matches"}
-        />
-        <StatCell
           label="STREAK"
           value={
             <span
@@ -126,18 +121,6 @@ export function PlayerStats({ stats, loading }: PlayerStatsProps) {
                   ? "không liên tiếp"
                   : "no streak"
           }
-        />
-        <StatCell
-          label={language === "vi" ? "NGƯỜI THEO DÕI" : "FOLLOWERS"}
-          value={`${stats.followers_count ?? 0}`}
-          sub={
-            language === "vi" ? "đang theo dõi" : "people following"
-          }
-        />
-        <StatCell
-          label={language === "vi" ? "ĐANG THEO DÕI" : "FOLLOWING"}
-          value={`${stats.following_count ?? 0}`}
-          sub={language === "vi" ? "người chơi" : "players"}
         />
       </div>
     </section>
@@ -192,29 +175,3 @@ function StatCell({ label, value, sub }: StatCellProps) {
   );
 }
 
-/** 5-cell sparkline; W=green pip, L=muted pip. Newest match leftmost. */
-function FormSparkline({ form }: { form: string }) {
-  const cells = form.padEnd(5, "·").slice(0, 5).split("");
-  return (
-    <div style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
-      {cells.map((c, i) => (
-        <span
-          key={i}
-          aria-label={c === "W" ? "Win" : c === "L" ? "Loss" : "no game"}
-          style={{
-            display: "inline-block",
-            width: 12,
-            height: 28,
-            borderRadius: 2,
-            background:
-              c === "W"
-                ? "var(--tl-green)"
-                : c === "L"
-                  ? "var(--tl-red, #ef4444)"
-                  : "var(--tl-border)",
-          }}
-        />
-      ))}
-    </div>
-  );
-}

@@ -137,7 +137,7 @@ const PlayerProfile = () => {
           <span className="sep">/</span>
           <span className="current">@{profile.username}</span>
         </nav>
-        <PlayerHeroCard player={profile} />
+        <PlayerHeroCard player={profile} stats={statsQuery.data} />
         <PlayerStats stats={statsQuery.data} loading={statsQuery.isLoading} />
         <DuprRatingChart
           history={historyQuery.data ?? []}

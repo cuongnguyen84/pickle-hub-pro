@@ -6,9 +6,12 @@ import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { FollowButton } from "@/components/social/FollowButton";
 import type { PlayerProfile } from "@/hooks/social/usePlayerProfile";
+import type { PlayerStatsRow } from "@/hooks/social/usePlayerStats";
 
 interface PlayerHeroCardProps {
   player: PlayerProfile;
+  /** Optional — when present, renders the IG-style stat strip + form ribbon. */
+  stats?: PlayerStatsRow | null;
 }
 
 const SKILL_LABELS_VI: Record<string, string> = {
@@ -29,7 +32,7 @@ const SKILL_LABELS_EN: Record<string, string> = {
  * pattern (italic serif h1 + tl-eyebrow tag + dim metadata line). Avatar floats
  * top-right on desktop, on top on mobile.
  */
-export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
+export function PlayerHeroCard({ player, stats }: PlayerHeroCardProps) {
   const { toast } = useToast();
   const { language } = useI18n();
   const [favoriteVenue, setFavoriteVenue] = useState<{
@@ -101,8 +104,15 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
     .filter(Boolean)
     .join(" · ");
 
+  // Inline IG/FB-style stat strip data — displayed under @handle.
+  const followers = stats?.followers_count ?? 0;
+  const following = stats?.following_count ?? 0;
+  const matches = stats?.total_matches ?? 0;
+  const formStr = (stats?.last_5_form ?? "").slice(0, 5);
+  const hasAnyMatches = matches > 0 || formStr.length > 0;
+
   return (
-    <header className="tl-page-head" style={{ padding: "32px 0 28px" }}>
+    <header className="tl-page-head" style={{ padding: "40px 0 32px" }}>
       <div className="tl-eyebrow" aria-hidden="true">
         <span className="pip" />
         <span>{language === "vi" ? "NGƯỜI CHƠI" : "PLAYER"}</span>
@@ -117,13 +127,20 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
       <div
         style={{
           display: "flex",
-          gap: 24,
+          gap: 32,
           alignItems: "flex-start",
           flexWrap: "wrap",
         }}
       >
-        <div style={{ flex: "1 1 60%", minWidth: 240 }}>
-          <h1 style={{ marginBottom: 12 }}>
+        <div style={{ flex: "1 1 60%", minWidth: 260 }}>
+          <h1
+            style={{
+              marginBottom: 14,
+              fontSize: "clamp(48px, 7vw, 96px)",
+              lineHeight: 0.95,
+              letterSpacing: "-0.025em",
+            }}
+          >
             <span style={{ display: "inline" }}>{displayName}</span>
             {player.is_verified && (
               <BadgeCheck
@@ -151,11 +168,48 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
               color: "var(--tl-fg-3)",
               fontSize: 12,
               fontFamily: "'Geist Mono', monospace",
-              marginBottom: 8,
+              marginBottom: 16,
             }}
           >
             {meta}
           </p>
+
+          {/* IG/FB-style stat strip — italic green numbers + serif labels */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "baseline",
+              gap: 14,
+              fontFamily: "'Instrument Serif', serif",
+              fontSize: 18,
+              color: "var(--tl-fg-2)",
+              borderTop: "1px solid var(--tl-border)",
+              paddingTop: 16,
+              marginBottom: hasAnyMatches ? 12 : 16,
+            }}
+          >
+            <StatPill
+              n={followers}
+              label={language === "vi" ? "người theo dõi" : "followers"}
+            />
+            <StatSep />
+            <StatPill
+              n={following}
+              label={language === "vi" ? "đang theo dõi" : "following"}
+            />
+            <StatSep />
+            <StatPill
+              n={matches}
+              label={language === "vi" ? "trận đấu" : "matches"}
+            />
+          </div>
+
+          {/* Form ribbon — 5 horizontal bands inline (replaces stat-card) */}
+          {hasAnyMatches && (
+            <FormRibbon form={formStr} language={language} />
+          )}
+
           {favoriteVenue && (
             <p
               style={{
@@ -163,7 +217,7 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
                 fontStyle: "italic",
                 fontSize: 18,
                 color: "var(--tl-fg-2)",
-                margin: "12px 0 0",
+                margin: "16px 0 0",
               }}
             >
               {language === "vi" ? "Sân hay chơi:" : "Home court:"}{" "}
@@ -193,7 +247,7 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
             </p>
           )}
 
-          <div className="tl-hero-ctas" style={{ marginTop: 24 }}>
+          <div className="tl-hero-ctas" style={{ marginTop: 28 }}>
             <button
               type="button"
               className="tl-btn"
@@ -214,11 +268,23 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
           </div>
         </div>
 
+        {/* Avatar — 140×140 with double-ring frame */}
         <div
           style={{
             flex: "0 0 auto",
-            width: 120,
-            height: 120,
+            width: 152,
+            height: 152,
+            padding: 5,
+            borderRadius: "50%",
+            border: "1px solid var(--tl-border)",
+            background:
+              "linear-gradient(135deg, var(--tl-green-glow, rgba(0,185,107,0.12)) 0%, transparent 70%)",
+          }}
+        >
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
             borderRadius: "50%",
             overflow: "hidden",
             border: "1px solid var(--tl-border)",
@@ -250,7 +316,98 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
             </div>
           )}
         </div>
+        </div>
       </div>
     </header>
+  );
+}
+
+/** Inline IG-style stat: italic green number + lowercase serif label. */
+function StatPill({ n, label }: { n: number; label: string }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+      <span
+        style={{
+          fontFamily: "'Instrument Serif', serif",
+          fontStyle: "italic",
+          fontSize: 26,
+          lineHeight: 1,
+          color: "var(--tl-green)",
+          letterSpacing: "-0.02em",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {n}
+      </span>
+      <span style={{ color: "var(--tl-fg-3)", fontSize: 16 }}>{label}</span>
+    </span>
+  );
+}
+
+function StatSep() {
+  return (
+    <span aria-hidden="true" style={{ color: "var(--tl-fg-4)" }}>
+      ·
+    </span>
+  );
+}
+
+/** Horizontal 5-band form ribbon. W=green / L=red / idle=border. */
+function FormRibbon({
+  form,
+  language,
+}: {
+  form: string;
+  language: "vi" | "en";
+}) {
+  const cells = form.padEnd(5, "·").slice(0, 5).split("");
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        marginTop: 4,
+      }}
+    >
+      <span
+        className="tl-caps"
+        style={{
+          fontFamily: "'Geist Mono', monospace",
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          color: "var(--tl-fg-3)",
+        }}
+      >
+        {language === "vi" ? "PHONG ĐỘ" : "FORM"}
+      </span>
+      <div
+        style={{ display: "inline-flex", gap: 3, alignItems: "center" }}
+        role="img"
+        aria-label={
+          language === "vi"
+            ? `5 trận gần nhất: ${form || "chưa có"}`
+            : `Last 5 matches: ${form || "no data"}`
+        }
+      >
+        {cells.map((c, i) => (
+          <span
+            key={i}
+            style={{
+              display: "inline-block",
+              width: 18,
+              height: 4,
+              borderRadius: 1,
+              background:
+                c === "W"
+                  ? "var(--tl-green)"
+                  : c === "L"
+                    ? "var(--tl-red, #ef4444)"
+                    : "var(--tl-border)",
+            }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
