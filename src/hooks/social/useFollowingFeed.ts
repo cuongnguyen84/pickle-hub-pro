@@ -27,6 +27,8 @@ export interface FeedMatch {
   /** Phase 4B — true when the viewer has kudoed this match. False for
    *  anonymous viewers (trending RPC sets it false when p_viewer_id is NULL). */
   viewer_kudoed: boolean;
+  /** Phase 4C — total non-deleted comments on the match (from feed RPC inline). */
+  comment_count: number;
 }
 
 interface RpcRow {
@@ -43,6 +45,7 @@ interface RpcRow {
   participants: unknown;
   kudos_count: number | null;
   viewer_kudoed: boolean | null;
+  comment_count: number | null;
 }
 
 const PAGE_SIZE = 20;
@@ -99,5 +102,6 @@ function normalizeRow(row: RpcRow): FeedMatch {
       : [],
     kudos_count: row.kudos_count ?? 0,
     viewer_kudoed: row.viewer_kudoed ?? false,
+    comment_count: row.comment_count ?? 0,
   };
 }
