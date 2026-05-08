@@ -5,6 +5,7 @@ import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useSuggestedFollows } from "@/hooks/onboarding/useSuggestedFollows";
 import { FollowButton } from "@/components/social/FollowButton";
+import { buildFollowsBatchRows } from "../follows-batch";
 import type { OnboardingState } from "../OnboardingWizard";
 
 interface Props {
@@ -64,6 +65,32 @@ export function SuggestedFollowsStep({
     setCompleting(true);
     setError(null);
     try {
+      // Reconcile DB state with the wizard's final selection. FollowButton
+      // already emits per-click inserts, but a navigate("/") unmount can
+      // abort an in-flight fetch and leave selected ids in the wizard
+      // counter without a corresponding social_follows row. Idempotent
+      // upsert: existing rows hit the (follower_id, followed_id) PK and
+      // are silently ignored. (Codex P1 follow-up; commit 8 PR #15.)
+      const followsBatch = buildFollowsBatchRows(userId, selected);
+      if (followsBatch.length > 0) {
+        const { error: followsError } = await supabase
+          .from("social_follows")
+          .upsert(followsBatch, {
+            onConflict: "follower_id,followed_id",
+            ignoreDuplicates: true,
+          });
+        if (followsError) {
+          // Don't block onboarding — partial follow state is recoverable
+          // (PlayerProfile FollowButtons remain wired up). Surface in dev
+          // tools for diagnostic; no user-facing toast since it's silent
+          // best-effort reconciliation.
+          console.error(
+            "[SuggestedFollowsStep] follow reconcile failed",
+            followsError,
+          );
+        }
+      }
+
       const { error: updateError } = await supabase
         .from("profiles")
         .update({

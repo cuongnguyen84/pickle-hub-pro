@@ -113,6 +113,11 @@ export function useFollowMutation() {
     },
     onError: (err, _vars, ctx) => {
       if (ctx) qc.setQueryData(ctx.key, ctx.prev);
+      // Surface the raw error in dev tools — bilingual toast strips the
+      // PostgREST code/details so when investigating silent regressions
+      // (e.g. PR #15 onboarding follow reconcile) the diagnostic is at
+      // hand without needing to instrument the call site.
+      console.error("[useFollowMutation] insert/delete failed", err);
       const fallback =
         language === "vi" ? "Lỗi không xác định" : "Unexpected error";
       toast({
