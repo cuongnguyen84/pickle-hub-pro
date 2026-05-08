@@ -4,6 +4,8 @@ import {
   detectMentionTrigger,
   applyMentionInsert,
   buildCommentTree,
+  shouldTriggerSubmitOnEnter,
+  shouldTriggerMentionSelect,
 } from "../comment-helpers";
 import type { MatchComment } from "@/hooks/social/useComments";
 
@@ -190,5 +192,97 @@ describe("buildCommentTree", () => {
     const before = JSON.stringify(flat);
     buildCommentTree(flat);
     expect(JSON.stringify(flat)).toBe(before);
+  });
+});
+
+/* ─── Keyboard guards (CommentInput Enter duplicate-submit fix) ───────── */
+
+describe("shouldTriggerSubmitOnEnter", () => {
+  it("returns true for plain Enter without modifiers", () => {
+    expect(
+      shouldTriggerSubmitOnEnter({ key: "Enter", nativeEvent: {} }),
+    ).toBe(true);
+  });
+
+  it("returns false for Shift+Enter (newline)", () => {
+    expect(
+      shouldTriggerSubmitOnEnter({
+        key: "Enter",
+        shiftKey: true,
+        nativeEvent: {},
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false for non-Enter keys", () => {
+    expect(
+      shouldTriggerSubmitOnEnter({ key: "a", nativeEvent: {} }),
+    ).toBe(false);
+    expect(
+      shouldTriggerSubmitOnEnter({ key: "Tab", nativeEvent: {} }),
+    ).toBe(false);
+  });
+
+  it("returns false during IME composition (isComposing=true)", () => {
+    // Vietnamese IME (Telex/VNI) confirms tone composition with Enter
+    // and the browser then re-fires a real Enter — without this guard
+    // both fire handleKeyDown and submit twice.
+    expect(
+      shouldTriggerSubmitOnEnter({
+        key: "Enter",
+        nativeEvent: { isComposing: true },
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false for legacy keyCode 229 (IME placeholder)", () => {
+    // Some browsers don't set isComposing but still send the legacy
+    // 229 keyCode for IME-confirm Enter.
+    expect(
+      shouldTriggerSubmitOnEnter({
+        key: "Enter",
+        keyCode: 229,
+        nativeEvent: {},
+      }),
+    ).toBe(false);
+  });
+
+  it("tolerates missing nativeEvent (loose typing safety)", () => {
+    expect(shouldTriggerSubmitOnEnter({ key: "Enter" })).toBe(true);
+  });
+});
+
+describe("shouldTriggerMentionSelect", () => {
+  it("returns true for plain Enter or Tab", () => {
+    expect(
+      shouldTriggerMentionSelect({ key: "Enter", nativeEvent: {} }),
+    ).toBe(true);
+    expect(
+      shouldTriggerMentionSelect({ key: "Tab", nativeEvent: {} }),
+    ).toBe(true);
+  });
+
+  it("returns false during IME composition", () => {
+    // Same composition guard as the submit path — IME-confirm Enter
+    // shouldn't accidentally pick the highlighted suggestion either.
+    expect(
+      shouldTriggerMentionSelect({
+        key: "Enter",
+        nativeEvent: { isComposing: true },
+      }),
+    ).toBe(false);
+    expect(
+      shouldTriggerMentionSelect({
+        key: "Enter",
+        keyCode: 229,
+        nativeEvent: {},
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false for keys other than Enter/Tab", () => {
+    expect(
+      shouldTriggerMentionSelect({ key: "Escape", nativeEvent: {} }),
+    ).toBe(false);
   });
 });

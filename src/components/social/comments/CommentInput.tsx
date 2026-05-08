@@ -5,6 +5,8 @@ import { useMentionAutocomplete } from "@/hooks/social/useMentionAutocomplete";
 import {
   detectMentionTrigger,
   applyMentionInsert,
+  shouldTriggerSubmitOnEnter,
+  shouldTriggerMentionSelect,
 } from "@/lib/social/comment-helpers";
 
 const MAX_LENGTH = 500;
@@ -73,6 +75,13 @@ export function CommentInput({
     setHighlightIndex(0);
   }, [trigger?.query]);
 
+  // Synchronous in-flight lock. isSubmitting (driven by mutation.isPending)
+  // updates via React state, so two keydown events fired before the next
+  // render commit would both see canSubmit=true and call onSubmit. The
+  // ref flips immediately and resets only after the mutation resolves —
+  // belt-and-suspenders alongside the IME composition guard.
+  const submittingRef = useRef(false);
+
   const trimmedLength = value.trim().length;
   const overLimit = value.length > MAX_LENGTH;
   const canSubmit = !isSubmitting && trimmedLength > 0 && !overLimit;
@@ -96,10 +105,16 @@ export function CommentInput({
   };
 
   const submit = async () => {
+    if (submittingRef.current) return;
     if (!canSubmit) return;
-    await onSubmit(value.trim());
-    setValue("");
-    setCaret(0);
+    submittingRef.current = true;
+    try {
+      await onSubmit(value.trim());
+      setValue("");
+      setCaret(0);
+    } finally {
+      submittingRef.current = false;
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -117,7 +132,7 @@ export function CommentInput({
         );
         return;
       }
-      if (e.key === "Enter" || e.key === "Tab") {
+      if (shouldTriggerMentionSelect(e)) {
         e.preventDefault();
         const pick = suggestions[highlightIndex];
         if (pick) handleSelect(pick.username);
@@ -130,7 +145,7 @@ export function CommentInput({
         return;
       }
     }
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (shouldTriggerSubmitOnEnter(e)) {
       e.preventDefault();
       void submit();
       return;

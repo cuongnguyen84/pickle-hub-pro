@@ -124,6 +124,57 @@ export function applyMentionInsert(
   return { value: before + insert + after, caret: before.length + insert.length };
 }
 
+/* ─── Keyboard guard helpers ──────────────────────────────────────────── */
+
+/**
+ * Subset of React's KeyboardEvent shape we need to make a decision.
+ * Loose typing so tests can pass plain objects.
+ */
+export interface KeyEventLike {
+  key: string;
+  shiftKey?: boolean;
+  /** React.SyntheticEvent wraps the native event here. */
+  nativeEvent?: { isComposing?: boolean };
+  /** Legacy 229 keyCode placeholder used by some browsers/IMEs. */
+  keyCode?: number;
+}
+
+/**
+ * Guard for "Enter pressed by the user wanting to submit". Returns false
+ * (skip submit) when:
+ *   - key is not Enter
+ *   - Shift is held (newline)
+ *   - IME composition is in progress (nativeEvent.isComposing)
+ *   - keyCode is 229 (legacy IME placeholder; some browsers don't set
+ *     isComposing but still report 229)
+ *
+ * Vietnamese audiences run Unikey / Telex / VNI which use composition
+ * events to fold tone marks (e.g. "owr" → "ờ"). When the user presses
+ * Enter, the IME first fires a keydown to confirm the in-progress
+ * composition (with isComposing=true), then the browser re-fires Enter
+ * as a real keydown (isComposing=false). Without this guard a single
+ * Enter press triggers handleKeyDown twice and we POST the comment
+ * twice. Same shape as the standard React fix used by TanStack and
+ * the React Aria patterns.
+ */
+export function shouldTriggerSubmitOnEnter(e: KeyEventLike): boolean {
+  if (e.key !== "Enter") return false;
+  if (e.shiftKey) return false;
+  if (e.nativeEvent?.isComposing) return false;
+  if (e.keyCode === 229) return false;
+  return true;
+}
+
+/**
+ * Same composition guard for the @-mention dropdown's Enter/Tab select.
+ */
+export function shouldTriggerMentionSelect(e: KeyEventLike): boolean {
+  if (e.key !== "Enter" && e.key !== "Tab") return false;
+  if (e.nativeEvent?.isComposing) return false;
+  if (e.keyCode === 229) return false;
+  return true;
+}
+
 /* ─── Threading tree ──────────────────────────────────────────────────── */
 
 export interface ThreadedComment extends MatchComment {
