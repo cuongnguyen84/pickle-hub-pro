@@ -22,6 +22,11 @@ export interface FeedMatch {
   team_b_score: number[];
   winning_team: "a" | "b" | string;
   participants: FeedParticipant[];
+  /** Phase 4B — total kudos count on the match (from feed RPC inline). */
+  kudos_count: number;
+  /** Phase 4B — true when the viewer has kudoed this match. False for
+   *  anonymous viewers (trending RPC sets it false when p_viewer_id is NULL). */
+  viewer_kudoed: boolean;
 }
 
 interface RpcRow {
@@ -36,6 +41,8 @@ interface RpcRow {
   team_b_score: number[];
   winning_team: string;
   participants: unknown;
+  kudos_count: number | null;
+  viewer_kudoed: boolean | null;
 }
 
 const PAGE_SIZE = 20;
@@ -90,5 +97,7 @@ function normalizeRow(row: RpcRow): FeedMatch {
     participants: Array.isArray(row.participants)
       ? (row.participants as FeedParticipant[])
       : [],
+    kudos_count: row.kudos_count ?? 0,
+    viewer_kudoed: row.viewer_kudoed ?? false,
   };
 }

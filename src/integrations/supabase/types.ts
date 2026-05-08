@@ -4420,6 +4420,8 @@ export type Database = {
           team_b_score: number[]
           winning_team: string
           participants: Json
+          kudos_count: number
+          viewer_kudoed: boolean
         }[]
       }
       get_player_match_history: {
@@ -4495,6 +4497,7 @@ export type Database = {
           p_limit?: number
           p_cursor_played_at?: string | null
           p_cursor_match_id?: string | null
+          p_viewer_id?: string | null
           p_kudos_weight?: number
           p_comments_weight?: number
           p_recency_decay_hours?: number
@@ -4511,6 +4514,8 @@ export type Database = {
           team_b_score: number[]
           winning_team: string
           participants: Json
+          kudos_count: number
+          viewer_kudoed: boolean
         }[]
       }
       get_top_content: {
@@ -4630,6 +4635,10 @@ export type Database = {
       set_user_quota: {
         Args: { _new_quota: number; _user_id: string }
         Returns: boolean
+      }
+      toggle_match_kudos: {
+        Args: { p_match_id: string }
+        Returns: Json
       }
     }
     Enums: {
