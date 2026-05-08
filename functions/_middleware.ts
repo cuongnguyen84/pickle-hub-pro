@@ -15,6 +15,8 @@ import {
   renderTournamentDetail, renderTournaments,
   renderVideos, renderNews, renderForum, renderForumPost,
   renderMatch,
+  renderProfile,
+  renderFeed,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage,
@@ -158,6 +160,18 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Match permalink (Sprint 2 Phase 3B.3)
   match = path.match(/^\/tran-dau\/([^/]+)$/);
   if (match && match[1] !== "moi") return await renderMatch(supabase, match[1], siteUrl);
+
+  // Player profile (Sprint 4 Phase 4D — Bet #1 social SEO).
+  // Single-canonical URL: /nguoi-choi/{username} serves both languages.
+  // The path itself is Vietnamese-friendly so there's no /vi/nguoi-choi/*
+  // mirror; hreflang en+vi both point at the same canonical.
+  match = path.match(/^\/nguoi-choi\/([^/]+)$/);
+  if (match) return await renderProfile(supabase, match[1], siteUrl);
+
+  // Feed (Sprint 4 Phase 4D). /feed (en) + /vi/feed (vi) — Phase 4A
+  // shipped both routes in src/App.tsx. Canonical drops ?tab=* in the
+  // render function so /feed and /feed?tab=trending dedupe.
+  if (path === "/feed") return await renderFeed(supabase, siteUrl, lang);
 
   // Tournaments list
   if (path === "/tournaments") return await renderTournaments(supabase, siteUrl, rawPath, lang);

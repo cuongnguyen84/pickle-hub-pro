@@ -18,6 +18,15 @@ import {
   type Lang,
   DEFAULT_OG_IMAGE,
 } from "../utils";
+import {
+  buildPersonJsonLd,
+  buildProfileFallbackDescription,
+  buildFeedJsonLd,
+  feedTeamLabel,
+  feedScoreCompact,
+  type FeedSeoParticipant,
+  type FeedRowForSeo,
+} from "../seo-helpers";
 
 // ─── Home ───────────────────────────���─────────────────────
 
@@ -880,6 +889,149 @@ export function render404(path: string, siteUrl: string): Response {
   }), 404);
 }
 
+// ─── Player profile ──────────────────────────────────────
+//
+// /nguoi-choi/{username} — public player profile (Sprint 3 Phase 3B).
+//
+// Phase 4D moves the JSON-LD Person schema from src/pages/PlayerProfile.tsx
+// (client-side DOM injection) to server-side prerender so bots see it on
+// first byte. The client-side script is intentionally left in place — it's
+// harmless when the server already injected the same structured data, and
+// it covers preview/staging environments that don't run through the
+// Pages Functions middleware.
+//
+// The /nguoi-choi/{username} URL is single-canonical (no /vi/nguoi-choi/*
+// variant in src/App.tsx); the React page renders bilingual based on the
+// language toggle. Server-side we render Vietnamese-first (95% audience)
+// and emit hreflang en + vi pointing to the same canonical URL — same
+// pattern Phase 4A used for /feed when only one path existed.
+
+export async function renderProfile(
+  supabase: SupabaseClient,
+  username: string,
+  siteUrl: string,
+): Promise<Response> {
+  // Mirror usePlayerProfile hook query (src/hooks/social/usePlayerProfile.ts).
+  // is_ghost=false + onboarding_completed_at IS NOT NULL filters out shells
+  // and unfinished signups so bots don't index zombie profiles.
+  const { data: profileRow } = await supabase
+    .from("profiles")
+    .select(
+      `id, username, display_name, avatar_url, bio,
+       city, country, skill_level,
+       dupr_singles, dupr_doubles,
+       is_ghost, onboarding_completed_at, created_at, updated_at`,
+    )
+    .eq("username", username)
+    .eq("is_ghost", false)
+    .not("onboarding_completed_at", "is", null)
+    .maybeSingle();
+
+  if (!profileRow) return render404(`/nguoi-choi/${username}`, siteUrl);
+
+  const p = profileRow as {
+    id: string;
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    bio: string | null;
+    city: string | null;
+    country: string | null;
+    skill_level: string | null;
+    dupr_singles: number | null;
+    dupr_doubles: number | null;
+    created_at: string;
+    updated_at: string | null;
+  };
+
+  const displayName = p.display_name ?? p.username;
+  const url = `${siteUrl}/nguoi-choi/${p.username}`;
+
+  // Bilingual title — primary clause Vietnamese, English in parens for
+  // international discoverability.
+  const rawTitle = `${displayName} (@${p.username})`;
+  const title = buildTitle(rawTitle, " | ThePickleHub Pickleball");
+
+  // Description: bio takes priority when long enough; otherwise build a
+  // bilingual fallback that references DUPR + city if known.
+  const duprBits: string[] = [];
+  if (p.dupr_doubles != null) duprBits.push(`DUPR đôi ${p.dupr_doubles.toFixed(2)}`);
+  if (p.dupr_singles != null) duprBits.push(`DUPR đơn ${p.dupr_singles.toFixed(2)}`);
+  const fallbackDesc = buildProfileFallbackDescription(p);
+  const description = buildMetaDescription(p.bio, {
+    type: "default",
+    title: displayName,
+  }) || buildMetaDescription(fallbackDesc, { type: "default", title: displayName });
+
+  // hreflang: same URL serves both languages (single canonical), so en/vi
+  // both point at /nguoi-choi/{username}. x-default mirrors vi for the
+  // Vietnamese-first audience.
+  const extraMeta = [
+    `<link rel="alternate" hreflang="vi" href="${escapeHtml(url)}"/>`,
+    `<link rel="alternate" hreflang="en" href="${escapeHtml(url)}"/>`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}"/>`,
+  ].join("\n");
+
+  // JSON-LD Person — server-side variant of the schema PlayerProfile.tsx
+  // injects client-side. Fields aligned with usePlayerProfile() shape so
+  // bot view matches what humans see post-hydration (no cloaking). Pure
+  // shape lives in functions/_lib/seo-helpers.ts so the JSON-LD edge
+  // cases (no bio, no city, no DUPR, etc.) are unit-tested.
+  const jsonLd = buildPersonJsonLd({
+    profile: p,
+    url,
+    siteUrl,
+    absoluteImageUrl: p.avatar_url ? absImage(p.avatar_url, siteUrl) : undefined,
+  });
+
+  const bc = breadcrumb([
+    { label: "Trang chủ", href: siteUrl },
+    { label: "Người chơi" },
+    { label: displayName },
+  ]);
+
+  // Bot-readable body — same pattern as renderMatch (no cloaking, gives
+  // Google a text excerpt to preview). Mirrors PlayerHeroCard + PlayerStats
+  // visible content roughly.
+  const skillLine = p.skill_level
+    ? `<p>Trình độ: <strong>${escapeHtml(p.skill_level)}</strong></p>`
+    : "";
+  const cityLine = p.city
+    ? `<p>${escapeHtml(p.city)}${p.country ? `, ${escapeHtml(p.country)}` : ""}</p>`
+    : "";
+  const duprLine =
+    duprBits.length > 0
+      ? `<p>${escapeHtml(duprBits.join(" · "))}</p>`
+      : "";
+  const bioLine = p.bio ? `<p>${escapeHtml(p.bio)}</p>` : "";
+
+  const bodyContent = `${bc}
+<h1>${escapeHtml(displayName)} <span>@${escapeHtml(p.username)}</span></h1>
+${cityLine}
+${skillLine}
+${duprLine}
+${bioLine}
+<nav><h2>Khám phá thêm</h2><ul>
+<li><a href="${siteUrl}/feed">Bảng tin pickleball</a></li>
+<li><a href="${siteUrl}/tournaments">Giải đấu</a></li>
+</ul></nav>`;
+
+  return htmlResponse(
+    buildHtml({
+      title,
+      description,
+      url,
+      siteUrl,
+      image: p.avatar_url ? absImage(p.avatar_url, siteUrl) : undefined,
+      type: "profile",
+      jsonLd,
+      bodyContent,
+      extraMeta,
+      lang: "vi",
+    }),
+  );
+}
+
 // ─── Match permalink ─────────────────────────────────────
 //
 // /tran-dau/{slug} — public match page (RLS matches.is_public read).
@@ -1061,6 +1213,125 @@ ${winnerName ? `<p>Người thắng: <strong>${escapeHtml(winnerName)}</strong><
       bodyContent,
       extraMeta,
       lang: "vi",
+    }),
+  );
+}
+
+// ─── Feed (Sprint 4 Phase 4D) ─────────────────────────────
+//
+// /feed (en) and /vi/feed (vi) — discovery surface. Renders the top 20
+// trending matches as a CollectionPage / ItemList of SportsEvent so
+// Googlebot can index recent activity beyond individual /tran-dau/* pages.
+//
+// We call the existing get_trending_feed RPC with viewer_id = NULL so
+// the bot sees the public anonymous trending order (engagement-weighted
+// by Phase 4B kudos + Phase 4C comments). Canonical strips ?tab=*
+// so /feed and /feed?tab=trending dedupe to the same indexed URL.
+
+export async function renderFeed(
+  supabase: SupabaseClient,
+  siteUrl: string,
+  lang: Lang,
+): Promise<Response> {
+  const path = lang === "vi" ? "/vi/feed" : "/feed";
+  // Canonical drops query string — /feed?tab=trending dedupes to /feed.
+  const canonical = `${siteUrl}${path}`;
+
+  let rows: FeedRowForSeo[] = [];
+  try {
+    // Anonymous viewer (NULL) so engagement weighting applies and
+    // viewer_kudoed comes back false uniformly. Default weights from
+    // the RPC signature (kudos=3, comments=5, decay=168h).
+    const { data, error } = await supabase.rpc("get_trending_feed", {
+      p_limit: 20,
+      p_cursor_played_at: null,
+      p_cursor_match_id: null,
+      p_viewer_id: null,
+    });
+    if (error) {
+      console.error("renderFeed: get_trending_feed error:", error);
+    } else {
+      rows = (data ?? []) as FeedRowForSeo[];
+    }
+  } catch (err) {
+    // Don't fail the whole prerender on RPC error — emit the SEO shell
+    // with empty list so bots still get title + description + canonical.
+    console.error("renderFeed: RPC fatal:", err);
+  }
+
+  const titleVi = "Bảng tin pickleball — Trận đấu mới nhất | ThePickleHub";
+  const titleEn = "Pickleball Feed — Latest Matches | ThePickleHub";
+  const descVi =
+    "Bảng tin pickleball cộng đồng — xem trận đấu, kết quả, và DUPR rating của người chơi pickleball Việt Nam mỗi ngày trên ThePickleHub.";
+  const descEn =
+    "Pickleball community feed — browse the latest matches, scores, and DUPR ratings from players across Vietnam and Asia on ThePickleHub.";
+
+  const title = lang === "vi" ? titleVi : titleEn;
+  const description = lang === "vi" ? descVi : descEn;
+
+  // Reciprocal hreflang — Phase 4A shipped both /feed and /vi/feed routes.
+  const extraMeta = [
+    `<link rel="alternate" hreflang="en" href="${siteUrl}/feed"/>`,
+    `<link rel="alternate" hreflang="vi" href="${siteUrl}/vi/feed"/>`,
+    `<link rel="alternate" hreflang="x-default" href="${siteUrl}/feed"/>`,
+  ].join("\n");
+
+  // CollectionPage → ItemList → SportsEvent. Pure shape lives in
+  // functions/_lib/seo-helpers.ts so the team-label and venue fallbacks
+  // are unit-tested for edge cases (empty participants, missing venue).
+  const jsonLd = buildFeedJsonLd({
+    rows,
+    canonical,
+    siteUrl,
+    title,
+    description,
+    lang,
+  });
+
+  // Body content — semantic list of matches so a fully-text bot like the
+  // legacy IA Crawler still sees structure even before parsing JSON-LD.
+  const items = rows
+    .map((row) => {
+      const parts = Array.isArray(row.participants)
+        ? (row.participants as FeedSeoParticipant[])
+        : [];
+      const teamA = feedTeamLabel(parts, "a");
+      const teamB = feedTeamLabel(parts, "b");
+      const score = feedScoreCompact(row.team_a_score, row.team_b_score);
+      const venue = row.venue_name ? ` · ${escapeHtml(row.venue_name)}` : "";
+      return `<li><a href="${siteUrl}/tran-dau/${escapeHtml(row.slug)}">${escapeHtml(`${teamA} vs ${teamB}`)}</a> — <strong>${escapeHtml(score)}</strong>${venue}</li>`;
+    })
+    .join("");
+
+  const headingVi = "Trận đấu nổi bật";
+  const headingEn = "Trending matches";
+  const heading = lang === "vi" ? headingVi : headingEn;
+  const empty =
+    lang === "vi"
+      ? "Chưa có trận đấu nào trong tuần."
+      : "No matches in the trending window yet.";
+
+  const bodyContent = `<section>
+<h2>${heading}</h2>
+${rows.length > 0 ? `<ol>${items}</ol>` : `<p>${empty}</p>`}
+</section>
+<nav><h2>${lang === "vi" ? "Khám phá" : "Discover"}</h2><ul>
+<li><a href="${siteUrl}/tournaments">${lang === "vi" ? "Giải đấu pickleball" : "Tournaments"}</a></li>
+<li><a href="${siteUrl}/livestream">Livestream</a></li>
+<li><a href="${siteUrl}/blog">${lang === "vi" ? "Blog" : "Blog"}</a></li>
+</ul></nav>`;
+
+  return htmlResponse(
+    buildHtml({
+      title,
+      description,
+      url: canonical,
+      siteUrl,
+      type: "website",
+      jsonLd,
+      bodyContent,
+      extraMeta,
+      lang,
     }),
   );
 }
