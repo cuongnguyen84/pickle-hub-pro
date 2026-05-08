@@ -5,7 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { I18nProvider } from "@/i18n";
+import { I18nProvider, useI18n } from "@/i18n";
 import { lazy, Suspense, Component, ReactNode } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -186,15 +186,28 @@ const queryClient = new QueryClient({
 import { prefetchHomeData } from "@/lib/prefetch";
 prefetchHomeData(queryClient);
 
-// Minimal route-transition fallback. Previously rendered the full MainLayout
-// shell (AppHeader + nav) which flashed the legacy chrome between TheLine
-// pages. Now: just a centered spinner on the page background — no header,
-// no nav, no text.
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-  </div>
-);
+// Minimal route-transition fallback. Centered spinner on the page background
+// — no header, no nav. PageLoader renders inside <I18nProvider> (the Suspense
+// boundary that uses it lives at App.tsx line 366, well inside line 354's
+// I18nProvider) so useI18n() is safe to call here without a localStorage
+// fallback.
+//
+// a11y (Codex P2): role="status" + aria-live="polite" so screen readers
+// announce the transition; sr-only label gives them a phrase to announce.
+const PageLoader = () => {
+  const { language } = useI18n();
+  const label = language === "en" ? "Loading..." : "Đang tải...";
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center bg-background"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+};
 
 // Helper: detect a "chunk error" — covers both classic Vite/webpack chunk
 // load failures AND the SPA-fallback signature (HTML served as JS → parser
