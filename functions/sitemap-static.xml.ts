@@ -73,6 +73,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/vi/news", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/news", "/vi/news") },
     { loc: "/forum", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/forum", "/vi/forum") },
     { loc: "/vi/forum", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/forum", "/vi/forum") },
+    // Sprint 4 Phase 4A shipped /feed + /vi/feed (Bet #1 social entry).
+    // Phase 4D: emit in sitemap so the trending discovery surface is
+    // crawlable. hourly changefreq matches the engagement-weighted RPC's
+    // typical refresh cadence — kudos/comments shift the order constantly.
+    { loc: "/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
+    { loc: "/vi/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
     { loc: "/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/vi/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/tools/flex-tournament", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: enOnly("/tools/flex-tournament") },

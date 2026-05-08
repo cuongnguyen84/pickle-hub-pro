@@ -52,11 +52,23 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .filter((p: any) => p.username && URL_SAFE_USERNAME_RE.test(p.username))
       .map((p: any) => {
         const lastmod = toLastmod(p.created_at, TODAY);
+        const profileUrl = `${siteUrl}/nguoi-choi/${p.username}`;
+        // Sprint 4 Phase 4D: profile URL is single-canonical (no /vi/nguoi-choi/*
+        // mirror in src/App.tsx; the path itself is Vietnamese-friendly).
+        // Both hreflang values therefore point at the same URL — the React
+        // app switches language via its own toggle on the same route. The
+        // reciprocal hreflang still helps Google understand the page is
+        // bilingual rather than English-only.
         return buildUrlEntry({
-          loc: `${siteUrl}/nguoi-choi/${p.username}`,
+          loc: profileUrl,
           lastmod,
           changefreq: "weekly",
           priority: "0.6",
+          hreflang: [
+            { lang: "vi", href: profileUrl },
+            { lang: "en", href: profileUrl },
+            { lang: "x-default", href: profileUrl },
+          ],
         });
       });
 
