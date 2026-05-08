@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 import type { MatchDetail, MatchParticipant } from "@/hooks/social";
 
 const initials = (name: string) =>
@@ -44,6 +45,7 @@ const PlayerCell = ({ p }: { p: MatchParticipant }) => {
 };
 
 export const MatchScoreboard = ({ match }: { match: MatchDetail }) => {
+  const { language } = useI18n();
   const teamA = match.participants.filter((p) => p.team === "a").sort((a, b) => (a.position ?? 1) - (b.position ?? 1));
   const teamB = match.participants.filter((p) => p.team === "b").sort((a, b) => (a.position ?? 1) - (b.position ?? 1));
   const aWon = match.winning_team === "a";
@@ -71,11 +73,11 @@ export const MatchScoreboard = ({ match }: { match: MatchDetail }) => {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            Đội {team.toUpperCase()}
+            {language === "vi" ? "Đội" : "Team"} {team.toUpperCase()}
           </span>
           {isWinner && (
             <Badge className="bg-social-primary text-white hover:bg-social-primary-dark gap-1">
-              <Trophy className="h-3 w-3" /> THẮNG
+              <Trophy className="h-3 w-3" /> {language === "vi" ? "THẮNG" : "WINNER"}
             </Badge>
           )}
         </div>

@@ -32,12 +32,13 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { venueSlug } from "@/lib/social/slug";
 import { toast } from "@/hooks/use-toast";
 import type { Venue } from "@/hooks/social/types";
 
-const VN_CITIES = [
+const VN_CITIES_VI = [
   "Hà Nội",
   "TP. Hồ Chí Minh",
   "Đà Nẵng",
@@ -50,27 +51,67 @@ const VN_CITIES = [
   "Quy Nhơn",
   "Khác",
 ];
+const VN_CITIES_EN = [
+  "Hanoi",
+  "Ho Chi Minh City",
+  "Da Nang",
+  "Hai Phong",
+  "Can Tho",
+  "Nha Trang",
+  "Hue",
+  "Vung Tau",
+  "Da Lat",
+  "Quy Nhon",
+  "Other",
+];
 
-const SURFACES = [
+const SURFACES_VI = [
   { value: "concrete", label: "Bê tông" },
   { value: "asphalt",  label: "Nhựa đường" },
   { value: "acrylic",  label: "Acrylic" },
   { value: "wood",     label: "Sàn gỗ" },
   { value: "other",    label: "Khác" },
 ];
+const SURFACES_EN = [
+  { value: "concrete", label: "Concrete" },
+  { value: "asphalt",  label: "Asphalt" },
+  { value: "acrylic",  label: "Acrylic" },
+  { value: "wood",     label: "Wood" },
+  { value: "other",    label: "Other" },
+];
 
-const schema = z.object({
-  name: z.string().min(2, "Tên sân tối thiểu 2 ký tự").max(100),
-  name_vi: z.string().max(100).optional(),
-  city: z.string().min(1, "Chọn thành phố"),
-  district: z.string().max(60).optional(),
-  address: z.string().max(200).optional(),
-  num_courts: z.coerce.number().int().min(0).max(50).optional(),
-  surface_type: z.string().optional(),
-  is_indoor: z.boolean().default(false),
-});
+const buildSchema = (language: "vi" | "en") =>
+  z.object({
+    name: z
+      .string()
+      .min(
+        2,
+        language === "vi"
+          ? "Tên sân tối thiểu 2 ký tự"
+          : "Venue name needs at least 2 characters",
+      )
+      .max(100),
+    name_vi: z.string().max(100).optional(),
+    city: z
+      .string()
+      .min(1, language === "vi" ? "Chọn thành phố" : "Pick a city"),
+    district: z.string().max(60).optional(),
+    address: z.string().max(200).optional(),
+    num_courts: z.coerce.number().int().min(0).max(50).optional(),
+    surface_type: z.string().optional(),
+    is_indoor: z.boolean().default(false),
+  });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = {
+  name: string;
+  name_vi?: string;
+  city: string;
+  district?: string;
+  address?: string;
+  num_courts?: number;
+  surface_type?: string;
+  is_indoor: boolean;
+};
 
 interface CreateVenueModalProps {
   open: boolean;
@@ -80,9 +121,12 @@ interface CreateVenueModalProps {
 
 export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueModalProps) => {
   const { user } = useAuth();
+  const { language } = useI18n();
+  const VN_CITIES = language === "vi" ? VN_CITIES_VI : VN_CITIES_EN;
+  const SURFACES = language === "vi" ? SURFACES_VI : SURFACES_EN;
   const [submitting, setSubmitting] = useState(false);
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(language)),
     defaultValues: {
       name: "", name_vi: "", city: "", district: "",
       address: "", num_courts: undefined, surface_type: undefined, is_indoor: false,
@@ -91,7 +135,10 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
 
   const submit = async (values: FormValues) => {
     if (!user) {
-      toast({ title: "Cần đăng nhập", variant: "destructive" });
+      toast({
+        title: language === "vi" ? "Cần đăng nhập" : "Sign in required",
+        variant: "destructive",
+      });
       return;
     }
     setSubmitting(true);
@@ -127,15 +174,30 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
         if (error && error.code !== "23505") throw error; // not slug-unique
         attempt++;
       }
-      if (!inserted) throw new Error("Không tạo được sân (slug trùng)");
-      toast({ title: "Đã thêm sân mới", description: inserted.name });
+      if (!inserted) {
+        throw new Error(
+          language === "vi"
+            ? "Không tạo được sân (slug trùng)"
+            : "Couldn't create venue (slug collision)",
+        );
+      }
+      toast({
+        title: language === "vi" ? "Đã thêm sân mới" : "Venue added",
+        description: inserted.name,
+      });
       onCreated(inserted);
       form.reset();
       onOpenChange(false);
     } catch (e) {
       toast({
-        title: "Không thêm được sân",
-        description: e instanceof Error ? e.message : "Lỗi không xác định",
+        title:
+          language === "vi" ? "Không thêm được sân" : "Couldn't add venue",
+        description:
+          e instanceof Error
+            ? e.message
+            : language === "vi"
+              ? "Lỗi không xác định"
+              : "Unexpected error",
         variant: "destructive",
       });
     } finally {
@@ -147,31 +209,61 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Thêm sân mới</DialogTitle>
+          <DialogTitle>
+            {language === "vi" ? "Thêm sân mới" : "Add a new venue"}
+          </DialogTitle>
           <DialogDescription>
-            Sân của bạn sẽ hiển thị ngay. Admin có thể duyệt thêm thông tin sau.
+            {language === "vi"
+              ? "Sân của bạn sẽ hiển thị ngay. Admin có thể duyệt thêm thông tin sau."
+              : "Your venue will appear immediately. Admin may review the metadata later."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
           <div>
-            <Label htmlFor="venue-name">Tên sân *</Label>
-            <Input id="venue-name" {...form.register("name")} placeholder="Sân Long Biên" />
+            <Label htmlFor="venue-name">
+              {language === "vi" ? "Tên sân" : "Venue name"} *
+            </Label>
+            <Input
+              id="venue-name"
+              {...form.register("name")}
+              placeholder={
+                language === "vi" ? "Sân Long Biên" : "Long Bien Court"
+              }
+            />
             {form.formState.errors.name && (
               <p className="mt-1 text-xs text-destructive">{form.formState.errors.name.message}</p>
             )}
           </div>
           <div>
-            <Label htmlFor="venue-name-vi">Tên hiển thị (VN)</Label>
-            <Input id="venue-name-vi" {...form.register("name_vi")} placeholder="Tên tiếng Việt nếu khác" />
+            <Label htmlFor="venue-name-vi">
+              {language === "vi"
+                ? "Tên hiển thị (VN)"
+                : "Vietnamese display name (optional)"}
+            </Label>
+            <Input
+              id="venue-name-vi"
+              {...form.register("name_vi")}
+              placeholder={
+                language === "vi"
+                  ? "Tên tiếng Việt nếu khác"
+                  : "Vietnamese name if different"
+              }
+            />
           </div>
           <div>
-            <Label htmlFor="venue-city">Thành phố *</Label>
+            <Label htmlFor="venue-city">
+              {language === "vi" ? "Thành phố" : "City"} *
+            </Label>
             <Select
               onValueChange={(v) => form.setValue("city", v, { shouldValidate: true })}
               value={form.watch("city")}
             >
               <SelectTrigger id="venue-city" className="h-11">
-                <SelectValue placeholder="Chọn thành phố" />
+                <SelectValue
+                  placeholder={
+                    language === "vi" ? "Chọn thành phố" : "Pick a city"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {VN_CITIES.map((c) => (
@@ -184,16 +276,32 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
             )}
           </div>
           <div>
-            <Label htmlFor="venue-district">Quận / Huyện</Label>
-            <Input id="venue-district" {...form.register("district")} placeholder="Long Biên" />
+            <Label htmlFor="venue-district">
+              {language === "vi" ? "Quận / Huyện" : "District"}
+            </Label>
+            <Input
+              id="venue-district"
+              {...form.register("district")}
+              placeholder={language === "vi" ? "Long Biên" : "Long Bien"}
+            />
           </div>
           <div>
-            <Label htmlFor="venue-address">Địa chỉ</Label>
-            <Input id="venue-address" {...form.register("address")} placeholder="Số 1, đường ABC" />
+            <Label htmlFor="venue-address">
+              {language === "vi" ? "Địa chỉ" : "Address"}
+            </Label>
+            <Input
+              id="venue-address"
+              {...form.register("address")}
+              placeholder={
+                language === "vi" ? "Số 1, đường ABC" : "1 ABC Street"
+              }
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="venue-courts">Số sân</Label>
+              <Label htmlFor="venue-courts">
+                {language === "vi" ? "Số sân" : "Court count"}
+              </Label>
               <Input
                 id="venue-courts"
                 type="number"
@@ -204,13 +312,19 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
               />
             </div>
             <div>
-              <Label htmlFor="venue-surface">Mặt sân</Label>
+              <Label htmlFor="venue-surface">
+                {language === "vi" ? "Mặt sân" : "Surface"}
+              </Label>
               <Select
                 onValueChange={(v) => form.setValue("surface_type", v)}
                 value={form.watch("surface_type") ?? ""}
               >
                 <SelectTrigger id="venue-surface" className="h-11">
-                  <SelectValue placeholder="Chọn loại" />
+                  <SelectValue
+                    placeholder={
+                      language === "vi" ? "Chọn loại" : "Pick a surface"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {SURFACES.map((s) => (
@@ -221,7 +335,9 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
             </div>
           </div>
           <div className="flex items-center justify-between rounded-lg border p-3">
-            <Label htmlFor="venue-indoor" className="flex-1 cursor-pointer">Sân trong nhà</Label>
+            <Label htmlFor="venue-indoor" className="flex-1 cursor-pointer">
+              {language === "vi" ? "Sân trong nhà" : "Indoor venue"}
+            </Label>
             <Switch
               id="venue-indoor"
               checked={form.watch("is_indoor")}
@@ -235,7 +351,7 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
               onClick={() => onOpenChange(false)}
               disabled={submitting}
             >
-              Hủy
+              {language === "vi" ? "Hủy" : "Cancel"}
             </Button>
             <Button
               type="submit"
@@ -243,7 +359,7 @@ export const CreateVenueModal = ({ open, onOpenChange, onCreated }: CreateVenueM
               className="bg-social-primary text-white hover:bg-social-primary-dark"
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Lưu sân
+              {language === "vi" ? "Lưu sân" : "Save venue"}
             </Button>
           </DialogFooter>
         </form>

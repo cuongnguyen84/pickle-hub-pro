@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/i18n";
 import {
   Popover,
   PopoverContent,
@@ -49,10 +50,14 @@ interface PlayerSelectorProps {
   onChange: (next: ParticipantSlot[]) => void;
 }
 
-const SLOTS_FOR_FORMAT: Record<PlayerSelectorProps["format"], Array<{ team: Team; position: Position; label: string }>> = {
+type SlotMap = Record<
+  PlayerSelectorProps["format"],
+  Array<{ team: Team; position: Position; label: string }>
+>;
+const slotsForFormat = (language: "vi" | "en"): SlotMap => ({
   singles: [
-    { team: "a", position: 1, label: "Đội A" },
-    { team: "b", position: 1, label: "Đội B" },
+    { team: "a", position: 1, label: language === "vi" ? "Đội A" : "Team A" },
+    { team: "b", position: 1, label: language === "vi" ? "Đội B" : "Team B" },
   ],
   doubles: [
     { team: "a", position: 1, label: "A1" },
@@ -66,7 +71,7 @@ const SLOTS_FOR_FORMAT: Record<PlayerSelectorProps["format"], Array<{ team: Team
     { team: "b", position: 1, label: "B1" },
     { team: "b", position: 2, label: "B2" },
   ],
-};
+});
 
 const initials = (name: string) =>
   name
@@ -89,6 +94,7 @@ const SlotCard = ({
   onMoveTo: (team: Team, position: Position) => void;
   availableSlots: Array<{ team: Team; position: Position; label: string }>;
 }) => {
+  const { language } = useI18n();
   const isTeamA = slot.team === "a";
   if (!participant) {
     return (
@@ -134,14 +140,19 @@ const SlotCard = ({
       </div>
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Tùy chọn">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            aria-label={language === "vi" ? "Tùy chọn" : "Options"}
+          >
             <X className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-44 p-1">
           <div className="space-y-1">
             <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-              Chuyển đến
+              {language === "vi" ? "Chuyển đến" : "Move to"}
             </div>
             {availableSlots
               .filter((s) => !(s.team === slot.team && s.position === slot.position))
@@ -160,7 +171,7 @@ const SlotCard = ({
               onClick={onRemove}
               className="w-full rounded-md px-2 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10"
             >
-              Bỏ chọn
+              {language === "vi" ? "Bỏ chọn" : "Remove"}
             </button>
           </div>
         </PopoverContent>
@@ -177,7 +188,9 @@ const PlayerRow = ({
   player: PlayerProfile;
   onPick: () => void;
   alreadyChosen: boolean;
-}) => (
+}) => {
+  const { language } = useI18n();
+  return (
   <button
     type="button"
     onClick={onPick}
@@ -205,17 +218,23 @@ const PlayerRow = ({
         {player.dupr_doubles && ` · DUPR ${player.dupr_doubles}`}
       </div>
     </div>
-    {alreadyChosen && <Badge variant="outline" className="shrink-0 text-[10px]">Đã chọn</Badge>}
+    {alreadyChosen && (
+      <Badge variant="outline" className="shrink-0 text-[10px]">
+        {language === "vi" ? "Đã chọn" : "Selected"}
+      </Badge>
+    )}
   </button>
-);
+  );
+};
 
 export const PlayerSelector = ({ format, participants, onChange }: PlayerSelectorProps) => {
+  const { language } = useI18n();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [ghostCount, setGhostCount] = useState(0);
 
-  const slots = SLOTS_FOR_FORMAT[format];
+  const slots = slotsForFormat(language)[format];
   const { partners, isLoading: partnersLoading } = useRecentPartners();
   const { players: searchResults, isLoading: searchLoading } = useSearchPlayers(search);
 
@@ -290,7 +309,7 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
       <div className="space-y-3">
         <div className="rounded-2xl border-2 border-social-primary/30 bg-social-primary/5 p-3">
           <div className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase text-social-primary">
-            <Users className="h-3.5 w-3.5" /> Đội A
+            <Users className="h-3.5 w-3.5" /> {language === "vi" ? "Đội A" : "Team A"}
           </div>
           <div className="space-y-2">
             {slots.filter((s) => s.team === "a").map((s) => (
@@ -307,7 +326,7 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
         </div>
         <div className="rounded-2xl border bg-muted/30 p-3">
           <div className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase text-muted-foreground">
-            <Users className="h-3.5 w-3.5" /> Đội B
+            <Users className="h-3.5 w-3.5" /> {language === "vi" ? "Đội B" : "Team B"}
           </div>
           <div className="space-y-2">
             {slots.filter((s) => s.team === "b").map((s) => (
@@ -330,7 +349,11 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm theo tên, username hoặc SĐT..."
+          placeholder={
+            language === "vi"
+              ? "Tìm theo tên, username hoặc SĐT..."
+              : "Search by name, username or phone..."
+          }
           className="h-12 pl-10"
         />
       </div>
@@ -339,7 +362,7 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
       {search.trim().length >= 2 && (
         <div>
           <div className="mb-2 px-1 text-xs font-semibold uppercase text-muted-foreground">
-            Kết quả
+            {language === "vi" ? "Kết quả" : "Results"}
           </div>
           {searchLoading ? (
             <div className="space-y-2">
@@ -359,7 +382,9 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
             </div>
           ) : (
             <div className="rounded-xl border border-dashed p-3 text-center text-sm text-muted-foreground">
-              Không tìm thấy. Mời người chơi mới bằng SĐT.
+              {language === "vi"
+                ? "Không tìm thấy. Mời người chơi mới bằng SĐT."
+                : "No matches. Invite a new player by phone number."}
             </div>
           )}
         </div>
@@ -369,7 +394,7 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
       {search.trim().length < 2 && (
         <div>
           <div className="mb-2 px-1 text-xs font-semibold uppercase text-muted-foreground">
-            Người chơi gần đây
+            {language === "vi" ? "Người chơi gần đây" : "Recent players"}
           </div>
           {partnersLoading ? (
             <div className="space-y-2">
@@ -389,7 +414,9 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
             </div>
           ) : (
             <div className="rounded-xl border border-dashed p-3 text-center text-sm text-muted-foreground">
-              Bạn chưa có lịch sử trận. Search hoặc mời người mới.
+              {language === "vi"
+                ? "Bạn chưa có lịch sử trận. Search hoặc mời người mới."
+                : "No match history yet. Search or invite a new player."}
             </div>
           )}
         </div>
@@ -403,7 +430,9 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
         className="w-full justify-start gap-2"
       >
         <UserPlus className="h-4 w-4" />
-        Mời SĐT (người chơi chưa có tài khoản)
+        {language === "vi"
+          ? "Mời SĐT (người chơi chưa có tài khoản)"
+          : "Invite by phone (players without an account)"}
       </Button>
 
       <CreateGhostProfileModal
@@ -418,8 +447,11 @@ export const PlayerSelector = ({ format, participants, onChange }: PlayerSelecto
 
       {/* ─── Validation hint ─────────────────────────────────────────── */}
       <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
-        Cần đủ {format === "singles" ? 2 : 4} người chơi.
-        Hiện tại: {participants.length}/{format === "singles" ? 2 : 4}
+        {language === "vi"
+          ? `Cần đủ ${format === "singles" ? 2 : 4} người chơi.`
+          : `Need ${format === "singles" ? 2 : 4} players.`}{" "}
+        {language === "vi" ? "Hiện tại" : "Current"}: {participants.length}/
+        {format === "singles" ? 2 : 4}
       </div>
     </div>
   );

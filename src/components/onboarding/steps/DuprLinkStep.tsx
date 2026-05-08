@@ -1,6 +1,7 @@
 import { useState, Dispatch } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useDuprLink } from "@/hooks/onboarding/useDuprLink";
 import type { OnboardingState } from "../OnboardingWizard";
@@ -38,6 +39,7 @@ const labelStyle: React.CSSProperties = {
 
 export function DuprLinkStep({ state, dispatch }: Props) {
   const { toast } = useToast();
+  const { language } = useI18n();
   const { mutate: callDuprLink, loading: linkLoading } = useDuprLink();
 
   const [duprId, setDuprId] = useState(state.dupr.dupr_id);
@@ -67,11 +69,13 @@ export function DuprLinkStep({ state, dispatch }: Props) {
       dispatch({ type: "SET_DUPR", payload: { ...payload, skipped } });
       dispatch({ type: "GO_NEXT" });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Lỗi";
+      const fallback = language === "vi" ? "Lỗi" : "Error";
+      const msg = err instanceof Error ? err.message : fallback;
       setError(msg);
       toast({
         variant: "destructive",
-        title: "Không thể chuyển bước",
+        title:
+          language === "vi" ? "Không thể chuyển bước" : "Couldn't continue",
         description: msg,
       });
     } finally {
@@ -85,18 +89,30 @@ export function DuprLinkStep({ state, dispatch }: Props) {
 
     const doublesNum = parseFloat(duprDoubles);
     if (!duprDoubles || Number.isNaN(doublesNum)) {
-      setError("Cần nhập điểm DUPR đôi (doubles) để lưu");
+      setError(
+        language === "vi"
+          ? "Cần nhập điểm DUPR đôi (doubles) để lưu"
+          : "Doubles DUPR rating is required",
+      );
       return;
     }
     if (doublesNum < 2.0 || doublesNum > 7.0) {
-      setError("Điểm DUPR phải trong khoảng 2.0 - 7.0");
+      setError(
+        language === "vi"
+          ? "Điểm DUPR phải trong khoảng 2.0 - 7.0"
+          : "DUPR rating must be between 2.0 and 7.0",
+      );
       return;
     }
     let singlesNum: number | null = null;
     if (duprSingles.trim().length > 0) {
       singlesNum = parseFloat(duprSingles);
       if (Number.isNaN(singlesNum) || singlesNum < 2.0 || singlesNum > 7.0) {
-        setError("Điểm DUPR đơn (singles) phải trong khoảng 2.0 - 7.0");
+        setError(
+          language === "vi"
+            ? "Điểm DUPR đơn (singles) phải trong khoảng 2.0 - 7.0"
+            : "Singles DUPR must be between 2.0 and 7.0",
+        );
         return;
       }
     }
@@ -111,7 +127,10 @@ export function DuprLinkStep({ state, dispatch }: Props) {
       },
       {
         onSuccess: (data) => {
-          toast({ title: "Đã lưu rating DUPR" });
+          toast({
+            title:
+              language === "vi" ? "Đã lưu rating DUPR" : "DUPR rating saved",
+          });
           advanceStep(
             {
               dupr_id: data.dupr_id ?? "",
@@ -123,11 +142,19 @@ export function DuprLinkStep({ state, dispatch }: Props) {
           );
         },
         onError: (err) => {
-          const errMsg = err.message ?? "Lỗi không xác định";
+          const fallbackErr =
+            language === "vi" ? "Lỗi không xác định" : "Unexpected error";
+          const errMsg = err.message ?? fallbackErr;
           if (err.code === "rate_limited") {
-            setError("Đang xử lý, vui lòng đợi 60 giây.");
+            setError(
+              language === "vi"
+                ? "Đang xử lý, vui lòng đợi 60 giây."
+                : "Processing, please wait 60 seconds.",
+            );
           } else if (err.code === "validation_failed") {
-            setError(`Tỷ số không hợp lệ: ${err.details?.join(", ") ?? errMsg}`);
+            setError(
+              `${language === "vi" ? "Tỷ số không hợp lệ" : "Invalid rating"}: ${err.details?.join(", ") ?? errMsg}`,
+            );
           } else {
             setError(errMsg);
           }
@@ -160,10 +187,13 @@ export function DuprLinkStep({ state, dispatch }: Props) {
           margin: "0 0 12px",
         }}
       >
-        Liên kết <span style={{ fontStyle: "normal" }}>DUPR.</span>
+        {language === "vi" ? "Liên kết " : "Link "}
+        <span style={{ fontStyle: "normal" }}>DUPR.</span>
       </h2>
       <p style={{ fontSize: 16, color: "var(--tl-fg-2)", margin: "0 0 8px", lineHeight: 1.55 }}>
-        Tự nhập rating để cộng đồng biết level của bạn.
+        {language === "vi"
+          ? "Tự nhập rating để cộng đồng biết level của bạn."
+          : "Enter your rating so the community knows your level."}
       </p>
       <p
         style={{
@@ -175,13 +205,15 @@ export function DuprLinkStep({ state, dispatch }: Props) {
           margin: "0 0 32px",
         }}
       >
-        ◆ Auto-sync DUPR sắp ra mắt — hiện tại nhập manual.
+        {language === "vi"
+          ? "◆ Auto-sync DUPR sắp ra mắt — hiện tại nhập manual."
+          : "◆ DUPR auto-sync coming soon — manual entry for now."}
       </p>
 
       <form onSubmit={handleSave}>
         <div style={{ marginBottom: 24 }}>
           <label htmlFor="dupr_doubles" style={labelStyle}>
-            Điểm DUPR Doubles{" "}
+            {language === "vi" ? "Điểm DUPR Doubles" : "DUPR Doubles rating"}{" "}
             <span style={{ color: "var(--tl-green)" }}>*</span>
           </label>
           <input
@@ -201,7 +233,9 @@ export function DuprLinkStep({ state, dispatch }: Props) {
 
         <div style={{ marginBottom: 24 }}>
           <label htmlFor="dupr_singles" style={labelStyle}>
-            Điểm DUPR Singles (tùy chọn)
+            {language === "vi"
+              ? "Điểm DUPR Singles (tùy chọn)"
+              : "DUPR Singles rating (optional)"}
           </label>
           <input
             id="dupr_singles"
@@ -220,14 +254,14 @@ export function DuprLinkStep({ state, dispatch }: Props) {
 
         <div style={{ marginBottom: 28 }}>
           <label htmlFor="dupr_id" style={labelStyle}>
-            DUPR ID (tùy chọn)
+            {language === "vi" ? "DUPR ID (tùy chọn)" : "DUPR ID (optional)"}
           </label>
           <input
             id="dupr_id"
             type="text"
             value={duprId}
             onChange={(e) => setDuprId(e.target.value)}
-            placeholder="VD: V6Y5XP"
+            placeholder={language === "vi" ? "VD: V6Y5XP" : "e.g., V6Y5XP"}
             disabled={submitting}
             style={inputStyle}
           />
@@ -240,7 +274,9 @@ export function DuprLinkStep({ state, dispatch }: Props) {
               marginTop: 8,
             }}
           >
-            Tìm trong URL DUPR profile của bạn.
+            {language === "vi"
+              ? "Tìm trong URL DUPR profile của bạn."
+              : "Find this in your DUPR profile URL."}
           </p>
         </div>
 
@@ -266,7 +302,7 @@ export function DuprLinkStep({ state, dispatch }: Props) {
           style={{ width: "100%", marginBottom: 8 }}
         >
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Lưu rating
+          {language === "vi" ? "Lưu rating" : "Save rating"}
         </button>
         <button
           type="button"
@@ -281,7 +317,7 @@ export function DuprLinkStep({ state, dispatch }: Props) {
             fontSize: 16,
           }}
         >
-          Bỏ qua bước này
+          {language === "vi" ? "Bỏ qua bước này" : "Skip this step"}
         </button>
       </form>
     </section>

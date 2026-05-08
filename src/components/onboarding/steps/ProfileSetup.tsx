@@ -1,6 +1,7 @@
 import { useState, useEffect, Dispatch } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import {
   generateUsername,
@@ -17,16 +18,24 @@ interface Props {
   userId: string;
 }
 
-const SKILL_LEVELS: Array<{
+type SkillValue = "beginner" | "intermediate" | "advanced" | "pro";
+interface SkillLevel {
   num: string;
-  value: "beginner" | "intermediate" | "advanced" | "pro";
+  value: SkillValue;
   label: string;
   description: string;
-}> = [
+}
+const SKILL_LEVELS_VI: SkillLevel[] = [
   { num: "01", value: "beginner", label: "NGƯỜI MỚI", description: "Mới bắt đầu, đang học" },
   { num: "02", value: "intermediate", label: "TRUNG BÌNH", description: "Đã chơi 3-12 tháng" },
   { num: "03", value: "advanced", label: "KHÁ", description: "1+ năm, tham gia giải địa phương" },
   { num: "04", value: "pro", label: "CHUYÊN NGHIỆP", description: "Top 100 VN hoặc tournament regular" },
+];
+const SKILL_LEVELS_EN: SkillLevel[] = [
+  { num: "01", value: "beginner", label: "BEGINNER", description: "Just starting out, still learning" },
+  { num: "02", value: "intermediate", label: "INTERMEDIATE", description: "3-12 months of experience" },
+  { num: "03", value: "advanced", label: "ADVANCED", description: "1+ year, plays local tournaments" },
+  { num: "04", value: "pro", label: "PRO", description: "Top 100 VN or tournament regular" },
 ];
 
 const inputStyle: React.CSSProperties = {
@@ -54,6 +63,8 @@ const labelStyle: React.CSSProperties = {
 
 export function ProfileSetup({ state, dispatch, userId }: Props) {
   const { toast } = useToast();
+  const { language } = useI18n();
+  const SKILL_LEVELS = language === "vi" ? SKILL_LEVELS_VI : SKILL_LEVELS_EN;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usernamePreview, setUsernamePreview] = useState<string>("");
@@ -85,15 +96,25 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
 
     const displayName = state.profile.display_name.trim();
     if (displayName.length < 2) {
-      setError("Tên hiển thị tối thiểu 2 ký tự");
+      setError(
+        language === "vi"
+          ? "Tên hiển thị tối thiểu 2 ký tự"
+          : "Display name needs at least 2 characters",
+      );
       return;
     }
     if (displayName.length > 50) {
-      setError("Tên hiển thị tối đa 50 ký tự");
+      setError(
+        language === "vi"
+          ? "Tên hiển thị tối đa 50 ký tự"
+          : "Display name limited to 50 characters",
+      );
       return;
     }
     if (!state.profile.skill_level) {
-      setError("Vui lòng chọn trình độ");
+      setError(
+        language === "vi" ? "Vui lòng chọn trình độ" : "Please pick a skill level",
+      );
       return;
     }
 
@@ -129,11 +150,14 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
       });
       dispatch({ type: "GO_NEXT" });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Lỗi không xác định";
+      const fallback =
+        language === "vi" ? "Lỗi không xác định" : "Unexpected error";
+      const msg = err instanceof Error ? err.message : fallback;
       setError(msg);
       toast({
         variant: "destructive",
-        title: "Lưu hồ sơ thất bại",
+        title:
+          language === "vi" ? "Lưu hồ sơ thất bại" : "Failed to save profile",
         description: msg,
       });
     } finally {
@@ -156,7 +180,7 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
           margin: "0 0 12px",
         }}
       >
-        Bắt đầu hồ sơ.
+        {language === "vi" ? "Bắt đầu hồ sơ." : "Start your profile."}
       </h2>
       <p
         style={{
@@ -166,20 +190,25 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
           lineHeight: 1.55,
         }}
       >
-        Tên hiển thị + trình độ để cộng đồng nhận ra bạn.
+        {language === "vi"
+          ? "Tên hiển thị + trình độ để cộng đồng nhận ra bạn."
+          : "Display name + skill level so the community knows you."}
       </p>
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 28 }}>
           <label htmlFor="display_name" style={labelStyle}>
-            Tên hiển thị <span style={{ color: "var(--tl-green)" }}>*</span>
+            {language === "vi" ? "Tên hiển thị" : "Display name"}{" "}
+            <span style={{ color: "var(--tl-green)" }}>*</span>
           </label>
           <input
             id="display_name"
             type="text"
             value={state.profile.display_name}
             onChange={(e) => handleDisplayNameChange(e.target.value)}
-            placeholder="VD: Nguyễn Hoàng Nam"
+            placeholder={
+              language === "vi" ? "VD: Nguyễn Hoàng Nam" : "e.g., Cuong Nguyen"
+            }
             required
             minLength={2}
             maxLength={50}
@@ -205,7 +234,8 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
 
         <div style={{ marginBottom: 28 }}>
           <div style={labelStyle}>
-            Trình độ <span style={{ color: "var(--tl-green)" }}>*</span>
+            {language === "vi" ? "Trình độ" : "Skill level"}{" "}
+            <span style={{ color: "var(--tl-green)" }}>*</span>
           </div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {SKILL_LEVELS.map((skill, i) => {
@@ -305,7 +335,7 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
           style={{ width: "100%" }}
         >
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Tiếp tục
+          {language === "vi" ? "Tiếp tục" : "Continue"}
         </button>
       </form>
     </section>

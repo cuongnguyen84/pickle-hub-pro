@@ -1,6 +1,7 @@
 import { useState, Dispatch } from "react";
 import { Loader2, UserPlus, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useSuggestedFollows } from "@/hooks/onboarding/useSuggestedFollows";
 import { useFollowToggle } from "@/hooks/onboarding/useFollowToggle";
@@ -16,10 +17,15 @@ interface Props {
   onComplete: () => void;
 }
 
-const REASON_LABELS: Record<string, string> = {
+const REASON_LABELS_VI: Record<string, string> = {
   played_together: "ĐÃ CHƠI CÙNG",
   same_city: "CÙNG THÀNH PHỐ",
   verified_pro: "PRO VERIFIED",
+};
+const REASON_LABELS_EN: Record<string, string> = {
+  played_together: "PLAYED TOGETHER",
+  same_city: "SAME CITY",
+  verified_pro: "VERIFIED PRO",
 };
 
 export function SuggestedFollowsStep({
@@ -29,6 +35,8 @@ export function SuggestedFollowsStep({
   onComplete,
 }: Props) {
   const { toast } = useToast();
+  const { language } = useI18n();
+  const REASON_LABELS = language === "vi" ? REASON_LABELS_VI : REASON_LABELS_EN;
   const { data: suggestions, isLoading } = useSuggestedFollows(userId);
   const toggle = useFollowToggle(userId);
 
@@ -68,14 +76,21 @@ export function SuggestedFollowsStep({
         type: "SET_FOLLOWS",
         payload: { skipped },
       });
-      toast({ title: "Chào mừng bạn đến ThePickleHub!" });
+      toast({
+        title:
+          language === "vi"
+            ? "Chào mừng bạn đến ThePickleHub!"
+            : "Welcome to ThePickleHub!",
+      });
       onComplete();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Lỗi";
+      const fallback = language === "vi" ? "Lỗi" : "Error";
+      const msg = err instanceof Error ? err.message : fallback;
       setError(msg);
       toast({
         variant: "destructive",
-        title: "Không thể hoàn tất",
+        title:
+          language === "vi" ? "Không thể hoàn tất" : "Couldn't finish",
         description: msg,
       });
     } finally {
@@ -98,7 +113,10 @@ export function SuggestedFollowsStep({
           margin: "0 0 12px",
         }}
       >
-        Theo dõi <span style={{ fontStyle: "normal" }}>cộng đồng.</span>
+        {language === "vi" ? "Theo dõi " : "Follow the "}
+        <span style={{ fontStyle: "normal" }}>
+          {language === "vi" ? "cộng đồng." : "community."}
+        </span>
       </h2>
       <p
         style={{
@@ -108,7 +126,9 @@ export function SuggestedFollowsStep({
           lineHeight: 1.55,
         }}
       >
-        Theo dõi 5-10 người để xem trận đấu và kết nối.
+        {language === "vi"
+          ? "Theo dõi 5-10 người để xem trận đấu và kết nối."
+          : "Follow 5-10 people to see their matches and connect."}
       </p>
 
       {isLoading ? (
@@ -128,7 +148,9 @@ export function SuggestedFollowsStep({
             padding: "16px 0",
           }}
         >
-          Chưa có gợi ý ở khu vực bạn. Tìm và theo dõi sau từ trang hồ sơ.
+          {language === "vi"
+            ? "Chưa có gợi ý ở khu vực bạn. Tìm và theo dõi sau từ trang hồ sơ."
+            : "No suggestions in your area yet. Find and follow players from their profile pages later."}
         </p>
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -229,12 +251,12 @@ export function SuggestedFollowsStep({
                   {isSelected ? (
                     <>
                       <UserCheck className="mr-1 h-4 w-4" />
-                      Đã theo dõi
+                      {language === "vi" ? "Đã theo dõi" : "Following"}
                     </>
                   ) : (
                     <>
                       <UserPlus className="mr-1 h-4 w-4" />
-                      Theo dõi
+                      {language === "vi" ? "Theo dõi" : "Follow"}
                     </>
                   )}
                 </button>
@@ -255,7 +277,9 @@ export function SuggestedFollowsStep({
           margin: "20px 0",
         }}
       >
-        ĐÃ CHỌN {selected.length} NGƯỜI
+        {language === "vi"
+          ? `ĐÃ CHỌN ${selected.length} NGƯỜI`
+          : `${selected.length} SELECTED`}
       </p>
 
       {error && (
@@ -281,7 +305,7 @@ export function SuggestedFollowsStep({
         style={{ width: "100%" }}
       >
         {completing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Hoàn tất
+        {language === "vi" ? "Hoàn tất" : "Finish"}
       </button>
     </section>
   );

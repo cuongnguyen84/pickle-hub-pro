@@ -7,6 +7,7 @@
 
 import { Users, User, Users2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 
 export type Format = "singles" | "doubles" | "mixed";
 
@@ -15,19 +16,28 @@ interface FormatSelectorProps {
   onSelect: (next: Format) => void;
 }
 
-const OPTIONS: {
+interface OptionShape {
   id: Format;
   title: string;
   subtitle: string;
   count: string;
   Icon: typeof User;
-}[] = [
+}
+
+const OPTIONS_VI: OptionShape[] = [
   { id: "singles", title: "Đơn",        subtitle: "1 vs 1",                count: "2 người",  Icon: User },
   { id: "doubles", title: "Đôi",        subtitle: "Cùng giới hoặc tự do",  count: "4 người",  Icon: Users },
   { id: "mixed",   title: "Đôi nam-nữ", subtitle: "1 nam + 1 nữ mỗi đội",  count: "4 người",  Icon: Users2 },
 ];
+const OPTIONS_EN: OptionShape[] = [
+  { id: "singles", title: "Singles", subtitle: "1 vs 1",                                count: "2 players", Icon: User },
+  { id: "doubles", title: "Doubles", subtitle: "Same-gender or open",                    count: "4 players", Icon: Users },
+  { id: "mixed",   title: "Mixed",   subtitle: "1 man + 1 woman per team",               count: "4 players", Icon: Users2 },
+];
 
 export const FormatSelector = ({ value, onSelect }: FormatSelectorProps) => {
+  const { language } = useI18n();
+  const OPTIONS = language === "vi" ? OPTIONS_VI : OPTIONS_EN;
   return (
     <div className="space-y-3">
       {OPTIONS.map(({ id, title, subtitle, count, Icon }) => {

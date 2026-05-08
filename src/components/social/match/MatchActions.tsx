@@ -6,9 +6,11 @@
 import { Heart, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareSheet } from "../shared/ShareSheet";
+import { useI18n } from "@/i18n";
 import type { MatchDetail } from "@/hooks/social";
 
 export const MatchActions = ({ match }: { match: MatchDetail }) => {
+  const { language } = useI18n();
   const url = typeof window !== "undefined"
     ? `${window.location.origin}/tran-dau/${match.slug}`
     : `https://www.thepicklehub.net/tran-dau/${match.slug}`;
@@ -18,7 +20,7 @@ export const MatchActions = ({ match }: { match: MatchDetail }) => {
         <button
           type="button"
           className="flex items-center gap-1 hover:text-foreground"
-          aria-label="Kudos (Sprint 2 Phase 3B.2)"
+          aria-label={language === "vi" ? "Kudos" : "Kudos"}
           disabled
         >
           <Heart className="h-4 w-4" />
@@ -27,7 +29,7 @@ export const MatchActions = ({ match }: { match: MatchDetail }) => {
         <button
           type="button"
           className="flex items-center gap-1 hover:text-foreground"
-          aria-label="Bình luận (Sprint 2 Phase 3B.2)"
+          aria-label={language === "vi" ? "Bình luận" : "Comments"}
           disabled
         >
           <MessageCircle className="h-4 w-4" />
@@ -36,8 +38,12 @@ export const MatchActions = ({ match }: { match: MatchDetail }) => {
       </div>
       <ShareSheet
         url={url}
-        title="Trận pickleball của tôi"
-        text={`Trận của tôi: ${url}`}
+        title={language === "vi" ? "Trận pickleball của tôi" : "My pickleball match"}
+        text={
+          language === "vi"
+            ? `Trận của tôi: ${url}`
+            : `Check out my match: ${url}`
+        }
       />
     </div>
   );

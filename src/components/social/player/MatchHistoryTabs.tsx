@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { MatchRow } from "./MatchRow";
+import { useI18n } from "@/i18n";
 import type { UseInfiniteQueryResult, InfiniteData } from "@tanstack/react-query";
 import type { PlayerMatchHistoryRow } from "@/hooks/social/usePlayerMatchHistory";
 
@@ -16,11 +17,17 @@ interface MatchHistoryTabsProps {
 
 type Tab = "matches" | "clips" | "tournaments" | "follows";
 
-const TAB_LABELS: { key: Tab; label: string }[] = [
+const TAB_LABELS_VI: { key: Tab; label: string }[] = [
   { key: "matches", label: "TRẬN ĐẤU" },
   { key: "clips", label: "CLIP" },
   { key: "tournaments", label: "GIẢI" },
   { key: "follows", label: "THEO DÕI" },
+];
+const TAB_LABELS_EN: { key: Tab; label: string }[] = [
+  { key: "matches", label: "MATCHES" },
+  { key: "clips", label: "CLIPS" },
+  { key: "tournaments", label: "TOURNAMENTS" },
+  { key: "follows", label: "FOLLOWS" },
 ];
 
 /**
@@ -34,7 +41,9 @@ export function MatchHistoryTabs({
   followingCount,
   matchesQuery,
 }: MatchHistoryTabsProps) {
+  const { language } = useI18n();
   const [tab, setTab] = useState<Tab>("matches");
+  const TAB_LABELS = language === "vi" ? TAB_LABELS_VI : TAB_LABELS_EN;
 
   return (
     <section
@@ -45,7 +54,7 @@ export function MatchHistoryTabs({
     >
       <div className="tl-eyebrow" aria-hidden="true">
         <span className="pip" />
-        <span>HOẠT ĐỘNG</span>
+        <span>{language === "vi" ? "HOẠT ĐỘNG" : "ACTIVITY"}</span>
       </div>
 
       <nav
@@ -92,10 +101,22 @@ export function MatchHistoryTabs({
         <MatchesList playerId={playerId} matchesQuery={matchesQuery} />
       )}
       {tab === "clips" && (
-        <Placeholder text="Sắp ra mắt — clip highlight per trận đấu (Sprint 4)." />
+        <Placeholder
+          text={
+            language === "vi"
+              ? "Sắp ra mắt — clip highlight per trận đấu (Sprint 4)."
+              : "Coming soon — match highlight clips (Sprint 4)."
+          }
+        />
       )}
       {tab === "tournaments" && (
-        <Placeholder text="Sắp ra mắt — lịch sử giải đấu đã tham gia (Sprint 4)." />
+        <Placeholder
+          text={
+            language === "vi"
+              ? "Sắp ra mắt — lịch sử giải đấu đã tham gia (Sprint 4)."
+              : "Coming soon — tournaments played history (Sprint 4)."
+          }
+        />
       )}
       {tab === "follows" && (
         <FollowsTab
@@ -115,6 +136,7 @@ interface MatchesListProps {
   >;
 }
 function MatchesList({ playerId, matchesQuery }: MatchesListProps) {
+  const { language } = useI18n();
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     matchesQuery;
 
@@ -141,7 +163,7 @@ function MatchesList({ playerId, matchesQuery }: MatchesListProps) {
           padding: "24px 0",
         }}
       >
-        Chưa có trận đấu nào.
+        {language === "vi" ? "Chưa có trận đấu nào." : "No matches yet."}
       </p>
     );
   }
@@ -179,7 +201,7 @@ function MatchesList({ playerId, matchesQuery }: MatchesListProps) {
             {isFetchingNextPage && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Xem thêm
+            {language === "vi" ? "Xem thêm" : "Load more"}
           </button>
         </div>
       )}
@@ -192,6 +214,7 @@ interface FollowsTabProps {
   followingCount: number;
 }
 function FollowsTab({ followersCount, followingCount }: FollowsTabProps) {
+  const { language } = useI18n();
   return (
     <div
       style={{
@@ -201,8 +224,14 @@ function FollowsTab({ followersCount, followingCount }: FollowsTabProps) {
         padding: "16px 0",
       }}
     >
-      <FollowStatCell label="NGƯỜI THEO DÕI" value={followersCount} />
-      <FollowStatCell label="ĐANG THEO DÕI" value={followingCount} />
+      <FollowStatCell
+        label={language === "vi" ? "NGƯỜI THEO DÕI" : "FOLLOWERS"}
+        value={followersCount}
+      />
+      <FollowStatCell
+        label={language === "vi" ? "ĐANG THEO DÕI" : "FOLLOWING"}
+        value={followingCount}
+      />
       <p
         style={{
           gridColumn: "1 / -1",
@@ -213,7 +242,9 @@ function FollowsTab({ followersCount, followingCount }: FollowsTabProps) {
           margin: 0,
         }}
       >
-        Danh sách người theo dõi sẽ hiển thị ở Phase 3C.
+        {language === "vi"
+          ? "Danh sách người theo dõi sẽ hiển thị ở Phase 3C."
+          : "Followers list will be available in Phase 3C."}
       </p>
     </div>
   );

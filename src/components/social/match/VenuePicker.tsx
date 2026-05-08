@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 import {
   useNearbyVenues,
   useRecentVenues,
@@ -106,6 +107,7 @@ export const VenuePicker = ({
   venueNameOverride,
   onOverrideChange,
 }: VenuePickerProps) => {
+  const { language } = useI18n();
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const { geo, venues: nearby, isLoading: nearbyLoading } = useNearbyVenues();
@@ -122,9 +124,13 @@ export const VenuePicker = ({
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm sân theo tên hoặc thành phố..."
+          placeholder={
+            language === "vi"
+              ? "Tìm sân theo tên hoặc thành phố..."
+              : "Search venues by name or city..."
+          }
           className="h-12 pl-10"
-          aria-label="Tìm sân"
+          aria-label={language === "vi" ? "Tìm sân" : "Search venues"}
         />
       </div>
 
@@ -133,7 +139,9 @@ export const VenuePicker = ({
         <div className="flex items-start gap-2 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-900 dark:text-yellow-200">
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>
-            Đã từ chối quyền vị trí. Bạn vẫn có thể tìm sân thủ công hoặc thêm sân mới.
+            {language === "vi"
+              ? "Đã từ chối quyền vị trí. Bạn vẫn có thể tìm sân thủ công hoặc thêm sân mới."
+              : "Location permission denied. You can still search venues manually or add a new one."}
           </span>
         </div>
       )}
@@ -141,9 +149,13 @@ export const VenuePicker = ({
       {/* ─── Search results (when typing) ──────────────────────────────── */}
       {showSearch && (
         <Section
-          title="Kết quả tìm kiếm"
+          title={language === "vi" ? "Kết quả tìm kiếm" : "Search results"}
           loading={searchLoading}
-          emptyText="Không tìm thấy. Thử thêm sân mới bên dưới."
+          emptyText={
+            language === "vi"
+              ? "Không tìm thấy. Thử thêm sân mới bên dưới."
+              : "No matches. Try adding a new venue below."
+          }
         >
           {searchResults && searchResults.length > 0
             ? searchResults.map((v) => (
@@ -162,12 +174,16 @@ export const VenuePicker = ({
       {!showSearch && (
         <>
           <Section
-            title="Sân gần bạn"
+            title={language === "vi" ? "Sân gần bạn" : "Nearby venues"}
             loading={nearbyLoading && geo.status !== "denied"}
             emptyText={
               geo.status === "denied"
-                ? "Cần quyền vị trí để gợi ý sân gần"
-                : "Chưa có sân trong bán kính 5km"
+                ? language === "vi"
+                  ? "Cần quyền vị trí để gợi ý sân gần"
+                  : "Location permission needed to suggest nearby venues"
+                : language === "vi"
+                  ? "Chưa có sân trong bán kính 5km"
+                  : "No venues within 5km"
             }
           >
             {nearby && nearby.length > 0
@@ -183,9 +199,13 @@ export const VenuePicker = ({
           </Section>
 
           <Section
-            title="Sân hay chơi"
+            title={language === "vi" ? "Sân hay chơi" : "Home courts"}
             loading={recentLoading}
-            emptyText="Bạn chưa log trận nào. Sân sẽ xuất hiện ở đây sau."
+            emptyText={
+              language === "vi"
+                ? "Bạn chưa log trận nào. Sân sẽ xuất hiện ở đây sau."
+                : "No matches logged yet. Venues will appear here after."
+            }
           >
             {recent && recent.length > 0
               ? recent.map((v) => (
@@ -209,18 +229,22 @@ export const VenuePicker = ({
         className="w-full justify-start gap-2"
       >
         <Plus className="h-4 w-4" />
-        Thêm sân mới
+        {language === "vi" ? "Thêm sân mới" : "Create new venue"}
       </Button>
 
       {/* ─── Override fallback ─────────────────────────────────────────── */}
       <div>
         <div className="mb-1 px-1 text-xs font-medium text-muted-foreground">
-          Hoặc nhập tên sân tự do (nếu sân không có trong danh sách)
+          {language === "vi"
+            ? "Hoặc nhập tên sân tự do (nếu sân không có trong danh sách)"
+            : "Or type a free-form venue name (if it isn't in the list)"}
         </div>
         <Input
           value={venueNameOverride}
           onChange={(e) => onOverrideChange(e.target.value)}
-          placeholder="VD: Sân khu nhà mình"
+          placeholder={
+            language === "vi" ? "VD: Sân khu nhà mình" : "e.g., Court near my place"
+          }
           className="h-11"
           maxLength={100}
         />
@@ -229,7 +253,9 @@ export const VenuePicker = ({
       {/* ─── Selected indicator ────────────────────────────────────────── */}
       {selectedVenue && (
         <div className="rounded-xl border-2 border-social-primary bg-social-primary/5 p-3 text-sm">
-          <div className="text-xs font-medium uppercase text-social-primary">Đã chọn</div>
+          <div className="text-xs font-medium uppercase text-social-primary">
+            {language === "vi" ? "Đã chọn" : "Selected"}
+          </div>
           <div className="font-semibold">{selectedVenue.name_vi || selectedVenue.name}</div>
           <div className="text-xs text-muted-foreground">
             {[selectedVenue.district, selectedVenue.city].filter(Boolean).join(" · ")}
