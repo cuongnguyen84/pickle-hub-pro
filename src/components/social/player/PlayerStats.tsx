@@ -127,6 +127,18 @@ export function PlayerStats({ stats, loading }: PlayerStatsProps) {
                   : "no streak"
           }
         />
+        <StatCell
+          label={language === "vi" ? "NGƯỜI THEO DÕI" : "FOLLOWERS"}
+          value={`${stats.followers_count ?? 0}`}
+          sub={
+            language === "vi" ? "đang theo dõi" : "people following"
+          }
+        />
+        <StatCell
+          label={language === "vi" ? "ĐANG THEO DÕI" : "FOLLOWING"}
+          value={`${stats.following_count ?? 0}`}
+          sub={language === "vi" ? "người chơi" : "players"}
+        />
       </div>
     </section>
   );

@@ -128,6 +128,18 @@ export function useFollowMutation() {
       qc.invalidateQueries({
         queryKey: ["follow-status", user?.id ?? null, followedId],
       });
+      // Refresh stats for BOTH the target and the viewer:
+      //   - target's followers_count needs to bump on their /nguoi-choi page
+      //   - viewer's following_count needs to bump on their own /nguoi-choi page
+      // We don't have the viewer's username at this layer (would require
+      // another fetch), so we invalidate the entire player-stats namespace.
+      // React Query only refetches queries that are currently active, so the
+      // cost is bounded: at most 1-2 stats queries on screen at any time.
+      qc.invalidateQueries({
+        predicate: (q) => q.queryKey[0] === "player-stats",
+      });
+      // Belt-and-suspenders: explicit invalidate of the target by username
+      // when caller knew it (kept as a no-op-but-clearer hint).
       if (followedUsername) {
         qc.invalidateQueries({
           queryKey: ["player-stats", followedUsername],
