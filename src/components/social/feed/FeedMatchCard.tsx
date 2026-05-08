@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { MessageCircle } from "lucide-react";
 import {
   type Language,
   type FeedParticipant,
@@ -170,6 +171,10 @@ export function FeedMatchCard({
             count={match.kudos_count}
             kudoed={match.viewer_kudoed}
             variant="feed"
+          />
+          <CommentCountChip
+            slug={match.slug}
+            count={match.comment_count}
           />
           {match.venue_name && (
             <span
@@ -372,6 +377,56 @@ function PlayerNameLink({
       className="tl-feed-player-link"
     >
       {name}
+    </Link>
+  );
+}
+
+/* ─── Comment count chip ─────────────────────────────────────────────── */
+function CommentCountChip({
+  slug,
+  count,
+}: {
+  slug: string;
+  count: number;
+}) {
+  // Don't bubble the click into the wrapping <Link> (which would route to
+  // /tran-dau/<slug> with no hash). The chip itself routes to the same
+  // slug but anchored at #comments so the page lands scrolled to the
+  // thread — desirable when the user clicks specifically the chip.
+  return (
+    <Link
+      to={`/tran-dau/${slug}#comments`}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={`${count} comments`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "8px 4px",
+        minHeight: 44,
+        minWidth: 44,
+        textDecoration: "none",
+        color: count > 0 ? "var(--tl-fg-2)" : "var(--tl-fg-3)",
+      }}
+    >
+      <MessageCircle
+        style={{ width: 16, height: 16 }}
+        strokeWidth={1.75}
+        aria-hidden="true"
+      />
+      {count > 0 && (
+        <span
+          style={{
+            fontFamily: "'Instrument Serif', serif",
+            fontStyle: "italic",
+            fontSize: 14,
+            fontVariantNumeric: "tabular-nums",
+            lineHeight: 1,
+          }}
+        >
+          {count}
+        </span>
+      )}
     </Link>
   );
 }

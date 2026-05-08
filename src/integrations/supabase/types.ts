@@ -4422,6 +4422,7 @@ export type Database = {
           participants: Json
           kudos_count: number
           viewer_kudoed: boolean
+          comment_count: number
         }[]
       }
       get_player_match_history: {
@@ -4516,6 +4517,7 @@ export type Database = {
           participants: Json
           kudos_count: number
           viewer_kudoed: boolean
+          comment_count: number
         }[]
       }
       get_top_content: {
@@ -4639,6 +4641,43 @@ export type Database = {
       toggle_match_kudos: {
         Args: { p_match_id: string }
         Returns: Json
+      }
+      add_match_comment: {
+        Args: {
+          p_match_id: string
+          p_body: string
+          p_parent_comment_id?: string | null
+        }
+        Returns: Json
+      }
+      edit_match_comment: {
+        Args: { p_comment_id: string; p_body: string }
+        Returns: Json
+      }
+      delete_match_comment: {
+        Args: { p_comment_id: string }
+        Returns: Json
+      }
+      get_match_comments: {
+        Args: {
+          p_match_id: string
+          p_limit?: number
+          p_cursor_created_at?: string | null
+          p_cursor_comment_id?: string | null
+        }
+        Returns: {
+          comment_id: string
+          parent_comment_id: string | null
+          depth: number
+          body: string
+          user_id: string
+          username: string | null
+          display_name: string | null
+          avatar_url: string | null
+          created_at: string
+          updated_at: string | null
+          is_deleted: boolean
+        }[]
       }
     }
     Enums: {

@@ -28,6 +28,7 @@ interface RpcRow {
   participants: unknown;
   kudos_count: number | null;
   viewer_kudoed: boolean | null;
+  comment_count: number | null;
 }
 
 const PAGE_SIZE = 20;
@@ -75,5 +76,6 @@ function normalizeRow(row: RpcRow): FeedMatch {
       : [],
     kudos_count: row.kudos_count ?? 0,
     viewer_kudoed: row.viewer_kudoed ?? false,
+    comment_count: row.comment_count ?? 0,
   };
 }

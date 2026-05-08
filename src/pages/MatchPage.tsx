@@ -20,6 +20,7 @@ import MatchHeader from "@/components/social/match/MatchHeader";
 import MatchScoreboard from "@/components/social/match/MatchScoreboard";
 import MatchVerifyBanner from "@/components/social/match/MatchVerifyBanner";
 import MatchActions from "@/components/social/match/MatchActions";
+import { CommentThread } from "@/components/social/comments/CommentThread";
 import type { MatchDetail } from "@/hooks/social";
 
 const SITE = "https://www.thepicklehub.net";
@@ -218,6 +219,7 @@ const MatchPage = () => {
               <p className="whitespace-pre-wrap">{match.notes}</p>
             </div>
           )}
+          <CommentThread matchId={match.id} />
         </div>
       </div>
     </TheLineLayout>
