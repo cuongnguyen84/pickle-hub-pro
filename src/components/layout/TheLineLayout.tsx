@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
 import "@/styles/the-line.css";
 
@@ -65,6 +66,12 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const navigate = useNavigate();
   const { language, setLanguage } = useI18n();
   const { user, signOut } = useAuth();
+  // Pulled here purely for the "View my profile" dropdown link. The
+  // profile.username slug isn't stored on the auth User object — useAuth
+  // gives us auth.users only. Defaults to undefined while loading; the
+  // menu item disables itself in that state.
+  const { profile } = useUserProfile();
+  const profileUsername = (profile as { username?: string | null } | null | undefined)?.username ?? null;
   const [menuOpen, setMenuOpen] = useState(false);
   const [mode, setMode] = useState<"dark" | "light">("dark");
   const [search, setSearch] = useState("");
@@ -275,6 +282,21 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                       <div className="name">{userName || "Signed in"}</div>
                       <div className="email">{userEmail}</div>
                     </div>
+                    {/* View my profile shortcut — disabled while the
+                        profile is still loading or for users whose
+                        onboarding hasn't assigned a username yet. */}
+                    {profileUsername ? (
+                      <Link
+                        to={`/nguoi-choi/${profileUsername}`}
+                        onClick={() => setAvatarOpen(false)}
+                      >
+                        {language === "vi" ? "Xem hồ sơ" : "View my profile"}
+                      </Link>
+                    ) : (
+                      <span style={{ opacity: 0.5, cursor: "default", padding: "8px 12px", display: "block" }}>
+                        {language === "vi" ? "Xem hồ sơ" : "View my profile"}
+                      </span>
+                    )}
                     <Link to="/account" onClick={() => setAvatarOpen(false)}>Account</Link>
                     <Link to="/creator" onClick={() => setAvatarOpen(false)}>Creator dashboard</Link>
                     <Link to="/admin" onClick={() => setAvatarOpen(false)}>Admin</Link>
