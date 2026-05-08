@@ -54,11 +54,15 @@ export function KudosButton({
   const location = useLocation();
   const mutation = useKudosMutation();
 
+  // User-facing copy uses "Like / Thích". Internal naming (component,
+  // hook, table, RPC) stays "kudos" — Strava-style activity engagement
+  // semantic for devs, friendlier surface for users.
   const labels = {
-    kudo: language === "vi" ? "Kudo" : "Kudo",
-    kudoed: language === "vi" ? "Đã kudo" : "Kudoed",
-    addAria: language === "vi" ? "Kudo trận này" : "Kudo this match",
-    removeAria: language === "vi" ? "Bỏ kudo" : "Remove kudo",
+    kudo: language === "vi" ? "Thích" : "Like",
+    kudoed: language === "vi" ? "Đã thích" : "Liked",
+    addAria: language === "vi" ? "Thích trận này" : "Like this match",
+    removeAria:
+      language === "vi" ? "Bỏ thích trận này" : "Unlike this match",
   };
 
   const isLoading = mutation.isPending;

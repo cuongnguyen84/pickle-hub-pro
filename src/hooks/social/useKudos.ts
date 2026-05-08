@@ -168,8 +168,8 @@ export function useKudosMutation() {
         variant: "destructive",
         title:
           language === "vi"
-            ? "Không thể cập nhật kudo"
-            : "Couldn't update kudo",
+            ? "Không thể cập nhật lượt thích"
+            : "Could not update like",
         description: err instanceof Error ? err.message : fallback,
       });
     },
