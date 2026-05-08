@@ -15,6 +15,7 @@ import { Plus, X, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 import { validateScores, type ScoringFormat } from "@/lib/social";
 
 interface ScoreInputProps {
@@ -25,9 +26,15 @@ interface ScoreInputProps {
   onScoresChange: (teamA: number[], teamB: number[]) => void;
 }
 
-const FORMATS: { id: ScoringFormat; label: string }[] = [
+const FORMATS_VI: { id: ScoringFormat; label: string }[] = [
   { id: "11_rally",       label: "11 rally" },
   { id: "11_traditional", label: "11 truyền thống" },
+  { id: "15_rally",       label: "15 rally" },
+  { id: "21_rally",       label: "21 rally" },
+];
+const FORMATS_EN: { id: ScoringFormat; label: string }[] = [
+  { id: "11_rally",       label: "11 rally" },
+  { id: "11_traditional", label: "11 traditional" },
   { id: "15_rally",       label: "15 rally" },
   { id: "21_rally",       label: "21 rally" },
 ];
@@ -41,6 +48,8 @@ export const ScoreInput = ({
   onScoringFormatChange,
   onScoresChange,
 }: ScoreInputProps) => {
+  const { language } = useI18n();
+  const FORMATS = language === "vi" ? FORMATS_VI : FORMATS_EN;
   // Ensure we always show at least 1 row
   const rows = Math.max(1, teamA.length, teamB.length);
 
@@ -77,7 +86,9 @@ export const ScoreInput = ({
     <div className="space-y-5">
       {/* ─── Scoring format chips ─────────────────────────────────────── */}
       <div>
-        <div className="mb-2 text-sm font-medium">Thể thức tính điểm</div>
+        <div className="mb-2 text-sm font-medium">
+          {language === "vi" ? "Thể thức tính điểm" : "Scoring format"}
+        </div>
         <div className="flex flex-wrap gap-2">
           {FORMATS.map(({ id, label }) => {
             const active = scoringFormat === id;
@@ -104,9 +115,13 @@ export const ScoreInput = ({
       {/* ─── Game rows ─────────────────────────────────────────────────── */}
       <div className="space-y-3">
         <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2 px-1 text-xs font-medium text-muted-foreground">
-          <span className="text-center">Đội A</span>
+          <span className="text-center">
+            {language === "vi" ? "Đội A" : "Team A"}
+          </span>
           <span />
-          <span className="text-center">Đội B</span>
+          <span className="text-center">
+            {language === "vi" ? "Đội B" : "Team B"}
+          </span>
           <span />
         </div>
         {Array.from({ length: rows }).map((_, idx) => (
@@ -123,7 +138,11 @@ export const ScoreInput = ({
               value={teamA[idx] ?? 0}
               onChange={(e) => setScore(idx, "a", e.target.value)}
               className="h-12 text-center text-lg font-semibold"
-              aria-label={`Đội A game ${idx + 1}`}
+              aria-label={
+                language === "vi"
+                  ? `Đội A game ${idx + 1}`
+                  : `Team A game ${idx + 1}`
+              }
             />
             <span className="text-muted-foreground">:</span>
             <Input
@@ -135,7 +154,11 @@ export const ScoreInput = ({
               value={teamB[idx] ?? 0}
               onChange={(e) => setScore(idx, "b", e.target.value)}
               className="h-12 text-center text-lg font-semibold"
-              aria-label={`Đội B game ${idx + 1}`}
+              aria-label={
+                language === "vi"
+                  ? `Đội B game ${idx + 1}`
+                  : `Team B game ${idx + 1}`
+              }
             />
             {rows > 1 ? (
               <Button
@@ -143,7 +166,11 @@ export const ScoreInput = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => removeGame(idx)}
-                aria-label={`Xóa game ${idx + 1}`}
+                aria-label={
+                  language === "vi"
+                    ? `Xóa game ${idx + 1}`
+                    : `Remove game ${idx + 1}`
+                }
                 className="h-11 w-11"
               >
                 <X className="h-4 w-4" />
@@ -161,7 +188,8 @@ export const ScoreInput = ({
             className="w-full gap-2"
           >
             <Plus className="h-4 w-4" />
-            Thêm game ({rows + 1}/{MAX_GAMES})
+            {language === "vi" ? "Thêm game" : "Add game"} ({rows + 1}/
+            {MAX_GAMES})
           </Button>
         )}
       </div>
@@ -172,10 +200,13 @@ export const ScoreInput = ({
           <Trophy className="h-5 w-5 shrink-0" />
           <div className="text-sm">
             <span className="font-semibold">
-              Đội {validation.winner.toUpperCase()} thắng
+              {language === "vi"
+                ? `Đội ${validation.winner.toUpperCase()} thắng`
+                : `Team ${validation.winner.toUpperCase()} wins`}
             </span>
             <span className="ml-2 text-muted-foreground">
-              ({validation.games_a}-{validation.games_b} game)
+              ({validation.games_a}-{validation.games_b}{" "}
+              {language === "vi" ? "game" : "games"})
             </span>
           </div>
         </div>

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 import type { ParticipantSlot } from "./PlayerSelector";
 import type { Venue } from "@/hooks/social/types";
 import { validateScores, type ScoringFormat } from "@/lib/social";
@@ -50,12 +51,19 @@ interface MatchConfirmationProps {
   submitting: boolean;
 }
 
-const MATCH_TYPES: { value: MatchType; label: string }[] = [
+const MATCH_TYPES_VI: { value: MatchType; label: string }[] = [
   { value: "rec",         label: "Giao lưu (rec)" },
   { value: "open_play",   label: "Open play" },
   { value: "tournament",  label: "Giải đấu" },
   { value: "league",      label: "League" },
   { value: "practice",    label: "Tập luyện" },
+];
+const MATCH_TYPES_EN: { value: MatchType; label: string }[] = [
+  { value: "rec",         label: "Casual (rec)" },
+  { value: "open_play",   label: "Open play" },
+  { value: "tournament",  label: "Tournament" },
+  { value: "league",      label: "League" },
+  { value: "practice",    label: "Practice" },
 ];
 
 const initials = (name: string) =>
@@ -72,9 +80,9 @@ const fmtDateTimeLocal = (iso: string) => {
   }
 };
 
-const fmtDateTime = (iso: string) => {
+const fmtDateTime = (iso: string, language: "vi" | "en") => {
   try {
-    return new Date(iso).toLocaleString("vi-VN", {
+    return new Date(iso).toLocaleString(language === "vi" ? "vi-VN" : "en-GB", {
       timeZone: "Asia/Ho_Chi_Minh",
       day: "2-digit", month: "2-digit", year: "numeric",
       hour: "2-digit", minute: "2-digit",
@@ -94,7 +102,9 @@ const TeamRoster = ({
   participants: ParticipantSlot[];
   isWinner: boolean;
   scores: number[];
-}) => (
+}) => {
+  const { language } = useI18n();
+  return (
   <div
     className={cn(
       "flex-1 rounded-xl border-2 p-3",
@@ -102,7 +112,9 @@ const TeamRoster = ({
     )}
   >
     <div className="mb-2 flex items-center justify-between">
-      <span className="text-xs font-semibold uppercase">Đội {team.toUpperCase()}</span>
+      <span className="text-xs font-semibold uppercase">
+        {language === "vi" ? "Đội" : "Team"} {team.toUpperCase()}
+      </span>
       {isWinner && (
         <Trophy className="h-4 w-4 text-social-primary" />
       )}
@@ -136,7 +148,8 @@ const TeamRoster = ({
         ))}
     </div>
   </div>
-);
+  );
+};
 
 export const MatchConfirmation = ({
   venue,
@@ -151,19 +164,25 @@ export const MatchConfirmation = ({
   onSubmit,
   submitting,
 }: MatchConfirmationProps) => {
+  const { language } = useI18n();
+  const MATCH_TYPES = language === "vi" ? MATCH_TYPES_VI : MATCH_TYPES_EN;
   const [showDetails, setShowDetails] = useState(false);
   const validation = validateScores(teamA, teamB, scoringFormat);
   const winner = validation.valid ? validation.winner : null;
-  const venueLabel = venue?.name_vi || venue?.name || venueNameOverride || "Chưa rõ";
+  const venueLabel =
+    venue?.name_vi || venue?.name || venueNameOverride ||
+    (language === "vi" ? "Chưa rõ" : "Not specified");
+  const formatLabel =
+    language === "vi"
+      ? ({ singles: "Đơn", doubles: "Đôi", mixed: "Đôi nam-nữ" } as const)[format]
+      : ({ singles: "Singles", doubles: "Doubles", mixed: "Mixed" } as const)[format];
 
   return (
     <div className="space-y-4">
       {/* ─── Header summary ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border bg-card p-4">
         <div className="mb-3 text-xs text-muted-foreground">
-          {fmtDateTime(details.played_at)} · {venueLabel} · {
-            ({ singles: "Đơn", doubles: "Đôi", mixed: "Đôi nam-nữ" } as const)[format]
-          }
+          {fmtDateTime(details.played_at, language)} · {venueLabel} · {formatLabel}
         </div>
         <div className="flex gap-2">
           <TeamRoster team="a" participants={participants} isWinner={winner === "a"} scores={teamA} />
@@ -177,14 +196,16 @@ export const MatchConfirmation = ({
         onClick={() => setShowDetails((s) => !s)}
         className="flex w-full items-center justify-between rounded-xl border bg-card p-3 text-left text-sm font-medium hover:bg-accent"
       >
-        <span>Thêm chi tiết</span>
+        <span>{language === "vi" ? "Thêm chi tiết" : "Add details"}</span>
         {showDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </button>
 
       {showDetails && (
         <div className="space-y-4 rounded-xl border bg-card p-4">
           <div>
-            <Label htmlFor="match-played-at">Thời gian thi đấu</Label>
+            <Label htmlFor="match-played-at">
+              {language === "vi" ? "Thời gian thi đấu" : "Match time"}
+            </Label>
             <Input
               id="match-played-at"
               type="datetime-local"
@@ -197,11 +218,15 @@ export const MatchConfirmation = ({
               className="h-11"
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Tối đa 24h trước. Mặc định: bây giờ.
+              {language === "vi"
+                ? "Tối đa 24h trước. Mặc định: bây giờ."
+                : "Max 24h in the past. Default: now."}
             </p>
           </div>
           <div>
-            <Label htmlFor="match-type">Loại trận</Label>
+            <Label htmlFor="match-type">
+              {language === "vi" ? "Loại trận" : "Match type"}
+            </Label>
             <Select
               value={details.match_type}
               onValueChange={(v) => onDetailsChange({ ...details, match_type: v as MatchType })}
@@ -217,12 +242,18 @@ export const MatchConfirmation = ({
             </Select>
           </div>
           <div>
-            <Label htmlFor="match-notes">Ghi chú</Label>
+            <Label htmlFor="match-notes">
+              {language === "vi" ? "Ghi chú" : "Notes"}
+            </Label>
             <Textarea
               id="match-notes"
               value={details.notes}
               onChange={(e) => onDetailsChange({ ...details, notes: e.target.value.slice(0, 500) })}
-              placeholder="Thời tiết, đặc điểm trận, ..."
+              placeholder={
+                language === "vi"
+                  ? "Thời tiết, đặc điểm trận, ..."
+                  : "Weather, match notes, ..."
+              }
               maxLength={500}
               rows={3}
             />
@@ -232,7 +263,9 @@ export const MatchConfirmation = ({
             <div className="flex-1">
               <Label htmlFor="dupr-toggle" className="cursor-pointer">Submit to DUPR</Label>
               <p className="text-xs text-muted-foreground">
-                Phase 1 chỉ ghi flag — chưa thực sự gửi DUPR.
+                {language === "vi"
+                  ? "Phase 1 chỉ ghi flag — chưa thực sự gửi DUPR."
+                  : "Phase 1 only stores the flag — DUPR submission not active yet."}
               </p>
             </div>
             <Switch
@@ -247,7 +280,9 @@ export const MatchConfirmation = ({
       {/* ─── Validation issues warning ─────────────────────────────────── */}
       {!validation.valid && (
         <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-          Quay lại bước 4 để sửa tỷ số: {validation.reason}
+          {language === "vi"
+            ? `Quay lại bước 4 để sửa tỷ số: ${validation.reason}`
+            : `Go back to step 4 to fix the score: ${validation.reason}`}
         </div>
       )}
 
@@ -259,7 +294,7 @@ export const MatchConfirmation = ({
         className="h-12 w-full bg-social-primary text-white hover:bg-social-primary-dark"
       >
         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Lưu trận đấu
+        {language === "vi" ? "Lưu trận đấu" : "Save match"}
       </Button>
     </div>
   );

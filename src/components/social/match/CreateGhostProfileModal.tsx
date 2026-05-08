@@ -36,9 +36,10 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { generateUsername } from "@/lib/social/username-generator";
 import { toast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 import type { PlayerProfile } from "@/hooks/social/types";
 
-const VN_CITIES = [
+const VN_CITIES_VI = [
   "Hà Nội",
   "TP. Hồ Chí Minh",
   "Đà Nẵng",
@@ -48,17 +49,47 @@ const VN_CITIES = [
   "Huế",
   "Khác",
 ];
+const VN_CITIES_EN = [
+  "Hanoi",
+  "Ho Chi Minh City",
+  "Da Nang",
+  "Hai Phong",
+  "Can Tho",
+  "Nha Trang",
+  "Hue",
+  "Other",
+];
 
 // Vietnam phone: 0 followed by 9 digits, OR +84 followed by 9 digits
 const VN_PHONE_RE = /^(0\d{9}|\+84\d{9})$/;
 
-const schema = z.object({
-  display_name: z.string().min(2, "Tên tối thiểu 2 ký tự").max(50),
-  phone: z.string().regex(VN_PHONE_RE, "Số điện thoại VN: 0xxxxxxxxx hoặc +84xxxxxxxxx"),
-  city: z.string().min(1, "Chọn thành phố"),
-});
+const buildSchema = (language: "vi" | "en") =>
+  z.object({
+    display_name: z
+      .string()
+      .min(
+        2,
+        language === "vi" ? "Tên tối thiểu 2 ký tự" : "Name needs at least 2 characters",
+      )
+      .max(50),
+    phone: z
+      .string()
+      .regex(
+        VN_PHONE_RE,
+        language === "vi"
+          ? "Số điện thoại VN: 0xxxxxxxxx hoặc +84xxxxxxxxx"
+          : "VN phone format: 0xxxxxxxxx or +84xxxxxxxxx",
+      ),
+    city: z
+      .string()
+      .min(1, language === "vi" ? "Chọn thành phố" : "Pick a city"),
+  });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = {
+  display_name: string;
+  phone: string;
+  city: string;
+};
 
 interface CreateGhostProfileModalProps {
   open: boolean;
@@ -76,9 +107,11 @@ export const CreateGhostProfileModal = ({
   onCreated,
   ghostCount,
 }: CreateGhostProfileModalProps) => {
+  const { language } = useI18n();
+  const VN_CITIES = language === "vi" ? VN_CITIES_VI : VN_CITIES_EN;
   const [submitting, setSubmitting] = useState(false);
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(language)),
     defaultValues: { display_name: "", phone: "", city: "" },
   });
 
@@ -96,8 +129,14 @@ export const CreateGhostProfileModal = ({
         .maybeSingle();
       if (existingByPhone) {
         toast({
-          title: "Đã có người chơi với SĐT này",
-          description: "Tự động chọn từ danh sách.",
+          title:
+            language === "vi"
+              ? "Đã có người chơi với SĐT này"
+              : "Player with this phone already exists",
+          description:
+            language === "vi"
+              ? "Tự động chọn từ danh sách."
+              : "Auto-selected from your list.",
         });
         onCreated(existingByPhone as PlayerProfile);
         form.reset();
@@ -131,7 +170,7 @@ export const CreateGhostProfileModal = ({
       if (error) throw error;
 
       toast({
-        title: "Đã thêm người chơi",
+        title: language === "vi" ? "Đã thêm người chơi" : "Player added",
         description: `${values.display_name} (@${username})`,
       });
       onCreated(data as PlayerProfile);
@@ -139,8 +178,16 @@ export const CreateGhostProfileModal = ({
       onOpenChange(false);
     } catch (e) {
       toast({
-        title: "Không thêm được người chơi",
-        description: e instanceof Error ? e.message : "Lỗi không xác định",
+        title:
+          language === "vi"
+            ? "Không thêm được người chơi"
+            : "Couldn't add player",
+        description:
+          e instanceof Error
+            ? e.message
+            : language === "vi"
+              ? "Lỗi không xác định"
+              : "Unexpected error",
         variant: "destructive",
       });
     } finally {
@@ -152,25 +199,31 @@ export const CreateGhostProfileModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Mời người chơi mới</DialogTitle>
+          <DialogTitle>
+            {language === "vi" ? "Mời người chơi mới" : "Invite a new player"}
+          </DialogTitle>
           <DialogDescription>
-            Người này chưa có tài khoản? Tạo profile tạm bằng số điện thoại.
-            Họ có thể nhận và xác nhận trận đấu khi đăng ký.
+            {language === "vi"
+              ? "Người này chưa có tài khoản? Tạo profile tạm bằng số điện thoại. Họ có thể nhận và xác nhận trận đấu khi đăng ký."
+              : "No ThePickleHub account yet? Create a placeholder profile with their phone. They can claim and confirm the match when they sign up."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
           {overLimit && (
             <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-              Đã đạt giới hạn 3 người chơi mới mỗi phiên. Vui lòng search hoặc gửi
-              link mời.
+              {language === "vi"
+                ? "Đã đạt giới hạn 3 người chơi mới mỗi phiên. Vui lòng search hoặc gửi link mời."
+                : "Reached the 3-new-players-per-session limit. Search existing players or send an invite link."}
             </div>
           )}
           <div>
-            <Label htmlFor="ghost-name">Tên hiển thị *</Label>
+            <Label htmlFor="ghost-name">
+              {language === "vi" ? "Tên hiển thị" : "Display name"} *
+            </Label>
             <Input
               id="ghost-name"
               {...form.register("display_name")}
-              placeholder="Nguyễn Văn A"
+              placeholder={language === "vi" ? "Nguyễn Văn A" : "Cuong Nguyen"}
               autoComplete="name"
             />
             {form.formState.errors.display_name && (
@@ -180,7 +233,9 @@ export const CreateGhostProfileModal = ({
             )}
           </div>
           <div>
-            <Label htmlFor="ghost-phone">Số điện thoại *</Label>
+            <Label htmlFor="ghost-phone">
+              {language === "vi" ? "Số điện thoại" : "Phone number"} *
+            </Label>
             <Input
               id="ghost-phone"
               {...form.register("phone")}
@@ -196,13 +251,19 @@ export const CreateGhostProfileModal = ({
             )}
           </div>
           <div>
-            <Label htmlFor="ghost-city">Thành phố *</Label>
+            <Label htmlFor="ghost-city">
+              {language === "vi" ? "Thành phố" : "City"} *
+            </Label>
             <Select
               onValueChange={(v) => form.setValue("city", v, { shouldValidate: true })}
               value={form.watch("city")}
             >
               <SelectTrigger id="ghost-city" className="h-11">
-                <SelectValue placeholder="Chọn thành phố" />
+                <SelectValue
+                  placeholder={
+                    language === "vi" ? "Chọn thành phố" : "Pick a city"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {VN_CITIES.map((c) => (
@@ -223,7 +284,7 @@ export const CreateGhostProfileModal = ({
               onClick={() => onOpenChange(false)}
               disabled={submitting}
             >
-              Hủy
+              {language === "vi" ? "Hủy" : "Cancel"}
             </Button>
             <Button
               type="submit"
@@ -231,7 +292,7 @@ export const CreateGhostProfileModal = ({
               className="bg-social-primary text-white hover:bg-social-primary-dark"
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Tạo
+              {language === "vi" ? "Tạo" : "Create"}
             </Button>
           </DialogFooter>
         </form>
