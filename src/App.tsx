@@ -97,6 +97,8 @@ const MatchPage = lazy(() => import("./pages/MatchPage"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 // Bet #1 social — Sprint 3 Phase 3B
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
+// Bet #1 social — Sprint 4 Phase 4A
+const Feed = lazy(() => import("./pages/Feed"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -407,6 +409,9 @@ const App = () => (
                     <Route path="/news" element={<News />} />
                     <Route path="/rankings" element={<Rankings />} />
                     <Route path="/vi/rankings" element={<Rankings />} />
+                    {/* Bet #1 Sprint 4 Phase 4A: Feed page */}
+                    <Route path="/feed" element={<Feed />} />
+                    <Route path="/vi/feed" element={<Feed />} />
                     {/* Blog routes */}
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogPost />} />

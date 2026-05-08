@@ -24,7 +24,7 @@ import "@/styles/the-line.css";
  * - Children render INSIDE the chrome
  * ------------------------------------------------------------------------- */
 
-type Active = "live" | "tournaments" | "lab" | "rankings" | "stories" | "stats" | "home";
+type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home";
 
 export interface TheLineLayoutProps {
   title: string;
@@ -37,11 +37,18 @@ export interface TheLineLayoutProps {
 
 const STORAGE_KEY = "tl-theme-mode";
 
-const NAV_ITEMS: { label: string; to: string; key: Active }[] = [
+/**
+ * Optional `labelVi` opts a nav item into bilingual rendering. Items without
+ * a labelVi keep the existing English-only behaviour (Live, Tournaments,
+ * etc. read the same in both locales). Feed gets a Vietnamese label
+ * because "Feed" doesn't carry meaning for VI-only readers.
+ */
+const NAV_ITEMS: { label: string; labelVi?: string; to: string; key: Active }[] = [
   { label: "Live", to: "/live", key: "live" },
   { label: "Tournaments", to: "/tournaments", key: "tournaments" },
   { label: "Bracket Lab", to: "/tools", key: "lab" },
   { label: "Rankings", to: "/rankings", key: "rankings" },
+  { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },
   { label: "Stories", to: "/blog", key: "stories" },
 ];
 
@@ -169,7 +176,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               to={localizedPath(item.to, language)}
               className={active === item.key ? "active" : ""}
             >
-              {item.label}
+              {language === "vi" && item.labelVi ? item.labelVi : item.label}
             </Link>
           ))}
         </div>
@@ -359,7 +366,9 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                   onClick={() => setMenuOpen(false)}
                   className={active === item.key ? "active" : ""}
                 >
-                  <span>{item.label}</span>
+                  <span>
+                    {language === "vi" && item.labelVi ? item.labelVi : item.label}
+                  </span>
                   <span className="arr">→</span>
                 </Link>
               ))}

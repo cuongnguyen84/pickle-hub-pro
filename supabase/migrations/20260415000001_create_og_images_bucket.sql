@@ -9,25 +9,36 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- ============================================================================
+-- Storage policies for og-images bucket
+-- PostgreSQL does not support `CREATE POLICY IF NOT EXISTS` — use the
+-- DROP IF EXISTS + CREATE pattern for idempotency. Required by Supabase
+-- Branch deploys which replay the migrations folder on a fresh DB.
+-- ============================================================================
+
 -- Allow anyone to read (public bucket)
-CREATE POLICY IF NOT EXISTS "og_images_public_read"
+DROP POLICY IF EXISTS "og_images_public_read" ON storage.objects;
+CREATE POLICY "og_images_public_read"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'og-images');
 
 -- Allow authenticated users to upload
-CREATE POLICY IF NOT EXISTS "og_images_auth_insert"
+DROP POLICY IF EXISTS "og_images_auth_insert" ON storage.objects;
+CREATE POLICY "og_images_auth_insert"
   ON storage.objects FOR INSERT
   TO authenticated
   WITH CHECK (bucket_id = 'og-images');
 
 -- Allow authenticated users to update/replace their uploads
-CREATE POLICY IF NOT EXISTS "og_images_auth_update"
+DROP POLICY IF EXISTS "og_images_auth_update" ON storage.objects;
+CREATE POLICY "og_images_auth_update"
   ON storage.objects FOR UPDATE
   TO authenticated
   USING (bucket_id = 'og-images');
 
 -- Allow authenticated users to delete
-CREATE POLICY IF NOT EXISTS "og_images_auth_delete"
+DROP POLICY IF EXISTS "og_images_auth_delete" ON storage.objects;
+CREATE POLICY "og_images_auth_delete"
   ON storage.objects FOR DELETE
   TO authenticated
   USING (bucket_id = 'og-images');

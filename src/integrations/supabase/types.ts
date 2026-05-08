@@ -4401,6 +4401,27 @@ export type Database = {
           org_id: string
         }[]
       }
+      get_following_feed: {
+        Args: {
+          p_viewer_id: string
+          p_limit?: number
+          p_cursor_played_at?: string | null
+          p_cursor_match_id?: string | null
+        }
+        Returns: {
+          match_id: string
+          slug: string
+          played_at: string
+          format: string
+          match_type: string
+          verification_status: string
+          venue_name: string
+          team_a_score: number[]
+          team_b_score: number[]
+          winning_team: string
+          participants: Json
+        }[]
+      }
       get_player_match_history: {
         Args: { p_limit?: number; p_offset?: number; p_player_id: string }
         Returns: {
@@ -4467,6 +4488,29 @@ export type Database = {
           slug: string
           total_views: number
           unique_viewers: number
+        }[]
+      }
+      get_trending_feed: {
+        Args: {
+          p_limit?: number
+          p_cursor_played_at?: string | null
+          p_cursor_match_id?: string | null
+          p_kudos_weight?: number
+          p_comments_weight?: number
+          p_recency_decay_hours?: number
+        }
+        Returns: {
+          match_id: string
+          slug: string
+          played_at: string
+          format: string
+          match_type: string
+          verification_status: string
+          venue_name: string
+          team_a_score: number[]
+          team_b_score: number[]
+          winning_team: string
+          participants: Json
         }[]
       }
       get_top_content: {
