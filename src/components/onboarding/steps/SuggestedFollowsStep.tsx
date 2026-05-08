@@ -1,10 +1,10 @@
 import { useState, Dispatch } from "react";
-import { Loader2, UserPlus, UserCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useSuggestedFollows } from "@/hooks/onboarding/useSuggestedFollows";
-import { useFollowToggle } from "@/hooks/onboarding/useFollowToggle";
+import { FollowButton } from "@/components/social/FollowButton";
 import type { OnboardingState } from "../OnboardingWizard";
 
 interface Props {
@@ -38,24 +38,23 @@ export function SuggestedFollowsStep({
   const { language } = useI18n();
   const REASON_LABELS = language === "vi" ? REASON_LABELS_VI : REASON_LABELS_EN;
   const { data: suggestions, isLoading } = useSuggestedFollows(userId);
-  const toggle = useFollowToggle(userId);
 
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selected = state.follows.selected_user_ids;
 
-  const handleToggle = (followedId: string) => {
-    const isSelected = selected.includes(followedId);
-    const next = isSelected
-      ? selected.filter((id) => id !== followedId)
-      : [...selected, followedId];
-
+  // FollowButton owns the actual social_follows mutation now (Phase 3C).
+  // We only sync the wizard's selected_user_ids count via onFollowChange so
+  // the "ĐÃ CHỌN N" label stays in sync with this session's toggles.
+  const handleFollowChange = (followedId: string, isFollowing: boolean) => {
+    const next = isFollowing
+      ? Array.from(new Set([...selected, followedId]))
+      : selected.filter((id) => id !== followedId);
     dispatch({
       type: "SET_FOLLOWS",
       payload: { selected_user_ids: next },
     });
-    toggle.mutate({ followedId, follow: !isSelected });
   };
 
   const handleComplete = async (skipped: boolean) => {
@@ -155,7 +154,6 @@ export function SuggestedFollowsStep({
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {suggestions.map((s, i) => {
-            const isSelected = selected.includes(s.id);
             return (
               <li
                 key={s.id}
@@ -240,26 +238,17 @@ export function SuggestedFollowsStep({
                     </span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className={isSelected ? "tl-btn primary" : "tl-btn"}
-                  onClick={() => handleToggle(s.id)}
-                  disabled={completing}
-                  aria-pressed={isSelected}
-                  style={{ flexShrink: 0, fontSize: 13, padding: "8px 12px" }}
-                >
-                  {isSelected ? (
-                    <>
-                      <UserCheck className="mr-1 h-4 w-4" />
-                      {language === "vi" ? "Đã theo dõi" : "Following"}
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="mr-1 h-4 w-4" />
-                      {language === "vi" ? "Theo dõi" : "Follow"}
-                    </>
-                  )}
-                </button>
+                <div style={{ flexShrink: 0 }}>
+                  <FollowButton
+                    targetUserId={s.id}
+                    targetUsername={s.username}
+                    variant="default"
+                    size="sm"
+                    onFollowChange={(isFollowing) =>
+                      handleFollowChange(s.id, isFollowing)
+                    }
+                  />
+                </div>
               </li>
             );
           })}
