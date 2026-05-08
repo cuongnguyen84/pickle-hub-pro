@@ -78,7 +78,15 @@ export function OnboardingWizard() {
   if (!user) return null;
 
   const handleComplete = () => {
-    navigate("/", { replace: true });
+    // Land on the user's own profile so they see the result of onboarding
+    // (Strava/Twitter pattern). state.profile.username is populated by
+    // ProfileSetup step 1 success. Fall back to homepage if username is
+    // somehow missing — shouldn't happen since step 1 is gating, but
+    // belt-and-suspenders against a partial-state wizard exit.
+    const target = state.profile.username
+      ? `/nguoi-choi/${state.profile.username}`
+      : "/";
+    navigate(target, { replace: true });
   };
 
   return (
