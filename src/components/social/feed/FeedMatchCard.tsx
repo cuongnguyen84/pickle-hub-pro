@@ -11,6 +11,7 @@ import {
   buildAriaLabel,
 } from "@/lib/social/feed-formatters";
 import type { FeedMatch } from "@/hooks/social/useFollowingFeed";
+import { KudosButton } from "@/components/social/KudosButton";
 
 interface FeedMatchCardProps {
   match: FeedMatch;
@@ -152,27 +153,44 @@ export function FeedMatchCard({
         />
       </div>
 
-      {/* Foot — venue + chevron pseudo (CSS-driven hover) */}
+      {/* Foot — kudos · venue + chevron pseudo (CSS-driven hover).
+          KudosButton sits LEFT of the venue diamond. The button itself
+          calls preventDefault + stopPropagation so its click doesn't
+          bubble up to the wrapping <Link>. */}
       <div className="tl-feed-card-foot">
-        {match.venue_name && (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              fontFamily: "'Geist Mono', monospace",
-              fontSize: 11,
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              color: "var(--tl-fg-2)",
-            }}
-          >
-            <span aria-hidden="true" style={{ color: "var(--tl-fg-4)", fontSize: 8 }}>
-              ◆
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <KudosButton
+            matchId={match.match_id}
+            count={match.kudos_count}
+            kudoed={match.viewer_kudoed}
+            variant="feed"
+          />
+          {match.venue_name && (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 11,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                color: "var(--tl-fg-2)",
+              }}
+            >
+              <span aria-hidden="true" style={{ color: "var(--tl-fg-4)", fontSize: 8 }}>
+                ◆
+              </span>
+              {match.venue_name}
             </span>
-            {match.venue_name}
-          </span>
-        )}
+          )}
+        </div>
       </div>
     </Link>
   );

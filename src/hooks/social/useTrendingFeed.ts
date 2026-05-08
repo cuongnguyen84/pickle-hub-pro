@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import type { FeedMatch, FeedCursor } from "./useFollowingFeed";
 import type { FeedParticipant } from "@/lib/social/feed-formatters";
 
@@ -7,10 +8,10 @@ import type { FeedParticipant } from "@/lib/social/feed-formatters";
  * Wraps get_trending_feed RPC. Public-readable so it always fetches —
  * anonymous viewers land here by default.
  *
- * Phase 4A renders effectively as recency-only because the engagement
- * tables (match_kudos / match_comments) don't exist yet; the Trending
- * RPC accepts the multipliers as parameters today so 4B/4C can plug in
- * the JOINs without changing this hook.
+ * Phase 4B activates engagement weighting: trending score now factors real
+ * kudos counts. The hook also passes p_viewer_id when a viewer is signed
+ * in so per-row viewer_kudoed comes back populated; anonymous viewers
+ * always get viewer_kudoed=false.
  */
 
 interface RpcRow {
@@ -25,13 +26,18 @@ interface RpcRow {
   team_b_score: number[];
   winning_team: string;
   participants: unknown;
+  kudos_count: number | null;
+  viewer_kudoed: boolean | null;
 }
 
 const PAGE_SIZE = 20;
 
 export function useTrendingFeed() {
+  const { user } = useAuth();
+  // Partition the cache by viewer so anonymous and signed-in viewers don't
+  // share the same trending pages — viewer_kudoed differs per viewer.
   return useInfiniteQuery({
-    queryKey: ["feed", "trending"] as const,
+    queryKey: ["feed", "trending", user?.id ?? null] as const,
     initialPageParam: null as FeedCursor | null,
     staleTime: 5 * 60_000,
     queryFn: async ({ pageParam }) => {
@@ -39,6 +45,7 @@ export function useTrendingFeed() {
         p_limit: PAGE_SIZE,
         p_cursor_played_at: pageParam?.played_at ?? null,
         p_cursor_match_id: pageParam?.match_id ?? null,
+        p_viewer_id: user?.id ?? null,
       });
       if (error) throw error;
       return (data ?? []).map(normalizeRow);
@@ -66,5 +73,7 @@ function normalizeRow(row: RpcRow): FeedMatch {
     participants: Array.isArray(row.participants)
       ? (row.participants as FeedParticipant[])
       : [],
+    kudos_count: row.kudos_count ?? 0,
+    viewer_kudoed: row.viewer_kudoed ?? false,
   };
 }
