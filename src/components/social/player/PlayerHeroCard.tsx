@@ -4,6 +4,7 @@ import { BadgeCheck, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
+import { FollowButton } from "@/components/social/FollowButton";
 import type { PlayerProfile } from "@/hooks/social/usePlayerProfile";
 
 interface PlayerHeroCardProps {
@@ -204,14 +205,12 @@ export function PlayerHeroCard({ player }: PlayerHeroCardProps) {
               <Share2 className="h-4 w-4" />
               {language === "vi" ? "Chia sẻ" : "Share"}
             </button>
-            <button
-              type="button"
-              className="tl-btn primary"
-              disabled
-              title="Phase 3C — coming soon"
-            >
-              {language === "vi" ? "+ Theo dõi" : "+ Follow"}
-            </button>
+            <FollowButton
+              targetUserId={player.id}
+              targetUsername={player.username ?? undefined}
+              variant="default"
+              size="md"
+            />
           </div>
         </div>
 
