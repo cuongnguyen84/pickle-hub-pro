@@ -12,23 +12,48 @@ import {
  */
 
 describe("resolveDefaultTab", () => {
-  it("URL override wins for anonymous when explicitly set to following", () => {
-    // A signed-out user can still arrive via deep link; respecting the URL
-    // is correct (the page will just show the empty state).
+  it("anonymous + urlOverride=following coerces to trending (Codex P2)", () => {
+    // Honouring an anonymous deep-link to ?tab=following would render
+    // Following content while the Following tab is hidden — a keyboard
+    // trap. Coerce to trending.
     expect(
       resolveDefaultTab({
         isAuthenticated: false,
         followingCount: null,
         urlOverride: "following",
       }),
-    ).toBe("following");
+    ).toBe("trending");
   });
 
-  it("URL override 'trending' wins over follow-graph default", () => {
+  it("authenticated + urlOverride=following honoured", () => {
+    expect(
+      resolveDefaultTab({
+        isAuthenticated: true,
+        followingCount: 0,
+        urlOverride: "following",
+      }),
+    ).toBe("following");
     expect(
       resolveDefaultTab({
         isAuthenticated: true,
         followingCount: 12,
+        urlOverride: "following",
+      }),
+    ).toBe("following");
+  });
+
+  it("URL override 'trending' wins over follow-graph default for both auth states", () => {
+    expect(
+      resolveDefaultTab({
+        isAuthenticated: true,
+        followingCount: 12,
+        urlOverride: "trending",
+      }),
+    ).toBe("trending");
+    expect(
+      resolveDefaultTab({
+        isAuthenticated: false,
+        followingCount: null,
         urlOverride: "trending",
       }),
     ).toBe("trending");

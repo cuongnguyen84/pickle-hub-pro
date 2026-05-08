@@ -17,22 +17,29 @@ export interface FeedTabContext {
    * than landing them on an empty Following feed.
    */
   followingCount: number | null | undefined;
-  /** Optional ?tab= URL override. When set, wins over auto-default. */
+  /** Optional ?tab= URL override. Validated against tab visibility below. */
   urlOverride?: FeedTab | null;
 }
 
 /**
  * Resolve which tab the page should land on initially.
  *
- *   - URL override always wins (deep links / browser back-button).
- *   - Anonymous → trending (no Following feed without follows).
+ *   - URL override "trending" always honoured (visible to everyone).
+ *   - URL override "following" honoured only when authenticated. Anonymous
+ *     deep-links to ?tab=following coerce to trending — otherwise we'd
+ *     render Following content while the Following tab is hidden, creating
+ *     a keyboard trap (Codex P2 fix on PR #16).
+ *   - Anonymous (no override) → trending.
  *   - Authenticated, 0 follows → trending (Empty State A would feel hostile
  *     as the very first thing they see).
  *   - Authenticated, >0 follows → following (the Bet #1 social loop).
  */
 export function resolveDefaultTab(ctx: FeedTabContext): FeedTab {
-  if (ctx.urlOverride === "following" || ctx.urlOverride === "trending") {
-    return ctx.urlOverride;
+  if (ctx.urlOverride === "trending") {
+    return "trending";
+  }
+  if (ctx.urlOverride === "following") {
+    return ctx.isAuthenticated ? "following" : "trending";
   }
   if (!ctx.isAuthenticated) return "trending";
   const count = ctx.followingCount ?? 0;
