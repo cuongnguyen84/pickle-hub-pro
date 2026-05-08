@@ -1,10 +1,10 @@
 // ============================================================================
-// MatchActions — Sprint 4 Phase 4B
-// Real KudosButton (replaces Sprint 2 placeholder) + comment placeholder
-// + Share button.
+// MatchActions — Sprint 4 Phase 4C
+// Real KudosButton (Phase 4B) + Share. Comment placeholder removed —
+// Phase 4C ships a full CommentThread section below MatchActions, so the
+// inline-disabled MessageCircle button became redundant.
 // ============================================================================
 
-import { MessageCircle } from "lucide-react";
 import { ShareSheet } from "../shared/ShareSheet";
 import { KudosButton } from "@/components/social/KudosButton";
 import { useMatchKudos } from "@/hooks/social/useKudos";
@@ -26,15 +26,6 @@ export const MatchActions = ({ match }: { match: MatchDetail }) => {
           kudoed={kudosState?.kudoed ?? false}
           variant="detail"
         />
-        <button
-          type="button"
-          className="flex items-center gap-1 hover:text-foreground"
-          aria-label={language === "vi" ? "Bình luận" : "Comments"}
-          disabled
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span>0</span>
-        </button>
       </div>
       <ShareSheet
         url={url}
