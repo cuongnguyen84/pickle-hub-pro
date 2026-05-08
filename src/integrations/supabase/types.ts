@@ -4406,6 +4406,7 @@ export type Database = {
           p_viewer_id: string
           p_limit?: number
           p_cursor_played_at?: string | null
+          p_cursor_match_id?: string | null
         }
         Returns: {
           match_id: string
@@ -4493,6 +4494,7 @@ export type Database = {
         Args: {
           p_limit?: number
           p_cursor_played_at?: string | null
+          p_cursor_match_id?: string | null
           p_kudos_weight?: number
           p_comments_weight?: number
           p_recency_decay_hours?: number

@@ -40,10 +40,20 @@ interface RpcRow {
 
 const PAGE_SIZE = 20;
 
+/**
+ * Composite cursor — paginates on (played_at, match_id) so matches that
+ * share an identical played_at don't get silently skipped at the page
+ * boundary (Codex P1 fix on PR #16).
+ */
+export interface FeedCursor {
+  played_at: string;
+  match_id: string;
+}
+
 export function useFollowingFeed(viewerId: string | undefined) {
   return useInfiniteQuery({
     queryKey: ["feed", "following", viewerId ?? null] as const,
-    initialPageParam: null as string | null,
+    initialPageParam: null as FeedCursor | null,
     enabled: !!viewerId,
     staleTime: 30_000,
     queryFn: async ({ pageParam }) => {
@@ -51,14 +61,16 @@ export function useFollowingFeed(viewerId: string | undefined) {
       const { data, error } = await supabase.rpc("get_following_feed", {
         p_viewer_id: viewerId,
         p_limit: PAGE_SIZE,
-        p_cursor_played_at: pageParam,
+        p_cursor_played_at: pageParam?.played_at ?? null,
+        p_cursor_match_id: pageParam?.match_id ?? null,
       });
       if (error) throw error;
       return (data ?? []).map(normalizeRow);
     },
-    getNextPageParam: (lastPage) => {
+    getNextPageParam: (lastPage): FeedCursor | undefined => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
-      return lastPage[lastPage.length - 1].played_at;
+      const last = lastPage[lastPage.length - 1];
+      return { played_at: last.played_at, match_id: last.match_id };
     },
   });
 }

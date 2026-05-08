@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { FeedMatch } from "./useFollowingFeed";
+import type { FeedMatch, FeedCursor } from "./useFollowingFeed";
 import type { FeedParticipant } from "@/lib/social/feed-formatters";
 
 /**
@@ -32,19 +32,21 @@ const PAGE_SIZE = 20;
 export function useTrendingFeed() {
   return useInfiniteQuery({
     queryKey: ["feed", "trending"] as const,
-    initialPageParam: null as string | null,
+    initialPageParam: null as FeedCursor | null,
     staleTime: 5 * 60_000,
     queryFn: async ({ pageParam }) => {
       const { data, error } = await supabase.rpc("get_trending_feed", {
         p_limit: PAGE_SIZE,
-        p_cursor_played_at: pageParam,
+        p_cursor_played_at: pageParam?.played_at ?? null,
+        p_cursor_match_id: pageParam?.match_id ?? null,
       });
       if (error) throw error;
       return (data ?? []).map(normalizeRow);
     },
-    getNextPageParam: (lastPage) => {
+    getNextPageParam: (lastPage): FeedCursor | undefined => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
-      return lastPage[lastPage.length - 1].played_at;
+      const last = lastPage[lastPage.length - 1];
+      return { played_at: last.played_at, match_id: last.match_id };
     },
   });
 }
