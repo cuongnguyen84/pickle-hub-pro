@@ -122,10 +122,17 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
     try {
       const username = await generateUsername(displayName, {
         isAvailable: async (candidate) => {
+          // Exclude self so re-onboarding the same user doesn't treat
+          // their existing profile row as a collision and append a -XXXX
+          // suffix. Pattern observed Sprint 3-4: user "Phạm Quang"
+          // onboards → username "pham-quang"; reset state + re-onboard
+          // → without this neq, isAvailable returned false (their own
+          // row matched) → suffix "-obhx" appended unnecessarily.
           const { data, error: lookupError } = await supabase
             .from("profiles")
             .select("id")
             .eq("username", candidate)
+            .neq("id", userId)
             .maybeSingle();
           if (lookupError) throw lookupError;
           return data === null;
