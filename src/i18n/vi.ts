@@ -187,8 +187,10 @@ export interface Translations {
     videos: string;
     tournaments: string;
     tools: string;
+    feed: string;
     search: string;
     profile: string;
+    viewProfile: string;
     login: string;
     logout: string;
     signup: string;
@@ -1924,8 +1926,10 @@ export const vi: Translations = {
     videos: "Video",
     tournaments: "Giải đấu",
     tools: "Công cụ",
+    feed: "Bảng tin",
     search: "Tìm kiếm",
     profile: "Tài khoản",
+    viewProfile: "Xem hồ sơ",
     login: "Đăng nhập",
     logout: "Đăng xuất",
     signup: "Đăng ký",
