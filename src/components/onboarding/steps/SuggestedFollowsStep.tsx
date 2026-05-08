@@ -9,10 +9,17 @@ import type { OnboardingState } from "../OnboardingWizard";
 
 interface Props {
   state: OnboardingState;
-  dispatch: Dispatch<{
-    type: "SET_FOLLOWS" | "GO_PREV";
-    payload?: Partial<OnboardingState["follows"]>;
-  }>;
+  dispatch: Dispatch<
+    | {
+        type: "SET_FOLLOWS" | "GO_PREV";
+        payload?: Partial<OnboardingState["follows"]>;
+      }
+    | {
+        type: "TOGGLE_FOLLOW";
+        followedId: string;
+        isFollowing: boolean;
+      }
+  >;
   userId: string;
   onComplete: () => void;
 }
@@ -45,16 +52,12 @@ export function SuggestedFollowsStep({
   const selected = state.follows.selected_user_ids;
 
   // FollowButton owns the actual social_follows mutation now (Phase 3C).
-  // We only sync the wizard's selected_user_ids count via onFollowChange so
-  // the "ĐÃ CHỌN N" label stays in sync with this session's toggles.
+  // We dispatch a TOGGLE_FOLLOW action so the wizard reducer derives the
+  // next selected array from its OWN current state — never from a stale
+  // closure snapshot. Two async onFollowChange callbacks resolving close
+  // together each get the latest state via the reducer (Codex P1 fix).
   const handleFollowChange = (followedId: string, isFollowing: boolean) => {
-    const next = isFollowing
-      ? Array.from(new Set([...selected, followedId]))
-      : selected.filter((id) => id !== followedId);
-    dispatch({
-      type: "SET_FOLLOWS",
-      payload: { selected_user_ids: next },
-    });
+    dispatch({ type: "TOGGLE_FOLLOW", followedId, isFollowing });
   };
 
   const handleComplete = async (skipped: boolean) => {
