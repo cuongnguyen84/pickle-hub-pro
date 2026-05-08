@@ -1,18 +1,26 @@
 import { useState, Dispatch } from "react";
-import { Loader2, UserPlus, UserCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useSuggestedFollows } from "@/hooks/onboarding/useSuggestedFollows";
-import { useFollowToggle } from "@/hooks/onboarding/useFollowToggle";
+import { FollowButton } from "@/components/social/FollowButton";
+import { buildFollowsBatchRows } from "../follows-batch";
 import type { OnboardingState } from "../OnboardingWizard";
 
 interface Props {
   state: OnboardingState;
-  dispatch: Dispatch<{
-    type: "SET_FOLLOWS" | "GO_PREV";
-    payload?: Partial<OnboardingState["follows"]>;
-  }>;
+  dispatch: Dispatch<
+    | {
+        type: "SET_FOLLOWS" | "GO_PREV";
+        payload?: Partial<OnboardingState["follows"]>;
+      }
+    | {
+        type: "TOGGLE_FOLLOW";
+        followedId: string;
+        isFollowing: boolean;
+      }
+  >;
   userId: string;
   onComplete: () => void;
 }
@@ -38,30 +46,51 @@ export function SuggestedFollowsStep({
   const { language } = useI18n();
   const REASON_LABELS = language === "vi" ? REASON_LABELS_VI : REASON_LABELS_EN;
   const { data: suggestions, isLoading } = useSuggestedFollows(userId);
-  const toggle = useFollowToggle(userId);
 
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selected = state.follows.selected_user_ids;
 
-  const handleToggle = (followedId: string) => {
-    const isSelected = selected.includes(followedId);
-    const next = isSelected
-      ? selected.filter((id) => id !== followedId)
-      : [...selected, followedId];
-
-    dispatch({
-      type: "SET_FOLLOWS",
-      payload: { selected_user_ids: next },
-    });
-    toggle.mutate({ followedId, follow: !isSelected });
+  // FollowButton owns the actual social_follows mutation now (Phase 3C).
+  // We dispatch a TOGGLE_FOLLOW action so the wizard reducer derives the
+  // next selected array from its OWN current state — never from a stale
+  // closure snapshot. Two async onFollowChange callbacks resolving close
+  // together each get the latest state via the reducer (Codex P1 fix).
+  const handleFollowChange = (followedId: string, isFollowing: boolean) => {
+    dispatch({ type: "TOGGLE_FOLLOW", followedId, isFollowing });
   };
 
   const handleComplete = async (skipped: boolean) => {
     setCompleting(true);
     setError(null);
     try {
+      // Reconcile DB state with the wizard's final selection. FollowButton
+      // already emits per-click inserts, but a navigate("/") unmount can
+      // abort an in-flight fetch and leave selected ids in the wizard
+      // counter without a corresponding social_follows row. Idempotent
+      // upsert: existing rows hit the (follower_id, followed_id) PK and
+      // are silently ignored. (Codex P1 follow-up; commit 8 PR #15.)
+      const followsBatch = buildFollowsBatchRows(userId, selected);
+      if (followsBatch.length > 0) {
+        const { error: followsError } = await supabase
+          .from("social_follows")
+          .upsert(followsBatch, {
+            onConflict: "follower_id,followed_id",
+            ignoreDuplicates: true,
+          });
+        if (followsError) {
+          // Don't block onboarding — partial follow state is recoverable
+          // (PlayerProfile FollowButtons remain wired up). Surface in dev
+          // tools for diagnostic; no user-facing toast since it's silent
+          // best-effort reconciliation.
+          console.error(
+            "[SuggestedFollowsStep] follow reconcile failed",
+            followsError,
+          );
+        }
+      }
+
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
@@ -155,7 +184,6 @@ export function SuggestedFollowsStep({
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {suggestions.map((s, i) => {
-            const isSelected = selected.includes(s.id);
             return (
               <li
                 key={s.id}
@@ -240,26 +268,17 @@ export function SuggestedFollowsStep({
                     </span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className={isSelected ? "tl-btn primary" : "tl-btn"}
-                  onClick={() => handleToggle(s.id)}
-                  disabled={completing}
-                  aria-pressed={isSelected}
-                  style={{ flexShrink: 0, fontSize: 13, padding: "8px 12px" }}
-                >
-                  {isSelected ? (
-                    <>
-                      <UserCheck className="mr-1 h-4 w-4" />
-                      {language === "vi" ? "Đã theo dõi" : "Following"}
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="mr-1 h-4 w-4" />
-                      {language === "vi" ? "Theo dõi" : "Follow"}
-                    </>
-                  )}
-                </button>
+                <div style={{ flexShrink: 0 }}>
+                  <FollowButton
+                    targetUserId={s.id}
+                    targetUsername={s.username}
+                    variant="default"
+                    size="sm"
+                    onFollowChange={(isFollowing) =>
+                      handleFollowChange(s.id, isFollowing)
+                    }
+                  />
+                </div>
               </li>
             );
           })}

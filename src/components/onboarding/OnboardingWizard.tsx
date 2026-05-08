@@ -7,81 +7,16 @@ import { ProfileSetup } from "./steps/ProfileSetup";
 import { DuprLinkStep } from "./steps/DuprLinkStep";
 import { VenueSelectStep } from "./steps/VenueSelectStep";
 import { SuggestedFollowsStep } from "./steps/SuggestedFollowsStep";
+import {
+  reducer,
+  initialState,
+  type StepNumber,
+  type OnboardingState,
+} from "./wizard-reducer";
 
-export type StepNumber = 1 | 2 | 3 | 4;
-
-export type OnboardingState = {
-  currentStep: StepNumber;
-  profile: {
-    display_name: string;
-    username: string;
-    skill_level: "beginner" | "intermediate" | "advanced" | "pro" | "";
-  };
-  dupr: {
-    dupr_id: string;
-    dupr_singles: number | null;
-    dupr_doubles: number | null;
-    skipped: boolean;
-    saved: boolean;
-  };
-  venue: {
-    venue_id: string | null;
-    venue_name: string | null;
-    skipped: boolean;
-  };
-  follows: {
-    selected_user_ids: string[];
-    skipped: boolean;
-  };
-};
-
-type Action =
-  | { type: "GO_NEXT" }
-  | { type: "GO_PREV" }
-  | { type: "SET_STEP"; step: StepNumber }
-  | { type: "SET_PROFILE"; payload: Partial<OnboardingState["profile"]> }
-  | { type: "SET_DUPR"; payload: Partial<OnboardingState["dupr"]> }
-  | { type: "SET_VENUE"; payload: Partial<OnboardingState["venue"]> }
-  | { type: "SET_FOLLOWS"; payload: Partial<OnboardingState["follows"]> };
-
-const initialState: OnboardingState = {
-  currentStep: 1,
-  profile: { display_name: "", username: "", skill_level: "" },
-  dupr: {
-    dupr_id: "",
-    dupr_singles: null,
-    dupr_doubles: null,
-    skipped: false,
-    saved: false,
-  },
-  venue: { venue_id: null, venue_name: null, skipped: false },
-  follows: { selected_user_ids: [], skipped: false },
-};
-
-function reducer(state: OnboardingState, action: Action): OnboardingState {
-  switch (action.type) {
-    case "GO_NEXT": {
-      const next = Math.min(state.currentStep + 1, 4) as StepNumber;
-      return { ...state, currentStep: next };
-    }
-    case "GO_PREV": {
-      const prev = Math.max(state.currentStep - 1, 1) as StepNumber;
-      return { ...state, currentStep: prev };
-    }
-    case "SET_STEP":
-      return { ...state, currentStep: action.step };
-    case "SET_PROFILE":
-      return { ...state, profile: { ...state.profile, ...action.payload } };
-    case "SET_DUPR":
-      return { ...state, dupr: { ...state.dupr, ...action.payload } };
-    case "SET_VENUE":
-      return { ...state, venue: { ...state.venue, ...action.payload } };
-    case "SET_FOLLOWS":
-      return { ...state, follows: { ...state.follows, ...action.payload } };
-    default:
-      return state;
-  }
-}
+// Re-export types for step component prop typing.
+export type { StepNumber, OnboardingState };
+export type { OnboardingAction } from "./wizard-reducer";
 
 export function OnboardingWizard() {
   const [state, dispatch] = useReducer(reducer, initialState);
