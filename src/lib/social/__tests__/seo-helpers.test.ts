@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   buildPersonJsonLd,
   buildProfileFallbackDescription,
+  pickProfileMetaDescription,
+  PROFILE_BIO_MIN_LENGTH,
   buildFeedJsonLd,
   feedTeamLabel,
   feedScoreCompact,
@@ -308,5 +310,81 @@ describe("buildFeedJsonLd", () => {
     const main = out.mainEntity as { numberOfItems: number; itemListElement: unknown[] };
     expect(main.numberOfItems).toBe(0);
     expect(main.itemListElement).toEqual([]);
+  });
+});
+
+/* ─── pickProfileMetaDescription (Codex P2 fix on PR #19) ─────────────── */
+
+describe("pickProfileMetaDescription", () => {
+  const fallback = "Hồ sơ pickleball của Trần Thị B tại Hà Nội. Xem lịch sử trận đấu, thống kê và rating DUPR trên ThePickleHub.";
+  const longBio =
+    "Active 4.0 doubles player based in Saigon. Tournament regular at PPA Vietnam 2026. Coach at HCMC pickleball club.";
+
+  it("uses bio when trimmed length >= MIN (30 chars)", () => {
+    expect(longBio.length).toBeGreaterThanOrEqual(PROFILE_BIO_MIN_LENGTH);
+    const out = pickProfileMetaDescription(longBio, fallback);
+    // longBio is < 160 chars so passes through unchanged
+    expect(out).toBe(longBio);
+  });
+
+  it("uses fallback when bio is null", () => {
+    const out = pickProfileMetaDescription(null, fallback);
+    expect(out).toBe(fallback);
+  });
+
+  it("uses fallback when bio is undefined", () => {
+    const out = pickProfileMetaDescription(undefined, fallback);
+    expect(out).toBe(fallback);
+  });
+
+  it("uses fallback when bio is empty string", () => {
+    const out = pickProfileMetaDescription("", fallback);
+    expect(out).toBe(fallback);
+  });
+
+  it("uses fallback when bio is whitespace-only", () => {
+    const out = pickProfileMetaDescription("   \n\t  ", fallback);
+    expect(out).toBe(fallback);
+  });
+
+  it("uses fallback when bio is below threshold", () => {
+    // "Hi I play" = 9 chars, well under 30. Bio's actual content gives
+    // Google nothing useful — fall back to the structured city/DUPR copy.
+    const out = pickProfileMetaDescription("Hi I play", fallback);
+    expect(out).toBe(fallback);
+  });
+
+  it("uses bio when exactly at threshold (boundary)", () => {
+    const exactly30 = "x".repeat(PROFILE_BIO_MIN_LENGTH);
+    const out = pickProfileMetaDescription(exactly30, fallback);
+    expect(out).toBe(exactly30);
+  });
+
+  it("trims bio before measuring length", () => {
+    // 25 chars padded with whitespace is still 25 chars after trim → fallback.
+    const padded = "   " + "x".repeat(25) + "   ";
+    expect(padded.length).toBeGreaterThan(PROFILE_BIO_MIN_LENGTH);
+    const out = pickProfileMetaDescription(padded, fallback);
+    expect(out).toBe(fallback);
+  });
+
+  it("truncates bio over 160 chars with ellipsis", () => {
+    const tooLong = "y".repeat(200);
+    const out = pickProfileMetaDescription(tooLong, fallback);
+    expect(out.length).toBe(160);
+    expect(out.endsWith("...")).toBe(true);
+  });
+
+  it("truncates fallback over 160 chars with ellipsis", () => {
+    const longFallback = "z".repeat(200);
+    const out = pickProfileMetaDescription(null, longFallback);
+    expect(out.length).toBe(160);
+    expect(out.endsWith("...")).toBe(true);
+  });
+
+  it("never returns empty string when both bio + fallback present", () => {
+    // Defensive: even pathological "" + "fallback" returns the fallback.
+    const out = pickProfileMetaDescription("", "fallback text");
+    expect(out.length).toBeGreaterThan(0);
   });
 });

@@ -96,6 +96,43 @@ export function buildProfileFallbackDescription(profile: ProfileForSeo): string 
   }. Xem lịch sử trận đấu, thống kê và rating DUPR trên ThePickleHub.`;
 }
 
+/**
+ * Pick the meta description for a profile and clamp to 160 chars.
+ *
+ * Codex P2 fix on PR #19: the original wiring did
+ *   `buildMetaDescription(bio, …) || buildMetaDescription(fallback, …)`
+ * but buildMetaDescription always returns a non-empty string (it pads
+ * short input with a generic platform fallback rather than returning
+ * falsy), so the `||` branch was dead code and the city/DUPR-aware
+ * fallback never reached bots when bio was empty/short.
+ *
+ * This helper makes the bio-vs-fallback choice explicit BEFORE
+ * truncation:
+ *   - trimmed bio ≥ MIN_BIO_LENGTH (30 chars) → use bio
+ *   - otherwise                              → use the city/DUPR fallback
+ *
+ * 30 chars is roughly "DUPR 4.0 player from Saigon" — a meaningful
+ * sentence. Below that, the structured fallback (which references
+ * city + ratings explicitly) gives Google more useful snippet text
+ * than a 1-line bio padded with generic platform copy.
+ *
+ * Truncation tail mirrors buildMetaDescription's "..." pattern so the
+ * description stays under Google's 160-char display cap.
+ */
+export const PROFILE_BIO_MIN_LENGTH = 30;
+const PROFILE_DESCRIPTION_MAX = 160;
+
+export function pickProfileMetaDescription(
+  bio: string | null | undefined,
+  fallback: string,
+): string {
+  const trimmedBio = (bio ?? "").trim();
+  const source =
+    trimmedBio.length >= PROFILE_BIO_MIN_LENGTH ? trimmedBio : fallback;
+  if (source.length <= PROFILE_DESCRIPTION_MAX) return source;
+  return source.slice(0, PROFILE_DESCRIPTION_MAX - 3).trim() + "...";
+}
+
 /* ─── Feed (CollectionPage / ItemList) ────────────────────────────────── */
 
 export interface FeedSeoParticipant {

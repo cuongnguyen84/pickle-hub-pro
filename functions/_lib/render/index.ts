@@ -21,6 +21,7 @@ import {
 import {
   buildPersonJsonLd,
   buildProfileFallbackDescription,
+  pickProfileMetaDescription,
   buildFeedJsonLd,
   feedTeamLabel,
   feedScoreCompact,
@@ -952,16 +953,19 @@ export async function renderProfile(
   const rawTitle = `${displayName} (@${p.username})`;
   const title = buildTitle(rawTitle, " | ThePickleHub Pickleball");
 
-  // Description: bio takes priority when long enough; otherwise build a
-  // bilingual fallback that references DUPR + city if known.
+  // Description: bio takes priority when meaningful (>= 30 chars after
+  // trim); otherwise fall through to the city/DUPR fallback. Codex P2
+  // fix on PR #19: the previous wiring used buildMetaDescription's
+  // implicit fallback chain, but that helper always returns a non-empty
+  // string (padding short input with generic platform copy), so the
+  // city/DUPR-specific fallback was dead code.
+  // pickProfileMetaDescription does the bio-vs-fallback choice
+  // explicitly + clamps to 160 chars for Google's snippet display.
   const duprBits: string[] = [];
   if (p.dupr_doubles != null) duprBits.push(`DUPR đôi ${p.dupr_doubles.toFixed(2)}`);
   if (p.dupr_singles != null) duprBits.push(`DUPR đơn ${p.dupr_singles.toFixed(2)}`);
   const fallbackDesc = buildProfileFallbackDescription(p);
-  const description = buildMetaDescription(p.bio, {
-    type: "default",
-    title: displayName,
-  }) || buildMetaDescription(fallbackDesc, { type: "default", title: displayName });
+  const description = pickProfileMetaDescription(p.bio, fallbackDesc);
 
   // hreflang: same URL serves both languages (single canonical), so en/vi
   // both point at /nguoi-choi/{username}. x-default mirrors vi for the
