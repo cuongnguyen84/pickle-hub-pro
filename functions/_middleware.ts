@@ -23,6 +23,7 @@ import {
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
   renderLivestreamList, renderPrivacy, renderTerms,
+  renderNotificationsShell,
   renderDefault, render404,
 } from "./_lib/render";
 
@@ -172,6 +173,16 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // shipped both routes in src/App.tsx. Canonical drops ?tab=* in the
   // render function so /feed and /feed?tab=trending dedupe.
   if (path === "/feed") return await renderFeed(supabase, siteUrl, lang);
+
+  // Notifications page (Sprint 5 PR-C). User-private surface — bots
+  // get a noindex shell so they don't waste crawl budget. Real users
+  // bypass this branch (middleware only routes here for bot UAs); the
+  // React route in src/App.tsx (/notifications, /vi/notifications,
+  // /thong-bao, /vi/thong-bao) renders the actual page for signed-in
+  // viewers; anonymous viewers get redirected to /login by the page.
+  if (path === "/notifications" || path === "/thong-bao") {
+    return renderNotificationsShell(siteUrl, rawPath, lang);
+  }
 
   // Tournaments list
   if (path === "/tournaments") return await renderTournaments(supabase, siteUrl, rawPath, lang);
