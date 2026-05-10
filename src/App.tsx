@@ -405,6 +405,11 @@ const App = () => (
                     {/* Bet #1 Sprint 3 Phase 3B: public PlayerProfile (no auth wrapper) */}
                     <Route path="/nguoi-choi/:username" element={<PlayerProfile />} />
                     <Route path="/notifications" element={<Notifications />} />
+                    {/* Sprint 5 PR-C — Vietnamese-friendly alias. Same
+                        page renders for both /notifications and /thong-bao
+                        so existing inbound links + bell deep-links keep
+                        working while VN viewers get a localized URL. */}
+                    <Route path="/thong-bao" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/news" element={<News />} />
                     <Route path="/rankings" element={<Rankings />} />
@@ -550,6 +555,7 @@ const App = () => (
                     <Route path="/vi/login" element={<ViLanguageWrapper><Login /></ViLanguageWrapper>} />
                     <Route path="/vi/account" element={<ViLanguageWrapper><Account /></ViLanguageWrapper>} />
                     <Route path="/vi/notifications" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
+                    <Route path="/vi/thong-bao" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
 
                     <Route path="*" element={<NotFound />} />
                   </Routes>
