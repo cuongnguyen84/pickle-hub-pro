@@ -4423,6 +4423,11 @@ export type Database = {
           kudos_count: number
           viewer_kudoed: boolean
           comment_count: number
+          source_provider: string
+          source_url: string | null
+          tournament_name: string | null
+          tournament_event: string | null
+          round_name: string | null
         }[]
       }
       get_player_match_history: {
@@ -4518,6 +4523,11 @@ export type Database = {
           kudos_count: number
           viewer_kudoed: boolean
           comment_count: number
+          source_provider: string
+          source_url: string | null
+          tournament_name: string | null
+          tournament_event: string | null
+          round_name: string | null
         }[]
       }
       get_top_content: {
