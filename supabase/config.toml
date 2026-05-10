@@ -124,3 +124,12 @@ verify_jwt = false
 # Public endpoint — Facebook/Twitter/LinkedIn/Slack scrapers must fetch the
 # 1200×630 PNG when a /tran-dau/{slug} URL is shared. CF Pages /og/match/*
 # proxies + caches in KV (7d TTL) — see functions/og/match/[slug].png.ts.
+
+# ─── Sprint 6 — pro tour data integration ──────────────────────────────────
+[functions.pro-tour-ingest]
+verify_jwt = false
+# Service-role gate: only the pro-tour-scraper Cloudflare Worker calls this
+# endpoint, with the Supabase service role key as the bearer token. The
+# function checks the bearer matches env.SUPABASE_SERVICE_ROLE_KEY exactly
+# before doing any work — verify_jwt would block legitimate calls because
+# the service role token isn't a user JWT.
