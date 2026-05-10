@@ -166,10 +166,17 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_actor    RECORD;
-  v_match    RECORD;
-  v_parent   RECORD;
-  v_excerpt  TEXT;
+  v_actor          RECORD;
+  v_match          RECORD;
+  -- v_parent_user_id is a UUID, not a RECORD. Original draft used a
+  -- RECORD and only SELECT INTO'd it in the reply path (Path B); the
+  -- mention dedupe subquery (Path C) then read v_parent.user_id which
+  -- raises "record 'v_parent' is not assigned yet" for ANY top-level
+  -- comment INSERT. Codex P1 on PR #22. Plain UUID defaults to NULL,
+  -- which is exactly the dedupe semantic we want for top-level rows
+  -- (no parent author to skip).
+  v_parent_user_id UUID;
+  v_excerpt        TEXT;
 BEGIN
   -- Only match-targeted comments fire match notifications. Other
   -- target_types (clip/venue/etc.) skip — Sprint 6+ adds those.
@@ -218,15 +225,15 @@ BEGIN
       AND mp.player_id <> NEW.user_id;
   ELSE
     -- ─── Path B: reply → notify parent comment author (skip self-reply)
-    SELECT user_id INTO v_parent
+    SELECT user_id INTO v_parent_user_id
       FROM public.social_comments
      WHERE id = NEW.parent_id;
 
-    IF v_parent.user_id IS NOT NULL AND v_parent.user_id <> NEW.user_id THEN
+    IF v_parent_user_id IS NOT NULL AND v_parent_user_id <> NEW.user_id THEN
       INSERT INTO public.social_notifications (
         user_id, type, title, body, link_url, payload
       ) VALUES (
-        v_parent.user_id,
+        v_parent_user_id,
         'comment_reply',
         COALESCE(v_actor.display_name, '@' || COALESCE(v_actor.username, 'someone'))
           || ' đã trả lời bình luận của bạn',
@@ -267,14 +274,17 @@ BEGIN
       JOIN public.profiles p ON lower(p.username) = mentions.handle
      WHERE p.is_ghost = FALSE
        AND p.id <> NEW.user_id
-       -- Skip if we already notified them via match_comment / comment_reply
+       -- Skip if we already notified them via match_comment / comment_reply.
+       -- v_parent_user_id is NULL on top-level inserts (Path A); the
+       -- WHERE filter naturally drops the row, so the UNION leg is a no-op
+       -- on those, and the participant leg is the only one that contributes.
        AND p.id NOT IN (
          SELECT mp.player_id
            FROM public.match_participants mp
           WHERE mp.match_id = NEW.target_id
             AND NEW.parent_id IS NULL
          UNION
-         SELECT v_parent.user_id WHERE v_parent.user_id IS NOT NULL
+         SELECT v_parent_user_id WHERE v_parent_user_id IS NOT NULL
        )
   )
   INSERT INTO public.social_notifications (
