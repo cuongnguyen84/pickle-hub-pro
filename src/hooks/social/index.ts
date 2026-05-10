@@ -26,6 +26,7 @@ export type { SocialNotification } from "./useNotifications";
 
 export {
   useUnifiedNotifications,
+  useUnifiedNotificationsRealtime,
   useUnifiedUnreadCount,
   useMarkUnifiedAsRead,
   useMarkAllUnifiedAsRead,
