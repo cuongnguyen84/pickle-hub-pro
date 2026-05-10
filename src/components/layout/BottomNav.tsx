@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { Home, Radio, Trophy, Wrench, MessageSquare } from "lucide-react";
+import { Home, Radio, Trophy, Wrench, Newspaper } from "lucide-react";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import { useLivestreams } from "@/hooks/useSupabaseData";
@@ -54,11 +54,14 @@ const BottomNav = () => {
     return null;
   }
 
+  // Sprint 5 PR-A: replaced /forum slot with /feed. Forum still reachable
+  // via the burger drawer; Feed is the entry point for the Bet #1 social
+  // loop and should sit in the 5-slot mobile primary nav.
   const navItems = [
     { path: "/", label: t.nav.home, icon: Home },
     { path: "/live", label: t.nav.live, icon: Radio, liveBadge: liveCount > 0 },
+    { path: "/feed", label: t.nav.feed, icon: Newspaper },
     { path: "/tools", label: t.nav.tools, icon: Wrench },
-    { path: "/forum", label: t.forum.navLabel, icon: MessageSquare },
     { path: "/tournaments", label: t.nav.tournaments, icon: Trophy },
   ];
 
@@ -98,9 +101,17 @@ const BottomNav = () => {
         style={{ minHeight: getNavHeight() }}
       >
         {navItems.map((item, idx) => {
+          // Match /<path> AND /vi/<path>. The slot links to the English
+          // path; light up when the user is on either language variant
+          // of the same surface (Phase 4A shipped /feed + /vi/feed).
+          const path = location.pathname;
+          const viPath = item.path === "/" ? "/vi" : `/vi${item.path}`;
           const isActive =
-            location.pathname === item.path ||
-            (item.path !== "/" && location.pathname.startsWith(item.path));
+            path === item.path ||
+            path === viPath ||
+            (item.path !== "/" &&
+              (path.startsWith(`${item.path}/`) ||
+                path.startsWith(`${viPath}/`)));
           const Icon = item.icon;
           const isLast = idx === navItems.length - 1;
 
