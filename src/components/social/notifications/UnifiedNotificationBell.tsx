@@ -8,7 +8,7 @@
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useUnifiedUnreadCount, useUnifiedNotificationsRealtime } from "@/hooks/social";
+import { useUnifiedUnreadCount } from "@/hooks/social";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
@@ -56,13 +56,12 @@ const Trigger = ({ unread, highlight }: { unread: number; highlight: boolean }) 
 
 export const UnifiedNotificationBell = ({ className }: UnifiedNotificationBellProps) => {
   const { user } = useAuth();
-  // Mount the realtime subscription at the bell level so the badge
-  // updates live regardless of whether the dropdown is open. Previously
-  // the subscription lived inside useUnifiedNotifications() (the LIST
-  // hook), which only mounts when the dropdown content renders, so the
-  // badge stayed stale until the user opened the dropdown or reloaded.
-  // Cuong's two-tab follow repro (Tab 1 misses the "1" badge) was this.
-  useUnifiedNotificationsRealtime();
+  // Realtime subscription is mounted ONCE at the App.tsx top level via
+  // NotificationsRealtimeInitializer (Codex P2 follow-up on PR #27).
+  // AppHeader renders TWO bell instances side-by-side (desktop hidden
+  // md:block + mobile md:hidden) so subscribing here would double the
+  // channel count per signed-in user. The bell just reads the cache;
+  // the initializer keeps it fresh.
   const { data: unread = 0 } = useUnifiedUnreadCount();
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(false);

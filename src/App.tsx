@@ -14,6 +14,7 @@ import AppHeader from "@/components/layout/AppHeader";
 
 import { ViLanguageWrapper } from "@/components/layout/ViLanguageWrapper";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useUnifiedNotificationsRealtime } from "@/hooks/social";
 import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
@@ -350,6 +351,17 @@ const PushNotificationInitializer = () => {
   return null;
 };
 
+// Mount the unified-notifications realtime subscription ONCE per page
+// (Codex P2 follow-up on PR #27). AppHeader renders the bell twice
+// (desktop md:block + mobile md:hidden side-by-side, CSS-toggled), so
+// subscribing inside the bell duplicates Supabase channel subscriptions
+// and runs invalidateQueries 2x per notification. Mounting here keeps
+// it 1-per-session regardless of how many bell instances exist.
+const NotificationsRealtimeInitializer = () => {
+  useUnifiedNotificationsRealtime();
+  return null;
+};
+
 // Component to track page views for GA4
 const PageTracker = () => {
   usePageTracking();
@@ -374,6 +386,7 @@ const App = () => (
             <BrowserRouter>
               <DeepLinkInitializer />
               <PushNotificationInitializer />
+              <NotificationsRealtimeInitializer />
               <PageTracker />
               
               <BottomNav />
