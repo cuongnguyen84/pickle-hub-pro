@@ -26,6 +26,12 @@ export interface UnifiedNotification {
   link_url: string;
   is_read: boolean;
   created_at: string;
+  /** Sprint 5 PR-C — denormalized actor + context fields the trigger
+   *  writes into social_notifications.payload. NotificationItem uses
+   *  this to rebuild the title in English when the viewer's language
+   *  is EN (DB title is Vietnamese-canonical). Always null for legacy
+   *  notifications (the legacy table has no payload column). */
+  payload: Record<string, unknown> | null;
 }
 
 const LIST_LIMIT = 10;
@@ -47,6 +53,7 @@ interface SocialRow {
   title: string;
   body: string | null;
   link_url: string | null;
+  payload: Record<string, unknown> | null;
   is_read: boolean;
   created_at: string;
 }
@@ -70,6 +77,7 @@ function normalizeLegacy(row: LegacyRow): UnifiedNotification {
     link_url: deriveLegacyLink(row),
     is_read: row.is_read,
     created_at: row.created_at,
+    payload: null,
   };
 }
 
@@ -83,6 +91,7 @@ function normalizeSocial(row: SocialRow): UnifiedNotification {
     link_url: row.link_url ?? "/",
     is_read: row.is_read,
     created_at: row.created_at,
+    payload: row.payload,
   };
 }
 
@@ -117,7 +126,7 @@ export function useUnifiedNotifications() {
           .limit(LIST_LIMIT),
         supabase
           .from("social_notifications")
-          .select("id, type, title, body, link_url, is_read, created_at")
+          .select("id, type, title, body, link_url, payload, is_read, created_at")
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
           .limit(LIST_LIMIT),
