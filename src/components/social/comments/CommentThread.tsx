@@ -12,6 +12,8 @@ import {
   buildCommentTree,
   type ThreadedComment,
 } from "@/lib/social/comment-helpers";
+import { useMatchModerationContext } from "@/hooks/social/useMatchModerationContext";
+import type { ModerationContext } from "@/lib/social/comment-moderation";
 import { CommentRow } from "./CommentRow";
 import { CommentInput } from "./CommentInput";
 import { useViewerProfile } from "./viewer-profile";
@@ -37,6 +39,7 @@ export function CommentThread({ matchId }: CommentThreadProps) {
   const location = useLocation();
   const profile = useViewerProfile();
   const addMutation = useAddCommentMutation();
+  const moderationContext = useMatchModerationContext(matchId);
   const {
     data,
     isLoading,
@@ -199,6 +202,7 @@ export function CommentThread({ matchId }: CommentThreadProps) {
               node={node}
               matchId={matchId}
               viewerId={user?.id ?? null}
+              moderationContext={moderationContext}
               openReplyId={openReplyId}
               setOpenReplyId={setOpenReplyId}
             />
@@ -246,6 +250,7 @@ interface NodeProps {
   node: ThreadedComment;
   matchId: string;
   viewerId: string | null;
+  moderationContext: ModerationContext;
   openReplyId: string | null;
   setOpenReplyId: (id: string | null) => void;
 }
@@ -254,6 +259,7 @@ function CommentTreeNode({
   node,
   matchId,
   viewerId,
+  moderationContext,
   openReplyId,
   setOpenReplyId,
 }: NodeProps) {
@@ -264,6 +270,7 @@ function CommentTreeNode({
         comment={node}
         matchId={matchId}
         viewerId={viewerId}
+        moderationContext={moderationContext}
         isReplyOpen={isReplyOpen}
         onToggleReply={() =>
           setOpenReplyId(isReplyOpen ? null : node.comment_id)
@@ -278,6 +285,7 @@ function CommentTreeNode({
               node={child}
               matchId={matchId}
               viewerId={viewerId}
+              moderationContext={moderationContext}
               openReplyId={openReplyId}
               setOpenReplyId={setOpenReplyId}
             />

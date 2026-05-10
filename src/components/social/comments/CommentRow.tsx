@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import { Pencil, Trash2, MessageCircle } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { parseMentions } from "@/lib/social/comment-helpers";
+import {
+  resolveDeletePermission,
+  moderationTooltip,
+  type ModerationContext,
+} from "@/lib/social/comment-moderation";
 import type { MatchComment } from "@/hooks/social/useComments";
 import {
   useAddCommentMutation,
@@ -17,8 +22,13 @@ const MAX_DEPTH = 4;
 interface CommentRowProps {
   comment: MatchComment;
   matchId: string;
-  /** Current viewer id, or null when anonymous. Drives edit/delete visibility. */
+  /** Current viewer id, or null when anonymous. Drives edit visibility
+   *  (edit stays owner-only). For delete, see moderationContext. */
   viewerId: string | null;
+  /** Per-match moderation context (admin/moderator/participant flags).
+   *  Resolved once in CommentThread and passed down per row so we don't
+   *  re-fetch user_roles + match_participants per comment. */
+  moderationContext: ModerationContext;
   /** Toggle reply form visibility — owned by parent (CommentThread) so only
    *  one reply form is open at a time across the tree. */
   isReplyOpen: boolean;
@@ -39,6 +49,7 @@ export function CommentRow({
   comment,
   matchId,
   viewerId,
+  moderationContext,
   isReplyOpen,
   onToggleReply,
   onReplySubmitted,
@@ -53,6 +64,17 @@ export function CommentRow({
   // Hide write actions on optimistic rows (server hasn't assigned a real id
   // yet — editing/deleting them would target a placeholder).
   const isOptimistic = isOptimisticId(comment.comment_id);
+
+  // Delete permission: owner / admin / moderator / match participant.
+  // Resolved by the pure helper (mirrors RPC). Tooltip surfaces the
+  // moderation role so it's visible when a non-owner removes someone
+  // else's comment.
+  const deleteActor = comment.is_deleted
+    ? null
+    : resolveDeletePermission(moderationContext, comment.user_id);
+  const deleteTooltip = deleteActor
+    ? moderationTooltip(deleteActor, language)
+    : null;
 
   const wasEdited =
     !comment.is_deleted &&
@@ -159,21 +181,25 @@ export function CommentRow({
               ariaPressed={isReplyOpen}
             />
           )}
+          {/* Edit stays owner-only. Moderators mask via delete, not rewrite. */}
           {isOwn && !isOptimistic && (
-            <>
-              <ActionButton
-                onClick={() => setIsEditing(true)}
-                icon={<Pencil style={{ width: 13, height: 13 }} />}
-                label={language === "vi" ? "Sửa" : "Edit"}
-              />
-              <ActionButton
-                onClick={handleDelete}
-                icon={<Trash2 style={{ width: 13, height: 13 }} />}
-                label={language === "vi" ? "Xoá" : "Delete"}
-                tone="danger"
-                disabled={deleteMutation.isPending}
-              />
-            </>
+            <ActionButton
+              onClick={() => setIsEditing(true)}
+              icon={<Pencil style={{ width: 13, height: 13 }} />}
+              label={language === "vi" ? "Sửa" : "Edit"}
+            />
+          )}
+          {/* Delete: owner OR participant OR admin OR moderator.
+              Optimistic rows hidden — server-assigned id not yet known. */}
+          {deleteActor && !isOptimistic && (
+            <ActionButton
+              onClick={handleDelete}
+              icon={<Trash2 style={{ width: 13, height: 13 }} />}
+              label={language === "vi" ? "Xoá" : "Delete"}
+              tone={deleteActor === "owner" ? "danger" : "moderation"}
+              title={deleteTooltip ?? undefined}
+              disabled={deleteMutation.isPending}
+            />
           )}
         </div>
       )}
@@ -439,20 +465,34 @@ function ActionButton({
   ariaPressed,
   tone,
   disabled,
+  title,
 }: {
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
   ariaPressed?: boolean;
-  tone?: "default" | "danger";
+  /** "moderation" tone uses the gold/amber accent so a non-owner delete
+   *  reads as moderation action distinct from a self-delete. */
+  tone?: "default" | "danger" | "moderation";
   disabled?: boolean;
+  /** Native browser tooltip — used to surface "Delete as moderator"
+   *  context when tone='moderation'. */
+  title?: string;
 }) {
+  const color =
+    tone === "danger"
+      ? "var(--tl-live, #ff4136)"
+      : tone === "moderation"
+        ? "var(--tl-gold, #e9b649)"
+        : "var(--tl-fg-3)";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       aria-pressed={ariaPressed}
+      title={title}
+      aria-label={title ?? label}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -465,10 +505,7 @@ function ActionButton({
         fontSize: 10.5,
         textTransform: "uppercase",
         letterSpacing: "0.08em",
-        color:
-          tone === "danger"
-            ? "var(--tl-live, #ff4136)"
-            : "var(--tl-fg-3)",
+        color,
       }}
     >
       {icon}
