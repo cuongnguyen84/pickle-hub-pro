@@ -915,18 +915,38 @@ export async function renderProfile(
   // Mirror usePlayerProfile hook query (src/hooks/social/usePlayerProfile.ts).
   // is_ghost=false + onboarding_completed_at IS NOT NULL filters out shells
   // and unfinished signups so bots don't index zombie profiles.
-  const { data: profileRow } = await supabase
+  //
+  // NOTE on `updated_at`: the profiles table has NO updated_at column on
+  // prod (verified via src/integrations/supabase/types.ts; sitemap-players
+  // comment also calls this out). The original Phase 4D select included
+  // it as boilerplate copied from other handlers — the resulting
+  // PostgREST 42703 error returned data=null + error=<column missing>,
+  // and the original code only destructured `data`, silently routing
+  // every profile lookup to the render404 fallback. Verified by Cuong's
+  // seo-verify.sh run on commit 9c9c2fe (4/5 routes passed; profile
+  // route returned the 404 SEO shell).
+  //
+  // Defensive: also destructure `error` and log it so a future column
+  // drift can't silently regress this path again.
+  const { data: profileRow, error: profileErr } = await supabase
     .from("profiles")
     .select(
       `id, username, display_name, avatar_url, bio,
        city, country, skill_level,
        dupr_singles, dupr_doubles,
-       is_ghost, onboarding_completed_at, created_at, updated_at`,
+       is_ghost, onboarding_completed_at, created_at`,
     )
     .eq("username", username)
     .eq("is_ghost", false)
     .not("onboarding_completed_at", "is", null)
     .maybeSingle();
+
+  if (profileErr) {
+    console.error("renderProfile: profile lookup error", {
+      username,
+      error: profileErr,
+    });
+  }
 
   if (!profileRow) return render404(`/nguoi-choi/${username}`, siteUrl);
 
@@ -942,7 +962,6 @@ export async function renderProfile(
     dupr_singles: number | null;
     dupr_doubles: number | null;
     created_at: string;
-    updated_at: string | null;
   };
 
   const displayName = p.display_name ?? p.username;
