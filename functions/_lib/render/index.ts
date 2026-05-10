@@ -866,6 +866,26 @@ export function renderTerms(siteUrl: string, rawPath: string, lang: Lang): Respo
   }));
 }
 
+// ─── Notifications page shell (Sprint 5 PR-C bot view) ────────────────────
+//
+// /notifications, /thong-bao, /vi/notifications, /vi/thong-bao all render
+// the same Notifications React page (auth-gated). Bots get this noindex
+// shell so they don't waste crawl budget on a private surface; real users
+// bypass this branch entirely (middleware only routes here for bot UAs).
+
+export function renderNotificationsShell(siteUrl: string, rawPath: string, lang: Lang): Response {
+  return htmlResponse(buildHtml({
+    title: lang === "vi" ? "Thông báo | ThePickleHub" : "Notifications | ThePickleHub",
+    description: lang === "vi"
+      ? "Thông báo cá nhân ThePickleHub — bình luận, kudo, theo dõi mới và lời nhắc đến từ cộng đồng pickleball."
+      : "ThePickleHub personal notifications — new comments, likes, follows, and mentions from the pickleball community.",
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    lang,
+    extraMeta: `<meta name="robots" content="noindex, nofollow"/>`,
+  }));
+}
+
 // ─── Default fallback ───────────────��─────────────────────
 
 export function renderDefault(path: string, siteUrl: string, lang: Lang): Response {

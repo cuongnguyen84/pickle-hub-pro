@@ -56,6 +56,12 @@ const Trigger = ({ unread, highlight }: { unread: number; highlight: boolean }) 
 
 export const UnifiedNotificationBell = ({ className }: UnifiedNotificationBellProps) => {
   const { user } = useAuth();
+  // Realtime subscription is mounted ONCE at the App.tsx top level via
+  // NotificationsRealtimeInitializer (Codex P2 follow-up on PR #27).
+  // AppHeader renders TWO bell instances side-by-side (desktop hidden
+  // md:block + mobile md:hidden) so subscribing here would double the
+  // channel count per signed-in user. The bell just reads the cache;
+  // the initializer keeps it fresh.
   const { data: unread = 0 } = useUnifiedUnreadCount();
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(false);

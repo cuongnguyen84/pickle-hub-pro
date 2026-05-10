@@ -137,7 +137,40 @@ export function useUnifiedNotifications() {
     },
   });
 
-  // ─── Realtime: subscribe to BOTH tables ──────────────────────────────
+  // Realtime subscription was previously embedded here, but
+  // useUnifiedNotifications only mounts when the bell DROPDOWN is OPEN
+  // (the list component renders inside Popover/Drawer content). That
+  // meant the bell BADGE — which uses useUnifiedUnreadCount() alone —
+  // never received realtime invalidations and only refreshed on page
+  // reload. Cuong's two-tab follow repro (Tab 1 doesn't see "1" badge
+  // until F5) was this exact case.
+  //
+  // Subscription moved to useUnifiedNotificationsRealtime() below so
+  // UnifiedNotificationBell can mount it once at the top level (always
+  // active when user is signed in). The list hook still benefits via
+  // shared cache invalidation — invalidating KEY_LIST refetches the
+  // list when the dropdown is open.
+
+  return list;
+}
+
+/**
+ * Mount the realtime subscription for unified notifications. Call this
+ * from a long-lived component (UnifiedNotificationBell) so the
+ * subscription stays active for the user's whole session, not just
+ * while the dropdown is open.
+ *
+ * Subscribes to BOTH tables (`notifications` legacy + `social_notifications`
+ * Sprint 1+) filtered by current user. Each event invalidates both
+ * KEY_LIST + KEY_UNREAD so the badge AND the dropdown refresh.
+ *
+ * Returns nothing — purely a side-effect hook.
+ */
+export function useUnifiedNotificationsRealtime(): void {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const qc = useQueryClient();
+
   useEffect(() => {
     if (!userId) return;
     const legacyChan = supabase
@@ -146,7 +179,6 @@ export function useUnifiedNotifications() {
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
         () => {
-          // Cheap path: invalidate both caches; React Query refetches.
           qc.invalidateQueries({ queryKey: KEY_LIST(userId) });
           qc.invalidateQueries({ queryKey: KEY_UNREAD(userId) });
         },
@@ -168,8 +200,6 @@ export function useUnifiedNotifications() {
       supabase.removeChannel(socialChan);
     };
   }, [userId, qc]);
-
-  return list;
 }
 
 export function useUnifiedUnreadCount() {
