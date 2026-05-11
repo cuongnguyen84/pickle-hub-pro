@@ -115,11 +115,22 @@ Deno.serve(async (req) => {
   }
 
   // ─── Already registered? ────────────────────────────────────────────────
+  // Codex P1 on PR #45: filter out cancelled rows in the query itself.
+  // After the PR42 Bug 1 fix the partial unique index on (event_id, phone)
+  // excludes status='cancelled', so a single phone may have N cancelled
+  // rows alongside (at most) one active row. The previous
+  // `.maybeSingle()` without the status filter would throw
+  // "multiple rows returned" — surfacing as a spurious
+  // `registration_lookup_failed` 500 that blocked re-registration.
+  //
+  // The query predicate now matches the unique-index predicate exactly,
+  // so .maybeSingle() is guaranteed safe.
   const { data: existing, error: existingErr } = await supabase
     .from("event_registrations")
     .select("id, status")
     .eq("event_id", eventIdInput)
     .eq("phone", phone)
+    .neq("status", "cancelled")
     .maybeSingle();
   if (existingErr) {
     logEvent({
@@ -130,7 +141,7 @@ Deno.serve(async (req) => {
     });
     return err("registration_lookup_failed", 500, "registration_lookup_failed");
   }
-  if (existing && existing.status !== "cancelled") {
+  if (existing) {
     return err("already_registered", 409, "already_registered");
   }
 
