@@ -1220,12 +1220,19 @@ export async function renderMatch(
     "vi",
   );
 
+  // OG image computed once + reused for both buildHtml's image opt
+  // and the schema's image property — Rich Results warns when image
+  // is absent on SportsEvent.
+  const ogImage = `${siteUrl}/og/match/${encodeURIComponent(slug)}.png`;
+
   // Rich JSON-LD (Bug 5 fix): SportsTeam competitors for doubles, Place
-  // location with court → venue containment, eventStatus,
-  // superEvent → tournament, endDate from duration_minutes.
+  // location with court → venue containment, eventStatus, superEvent
+  // (now SportsSeries — see match-seo.ts comment), endDate from
+  // duration_minutes, organizer from source_provider, image from OG.
   const jsonLd = buildMatchSchema({
     url: `${siteUrl}/tran-dau/${slug}`,
     description,
+    imageUrl: ogImage,
     teamAPlayers,
     teamBPlayers,
     teamAScore,
@@ -1238,6 +1245,13 @@ export async function renderMatch(
     venueName,
     venueCity,
     courtNumber,
+    sourceProvider: (m.source_provider as string | null) as
+      | "community"
+      | "ppa_tour"
+      | "app_tour"
+      | "mlp"
+      | "other"
+      | null,
   });
 
   // Breadcrumb (Bug 1 fix): the "Trận đấu" middle crumb now points at
@@ -1270,12 +1284,11 @@ ${tournamentLine}
 <p>Tỉ số: <strong>${escapeHtml(compactScore)}</strong></p>
 ${winnerLabel ? `<p>Đội thắng: <strong>${escapeHtml(winnerLabel)}</strong></p>` : ""}`;
 
-  // OG image points to the og-image-match function. Bug 6 fix:
-  // twitter:image is emitted by buildHtml from the `image` opt
-  // already — don't duplicate it via extraMeta. We still pass the
-  // PNG dimensions/type for og:image because buildHtml only emits
-  // the bare og:image URL.
-  const ogImage = `${siteUrl}/og/match/${encodeURIComponent(slug)}.png`;
+  // ogImage already declared above for the schema's `image` field.
+  // Bug 6 fix on PR #40: twitter:image is emitted by buildHtml from
+  // the `image` opt — don't duplicate via extraMeta. We still pass
+  // PNG dimensions/type because buildHtml only emits the bare
+  // og:image URL.
   const extraMeta = [
     `<meta property="og:image:width" content="1200"/>`,
     `<meta property="og:image:height" content="630"/>`,

@@ -118,6 +118,7 @@ describe("buildMatchSchema", () => {
   const final = {
     url: "https://www.thepicklehub.net/tran-dau/ppa-tour-final",
     description: "Anna Leigh Waters & Anna Bright defeat ...",
+    imageUrl: "https://www.thepicklehub.net/og/match/ppa-tour-final.png",
     teamAPlayers: ["Anna Leigh Waters", "Anna Bright"],
     teamBPlayers: ["Parris Todd", "Rachel Rohrabacher"],
     teamAScore: [11, 11, 11],
@@ -130,6 +131,7 @@ describe("buildMatchSchema", () => {
     venueName: "Brookhaven Country Club",
     venueCity: "Dallas, TX",
     courtNumber: "Center Court",
+    sourceProvider: "ppa_tour" as const,
   };
 
   it("emits SportsTeam competitors when doubles", () => {
@@ -199,10 +201,14 @@ describe("buildMatchSchema", () => {
     expect(loc.containedInPlace?.name).toBe("Brookhaven Country Club");
   });
 
-  it("superEvent links the tournament", () => {
+  it("superEvent uses SportsSeries (no required dates/location)", () => {
+    // PR #41 fix: nested SportsEvent without startDate + location
+    // produced two Rich Results errors. SportsSeries semantically fits
+    // the parent tournament (a series of matches) and only requires
+    // `name` per schema.org.
     const out = buildMatchSchema(final);
     const sup = out.superEvent as { "@type": string; name: string };
-    expect(sup["@type"]).toBe("SportsEvent");
+    expect(sup["@type"]).toBe("SportsSeries");
     expect(sup.name).toBe("PPA Tour 2026 PPA Finals");
   });
 
@@ -214,5 +220,42 @@ describe("buildMatchSchema", () => {
   it("omits winner when winning_team is null", () => {
     const out = buildMatchSchema({ ...final, winningTeam: null });
     expect(out.winner).toBeUndefined();
+  });
+
+  it("emits image (dampens Rich Results image warning)", () => {
+    expect(buildMatchSchema(final).image).toBe(
+      "https://www.thepicklehub.net/og/match/ppa-tour-final.png",
+    );
+  });
+
+  it("emits performer mirroring competitor (Rich Results dampener)", () => {
+    const out = buildMatchSchema(final);
+    expect(out.performer).toEqual(out.competitor);
+  });
+
+  it("organizer maps from sourceProvider", () => {
+    const cases: Array<["ppa_tour" | "app_tour" | "mlp", string]> = [
+      ["ppa_tour", "PPA Tour"],
+      ["app_tour", "APP Tour"],
+      ["mlp", "Major League Pickleball"],
+    ];
+    for (const [source, expectedName] of cases) {
+      const out = buildMatchSchema({ ...final, sourceProvider: source });
+      const org = out.organizer as { "@type": string; name: string };
+      expect(org["@type"]).toBe("Organization");
+      expect(org.name).toBe(expectedName);
+    }
+  });
+
+  it("omits organizer for community matches", () => {
+    expect(
+      buildMatchSchema({ ...final, sourceProvider: "community" }).organizer,
+    ).toBeUndefined();
+  });
+
+  it("omits organizer when sourceProvider is null", () => {
+    expect(
+      buildMatchSchema({ ...final, sourceProvider: null }).organizer,
+    ).toBeUndefined();
   });
 });
