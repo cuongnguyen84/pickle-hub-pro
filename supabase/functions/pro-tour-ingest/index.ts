@@ -55,6 +55,14 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// Pro Tour system profile — matches.recorded_by is NOT NULL UUID FK to
+// profiles(id) (Sprint 1 schema). Pro tour matches have no real user
+// recording them, so we attribute to a synthetic system profile seeded
+// by migration 20260510160002_pro_tour_system_profile.sql. The UUID
+// here MUST match the one INSERTed by that migration — if either
+// changes, the FK violation surfaces immediately on the next ingest.
+const SYSTEM_RECORDER_PROFILE_ID = "11111111-1111-1111-1111-111111111111";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
@@ -330,6 +338,10 @@ async function insertMatchWithParticipants(
       winning_team,
       verification_status: winning_team ? "verified" : "pending",
       is_public: true,
+      // Required NOT NULL FK to profiles. Synthetic system profile seeded
+      // by migration 20260510160002 — see SYSTEM_RECORDER_PROFILE_ID
+      // constant for rationale. (Codex P1 fix on PR #29.)
+      recorded_by: SYSTEM_RECORDER_PROFILE_ID,
       source_provider: scrape.source_provider,
       source_url: match.source_url,
       external_match_id: match.external_match_id,
