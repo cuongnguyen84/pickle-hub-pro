@@ -88,21 +88,31 @@ describe("parseTournamentHtml — fixture: 2026 PPA Finals men's doubles", () =>
     expect(result.tournament_event).toMatch(/Men's Doubles/i);
   });
 
-  it("extracts at least 3 match records from the initial chunk payload", () => {
-    // Initial curl payload contains the 3 most-advanced rounds (Semis +
-    // a Final). Other rounds need Browser Rendering click, but 3+ is
-    // sufficient to certify the regex extractor works end-to-end.
-    expect(result.matches.length).toBeGreaterThanOrEqual(3);
+  it("extracts exactly 3 match records (2 SF + 1 F) from the initial chunk payload", () => {
+    // Top-8 ranked draw: Semi-Finals + Gold Medal Match (Final). No
+    // earlier rounds in this fixture (only 8 teams). Asserting EXACTLY
+    // 3 catches the prior bug where the matchSlice over-extended and
+    // the Final's player block was overwritten with SF2's data,
+    // producing 3 records but only 2 unique team pairings.
+    expect(result.matches.length).toBe(3);
   });
 
-  it("each match has 2 teams with valid score arrays", () => {
+  it("emits a unique external_match_id per match (no duplicates)", () => {
+    const ids = result.matches.map((m) => m.external_match_id);
+    expect(new Set(ids).size).toBe(ids.length);
+    // Spot-check the actual UUIDs from the captured fixture so a
+    // future re-shuffle of regex extraction is caught.
+    expect(ids).toContain("ab0c3626-06a4-45c2-884f-ac3066c2e348"); // SF1
+    expect(ids).toContain("ceef8f47-8b9f-4ff5-93ba-6b0999a6ef45"); // SF2
+    expect(ids).toContain("75d916ac-7c0c-478e-9c69-cbccde99a431"); // Final
+  });
+
+  it("each match has exactly 2 doubles teams with integer scores", () => {
     for (const m of result.matches) {
-      expect(m.team_one.player_external_ids.length).toBeGreaterThanOrEqual(1);
-      expect(m.team_two.player_external_ids.length).toBeGreaterThanOrEqual(1);
-      // Doubles: exactly 2 players per team
-      expect(m.team_one.player_external_ids.length).toBeLessThanOrEqual(2);
-      expect(m.team_two.player_external_ids.length).toBeLessThanOrEqual(2);
-      // Scores are arrays of integers (0..21 covers any sane PPA result)
+      expect(m.team_one.player_external_ids.length).toBe(2);
+      expect(m.team_two.player_external_ids.length).toBe(2);
+      // Both teams should have the same number of games played
+      expect(m.scores_team_one.length).toBe(m.scores_team_two.length);
       for (const s of [...m.scores_team_one, ...m.scores_team_two]) {
         expect(Number.isInteger(s)).toBe(true);
         expect(s).toBeGreaterThanOrEqual(0);
@@ -111,28 +121,77 @@ describe("parseTournamentHtml — fixture: 2026 PPA Finals men's doubles", () =>
     }
   });
 
-  it("ben johns + gabriel tardio team is present and seeded #1", () => {
-    const benTardio = result.matches.find((m) =>
-      [m.team_one, m.team_two].some(
-        (t) =>
-          t.player_external_ids.includes("ben-johns") &&
-          t.player_external_ids.includes("gabriel-tardio"),
-      ),
+  it("round_name is canonical SF for semis and F for the final", () => {
+    const rounds = result.matches.map((m) => m.round_name).sort();
+    // Two semis + one final → ['F','SF','SF']
+    expect(rounds).toEqual(["F", "SF", "SF"]);
+  });
+
+  it("SF1: Ben Johns + Gabriel Tardio (11,11) def Hayden Patriquin + Christian Alshon (8,9)", () => {
+    const sf1 = result.matches.find(
+      (m) => m.external_match_id === "ab0c3626-06a4-45c2-884f-ac3066c2e348",
     );
-    expect(benTardio).toBeDefined();
-    const team = [benTardio!.team_one, benTardio!.team_two].find((t) =>
-      t.player_external_ids.includes("ben-johns"),
-    )!;
-    expect(team.seed).toBe(1);
+    expect(sf1).toBeDefined();
+    expect(sf1!.round_name).toBe("SF");
+    expect(sf1!.team_one.player_external_ids).toEqual(["ben-johns", "gabriel-tardio"]);
+    expect(sf1!.team_one.seed).toBe(1);
+    expect(sf1!.team_two.player_external_ids).toEqual(["hayden-patriquin", "christian-alshon"]);
+    expect(sf1!.team_two.seed).toBe(2);
+    expect(sf1!.scores_team_one).toEqual([11, 11]);
+    expect(sf1!.scores_team_two).toEqual([8, 9]);
+    expect(sf1!.winner_team).toBe("one");
+    expect(sf1!.played_at).toMatch(/^2026-05-09T17:38:00-07:00$/);
+    expect(sf1!.court).toBe("CC");
+  });
+
+  it("SF2: Federico Staksrud + Andrei Daescu (11,11) def Connor Garnett + Riley Newman (9,7)", () => {
+    const sf2 = result.matches.find(
+      (m) => m.external_match_id === "ceef8f47-8b9f-4ff5-93ba-6b0999a6ef45",
+    );
+    expect(sf2).toBeDefined();
+    expect(sf2!.round_name).toBe("SF");
+    expect(sf2!.team_one.player_external_ids).toEqual(["federico-staksrud", "andrei-daescu"]);
+    expect(sf2!.team_one.seed).toBe(3);
+    expect(sf2!.team_two.player_external_ids).toEqual(["connor-garnett", "riley-newman"]);
+    expect(sf2!.team_two.seed).toBe(8);
+    expect(sf2!.scores_team_one).toEqual([11, 11]);
+    expect(sf2!.scores_team_two).toEqual([9, 7]);
+    expect(sf2!.winner_team).toBe("one");
+    expect(sf2!.played_at).toMatch(/^2026-05-09T15:50:00-07:00$/);
+  });
+
+  it("FINAL: Ben Johns + Gabriel Tardio (11,11,11) def Federico Staksrud + Andrei Daescu (8,3,0)", () => {
+    const final = result.matches.find(
+      (m) => m.external_match_id === "75d916ac-7c0c-478e-9c69-cbccde99a431",
+    );
+    expect(final).toBeDefined();
+    expect(final!.round_name).toBe("F");
+    expect(final!.team_one.player_external_ids).toEqual(["ben-johns", "gabriel-tardio"]);
+    expect(final!.team_one.seed).toBe(1);
+    expect(final!.team_two.player_external_ids).toEqual(["federico-staksrud", "andrei-daescu"]);
+    expect(final!.team_two.seed).toBe(3);
+    // Final is best-of-5, played to 3 games (11-11-11 sweep)
+    expect(final!.scores_team_one).toEqual([11, 11, 11]);
+    expect(final!.scores_team_two).toEqual([8, 3, 0]);
+    expect(final!.winner_team).toBe("one");
+    expect(final!.played_at).toMatch(/^2026-05-10T14:02:00-07:00$/);
+  });
+
+  it("each match's played_at is distinct (regression for 'all matches share SF1's date')", () => {
+    const dates = result.matches.map((m) => m.played_at);
+    expect(new Set(dates).size).toBe(dates.length);
   });
 
   it("dedupes players across matches by external_id slug", () => {
     const ids = result.players.map((p) => p.external_id);
-    const uniqueIds = new Set(ids);
-    expect(ids.length).toBe(uniqueIds.size);
-    // Spot-check known players from the men's doubles top-8 bracket
+    expect(new Set(ids).size).toBe(ids.length);
+    // Final draw includes 7 unique players (Ben Johns + Gabriel Tardio
+    // play in both SF and Final but dedupe to one entry each).
+    expect(ids.length).toBe(8);
     expect(ids).toContain("ben-johns");
     expect(ids).toContain("gabriel-tardio");
+    expect(ids).toContain("federico-staksrud");
+    expect(ids).toContain("andrei-daescu");
   });
 
   it("synthesizes a pickleball.com player URL for each player", () => {
@@ -141,16 +200,82 @@ describe("parseTournamentHtml — fixture: 2026 PPA Finals men's doubles", () =>
     expect(ben?.display_name).toBe("Ben Johns");
   });
 
-  it("captures bracket round identifier (W / L / GS)", () => {
+  it("populates court name (CC = Center Court for top-tier matches)", () => {
     for (const m of result.matches) {
-      expect(["W", "L", "GS", "UNKNOWN"]).toContain(m.round_name);
+      expect(m.court).toBe("CC");
     }
   });
+});
 
-  it("populates court name when present", () => {
-    // CC = Center Court. Top-tier matches always render on CC for pro-tour
-    const courts = result.matches.map((m) => m.court).filter(Boolean);
-    expect(courts.length).toBeGreaterThan(0);
+describe("canonicalRoundName via parseTournamentHtml", () => {
+  // Synthetic mini-payloads that exercise each round-title mapping.
+  // The fixture only covers SF + F naturally; these guard against
+  // future tournaments where R32/QF/etc. are scraped.
+  function makeStub(roundTitle: string, bracketType: string): string {
+    return [
+      '<title>Test - Pro Series - Test Event</title>',
+      '<script>self.__next_f.push([1,"',
+      `\\"roundId\\":\\"00001X\\",\\"title\\":\\"${roundTitle}\\",`,
+      '\\"matches\\":[',
+      '{\\"id\\":\\"11111111-1111-1111-1111-111111111111\\",',
+      `\\"inBracketType\\":\\"${bracketType}\\",`,
+      '\\"date\\":\\"May 10 - 02:00 PM PDT\\",',
+      '\\"court\\":\\"CC\\",',
+      '\\"teams\\":[',
+      '{\\"id\\":\\"22222222-2222-2222-2222-222222222222\\",\\"players\\":[\\"Player A\\",\\"Player B\\"],\\"seedNumber\\":1,\\"games\\":[{\\"score\\":11,\\"isWinner\\":true}],\\"isWinner\\":true},',
+      '{\\"id\\":\\"33333333-3333-3333-3333-333333333333\\",\\"players\\":[\\"Player C\\",\\"Player D\\"],\\"seedNumber\\":2,\\"games\\":[{\\"score\\":5,\\"isWinner\\":false}],\\"isWinner\\":false}',
+      ']}',
+      ']"])',
+      '</script>',
+    ].join("");
+  }
+
+  const VALID_URL =
+    "https://brackets.pickleballtournaments.com/tournaments/x/events/AAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/elimination/BBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB";
+
+  const cases: Array<[string, string, string]> = [
+    ["Quarter-Finals", "W", "QF"],
+    ["Quarterfinals", "W", "QF"],
+    ["QF", "W", "QF"],
+    ["Round of 16", "W", "R16"],
+    ["Round of 32", "W", "R32"],
+    ["Gold Medal Match", "GS", "F"],
+    ["Gold Match", "GS", "F"],
+    ["Final", "GS", "F"],
+    ["Bronze Medal Match", "L", "3P"],
+  ];
+
+  for (const [title, bracketType, expectedCode] of cases) {
+    it(`maps round title "${title}" → "${expectedCode}"`, () => {
+      const html = makeStub(title, bracketType);
+      const out = parseTournamentHtml(html, VALID_URL);
+      expect(out.matches.length).toBe(1);
+      expect(out.matches[0].round_name).toBe(expectedCode);
+    });
+  }
+
+  it("falls back to inBracketType when round title is unrecognized", () => {
+    const html = makeStub("Mystery Bracket", "L");
+    const out = parseTournamentHtml(html, VALID_URL);
+    expect(out.matches[0].round_name).toBe("Mystery Bracket");
+  });
+
+  it("falls back to UNKNOWN when both title and bracketType are missing", () => {
+    // Build a stub WITHOUT roundId/title preceding the match
+    const html = [
+      '<title>Test - Test - Event</title>',
+      '<script>self.__next_f.push([1,"',
+      '{\\"id\\":\\"11111111-1111-1111-1111-111111111111\\",',
+      '\\"date\\":\\"May 10 - 02:00 PM PDT\\",',
+      '\\"court\\":\\"CC\\",',
+      '\\"teams\\":[',
+      '{\\"id\\":\\"22222222-2222-2222-2222-222222222222\\",\\"players\\":[\\"Player A\\"],\\"seedNumber\\":1,\\"games\\":[{\\"score\\":11,\\"isWinner\\":true}],\\"isWinner\\":true},',
+      '{\\"id\\":\\"33333333-3333-3333-3333-333333333333\\",\\"players\\":[\\"Player B\\"],\\"seedNumber\\":2,\\"games\\":[{\\"score\\":5,\\"isWinner\\":false}],\\"isWinner\\":false}',
+      ']}',
+      '"])</script>',
+    ].join("");
+    const out = parseTournamentHtml(html, VALID_URL);
+    expect(out.matches[0].round_name).toBe("UNKNOWN");
   });
 });
 
