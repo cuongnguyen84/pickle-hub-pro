@@ -1735,6 +1735,13 @@ export interface Translations {
     replyingTo: string;
     cancelReply: string;
   };
+  // Social Events MVP (Sprint 1) — PR1 ships the namespace skeleton.
+  // PR2 fills register/detail keys; PR3 fills create/manage/matchmaking.
+  socialEvents: {
+    nav: string;
+    breadcrumb: string;
+    comingSoon: string;
+  };
 }
 
 // Vietnamese translations
@@ -3475,5 +3482,10 @@ export const vi: Translations = {
     reply: "Trả lời",
     replyingTo: "Đang trả lời",
     cancelReply: "Hủy",
+  },
+  socialEvents: {
+    nav: "Sự kiện",
+    breadcrumb: "Sự kiện CLB",
+    comingSoon: "Đang xây dựng — sẽ ra mắt cuối tháng 5/2026.",
   },
 };

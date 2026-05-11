@@ -143,3 +143,20 @@ verify_jwt = false
 # to the pro-tour-scraper Cloudflare Worker. Required secrets:
 #   SCRAPER_AUTH_SECRET    — must match the Worker's wrangler secret
 #   PRO_TOUR_SCRAPER_URL   — e.g. https://pro-tour-scraper.<account>.workers.dev
+
+# ─── Social Events MVP (Sprint 1 PR1) ──────────────────────────────────────
+# Public phone-OTP registration. No auth required — these endpoints take a
+# phone number + 6-digit code and write to event_registrations via the
+# service-role key. RLS on otp_codes blocks all non-service access.
+# Required secrets when running outside dev mode:
+#   ESMS_API_KEY      — eSMS.vn API key
+#   ESMS_SECRET_KEY   — eSMS.vn secret
+#   ESMS_BRAND_NAME   — registered brandname (e.g. "PickleHub")
+# Dev mode: set ENVIRONMENT=development to skip the gateway and emit the
+# OTP to console (the response also carries `dev_mode_code`).
+
+[functions.phone-otp-send]
+verify_jwt = false
+
+[functions.phone-otp-verify]
+verify_jwt = false
