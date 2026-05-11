@@ -133,3 +133,13 @@ verify_jwt = false
 # function checks the bearer matches env.SUPABASE_SERVICE_ROLE_KEY exactly
 # before doing any work — verify_jwt would block legitimate calls because
 # the service role token isn't a user JWT.
+
+[functions.pro-tour-trigger-scrape]
+verify_jwt = false
+# Admin-gated scrape trigger called from /admin/pro-tour. verify_jwt = false
+# per the project-wide ES256/HS256 workaround (CLAUDE.md); the function
+# verifies the bearer JWT internally via supabase.auth.getUser() and
+# checks user_roles for admin role before forwarding the signed request
+# to the pro-tour-scraper Cloudflare Worker. Required secrets:
+#   SCRAPER_AUTH_SECRET    — must match the Worker's wrangler secret
+#   PRO_TOUR_SCRAPER_URL   — e.g. https://pro-tour-scraper.<account>.workers.dev
