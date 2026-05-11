@@ -24,6 +24,7 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "tama-shimabukuro-ppa-atlanta-final-15-year-old",
   "pickleball-tour-wars-2023-explained",
   "app-tour-vs-ppa-tour-contracts-2026",
   "how-to-watch-ppa-tour-live-2026",

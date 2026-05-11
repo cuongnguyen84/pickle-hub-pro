@@ -310,6 +310,22 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaDescriptionEn: "Complete guide to PPA Tour Asia 2026 — all 10 tournament stops, $2.15M total prize money, dates, cities, and how amateurs can play alongside the pros.",
     metaDescriptionVi: "Hướng dẫn đầy đủ PPA Tour Asia 2026 — 10 chặng đấu, tổng tiền thưởng $2.15 triệu, lịch trình, địa điểm và cách VĐV nghiệp dư tham gia thi đấu cùng các pro.",
   },
+  {
+    slug: "tama-shimabukuro-ppa-atlanta-final-15-year-old",
+    publishedDate: "2026-05-11",
+    updatedDate: "2026-05-11",
+    author: "Cuong Nguyen",
+    tags: ["tama shimabukuro", "ppa tour", "atlanta championships", "hunter johnson", "federico staksrud", "young players", "professional pickleball", "hawaii"],
+    ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
+    ctaLabel: { en: "Read: PPA Tour Asia 2026 Complete Guide", vi: "Đọc tiếp: PPA Tour Asia 2026 — Hướng dẫn đầy đủ" },
+    heroImage: undefined,
+    titleEn: "Tama Shimabukuro: How a 15-Year-Old From Hawaii Took Down World #1 and #2 at PPA Atlanta",
+    titleVi: "Tama Shimabukuro: 15 tuổi, hạ số 1 và số 2 thế giới, vào chung kết PPA Atlanta",
+    metaTitleEn: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud",
+    metaTitleVi: "Tama Shimabukuro vào chung kết PPA Atlanta ở tuổi 15 | Hạ Hunter Johnson & Staksrud",
+    metaDescriptionEn: "15-year-old Tama Shimabukuro just beat world #1 Hunter Johnson and #2 Federico Staksrud at PPA Veolia Atlanta Championships to reach the final. His self-taught Hawaii origin story.",
+    metaDescriptionVi: "Tama Shimabukuro 15 tuổi vừa hạ số 1 thế giới Hunter Johnson và số 2 Federico Staksrud tại PPA Veolia Atlanta Championships. Câu chuyện tự học từ Hawaii.",
+  },
 ];
 
 export const blogSlugs: string[] = blogMetadata.map((p) => p.slug);
