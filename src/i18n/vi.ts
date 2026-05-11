@@ -1761,6 +1761,8 @@ export interface Translations {
       zaloGroup: string;
       shareTitle: string;
       shareCopy: string;
+      shareZalo: string;
+      shareFacebook: string;
       copyLink: string;
       rosterHeading: string;
       rosterEmpty: string;
@@ -1812,6 +1814,128 @@ export interface Translations {
       eventsLabel: string;
       notFound: string;
       notFoundBody: string;
+    };
+    // PR3 — organizer surfaces
+    create: {
+      pageTitle: string;
+      pageSubtitle: string;
+      titleVi: string;
+      titleEn: string;
+      titleViPlaceholder: string;
+      titleEnPlaceholder: string;
+      slug: string;
+      slugHint: string;
+      slugAuto: string;
+      descriptionVi: string;
+      descriptionEn: string;
+      startAt: string;
+      endAt: string;
+      location: string;
+      locationPlaceholder: string;
+      latLng: string;
+      courtCount: string;
+      maxPlayers: string;
+      levelMin: string;
+      levelMax: string;
+      priceVnd: string;
+      priceVndHint: string;
+      allowGuests: string;
+      allowGuestsHint: string;
+      cancellationHours: string;
+      zaloGroupUrl: string;
+      visibility: string;
+      visibilityPublic: string;
+      visibilityClubOnly: string;
+      saveDraft: string;
+      publishNow: string;
+      submitting: string;
+      errorRequired: string;
+      errorTimeOrder: string;
+      errorSlugTaken: string;
+      errorSlugFormat: string;
+      successDraft: string;
+      successPublished: string;
+    };
+    manage: {
+      pageTitle: string;
+      newEventCta: string;
+      backToClub: string;
+      noEvents: string;
+      statsRegistered: string;
+      statsPaid: string;
+      statsCheckedIn: string;
+      statusDraft: string;
+      statusPublished: string;
+      statusCancelled: string;
+      statusCompleted: string;
+      manageRoster: string;
+      shufflePairs: string;
+      viewPublic: string;
+      cancelEvent: string;
+      cancelEventConfirm: string;
+      cancelEventConfirmBody: string;
+      cancelled: string;
+      reopen: string;
+      reopenedToast: string;
+      noPermissionTitle: string;
+      noPermissionBody: string;
+    };
+    roster: {
+      pageTitle: string;
+      registeredCount: string;
+      paidCount: string;
+      noRegistrations: string;
+      addManual: string;
+      addManualTitle: string;
+      addManualSubmit: string;
+      export: string;
+      colName: string;
+      colPhone: string;
+      colLevel: string;
+      colStatus: string;
+      colPayment: string;
+      colRegistered: string;
+      colActions: string;
+      actionCheckIn: string;
+      actionUndoCheckIn: string;
+      actionMarkPaid: string;
+      actionMarkUnpaid: string;
+      actionMarkNoShow: string;
+      actionCancel: string;
+      actionEditNotes: string;
+      confirmCancelTitle: string;
+      confirmCancelBody: string;
+      confirmNoShowTitle: string;
+      confirmNoShowBody: string;
+      notesPlaceholder: string;
+      saveNotes: string;
+      updatedToast: string;
+      deletedToast: string;
+    };
+    matchmaking: {
+      pageTitle: string;
+      tabMexicano: string;
+      tabRoundRobin: string;
+      selectPlayersTitle: string;
+      selectAll: string;
+      selectNone: string;
+      selectedCount: string;
+      roundsLabel: string;
+      courtsLabel: string;
+      generate: string;
+      regenerate: string;
+      oddPlayersWarning: string;
+      schedule: string;
+      round: string;
+      court: string;
+      teamA: string;
+      teamB: string;
+      sittingOut: string;
+      print: string;
+      copy: string;
+      copied: string;
+      empty: string;
+      notEnoughPlayers: string;
     };
   };
 }
@@ -3580,6 +3704,8 @@ export const vi: Translations = {
       zaloGroup: "Mở nhóm Zalo",
       shareTitle: "Chia sẻ sự kiện",
       shareCopy: "Sao chép liên kết",
+      shareZalo: "Chia sẻ Zalo",
+      shareFacebook: "Chia sẻ Facebook",
       copyLink: "Đã sao chép liên kết",
       rosterHeading: "Đã đăng ký",
       rosterEmpty: "Chưa có ai đăng ký — bạn là người đầu tiên!",
@@ -3634,6 +3760,132 @@ export const vi: Translations = {
       notFound: "Không tìm thấy CLB",
       notFoundBody:
         "Liên kết CLB có thể đã thay đổi hoặc bị xóa. Quay lại trang chủ để khám phá thêm.",
+    },
+    create: {
+      pageTitle: "Tạo sự kiện mới",
+      pageSubtitle: "Sự kiện sẽ xuất hiện trên trang CLB sau khi xuất bản.",
+      titleVi: "Tên sự kiện (tiếng Việt)",
+      titleEn: "Tên sự kiện (English, tuỳ chọn)",
+      titleViPlaceholder: "Open Play Tối Thứ Bảy",
+      titleEnPlaceholder: "Saturday Night Open Play",
+      slug: "Đường dẫn (slug)",
+      slugHint:
+        "Hiển thị trong URL: thepicklehub.net/su-kien/<slug>. Chỉ chữ thường, số và dấu gạch ngang.",
+      slugAuto: "Tự sinh từ tên",
+      descriptionVi: "Mô tả (tiếng Việt)",
+      descriptionEn: "Mô tả (English, tuỳ chọn)",
+      startAt: "Bắt đầu",
+      endAt: "Kết thúc",
+      location: "Địa điểm",
+      locationPlaceholder: "Sân pickleball ABC, Quận 3, TP.HCM",
+      latLng: "Toạ độ (lat,lng — tuỳ chọn)",
+      courtCount: "Số sân",
+      maxPlayers: "Số người tối đa",
+      levelMin: "Trình độ tối thiểu",
+      levelMax: "Trình độ tối đa",
+      priceVnd: "Phí mỗi người (VNĐ)",
+      priceVndHint: "Đặt 0 cho sự kiện miễn phí.",
+      allowGuests: "Cho phép đăng ký khách (qua OTP)",
+      allowGuestsHint:
+        "Bỏ chọn nếu chỉ thành viên CLB có tài khoản mới được đăng ký.",
+      cancellationHours: "Số giờ hủy đăng ký được hoàn tiền",
+      zaloGroupUrl: "Liên kết nhóm Zalo (tuỳ chọn)",
+      visibility: "Hiển thị",
+      visibilityPublic: "Công khai — ai cũng xem được",
+      visibilityClubOnly: "Chỉ trong CLB — không index search engine",
+      saveDraft: "Lưu nháp",
+      publishNow: "Xuất bản ngay",
+      submitting: "Đang lưu…",
+      errorRequired: "Trường này bắt buộc",
+      errorTimeOrder: "Giờ kết thúc phải sau giờ bắt đầu",
+      errorSlugTaken: "Slug đã tồn tại — vui lòng đổi",
+      errorSlugFormat: "Slug chỉ chứa chữ thường, số, dấu gạch ngang (3–100 ký tự)",
+      successDraft: "Đã lưu nháp",
+      successPublished: "Đã xuất bản — sự kiện đang nhận đăng ký",
+    },
+    manage: {
+      pageTitle: "Quản lý sự kiện",
+      newEventCta: "Tạo sự kiện mới",
+      backToClub: "Quay lại trang CLB",
+      noEvents: "CLB chưa có sự kiện nào.",
+      statsRegistered: "Đăng ký",
+      statsPaid: "Đã thanh toán",
+      statsCheckedIn: "Check-in",
+      statusDraft: "Nháp",
+      statusPublished: "Đang nhận đăng ký",
+      statusCancelled: "Đã huỷ",
+      statusCompleted: "Đã kết thúc",
+      manageRoster: "Danh sách đăng ký",
+      shufflePairs: "Xếp cặp",
+      viewPublic: "Xem trang công khai",
+      cancelEvent: "Huỷ sự kiện",
+      cancelEventConfirm: "Bạn chắc chắn huỷ sự kiện này?",
+      cancelEventConfirmBody:
+        "Tất cả người đã đăng ký sẽ thấy thông báo \"Sự kiện đã huỷ\". Bạn có thể mở lại sau.",
+      cancelled: "Đã huỷ",
+      reopen: "Mở lại",
+      reopenedToast: "Đã mở lại sự kiện",
+      noPermissionTitle: "Bạn không có quyền truy cập",
+      noPermissionBody:
+        "Chỉ tổ chức viên (người tạo CLB hoặc admin) mới truy cập được trang này.",
+    },
+    roster: {
+      pageTitle: "Danh sách đăng ký",
+      registeredCount: "Đã đăng ký",
+      paidCount: "Đã thanh toán",
+      noRegistrations: "Chưa có ai đăng ký.",
+      addManual: "Thêm thủ công",
+      addManualTitle: "Thêm người tham gia",
+      addManualSubmit: "Thêm vào danh sách",
+      export: "Tải CSV",
+      colName: "Tên",
+      colPhone: "Số ĐT",
+      colLevel: "Trình độ",
+      colStatus: "Trạng thái",
+      colPayment: "Thanh toán",
+      colRegistered: "Đăng ký lúc",
+      colActions: "Thao tác",
+      actionCheckIn: "Check-in",
+      actionUndoCheckIn: "Bỏ check-in",
+      actionMarkPaid: "Đánh dấu đã thanh toán",
+      actionMarkUnpaid: "Đánh dấu chưa thanh toán",
+      actionMarkNoShow: "Vắng mặt",
+      actionCancel: "Huỷ đăng ký",
+      actionEditNotes: "Ghi chú",
+      confirmCancelTitle: "Huỷ đăng ký của người này?",
+      confirmCancelBody:
+        "Số điện thoại sẽ được giải phóng và có thể đăng ký lại.",
+      confirmNoShowTitle: "Đánh dấu vắng mặt?",
+      confirmNoShowBody: "Người này vẫn nằm trong danh sách nhưng không tính sĩ số sân.",
+      notesPlaceholder: "Ghi chú nội bộ (không hiển thị công khai)",
+      saveNotes: "Lưu",
+      updatedToast: "Đã cập nhật",
+      deletedToast: "Đã huỷ đăng ký",
+    },
+    matchmaking: {
+      pageTitle: "Xếp cặp — Matchmaking",
+      tabMexicano: "Mexicano",
+      tabRoundRobin: "Round Robin",
+      selectPlayersTitle: "Chọn người tham gia",
+      selectAll: "Chọn tất cả",
+      selectNone: "Bỏ chọn",
+      selectedCount: "Đã chọn {n} người",
+      roundsLabel: "Số vòng",
+      courtsLabel: "Số sân",
+      generate: "Tạo lịch trận",
+      regenerate: "Tạo lại",
+      oddPlayersWarning: "Số người không chia hết cho 4 — sẽ có người ngồi ngoài mỗi vòng.",
+      schedule: "Lịch trận",
+      round: "Vòng",
+      court: "Sân",
+      teamA: "Cặp A",
+      teamB: "Cặp B",
+      sittingOut: "Ngồi ngoài",
+      print: "In",
+      copy: "Sao chép",
+      copied: "Đã sao chép",
+      empty: "Chưa có lịch — chọn người chơi rồi nhấn \"Tạo lịch trận\".",
+      notEnoughPlayers: "Cần ít nhất 4 người để xếp cặp.",
     },
   },
 };

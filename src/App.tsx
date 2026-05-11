@@ -103,6 +103,11 @@ const Feed = lazy(() => import("./pages/Feed"));
 // Social Events MVP — Sprint 1 PR2
 const SocialEventDetail = lazy(() => import("./pages/SocialEventDetail"));
 const ClubLanding = lazy(() => import("./pages/ClubLanding"));
+// Social Events MVP — Sprint 1 PR3 (organizer surfaces)
+const ClubManage = lazy(() => import("./pages/ClubManage"));
+const CreateSocialEvent = lazy(() => import("./pages/CreateSocialEvent"));
+const SocialEventRoster = lazy(() => import("./pages/SocialEventRoster"));
+const SocialEventMatchmaking = lazy(() => import("./pages/SocialEventMatchmaking"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -424,6 +429,11 @@ const App = () => (
                     {/* Social Events MVP Sprint 1 PR2 — public landing pages (no auth) */}
                     <Route path="/su-kien/:slug" element={<SocialEventDetail />} />
                     <Route path="/clb/:slug" element={<ClubLanding />} />
+                    {/* Social Events MVP Sprint 1 PR3 — organizer surfaces (auth + ownership) */}
+                    <Route path="/clb/:slug/quan-ly" element={<ClubManage />} />
+                    <Route path="/clb/:slug/su-kien/moi" element={<CreateSocialEvent />} />
+                    <Route path="/su-kien/:slug/danh-sach" element={<SocialEventRoster />} />
+                    <Route path="/su-kien/:slug/xep-cap" element={<SocialEventMatchmaking />} />
                     <Route path="/notifications" element={<Notifications />} />
                     {/* Sprint 5 PR-C — Vietnamese-friendly alias. Same
                         page renders for both /notifications and /thong-bao

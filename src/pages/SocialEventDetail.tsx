@@ -16,13 +16,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2 } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, Link as LinkIcon } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations } from "@/hooks/useEventRegistrations";
@@ -61,6 +62,7 @@ export default function SocialEventDetail() {
   const { t, language } = useI18n();
   const { user } = useAuth();
   const { profile } = useUserProfile();
+  const isMobile = useIsMobile();
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data, isLoading, refetch } = useSocialEvent(slug);
@@ -190,7 +192,11 @@ export default function SocialEventDetail() {
   const eventUrl = `${SITE_URL}/su-kien/${data.slug}`;
   const levelRange = formatLevelRange(data.level_min, data.level_max);
 
-  const handleShare = async () => {
+  // Share UX (per Sprint-1 decision): mobile gets native picker (95% VN
+  // users have Zalo as a target), desktop gets explicit Zalo + Facebook
+  // + Copy buttons. Detect mobile via useIsMobile rather than UA-sniff so
+  // we follow the same breakpoint as the rest of the chrome.
+  const handleNativeShare = async () => {
     const shareData: ShareData = {
       title: eventTitle,
       text: description.slice(0, 140) || eventTitle,
@@ -204,16 +210,27 @@ export default function SocialEventDetail() {
         // user cancelled — fall through to clipboard
       }
     }
+    await handleCopyLink();
+  };
+
+  const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(eventUrl);
       toast({ title: t.socialEvents.detail.copyLink });
     } catch {
-      toast({
-        title: t.common.error,
-        description: eventUrl,
-      });
+      toast({ title: t.common.error, description: eventUrl });
     }
   };
+
+  // Zalo share URL — opens Zalo PC client when installed, otherwise the
+  // browser share UI. Encode the full event URL only; Zalo strips
+  // unknown params, so we don't bother with title/text.
+  const zaloShareHref = `https://zalo.me/share/url?url=${encodeURIComponent(eventUrl)}`;
+  // Facebook standard sharer endpoint — opens a popup-style dialog.
+  const facebookShareHref = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(eventUrl)}`;
+
+  const useNativeShare =
+    isMobile && typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const mapsHref = data.location_lat && data.location_lng
     ? `https://www.google.com/maps/search/?api=1&query=${data.location_lat},${data.location_lng}`
@@ -339,10 +356,58 @@ export default function SocialEventDetail() {
                       ? (language === "vi" ? "Hết chỗ" : "Sold out")
                       : t.socialEvents.detail.registerCta}
             </Button>
-            <Button variant="outline" size="lg" onClick={handleShare}>
-              <Share2 className="mr-2 h-4 w-4" />
-              {t.socialEvents.detail.shareTitle}
-            </Button>
+            {useNativeShare ? (
+              <Button variant="outline" size="lg" onClick={handleNativeShare}>
+                <Share2 className="mr-2 h-4 w-4" />
+                {t.socialEvents.detail.shareTitle}
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="outline" size="lg">
+                  <a
+                    href={zaloShareHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t.socialEvents.detail.shareZalo}
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 18,
+                        height: 18,
+                        borderRadius: 4,
+                        background: "#0068ff",
+                        color: "white",
+                        fontWeight: 700,
+                        fontSize: 11,
+                        marginRight: 8,
+                      }}
+                    >
+                      Z
+                    </span>
+                    {t.socialEvents.detail.shareZalo}
+                  </a>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <a
+                    href={facebookShareHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t.socialEvents.detail.shareFacebook}
+                  >
+                    <Facebook className="mr-2 h-4 w-4" />
+                    {t.socialEvents.detail.shareFacebook}
+                  </a>
+                </Button>
+                <Button variant="ghost" size="lg" onClick={handleCopyLink} aria-label={t.socialEvents.detail.shareCopy}>
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  {t.socialEvents.detail.shareCopy}
+                </Button>
+              </>
+            )}
           </div>
         </Card>
 
