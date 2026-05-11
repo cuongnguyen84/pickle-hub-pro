@@ -1761,6 +1761,8 @@ export interface Translations {
       zaloGroup: string;
       shareTitle: string;
       shareCopy: string;
+      shareZalo: string;
+      shareFacebook: string;
       copyLink: string;
       rosterHeading: string;
       rosterEmpty: string;
@@ -3702,6 +3704,8 @@ export const vi: Translations = {
       zaloGroup: "Mở nhóm Zalo",
       shareTitle: "Chia sẻ sự kiện",
       shareCopy: "Sao chép liên kết",
+      shareZalo: "Chia sẻ Zalo",
+      shareFacebook: "Chia sẻ Facebook",
       copyLink: "Đã sao chép liên kết",
       rosterHeading: "Đã đăng ký",
       rosterEmpty: "Chưa có ai đăng ký — bạn là người đầu tiên!",

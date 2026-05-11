@@ -1764,6 +1764,8 @@ export const en: Translations = {
       zaloGroup: "Open Zalo group",
       shareTitle: "Share event",
       shareCopy: "Copy link",
+      shareZalo: "Share to Zalo",
+      shareFacebook: "Share to Facebook",
       copyLink: "Link copied",
       rosterHeading: "Registered",
       rosterEmpty: "No one has registered yet — be the first!",
