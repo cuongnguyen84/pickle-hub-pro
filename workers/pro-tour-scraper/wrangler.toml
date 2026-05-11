@@ -55,7 +55,7 @@ SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
 # Non-secret — safe to commit. If you need to keep it private, switch
 # to `wrangler secret put CLOUDFLARE_ACCOUNT_ID` and update the Env
 # interface in src/index.ts accordingly.
-CLOUDFLARE_ACCOUNT_ID = ""
+CLOUDFLARE_ACCOUNT_ID = "7888e97076d4eadd9a8fa409d11dc281"
 
 # Observability — surface scrape errors in CF dashboard logs without
 # adding an external service.
