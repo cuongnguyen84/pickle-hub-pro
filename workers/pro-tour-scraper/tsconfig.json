@@ -16,5 +16,5 @@
     }
   },
   "include": ["./src/**/*.ts", "../../src/lib/pro-tour/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "../../src/lib/pro-tour/__tests__/**/*"]
 }

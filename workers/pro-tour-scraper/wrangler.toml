@@ -6,22 +6,37 @@
 #   - Scheduled cron       → every 6h, picks up pro_tour_watchlist rows
 #     where next_scrape_at < NOW() AND status='active'
 #
-# Bindings required:
-#   - MYBROWSER       : Browser Rendering binding (Workers Paid plan)
-#   - SUPABASE_URL    : env var, ajvlcamxemgbxduhiqrl.supabase.co
-#   - SUPABASE_SERVICE_ROLE_KEY : env secret, set via `wrangler secret put`
-#   - SCRAPER_AUTH_SECRET : env secret, shared with the admin UI / edge
-#                           function so /scrape rejects un-signed POSTs
+# Bindings + env required:
+#   [vars]
+#     SUPABASE_URL          : Supabase project URL
+#     CLOUDFLARE_ACCOUNT_ID : account that owns the Browser Rendering quota
+#   [secrets] — set via `wrangler secret put`
+#     SUPABASE_SERVICE_ROLE_KEY : Supabase service role key (PostgREST)
+#     SCRAPER_AUTH_SECRET       : HMAC shared with admin UI / edge fn
+#     CLOUDFLARE_API_TOKEN      : token w/ permission Account → Browser Rendering: Edit
+#
+# Browser Rendering: we call the REST API directly
+# (POST /accounts/:id/browser-rendering/content) instead of using the
+# @cloudflare/puppeteer Workers binding. Puppeteer kept timing out on
+# Browser.getVersion at the launch handshake — `protocolTimeout` isn't
+# exposed via WorkersLaunchOptions in 0.0.14, only `keep_alive`. The
+# REST API runs the browser server-side; we just receive HTML, no
+# client-side CDP timeout to hit. See src/index.ts header for the
+# full trade-off discussion (REST is single-shot — earlier bracket
+# rounds need follow-up strategy).
 
 name = "pro-tour-scraper"
 main = "src/index.ts"
 compatibility_date = "2026-04-15"
 compatibility_flags = ["nodejs_compat"]
 
-# Browser Rendering binding — Workers Paid plan; free quota 10 hrs/month.
-# Configure in dashboard if not auto-provisioned by `wrangler deploy`.
-[browser]
-binding = "MYBROWSER"
+# [browser] binding intentionally COMMENTED OUT — the REST API path
+# doesn't need it. Re-enable if a future revision reintroduces the
+# puppeteer Workers binding behind a feature flag for full-bracket
+# multi-round coverage (R32 click loop). The commented form keeps the
+# config trivially restorable without new dashboard work.
+# [browser]
+# binding = "MYBROWSER"
 
 # Cron trigger — every 6 hours UTC. Picks up active watchlist rows that
 # are due for a re-scrape. Adjust schedule as cadence demands change;
@@ -34,6 +49,13 @@ crons = ["0 */6 * * *"]
 # `wrangler secret put`, never committed.
 [vars]
 SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
+# Set CLOUDFLARE_ACCOUNT_ID to your CF account id (the one that hosts
+# the Worker). Find it in the URL of any page in the CF dashboard:
+#   https://dash.cloudflare.com/<account_id>/...
+# Non-secret — safe to commit. If you need to keep it private, switch
+# to `wrangler secret put CLOUDFLARE_ACCOUNT_ID` and update the Env
+# interface in src/index.ts accordingly.
+CLOUDFLARE_ACCOUNT_ID = "7888e97076d4eadd9a8fa409d11dc281"
 
 # Observability — surface scrape errors in CF dashboard logs without
 # adding an external service.
