@@ -337,7 +337,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["dupr", "pickleball rating", "skill rating", "ppa tour", "mlp", "usa pickleball", "vietnam", "beginner guide"],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
     ctaLabel: { en: "Read: PPA Tour Asia 2026 Complete Guide", vi: "Đọc tiếp: PPA Tour Asia 2026 — Hướng dẫn đầy đủ" },
-    heroImage: undefined,
+    heroImage: {
+      src: "/images/blog/dupr-pickleball-rating-hero.webp",
+      alt: "Visual explainer for DUPR (Dynamic Universal Pickleball Rating), the global pickleball skill rating system on a 2.000–8.000 scale used by PPA Tour, MLP, USA Pickleball, Pickleball World Cup, and over 1 million rated players across 175 countries"
+    },
     titleEn: "What Is DUPR? The Global Pickleball Rating System Explained (Part 1 of 3)",
     titleVi: "DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu cho người chơi Việt Nam (Phần 1/3)",
     metaTitleEn: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series",
