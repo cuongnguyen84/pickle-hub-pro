@@ -12,6 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Navigate } from "react-router-dom";
+// Single source of truth for the URL shape — same regex the Worker
+// uses to gatekeep /scrape. Importing it here means a future bracket
+// host (APP / MLP / new PPA URL convention) only needs the change in
+// the adapter, never duplicated in the admin UI. The previous local
+// regex required hex-only chars in the tournaments segment, which
+// rejected the current PPA slug form (e.g. ppa-tour-2026-ppa-finals)
+// even though the Worker accepted it.
+import { PRO_TOUR_HOST_PATTERN } from "@/lib/pro-tour/adapters/rsc-scraper";
 
 /**
  * /admin/pro-tour — Sprint 6 admin surface for the pro tour ingestion
@@ -31,9 +39,6 @@ import { Navigate } from "react-router-dom";
  * admin pages stay on AdminLayout for nav consistency with the rest of
  * /admin/*.
  */
-
-const SCRAPER_URL_RE =
-  /^https:\/\/brackets\.pickleballtournaments\.com\/tournaments\/[0-9a-f-]+\/events\/[0-9A-F-]+\/elimination\/[0-9A-F-]+/i;
 
 const ProTourAdmin = () => {
   const { language } = useI18n();
@@ -107,7 +112,7 @@ function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
 
   const submit = async () => {
     setResult(null);
-    if (!SCRAPER_URL_RE.test(url)) {
+    if (!PRO_TOUR_HOST_PATTERN.test(url)) {
       setResult({
         ok: false,
         error:

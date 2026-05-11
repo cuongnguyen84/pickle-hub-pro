@@ -254,10 +254,31 @@ describe("canonicalRoundName via parseTournamentHtml", () => {
     });
   }
 
-  it("falls back to inBracketType when round title is unrecognized", () => {
-    const html = makeStub("Mystery Bracket", "L");
+  it("falls back to inBracketType (W/L/GS) when round title is unrecognized", () => {
+    // Codex P2 fix on PR #34: never emit raw title text into round_name —
+    // downstream grouping/filtering relies on a bounded vocabulary.
+    // bracketType is the stable fallback whenever the canonical map misses.
+    const cases: Array<[string, "W" | "L" | "GS"]> = [
+      ["Mystery Bracket", "W"],
+      ["Cuartos de Final", "L"], // localized label
+      ["Round-Robin Group A", "GS"], // novel format
+    ];
+    for (const [title, bracketType] of cases) {
+      const html = makeStub(title, bracketType);
+      const out = parseTournamentHtml(html, VALID_URL);
+      expect(out.matches[0].round_name).toBe(bracketType);
+    }
+  });
+
+  it("canonical title wins even when bracketType disagrees", () => {
+    // Sanity check: a Semi-Final played on the loser side of a double-
+    // elimination bracket would carry inBracketType='L' but title
+    // 'Semi-Finals'. The canonical map MUST take precedence — round_name
+    // should be 'SF', not 'L'. Otherwise the ordering of the lookup
+    // matters for correctness, which it shouldn't.
+    const html = makeStub("Semi-Finals", "L");
     const out = parseTournamentHtml(html, VALID_URL);
-    expect(out.matches[0].round_name).toBe("Mystery Bracket");
+    expect(out.matches[0].round_name).toBe("SF");
   });
 
   it("falls back to UNKNOWN when both title and bracketType are missing", () => {
