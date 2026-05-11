@@ -1739,4 +1739,9 @@ export const en: Translations = {
     replyingTo: "Replying to",
     cancelReply: "Cancel",
   },
+  socialEvents: {
+    nav: "Events",
+    breadcrumb: "Club events",
+    comingSoon: "Under construction — launching late May 2026.",
+  },
 };
