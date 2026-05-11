@@ -5,7 +5,7 @@
 // print/copy. Nothing persists. Organizer can re-generate as often as needed.
 // ============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Loader2, Sparkles, Printer, Copy, RefreshCw } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -40,8 +40,22 @@ export default function SocialEventMatchmaking() {
   const [format, setFormat] = useState<Format>("mexicano");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [rounds, setRounds] = useState(4);
-  const [courts, setCourts] = useState(event?.court_count ?? 2);
+  // Courts default to 2 on first render — `event` resolves asynchronously
+  // from the query, so we can't read event.court_count in useState init.
+  // The useEffect below syncs the real value once the event loads.
+  const [courts, setCourts] = useState(2);
+  const [courtsTouched, setCourtsTouched] = useState(false);
   const [schedule, setSchedule] = useState<MMSchedule | null>(null);
+
+  // Codex Bug 6 (PR #44): sync courts state from event.court_count once the
+  // event resolves. We only auto-apply until the organizer manually
+  // changes the input (courtsTouched flag) so subsequent event re-fetches
+  // (e.g. on focus) don't clobber the organizer's override.
+  useEffect(() => {
+    if (!courtsTouched && event?.court_count) {
+      setCourts(event.court_count);
+    }
+  }, [event?.court_count, courtsTouched]);
 
   // Default-select checked-in players the first time registrations load.
   const eligible = useMemo(() => {
@@ -211,7 +225,10 @@ export default function SocialEventMatchmaking() {
                 min={1}
                 max={20}
                 value={courts}
-                onChange={(e) => setCourts(Math.max(1, Number(e.target.value)))}
+                onChange={(e) => {
+                  setCourtsTouched(true);
+                  setCourts(Math.max(1, Number(e.target.value)));
+                }}
               />
             </div>
             <div style={{ display: "flex", alignItems: "flex-end" }}>

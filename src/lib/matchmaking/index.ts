@@ -175,11 +175,6 @@ export function generateMexicano(opts: GenerateOptions): MMSchedule {
       continue;
     }
 
-    // Update partner history for next round.
-    for (const [p1, p2] of best.teams) {
-      partnerHistory.add(partnerKey(p1.id, p2.id));
-    }
-
     // teams[] is alternating: index 0,2,4… = teamA; 1,3,5… = teamB. Pair
     // them into matches; assign courts in rotation.
     const matches: MMMatch[] = [];
@@ -192,6 +187,16 @@ export function generateMexicano(opts: GenerateOptions): MMSchedule {
         teamA: best.teams[i],
         teamB: best.teams[i + 1],
       });
+    }
+    // Codex Bug 5 (PR #44): partner history must be recorded from the
+    // FINALIZED matches (after the courtCount cap), not from best.teams.
+    // pairAvoidingRepeats returns one pair per 4 seeded players; when
+    // players > courtCount * 4 the extra pairs never play yet were being
+    // marked as prior partners, skewing the next round's matchmaking
+    // toward repeated pairings for clubs with few courts.
+    for (const m of matches) {
+      partnerHistory.add(partnerKey(m.teamA[0].id, m.teamA[1].id));
+      partnerHistory.add(partnerKey(m.teamB[0].id, m.teamB[1].id));
     }
     const usedIds = new Set(matches.flatMap((m) => [
       m.teamA[0].id,
