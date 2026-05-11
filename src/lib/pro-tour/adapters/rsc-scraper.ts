@@ -244,38 +244,100 @@ const MATCH_TEAM_BLOCK_RE =
 const PLAYER_NAME_RE = /\\"([^"\\]+)\\"/g;
 const GAME_SCORE_RE = /\\"score\\":(?:(\d+)|\\"\\")/g;
 
+// Round metadata pair: the bracket payload groups matches by round,
+// each round opening with  \"roundId\":\"00004W\",\"title\":\"Semi-Finals\"
+// just before its `matches` array. We reverse-scan from each match's
+// position to find the enclosing round title — that's the user-facing
+// label. inBracketType (W/L/GS) is a coarser bracket-section marker
+// and was the source of the "all matches show round=W" prod bug.
+const ROUND_TITLE_RE = /\\"roundId\\":\\"[^"\\]+\\",\\"title\\":\\"([^"\\]+)\\"/g;
+
+// Map source's round titles to canonical short codes used downstream
+// (matches.round_name, feed UI, et al). Anything unrecognized falls
+// through to the inBracketType code as a graceful degradation, with
+// "UNKNOWN" only as the last-resort fallback.
+const ROUND_TITLE_TO_CODE: Array<{ pattern: RegExp; code: string }> = [
+  // Final / Gold Medal Match — match both "Finals" and "Final" exactly,
+  // also "Gold Match" / "Gold Medal Match" wording the source sometimes
+  // uses for the championship round.
+  { pattern: /^(finals?|gold(?:\s+medal)?\s+match)$/i, code: "F" },
+  { pattern: /^(third\s+place|bronze(?:\s+medal)?\s+match)$/i, code: "3P" },
+  { pattern: /^(semi[-\s]?finals?|sf)$/i, code: "SF" },
+  { pattern: /^(quarter[-\s]?finals?|qf)$/i, code: "QF" },
+  { pattern: /^(round\s+of\s+16|r16)$/i, code: "R16" },
+  { pattern: /^(round\s+of\s+32|r32)$/i, code: "R32" },
+  { pattern: /^(round\s+of\s+64|r64)$/i, code: "R64" },
+];
+
+function canonicalRoundName(rawTitle: string, bracketType: string): string {
+  const trimmed = rawTitle.trim();
+  for (const { pattern, code } of ROUND_TITLE_TO_CODE) {
+    if (pattern.test(trimmed)) return code;
+  }
+  // Title didn't match a known round shape — fall back to bracketType
+  // (W/L/GS) so the row is still distinguishable in the admin Logs
+  // tab. Only when BOTH are empty do we surface "UNKNOWN".
+  if (trimmed) return trimmed;
+  if (bracketType) return bracketType;
+  return "UNKNOWN";
+}
+
 function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
   const matches: ScrapedMatch[] = [];
   const seen = new Set<string>();
 
-  // Walk through every "teams":[ marker. For each, look BEHIND for the
-  // closest match id (within ~2000 chars) and AHEAD for the closing of
-  // the teams array. This pair frames a match record.
+  // Walk through every "teams":[ marker. For each:
+  //   1. Look BEHIND for the closest match id (within ~3000 chars)
+  //      → matchIdEnd marks where the current match RECORD begins.
+  //   2. Scope matchSlice = [matchIdStart, teamsIdx + 5000] so all
+  //      per-match regexes (date / court / team blocks) operate on
+  //      the CURRENT match record only — never bleeds into the
+  //      previous match's data.
+  //   3. Reverse-scan ROUND_TITLE_RE from matchIdStart to find the
+  //      enclosing round's user-facing title (Semi-Finals / Finals /
+  //      Quarter-Finals / etc.) → canonical code.
+  //
+  // Bug history (PR #34): the original implementation built
+  // matchSlice from `lookBehindStart` (3000 chars before teams),
+  // which leaked the previous match's team blocks into MATCH_TEAM_BLOCK_RE.
+  // Net effect on the PPA Finals fixture: SF2 record showed SF1's
+  // teams + date; the actual Final match showed SF2's teams + date.
+  // Scoping matchSlice to the matchId position fixes both.
   for (const teamsMatch of html.matchAll(MATCH_TEAMS_MARKER)) {
     const teamsIdx = teamsMatch.index ?? 0;
 
-    // Look-behind window: find the LAST `\"id\":\"<uuid>\"` before this
-    // teams marker that appears within a reasonable distance (matches
-    // sit close to each other in the chunk; 3000 chars covers a worst-
-    // case match record with full sponsor + link metadata).
     const lookBehindStart = Math.max(0, teamsIdx - 3000);
     const lookBehindWindow = html.slice(lookBehindStart, teamsIdx);
     let matchId: string | null = null;
+    let matchIdLocalIdx = -1;
     for (const idMatch of lookBehindWindow.matchAll(MATCH_ID_RE)) {
-      // Last one wins.
+      // Last one wins — that's the CURRENT match's id (closest to teams).
       matchId = idMatch[1];
+      matchIdLocalIdx = idMatch.index ?? -1;
     }
-    if (!matchId || seen.has(matchId)) continue;
+    if (!matchId || matchIdLocalIdx < 0 || seen.has(matchId)) continue;
     seen.add(matchId);
 
-    // Forward window: capture up to the next "teams":[ OR end of chunk.
-    // 5000 chars covers a 5-game match with sponsor metadata.
+    // Absolute position where the match record begins (the "{ before
+    // \"id\":\"<uuid>\""). Slice from here forward so per-match regexes
+    // can't see previous-match residue.
+    const matchIdStart = lookBehindStart + matchIdLocalIdx;
     const forwardEnd = Math.min(html.length, teamsIdx + 5000);
-    const matchSlice = html.slice(lookBehindStart, forwardEnd);
+    const matchSlice = html.slice(matchIdStart, forwardEnd);
 
     const dateRaw = matchSlice.match(MATCH_DATE_RE)?.[1] ?? "";
     const court = matchSlice.match(MATCH_COURT_RE)?.[1] ?? null;
     const bracketType = matchSlice.match(MATCH_BRACKET_TYPE_RE)?.[1] ?? "";
+
+    // Round title lives BEFORE the match record (in the round wrapper).
+    // Scan from start-of-html to matchIdStart and pick the LAST title —
+    // that's the enclosing round.
+    const titleScanWindow = html.slice(0, matchIdStart);
+    let lastRoundTitle = "";
+    for (const tm of titleScanWindow.matchAll(ROUND_TITLE_RE)) {
+      lastRoundTitle = tm[1];
+    }
+    const round_name = canonicalRoundName(lastRoundTitle, bracketType);
 
     const teamBlocks = Array.from(matchSlice.matchAll(MATCH_TEAM_BLOCK_RE));
     if (teamBlocks.length < 2) continue;
@@ -291,7 +353,7 @@ function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
 
     matches.push({
       external_match_id: matchId,
-      round_name: bracketType || "UNKNOWN",
+      round_name,
       team_one: { seed: team_one.seed, player_external_ids: team_one.externalIds },
       team_two: { seed: team_two.seed, player_external_ids: team_two.externalIds },
       scores_team_one: team_one.scores,
