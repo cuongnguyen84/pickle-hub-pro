@@ -6,14 +6,46 @@ Sprint 6 — Cloudflare Worker that scrapes pro-tour bracket pages
 ## Bindings + secrets
 
 ```bash
-# One-time secret setup (Workers Paid plan, Browser Rendering enabled)
+# One-time secret setup
 wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 wrangler secret put SCRAPER_AUTH_SECRET
+wrangler secret put CLOUDFLARE_API_TOKEN   # NEW: see token recipe below
 ```
 
-`SUPABASE_URL`, `MYBROWSER` browser binding, and the cron schedule are in
-`wrangler.toml` (committed). Service-role key + scraper auth secret are
-sensitive and live only in CF dashboard / wrangler secrets.
+Then edit `wrangler.toml` and set `CLOUDFLARE_ACCOUNT_ID` under `[vars]`
+(the account that owns your Browser Rendering quota — find the id in
+the URL of any page in the CF dashboard:
+`https://dash.cloudflare.com/<account_id>/...`).
+
+### Creating the `CLOUDFLARE_API_TOKEN`
+
+1. CF dashboard → My Profile → API Tokens → Create Token → Custom token
+2. Permissions: `Account` → `Browser Rendering` → `Edit`
+3. Account Resources: include the account that hosts this Worker
+4. Copy the token, paste into `wrangler secret put CLOUDFLARE_API_TOKEN`
+
+The token only needs Browser Rendering scope — minimum-privilege so a
+leak doesn't compromise other CF resources. Rotate via dashboard +
+re-run `wrangler secret put` whenever needed.
+
+### Why REST API instead of the puppeteer Workers binding
+
+The previous approach used `@cloudflare/puppeteer` 0.0.14 with the
+`MYBROWSER` Browser Rendering binding. It kept timing out on
+`Browser.getVersion` at the launch handshake — the package doesn't
+expose `protocolTimeout` via its `WorkersLaunchOptions` (only
+`keep_alive`), so client-side cold-starts couldn't be tuned. The REST
+API moves the browser lifecycle entirely to Cloudflare's side; we just
+POST a URL and receive HTML, no client-side CDP timeout to hit.
+
+Trade-off: REST `/content` is single-shot (no `actions`/click array
+available as of 2026-05). The puppeteer path used to click each round
+button (R32→F) so all five panels hydrated into the same dump. REST
+only captures the initial server-rendered payload — typically Final +
+Semis on a PPA bracket page (3 matches for an 8-team draw). Earlier
+rounds are out of scope until we either (a) find a per-round URL
+fragment, or (b) reintroduce the puppeteer binding behind a feature
+flag. See `src/index.ts` header for the full discussion.
 
 ## Local dev
 
@@ -119,18 +151,32 @@ sequenceDiagram
   participant Admin UI
   participant Cron
   participant Worker
-  participant CF Browser
+  participant CF REST
   participant Edge Fn
   participant Postgres
 
   Admin UI->>Worker: POST /scrape (HMAC signed)
   Cron->>Worker: scheduled() every 6h
   Worker->>Postgres: SELECT pro_tour_watchlist (cron path)
-  Worker->>CF Browser: launch + goto + click R32..F
-  CF Browser-->>Worker: post-hydration HTML
+  Worker->>CF REST: POST /browser-rendering/content { url, gotoOptions, waitForTimeout }
+  CF REST-->>Worker: { success, result: <HTML string> }
   Worker->>Worker: parseTournamentHtml()
   Worker->>Edge Fn: POST /functions/v1/pro-tour-ingest
   Edge Fn->>Postgres: upsert profiles + matches (idempotent)
   Edge Fn-->>Worker: { log_id, matches_imported }
   Worker-->>Admin UI: { ok, log_id }
 ```
+
+## Stage labels (for debugging failures)
+
+When a scrape fails, the `error` field in the `/scrape` response and
+the `pro_tour_ingestion_logs` row carries a `[stage] message` prefix
+indicating which step died:
+
+| Prefix | What it means |
+|---|---|
+| `[env-validate]` | `CLOUDFLARE_ACCOUNT_ID` or `CLOUDFLARE_API_TOKEN` missing |
+| `[render-fetch]` | `fetch()` to CF REST API failed (network) or hit our 90s ceiling |
+| `[render-http]` | CF REST returned non-2xx HTTP status |
+| `[render-parse]` | CF REST returned 2xx but body wasn't a usable HTML envelope |
+| `Ingest failed:` | HTML parsed OK, but Supabase edge function rejected the upsert |

@@ -10,8 +10,9 @@
  *      runScrape() for each, updates next_scrape_at based on frequency.
  *
  * Both paths converge in runScrape() which:
- *   1. Renders the page in Browser Rendering (clicks each round button,
- *      waits for RSC stream to settle, dumps post-hydration HTML).
+ *   1. Renders the page via the Cloudflare Browser Rendering REST API
+ *      (POST /accounts/:id/browser-rendering/content) which returns
+ *      the post-hydration HTML string.
  *   2. Hands the HTML to parseTournamentHtml() (pure parser in
  *      ../../../src/lib/pro-tour/adapters/rsc-scraper.ts).
  *   3. POSTs the result to the Supabase edge function pro-tour-ingest
@@ -19,12 +20,32 @@
  *      matches idempotently.
  *   4. Returns { ok, log_id, matches_extracted, error? } for the caller.
  *
- * ⚠️ Scraper selectors are scaffolding (see rsc-scraper.ts header).
- * Browser Rendering glue is real and runnable; parser will return
- * matches=0 until selectors are filled in against a captured fixture.
+ * Why REST API instead of @cloudflare/puppeteer:
+ *   The puppeteer Workers binding kept timing out at the launch
+ *   handshake — `Browser.getVersion timed out` — even with session
+ *   reuse + keep_alive (PR #32). Root cause: @cloudflare/puppeteer
+ *   0.0.14's WorkersLaunchOptions doesn't expose `protocolTimeout`
+ *   (only `keep_alive`), and the upstream control-plane handshake on
+ *   cold-start regularly exceeded the internal default. The REST API
+ *   is server-side: Cloudflare manages the browser lifecycle and we
+ *   just receive HTML, no client-side CDP timeout to hit.
+ *
+ *   Trade-off: REST /content is single-shot (no `actions`/click array
+ *   available as of 2026-05). The previous puppeteer path clicked each
+ *   round button (R32→F) so all five round panels hydrated into the
+ *   same DOM dump. REST API only captures the initial server-rendered
+ *   payload, which on the PPA bracket page contains the most-advanced
+ *   rounds (Final + Semis = 3 matches in the men's-doubles top-8
+ *   sample). Earlier rounds (R32, R16, QF) need a follow-up strategy:
+ *     a) per-round REST calls if the bracket UI exposes a query
+ *        parameter for the round selector,
+ *     b) reintroduce puppeteer Workers binding behind a feature flag
+ *        for tournaments where missing earlier rounds matters,
+ *     c) accept the limitation for Sprint 6 baseline (the most-recent
+ *        rounds are the ones admins actually want for the social feed).
+ *   Tracking option (a) discovery as a Sprint 7 follow-up.
  */
 
-import puppeteer from "@cloudflare/puppeteer";
 import {
   rscScraperAdapter,
   parseTournamentHtml,
@@ -32,60 +53,39 @@ import {
 } from "@/lib/pro-tour/adapters/rsc-scraper";
 import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
 
-// ─── Browser Rendering timeout budgets ───────────────────────────────────
+// ─── Browser Rendering REST API budgets ───────────────────────────────────
 //
-// The CF Browser Rendering binding's launch handshake performs a
-// `Browser.getVersion` CDP call. When that call times out we get:
-//   "Browser.getVersion timed out. Increase the 'protocolTimeout' setting
-//    in launch/connect calls for a higher timeout if needed."
-// Important: @cloudflare/puppeteer 0.0.14 does NOT expose protocolTimeout
-// via launch options — its `WorkersLaunchOptions` only allows
-// `keep_alive`. The internal Connection defaults timeout to 180s already
-// (see node_modules/@cloudflare/puppeteer/.../common/Connection.js:155).
-// So the timeout we're hitting is from the upstream control plane being
-// slow / session exhausted, not from a tight client-side limit.
+// The Cloudflare REST API runs the browser server-side and streams
+// HTML back. We pass `gotoOptions.timeout` so the navigation phase has
+// a generous ceiling, and `waitForTimeout` so the RSC chunks have time
+// to stream in before content capture. Total wall-clock for one
+// successful render is typically 5–15s; failure modes we've observed:
+//   - 408 Request Timeout from CF (bumps over actionTimeout)
+//   - 5xx with retry-able body (CF sometimes returns "browser failed
+//     to launch" under load — a single retry usually clears it)
+//   - 200 with success=false in the JSON envelope (origin error)
 //
-// Mitigations layered here:
-//   1. SESSION REUSE — call puppeteer.sessions() first; reuse a free
-//      browser via puppeteer.connect(sessionId) instead of paying the
-//      full launch handshake every time. CF-recommended pattern.
-//   2. KEEP-ALIVE — when we do launch fresh, keep the browser warm for
-//      KEEP_ALIVE_MS so the next scrape (cron tick or follow-up admin
-//      click) can reuse via (1).
-//   3. STAGE TIMEOUTS — page.goto + per-round-click waits + final
-//      content dump each have their own ceilings so a stuck stage
-//      surfaces a clear error instead of bubbling the opaque CDP timeout.
-//   4. STAGE LABELS — every async stage is wrapped to throw with a
-//      "[stage] message" prefix, so the admin Logs tab pinpoints
-//      exactly where rendering failed.
-//
-// Total worst-case budget for one scrape (5 rounds, fresh launch, no
-// reuse): ~ launch(180s, controlled by upstream) + goto(60s) +
-// 5 × click_settle(2s) = ~250s. Cloudflare Workers have a 30s CPU /
-// 5min wall-clock cap; this fits but leaves no slack — keep an eye on
-// p95 in CF Dashboard once we have ≥10 scrapes of real data.
-const KEEP_ALIVE_MS = 60_000;
+// We keep the Worker itself well under CF's 30s CPU / 5min wall-clock
+// limits. RENDER_FETCH_TIMEOUT_MS is the outer guard that aborts the
+// upstream fetch if it hangs.
 const PAGE_GOTO_TIMEOUT_MS = 60_000;
-const ROUND_SETTLE_MS = 2_000;
-const CONTENT_DUMP_TIMEOUT_MS = 30_000;
-
-// Minimal DOM stand-ins for the page.evaluate browser-context callback.
-// We deliberately don't load the full DOM lib in tsconfig (Worker
-// runtime is not a browser) — these tiny shapes are all the callback
-// touches.
-interface Clickable {
-  textContent: string | null;
-  click(): void;
-}
-interface ClickableRoot {
-  querySelectorAll(selector: string): ArrayLike<Clickable>;
-}
+const RSC_SETTLE_TIMEOUT_MS = 5_000;
+const RENDER_FETCH_TIMEOUT_MS = 90_000;
 
 interface Env {
-  MYBROWSER: Fetcher;
+  /** Legacy Browser Rendering binding from the puppeteer-based
+   *  approach. Kept in wrangler.toml as a commented-out fallback so a
+   *  future revision can reintroduce puppeteer for full-bracket
+   *  multi-round coverage. The REST-API path doesn't use it. */
+  MYBROWSER?: Fetcher;
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   SCRAPER_AUTH_SECRET: string;
+  /** Cloudflare account id (non-secret, in [vars]). */
+  CLOUDFLARE_ACCOUNT_ID: string;
+  /** Cloudflare API token with permission Account → Browser Rendering: Edit
+   *  (set via `wrangler secret put CLOUDFLARE_API_TOKEN`). */
+  CLOUDFLARE_API_TOKEN: string;
 }
 
 interface ScrapeRequestBody {
@@ -233,13 +233,13 @@ async function runScrape(
   };
 }
 
-/* ─── Browser Rendering glue ────────────────────────────────────────── */
+/* ─── Browser Rendering REST API ─────────────────────────────────────── */
 
 /**
  * Wrap an async stage so any thrown error gets a "[stage] " prefix.
  * Consumed by runScrape's catch → result.error so the admin Logs tab
- * shows exactly where the scrape died (launch / goto / round-click /
- * content-dump).
+ * shows exactly where the scrape died (env-validate / render-fetch /
+ * render-parse).
  */
 async function withStage<T>(stage: string, fn: () => Promise<T>): Promise<T> {
   try {
@@ -250,139 +250,122 @@ async function withStage<T>(stage: string, fn: () => Promise<T>): Promise<T> {
   }
 }
 
-/**
- * Race a promise against a timeout that throws with a stage-aware
- * message. Used for page operations whose own timeouts can't be
- * configured (e.g. page.content()).
- */
-async function withTimeout<T>(
-  stage: string,
-  ms: number,
-  fn: () => Promise<T>,
-): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race<T>([
-      fn(),
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error(`[${stage}] hit ${ms}ms ceiling`)),
-          ms,
-        );
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
+/** Cloudflare API envelope shape, common to all REST endpoints. */
+interface CfApiEnvelope<T> {
+  success: boolean;
+  result?: T;
+  errors?: Array<{ code: number; message: string }>;
+  messages?: Array<{ code: number; message: string }>;
 }
 
 /**
- * Acquire a Browser handle — preferring an existing free session over a
- * fresh launch. Returns the browser plus a `launched` flag so the
- * caller can decide whether to .close() (which kills the session) or
- * .disconnect() (which leaves the session warm for KEEP_ALIVE_MS).
+ * Render the bracket page via Cloudflare Browser Rendering REST API.
+ *
+ * Endpoint: POST /accounts/:account_id/browser-rendering/content
+ * Auth:     Bearer <CLOUDFLARE_API_TOKEN>  (Account → Browser Rendering: Edit)
+ *
+ * The endpoint is single-shot — no click actions available — so we
+ * capture the initial server-rendered HTML, which on the PPA bracket
+ * page already includes the most-advanced rounds (Final + Semis,
+ * 3 matches typical for an 8-team draw). Earlier rounds (R32/R16/QF)
+ * are not in this dump; see the file header comment for the trade-off
+ * discussion + Sprint 7 follow-up options.
  */
-async function acquireBrowser(env: Env): Promise<{
-  browser: Awaited<ReturnType<typeof puppeteer.launch>>;
-  launched: boolean;
-}> {
-  // (1) Try to find a free session left over by a previous invocation.
-  // Sessions with `connectionId` are currently in use; pick one without
-  // it. sessions() failing is non-fatal — we'll just launch a new one.
-  try {
-    const sessions = await puppeteer.sessions(env.MYBROWSER);
-    const free = sessions.find((s) => !s.connectionId);
-    if (free) {
-      const browser = await withStage("connect-session", () =>
-        puppeteer.connect(env.MYBROWSER, free.sessionId),
-      );
-      return { browser, launched: false };
-    }
-  } catch (err) {
-    console.warn(
-      `[acquireBrowser] sessions() lookup failed; falling back to fresh launch. ${
-        err instanceof Error ? err.message : String(err)
-      }`,
-    );
-  }
-
-  // (2) No free session — launch fresh with keep_alive so the NEXT
-  // scrape can reuse via (1). 60s window comfortably covers the gap
-  // between a manual admin click and the cron firing on the same row.
-  const browser = await withStage("launch", () =>
-    puppeteer.launch(env.MYBROWSER, { keep_alive: KEEP_ALIVE_MS }),
-  );
-  return { browser, launched: true };
-}
-
 async function renderWithBrowserRendering(env: Env, url: string): Promise<string> {
-  const { browser, launched } = await acquireBrowser(env);
-  try {
-    const page = await withStage("new-page", () => browser.newPage());
-
-    // `domcontentloaded` is enough for the initial RSC payload to be in
-    // the page string. networkidle0 was previously waiting for ALL
-    // background fetches (analytics, tracking pixels, lazy player
-    // avatars) to settle — those can keep firing for tens of seconds
-    // on a streaming site, masking the real "rendered enough" signal.
-    await withStage("goto", () =>
-      page.goto(url, { waitUntil: "domcontentloaded", timeout: PAGE_GOTO_TIMEOUT_MS }),
-    );
-
-    // Iterate round buttons so each panel hydrates into the same DOM
-    // dump. Labels per PPA bracket UI: R32, R16, QF, SF, F. Click is
-    // fire-and-wait; missing buttons (e.g. top-8 draw with only QF/SF/F)
-    // are no-ops. Each click followed by ROUND_SETTLE_MS for the RSC
-    // chunk to stream in.
-    const rounds = ["R32", "R16", "QF", "SF", "F"];
-    for (const label of rounds) {
-      await withStage(`round-click:${label}`, async () => {
-        // page.evaluate body executes in browser context; tsconfig
-        // intentionally excludes the DOM lib (Worker runtime is not
-        // browser) so document/HTMLElement are flagged here. Cast to
-        // the loose function shape and let the runtime resolve.
-        await (page.evaluate as unknown as (
-          fn: (needle: string) => void,
-          arg: string,
-        ) => Promise<void>)((needle) => {
-          const root = (globalThis as { document?: ClickableRoot }).document;
-          if (!root) return;
-          const buttons = Array.from(
-            root.querySelectorAll("[role='button'], button"),
-          ) as Clickable[];
-          const target = buttons.find(
-            (b) => b.textContent?.trim() === needle,
-          );
-          target?.click();
-        }, label);
-        await new Promise((resolve) => setTimeout(resolve, ROUND_SETTLE_MS));
-      });
-    }
-
-    return await withTimeout("content-dump", CONTENT_DUMP_TIMEOUT_MS, () =>
-      page.content(),
-    );
-  } finally {
-    // If WE launched it, disconnect (not close) so the keep_alive window
-    // applies and the next scrape can reuse via puppeteer.sessions().
-    // If we connected to an existing session, also disconnect — closing
-    // would kill a session another invocation might still want.
-    try {
-      if (launched) {
-        await browser.disconnect();
-      } else {
-        await browser.disconnect();
-      }
-    } catch (closeErr) {
-      // Disconnect failures are non-fatal — the session times out on
-      // its own. Just log so they're visible in CF tail.
-      console.warn(
-        `[renderWithBrowserRendering] disconnect failed (non-fatal). ${
-          closeErr instanceof Error ? closeErr.message : String(closeErr)
-        }`,
+  await withStage("env-validate", async () => {
+    if (!env.CLOUDFLARE_ACCOUNT_ID) {
+      throw new Error(
+        "CLOUDFLARE_ACCOUNT_ID env var missing — set in wrangler.toml [vars]",
       );
     }
+    if (!env.CLOUDFLARE_API_TOKEN) {
+      throw new Error(
+        "CLOUDFLARE_API_TOKEN secret missing — run `wrangler secret put CLOUDFLARE_API_TOKEN`",
+      );
+    }
+  });
+
+  const apiUrl = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/browser-rendering/content`;
+
+  // Body shape per Cloudflare API docs (2026-05):
+  //   url             — the bracket page to render
+  //   gotoOptions     — Puppeteer page.goto() options. waitUntil:
+  //                     "domcontentloaded" (instead of networkidle*)
+  //                     because the RSC chunks land in the page string
+  //                     during DOM construction — waiting for full
+  //                     network idle blocks on tracking pixels that
+  //                     never settle.
+  //   waitForTimeout  — extra dwell after navigation so any deferred
+  //                     RSC chunk hydration finishes streaming.
+  const requestBody = {
+    url,
+    gotoOptions: {
+      waitUntil: "domcontentloaded" as const,
+      timeout: PAGE_GOTO_TIMEOUT_MS,
+    },
+    waitForTimeout: RSC_SETTLE_TIMEOUT_MS,
+  };
+
+  // AbortController guards against the upstream fetch hanging beyond
+  // our outer ceiling — independent of CF's own internal timeouts.
+  const controller = new AbortController();
+  const abortTimer = setTimeout(
+    () => controller.abort(new Error(`render-fetch hit ${RENDER_FETCH_TIMEOUT_MS}ms ceiling`)),
+    RENDER_FETCH_TIMEOUT_MS,
+  );
+
+  let res: Response;
+  try {
+    res = await withStage("render-fetch", () =>
+      fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      }),
+    );
+  } finally {
+    clearTimeout(abortTimer);
   }
+
+  // Read body text first so we can include it in error messages even
+  // when the JSON shape is unexpected (CF sometimes returns plaintext
+  // 5xx bodies on infrastructure failures).
+  const responseText = await res.text();
+
+  if (!res.ok) {
+    throw new Error(
+      `[render-http] ${res.status} ${res.statusText}: ${responseText.slice(0, 500)}`,
+    );
+  }
+
+  return await withStage("render-parse", async () => {
+    let envelope: CfApiEnvelope<string>;
+    try {
+      envelope = JSON.parse(responseText) as CfApiEnvelope<string>;
+    } catch (err) {
+      throw new Error(
+        `Cloudflare response is not JSON (first 200 chars): ${responseText.slice(0, 200)}`,
+      );
+    }
+    if (!envelope.success) {
+      const errMsgs = (envelope.errors ?? [])
+        .map((e) => `${e.code}: ${e.message}`)
+        .join("; ");
+      throw new Error(
+        `Cloudflare API success=false. Errors: ${errMsgs || "(none reported)"}`,
+      );
+    }
+    if (typeof envelope.result !== "string" || envelope.result.length === 0) {
+      throw new Error(
+        `Cloudflare API returned success=true but result is empty/non-string`,
+      );
+    }
+    return envelope.result;
+  });
 }
 
 /* ─── Watchlist polling (scheduled handler) ─────────────────────────── */
