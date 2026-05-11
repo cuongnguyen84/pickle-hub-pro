@@ -318,7 +318,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["tama shimabukuro", "ppa tour", "atlanta championships", "hunter johnson", "federico staksrud", "young players", "professional pickleball", "hawaii"],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
     ctaLabel: { en: "Read: PPA Tour Asia 2026 Complete Guide", vi: "Đọc tiếp: PPA Tour Asia 2026 — Hướng dẫn đầy đủ" },
-    heroImage: undefined,
+    heroImage: {
+      src: "/images/blog/tama-shimabukuro-atlanta-hero.webp",
+      alt: "Tama Shimabukuro, the 15-year-old pickleball pro from Hawaii, at the PPA Veolia Atlanta Championships where he defeated world #1 Hunter Johnson and world #2 Federico Staksrud to reach the men's singles final — a self-taught player who started in 2023 and signed his three-year PPA Tour contract at 14"
+    },
     titleEn: "Tama Shimabukuro: How a 15-Year-Old From Hawaii Took Down World #1 and #2 at PPA Atlanta",
     titleVi: "Tama Shimabukuro: 15 tuổi, hạ số 1 và số 2 thế giới, vào chung kết PPA Atlanta",
     metaTitleEn: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud",
