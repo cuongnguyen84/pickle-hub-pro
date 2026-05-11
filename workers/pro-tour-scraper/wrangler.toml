@@ -1,0 +1,46 @@
+# Sprint 6 — pro-tour-scraper Cloudflare Worker
+#
+# Hybrid trigger Worker:
+#   - HTTP POST  /scrape  → on-demand scrape (called by admin UI via
+#     Supabase edge function, or direct from cron handler below)
+#   - Scheduled cron       → every 6h, picks up pro_tour_watchlist rows
+#     where next_scrape_at < NOW() AND status='active'
+#
+# Bindings required:
+#   - MYBROWSER       : Browser Rendering binding (Workers Paid plan)
+#   - SUPABASE_URL    : env var, ajvlcamxemgbxduhiqrl.supabase.co
+#   - SUPABASE_SERVICE_ROLE_KEY : env secret, set via `wrangler secret put`
+#   - SCRAPER_AUTH_SECRET : env secret, shared with the admin UI / edge
+#                           function so /scrape rejects un-signed POSTs
+
+name = "pro-tour-scraper"
+main = "src/index.ts"
+compatibility_date = "2026-04-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Browser Rendering binding — Workers Paid plan; free quota 10 hrs/month.
+# Configure in dashboard if not auto-provisioned by `wrangler deploy`.
+[browser]
+binding = "MYBROWSER"
+
+# Cron trigger — every 6 hours UTC. Picks up active watchlist rows that
+# are due for a re-scrape. Adjust schedule as cadence demands change;
+# Worker handler is idempotent so over-triggering is safe (ingest dedupes
+# on (source_provider, external_match_id)).
+[triggers]
+crons = ["0 */6 * * *"]
+
+# Public env vars — non-sensitive identifiers. Secrets go through
+# `wrangler secret put`, never committed.
+[vars]
+SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
+
+# Observability — surface scrape errors in CF dashboard logs without
+# adding an external service.
+[observability]
+enabled = true
+
+# Smart placement so the Worker runs near Supabase (Tokyo region per
+# CLAUDE.md notes). Reduces ingest POST round-trip from the Worker.
+[placement]
+mode = "smart"

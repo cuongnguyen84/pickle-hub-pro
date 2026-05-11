@@ -120,8 +120,38 @@ export function FeedMatchCard({
           <span style={{ color: "var(--tl-fg-4)" }}>·</span>
           <span>{formatTypeLabel(match.match_type, language)}</span>
         </div>
-        <StatusBadge status={match.verification_status} language={language} />
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <ProSourceBadge
+            source={match.source_provider}
+            language={language}
+          />
+          <StatusBadge status={match.verification_status} language={language} />
+        </div>
       </div>
+
+      {/* Pro tour tournament caption — only renders for non-community
+          matches. Position above the team rows so the tournament context
+          reads first ("PPA Tour: 2026 Finals · Mens Doubles · R32"). */}
+      {match.source_provider !== "community" && match.tournament_name && (
+        <div
+          style={{
+            fontFamily: "'Geist Mono', monospace",
+            fontSize: 10.5,
+            letterSpacing: "0.08em",
+            color: "var(--tl-fg-3)",
+            textTransform: "uppercase",
+            marginTop: -8,
+          }}
+        >
+          {[
+            match.tournament_name,
+            match.tournament_event,
+            match.round_name,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </div>
+      )}
 
       {/* Two-team scoreboard */}
       <div
@@ -198,6 +228,52 @@ export function FeedMatchCard({
         </div>
       </div>
     </Link>
+  );
+}
+
+/* ─── Pro source badge (Sprint 6) ────────────────────────────────────── */
+//
+// Surfaces "PPA TOUR" / "APP TOUR" / "MLP" on cards whose source_provider
+// is not 'community'. Amber accent (gold token from the-line.css) so it
+// reads as editorial / external context — distinct from the lime accent
+// used for active states elsewhere in the surface.
+function ProSourceBadge({
+  source,
+  language,
+}: {
+  source: FeedMatch["source_provider"];
+  language: Language;
+}) {
+  if (source === "community") return null;
+  const label =
+    source === "ppa_tour"
+      ? "PPA TOUR"
+      : source === "app_tour"
+        ? "APP TOUR"
+        : source === "mlp"
+          ? "MLP"
+          : "PRO";
+  return (
+    <span
+      aria-label={
+        language === "vi" ? `Trận từ ${label}` : `Match from ${label}`
+      }
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontFamily: "'Geist Mono', monospace",
+        fontSize: 10,
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        padding: "4px 9px",
+        borderRadius: 2,
+        border: "1px solid rgba(233, 182, 73, 0.3)",
+        color: "var(--tl-gold, #e9b649)",
+      }}
+    >
+      {label}
+    </span>
   );
 }
 

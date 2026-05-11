@@ -29,6 +29,11 @@ interface RpcRow {
   kudos_count: number | null;
   viewer_kudoed: boolean | null;
   comment_count: number | null;
+  source_provider: string | null;
+  source_url: string | null;
+  tournament_name: string | null;
+  tournament_event: string | null;
+  round_name: string | null;
 }
 
 const PAGE_SIZE = 20;
@@ -77,5 +82,10 @@ function normalizeRow(row: RpcRow): FeedMatch {
     kudos_count: row.kudos_count ?? 0,
     viewer_kudoed: row.viewer_kudoed ?? false,
     comment_count: row.comment_count ?? 0,
+    source_provider: (row.source_provider ?? "community") as FeedMatch["source_provider"],
+    source_url: row.source_url,
+    tournament_name: row.tournament_name,
+    tournament_event: row.tournament_event,
+    round_name: row.round_name,
   };
 }

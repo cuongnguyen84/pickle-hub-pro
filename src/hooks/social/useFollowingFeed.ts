@@ -29,6 +29,21 @@ export interface FeedMatch {
   viewer_kudoed: boolean;
   /** Phase 4C — total non-deleted comments on the match (from feed RPC inline). */
   comment_count: number;
+  /** Sprint 6 — source provenance (community vs pro tour). community is
+   *  the existing user-recorded match path; ppa_tour / app_tour / mlp /
+   *  other are scrape-imported. FeedMatchCard renders a PPA-style badge
+   *  + tournament caption when source_provider !== 'community'. */
+  source_provider: "community" | "ppa_tour" | "app_tour" | "mlp" | "other";
+  /** Source URL on the original site (e.g. brackets.pickleballtournaments.com).
+   *  Null for community matches. */
+  source_url: string | null;
+  /** Tournament name displayed at the top of the card for pro matches —
+   *  e.g. "PPA Tour: 2026 PPA Finals". Null for community matches. */
+  tournament_name: string | null;
+  /** Event subtitle — e.g. "Mens Doubles Pro Main Draw". Null otherwise. */
+  tournament_event: string | null;
+  /** Round label — e.g. "R32", "QF", "F". Null otherwise. */
+  round_name: string | null;
 }
 
 interface RpcRow {
@@ -46,6 +61,11 @@ interface RpcRow {
   kudos_count: number | null;
   viewer_kudoed: boolean | null;
   comment_count: number | null;
+  source_provider: string | null;
+  source_url: string | null;
+  tournament_name: string | null;
+  tournament_event: string | null;
+  round_name: string | null;
 }
 
 const PAGE_SIZE = 20;
@@ -103,5 +123,10 @@ function normalizeRow(row: RpcRow): FeedMatch {
     kudos_count: row.kudos_count ?? 0,
     viewer_kudoed: row.viewer_kudoed ?? false,
     comment_count: row.comment_count ?? 0,
+    source_provider: (row.source_provider ?? "community") as FeedMatch["source_provider"],
+    source_url: row.source_url,
+    tournament_name: row.tournament_name,
+    tournament_event: row.tournament_event,
+    round_name: row.round_name,
   };
 }
