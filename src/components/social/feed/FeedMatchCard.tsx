@@ -43,6 +43,17 @@ export function FeedMatchCard({
   const { teamA, teamB } = groupTeams(match.participants);
   const winnerIsA = match.winning_team === "a";
 
+  // Final / Gold-Match treatment: cards whose round is the championship
+  // get a foil-style accent (hairline gold rule + GOLD MATCH eyebrow
+  // badge + ĐĂNG QUANG champion caption + gold hover). The signal is
+  // structural (border) + typographic (badges), never a background
+  // flood — keeps the row at home in the editorial layout while still
+  // making the championship visually unmistakable.
+  // Round codes come from the parser's canonical map (rsc-scraper.ts):
+  //   "F"  → Finals / Gold Medal Match
+  //   "3P" → Bronze / third place — NOT a final, treated as normal.
+  const isFinal = match.round_name === "F";
+
   const ariaLabel = buildAriaLabel({
     language,
     teamA,
@@ -65,7 +76,7 @@ export function FeedMatchCard({
       to={`/tran-dau/${match.slug}`}
       role="article"
       aria-label={ariaLabel}
-      className="tl-feed-card"
+      className={`tl-feed-card${isFinal ? " tl-feed-card--final" : ""}`}
       style={{
         display: "grid",
         gridTemplateColumns: "1fr",
@@ -120,7 +131,8 @@ export function FeedMatchCard({
           <span style={{ color: "var(--tl-fg-4)" }}>·</span>
           <span>{formatTypeLabel(match.match_type, language)}</span>
         </div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {isFinal && <FinalMatchBadge language={language} />}
           <ProSourceBadge
             source={match.source_provider}
             language={language}
@@ -206,6 +218,7 @@ export function FeedMatchCard({
             slug={match.slug}
             count={match.comment_count}
           />
+          {isFinal && <ChampionCaption language={language} />}
           {match.venue_name && (
             <span
               style={{
@@ -228,6 +241,47 @@ export function FeedMatchCard({
         </div>
       </div>
     </Link>
+  );
+}
+
+/* ─── Final / Gold Match badge (Sprint 6 PR-D) ───────────────────────── */
+//
+// Eyebrow pill for matches whose round_name === 'F'. Shape mirrors the
+// PPA TOUR / status pills next to it (mono caps, hairline border, 2px
+// radius) so the badge cluster reads as one metadata strip — but the
+// gold tone + medallion pip distinguish it as the championship signal.
+// All visual rules live in the-line.css under .tl-feed-final-badge so
+// the design tokens stay in one place; this component just declares
+// the bilingual label.
+function FinalMatchBadge({ language }: { language: Language }) {
+  return (
+    <span
+      className="tl-feed-final-badge"
+      aria-label={
+        language === "vi" ? "Trận chung kết / huy chương vàng" : "Gold-medal final match"
+      }
+    >
+      {language === "vi" ? "Trận chung kết" : "Gold match"}
+    </span>
+  );
+}
+
+/* ─── Champion caption ───────────────────────────────────────────────── */
+//
+// Sits in the card foot beside the venue diamond, only on Final cards.
+// Reads as a tournament record line — small medallion pip + gold mono
+// caps ("ĐĂNG QUANG" / "CHAMPION"). Doesn't name the winner explicitly;
+// the team rows + score column already communicate that, so duplicating
+// the name here would feel chatty. The caption's job is to mark the
+// row as a championship in the same hand as the eyebrow badge.
+function ChampionCaption({ language }: { language: Language }) {
+  return (
+    <span
+      className="tl-feed-final-champion"
+      aria-hidden="true"
+    >
+      {language === "vi" ? "Đăng quang" : "Champion"}
+    </span>
   );
 }
 
