@@ -274,10 +274,15 @@ function canonicalRoundName(rawTitle: string, bracketType: string): string {
   for (const { pattern, code } of ROUND_TITLE_TO_CODE) {
     if (pattern.test(trimmed)) return code;
   }
-  // Title didn't match a known round shape — fall back to bracketType
-  // (W/L/GS) so the row is still distinguishable in the admin Logs
-  // tab. Only when BOTH are empty do we surface "UNKNOWN".
-  if (trimmed) return trimmed;
+  // No canonical match. Prefer bracketType (W/L/GS) over the raw
+  // title — the title may be a brand-new or localized label we've
+  // never seen ("Cuartos de Final", "Round-Robin Group A"), and
+  // returning arbitrary free-form text into round_name breaks
+  // downstream grouping/filtering that expects a bounded vocabulary.
+  // bracketType keeps us in the W/L/GS set the existing UI handles.
+  // (Codex P2 fix on PR #34: previous version returned the raw title
+  // here, which regressed the stable W/L/GS contract whenever the
+  // source platform shipped a new round label.)
   if (bracketType) return bracketType;
   return "UNKNOWN";
 }
