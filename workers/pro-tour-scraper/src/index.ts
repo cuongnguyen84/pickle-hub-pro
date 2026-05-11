@@ -101,7 +101,25 @@ export default {
             watchlist_id: row.id,
           },
           env,
-        ).then(() => updateWatchlistAfterScrape(env, row.id, row.scrape_frequency)),
+        ).then((result) => {
+          // Codex P2 fix on PR #29: only stamp last_scraped_at +
+          // advance next_scrape_at when the scrape actually succeeded.
+          // Original version updated unconditionally so a failed scrape
+          // would push next_scrape_at +24h (or +7d) and the cron would
+          // never retry until that window elapsed — silent regression
+          // until an admin noticed pro_tour_ingestion_logs failures
+          // piling up. Now: failed scrapes leave next_scrape_at as-is
+          // so the next cron tick (every 6h) picks the row up again.
+          if (result.ok) {
+            return updateWatchlistAfterScrape(env, row.id, row.scrape_frequency);
+          }
+          console.error(
+            `[scheduled] scrape failed for ${row.tournament_url}; ` +
+              "next_scrape_at NOT advanced. Will retry next cron tick. " +
+              `error: ${result.error ?? "unknown"}`,
+          );
+          return undefined;
+        }),
       );
     }
   },
