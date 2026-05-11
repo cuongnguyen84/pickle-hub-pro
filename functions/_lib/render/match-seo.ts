@@ -205,9 +205,14 @@ export function buildMatchDescription(
 
 /* ─── JSON-LD SportsEvent schema builder ─────────────────────────────── */
 
+export type SourceProvider = "community" | "ppa_tour" | "app_tour" | "mlp" | "other";
+
 export interface MatchSchemaInput {
   url: string;
   description: string;
+  /** OG image absolute URL — emitted as schema.image to dampen the
+   *  "missing image" Rich Results warning. */
+  imageUrl: string;
   teamAPlayers: string[]; // display names — ordered by position
   teamBPlayers: string[];
   teamAScore: number[];
@@ -220,6 +225,19 @@ export interface MatchSchemaInput {
   venueName: string;
   venueCity: string;
   courtNumber: string | null;
+  /** Drives schema.organizer — pro-tour rows attribute to the tour
+   *  body (PPA / APP / MLP). Community matches have no formal
+   *  organizer and skip the field. */
+  sourceProvider: SourceProvider | null;
+}
+
+/** Map source_provider → human-readable organizer name. Returns null
+ *  when the row has no formal organizer (community matches). */
+function sourceProviderLabel(s: SourceProvider | null): string | null {
+  if (s === "ppa_tour") return "PPA Tour";
+  if (s === "app_tour") return "APP Tour";
+  if (s === "mlp") return "Major League Pickleball";
+  return null;
 }
 
 const DEFAULT_DURATION_MINUTES = 45;
@@ -280,11 +298,28 @@ export function buildMatchSchema(
     startDate: input.playedAtIso,
     url: input.url,
     description: input.description,
+    image: input.imageUrl,
     competitor: [competitorA, competitorB],
+    // performer mirrors competitor — Google Rich Results recommends
+    // both for sports events; competitor is the schema-canonical
+    // property but performer is what generic Event-rich-result
+    // crawlers look for.
+    performer: [competitorA, competitorB],
     eventStatus,
   };
 
   if (endIso) out.endDate = endIso;
+
+  // organizer — derived from source_provider so pro-tour matches credit
+  // the tour body. Community matches skip the property (no formal
+  // organizer) rather than fabricating one.
+  const organizerName = sourceProviderLabel(input.sourceProvider);
+  if (organizerName) {
+    out.organizer = {
+      "@type": "Organization",
+      name: organizerName,
+    };
+  }
 
   if (input.winningTeam === "a") {
     out.winner = competitorA;
@@ -316,9 +351,17 @@ export function buildMatchSchema(
     }
   }
 
+  // superEvent uses SportsSeries (NOT SportsEvent). Google Rich Results
+  // requires SportsEvent to declare startDate + location; we don't have
+  // those for the parent tournament without a separate query (and the
+  // tournament spans many matches, so a single startDate would lie).
+  // SportsSeries semantically matches a tournament's "series of
+  // matches" framing and only requires `name`. (Codex finding on
+  // PR #40: nested SportsEvent without dates produced two Rich Results
+  // errors — startDate missing, location missing.)
   if (input.tournamentName) {
     out.superEvent = {
-      "@type": "SportsEvent",
+      "@type": "SportsSeries",
       name: input.tournamentName,
     };
   }
