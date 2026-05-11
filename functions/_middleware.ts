@@ -70,7 +70,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   // ─── 4. Bot path: KV cache + SSR render ───────────────
   const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
-  const cacheKey = `pr:v2:${url.pathname}`;
+  // Cache key version bumped pr:v2 → pr:v3 on 2026-05-11 to invalidate
+  // every cached prerender response after the Sprint 6 SEO fixes
+  // landed (PR #40). Stale `<a href="undefined">Trận đấu</a>` rows
+  // and fake same-URL hreflang from the previous render template were
+  // still being served from KV until natural 6h TTL expiry — bumping
+  // the prefix forces a fresh render on the next bot hit per URL.
+  const cacheKey = `pr:v3:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

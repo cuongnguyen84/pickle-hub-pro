@@ -99,11 +99,17 @@ export function buildHtml(opts: BuildHtmlOptions): string {
 
   const htmlLang = lang === "vi" ? "vi" : "en";
   const ogLocale = lang === "vi" ? "vi_VN" : "en_US";
-  // The other locale a crawler might want to surface — declared via
-  // og:locale:alternate. For single-canonical bilingual routes this
-  // pair is symmetric (vi page declares en alternate; en page declares
-  // vi alternate). When more locales are added, expand to an array.
+  // og:locale:alternate is gated on the caller actually declaring
+  // alternates. Emitting it unconditionally would claim alt-locale
+  // availability for single-canonical routes that don't have one
+  // — a parallel of the fake-hreflang invalid-signal problem
+  // (Codex P1 on PR #40). When a route truly serves multiple locales
+  // it passes `alternates` AND inherits the og:locale:alternate tag.
+  const hasAlternates = !!(alternates && alternates.length > 0);
   const ogLocaleAlternate = lang === "vi" ? "en_US" : "vi_VN";
+  const ogLocaleAlternateTag = hasAlternates
+    ? `<meta property="og:locale:alternate" content="${ogLocaleAlternate}"/>`
+    : "";
   const alternatesHtml = (alternates ?? [])
     .map(
       (a) =>
@@ -129,7 +135,7 @@ ${alternatesHtml}
 <meta property="og:image" content="${escapeHtml(image)}"/>
 <meta property="og:site_name" content="${SITE_NAME}"/>
 <meta property="og:locale" content="${ogLocale}"/>
-<meta property="og:locale:alternate" content="${ogLocaleAlternate}"/>
+${ogLocaleAlternateTag}
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="${escapeHtml(title)}"/>
 <meta name="twitter:description" content="${escapeHtml(description)}"/>

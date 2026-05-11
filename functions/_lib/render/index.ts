@@ -1012,14 +1012,14 @@ export async function renderProfile(
   const fallbackDesc = buildProfileFallbackDescription(p);
   const description = pickProfileMetaDescription(p.bio, fallbackDesc);
 
-  // hreflang: same URL serves both languages (single canonical), so en/vi
-  // both point at /nguoi-choi/{username}. x-default mirrors vi for the
-  // Vietnamese-first audience.
-  const extraMeta = [
-    `<link rel="alternate" hreflang="vi" href="${escapeHtml(url)}"/>`,
-    `<link rel="alternate" hreflang="en" href="${escapeHtml(url)}"/>`,
-    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}"/>`,
-  ].join("\n");
+  // hreflang intentionally OMITTED. /nguoi-choi/{username} is single-
+  // canonical — no separate /en/player/<u> URL serves different content.
+  // Previous version emitted three <link hreflang> tags all pointing at
+  // the same URL, which Google treats as an invalid signal (and Search
+  // Console flags as "alternate page with proper canonical tag"). Same
+  // policy as renderMatch (Codex P1 on PR #40). Re-add when the SPA
+  // actually ships split-canonical bilingual URLs.
+  const extraMeta = "";
 
   // JSON-LD Person — server-side variant of the schema PlayerProfile.tsx
   // injects client-side. Fields aligned with usePlayerProfile() shape so
@@ -1282,17 +1282,19 @@ ${winnerLabel ? `<p>Đội thắng: <strong>${escapeHtml(winnerLabel)}</strong><
     `<meta property="og:image:type" content="image/png"/>`,
   ].join("\n");
 
-  // hreflang (Bug 4 fix): /tran-dau/<slug> serves both VI and EN via
-  // SPA context — single canonical URL. Emit symmetric alternates so
-  // crawlers know the page is bilingual; x-default targets the same
-  // canonical (Vietnamese is the dominant locale per CLAUDE.md but
-  // we don't want to lock in either as the "default").
+  // hreflang intentionally OMITTED. /tran-dau/<slug> is single-canonical
+  // — there is no separate /en/match/<slug> or /vi/tran-dau/<slug> URL
+  // serving distinct localized content (renderMatch hard-codes lang:"vi"
+  // and the SPA toggles language client-side via context).
+  //
+  // Codex P1 on PR #40: emitting three <link hreflang> tags all
+  // pointing at the same canonical URL is an invalid SEO signal —
+  // Google will either ignore it or flag it in Search Console as
+  // "alternate page with proper canonical tag" / "incorrect hreflang
+  // implementation". Better to omit entirely until the route actually
+  // ships split-canonical bilingual URLs. The og:locale:alternate tag
+  // that buildHtml emits is similarly gated below.
   const canonicalUrl = `${siteUrl}/tran-dau/${slug}`;
-  const alternates = [
-    { hreflang: "vi", href: canonicalUrl },
-    { hreflang: "en", href: canonicalUrl },
-    { hreflang: "x-default", href: canonicalUrl },
-  ];
 
   return htmlResponse(
     buildHtml({
@@ -1306,7 +1308,6 @@ ${winnerLabel ? `<p>Đội thắng: <strong>${escapeHtml(winnerLabel)}</strong><
       bodyContent,
       extraMeta,
       lang: "vi",
-      alternates,
     }),
   );
 }
