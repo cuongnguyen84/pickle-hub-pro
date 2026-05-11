@@ -3403,6 +3403,108 @@ html.tl-drawer-open .tl-scroll { overflow: hidden; touch-action: none; }
   text-decoration-thickness: 1px;
 }
 
+/* ─── Final / Gold Match treatment (Sprint 6 PR-D) ─────────────────────
+   Cards whose match.round_name === 'F' get the championship row mark.
+   Visual contract:
+     1. Hairline gold rule along the top edge — like the foil border on
+        a tournament program. Non-decorative: signals "this is a final"
+        before the eyebrow even reads.
+     2. The standard fg-4 bottom hairline upgrades to a gold tint at
+        12% opacity — quiet companion to (1), not a second loud rule.
+     3. Hover gradient swaps from lime to gold so the affordance
+        echoes the card's gold framing.
+     4. The championship caption (".tl-feed-final-caption") sits inside
+        the card foot and reads "ĐĂNG QUANG / CHAMPION" beside a
+        medallion pip. The pip uses solid gold; the caption uses
+        gold text on the dark surface.
+   Restrained on purpose: scores stay green so winner-detection stays
+   consistent with the rest of the feed, no background flood, no glow. */
+[data-theme="the-line"] .tl-feed-card--final {
+  border-top: 1px solid var(--tl-gold);
+  /* The card already has padding 32px 0; the gold rule sits flush to the
+     content edge. We deliberately don't tint the bottom border too —
+     FeedMatchCard sets borderBottom inline (1px var(--tl-border)) and
+     fighting that with !important would feel hacky for a subtle effect.
+     Top rule alone is enough — paired with the badge + champion caption
+     it signals "championship row" without needing the second hairline. */
+}
+[data-theme="the-line"] .tl-feed-card--final:hover {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(233, 182, 73, 0.05) 50%,
+    transparent 100%
+  );
+}
+[data-theme="the-line"] .tl-feed-card--final:focus-visible {
+  outline-color: var(--tl-gold);
+}
+[data-theme="the-line"] .tl-feed-card--final:hover .tl-feed-card-foot::after,
+[data-theme="the-line"] .tl-feed-card--final:focus-visible .tl-feed-card-foot::after {
+  color: var(--tl-gold);
+}
+
+/* Eyebrow badge — sits next to PPA TOUR / status pills. Pip is a 5px
+   solid gold disc, the surrounding ring uses the same hairline-border
+   contract as the other badges so heights align. */
+[data-theme="the-line"] .tl-feed-final-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 4px 9px 4px 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(233, 182, 73, 0.45);
+  color: var(--tl-gold);
+  background: rgba(233, 182, 73, 0.04);
+  /* Keep weight close to the sibling pills so the row reads as one
+     metadata cluster, not three competing chips. */
+  white-space: nowrap;
+}
+[data-theme="the-line"] .tl-feed-final-badge::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--tl-gold);
+  /* Subtle outer halo so the medallion reads as foil-pressed rather
+     than a flat dot. 0.4 opacity at 6px keeps it from blooming. */
+  box-shadow: 0 0 0 2px rgba(233, 182, 73, 0.18);
+  flex: 0 0 auto;
+}
+
+/* Champion caption — appears in the card foot ONLY for Final cards.
+   Reads as a typeset record: medallion pip + gold mono-caps. Position
+   is "next to venue" so the row balances; the parent's flex layout
+   handles wrapping on narrow screens. */
+[data-theme="the-line"] .tl-feed-final-champion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tl-gold);
+}
+[data-theme="the-line"] .tl-feed-final-champion::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--tl-gold);
+  box-shadow: 0 0 0 1.5px rgba(233, 182, 73, 0.18);
+}
+
+/* Mobile (< 600px): keep the gold rule + badge + caption visible.
+   They're already lightweight — no special compaction needed beyond
+   the existing wrap behavior in the eyebrow flex container. The badge
+   stays on its own line if the eyebrow row overflows; the champion
+   caption wraps below the venue when there isn't horizontal room. */
+
 /* Mobile (< 600px): DUPR rating dropped from card; full DUPR signal lives
    on /nguoi-choi/:username. Score size compacts; format/type chips wrap. */
 @media (max-width: 600px) {
