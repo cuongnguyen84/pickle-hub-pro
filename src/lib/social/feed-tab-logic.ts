@@ -29,10 +29,12 @@ export interface FeedTabContext {
  *     deep-links to ?tab=following coerce to trending — otherwise we'd
  *     render Following content while the Following tab is hidden, creating
  *     a keyboard trap (Codex P2 fix on PR #16).
- *   - Anonymous (no override) → trending.
- *   - Authenticated, 0 follows → trending (Empty State A would feel hostile
- *     as the very first thing they see).
- *   - Authenticated, >0 follows → following (the Bet #1 social loop).
+ *   - No URL override: ALWAYS land on Trending. Sprint 6 product call:
+ *     Trending now leads with PPA / APP / MLP pro matches (boosted in
+ *     get_trending_feed) so even cold-start users see fresh, recognizable
+ *     content before deciding to follow anyone. This trumps the previous
+ *     "logged-in with >0 follows → following" heuristic — that path landed
+ *     low-engagement viewers on a sometimes-stale Following timeline.
  */
 export function resolveDefaultTab(ctx: FeedTabContext): FeedTab {
   if (ctx.urlOverride === "trending") {
@@ -41,10 +43,10 @@ export function resolveDefaultTab(ctx: FeedTabContext): FeedTab {
   if (ctx.urlOverride === "following") {
     return ctx.isAuthenticated ? "following" : "trending";
   }
-  if (!ctx.isAuthenticated) return "trending";
-  const count = ctx.followingCount ?? 0;
-  if (count <= 0) return "trending";
-  return "following";
+  // No override: Trending is the cold-start default for everyone. The
+  // Following tab remains one click away (and the deep-link still works
+  // for users who bookmark ?tab=following).
+  return "trending";
 }
 
 /** True only when the Following tab should be visible. */

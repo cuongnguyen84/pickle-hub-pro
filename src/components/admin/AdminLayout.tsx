@@ -21,6 +21,7 @@ import {
   Flag,
   MoreHorizontal,
   BarChart2,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,6 +39,7 @@ const navItems = [
   { path: "/admin/organizations", icon: Building2, labelKey: "organizations" as const },
   { path: "/admin/users", icon: Users, labelKey: "users" as const },
   { path: "/admin/tournaments", icon: Trophy, labelKey: "tournaments" as const },
+  { path: "/admin/pro-tour", icon: Zap, labelKey: "proTour" as const },
   { path: "/admin/moderation", icon: Shield, labelKey: "moderation" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
@@ -121,6 +123,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       organizations: t.admin.organizations,
       users: t.admin.users,
       tournaments: t.admin.tournaments,
+      // labelKey "proTour" intentionally bypasses the i18n bundle —
+      // "Pro Tour" reads identically in VI and EN (same English brand
+      // term used in Vietnamese pickleball coverage). Refactor to the
+      // i18n bundle when a localized variant becomes necessary.
+      proTour: "Pro Tour",
       moderation: t.admin.moderation.title,
       reports: "Báo cáo",
       apiKeys: "API Keys",

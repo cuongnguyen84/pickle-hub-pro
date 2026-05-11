@@ -77,24 +77,30 @@ describe("resolveDefaultTab", () => {
     ).toBe("trending");
   });
 
-  it("authenticated with >0 follows → following (the social-loop payoff)", () => {
+  it("authenticated with >0 follows → trending (Sprint 6: pro-tour boost makes Trending the cold-start landing for everyone)", () => {
+    // Previous behavior favored Following when the viewer had any follows.
+    // Sprint 6 product call: Trending now leads with PPA / APP / MLP pro
+    // matches (boosted in get_trending_feed) so even high-follow viewers
+    // see fresh recognizable content first. The Following tab is one
+    // click + the deep-link is preserved for users who bookmark it.
     expect(
       resolveDefaultTab({
         isAuthenticated: true,
         followingCount: 1,
       }),
-    ).toBe("following");
+    ).toBe("trending");
     expect(
       resolveDefaultTab({
         isAuthenticated: true,
         followingCount: 47,
       }),
-    ).toBe("following");
+    ).toBe("trending");
   });
 
   it("authenticated with undefined count (loading) → trending", () => {
-    // While useFollowingCount is in flight, undefined means we haven't
-    // confirmed there are follows yet — Trending is the safer default.
+    // Pre-Sprint-6, this fallback existed to avoid landing on an empty
+    // Following while useFollowingCount was in flight. Post-Sprint-6
+    // the answer is the same: Trending unconditionally.
     expect(
       resolveDefaultTab({
         isAuthenticated: true,
