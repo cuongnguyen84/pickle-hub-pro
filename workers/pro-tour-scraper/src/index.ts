@@ -32,6 +32,55 @@ import {
 } from "@/lib/pro-tour/adapters/rsc-scraper";
 import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
 
+// ─── Browser Rendering timeout budgets ───────────────────────────────────
+//
+// The CF Browser Rendering binding's launch handshake performs a
+// `Browser.getVersion` CDP call. When that call times out we get:
+//   "Browser.getVersion timed out. Increase the 'protocolTimeout' setting
+//    in launch/connect calls for a higher timeout if needed."
+// Important: @cloudflare/puppeteer 0.0.14 does NOT expose protocolTimeout
+// via launch options — its `WorkersLaunchOptions` only allows
+// `keep_alive`. The internal Connection defaults timeout to 180s already
+// (see node_modules/@cloudflare/puppeteer/.../common/Connection.js:155).
+// So the timeout we're hitting is from the upstream control plane being
+// slow / session exhausted, not from a tight client-side limit.
+//
+// Mitigations layered here:
+//   1. SESSION REUSE — call puppeteer.sessions() first; reuse a free
+//      browser via puppeteer.connect(sessionId) instead of paying the
+//      full launch handshake every time. CF-recommended pattern.
+//   2. KEEP-ALIVE — when we do launch fresh, keep the browser warm for
+//      KEEP_ALIVE_MS so the next scrape (cron tick or follow-up admin
+//      click) can reuse via (1).
+//   3. STAGE TIMEOUTS — page.goto + per-round-click waits + final
+//      content dump each have their own ceilings so a stuck stage
+//      surfaces a clear error instead of bubbling the opaque CDP timeout.
+//   4. STAGE LABELS — every async stage is wrapped to throw with a
+//      "[stage] message" prefix, so the admin Logs tab pinpoints
+//      exactly where rendering failed.
+//
+// Total worst-case budget for one scrape (5 rounds, fresh launch, no
+// reuse): ~ launch(180s, controlled by upstream) + goto(60s) +
+// 5 × click_settle(2s) = ~250s. Cloudflare Workers have a 30s CPU /
+// 5min wall-clock cap; this fits but leaves no slack — keep an eye on
+// p95 in CF Dashboard once we have ≥10 scrapes of real data.
+const KEEP_ALIVE_MS = 60_000;
+const PAGE_GOTO_TIMEOUT_MS = 60_000;
+const ROUND_SETTLE_MS = 2_000;
+const CONTENT_DUMP_TIMEOUT_MS = 30_000;
+
+// Minimal DOM stand-ins for the page.evaluate browser-context callback.
+// We deliberately don't load the full DOM lib in tsconfig (Worker
+// runtime is not a browser) — these tiny shapes are all the callback
+// touches.
+interface Clickable {
+  textContent: string | null;
+  click(): void;
+}
+interface ClickableRoot {
+  querySelectorAll(selector: string): ArrayLike<Clickable>;
+}
+
 interface Env {
   MYBROWSER: Fetcher;
   SUPABASE_URL: string;
@@ -186,34 +235,153 @@ async function runScrape(
 
 /* ─── Browser Rendering glue ────────────────────────────────────────── */
 
-async function renderWithBrowserRendering(env: Env, url: string): Promise<string> {
-  const browser = await puppeteer.launch(env.MYBROWSER);
+/**
+ * Wrap an async stage so any thrown error gets a "[stage] " prefix.
+ * Consumed by runScrape's catch → result.error so the admin Logs tab
+ * shows exactly where the scrape died (launch / goto / round-click /
+ * content-dump).
+ */
+async function withStage<T>(stage: string, fn: () => Promise<T>): Promise<T> {
   try {
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "networkidle0", timeout: 30_000 });
+    return await fn();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`[${stage}] ${msg}`);
+  }
+}
+
+/**
+ * Race a promise against a timeout that throws with a stage-aware
+ * message. Used for page operations whose own timeouts can't be
+ * configured (e.g. page.content()).
+ */
+async function withTimeout<T>(
+  stage: string,
+  ms: number,
+  fn: () => Promise<T>,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race<T>([
+      fn(),
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`[${stage}] hit ${ms}ms ceiling`)),
+          ms,
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/**
+ * Acquire a Browser handle — preferring an existing free session over a
+ * fresh launch. Returns the browser plus a `launched` flag so the
+ * caller can decide whether to .close() (which kills the session) or
+ * .disconnect() (which leaves the session warm for KEEP_ALIVE_MS).
+ */
+async function acquireBrowser(env: Env): Promise<{
+  browser: Awaited<ReturnType<typeof puppeteer.launch>>;
+  launched: boolean;
+}> {
+  // (1) Try to find a free session left over by a previous invocation.
+  // Sessions with `connectionId` are currently in use; pick one without
+  // it. sessions() failing is non-fatal — we'll just launch a new one.
+  try {
+    const sessions = await puppeteer.sessions(env.MYBROWSER);
+    const free = sessions.find((s) => !s.connectionId);
+    if (free) {
+      const browser = await withStage("connect-session", () =>
+        puppeteer.connect(env.MYBROWSER, free.sessionId),
+      );
+      return { browser, launched: false };
+    }
+  } catch (err) {
+    console.warn(
+      `[acquireBrowser] sessions() lookup failed; falling back to fresh launch. ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+
+  // (2) No free session — launch fresh with keep_alive so the NEXT
+  // scrape can reuse via (1). 60s window comfortably covers the gap
+  // between a manual admin click and the cron firing on the same row.
+  const browser = await withStage("launch", () =>
+    puppeteer.launch(env.MYBROWSER, { keep_alive: KEEP_ALIVE_MS }),
+  );
+  return { browser, launched: true };
+}
+
+async function renderWithBrowserRendering(env: Env, url: string): Promise<string> {
+  const { browser, launched } = await acquireBrowser(env);
+  try {
+    const page = await withStage("new-page", () => browser.newPage());
+
+    // `domcontentloaded` is enough for the initial RSC payload to be in
+    // the page string. networkidle0 was previously waiting for ALL
+    // background fetches (analytics, tracking pixels, lazy player
+    // avatars) to settle — those can keep firing for tens of seconds
+    // on a streaming site, masking the real "rendered enough" signal.
+    await withStage("goto", () =>
+      page.goto(url, { waitUntil: "domcontentloaded", timeout: PAGE_GOTO_TIMEOUT_MS }),
+    );
 
     // Iterate round buttons so each panel hydrates into the same DOM
-    // dump. Round labels per Cuong's spec: R32, R16, QF, SF, F.
-    // The click() is fire-and-wait; if the button doesn't exist for
-    // this draw size (e.g. small event with only QF/SF/F), the loop
-    // is a no-op for that label.
+    // dump. Labels per PPA bracket UI: R32, R16, QF, SF, F. Click is
+    // fire-and-wait; missing buttons (e.g. top-8 draw with only QF/SF/F)
+    // are no-ops. Each click followed by ROUND_SETTLE_MS for the RSC
+    // chunk to stream in.
     const rounds = ["R32", "R16", "QF", "SF", "F"];
     for (const label of rounds) {
-      await page.evaluate((needle: string) => {
-        const buttons = Array.from(
-          document.querySelectorAll<HTMLElement>("[role='button'], button"),
-        );
-        const target = buttons.find((b) => b.textContent?.trim() === needle);
-        target?.click();
-      }, label);
-      // Settle RSC stream — 800ms covers the typical hydration window.
-      // Adjust upward if rounds with many matches need more.
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await withStage(`round-click:${label}`, async () => {
+        // page.evaluate body executes in browser context; tsconfig
+        // intentionally excludes the DOM lib (Worker runtime is not
+        // browser) so document/HTMLElement are flagged here. Cast to
+        // the loose function shape and let the runtime resolve.
+        await (page.evaluate as unknown as (
+          fn: (needle: string) => void,
+          arg: string,
+        ) => Promise<void>)((needle) => {
+          const root = (globalThis as { document?: ClickableRoot }).document;
+          if (!root) return;
+          const buttons = Array.from(
+            root.querySelectorAll("[role='button'], button"),
+          ) as Clickable[];
+          const target = buttons.find(
+            (b) => b.textContent?.trim() === needle,
+          );
+          target?.click();
+        }, label);
+        await new Promise((resolve) => setTimeout(resolve, ROUND_SETTLE_MS));
+      });
     }
 
-    return await page.content();
+    return await withTimeout("content-dump", CONTENT_DUMP_TIMEOUT_MS, () =>
+      page.content(),
+    );
   } finally {
-    await browser.close();
+    // If WE launched it, disconnect (not close) so the keep_alive window
+    // applies and the next scrape can reuse via puppeteer.sessions().
+    // If we connected to an existing session, also disconnect — closing
+    // would kill a session another invocation might still want.
+    try {
+      if (launched) {
+        await browser.disconnect();
+      } else {
+        await browser.disconnect();
+      }
+    } catch (closeErr) {
+      // Disconnect failures are non-fatal — the session times out on
+      // its own. Just log so they're visible in CF tail.
+      console.warn(
+        `[renderWithBrowserRendering] disconnect failed (non-fatal). ${
+          closeErr instanceof Error ? closeErr.message : String(closeErr)
+        }`,
+      );
+    }
   }
 }
 
