@@ -329,6 +329,22 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaDescriptionEn: "15-year-old Tama Shimabukuro just beat world #1 Hunter Johnson and #2 Federico Staksrud at PPA Veolia Atlanta Championships to reach the final. His self-taught Hawaii origin story.",
     metaDescriptionVi: "Tama Shimabukuro 15 tuổi vừa hạ số 1 thế giới Hunter Johnson và số 2 Federico Staksrud tại PPA Veolia Atlanta Championships. Câu chuyện tự học từ Hawaii.",
   },
+  {
+    slug: "what-is-dupr-pickleball-rating-system",
+    publishedDate: "2026-05-11",
+    updatedDate: "2026-05-11",
+    author: "Cuong Nguyen",
+    tags: ["dupr", "pickleball rating", "skill rating", "ppa tour", "mlp", "usa pickleball", "vietnam", "beginner guide"],
+    ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
+    ctaLabel: { en: "Read: PPA Tour Asia 2026 Complete Guide", vi: "Đọc tiếp: PPA Tour Asia 2026 — Hướng dẫn đầy đủ" },
+    heroImage: undefined,
+    titleEn: "What Is DUPR? The Global Pickleball Rating System Explained (Part 1 of 3)",
+    titleVi: "DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu cho người chơi Việt Nam (Phần 1/3)",
+    metaTitleEn: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series",
+    metaTitleVi: "DUPR là gì? Xếp hạng pickleball toàn cầu | Series 3 phần — Phần 1",
+    metaDescriptionEn: "DUPR explained: the global pickleball rating system used by PPA Tour, MLP, USA Pickleball, and Pickleball World Cup. How it works, who runs it, and why Vietnamese players need it.",
+    metaDescriptionVi: "DUPR — hệ thống xếp hạng pickleball toàn cầu dùng bởi PPA Tour, MLP, USA Pickleball, Pickleball World Cup. Cách hoạt động, ai điều hành và vì sao người chơi VN cần nó.",
+  },
 ];
 
 export const blogSlugs: string[] = blogMetadata.map((p) => p.slug);

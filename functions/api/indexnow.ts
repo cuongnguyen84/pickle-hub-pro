@@ -43,6 +43,7 @@ const STATIC_URLS = [
 // Blog slugs (EN) — keep in sync with src/content/blog/metadata.ts and functions/sitemap.xml.ts
 const BLOG_SLUGS = [
   "tama-shimabukuro-ppa-atlanta-final-15-year-old",
+  "what-is-dupr-pickleball-rating-system",
   "how-to-watch-ppa-tour-live-2026",
   "ppa-tour-asia-2026-complete-guide",
   "best-pickleball-tournament-software-2026",
