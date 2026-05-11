@@ -40,30 +40,67 @@ Expected response shape:
 {
   "ok": true,
   "log_id": "<uuid>",
-  "matches_extracted": 0,
+  "matches_extracted": 3,
   "players_extracted": 7
 }
 ```
 
-`matches_extracted: 0` is **expected on the first run** — see the
-"Selectors are scaffolding" note in `src/lib/pro-tour/adapters/rsc-scraper.ts`.
-The end-to-end pipeline (Browser Rendering → parse → ingest function →
-log row) runs successfully; the parser just doesn't surface any matches
-until selectors are filled in against a captured fixture.
+(Counts vary by tournament round depth + draw size; the values above are
+from the men's doubles top-8 fixture in `__fixtures__/`.)
 
-## Capturing the first fixture
+## Fixture harvest cycle
 
-After `wrangler dev` is running:
+The parser is **not** DOM-selector based — it regex-extracts already-
+structured match objects from the inline JSON that Next.js streams via
+`self.__next_f.push([N, "..."])` script chunks. That makes the parser
+immune to Tailwind class hash changes, dark-mode tweaks, and breakpoint
+reflows. The shape we depend on is the platform's own server-side React
+data contract, which can't change without breaking their UI.
 
-1. Hit `/scrape` with the test URL.
-2. Worker tail shows the page HTML in dev. Save it to
-   `__fixtures__/2026-ppa-finals.html` (gitignored binary; commit a
-   small representative snippet only, the full page is multi-MB).
-3. Open `src/lib/pro-tour/adapters/rsc-scraper.ts` and update each
-   `SELECTOR_*` constant to match the actual class / data attribute
-   strings in the captured DOM.
-4. Run vitest against the fixture: `npm test parser` from the project root.
-5. Iterate until the expected match count parses.
+Re-running the harvest cycle for a new tournament URL:
+
+1. **Capture the post-hydration HTML.** Direct `curl` works for the
+   initial server-rendered chunk (no Browser Rendering needed for parser
+   verification):
+   ```bash
+   curl -sL -A 'Mozilla/5.0 (Macintosh)' \
+     'https://brackets.pickleballtournaments.com/tournaments/<slug>/events/<UUID>/elimination/<UUID>' \
+     -o /tmp/raw.html
+   ```
+   For full-bracket coverage the Worker's Browser Rendering path needs
+   to click each round button so additional chunks stream in — that's
+   orthogonal to the parser; once the chunks land in the page string,
+   the same regex extractor picks them up.
+
+2. **Save the fixture** to `workers/pro-tour-scraper/__fixtures__/<event-slug>.html`.
+   These are committed (small enough — ~150KB per event). Public
+   pro-player names + scores are NOT user-identifying data; do **not**
+   capture admin or signed-in pages.
+
+3. **Sanity-check the JSON shape.** A grep should find 3+ markers per
+   round currently rendered:
+   ```bash
+   grep -c '"teams":' workers/pro-tour-scraper/__fixtures__/<file>.html
+   ```
+   If 0, the page didn't hydrate (auth wall, geo-block, or the platform
+   changed their streaming format).
+
+4. **Add fixture-based tests** to
+   `src/lib/pro-tour/__tests__/rsc-scraper.test.ts`. Pattern: load the
+   fixture file, call `parseTournamentHtml()`, assert `matches.length
+   >= N`, verify spot-check player slugs + tournament name.
+
+5. **Run vitest** from the project root until green:
+   ```bash
+   npx vitest run pro-tour
+   ```
+
+6. **If shape changed:** the platform may have renamed a key (e.g.
+   `players` → `participants`). Update the regex constants at the top
+   of `src/lib/pro-tour/adapters/rsc-scraper.ts`. The constants are
+   commented with the byte sequence they're matching against — useful
+   when reasoning about double-stringified JSON escape rules
+   (JSON.stringify escapes `"` → `\"` but leaves `[` `]` bare).
 
 ## Deploy
 

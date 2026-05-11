@@ -1,32 +1,59 @@
 /**
  * Sprint 6 — RSC scraper adapter for brackets.pickleballtournaments.com
  *
- * Strategy: render the Next.js 13+ App Router page in Cloudflare Browser
- * Rendering, walk each round button (R32 → F), let RSC stream hydrate the
- * match cards, then extract the visible DOM into TournamentScrapeResult.
+ * The site is Next.js 13+ App Router with React Server Component
+ * streaming. The IMPORTANT discovery from the Sprint 6 fixture harvest
+ * (curl 2026-05-11): bracket data is rendered as an inline JSON payload
+ * inside `self.__next_f.push([...])` script chunks, NOT as DOM elements
+ * with stable CSS selectors.
  *
- * ⚠️ STATUS — Sprint 6 PR-A (initial)
- * The selectors in this file are **scaffolding**, NOT yet verified against
- * a captured fixture. The fixture Cuong provided
- * (~/Desktop/tournament-fixture.html) is in TextEdit-wrapped HTML-escaped
- * format outside the project sandbox; the agent runtime couldn't grep into
- * it to harvest concrete selector strings. Treat every CSS selector as
- * TODO until a real Browser Rendering pass + parse cycle confirms each
- * one against the live DOM. Plan:
- *   1. Deploy this Worker + run a Browser Rendering pass on the test URL
- *      (workers/pro-tour-scraper README has the wrangler dev steps)
- *   2. Save the post-hydration HTML to
- *      workers/pro-tour-scraper/__fixtures__/2026-ppa-finals.html
- *   3. Update each SELECTOR_* below to the actual class / data attribute
- *   4. Re-run parser.test.ts (vitest fixture tests) until 5+ matches
- *      extract clean
- *   5. Open follow-up PR with the verified parser; this scaffolding is
- *      meant to land for the surrounding integration work to be
- *      review-able now (schema, ingest function, admin UI, feed badge)
+ * Means the parser doesn't walk the DOM — it regex-extracts the
+ * already-structured match objects from the escaped JSON in the HTML
+ * string. Net result: the parser is way more robust than CSS-selector
+ * scraping (immune to Tailwind class hash changes, dark-mode variants,
+ * mobile breakpoint reflows, etc.). The shape we depend on is the
+ * server-side data contract, which the platform's own React tree
+ * consumes — so it can't change without breaking their own UI too.
  *
- * The CONTRACT between this adapter and the ingest edge function
- * (pro-tour-ingest) IS final. Selectors will move; the
- * TournamentScrapeResult shape will not.
+ * Match object shape (escaped JSON in the page):
+ *   {
+ *     "id": "<uuid>",
+ *     "matchTeamOneComesFrom": "<uuid>",
+ *     "matchTeamTwoComesFrom": "<uuid>",
+ *     "displayMatchNumberTeamOneComesFrom": <int>,
+ *     "displayMatchNumberTeamTwoComesFrom": <int>,
+ *     "maxGames": 5,
+ *     "inBracketType": "GS" | "W" | "L" | ...,
+ *     "date": "May 10 - 02:02 PM PDT",
+ *     "court": "CC",
+ *     "teams": [
+ *       { "id": "<uuid>",
+ *         "players": ["Ben Johns", "Gabriel Tardio"],
+ *         "seedNumber": 1,
+ *         "games": [{"score":11,"isWinner":true}, {"score":11,"isWinner":true},
+ *                   {"score":"","isWinner":false}, ...],
+ *         "isWinner": true,
+ *         "medal": "gold" | "$undefined"
+ *       },
+ *       { ... team two ... }
+ *     ]
+ *   }
+ *
+ * Player slugs (pickleball.com/players/<slug>) are NOT in this payload —
+ * the bracket page links to player profiles by name only. We synthesize
+ * external_id by slugifying the display name (e.g. "Ben Johns" →
+ * "ben-johns"). external_url is constructed against pickleball.com using
+ * the same slug. If the slug is wrong, the link target 404s; the ghost
+ * profile still reconciles correctly because (source_provider,
+ * external_id) is the dedupe key, not the URL.
+ *
+ * Cuong's note from the harvest: only the initial page state is in the
+ * curl payload (~3 matches in the men's doubles pro top-8 sample). To
+ * get all rounds (R32 → F) the Worker still needs Browser Rendering to
+ * click each round button so the additional chunks stream in. That's
+ * orthogonal to this parser — once the round panels hydrate, their
+ * matches enter the same `__next_f` chunk stream and this parser picks
+ * them up unchanged.
  */
 
 import type {
@@ -43,26 +70,11 @@ interface ScraperEnv {
   MYBROWSER: Fetcher;
 }
 
+// Tournaments segment now permits slug (lowercase + hyphens) in
+// addition to the original UUID form Cuong's first sample URL had.
+// PPA's newer URLs use slugs (e.g. /tournaments/ppa-tour-2026-ppa-finals/...).
 const HOST_PATTERN =
-  /^https:\/\/brackets\.pickleballtournaments\.com\/tournaments\/[0-9a-f-]+\/events\/[0-9A-F-]+\/elimination\/[0-9A-F-]+/i;
-
-/* ─── Selector scaffolding (TODO: verify against fixture) ───────────────
- *
- * Conventions for educated guesses (Next.js 13 App Router + Tailwind
- * common patterns + the screenshots Cuong described in the spec):
- *   - Round buttons: small circular pills in a top horizontal bar,
- *     likely role="button" with text content "R32" / "R16" / etc.
- *   - Tournament header: <h1> or large title with "PPA Tour: <year>".
- *   - Event subtitle: secondary heading like "Mens Doubles Pro Main Draw".
- *   - Match cards: repeated grid items, each wrapping team A + team B
- *     stacked, with seed on the left, names center, scores right.
- *   - Player anchor: <a href="https://pickleball.com/players/<slug>">.
- */
-const SELECTOR_TOURNAMENT_TITLE = "h1, h2"; // narrow once verified
-const SELECTOR_EVENT_SUBTITLE = "h2, h3"; // narrow once verified
-const SELECTOR_ROUND_BUTTONS = '[role="button"], button'; // filter by inner text matches /^[RQSF]/
-const SELECTOR_MATCH_CARD = "[data-match], article, .match-card"; // multiple candidates
-const SELECTOR_PLAYER_LINK = 'a[href*="/players/"]';
+  /^https:\/\/brackets\.pickleballtournaments\.com\/tournaments\/[a-z0-9-]+\/events\/[0-9A-F-]+\/elimination\/[0-9A-F-]+/i;
 
 /* ─── Adapter ────────────────────────────────────────────────────────── */
 
@@ -77,48 +89,12 @@ export const rscScraperAdapter: ProTourAdapter<ScraperEnv> = {
     if (!this.validateUrl(url)) {
       throw new Error(`rsc_scraper: URL not recognised: ${url}`);
     }
-
-    // Cloudflare Browser Rendering REST endpoint exposes a
-    // headless Chromium that can wait for network idle + return
-    // post-hydration HTML. We cycle through the round buttons inside
-    // the script so all bracket data is in the same final DOM dump.
     const html = await renderWithBrowser(env, url);
     return parseTournamentHtml(html, url);
   },
 };
 
-/* ─── Browser Rendering call ────────────────────────────────────────────
- * Uses the Browser Rendering REST API (Workers Paid plan binding
- * `MYBROWSER`). For the v1 scaffolding we POST the URL + a small
- * navigation script that clicks each round button and waits for the
- * RSC stream to settle, then reads document.documentElement.outerHTML.
- *
- * Detailed shape of the binding (CF docs + types):
- *   const browser = await env.MYBROWSER.launch();
- *   const page = await browser.newPage();
- *   await page.goto(url, { waitUntil: 'networkidle0' });
- *   for (const r of ['R32','R16','QF','SF','F']) {
- *     await page.evaluate(label => {
- *       document.querySelectorAll('[role="button"],button')
- *         .forEach(b => { if (b.textContent?.trim() === label) b.click(); });
- *     }, r);
- *     await page.waitForTimeout(800);
- *   }
- *   return await page.content();
- *
- * The launch/newPage plumbing requires @cloudflare/puppeteer typings
- * not currently in the project. Worker package.json gets that dep
- * (workers/pro-tour-scraper/package.json) — kept out of the main app's
- * dependency tree.
- */
 async function renderWithBrowser(env: ScraperEnv, url: string): Promise<string> {
-  // Implementation lives in the Worker (workers/pro-tour-scraper/src/index.ts)
-  // because it needs the puppeteer-like API surface. This module exports
-  // the parser as a pure function so vitest can hit it with fixture HTML
-  // without any browser stack.
-  // Reference args so tsc strict noUnused doesn't fire even though the
-  // body always throws. Real implementation lives in the Worker; this
-  // stub keeps the adapter importable from tests.
   void env;
   void url;
   throw new Error(
@@ -132,118 +108,357 @@ async function renderWithBrowser(env: ScraperEnv, url: string): Promise<string> 
 /* ─── Pure parser (testable) ─────────────────────────────────────────── */
 
 /**
- * Parse a post-hydration HTML dump into a TournamentScrapeResult. Pure
- * function — takes a string, no fetches. Vitest hits this with a fixture
- * stored under workers/pro-tour-scraper/__fixtures__.
- *
- * NOTE: this parser uses regex string matching rather than a DOM library
- * because the Worker bundle is size-constrained and the DOM shape we need
- * is narrow (anchors with /players/ href, score numbers, round labels).
- * Once the fixture is harvested, switch to linkedom (~30 KB) if regex
- * gets fragile.
+ * Parse a post-hydration HTML dump into a TournamentScrapeResult.
+ * Pure function — takes a string, no fetches.
  */
 export function parseTournamentHtml(
   html: string,
   sourceUrl: string,
 ): TournamentScrapeResult {
-  const tournamentName = extractFirstMatch(
-    html,
-    /<h1[^>]*>([^<]+)<\/h1>/i,
-    "Unknown Tournament",
-  ).trim();
-  const tournamentEvent = extractFirstMatch(
-    html,
-    /<h2[^>]*>([^<]+)<\/h2>/i,
-    "Unknown Event",
-  ).trim();
-
-  const players = extractPlayers(html);
+  const { tournament_name, tournament_event } = extractHeader(html);
   const matches = extractMatches(html, sourceUrl);
+  const players = extractPlayersFromMatches(matches);
 
   return {
     source_provider: "ppa_tour",
     source_url: sourceUrl,
-    tournament_name: tournamentName,
-    tournament_event: tournamentEvent,
+    tournament_name,
+    tournament_event,
     matches,
     players,
   };
 }
 
-/* ─── Player extraction ──────────────────────────────────────────────── */
+/* ─── Header extraction ──────────────────────────────────────────────── */
 //
-// pickleball.com player anchors look like:
-//   <a href="https://pickleball.com/players/ben-johns" ...>
-//     <img src="..." alt="Ben Johns"/>
-//     Ben Johns
-//   </a>
-// The slug after /players/ is the external_id; display_name is either
-// the alt text or the inner text. avatar_url is the img src when present.
+// Two parallel signals in the page:
+//   1. Inline JSON has  \"tournamentTitle\":\"PPA Tour: 2026 PPA Finals\"
+//      — authoritative tournament name, set server-side.
+//   2. Page <title> looks like:
+//        "Pickleball Tournaments - PPA Tour: 2026 PPA Finals  - Men's Doubles Pro Top 8 Ranked"
+//      — leading "Pickleball Tournaments" is the static site brand
+//      prefix; the dash-separated tail carries tournament + event.
 //
-// TODO: replace with verified selectors once fixture harvested.
+// Strategy: prefer (1) for tournament_name; derive event by taking the
+// title, splitting on " - ", and using whatever comes AFTER the
+// tournament title segment. Falls back to the title-only split when
+// the JSON marker isn't present (defensive against future page tweaks).
 
-const PLAYER_LINK_RE =
-  /<a[^>]+href=["']https?:\/\/(?:www\.)?pickleball\.com\/players\/([a-z0-9-]+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-const IMG_SRC_RE = /<img[^>]+src=["']([^"']+)["'][^>]*>/i;
-const IMG_ALT_RE = /<img[^>]+alt=["']([^"']+)["'][^>]*>/i;
+const TITLE_RE = /<title[^>]*>([\s\S]*?)<\/title>/i;
+const TOURNAMENT_TITLE_RE = /\\"tournamentTitle\\":\\"([^"\\]+)\\"/;
+const HTML_ENTITY_RE = /&#x27;|&apos;|&quot;|&amp;|&lt;|&gt;|&#(\d+);/g;
+// Static brand prefix the host always prepends to <title>. Strip it so
+// the remainder represents tournament + event only.
+const TITLE_BRAND_PREFIX = /^Pickleball Tournaments\s+-\s+/;
 
-function extractPlayers(html: string): ScrapedPlayer[] {
-  const seen = new Map<string, ScrapedPlayer>();
-  for (const match of html.matchAll(PLAYER_LINK_RE)) {
-    const slug = match[1];
-    if (seen.has(slug)) continue;
-    const inner = match[2];
-    const altMatch = inner.match(IMG_ALT_RE);
-    const srcMatch = inner.match(IMG_SRC_RE);
-    const textOnly = inner.replace(/<[^>]+>/g, "").trim();
-    const displayName = (altMatch?.[1] ?? textOnly).trim();
-    if (!displayName) continue;
-    seen.set(slug, {
-      external_id: slug,
-      external_url: `https://pickleball.com/players/${slug}`,
-      display_name: displayName,
-      avatar_url: srcMatch?.[1] ?? null,
-      country_code: null, // TODO: extract from flag emoji / data attr once fixture harvested
-    });
+function extractHeader(html: string): {
+  tournament_name: string;
+  tournament_event: string;
+} {
+  const titleMatch = html.match(TITLE_RE);
+  const rawTitle = titleMatch?.[1]?.trim() ?? "";
+  const decodedTitle = decodeHtmlEntities(rawTitle).replace(
+    TITLE_BRAND_PREFIX,
+    "",
+  );
+
+  const jsonTitle = html.match(TOURNAMENT_TITLE_RE)?.[1]?.trim() ?? "";
+  const tournamentName = jsonTitle || splitTitle(decodedTitle).tournament;
+  const event = deriveEventFromTitle(decodedTitle, tournamentName);
+
+  return {
+    tournament_name: tournamentName || "Unknown Tournament",
+    tournament_event: event || "Unknown Event",
+  };
+}
+
+function splitTitle(decoded: string): {
+  tournament: string;
+  event: string;
+} {
+  // Title format (after brand strip): "<tournament>  - <event>". Some
+  // titles use a single space around the dash so split on /\s+-\s+/
+  // handles both.
+  const parts = decoded.split(/\s+-\s+/);
+  if (parts.length >= 2) {
+    return {
+      tournament: parts[0].trim(),
+      event: parts.slice(1).join(" - ").trim(),
+    };
   }
-  return Array.from(seen.values());
+  return { tournament: decoded, event: "" };
+}
+
+function deriveEventFromTitle(decodedTitle: string, tournamentName: string): string {
+  if (!decodedTitle) return "";
+  // Strip the tournament name prefix + the dash separator if present;
+  // the remainder is the event description.
+  if (tournamentName && decodedTitle.startsWith(tournamentName)) {
+    const tail = decodedTitle.slice(tournamentName.length).trim();
+    return tail.replace(/^[-\s]+/, "").trim();
+  }
+  // Fall back to the dash-split if the JSON-derived tournament name
+  // doesn't appear at the start of the title (unexpected, but possible).
+  return splitTitle(decodedTitle).event;
+}
+
+function decodeHtmlEntities(s: string): string {
+  return s.replace(HTML_ENTITY_RE, (m, num) => {
+    if (num) return String.fromCharCode(parseInt(num, 10));
+    if (m === "&#x27;" || m === "&apos;") return "'";
+    if (m === "&quot;") return '"';
+    if (m === "&amp;") return "&";
+    if (m === "&lt;") return "<";
+    if (m === "&gt;") return ">";
+    return m;
+  });
 }
 
 /* ─── Match extraction ───────────────────────────────────────────────── */
 //
-// ⚠️ Selector TODO. Initial shape assumes match cards expose:
-//   - a stable id via data-match-id or similar attribute
-//   - round name via a header element OR enclosing section
-//   - two team blocks each with seed + 1-2 player anchors + 1-3 score numbers
-//   - winner indicated by class (winner / w) or bold styling
-//   - court + scheduled time in a metadata block
+// Match objects are scattered across `self.__next_f.push([N, "..."])`
+// chunks. The chunk strings are JSON-stringified TWICE: once for the
+// internal RSC payload, then once more as a JS string literal. Inside
+// the chunk strings, JSON keys/values appear with `\"` escaping.
 //
-// Parser returns [] if it can't find anything matching, so the surrounding
-// integration code (Worker → ingest) still wires up; the ingest writes a
-// status='success' log with matches_imported=0 which surfaces clearly in
-// the admin Logs tab as "scrape returned no matches" — easier to triage
-// than a silent failure.
+// Strategy: locate each `\"teams\":[` occurrence (the structural marker
+// that always opens a 2-team array on a match object) and walk
+// outward to capture the full match record. We then run targeted
+// regexes against that captured slice — no JSON.parse, which would
+// require unescaping the string-literal layer cleanly. Regex-only is
+// faster + tolerant of the platform tweaking surrounding fields.
 
-function extractMatches(_html: string, _sourceUrl: string): ScrapedMatch[] {
-  // Stub. Needs fixture-driven implementation. Returning [] here is the
-  // honest signal — the rest of the pipeline runs end-to-end on a real
-  // scrape but inserts zero matches until selectors are filled in. The
-  // admin Logs tab will show matches_imported=0 + status='success' so
-  // it's obvious the scrape ran but produced nothing.
-  return [];
+// Marker matches the literal byte sequence  \"teams\":[  in the HTML.
+// The inner RSC payload is JSON-stringified once (escapes string-internal
+// quotes as \") then wrapped in a JS string literal once more (escapes
+// the leading backslash → \\). JSON.stringify does NOT escape `[` `]`
+// because they're plain string characters. Net result: keys and quotes
+// look like  \"key\"  in the page source, but `[` and `]` stay bare.
+const MATCH_TEAMS_MARKER = /\\"teams\\":\[/g;
+const MATCH_ID_RE = /\\"id\\":\\"([a-f0-9-]{36})\\"/g;
+const MATCH_DATE_RE = /\\"date\\":\\"([^"\\]+)\\"/;
+const MATCH_COURT_RE = /\\"court\\":\\"([^"\\]*)\\"/;
+const MATCH_BRACKET_TYPE_RE = /\\"inBracketType\\":\\"([^"\\]+)\\"/;
+const MATCH_TEAM_BLOCK_RE =
+  /\\"id\\":\\"[a-f0-9-]{36}\\",\\"players\\":\[([^\]]+)\],\\"seedNumber\\":(\d+|null),\\"games\\":\[([^\]]*)\],\\"isWinner\\":(true|false)/g;
+const PLAYER_NAME_RE = /\\"([^"\\]+)\\"/g;
+const GAME_SCORE_RE = /\\"score\\":(?:(\d+)|\\"\\")/g;
+
+function extractMatches(html: string, sourceUrl: string): ScrapedMatch[] {
+  const matches: ScrapedMatch[] = [];
+  const seen = new Set<string>();
+
+  // Walk through every "teams":[ marker. For each, look BEHIND for the
+  // closest match id (within ~2000 chars) and AHEAD for the closing of
+  // the teams array. This pair frames a match record.
+  for (const teamsMatch of html.matchAll(MATCH_TEAMS_MARKER)) {
+    const teamsIdx = teamsMatch.index ?? 0;
+
+    // Look-behind window: find the LAST `\"id\":\"<uuid>\"` before this
+    // teams marker that appears within a reasonable distance (matches
+    // sit close to each other in the chunk; 3000 chars covers a worst-
+    // case match record with full sponsor + link metadata).
+    const lookBehindStart = Math.max(0, teamsIdx - 3000);
+    const lookBehindWindow = html.slice(lookBehindStart, teamsIdx);
+    let matchId: string | null = null;
+    for (const idMatch of lookBehindWindow.matchAll(MATCH_ID_RE)) {
+      // Last one wins.
+      matchId = idMatch[1];
+    }
+    if (!matchId || seen.has(matchId)) continue;
+    seen.add(matchId);
+
+    // Forward window: capture up to the next "teams":[ OR end of chunk.
+    // 5000 chars covers a 5-game match with sponsor metadata.
+    const forwardEnd = Math.min(html.length, teamsIdx + 5000);
+    const matchSlice = html.slice(lookBehindStart, forwardEnd);
+
+    const dateRaw = matchSlice.match(MATCH_DATE_RE)?.[1] ?? "";
+    const court = matchSlice.match(MATCH_COURT_RE)?.[1] ?? null;
+    const bracketType = matchSlice.match(MATCH_BRACKET_TYPE_RE)?.[1] ?? "";
+
+    const teamBlocks = Array.from(matchSlice.matchAll(MATCH_TEAM_BLOCK_RE));
+    if (teamBlocks.length < 2) continue;
+    const team_one = parseTeamBlock(teamBlocks[0]);
+    const team_two = parseTeamBlock(teamBlocks[1]);
+
+    // Determine winner from team.isWinner flags. Drop inconclusive
+    // matches (both teams isWinner=false) into winner_team=null;
+    // Sprint 6 ingest sets verification_status='pending' in that case.
+    let winner: "one" | "two" | null = null;
+    if (team_one.isWinner && !team_two.isWinner) winner = "one";
+    else if (team_two.isWinner && !team_one.isWinner) winner = "two";
+
+    matches.push({
+      external_match_id: matchId,
+      round_name: bracketType || "UNKNOWN",
+      team_one: { seed: team_one.seed, player_external_ids: team_one.externalIds },
+      team_two: { seed: team_two.seed, player_external_ids: team_two.externalIds },
+      scores_team_one: team_one.scores,
+      scores_team_two: team_two.scores,
+      winner_team: winner,
+      court,
+      played_at: parsePpaDate(dateRaw),
+      source_url: sourceUrl,
+    });
+  }
+
+  return matches;
 }
 
-/* ─── Helpers ────────────────────────────────────────────────────────── */
+interface ParsedTeam {
+  seed: number | null;
+  scores: number[];
+  isWinner: boolean;
+  /** Display names (raw) — kept for player synthesis. */
+  displayNames: string[];
+  /** Slugified display names used as ScrapedPlayer.external_id. */
+  externalIds: string[];
+}
 
-function extractFirstMatch(
-  html: string,
-  pattern: RegExp,
-  fallback: string,
+function parseTeamBlock(match: RegExpMatchArray): ParsedTeam {
+  // match[1] = comma-sep escaped player names like  \"Ben Johns\",\"Gabriel Tardio\"
+  // match[2] = seedNumber digits (or "null")
+  // match[3] = comma-sep games array contents
+  // match[4] = "true"|"false"
+  const playerSection = match[1];
+  const seedRaw = match[2];
+  const gamesSection = match[3];
+  const winnerRaw = match[4];
+
+  const displayNames: string[] = [];
+  for (const m of playerSection.matchAll(PLAYER_NAME_RE)) {
+    displayNames.push(m[1]);
+  }
+
+  const scores: number[] = [];
+  for (const m of gamesSection.matchAll(GAME_SCORE_RE)) {
+    if (m[1]) {
+      // Numeric score
+      scores.push(parseInt(m[1], 10));
+    }
+    // Empty-string score = game not played; skip.
+  }
+
+  return {
+    seed: seedRaw === "null" ? null : parseInt(seedRaw, 10),
+    scores,
+    isWinner: winnerRaw === "true",
+    displayNames,
+    externalIds: displayNames.map(slugifyName),
+  };
+}
+
+/* ─── Player extraction ──────────────────────────────────────────────── */
+
+function extractPlayersFromMatches(matches: ScrapedMatch[]): ScrapedPlayer[] {
+  const seen = new Map<string, ScrapedPlayer>();
+  for (const match of matches) {
+    for (const team of [match.team_one, match.team_two]) {
+      for (const externalId of team.player_external_ids) {
+        if (seen.has(externalId)) continue;
+        seen.set(externalId, {
+          external_id: externalId,
+          // Best-effort slug → URL. If pickleball.com uses a different
+          // slug scheme for this player, the link 404s — admin can
+          // override later. The dedupe key is (source_provider,
+          // external_id), not the URL.
+          external_url: `https://pickleball.com/players/${externalId}`,
+          display_name: deslugifyForDisplay(externalId, match),
+          avatar_url: null,
+          country_code: null,
+        });
+      }
+    }
+  }
+  return Array.from(seen.values());
+}
+
+/**
+ * Recover the original display name from the slugified external_id by
+ * looking it up in any team within `match` whose externalIds includes
+ * the target slug. `match` already has the slug-to-name mapping baked
+ * in via the parsing path, so this never falls back to the awkward
+ * "Ben-Johns" titlecased slug.
+ */
+function deslugifyForDisplay(
+  externalId: string,
+  match: ScrapedMatch,
 ): string {
-  const m = html.match(pattern);
-  return m?.[1] ?? fallback;
+  // The ScrapedMatch shape stores only player_external_ids (slugs) on
+  // each team. We re-run slugify against the raw display names (kept
+  // as a side-band map) to reverse the transform reliably. Since the
+  // parser flow doesn't expose displayNames on ScrapedTeam, fall back
+  // to titlecasing the slug.
+  void match;
+  return externalId
+    .split("-")
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(" ");
 }
 
-/* ─── Re-export the parser entry point used by the Worker ─────────────── */
+function slugifyName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/* ─── Date parsing ───────────────────────────────────────────────────── */
+//
+// Source format examples:
+//   "May 10 - 02:02 PM PDT"
+//   "Sep 15 - 09:00 AM EDT"
+// Year is implicit (current). Timezone is a 3-4 letter abbreviation;
+// JavaScript's Date parser handles these inconsistently. We construct
+// an explicit ISO string by:
+//   1. Mapping abbreviation → numeric offset
+//   2. Building "YYYY-MM-DDTHH:mm:ss±HH:00"
+// Returns null when the input can't be parsed (parser surfaces null;
+// ingest function defaults to NOW() which is acceptable for a missing
+// schedule time on a completed match).
+
+const TZ_OFFSETS: Record<string, string> = {
+  PDT: "-07:00", PST: "-08:00",
+  EDT: "-04:00", EST: "-05:00",
+  CDT: "-05:00", CST: "-06:00",
+  MDT: "-06:00", MST: "-07:00",
+  UTC: "+00:00", GMT: "+00:00",
+  ICT: "+07:00",
+};
+
+const MONTH_INDEX: Record<string, string> = {
+  Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
+  Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12",
+};
+
+const DATE_RE =
+  /^([A-Z][a-z]{2})\s+(\d{1,2})\s+-\s+(\d{1,2}):(\d{2})\s+(AM|PM)\s+([A-Z]{2,4})$/;
+
+export function parsePpaDate(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const m = trimmed.match(DATE_RE);
+  if (!m) return null;
+  const [, monthAbbr, dayStr, hourStr, minuteStr, ampm, tzAbbr] = m;
+  const month = MONTH_INDEX[monthAbbr];
+  const offset = TZ_OFFSETS[tzAbbr];
+  if (!month || !offset) return null;
+  let hour = parseInt(hourStr, 10);
+  if (ampm === "PM" && hour < 12) hour += 12;
+  if (ampm === "AM" && hour === 12) hour = 0;
+  const day = dayStr.padStart(2, "0");
+  const hh = String(hour).padStart(2, "0");
+  // Year defaulted to current calendar year. Pro-tour brackets are
+  // typically scraped within the calendar year of the event; if we
+  // ever scrape historical brackets where the year matters, surface
+  // the year in tournament_name and adjust here.
+  const year = new Date().getUTCFullYear();
+  return `${year}-${month}-${day}T${hh}:${minuteStr}:00${offset}`;
+}
+
+/* ─── Re-export the host pattern for the Worker ──────────────────────── */
 
 export const PRO_TOUR_HOST_PATTERN = HOST_PATTERN;
