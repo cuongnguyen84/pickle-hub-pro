@@ -167,13 +167,22 @@ export function formatProMatchTicker(
 
   // Score reads team_a:team_b as recorded — winner side comes first
   // visually because pickleball broadcasts always lead with the winner
-  // ("Johns/Tardio 3:0 Staksrud/Daescu"). Swap the side ordering when
-  // team B won so the lead pair is the champion.
-  const aWon = m.winning_team === "a";
-  const leftLabel = aWon ? teamA : teamB;
-  const rightLabel = aWon ? teamB : teamA;
-  const leftWins = aWon ? wins.a : wins.b;
-  const rightWins = aWon ? wins.b : wins.a;
+  // ("Johns/Tardio 3:0 Staksrud/Daescu"). Swap the side ordering only
+  // when team B is the explicit winner; for team A wins or unresolved
+  // matches keep the natural A/B ordering.
+  //
+  // Codex P2 fix on PR #38: previously `aWon = winning_team === "a"`
+  // evaluated to `false` for `winning_team === null` AND for
+  // `winning_team === "b"` alike — both branches would then flip the
+  // display so team B led. That's correct for B wins but wrong for the
+  // null case: an unresolved match has no winner to lead with, and
+  // forcing "B 0:0 A" silently mislabels the row. Now: only B-wins
+  // trigger the swap; null/missing keeps A first.
+  const swapForBWinner = m.winning_team === "b";
+  const leftLabel = swapForBWinner ? teamB : teamA;
+  const rightLabel = swapForBWinner ? teamA : teamB;
+  const leftWins = swapForBWinner ? wins.b : wins.a;
+  const rightWins = swapForBWinner ? wins.a : wins.b;
 
   const body = `${leftLabel} ${leftWins}:${rightWins} ${rightLabel}`;
 

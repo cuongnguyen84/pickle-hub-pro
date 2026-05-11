@@ -209,6 +209,33 @@ describe("formatProMatchTicker", () => {
     expect(item.body).toBe("Staksrud/Daescu 3:0 Johns/Tardio");
   });
 
+  it("when team A won, body leads with team A (no swap)", () => {
+    // Sanity check that the A-winner branch doesn't accidentally swap.
+    // Existing fixture already covers this implicitly via the first
+    // assertion, but pinning it explicitly so the swap-only-on-B
+    // contract is documented.
+    const item = formatProMatchTicker(
+      { ...benTardioVsStaksrudDaescu, winning_team: "a" },
+      "en",
+    );
+    expect(item.body).toBe("Johns/Tardio 3:0 Staksrud/Daescu");
+  });
+
+  it("when winning_team is null, keep natural A/B order (Codex P2)", () => {
+    // Unresolved match — partial ingest, in-progress, or a tie that
+    // never got a winner stamp. Previously the body forced B-first
+    // because `aWon = winning_team === "a"` was false → swap. The
+    // correct behavior is to leave A/B in their recorded order; the
+    // useRecentProMatches query also filters these rows out at the
+    // DB level, so this branch is a defensive belt-and-braces guard
+    // for any null that slips through.
+    const item = formatProMatchTicker(
+      { ...benTardioVsStaksrudDaescu, winning_team: null },
+      "en",
+    );
+    expect(item.body).toBe("Johns/Tardio 3:0 Staksrud/Daescu");
+  });
+
   it("SF round label, 2:0 best-of-3", () => {
     const item = formatProMatchTicker(
       {

@@ -99,15 +99,37 @@ export function useTickerData(language: Language): UseTickerDataResult {
 }
 
 /* ─── Live + upcoming (Mode 1) ───────────────────────────────────────── */
+//
+// Time window for "upcoming": the stream's scheduled_start_at must fall
+// in [now - LATE_GRACE_MINUTES, now + UPCOMING_WINDOW_HOURS]. Two
+// boundaries matter:
+//
+//   Lower bound (Codex P1 fix on PR #38): without it, stale rows whose
+//   start time is in the past — operators forgot to flip status to
+//   'live' or 'ended', or the row was orphaned — kept qualifying as
+//   upcoming and pinned the ticker to LIVE mode forever, hiding the
+//   matches/blog fallback. Real upcoming streams haven't started yet
+//   by definition.
+//
+//   Late grace: a stream that "should have started 3 minutes ago" but
+//   whose status is still 'scheduled' is plausibly about to flip live.
+//   Keeping it visible for a short window absorbs the human/operator
+//   delay between scheduled_start_at and the actual go-live moment.
+//   Five minutes is enough cushion without dragging in genuinely stale
+//   rows from yesterday.
+
+const LATE_GRACE_MINUTES = 5;
 
 function filterUpcomingWithin24h(
   scheduled: LivestreamWithLogo[],
 ): LivestreamWithLogo[] {
-  const cutoff = Date.now() + UPCOMING_WINDOW_HOURS * 3600_000;
+  const now = Date.now();
+  const lower = now - LATE_GRACE_MINUTES * 60_000;
+  const upper = now + UPCOMING_WINDOW_HOURS * 3600_000;
   return scheduled.filter((s) => {
     if (!s.scheduled_start_at) return false;
     const ts = new Date(s.scheduled_start_at).getTime();
-    return Number.isFinite(ts) && ts <= cutoff;
+    return Number.isFinite(ts) && ts >= lower && ts <= upper;
   });
 }
 
@@ -182,6 +204,14 @@ function useRecentProMatches() {
         .eq("source_provider", "ppa_tour")
         .eq("is_public", true)
         .gte("played_at", cutoff)
+        // Only show matches with a determined winner. Unresolved rows
+        // (winning_team IS NULL — partial ingest, in-progress match)
+        // would render as "Team A 0:0 Team B" which reads as a tie /
+        // misleads a casual viewer. Drop them at the query level so
+        // they never enter the formatter; if a future scrape needs to
+        // surface in-progress matches, lift this filter and have the
+        // formatter render a "vs" separator instead of a score.
+        .in("winning_team", ["a", "b"])
         .order("played_at", { ascending: false })
         .limit(MATCH_LIMIT);
       if (error) throw error;
