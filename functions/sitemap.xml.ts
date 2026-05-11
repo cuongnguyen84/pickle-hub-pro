@@ -33,6 +33,7 @@ const SEGMENT_PATHS = [
   "/sitemap-blog.xml",
   "/sitemap-tournaments.xml",
   "/sitemap-matches.xml",
+  "/sitemap-events.xml",
   "/sitemap-players.xml",
   "/sitemap-venues.xml",
 ];
