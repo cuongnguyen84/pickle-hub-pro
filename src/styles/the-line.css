@@ -223,6 +223,63 @@
 [data-theme="the-line"] .tl-ticker-track b { color: var(--tl-fg); font-weight: 500; }
 [data-theme="the-line"] .tl-ticker-track .s { color: var(--tl-green); font-weight: 500; }
 [data-theme="the-line"] .tl-ticker-track .sep { color: var(--tl-fg-4); }
+
+/* ─── Ticker mode variants (Sprint 6 PR-D) ─────────────────────────────
+   Head label colour signals which data source is currently filling the
+   bar. The dot keeps its pulse only in live mode — when there's no
+   livestream, the steadier gold/muted dot reads as "ambient ticker"
+   rather than "URGENT NOW". */
+[data-theme="the-line"] .tl-ticker--mode-matches .tl-ticker-head { color: var(--tl-gold); }
+[data-theme="the-line"] .tl-ticker--mode-matches .tl-ticker-head .dot {
+  background: var(--tl-gold);
+  animation: none;
+  box-shadow: 0 0 0 2px rgba(233, 182, 73, 0.18);
+}
+[data-theme="the-line"] .tl-ticker--mode-blog .tl-ticker-head { color: var(--tl-fg-2); }
+[data-theme="the-line"] .tl-ticker--mode-blog .tl-ticker-head .dot {
+  background: var(--tl-fg-3);
+  animation: none;
+  box-shadow: none;
+}
+[data-theme="the-line"] .tl-ticker--mode-empty .tl-ticker-head { color: var(--tl-fg-3); }
+[data-theme="the-line"] .tl-ticker--mode-empty .tl-ticker-head .dot {
+  background: var(--tl-fg-4);
+  animation: none;
+}
+
+/* Each ticker entry is a real link now (was bare span). Lead = mode
+   eyebrow tint to match the head label — gold in matches mode, fg-3
+   in blog mode, default in live. The body stays --tl-fg so the headline
+   itself reads first; trail (org / excerpt) drops to fg-2 like the
+   existing pattern. Hover mints the body lime — same treatment as the
+   feed-card player links so the whole site feels consistent. */
+[data-theme="the-line"] .tl-ticker-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  text-decoration: none;
+  color: var(--tl-fg-2);
+  transition: color 0.18s;
+}
+[data-theme="the-line"] .tl-ticker-item .lead {
+  color: var(--tl-fg-3);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+[data-theme="the-line"] .tl-ticker--mode-live .tl-ticker-item .lead {
+  color: var(--tl-live);
+}
+[data-theme="the-line"] .tl-ticker--mode-matches .tl-ticker-item .lead {
+  color: var(--tl-gold);
+}
+[data-theme="the-line"] .tl-ticker-item .trail {
+  color: var(--tl-fg-2);
+}
+[data-theme="the-line"] .tl-ticker-item:hover b {
+  color: var(--tl-green);
+}
+
 @keyframes tl-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes tl-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 

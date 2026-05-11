@@ -16,6 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { LiveBroadcastHero } from "@/components/home/LiveBroadcastHero";
+import { useTickerData } from "@/hooks/useTickerData";
 
 /**
  * Production homepage. Promoted from preview/the-line on 2026-04-25.
@@ -173,36 +174,14 @@ const Index = () => {
       }));
   }, [language, viBlogPosts]);
 
-  // Ticker — live > scheduled > ended (recent), all pulled from real streams
-  const tickerItems = useMemo(() => {
-    const items: { text: string; org: string }[] = [];
-    const tNext = language === "vi" ? "TIẾP THEO" : "NEXT";
-    const tReplay = language === "vi" ? "REPLAY" : "REPLAY";
-    const tLiveMatch = language === "vi" ? "Trận trực tiếp" : "Live match";
-    const tUpcoming = language === "vi" ? "Sắp tới" : "Upcoming";
-    const tMatch = language === "vi" ? "Trận đấu" : "Match";
-    const tEmpty = language === "vi"
-      ? "Hiện không có trận nào — quay lại sau"
-      : "No broadcasts right now — check back soon";
-    liveStreams.slice(0, 4).forEach((s) => {
-      items.push({ text: s.title ?? tLiveMatch, org: s.organization?.name ?? "" });
-    });
-    scheduledStreams.slice(0, 2).forEach((s) => {
-      items.push({
-        text: `${tNext} · ${s.title ?? tUpcoming} · ${formatRelative(s.scheduled_start_at, language)}`,
-        org: s.organization?.name ?? "",
-      });
-    });
-    if (items.length < 4) {
-      endedStreams.slice(0, 4 - items.length).forEach((s) => {
-        items.push({
-          text: `${tReplay} · ${s.title ?? tMatch}`,
-          org: s.organization?.name ?? "",
-        });
-      });
-    }
-    return items.length > 0 ? items : [{ text: tEmpty, org: "" }];
-  }, [liveStreams, scheduledStreams, endedStreams, language]);
+  // Ticker — 3-mode priority resolver:
+  //   live (active or scheduled within 24h) → pro-tour matches (last 3d)
+  //   → blog posts (always-on fallback)
+  // Replaces the previous live > scheduled > replay cascade so the bar
+  // surfaces fresh content even on quiet broadcast days. Hook returns
+  // { mode, items } so the JSX below can colour the head label by mode
+  // (red for live, gold for matches, muted for blog).
+  const ticker = useTickerData(language);
 
   // Featured cascade: live first, then upcoming, then a recent replay
   // (≤7 days old) so the homepage stays alive between events instead of
@@ -364,28 +343,54 @@ const Index = () => {
         would surface as duplicate Organization markup.
         Refs: growth-tasks/POST-CUTOVER-CHECKLIST-2026-04-28.md section E.
       */}
-      {/* Ticker */}
-      <div className="tl-ticker" aria-label={language === "vi" ? "Bảng điểm trực tiếp" : "Live scores ticker"}>
-        <div className="tl-ticker-head">
-          <span className="dot" aria-hidden="true" />
-          {language === "vi" ? "Trực tiếp" : "Live"}
-        </div>
-        <div className="tl-ticker-body">
-          <div className="tl-ticker-track">
-            {[...tickerItems, ...tickerItems].map((item, idx) => (
-              <span key={idx}>
-                <b>{item.text}</b>
-                {item.org && (
-                  <>
-                    <span className="sep"> · </span>
-                    {item.org}
-                  </>
-                )}
-              </span>
-            ))}
+      {/* Ticker — 3-mode (live / matches / blog), each item is a Link.
+          Marquee duplicates the items array so the CSS translate(-50%)
+          loop is seamless. Mode controls the head label colour: red dot
+          for live, gold pip for matches, muted dot for blog. */}
+      {(() => {
+        const headLabel = (() => {
+          if (ticker.mode === "live") return language === "vi" ? "Trực tiếp" : "Live";
+          if (ticker.mode === "matches") return language === "vi" ? "Kết quả" : "Results";
+          if (ticker.mode === "blog") return language === "vi" ? "Tin tức" : "Stories";
+          return language === "vi" ? "Bảng tin" : "Headlines";
+        })();
+        const ariaLabel =
+          language === "vi"
+            ? `Bảng tin — ${headLabel.toLowerCase()}`
+            : `Headlines ticker — ${headLabel.toLowerCase()}`;
+        return (
+          <div
+            className={`tl-ticker tl-ticker--mode-${ticker.mode}`}
+            aria-label={ariaLabel}
+          >
+            <div className="tl-ticker-head">
+              <span className="dot" aria-hidden="true" />
+              {headLabel}
+            </div>
+            <div className="tl-ticker-body">
+              <div className="tl-ticker-track">
+                {[...ticker.items, ...ticker.items].map((item, idx) => (
+                  <Link
+                    key={`${item.id}-${idx}`}
+                    to={item.href}
+                    className="tl-ticker-item"
+                  >
+                    {item.lead && <span className="lead">{item.lead}</span>}
+                    {item.lead && <span className="sep"> · </span>}
+                    <b>{item.body}</b>
+                    {item.trail && (
+                      <>
+                        <span className="sep"> · </span>
+                        <span className="trail">{item.trail}</span>
+                      </>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Hero */}
       {(() => {
