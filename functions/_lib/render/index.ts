@@ -1444,3 +1444,10 @@ ${rows.length > 0 ? `<ol>${items}</ol>` : `<p>${empty}</p>`}
     }),
   );
 }
+
+// ─── Social Events MVP (Sprint 1 PR2) ─────────────────────
+// Re-export the dedicated render module so functions/_middleware.ts can
+// import { renderSocialEvent, renderClub } from "./_lib/render" alongside
+// the other handlers. Implementation lives in ./social-event.ts to keep
+// this file from sprawling further.
+export { renderSocialEvent, renderClub } from "./social-event";
