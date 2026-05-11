@@ -83,22 +83,26 @@ export default function ClubManage() {
 
   return (
     <TheLineLayout title={`${manage.pageTitle} — ${clubData.club.name}`} active="events" noindex>
-      <div className="tl-shell" style={{ padding: "32px 16px 60px", maxWidth: 1080, margin: "0 auto" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="tl-shell" style={{ paddingBottom: 60, maxWidth: 1080, margin: "0 auto" }}>
+        <header
+          className="tl-page-head"
+          style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between", alignItems: "flex-start" }}
+        >
           <div>
-            <h1 style={{ fontSize: 26, marginBottom: 4 }}>{manage.pageTitle}</h1>
-            <p style={{ color: "var(--tl-fg-3)", fontSize: 14 }}>
-              <Link to={`/clb/${clubData.club.slug}`} style={{ color: "inherit" }}>
+            <div className="kicker">
+              ◆{" "}
+              <Link to={`/clb/${clubData.club.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
                 {clubData.club.name}
               </Link>
-            </p>
+            </div>
+            <h1>{manage.pageTitle}</h1>
           </div>
-          <Button asChild>
+          <Button asChild style={{ alignSelf: "center" }}>
             <Link to={`/clb/${clubData.club.slug}/su-kien/moi`}>
               <Plus className="mr-2 h-4 w-4" /> {manage.newEventCta}
             </Link>
           </Button>
-        </div>
+        </header>
 
         {isLoading && (
           <div style={{ padding: 60, textAlign: "center" }}>

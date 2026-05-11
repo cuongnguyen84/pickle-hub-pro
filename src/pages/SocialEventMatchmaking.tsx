@@ -145,15 +145,16 @@ export default function SocialEventMatchmaking() {
 
   return (
     <TheLineLayout title={`${mm.pageTitle} — ${eventTitle}`} active="events" noindex>
-      <div className="tl-shell" style={{ padding: "32px 16px 60px", maxWidth: 1080, margin: "0 auto" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div>
-            <h1 style={{ fontSize: 24, marginBottom: 4 }}>{mm.pageTitle}</h1>
-            <p style={{ color: "var(--tl-fg-3)", fontSize: 14 }}>
-              <Link to={`/su-kien/${event.slug}/danh-sach`} style={{ color: "inherit" }}>{eventTitle}</Link>
-            </p>
+      <div className="tl-shell" style={{ paddingBottom: 60, maxWidth: 1080, margin: "0 auto" }}>
+        <header className="tl-page-head">
+          <div className="kicker">
+            ◆{" "}
+            <Link to={`/su-kien/${event.slug}/danh-sach`} style={{ color: "inherit", textDecoration: "none" }}>
+              {eventTitle}
+            </Link>
           </div>
-        </div>
+          <h1>{mm.pageTitle}</h1>
+        </header>
 
         <Tabs value={format} onValueChange={(v) => setFormat(v as Format)} className="mb-4">
           <TabsList>

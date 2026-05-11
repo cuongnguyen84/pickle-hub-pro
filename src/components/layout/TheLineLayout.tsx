@@ -47,6 +47,7 @@ const STORAGE_KEY = "tl-theme-mode";
 const NAV_ITEMS: { label: string; labelVi?: string; to: string; key: Active }[] = [
   { label: "Live", to: "/live", key: "live" },
   { label: "Tournaments", to: "/tournaments", key: "tournaments" },
+  { label: "Events", labelVi: "Sự kiện", to: "/su-kien", key: "events" },
   { label: "Bracket Lab", to: "/tools", key: "lab" },
   { label: "Rankings", to: "/rankings", key: "rankings" },
   { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },

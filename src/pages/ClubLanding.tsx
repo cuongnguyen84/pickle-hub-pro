@@ -89,36 +89,42 @@ export default function ClubLanding() {
       description={club.description ?? `${club.name} pickleball events`}
       active="events"
     >
-      <div className="tl-shell" style={{ padding: "32px 16px 60px", maxWidth: 880, margin: "0 auto" }}>
-        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 24 }}>
-          {club.logo_url && (
-            <img
-              src={club.logo_url}
-              alt={club.name}
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 16,
-                objectFit: "cover",
-                background: "var(--tl-bg-2, rgba(0,0,0,0.04))",
-                flexShrink: 0,
-              }}
-            />
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontSize: 28, lineHeight: 1.2, marginBottom: 8 }}>{club.name}</h1>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {club.location_text && (
+      <div className="tl-shell" style={{ paddingBottom: 60, maxWidth: 880, margin: "0 auto" }}>
+        <header className="tl-page-head">
+          <div className="kicker">
+            ◆ {language === "vi" ? "CLB pickleball" : "Pickleball club"}
+          </div>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            {club.logo_url && (
+              <img
+                src={club.logo_url}
+                alt={club.name}
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 14,
+                  objectFit: "cover",
+                  background: "var(--tl-bg-2, rgba(0,0,0,0.04))",
+                  flexShrink: 0,
+                  marginTop: 8,
+                }}
+              />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1>{club.name}</h1>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                {club.location_text && (
+                  <Badge variant="secondary">
+                    <MapPin className="mr-1 h-3.5 w-3.5" /> {club.location_text}
+                  </Badge>
+                )}
                 <Badge variant="secondary">
-                  <MapPin className="mr-1 h-3.5 w-3.5" /> {club.location_text}
+                  {interp(t.socialEvents.club.eventsLabel, { n: totalEvents })}
                 </Badge>
-              )}
-              <Badge variant="secondary">
-                {interp(t.socialEvents.club.eventsLabel, { n: totalEvents })}
-              </Badge>
+              </div>
             </div>
           </div>
-        </div>
+        </header>
 
         {club.description && (
           <Card className="p-5 mb-6">

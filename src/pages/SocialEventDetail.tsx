@@ -14,7 +14,7 @@
 // (the prerender path covers bot traffic in functions/_lib/render).
 // ============================================================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, Link as LinkIcon } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -36,6 +36,7 @@ import {
   formatPriceVnd,
   interp,
 } from "@/lib/social-events/format";
+import { maskName } from "@/lib/social-events/maskName";
 
 const SITE_URL =
   (import.meta.env.VITE_SITE_URL as string | undefined) ?? "https://www.thepicklehub.net";
@@ -44,17 +45,25 @@ function escapeJsonLd(s: string): string {
   return s.replace(/<\/script/gi, "<\\/script");
 }
 
-function maskName(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) {
-    return parts[0].length <= 2 ? parts[0] : `${parts[0][0]}***`;
-  }
-  const last = parts[parts.length - 1];
-  const firstInitials = parts
-    .slice(0, -1)
-    .map((p) => `${p[0]?.toUpperCase() ?? ""}.`)
-    .join(" ");
-  return `${firstInitials} ${last}`.trim();
+/**
+ * Render a description string with `\n\n` paragraph breaks + `\n` line
+ * breaks, without dangerouslySetInnerHTML. Skips empty paragraphs.
+ */
+function renderDescription(text: string): ReactNode {
+  const paragraphs = text.split(/\n{2,}/).filter((p) => p.trim().length > 0);
+  return paragraphs.map((para, pi) => {
+    const lines = para.split(/\n/);
+    return (
+      <p key={pi} style={{ margin: "0 0 12px", lineHeight: 1.6 }}>
+        {lines.map((line, li) => (
+          <span key={li}>
+            {line}
+            {li < lines.length - 1 && <br />}
+          </span>
+        ))}
+      </p>
+    );
+  });
 }
 
 export default function SocialEventDetail() {
@@ -245,7 +254,7 @@ export default function SocialEventDetail() {
       active="events"
       noindex={isPreviewOnly}
     >
-      <div className="tl-shell" style={{ padding: "32px 16px 60px", maxWidth: 880, margin: "0 auto" }}>
+      <div className="tl-shell" style={{ paddingBottom: 60, maxWidth: 880, margin: "0 auto" }}>
         {isPreviewOnly && isOrganizer && (
           <div
             style={{
@@ -262,25 +271,19 @@ export default function SocialEventDetail() {
           </div>
         )}
 
-        {data.club && (
-          <Link
-            to={`/clb/${data.club.slug}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13,
-              color: "var(--tl-fg-3)",
-              marginBottom: 12,
-              textDecoration: "none",
-            }}
-          >
-            <span style={{ opacity: 0.7 }}>{t.socialEvents.detail.hostedBy}</span>
-            <span style={{ color: "var(--tl-fg-1)", fontWeight: 600 }}>{data.club.name}</span>
-          </Link>
-        )}
-
-        <h1 style={{ fontSize: 32, lineHeight: 1.15, marginBottom: 16 }}>{eventTitle}</h1>
+        <header className="tl-page-head">
+          {data.club && (
+            <div className="kicker">
+              <Link
+                to={`/clb/${data.club.slug}`}
+                style={{ color: "inherit", textDecoration: "none" }}
+              >
+                ◆ {t.socialEvents.detail.hostedBy} {data.club.name}
+              </Link>
+            </div>
+          )}
+          <h1>{eventTitle}</h1>
+        </header>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
           <Badge variant="secondary" className="text-sm">
@@ -413,7 +416,7 @@ export default function SocialEventDetail() {
 
         {description && (
           <Card className="p-5 mb-6">
-            <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{description}</div>
+            <div>{renderDescription(description)}</div>
           </Card>
         )}
 
