@@ -1744,6 +1744,7 @@ export interface Translations {
     detail: {
       registerCta: string;
       registerCtaShort: string;
+      registerInProgress: string;
       registeredCount: string;
       spotsLeft: string;
       startsIn: string;
@@ -3561,6 +3562,7 @@ export const vi: Translations = {
     detail: {
       registerCta: "Đăng ký ngay",
       registerCtaShort: "Đăng ký",
+      registerInProgress: "Sự kiện đang diễn ra",
       registeredCount: "{registered}/{max} người đã đăng ký",
       spotsLeft: "Còn {n} chỗ",
       startsIn: "Bắt đầu sau",

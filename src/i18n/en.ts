@@ -1746,6 +1746,7 @@ export const en: Translations = {
     detail: {
       registerCta: "Register now",
       registerCtaShort: "Register",
+      registerInProgress: "Event in progress",
       registeredCount: "{registered}/{max} registered",
       spotsLeft: "{n} spots left",
       startsIn: "Starts in",

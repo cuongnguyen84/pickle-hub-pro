@@ -64,7 +64,8 @@ export default function SocialEventDetail() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data, isLoading, refetch } = useSocialEvent(slug);
-  const { data: registrations } = useEventRegistrations(data?.id);
+  const { data: registrations, refetch: refetchRegistrations } =
+    useEventRegistrations(data?.id);
 
   const eventTitle = useMemo(() => {
     if (!data) return "";
@@ -177,9 +178,15 @@ export default function SocialEventDetail() {
   const isOrganizer = user?.id === data.created_by;
   const remaining = Math.max(0, data.max_players - (data.registered_count ?? 0));
   const eventEnded = countdown?.state === "ended" || data.status === "completed";
+  const eventStarted = countdown?.state === "started";
   const cancelled = data.status === "cancelled";
   const isPreviewOnly = data.status !== "published" || data.visibility !== "public";
-  const canRegister = !eventEnded && !cancelled && !isPreviewOnly && remaining > 0 && data.allow_guests;
+  // Codex Bug 3 (PR #43): block registration once the event has started.
+  // phone-otp-send + phone-otp-verify both reject with
+  // `event_started_or_ended` after start_at — surface that as a disabled
+  // CTA instead of letting the user click through to a generic error toast.
+  const canRegister =
+    !eventEnded && !eventStarted && !cancelled && !isPreviewOnly && remaining > 0 && data.allow_guests;
   const eventUrl = `${SITE_URL}/su-kien/${data.slug}`;
   const levelRange = formatLevelRange(data.level_min, data.level_max);
 
@@ -326,9 +333,11 @@ export default function SocialEventDetail() {
                 ? t.socialEvents.detail.cancelled
                 : eventEnded
                   ? t.socialEvents.detail.ended
-                  : remaining === 0
-                    ? (language === "vi" ? "Hết chỗ" : "Sold out")
-                    : t.socialEvents.detail.registerCta}
+                  : eventStarted
+                    ? t.socialEvents.detail.registerInProgress
+                    : remaining === 0
+                      ? (language === "vi" ? "Hết chỗ" : "Sold out")
+                      : t.socialEvents.detail.registerCta}
             </Button>
             <Button variant="outline" size="lg" onClick={handleShare}>
               <Share2 className="mr-2 h-4 w-4" />
@@ -421,7 +430,14 @@ export default function SocialEventDetail() {
           zaloGroupUrl={data.zalo_group_url}
           defaultPhone={(profile as { phone?: string | null } | null)?.phone ?? null}
           defaultDisplayName={profile?.display_name ?? null}
-          onSuccess={() => refetch()}
+          onSuccess={() => {
+            // Codex Bug 4 (PR #43): refresh BOTH queries so the counter
+            // (useSocialEvent → registered_count) and the masked roster
+            // (useEventRegistrations) both reflect the new registration
+            // without a manual page reload.
+            refetch();
+            refetchRegistrations();
+          }}
         />
       </div>
     </TheLineLayout>
