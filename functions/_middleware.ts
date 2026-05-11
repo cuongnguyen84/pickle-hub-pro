@@ -17,6 +17,8 @@ import {
   renderMatch,
   renderProfile,
   renderFeed,
+  renderSocialEvent,
+  renderClub,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage,
@@ -167,6 +169,17 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Match permalink (Sprint 2 Phase 3B.3)
   match = path.match(/^\/tran-dau\/([^/]+)$/);
   if (match && match[1] !== "moi") return await renderMatch(supabase, match[1], siteUrl);
+
+  // Social event detail (Social Events MVP Sprint 1 PR2). Public landing
+  // with SportsEvent JSON-LD + Offer (availability). Bots see the
+  // pre-rendered shell; SPA path handles real users.
+  match = path.match(/^\/su-kien\/([^/]+)$/);
+  if (match) return await renderSocialEvent(supabase, match[1], siteUrl);
+
+  // Club landing (Social Events MVP Sprint 1 PR2). Public ItemList of
+  // upcoming events.
+  match = path.match(/^\/clb\/([^/]+)$/);
+  if (match) return await renderClub(supabase, match[1], siteUrl);
 
   // Player profile (Sprint 4 Phase 4D — Bet #1 social SEO).
   // Single-canonical URL: /nguoi-choi/{username} serves both languages.

@@ -1735,12 +1735,83 @@ export interface Translations {
     replyingTo: string;
     cancelReply: string;
   };
-  // Social Events MVP (Sprint 1) — PR1 ships the namespace skeleton.
-  // PR2 fills register/detail keys; PR3 fills create/manage/matchmaking.
+  // Social Events MVP (Sprint 1). PR2 fills detail/register/club; PR3
+  // adds create/manage/matchmaking subnamespaces.
   socialEvents: {
     nav: string;
     breadcrumb: string;
     comingSoon: string;
+    detail: {
+      registerCta: string;
+      registerCtaShort: string;
+      registeredCount: string;
+      spotsLeft: string;
+      startsIn: string;
+      startedAt: string;
+      ended: string;
+      cancelled: string;
+      level: string;
+      free: string;
+      priceVnd: string;
+      cancellationPolicy: string;
+      cancellationPolicyBody: string;
+      hostedBy: string;
+      directionsLabel: string;
+      zaloGroup: string;
+      shareTitle: string;
+      shareCopy: string;
+      copyLink: string;
+      rosterHeading: string;
+      rosterEmpty: string;
+      privatePreview: string;
+      notFound: string;
+      notFoundBody: string;
+    };
+    register: {
+      modalTitle: string;
+      stepPhone: string;
+      stepCode: string;
+      stepDone: string;
+      phoneLabel: string;
+      phonePlaceholder: string;
+      phoneInvalid: string;
+      nameLabel: string;
+      namePlaceholder: string;
+      nameRequired: string;
+      levelLabel: string;
+      levelOptional: string;
+      sendOtp: string;
+      otpLabel: string;
+      otpHint: string;
+      otpResend: string;
+      otpResendIn: string;
+      otpInvalid: string;
+      otpExpired: string;
+      tooManyAttempts: string;
+      tooManyOtps: string;
+      alreadyRegistered: string;
+      eventFull: string;
+      eventNotOpen: string;
+      smsFailed: string;
+      networkError: string;
+      submit: string;
+      submitting: string;
+      successTitle: string;
+      successBody: string;
+      successPaymentBody: string;
+      orderLabel: string;
+      paymentInstructions: string;
+      openZalo: string;
+      backToEvent: string;
+    };
+    club: {
+      upcomingHeading: string;
+      pastHeading: string;
+      noUpcoming: string;
+      eventsLabel: string;
+      notFound: string;
+      notFoundBody: string;
+    };
   };
 }
 
@@ -3487,5 +3558,80 @@ export const vi: Translations = {
     nav: "Sự kiện",
     breadcrumb: "Sự kiện CLB",
     comingSoon: "Đang xây dựng — sẽ ra mắt cuối tháng 5/2026.",
+    detail: {
+      registerCta: "Đăng ký ngay",
+      registerCtaShort: "Đăng ký",
+      registeredCount: "{registered}/{max} người đã đăng ký",
+      spotsLeft: "Còn {n} chỗ",
+      startsIn: "Bắt đầu sau",
+      startedAt: "Đã bắt đầu",
+      ended: "Đã kết thúc",
+      cancelled: "Sự kiện đã hủy",
+      level: "Trình độ",
+      free: "Miễn phí",
+      priceVnd: "{vnd}₫ / người",
+      cancellationPolicy: "Chính sách hủy",
+      cancellationPolicyBody:
+        "Hủy đăng ký trễ nhất {hours} giờ trước khi sự kiện bắt đầu để được hoàn tiền 100%.",
+      hostedBy: "Tổ chức bởi",
+      directionsLabel: "Mở Google Maps",
+      zaloGroup: "Mở nhóm Zalo",
+      shareTitle: "Chia sẻ sự kiện",
+      shareCopy: "Sao chép liên kết",
+      copyLink: "Đã sao chép liên kết",
+      rosterHeading: "Đã đăng ký",
+      rosterEmpty: "Chưa có ai đăng ký — bạn là người đầu tiên!",
+      privatePreview: "Sự kiện chưa công khai — chỉ mình bạn (organizer) xem được.",
+      notFound: "Không tìm thấy sự kiện",
+      notFoundBody:
+        "Liên kết có thể đã hết hạn hoặc sự kiện đã bị xóa. Quay lại trang chủ để xem các sự kiện đang diễn ra.",
+    },
+    register: {
+      modalTitle: "Đăng ký sự kiện",
+      stepPhone: "Số điện thoại",
+      stepCode: "Nhập mã OTP",
+      stepDone: "Hoàn tất",
+      phoneLabel: "Số điện thoại",
+      phonePlaceholder: "0901 234 567",
+      phoneInvalid: "Số điện thoại không hợp lệ",
+      nameLabel: "Tên hiển thị",
+      namePlaceholder: "Nguyễn Văn A",
+      nameRequired: "Vui lòng nhập tên",
+      levelLabel: "Trình độ tự đánh giá (tuỳ chọn)",
+      levelOptional: "Chưa rõ",
+      sendOtp: "Gửi mã OTP",
+      otpLabel: "Mã OTP 6 chữ số",
+      otpHint: "Đã gửi mã tới {phone}. Mã hết hạn sau 5 phút.",
+      otpResend: "Gửi lại mã",
+      otpResendIn: "Gửi lại sau {seconds}s",
+      otpInvalid: "Mã OTP không đúng",
+      otpExpired: "Mã OTP đã hết hạn — vui lòng yêu cầu mã mới",
+      tooManyAttempts: "Sai mã quá nhiều lần — vui lòng yêu cầu mã mới",
+      tooManyOtps: "Bạn đã yêu cầu OTP quá nhiều lần — thử lại sau 15 phút",
+      alreadyRegistered: "Số điện thoại này đã đăng ký sự kiện",
+      eventFull: "Sự kiện đã đủ người",
+      eventNotOpen: "Sự kiện không mở đăng ký",
+      smsFailed: "Không gửi được SMS — vui lòng thử lại hoặc liên hệ ban tổ chức",
+      networkError: "Lỗi kết nối — vui lòng thử lại",
+      submit: "Xác nhận đăng ký",
+      submitting: "Đang xử lý…",
+      successTitle: "Đăng ký thành công!",
+      successBody: "Hẹn gặp bạn tại sân. Hãy lưu lại liên kết này.",
+      successPaymentBody:
+        "Vui lòng chuyển khoản {price}₫ cho ban tổ chức. Trạng thái thanh toán sẽ cập nhật sau khi xác nhận.",
+      orderLabel: "Số thứ tự đăng ký",
+      paymentInstructions: "Hướng dẫn thanh toán",
+      openZalo: "Mở nhóm Zalo",
+      backToEvent: "Quay lại sự kiện",
+    },
+    club: {
+      upcomingHeading: "Sự kiện sắp diễn ra",
+      pastHeading: "Sự kiện đã qua",
+      noUpcoming: "Chưa có sự kiện nào — quay lại sau nhé!",
+      eventsLabel: "{n} sự kiện",
+      notFound: "Không tìm thấy CLB",
+      notFoundBody:
+        "Liên kết CLB có thể đã thay đổi hoặc bị xóa. Quay lại trang chủ để khám phá thêm.",
+    },
   },
 };

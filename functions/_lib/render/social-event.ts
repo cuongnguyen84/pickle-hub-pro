@@ -1,0 +1,311 @@
+// ============================================================================
+// renderSocialEvent + renderClub — Social Events MVP prerender targets.
+// ----------------------------------------------------------------------------
+// Cloudflare Pages bot-prerender for /su-kien/:slug and /clb/:slug.
+// Mirrors the renderMatch / renderProfile pattern — service-role Supabase
+// query, build SportsEvent JSON-LD, hand off to buildHtml.
+// ============================================================================
+
+import type { SupabaseClient } from "../supabase";
+import { buildHtml, htmlResponse } from "../html";
+import {
+  escapeHtml,
+  buildTitle,
+  buildMetaDescription,
+  breadcrumb,
+} from "../utils";
+import { render404 } from "./index";
+
+interface SocialEventRow {
+  id: string;
+  slug: string;
+  title_vi: string;
+  title_en: string | null;
+  description_vi: string | null;
+  description_en: string | null;
+  start_at: string;
+  end_at: string;
+  location_text: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
+  max_players: number;
+  price_vnd: number;
+  status: "draft" | "published" | "cancelled" | "completed";
+  visibility: "public" | "club_only";
+  club: { slug: string; name: string } | null;
+}
+
+interface ClubRow {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  location_text: string | null;
+}
+
+interface ClubEventRow {
+  slug: string;
+  title_vi: string;
+  start_at: string;
+  end_at: string;
+  status: string;
+  visibility: string;
+}
+
+function fmtDateVN(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function fmtTimeVN(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return "";
+  }
+}
+
+export async function renderSocialEvent(
+  supabase: SupabaseClient,
+  slug: string,
+  siteUrl: string,
+): Promise<Response> {
+  const { data, error } = await supabase
+    .from("social_events")
+    .select(
+      `id, slug, title_vi, title_en, description_vi, description_en,
+       start_at, end_at, location_text, location_lat, location_lng,
+       max_players, price_vnd, status, visibility,
+       club:clubs!social_events_club_id_fkey ( slug, name )`,
+    )
+    .eq("slug", slug)
+    .eq("status", "published")
+    .eq("visibility", "public")
+    .maybeSingle();
+
+  if (error) {
+    console.error("renderSocialEvent: lookup error", { slug, error });
+  }
+
+  if (!data) return render404(`/su-kien/${slug}`, siteUrl);
+
+  const ev = data as unknown as SocialEventRow;
+  const titleVi = ev.title_vi;
+  const url = `${siteUrl}/su-kien/${ev.slug}`;
+
+  // Registered count for offers.availability ("InStock" / "SoldOut").
+  let registeredCount = 0;
+  try {
+    const { count } = await supabase
+      .from("event_registrations")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", ev.id)
+      .neq("status", "cancelled");
+    registeredCount = count ?? 0;
+  } catch {
+    // non-fatal
+  }
+
+  const dateStr = fmtDateVN(ev.start_at);
+  const startTime = fmtTimeVN(ev.start_at);
+  const endTime = fmtTimeVN(ev.end_at);
+  const venueLabel = ev.location_text ?? "";
+  const rawTitle = `${titleVi} — ${dateStr}${venueLabel ? ` · ${venueLabel}` : ""}`;
+  const title = buildTitle(rawTitle, " | ThePickleHub");
+
+  // Description: club + date + capacity + price short sentence in Vietnamese.
+  const priceLabel = ev.price_vnd > 0 ? `${ev.price_vnd.toLocaleString("vi-VN")}₫` : "Miễn phí";
+  const hostLabel = ev.club ? `${ev.club.name} tổ chức` : "Sự kiện pickleball";
+  const fallbackDesc =
+    `${hostLabel} ngày ${dateStr} ${startTime ? `lúc ${startTime}` : ""}` +
+    `${venueLabel ? ` tại ${venueLabel}` : ""}.` +
+    ` Tối đa ${ev.max_players} người · ${priceLabel}.` +
+    ` Đăng ký bằng số điện thoại trên ThePickleHub.`;
+  const description = buildMetaDescription(ev.description_vi, {
+    type: "default",
+    title: titleVi,
+  }) || fallbackDesc;
+
+  const bc = breadcrumb([
+    { label: "Trang chủ", href: siteUrl },
+    { label: "Sự kiện CLB", href: ev.club ? `${siteUrl}/clb/${ev.club.slug}` : siteUrl },
+    { label: titleVi },
+  ]);
+
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    name: titleVi,
+    description,
+    url,
+    sport: "Pickleball",
+    startDate: ev.start_at,
+    endDate: ev.end_at,
+    eventStatus:
+      ev.status === "cancelled"
+        ? "https://schema.org/EventCancelled"
+        : "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    organizer: ev.club
+      ? {
+          "@type": "SportsOrganization",
+          name: ev.club.name,
+          url: `${siteUrl}/clb/${ev.club.slug}`,
+        }
+      : { "@type": "Organization", name: "ThePickleHub", url: siteUrl },
+    location: ev.location_text
+      ? {
+          "@type": "Place",
+          name: ev.location_text,
+          address: ev.location_text,
+          ...(ev.location_lat != null && ev.location_lng != null
+            ? {
+                geo: {
+                  "@type": "GeoCoordinates",
+                  latitude: ev.location_lat,
+                  longitude: ev.location_lng,
+                },
+              }
+            : {}),
+        }
+      : { "@type": "VirtualLocation", url },
+    offers: {
+      "@type": "Offer",
+      url,
+      price: ev.price_vnd,
+      priceCurrency: "VND",
+      availability:
+        registeredCount >= ev.max_players
+          ? "https://schema.org/SoldOut"
+          : "https://schema.org/InStock",
+      validFrom: ev.start_at,
+    },
+  };
+
+  const bodyParts: string[] = [bc];
+  bodyParts.push(`<h1>${escapeHtml(titleVi)}</h1>`);
+  bodyParts.push(`<p><strong>Thời gian:</strong> ${escapeHtml(dateStr)} · ${escapeHtml(startTime)} – ${escapeHtml(endTime)}</p>`);
+  if (ev.location_text) {
+    bodyParts.push(`<p><strong>Địa điểm:</strong> ${escapeHtml(ev.location_text)}</p>`);
+  }
+  bodyParts.push(`<p><strong>Số người tối đa:</strong> ${ev.max_players}</p>`);
+  bodyParts.push(`<p><strong>Phí:</strong> ${escapeHtml(priceLabel)}</p>`);
+  if (ev.description_vi) {
+    bodyParts.push(`<p>${escapeHtml(ev.description_vi).replace(/\n/g, "<br>")}</p>`);
+  }
+
+  return htmlResponse(
+    buildHtml({
+      title,
+      description,
+      url,
+      siteUrl,
+      jsonLd,
+      bodyContent: bodyParts.join("\n"),
+      lang: "vi",
+    }),
+  );
+}
+
+export async function renderClub(
+  supabase: SupabaseClient,
+  slug: string,
+  siteUrl: string,
+): Promise<Response> {
+  const { data, error } = await supabase
+    .from("clubs")
+    .select("id, slug, name, description, location_text")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("renderClub: lookup error", { slug, error });
+  }
+  if (!data) return render404(`/clb/${slug}`, siteUrl);
+
+  const club = data as unknown as ClubRow;
+  const url = `${siteUrl}/clb/${club.slug}`;
+  const title = buildTitle(club.name, " | CLB Pickleball · ThePickleHub");
+  const fallbackDesc =
+    `${club.name}${club.location_text ? ` tại ${club.location_text}` : ""} — ` +
+    "lịch sự kiện pickleball, đăng ký, kết quả. Tổ chức trên ThePickleHub.";
+  const description = buildMetaDescription(club.description, {
+    type: "default",
+    title: club.name,
+  }) || fallbackDesc;
+
+  // List a snapshot of upcoming events as bot-readable links.
+  const { data: events } = await supabase
+    .from("social_events")
+    .select("slug, title_vi, start_at, end_at, status, visibility")
+    .eq("club_id", club.id)
+    .eq("status", "published")
+    .eq("visibility", "public")
+    .gte("end_at", new Date().toISOString())
+    .order("start_at", { ascending: true })
+    .limit(20);
+
+  const upcoming = (events ?? []) as ClubEventRow[];
+  const itemListJsonLd =
+    upcoming.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: `${club.name} — sự kiện sắp diễn ra`,
+          itemListElement: upcoming.map((e, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            url: `${siteUrl}/su-kien/${e.slug}`,
+            name: e.title_vi,
+          })),
+        }
+      : undefined;
+
+  const bc = breadcrumb([
+    { label: "Trang chủ", href: siteUrl },
+    { label: "CLB", href: siteUrl },
+    { label: club.name },
+  ]);
+
+  const eventList = upcoming
+    .map(
+      (e) =>
+        `<li><a href="${siteUrl}/su-kien/${escapeHtml(e.slug)}">${escapeHtml(e.title_vi)}</a> — ${escapeHtml(fmtDateVN(e.start_at))}</li>`,
+    )
+    .join("");
+  const eventListBlock =
+    upcoming.length > 0
+      ? `<h2>Sự kiện sắp diễn ra</h2><ul>${eventList}</ul>`
+      : "<p>Chưa có sự kiện công khai.</p>";
+
+  const bodyContent =
+    `${bc}<h1>${escapeHtml(club.name)}</h1>` +
+    (club.location_text ? `<p><strong>Địa điểm:</strong> ${escapeHtml(club.location_text)}</p>` : "") +
+    (club.description ? `<p>${escapeHtml(club.description).replace(/\n/g, "<br>")}</p>` : "") +
+    eventListBlock;
+
+  return htmlResponse(
+    buildHtml({
+      title,
+      description,
+      url,
+      siteUrl,
+      jsonLd: itemListJsonLd,
+      bodyContent,
+      lang: "vi",
+    }),
+  );
+}
