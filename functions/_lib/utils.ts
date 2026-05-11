@@ -121,11 +121,19 @@ export function stripLangPrefix(path: string): string {
 
 export function breadcrumb(crumbs: { label: string; href?: string }[]): string {
   return `<nav aria-label="breadcrumb"><ol>${crumbs
-    .map((c, i) =>
-      i < crumbs.length - 1
-        ? `<li><a href="${c.href}">${escapeHtml(c.label)}</a></li>`
-        : `<li>${escapeHtml(c.label)}</li>`,
-    )
+    .map((c, i) => {
+      const isLast = i === crumbs.length - 1;
+      // Defensive against missing `href` on intermediate crumbs — prior
+      // versions emitted `<a href="undefined">` which broke SEO audits
+      // (the href attribute went out as the literal string "undefined").
+      // Now: if href is missing OR this is the last crumb, render the
+      // label as plain text. Callers that want a real link must pass
+      // a non-empty href.
+      if (isLast || !c.href) {
+        return `<li>${escapeHtml(c.label)}</li>`;
+      }
+      return `<li><a href="${escapeHtml(c.href)}">${escapeHtml(c.label)}</a></li>`;
+    })
     .join(" &gt; ")}</ol></nav>`;
 }
 

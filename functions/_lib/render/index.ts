@@ -28,6 +28,11 @@ import {
   type FeedSeoParticipant,
   type FeedRowForSeo,
 } from "../seo-helpers";
+import {
+  buildMatchDescription,
+  buildMatchSchema,
+  roundLabel,
+} from "./match-seo";
 
 // ─── Home ───────────────────────────���─────────────────────
 
@@ -1118,12 +1123,18 @@ export async function renderMatch(
   slug: string,
   siteUrl: string,
 ): Promise<Response> {
-  // Mirrors useMatch hook query shape (src/hooks/social/useMatch.ts)
+  // Fetches mirror useMatch (src/hooks/social/useMatch.ts) PLUS the
+  // pro-tour provenance columns added in Sprint 6 — we need
+  // tournament_name / tournament_event / round_name / source_provider
+  // to build a rich meta description and the SportsEvent schema's
+  // superEvent. duration_minutes feeds the schema's endDate (falls
+  // back to a 45-min default when the source didn't capture it).
   const { data: matchRow } = await supabase
     .from("matches")
     .select(
       `id, slug, format, played_at, team_a_score, team_b_score, winning_team,
-       venue_id, venue_name_override, court_number,
+       venue_id, venue_name_override, court_number, duration_minutes,
+       source_provider, tournament_name, tournament_event, round_name,
        venues:venue_id ( slug, name, city )`,
     )
     .eq("slug", slug)
@@ -1160,96 +1171,134 @@ export async function renderMatch(
 
   const teamA = participants.filter((p) => p.team === "a");
   const teamB = participants.filter((p) => p.team === "b");
-  const p1Name = teamA[0]?.display_name ?? teamA[0]?.username ?? "?";
-  const p2Name = teamB[0]?.display_name ?? teamB[0]?.username ?? "?";
-
-  const teamALabel = teamA
-    .map((p) => p.display_name ?? p.username ?? "?")
-    .filter(Boolean)
-    .join(" & ") || p1Name;
-  const teamBLabel = teamB
-    .map((p) => p.display_name ?? p.username ?? "?")
-    .filter(Boolean)
-    .join(" & ") || p2Name;
+  const teamAPlayers = teamA
+    .map((p) => p.display_name ?? p.username ?? "")
+    .filter(Boolean);
+  const teamBPlayers = teamB
+    .map((p) => p.display_name ?? p.username ?? "")
+    .filter(Boolean);
+  const teamALabel = teamAPlayers.join(" & ") || "?";
+  const teamBLabel = teamBPlayers.join(" & ") || "?";
 
   const playedAt = m.played_at as string;
   const teamAScore = (m.team_a_score as number[]) || [];
   const teamBScore = (m.team_b_score as number[]) || [];
   const winningTeam = m.winning_team as "a" | "b" | null;
   const format = m.format as string;
+  const tournamentName = (m.tournament_name as string | null) ?? null;
+  const tournamentEvent = (m.tournament_event as string | null) ?? null;
+  const roundCode = (m.round_name as string | null) ?? null;
+  const courtNumber = (m.court_number as string | null) ?? null;
+  const durationMinutes = (m.duration_minutes as number | null) ?? null;
 
-  const score = fmtScoreCompact(teamAScore, teamBScore);
   const date = fmtMatchDateVN(playedAt);
   const fmtLabel = fmtMatchFormatVi(format);
   const venueLabel = venueName ? venueName : "";
+  const compactScore = fmtScoreCompact(teamAScore, teamBScore);
 
-  // Title matches client-side applyClientSeo exactly
-  const rawTitle = `${p1Name} vs ${p2Name}, ${score}${venueLabel ? ` — ${venueLabel}` : ""}, ${date}`;
+  // Title — keep concise; tournament context lives in the description.
+  const rawTitle = `${teamALabel} vs ${teamBLabel}, ${compactScore}${venueLabel ? ` — ${venueLabel}` : ""}, ${date}`;
   const title = buildTitle(rawTitle, " | ThePickleHub");
 
-  const description = buildMetaDescription(
-    `Trận pickleball ${fmtLabel} ngày ${date}${venueLabel ? ` tại ${venueLabel}` : ""}, kết quả ${score}.`,
-    { type: "default", title: `${p1Name} vs ${p2Name}` },
+  // Dynamic description (Bug 3 fix): match-specific sentence with
+  // tournament + round + scores + winners, replaces the previous
+  // boilerplate "Trận pickleball... kết quả X-Y" line.
+  const description = buildMatchDescription(
+    {
+      teamALabel,
+      teamBLabel,
+      teamAScore,
+      teamBScore,
+      winningTeam,
+      format,
+      playedAtIso: playedAt,
+      tournamentName,
+      tournamentEvent,
+      roundCode,
+      venueName,
+    },
+    "vi",
   );
 
-  const winnerName = winningTeam === "a" ? p1Name : p2Name;
-
-  const jsonLd: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "SportsEvent",
-    name: `${p1Name} vs ${p2Name}`,
-    sport: "Pickleball",
-    startDate: playedAt,
+  // Rich JSON-LD (Bug 5 fix): SportsTeam competitors for doubles, Place
+  // location with court → venue containment, eventStatus,
+  // superEvent → tournament, endDate from duration_minutes.
+  const jsonLd = buildMatchSchema({
     url: `${siteUrl}/tran-dau/${slug}`,
     description,
-    competitor: [
-      { "@type": "Person", name: p1Name },
-      { "@type": "Person", name: p2Name },
-    ],
-  };
-  if (winnerName && winningTeam) {
-    jsonLd.winner = { "@type": "Person", name: winnerName };
-  }
-  if (venueLabel) {
-    jsonLd.location = {
-      "@type": "SportsActivityLocation",
-      name: venueLabel,
-      ...(venueCity ? { address: venueCity } : {}),
-    };
-  }
+    teamAPlayers,
+    teamBPlayers,
+    teamAScore,
+    teamBScore,
+    winningTeam,
+    format,
+    playedAtIso: playedAt,
+    durationMinutes,
+    tournamentName,
+    venueName,
+    venueCity,
+    courtNumber,
+  });
 
+  // Breadcrumb (Bug 1 fix): the "Trận đấu" middle crumb now points at
+  // /feed?tab=trending — the closest thing to a "matches index" we
+  // have today. The breadcrumb helper itself was hardened to render
+  // a plain <li> when href is missing, but we want a working link
+  // here so users (and Google's breadcrumb path display) get a
+  // navigable route.
   const bc = breadcrumb([
-    { label: "Trang chủ", href: siteUrl },
-    { label: "Trận đấu" },
-    { label: `${p1Name} vs ${p2Name}` },
+    { label: "Trang chủ", href: `${siteUrl}/` },
+    { label: "Trận đấu", href: `${siteUrl}/feed?tab=trending` },
+    { label: `${teamALabel} vs ${teamBLabel}` },
   ]);
 
-  // Bot-readable body with the same data the user gets — keeps the prerender
-  // honest (no cloaking) and gives Google a text excerpt to preview.
+  // Bot-readable body. The H1 (Bug 2 fix) is now emitted by buildHtml
+  // from the page title; the in-body teams headline is demoted to H2
+  // so there's exactly one H1 per document. Tournament context is
+  // surfaced as a paragraph above the score so the bot excerpt has
+  // strong matching against tournament search queries.
+  const tournamentLine = tournamentName
+    ? `<p><em>${escapeHtml([tournamentName, tournamentEvent, roundLabel(roundCode, "vi")].filter(Boolean).join(" · "))}</em></p>`
+    : "";
+  const winnerLabel =
+    winningTeam === "a" ? teamALabel : winningTeam === "b" ? teamBLabel : "";
   const bodyContent = `${bc}
-<h1>${escapeHtml(`${teamALabel} vs ${teamBLabel}`)}</h1>
-<p><strong>${escapeHtml(date)}</strong>${venueLabel ? ` · ${escapeHtml(venueLabel)}` : ""}${venueCity ? `, ${escapeHtml(venueCity)}` : ""}</p>
+<h2>${escapeHtml(`${teamALabel} vs ${teamBLabel}`)}</h2>
+${tournamentLine}
+<p><strong>${escapeHtml(date)}</strong>${venueLabel ? ` · ${escapeHtml(venueLabel)}` : ""}${venueCity ? `, ${escapeHtml(venueCity)}` : ""}${courtNumber ? ` · ${escapeHtml(courtNumber)}` : ""}</p>
 <p>Hình thức: ${escapeHtml(fmtLabel)}</p>
-<p>Tỉ số: <strong>${escapeHtml(score)}</strong></p>
-${winnerName ? `<p>Người thắng: <strong>${escapeHtml(winnerName)}</strong></p>` : ""}`;
+<p>Tỉ số: <strong>${escapeHtml(compactScore)}</strong></p>
+${winnerLabel ? `<p>Đội thắng: <strong>${escapeHtml(winnerLabel)}</strong></p>` : ""}`;
 
-  // OG image points to the og-image-match function (Phase 3B.3 deliverable 3).
-  // Even when that endpoint doesn't exist yet, og:image is harmless — bots
-  // fall back to absent-image rendering rather than failing the page.
+  // OG image points to the og-image-match function. Bug 6 fix:
+  // twitter:image is emitted by buildHtml from the `image` opt
+  // already — don't duplicate it via extraMeta. We still pass the
+  // PNG dimensions/type for og:image because buildHtml only emits
+  // the bare og:image URL.
   const ogImage = `${siteUrl}/og/match/${encodeURIComponent(slug)}.png`;
-
   const extraMeta = [
     `<meta property="og:image:width" content="1200"/>`,
     `<meta property="og:image:height" content="630"/>`,
     `<meta property="og:image:type" content="image/png"/>`,
-    `<meta name="twitter:image" content="${escapeHtml(ogImage)}"/>`,
   ].join("\n");
+
+  // hreflang (Bug 4 fix): /tran-dau/<slug> serves both VI and EN via
+  // SPA context — single canonical URL. Emit symmetric alternates so
+  // crawlers know the page is bilingual; x-default targets the same
+  // canonical (Vietnamese is the dominant locale per CLAUDE.md but
+  // we don't want to lock in either as the "default").
+  const canonicalUrl = `${siteUrl}/tran-dau/${slug}`;
+  const alternates = [
+    { hreflang: "vi", href: canonicalUrl },
+    { hreflang: "en", href: canonicalUrl },
+    { hreflang: "x-default", href: canonicalUrl },
+  ];
 
   return htmlResponse(
     buildHtml({
       title,
       description,
-      url: `${siteUrl}/tran-dau/${slug}`,
+      url: canonicalUrl,
       siteUrl,
       image: ogImage,
       type: "article",
@@ -1257,6 +1306,7 @@ ${winnerName ? `<p>Người thắng: <strong>${escapeHtml(winnerName)}</strong><
       bodyContent,
       extraMeta,
       lang: "vi",
+      alternates,
     }),
   );
 }
