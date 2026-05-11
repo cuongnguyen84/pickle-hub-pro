@@ -355,8 +355,28 @@ async function insertMatchWithParticipants(
 
   if (matchErr || !matchRow) {
     // Race against sibling ingest: another writer beat us to the same
-    // (source_provider, external_match_id). Treat as success-no-op.
-    return false;
+    // (source_provider, external_match_id) via the partial unique
+    // index (Sprint 6 migration 20260510160000). PostgreSQL surfaces
+    // that as SQLSTATE 23505 (unique_violation) which supabase-js
+    // exposes via error.code. Codex P1 fix on PR #29: original
+    // version swallowed EVERY error as "duplicate" which masked
+    // genuine failures (NOT NULL violations, FK violations, RLS
+    // denies) under success-no-op semantics — the ingestion log
+    // would mark status='success' with matches_imported=0 and the
+    // admin Logs tab would have no signal that something went wrong.
+    //
+    // Resolution: only treat 23505 as a benign skip. Anything else
+    // bubbles up so the surrounding try/catch flips the log to
+    // status='failed' with the underlying error_message.
+    const errCode = (matchErr as { code?: string } | null)?.code;
+    if (errCode === "23505") {
+      return false;
+    }
+    throw new Error(
+      `Insert match ${match.external_match_id} failed: ${
+        matchErr?.message ?? "no row returned (non-23505)"
+      }`,
+    );
   }
 
   const participants = [
