@@ -158,6 +158,13 @@ Deno.serve(async (req) => {
   if (event.status !== "published") {
     return err("event_not_published", 404, "event_not_published");
   }
+  // Codex Bug 2 (PR #42): re-check visibility between send and verify.
+  // phone-otp-send rejects non-public events, but if the organizer flips
+  // visibility from `public` to `club_only` after an OTP is issued, the
+  // outstanding OTP would otherwise redeem and bypass the new restriction.
+  if (event.visibility !== "public") {
+    return err("event_not_public", 403, "event_not_public");
+  }
   const startAt = new Date(event.start_at as string).getTime();
   if (Number.isNaN(startAt) || startAt < Date.now()) {
     return err("event_started_or_ended", 409, "event_started_or_ended");
