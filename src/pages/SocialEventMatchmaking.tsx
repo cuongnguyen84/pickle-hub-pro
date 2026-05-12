@@ -139,15 +139,43 @@ export default function SocialEventMatchmaking() {
       const regById = new Map(
         (registrations ?? []).map((r) => [r.id, r] as const),
       );
+
+      // Defensive guard: every selected player must have a usable
+      // profile_id, otherwise the insert below would silently write
+      // NULL FKs and the live page would render blank. Walk-ins from
+      // before migration 20260512120000 had NULL profile_id; that
+      // migration backfills them, but if a stale row slipped through
+      // we surface the bug instead of swallowing it.
+      const missing: string[] = [];
+      for (const r of schedule.rounds) {
+        for (const m of r.matches) {
+          for (const p of [...m.teamA, ...m.teamB]) {
+            if (!regById.get(p.id)?.profile_id) missing.push(p.name);
+          }
+        }
+      }
+      if (missing.length > 0) {
+        console.error("persistSchedule: players missing profile_id", missing);
+        toast({
+          title: t.common.error,
+          description:
+            language === "vi"
+              ? `Người chơi sau chưa có hồ sơ: ${[...new Set(missing)].join(", ")}. Liên hệ admin để chạy migration walk-in.`
+              : `Players missing a profile: ${[...new Set(missing)].join(", ")}. Ask admin to run the walk-in migration.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       const rows = schedule.rounds.flatMap((r) =>
         r.matches.map((m) => ({
           event_id: event.id,
           round: m.round,
           court: m.court,
-          team_a_player1_id: regById.get(m.teamA[0].id)?.profile_id ?? null,
-          team_a_player2_id: regById.get(m.teamA[1].id)?.profile_id ?? null,
-          team_b_player1_id: regById.get(m.teamB[0].id)?.profile_id ?? null,
-          team_b_player2_id: regById.get(m.teamB[1].id)?.profile_id ?? null,
+          team_a_player1_id: regById.get(m.teamA[0].id)!.profile_id,
+          team_a_player2_id: regById.get(m.teamA[1].id)!.profile_id,
+          team_b_player1_id: regById.get(m.teamB[0].id)!.profile_id,
+          team_b_player2_id: regById.get(m.teamB[1].id)!.profile_id,
           status: "scheduled" as const,
         })),
       );

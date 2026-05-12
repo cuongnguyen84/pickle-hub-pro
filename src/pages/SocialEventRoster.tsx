@@ -232,13 +232,15 @@ export default function SocialEventRoster() {
       return;
     }
     const levelNum = manualLevel.trim() === "" ? null : Number(manualLevel);
-    const { error } = await supabase.from("event_registrations").insert({
-      event_id: event.id,
-      display_name: manualName.trim(),
-      phone: phoneNorm,
-      self_rated_level: levelNum,
-      status: "registered",
-      payment_status: "unpaid",
+    // Use the add_walk_in_registration RPC instead of a direct INSERT so
+    // the new row always carries a profile_id. A direct insert leaves
+    // profile_id NULL, which then propagates as NULL player FKs when the
+    // organizer saves a matchmaking schedule (PR47 follow-up fix).
+    const { error } = await supabase.rpc("add_walk_in_registration", {
+      p_event_id: event.id,
+      p_display_name: manualName.trim(),
+      p_phone: phoneNorm,
+      p_self_rated_level: levelNum,
     });
     if (error) {
       toast({ title: t.common.error, description: error.message, variant: "destructive" });
