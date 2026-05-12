@@ -67,6 +67,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { maskPhone, normalizeVietnamPhone } from "@/lib/phone";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
+import { profileIdToSlug } from "@/lib/badges/profileSlug";
 
 interface PaymentOrderRow {
   id: string;
@@ -422,7 +423,19 @@ export default function SocialEventRoster() {
               {(registrations ?? []).map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>
-                    <div style={{ fontWeight: 500 }}>{row.display_name}</div>
+                    <div style={{ fontWeight: 500 }}>
+                      {row.profile_id ? (
+                        <Link
+                          to={`/u/${profileIdToSlug(row.profile_id)}`}
+                          className="hover:underline"
+                          title={roster.viewProfileHint}
+                        >
+                          {row.display_name}
+                        </Link>
+                      ) : (
+                        row.display_name
+                      )}
+                    </div>
                     {row.notes && (
                       <div style={{ fontSize: 12, color: "var(--tl-fg-3)" }}>
                         <StickyNote className="inline h-3 w-3" /> {row.notes}
