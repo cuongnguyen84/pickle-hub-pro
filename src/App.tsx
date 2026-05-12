@@ -110,6 +110,8 @@ const SocialEventRoster = lazy(() => import("./pages/SocialEventRoster"));
 const SocialEventMatchmaking = lazy(() => import("./pages/SocialEventMatchmaking"));
 // Social Events MVP — Sprint 1.5 PR46 (public collection page)
 const SocialEventList = lazy(() => import("./pages/SocialEventList"));
+// Social Events MVP — Sprint 1.5 PR47 (live event UX)
+const SocialEventLive = lazy(() => import("./pages/SocialEventLive"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -438,6 +440,9 @@ const App = () => (
                     <Route path="/clb/:slug/su-kien/moi" element={<CreateSocialEvent />} />
                     <Route path="/su-kien/:slug/danh-sach" element={<SocialEventRoster />} />
                     <Route path="/su-kien/:slug/xep-cap" element={<SocialEventMatchmaking />} />
+                    {/* Social Events MVP PR47 — Live Event UX (public; spectator when not registered) */}
+                    <Route path="/su-kien/:slug/live" element={<SocialEventLive />} />
+                    <Route path="/vi/su-kien/:slug/live" element={<SocialEventLive />} />
                     <Route path="/notifications" element={<Notifications />} />
                     {/* Sprint 5 PR-C — Vietnamese-friendly alias. Same
                         page renders for both /notifications and /thong-bao

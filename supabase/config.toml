@@ -160,3 +160,12 @@ verify_jwt = false
 
 [functions.phone-otp-verify]
 verify_jwt = false
+
+# ─── Social Events MVP (PR47 Live Event UX) ────────────────────────────────
+# Player path: guest with localStorage magic_token. Organizer path: bearer
+# JWT verified internally via getAuthUser (ES256/HS256 workaround).
+# A single function handles both — verify_jwt=false at the gateway lets the
+# guest path through, the organizer path enforces auth itself.
+
+[functions.submit-match-score]
+verify_jwt = false

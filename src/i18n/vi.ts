@@ -1936,6 +1936,54 @@ export interface Translations {
       copied: string;
       empty: string;
       notEnoughPlayers: string;
+      saveToEvent: string;
+      savingToEvent: string;
+      savedToEventToast: string;
+      saveOverwriteConfirmTitle: string;
+      saveOverwriteConfirmBody: string;
+      openLivePage: string;
+    };
+    live: {
+      pageTitle: string;
+      pageTitleSpectator: string;
+      noScheduleTitle: string;
+      noScheduleBody: string;
+      notRegisteredTitle: string;
+      notRegisteredBody: string;
+      zoneNow: string;
+      zoneNoNow: string;
+      zoneNext: string;
+      zoneNoNext: string;
+      zoneStandings: string;
+      zoneScoreInput: string;
+      zoneZalo: string;
+      openZalo: string;
+      court: string;
+      round: string;
+      teamA: string;
+      teamB: string;
+      versus: string;
+      submitScore: string;
+      submitting: string;
+      awaitingOpponent: string;
+      bothConfirmed: string;
+      statusScheduled: string;
+      statusInProgress: string;
+      statusCompleted: string;
+      organizerOverride: string;
+      organizerOverrideHint: string;
+      colRank: string;
+      colPlayer: string;
+      colWins: string;
+      colLosses: string;
+      colDiff: string;
+      youLabel: string;
+      scoreToast: string;
+      scoreCompletedToast: string;
+      scoreErrorToast: string;
+      notInMatchToast: string;
+      organizerCta: string;
+      backToEvent: string;
     };
   };
 }
@@ -3886,6 +3934,54 @@ export const vi: Translations = {
       copied: "Đã sao chép",
       empty: "Chưa có lịch — chọn người chơi rồi nhấn \"Tạo lịch trận\".",
       notEnoughPlayers: "Cần ít nhất 4 người để xếp cặp.",
+      saveToEvent: "Lưu vào sự kiện",
+      savingToEvent: "Đang lưu…",
+      savedToEventToast: "Đã lưu lịch trận. Người chơi có thể vào trang Live để xem.",
+      saveOverwriteConfirmTitle: "Ghi đè lịch hiện có?",
+      saveOverwriteConfirmBody: "Sự kiện đã có lịch trận trước đó. Lưu mới sẽ xóa toàn bộ trận cũ và thay bằng lịch này.",
+      openLivePage: "Mở trang Live",
+    },
+    live: {
+      pageTitle: "Live — đang diễn ra",
+      pageTitleSpectator: "Live — theo dõi",
+      noScheduleTitle: "Chưa có lịch trận",
+      noScheduleBody: "BTC chưa lưu lịch xếp cặp cho sự kiện này. Vui lòng quay lại sau.",
+      notRegisteredTitle: "Bạn chưa đăng ký",
+      notRegisteredBody: "Đang ở chế độ khán giả. Đăng ký để hiển thị trận của riêng bạn.",
+      zoneNow: "Trận hiện tại",
+      zoneNoNow: "Bạn chưa có trận đang diễn ra.",
+      zoneNext: "Trận kế tiếp",
+      zoneNoNext: "Không có trận kế tiếp.",
+      zoneStandings: "Bảng xếp hạng",
+      zoneScoreInput: "Nhập tỉ số",
+      zoneZalo: "Nhóm Zalo sự kiện",
+      openZalo: "Mở nhóm Zalo",
+      court: "Sân",
+      round: "Vòng",
+      teamA: "Cặp A",
+      teamB: "Cặp B",
+      versus: "vs",
+      submitScore: "Xác nhận tỉ số",
+      submitting: "Đang gửi…",
+      awaitingOpponent: "Chờ đối thủ xác nhận",
+      bothConfirmed: "Đã xác nhận xong",
+      statusScheduled: "Chưa bắt đầu",
+      statusInProgress: "Đang chơi",
+      statusCompleted: "Đã xong",
+      organizerOverride: "Ghi nhận tỉ số (BTC)",
+      organizerOverrideHint: "Bạn là BTC — thao tác này sẽ chốt tỉ số ngay không cần đối thủ xác nhận.",
+      colRank: "#",
+      colPlayer: "Người chơi",
+      colWins: "T",
+      colLosses: "B",
+      colDiff: "+/-",
+      youLabel: "Bạn",
+      scoreToast: "Đã gửi tỉ số, chờ đối thủ xác nhận.",
+      scoreCompletedToast: "Trận đã chốt!",
+      scoreErrorToast: "Không gửi được tỉ số. Thử lại.",
+      notInMatchToast: "Bạn không nằm trong trận này.",
+      organizerCta: "Quản lý sự kiện",
+      backToEvent: "Về trang sự kiện",
     },
   },
 };
