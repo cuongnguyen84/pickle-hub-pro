@@ -80,6 +80,14 @@ export default function PublicProfile() {
   const slug = normalizeSlug(rawSlug);
 
   // ─── Profile row ────────────────────────────────────────────────────────
+  // PR53 bug 2 fix: lookup uses the materialized `profile_slug` column
+  // added in migration 20260512150004. The previous `id ilike '<slug>%'`
+  // version accidentally worked for 8-char slugs (id starts with 8 hex
+  // chars before the first dash) but silently failed for the 12-char
+  // collision-fallback slug — that overlapped a dash at position 9 of
+  // the UUID and never matched. The new column is a plain 12-char hex
+  // string so both 8- and 12-char inputs resolve via a single
+  // prefix-LIKE against an indexed column.
   const { data: resolved, isLoading: profileLoading } = useQuery<ResolvedProfile | null>({
     queryKey: ["public-profile", slug],
     queryFn: async () => {
@@ -87,7 +95,7 @@ export default function PublicProfile() {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, display_name, is_ghost, self_rating")
-        .filter("id", "ilike", `${slug}%`)
+        .like("profile_slug", `${slug}%`)
         .limit(1)
         .maybeSingle();
       if (error) {
