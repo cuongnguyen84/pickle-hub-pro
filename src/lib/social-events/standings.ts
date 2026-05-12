@@ -135,3 +135,56 @@ export function findStanding(
   }
   return null;
 }
+
+export interface RosterEntry {
+  profile_id: string;
+  level: number | null;
+}
+
+/**
+ * Merge the match-derived standings with the full roster so registered
+ * players who haven't played yet appear as 0-0 rows. Re-sorts with level
+ * (descending, nulls last) as a tiebreaker after the standard wins /
+ * point_diff / matches_played keys — that way the initial display
+ * (no completed matches yet) reads as "strongest player first" instead
+ * of a string-id alphabetic order.
+ *
+ * Pure. Input arrays are not mutated.
+ */
+export function seedStandingsWithRoster(
+  base: StandingRow[],
+  roster: RosterEntry[],
+): StandingRow[] {
+  const baseIds = new Set(base.map((s) => s.player_id));
+  const seeded: StandingRow[] = base.slice();
+  for (const r of roster) {
+    if (!baseIds.has(r.profile_id)) {
+      seeded.push({
+        player_id: r.profile_id,
+        wins: 0,
+        losses: 0,
+        matches_played: 0,
+        points_for: 0,
+        points_against: 0,
+        point_diff: 0,
+      });
+    }
+  }
+  const levelById = new Map(
+    roster.map((r) => [r.profile_id, r.level] as const),
+  );
+  seeded.sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.point_diff !== a.point_diff) return b.point_diff - a.point_diff;
+    if (b.matches_played !== a.matches_played) {
+      return b.matches_played - a.matches_played;
+    }
+    const la = levelById.get(a.player_id);
+    const lb = levelById.get(b.player_id);
+    const laN = la == null ? -Infinity : la;
+    const lbN = lb == null ? -Infinity : lb;
+    if (lbN !== laN) return lbN - laN;
+    return a.player_id < b.player_id ? -1 : a.player_id > b.player_id ? 1 : 0;
+  });
+  return seeded;
+}

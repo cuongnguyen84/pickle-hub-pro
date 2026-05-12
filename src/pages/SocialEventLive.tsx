@@ -6,21 +6,26 @@
 // device updates as scores come in.
 //
 // Zones:
-//   1. Now — the player's current/in-progress match (also the score-input form)
-//   2. Next — the player's next scheduled match (read-only)
-//   3. Standings — top 5 + highlight the current player
-//   4. Score Input — folded into Zone 1 (single card to reduce vertical scrolling)
-//   5. Zalo — link to the event group (only if event.zalo_group_url is set)
+//   1. Now — the identified player's current match. Three states:
+//        a. They have an in_progress match  → MatchCard + ScoreInput
+//        b. They have a scheduled match     → MatchCard + StartMatchCta
+//        c. They have nothing pending       → "Đang nghỉ" placeholder
+//   2. Next — the event-wide first scheduled match (visible to everyone,
+//      including spectators).
+//   3. Standings — every registered player (seeded 0-0 by useEventLive
+//      until matches are completed), top 8 + highlight the current player.
+//   4. Zalo — link to the event group (only if event.zalo_group_url is set).
 //
 // Identification:
 //   - Authenticated user: profile_id = auth.uid()
 //   - Guest: magic_token in localStorage from PR2 RegistrationModal flow
-//   - Neither: spectator mode (zones 1, 2, 4 hidden; standings + Zalo only)
+//   - Neither: spectator mode (Now zone hidden; Next + Standings still
+//     render so anyone with the URL can follow the event).
 // ============================================================================
 
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, Trophy, ClipboardList, ExternalLink } from "lucide-react";
+import { Loader2, Trophy, ClipboardList, ExternalLink, PlayCircle } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -271,6 +276,69 @@ function ScoreInput({ match, me, isOrganizer, onSubmitted }: ScoreInputProps) {
   );
 }
 
+interface StartMatchCtaProps {
+  match: LiveMatchRow;
+  me: MyRegistration;
+  isOrganizer: boolean;
+}
+
+/**
+ * Visible on a scheduled match for either the four players or the organizer.
+ * Single client-side UPDATE flips `status` from 'scheduled' → 'in_progress'.
+ * RLS allows the four match players + the event organizer to update; the
+ * `.eq("status", "scheduled")` guard makes the call idempotent if someone
+ * else just transitioned the row (the realtime channel will refetch and
+ * the page will rerender with ScoreInput).
+ */
+function StartMatchCta({ match, me, isOrganizer }: StartMatchCtaProps) {
+  const { t } = useI18n();
+  const live = t.socialEvents.live;
+  const [starting, setStarting] = useState(false);
+
+  const inMatch =
+    match.team_a_player1_id === me.profile_id ||
+    match.team_a_player2_id === me.profile_id ||
+    match.team_b_player1_id === me.profile_id ||
+    match.team_b_player2_id === me.profile_id;
+
+  // Only the 4 match players or the organizer can flip the flag. Spectators
+  // see neither — they wait for the players to start.
+  if (!inMatch && !isOrganizer) return null;
+
+  async function handleStart() {
+    setStarting(true);
+    try {
+      const { error } = await supabase
+        .from("social_event_matches")
+        .update({ status: "in_progress" })
+        .eq("id", match.id)
+        .eq("status", "scheduled");
+      if (error) {
+        console.error("StartMatchCta: update failed", error);
+        toast({ title: t.common.error, description: error.message, variant: "destructive" });
+      }
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      <p style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
+        {live.startMatchHint}
+      </p>
+      <Button onClick={handleStart} disabled={starting}>
+        {starting ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <PlayCircle className="mr-2 h-4 w-4" />
+        )}
+        {starting ? live.starting : live.startMatch}
+      </Button>
+    </div>
+  );
+}
+
 interface StandingsTableProps {
   standings: StandingRow[];
   names: PlayerNameMap;
@@ -283,7 +351,11 @@ function StandingsTable({ standings, names, myProfileId, limit = 8 }: StandingsT
   const live = t.socialEvents.live;
   const top = standings.slice(0, limit);
   if (top.length === 0) {
-    return <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>—</p>;
+    return (
+      <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>
+        {live.zoneStandingsEmpty}
+      </p>
+    );
   }
   return (
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
@@ -429,7 +501,7 @@ export default function SocialEventLive() {
           </Card>
         )}
 
-        {/* Zone 1 — Now + Score Input merged */}
+        {/* Zone 1 — Now (only for identified players) */}
         {!noSchedule && me && (
           <Card className="p-5 mb-4">
             <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
@@ -442,29 +514,65 @@ export default function SocialEventLive() {
                   names={playerNames}
                   language={language}
                 />
-                <ScoreInput
-                  match={data.currentMatch}
-                  me={me}
-                  isOrganizer={isOrganizer}
-                  onSubmitted={() => {
-                    // Realtime subscription will refetch; nothing local to do.
-                  }}
-                />
+                {data.currentInProgress ? (
+                  <ScoreInput
+                    match={data.currentMatch}
+                    me={me}
+                    isOrganizer={isOrganizer}
+                    onSubmitted={() => {
+                      // Realtime subscription will refetch; nothing local to do.
+                    }}
+                  />
+                ) : (
+                  <StartMatchCta
+                    match={data.currentMatch}
+                    me={me}
+                    isOrganizer={isOrganizer}
+                  />
+                )}
               </div>
             ) : (
-              <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>{live.zoneNoNow}</p>
+              // No in_progress and no scheduled match for this player —
+              // either they've played everything or they're not in any
+              // match (e.g. organizer who didn't self-register). Surface
+              // the event's next scheduled match so they know what's up.
+              <div>
+                <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
+                  {live.zoneRestingTitle}
+                </h4>
+                {data.firstScheduled ? (
+                  <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>
+                    {live.zoneRestingBody
+                      .replace("{round}", String(data.firstScheduled.round))
+                      .replace("{court}", String(data.firstScheduled.court))}
+                  </p>
+                ) : (
+                  <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>
+                    {live.zoneRestingNoNext}
+                  </p>
+                )}
+              </div>
             )}
           </Card>
         )}
 
-        {/* Zone 2 — Next */}
-        {!noSchedule && me && (
+        {/* Zone 2 — Next (always rendered; spectators see this too) */}
+        {!noSchedule && (
           <Card className="p-5 mb-4">
             <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
               {live.zoneNext}
             </h3>
-            {data.nextMatch ? (
-              <MatchCard match={data.nextMatch} names={playerNames} language={language} />
+            {data.firstScheduled ? (
+              <>
+                <p style={{ fontSize: 12, color: "var(--tl-fg-3)", marginBottom: 8 }}>
+                  {live.zoneNextHint}
+                </p>
+                <MatchCard
+                  match={data.firstScheduled}
+                  names={playerNames}
+                  language={language}
+                />
+              </>
             ) : (
               <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>{live.zoneNoNext}</p>
             )}

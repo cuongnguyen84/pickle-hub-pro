@@ -1952,12 +1952,20 @@ export interface Translations {
       notRegisteredBody: string;
       zoneNow: string;
       zoneNoNow: string;
+      zoneRestingTitle: string;
+      zoneRestingBody: string;
+      zoneRestingNoNext: string;
       zoneNext: string;
       zoneNoNext: string;
+      zoneNextHint: string;
       zoneStandings: string;
+      zoneStandingsEmpty: string;
       zoneScoreInput: string;
       zoneZalo: string;
       openZalo: string;
+      startMatch: string;
+      startMatchHint: string;
+      starting: string;
       court: string;
       round: string;
       teamA: string;
@@ -3950,12 +3958,20 @@ export const vi: Translations = {
       notRegisteredBody: "Đang ở chế độ khán giả. Đăng ký để hiển thị trận của riêng bạn.",
       zoneNow: "Trận hiện tại",
       zoneNoNow: "Bạn chưa có trận đang diễn ra.",
+      zoneRestingTitle: "Đang nghỉ",
+      zoneRestingBody: "Trận kế tiếp của bạn — vòng {round}, sân {court}.",
+      zoneRestingNoNext: "Bạn đã chơi xong tất cả trận.",
       zoneNext: "Trận kế tiếp",
-      zoneNoNext: "Không có trận kế tiếp.",
+      zoneNoNext: "Không còn trận nào trong lịch.",
+      zoneNextHint: "Trận sớm nhất chưa bắt đầu trong sự kiện.",
       zoneStandings: "Bảng xếp hạng",
+      zoneStandingsEmpty: "Chưa có người chơi nào đăng ký.",
       zoneScoreInput: "Nhập tỉ số",
       zoneZalo: "Nhóm Zalo sự kiện",
       openZalo: "Mở nhóm Zalo",
+      startMatch: "Bắt đầu chơi",
+      startMatchHint: "Đánh dấu trận đang diễn ra để bắt đầu nhập tỉ số.",
+      starting: "Đang bắt đầu…",
       court: "Sân",
       round: "Vòng",
       teamA: "Cặp A",

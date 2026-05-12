@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { computeStandings, findStanding, type MatchInput } from "../standings";
+import {
+  computeStandings,
+  findStanding,
+  seedStandingsWithRoster,
+  type MatchInput,
+  type RosterEntry,
+} from "../standings";
 
 // ============================================================================
 // Helpers — concise match builders so cases read like prose.
@@ -274,5 +280,73 @@ describe("findStanding", () => {
     const rows = computeStandings([m]);
     const r = findStanding(rows, "p1");
     expect(r?.wins).toBe(1);
+  });
+});
+
+describe("seedStandingsWithRoster", () => {
+  const roster: RosterEntry[] = [
+    { profile_id: "p1", level: 4.5 },
+    { profile_id: "p2", level: 3.5 },
+    { profile_id: "p3", level: 4.0 },
+    { profile_id: "p4", level: null },
+  ];
+
+  it("returns 0-0 rows for everyone when no matches have completed", () => {
+    const out = seedStandingsWithRoster([], roster);
+    expect(out).toHaveLength(4);
+    out.forEach((r) => {
+      expect(r.wins).toBe(0);
+      expect(r.losses).toBe(0);
+      expect(r.matches_played).toBe(0);
+    });
+  });
+
+  it("sorts seeded 0-0 rows by level desc, nulls last", () => {
+    const out = seedStandingsWithRoster([], roster);
+    expect(out.map((r) => r.player_id)).toEqual(["p1", "p3", "p2", "p4"]);
+  });
+
+  it("preserves base standings ordering when wins differ", () => {
+    const matches = [
+      match("m1", ["p1", "p2"], ["p3", "p4"], 11, 7), // p1 + p2 win
+    ];
+    const base = computeStandings(matches);
+    const out = seedStandingsWithRoster(base, roster);
+    // p1 has 1 win, p2 has 1 win, p3 + p4 each have 0 wins.
+    // Among winners, p1 (level 4.5) ranks above p2 (level 3.5) per the
+    // level tiebreaker. Among losers, p3 (level 4.0) ranks above p4 (null).
+    expect(out.map((r) => r.player_id)).toEqual(["p1", "p2", "p3", "p4"]);
+  });
+
+  it("doesn't duplicate players already in the base standings", () => {
+    const matches = [match("m1", ["p1", "p2"], ["p3", "p4"], 11, 5)];
+    const base = computeStandings(matches);
+    const out = seedStandingsWithRoster(base, roster);
+    expect(out).toHaveLength(4); // not 8
+    expect(new Set(out.map((r) => r.player_id)).size).toBe(4);
+  });
+
+  it("does not mutate input arrays", () => {
+    const matches = [match("m1", ["p1", "p2"], ["p3", "p4"], 11, 5)];
+    const base = computeStandings(matches);
+    const baseSnapshot = JSON.parse(JSON.stringify(base));
+    const rosterSnapshot = JSON.parse(JSON.stringify(roster));
+    seedStandingsWithRoster(base, roster);
+    expect(base).toEqual(baseSnapshot);
+    expect(roster).toEqual(rosterSnapshot);
+  });
+
+  it("supports an empty roster (passthrough on base)", () => {
+    const matches = [match("m1", ["p1", "p2"], ["p3", "p4"], 11, 5)];
+    const base = computeStandings(matches);
+    const out = seedStandingsWithRoster(base, []);
+    // No seeding happened; the sort with no level info falls back to
+    // player_id ASC after the wins/diff/mp keys (winners still rank
+    // above losers).
+    expect(out).toHaveLength(base.length);
+    expect(out.filter((r) => r.wins === 1).map((r) => r.player_id)).toEqual([
+      "p1",
+      "p2",
+    ]);
   });
 });

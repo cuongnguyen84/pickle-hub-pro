@@ -2,13 +2,18 @@
 // useEventLive — Live event data + realtime subscription for /su-kien/:slug/live
 // ----------------------------------------------------------------------------
 // Returns:
-//   - allMatches:    every social_event_matches row for the event
-//   - standings:     computed from completed matches (top-N at the page level)
-//   - currentMatch:  the in_progress or earliest scheduled match for the
-//                    identified player (auth.uid() OR the registration row
-//                    matching the localStorage magic_token)
-//   - nextMatch:     the next scheduled match after currentMatch for the player
-//   - myRegistration: the resolved registration row when identified, else null
+//   - allMatches:        every social_event_matches row for the event
+//   - standings:         match-derived stats, **seeded** with every registered
+//                        player at 0-0 so the Standings zone renders something
+//                        useful immediately after the schedule is saved (no
+//                        completed matches yet)
+//   - currentMatch:      the in_progress OR earliest scheduled match for the
+//                        identified player. Page uses currentInProgress to
+//                        decide whether to show score input or a "start" CTA.
+//   - currentInProgress: true iff currentMatch.status === 'in_progress'
+//   - firstScheduled:    event-wide first scheduled match (round asc, court
+//                        asc). Used by the spectator-visible Next zone.
+//   - me:                resolved registration row when identified, else null
 //
 // Realtime pattern follows useFlexRealtime — channel per event, single
 // postgres_changes subscription on social_event_matches filtered by event_id,
@@ -20,7 +25,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { computeStandings, findStanding, type StandingRow } from "@/lib/social-events/standings";
+import { useEventRegistrations } from "@/hooks/useEventRegistrations";
+import {
+  computeStandings,
+  findStanding,
+  seedStandingsWithRoster,
+  type StandingRow,
+  type RosterEntry,
+} from "@/lib/social-events/standings";
 
 const MAGIC_TOKEN_STORAGE_PREFIX = "tph-event-magic:";
 
@@ -63,7 +75,8 @@ export interface LiveData {
   allMatches: LiveMatchRow[];
   standings: StandingRow[];
   currentMatch: LiveMatchRow | null;
-  nextMatch: LiveMatchRow | null;
+  currentInProgress: boolean;
+  firstScheduled: LiveMatchRow | null;
 }
 
 interface StoredEntry {
@@ -192,6 +205,11 @@ export function useEventLive(eventId: string | undefined): {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const me = useMyRegistration(eventId);
 
+  // Pull registrations so we can (a) seed standings with all registered
+  // players at 0-0 even before a single match has completed, and (b) sort
+  // initial standings by self-rated level descending.
+  const { data: registrations } = useEventRegistrations(eventId);
+
   const { data: matches, isLoading } = useQuery<LiveMatchRow[]>({
     queryKey: ["social-event-matches", eventId],
     queryFn: async () => {
@@ -248,11 +266,27 @@ export function useEventLive(eventId: string | undefined): {
     };
   }, [eventId, queryClient]);
 
-  const standings = useMemo(() => computeStandings(matches ?? []), [matches]);
+  const standings = useMemo(() => {
+    const base = computeStandings(matches ?? []);
+    const roster: RosterEntry[] = (registrations ?? [])
+      .filter((r) => r.profile_id !== null)
+      .map((r) => ({
+        profile_id: r.profile_id as string,
+        level: r.self_rated_level,
+      }));
+    return seedStandingsWithRoster(base, roster);
+  }, [matches, registrations]);
 
-  const { currentMatch, nextMatch } = useMemo(() => {
+  const firstScheduled = useMemo<LiveMatchRow | null>(() => {
+    if (!matches || matches.length === 0) return null;
+    // matches is already round/court asc from the query — first scheduled
+    // is the earliest in the queue.
+    return matches.find((m) => m.status === "scheduled") ?? null;
+  }, [matches]);
+
+  const { currentMatch, currentInProgress } = useMemo(() => {
     if (!me || !matches || matches.length === 0) {
-      return { currentMatch: null, nextMatch: null };
+      return { currentMatch: null, currentInProgress: false };
     }
     const profileId = me.profile_id;
     const mine = matches.filter((m) => {
@@ -263,25 +297,24 @@ export function useEventLive(eventId: string | undefined): {
         m.team_b_player2_id === profileId
       );
     });
-    if (mine.length === 0) return { currentMatch: null, nextMatch: null };
+    if (mine.length === 0) {
+      return { currentMatch: null, currentInProgress: false };
+    }
 
     // "Current" = first in_progress OR first scheduled by (round, court).
-    // "Next" = the scheduled match strictly after the current one.
+    // The page renders score input only when currentInProgress is true; for
+    // a scheduled match it shows a "Start playing" CTA instead.
     const inProgress = mine.find((m) => m.status === "in_progress");
-    const scheduled = mine
+    if (inProgress) {
+      return { currentMatch: inProgress, currentInProgress: true };
+    }
+    const nextScheduled = mine
       .filter((m) => m.status === "scheduled")
-      .sort((a, b) => a.round - b.round || a.court - b.court);
-    const current = inProgress ?? scheduled[0] ?? null;
-    const next =
-      current && scheduled.length > 0
-        ? scheduled.find(
-            (m) =>
-              m.id !== current.id &&
-              (m.round > current.round ||
-                (m.round === current.round && m.court > current.court)),
-          ) ?? null
-        : null;
-    return { currentMatch: current, nextMatch: next };
+      .sort((a, b) => a.round - b.round || a.court - b.court)[0];
+    return {
+      currentMatch: nextScheduled ?? null,
+      currentInProgress: false,
+    };
   }, [me, matches]);
 
   const myStanding = useMemo(() => {
@@ -294,7 +327,8 @@ export function useEventLive(eventId: string | undefined): {
       allMatches: matches ?? [],
       standings,
       currentMatch,
-      nextMatch,
+      currentInProgress,
+      firstScheduled,
     },
     isLoading,
     me,
