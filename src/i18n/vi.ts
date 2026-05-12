@@ -1945,6 +1945,7 @@ export interface Translations {
       transferClaimed: string;
       transferNotClaimed: string;
       reconcileBanner: string;
+      viewProfileHint: string;
       actionCheckIn: string;
       actionUndoCheckIn: string;
       actionMarkPaid: string;
@@ -2064,6 +2065,46 @@ export interface Translations {
       claimedToast: string;
       claimError: string;
       copiedToast: string;
+    };
+    profile: {
+      notFoundTitle: string;
+      notFoundBody: string;
+      levelLabel: string;
+      eventsPlayedShort: string;
+      matchesPlayedShort: string;
+      ghostHint: string;
+      stats: {
+        eventsLabel: string;
+        matchesLabel: string;
+        winsLabel: string;
+        streakLabel: string;
+      };
+      badgesHeading: string;
+      historyHeading: string;
+      lockedHint: string;
+      earnedOn: string;
+      history: {
+        empty: string;
+        partner: string;
+        vs: string;
+        loadMore: string;
+        loading: string;
+      };
+      badges: {
+        first_event: { title: string; description: string };
+        first_match: { title: string; description: string };
+        first_win: { title: string; description: string };
+        event_5: { title: string; description: string };
+        event_10: { title: string; description: string };
+        event_25: { title: string; description: string };
+        event_50: { title: string; description: string };
+        match_10: { title: string; description: string };
+        match_50: { title: string; description: string };
+        match_100: { title: string; description: string };
+        win_streak_3: { title: string; description: string };
+        win_streak_5: { title: string; description: string };
+        night_owl: { title: string; description: string };
+      };
     };
   };
 }
@@ -4040,6 +4081,7 @@ export const vi: Translations = {
       transferClaimed: "Player đã chuyển",
       transferNotClaimed: "Chưa chuyển",
       reconcileBanner: "Player tự đánh dấu đã chuyển. Hãy đối chiếu với app ngân hàng (tìm theo mã PHUB-XXXXXX) trước khi cho phép chơi.",
+      viewProfileHint: "Xem profile",
     },
     matchmaking: {
       pageTitle: "Xếp cặp — Matchmaking",
@@ -4144,6 +4186,46 @@ export const vi: Translations = {
       claimedToast: "Đã đánh dấu đã chuyển tiền.",
       claimError: "Không gửi được yêu cầu. Thử lại.",
       copiedToast: "Đã sao chép!",
+    },
+    profile: {
+      notFoundTitle: "Không tìm thấy profile",
+      notFoundBody: "Profile này không tồn tại hoặc đã bị xoá.",
+      levelLabel: "Level",
+      eventsPlayedShort: "Đã chơi {n} event",
+      matchesPlayedShort: "{n} trận",
+      ghostHint: "Player này chưa tạo tài khoản đầy đủ — chưa nhận được badge.",
+      stats: {
+        eventsLabel: "Event",
+        matchesLabel: "Trận",
+        winsLabel: "Thắng",
+        streakLabel: "Streak hiện tại",
+      },
+      badgesHeading: "Badges",
+      historyHeading: "Lịch sử trận đấu",
+      lockedHint: "Còn {remaining} để mở khoá",
+      earnedOn: "Đạt được vào {date}",
+      history: {
+        empty: "Chưa có trận nào hoàn thành.",
+        partner: "Cặp",
+        vs: "vs",
+        loadMore: "Xem thêm",
+        loading: "Đang tải…",
+      },
+      badges: {
+        first_event:   { title: "Lần đầu góp mặt",   description: "Đăng ký event đầu tiên trên ThePickleHub." },
+        first_match:   { title: "Trận đầu",          description: "Chơi xong trận đấu đầu tiên." },
+        first_win:     { title: "Chiến thắng đầu",   description: "Thắng trận đấu đầu tiên." },
+        event_5:       { title: "5 events",          description: "Đã chơi 5 events." },
+        event_10:      { title: "10 events",         description: "Đã chơi 10 events." },
+        event_25:      { title: "25 events",         description: "Đã chơi 25 events." },
+        event_50:      { title: "50 events",         description: "Đã chơi 50 events." },
+        match_10:      { title: "10 trận",           description: "Đã hoàn thành 10 trận đấu." },
+        match_50:      { title: "50 trận",           description: "Đã hoàn thành 50 trận đấu." },
+        match_100:     { title: "100 trận",          description: "Đã hoàn thành 100 trận đấu." },
+        win_streak_3:  { title: "Streak 3",          description: "Thắng 3 trận liên tiếp." },
+        win_streak_5:  { title: "Streak 5",          description: "Thắng 5 trận liên tiếp." },
+        night_owl:     { title: "Cú đêm",            description: "Đăng ký event diễn ra sau 21:00." },
+      },
     },
   },
 };

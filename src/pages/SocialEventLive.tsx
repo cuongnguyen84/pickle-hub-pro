@@ -41,6 +41,7 @@ import { useEventLive, type LiveMatchRow, type MyRegistration } from "@/hooks/us
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { StandingRow } from "@/lib/social-events/standings";
+import { profileIdToSlug } from "@/lib/badges/profileSlug";
 
 interface PlayerNameMap {
   [profileId: string]: string;
@@ -434,7 +435,12 @@ function StandingsTable({ standings, names, myProfileId, limit = 8 }: StandingsT
             >
               <td style={{ padding: "8px 6px", fontFamily: "Geist Mono", color: "var(--tl-fg-3)" }}>{i + 1}</td>
               <td style={{ padding: "8px 6px" }}>
-                {names[r.player_id] ?? "?"}
+                <Link
+                  to={`/u/${profileIdToSlug(r.player_id)}`}
+                  className="hover:underline"
+                >
+                  {names[r.player_id] ?? "?"}
+                </Link>
                 {isMe && (
                   <span style={{ marginLeft: 8, fontSize: 11, color: "var(--primary)" }}>
                     ({live.youLabel})
