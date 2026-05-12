@@ -1856,6 +1856,34 @@ export interface Translations {
       errorSlugFormat: string;
       successDraft: string;
       successPublished: string;
+      // ── PR50a wizard additions ────────────────────────────────────
+      stepIndicator: string;
+      step1Heading: string;
+      step1Subheading: string;
+      step2Heading: string;
+      nextButton: string;
+      backButton: string;
+      eventName: string;
+      eventNamePlaceholder: string;
+      description: string;
+      startDate: string;
+      startTime: string;
+      endTime: string;
+      priceAmount: string;
+      priceFreeHint: string;
+      paymentBannerFree: string;
+      paymentBannerNotConfigured: string;
+      paymentBannerNotConfiguredCta: string;
+      paymentBannerReady: string;
+      errorTitleMin: string;
+      errorTitleMax: string;
+      errorLocationMin: string;
+      errorPastDate: string;
+      errorMaxPlayersMin: string;
+      errorCourtCountMin: string;
+      errorZaloUrl: string;
+      errorPriceTooLarge: string;
+      errorPriceNeg: string;
     };
     manage: {
       pageTitle: string;
@@ -3908,6 +3936,36 @@ export const vi: Translations = {
       errorSlugFormat: "Slug chỉ chứa chữ thường, số, dấu gạch ngang (3–100 ký tự)",
       successDraft: "Đã lưu nháp",
       successPublished: "Đã xuất bản — sự kiện đang nhận đăng ký",
+      stepIndicator: "Bước {n}/2",
+      step1Heading: "Thông tin sự kiện",
+      step1Subheading: "Nhập chi tiết cơ bản về buổi chơi của bạn.",
+      step2Heading: "Phí tham gia",
+      nextButton: "Tiếp theo →",
+      backButton: "← Quay lại",
+      eventName: "Tên sự kiện",
+      eventNamePlaceholder: "VD: Open Play Tối Thứ Bảy",
+      description: "Mô tả",
+      startDate: "Ngày bắt đầu",
+      startTime: "Giờ bắt đầu",
+      endTime: "Giờ kết thúc",
+      priceAmount: "Số tiền (VND)",
+      priceFreeHint: "Nhập 0 nếu sự kiện miễn phí.",
+      paymentBannerFree:
+        "Sự kiện miễn phí. Người chơi sẽ không thấy bước thanh toán.",
+      paymentBannerNotConfigured:
+        "CLB chưa bật thanh toán online. Người chơi sẽ thấy thông báo \"Vui lòng thanh toán tại sân cho BTC\".",
+      paymentBannerNotConfiguredCta: "Cài đặt thanh toán online →",
+      paymentBannerReady:
+        "Người chơi sẽ thấy QR VietQR + thông tin chuyển khoản khi đăng ký. Tiền chuyển trực tiếp vào tài khoản CLB.",
+      errorTitleMin: "Tên sự kiện cần ít nhất 3 ký tự",
+      errorTitleMax: "Tên sự kiện không quá 200 ký tự",
+      errorLocationMin: "Địa điểm cần ít nhất 3 ký tự",
+      errorPastDate: "Ngày bắt đầu không được trong quá khứ",
+      errorMaxPlayersMin: "Cần tối thiểu 4 người chơi",
+      errorCourtCountMin: "Số sân phải lớn hơn 0",
+      errorZaloUrl: "Liên kết Zalo không hợp lệ",
+      errorPriceTooLarge: "Phí tham gia tối đa 10.000.000 ₫",
+      errorPriceNeg: "Phí không được âm",
     },
     manage: {
       pageTitle: "Quản lý sự kiện",

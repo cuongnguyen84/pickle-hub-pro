@@ -33,18 +33,12 @@ import {
 import { useI18n } from "@/i18n";
 import { useClub } from "@/hooks/useClub";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useClubPaymentConfig } from "@/hooks/useClubPaymentConfig";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { VN_BANKS, findBankByCode } from "@/lib/payment/banks";
 import { generateVietQRUrl } from "@/lib/payment/vietqr";
-
-interface ConfigRow {
-  bank_code: string;
-  bank_account_number: string;
-  bank_account_name: string;
-  enabled: boolean;
-}
 
 export default function ClubPaymentSettings() {
   const { slug } = useParams<{ slug: string }>();
@@ -55,20 +49,7 @@ export default function ClubPaymentSettings() {
   const permission = useClubOwnership(slug);
   const { data: clubData } = useClub(slug);
 
-  const { data: config, isLoading } = useQuery<ConfigRow | null>({
-    queryKey: ["club-payment-config", clubData?.club.id],
-    queryFn: async () => {
-      if (!clubData?.club.id) return null;
-      const { data } = await supabase
-        .from("club_payment_config")
-        .select("bank_code, bank_account_number, bank_account_name, enabled")
-        .eq("club_id", clubData.club.id)
-        .maybeSingle();
-      return (data as ConfigRow | null) ?? null;
-    },
-    enabled: Boolean(clubData?.club.id),
-    staleTime: 30_000,
-  });
+  const { data: config, isLoading } = useClubPaymentConfig(clubData?.club.id);
 
   const [bankCode, setBankCode] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
