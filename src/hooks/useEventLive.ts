@@ -1,0 +1,280 @@
+// ============================================================================
+// useEventLive — Live event data + realtime subscription for /su-kien/:slug/live
+// ----------------------------------------------------------------------------
+// Returns:
+//   - allMatches:    every social_event_matches row for the event
+//   - standings:     computed from completed matches (top-N at the page level)
+//   - currentMatch:  the in_progress or earliest scheduled match for the
+//                    identified player (auth.uid() OR the registration row
+//                    matching the localStorage magic_token)
+//   - nextMatch:     the next scheduled match after currentMatch for the player
+//   - myRegistration: the resolved registration row when identified, else null
+//
+// Realtime pattern follows useFlexRealtime — channel per event, single
+// postgres_changes subscription on social_event_matches filtered by event_id,
+// callback re-runs the React-Query fetch via queryClient.invalidateQueries.
+// ============================================================================
+
+import { useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { computeStandings, findStanding, type StandingRow } from "@/lib/social-events/standings";
+
+const MAGIC_TOKEN_STORAGE_PREFIX = "tph-event-magic:";
+
+export interface LiveMatchRow {
+  id: string;
+  event_id: string;
+  round: number;
+  court: number;
+  team_a_player1_id: string | null;
+  team_a_player2_id: string | null;
+  team_b_player1_id: string | null;
+  team_b_player2_id: string | null;
+  team_a_score: number | null;
+  team_b_score: number | null;
+  status: "scheduled" | "in_progress" | "completed";
+  confirmed_by_team_a: boolean;
+  confirmed_by_team_b: boolean;
+  winning_team: "a" | "b" | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface MagicTokenEntry {
+  token: string;
+  registration_id: string;
+  registered_at: string;
+  expires_at: string;
+}
+
+export interface MyRegistration {
+  registration_id: string;
+  profile_id: string;
+  display_name: string;
+  magic_token: string | null;
+  /** Whether the identification came from auth.uid() or the magic token. */
+  via: "auth" | "magic_token";
+}
+
+export interface LiveData {
+  allMatches: LiveMatchRow[];
+  standings: StandingRow[];
+  currentMatch: LiveMatchRow | null;
+  nextMatch: LiveMatchRow | null;
+}
+
+function readMagicToken(eventId: string | undefined): string | null {
+  if (!eventId) return null;
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(
+      `${MAGIC_TOKEN_STORAGE_PREFIX}${eventId}`,
+    );
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<MagicTokenEntry>;
+    if (!parsed.token) return null;
+    if (parsed.expires_at && new Date(parsed.expires_at).getTime() < Date.now()) {
+      return null;
+    }
+    return parsed.token;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Identify the current player either from auth.uid() OR from the
+ * magic_token stored at registration time. Single row from
+ * event_registrations (RLS lets organizer + public published events
+ * through; for guest identification we use the magic_token unique index
+ * directly, which is also covered by the public SELECT policy).
+ */
+function useMyRegistration(eventId: string | undefined): MyRegistration | null {
+  const { user } = useAuth();
+  const magicToken = useMemo(() => readMagicToken(eventId), [eventId]);
+
+  const { data } = useQuery<MyRegistration | null>({
+    queryKey: ["my-event-registration", eventId, user?.id ?? null, magicToken],
+    queryFn: async () => {
+      if (!eventId) return null;
+      if (user?.id) {
+        const { data: row } = await supabase
+          .from("event_registrations")
+          .select("id, profile_id, display_name, magic_token")
+          .eq("event_id", eventId)
+          .eq("profile_id", user.id)
+          .neq("status", "cancelled")
+          .maybeSingle();
+        if (row) {
+          const r = row as {
+            id: string;
+            profile_id: string;
+            display_name: string;
+            magic_token: string | null;
+          };
+          return {
+            registration_id: r.id,
+            profile_id: r.profile_id,
+            display_name: r.display_name,
+            magic_token: r.magic_token,
+            via: "auth",
+          };
+        }
+      }
+      if (magicToken) {
+        const { data: row } = await supabase
+          .from("event_registrations")
+          .select("id, profile_id, display_name, magic_token")
+          .eq("event_id", eventId)
+          .eq("magic_token", magicToken)
+          .neq("status", "cancelled")
+          .maybeSingle();
+        if (row) {
+          const r = row as {
+            id: string;
+            profile_id: string | null;
+            display_name: string;
+            magic_token: string | null;
+          };
+          if (r.profile_id) {
+            return {
+              registration_id: r.id,
+              profile_id: r.profile_id,
+              display_name: r.display_name,
+              magic_token: r.magic_token,
+              via: "magic_token",
+            };
+          }
+        }
+      }
+      return null;
+    },
+    enabled: Boolean(eventId),
+    staleTime: 60_000,
+  });
+
+  return data ?? null;
+}
+
+export function useEventLive(eventId: string | undefined): {
+  data: LiveData;
+  isLoading: boolean;
+  me: MyRegistration | null;
+  myStanding: StandingRow | null;
+} {
+  const queryClient = useQueryClient();
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const me = useMyRegistration(eventId);
+
+  const { data: matches, isLoading } = useQuery<LiveMatchRow[]>({
+    queryKey: ["social-event-matches", eventId],
+    queryFn: async () => {
+      if (!eventId) return [];
+      const { data, error } = await supabase
+        .from("social_event_matches")
+        .select(
+          `id, event_id, round, court,
+           team_a_player1_id, team_a_player2_id,
+           team_b_player1_id, team_b_player2_id,
+           team_a_score, team_b_score, status,
+           confirmed_by_team_a, confirmed_by_team_b,
+           winning_team, created_at, updated_at`,
+        )
+        .eq("event_id", eventId)
+        .order("round", { ascending: true })
+        .order("court", { ascending: true });
+      if (error) {
+        console.error("useEventLive: lookup error", { eventId, error });
+        return [];
+      }
+      return (data ?? []) as LiveMatchRow[];
+    },
+    enabled: Boolean(eventId),
+    staleTime: 5_000,
+  });
+
+  // Realtime: refetch the matches query on any change. The push payload
+  // itself is discarded — React Query is the single source of truth so we
+  // avoid divergent client-side state from a partial UPDATE event.
+  useEffect(() => {
+    if (!eventId) return;
+    const channel = supabase
+      .channel(`social-event:${eventId}:${Date.now()}_${Math.random().toString(36).slice(2, 7)}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "social_event_matches",
+          filter: `event_id=eq.${eventId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["social-event-matches", eventId] });
+        },
+      )
+      .subscribe();
+    channelRef.current = channel;
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [eventId, queryClient]);
+
+  const standings = useMemo(() => computeStandings(matches ?? []), [matches]);
+
+  const { currentMatch, nextMatch } = useMemo(() => {
+    if (!me || !matches || matches.length === 0) {
+      return { currentMatch: null, nextMatch: null };
+    }
+    const profileId = me.profile_id;
+    const mine = matches.filter((m) => {
+      return (
+        m.team_a_player1_id === profileId ||
+        m.team_a_player2_id === profileId ||
+        m.team_b_player1_id === profileId ||
+        m.team_b_player2_id === profileId
+      );
+    });
+    if (mine.length === 0) return { currentMatch: null, nextMatch: null };
+
+    // "Current" = first in_progress OR first scheduled by (round, court).
+    // "Next" = the scheduled match strictly after the current one.
+    const inProgress = mine.find((m) => m.status === "in_progress");
+    const scheduled = mine
+      .filter((m) => m.status === "scheduled")
+      .sort((a, b) => a.round - b.round || a.court - b.court);
+    const current = inProgress ?? scheduled[0] ?? null;
+    const next =
+      current && scheduled.length > 0
+        ? scheduled.find(
+            (m) =>
+              m.id !== current.id &&
+              (m.round > current.round ||
+                (m.round === current.round && m.court > current.court)),
+          ) ?? null
+        : null;
+    return { currentMatch: current, nextMatch: next };
+  }, [me, matches]);
+
+  const myStanding = useMemo(() => {
+    if (!me) return null;
+    return findStanding(standings, me.profile_id);
+  }, [me, standings]);
+
+  return {
+    data: {
+      allMatches: matches ?? [],
+      standings,
+      currentMatch,
+      nextMatch,
+    },
+    isLoading,
+    me,
+    myStanding,
+  };
+}
