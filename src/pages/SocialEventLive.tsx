@@ -364,19 +364,30 @@ function StartMatchCta({ match, me, canManage }: StartMatchCtaProps) {
     }
   }
 
+  // TheLine vibrant-green pill — bracket-lab primary CTA pattern.
   return (
     <div style={{ display: "grid", gap: 8 }}>
       <p style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
         {live.startMatchHint}
       </p>
-      <Button onClick={handleStart} disabled={starting}>
+      <button
+        type="button"
+        className="tl-btn green"
+        onClick={handleStart}
+        disabled={starting}
+        style={{
+          opacity: starting ? 0.7 : 1,
+          cursor: starting ? "not-allowed" : "pointer",
+          justifyContent: "center",
+        }}
+      >
         {starting ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <PlayCircle className="mr-2 h-4 w-4" />
+          <PlayCircle className="h-4 w-4" />
         )}
-        {starting ? live.starting : live.startMatch}
-      </Button>
+        {starting ? live.starting : `${live.startMatch} →`}
+      </button>
     </div>
   );
 }

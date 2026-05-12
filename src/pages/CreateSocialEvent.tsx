@@ -322,41 +322,73 @@ export default function CreateSocialEvent() {
             {/* Footer button bar. Sticky-ish via mt-8; full-width on
                 mobile, right-aligned on sm+. */}
             <div className="mt-8 flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+              {/* Footer buttons. TheLine vibrant-green pill for the
+                  primary CTA (Next on step 1, Publish on step 2). Back
+                  + Save-draft are neutral inline / outline pills so the
+                  primary action stays the visual anchor. */}
               {step === 1 ? (
-                <Button
+                <button
                   type="button"
+                  className="tl-btn green"
                   onClick={handleNext}
                   disabled={step1Disabled}
-                  className="sm:min-w-[140px]"
+                  style={{
+                    opacity: step1Disabled ? 0.5 : 1,
+                    cursor: step1Disabled ? "not-allowed" : "pointer",
+                    minWidth: 140,
+                    justifyContent: "center",
+                  }}
                 >
                   {create.nextButton}
-                </Button>
+                </button>
               ) : (
                 <>
-                  <Button
+                  <button
                     type="button"
-                    variant="ghost"
                     onClick={handleBack}
                     disabled={submitting}
+                    style={{
+                      background: "none",
+                      border: 0,
+                      padding: "10px 14px",
+                      cursor: submitting ? "not-allowed" : "pointer",
+                      color: "var(--tl-fg-3)",
+                      fontFamily: "Geist Mono",
+                      fontSize: 11,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                    }}
+                    className="hover:underline"
                   >
                     {create.backButton}
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
-                    variant="outline"
+                    className="tl-btn"
                     disabled={submitDisabled}
                     onClick={() => submit(false)}
+                    style={{
+                      opacity: submitDisabled ? 0.5 : 1,
+                      cursor: submitDisabled ? "not-allowed" : "pointer",
+                    }}
                   >
                     {create.saveDraft}
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
+                    className="tl-btn green"
                     disabled={submitDisabled}
                     onClick={() => submit(true)}
+                    style={{
+                      opacity: submitDisabled ? 0.5 : 1,
+                      cursor: submitDisabled ? "not-allowed" : "pointer",
+                      minWidth: 140,
+                      justifyContent: "center",
+                    }}
                   >
-                    {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {submitting ? create.submitting : create.publishNow}
-                  </Button>
+                    {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {submitting ? create.submitting : `${create.publishNow} →`}
+                  </button>
                 </>
               )}
             </div>

@@ -331,16 +331,54 @@ export default function SocialEventRoster() {
             </div>
             <h1>{roster.pageTitle}</h1>
           </div>
-          <div style={{ display: "flex", gap: 8, alignSelf: "center" }}>
-            <Button asChild variant="ghost" size="sm">
-              <Link to={`/su-kien/${event.slug}/xep-cap`}>{t.socialEvents.matchmaking.pageTitle}</Link>
-            </Button>
-            <Button variant="outline" size="sm" onClick={downloadCsv}>
-              <Download className="mr-1 h-3.5 w-3.5" /> {roster.export}
-            </Button>
-            <Button size="sm" onClick={() => setManualOpen(true)}>
-              <Plus className="mr-1 h-3.5 w-3.5" /> {roster.addManual}
-            </Button>
+          {/* TheLine action row — mono caps + arrow inline links (CSV +
+              matchmaking link) plus a vibrant-green pill for the primary
+              "+ Thêm thủ công" CTA (creates a new row). */}
+          <div
+            style={{
+              display: "flex",
+              gap: 14,
+              alignItems: "center",
+              alignSelf: "center",
+              flexWrap: "wrap",
+              fontFamily: "Geist Mono",
+              fontSize: 11,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+            }}
+          >
+            <Link
+              to={`/su-kien/${event.slug}/xep-cap`}
+              style={{ color: "var(--tl-fg)", textDecoration: "none" }}
+              className="inline-flex items-center gap-1 hover:underline"
+            >
+              {t.socialEvents.matchmaking.pageTitle} →
+            </Link>
+            <button
+              type="button"
+              onClick={downloadCsv}
+              style={{
+                background: "none",
+                border: 0,
+                padding: 0,
+                cursor: "pointer",
+                color: "var(--tl-fg)",
+                fontFamily: "inherit",
+                fontSize: "inherit",
+                letterSpacing: "inherit",
+                textTransform: "inherit",
+              }}
+              className="inline-flex items-center gap-1 hover:underline"
+            >
+              <Download className="h-3 w-3" /> {roster.export} →
+            </button>
+            <button
+              type="button"
+              className="tl-btn green"
+              onClick={() => setManualOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5" /> {roster.addManual}
+            </button>
           </div>
         </header>
 
@@ -398,23 +436,35 @@ export default function SocialEventRoster() {
                     {row.self_rated_level != null ? row.self_rated_level.toFixed(1) : "—"}
                   </TableCell>
                   <TableCell>
+                    {/* TheLine tl-format-badge — mono caps + outline pill. */}
                     {row.status === "checked_in" ? (
-                      <Badge variant="outline" className="border-primary/50 text-primary">
+                      <span
+                        className="tl-format-badge"
+                        style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
+                      >
                         {manage.statsCheckedIn}
-                      </Badge>
+                      </span>
                     ) : row.status === "no_show" ? (
-                      <Badge variant="destructive">{language === "vi" ? "Vắng" : "No show"}</Badge>
+                      <span
+                        className="tl-format-badge"
+                        style={{ borderColor: "var(--tl-live)", color: "var(--tl-live)" }}
+                      >
+                        {language === "vi" ? "Vắng" : "No show"}
+                      </span>
                     ) : (
-                      <Badge variant="secondary">{manage.statsRegistered}</Badge>
+                      <span className="tl-format-badge">{manage.statsRegistered}</span>
                     )}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     {row.payment_status === "paid" ? (
-                      <Badge variant="outline" className="border-primary/50 text-primary">
-                        <Banknote className="mr-1 h-3 w-3" /> {manage.statsPaid}
-                      </Badge>
+                      <span
+                        className="tl-format-badge"
+                        style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
+                      >
+                        <Banknote className="mr-1 inline h-3 w-3" /> {manage.statsPaid}
+                      </span>
                     ) : (
-                      <Badge variant="outline">—</Badge>
+                      <span className="tl-format-badge">—</span>
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell font-mono text-xs">
@@ -428,9 +478,9 @@ export default function SocialEventRoster() {
                       }
                       if (order.player_claimed_paid) {
                         return (
-                          <Badge
-                            variant="outline"
-                            className="border-emerald-500/50 text-emerald-700 dark:text-emerald-300"
+                          <span
+                            className="tl-format-badge"
+                            style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
                             title={
                               order.player_claimed_at
                                 ? new Date(order.player_claimed_at).toLocaleString(
@@ -448,10 +498,12 @@ export default function SocialEventRoster() {
                             }
                           >
                             {roster.transferClaimed}
-                          </Badge>
+                          </span>
                         );
                       }
-                      return <Badge variant="outline">{roster.transferNotClaimed}</Badge>;
+                      return (
+                        <span className="tl-format-badge">{roster.transferNotClaimed}</span>
+                      );
                     })()}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">

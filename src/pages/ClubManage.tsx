@@ -29,21 +29,35 @@ export default function ClubManage() {
 
   const manage = t.socialEvents.manage;
 
+  // PR52 follow-up: TheLine `tl-format-badge` pattern — mono caps + thin
+  // outline pill matching the bracket-lab status chips ("MOST POPULAR",
+  // "GROUP_STAGE"). The `published` variant gets a primary-coloured
+  // border to read as the active / open-for-registration state.
   const statusBadge = useMemo(
     () => (status: string) => {
       switch (status) {
         case "draft":
-          return <Badge variant="outline">{manage.statusDraft}</Badge>;
+          return <span className="tl-format-badge">{manage.statusDraft}</span>;
         case "published":
           return (
-            <Badge variant="outline" className="border-primary/50 text-primary">
+            <span
+              className="tl-format-badge"
+              style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
+            >
               {manage.statusPublished}
-            </Badge>
+            </span>
           );
         case "cancelled":
-          return <Badge variant="destructive">{manage.statusCancelled}</Badge>;
+          return (
+            <span
+              className="tl-format-badge"
+              style={{ borderColor: "var(--tl-live)", color: "var(--tl-live)" }}
+            >
+              {manage.statusCancelled}
+            </span>
+          );
         case "completed":
-          return <Badge variant="secondary">{manage.statusCompleted}</Badge>;
+          return <span className="tl-format-badge">{manage.statusCompleted}</span>;
         default:
           return null;
       }
@@ -102,11 +116,15 @@ export default function ClubManage() {
             </div>
             <h1>{manage.pageTitle}</h1>
           </div>
-          <Button asChild style={{ alignSelf: "center" }}>
-            <Link to={`/clb/${clubData.club.slug}/su-kien/moi`}>
-              <Plus className="mr-2 h-4 w-4" /> {manage.newEventCta}
-            </Link>
-          </Button>
+          {/* TheLine vibrant-green pill primary CTA — matches the
+              bracket-lab header pattern ("+ Start a Quick Table →"). */}
+          <Link
+            to={`/clb/${clubData.club.slug}/su-kien/moi`}
+            className="tl-btn green"
+            style={{ alignSelf: "center" }}
+          >
+            <Plus className="h-4 w-4" /> {manage.newEventCta} →
+          </Link>
         </header>
 
         {isLoading && (
@@ -134,9 +152,9 @@ export default function ClubManage() {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
                       {statusBadge(event.status)}
                       {event.visibility === "club_only" && (
-                        <Badge variant="outline">
+                        <span className="tl-format-badge">
                           {language === "vi" ? "Chỉ thành viên" : "Members only"}
-                        </Badge>
+                        </span>
                       )}
                     </div>
                     <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{title}</h3>
@@ -157,22 +175,43 @@ export default function ClubManage() {
                     </span>
                   </div>
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-                  <Button asChild size="sm" variant="outline">
-                    <Link to={`/su-kien/${event.slug}/danh-sach`}>
-                      <ClipboardList className="mr-1 h-3.5 w-3.5" /> {manage.manageRoster}
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline">
-                    <Link to={`/su-kien/${event.slug}/xep-cap`}>
-                      <Sparkles className="mr-1 h-3.5 w-3.5" /> {manage.shufflePairs}
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="ghost">
-                    <Link to={`/su-kien/${event.slug}`}>
-                      <ExternalLink className="mr-1 h-3.5 w-3.5" /> {manage.viewPublic}
-                    </Link>
-                  </Button>
+                {/* TheLine inline-action row — mono caps + arrow, no
+                    fill, matches the bracket-lab card foot pattern. */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 18,
+                    marginTop: 14,
+                    paddingTop: 12,
+                    borderTop: "1px solid var(--tl-border)",
+                    fontFamily: "Geist Mono",
+                    fontSize: 11,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  <Link
+                    to={`/su-kien/${event.slug}/danh-sach`}
+                    style={{ color: "var(--tl-fg)", textDecoration: "none" }}
+                    className="inline-flex items-center gap-1 hover:underline"
+                  >
+                    <ClipboardList className="h-3 w-3" /> {manage.manageRoster} →
+                  </Link>
+                  <Link
+                    to={`/su-kien/${event.slug}/xep-cap`}
+                    style={{ color: "var(--tl-fg)", textDecoration: "none" }}
+                    className="inline-flex items-center gap-1 hover:underline"
+                  >
+                    <Sparkles className="h-3 w-3" /> {manage.shufflePairs} →
+                  </Link>
+                  <Link
+                    to={`/su-kien/${event.slug}`}
+                    style={{ color: "var(--tl-fg-3)", textDecoration: "none" }}
+                    className="inline-flex items-center gap-1 hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" /> {manage.viewPublic} →
+                  </Link>
                 </div>
               </Card>
             );
