@@ -342,73 +342,113 @@ export default function SocialEventDetail() {
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button
-              size="lg"
-              className="flex-1"
-              disabled={!canRegister}
-              onClick={() => setModalOpen(true)}
-            >
-              {cancelled
-                ? t.socialEvents.detail.cancelled
-                : eventEnded
-                  ? t.socialEvents.detail.ended
-                  : eventStarted
-                    ? t.socialEvents.detail.registerInProgress
-                    : remaining === 0
-                      ? (language === "vi" ? "Hết chỗ" : "Sold out")
-                      : t.socialEvents.detail.registerCta}
-            </Button>
+          {/* TheLine vibrant-green pill primary CTA — bracket-lab pattern. */}
+          <button
+            type="button"
+            className="tl-btn green"
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              fontSize: 15,
+              padding: "14px 22px",
+              opacity: canRegister ? 1 : 0.5,
+              cursor: canRegister ? "pointer" : "not-allowed",
+            }}
+            disabled={!canRegister}
+            onClick={() => setModalOpen(true)}
+          >
+            {cancelled
+              ? t.socialEvents.detail.cancelled
+              : eventEnded
+                ? t.socialEvents.detail.ended
+                : eventStarted
+                  ? t.socialEvents.detail.registerInProgress
+                  : remaining === 0
+                    ? (language === "vi" ? "Hết chỗ" : "Sold out")
+                    : `${t.socialEvents.detail.registerCta} →`}
+          </button>
+          {/* TheLine inline-action share row — mono caps + arrow, no fill. */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 18,
+              marginTop: 16,
+              paddingTop: 14,
+              borderTop: "1px solid var(--tl-border)",
+              fontFamily: "Geist Mono",
+              fontSize: 11,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+            }}
+          >
             {useNativeShare ? (
-              <Button variant="outline" size="lg" onClick={handleNativeShare}>
-                <Share2 className="mr-2 h-4 w-4" />
-                {t.socialEvents.detail.shareTitle}
-              </Button>
+              <button
+                type="button"
+                onClick={handleNativeShare}
+                style={{ background: "none", border: 0, padding: 0, cursor: "pointer", color: "var(--tl-fg)" }}
+                className="inline-flex items-center gap-1 hover:underline"
+              >
+                <Share2 className="h-3 w-3" /> {t.socialEvents.detail.shareTitle} →
+              </button>
             ) : (
               <>
-                <Button asChild variant="outline" size="lg">
-                  <a
-                    href={zaloShareHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={t.socialEvents.detail.shareZalo}
+                <a
+                  href={zaloShareHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t.socialEvents.detail.shareZalo}
+                  style={{ color: "var(--tl-fg)", textDecoration: "none" }}
+                  className="inline-flex items-center gap-1 hover:underline"
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 14,
+                      height: 14,
+                      borderRadius: 3,
+                      background: "#0068ff",
+                      color: "white",
+                      fontWeight: 700,
+                      fontSize: 9,
+                    }}
                   >
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 18,
-                        height: 18,
-                        borderRadius: 4,
-                        background: "#0068ff",
-                        color: "white",
-                        fontWeight: 700,
-                        fontSize: 11,
-                        marginRight: 8,
-                      }}
-                    >
-                      Z
-                    </span>
-                    {t.socialEvents.detail.shareZalo}
-                  </a>
-                </Button>
-                <Button asChild variant="outline" size="lg">
-                  <a
-                    href={facebookShareHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={t.socialEvents.detail.shareFacebook}
-                  >
-                    <Facebook className="mr-2 h-4 w-4" />
-                    {t.socialEvents.detail.shareFacebook}
-                  </a>
-                </Button>
-                <Button variant="ghost" size="lg" onClick={handleCopyLink} aria-label={t.socialEvents.detail.shareCopy}>
-                  <LinkIcon className="mr-2 h-4 w-4" />
-                  {t.socialEvents.detail.shareCopy}
-                </Button>
+                    Z
+                  </span>
+                  {t.socialEvents.detail.shareZalo} →
+                </a>
+                <a
+                  href={facebookShareHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t.socialEvents.detail.shareFacebook}
+                  style={{ color: "var(--tl-fg)", textDecoration: "none" }}
+                  className="inline-flex items-center gap-1 hover:underline"
+                >
+                  <Facebook className="h-3 w-3" /> {t.socialEvents.detail.shareFacebook} →
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  aria-label={t.socialEvents.detail.shareCopy}
+                  style={{
+                    background: "none",
+                    border: 0,
+                    padding: 0,
+                    cursor: "pointer",
+                    color: "var(--tl-fg-3)",
+                    fontFamily: "inherit",
+                    fontSize: "inherit",
+                    textTransform: "inherit",
+                    letterSpacing: "inherit",
+                  }}
+                  className="inline-flex items-center gap-1 hover:underline"
+                >
+                  <LinkIcon className="h-3 w-3" /> {t.socialEvents.detail.shareCopy} →
+                </button>
               </>
             )}
           </div>

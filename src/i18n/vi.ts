@@ -1927,6 +1927,7 @@ export interface Translations {
       pageTitle: string;
       registeredCount: string;
       paidCount: string;
+      claimedCount: string;
       noRegistrations: string;
       addManual: string;
       addManualTitle: string;
@@ -4005,6 +4006,7 @@ export const vi: Translations = {
       pageTitle: "Danh sách đăng ký",
       registeredCount: "Đã đăng ký",
       paidCount: "Đã thanh toán",
+      claimedCount: "Player đã claim",
       noRegistrations: "Chưa có ai đăng ký.",
       addManual: "Thêm thủ công",
       addManualTitle: "Thêm người tham gia",
