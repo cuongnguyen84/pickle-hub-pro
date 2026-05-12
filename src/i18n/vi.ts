@@ -1774,6 +1774,7 @@ export interface Translations {
       modalTitle: string;
       stepPhone: string;
       stepCode: string;
+      stepPayment: string;
       stepDone: string;
       phoneLabel: string;
       phonePlaceholder: string;
@@ -1894,8 +1895,13 @@ export interface Translations {
       colLevel: string;
       colStatus: string;
       colPayment: string;
+      colReferenceCode: string;
+      colTransferStatus: string;
       colRegistered: string;
       colActions: string;
+      transferClaimed: string;
+      transferNotClaimed: string;
+      reconcileBanner: string;
       actionCheckIn: string;
       actionUndoCheckIn: string;
       actionMarkPaid: string;
@@ -1996,6 +2002,45 @@ export interface Translations {
       notInMatchToast: string;
       organizerCta: string;
       backToEvent: string;
+    };
+    payment: {
+      amountLabel: string;
+      qrAlt: string;
+      bankLabel: string;
+      accountNumberLabel: string;
+      accountNameLabel: string;
+      memoLabel: string;
+      referenceCodeLabel: string;
+      warning: string;
+      claimButton: string;
+      skipButton: string;
+      submitting: string;
+      claimedTitle: string;
+      claimedBody: string;
+      claimedHint: string;
+      claimedToast: string;
+      claimError: string;
+      copiedToast: string;
+    };
+    paymentSettings: {
+      pageTitle: string;
+      pageSubtitle: string;
+      bankLabel: string;
+      bankPlaceholder: string;
+      accountNumberLabel: string;
+      accountNumberInvalid: string;
+      accountNameLabel: string;
+      accountNameHint: string;
+      enabledLabel: string;
+      enabledHint: string;
+      saveButton: string;
+      saving: string;
+      savedToast: string;
+      previewTitle: string;
+      previewHint: string;
+      previewAlt: string;
+      disabledNotice: string;
+      manageCta: string;
     };
   };
 }
@@ -3778,6 +3823,7 @@ export const vi: Translations = {
       modalTitle: "Đăng ký sự kiện",
       stepPhone: "Số điện thoại",
       stepCode: "Nhập mã OTP",
+      stepPayment: "Thanh toán",
       stepDone: "Hoàn tất",
       phoneLabel: "Số điện thoại",
       phonePlaceholder: "0901 234 567",
@@ -3903,6 +3949,8 @@ export const vi: Translations = {
       colLevel: "Trình độ",
       colStatus: "Trạng thái",
       colPayment: "Thanh toán",
+      colReferenceCode: "Mã thanh toán",
+      colTransferStatus: "Trạng thái CK",
       colRegistered: "Đăng ký lúc",
       colActions: "Thao tác",
       actionCheckIn: "Check-in",
@@ -3921,6 +3969,9 @@ export const vi: Translations = {
       saveNotes: "Lưu",
       updatedToast: "Đã cập nhật",
       deletedToast: "Đã huỷ đăng ký",
+      transferClaimed: "Player đã chuyển",
+      transferNotClaimed: "Chưa chuyển",
+      reconcileBanner: "Player tự đánh dấu đã chuyển. Hãy đối chiếu với app ngân hàng (tìm theo mã PHUB-XXXXXX) trước khi cho phép chơi.",
     },
     matchmaking: {
       pageTitle: "Xếp cặp — Matchmaking",
@@ -4006,6 +4057,45 @@ export const vi: Translations = {
       notInMatchToast: "Bạn không nằm trong trận này.",
       organizerCta: "Quản lý sự kiện",
       backToEvent: "Về trang sự kiện",
+    },
+    payment: {
+      amountLabel: "Số tiền cần chuyển",
+      qrAlt: "Mã VietQR thanh toán",
+      bankLabel: "Ngân hàng",
+      accountNumberLabel: "Số tài khoản",
+      accountNameLabel: "Chủ tài khoản",
+      memoLabel: "Nội dung CK",
+      referenceCodeLabel: "Mã thanh toán của bạn",
+      warning: "Ghi đúng nội dung CK để BTC đối chiếu. Mang theo bằng chứng chuyển khoản (screenshot) khi tới sân.",
+      claimButton: "Tôi đã chuyển tiền",
+      skipButton: "Sẽ thanh toán tại sân",
+      submitting: "Đang gửi…",
+      claimedTitle: "Đã ghi nhận",
+      claimedBody: "Cảm ơn bạn. BTC sẽ đối chiếu giao dịch trước khi bạn vào sân.",
+      claimedHint: "Lưu mã này hoặc screenshot màn hình để BTC tra cứu nếu cần.",
+      claimedToast: "Đã đánh dấu đã chuyển tiền.",
+      claimError: "Không gửi được yêu cầu. Thử lại.",
+      copiedToast: "Đã sao chép!",
+    },
+    paymentSettings: {
+      pageTitle: "Nhận thanh toán online",
+      pageSubtitle: "Player quét QR chuyển khoản trực tiếp vào tài khoản ngân hàng của CLB. ThePickleHub không cầm tiền. Setup 1 phút.",
+      bankLabel: "Ngân hàng",
+      bankPlaceholder: "Chọn ngân hàng",
+      accountNumberLabel: "Số tài khoản",
+      accountNumberInvalid: "Số tài khoản chỉ chứa số (3–30 ký tự).",
+      accountNameLabel: "Tên chủ tài khoản",
+      accountNameHint: "Viết hoa không dấu, đúng như trên ngân hàng (vd: NGUYEN VAN A).",
+      enabledLabel: "Bật thanh toán online",
+      enabledHint: "Khi tắt, player chỉ thấy hướng dẫn \"thanh toán tại sân\".",
+      saveButton: "Lưu cấu hình",
+      saving: "Đang lưu…",
+      savedToast: "Đã lưu cấu hình thanh toán.",
+      previewTitle: "Preview QR demo",
+      previewHint: "Quét bằng app ngân hàng để verify thông tin đúng (50.000 ₫ + nội dung CK PHUB-DEMO00).",
+      previewAlt: "Mã VietQR preview",
+      disabledNotice: "Thanh toán đang TẮT. Player không thấy QR khi đăng ký.",
+      manageCta: "Thanh toán",
     },
   },
 };
