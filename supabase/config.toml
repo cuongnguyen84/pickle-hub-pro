@@ -179,3 +179,13 @@ verify_jwt = false
 
 [functions.mark-payment-claimed]
 verify_jwt = false
+
+# ─── Social Events MVP (PR58 pre-launch must-haves) ────────────────────────
+# Player-facing cancel + reactivate flow on /dang-ky/:magic_token. Auth via
+# magic_token (registration_secrets lookup, service-role only) — no JWT.
+
+[functions.cancel-registration]
+verify_jwt = false
+
+[functions.reactivate-registration]
+verify_jwt = false

@@ -13,7 +13,7 @@
 // ============================================================================
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Copy } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -552,6 +552,36 @@ export function RegistrationModal({
                 {reg.backToEvent}
               </Button>
             </div>
+            {/* PR58 — save link card surfaces /dang-ky/<token> so the
+                player can come back to cancel / view status without
+                another OTP. localStorage already remembers it for 90
+                days but the visible URL is the durable handle. */}
+            {success.magic_token && (
+              <div className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm">
+                <p className="font-semibold">{t.socialEvents.playerRegistration.saveLinkHeading}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t.socialEvents.playerRegistration.saveLinkBody}
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <code className="flex-1 truncate rounded-md bg-background px-2 py-1.5 font-mono text-xs">
+                    /dang-ky/{success.magic_token}
+                  </code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(
+                        `${window.location.origin}/dang-ky/${success.magic_token}`,
+                      );
+                      toast({ title: t.socialEvents.playerRegistration.saveLinkCopied });
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
             <p className="text-center text-xs text-muted-foreground">
               {language === "vi"
                 ? `Lưu liên kết: thepicklehub.net/su-kien/${eventSlug}`
