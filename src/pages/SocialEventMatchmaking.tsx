@@ -46,6 +46,7 @@ import {
   type Format,
 } from "@/lib/matchmaking";
 import { interp } from "@/lib/social-events/format";
+import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 
 interface SavedMatchRow {
   id: string;
@@ -377,7 +378,9 @@ export default function SocialEventMatchmaking() {
       </TheLineLayout>
     );
   }
-  if (permission.state === "anonymous") return <Navigate to="/login" replace />;
+  if (permission.state === "anonymous") {
+    return <Navigate to={buildLoginRedirect(window.location.pathname + window.location.search)} replace />;
+  }
   if (permission.state === "denied") {
     return (
       <TheLineLayout title={t.socialEvents.manage.noPermissionTitle} active="events" noindex>

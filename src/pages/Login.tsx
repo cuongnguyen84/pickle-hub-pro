@@ -11,6 +11,7 @@ import { trackEvent } from "@/utils/ga";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmailVerificationRedirectUrl, getPasswordResetRedirectUrl, getSiteUrl } from "@/lib/auth-config";
+import { safeInternalPath } from "@/lib/auth/safeRedirect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { isNativeApp } from "@/lib/capacitor-utils";
@@ -40,8 +41,10 @@ const Login = () => {
     return error instanceof Error ? error.message : fallback;
   };
 
-  // Get redirect URL from query params
-  const redirectUrl = searchParams.get("redirect");
+  // Get redirect URL from query params + validate against open-redirect
+  // (PR52 hardening — `?redirect=//evil.com` would otherwise trampoline
+  // the user off-site after Supabase Auth commits the session).
+  const redirectUrl = safeInternalPath(searchParams.get("redirect"));
 
   // Redirect if already logged in. Sprint 3 Phase 3A: incomplete onboarding
   // bounces the user to /onboarding instead of the requested redirect target.
@@ -52,7 +55,7 @@ const Login = () => {
     const onboarded = (
       profile as { onboarding_completed_at?: string | null } | null | undefined
     )?.onboarding_completed_at;
-    const targetUrl = onboarded ? redirectUrl || "/" : "/onboarding";
+    const targetUrl = onboarded ? redirectUrl : "/onboarding";
     navigate(targetUrl, { replace: true });
   }, [user, authLoading, profileLoading, profile, navigate, redirectUrl]);
 
