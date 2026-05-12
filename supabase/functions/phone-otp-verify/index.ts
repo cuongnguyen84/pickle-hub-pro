@@ -235,6 +235,9 @@ Deno.serve(async (req) => {
   }
 
   // ─── Insert registration. Unique indexes catch double-register. ────────
+  // Magic token: fresh UUID persisted with the row so submit-match-score
+  // (PR47) can verify a returning guest before letting them submit a score.
+  const magicToken = crypto.randomUUID();
   const { data: registration, error: regErr } = await supabase
     .from("event_registrations")
     .insert({
@@ -245,6 +248,7 @@ Deno.serve(async (req) => {
       self_rated_level: selfRatedLevel,
       status: "registered",
       payment_status: "unpaid",
+      magic_token: magicToken,
     })
     .select("id, registered_at")
     .single();
@@ -271,12 +275,6 @@ Deno.serve(async (req) => {
     .from("otp_codes")
     .update({ used_at: new Date().toISOString() })
     .eq("id", otp.id);
-
-  // Magic token: a fresh UUID the SPA stores in a 90-day cookie so the
-  // guest is recognized without re-OTP. The frontend treats this as
-  // opaque — no server table backing it yet. (When PR2 adds "see my
-  // registered events" UX, we'll add a profile_magic_tokens table.)
-  const magicToken = crypto.randomUUID();
 
   logEvent({
     step: "register_ok",
