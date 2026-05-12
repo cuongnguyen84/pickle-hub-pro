@@ -474,7 +474,7 @@ export function RegistrationModal({
                 <Button
                   asChild
                   className="w-full"
-                  variant="default"
+                  variant="outline"
                 >
                   <a href={zaloGroupUrl} target="_blank" rel="noopener noreferrer">
                     {reg.openZalo}
@@ -483,7 +483,7 @@ export function RegistrationModal({
               )}
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 className="w-full"
                 onClick={() => onOpenChange(false)}
               >

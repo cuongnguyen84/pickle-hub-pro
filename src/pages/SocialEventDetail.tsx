@@ -481,7 +481,7 @@ export default function SocialEventDetail() {
         </Card>
 
         {data.zalo_group_url && (
-          <Button asChild variant="default" className="w-full">
+          <Button asChild variant="outline" className="w-full">
             <a href={data.zalo_group_url} target="_blank" rel="noopener noreferrer">
               {t.socialEvents.detail.zaloGroup}
             </a>
