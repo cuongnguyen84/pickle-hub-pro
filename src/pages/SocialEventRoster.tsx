@@ -265,15 +265,21 @@ export default function SocialEventRoster() {
 
   return (
     <TheLineLayout title={`${roster.pageTitle} — ${eventTitle}`} active="events" noindex>
-      <div className="tl-shell" style={{ padding: "32px 16px 60px", maxWidth: 1080, margin: "0 auto" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div className="tl-shell" style={{ paddingBottom: 60, maxWidth: 1080, margin: "0 auto" }}>
+        <header
+          className="tl-page-head"
+          style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between", alignItems: "flex-start" }}
+        >
           <div>
-            <h1 style={{ fontSize: 24, marginBottom: 4 }}>{roster.pageTitle}</h1>
-            <p style={{ color: "var(--tl-fg-3)", fontSize: 14 }}>
-              <Link to={`/su-kien/${event.slug}`} style={{ color: "inherit" }}>{eventTitle}</Link>
-            </p>
+            <div className="kicker">
+              ◆{" "}
+              <Link to={`/su-kien/${event.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
+                {eventTitle}
+              </Link>
+            </div>
+            <h1>{roster.pageTitle}</h1>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, alignSelf: "center" }}>
             <Button asChild variant="ghost" size="sm">
               <Link to={`/su-kien/${event.slug}/xep-cap`}>{t.socialEvents.matchmaking.pageTitle}</Link>
             </Button>
@@ -284,7 +290,7 @@ export default function SocialEventRoster() {
               <Plus className="mr-1 h-3.5 w-3.5" /> {roster.addManual}
             </Button>
           </div>
-        </div>
+        </header>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
           <Badge variant="secondary">{roster.registeredCount}: {stats.registered}/{event.max_players}</Badge>

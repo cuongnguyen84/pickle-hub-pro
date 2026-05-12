@@ -108,6 +108,8 @@ const ClubManage = lazy(() => import("./pages/ClubManage"));
 const CreateSocialEvent = lazy(() => import("./pages/CreateSocialEvent"));
 const SocialEventRoster = lazy(() => import("./pages/SocialEventRoster"));
 const SocialEventMatchmaking = lazy(() => import("./pages/SocialEventMatchmaking"));
+// Social Events MVP — Sprint 1.5 PR46 (public collection page)
+const SocialEventList = lazy(() => import("./pages/SocialEventList"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -427,6 +429,8 @@ const App = () => (
                     {/* Bet #1 Sprint 3 Phase 3B: public PlayerProfile (no auth wrapper) */}
                     <Route path="/nguoi-choi/:username" element={<PlayerProfile />} />
                     {/* Social Events MVP Sprint 1 PR2 — public landing pages (no auth) */}
+                    <Route path="/su-kien" element={<SocialEventList />} />
+                    <Route path="/vi/su-kien" element={<SocialEventList />} />
                     <Route path="/su-kien/:slug" element={<SocialEventDetail />} />
                     <Route path="/clb/:slug" element={<ClubLanding />} />
                     {/* Social Events MVP Sprint 1 PR3 — organizer surfaces (auth + ownership) */}

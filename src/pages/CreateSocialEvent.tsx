@@ -12,7 +12,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -231,21 +231,21 @@ export default function CreateSocialEvent() {
 
   return (
     <TheLineLayout title={create.pageTitle} active="events" noindex>
-      <div className="tl-shell" style={{ padding: "32px 16px 60px", maxWidth: 760, margin: "0 auto" }}>
+      <div className="tl-shell" style={{ paddingBottom: 60, maxWidth: 760, margin: "0 auto" }}>
+        <header className="tl-page-head">
+          {clubData && (
+            <div className="kicker">
+              ◆{" "}
+              <Link to={`/clb/${clubData.club.slug}/quan-ly`} style={{ color: "inherit", textDecoration: "none" }}>
+                {clubData.club.name}
+              </Link>
+            </div>
+          )}
+          <h1>{create.pageTitle}</h1>
+          <p>{create.pageSubtitle}</p>
+        </header>
         <Card>
-          <CardHeader>
-            <CardTitle>{create.pageTitle}</CardTitle>
-            <CardDescription>
-              {create.pageSubtitle}
-              {clubData && (
-                <>
-                  {" · "}
-                  <Link to={`/clb/${clubData.club.slug}/quan-ly`}>{clubData.club.name}</Link>
-                </>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent style={{ paddingTop: 24 }}>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -445,11 +445,17 @@ export default function CreateSocialEvent() {
                 <Label htmlFor="price">{create.priceVnd}</Label>
                 <Input
                   id="price"
-                  type="number"
-                  min={0}
-                  step={1000}
-                  value={form.price_vnd}
-                  onChange={(e) => update("price_vnd", Number(e.target.value))}
+                  type="text"
+                  inputMode="numeric"
+                  value={form.price_vnd === 0 ? "" : form.price_vnd.toLocaleString("vi-VN")}
+                  placeholder="0"
+                  onChange={(e) => {
+                    // Strip everything that isn't a digit so we can store
+                    // the canonical integer regardless of how the user
+                    // typed it (with or without thousand separators).
+                    const digitsOnly = e.target.value.replace(/\D+/g, "");
+                    update("price_vnd", digitsOnly === "" ? 0 : Number(digitsOnly));
+                  }}
                 />
                 <p className="text-xs text-muted-foreground">{create.priceVndHint}</p>
               </div>
