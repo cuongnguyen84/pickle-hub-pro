@@ -42,6 +42,7 @@ import {
   type FormState,
   type FormErrors,
 } from "@/components/social/create-event/types";
+import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 
 function slugify(input: string): string {
   return input
@@ -262,7 +263,9 @@ export default function CreateSocialEvent() {
       </TheLineLayout>
     );
   }
-  if (permission.state === "anonymous") return <Navigate to="/login" replace />;
+  if (permission.state === "anonymous") {
+    return <Navigate to={buildLoginRedirect(window.location.pathname + window.location.search)} replace />;
+  }
   if (permission.state === "denied") {
     return (
       <TheLineLayout title={t.socialEvents.manage.noPermissionTitle} active="events" noindex>

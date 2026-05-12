@@ -18,6 +18,7 @@ import { useClub } from "@/hooks/useClub";
 import { useClubEventsManage } from "@/hooks/useClubEventsManage";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { formatEventDateRange } from "@/lib/social-events/format";
+import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 
 export default function ClubManage() {
   const { slug } = useParams<{ slug: string }>();
@@ -60,7 +61,7 @@ export default function ClubManage() {
     );
   }
   if (permission.state === "anonymous") {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={buildLoginRedirect(window.location.pathname + window.location.search)} replace />;
   }
   if (permission.state === "denied") {
     return (

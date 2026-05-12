@@ -66,6 +66,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { maskPhone, normalizeVietnamPhone } from "@/lib/phone";
+import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 
 interface PaymentOrderRow {
   id: string;
@@ -180,12 +181,16 @@ export default function SocialEventRoster() {
 
   const stats = useMemo(() => {
     const list = registrations ?? [];
+    // PR52: rename "Đã thanh toán" → "Player đã claim". With PR51 the
+    // organizer-toggled payment_status field is essentially dead — only
+    // player_claimed_paid changes during a live event. Count the latter.
+    const claimed = (paymentOrders ?? []).filter((o) => o.player_claimed_paid).length;
     return {
       registered: list.length,
-      paid: list.filter((r) => r.payment_status === "paid").length,
+      claimed,
       checkedIn: list.filter((r) => r.status === "checked_in").length,
     };
-  }, [registrations]);
+  }, [registrations, paymentOrders]);
 
   if (permission.state === "loading") {
     return (
@@ -196,7 +201,9 @@ export default function SocialEventRoster() {
       </TheLineLayout>
     );
   }
-  if (permission.state === "anonymous") return <Navigate to="/login" replace />;
+  if (permission.state === "anonymous") {
+    return <Navigate to={buildLoginRedirect(window.location.pathname + window.location.search)} replace />;
+  }
   if (permission.state === "denied") {
     return (
       <TheLineLayout title={manage.noPermissionTitle} active="events" noindex>
@@ -339,7 +346,7 @@ export default function SocialEventRoster() {
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
           <Badge variant="secondary">{roster.registeredCount}: {stats.registered}/{event.max_players}</Badge>
-          <Badge variant="secondary">{roster.paidCount}: {stats.paid}</Badge>
+          <Badge variant="secondary">{roster.claimedCount}: {stats.claimed}</Badge>
           <Badge variant="secondary">{manage.statsCheckedIn}: {stats.checkedIn}</Badge>
         </div>
 
