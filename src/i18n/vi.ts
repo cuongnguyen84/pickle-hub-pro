@@ -4193,7 +4193,7 @@ export const vi: Translations = {
       levelLabel: "Level",
       eventsPlayedShort: "Đã chơi {n} event",
       matchesPlayedShort: "{n} trận",
-      ghostHint: "Player này chưa tạo tài khoản đầy đủ — chưa nhận được badge.",
+      ghostHint: "Player này đăng ký qua OTP, chưa tạo tài khoản đầy đủ.",
       stats: {
         eventsLabel: "Event",
         matchesLabel: "Trận",

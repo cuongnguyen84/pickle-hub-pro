@@ -146,7 +146,7 @@ export default function PublicProfile() {
       const { data } = await supabase
         .from("user_badges")
         .select("badge_code, earned_at")
-        .eq("user_id", resolved.id);
+        .eq("profile_id", resolved.id);
       const map: Record<string, string> = {};
       for (const b of (data as { badge_code: string; earned_at: string }[]) ?? []) {
         map[b.badge_code] = b.earned_at;

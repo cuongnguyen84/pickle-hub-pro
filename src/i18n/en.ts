@@ -2084,7 +2084,7 @@ export const en: Translations = {
       levelLabel: "Level",
       eventsPlayedShort: "Played {n} events",
       matchesPlayedShort: "{n} matches",
-      ghostHint: "This player hasn't created a full account yet — no badges earned.",
+      ghostHint: "This player registered via OTP and hasn't created a full account yet.",
       stats: {
         eventsLabel: "Events",
         matchesLabel: "Matches",
