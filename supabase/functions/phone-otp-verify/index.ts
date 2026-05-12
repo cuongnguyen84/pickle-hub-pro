@@ -235,9 +235,6 @@ Deno.serve(async (req) => {
   }
 
   // ─── Insert registration. Unique indexes catch double-register. ────────
-  // Magic token: fresh UUID persisted with the row so submit-match-score
-  // (PR47) can verify a returning guest before letting them submit a score.
-  const magicToken = crypto.randomUUID();
   const { data: registration, error: regErr } = await supabase
     .from("event_registrations")
     .insert({
@@ -248,7 +245,6 @@ Deno.serve(async (req) => {
       self_rated_level: selfRatedLevel,
       status: "registered",
       payment_status: "unpaid",
-      magic_token: magicToken,
     })
     .select("id, registered_at")
     .single();
@@ -268,6 +264,30 @@ Deno.serve(async (req) => {
       event_id: eventId,
     });
     return err("registration_insert_failed", 500, "registration_insert_failed");
+  }
+
+  // ─── Magic token — write to the private registration_secrets table ─────
+  // Post-Codex-review (PR47 bug 1): magic_token no longer lives on
+  // event_registrations (where the public SELECT policy would have leaked
+  // it). It now lives in a sibling table with zero public access; only
+  // service-role clients (this function and submit-match-score) can read
+  // or write it.
+  const magicToken = crypto.randomUUID();
+  const { error: secretErr } = await supabase
+    .from("registration_secrets")
+    .insert({
+      registration_id: registration.id as string,
+      magic_token: magicToken,
+    });
+  if (secretErr) {
+    // Don't fail the registration just because the secret write failed —
+    // the row was already committed, refusing now would leave the user
+    // double-registered on retry. Log loudly so we notice the drift.
+    logEvent({
+      error: secretErr.message,
+      step: "insert_registration_secret",
+      registration_id: registration.id,
+    });
   }
 
   // ─── Burn the OTP ───────────────────────────────────────────────────────

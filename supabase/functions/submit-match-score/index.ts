@@ -196,9 +196,14 @@ Deno.serve(async (req) => {
     return err("invalid_magic_token", 400, "invalid_magic_token");
   }
 
+  // The token now lives in `registration_secrets`, not on event_registrations
+  // (Codex review bug 1 — public SELECT on event_registrations would have
+  // leaked it). Fetch the registration row + its secret in two reads; we
+  // can't JOIN through PostgREST's nested-select syntax here without an FK
+  // alias, and the service-role client makes the second read cheap.
   const { data: reg, error: regErr } = await supabase
     .from("event_registrations")
-    .select("id, event_id, profile_id, magic_token, status")
+    .select("id, event_id, profile_id, status")
     .eq("id", registrationId)
     .maybeSingle();
   if (regErr) {
@@ -209,11 +214,21 @@ Deno.serve(async (req) => {
   if (reg.event_id !== eventId) {
     return err("registration_event_mismatch", 403, "registration_event_mismatch");
   }
-  if (reg.magic_token !== magicToken) {
-    return err("magic_token_mismatch", 401, "magic_token_mismatch");
-  }
   if (reg.status === "cancelled") {
     return err("registration_cancelled", 403, "registration_cancelled");
+  }
+
+  const { data: secret, error: secretErr } = await supabase
+    .from("registration_secrets")
+    .select("magic_token")
+    .eq("registration_id", registrationId)
+    .maybeSingle();
+  if (secretErr) {
+    logEvent({ error: secretErr.message, step: "fetch_secret" });
+    return err("secret_lookup_failed", 500, "secret_lookup_failed");
+  }
+  if (!secret || (secret.magic_token as string) !== magicToken) {
+    return err("magic_token_mismatch", 401, "magic_token_mismatch");
   }
 
   const profileId = reg.profile_id as string | null;
@@ -221,7 +236,8 @@ Deno.serve(async (req) => {
     return err("registration_has_no_profile", 403, "registration_has_no_profile");
   }
 
-  // Which team is the player on?
+  // Which team is the player on? (Team membership is immutable, so a
+  // separate read here is safe — no race window on this comparison.)
   const onA =
     match.team_a_player1_id === profileId || match.team_a_player2_id === profileId;
   const onB =
@@ -231,33 +247,36 @@ Deno.serve(async (req) => {
   }
   const team: "a" | "b" = onA ? "a" : "b";
 
-  // First write the score + flip the confirm flag for this team. If both
-  // flags are now true (the OTHER team already confirmed before us), move
-  // status → completed and set winning_team.
-  const otherConfirmed =
-    team === "a"
-      ? Boolean(match.confirmed_by_team_b)
-      : Boolean(match.confirmed_by_team_a);
-  const willBeCompleted = otherConfirmed;
-  const winning = willBeCompleted ? deriveWinningTeam(scoreA, scoreB) : null;
-  const patch: Record<string, unknown> = {
-    team_a_score: scoreA,
-    team_b_score: scoreB,
-    [team === "a" ? "confirmed_by_team_a" : "confirmed_by_team_b"]: true,
-    status: willBeCompleted ? "completed" : "in_progress",
-  };
-  if (willBeCompleted) patch.winning_team = winning;
-
-  const { error: updErr } = await supabase
-    .from("social_event_matches")
-    .update(patch)
-    .eq("id", matchId);
-  if (updErr) {
-    logEvent({ error: updErr.message, step: "player_update" });
+  // Atomic submit (Codex review bug 2). The Postgres function performs the
+  // score write, confirm-flag flip, and status/winning_team transition in
+  // a single UPDATE whose CASE expressions read the row under a lock —
+  // concurrent A+B submissions serialize correctly with no zombie
+  // "both confirmed but status=in_progress" state.
+  const { data: rpcRows, error: rpcErr } = await supabase.rpc(
+    "social_event_match_player_submit",
+    {
+      p_match_id: matchId,
+      p_team: team,
+      p_score_a: scoreA,
+      p_score_b: scoreB,
+    },
+  );
+  if (rpcErr) {
+    logEvent({ error: rpcErr.message, step: "player_atomic_submit" });
     return err("update_failed", 500, "update_failed");
   }
+  // RPC returns SETOF — pluck the first (and only) row. An empty result
+  // means the UPDATE matched zero rows because the match was already
+  // completed by a third party between our SELECT and the RPC; treat
+  // that as a soft-409.
+  const updated = Array.isArray(rpcRows) && rpcRows.length > 0 ? rpcRows[0] : null;
+  if (!updated) {
+    return err("match_already_completed", 409, "match_already_completed");
+  }
+  const newStatus = (updated as { status: string }).status;
+  const newWinning = (updated as { winning_team: string | null }).winning_team;
   logEvent({
-    step: willBeCompleted ? "player_completed" : "player_confirmed",
+    step: newStatus === "completed" ? "player_completed" : "player_confirmed",
     match_id: matchId,
     event_id: eventId,
     team,
@@ -265,8 +284,8 @@ Deno.serve(async (req) => {
   });
   return jsonResponse({
     ok: true,
-    status: willBeCompleted ? "completed" : "in_progress",
-    winning_team: winning,
+    status: newStatus,
+    winning_team: newWinning,
     team_confirmed: team,
   });
 });

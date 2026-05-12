@@ -66,7 +66,19 @@ export interface LiveData {
   nextMatch: LiveMatchRow | null;
 }
 
-function readMagicToken(eventId: string | undefined): string | null {
+interface StoredEntry {
+  token: string;
+  registration_id: string;
+}
+
+/**
+ * Read both the magic_token AND the registration_id that RegistrationModal
+ * persisted at OTP-verify time. After PR47 bug 1 the token is private —
+ * the frontend looks up its registration row by id (which is public-readable
+ * for published events) and keeps the token client-side for passing to
+ * submit-match-score.
+ */
+function readStoredEntry(eventId: string | undefined): StoredEntry | null {
   if (!eventId) return null;
   if (typeof window === "undefined") return null;
   try {
@@ -75,11 +87,11 @@ function readMagicToken(eventId: string | undefined): string | null {
     );
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<MagicTokenEntry>;
-    if (!parsed.token) return null;
+    if (!parsed.token || !parsed.registration_id) return null;
     if (parsed.expires_at && new Date(parsed.expires_at).getTime() < Date.now()) {
       return null;
     }
-    return parsed.token;
+    return { token: parsed.token, registration_id: parsed.registration_id };
   } catch {
     return null;
   }
@@ -87,23 +99,28 @@ function readMagicToken(eventId: string | undefined): string | null {
 
 /**
  * Identify the current player either from auth.uid() OR from the
- * magic_token stored at registration time. Single row from
- * event_registrations (RLS lets organizer + public published events
- * through; for guest identification we use the magic_token unique index
- * directly, which is also covered by the public SELECT policy).
+ * { token, registration_id } pair stored at registration time. Both paths
+ * read public columns only — the magic_token never appears in any SELECT
+ * against event_registrations (it lives in registration_secrets, service
+ * role only).
  */
 function useMyRegistration(eventId: string | undefined): MyRegistration | null {
   const { user } = useAuth();
-  const magicToken = useMemo(() => readMagicToken(eventId), [eventId]);
+  const stored = useMemo(() => readStoredEntry(eventId), [eventId]);
 
   const { data } = useQuery<MyRegistration | null>({
-    queryKey: ["my-event-registration", eventId, user?.id ?? null, magicToken],
+    queryKey: [
+      "my-event-registration",
+      eventId,
+      user?.id ?? null,
+      stored?.registration_id ?? null,
+    ],
     queryFn: async () => {
       if (!eventId) return null;
       if (user?.id) {
         const { data: row } = await supabase
           .from("event_registrations")
-          .select("id, profile_id, display_name, magic_token")
+          .select("id, profile_id, display_name")
           .eq("event_id", eventId)
           .eq("profile_id", user.id)
           .neq("status", "cancelled")
@@ -113,23 +130,27 @@ function useMyRegistration(eventId: string | undefined): MyRegistration | null {
             id: string;
             profile_id: string;
             display_name: string;
-            magic_token: string | null;
           };
           return {
             registration_id: r.id,
             profile_id: r.profile_id,
             display_name: r.display_name,
-            magic_token: r.magic_token,
+            // Most authed users also went through the OTP modal which
+            // wrote a token into localStorage; reuse it so score
+            // submission still works. Authed organizers (who didn't
+            // self-register) get null and rely on the organizer override
+            // button instead.
+            magic_token:
+              stored && stored.registration_id === r.id ? stored.token : null,
             via: "auth",
           };
         }
       }
-      if (magicToken) {
+      if (stored) {
         const { data: row } = await supabase
           .from("event_registrations")
-          .select("id, profile_id, display_name, magic_token")
-          .eq("event_id", eventId)
-          .eq("magic_token", magicToken)
+          .select("id, profile_id, display_name, event_id")
+          .eq("id", stored.registration_id)
           .neq("status", "cancelled")
           .maybeSingle();
         if (row) {
@@ -137,14 +158,16 @@ function useMyRegistration(eventId: string | undefined): MyRegistration | null {
             id: string;
             profile_id: string | null;
             display_name: string;
-            magic_token: string | null;
+            event_id: string;
           };
-          if (r.profile_id) {
+          // Defensive: localStorage entry is keyed by event_id but verify
+          // the row's event matches in case of stale / tampered storage.
+          if (r.event_id === eventId && r.profile_id) {
             return {
               registration_id: r.id,
               profile_id: r.profile_id,
               display_name: r.display_name,
-              magic_token: r.magic_token,
+              magic_token: stored.token,
               via: "magic_token",
             };
           }
