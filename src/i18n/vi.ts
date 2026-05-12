@@ -1884,6 +1884,20 @@ export interface Translations {
       errorZaloUrl: string;
       errorPriceTooLarge: string;
       errorPriceNeg: string;
+      // ── PR51 bank fields on the Step-2 form ───────────────────────
+      step2PaymentHeading: string;
+      bankInfoHeading: string;
+      bankLabel: string;
+      bankPlaceholder: string;
+      accountNumberLabel: string;
+      accountNumberPlaceholder: string;
+      accountNameLabel: string;
+      accountNameHint: string;
+      bankDisclaimer: string;
+      previewLabel: string;
+      previewAlt: string;
+      errorAccountNumber: string;
+      errorAccountName: string;
     };
     manage: {
       pageTitle: string;
@@ -2049,26 +2063,6 @@ export interface Translations {
       claimedToast: string;
       claimError: string;
       copiedToast: string;
-    };
-    paymentSettings: {
-      pageTitle: string;
-      pageSubtitle: string;
-      bankLabel: string;
-      bankPlaceholder: string;
-      accountNumberLabel: string;
-      accountNumberInvalid: string;
-      accountNameLabel: string;
-      accountNameHint: string;
-      enabledLabel: string;
-      enabledHint: string;
-      saveButton: string;
-      saving: string;
-      savedToast: string;
-      previewTitle: string;
-      previewHint: string;
-      previewAlt: string;
-      disabledNotice: string;
-      manageCta: string;
     };
   };
 }
@@ -3966,6 +3960,20 @@ export const vi: Translations = {
       errorZaloUrl: "Liên kết Zalo không hợp lệ",
       errorPriceTooLarge: "Phí tham gia tối đa 10.000.000 ₫",
       errorPriceNeg: "Phí không được âm",
+      step2PaymentHeading: "Cài đặt thanh toán",
+      bankInfoHeading: "Thông tin nhận thanh toán",
+      bankLabel: "Ngân hàng",
+      bankPlaceholder: "Chọn ngân hàng",
+      accountNumberLabel: "Số tài khoản",
+      accountNumberPlaceholder: "0123456789",
+      accountNameLabel: "Tên chủ tài khoản",
+      accountNameHint: "Viết hoa không dấu, đúng như trên ngân hàng (vd: NGUYEN VAN A).",
+      bankDisclaimer:
+        "Tiền sẽ chuyển trực tiếp vào tài khoản này. ThePickleHub không cầm tiền. Mỗi event có thể dùng STK khác nhau (BTC khác nhau).",
+      previewLabel: "Preview QR",
+      previewAlt: "Mã VietQR preview",
+      errorAccountNumber: "Số tài khoản phải là 6–20 chữ số.",
+      errorAccountName: "Tên chủ tài khoản tối thiểu 3 ký tự, không chứa số.",
     },
     manage: {
       pageTitle: "Quản lý sự kiện",
@@ -4134,26 +4142,6 @@ export const vi: Translations = {
       claimedToast: "Đã đánh dấu đã chuyển tiền.",
       claimError: "Không gửi được yêu cầu. Thử lại.",
       copiedToast: "Đã sao chép!",
-    },
-    paymentSettings: {
-      pageTitle: "Nhận thanh toán online",
-      pageSubtitle: "Player quét QR chuyển khoản trực tiếp vào tài khoản ngân hàng của CLB. ThePickleHub không cầm tiền. Setup 1 phút.",
-      bankLabel: "Ngân hàng",
-      bankPlaceholder: "Chọn ngân hàng",
-      accountNumberLabel: "Số tài khoản",
-      accountNumberInvalid: "Số tài khoản chỉ chứa số (3–30 ký tự).",
-      accountNameLabel: "Tên chủ tài khoản",
-      accountNameHint: "Viết hoa không dấu, đúng như trên ngân hàng (vd: NGUYEN VAN A).",
-      enabledLabel: "Bật thanh toán online",
-      enabledHint: "Khi tắt, player chỉ thấy hướng dẫn \"thanh toán tại sân\".",
-      saveButton: "Lưu cấu hình",
-      saving: "Đang lưu…",
-      savedToast: "Đã lưu cấu hình thanh toán.",
-      previewTitle: "Preview QR demo",
-      previewHint: "Quét bằng app ngân hàng để verify thông tin đúng (50.000 ₫ + nội dung CK PHUB-DEMO00).",
-      previewAlt: "Mã VietQR preview",
-      disabledNotice: "Thanh toán đang TẮT. Player không thấy QR khi đăng ký.",
-      manageCta: "Thanh toán",
     },
   },
 };

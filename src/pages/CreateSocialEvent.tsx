@@ -30,7 +30,6 @@ import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useClub } from "@/hooks/useClub";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
-import { useClubPaymentConfig } from "@/hooks/useClubPaymentConfig";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { WizardProgress } from "@/components/social/create-event/WizardProgress";
@@ -76,10 +75,6 @@ export default function CreateSocialEvent() {
   const create = t.socialEvents.create;
   const permission = useClubOwnership(slug);
   const { data: clubData } = useClub(slug);
-  // Pulled up-front so the Step-2 banner doesn't have to wait when the
-  // user crosses the step boundary.
-  const { data: paymentConfig, isLoading: paymentConfigLoading } =
-    useClubPaymentConfig(clubData?.club.id);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [form, setForm] = useState<FormState>(initialForm);
@@ -206,42 +201,53 @@ export default function CreateSocialEvent() {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("social_events").insert({
+      // PR51 atomic submit. The RPC writes social_events + (when paid)
+      // event_payment_config inside one PL/pgSQL transaction so a
+      // partial failure can't strand a paid event without bank config.
+      const eventPayload = {
         club_id: clubData.club.id,
         slug: finalSlug,
         title_vi: form.title.trim(),
-        title_en: null,
         description_vi: form.description.trim() === "" ? null : form.description.trim(),
-        description_en: null,
         start_at: startIso,
         end_at: endIso,
         location_text: form.location_text.trim() === "" ? null : form.location_text.trim(),
-        location_lat: null,
-        location_lng: null,
         court_count: form.court_count,
         max_players: form.max_players,
-        level_min: null,
-        level_max: null,
         price_vnd: form.price_vnd,
-        allow_guests: true,
-        cancellation_hours: 12,
         zalo_group_url:
           form.zalo_group_url.trim() === "" ? null : form.zalo_group_url.trim(),
-        visibility: form.visibility,
         status: publish ? "published" : "draft",
-        created_by: user.id,
-      });
+        visibility: form.visibility,
+      };
+      const paymentPayload =
+        form.price_vnd > 0
+          ? {
+              bank_code: form.bank_code,
+              bank_account_number: form.bank_account_number.trim(),
+              bank_account_name: form.bank_account_name.trim(),
+            }
+          : null;
+      const { data: rows, error } = await supabase.rpc(
+        "create_social_event_with_payment",
+        {
+          p_event: eventPayload,
+          p_payment: paymentPayload,
+        },
+      );
       if (error) {
         if (error.message.toLowerCase().includes("social_events_slug")) {
           toast({ title: create.errorSlugTaken, variant: "destructive" });
           return;
         }
-        console.error("CreateSocialEvent insert error", error);
+        console.error("CreateSocialEvent RPC error", error);
         toast({ title: t.common.error, description: error.message, variant: "destructive" });
         return;
       }
+      const row = Array.isArray(rows) && rows.length > 0 ? (rows[0] as { event_slug: string }) : null;
+      const newSlug = row?.event_slug ?? finalSlug;
       toast({ title: publish ? create.successPublished : create.successDraft });
-      navigate(`/su-kien/${finalSlug}`);
+      navigate(`/su-kien/${newSlug}`);
     } finally {
       setSubmitting(false);
     }
@@ -306,9 +312,6 @@ export default function CreateSocialEvent() {
                 touched={touched}
                 onChange={setField}
                 onBlur={markTouched}
-                paymentConfig={paymentConfig}
-                paymentConfigLoading={paymentConfigLoading}
-                clubSlug={slug ?? ""}
                 language={language}
               />
             )}

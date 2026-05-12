@@ -25,8 +25,12 @@ export interface FormState {
   max_players: number;
   zalo_group_url: string;
   visibility: "public" | "club_only";
-  /** Step 2 only. VND, integer >= 0. */
+  /** Step 2. VND, integer >= 0. */
   price_vnd: number;
+  /** Step 2 bank fields — PR51 moves payment config onto the event. */
+  bank_code: string;
+  bank_account_number: string;
+  bank_account_name: string;
 }
 
 export type FormErrors = Partial<Record<keyof FormState, string | null>>;
@@ -43,7 +47,25 @@ export const initialForm: FormState = {
   zalo_group_url: "",
   visibility: "public",
   price_vnd: 0,
+  bank_code: "",
+  bank_account_number: "",
+  bank_account_name: "",
 };
+
+/**
+ * Uppercase + strip Vietnamese diacritics so the account name matches
+ * the format banks print on cards. Called from Step2Payment onBlur.
+ */
+export function normalizeAccountName(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toUpperCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 const MAX_PRICE_VND = 10_000_000;
 
@@ -142,6 +164,28 @@ export function validateField(
       if (n > MAX_PRICE_VND) return create.errorPriceTooLarge;
       return null;
     }
+
+    // Bank-trio. Only required when price_vnd > 0; otherwise null (the
+    // free-event branch bypasses these fields entirely).
+    case "bank_code": {
+      if (form.price_vnd <= 0) return null;
+      return String(value).length === 0 ? create.errorRequired : null;
+    }
+    case "bank_account_number": {
+      if (form.price_vnd <= 0) return null;
+      const v = String(value).trim();
+      if (v.length === 0) return create.errorRequired;
+      if (!/^[0-9]{6,20}$/.test(v)) return create.errorAccountNumber;
+      return null;
+    }
+    case "bank_account_name": {
+      if (form.price_vnd <= 0) return null;
+      const v = String(value).trim();
+      if (v.length === 0) return create.errorRequired;
+      if (v.length < 3) return create.errorAccountName;
+      if (/\d/.test(v)) return create.errorAccountName;
+      return null;
+    }
   }
 }
 
@@ -158,7 +202,12 @@ const STEP1_FIELDS: ReadonlyArray<keyof FormState> = [
   "visibility",
 ];
 
-const STEP2_FIELDS: ReadonlyArray<keyof FormState> = ["price_vnd"];
+const STEP2_FIELDS: ReadonlyArray<keyof FormState> = [
+  "price_vnd",
+  "bank_code",
+  "bank_account_number",
+  "bank_account_name",
+];
 
 /**
  * Validate every Step-1 field. Returns a per-field error map and a single
