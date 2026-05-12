@@ -37,6 +37,7 @@ import {
   interp,
 } from "@/lib/social-events/format";
 import { maskName } from "@/lib/social-events/maskName";
+import { EntityNotFound } from "@/components/EntityNotFound";
 
 const SITE_URL =
   (import.meta.env.VITE_SITE_URL as string | undefined) ?? "https://www.thepicklehub.net";
@@ -163,27 +164,7 @@ export default function SocialEventDetail() {
   }
 
   if (!data) {
-    return (
-      <TheLineLayout
-        title={t.socialEvents.detail.notFound}
-        active="events"
-        noindex
-      >
-        <div className="tl-shell" style={{ padding: "60px 16px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 24, marginBottom: 12 }}>{t.socialEvents.detail.notFound}</h1>
-          <p style={{ color: "var(--tl-fg-3)", maxWidth: 480, margin: "0 auto" }}>
-            {t.socialEvents.detail.notFoundBody}
-          </p>
-          <div style={{ marginTop: 24 }}>
-            <Button asChild variant="outline">
-              <Link to={language === "vi" ? "/vi" : "/"}>
-                {language === "vi" ? "Về trang chủ" : "Back to home"}
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </TheLineLayout>
-    );
+    return <EntityNotFound entity="event" active="events" />;
   }
 
   const isOrganizer = user?.id === data.created_by;

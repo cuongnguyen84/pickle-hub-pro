@@ -27,8 +27,12 @@ interface ClubListingRow {
   description: string | null;
   logo_url: string | null;
   location_text: string | null;
+  created_by: string;
   created_at: string;
   upcoming_events: number;
+  creator_profile_slug: string | null;
+  creator_display_name: string | null;
+  creator_username: string | null;
 }
 
 const PAGE_SIZE = 24;
@@ -68,7 +72,7 @@ export default function ClubsList() {
       let q = supabase
         .from("club_listing")
         .select(
-          "id, slug, name, description, logo_url, location_text, created_at, upcoming_events",
+          "id, slug, name, description, logo_url, location_text, created_by, created_at, upcoming_events, creator_profile_slug, creator_display_name, creator_username",
         )
         .order("upcoming_events", { ascending: false })
         .order("created_at", { ascending: false })
@@ -93,7 +97,31 @@ export default function ClubsList() {
     staleTime: 30_000,
   });
 
+  // Split into "my clubs" (created by current user) vs "all". When there
+  // are search results we collapse back to a single grid because the
+  // section split would be visual noise.
+  const myClubs = user
+    ? (rows ?? []).filter((r) => r.created_by === user.id)
+    : [];
+  const otherClubs = user
+    ? (rows ?? []).filter((r) => r.created_by !== user.id)
+    : (rows ?? []);
   const hasResults = (rows ?? []).length > 0;
+  const showSections = search.length === 0 && myClubs.length > 0;
+
+  const renderCard = (row: ClubListingRow) => (
+    <ClubCard
+      key={row.id}
+      slug={row.slug}
+      name={row.name}
+      description={row.description}
+      logoUrl={row.logo_url}
+      locationText={row.location_text}
+      upcomingEvents={row.upcoming_events}
+      creatorSlug={row.creator_profile_slug ?? row.creator_username}
+      creatorDisplayName={row.creator_display_name}
+    />
+  );
 
   return (
     <TheLineLayout title={clubs.pageTitle} active="clubs">
@@ -137,19 +165,32 @@ export default function ClubsList() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : hasResults ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {(rows ?? []).map((row) => (
-              <ClubCard
-                key={row.id}
-                slug={row.slug}
-                name={row.name}
-                description={row.description}
-                logoUrl={row.logo_url}
-                locationText={row.location_text}
-                upcomingEvents={row.upcoming_events}
-              />
-            ))}
-          </div>
+          showSections ? (
+            <div className="space-y-10">
+              <section>
+                <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  {clubs.sectionMine}
+                </h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {myClubs.map(renderCard)}
+                </div>
+              </section>
+              {otherClubs.length > 0 && (
+                <section>
+                  <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    {clubs.sectionAll}
+                  </h2>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {otherClubs.map(renderCard)}
+                  </div>
+                </section>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {(rows ?? []).map(renderCard)}
+            </div>
+          )
         ) : (
           <div className="rounded-md border border-border bg-muted/30 p-8 text-center">
             <p className="text-sm text-muted-foreground">
