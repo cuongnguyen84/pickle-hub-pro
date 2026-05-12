@@ -34,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations } from "@/hooks/useEventRegistrations";
 import { useEventLive, type LiveMatchRow, type MyRegistration } from "@/hooks/useEventLive";
@@ -278,32 +279,40 @@ function ScoreInput({ match, me, isOrganizer, onSubmitted }: ScoreInputProps) {
 
 interface StartMatchCtaProps {
   match: LiveMatchRow;
-  me: MyRegistration;
-  isOrganizer: boolean;
+  /** Resolved registration row when the viewer is a registered player. */
+  me: MyRegistration | null;
+  /** True when the viewer either created the event OR has the admin role. */
+  canManage: boolean;
 }
 
 /**
- * Visible on a scheduled match for either the four players or the organizer.
- * Single client-side UPDATE flips `status` from 'scheduled' → 'in_progress'.
- * RLS allows the four match players + the event organizer to update; the
- * `.eq("status", "scheduled")` guard makes the call idempotent if someone
- * else just transitioned the row (the realtime channel will refetch and
- * the page will rerender with ScoreInput).
+ * "Bắt đầu chơi" button shown on a scheduled match. Visible to:
+ *   - the four players in the match (identified via `me.profile_id`)
+ *   - the event organizer or admin (gated by `canManage` upstream)
+ *
+ * A single client-side UPDATE flips `status` from 'scheduled' → 'in_progress'.
+ * RLS allows the four match players + the event organizer + admin to update;
+ * the `.eq("status", "scheduled")` guard makes the call idempotent if a
+ * peer just transitioned the row (the realtime channel will refetch and
+ * the page rerenders with ScoreInput).
+ *
+ * Returns null when neither path applies (spectator viewing someone else's
+ * match) so the parent can render this unconditionally and trust the
+ * component to gate itself.
  */
-function StartMatchCta({ match, me, isOrganizer }: StartMatchCtaProps) {
+function StartMatchCta({ match, me, canManage }: StartMatchCtaProps) {
   const { t } = useI18n();
   const live = t.socialEvents.live;
   const [starting, setStarting] = useState(false);
 
-  const inMatch =
-    match.team_a_player1_id === me.profile_id ||
-    match.team_a_player2_id === me.profile_id ||
-    match.team_b_player1_id === me.profile_id ||
-    match.team_b_player2_id === me.profile_id;
+  const inMatch = me
+    ? match.team_a_player1_id === me.profile_id ||
+      match.team_a_player2_id === me.profile_id ||
+      match.team_b_player1_id === me.profile_id ||
+      match.team_b_player2_id === me.profile_id
+    : false;
 
-  // Only the 4 match players or the organizer can flip the flag. Spectators
-  // see neither — they wait for the players to start.
-  if (!inMatch && !isOrganizer) return null;
+  if (!inMatch && !canManage) return null;
 
   async function handleStart() {
     setStarting(true);
@@ -418,11 +427,18 @@ export default function SocialEventLive() {
   const { t, language } = useI18n();
   const live = t.socialEvents.live;
   const { user } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const { data: event, isLoading: eventLoading } = useSocialEvent(slug);
   const { data: registrations } = useEventRegistrations(event?.id);
   const { data, isLoading, me, myStanding } = useEventLive(event?.id);
 
   const isOrganizer = Boolean(user && event && user.id === event.created_by);
+  // `canManage` extends isOrganizer with the admin role — admins can run the
+  // event even on a club they don't own (start matches, organizer-override
+  // a score). Both isOrganizer + canManage are needed: ScoreInput's
+  // override panel hinges on canManage; the page CTAs at the bottom only
+  // make sense for the event's actual organizer.
+  const canManage = isOrganizer || isAdmin;
 
   // Build a profile_id → display_name lookup from the registrations array.
   // Registrations have both profile_id (FK) and display_name; the matches
@@ -457,7 +473,7 @@ export default function SocialEventLive() {
 
   const eventTitle = language === "vi" ? event.title_vi : (event.title_en || event.title_vi);
   const noSchedule = data.allMatches.length === 0;
-  const spectator = !me && !isOrganizer;
+  const spectator = !me && !canManage;
 
   return (
     <TheLineLayout
@@ -483,7 +499,7 @@ export default function SocialEventLive() {
           <Card className="p-5 mb-4" style={{ textAlign: "center" }}>
             <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{live.noScheduleTitle}</h3>
             <p style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>{live.noScheduleBody}</p>
-            {isOrganizer && (
+            {canManage && (
               <div style={{ marginTop: 12 }}>
                 <Button asChild variant="outline" size="sm">
                   <Link to={`/su-kien/${event.slug}/xep-cap`}>
@@ -524,7 +540,7 @@ export default function SocialEventLive() {
                   <ScoreInput
                     match={data.currentMatch}
                     me={me}
-                    isOrganizer={isOrganizer}
+                    isOrganizer={canManage}
                     onSubmitted={() => {
                       // Realtime subscription will refetch; nothing local to do.
                     }}
@@ -533,7 +549,7 @@ export default function SocialEventLive() {
                   <StartMatchCta
                     match={data.currentMatch}
                     me={me}
-                    isOrganizer={isOrganizer}
+                    canManage={canManage}
                   />
                 )}
               </div>
@@ -563,8 +579,13 @@ export default function SocialEventLive() {
         )}
 
         {/* Zone 2 — Next. ALWAYS rendered — every viewer (spectator, player,
-            organizer) should see "what's coming up". The card carries its
-            own empty state so we don't need a render-level gate. */}
+            organizer) should see "what's coming up". For the organizer /
+            admin / 4 match players, the "Bắt đầu chơi" CTA is embedded
+            here too so the match can be started without the
+            organizer having to register themselves as a player first
+            (Zone Now requires `me` and would otherwise be empty for
+            them). StartMatchCta self-gates and returns null for
+            spectators. */}
         <Card className="p-5 mb-4">
           <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
             {live.zoneNext}
@@ -579,6 +600,15 @@ export default function SocialEventLive() {
                 names={playerNames}
                 language={language}
               />
+              {data.firstScheduled.status === "scheduled" && (
+                <div style={{ marginTop: 12 }}>
+                  <StartMatchCta
+                    match={data.firstScheduled}
+                    me={me}
+                    canManage={canManage}
+                  />
+                </div>
+              )}
             </>
           ) : (
             <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>{live.zoneNoNext}</p>
