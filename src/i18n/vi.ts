@@ -1774,6 +1774,7 @@ export interface Translations {
       modalTitle: string;
       stepPhone: string;
       stepCode: string;
+      stepPayment: string;
       stepDone: string;
       phoneLabel: string;
       phonePlaceholder: string;
@@ -1855,6 +1856,48 @@ export interface Translations {
       errorSlugFormat: string;
       successDraft: string;
       successPublished: string;
+      // ── PR50a wizard additions ────────────────────────────────────
+      stepIndicator: string;
+      step1Heading: string;
+      step1Subheading: string;
+      step2Heading: string;
+      nextButton: string;
+      backButton: string;
+      eventName: string;
+      eventNamePlaceholder: string;
+      description: string;
+      startDate: string;
+      startTime: string;
+      endTime: string;
+      priceAmount: string;
+      priceFreeHint: string;
+      paymentBannerFree: string;
+      paymentBannerNotConfigured: string;
+      paymentBannerNotConfiguredCta: string;
+      paymentBannerReady: string;
+      errorTitleMin: string;
+      errorTitleMax: string;
+      errorLocationMin: string;
+      errorPastDate: string;
+      errorMaxPlayersMin: string;
+      errorCourtCountMin: string;
+      errorZaloUrl: string;
+      errorPriceTooLarge: string;
+      errorPriceNeg: string;
+      // ── PR51 bank fields on the Step-2 form ───────────────────────
+      step2PaymentHeading: string;
+      bankInfoHeading: string;
+      bankLabel: string;
+      bankPlaceholder: string;
+      accountNumberLabel: string;
+      accountNumberPlaceholder: string;
+      accountNameLabel: string;
+      accountNameHint: string;
+      bankDisclaimer: string;
+      previewLabel: string;
+      previewAlt: string;
+      errorAccountNumber: string;
+      errorAccountName: string;
     };
     manage: {
       pageTitle: string;
@@ -1894,8 +1937,13 @@ export interface Translations {
       colLevel: string;
       colStatus: string;
       colPayment: string;
+      colReferenceCode: string;
+      colTransferStatus: string;
       colRegistered: string;
       colActions: string;
+      transferClaimed: string;
+      transferNotClaimed: string;
+      reconcileBanner: string;
       actionCheckIn: string;
       actionUndoCheckIn: string;
       actionMarkPaid: string;
@@ -1996,6 +2044,25 @@ export interface Translations {
       notInMatchToast: string;
       organizerCta: string;
       backToEvent: string;
+    };
+    payment: {
+      amountLabel: string;
+      qrAlt: string;
+      bankLabel: string;
+      accountNumberLabel: string;
+      accountNameLabel: string;
+      memoLabel: string;
+      referenceCodeLabel: string;
+      warning: string;
+      claimButton: string;
+      skipButton: string;
+      submitting: string;
+      claimedTitle: string;
+      claimedBody: string;
+      claimedHint: string;
+      claimedToast: string;
+      claimError: string;
+      copiedToast: string;
     };
   };
 }
@@ -3778,6 +3845,7 @@ export const vi: Translations = {
       modalTitle: "Đăng ký sự kiện",
       stepPhone: "Số điện thoại",
       stepCode: "Nhập mã OTP",
+      stepPayment: "Thanh toán",
       stepDone: "Hoàn tất",
       phoneLabel: "Số điện thoại",
       phonePlaceholder: "0901 234 567",
@@ -3862,6 +3930,50 @@ export const vi: Translations = {
       errorSlugFormat: "Slug chỉ chứa chữ thường, số, dấu gạch ngang (3–100 ký tự)",
       successDraft: "Đã lưu nháp",
       successPublished: "Đã xuất bản — sự kiện đang nhận đăng ký",
+      stepIndicator: "Bước {n}/2",
+      step1Heading: "Thông tin sự kiện",
+      step1Subheading: "Nhập chi tiết cơ bản về buổi chơi của bạn.",
+      step2Heading: "Phí tham gia",
+      nextButton: "Tiếp theo →",
+      backButton: "← Quay lại",
+      eventName: "Tên sự kiện",
+      eventNamePlaceholder: "VD: Open Play Tối Thứ Bảy",
+      description: "Mô tả",
+      startDate: "Ngày bắt đầu",
+      startTime: "Giờ bắt đầu",
+      endTime: "Giờ kết thúc",
+      priceAmount: "Số tiền (VND)",
+      priceFreeHint: "Nhập 0 nếu sự kiện miễn phí.",
+      paymentBannerFree:
+        "Sự kiện miễn phí. Người chơi sẽ không thấy bước thanh toán.",
+      paymentBannerNotConfigured:
+        "CLB chưa bật thanh toán online. Người chơi sẽ thấy thông báo \"Vui lòng thanh toán tại sân cho BTC\".",
+      paymentBannerNotConfiguredCta: "Cài đặt thanh toán online →",
+      paymentBannerReady:
+        "Người chơi sẽ thấy QR VietQR + thông tin chuyển khoản khi đăng ký. Tiền chuyển trực tiếp vào tài khoản CLB.",
+      errorTitleMin: "Tên sự kiện cần ít nhất 3 ký tự",
+      errorTitleMax: "Tên sự kiện không quá 200 ký tự",
+      errorLocationMin: "Địa điểm cần ít nhất 3 ký tự",
+      errorPastDate: "Ngày bắt đầu không được trong quá khứ",
+      errorMaxPlayersMin: "Cần tối thiểu 4 người chơi",
+      errorCourtCountMin: "Số sân phải lớn hơn 0",
+      errorZaloUrl: "Liên kết Zalo không hợp lệ",
+      errorPriceTooLarge: "Phí tham gia tối đa 10.000.000 ₫",
+      errorPriceNeg: "Phí không được âm",
+      step2PaymentHeading: "Cài đặt thanh toán",
+      bankInfoHeading: "Thông tin nhận thanh toán",
+      bankLabel: "Ngân hàng",
+      bankPlaceholder: "Chọn ngân hàng",
+      accountNumberLabel: "Số tài khoản",
+      accountNumberPlaceholder: "0123456789",
+      accountNameLabel: "Tên chủ tài khoản",
+      accountNameHint: "Viết hoa không dấu, đúng như trên ngân hàng (vd: NGUYEN VAN A).",
+      bankDisclaimer:
+        "Tiền sẽ chuyển trực tiếp vào tài khoản này. ThePickleHub không cầm tiền. Mỗi event có thể dùng STK khác nhau (BTC khác nhau).",
+      previewLabel: "Preview QR",
+      previewAlt: "Mã VietQR preview",
+      errorAccountNumber: "Số tài khoản phải là 6–20 chữ số.",
+      errorAccountName: "Tên chủ tài khoản tối thiểu 3 ký tự, không chứa số.",
     },
     manage: {
       pageTitle: "Quản lý sự kiện",
@@ -3903,6 +4015,8 @@ export const vi: Translations = {
       colLevel: "Trình độ",
       colStatus: "Trạng thái",
       colPayment: "Thanh toán",
+      colReferenceCode: "Mã thanh toán",
+      colTransferStatus: "Trạng thái CK",
       colRegistered: "Đăng ký lúc",
       colActions: "Thao tác",
       actionCheckIn: "Check-in",
@@ -3921,6 +4035,9 @@ export const vi: Translations = {
       saveNotes: "Lưu",
       updatedToast: "Đã cập nhật",
       deletedToast: "Đã huỷ đăng ký",
+      transferClaimed: "Player đã chuyển",
+      transferNotClaimed: "Chưa chuyển",
+      reconcileBanner: "Player tự đánh dấu đã chuyển. Hãy đối chiếu với app ngân hàng (tìm theo mã PHUB-XXXXXX) trước khi cho phép chơi.",
     },
     matchmaking: {
       pageTitle: "Xếp cặp — Matchmaking",
@@ -4006,6 +4123,25 @@ export const vi: Translations = {
       notInMatchToast: "Bạn không nằm trong trận này.",
       organizerCta: "Quản lý sự kiện",
       backToEvent: "Về trang sự kiện",
+    },
+    payment: {
+      amountLabel: "Số tiền cần chuyển",
+      qrAlt: "Mã VietQR thanh toán",
+      bankLabel: "Ngân hàng",
+      accountNumberLabel: "Số tài khoản",
+      accountNameLabel: "Chủ tài khoản",
+      memoLabel: "Nội dung CK",
+      referenceCodeLabel: "Mã thanh toán của bạn",
+      warning: "Ghi đúng nội dung CK để BTC đối chiếu. Mang theo bằng chứng chuyển khoản (screenshot) khi tới sân.",
+      claimButton: "Tôi đã chuyển tiền",
+      skipButton: "Sẽ thanh toán tại sân",
+      submitting: "Đang gửi…",
+      claimedTitle: "Đã ghi nhận",
+      claimedBody: "Cảm ơn bạn. BTC sẽ đối chiếu giao dịch trước khi bạn vào sân.",
+      claimedHint: "Lưu mã này hoặc screenshot màn hình để BTC tra cứu nếu cần.",
+      claimedToast: "Đã đánh dấu đã chuyển tiền.",
+      claimError: "Không gửi được yêu cầu. Thử lại.",
+      copiedToast: "Đã sao chép!",
     },
   },
 };

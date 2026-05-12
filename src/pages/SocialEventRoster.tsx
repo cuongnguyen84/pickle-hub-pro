@@ -62,10 +62,19 @@ import { useI18n } from "@/i18n";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations, type EventRegistrationRow } from "@/hooks/useEventRegistrations";
 import { useEventOwnership } from "@/hooks/useClubOwnership";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { maskPhone, normalizeVietnamPhone } from "@/lib/phone";
+
+interface PaymentOrderRow {
+  id: string;
+  registration_id: string;
+  amount_vnd: number;
+  reference_code: string;
+  player_claimed_paid: boolean;
+  player_claimed_at: string | null;
+}
 
 function fmtRegisteredAt(iso: string, lang: "vi" | "en"): string {
   try {
@@ -125,6 +134,40 @@ export default function SocialEventRoster() {
   const permission = useEventOwnership(slug);
   const { data: event } = useSocialEvent(slug);
   const { data: registrations, refetch } = useEventRegistrations(event?.id);
+
+  // Payment orders for this event (PR49). RLS restricts SELECT to the
+  // event organizer + admin, which matches who's allowed to view this
+  // page. The map is keyed by registration_id so a single roster row
+  // can look up its order in O(1).
+  const { data: paymentOrders } = useQuery<PaymentOrderRow[]>({
+    queryKey: ["payment-orders-event", event?.id],
+    queryFn: async () => {
+      if (!event?.id) return [];
+      const { data, error } = await supabase
+        .from("payment_orders")
+        .select(
+          `id, registration_id, amount_vnd, reference_code,
+           player_claimed_paid, player_claimed_at,
+           event_registrations!inner(event_id)`,
+        )
+        .eq("event_registrations.event_id", event.id);
+      if (error) {
+        console.error("payment-orders-event fetch error", error);
+        return [];
+      }
+      // The inner-join filter is server-side; the response shape still
+      // includes the join column but we don't need it client-side.
+      return (data as PaymentOrderRow[]) ?? [];
+    },
+    enabled: Boolean(event?.id),
+    staleTime: 30_000,
+  });
+
+  const ordersByRegistration = useMemo(() => {
+    const map = new Map<string, PaymentOrderRow>();
+    for (const o of paymentOrders ?? []) map.set(o.registration_id, o);
+    return map;
+  }, [paymentOrders]);
 
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [confirmNoShowId, setConfirmNoShowId] = useState<string | null>(null);
@@ -300,6 +343,14 @@ export default function SocialEventRoster() {
           <Badge variant="secondary">{manage.statsCheckedIn}: {stats.checkedIn}</Badge>
         </div>
 
+        {(paymentOrders ?? []).length > 0 && (
+          <p
+            className="mb-3 rounded-md border border-amber-400/40 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            ⚠️ {roster.reconcileBanner}
+          </p>
+        )}
+
         <Card>
           <Table>
             <TableHeader>
@@ -309,6 +360,8 @@ export default function SocialEventRoster() {
                 <TableHead className="hidden md:table-cell">{roster.colLevel}</TableHead>
                 <TableHead>{roster.colStatus}</TableHead>
                 <TableHead className="hidden sm:table-cell">{roster.colPayment}</TableHead>
+                <TableHead className="hidden md:table-cell">{roster.colReferenceCode}</TableHead>
+                <TableHead className="hidden md:table-cell">{roster.colTransferStatus}</TableHead>
                 <TableHead className="hidden lg:table-cell">{roster.colRegistered}</TableHead>
                 <TableHead className="text-right">{roster.colActions}</TableHead>
               </TableRow>
@@ -316,7 +369,7 @@ export default function SocialEventRoster() {
             <TableBody>
               {(registrations ?? []).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                     {roster.noRegistrations}
                   </TableCell>
                 </TableRow>
@@ -356,6 +409,43 @@ export default function SocialEventRoster() {
                     ) : (
                       <Badge variant="outline">—</Badge>
                     )}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell font-mono text-xs">
+                    {ordersByRegistration.get(row.id)?.reference_code ?? "—"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {(() => {
+                      const order = ordersByRegistration.get(row.id);
+                      if (!order) {
+                        return <span className="text-xs text-muted-foreground">—</span>;
+                      }
+                      if (order.player_claimed_paid) {
+                        return (
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-500/50 text-emerald-700 dark:text-emerald-300"
+                            title={
+                              order.player_claimed_at
+                                ? new Date(order.player_claimed_at).toLocaleString(
+                                    language === "vi" ? "vi-VN" : "en-GB",
+                                    {
+                                      timeZone: "Asia/Ho_Chi_Minh",
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "2-digit",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )
+                                : undefined
+                            }
+                          >
+                            {roster.transferClaimed}
+                          </Badge>
+                        );
+                      }
+                      return <Badge variant="outline">{roster.transferNotClaimed}</Badge>;
+                    })()}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
                     {fmtRegisteredAt(row.registered_at, language)}

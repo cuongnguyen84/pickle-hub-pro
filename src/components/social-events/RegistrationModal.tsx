@@ -39,6 +39,7 @@ import {
   normalizeVietnamPhone,
 } from "@/lib/phone";
 import { formatPriceVnd, interp } from "@/lib/social-events/format";
+import { QRPaymentStep, type PaymentOrder } from "@/components/payment/QRPaymentStep";
 
 const RESEND_COOLDOWN_SEC = 60;
 const MAGIC_TOKEN_STORAGE_PREFIX = "tph-event-magic:";
@@ -59,7 +60,7 @@ interface Props {
   onSuccess?: () => void;
 }
 
-type Step = "phone" | "otp" | "success";
+type Step = "phone" | "otp" | "payment" | "success";
 
 interface VerifyResponse {
   ok: true;
@@ -132,6 +133,7 @@ export function RegistrationModal({
   const [submitting, setSubmitting] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [success, setSuccess] = useState<VerifyResponse | null>(null);
+  const [paymentOrder, setPaymentOrder] = useState<PaymentOrder | null>(null);
   // Tracks the dev_mode_code echo from phone-otp-send so we can surface
   // it inside the modal during local development (production never
   // returns this field).
@@ -147,6 +149,7 @@ export function RegistrationModal({
       setDevOtp(null);
       setSubmitting(false);
       setResendIn(0);
+      setPaymentOrder(null);
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -297,8 +300,55 @@ export function RegistrationModal({
         // localStorage can throw in private-mode Safari — non-fatal.
       }
       setSuccess(data);
-      setStep("success");
       onSuccess?.();
+
+      // PR49 payment branch. Free events skip straight to the success
+      // step. Paid events ask the create-payment-order edge fn for an
+      // order + bank config; a `payment_not_enabled` response means the
+      // club hasn't onboarded payment yet and we fall back to the same
+      // success step (which already shows a "pay at the venue" hint).
+      if (priceVnd > 0) {
+        const orderResp = await supabase.functions.invoke<{
+          ok?: true;
+          code?: string;
+          order_id?: string;
+          reference_code?: string;
+          amount_vnd?: number;
+          player_claimed_paid?: boolean;
+          player_claimed_at?: string | null;
+          bank?: { code: string; account_number: string; account_name: string };
+        }>("create-payment-order", {
+          body: {
+            registration_id: data.registration_id,
+            magic_token: data.magic_token,
+          },
+        });
+        const payload = orderResp.data;
+        if (
+          orderResp.error ||
+          !payload?.ok ||
+          payload.code === "payment_not_enabled" ||
+          !payload.order_id ||
+          !payload.bank
+        ) {
+          // Either the club hasn't enabled payment or the call failed;
+          // either way fall back to the venue-payment success message.
+          setStep("success");
+          return;
+        }
+        setPaymentOrder({
+          order_id: payload.order_id,
+          reference_code: payload.reference_code ?? "",
+          amount_vnd: payload.amount_vnd ?? priceVnd,
+          player_claimed_paid: payload.player_claimed_paid ?? false,
+          player_claimed_at: payload.player_claimed_at ?? null,
+          bank: payload.bank,
+        });
+        setStep("payment");
+        return;
+      }
+
+      setStep("success");
     } catch (e) {
       console.error("phone-otp-verify failed", e);
       toast({ title: reg.networkError, variant: "destructive" });
@@ -310,6 +360,7 @@ export function RegistrationModal({
   const stepHeader = (() => {
     if (step === "phone") return reg.stepPhone;
     if (step === "otp") return reg.stepCode;
+    if (step === "payment") return reg.stepPayment;
     return reg.stepDone;
   })();
 
@@ -451,6 +502,17 @@ export function RegistrationModal({
               </Button>
             </div>
           </form>
+        )}
+
+        {step === "payment" && paymentOrder && success && (
+          <QRPaymentStep
+            order={paymentOrder}
+            magicToken={success.magic_token}
+            onClaimed={(next) => setPaymentOrder(next)}
+            onSkip={() => onOpenChange(false)}
+            zaloGroupUrl={zaloGroupUrl}
+            onClose={() => onOpenChange(false)}
+          />
         )}
 
         {step === "success" && success && (

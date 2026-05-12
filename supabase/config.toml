@@ -169,3 +169,13 @@ verify_jwt = false
 
 [functions.submit-match-score]
 verify_jwt = false
+
+# ─── Social Events MVP (PR49 Payment) ──────────────────────────────────────
+# Both functions take a magic_token verified against registration_secrets;
+# verify_jwt=false at the gateway because guests have no auth.users row.
+
+[functions.create-payment-order]
+verify_jwt = false
+
+[functions.mark-payment-claimed]
+verify_jwt = false
