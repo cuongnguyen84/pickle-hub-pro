@@ -1942,6 +1942,8 @@ export interface Translations {
       saveOverwriteConfirmTitle: string;
       saveOverwriteConfirmBody: string;
       openLivePage: string;
+      savedScheduleBanner: string;
+      regenerateHint: string;
     };
     live: {
       pageTitle: string;
@@ -3948,6 +3950,8 @@ export const vi: Translations = {
       saveOverwriteConfirmTitle: "Ghi đè lịch hiện có?",
       saveOverwriteConfirmBody: "Sự kiện đã có lịch trận trước đó. Lưu mới sẽ xóa toàn bộ trận cũ và thay bằng lịch này.",
       openLivePage: "Mở trang Live",
+      savedScheduleBanner: "Đây là lịch đã lưu trong sự kiện.",
+      regenerateHint: "Chọn lại người chơi và nhấn \"Tạo lịch trận\" để xếp lại — lịch mới sẽ thay thế lịch hiện tại sau khi bạn lưu.",
     },
     live: {
       pageTitle: "Live — đang diễn ra",

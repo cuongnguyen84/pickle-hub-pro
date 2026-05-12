@@ -1,13 +1,17 @@
 // ============================================================================
 // SocialEventMatchmaking (`/su-kien/:slug/xep-cap`) — Mexicano / RoundRobin
 // ----------------------------------------------------------------------------
-// Pure client-side tool: pick checked-in players → generate schedule →
-// print/copy. Nothing persists. Organizer can re-generate as often as needed.
+// Pick checked-in players → generate Mexicano / Round-Robin schedule →
+// print/copy/save. On mount the page reads any existing saved schedule
+// from `social_event_matches` and rebuilds an MMSchedule from it so the
+// organizer can come back later and see what was saved (rather than the
+// empty "no schedule yet" state).
 // ============================================================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useParams, useNavigate } from "react-router-dom";
 import { Loader2, Sparkles, Printer, Copy, RefreshCw, Save, PlayCircle } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,21 +32,96 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useI18n } from "@/i18n";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
-import { useEventRegistrations } from "@/hooks/useEventRegistrations";
+import { useEventRegistrations, type EventRegistrationRow } from "@/hooks/useEventRegistrations";
 import { useEventOwnership } from "@/hooks/useClubOwnership";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   generate,
   scheduleToText,
+  type MMMatch,
+  type MMPlayer,
+  type MMRound,
   type MMSchedule,
   type Format,
 } from "@/lib/matchmaking";
 import { interp } from "@/lib/social-events/format";
 
+interface SavedMatchRow {
+  id: string;
+  round: number;
+  court: number;
+  team_a_player1_id: string | null;
+  team_a_player2_id: string | null;
+  team_b_player1_id: string | null;
+  team_b_player2_id: string | null;
+  status: "scheduled" | "in_progress" | "completed";
+}
+
+/**
+ * Rebuild an MMSchedule from the rows persisted in social_event_matches so
+ * the organizer can return to /xep-cap after navigation and see what was
+ * saved. The matchmaking lib's MMPlayer.id is registration.id (not
+ * profile.id) — we look up registrations by profile_id to recover that
+ * mapping. Players whose registration we can't resolve get a placeholder
+ * row so the rebuild doesn't drop columns silently.
+ *
+ * sittingOut is NOT persisted, so we leave it empty. Format also isn't
+ * persisted — the caller defaults to 'mexicano' when restoring.
+ */
+function rebuildScheduleFromSaved(
+  savedMatches: SavedMatchRow[],
+  registrations: EventRegistrationRow[],
+  format: Format,
+): MMSchedule {
+  const profileToReg = new Map<string, EventRegistrationRow>();
+  for (const r of registrations) {
+    if (r.profile_id) profileToReg.set(r.profile_id, r);
+  }
+
+  const mkPlayer = (profileId: string | null): MMPlayer => {
+    if (!profileId) return { id: `__missing__:${Math.random()}`, name: "—", level: null };
+    const reg = profileToReg.get(profileId);
+    if (!reg) return { id: profileId, name: "?", level: null };
+    return { id: reg.id, name: reg.display_name, level: reg.self_rated_level };
+  };
+
+  const byRound = new Map<number, MMMatch[]>();
+  for (const m of savedMatches) {
+    const list = byRound.get(m.round) ?? [];
+    list.push({
+      round: m.round,
+      court: m.court,
+      teamA: [mkPlayer(m.team_a_player1_id), mkPlayer(m.team_a_player2_id)],
+      teamB: [mkPlayer(m.team_b_player1_id), mkPlayer(m.team_b_player2_id)],
+    });
+    byRound.set(m.round, list);
+  }
+  const rounds: MMRound[] = Array.from(byRound.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([round, matches]) => ({
+      round,
+      matches: matches.sort((a, b) => a.court - b.court),
+      sittingOut: [],
+    }));
+
+  const players = new Set<string>();
+  for (const r of rounds) {
+    for (const m of r.matches) {
+      players.add(m.teamA[0].id);
+      players.add(m.teamA[1].id);
+      players.add(m.teamB[0].id);
+      players.add(m.teamB[1].id);
+    }
+  }
+
+  return { rounds, playerCount: players.size, format };
+}
+
 export default function SocialEventMatchmaking() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t, language } = useI18n();
   const mm = t.socialEvents.matchmaking;
   const permission = useEventOwnership(slug);
@@ -58,8 +137,65 @@ export default function SocialEventMatchmaking() {
   const [courts, setCourts] = useState(2);
   const [courtsTouched, setCourtsTouched] = useState(false);
   const [schedule, setSchedule] = useState<MMSchedule | null>(null);
+  // `viewingSaved` is true when the displayed schedule was rebuilt from
+  // the DB (not freshly generated by the user). Drives the banner +
+  // hides the "Save" button (no-op against an unmodified copy).
+  const [viewingSaved, setViewingSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [overwriteOpen, setOverwriteOpen] = useState(false);
+
+  // Saved matches restoration — fetch what's persisted so the page doesn't
+  // look like a fresh blank slate after the organizer navigates away and back.
+  const { data: savedMatches } = useQuery<SavedMatchRow[]>({
+    queryKey: ["social-event-matches", event?.id],
+    queryFn: async () => {
+      if (!event?.id) return [];
+      const { data, error } = await supabase
+        .from("social_event_matches")
+        .select(
+          `id, round, court,
+           team_a_player1_id, team_a_player2_id,
+           team_b_player1_id, team_b_player2_id,
+           status`,
+        )
+        .eq("event_id", event.id)
+        .order("round", { ascending: true })
+        .order("court", { ascending: true });
+      if (error) {
+        console.error("matchmaking: saved matches fetch error", error);
+        return [];
+      }
+      return (data ?? []) as SavedMatchRow[];
+    },
+    enabled: Boolean(event?.id),
+    staleTime: 5_000,
+  });
+
+  // One-shot restore. Once the user generates a fresh schedule locally
+  // (schedule !== null) we never overwrite it on subsequent re-fetches.
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    if (schedule) return; // user already generated a local preview
+    if (!event || !savedMatches || !registrations) return;
+    if (savedMatches.length === 0) return;
+    const restored = rebuildScheduleFromSaved(savedMatches, registrations, format);
+    setSchedule(restored);
+    setViewingSaved(true);
+    // Pre-select players who appear in the saved schedule so a "Tạo lại"
+    // run starts with the same roster.
+    const ids = new Set<string>();
+    for (const r of restored.rounds) {
+      for (const m of r.matches) {
+        if (m.teamA[0].id && !m.teamA[0].id.startsWith("__missing__")) ids.add(m.teamA[0].id);
+        if (m.teamA[1].id && !m.teamA[1].id.startsWith("__missing__")) ids.add(m.teamA[1].id);
+        if (m.teamB[0].id && !m.teamB[0].id.startsWith("__missing__")) ids.add(m.teamB[0].id);
+        if (m.teamB[1].id && !m.teamB[1].id.startsWith("__missing__")) ids.add(m.teamB[1].id);
+      }
+    }
+    setSelected(ids);
+    restoredRef.current = true;
+  }, [event, savedMatches, registrations, format, schedule]);
 
   // Codex Bug 6 (PR #44): sync courts state from event.court_count once the
   // event resolves. We only auto-apply until the organizer manually
@@ -106,6 +242,8 @@ export default function SocialEventMatchmaking() {
       seed: Date.now(),
     });
     setSchedule(next);
+    // Local generation supersedes anything we restored from the DB.
+    setViewingSaved(false);
   }
 
   function handleCopy() {
@@ -202,6 +340,14 @@ export default function SocialEventMatchmaking() {
         return;
       }
       toast({ title: mm.savedToEventToast });
+      // Persisted state now matches the local preview. Future returns to
+      // this page will rebuild from these rows; flag the in-memory copy
+      // as "saved" so the banner reappears + Save button hides.
+      setViewingSaved(true);
+      // Other consumers (useEventLive on /live, the matchmaking page on a
+      // fresh mount) read from this same query key — invalidate so they
+      // refetch the new rows.
+      queryClient.invalidateQueries({ queryKey: ["social-event-matches", event.id] });
     } finally {
       setSaving(false);
       setOverwriteOpen(false);
@@ -372,14 +518,19 @@ export default function SocialEventMatchmaking() {
                 <Button variant="outline" size="sm" onClick={handlePrint}>
                   <Printer className="mr-1 h-3.5 w-3.5" /> {mm.print}
                 </Button>
-                <Button size="sm" onClick={handleSave} disabled={saving}>
-                  {saving ? (
-                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Save className="mr-1 h-3.5 w-3.5" />
-                  )}
-                  {saving ? mm.savingToEvent : mm.saveToEvent}
-                </Button>
+                {/* Hide Save while we're showing the schedule as already
+                    persisted — saving an unchanged copy is a no-op + would
+                    trigger the overwrite confirm dialog for no reason. */}
+                {!viewingSaved && (
+                  <Button size="sm" onClick={handleSave} disabled={saving}>
+                    {saving ? (
+                      <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Save className="mr-1 h-3.5 w-3.5" />
+                    )}
+                    {saving ? mm.savingToEvent : mm.saveToEvent}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -389,6 +540,24 @@ export default function SocialEventMatchmaking() {
                 </Button>
               </div>
             </div>
+            {viewingSaved && (
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: "10px 12px",
+                  borderRadius: 6,
+                  border: "1px solid var(--tl-border, #22252a)",
+                  background: "rgba(0, 185, 107, 0.06)",
+                  fontSize: 13,
+                  color: "var(--tl-fg-2, #c7c3bb)",
+                }}
+              >
+                <strong style={{ color: "var(--primary)" }}>
+                  {mm.savedScheduleBanner}
+                </strong>{" "}
+                {mm.regenerateHint}
+              </div>
+            )}
             <div style={{ display: "grid", gap: 16 }}>
               {schedule.rounds.map((r) => (
                 <div key={r.round}>

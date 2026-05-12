@@ -1952,6 +1952,8 @@ export const en: Translations = {
       saveOverwriteConfirmTitle: "Overwrite existing schedule?",
       saveOverwriteConfirmBody: "This event already has a schedule. Saving will delete all previous matches and replace them with this one.",
       openLivePage: "Open Live page",
+      savedScheduleBanner: "This is the schedule already saved on the event.",
+      regenerateHint: "Re-select players and click \"Generate schedule\" to rebuild — the new schedule replaces this one when you save.",
     },
     live: {
       pageTitle: "Live — in session",

@@ -476,12 +476,15 @@ export default function SocialEventLive() {
           <h1>{me ? live.pageTitle : live.pageTitleSpectator}</h1>
         </header>
 
+        {/* Top-level "no schedule" banner — non-blocking. We still render
+            the Next + Standings cards below so registrations are visible
+            even when matches haven't been saved yet. */}
         {noSchedule && (
-          <Card className="p-6" style={{ textAlign: "center" }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>{live.noScheduleTitle}</h3>
-            <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>{live.noScheduleBody}</p>
+          <Card className="p-5 mb-4" style={{ textAlign: "center" }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{live.noScheduleTitle}</h3>
+            <p style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>{live.noScheduleBody}</p>
             {isOrganizer && (
-              <div style={{ marginTop: 16 }}>
+              <div style={{ marginTop: 12 }}>
                 <Button asChild variant="outline" size="sm">
                   <Link to={`/su-kien/${event.slug}/xep-cap`}>
                     <ClipboardList className="mr-1 h-3.5 w-3.5" /> {live.organizerCta}
@@ -492,7 +495,10 @@ export default function SocialEventLive() {
           </Card>
         )}
 
-        {!noSchedule && spectator && (
+        {/* Spectator banner — visible whenever the viewer has no
+            registration AND isn't the organizer. Independent of whether
+            the schedule has been saved yet. */}
+        {spectator && (
           <Card className="p-4 mb-4" style={{ background: "rgba(255,255,255,0.02)" }}>
             <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
               {live.notRegisteredTitle}
@@ -502,7 +508,7 @@ export default function SocialEventLive() {
         )}
 
         {/* Zone 1 — Now (only for identified players) */}
-        {!noSchedule && me && (
+        {me && (
           <Card className="p-5 mb-4">
             <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
               {live.zoneNow}
@@ -556,48 +562,49 @@ export default function SocialEventLive() {
           </Card>
         )}
 
-        {/* Zone 2 — Next (always rendered; spectators see this too) */}
-        {!noSchedule && (
-          <Card className="p-5 mb-4">
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
-              {live.zoneNext}
-            </h3>
-            {data.firstScheduled ? (
-              <>
-                <p style={{ fontSize: 12, color: "var(--tl-fg-3)", marginBottom: 8 }}>
-                  {live.zoneNextHint}
-                </p>
-                <MatchCard
-                  match={data.firstScheduled}
-                  names={playerNames}
-                  language={language}
-                />
-              </>
-            ) : (
-              <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>{live.zoneNoNext}</p>
-            )}
-          </Card>
-        )}
-
-        {/* Zone 3 — Standings */}
-        {!noSchedule && (
-          <Card className="p-5 mb-4">
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-              <Trophy className="h-4 w-4" /> {live.zoneStandings}
-            </h3>
-            <StandingsTable
-              standings={data.standings}
-              names={playerNames}
-              myProfileId={me?.profile_id ?? null}
-            />
-            {myStanding && (
-              <p style={{ marginTop: 12, fontSize: 13, color: "var(--tl-fg-3)" }}>
-                {live.youLabel}: {myStanding.wins}W / {myStanding.losses}L ·{" "}
-                {myStanding.point_diff > 0 ? `+${myStanding.point_diff}` : myStanding.point_diff}
+        {/* Zone 2 — Next. ALWAYS rendered — every viewer (spectator, player,
+            organizer) should see "what's coming up". The card carries its
+            own empty state so we don't need a render-level gate. */}
+        <Card className="p-5 mb-4">
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
+            {live.zoneNext}
+          </h3>
+          {data.firstScheduled ? (
+            <>
+              <p style={{ fontSize: 12, color: "var(--tl-fg-3)", marginBottom: 8 }}>
+                {live.zoneNextHint}
               </p>
-            )}
-          </Card>
-        )}
+              <MatchCard
+                match={data.firstScheduled}
+                names={playerNames}
+                language={language}
+              />
+            </>
+          ) : (
+            <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>{live.zoneNoNext}</p>
+          )}
+        </Card>
+
+        {/* Zone 3 — Standings. ALWAYS rendered. Seeded by useEventLive from
+            the registrations so the table shows the full roster (0-0)
+            immediately after the organizer publishes — no completed
+            matches required. */}
+        <Card className="p-5 mb-4">
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+            <Trophy className="h-4 w-4" /> {live.zoneStandings}
+          </h3>
+          <StandingsTable
+            standings={data.standings}
+            names={playerNames}
+            myProfileId={me?.profile_id ?? null}
+          />
+          {myStanding && (
+            <p style={{ marginTop: 12, fontSize: 13, color: "var(--tl-fg-3)" }}>
+              {live.youLabel}: {myStanding.wins}W / {myStanding.losses}L ·{" "}
+              {myStanding.point_diff > 0 ? `+${myStanding.point_diff}` : myStanding.point_diff}
+            </p>
+          )}
+        </Card>
 
         {/* Zone 5 — Zalo */}
         {event.zalo_group_url && (
