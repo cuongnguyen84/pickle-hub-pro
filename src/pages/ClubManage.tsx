@@ -34,7 +34,11 @@ export default function ClubManage() {
         case "draft":
           return <Badge variant="outline">{manage.statusDraft}</Badge>;
         case "published":
-          return <Badge variant="default">{manage.statusPublished}</Badge>;
+          return (
+            <Badge variant="outline" className="border-primary/50 text-primary">
+              {manage.statusPublished}
+            </Badge>
+          );
         case "cancelled":
           return <Badge variant="destructive">{manage.statusCancelled}</Badge>;
         case "completed":

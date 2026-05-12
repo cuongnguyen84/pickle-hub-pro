@@ -337,7 +337,9 @@ export default function SocialEventRoster() {
                   </TableCell>
                   <TableCell>
                     {row.status === "checked_in" ? (
-                      <Badge variant="default">{manage.statsCheckedIn}</Badge>
+                      <Badge variant="outline" className="border-primary/50 text-primary">
+                        {manage.statsCheckedIn}
+                      </Badge>
                     ) : row.status === "no_show" ? (
                       <Badge variant="destructive">{language === "vi" ? "Vắng" : "No show"}</Badge>
                     ) : (
@@ -346,7 +348,7 @@ export default function SocialEventRoster() {
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     {row.payment_status === "paid" ? (
-                      <Badge variant="default">
+                      <Badge variant="outline" className="border-primary/50 text-primary">
                         <Banknote className="mr-1 h-3 w-3" /> {manage.statsPaid}
                       </Badge>
                     ) : (
