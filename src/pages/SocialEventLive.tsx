@@ -114,12 +114,30 @@ function MatchCard({ match, names, language }: MatchCardProps) {
 
 interface ScoreInputProps {
   match: LiveMatchRow;
-  me: MyRegistration;
-  isOrganizer: boolean;
+  /** Resolved registration row when the viewer is a registered player. */
+  me: MyRegistration | null;
+  /** True when the viewer is event organizer OR has admin role. */
+  canManage: boolean;
+  /** Map for rendering team labels (profile_id → display_name). */
+  names: PlayerNameMap;
   onSubmitted: () => void;
 }
 
-function ScoreInput({ match, me, isOrganizer, onSubmitted }: ScoreInputProps) {
+/**
+ * Score-input form shown on an in_progress match. Self-gates:
+ *   - 4 match players (identified via `me.profile_id`) get the "Confirm
+ *     score" button which routes through submit-match-score's player path
+ *     (two-team confirm).
+ *   - Organizers + admins get the override panel (expand → submit →
+ *     match completes unilaterally).
+ *   - A spectator viewing someone else's match returns the
+ *     "you're not in this match" hint.
+ *
+ * `names` is threaded through so the team labels above each input show
+ * "Alice & Bob" / "Carol & Dan" instead of a blank dash even when the
+ * caller doesn't have a profile_id→name map handy at the input level.
+ */
+function ScoreInput({ match, me, canManage, names, onSubmitted }: ScoreInputProps) {
   const { t } = useI18n();
   const live = t.socialEvents.live;
   const [a, setA] = useState<string>(
@@ -131,15 +149,17 @@ function ScoreInput({ match, me, isOrganizer, onSubmitted }: ScoreInputProps) {
   const [submitting, setSubmitting] = useState(false);
   const [organizerMode, setOrganizerMode] = useState(false);
 
-  const onMyTeamA =
-    match.team_a_player1_id === me.profile_id ||
-    match.team_a_player2_id === me.profile_id;
-  const onMyTeamB =
-    match.team_b_player1_id === me.profile_id ||
-    match.team_b_player2_id === me.profile_id;
+  const onMyTeamA = me
+    ? match.team_a_player1_id === me.profile_id ||
+      match.team_a_player2_id === me.profile_id
+    : false;
+  const onMyTeamB = me
+    ? match.team_b_player1_id === me.profile_id ||
+      match.team_b_player2_id === me.profile_id
+    : false;
   const inMatch = onMyTeamA || onMyTeamB;
 
-  if (!inMatch && !isOrganizer) {
+  if (!inMatch && !canManage) {
     return (
       <p style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
         {live.notInMatchToast}
@@ -163,6 +183,15 @@ function ScoreInput({ match, me, isOrganizer, onSubmitted }: ScoreInputProps) {
         organizer_override: override,
       };
       if (!override) {
+        // Player path needs the magic_token. A guest's token comes from
+        // localStorage (the OTP modal persists it at register time); an
+        // authed user picks it up via useEventLive if they have one. If
+        // it's missing we can't go through the player path — fall back
+        // to organizer override when canManage, else error.
+        if (!me?.magic_token) {
+          toast({ title: live.scoreErrorToast, variant: "destructive" });
+          return;
+        }
         body.registration_id = me.registration_id;
         body.magic_token = me.magic_token;
       }
@@ -186,16 +215,20 @@ function ScoreInput({ match, me, isOrganizer, onSubmitted }: ScoreInputProps) {
 
   const myTeamConfirmed = onMyTeamA ? match.confirmed_by_team_a : match.confirmed_by_team_b;
   const otherTeamConfirmed = onMyTeamA ? match.confirmed_by_team_b : match.confirmed_by_team_a;
+  // Unique element ids so multiple ScoreInput cards on the same page
+  // (organizer scoring several courts at once) don't share input ids.
+  const aId = `score-a-${match.id}`;
+  const bId = `score-b-${match.id}`;
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <div>
-          <Label htmlFor="score-a" style={{ fontSize: 12 }}>
-            {teamLabel(match, "a", {})}
+          <Label htmlFor={aId} style={{ fontSize: 12 }}>
+            {teamLabel(match, "a", names)}
           </Label>
           <Input
-            id="score-a"
+            id={aId}
             type="number"
             inputMode="numeric"
             min={0}
@@ -206,11 +239,11 @@ function ScoreInput({ match, me, isOrganizer, onSubmitted }: ScoreInputProps) {
           />
         </div>
         <div>
-          <Label htmlFor="score-b" style={{ fontSize: 12 }}>
-            {teamLabel(match, "b", {})}
+          <Label htmlFor={bId} style={{ fontSize: 12 }}>
+            {teamLabel(match, "b", names)}
           </Label>
           <Input
-            id="score-b"
+            id={bId}
             type="number"
             inputMode="numeric"
             min={0}
@@ -237,7 +270,7 @@ function ScoreInput({ match, me, isOrganizer, onSubmitted }: ScoreInputProps) {
           {live.bothConfirmed}
         </p>
       )}
-      {isOrganizer && (
+      {canManage && (
         <div
           style={{
             padding: 10,
@@ -451,6 +484,22 @@ export default function SocialEventLive() {
     return map;
   }, [registrations]);
 
+  // Zone Now derivation. For an identified player, `playerCurrent` is
+  // their resolved in_progress-or-scheduled match. For an organizer / admin,
+  // `orgInProgress` is every in_progress match they need to score — except
+  // the one that's already being shown as `playerCurrent` (a user who is
+  // both organizer + a player in one of the matches should see that match
+  // once with the player UI, not duplicated as an organizer card).
+  const playerCurrent = me ? data.currentMatch : null;
+  const orgInProgress = useMemo<LiveMatchRow[]>(() => {
+    if (!canManage) return [];
+    return data.allMatches.filter(
+      (m) =>
+        m.status === "in_progress" &&
+        (!playerCurrent || m.id !== playerCurrent.id),
+    );
+  }, [canManage, data.allMatches, playerCurrent]);
+
   if (eventLoading || isLoading) {
     return (
       <TheLineLayout title="Loading…" active="events" noindex>
@@ -523,41 +572,54 @@ export default function SocialEventLive() {
           </Card>
         )}
 
-        {/* Zone 1 — Now (only for identified players) */}
-        {me && (
+        {/* Zone 1 — Now. Two render paths share this card:
+              (a) Identified player block — shows the player's currentMatch
+                  (in_progress → ScoreInput, scheduled → StartMatchCta), or
+                  the resting placeholder when they have nothing pending.
+              (b) Organizer / admin block — shows EVERY in_progress match
+                  the event has running so the organizer can score multiple
+                  courts at once. The orgInProgress derivation upstream
+                  already deduplicates against playerCurrent so an
+                  organizer-who-is-also-a-player sees their match once.
+            Spectators (neither `me` nor canManage) get nothing here. */}
+        {(me || canManage) && (
           <Card className="p-5 mb-4">
             <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
               {live.zoneNow}
             </h3>
-            {data.currentMatch ? (
+
+            {/* (a) Player block — only when `me` is resolved. */}
+            {me && playerCurrent && (
               <div style={{ display: "grid", gap: 16 }}>
                 <MatchCard
-                  match={data.currentMatch}
+                  match={playerCurrent}
                   names={playerNames}
                   language={language}
                 />
-                {data.currentInProgress ? (
+                {playerCurrent.status === "in_progress" ? (
                   <ScoreInput
-                    match={data.currentMatch}
+                    match={playerCurrent}
                     me={me}
-                    isOrganizer={canManage}
+                    canManage={canManage}
+                    names={playerNames}
                     onSubmitted={() => {
                       // Realtime subscription will refetch; nothing local to do.
                     }}
                   />
                 ) : (
                   <StartMatchCta
-                    match={data.currentMatch}
+                    match={playerCurrent}
                     me={me}
                     canManage={canManage}
                   />
                 )}
               </div>
-            ) : (
-              // No in_progress and no scheduled match for this player —
-              // either they've played everything or they're not in any
-              // match (e.g. organizer who didn't self-register). Surface
-              // the event's next scheduled match so they know what's up.
+            )}
+
+            {/* Player has no pending match. Only show the placeholder when
+                there are also no org-side in_progress cards to render
+                below — otherwise the placeholder competes for attention. */}
+            {me && !playerCurrent && orgInProgress.length === 0 && (
               <div>
                 <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
                   {live.zoneRestingTitle}
@@ -572,6 +634,56 @@ export default function SocialEventLive() {
                   <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>
                     {live.zoneRestingNoNext}
                   </p>
+                )}
+              </div>
+            )}
+
+            {/* (b) Organizer / admin block — every in_progress match. */}
+            {canManage && (
+              <div
+                style={{
+                  marginTop: me && playerCurrent ? 24 : 0,
+                  paddingTop: me && playerCurrent ? 16 : 0,
+                  borderTop: me && playerCurrent ? "1px solid var(--tl-border, #22252a)" : "none",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "var(--tl-fg-3)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    marginBottom: 12,
+                  }}
+                >
+                  {live.zoneNowOrganizerSubtitle.replace("{n}", String(orgInProgress.length))}
+                </p>
+                {orgInProgress.length === 0 ? (
+                  // For an organizer who isn't a player AND has no active
+                  // match to score, this is the only thing rendered.
+                  // Direct them to the Next zone's "Bắt đầu chơi" CTA.
+                  !me && (
+                    <p style={{ fontSize: 14, color: "var(--tl-fg-3)" }}>
+                      {live.zoneNowOrganizerEmpty}
+                    </p>
+                  )
+                ) : (
+                  <div style={{ display: "grid", gap: 24 }}>
+                    {orgInProgress.map((m) => (
+                      <div key={m.id} style={{ display: "grid", gap: 12 }}>
+                        <MatchCard match={m} names={playerNames} language={language} />
+                        <ScoreInput
+                          match={m}
+                          me={me}
+                          canManage={canManage}
+                          names={playerNames}
+                          onSubmitted={() => {
+                            // Realtime subscription will refetch.
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

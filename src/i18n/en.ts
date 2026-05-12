@@ -1964,6 +1964,8 @@ export const en: Translations = {
       notRegisteredBody: "You're in spectator mode. Register to see your own matches here.",
       zoneNow: "Now",
       zoneNoNow: "You have no match in progress.",
+      zoneNowOrganizerSubtitle: "Matches in progress ({n})",
+      zoneNowOrganizerEmpty: "No matches in progress yet. Click \"Start playing\" on the next match to record scores.",
       zoneRestingTitle: "Resting",
       zoneRestingBody: "Your next match — round {round}, court {court}.",
       zoneRestingNoNext: "You've played all your matches.",

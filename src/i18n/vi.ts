@@ -1954,6 +1954,8 @@ export interface Translations {
       notRegisteredBody: string;
       zoneNow: string;
       zoneNoNow: string;
+      zoneNowOrganizerSubtitle: string;
+      zoneNowOrganizerEmpty: string;
       zoneRestingTitle: string;
       zoneRestingBody: string;
       zoneRestingNoNext: string;
@@ -3962,6 +3964,8 @@ export const vi: Translations = {
       notRegisteredBody: "Đang ở chế độ khán giả. Đăng ký để hiển thị trận của riêng bạn.",
       zoneNow: "Trận hiện tại",
       zoneNoNow: "Bạn chưa có trận đang diễn ra.",
+      zoneNowOrganizerSubtitle: "Các trận đang diễn ra ({n})",
+      zoneNowOrganizerEmpty: "Chưa có trận nào đang diễn ra. Nhấn \"Bắt đầu chơi\" ở trận kế tiếp để chấm điểm.",
       zoneRestingTitle: "Đang nghỉ",
       zoneRestingBody: "Trận kế tiếp của bạn — vòng {round}, sân {court}.",
       zoneRestingNoNext: "Bạn đã chơi xong tất cả trận.",
