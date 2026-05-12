@@ -134,8 +134,27 @@ export default function ClubManage() {
         )}
 
         {!isLoading && (events ?? []).length === 0 && (
-          <Card className="p-6 text-center" style={{ color: "var(--tl-fg-3)" }}>
-            {manage.noEvents}
+          /* PR55 — empty-state hero. Hides the dense card layout and
+              swaps in a large CTA so the organizer who just created the
+              club lands on a single clear next-step. */
+          <Card className="p-10 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-muted/30">
+              <Plus className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="font-serif text-2xl italic" style={{ fontFamily: "'Instrument Serif', serif" }}>
+              {manage.emptyHeading}
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              {manage.emptyBody}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <Link
+                to={`/clb/${clubData.club.slug}/su-kien/moi`}
+                className="tl-btn green"
+              >
+                <Plus className="h-4 w-4" /> {manage.emptyCta} →
+              </Link>
+            </div>
           </Card>
         )}
 

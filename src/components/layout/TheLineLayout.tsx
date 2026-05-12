@@ -1,10 +1,12 @@
 import { ReactNode, useEffect, useState, useCallback, useRef, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
+import { supabase } from "@/integrations/supabase/client";
 import "@/styles/the-line.css";
 
 /* ---------------------------------------------------------------------------
@@ -25,7 +27,7 @@ import "@/styles/the-line.css";
  * - Children render INSIDE the chrome
  * ------------------------------------------------------------------------- */
 
-type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events";
+type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs";
 
 export interface TheLineLayoutProps {
   title: string;
@@ -48,6 +50,7 @@ const NAV_ITEMS: { label: string; labelVi?: string; to: string; key: Active }[] 
   { label: "Live", to: "/live", key: "live" },
   { label: "Tournaments", to: "/tournaments", key: "tournaments" },
   { label: "Events", labelVi: "Sự kiện", to: "/su-kien", key: "events" },
+  { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
   { label: "Bracket Lab", to: "/tools", key: "lab" },
   { label: "Rankings", to: "/rankings", key: "rankings" },
   { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },
@@ -73,6 +76,30 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   // menu item disables itself in that state.
   const { profile } = useUserProfile();
   const profileUsername = (profile as { username?: string | null } | null | undefined)?.username ?? null;
+
+  // PR55: surface the viewer's own clubs in the avatar dropdown so they
+  // can jump straight to /clb/<slug>/quan-ly. Limit 3 because that's
+  // also the self-service cap; if a user has more (e.g. admin-created)
+  // we still cap the menu to keep it scannable.
+  const { data: myClubs } = useQuery<{ slug: string; name: string }[]>({
+    queryKey: ["my-clubs", user?.id ?? null],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("clubs")
+        .select("slug, name")
+        .eq("created_by", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (error) {
+        console.error("TheLineLayout: my-clubs error", error);
+        return [];
+      }
+      return (data as { slug: string; name: string }[]) ?? [];
+    },
+    enabled: Boolean(user?.id),
+    staleTime: 60_000,
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [mode, setMode] = useState<"dark" | "light">("dark");
   const [search, setSearch] = useState("");
@@ -301,6 +328,49 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                     <Link to="/account" onClick={() => setAvatarOpen(false)}>Account</Link>
                     <Link to="/creator" onClick={() => setAvatarOpen(false)}>Creator dashboard</Link>
                     <Link to="/admin" onClick={() => setAvatarOpen(false)}>Admin</Link>
+                    <div className="divider" />
+                    {/* PR55 — my-clubs section. Header label + flat list
+                        of the viewer's clubs (up to 5) so they can jump
+                        straight to /clb/<slug>/quan-ly. Always shows the
+                        "Tạo CLB mới" link at the bottom, regardless of
+                        whether they have any clubs yet. */}
+                    <div
+                      style={{
+                        padding: "6px 12px 4px",
+                        fontSize: 11,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        color: "var(--tl-fg-3)",
+                        fontFamily: "Geist Mono",
+                      }}
+                    >
+                      {language === "vi" ? "CLB của tôi" : "My clubs"}
+                    </div>
+                    {(myClubs ?? []).length > 0 ? (
+                      (myClubs ?? []).map((c) => (
+                        <Link
+                          key={c.slug}
+                          to={`/clb/${c.slug}/quan-ly`}
+                          onClick={() => setAvatarOpen(false)}
+                        >
+                          {c.name}
+                        </Link>
+                      ))
+                    ) : (
+                      <span
+                        style={{
+                          opacity: 0.6,
+                          display: "block",
+                          padding: "4px 12px",
+                          fontSize: 12,
+                        }}
+                      >
+                        {language === "vi" ? "Chưa có CLB nào." : "No clubs yet."}
+                      </span>
+                    )}
+                    <Link to="/clubs/new" onClick={() => setAvatarOpen(false)}>
+                      + {language === "vi" ? "Tạo CLB mới" : "Create new club"}
+                    </Link>
                     <div className="divider" />
                     <button
                       type="button"
