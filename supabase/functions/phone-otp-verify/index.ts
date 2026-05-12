@@ -266,17 +266,35 @@ Deno.serve(async (req) => {
     return err("registration_insert_failed", 500, "registration_insert_failed");
   }
 
+  // ─── Magic token — write to the private registration_secrets table ─────
+  // Post-Codex-review (PR47 bug 1): magic_token no longer lives on
+  // event_registrations (where the public SELECT policy would have leaked
+  // it). It now lives in a sibling table with zero public access; only
+  // service-role clients (this function and submit-match-score) can read
+  // or write it.
+  const magicToken = crypto.randomUUID();
+  const { error: secretErr } = await supabase
+    .from("registration_secrets")
+    .insert({
+      registration_id: registration.id as string,
+      magic_token: magicToken,
+    });
+  if (secretErr) {
+    // Don't fail the registration just because the secret write failed —
+    // the row was already committed, refusing now would leave the user
+    // double-registered on retry. Log loudly so we notice the drift.
+    logEvent({
+      error: secretErr.message,
+      step: "insert_registration_secret",
+      registration_id: registration.id,
+    });
+  }
+
   // ─── Burn the OTP ───────────────────────────────────────────────────────
   await supabase
     .from("otp_codes")
     .update({ used_at: new Date().toISOString() })
     .eq("id", otp.id);
-
-  // Magic token: a fresh UUID the SPA stores in a 90-day cookie so the
-  // guest is recognized without re-OTP. The frontend treats this as
-  // opaque — no server table backing it yet. (When PR2 adds "see my
-  // registered events" UX, we'll add a profile_magic_tokens table.)
-  const magicToken = crypto.randomUUID();
 
   logEvent({
     step: "register_ok",
