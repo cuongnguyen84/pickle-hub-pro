@@ -6,6 +6,14 @@
 //   - allowed             : current user is creator OR admin
 //   - denied              : current user doesn't have access
 //   - anonymous           : no auth — redirect to /login
+//
+// Race-condition note (PR49 fix): both hooks run two queries in parallel —
+// the ownership row + the user's roles. We MUST NOT return `denied` until
+// the roles query has also settled, otherwise an admin who isn't the
+// creator gets flashed a "no permission" screen between the ownership
+// query resolving (with mismatched created_by) and the roles query
+// resolving (with the admin role). Treat the "creator? no — admin? still
+// loading" state as `loading`, not `denied`.
 // ============================================================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -36,7 +44,7 @@ export function useClubOwnership(slug: string | undefined): PermissionState {
     enabled,
     staleTime: 60_000,
   });
-  const { data: roles } = useQuery<string[]>({
+  const { data: roles, isLoading: rolesLoading } = useQuery<string[]>({
     queryKey: ["user-roles", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -55,6 +63,9 @@ export function useClubOwnership(slug: string | undefined): PermissionState {
   if (isLoading) return { state: "loading" };
   if (!data) return { state: "denied" };
   if (data.ownerId === user.id) return { state: "allowed" };
+  // Creator check failed — defer the verdict until we know the user's
+  // roles so an admin doesn't see a denial flash.
+  if (rolesLoading) return { state: "loading" };
   if (roles?.includes("admin")) return { state: "allowed" };
   return { state: "denied" };
 }
@@ -80,7 +91,7 @@ export function useEventOwnership(slug: string | undefined): PermissionState {
     enabled: Boolean(user && slug),
     staleTime: 60_000,
   });
-  const { data: roles } = useQuery<string[]>({
+  const { data: roles, isLoading: rolesLoading } = useQuery<string[]>({
     queryKey: ["user-roles", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -99,6 +110,8 @@ export function useEventOwnership(slug: string | undefined): PermissionState {
   if (isLoading) return { state: "loading" };
   if (!data) return { state: "denied" };
   if (data.ownerId === user.id) return { state: "allowed" };
+  // Same race-fix as useClubOwnership: defer denial until roles resolve.
+  if (rolesLoading) return { state: "loading" };
   if (roles?.includes("admin")) return { state: "allowed" };
   return { state: "denied" };
 }
