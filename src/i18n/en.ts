@@ -1938,6 +1938,7 @@ export const en: Translations = {
       pageTitle: "Roster",
       registeredCount: "Registered",
       paidCount: "Paid",
+      claimedCount: "Player marked paid",
       noRegistrations: "No registrations yet.",
       addManual: "Add manually",
       addManualTitle: "Add participant",
