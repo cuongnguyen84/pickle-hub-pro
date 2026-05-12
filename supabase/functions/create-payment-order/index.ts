@@ -119,24 +119,25 @@ Deno.serve(async (req) => {
     return err("magic_token_mismatch", 401, "magic_token_mismatch");
   }
 
-  // ─── Load event + club_payment_config ────────────────────────────────────
+  // ─── Load event + event_payment_config ───────────────────────────────────
+  // PR51 (payment refactor): config now lives one level down — keyed on
+  // event_id instead of club_id — so different events run by different
+  // organizers in the same club can receive into different bank
+  // accounts. The lookup is a single read on event_payment_config.
   const { data: event } = await supabase
     .from("social_events")
-    .select("id, club_id, price_vnd, status")
+    .select("id, price_vnd, status")
     .eq("id", reg.event_id)
     .maybeSingle();
   if (!event) return err("event_not_found", 404, "event_not_found");
   if (event.status === "cancelled") {
     return err("event_cancelled", 410, "event_cancelled");
   }
-  if (event.club_id == null) {
-    return err("payment_not_enabled", 200, "payment_not_enabled");
-  }
 
   const { data: cfg } = await supabase
-    .from("club_payment_config")
+    .from("event_payment_config")
     .select("bank_code, bank_account_number, bank_account_name, enabled")
-    .eq("club_id", event.club_id)
+    .eq("event_id", reg.event_id)
     .maybeSingle();
   if (!cfg || cfg.enabled !== true) {
     return err("payment_not_enabled", 200, "payment_not_enabled");

@@ -8,7 +8,7 @@
 
 import { useMemo } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { Loader2, Plus, Users, BadgeCheck, CheckCircle2, ExternalLink, Sparkles, ClipboardList, Banknote } from "lucide-react";
+import { Loader2, Plus, Users, BadgeCheck, CheckCircle2, ExternalLink, Sparkles, ClipboardList } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -101,18 +101,11 @@ export default function ClubManage() {
             </div>
             <h1>{manage.pageTitle}</h1>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignSelf: "center" }}>
-            <Button asChild variant="outline" size="sm">
-              <Link to={`/clb/${clubData.club.slug}/quan-ly/thanh-toan`}>
-                <Banknote className="mr-2 h-4 w-4" /> {t.socialEvents.paymentSettings.manageCta}
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link to={`/clb/${clubData.club.slug}/su-kien/moi`}>
-                <Plus className="mr-2 h-4 w-4" /> {manage.newEventCta}
-              </Link>
-            </Button>
-          </div>
+          <Button asChild style={{ alignSelf: "center" }}>
+            <Link to={`/clb/${clubData.club.slug}/su-kien/moi`}>
+              <Plus className="mr-2 h-4 w-4" /> {manage.newEventCta}
+            </Link>
+          </Button>
         </header>
 
         {isLoading && (
