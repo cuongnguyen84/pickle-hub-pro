@@ -122,6 +122,8 @@ const EditClub = lazy(() => import("./pages/EditClub"));
 // Social Events MVP — PR58 (pre-launch must-haves)
 const PlayerRegistration = lazy(() => import("./pages/PlayerRegistration"));
 const EditSocialEvent = lazy(() => import("./pages/EditSocialEvent"));
+// Social Events MVP — PR59 (registration recovery)
+const RecoveryRegistration = lazy(() => import("./pages/RecoveryRegistration"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -466,6 +468,9 @@ const App = () => (
                     <Route path="/dang-ky/:magic_token" element={<PlayerRegistration />} />
                     <Route path="/vi/dang-ky/:magic_token" element={<ViLanguageWrapper><PlayerRegistration /></ViLanguageWrapper>} />
                     <Route path="/clb/:slug/quan-ly/su-kien/:event_slug/sua" element={<EditSocialEvent />} />
+                    {/* Social Events MVP PR59 — phone-keyed recovery page */}
+                    <Route path="/khoi-phuc-dang-ky" element={<RecoveryRegistration />} />
+                    <Route path="/vi/khoi-phuc-dang-ky" element={<ViLanguageWrapper><RecoveryRegistration /></ViLanguageWrapper>} />
                     <Route path="/notifications" element={<Notifications />} />
                     {/* Sprint 5 PR-C — Vietnamese-friendly alias. Same
                         page renders for both /notifications and /thong-bao

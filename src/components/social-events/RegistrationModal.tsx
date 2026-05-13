@@ -138,6 +138,10 @@ export function RegistrationModal({
   // it inside the modal during local development (production never
   // returns this field).
   const [devOtp, setDevOtp] = useState<string | null>(null);
+  // PR59 — optional recovery-channel collection in the success state.
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactSaving, setContactSaving] = useState(false);
+  const [contactSaved, setContactSaved] = useState(false);
   const intervalRef = useRef<number | null>(null);
 
   // Reset state whenever the modal closes so the next open starts clean.
@@ -150,6 +154,9 @@ export function RegistrationModal({
       setSubmitting(false);
       setResendIn(0);
       setPaymentOrder(null);
+      setContactEmail("");
+      setContactSaving(false);
+      setContactSaved(false);
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -603,6 +610,99 @@ export function RegistrationModal({
                 </p>
               </div>
             )}
+
+            {/* PR59 — optional recovery-channel opt-in. If the player
+                provides an email here we store it on their (possibly
+                ghost) profile via update_profile_contact_from_magic so
+                request-recovery-link can fall back to email when they
+                lose the URL. Skipping is fine — the save-link card
+                above is the primary handle. */}
+            {success.magic_token && !contactSaved && (
+              <div className="rounded-md border border-border bg-muted/20 px-4 py-3 text-sm">
+                <p className="font-semibold">
+                  {t.socialEvents.recoveryOptIn.heading}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t.socialEvents.recoveryOptIn.body}
+                </p>
+                <div className="mt-3 space-y-2">
+                  <Label htmlFor="recovery-email" className="text-xs">
+                    {t.socialEvents.recoveryOptIn.emailLabel}
+                  </Label>
+                  <Input
+                    id="recovery-email"
+                    type="email"
+                    inputMode="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="ten@gmail.com"
+                    disabled={contactSaving}
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    className="flex-1"
+                    disabled={
+                      contactSaving ||
+                      contactEmail.trim().length === 0 ||
+                      !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contactEmail.trim())
+                    }
+                    onClick={async () => {
+                      if (!success?.magic_token) return;
+                      setContactSaving(true);
+                      try {
+                        const { error } = await supabase.rpc(
+                          "update_profile_contact_from_magic",
+                          {
+                            p_magic_token: success.magic_token,
+                            p_email: contactEmail.trim(),
+                          },
+                        );
+                        if (error) {
+                          toast({
+                            title: t.socialEvents.recoveryOptIn.saveError,
+                            description: error.message,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setContactSaved(true);
+                        toast({
+                          title: t.socialEvents.recoveryOptIn.saveSuccess,
+                        });
+                      } finally {
+                        setContactSaving(false);
+                      }
+                    }}
+                  >
+                    {contactSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : null}
+                    {t.socialEvents.recoveryOptIn.saveCta}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setContactSaved(true)}
+                  >
+                    {t.socialEvents.recoveryOptIn.skipCta}
+                  </Button>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t.socialEvents.recoveryOptIn.zaloHint}
+                </p>
+              </div>
+            )}
+            {contactSaved && contactEmail.trim().length > 0 && (
+              <p className="text-center text-xs text-emerald-600">
+                ✓ {t.socialEvents.recoveryOptIn.saveSuccess}
+              </p>
+            )}
+
             <p className="text-center text-xs text-muted-foreground">
               {language === "vi"
                 ? `Lưu liên kết: thepicklehub.net/su-kien/${eventSlug}`

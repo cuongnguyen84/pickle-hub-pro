@@ -420,6 +420,16 @@ export default function SocialEventDetail() {
                 : t.socialEvents.playerRegistration.alreadyRegisteredBanner}
             </p>
           )}
+          {/* PR59 — lost-link recovery CTA. Subtle, only relevant when
+              we don't already know the viewer is registered. */}
+          {!myStored && canRegister && (
+            <p className="mt-2 text-xs text-center text-muted-foreground">
+              {t.socialEvents.recovery.lostLinkHint}{" "}
+              <Link to="/khoi-phuc-dang-ky" className="underline">
+                {t.socialEvents.recovery.lostLinkCta} →
+              </Link>
+            </p>
+          )}
           {/* TheLine inline-action share row — mono caps + arrow, no fill. */}
           <div
             style={{

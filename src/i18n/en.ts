@@ -2070,6 +2070,57 @@ export const en: Translations = {
         lookup_failed: "Couldn't load data, please try again.",
       },
     },
+    recovery: {
+      pageTitle: "Recover registration",
+      eyebrow: "Recover registration",
+      heading: "Find your registration",
+      subheading:
+        "Enter the phone number you used to register. We'll send the link via Zalo OA or email — or you can solve a CAPTCHA to open it directly.",
+      phoneLabel: "Phone number",
+      phoneInvalid: "Invalid phone number.",
+      submit: "Find registration",
+      submitting: "Searching…",
+      zaloSentTitle: "Sent via Zalo",
+      zaloSentBody:
+        "Found {n} registration(s). Link sent to your Zalo OA inbox — check the Zalo app.",
+      emailSentTitle: "Sent via email",
+      emailSentBody:
+        "Found {n} registration(s). Link sent to {email}. Check inbox (and spam).",
+      captchaTitle: "Verify you're human",
+      captchaBody:
+        "No Zalo OA or recovery email on file. Solve a CAPTCHA to open the registration link directly.",
+      captchaSubmit: "Verify",
+      captchaVerifying: "Verifying…",
+      captchaSuccessTitle: "Verified",
+      captchaSuccessBody: "Open your registration:",
+      captchaOpenCta: "Open registration",
+      noRegistration: "Not registered yet?",
+      noRegistrationCta: "Browse pickleball clubs",
+      lostLinkHint: "Registered but lost the link?",
+      lostLinkCta: "Recover",
+      errors: {
+        generic: "Something went wrong, please try again.",
+        invalid_phone: "Invalid phone number.",
+        no_registration_found:
+          "No registration found for that phone. Check it or register for a new event.",
+        rate_limit_exceeded:
+          "Too many requests. Try again in 24 hours.",
+        captcha_failed: "CAPTCHA failed. Try again.",
+        captcha_required: "Please solve the CAPTCHA below.",
+      },
+    },
+    recoveryOptIn: {
+      heading: "In case you lose the link",
+      body:
+        "Save an email (or follow our Zalo OA) so you can recover the registration link if you lose it.",
+      emailLabel: "Recovery email (optional)",
+      saveCta: "Save email",
+      skipCta: "Skip",
+      saveSuccess: "Recovery email saved",
+      saveError: "Couldn't save email",
+      zaloHint:
+        "💡 Or follow ThePickleHub on Zalo OA to receive recovery links via Zalo.",
+    },
     entityNotFound: {
       club: {
         title: "Club not found",
