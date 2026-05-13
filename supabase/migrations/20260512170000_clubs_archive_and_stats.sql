@@ -131,11 +131,17 @@ BEGIN
     RAISE EXCEPTION 'AUTH_REQUIRED' USING ERRCODE = '42501';
   END IF;
 
+  -- Advisory lock — see 20260512160100 header for the FOR-UPDATE-with-
+  -- aggregate-functions explanation. Same lock key as the PR55 version
+  -- so a fresh deploy + already-deployed prod converge.
+  PERFORM pg_advisory_xact_lock(
+    hashtext('club_cap:' || v_user_id::text)::bigint
+  );
+
   SELECT COUNT(*) INTO v_count
   FROM public.clubs
   WHERE created_by = v_user_id
-    AND archived_at IS NULL
-  FOR UPDATE;
+    AND archived_at IS NULL;
 
   IF v_count >= 3 THEN
     RAISE EXCEPTION 'CLUB_CAP_EXCEEDED' USING ERRCODE = 'P0001';
