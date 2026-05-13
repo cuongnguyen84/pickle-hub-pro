@@ -123,13 +123,14 @@ export default function EditClub() {
         return;
       }
 
-      // PR62 — invalidate the surfaces that depend on this club row.
-      // Prefix invalidation handles the user-scoped my-clubs key
-      // (`['my-clubs', user.id]`) without needing user.id here.
+      // PR62 v2 — refetchType: 'all' required because App.tsx sets
+      // refetchOnMount: false globally. See CreateClub for the
+      // detailed rationale. Prefix invalidation handles the
+      // user-scoped my-clubs key without needing user.id here.
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["club", clubData.club.slug] }),
-        queryClient.invalidateQueries({ queryKey: ["my-clubs"] }),
-        queryClient.invalidateQueries({ queryKey: ["clubs-list"] }),
+        queryClient.invalidateQueries({ queryKey: ["club", clubData.club.slug], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["my-clubs"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["clubs-list"], refetchType: "all" }),
       ]);
 
       toast({ title: edit.successTitle, description: edit.successBody });
@@ -153,13 +154,14 @@ export default function EditClub() {
         toast({ title: t.common.error, description: archErr.message, variant: "destructive" });
         return;
       }
-      // PR62 — invalidate so the dropdown + public listing drop the
-      // archived club immediately and the public page swaps in the
-      // archived banner (Bug 4 fix).
+      // PR62 v2 — refetchType: 'all' so the dropdown + public listing
+      // drop the archived club immediately (inactive observers refetch
+      // too) and the public /clb/:slug page swaps in the archived
+      // banner on next visit even though refetchOnMount is false.
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["club", clubData.club.slug] }),
-        queryClient.invalidateQueries({ queryKey: ["my-clubs"] }),
-        queryClient.invalidateQueries({ queryKey: ["clubs-list"] }),
+        queryClient.invalidateQueries({ queryKey: ["club", clubData.club.slug], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["my-clubs"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["clubs-list"], refetchType: "all" }),
       ]);
 
       toast({ title: edit.archiveSuccessTitle, description: edit.archiveSuccessBody });

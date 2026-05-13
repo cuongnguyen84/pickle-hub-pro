@@ -195,12 +195,16 @@ export default function CreateClub() {
         return;
       }
 
-      // PR62 — invalidate so the avatar dropdown's "CLB của tôi"
-      // section + the public /clubs listing pick up the new club
-      // without a manual refresh.
+      // PR62 v2 — refetchType: 'all' is required because App.tsx sets
+      // refetchOnMount: false globally. The avatar dropdown's
+      // "CLB của tôi" query stays mounted across navigation so the
+      // default active-observer refetch worked for it; the public
+      // /clubs page is NOT mounted while the user is on CreateClub,
+      // so its observer is inactive when invalidate fires and the
+      // refetch never happens. refetchType: 'all' fixes both branches.
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["my-clubs", user.id] }),
-        queryClient.invalidateQueries({ queryKey: ["clubs-list"] }),
+        queryClient.invalidateQueries({ queryKey: ["my-clubs", user.id], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["clubs-list"], refetchType: "all" }),
       ]);
 
       toast({ title: create.successTitle, description: create.successBody });

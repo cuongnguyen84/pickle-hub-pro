@@ -254,17 +254,23 @@ export default function EditSocialEvent() {
         }
       }
 
-      // PR62 — invalidate the caches that depend on this event's row
-      // so the destination page renders fresh data instead of the
-      // stale snapshot that triggered the edit in the first place.
+      // PR62 v2 — refetchType: 'all' is required because App.tsx sets
+      // refetchOnMount: false globally. Without it, invalidateQueries
+      // only triggers a refetch for queries with ACTIVE observers; the
+      // destination ClubManage page hasn't mounted yet, so its
+      // observers are inactive, and after navigate the freshly-mounted
+      // page reads the cached-but-stale data (refetchOnMount=false
+      // suppresses the auto-refetch). refetchType: 'all' kicks off an
+      // immediate background fetch even for inactive queries, so by
+      // the time the destination mounts the cache is fresh.
       const clubIdForList = (bundle?.ev as { club_id?: string } | null | undefined)?.club_id;
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["edit-event", event_slug] }),
-        queryClient.invalidateQueries({ queryKey: ["social-event", event_slug] }),
+        queryClient.invalidateQueries({ queryKey: ["edit-event", event_slug], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["social-event", event_slug], refetchType: "all" }),
         ...(clubIdForList
-          ? [queryClient.invalidateQueries({ queryKey: ["club-events-manage", clubIdForList] })]
+          ? [queryClient.invalidateQueries({ queryKey: ["club-events-manage", clubIdForList], refetchType: "all" })]
           : []),
-        queryClient.invalidateQueries({ queryKey: ["club", clubSlug] }),
+        queryClient.invalidateQueries({ queryKey: ["club", clubSlug], refetchType: "all" }),
       ]);
 
       toast({ title: edit.savedTitle, description: edit.savedBody });
@@ -289,16 +295,17 @@ export default function EditSocialEvent() {
         toast({ title: t.common.error, description: rpcErr.message, variant: "destructive" });
         return;
       }
-      // PR62 — same invalidation set as the save handler so the
-      // destination ClubManage page reflects the cancellation.
+      // PR62 v2 — same invalidation set + refetchType: 'all' as
+      // handleSave so the destination reflects the cancellation. See
+      // handleSave for the refetchOnMount=false rationale.
       const clubIdForList = (bundle?.ev as { club_id?: string } | null | undefined)?.club_id;
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["edit-event", event_slug] }),
-        queryClient.invalidateQueries({ queryKey: ["social-event", event_slug] }),
+        queryClient.invalidateQueries({ queryKey: ["edit-event", event_slug], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["social-event", event_slug], refetchType: "all" }),
         ...(clubIdForList
-          ? [queryClient.invalidateQueries({ queryKey: ["club-events-manage", clubIdForList] })]
+          ? [queryClient.invalidateQueries({ queryKey: ["club-events-manage", clubIdForList], refetchType: "all" })]
           : []),
-        queryClient.invalidateQueries({ queryKey: ["club", clubSlug] }),
+        queryClient.invalidateQueries({ queryKey: ["club", clubSlug], refetchType: "all" }),
       ]);
 
       toast({ title: edit.cancelEventSuccessTitle, description: edit.cancelEventSuccessBody });
