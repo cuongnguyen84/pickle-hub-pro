@@ -189,3 +189,16 @@ verify_jwt = false
 
 [functions.reactivate-registration]
 verify_jwt = false
+
+# ─── Social Events MVP (PR59 registration recovery) ────────────────────────
+# Public lookup-by-phone with tiered channel fan-out (Zalo ZNS → email →
+# Turnstile CAPTCHA). Service-role internally to read registration_secrets.
+# Required secrets:
+#   ZALO_OA_ACCESS_TOKEN       — Zalo OA access_token from the OA Console
+#   ZALO_TEMPLATE_ID_RECOVERY  — approved ZNS template id (1-2 day review)
+#   RESEND_API_KEY             — already set for send-auth-email
+#   TURNSTILE_SECRET           — Cloudflare Turnstile secret key
+#   SITE_URL                   — https://www.thepicklehub.net (origin for the link)
+
+[functions.request-recovery-link]
+verify_jwt = false

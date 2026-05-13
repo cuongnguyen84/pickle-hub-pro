@@ -1985,6 +1985,49 @@ export interface Translations {
       event: { title: string; body: string; backCta: string };
       profile: { title: string; body: string; backCta: string };
     };
+    recovery: {
+      pageTitle: string;
+      eyebrow: string;
+      heading: string;
+      subheading: string;
+      phoneLabel: string;
+      phoneInvalid: string;
+      submit: string;
+      submitting: string;
+      zaloSentTitle: string;
+      zaloSentBody: string;
+      emailSentTitle: string;
+      emailSentBody: string;
+      captchaTitle: string;
+      captchaBody: string;
+      captchaSubmit: string;
+      captchaVerifying: string;
+      captchaSuccessTitle: string;
+      captchaSuccessBody: string;
+      captchaOpenCta: string;
+      noRegistration: string;
+      noRegistrationCta: string;
+      lostLinkHint: string;
+      lostLinkCta: string;
+      errors: {
+        generic: string;
+        invalid_phone: string;
+        no_registration_found: string;
+        rate_limit_exceeded: string;
+        captcha_failed: string;
+        captcha_required: string;
+      };
+    };
+    recoveryOptIn: {
+      heading: string;
+      body: string;
+      emailLabel: string;
+      saveCta: string;
+      skipCta: string;
+      saveSuccess: string;
+      saveError: string;
+      zaloHint: string;
+    };
     playerRegistration: {
       pageTitle: string;
       eyebrow: string;
@@ -4383,6 +4426,56 @@ export const vi: Translations = {
         update_failed: "Không cập nhật được, vui lòng thử lại.",
         lookup_failed: "Không tải được dữ liệu, vui lòng thử lại.",
       },
+    },
+    recovery: {
+      pageTitle: "Khôi phục đăng ký",
+      eyebrow: "Khôi phục đăng ký",
+      heading: "Tìm lại đăng ký của bạn",
+      subheading: "Nhập số điện thoại đã dùng đăng ký event. Hệ thống sẽ gửi link qua Zalo OA hoặc email — hoặc giải CAPTCHA để mở link trực tiếp.",
+      phoneLabel: "Số điện thoại",
+      phoneInvalid: "Số điện thoại không hợp lệ.",
+      submit: "Tìm đăng ký",
+      submitting: "Đang tìm…",
+      zaloSentTitle: "Đã gửi qua Zalo",
+      zaloSentBody:
+        "Tìm thấy {n} đăng ký. Link đã gửi vào tin nhắn Zalo OA của bạn — kiểm tra app Zalo.",
+      emailSentTitle: "Đã gửi qua email",
+      emailSentBody:
+        "Tìm thấy {n} đăng ký. Link đã gửi tới {email}. Kiểm tra inbox (và mục spam).",
+      captchaTitle: "Xác minh bạn không phải bot",
+      captchaBody:
+        "Bạn chưa có Zalo OA hoặc email recovery. Giải CAPTCHA để mở link đăng ký trực tiếp.",
+      captchaSubmit: "Xác minh",
+      captchaVerifying: "Đang xác minh…",
+      captchaSuccessTitle: "Đã xác minh",
+      captchaSuccessBody: "Mở link đăng ký của bạn:",
+      captchaOpenCta: "Mở trang đăng ký",
+      noRegistration: "Chưa đăng ký?",
+      noRegistrationCta: "Khám phá CLB pickleball",
+      lostLinkHint: "Đã đăng ký nhưng mất link?",
+      lostLinkCta: "Khôi phục",
+      errors: {
+        generic: "Có lỗi xảy ra, vui lòng thử lại.",
+        invalid_phone: "Số điện thoại không hợp lệ.",
+        no_registration_found:
+          "Không tìm thấy đăng ký với số điện thoại này. Kiểm tra lại hoặc đăng ký event mới.",
+        rate_limit_exceeded:
+          "Bạn đã gửi quá nhiều yêu cầu. Thử lại sau 24h.",
+        captcha_failed: "CAPTCHA không hợp lệ. Thử lại.",
+        captcha_required: "Vui lòng giải CAPTCHA bên dưới.",
+      },
+    },
+    recoveryOptIn: {
+      heading: "Phòng khi mất link",
+      body:
+        "Lưu email (hoặc theo dõi Zalo OA) để có thể khôi phục link đăng ký nếu mất.",
+      emailLabel: "Email recovery (tuỳ chọn)",
+      saveCta: "Lưu email",
+      skipCta: "Bỏ qua",
+      saveSuccess: "Đã lưu email recovery",
+      saveError: "Không lưu được email",
+      zaloHint:
+        "💡 Hoặc theo dõi ThePickleHub trên Zalo OA để nhận link recovery qua Zalo.",
     },
     entityNotFound: {
       club: {

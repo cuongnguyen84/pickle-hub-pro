@@ -138,6 +138,10 @@ export function RegistrationModal({
   // it inside the modal during local development (production never
   // returns this field).
   const [devOtp, setDevOtp] = useState<string | null>(null);
+  // PR59 — optional recovery-channel collection in the success state.
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactSaving, setContactSaving] = useState(false);
+  const [contactSaved, setContactSaved] = useState(false);
   const intervalRef = useRef<number | null>(null);
 
   // Reset state whenever the modal closes so the next open starts clean.
@@ -150,6 +154,9 @@ export function RegistrationModal({
       setSubmitting(false);
       setResendIn(0);
       setPaymentOrder(null);
+      setContactEmail("");
+      setContactSaving(false);
+      setContactSaved(false);
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -510,19 +517,34 @@ export function RegistrationModal({
           <QRPaymentStep
             order={paymentOrder}
             magicToken={success.magic_token}
-            onClaimed={(next) => setPaymentOrder(next)}
-            onSkip={() => onOpenChange(false)}
+            /* PR60 (v2) — after the player marks paid, jump straight
+               to the success step. Otherwise QRPaymentStep would fall
+               into its own State 2 (a generic "claimed" banner) and
+               the player would have to click "Về trang sự kiện" to
+               see the save-link + recovery cards. We keep the
+               paymentOrder on state so the success view can surface
+               the reference code prominently. */
+            onClaimed={(next) => {
+              setPaymentOrder(next);
+              setStep("success");
+            }}
+            /* "Sẽ thanh toán tại sân" and the post-claim "Về trang
+               sự kiện" (only reachable if State 2 somehow renders)
+               both route to success too. */
+            onSkip={() => setStep("success")}
             zaloGroupUrl={zaloGroupUrl}
-            onClose={() => onOpenChange(false)}
+            onClose={() => setStep("success")}
           />
         )}
 
         {step === "success" && success && (
           <div className="space-y-4">
+            {/* 1. Top banner — "Đăng ký thành công". */}
             <div className="rounded-md border border-emerald-400/50 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
               <p className="font-semibold">{reg.successTitle}</p>
               <p className="mt-1">{reg.successBody}</p>
             </div>
+
             {priceVnd > 0 && (
               <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
                 <p className="font-semibold">{reg.paymentInstructions}</p>
@@ -533,31 +555,40 @@ export function RegistrationModal({
                 </p>
               </div>
             )}
-            <div className="flex flex-col gap-2">
-              {zaloGroupUrl && (
-                <Button
-                  asChild
-                  className="w-full"
-                  variant="outline"
-                >
-                  <a href={zaloGroupUrl} target="_blank" rel="noopener noreferrer">
-                    {reg.openZalo}
-                  </a>
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => onOpenChange(false)}
-              >
-                {reg.backToEvent}
-              </Button>
-            </div>
-            {/* PR58 — save-link card. Critical surface: this URL is the
-                ONLY way (until SMS lands) the player can come back to
-                cancel / view status, so we keep it prominent and offer
-                copy + open-in-new-tab + a "screenshot this" hint. */}
+
+            {/* 2. Reference code (paid events only) — prominent so the
+                player can show it at the venue without digging into
+                the /dang-ky/:token page. Was previously buried inside
+                QRPaymentStep State 2 which we now skip. */}
+            {paymentOrder?.reference_code && (
+              <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t.socialEvents.payment.referenceCodeLabel}
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <code className="flex-1 truncate rounded-md bg-background px-3 py-2 font-mono text-lg font-semibold text-primary">
+                    {paymentOrder.reference_code}
+                  </code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={t.common.copyLink}
+                    onClick={() => {
+                      if (!paymentOrder?.reference_code) return;
+                      void navigator.clipboard.writeText(paymentOrder.reference_code);
+                      toast({ title: t.socialEvents.payment.copiedToast });
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Save-link card — the critical handle on this
+                registration. Until SMS lands this URL is the only
+                way the player can come back to cancel / view. */}
             {success.magic_token && (
               <div className="rounded-md border-2 border-primary/40 bg-primary/5 px-4 py-3 text-sm">
                 <p className="font-semibold">
@@ -603,6 +634,122 @@ export function RegistrationModal({
                 </p>
               </div>
             )}
+
+            {/* 4. Recovery opt-in — collect contact_email so request-
+                recovery-link can email this player the URL when they
+                lose it. Skipping is fine — the save-link card above
+                is the primary handle. */}
+            {success.magic_token && !contactSaved && (
+              <div className="rounded-md border border-border bg-muted/20 px-4 py-3 text-sm">
+                <p className="font-semibold">
+                  {t.socialEvents.recoveryOptIn.heading}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t.socialEvents.recoveryOptIn.body}
+                </p>
+                <div className="mt-3 space-y-2">
+                  <Label htmlFor="recovery-email" className="text-xs">
+                    {t.socialEvents.recoveryOptIn.emailLabel}
+                  </Label>
+                  <Input
+                    id="recovery-email"
+                    type="email"
+                    inputMode="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="ten@gmail.com"
+                    disabled={contactSaving}
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    className="flex-1"
+                    disabled={
+                      contactSaving ||
+                      contactEmail.trim().length === 0 ||
+                      !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contactEmail.trim())
+                    }
+                    onClick={async () => {
+                      if (!success?.magic_token) return;
+                      setContactSaving(true);
+                      try {
+                        const { error } = await supabase.rpc(
+                          "update_profile_contact_from_magic",
+                          {
+                            p_magic_token: success.magic_token,
+                            p_email: contactEmail.trim(),
+                          },
+                        );
+                        if (error) {
+                          toast({
+                            title: t.socialEvents.recoveryOptIn.saveError,
+                            description: error.message,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setContactSaved(true);
+                        toast({
+                          title: t.socialEvents.recoveryOptIn.saveSuccess,
+                        });
+                      } finally {
+                        setContactSaving(false);
+                      }
+                    }}
+                  >
+                    {contactSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : null}
+                    {t.socialEvents.recoveryOptIn.saveCta}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setContactSaved(true)}
+                  >
+                    {t.socialEvents.recoveryOptIn.skipCta}
+                  </Button>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t.socialEvents.recoveryOptIn.zaloHint}
+                </p>
+              </div>
+            )}
+            {contactSaved && contactEmail.trim().length > 0 && (
+              <p className="text-center text-xs text-emerald-600">
+                ✓ {t.socialEvents.recoveryOptIn.saveSuccess}
+              </p>
+            )}
+
+            {/* 5. Footer actions — Zalo group (if set) + close. Pushed
+                to the bottom so the user can't accidentally dismiss
+                the modal before reading the cards above. */}
+            <div className="flex flex-col gap-2 border-t border-border pt-4">
+              {zaloGroupUrl && (
+                <Button
+                  asChild
+                  className="w-full"
+                  variant="outline"
+                >
+                  <a href={zaloGroupUrl} target="_blank" rel="noopener noreferrer">
+                    {reg.openZalo}
+                  </a>
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => onOpenChange(false)}
+              >
+                {reg.backToEvent}
+              </Button>
+            </div>
+
             <p className="text-center text-xs text-muted-foreground">
               {language === "vi"
                 ? `Lưu liên kết: thepicklehub.net/su-kien/${eventSlug}`
