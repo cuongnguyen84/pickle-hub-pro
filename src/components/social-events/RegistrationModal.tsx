@@ -517,13 +517,20 @@ export function RegistrationModal({
           <QRPaymentStep
             order={paymentOrder}
             magicToken={success.magic_token}
-            onClaimed={(next) => setPaymentOrder(next)}
-            /* PR60 fix — both payment-step exits now route through the
-               success step so the player sees the save-link card +
-               optional contact opt-in (PR58 + PR59 wiring). Closing
-               the modal directly from here meant paid events skipped
-               those cards entirely, leaving /dang-ky/:token
-               undiscoverable + contact_email never collected. */
+            /* PR60 (v2) — after the player marks paid, jump straight
+               to the success step. Otherwise QRPaymentStep would fall
+               into its own State 2 (a generic "claimed" banner) and
+               the player would have to click "Về trang sự kiện" to
+               see the save-link + recovery cards. We keep the
+               paymentOrder on state so the success view can surface
+               the reference code prominently. */
+            onClaimed={(next) => {
+              setPaymentOrder(next);
+              setStep("success");
+            }}
+            /* "Sẽ thanh toán tại sân" and the post-claim "Về trang
+               sự kiện" (only reachable if State 2 somehow renders)
+               both route to success too. */
             onSkip={() => setStep("success")}
             zaloGroupUrl={zaloGroupUrl}
             onClose={() => setStep("success")}
@@ -532,10 +539,12 @@ export function RegistrationModal({
 
         {step === "success" && success && (
           <div className="space-y-4">
+            {/* 1. Top banner — "Đăng ký thành công". */}
             <div className="rounded-md border border-emerald-400/50 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
               <p className="font-semibold">{reg.successTitle}</p>
               <p className="mt-1">{reg.successBody}</p>
             </div>
+
             {priceVnd > 0 && (
               <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
                 <p className="font-semibold">{reg.paymentInstructions}</p>
@@ -546,31 +555,40 @@ export function RegistrationModal({
                 </p>
               </div>
             )}
-            <div className="flex flex-col gap-2">
-              {zaloGroupUrl && (
-                <Button
-                  asChild
-                  className="w-full"
-                  variant="outline"
-                >
-                  <a href={zaloGroupUrl} target="_blank" rel="noopener noreferrer">
-                    {reg.openZalo}
-                  </a>
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => onOpenChange(false)}
-              >
-                {reg.backToEvent}
-              </Button>
-            </div>
-            {/* PR58 — save-link card. Critical surface: this URL is the
-                ONLY way (until SMS lands) the player can come back to
-                cancel / view status, so we keep it prominent and offer
-                copy + open-in-new-tab + a "screenshot this" hint. */}
+
+            {/* 2. Reference code (paid events only) — prominent so the
+                player can show it at the venue without digging into
+                the /dang-ky/:token page. Was previously buried inside
+                QRPaymentStep State 2 which we now skip. */}
+            {paymentOrder?.reference_code && (
+              <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t.socialEvents.payment.referenceCodeLabel}
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <code className="flex-1 truncate rounded-md bg-background px-3 py-2 font-mono text-lg font-semibold text-primary">
+                    {paymentOrder.reference_code}
+                  </code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label={t.common.copyLink}
+                    onClick={() => {
+                      if (!paymentOrder?.reference_code) return;
+                      void navigator.clipboard.writeText(paymentOrder.reference_code);
+                      toast({ title: t.socialEvents.payment.copiedToast });
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Save-link card — the critical handle on this
+                registration. Until SMS lands this URL is the only
+                way the player can come back to cancel / view. */}
             {success.magic_token && (
               <div className="rounded-md border-2 border-primary/40 bg-primary/5 px-4 py-3 text-sm">
                 <p className="font-semibold">
@@ -617,12 +635,10 @@ export function RegistrationModal({
               </div>
             )}
 
-            {/* PR59 — optional recovery-channel opt-in. If the player
-                provides an email here we store it on their (possibly
-                ghost) profile via update_profile_contact_from_magic so
-                request-recovery-link can fall back to email when they
-                lose the URL. Skipping is fine — the save-link card
-                above is the primary handle. */}
+            {/* 4. Recovery opt-in — collect contact_email so request-
+                recovery-link can email this player the URL when they
+                lose it. Skipping is fine — the save-link card above
+                is the primary handle. */}
             {success.magic_token && !contactSaved && (
               <div className="rounded-md border border-border bg-muted/20 px-4 py-3 text-sm">
                 <p className="font-semibold">
@@ -708,6 +724,31 @@ export function RegistrationModal({
                 ✓ {t.socialEvents.recoveryOptIn.saveSuccess}
               </p>
             )}
+
+            {/* 5. Footer actions — Zalo group (if set) + close. Pushed
+                to the bottom so the user can't accidentally dismiss
+                the modal before reading the cards above. */}
+            <div className="flex flex-col gap-2 border-t border-border pt-4">
+              {zaloGroupUrl && (
+                <Button
+                  asChild
+                  className="w-full"
+                  variant="outline"
+                >
+                  <a href={zaloGroupUrl} target="_blank" rel="noopener noreferrer">
+                    {reg.openZalo}
+                  </a>
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => onOpenChange(false)}
+              >
+                {reg.backToEvent}
+              </Button>
+            </div>
 
             <p className="text-center text-xs text-muted-foreground">
               {language === "vi"
