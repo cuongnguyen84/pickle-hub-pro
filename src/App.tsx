@@ -114,6 +114,9 @@ const SocialEventList = lazy(() => import("./pages/SocialEventList"));
 const SocialEventLive = lazy(() => import("./pages/SocialEventLive"));
 // Social Events MVP — PR53 (public profile + match history + badges)
 const PublicProfile = lazy(() => import("./pages/PublicProfile"));
+// Social Events MVP — PR55 (self-service club creation + discovery)
+const ClubsList = lazy(() => import("./pages/ClubsList"));
+const CreateClub = lazy(() => import("./pages/CreateClub"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -448,6 +451,10 @@ const App = () => (
                     {/* Social Events MVP PR53 — public profile + match history + badges */}
                     <Route path="/u/:slug" element={<PublicProfile />} />
                     <Route path="/vi/u/:slug" element={<PublicProfile />} />
+                    {/* Social Events MVP PR55 — self-service club discovery + creation */}
+                    <Route path="/clubs" element={<ClubsList />} />
+                    <Route path="/vi/clubs" element={<ViLanguageWrapper><ClubsList /></ViLanguageWrapper>} />
+                    <Route path="/clubs/new" element={<CreateClub />} />
                     <Route path="/notifications" element={<Notifications />} />
                     {/* Sprint 5 PR-C — Vietnamese-friendly alias. Same
                         page renders for both /notifications and /thong-bao

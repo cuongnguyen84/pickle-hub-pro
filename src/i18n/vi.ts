@@ -1904,6 +1904,9 @@ export interface Translations {
       newEventCta: string;
       backToClub: string;
       noEvents: string;
+      emptyHeading: string;
+      emptyBody: string;
+      emptyCta: string;
       statsRegistered: string;
       statsPaid: string;
       statsCheckedIn: string;
@@ -1922,6 +1925,56 @@ export interface Translations {
       reopenedToast: string;
       noPermissionTitle: string;
       noPermissionBody: string;
+    };
+    clubsList: {
+      pageTitle: string;
+      kicker: string;
+      heading: string;
+      subheading: string;
+      searchPlaceholder: string;
+      searchAria: string;
+      createCta: string;
+      createCtaAnon: string;
+      emptyAll: string;
+      emptySearch: string;
+      cardCta: string;
+      cardEventCount: string;
+      cardNoEvents: string;
+    };
+    createClub: {
+      pageTitle: string;
+      kicker: string;
+      heading: string;
+      nameLabel: string;
+      namePlaceholder: string;
+      nameInvalid: string;
+      slugLabel: string;
+      slugAuto: string;
+      slugHint: string;
+      slugInvalid: string;
+      slugChecking: string;
+      slugTaken: string;
+      slugAvailable: string;
+      descriptionLabel: string;
+      descriptionPlaceholder: string;
+      locationLabel: string;
+      locationPlaceholder: string;
+      locationHint: string;
+      logoLabel: string;
+      logoUpload: string;
+      logoRemove: string;
+      logoHint: string;
+      logoUploadError: string;
+      logoTooLargeTitle: string;
+      logoTooLargeBody: string;
+      submit: string;
+      submitting: string;
+      infoBanner: string;
+      tooManyClubsTitle: string;
+      tooManyClubsBody: string;
+      successTitle: string;
+      successBody: string;
+      backToList: string;
     };
     roster: {
       pageTitle: string;
@@ -4022,6 +4075,10 @@ export const vi: Translations = {
       newEventCta: "Tạo sự kiện mới",
       backToClub: "Quay lại trang CLB",
       noEvents: "CLB chưa có sự kiện nào.",
+      emptyHeading: "Tạo sự kiện đầu tiên",
+      emptyBody:
+        "CLB đã sẵn sàng. Hãy tạo sự kiện đầu tiên để bắt đầu mời người chơi và quản lý lịch thi đấu.",
+      emptyCta: "Tạo sự kiện đầu tiên",
       statsRegistered: "Đăng ký",
       statsPaid: "Đã thanh toán",
       statsCheckedIn: "Check-in",
@@ -4042,6 +4099,59 @@ export const vi: Translations = {
       noPermissionTitle: "Bạn không có quyền truy cập",
       noPermissionBody:
         "Chỉ tổ chức viên (người tạo CLB hoặc admin) mới truy cập được trang này.",
+    },
+    clubsList: {
+      pageTitle: "Danh sách CLB",
+      kicker: "Câu lạc bộ",
+      heading: "Khám phá CLB pickleball",
+      subheading: "Tìm CLB gần bạn, theo dõi sự kiện sắp tới, hoặc tạo CLB của riêng bạn.",
+      searchPlaceholder: "Tìm theo tên hoặc địa điểm…",
+      searchAria: "Tìm CLB theo tên hoặc địa điểm",
+      createCta: "Tạo CLB",
+      createCtaAnon: "Đăng nhập để tạo CLB",
+      emptyAll: "Chưa có CLB nào. Hãy là người tạo CLB đầu tiên!",
+      emptySearch: "Không tìm thấy CLB phù hợp. Thử từ khoá khác.",
+      cardCta: "Xem CLB",
+      cardEventCount: "{n} sự kiện sắp tới",
+      cardNoEvents: "Chưa có sự kiện",
+    },
+    createClub: {
+      pageTitle: "Tạo CLB mới",
+      kicker: "Câu lạc bộ",
+      heading: "Tạo CLB của bạn",
+      nameLabel: "Tên CLB",
+      namePlaceholder: "VD: CLB Pickleball Sài Gòn",
+      nameInvalid: "Tên CLB cần 3–100 ký tự.",
+      slugLabel: "Slug (URL)",
+      slugAuto: "Tự động",
+      slugHint:
+        "URL của CLB sẽ là thepicklehub.net/clb/<slug>. Chỉ chữ thường, số và dấu gạch ngang.",
+      slugInvalid: "Slug cần 3–50 ký tự, chỉ chữ thường / số / gạch ngang.",
+      slugChecking: "Đang kiểm tra…",
+      slugTaken: "Slug này đã được sử dụng. Hãy chọn slug khác.",
+      slugAvailable: "✓ Slug khả dụng",
+      descriptionLabel: "Mô tả ngắn",
+      descriptionPlaceholder: "Giới thiệu về CLB, đối tượng người chơi, lịch sinh hoạt…",
+      locationLabel: "Địa điểm",
+      locationPlaceholder: "VD: Quận 7, TP. HCM",
+      locationHint: "Hiển thị trên trang CLB và danh sách CLB.",
+      logoLabel: "Logo CLB",
+      logoUpload: "Tải lên",
+      logoRemove: "Xoá",
+      logoHint: "JPG / PNG / WebP, tối đa 2MB. Hình vuông sẽ đẹp nhất.",
+      logoUploadError: "Tải logo thất bại",
+      logoTooLargeTitle: "Tệp quá lớn",
+      logoTooLargeBody: "Logo tối đa 2MB. Hãy chọn tệp nhỏ hơn.",
+      submit: "Tạo CLB",
+      submitting: "Đang tạo CLB…",
+      infoBanner:
+        "Mỗi tài khoản tối đa {max} CLB. Bạn là chủ CLB và có thể tạo sự kiện ngay sau khi tạo.",
+      tooManyClubsTitle: "Đã đạt giới hạn CLB",
+      tooManyClubsBody:
+        "Mỗi tài khoản chỉ tạo được tối đa {max} CLB. Hãy liên hệ admin nếu cần thêm.",
+      successTitle: "Đã tạo CLB",
+      successBody: "Chuyển đến trang quản lý CLB…",
+      backToList: "Quay lại danh sách CLB",
     },
     roster: {
       pageTitle: "Danh sách đăng ký",
