@@ -1,13 +1,22 @@
 // ============================================================================
 // TurnstileWidget — thin wrapper over Cloudflare Turnstile (PR59).
 // ----------------------------------------------------------------------------
-// Loads the Turnstile script once, mounts a widget, and forwards the
-// resulting token via onVerify. No npm dependency — Turnstile ships as
-// a standalone <script> + global render callback.
+// Loads the Turnstile script once, mounts a widget, forwards the token
+// via onVerify. No npm dependency — Turnstile ships as a standalone
+// <script> + global render callback.
 //
-// Site key is read from VITE_TURNSTILE_SITE_KEY. When the env is unset
-// (local dev without the key) the widget renders a "captcha unavailable"
-// note and never fires onVerify — recovery flow gracefully degrades.
+// PR60 bug fix: callbacks are routed through refs so the mount effect
+// can depend ONLY on siteKey. The previous version listed onVerify +
+// onError in the deps array; when the parent recreated those inline
+// each render the cleanup tore the widget down + the effect re-rendered
+// it, in a tight loop. Cloudflare dashboard showed 14 challenges issued
+// for one user session. The widget now mounts exactly once per parent
+// instance and refresh-resets via the public `key` prop if a caller
+// ever needs to remount intentionally.
+//
+// Site key is read from VITE_TURNSTILE_SITE_KEY. When unset (local dev
+// without the env) the widget renders a "captcha unavailable" note and
+// never fires onVerify — recovery flow gracefully degrades.
 // ============================================================================
 
 import { useEffect, useRef } from "react";
@@ -64,34 +73,57 @@ interface Props {
 export function TurnstileWidget({ onVerify, onError }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+
+  // Callback refs — let us read the latest parent callbacks from the
+  // render effect without listing them as deps (which would re-mount
+  // the widget every render the parent recreates the closures inline).
+  const onVerifyRef = useRef(onVerify);
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    onVerifyRef.current = onVerify;
+  }, [onVerify]);
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
   const siteKey = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) ?? "";
 
   useEffect(() => {
     if (!siteKey || !ref.current) return;
+    // Guard against StrictMode double-mount + any unexpected re-run:
+    // if a widget already exists in this container we don't render
+    // again.
+    if (widgetIdRef.current) return;
+
     let cancelled = false;
     loadTurnstile()
       .then(() => {
         if (cancelled || !ref.current || !window.turnstile) return;
+        if (widgetIdRef.current) return;
         widgetIdRef.current = window.turnstile.render(ref.current, {
           sitekey: siteKey,
-          callback: (token) => onVerify(token),
-          "error-callback": () => onError?.(),
-          "expired-callback": () => onError?.(),
+          callback: (token) => onVerifyRef.current(token),
+          "error-callback": () => onErrorRef.current?.(),
+          "expired-callback": () => onErrorRef.current?.(),
           theme: "auto",
         });
       })
-      .catch(() => onError?.());
+      .catch(() => onErrorRef.current?.());
+
     return () => {
       cancelled = true;
-      if (widgetIdRef.current && window.turnstile?.remove) {
+      const id = widgetIdRef.current;
+      widgetIdRef.current = null;
+      if (id && window.turnstile?.remove) {
         try {
-          window.turnstile.remove(widgetIdRef.current);
+          window.turnstile.remove(id);
         } catch {
-          // ignore
+          // ignore — happens if Cloudflare already swept it
         }
       }
     };
-  }, [siteKey, onVerify, onError]);
+    // Intentionally siteKey-only. Callbacks are routed via refs above.
+  }, [siteKey]);
 
   if (!siteKey) {
     return (
