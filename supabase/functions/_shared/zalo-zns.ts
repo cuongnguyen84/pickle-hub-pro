@@ -13,7 +13,16 @@
 
 export type ZaloResult =
   | { ok: true; provider_message_id?: string }
-  | { ok: false; reason: "not_configured" | "api_error" | "network_error"; code?: number; message?: string };
+  | {
+      ok: false;
+      reason:
+        | "not_configured"
+        | "api_error"
+        | "network_error"
+        | "unexpected_response";
+      code?: number;
+      message?: string;
+    };
 
 interface SendArgs {
   /** Phone in international format WITHOUT the leading '+', e.g. "84912345678". */
@@ -51,18 +60,41 @@ export async function sendZaloZns(args: SendArgs): Promise<ZaloResult> {
     try {
       body = await res.json();
     } catch {
-      // ignore — provider returned non-JSON
+      // ignore — provider returned non-JSON (proxy / gateway error,
+      // HTML error page, etc.). Falls through to the unexpected-
+      // response branch below.
     }
 
-    // Zalo convention: error === 0 → success.
-    if (body.error === 0 || body.error === undefined) {
+    // Codex P1 fix: ONLY explicit `error === 0` counts as success.
+    // The previous version also accepted `error === undefined`, which
+    // let non-JSON responses, proxy/gateway shells, and HTML error
+    // pages through — phone-otp-send would then log channel="zalo",
+    // success=true and skip the eSMS fallback even though the player
+    // never received the OTP. Now any non-zero / missing / non-numeric
+    // error field returns ok=false so the caller falls back.
+    if (body.error === 0) {
       return { ok: true, provider_message_id: body.data?.msg_id };
     }
+
+    // Explicit non-zero numeric error → Zalo API rejected the call.
+    if (typeof body.error === "number") {
+      return {
+        ok: false,
+        reason: "api_error",
+        code: body.error,
+        message: body.message,
+      };
+    }
+
+    // Anything else — missing field, non-numeric value, non-JSON body.
     return {
       ok: false,
-      reason: "api_error",
-      code: body.error,
-      message: body.message,
+      reason: "unexpected_response",
+      code: res.status,
+      message:
+        typeof body.message === "string" && body.message.length > 0
+          ? body.message
+          : `zalo_unexpected_response_${res.status}`,
     };
   } catch (e) {
     return { ok: false, reason: "network_error", message: String(e) };
