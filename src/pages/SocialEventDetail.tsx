@@ -38,6 +38,9 @@ import {
 } from "@/lib/social-events/format";
 import { maskName } from "@/lib/social-events/maskName";
 import { EntityNotFound } from "@/components/EntityNotFound";
+import { readMyRegistration } from "@/lib/social-events/myRegistration";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const SITE_URL =
   (import.meta.env.VITE_SITE_URL as string | undefined) ?? "https://www.thepicklehub.net";
@@ -78,6 +81,33 @@ export default function SocialEventDetail() {
   const { data, isLoading, refetch } = useSocialEvent(slug);
   const { data: registrations, refetch: refetchRegistrations } =
     useEventRegistrations(data?.id);
+
+  // PR58 — check localStorage for an existing registration on this
+  // event. The /dang-ky/:token page is the player's only way back to
+  // their registration (no SMS yet), so when we know they registered
+  // we swap the big green "Register" CTA for a "View / manage" banner
+  // pointing at that page. We also re-query the DB to surface the
+  // current cancelled_at state so a cancelled registration shows the
+  // right CTA.
+  const myStored = useMemo(() => {
+    if (!data?.id) return null;
+    return readMyRegistration(data.id);
+  }, [data?.id]);
+
+  const { data: myStatus } = useQuery<{ cancelled_at: string | null } | null>({
+    queryKey: ["my-registration-status", myStored?.magic_token ?? null],
+    queryFn: async () => {
+      if (!myStored?.magic_token) return null;
+      const { data: row, error } = await supabase
+        .rpc("get_registration_by_token", { p_magic_token: myStored.magic_token })
+        .maybeSingle();
+      if (error || !row) return null;
+      return { cancelled_at: (row as { cancelled_at: string | null }).cancelled_at };
+    },
+    enabled: Boolean(myStored?.magic_token),
+    staleTime: 30_000,
+  });
+  const isCancelled = myStatus?.cancelled_at != null;
 
   const eventTitle = useMemo(() => {
     if (!data) return "";
@@ -323,31 +353,73 @@ export default function SocialEventDetail() {
               </div>
             </div>
           </div>
-          {/* TheLine vibrant-green pill primary CTA — bracket-lab pattern. */}
-          <button
-            type="button"
-            className="tl-btn green"
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              fontSize: 15,
-              padding: "14px 22px",
-              opacity: canRegister ? 1 : 0.5,
-              cursor: canRegister ? "pointer" : "not-allowed",
-            }}
-            disabled={!canRegister}
-            onClick={() => setModalOpen(true)}
-          >
-            {cancelled
-              ? t.socialEvents.detail.cancelled
-              : eventEnded
-                ? t.socialEvents.detail.ended
-                : eventStarted
-                  ? t.socialEvents.detail.registerInProgress
-                  : remaining === 0
-                    ? (language === "vi" ? "Hết chỗ" : "Sold out")
-                    : `${t.socialEvents.detail.registerCta} →`}
-          </button>
+          {/* PR58 — when localStorage says we already registered, swap
+              the green primary CTA for a "View / manage" banner that
+              deep-links to /dang-ky/:token. Cancelled registrations
+              still need a way back so we also point at /dang-ky/:token
+              (PlayerRegistration handles the reactivate flow). */}
+          {myStored && !isCancelled ? (
+            <a
+              className="tl-btn green"
+              href={`/dang-ky/${myStored.magic_token}`}
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                fontSize: 15,
+                padding: "14px 22px",
+                textDecoration: "none",
+              }}
+            >
+              {t.socialEvents.playerRegistration.alreadyRegisteredCta} →
+            </a>
+          ) : myStored && isCancelled ? (
+            <a
+              className="tl-btn"
+              href={`/dang-ky/${myStored.magic_token}`}
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                fontSize: 15,
+                padding: "14px 22px",
+                textDecoration: "none",
+              }}
+            >
+              {t.socialEvents.playerRegistration.reregisterCta} →
+            </a>
+          ) : (
+            /* TheLine vibrant-green pill primary CTA — bracket-lab pattern. */
+            <button
+              type="button"
+              className="tl-btn green"
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                fontSize: 15,
+                padding: "14px 22px",
+                opacity: canRegister ? 1 : 0.5,
+                cursor: canRegister ? "pointer" : "not-allowed",
+              }}
+              disabled={!canRegister}
+              onClick={() => setModalOpen(true)}
+            >
+              {cancelled
+                ? t.socialEvents.detail.cancelled
+                : eventEnded
+                  ? t.socialEvents.detail.ended
+                  : eventStarted
+                    ? t.socialEvents.detail.registerInProgress
+                    : remaining === 0
+                      ? (language === "vi" ? "Hết chỗ" : "Sold out")
+                      : `${t.socialEvents.detail.registerCta} →`}
+            </button>
+          )}
+          {myStored && (
+            <p className="mt-2 text-xs text-center text-muted-foreground">
+              {isCancelled
+                ? t.socialEvents.playerRegistration.cancelledBanner
+                : t.socialEvents.playerRegistration.alreadyRegisteredBanner}
+            </p>
+          )}
           {/* TheLine inline-action share row — mono caps + arrow, no fill. */}
           <div
             style={{

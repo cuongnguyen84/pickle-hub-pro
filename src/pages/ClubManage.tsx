@@ -8,7 +8,7 @@
 
 import { useMemo } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { Loader2, Plus, Users, BadgeCheck, CheckCircle2, ExternalLink, Sparkles, ClipboardList, Settings } from "lucide-react";
+import { Loader2, Plus, Users, BadgeCheck, CheckCircle2, ExternalLink, Sparkles, ClipboardList, Settings, Pencil } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -232,6 +232,13 @@ export default function ClubManage() {
                     className="inline-flex items-center gap-1 hover:underline"
                   >
                     <Sparkles className="h-3 w-3" /> {manage.shufflePairs} →
+                  </Link>
+                  <Link
+                    to={`/clb/${clubData.club.slug}/quan-ly/su-kien/${event.slug}/sua`}
+                    style={{ color: "var(--tl-fg)", textDecoration: "none" }}
+                    className="inline-flex items-center gap-1 hover:underline"
+                  >
+                    <Pencil className="h-3 w-3" /> {manage.editEvent} →
                   </Link>
                   <Link
                     to={`/su-kien/${event.slug}`}

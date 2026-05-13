@@ -1916,6 +1916,7 @@ export interface Translations {
       statusCompleted: string;
       manageRoster: string;
       shufflePairs: string;
+      editEvent: string;
       viewPublic: string;
       cancelEvent: string;
       cancelEventConfirm: string;
@@ -1983,6 +1984,124 @@ export interface Translations {
       club: { title: string; body: string; backCta: string };
       event: { title: string; body: string; backCta: string };
       profile: { title: string; body: string; backCta: string };
+    };
+    playerRegistration: {
+      pageTitle: string;
+      eyebrow: string;
+      viewPublic: string;
+      statusActive: string;
+      statusCancelled: string;
+      labelName: string;
+      labelWhen: string;
+      labelWhere: string;
+      labelPrice: string;
+      labelCancelledAt: string;
+      labelCancelledReason: string;
+      priceFree: string;
+      paymentHeading: string;
+      paymentMarked: string;
+      paymentPending: string;
+      cancellationPolicyHeading: string;
+      refundEligible: string;
+      refundIneligible: string;
+      refundManualNote: string;
+      cancelCta: string;
+      cancelModalTitle: string;
+      cancelModalBody: string;
+      cancelReasonLabel: string;
+      cancelReasonPlaceholder: string;
+      cancelConfirmCta: string;
+      cancelling: string;
+      modalBack: string;
+      cancelSuccessTitle: string;
+      cancelSuccessBody: string;
+      reactivateCta: string;
+      reactivating: string;
+      reactivateSuccessTitle: string;
+      reactivateSuccessBody: string;
+      eventStartedHint: string;
+      eventFullHint: string;
+      eventCancelledTitle: string;
+      eventCancelledBody: string;
+      referenceCodeCopied: string;
+      notFoundTitle: string;
+      notFoundBody: string;
+      saveLinkHeading: string;
+      saveLinkBody: string;
+      saveLinkCopy: string;
+      saveLinkCopied: string;
+      saveLinkOpen: string;
+      saveLinkScreenshotHint: string;
+      alreadyRegisteredBanner: string;
+      alreadyRegisteredCta: string;
+      cancelledBanner: string;
+      reregisterCta: string;
+      errors: {
+        generic: string;
+        invalid_magic_token: string;
+        not_found: string;
+        registration_missing: string;
+        event_missing: string;
+        event_started: string;
+        event_cancelled: string;
+        event_completed: string;
+        event_not_open: string;
+        event_full: string;
+        already_cancelled: string;
+        update_failed: string;
+        lookup_failed: string;
+      };
+    };
+    editEvent: {
+      pageTitle: string;
+      eyebrow: string;
+      slugLabel: string;
+      slugImmutableHint: string;
+      titleLabel: string;
+      descriptionLabel: string;
+      dateLabel: string;
+      startTimeLabel: string;
+      endTimeLabel: string;
+      locationLabel: string;
+      courtCountLabel: string;
+      maxPlayersLabel: string;
+      maxPlayersFloor: string;
+      errorMaxPlayersBelowReg: string;
+      zaloLabel: string;
+      visibilityLabel: string;
+      visibilityPublic: string;
+      visibilityClubOnly: string;
+      paymentHeading: string;
+      priceLabel: string;
+      priceLockedByClaims: string;
+      bankWarning: string;
+      bankCodeLabel: string;
+      bankAccountNumberLabel: string;
+      bankAccountNameLabel: string;
+      save: string;
+      saving: string;
+      cancelBtn: string;
+      savedTitle: string;
+      savedBody: string;
+      savedPartialTitle: string;
+      savedPartialBody: string;
+      activeRegsWarning: string;
+      readOnlyStartedTitle: string;
+      readOnlyStartedBody: string;
+      readOnlyCancelledTitle: string;
+      readOnlyCancelledBody: string;
+      dangerZone: string;
+      cancelEventHeading: string;
+      cancelEventBody: string;
+      cancelEventCta: string;
+      cancelEventModalTitle: string;
+      cancelEventModalBody: string;
+      cancelEventModalInputLabel: string;
+      cancelEventConfirmCta: string;
+      cancelEventCancelling: string;
+      cancelEventSuccessTitle: string;
+      cancelEventSuccessBody: string;
+      modalBack: string;
     };
     editClub: {
       pageTitle: string;
@@ -4121,6 +4240,7 @@ export const vi: Translations = {
       statusCompleted: "Đã kết thúc",
       manageRoster: "Danh sách đăng ký",
       shufflePairs: "Xếp cặp",
+      editEvent: "Sửa event",
       viewPublic: "Xem trang công khai",
       cancelEvent: "Huỷ sự kiện",
       cancelEventConfirm: "Bạn chắc chắn huỷ sự kiện này?",
@@ -4189,6 +4309,81 @@ export const vi: Translations = {
       successBody: "Chuyển đến trang quản lý CLB…",
       backToList: "Quay lại danh sách CLB",
     },
+    playerRegistration: {
+      pageTitle: "Đăng ký của bạn",
+      eyebrow: "Đăng ký của bạn",
+      viewPublic: "Xem trang sự kiện",
+      statusActive: "Đã đăng ký",
+      statusCancelled: "Đã huỷ",
+      labelName: "Tên",
+      labelWhen: "Thời gian",
+      labelWhere: "Địa điểm",
+      labelPrice: "Phí",
+      labelCancelledAt: "Huỷ lúc",
+      labelCancelledReason: "Lý do",
+      priceFree: "Miễn phí",
+      paymentHeading: "Mã thanh toán",
+      paymentMarked: "Bạn đã đánh dấu đã chuyển khoản.",
+      paymentPending: "Bạn chưa đánh dấu đã chuyển khoản.",
+      cancellationPolicyHeading: "Chính sách hoàn tiền",
+      refundEligible:
+        "Hủy trước {h} giờ so với giờ bắt đầu sự kiện — bạn được hoàn 100% (do BTC tự xử lý).",
+      refundIneligible:
+        "Còn dưới {h} giờ — theo chính sách, BTC có quyền không hoàn tiền.",
+      refundManualNote:
+        "ThePickleHub không cầm tiền; mọi việc hoàn tiền do BTC xử lý thủ công.",
+      cancelCta: "Hủy đăng ký",
+      cancelModalTitle: "Xác nhận hủy đăng ký",
+      cancelModalBody:
+        "Bạn chắc chắn muốn hủy đăng ký? Slot sẽ được mở lại cho người khác.",
+      cancelReasonLabel: "Lý do (tuỳ chọn)",
+      cancelReasonPlaceholder: "VD: Bận công việc, ốm…",
+      cancelConfirmCta: "Xác nhận hủy",
+      cancelling: "Đang hủy…",
+      modalBack: "Quay lại",
+      cancelSuccessTitle: "Đã hủy đăng ký",
+      cancelSuccessBody: "Slot đã được mở lại. Bạn có thể đăng ký lại nếu đổi ý.",
+      reactivateCta: "Đăng ký lại",
+      reactivating: "Đang đăng ký lại…",
+      reactivateSuccessTitle: "Đã đăng ký lại",
+      reactivateSuccessBody: "Bạn đã có lại slot. Hẹn gặp tại sự kiện!",
+      eventStartedHint: "Sự kiện đã bắt đầu, không thể huỷ/đăng ký lại.",
+      eventFullHint: "Sự kiện đã đầy. Bạn không thể đăng ký lại.",
+      eventCancelledTitle: "Sự kiện đã bị BTC hủy",
+      eventCancelledBody:
+        "BTC đã hủy sự kiện này. Đăng ký của bạn coi như đã huỷ. Hãy liên hệ BTC để biết thông tin hoàn tiền (nếu có).",
+      referenceCodeCopied: "Đã sao chép mã",
+      notFoundTitle: "Không tìm thấy đăng ký",
+      notFoundBody:
+        "Link bạn đang dùng không hợp lệ hoặc đã hết hạn. Liên hệ BTC nếu bạn cần xác nhận đăng ký.",
+      saveLinkHeading: "Link quản lý đăng ký của bạn",
+      saveLinkBody:
+        "Bookmark hoặc lưu lại link này — bạn cần nó để xem trạng thái hoặc huỷ đăng ký. (Không gửi SMS / email.)",
+      saveLinkCopy: "Sao chép",
+      saveLinkCopied: "Đã sao chép link",
+      saveLinkOpen: "Mở tab mới",
+      saveLinkScreenshotHint:
+        "Khuyên: chụp màn hình thẻ này — link không thể khôi phục nếu mất.",
+      alreadyRegisteredBanner: "Bạn đã đăng ký sự kiện này",
+      alreadyRegisteredCta: "Xem đăng ký của bạn",
+      cancelledBanner: "Bạn đã huỷ đăng ký sự kiện này",
+      reregisterCta: "Quản lý / Đăng ký lại",
+      errors: {
+        generic: "Có lỗi xảy ra, vui lòng thử lại.",
+        invalid_magic_token: "Link không hợp lệ.",
+        not_found: "Không tìm thấy đăng ký.",
+        registration_missing: "Không tìm thấy đăng ký.",
+        event_missing: "Không tìm thấy sự kiện.",
+        event_started: "Sự kiện đã bắt đầu, không thể huỷ.",
+        event_cancelled: "Sự kiện đã bị BTC hủy.",
+        event_completed: "Sự kiện đã kết thúc.",
+        event_not_open: "Sự kiện không mở đăng ký.",
+        event_full: "Sự kiện đã đầy, vui lòng đăng ký event khác.",
+        already_cancelled: "Đăng ký đã được hủy trước đó.",
+        update_failed: "Không cập nhật được, vui lòng thử lại.",
+        lookup_failed: "Không tải được dữ liệu, vui lòng thử lại.",
+      },
+    },
     entityNotFound: {
       club: {
         title: "Không tìm thấy CLB",
@@ -4205,6 +4400,66 @@ export const vi: Translations = {
         body: "Hồ sơ này có thể đã bị xoá hoặc liên kết không đúng.",
         backCta: "Về trang chủ",
       },
+    },
+    editEvent: {
+      pageTitle: "Sửa sự kiện",
+      eyebrow: "Sửa sự kiện",
+      slugLabel: "URL sự kiện",
+      slugImmutableHint: "URL được khóa để giữ liên kết ổn định.",
+      titleLabel: "Tên sự kiện",
+      descriptionLabel: "Mô tả",
+      dateLabel: "Ngày",
+      startTimeLabel: "Giờ bắt đầu",
+      endTimeLabel: "Giờ kết thúc",
+      locationLabel: "Địa điểm",
+      courtCountLabel: "Số sân",
+      maxPlayersLabel: "Số người tối đa",
+      maxPlayersFloor: "không thể giảm dưới {n} (đã đăng ký)",
+      errorMaxPlayersBelowReg:
+        "Đã có {n} người đăng ký — số người tối đa không được nhỏ hơn.",
+      zaloLabel: "Link Zalo group",
+      visibilityLabel: "Hiển thị",
+      visibilityPublic: "Công khai",
+      visibilityClubOnly: "Chỉ thành viên",
+      paymentHeading: "Thanh toán",
+      priceLabel: "Phí tham gia (VND)",
+      priceLockedByClaims:
+        "Đã có người đánh dấu đã chuyển khoản — không thể đổi phí.",
+      bankWarning:
+        "⚠️ Đổi thông tin ngân hàng sẽ ảnh hưởng player đã claim. Cân nhắc kỹ trước khi đổi.",
+      bankCodeLabel: "Mã ngân hàng",
+      bankAccountNumberLabel: "Số tài khoản",
+      bankAccountNameLabel: "Tên chủ TK",
+      save: "Lưu thay đổi",
+      saving: "Đang lưu…",
+      cancelBtn: "Huỷ",
+      savedTitle: "Đã lưu",
+      savedBody: "Hãy thông báo cho player đã đăng ký qua Zalo group.",
+      savedPartialTitle: "Đã lưu thông tin sự kiện",
+      savedPartialBody:
+        "Nhưng không cập nhật được thông tin ngân hàng. Vui lòng thử lại.",
+      activeRegsWarning:
+        "⚠️ Sự kiện đã có {n} người đăng ký. Mọi thay đổi sẽ ảnh hưởng đến họ — hãy báo lại qua Zalo sau khi lưu.",
+      readOnlyStartedTitle: "Sự kiện đã bắt đầu",
+      readOnlyStartedBody:
+        "Không thể sửa sự kiện sau khi đã bắt đầu. Liên hệ admin nếu cần điều chỉnh.",
+      readOnlyCancelledTitle: "Sự kiện đã bị huỷ",
+      readOnlyCancelledBody:
+        "Sự kiện này đã bị huỷ. Để mở lại, liên hệ admin.",
+      dangerZone: "Vùng nguy hiểm",
+      cancelEventHeading: "Huỷ sự kiện",
+      cancelEventBody:
+        "Huỷ sự kiện này sẽ tự động huỷ tất cả đăng ký. Player sẽ thấy banner \"Sự kiện đã bị BTC huỷ\". Bạn phải tự refund tiền cho ai đã chuyển khoản.",
+      cancelEventCta: "Huỷ sự kiện",
+      cancelEventModalTitle: "Xác nhận huỷ sự kiện",
+      cancelEventModalBody:
+        "Bạn sắp huỷ sự kiện. {n} đăng ký sẽ bị huỷ tự động.",
+      cancelEventModalInputLabel: "Gõ \"{name}\" để xác nhận",
+      cancelEventConfirmCta: "Huỷ sự kiện",
+      cancelEventCancelling: "Đang huỷ…",
+      cancelEventSuccessTitle: "Đã huỷ sự kiện",
+      cancelEventSuccessBody: "Tất cả đăng ký đã được tự động huỷ.",
+      modalBack: "Quay lại",
     },
     editClub: {
       pageTitle: "Cài đặt CLB",
