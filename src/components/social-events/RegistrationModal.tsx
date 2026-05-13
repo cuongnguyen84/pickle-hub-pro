@@ -518,9 +518,15 @@ export function RegistrationModal({
             order={paymentOrder}
             magicToken={success.magic_token}
             onClaimed={(next) => setPaymentOrder(next)}
-            onSkip={() => onOpenChange(false)}
+            /* PR60 fix — both payment-step exits now route through the
+               success step so the player sees the save-link card +
+               optional contact opt-in (PR58 + PR59 wiring). Closing
+               the modal directly from here meant paid events skipped
+               those cards entirely, leaving /dang-ky/:token
+               undiscoverable + contact_email never collected. */
+            onSkip={() => setStep("success")}
             zaloGroupUrl={zaloGroupUrl}
-            onClose={() => onOpenChange(false)}
+            onClose={() => setStep("success")}
           />
         )}
 
