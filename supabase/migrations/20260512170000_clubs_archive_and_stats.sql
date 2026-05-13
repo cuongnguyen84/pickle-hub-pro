@@ -75,9 +75,13 @@ GRANT SELECT ON public.club_stats TO authenticated;
 COMMENT ON VIEW public.club_stats IS
   'Per-club aggregates for the organizer settings page. Includes archived clubs. See migration 20260512170000.';
 
--- ─── 3. user_club_count — exclude archived clubs ──────────────────────────
+-- ─── 3. user_club_count + create_club_with_cap_check — exclude archived ───
 -- Once a club is archived it no longer counts toward the 3-club cap so
--- the owner can pivot to a new club name without admin help.
+-- the owner can pivot to a new club name without admin help. Both the
+-- read RPC (user_club_count, kept for older client builds) and the
+-- atomic write RPC (create_club_with_cap_check, added in PR55's Codex
+-- fix at 20260512160100) need the archived_at filter to stay consistent
+-- with the public /clubs view + the new "CLB của tôi" section.
 
 CREATE OR REPLACE FUNCTION public.user_club_count(p_user_id UUID)
 RETURNS INTEGER
@@ -96,6 +100,59 @@ REVOKE ALL ON FUNCTION public.user_club_count(UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.user_club_count(UUID) FROM anon;
 GRANT  EXECUTE ON FUNCTION public.user_club_count(UUID) TO authenticated;
 GRANT  EXECUTE ON FUNCTION public.user_club_count(UUID) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.create_club_with_cap_check(
+  p_slug          TEXT,
+  p_name          TEXT,
+  p_description   TEXT,
+  p_location_text TEXT,
+  p_logo_url      TEXT
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_count   INTEGER;
+  v_new_id  UUID;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'AUTH_REQUIRED' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT COUNT(*) INTO v_count
+  FROM public.clubs
+  WHERE created_by = v_user_id
+    AND archived_at IS NULL
+  FOR UPDATE;
+
+  IF v_count >= 3 THEN
+    RAISE EXCEPTION 'CLUB_CAP_EXCEEDED' USING ERRCODE = 'P0001';
+  END IF;
+
+  INSERT INTO public.clubs (
+    slug, name, description, location_text, logo_url, created_by
+  )
+  VALUES (
+    p_slug,
+    p_name,
+    NULLIF(trim(coalesce(p_description, '')), ''),
+    p_location_text,
+    p_logo_url,
+    v_user_id
+  )
+  RETURNING id INTO v_new_id;
+
+  RETURN v_new_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.create_club_with_cap_check(TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.create_club_with_cap_check(TEXT, TEXT, TEXT, TEXT, TEXT) FROM anon;
+GRANT  EXECUTE ON FUNCTION public.create_club_with_cap_check(TEXT, TEXT, TEXT, TEXT, TEXT) TO authenticated;
+GRANT  EXECUTE ON FUNCTION public.create_club_with_cap_check(TEXT, TEXT, TEXT, TEXT, TEXT) TO service_role;
 
 -- ─── 4. club_listing — exclude archived + expose creator profile info ────
 -- The /clubs cards link to the creator's profile so viewers can poke at
