@@ -29,6 +29,18 @@ const config: CapacitorConfig = {
     // Match --background-elevated HSL(220, 13%, 11%) so no color mismatch at bottom
     backgroundColor: '#181b20',
     preferredContentMode: 'mobile'
+    // PR63 NOTE — true edge-swipe back/forward (the native iOS gesture)
+    // requires `webView.allowsBackForwardNavigationGestures = true` on
+    // the WKWebView. Capacitor 8 does NOT expose this via config, so
+    // after `npx cap add ios` add the line to the bridge view
+    // controller manually:
+    //   ios/App/App/AppDelegate.swift OR ios/App/App/CAPBridgeViewController.swift
+    //   override func webView(... didCommit:) {
+    //     webView.allowsBackForwardNavigationGestures = true
+    //   }
+    // The visible back button in TheLineLayout already covers the
+    // gap for users who don't know the gesture exists, so this is
+    // polish rather than launch-blocking.
   },
 
   // Android-specific configuration  
