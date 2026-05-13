@@ -80,7 +80,8 @@ export default function EditSocialEvent() {
         .select(
           `id, slug, title_vi, title_en, description_vi, description_en,
            start_at, end_at, location_text, court_count, max_players,
-           price_vnd, zalo_group_url, visibility, status, club_id`,
+           price_vnd, zalo_group_url, visibility, status, club_id,
+           requires_prepayment, prepayment_deadline_hours`,
         )
         .eq("slug", event_slug)
         .maybeSingle();
@@ -132,6 +133,8 @@ export default function EditSocialEvent() {
       price_vnd: number;
       zalo_group_url: string | null;
       visibility: "public" | "club_only";
+      requires_prepayment?: boolean;
+      prepayment_deadline_hours?: number;
     };
     setEventId(e.id);
     setEventStartIso(e.start_at);
@@ -154,6 +157,10 @@ export default function EditSocialEvent() {
         (bundle.pc as { bank_account_number?: string } | null)?.bank_account_number ?? "",
       bank_account_name:
         (bundle.pc as { bank_account_name?: string } | null)?.bank_account_name ?? "",
+      // PR67 — prefill from DB; new events on older clients default to
+      // false / 12 via the column DEFAULTs.
+      requires_prepayment: e.requires_prepayment ?? false,
+      prepayment_deadline_hours: e.prepayment_deadline_hours ?? 12,
     });
   }, [bundle]);
 
@@ -222,6 +229,11 @@ export default function EditSocialEvent() {
         zalo_group_url: form.zalo_group_url.trim() || null,
         visibility: form.visibility,
         price_vnd: form.price_vnd,
+        // PR67 — only meaningful for paid events. Free events force
+        // requires_prepayment back to false so toggling price to 0
+        // doesn't leave a stale requirement attached.
+        requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
+        prepayment_deadline_hours: form.prepayment_deadline_hours,
       };
       const { error: upErr } = await supabase
         .from("social_events")
@@ -611,6 +623,57 @@ export default function EditSocialEvent() {
                         disabled={readOnly}
                       />
                     </div>
+                  </div>
+
+                  {/* PR67 — prepayment toggle + deadline. Same UX as the
+                      CreateSocialEvent wizard's Step2Payment block. */}
+                  <div className="mt-4 space-y-3 border-t border-border pt-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        id="ev-edit-requires-prepayment"
+                        type="checkbox"
+                        checked={form.requires_prepayment}
+                        onChange={(e) => setField("requires_prepayment", e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-border"
+                        disabled={readOnly}
+                      />
+                      <div className="flex-1">
+                        <Label htmlFor="ev-edit-requires-prepayment" className="cursor-pointer">
+                          {t.socialEvents.create.requirePrepayment}
+                        </Label>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {t.socialEvents.create.requirePrepaymentDescription}
+                        </p>
+                      </div>
+                    </div>
+
+                    {form.requires_prepayment && (
+                      <div className="ml-7 space-y-2">
+                        <Label htmlFor="ev-edit-prepayment-deadline">
+                          {t.socialEvents.create.paymentDeadlineHours}
+                        </Label>
+                        <Input
+                          id="ev-edit-prepayment-deadline"
+                          type="number"
+                          inputMode="numeric"
+                          min={1}
+                          max={168}
+                          value={form.prepayment_deadline_hours}
+                          onChange={(e) => {
+                            const n = Number(e.target.value);
+                            setField(
+                              "prepayment_deadline_hours",
+                              Number.isFinite(n) ? Math.min(168, Math.max(1, Math.trunc(n))) : 12,
+                            );
+                          }}
+                          className="max-w-[120px]"
+                          disabled={readOnly}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {t.socialEvents.create.paymentDeadlineHint}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

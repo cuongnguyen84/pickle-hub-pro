@@ -598,6 +598,8 @@ export default function SocialEventDetail() {
           eventSlug={data.slug}
           eventTitle={eventTitle}
           priceVnd={data.price_vnd}
+          requiresPrepayment={data.requires_prepayment}
+          prepaymentDeadlineHours={data.prepayment_deadline_hours}
           zaloGroupUrl={data.zalo_group_url}
           defaultPhone={(profile as { phone?: string | null } | null)?.phone ?? null}
           defaultDisplayName={profile?.display_name ?? null}

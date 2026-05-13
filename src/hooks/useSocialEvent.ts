@@ -34,6 +34,10 @@ export interface SocialEventRow {
   price_vnd: number;
   allow_guests: boolean;
   cancellation_hours: number;
+  /** PR67 — when true + price_vnd > 0, registrations auto-cancel after
+   *  prepayment_deadline_hours unless the player claims payment. */
+  requires_prepayment: boolean;
+  prepayment_deadline_hours: number;
   zalo_group_url: string | null;
   status: "draft" | "published" | "cancelled" | "completed";
   visibility: "public" | "club_only";
@@ -58,7 +62,8 @@ export function useSocialEvent(slug: string | undefined) {
           `id, slug, club_id, title_vi, title_en, description_vi, description_en,
            start_at, end_at, location_text, location_lat, location_lng,
            court_count, max_players, level_min, level_max,
-           price_vnd, allow_guests, cancellation_hours, zalo_group_url,
+           price_vnd, allow_guests, cancellation_hours,
+           requires_prepayment, prepayment_deadline_hours, zalo_group_url,
            status, visibility, created_by, created_at, updated_at,
            club:clubs!social_events_club_id_fkey ( id, slug, name, logo_url )`,
         )

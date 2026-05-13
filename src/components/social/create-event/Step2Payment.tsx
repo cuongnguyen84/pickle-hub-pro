@@ -185,6 +185,58 @@ export function Step2Payment({ form, errors, touched, onChange, onBlur, language
             ⓘ {create.bankDisclaimer}
           </p>
 
+          {/* PR67 — prepayment toggle + deadline. Only relevant for paid
+              events (parent block hides when isFree). Checkbox controls
+              whether the hours input renders. */}
+          <div className="space-y-3 border-t pt-5">
+            <div className="flex items-start gap-3">
+              <input
+                id="ev-requires-prepayment"
+                type="checkbox"
+                checked={form.requires_prepayment}
+                onChange={(e) => onChange("requires_prepayment", e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-border"
+              />
+              <div className="flex-1">
+                <Label htmlFor="ev-requires-prepayment" className="cursor-pointer">
+                  {create.requirePrepayment}
+                </Label>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {create.requirePrepaymentDescription}
+                </p>
+              </div>
+            </div>
+
+            {form.requires_prepayment && (
+              <div className="ml-7 space-y-2">
+                <Label htmlFor="ev-prepayment-deadline">
+                  {create.paymentDeadlineHours}
+                </Label>
+                <Input
+                  id="ev-prepayment-deadline"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={168}
+                  value={form.prepayment_deadline_hours}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    onChange(
+                      "prepayment_deadline_hours",
+                      Number.isFinite(n) ? Math.min(168, Math.max(1, Math.trunc(n))) : 12,
+                    );
+                  }}
+                  onBlur={() => onBlur("prepayment_deadline_hours")}
+                  className="max-w-[120px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {create.paymentDeadlineHint}
+                </p>
+                <ErrorText msg={showError("prepayment_deadline_hours")} />
+              </div>
+            )}
+          </div>
+
           {previewUrl && (
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
