@@ -51,6 +51,10 @@ interface Props {
   eventSlug: string;
   eventTitle: string;
   priceVnd: number;
+  /** PR67 — when true + priceVnd > 0, the QR step renders an amber
+   *  prepayment warning and the skip button says "I'll pay later". */
+  requiresPrepayment?: boolean;
+  prepaymentDeadlineHours?: number;
   zaloGroupUrl: string | null;
   /** Prefill phone from authed profile when available. */
   defaultPhone?: string | null;
@@ -116,6 +120,8 @@ export function RegistrationModal({
   eventSlug,
   eventTitle,
   priceVnd,
+  requiresPrepayment = false,
+  prepaymentDeadlineHours,
   zaloGroupUrl,
   defaultPhone,
   defaultDisplayName,
@@ -549,6 +555,9 @@ export function RegistrationModal({
           <QRPaymentStep
             order={paymentOrder}
             magicToken={success.magic_token}
+            requiresPrepayment={requiresPrepayment}
+            prepaymentDeadlineHours={prepaymentDeadlineHours}
+            registeredAt={success.registered_at}
             /* PR60 (v2) — after the player marks paid, jump straight
                to the success step. Otherwise QRPaymentStep would fall
                into its own State 2 (a generic "claimed" banner) and
@@ -594,9 +603,26 @@ export function RegistrationModal({
                 QRPaymentStep State 2 which we now skip. */}
             {paymentOrder?.reference_code && (
               <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {t.socialEvents.payment.referenceCodeLabel}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t.socialEvents.payment.referenceCodeLabel}
+                  </p>
+                  {/* PR67 — amber "unpaid" badge sits next to the
+                      reference code when prepayment is required and
+                      the player hasn't claimed payment yet. Gives a
+                      clear at-a-glance signal in the success card. */}
+                  {requiresPrepayment && !paymentOrder.player_claimed_paid && (
+                    <span
+                      className="tl-format-badge"
+                      style={{
+                        borderColor: "hsl(38 92% 50%)",
+                        color: "hsl(38 92% 50%)",
+                      }}
+                    >
+                      {t.socialEvents.payment.unpaidStatusBadge}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-1 flex items-center gap-2">
                   <code className="flex-1 break-all rounded-md bg-background px-3 py-2 font-mono text-lg font-semibold text-primary">
                     {paymentOrder.reference_code}

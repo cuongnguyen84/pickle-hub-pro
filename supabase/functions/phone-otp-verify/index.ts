@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
   // ─── Re-verify event still open ─────────────────────────────────────────
   const { data: event, error: eventErr } = await supabase
     .from("social_events")
-    .select("id, status, visibility, start_at, max_players, allow_guests")
+    .select("id, status, visibility, start_at, max_players, allow_guests, price_vnd, requires_prepayment")
     .eq("id", eventId)
     .maybeSingle();
   if (eventErr || !event) {
@@ -235,6 +235,15 @@ Deno.serve(async (req) => {
   }
 
   // ─── Insert registration. Unique indexes catch double-register. ────────
+  // PR67: when the event requires prepayment and the price is non-zero,
+  // mark the row 'pending_payment' on insert so the auto-cancel cron
+  // picks it up after the deadline (even if the player never clicks any
+  // button in QRPaymentStep).
+  const initialPaymentStatus =
+    Boolean(event.requires_prepayment) && (event.price_vnd as number) > 0
+      ? "pending_payment"
+      : "unpaid";
+
   const { data: registration, error: regErr } = await supabase
     .from("event_registrations")
     .insert({
@@ -244,7 +253,7 @@ Deno.serve(async (req) => {
       display_name: displayName,
       self_rated_level: selfRatedLevel,
       status: "registered",
-      payment_status: "unpaid",
+      payment_status: initialPaymentStatus,
     })
     .select("id, registered_at")
     .single();

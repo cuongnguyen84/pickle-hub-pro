@@ -24,7 +24,7 @@
 // ============================================================================
 
 import { useState } from "react";
-import { CheckCircle2, Copy, Loader2 } from "lucide-react";
+import { CheckCircle2, Copy, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/i18n";
@@ -57,6 +57,16 @@ interface Props {
   zaloGroupUrl: string | null;
   /** Called from the post-claim footer's "Về trang sự kiện" button. */
   onClose: () => void;
+  /** PR67 — when true, prepend an amber warning banner explaining the
+   *  auto-cancel timeout. The skip-button copy also shifts from
+   *  "Sẽ thanh toán tại sân" to "Tôi sẽ thanh toán sau". */
+  requiresPrepayment?: boolean;
+  /** PR67 — hours from registered_at after which the auto-cancel cron
+   *  flips the registration. Used to render the deadline label. */
+  prepaymentDeadlineHours?: number;
+  /** PR67 — ISO timestamp of registration. The deadline label =
+   *  registeredAt + prepaymentDeadlineHours. */
+  registeredAt?: string;
 }
 
 async function copyToClipboard(text: string, successMsg: string) {
@@ -68,10 +78,40 @@ async function copyToClipboard(text: string, successMsg: string) {
   }
 }
 
-export function QRPaymentStep({ order, magicToken, onClaimed, onSkip, zaloGroupUrl, onClose }: Props) {
+export function QRPaymentStep({
+  order,
+  magicToken,
+  onClaimed,
+  onSkip,
+  zaloGroupUrl,
+  onClose,
+  requiresPrepayment = false,
+  prepaymentDeadlineHours,
+  registeredAt,
+}: Props) {
   const { t, language } = useI18n();
   const pay = t.socialEvents.payment;
   const [submitting, setSubmitting] = useState(false);
+
+  // PR67 — deadline label for the warning banner. Formats in
+  // Asia/Ho_Chi_Minh so the player sees their local clock.
+  const deadlineLabel = (() => {
+    if (!requiresPrepayment || !prepaymentDeadlineHours) return null;
+    const baseMs = registeredAt
+      ? new Date(registeredAt).getTime()
+      : Date.now();
+    if (!Number.isFinite(baseMs)) return null;
+    const deadline = new Date(baseMs + prepaymentDeadlineHours * 60 * 60 * 1000);
+    return deadline.toLocaleString(language === "vi" ? "vi-VN" : "en-GB", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  })();
 
   const bank = findBankByCode(order.bank.code);
   const bankLabel = bank
@@ -177,6 +217,22 @@ export function QRPaymentStep({ order, magicToken, onClaimed, onSkip, zaloGroupU
 
   return (
     <div className="space-y-4">
+      {/* PR67 — prepayment warning. Sits at the very top so it's the
+          first thing the player sees before the QR + bank details. */}
+      {requiresPrepayment && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-400/50 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-semibold">{pay.prepaymentWarningTitle}</p>
+            <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-200">
+              {pay.prepaymentWarningDescription
+                .replace("{hours}", String(prepaymentDeadlineHours ?? 12))
+                .replace("{deadline}", deadlineLabel ?? "—")}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="text-center">
         <p className="text-sm text-muted-foreground">{pay.amountLabel}</p>
         <p className="font-mono text-3xl font-semibold">
@@ -261,7 +317,10 @@ export function QRPaymentStep({ order, magicToken, onClaimed, onSkip, zaloGroupU
           disabled={submitting}
           className="w-full"
         >
-          {pay.skipButton}
+          {/* PR67 — when prepayment is required, the "skip" button is
+              semantically "I'll pay later" (auto-cancel will fire if
+              they don't follow through). */}
+          {requiresPrepayment ? pay.payLater : pay.skipButton}
         </Button>
       </div>
     </div>

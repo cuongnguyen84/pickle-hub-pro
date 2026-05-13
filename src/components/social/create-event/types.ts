@@ -31,6 +31,9 @@ export interface FormState {
   bank_code: string;
   bank_account_number: string;
   bank_account_name: string;
+  /** PR67 — prepayment toggle + deadline window (hours). */
+  requires_prepayment: boolean;
+  prepayment_deadline_hours: number;
 }
 
 export type FormErrors = Partial<Record<keyof FormState, string | null>>;
@@ -50,6 +53,8 @@ export const initialForm: FormState = {
   bank_code: "",
   bank_account_number: "",
   bank_account_name: "",
+  requires_prepayment: false,
+  prepayment_deadline_hours: 12,
 };
 
 /**
@@ -186,6 +191,18 @@ export function validateField(
       if (/\d/.test(v)) return create.errorAccountName;
       return null;
     }
+    case "requires_prepayment":
+      return null;
+    case "prepayment_deadline_hours": {
+      // Only meaningful for paid events with the toggle on. Otherwise
+      // any value is fine (the column has a DEFAULT 12 backstop).
+      if (form.price_vnd <= 0 || !form.requires_prepayment) return null;
+      const n = Number(value);
+      if (!Number.isInteger(n) || n < 1 || n > 168) {
+        return create.errorPrepaymentDeadlineRange;
+      }
+      return null;
+    }
   }
 }
 
@@ -204,6 +221,8 @@ const STEP1_FIELDS: ReadonlyArray<keyof FormState> = [
 
 const STEP2_FIELDS: ReadonlyArray<keyof FormState> = [
   "price_vnd",
+  "requires_prepayment",
+  "prepayment_deadline_hours",
   "bank_code",
   "bank_account_number",
   "bank_account_name",

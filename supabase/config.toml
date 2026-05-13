@@ -206,3 +206,22 @@ verify_jwt = false
 
 [functions.request-recovery-link]
 verify_jwt = false
+
+# ─── Social Events MVP (PR67 prepayment auto-cancel) ───────────────────────
+# Hourly cron. Cancels paid-event registrations where the player hasn't
+# claimed payment within event.prepayment_deadline_hours of registering.
+# verify_jwt=false at the gateway; the function itself enforces
+# `x-cron-secret` header matches the CRON_SECRET env var.
+# Required secret:
+#   CRON_SECRET — random string; same value used in the pg_cron http_post
+#
+# Cron registration (manual via Supabase Dashboard → Database → Cron jobs):
+#   schedule: '0 * * * *'  (every hour at :00)
+#   SQL:
+#     SELECT net.http_post(
+#       url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/auto-cancel-unpaid-registrations',
+#       headers := jsonb_build_object('x-cron-secret', '<CRON_SECRET>')
+#     );
+
+[functions.auto-cancel-unpaid-registrations]
+verify_jwt = false
