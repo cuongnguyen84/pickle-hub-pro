@@ -9,7 +9,7 @@
 //                   returned and we deep-link straight to /dang-ky/:token
 // ============================================================================
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Phone, MessageCircle, Mail, ShieldCheck, ExternalLink } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -53,6 +53,17 @@ export default function RecoveryRegistration() {
   const [phone, setPhone] = useState("");
   const [result, setResult] = useState<ResultState>({ kind: "idle" });
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Stable callback refs for TurnstileWidget. Inline closures would
+  // re-create each render and (if the widget were ever wired to depend
+  // on them) cause a remount loop. Belt-and-braces — the widget now
+  // routes callbacks through refs, but keeping these stable here means
+  // future debugging stays clean.
+  const handleCaptchaVerify = useCallback((token: string) => {
+    setCaptchaToken(token);
+  }, []);
+  const handleCaptchaError = useCallback(() => {
+    setCaptchaToken(null);
+  }, []);
   const [solvingCaptcha, setSolvingCaptcha] = useState(false);
 
   const normalized = normalizeVietnamPhone(phone);
@@ -215,8 +226,8 @@ export default function RecoveryRegistration() {
                   </div>
                 </div>
                 <TurnstileWidget
-                  onVerify={(token) => setCaptchaToken(token)}
-                  onError={() => setCaptchaToken(null)}
+                  onVerify={handleCaptchaVerify}
+                  onError={handleCaptchaError}
                 />
                 <button
                   type="button"
