@@ -6,7 +6,7 @@
 // ============================================================================
 
 import { Link, useParams } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, ListChecks } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,33 +15,63 @@ import { useI18n } from "@/i18n";
 import { useClub, type ClubEventRow } from "@/hooks/useClub";
 import { formatEventDateRange, interp } from "@/lib/social-events/format";
 import { EntityNotFound } from "@/components/EntityNotFound";
+import { useClubOwnership } from "@/hooks/useClubOwnership";
 
-function EventCard({ event, lang }: { event: ClubEventRow; lang: "vi" | "en" }) {
+function EventCard({
+  event,
+  lang,
+  isOrganizer,
+  manageLabel,
+}: {
+  event: ClubEventRow;
+  lang: "vi" | "en";
+  isOrganizer: boolean;
+  manageLabel: string;
+}) {
   const title =
     lang === "vi"
       ? event.title_vi
       : (event.title_en && event.title_en.trim().length > 0 ? event.title_en : event.title_vi);
   return (
     <Card className="p-4 transition hover:shadow-md">
-      <Link
-        to={`/su-kien/${event.slug}`}
-        style={{ textDecoration: "none", color: "inherit", display: "block" }}
-      >
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
-          {event.status === "cancelled" && (
-            <Badge variant="destructive">{lang === "vi" ? "Đã hủy" : "Cancelled"}</Badge>
-          )}
-          {event.visibility === "club_only" && (
-            <Badge variant="outline">{lang === "vi" ? "Chỉ thành viên" : "Members only"}</Badge>
-          )}
-        </div>
-        <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>{title}</h3>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, fontSize: 13, color: "var(--tl-fg-3)" }}>
-          <span><Calendar className="inline h-3.5 w-3.5" /> {formatEventDateRange(event.start_at, event.end_at, lang)}</span>
-          {event.location_text && <span><MapPin className="inline h-3.5 w-3.5" /> {event.location_text}</span>}
-          <span><Users className="inline h-3.5 w-3.5" /> {event.max_players}</span>
-        </div>
-      </Link>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <Link
+          to={`/su-kien/${event.slug}`}
+          style={{ textDecoration: "none", color: "inherit", display: "block", flex: 1, minWidth: 0 }}
+        >
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+            {event.status === "cancelled" && (
+              <Badge variant="destructive">{lang === "vi" ? "Đã hủy" : "Cancelled"}</Badge>
+            )}
+            {event.visibility === "club_only" && (
+              <Badge variant="outline">{lang === "vi" ? "Chỉ thành viên" : "Members only"}</Badge>
+            )}
+          </div>
+          <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>{title}</h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, fontSize: 13, color: "var(--tl-fg-3)" }}>
+            <span><Calendar className="inline h-3.5 w-3.5" /> {formatEventDateRange(event.start_at, event.end_at, lang)}</span>
+            {event.location_text && <span><MapPin className="inline h-3.5 w-3.5" /> {event.location_text}</span>}
+            <span><Users className="inline h-3.5 w-3.5" /> {event.max_players}</span>
+          </div>
+        </Link>
+        {/* PR63 — organizer-only entry point into the registrations
+            roster. Hidden from players so the public card stays clean
+            for the 99% case. */}
+        {isOrganizer && (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1"
+            title={manageLabel}
+          >
+            <Link to={`/su-kien/${event.slug}/danh-sach`} aria-label={manageLabel}>
+              <ListChecks className="h-4 w-4" />
+              <span className="hidden sm:inline">{manageLabel}</span>
+            </Link>
+          </Button>
+        )}
+      </div>
     </Card>
   );
 }
@@ -50,6 +80,12 @@ export default function ClubLanding() {
   const { slug } = useParams<{ slug: string }>();
   const { t, language } = useI18n();
   const { data, isLoading } = useClub(slug);
+  // PR63 — same gate used by /clb/:slug/quan-ly so an admin or the
+  // CLB creator sees a Manage entry on each event card. Anonymous
+  // viewers + non-owners get `denied` / `anonymous` and don't.
+  const permission = useClubOwnership(slug);
+  const isOrganizer = permission.state === "allowed";
+  const manageLabel = t.socialEvents.club.manageEventCta;
 
   if (isLoading) {
     return (
@@ -126,7 +162,13 @@ export default function ClubLanding() {
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
               {upcoming.map((e) => (
-                <EventCard key={e.id} event={e} lang={language} />
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  lang={language}
+                  isOrganizer={isOrganizer}
+                  manageLabel={manageLabel}
+                />
               ))}
             </div>
           )}
@@ -139,7 +181,13 @@ export default function ClubLanding() {
             </h2>
             <div style={{ display: "grid", gap: 12 }}>
               {past.slice(0, 10).map((e) => (
-                <EventCard key={e.id} event={e} lang={language} />
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  lang={language}
+                  isOrganizer={isOrganizer}
+                  manageLabel={manageLabel}
+                />
               ))}
             </div>
           </section>

@@ -1818,6 +1818,7 @@ export interface Translations {
       eventsLabel: string;
       notFound: string;
       notFoundBody: string;
+      manageEventCta: string;
     };
     // PR3 — organizer surfaces
     create: {
@@ -4186,6 +4187,7 @@ export const vi: Translations = {
       notFound: "Không tìm thấy CLB",
       notFoundBody:
         "Liên kết CLB có thể đã thay đổi hoặc bị xóa. Quay lại trang chủ để khám phá thêm.",
+      manageEventCta: "Quản lý",
     },
     create: {
       pageTitle: "Tạo sự kiện mới",

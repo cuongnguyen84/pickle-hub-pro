@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState, useCallback, useRef, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { useI18n } from "@/i18n";
@@ -68,6 +68,46 @@ const localizedPath = (path: string, language: "vi" | "en"): string =>
 
 export const TheLineLayout = ({ title, description, noindex = false, active, children }: TheLineLayoutProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  // PR63 — universal back button. iOS users in the Capacitor wrapper
+  // don't have a browser back gesture by default (true edge-swipe
+  // requires an AppDelegate.swift edit — see capacitor.config.ts
+  // note). Android has a hardware back button but a visible chrome
+  // affordance is still helpful. Web users always get this when
+  // they navigated in via a link rather than typing the URL.
+  //
+  // Hidden on root pages so the brand mark stays the leftmost item
+  // when you can't actually go anywhere back. The history-length
+  // check guards against the "fresh tab landing directly on a deep
+  // link" case where navigate(-1) would leave the SPA.
+  const ROOT_PATHS = new Set<string>([
+    "/",
+    "/vi",
+    "/clubs",
+    "/vi/clubs",
+    "/su-kien",
+    "/vi/su-kien",
+    "/live",
+    "/vi/live",
+    "/tournaments",
+    "/vi/tournaments",
+    "/videos",
+    "/vi/videos",
+    "/feed",
+    "/vi/feed",
+    "/blog",
+    "/vi/blog",
+    "/news",
+    "/vi/news",
+    "/forum",
+    "/vi/forum",
+    "/search",
+    "/vi/search",
+  ]);
+  const hasHistory =
+    typeof window !== "undefined" && window.history.length > 1;
+  const onRootPath = ROOT_PATHS.has(location.pathname);
+  const showBackButton = hasHistory && !onRootPath;
   const { language, setLanguage } = useI18n();
   const { user, signOut } = useAuth();
   // Pulled here purely for the "View my profile" dropdown link. The
@@ -201,6 +241,31 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
       <div className="tl-scroll">
       <nav className="tl-nav">
+        {/* PR63 — back affordance. Only shown when there's somewhere
+            to go back to and we're not on a root listing page. */}
+        {showBackButton && (
+          <button
+            type="button"
+            className="tl-icon-btn tl-back-btn"
+            aria-label={language === "vi" ? "Quay lại" : "Back"}
+            title={language === "vi" ? "Quay lại" : "Back"}
+            onClick={() => navigate(-1)}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              width="20"
+              height="20"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+        )}
         <Link to={language === "vi" ? "/vi" : "/"} className="tl-brand" aria-label="The PickleHub home">
           <span className="tl-brand-mark" aria-hidden="true" />
           <span className="tl-brand-text">

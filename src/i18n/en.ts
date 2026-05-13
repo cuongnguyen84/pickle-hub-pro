@@ -1826,6 +1826,7 @@ export const en: Translations = {
       notFound: "Club not found",
       notFoundBody:
         "The club link may have changed or been removed. Return to the home page to discover more.",
+      manageEventCta: "Manage",
     },
     create: {
       pageTitle: "Create new event",

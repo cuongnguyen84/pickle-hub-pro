@@ -2518,6 +2518,14 @@
   [data-theme="the-line"] .tl-menu-btn { display: inline-flex; }
   [data-theme="the-line"] .tl-nav-search { display: none; }
 }
+
+/* PR63 — back affordance lives at the leftmost edge of the nav.
+   margin-right pushes the brand mark a little so they don't crowd. */
+[data-theme="the-line"] .tl-back-btn {
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+[data-theme="the-line"] .tl-back-btn svg { width: 20px; height: 20px; }
 @media (max-width: 640px) {
   [data-theme="the-line"] .tl-nav-right .tl-nav-btn { display: none; }
 }
