@@ -16,6 +16,7 @@
 
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Upload, X } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ function slugify(input: string): string {
 export default function CreateClub() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
   const create = t.socialEvents.createClub;
   const { upload, uploading, error: uploadErr } = useClubLogoUpload();
@@ -192,6 +194,18 @@ export default function CreateClub() {
         toast({ title: t.common.error, variant: "destructive" });
         return;
       }
+
+      // PR62 v2 — refetchType: 'all' is required because App.tsx sets
+      // refetchOnMount: false globally. The avatar dropdown's
+      // "CLB của tôi" query stays mounted across navigation so the
+      // default active-observer refetch worked for it; the public
+      // /clubs page is NOT mounted while the user is on CreateClub,
+      // so its observer is inactive when invalidate fires and the
+      // refetch never happens. refetchType: 'all' fixes both branches.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["my-clubs", user.id], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["clubs-list"], refetchType: "all" }),
+      ]);
 
       toast({ title: create.successTitle, description: create.successBody });
       navigate(`/clb/${slug}/quan-ly`);

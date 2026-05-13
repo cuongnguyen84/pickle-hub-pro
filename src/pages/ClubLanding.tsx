@@ -6,7 +6,7 @@
 // ============================================================================
 
 import { Link, useParams } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users, ListChecks } from "lucide-react";
+import { AlertTriangle, Loader2, MapPin, Calendar, Users, ListChecks } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -111,6 +111,25 @@ export default function ClubLanding() {
       active="events"
     >
       <div className="tl-shell" style={{ paddingBottom: 60, maxWidth: 880, margin: "0 auto" }}>
+        {/* PR62 — archived banner. Public page stays reachable via
+            direct link so people holding deep links don't 404, but a
+            top-aligned amber notice makes the soft-archived state
+            obvious so nobody tries to register for events that are
+            no longer accepting new sign-ups. */}
+        {club.archived_at && (
+          <div
+            className="mb-4 flex items-start gap-3 rounded-md border border-amber-400/50 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100"
+            role="alert"
+          >
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-semibold">{t.socialEvents.club.archivedHeading}</p>
+              <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-200">
+                {t.socialEvents.club.archivedBody}
+              </p>
+            </div>
+          </div>
+        )}
         <header className="tl-page-head">
           <div className="kicker">
             ◆ {language === "vi" ? "CLB pickleball" : "Pickleball club"}

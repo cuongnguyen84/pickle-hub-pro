@@ -1827,6 +1827,9 @@ export const en: Translations = {
       notFoundBody:
         "The club link may have changed or been removed. Return to the home page to discover more.",
       manageEventCta: "Manage",
+      archivedHeading: "This club has been archived",
+      archivedBody:
+        "It's no longer accepting new event registrations. Past events remain visible; contact admin for more information.",
     },
     create: {
       pageTitle: "Create new event",

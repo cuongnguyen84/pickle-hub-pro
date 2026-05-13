@@ -386,7 +386,11 @@ export function RegistrationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      {/* PR62 polish — success state now stacks 4 cards (reference
+          code + save-link + recovery + footer). On md+ widen the
+          modal so the URL + memo display don't fight the column
+          width. Mobile (sm:max-w-md ≈ 448px) is unchanged. */}
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md md:max-w-lg">
         <DialogHeader>
           <DialogTitle>{reg.modalTitle}</DialogTitle>
           <DialogDescription>
@@ -594,7 +598,7 @@ export function RegistrationModal({
                   {t.socialEvents.payment.referenceCodeLabel}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
-                  <code className="flex-1 truncate rounded-md bg-background px-3 py-2 font-mono text-lg font-semibold text-primary">
+                  <code className="flex-1 break-all rounded-md bg-background px-3 py-2 font-mono text-lg font-semibold text-primary">
                     {paymentOrder.reference_code}
                   </code>
                   <Button
@@ -626,7 +630,7 @@ export function RegistrationModal({
                   {t.socialEvents.playerRegistration.saveLinkBody}
                 </p>
                 <div className="mt-3 flex items-center gap-2">
-                  <code className="flex-1 truncate rounded-md bg-background px-2 py-1.5 font-mono text-xs">
+                  <code className="flex-1 break-all rounded-md bg-background px-2 py-1.5 font-mono text-xs">
                     {`${window.location.origin}/dang-ky/${success.magic_token}`}
                   </code>
                 </div>

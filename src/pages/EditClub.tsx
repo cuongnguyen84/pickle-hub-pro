@@ -11,6 +11,7 @@
 
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save, Trash2, Upload, X } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export default function EditClub() {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const permission = useClubOwnership(slug);
   const { data: clubData } = useClub(slug);
   const { upload, uploading, error: uploadErr } = useClubLogoUpload();
@@ -121,6 +123,16 @@ export default function EditClub() {
         return;
       }
 
+      // PR62 v2 — refetchType: 'all' required because App.tsx sets
+      // refetchOnMount: false globally. See CreateClub for the
+      // detailed rationale. Prefix invalidation handles the
+      // user-scoped my-clubs key without needing user.id here.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["club", clubData.club.slug], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["my-clubs"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["clubs-list"], refetchType: "all" }),
+      ]);
+
       toast({ title: edit.successTitle, description: edit.successBody });
       navigate(`/clb/${clubData.club.slug}/quan-ly`);
     } finally {
@@ -142,6 +154,16 @@ export default function EditClub() {
         toast({ title: t.common.error, description: archErr.message, variant: "destructive" });
         return;
       }
+      // PR62 v2 — refetchType: 'all' so the dropdown + public listing
+      // drop the archived club immediately (inactive observers refetch
+      // too) and the public /clb/:slug page swaps in the archived
+      // banner on next visit even though refetchOnMount is false.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["club", clubData.club.slug], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["my-clubs"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["clubs-list"], refetchType: "all" }),
+      ]);
+
       toast({ title: edit.archiveSuccessTitle, description: edit.archiveSuccessBody });
       navigate("/clubs");
     } finally {
