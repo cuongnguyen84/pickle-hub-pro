@@ -7,11 +7,17 @@
 -- with 4 clubs for the user.
 --
 -- Fix: collapse the gate + INSERT into a single SECURITY DEFINER function
--- that takes a row-level lock on the user's existing clubs (SELECT ...
--- FOR UPDATE) so a second concurrent transaction blocks behind the first
--- and re-reads the (now updated) count. The function raises a tagged
+-- that holds a per-user advisory lock for the duration of the txn so a
+-- parallel session blocks until we commit. The function raises a tagged
 -- exception "CLUB_CAP_EXCEEDED" which the client maps to a user-friendly
 -- toast.
+--
+-- An earlier draft used `SELECT COUNT(*) ... FOR UPDATE`, but Postgres
+-- rejects FOR UPDATE on aggregate queries ("FOR UPDATE is not allowed
+-- with aggregate functions"). Splitting it into PERFORM ... FOR UPDATE
+-- + a separate SELECT COUNT also doesn't work for fresh users (zero
+-- rows = nothing to lock = phantom-row race). Advisory lock works
+-- regardless of whether any rows exist and is auto-released at txn end.
 --
 -- Note: PR57 will refresh this RPC to also exclude archived clubs (mirror
 -- of the user_club_count update there) — the archived_at column doesn't
@@ -41,18 +47,16 @@ BEGIN
     RAISE EXCEPTION 'AUTH_REQUIRED' USING ERRCODE = '42501';
   END IF;
 
-  -- Row-lock the user's existing clubs so a parallel session blocks on
-  -- the same set of rows until we commit. The FOR UPDATE doesn't strictly
-  -- need anything to lock when count is 0; PostgreSQL still serialises
-  -- the predicate against concurrent inserts that satisfy `created_by =
-  -- v_user_id` because of the (implicit) gap lock under READ COMMITTED.
-  -- A clean atomic alternative would be a unique partial index on
-  -- (created_by) WHERE count<3 — but Postgres has no count-based index,
-  -- hence the explicit lock.
+  -- Serialise concurrent submits from the same user with a per-user
+  -- advisory lock — auto-released at txn end. See header comment for
+  -- why FOR UPDATE doesn't fit here.
+  PERFORM pg_advisory_xact_lock(
+    hashtext('club_cap:' || v_user_id::text)::bigint
+  );
+
   SELECT COUNT(*) INTO v_count
   FROM public.clubs
-  WHERE created_by = v_user_id
-  FOR UPDATE;
+  WHERE created_by = v_user_id;
 
   IF v_count >= 3 THEN
     RAISE EXCEPTION 'CLUB_CAP_EXCEEDED' USING ERRCODE = 'P0001';
