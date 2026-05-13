@@ -449,24 +449,79 @@ export default function SocialEventRoster() {
                     {row.self_rated_level != null ? row.self_rated_level.toFixed(1) : "—"}
                   </TableCell>
                   <TableCell>
-                    {/* TheLine tl-format-badge — mono caps + outline pill. */}
-                    {row.status === "checked_in" ? (
-                      <span
-                        className="tl-format-badge"
-                        style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
-                      >
-                        {manage.statsCheckedIn}
-                      </span>
-                    ) : row.status === "no_show" ? (
-                      <span
-                        className="tl-format-badge"
-                        style={{ borderColor: "var(--tl-live)", color: "var(--tl-live)" }}
-                      >
-                        {language === "vi" ? "Vắng" : "No show"}
-                      </span>
-                    ) : (
-                      <span className="tl-format-badge">{manage.statsRegistered}</span>
-                    )}
+                    {/* PR63 follow-up — mobile (<sm) hides the Payment +
+                        Reference + Transfer columns entirely. Without
+                        those signals the organizer can't tell who paid
+                        at the venue. Stack a compact column of badges
+                        inside the always-visible Status cell so the
+                        info travels with the row on narrow screens.
+                        Desktop is unchanged. */}
+                    <div className="flex flex-col gap-1">
+                      {/* Status badge — same as before. */}
+                      {row.status === "checked_in" ? (
+                        <span
+                          className="tl-format-badge w-fit"
+                          style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
+                        >
+                          {manage.statsCheckedIn}
+                        </span>
+                      ) : row.status === "no_show" ? (
+                        <span
+                          className="tl-format-badge w-fit"
+                          style={{ borderColor: "var(--tl-live)", color: "var(--tl-live)" }}
+                        >
+                          {language === "vi" ? "Vắng" : "No show"}
+                        </span>
+                      ) : (
+                        <span className="tl-format-badge w-fit">{manage.statsRegistered}</span>
+                      )}
+
+                      {/* Mobile-only payment badge. Hidden once the
+                          Payment column comes back at sm+. */}
+                      {row.payment_status === "paid" ? (
+                        <span
+                          className="tl-format-badge w-fit sm:hidden"
+                          style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
+                        >
+                          <Banknote className="mr-1 inline h-3 w-3" /> {manage.statsPaid}
+                        </span>
+                      ) : (
+                        <span className="tl-format-badge w-fit sm:hidden">
+                          {language === "vi" ? "Chưa thanh toán" : "Not paid"}
+                        </span>
+                      )}
+
+                      {/* Mobile-only transfer badge. Hidden once the
+                          Transfer status column comes back at md+. */}
+                      {(() => {
+                        const order = ordersByRegistration.get(row.id);
+                        if (!order) return null;
+                        if (order.player_claimed_paid) {
+                          return (
+                            <span
+                              className="tl-format-badge w-fit md:hidden"
+                              style={{
+                                borderColor: "var(--tl-green)",
+                                color: "var(--tl-green)",
+                              }}
+                            >
+                              {roster.transferClaimed}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span
+                            className="tl-format-badge w-fit md:hidden"
+                            style={{
+                              borderColor: "hsl(38 92% 50%)",
+                              color: "hsl(38 92% 50%)",
+                            }}
+                          >
+                            {roster.transferNotClaimed}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     {row.payment_status === "paid" ? (
