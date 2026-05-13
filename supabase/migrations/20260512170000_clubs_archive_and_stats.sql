@@ -29,8 +29,17 @@ COMMENT ON COLUMN public.clubs.archived_at IS
 -- ─── 2. club_stats view ────────────────────────────────────────────────────
 -- Per-club aggregates the organizer settings page renders. Includes
 -- archived clubs so the owner can still see them.
+--
+-- DROP first (instead of CREATE OR REPLACE) because Postgres rejects
+-- column-rename / column-add via REPLACE — see the same fix on
+-- club_listing below for the actual root cause. Doing it consistently
+-- here keeps replays idempotent even if the view shape changes again.
+-- Plain DROP (no CASCADE) — if anything depends on this view we want
+-- the migration to fail loudly so we can audit.
 
-CREATE OR REPLACE VIEW public.club_stats AS
+DROP VIEW IF EXISTS public.club_stats;
+
+CREATE VIEW public.club_stats AS
 SELECT
   c.id,
   c.slug,
@@ -157,8 +166,19 @@ GRANT  EXECUTE ON FUNCTION public.create_club_with_cap_check(TEXT, TEXT, TEXT, T
 -- ─── 4. club_listing — exclude archived + expose creator profile info ────
 -- The /clubs cards link to the creator's profile so viewers can poke at
 -- their match history. Joining profiles here keeps the cards single-query.
+--
+-- DROP first instead of CREATE OR REPLACE: PR55's view exposes 9
+-- columns ending in upcoming_events; this version inserts 3 new
+-- profile-join columns before upcoming_events, which Postgres rejects
+-- under CREATE OR REPLACE VIEW ("cannot change name of view column
+-- ... to ..."). DROP + recreate sidesteps the constraint. Plain DROP
+-- (no CASCADE) — if anything depends on this view we want the
+-- migration to fail loudly. ClubsList.tsx is the only known reader at
+-- the time of writing.
 
-CREATE OR REPLACE VIEW public.club_listing AS
+DROP VIEW IF EXISTS public.club_listing;
+
+CREATE VIEW public.club_listing AS
 SELECT
   c.id,
   c.slug,
