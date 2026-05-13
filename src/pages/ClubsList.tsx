@@ -119,7 +119,9 @@ export default function ClubsList() {
       locationText={row.location_text}
       upcomingEvents={row.upcoming_events}
       creatorSlug={row.creator_profile_slug ?? row.creator_username}
-      creatorDisplayName={row.creator_display_name}
+      // Codex review: fall back to @username when display_name is empty
+      // so the "Tạo bởi …" label never renders blank.
+      creatorDisplayName={row.creator_display_name ?? row.creator_username}
     />
   );
 
