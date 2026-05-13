@@ -88,8 +88,18 @@ GRANT SELECT ON public.club_listing TO authenticated;
 -- folder. Mirrors the avatars bucket convention. Bucket creation is
 -- idempotent via ON CONFLICT.
 
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('clubs-logos', 'clubs-logos', true)
+-- Bucket config (Codex bug 3 fix folded back into the original migration
+-- so fresh deploys get the limits without needing 20260512160200 to
+-- catch up). file_size_limit = 2 MB, MIME allow-list matches the client
+-- hook in useClubLogoUpload.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'clubs-logos',
+  'clubs-logos',
+  true,
+  2097152,
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
 ON CONFLICT (id) DO NOTHING;
 
 -- RLS policies on storage.objects. The path convention is

@@ -33,6 +33,19 @@ interface ClubListingRow {
 
 const PAGE_SIZE = 24;
 
+// Codex bug 2: PostgREST's `.or()` parser uses commas and parens as
+// argument separators, so a user typing "District 1, HCMC" would break
+// the OR expression and the query silently returns 0 rows. Strip the
+// reserved characters before interpolating into the filter. Also
+// neutralise the SQL ILIKE wildcards % and _ so a literal "100%" search
+// doesn't match everything.
+function escapePostgrestSearch(input: string): string {
+  return input
+    .replace(/[,.()*"%_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function ClubsList() {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -61,10 +74,14 @@ export default function ClubsList() {
         .order("created_at", { ascending: false })
         .limit(PAGE_SIZE);
       if (search.length > 0) {
-        // ILIKE prefix match on either name or location. The GIN indexes
-        // from migration 16000 keep this cheap even with a few thousand
-        // rows.
-        q = q.or(`name.ilike.%${search}%,location_text.ilike.%${search}%`);
+        const safe = escapePostgrestSearch(search);
+        if (safe.length > 0) {
+          // ILIKE prefix match on either name or location. The GIN
+          // indexes from migration 16000 keep this cheap even with a
+          // few thousand rows. `safe` has commas / parens / quotes
+          // stripped so the .or() expression parses cleanly.
+          q = q.or(`name.ilike.%${safe}%,location_text.ilike.%${safe}%`);
+        }
       }
       const { data, error } = await q;
       if (error) {

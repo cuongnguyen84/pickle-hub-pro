@@ -139,29 +139,9 @@ export default function CreateClub() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      // Spam mitigation — server-side authoritative check.
-      const { data: count, error: countErr } = await supabase.rpc(
-        "user_club_count",
-        { p_user_id: user.id },
-      );
-      if (countErr) {
-        console.error("user_club_count error", countErr);
-        toast({ title: t.common.error, description: countErr.message, variant: "destructive" });
-        return;
-      }
-      const userClubs = typeof count === "number" ? count : 0;
-      if (userClubs >= MAX_CLUBS_PER_USER) {
-        toast({
-          title: create.tooManyClubsTitle,
-          description: create.tooManyClubsBody.replace("{max}", String(MAX_CLUBS_PER_USER)),
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Optional logo upload BEFORE insert so we can persist logo_url
-      // atomically with the club row. A failed upload is non-fatal —
-      // we toast a warning and proceed with logo_url = null.
+      // Optional logo upload BEFORE the cap-check + INSERT so we can
+      // persist logo_url atomically with the club row. A failed upload
+      // is non-fatal — toast a warning and proceed with logo_url = null.
       let logoUrl: string | null = null;
       if (logoFile) {
         const result = await upload(logoFile);
@@ -176,22 +156,40 @@ export default function CreateClub() {
         }
       }
 
-      const { error: insErr } = await supabase.from("clubs").insert({
-        slug,
-        name: name.trim(),
-        description: description.trim() === "" ? null : description.trim(),
-        location_text: location.trim(),
-        logo_url: logoUrl,
-        created_by: user.id,
-      });
-      if (insErr) {
-        if (insErr.message.toLowerCase().includes("clubs_slug")) {
+      // Codex bug 1 fix: atomic cap-check + INSERT via SECURITY DEFINER
+      // RPC. Replaces the racy two-step user_club_count + INSERT path
+      // that let two concurrent submits both pass a stale count = 2.
+      const { data: newId, error: rpcErr } = await supabase.rpc(
+        "create_club_with_cap_check",
+        {
+          p_slug: slug,
+          p_name: name.trim(),
+          p_description: description.trim() === "" ? null : description.trim(),
+          p_location_text: location.trim(),
+          p_logo_url: logoUrl,
+        },
+      );
+      if (rpcErr) {
+        const msg = (rpcErr.message ?? "").toUpperCase();
+        if (msg.includes("CLUB_CAP_EXCEEDED")) {
+          toast({
+            title: create.tooManyClubsTitle,
+            description: create.tooManyClubsBody.replace("{max}", String(MAX_CLUBS_PER_USER)),
+            variant: "destructive",
+          });
+          return;
+        }
+        if (msg.includes("CLUBS_SLUG") || msg.includes("DUPLICATE KEY")) {
           setSlugTaken(true);
           toast({ title: create.slugTaken, variant: "destructive" });
           return;
         }
-        console.error("CreateClub insert error", insErr);
-        toast({ title: t.common.error, description: insErr.message, variant: "destructive" });
+        console.error("create_club_with_cap_check error", rpcErr);
+        toast({ title: t.common.error, description: rpcErr.message, variant: "destructive" });
+        return;
+      }
+      if (!newId) {
+        toast({ title: t.common.error, variant: "destructive" });
         return;
       }
 
