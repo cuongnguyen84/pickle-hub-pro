@@ -348,6 +348,25 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaDescriptionEn: "DUPR explained: the global pickleball rating system used by PPA Tour, MLP, USA Pickleball, and Pickleball World Cup. How it works, who runs it, and why Vietnamese players need it.",
     metaDescriptionVi: "DUPR — hệ thống xếp hạng pickleball toàn cầu dùng bởi PPA Tour, MLP, USA Pickleball, Pickleball World Cup. Cách hoạt động, ai điều hành và vì sao người chơi VN cần nó.",
   },
+  {
+    slug: "dupr-vietnam-partnership-ta-pickleball-thepicklehub",
+    publishedDate: "2026-05-13",
+    updatedDate: "2026-05-13",
+    author: "Cuong Nguyen",
+    tags: ["dupr", "dupr vietnam", "ta pickleball", "thepicklehub", "pickleball vietnam", "partnership", "pickleball rating", "asia pickleball"],
+    ctaPath: "/blog/what-is-dupr-pickleball-rating-system",
+    ctaLabel: { en: "Read: What Is DUPR? The Global Rating System Explained", vi: "Đọc tiếp: DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu" },
+    heroImage: {
+      src: "/images/blog/dupr-ta-picklehub-partnership-hero.webp",
+      alt: "First step together — preliminary partnership between DUPR (Dynamic Universal Pickleball Rating), TA Pickleball, and ThePickleHub.net to bring the global pickleball rating system to the Vietnamese pickleball community"
+    },
+    titleEn: "DUPR x TA Pickleball x ThePickleHub: A Preliminary Partnership for Vietnamese Pickleball",
+    titleVi: "DUPR x TA Pickleball x ThePickleHub: Thỏa thuận sơ bộ cho cộng đồng pickleball Việt Nam",
+    metaTitleEn: "DUPR Vietnam Partnership Announced | TA Pickleball x ThePickleHub First Step",
+    metaTitleVi: "DUPR Việt Nam: Thỏa thuận sơ bộ với TA Pickleball x ThePickleHub | Bước đầu tiên",
+    metaDescriptionEn: "DUPR, TA Pickleball, and ThePickleHub have signed a preliminary partnership to bring the global pickleball rating system to Vietnam. First step of a three-phase roadmap.",
+    metaDescriptionVi: "DUPR, TA Pickleball và ThePickleHub vừa ký thỏa thuận sơ bộ đưa hệ thống xếp hạng pickleball toàn cầu vào Việt Nam. Bước đầu của lộ trình ba giai đoạn.",
+  },
 ];
 
 export const blogSlugs: string[] = blogMetadata.map((p) => p.slug);
