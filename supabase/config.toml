@@ -157,6 +157,10 @@ verify_jwt = false
 
 [functions.phone-otp-send]
 verify_jwt = false
+# PR61: tries Zalo ZNS first then falls back to eSMS. Extra secrets:
+#   ZALO_TEMPLATE_ID_OTP   — approved ZNS OTP template id (1-2 day review)
+# When ZALO_TEMPLATE_ID_OTP is unset the function silently uses eSMS only,
+# so the feature lands ahead of Zalo OA template approval without breaking.
 
 [functions.phone-otp-verify]
 verify_jwt = false

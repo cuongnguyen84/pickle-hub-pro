@@ -1787,8 +1787,11 @@ export interface Translations {
       sendOtp: string;
       otpLabel: string;
       otpHint: string;
+      otpHintZalo: string;
+      otpHintSms: string;
       otpResend: string;
       otpResendIn: string;
+      otpResendViaSms: string;
       otpInvalid: string;
       otpExpired: string;
       tooManyAttempts: string;
@@ -4148,8 +4151,13 @@ export const vi: Translations = {
       sendOtp: "Gửi mã OTP",
       otpLabel: "Mã OTP 6 chữ số",
       otpHint: "Đã gửi mã tới {phone}. Mã hết hạn sau 5 phút.",
+      otpHintZalo:
+        "Đã gửi mã qua Zalo đến {phone}. Mở app Zalo, kiểm tra tin nhắn từ ThePickleHub OA. Mã hết hạn sau 5 phút.",
+      otpHintSms:
+        "Đã gửi mã qua SMS đến {phone}. Mã hết hạn sau 5 phút.",
       otpResend: "Gửi lại mã",
       otpResendIn: "Gửi lại sau {seconds}s",
+      otpResendViaSms: "Không nhận được Zalo? Gửi lại qua SMS →",
       otpInvalid: "Mã OTP không đúng",
       otpExpired: "Mã OTP đã hết hạn — vui lòng yêu cầu mã mới",
       tooManyAttempts: "Sai mã quá nhiều lần — vui lòng yêu cầu mã mới",

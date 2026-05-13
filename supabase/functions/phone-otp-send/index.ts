@@ -1,7 +1,7 @@
 // ============================================================================
-// phone-otp-send — Social Events MVP (PR1) edge function
+// phone-otp-send — Social Events MVP (PR1, channel-extended in PR61)
 // ----------------------------------------------------------------------------
-// POST { phone: string, event_id: uuid }
+// POST { phone, event_id, force_channel?: 'sms' | 'zalo' }
 //
 // Flow:
 //   1. Normalize + validate VN phone via _shared/phone.ts
@@ -11,19 +11,19 @@
 //   3. Rate limit: max 3 OTPs per phone per 15 minutes per event.
 //   4. Generate 6-digit OTP, hash with phone salt, persist in otp_codes
 //      with a 5-minute TTL.
-//   5. Send via eSMS.vn brandname route — unless ENVIRONMENT=development,
-//      in which case the OTP is logged to stdout so the dev can paste it.
+//   5. Channel resolution (PR61):
+//        - dev mode (ENVIRONMENT=development) → log to stdout, return code
+//        - force_channel='sms' → eSMS only
+//        - force_channel='zalo' → Zalo only, no fallback (rarely used)
+//        - default → try Zalo ZNS first; on any failure fall back to
+//          eSMS so a user without Zalo OA still gets their OTP.
+//      Every send (success or failure) writes a row to otp_send_logs.
 //
-// verify_jwt=false in supabase/config.toml — this is a fully public
-// endpoint. Service role key used internally for DB writes.
+// Returns channel actually used so the client hint can adapt ("check
+// Zalo" vs "check SMS").
 //
-// Response shapes:
-//   200 { ok: true, expires_at: ISO8601, dev_mode_code?: string }
-//   400 { error, code }     — validation failure
-//   404 { error, code }     — event not found / not open
-//   409 { error, code }     — event full / already registered
-//   429 { error, code }     — rate limit
-//   500 { error, code }
+// verify_jwt=false in supabase/config.toml. Service-role key used
+// internally for DB writes.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
@@ -31,6 +31,7 @@ import { corsHeaders, jsonResponse } from "../_shared/auth.ts";
 import { normalizeVietnamPhone } from "../_shared/phone.ts";
 import { generateOtpCode, hashOtp } from "../_shared/otp.ts";
 import { sendBrandnameSms } from "../_shared/sms-esms.ts";
+import { sendZaloZns } from "../_shared/zalo-zns.ts";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -42,6 +43,34 @@ const RATE_MAX_PER_WINDOW = 3;
 interface SendBody {
   phone?: unknown;
   event_id?: unknown;
+  /** PR61 — let the client force the SMS fallback when the user
+   *  doesn't follow the Zalo OA. Optional; default = "auto". */
+  force_channel?: unknown;
+}
+
+type Channel = "zalo" | "sms" | "dev";
+
+async function logSendAttempt(
+  supabase: ReturnType<typeof createClient>,
+  args: {
+    phone: string;
+    event_id: string;
+    channel: Channel;
+    success: boolean;
+    error_code?: string;
+  },
+): Promise<void> {
+  try {
+    await supabase.from("otp_send_logs").insert({
+      phone_e164: args.phone,
+      event_id: args.event_id,
+      channel: args.channel,
+      success: args.success,
+      error_code: args.error_code ?? null,
+    });
+  } catch {
+    // telemetry failure must never block the user
+  }
 }
 
 function err(error: string, status: number, code: string) {
@@ -194,12 +223,12 @@ Deno.serve(async (req) => {
     return err("otp_persist_failed", 500, "otp_persist_failed");
   }
 
-  // ─── Deliver: SMS in prod, console in dev ───────────────────────────────
+  // ─── Deliver — channel resolution ───────────────────────────────────────
   const env = (Deno.env.get("ENVIRONMENT") ?? "production").toLowerCase();
   const isDevMode = env === "development" || env === "dev" || env === "local";
   const eventLabel =
     (event.title_vi as string | null) || (event.title_en as string | null) || "ThePickleHub";
-  const content =
+  const smsContent =
     `[ThePickleHub] Ma OTP dang ky su kien "${eventLabel}": ${code} (5 phut). ` +
     `Khong chia se ma nay.`;
 
@@ -209,26 +238,97 @@ Deno.serve(async (req) => {
       phone,
       event_id: eventIdInput,
       otp: code,
-      note: "SMS not sent — ENVIRONMENT=development",
+      note: "SMS/Zalo not sent — ENVIRONMENT=development",
+    });
+    await logSendAttempt(supabase, {
+      phone,
+      event_id: eventIdInput,
+      channel: "dev",
+      success: true,
     });
     return jsonResponse({
       ok: true,
       expires_at: expiresAt,
+      channel: "dev",
       dev_mode_code: code,
     });
   }
 
-  const smsResult = await sendBrandnameSms({ phoneE164: phone, content });
+  const forceChannelRaw = typeof body.force_channel === "string"
+    ? body.force_channel.toLowerCase()
+    : "";
+  const forceChannel: "sms" | "zalo" | null =
+    forceChannelRaw === "sms" ? "sms" : forceChannelRaw === "zalo" ? "zalo" : null;
+
+  // PR61 — channel resolution. Try Zalo ZNS first (cheaper + brand
+  // trust) and fall back to eSMS so users without the OA still
+  // receive an OTP. force_channel='sms' skips Zalo entirely.
+  const templateId = Deno.env.get("ZALO_TEMPLATE_ID_OTP") ?? "";
+  const zaloConfigured = templateId.length > 0 && (Deno.env.get("ZALO_OA_ACCESS_TOKEN") ?? "").length > 0;
+  const tryZalo = forceChannel !== "sms" && zaloConfigured;
+
+  if (tryZalo) {
+    const zaloResult = await sendZaloZns({
+      phone_no_plus: phone.replace(/^\+/, ""),
+      template_id: templateId,
+      template_data: { otp_code: code },
+      tracking_id: `${eventIdInput}:${phone}:${Date.now()}`,
+    });
+
+    if (zaloResult.ok) {
+      logEvent({
+        step: "zalo_send_ok",
+        phone,
+        event_id: eventIdInput,
+        provider_message_id: zaloResult.provider_message_id,
+      });
+      await logSendAttempt(supabase, {
+        phone,
+        event_id: eventIdInput,
+        channel: "zalo",
+        success: true,
+      });
+      return jsonResponse({ ok: true, expires_at: expiresAt, channel: "zalo" });
+    }
+
+    logEvent({
+      step: "zalo_send_failed",
+      phone,
+      event_id: eventIdInput,
+      reason: zaloResult.reason,
+      provider_code: zaloResult.code,
+      provider_error: zaloResult.message,
+    });
+    await logSendAttempt(supabase, {
+      phone,
+      event_id: eventIdInput,
+      channel: "zalo",
+      success: false,
+      error_code: zaloResult.reason,
+    });
+
+    if (forceChannel === "zalo") {
+      // Explicit zalo-only request — don't silently fall back.
+      return err("zalo_send_failed", 502, "zalo_send_failed");
+    }
+    // Otherwise fall through to eSMS.
+  }
+
+  const smsResult = await sendBrandnameSms({ phoneE164: phone, content: smsContent });
   if (!smsResult.ok) {
-    // We deliberately do NOT roll back the OTP row — the user can hit
-    // "Resend OTP" without bumping the rate limit further if they wait.
-    // But we log loudly so ops can react.
     logEvent({
       step: "sms_send_failed",
       phone,
       event_id: eventIdInput,
       provider_code: smsResult.codeResult,
       provider_error: smsResult.errorMessage,
+    });
+    await logSendAttempt(supabase, {
+      phone,
+      event_id: eventIdInput,
+      channel: "sms",
+      success: false,
+      error_code: smsResult.codeResult ?? smsResult.errorMessage,
     });
     return err("sms_send_failed", 502, "sms_send_failed");
   }
@@ -239,6 +339,11 @@ Deno.serve(async (req) => {
     event_id: eventIdInput,
     provider_message_id: smsResult.messageId,
   });
-
-  return jsonResponse({ ok: true, expires_at: expiresAt });
+  await logSendAttempt(supabase, {
+    phone,
+    event_id: eventIdInput,
+    channel: "sms",
+    success: true,
+  });
+  return jsonResponse({ ok: true, expires_at: expiresAt, channel: "sms" });
 });
