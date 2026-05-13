@@ -16,6 +16,7 @@
 
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Upload, X } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ function slugify(input: string): string {
 export default function CreateClub() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
   const create = t.socialEvents.createClub;
   const { upload, uploading, error: uploadErr } = useClubLogoUpload();
@@ -192,6 +194,14 @@ export default function CreateClub() {
         toast({ title: t.common.error, variant: "destructive" });
         return;
       }
+
+      // PR62 — invalidate so the avatar dropdown's "CLB của tôi"
+      // section + the public /clubs listing pick up the new club
+      // without a manual refresh.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["my-clubs", user.id] }),
+        queryClient.invalidateQueries({ queryKey: ["clubs-list"] }),
+      ]);
 
       toast({ title: create.successTitle, description: create.successBody });
       navigate(`/clb/${slug}/quan-ly`);
