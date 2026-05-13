@@ -2030,6 +2030,12 @@ export interface Translations {
       saveLinkBody: string;
       saveLinkCopy: string;
       saveLinkCopied: string;
+      saveLinkOpen: string;
+      saveLinkScreenshotHint: string;
+      alreadyRegisteredBanner: string;
+      alreadyRegisteredCta: string;
+      cancelledBanner: string;
+      reregisterCta: string;
       errors: {
         generic: string;
         invalid_magic_token: string;
@@ -4350,11 +4356,18 @@ export const vi: Translations = {
       notFoundTitle: "Không tìm thấy đăng ký",
       notFoundBody:
         "Link bạn đang dùng không hợp lệ hoặc đã hết hạn. Liên hệ BTC nếu bạn cần xác nhận đăng ký.",
-      saveLinkHeading: "Lưu link để xem/quản lý đăng ký",
+      saveLinkHeading: "Link quản lý đăng ký của bạn",
       saveLinkBody:
-        "Bookmark hoặc lưu lại link này — bạn cần nó để xem trạng thái và hủy đăng ký nếu cần.",
-      saveLinkCopy: "Sao chép link",
+        "Bookmark hoặc lưu lại link này — bạn cần nó để xem trạng thái hoặc huỷ đăng ký. (Không gửi SMS / email.)",
+      saveLinkCopy: "Sao chép",
       saveLinkCopied: "Đã sao chép link",
+      saveLinkOpen: "Mở tab mới",
+      saveLinkScreenshotHint:
+        "Khuyên: chụp màn hình thẻ này — link không thể khôi phục nếu mất.",
+      alreadyRegisteredBanner: "Bạn đã đăng ký sự kiện này",
+      alreadyRegisteredCta: "Xem đăng ký của bạn",
+      cancelledBanner: "Bạn đã huỷ đăng ký sự kiện này",
+      reregisterCta: "Quản lý / Đăng ký lại",
       errors: {
         generic: "Có lỗi xảy ra, vui lòng thử lại.",
         invalid_magic_token: "Link không hợp lệ.",

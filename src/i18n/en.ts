@@ -2042,11 +2042,18 @@ export const en: Translations = {
       notFoundTitle: "Registration not found",
       notFoundBody:
         "The link you used isn't valid or has expired. Contact the organizer if you need to verify your registration.",
-      saveLinkHeading: "Save this link to manage your registration",
+      saveLinkHeading: "Your registration management link",
       saveLinkBody:
-        "Bookmark or save this link — you'll need it to check status or cancel.",
-      saveLinkCopy: "Copy link",
+        "Bookmark or save this link — you'll need it to check status or cancel. (No SMS / email is sent.)",
+      saveLinkCopy: "Copy",
       saveLinkCopied: "Link copied",
+      saveLinkOpen: "Open in tab",
+      saveLinkScreenshotHint:
+        "Tip: screenshot this card — the link cannot be recovered if lost.",
+      alreadyRegisteredBanner: "You're registered for this event",
+      alreadyRegisteredCta: "View your registration",
+      cancelledBanner: "You cancelled your registration for this event",
+      reregisterCta: "Manage / re-register",
       errors: {
         generic: "Something went wrong, please try again.",
         invalid_magic_token: "Invalid link.",

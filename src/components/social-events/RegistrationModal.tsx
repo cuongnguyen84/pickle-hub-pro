@@ -13,7 +13,7 @@
 // ============================================================================
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Copy } from "lucide-react";
+import { Loader2, Copy, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,9 +40,9 @@ import {
 } from "@/lib/phone";
 import { formatPriceVnd, interp } from "@/lib/social-events/format";
 import { QRPaymentStep, type PaymentOrder } from "@/components/payment/QRPaymentStep";
+import { saveMyRegistration } from "@/lib/social-events/myRegistration";
 
 const RESEND_COOLDOWN_SEC = 60;
-const MAGIC_TOKEN_STORAGE_PREFIX = "tph-event-magic:";
 
 interface Props {
   open: boolean;
@@ -285,20 +285,12 @@ export function RegistrationModal({
         toast({ title: reg.networkError, variant: "destructive" });
         return;
       }
-      try {
-        localStorage.setItem(
-          `${MAGIC_TOKEN_STORAGE_PREFIX}${eventId}`,
-          JSON.stringify({
-            token: data.magic_token,
-            registration_id: data.registration_id,
-            registered_at: data.registered_at,
-            // 90 days from now
-            expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-          }),
-        );
-      } catch {
-        // localStorage can throw in private-mode Safari — non-fatal.
-      }
+      saveMyRegistration(eventId, {
+        magic_token: data.magic_token,
+        registration_id: data.registration_id,
+        display_name: displayName.trim() || null,
+        registered_at: data.registered_at,
+      });
       setSuccess(data);
       onSuccess?.();
 
@@ -343,6 +335,16 @@ export function RegistrationModal({
           player_claimed_paid: payload.player_claimed_paid ?? false,
           player_claimed_at: payload.player_claimed_at ?? null,
           bank: payload.bank,
+        });
+        // Now that we have the reference_code, fold it into the stored
+        // registration so the "Save link" card + /dang-ky/:token page
+        // can echo it back without another fetch.
+        saveMyRegistration(eventId, {
+          magic_token: data.magic_token,
+          registration_id: data.registration_id,
+          reference_code: payload.reference_code ?? null,
+          display_name: displayName.trim() || null,
+          registered_at: data.registered_at,
         });
         setStep("payment");
         return;
@@ -552,24 +554,29 @@ export function RegistrationModal({
                 {reg.backToEvent}
               </Button>
             </div>
-            {/* PR58 — save link card surfaces /dang-ky/<token> so the
-                player can come back to cancel / view status without
-                another OTP. localStorage already remembers it for 90
-                days but the visible URL is the durable handle. */}
+            {/* PR58 — save-link card. Critical surface: this URL is the
+                ONLY way (until SMS lands) the player can come back to
+                cancel / view status, so we keep it prominent and offer
+                copy + open-in-new-tab + a "screenshot this" hint. */}
             {success.magic_token && (
-              <div className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm">
-                <p className="font-semibold">{t.socialEvents.playerRegistration.saveLinkHeading}</p>
+              <div className="rounded-md border-2 border-primary/40 bg-primary/5 px-4 py-3 text-sm">
+                <p className="font-semibold">
+                  {t.socialEvents.playerRegistration.saveLinkHeading}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t.socialEvents.playerRegistration.saveLinkBody}
                 </p>
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-3 flex items-center gap-2">
                   <code className="flex-1 truncate rounded-md bg-background px-2 py-1.5 font-mono text-xs">
-                    /dang-ky/{success.magic_token}
+                    {`${window.location.origin}/dang-ky/${success.magic_token}`}
                   </code>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="flex-1"
                     onClick={() => {
                       void navigator.clipboard.writeText(
                         `${window.location.origin}/dang-ky/${success.magic_token}`,
@@ -577,9 +584,23 @@ export function RegistrationModal({
                       toast({ title: t.socialEvents.playerRegistration.saveLinkCopied });
                     }}
                   >
-                    <Copy className="h-3.5 w-3.5" />
+                    <Copy className="mr-1 h-3.5 w-3.5" />{" "}
+                    {t.socialEvents.playerRegistration.saveLinkCopy}
+                  </Button>
+                  <Button asChild type="button" variant="outline" size="sm" className="flex-1">
+                    <a
+                      href={`/dang-ky/${success.magic_token}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="mr-1 h-3.5 w-3.5" />{" "}
+                      {t.socialEvents.playerRegistration.saveLinkOpen}
+                    </a>
                   </Button>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t.socialEvents.playerRegistration.saveLinkScreenshotHint}
+                </p>
               </div>
             )}
             <p className="text-center text-xs text-muted-foreground">
