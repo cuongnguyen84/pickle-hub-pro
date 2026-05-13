@@ -17,7 +17,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save, AlertTriangle, Trash2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export default function EditSocialEvent() {
   const { slug: clubSlug, event_slug } = useParams<{ slug: string; event_slug: string }>();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const permission = useEventOwnership(event_slug);
   const edit = t.socialEvents.editEvent;
 
@@ -253,6 +254,19 @@ export default function EditSocialEvent() {
         }
       }
 
+      // PR62 — invalidate the caches that depend on this event's row
+      // so the destination page renders fresh data instead of the
+      // stale snapshot that triggered the edit in the first place.
+      const clubIdForList = (bundle?.ev as { club_id?: string } | null | undefined)?.club_id;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["edit-event", event_slug] }),
+        queryClient.invalidateQueries({ queryKey: ["social-event", event_slug] }),
+        ...(clubIdForList
+          ? [queryClient.invalidateQueries({ queryKey: ["club-events-manage", clubIdForList] })]
+          : []),
+        queryClient.invalidateQueries({ queryKey: ["club", clubSlug] }),
+      ]);
+
       toast({ title: edit.savedTitle, description: edit.savedBody });
       navigate(`/clb/${clubSlug}/quan-ly`);
     } finally {
@@ -275,8 +289,19 @@ export default function EditSocialEvent() {
         toast({ title: t.common.error, description: rpcErr.message, variant: "destructive" });
         return;
       }
+      // PR62 — same invalidation set as the save handler so the
+      // destination ClubManage page reflects the cancellation.
+      const clubIdForList = (bundle?.ev as { club_id?: string } | null | undefined)?.club_id;
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["edit-event", event_slug] }),
+        queryClient.invalidateQueries({ queryKey: ["social-event", event_slug] }),
+        ...(clubIdForList
+          ? [queryClient.invalidateQueries({ queryKey: ["club-events-manage", clubIdForList] })]
+          : []),
+        queryClient.invalidateQueries({ queryKey: ["club", clubSlug] }),
+      ]);
+
       toast({ title: edit.cancelEventSuccessTitle, description: edit.cancelEventSuccessBody });
-      await refetch();
       setCancelOpen(false);
       navigate(`/clb/${clubSlug}/quan-ly`);
     } finally {
