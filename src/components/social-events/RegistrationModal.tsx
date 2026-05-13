@@ -142,6 +142,10 @@ export function RegistrationModal({
   const [contactEmail, setContactEmail] = useState("");
   const [contactSaving, setContactSaving] = useState(false);
   const [contactSaved, setContactSaved] = useState(false);
+  // PR61 — channel the last OTP was delivered through ('zalo' | 'sms' |
+  // 'dev'). Surfaces in the OTP-waiting hint + lets the user force the
+  // SMS fallback when Zalo doesn't reach them.
+  const [otpChannel, setOtpChannel] = useState<"zalo" | "sms" | "dev" | null>(null);
   const intervalRef = useRef<number | null>(null);
 
   // Reset state whenever the modal closes so the next open starts clean.
@@ -157,6 +161,7 @@ export function RegistrationModal({
       setContactEmail("");
       setContactSaving(false);
       setContactSaved(false);
+      setOtpChannel(null);
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -180,7 +185,7 @@ export function RegistrationModal({
     return norm != null;
   }, [phoneInput]);
 
-  async function callSendOtp(): Promise<boolean> {
+  async function callSendOtp(opts?: { forceChannel?: "sms" | "zalo" }): Promise<boolean> {
     const norm = normalizeVietnamPhone(phoneInput);
     if (!norm || !isValidVietnamPhone(norm)) {
       toast({
@@ -196,10 +201,15 @@ export function RegistrationModal({
         ok?: true;
         expires_at?: string;
         dev_mode_code?: string;
+        channel?: "zalo" | "sms" | "dev";
         error?: string;
         code?: string;
       }>("phone-otp-send", {
-        body: { phone: norm, event_id: eventId },
+        body: {
+          phone: norm,
+          event_id: eventId,
+          ...(opts?.forceChannel ? { force_channel: opts.forceChannel } : {}),
+        },
       });
       // supabase.functions.invoke wraps non-2xx into `error`. We re-read
       // the response body to surface the structured `code` field.
@@ -227,6 +237,7 @@ export function RegistrationModal({
         return false;
       }
       setDevOtp(data?.dev_mode_code ?? null);
+      setOtpChannel(data?.channel ?? null);
       setResendIn(RESEND_COOLDOWN_SEC);
       return true;
     } catch (e) {
@@ -248,9 +259,9 @@ export function RegistrationModal({
     if (ok) setStep("otp");
   }
 
-  async function handleResendOtp() {
+  async function handleResendOtp(opts?: { forceChannel?: "sms" | "zalo" }) {
     if (resendIn > 0) return;
-    await callSendOtp();
+    await callSendOtp(opts);
   }
 
   async function handleVerify() {
@@ -459,7 +470,11 @@ export function RegistrationModal({
             <div className="space-y-2">
               <Label>{reg.otpLabel}</Label>
               <p className="text-sm text-muted-foreground">
-                {interp(reg.otpHint, { phone: maskPhone(normalizedPhone) })}
+                {otpChannel === "zalo"
+                  ? interp(reg.otpHintZalo, { phone: maskPhone(normalizedPhone) })
+                  : otpChannel === "sms"
+                    ? interp(reg.otpHintSms, { phone: maskPhone(normalizedPhone) })
+                    : interp(reg.otpHint, { phone: maskPhone(normalizedPhone) })}
               </p>
               <div className="flex justify-center pt-2">
                 <InputOTP
@@ -503,12 +518,25 @@ export function RegistrationModal({
                 variant="ghost"
                 className="w-full"
                 disabled={submitting || resendIn > 0}
-                onClick={handleResendOtp}
+                onClick={() => handleResendOtp()}
               >
                 {resendIn > 0
                   ? interp(reg.otpResendIn, { seconds: resendIn })
                   : reg.otpResend}
               </Button>
+              {/* PR61 — when the last send went over Zalo, offer the
+                  user a way to retry over SMS. A user who doesn't
+                  follow the OA may never see a Zalo OTP arrive. */}
+              {otpChannel === "zalo" && (
+                <button
+                  type="button"
+                  className="text-center text-xs text-primary underline disabled:opacity-50"
+                  disabled={submitting || resendIn > 0}
+                  onClick={() => handleResendOtp({ forceChannel: "sms" })}
+                >
+                  {reg.otpResendViaSms}
+                </button>
+              )}
             </div>
           </form>
         )}

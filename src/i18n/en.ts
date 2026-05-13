@@ -1791,8 +1791,13 @@ export const en: Translations = {
       sendOtp: "Send OTP",
       otpLabel: "6-digit OTP",
       otpHint: "Code sent to {phone}. Expires in 5 minutes.",
+      otpHintZalo:
+        "Code sent via Zalo to {phone}. Open the Zalo app and check messages from the ThePickleHub OA. Expires in 5 minutes.",
+      otpHintSms:
+        "Code sent via SMS to {phone}. Expires in 5 minutes.",
       otpResend: "Resend code",
       otpResendIn: "Resend in {seconds}s",
+      otpResendViaSms: "Didn't get Zalo? Resend via SMS →",
       otpInvalid: "Incorrect OTP",
       otpExpired: "OTP expired — please request a new one",
       tooManyAttempts: "Too many wrong attempts — please request a new code",
