@@ -89,6 +89,10 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
         .from("clubs")
         .select("slug, name")
         .eq("created_by", user.id)
+        // Codex review: hide archived clubs from the avatar dropdown so
+        // an owner who archives a CLB doesn't keep seeing it as an
+        // active jump target. /clb/<slug> still loads via direct link.
+        .is("archived_at", null)
         .order("created_at", { ascending: false })
         .limit(5);
       if (error) {

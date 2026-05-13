@@ -8,7 +8,7 @@
 
 import { useMemo } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { Loader2, Plus, Users, BadgeCheck, CheckCircle2, ExternalLink, Sparkles, ClipboardList } from "lucide-react";
+import { Loader2, Plus, Users, BadgeCheck, CheckCircle2, ExternalLink, Sparkles, ClipboardList, Settings } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -116,15 +116,24 @@ export default function ClubManage() {
             </div>
             <h1>{manage.pageTitle}</h1>
           </div>
-          {/* TheLine vibrant-green pill primary CTA — matches the
-              bracket-lab header pattern ("+ Start a Quick Table →"). */}
-          <Link
-            to={`/clb/${clubData.club.slug}/su-kien/moi`}
-            className="tl-btn green"
-            style={{ alignSelf: "center" }}
-          >
-            <Plus className="h-4 w-4" /> {manage.newEventCta} →
-          </Link>
+          <div style={{ display: "flex", gap: 8, alignSelf: "center", flexWrap: "wrap" }}>
+            <Link
+              to={`/clb/${clubData.club.slug}/quan-ly/cai-dat`}
+              className="tl-btn"
+              style={{ textDecoration: "none" }}
+              title={t.socialEvents.editClub.pageTitle}
+            >
+              <Settings className="h-4 w-4" /> {t.socialEvents.editClub.pageTitle}
+            </Link>
+            {/* TheLine vibrant-green pill primary CTA — matches the
+                bracket-lab header pattern ("+ Start a Quick Table →"). */}
+            <Link
+              to={`/clb/${clubData.club.slug}/su-kien/moi`}
+              className="tl-btn green"
+            >
+              <Plus className="h-4 w-4" /> {manage.newEventCta} →
+            </Link>
+          </div>
         </header>
 
         {isLoading && (

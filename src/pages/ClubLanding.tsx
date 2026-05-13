@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
 import { useClub, type ClubEventRow } from "@/hooks/useClub";
 import { formatEventDateRange, interp } from "@/lib/social-events/format";
+import { EntityNotFound } from "@/components/EntityNotFound";
 
 function EventCard({ event, lang }: { event: ClubEventRow; lang: "vi" | "en" }) {
   const title =
@@ -61,23 +62,7 @@ export default function ClubLanding() {
   }
 
   if (!data) {
-    return (
-      <TheLineLayout title={t.socialEvents.club.notFound} active="events" noindex>
-        <div className="tl-shell" style={{ padding: "60px 16px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 24, marginBottom: 12 }}>{t.socialEvents.club.notFound}</h1>
-          <p style={{ color: "var(--tl-fg-3)", maxWidth: 480, margin: "0 auto" }}>
-            {t.socialEvents.club.notFoundBody}
-          </p>
-          <div style={{ marginTop: 24 }}>
-            <Button asChild variant="outline">
-              <Link to={language === "vi" ? "/vi" : "/"}>
-                {language === "vi" ? "Về trang chủ" : "Back to home"}
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </TheLineLayout>
-    );
+    return <EntityNotFound entity="club" active="clubs" />;
   }
 
   const { club, upcoming, past } = data;
