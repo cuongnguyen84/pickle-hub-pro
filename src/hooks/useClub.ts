@@ -16,6 +16,8 @@ export interface ClubRow {
   location_text: string | null;
   created_by: string;
   created_at: string;
+  /** Non-null when the owner soft-archived the club via /clb/:slug/quan-ly/cai-dat. */
+  archived_at: string | null;
 }
 
 export interface ClubEventRow {
@@ -45,7 +47,9 @@ export function useClub(slug: string | undefined) {
       if (!slug) return null;
       const { data: club, error: clubErr } = await supabase
         .from("clubs")
-        .select("id, slug, name, description, logo_url, location_text, created_by, created_at")
+        .select(
+          "id, slug, name, description, logo_url, location_text, created_by, created_at, archived_at",
+        )
         .eq("slug", slug)
         .maybeSingle();
       if (clubErr) {
