@@ -29,6 +29,7 @@ import {
   type HistoryMatchRow,
 } from "@/components/profile/MatchHistoryList";
 import { normalizeSlug } from "@/lib/badges/profileSlug";
+import { EntityNotFound } from "@/components/EntityNotFound";
 
 const PAGE_SIZE = 20;
 
@@ -222,15 +223,7 @@ export default function PublicProfile() {
   });
 
   // Loading / not-found rails.
-  if (!slug) {
-    return (
-      <TheLineLayout title={profileTr.notFoundTitle} active="events" noindex>
-        <div className="tl-shell" style={{ padding: "60px 16px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 24, marginBottom: 12 }}>{profileTr.notFoundTitle}</h1>
-        </div>
-      </TheLineLayout>
-    );
-  }
+  if (!slug) return <EntityNotFound entity="profile" active="events" />;
   if (profileLoading) {
     return (
       <TheLineLayout title="Loading…" active="events" noindex>
@@ -240,16 +233,7 @@ export default function PublicProfile() {
       </TheLineLayout>
     );
   }
-  if (!resolved) {
-    return (
-      <TheLineLayout title={profileTr.notFoundTitle} active="events" noindex>
-        <div className="tl-shell" style={{ padding: "60px 16px", textAlign: "center" }}>
-          <h1 style={{ fontSize: 24, marginBottom: 12 }}>{profileTr.notFoundTitle}</h1>
-          <p style={{ color: "var(--tl-fg-3)" }}>{profileTr.notFoundBody}</p>
-        </div>
-      </TheLineLayout>
-    );
-  }
+  if (!resolved) return <EntityNotFound entity="profile" active="events" />;
 
   const eventsPlayed = stats?.events_played ?? 0;
   const matchesPlayed = stats?.matches_played ?? 0;

@@ -1940,6 +1940,9 @@ export interface Translations {
       cardCta: string;
       cardEventCount: string;
       cardNoEvents: string;
+      cardCreatedBy: string;
+      sectionMine: string;
+      sectionAll: string;
     };
     createClub: {
       pageTitle: string;
@@ -1975,6 +1978,36 @@ export interface Translations {
       successTitle: string;
       successBody: string;
       backToList: string;
+    };
+    entityNotFound: {
+      club: { title: string; body: string; backCta: string };
+      event: { title: string; body: string; backCta: string };
+      profile: { title: string; body: string; backCta: string };
+    };
+    editClub: {
+      pageTitle: string;
+      slugLabel: string;
+      slugImmutableHint: string;
+      nameLabel: string;
+      descriptionLabel: string;
+      locationLabel: string;
+      logoLabel: string;
+      save: string;
+      saving: string;
+      cancel: string;
+      successTitle: string;
+      successBody: string;
+      dangerZone: string;
+      archiveHeading: string;
+      archiveBody: string;
+      archiveCta: string;
+      archiveModalTitle: string;
+      archiveModalBody: string;
+      archiveModalInputLabel: string;
+      archiveConfirmCta: string;
+      archiving: string;
+      archiveSuccessTitle: string;
+      archiveSuccessBody: string;
     };
     roster: {
       pageTitle: string;
@@ -4114,6 +4147,9 @@ export const vi: Translations = {
       cardCta: "Xem CLB",
       cardEventCount: "{n} sự kiện sắp tới",
       cardNoEvents: "Chưa có sự kiện",
+      cardCreatedBy: "Tạo bởi {name}",
+      sectionMine: "CLB của tôi",
+      sectionAll: "Tất cả CLB",
     },
     createClub: {
       pageTitle: "Tạo CLB mới",
@@ -4152,6 +4188,50 @@ export const vi: Translations = {
       successTitle: "Đã tạo CLB",
       successBody: "Chuyển đến trang quản lý CLB…",
       backToList: "Quay lại danh sách CLB",
+    },
+    entityNotFound: {
+      club: {
+        title: "Không tìm thấy CLB",
+        body: "CLB này có thể đã bị lưu trữ hoặc liên kết bạn dùng đã thay đổi. Hãy thử tìm trong danh sách CLB.",
+        backCta: "Xem danh sách CLB",
+      },
+      event: {
+        title: "Không tìm thấy sự kiện",
+        body: "Sự kiện này có thể đã bị huỷ hoặc liên kết không còn chính xác. Hãy thử trang sự kiện công khai.",
+        backCta: "Xem sự kiện sắp tới",
+      },
+      profile: {
+        title: "Không tìm thấy người chơi",
+        body: "Hồ sơ này có thể đã bị xoá hoặc liên kết không đúng.",
+        backCta: "Về trang chủ",
+      },
+    },
+    editClub: {
+      pageTitle: "Cài đặt CLB",
+      slugLabel: "URL CLB",
+      slugImmutableHint: "URL được khóa để giữ liên kết ổn định. Liên hệ admin nếu cần đổi.",
+      nameLabel: "Tên CLB",
+      descriptionLabel: "Mô tả ngắn",
+      locationLabel: "Địa điểm",
+      logoLabel: "Logo CLB",
+      save: "Lưu thay đổi",
+      saving: "Đang lưu…",
+      cancel: "Huỷ",
+      successTitle: "Đã lưu",
+      successBody: "Thông tin CLB đã được cập nhật.",
+      dangerZone: "Vùng nguy hiểm",
+      archiveHeading: "Lưu trữ CLB",
+      archiveBody:
+        "CLB sẽ bị ẩn khỏi danh sách công khai và menu của bạn. Các sự kiện đã công bố vẫn truy cập được qua liên kết trực tiếp. Liên hệ admin nếu cần khôi phục.",
+      archiveCta: "Lưu trữ CLB",
+      archiveModalTitle: "Xác nhận lưu trữ",
+      archiveModalBody:
+        "Bạn sắp lưu trữ CLB \"{name}\". Hành động này sẽ ẩn CLB khỏi /clubs và dropdown của bạn.",
+      archiveModalInputLabel: "Gõ \"{name}\" để xác nhận",
+      archiveConfirmCta: "Lưu trữ CLB",
+      archiving: "Đang lưu trữ…",
+      archiveSuccessTitle: "Đã lưu trữ CLB",
+      archiveSuccessBody: "CLB đã được ẩn khỏi danh sách công khai.",
     },
     roster: {
       pageTitle: "Danh sách đăng ký",

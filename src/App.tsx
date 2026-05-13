@@ -117,6 +117,8 @@ const PublicProfile = lazy(() => import("./pages/PublicProfile"));
 // Social Events MVP — PR55 (self-service club creation + discovery)
 const ClubsList = lazy(() => import("./pages/ClubsList"));
 const CreateClub = lazy(() => import("./pages/CreateClub"));
+// Social Events MVP — PR57 (club management polish)
+const EditClub = lazy(() => import("./pages/EditClub"));
 // Dashboard pages
 const DashboardPicker = lazy(() => import("./pages/DashboardPicker"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
@@ -455,6 +457,8 @@ const App = () => (
                     <Route path="/clubs" element={<ClubsList />} />
                     <Route path="/vi/clubs" element={<ViLanguageWrapper><ClubsList /></ViLanguageWrapper>} />
                     <Route path="/clubs/new" element={<CreateClub />} />
+                    {/* Social Events MVP PR57 — organizer club settings */}
+                    <Route path="/clb/:slug/quan-ly/cai-dat" element={<EditClub />} />
                     <Route path="/notifications" element={<Notifications />} />
                     {/* Sprint 5 PR-C — Vietnamese-friendly alias. Same
                         page renders for both /notifications and /thong-bao

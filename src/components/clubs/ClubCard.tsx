@@ -17,6 +17,8 @@ interface Props {
   logoUrl: string | null;
   locationText: string | null;
   upcomingEvents: number;
+  creatorSlug?: string | null;
+  creatorDisplayName?: string | null;
 }
 
 function initialsOf(name: string): string {
@@ -33,16 +35,20 @@ export function ClubCard({
   logoUrl,
   locationText,
   upcomingEvents,
+  creatorSlug,
+  creatorDisplayName,
 }: Props) {
   const { t } = useI18n();
   const clubs = t.socialEvents.clubsList;
   return (
-    <Link
-      to={`/clb/${slug}`}
+    <div
       className="group flex flex-col gap-3 rounded-md border border-border bg-card p-5 transition-colors hover:border-primary/40"
-      style={{ textDecoration: "none", color: "inherit" }}
     >
-      <div className="flex items-start gap-3">
+      <Link
+        to={`/clb/${slug}`}
+        className="flex items-start gap-3"
+        style={{ textDecoration: "none", color: "inherit" }}
+      >
         {logoUrl ? (
           <img
             src={logoUrl}
@@ -73,10 +79,26 @@ export function ClubCard({
             </p>
           )}
         </div>
-      </div>
+      </Link>
 
       {description && (
-        <p className="line-clamp-2 text-sm text-muted-foreground">{description}</p>
+        <Link
+          to={`/clb/${slug}`}
+          className="line-clamp-2 text-sm text-muted-foreground"
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
+          {description}
+        </Link>
+      )}
+
+      {creatorSlug && creatorDisplayName && (
+        <Link
+          to={`/u/${creatorSlug}`}
+          className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+          style={{ textDecoration: "none" }}
+        >
+          {clubs.cardCreatedBy.replace("{name}", creatorDisplayName)}
+        </Link>
       )}
 
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3">
@@ -87,12 +109,14 @@ export function ClubCard({
             ? clubs.cardNoEvents
             : clubs.cardEventCount.replace("{n}", String(upcomingEvents))}
         </span>
-        <span
-          className="font-mono text-xs uppercase tracking-wider text-foreground group-hover:underline"
+        <Link
+          to={`/clb/${slug}`}
+          className="font-mono text-xs uppercase tracking-wider text-foreground hover:underline"
+          style={{ textDecoration: "none", color: "inherit" }}
         >
           {clubs.cardCta} →
-        </span>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
