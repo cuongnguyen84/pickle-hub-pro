@@ -125,6 +125,18 @@ verify_jwt = false
 # 1200×630 PNG when a /tran-dau/{slug} URL is shared. CF Pages /og/match/*
 # proxies + caches in KV (7d TTL) — see functions/og/match/[slug].png.ts.
 
+[functions.og-image-social-event]
+verify_jwt = false
+# PR79 Phase 2E — Public endpoint. Generates a 1200×630 PNG for
+# /social/{slug} (Social Events MVP). Scrapers fetch via the CF Pages
+# proxy at /og/social/{slug}.png which adds a 7-day KV cache layer.
+
+[functions.og-image-club]
+verify_jwt = false
+# PR79 Phase 2E — Public endpoint. Generates a 1200×630 PNG for
+# /clb/{slug} (club landing pages). Scrapers fetch via the CF Pages
+# proxy at /og/clb/{slug}.png which adds a 7-day KV cache layer.
+
 # ─── Sprint 6 — pro tour data integration ──────────────────────────────────
 [functions.pro-tour-ingest]
 verify_jwt = false
