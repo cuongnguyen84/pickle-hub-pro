@@ -2097,6 +2097,9 @@ export interface Translations {
       timeRemaining: string;
       paymentOverdue: string;
       payNowButton: string;
+      payNowConfirmPrompt: string;
+      payNowConfirm: string;
+      payNowCancel: string;
       payNowSuccess: string;
       errors: {
         generic: string;
@@ -4456,7 +4459,11 @@ export const vi: Translations = {
         "Sự kiện này yêu cầu chuyển khoản trước. Hoàn tất chuyển khoản theo mã thanh toán bên dưới rồi bấm \"Đã thanh toán\" để xác nhận.",
       timeRemaining: "Còn lại: {hours} giờ {minutes} phút",
       paymentOverdue: "Đã quá hạn thanh toán, đăng ký sẽ sớm bị huỷ.",
-      payNowButton: "Đã thanh toán",
+      payNowButton: "Tôi đã chuyển tiền",
+      payNowConfirmPrompt:
+        "Chỉ xác nhận khi bạn đã thực sự chuyển khoản. BTC sẽ đối chiếu với mã thanh toán.",
+      payNowConfirm: "Xác nhận đã chuyển",
+      payNowCancel: "Huỷ",
       payNowSuccess: "Đã đánh dấu đã thanh toán. BTC sẽ xác nhận.",
       errors: {
         generic: "Có lỗi xảy ra, vui lòng thử lại.",
