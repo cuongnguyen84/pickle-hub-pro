@@ -1,5 +1,5 @@
 // ============================================================================
-// pro-tour-ingest — Sprint 6 PR-A
+// pro-tour-ingest — Sprint 6 PR-A  (updated: pending-match backfill)
 // ----------------------------------------------------------------------------
 // Single ingestion endpoint for pro-tour scrape results. Called by the
 // pro-tour-scraper Worker (workers/pro-tour-scraper) after a successful
@@ -7,16 +7,16 @@
 //   1. profiles ghost rows (one per ScrapedPlayer external_id, INSERT ON
 //      CONFLICT DO NOTHING via the partial unique index from migration
 //      20260510160000)
-//   2. matches rows (INSERT ON CONFLICT DO NOTHING, dedupe on
-//      (source_provider, external_match_id))
+//   2. matches rows — INSERT for new matches; UPDATE pending→verified when
+//      a re-scrape supplies a winner. Verified matches are immutable.
 //   3. match_participants rows (one per player on each match, position
 //      derived from team order)
 //   4. pro_tour_ingestion_logs row tracking matches_imported,
 //      players_created, players_matched, duration_ms
 //
 // Idempotent: re-ingesting the same TournamentScrapeResult is a no-op for
-// matches that already exist + zero-create for players that already exist.
-// players_matched counts the latter.
+// verified matches and pending matches that still have no winner.
+// players_matched counts profiles that already existed.
 //
 // Auth: service_role key required (the Worker is the only legitimate
 // caller; admin UI hits the Worker, not this directly). verify_jwt is
@@ -267,23 +267,63 @@ async function reconcileMatches(
 ): Promise<number> {
   if (scrape.matches.length === 0) return 0;
 
-  // Bulk-check which matches already exist so we skip them cleanly.
+  // Bulk-check which matches already exist. Fetch id + verification_status
+  // so we can promote pending rows to verified when fresh results arrive.
   const externalIds = scrape.matches.map((m) => m.external_match_id);
   const { data: existing, error } = await supabase
     .from("matches")
-    .select("external_match_id")
+    .select("id, external_match_id, verification_status")
     .eq("source_provider", scrape.source_provider)
     .in("external_match_id", externalIds);
   if (error) throw new Error(`Match lookup: ${error.message}`);
 
-  const existingSet = new Set(
-    (existing ?? []).map((r) => r.external_match_id as string),
-  );
+  const existingByExtId = new Map<string, { id: string; verification_status: string }>();
+  for (const row of existing ?? []) {
+    existingByExtId.set(row.external_match_id as string, {
+      id: row.id as string,
+      verification_status: row.verification_status as string,
+    });
+  }
 
   let imported = 0;
   for (const match of scrape.matches) {
-    if (existingSet.has(match.external_match_id)) continue;
+    const hit = existingByExtId.get(match.external_match_id);
 
+    if (hit) {
+      // Verified matches are immutable — results are final, never overwrite.
+      if (hit.verification_status === "verified") continue;
+
+      // Pending match: promote to verified only when the scrape now has a winner.
+      const winning_team =
+        match.winner_team === "one" ? "a" : match.winner_team === "two" ? "b" : null;
+      if (winning_team === null) continue; // still no result — nothing new to write
+
+      const updatePayload: Record<string, unknown> = {
+        team_a_score: match.scores_team_one,
+        team_b_score: match.scores_team_two,
+        winning_team,
+        verification_status: "verified",
+        round_name: match.round_name,
+      };
+      // Only overwrite played_at / court_number when the scrape provides a value.
+      // Keeps the original estimate rather than nullifying it.
+      if (match.played_at !== null) updatePayload.played_at = match.played_at;
+      if (match.court !== null) updatePayload.court_number = match.court;
+
+      const { error: updateErr } = await supabase
+        .from("matches")
+        .update(updatePayload)
+        .eq("id", hit.id);
+      if (updateErr) {
+        throw new Error(
+          `Update pending match ${match.external_match_id} failed: ${updateErr.message}`,
+        );
+      }
+      imported += 1;
+      continue;
+    }
+
+    // New match — INSERT as before.
     const inserted = await insertMatchWithParticipants(
       supabase,
       scrape,
