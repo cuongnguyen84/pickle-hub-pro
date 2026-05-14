@@ -149,6 +149,7 @@ ${alternatesHtml}
 <meta property="og:locale" content="${ogLocale}"/>
 ${ogLocaleAlternateTag}
 <meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@ThePickleHub"/>
 <meta name="twitter:title" content="${escapeHtml(title)}"/>
 <meta name="twitter:description" content="${escapeHtml(description)}"/>
 <meta name="twitter:image" content="${escapeHtml(image)}"/>

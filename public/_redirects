@@ -9,6 +9,13 @@
 /vi/su-kien/* /vi/social/:splat 301
 /vi/su-kien /vi/social 301
 
+# PR79 Phase 2F (audit I-8) — consolidate profile routes. /u/:slug was a
+# PR53 vanity-URL prototype that never reached prerender parity with
+# /nguoi-choi/:username. Both surfaces now converge to the canonical
+# /nguoi-choi/* path so Google sees one indexable URL per profile.
+/u/* /nguoi-choi/:splat 301
+/vi/u/* /nguoi-choi/:splat 301
+
 # Blog post URL refresh (2025 → 2026)
 /blog/best-pickleball-tournament-software-2025  /blog/best-pickleball-tournament-software-2026  301
 
