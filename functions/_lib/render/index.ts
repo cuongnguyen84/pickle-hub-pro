@@ -690,30 +690,42 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
 // missing here, Googlebot/Bingbot get a 404 even though the React app renders
 // fine for humans, and the URL cannot be indexed (verified 2026-04-23 with
 // the world-cup-pickleball-2026-da-nang post).
-const BLOG_POST_META: Record<string, { title: string; description: string }> = {
-  "dupr-algorithm-explained-performance-vs-expectation": { title: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3", description: "DUPR's July 2025 algorithm rewrite explained. Why you can win a match and still lose rating points, or lose a match and gain them. Match weights, exclusion rules, reliability score — Part 2 of 3." },
-  "tama-shimabukuro-ppa-atlanta-final-15-year-old": { title: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud", description: "15-year-old Tama Shimabukuro just beat world #1 Hunter Johnson and #2 Federico Staksrud at PPA Veolia Atlanta Championships to reach the final. His self-taught Hawaii origin story." },
-  "what-is-dupr-pickleball-rating-system": { title: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series", description: "DUPR explained: the global pickleball rating system used by PPA Tour, MLP, USA Pickleball, and Pickleball World Cup. How it works, who runs it, and why Vietnamese players need it." },
-  "dupr-vietnam-partnership-ta-pickleball-thepicklehub": { title: "DUPR Vietnam Partnership Announced | TA Pickleball x ThePickleHub First Step", description: "DUPR, TA Pickleball, and ThePickleHub have signed a preliminary partnership to bring the global pickleball rating system to Vietnam. First step of a three-phase roadmap." },
-  "pickleball-tour-wars-2023-explained": { title: "Pickleball Tour Wars 2023 Explained | 10 Days That Changed Pro Pickleball", description: "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today." },
-  "app-tour-vs-ppa-tour-contracts-2026": { title: "APP Tour vs PPA Tour 2026 | Contracts, Money & Exclusivity Compared", description: "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained." },
-  "pickleball-world-cup-2026-da-nang": { title: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch", description: "Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). Up to 80 nations, 4,000 athletes. Dates, venues, format, Vietnam team." },
-  "how-to-watch-ppa-tour-live-2026": { title: "How to Watch PPA Tour Live 2026 | Streaming Platforms, Schedules & Free Options", description: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS, ESPN, and Fox Sports. Plus free YouTube highlights + ThePickleHub livestreams." },
-  "ppa-tour-asia-2026-complete-guide": { title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play", description: "PPA Tour Asia 2026 complete guide — 10 tournament stops in Vietnam, Japan, Korea, Thailand. Schedule, prize money, registration, live streams." },
-  "best-pickleball-tournament-software-2026": { title: "Best Pickleball Tournament Software 2026", description: "Compare the best pickleball tournament software in 2026: free bracket generators, round robin tools, MLP team match platforms. No signup." },
-  "how-to-create-pickleball-bracket": { title: "How to Create a Pickleball Bracket", description: "How to create a pickleball bracket for round robin, single elimination, and double elimination — with a free bracket generator + live scoring." },
-  "pickleball-round-robin-generator-guide": { title: "Pickleball Round Robin Generator Guide 2026", description: "Free pickleball round robin generator with auto scheduling, court rotation, and live scoring. Organize a perfect round robin tournament." },
-  "pickleball-scoring-rules-guide": { title: "Pickleball Scoring Rules 2026 | Beginner Guide", description: "Learn pickleball scoring rules for singles, doubles, and tournament play. Rally scoring vs side-out explained. Free digital scoring tool included." },
-  "how-to-organize-pickleball-tournament": { title: "How to Organize a Pickleball Tournament 2026", description: "Step-by-step guide to organize a pickleball tournament: venue, format, registration, scheduling, scoring, and free tools to run the event." },
-  "pickleball-doubles-strategy-guide": { title: "Pickleball Doubles Strategy & Tips 2026", description: "Pickleball doubles strategy for tournaments: partner communication, court positioning, stacking, and when to attack the kitchen line." },
-  "pickleball-tournament-formats-explained": { title: "Pickleball Tournament Formats | Round Robin & More", description: "Pickleball tournament formats explained: round robin, single + double elimination, MLP team match, flex. Choose the right format for your event." },
-  "pickleball-live-streaming-guide": { title: "Pickleball Live Streaming Guide 2026", description: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with The Pickle Hub's free livestreaming platform." },
-  "mlp-format-explained": { title: "MLP Format Explained 2026 | Major League Pickleball", description: "MLP format explained: Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event." },
-  "free-pickleball-bracket-generator": { title: "Free Pickleball Bracket Generator 2026", description: "Free pickleball bracket generator: round robin, single + double elimination, with real-time scoring. Build a tournament bracket in 60 seconds." },
-  "pickleball-bracket-templates": { title: "Pickleball Bracket Templates 2026 | Free Download", description: "Free pickleball bracket templates for round robin, single + double elimination. Sizes for 4, 8, 16, 32, 64 players with live scoring." },
-  "pickleball-rules-complete-guide": { title: "Pickleball Rules 2026 | Complete Guide with Asia's Hardest Calls Explained", description: "The 2026 pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus 5 disputed calls in Asian tournaments." },
-  "tournament-organizer-hub": { title: "Pickleball Tournament Organizer Hub | Formats, Brackets, Tools 2026", description: "Pickleball tournament organizer hub 2026: choose a format, build brackets, manage scoring, livestream, and compare free software — all from one page." },
-  "how-to-play-pickleball": { title: "How to Play Pickleball | 7-Day Beginner Plan Tested in Vietnam", description: "How to play pickleball: beginner gear, grip, 6 core shots, and a 7-day practice plan tested with 200+ Vietnamese players. Start playing in week one." },
+const BLOG_POST_META: Record<string, {
+  title: string;
+  description: string;
+  /** PR79 Phase 2G — datePublished + image used by the BlogPosting
+   *  JSON-LD so the EN side reaches schema parity with VI (which
+   *  drives the fields from vi_blog_posts.published_at +
+   *  cover_image_url). When a new post lands, copy the
+   *  `publishedDate` + `heroImage.src` from
+   *  src/content/blog/posts/<slug>.ts. Posts with empty image
+   *  fall back to DEFAULT_OG_IMAGE in the renderer. */
+  datePublished?: string;
+  image?: string;
+}> = {
+  "dupr-algorithm-explained-performance-vs-expectation": { title: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3", description: "DUPR's July 2025 algorithm rewrite explained. Why you can win a match and still lose rating points, or lose a match and gain them. Match weights, exclusion rules, reliability score — Part 2 of 3.", datePublished: "2026-05-14", image: "/images/blog/dupr-algorithm-performance-vs-expectation-hero.webp" },
+  "tama-shimabukuro-ppa-atlanta-final-15-year-old": { title: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud", description: "15-year-old Tama Shimabukuro just beat world #1 Hunter Johnson and #2 Federico Staksrud at PPA Veolia Atlanta Championships to reach the final. His self-taught Hawaii origin story.", datePublished: "2026-05-11", image: "/images/blog/tama-shimabukuro-atlanta-hero.webp" },
+  "what-is-dupr-pickleball-rating-system": { title: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series", description: "DUPR explained: the global pickleball rating system used by PPA Tour, MLP, USA Pickleball, and Pickleball World Cup. How it works, who runs it, and why Vietnamese players need it.", datePublished: "2026-05-11", image: "/images/blog/dupr-pickleball-rating-hero.webp" },
+  "dupr-vietnam-partnership-ta-pickleball-thepicklehub": { title: "DUPR Vietnam Partnership Announced | TA Pickleball x ThePickleHub First Step", description: "DUPR, TA Pickleball, and ThePickleHub have signed a preliminary partnership to bring the global pickleball rating system to Vietnam. First step of a three-phase roadmap.", datePublished: "2026-05-13", image: "/images/blog/dupr-ta-picklehub-partnership-hero.webp" },
+  "pickleball-tour-wars-2023-explained": { title: "Pickleball Tour Wars 2023 Explained | 10 Days That Changed Pro Pickleball", description: "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today.", datePublished: "2026-05-05", image: "/images/blog/pickleball-tour-wars-2023-hero.webp" },
+  "app-tour-vs-ppa-tour-contracts-2026": { title: "APP Tour vs PPA Tour 2026 | Contracts, Money & Exclusivity Compared", description: "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained.", datePublished: "2026-05-05", image: "/images/blog/app-tour-vs-ppa-tour-contracts-hero.webp" },
+  "pickleball-world-cup-2026-da-nang": { title: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch", description: "Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). Up to 80 nations, 4,000 athletes. Dates, venues, format, Vietnam team.", datePublished: "2026-04-23", image: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp" },
+  "how-to-watch-ppa-tour-live-2026": { title: "How to Watch PPA Tour Live 2026 | Streaming Platforms, Schedules & Free Options", description: "Watch PPA Tour live in 2026 on PBTV, Amazon Prime, CBS, ESPN, and Fox Sports. Plus free YouTube highlights + ThePickleHub livestreams.", datePublished: "2026-04-16", image: "/images/blog/how-to-watch-ppa-tour-live-2026-hero.webp?v=2" },
+  "ppa-tour-asia-2026-complete-guide": { title: "PPA Tour Asia 2026: Complete Schedule, Prize Money & How to Play", description: "PPA Tour Asia 2026 complete guide — 10 tournament stops in Vietnam, Japan, Korea, Thailand. Schedule, prize money, registration, live streams.", datePublished: "2026-04-16", image: "/images/blog/ppa-tour-asia-2026-hero.webp" },
+  "best-pickleball-tournament-software-2026": { title: "Best Pickleball Tournament Software 2026", description: "Compare the best pickleball tournament software in 2026: free bracket generators, round robin tools, MLP team match platforms. No signup.", datePublished: "2025-12-15" },
+  "how-to-create-pickleball-bracket": { title: "How to Create a Pickleball Bracket", description: "How to create a pickleball bracket for round robin, single elimination, and double elimination — with a free bracket generator + live scoring.", datePublished: "2025-11-20" },
+  "pickleball-round-robin-generator-guide": { title: "Pickleball Round Robin Generator Guide 2026", description: "Free pickleball round robin generator with auto scheduling, court rotation, and live scoring. Organize a perfect round robin tournament.", datePublished: "2025-10-10" },
+  "pickleball-scoring-rules-guide": { title: "Pickleball Scoring Rules 2026 | Beginner Guide", description: "Learn pickleball scoring rules for singles, doubles, and tournament play. Rally scoring vs side-out explained. Free digital scoring tool included.", datePublished: "2026-03-15" },
+  "how-to-organize-pickleball-tournament": { title: "How to Organize a Pickleball Tournament 2026", description: "Step-by-step guide to organize a pickleball tournament: venue, format, registration, scheduling, scoring, and free tools to run the event.", datePublished: "2026-03-20" },
+  "pickleball-doubles-strategy-guide": { title: "Pickleball Doubles Strategy & Tips 2026", description: "Pickleball doubles strategy for tournaments: partner communication, court positioning, stacking, and when to attack the kitchen line.", datePublished: "2026-03-22" },
+  "pickleball-tournament-formats-explained": { title: "Pickleball Tournament Formats | Round Robin & More", description: "Pickleball tournament formats explained: round robin, single + double elimination, MLP team match, flex. Choose the right format for your event.", datePublished: "2026-03-25" },
+  "pickleball-live-streaming-guide": { title: "Pickleball Live Streaming Guide 2026", description: "Watch pickleball live streams for free. Learn how to stream your own pickleball tournament online with The Pickle Hub's free livestreaming platform.", datePublished: "2026-03-29" },
+  "mlp-format-explained": { title: "MLP Format Explained 2026 | Major League Pickleball", description: "MLP format explained: Major League Pickleball team match rules, dreambreaker, lineup strategy, and how to organize your own MLP-style event.", datePublished: "2026-03-29" },
+  "free-pickleball-bracket-generator": { title: "Free Pickleball Bracket Generator 2026", description: "Free pickleball bracket generator: round robin, single + double elimination, with real-time scoring. Build a tournament bracket in 60 seconds.", datePublished: "2026-03-29" },
+  "pickleball-bracket-templates": { title: "Pickleball Bracket Templates 2026 | Free Download", description: "Free pickleball bracket templates for round robin, single + double elimination. Sizes for 4, 8, 16, 32, 64 players with live scoring.", datePublished: "2026-03-29" },
+  "pickleball-rules-complete-guide": { title: "Pickleball Rules 2026 | Complete Guide with Asia's Hardest Calls Explained", description: "The 2026 pickleball rulebook simplified: serve, two-bounce, kitchen/NVZ, scoring, faults. Plus 5 disputed calls in Asian tournaments.", datePublished: "2026-04-19" },
+  "tournament-organizer-hub": { title: "Pickleball Tournament Organizer Hub | Formats, Brackets, Tools 2026", description: "Pickleball tournament organizer hub 2026: choose a format, build brackets, manage scoring, livestream, and compare free software — all from one page.", datePublished: "2026-04-25", image: "/images/blog/tournament-organizer-hub-hero.webp" },
+  "how-to-play-pickleball": { title: "How to Play Pickleball | 7-Day Beginner Plan Tested in Vietnam", description: "How to play pickleball: beginner gear, grip, 6 core shots, and a 7-day practice plan tested with 200+ Vietnamese players. Start playing in week one.", datePublished: "2026-04-26", image: "/images/blog/how-to-play-pickleball-hero.webp" },
 };
 
 export async function renderBlogPost(supabase: SupabaseClient, slug: string, siteUrl: string): Promise<Response> {
@@ -741,14 +753,57 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
   const title = buildTitle(meta.title, " | ThePickleHub");
   const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Blog", href: `${siteUrl}/blog` }, { label: meta.title }]);
 
+  // PR79 Phase 2G (audit I-9 + I-10 + I-17) — bring the EN BlogPosting
+  // schema to parity with the VI side (renderViBlogPost). Previously
+  // emitted only { headline, description, url, publisher } so EN posts
+  // were ineligible for the Article rich card (Google requires
+  // datePublished + image + author + publisher.logo for the snippet).
+  //
+  // VI parity adds:
+  //   image           — absolute heroImage URL (DEFAULT_OG_IMAGE fallback)
+  //   datePublished   — from BLOG_POST_META (mirrored from src/content/
+  //                     blog/posts/<slug>.ts.publishedDate)
+  //   dateModified    — same as datePublished for now; we don't track
+  //                     the EN updatedDate separately in BLOG_POST_META.
+  //                     VI side reads vi_blog_posts.updated_at; can add
+  //                     when EN edits start landing.
+  //   author          — Organization (matches VI; future per-post bylines
+  //                     can override when needed)
+  //   publisher.logo  — promote the existing string `logo` field to a
+  //                     proper ImageObject so Google's Article validator
+  //                     stops flagging "logo must be ImageObject"
+  //   inLanguage      — "en-US"
+  const blogImage = absImage(meta.image ?? "", siteUrl);
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: title,
+    description: meta.description,
+    image: blogImage,
+    url: enUrl,
+    author: { "@type": "Organization", name: "ThePickleHub", url: siteUrl },
+    publisher: {
+      "@type": "Organization",
+      name: "ThePickleHub",
+      url: siteUrl,
+      logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
+    },
+    inLanguage: "en-US",
+  };
+  if (meta.datePublished) {
+    jsonLd.datePublished = meta.datePublished;
+    jsonLd.dateModified = meta.datePublished;
+  }
+
   return htmlResponse(buildHtml({
     title,
     description: meta.description,
     url: enUrl,
     siteUrl,
+    image: blogImage,
     type: "article",
     extraMeta,
-    jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", headline: title, description: meta.description, url: enUrl, publisher: { "@type": "Organization", name: "ThePickleHub", url: siteUrl } },
+    jsonLd,
     bodyContent: `${bc}${relatedBlogLinks(slug, siteUrl)}`,
   }));
 }
