@@ -4224,7 +4224,7 @@ export const vi: Translations = {
       titleEnPlaceholder: "Saturday Night Open Play",
       slug: "Đường dẫn (slug)",
       slugHint:
-        "Hiển thị trong URL: thepicklehub.net/su-kien/<slug>. Chỉ chữ thường, số và dấu gạch ngang.",
+        "Hiển thị trong URL: thepicklehub.net/social/<slug>. Chỉ chữ thường, số và dấu gạch ngang.",
       slugAuto: "Tự sinh từ tên",
       descriptionVi: "Mô tả (tiếng Việt)",
       descriptionEn: "Mô tả (English, tuỳ chọn)",

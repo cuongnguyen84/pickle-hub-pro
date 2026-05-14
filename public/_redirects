@@ -2,6 +2,13 @@
 /livestream/:id /live/:id 301
 /livestream /live 301
 
+# PR69 — Social nav restructure. /su-kien legacy paths → /social.
+# Cloudflare _redirects splat preserves anything after the prefix.
+/su-kien/* /social/:splat 301
+/su-kien /social 301
+/vi/su-kien/* /vi/social/:splat 301
+/vi/su-kien /vi/social 301
+
 # Blog post URL refresh (2025 → 2026)
 /blog/best-pickleball-tournament-software-2025  /blog/best-pickleball-tournament-software-2026  301
 

@@ -157,6 +157,37 @@
 [data-theme="the-line"] .tl-nav-links a:hover { color: var(--tl-fg); background: var(--tl-surface); }
 [data-theme="the-line"] .tl-nav-links a.active { color: var(--tl-fg); }
 
+/* PR69 — nav-parent dropdown trigger. Matches the leaf-link styling so
+   the group reads as a regular nav item with a chevron. */
+[data-theme="the-line"] .tl-nav-link-btn {
+  display: inline-flex; align-items: center;
+  padding: 8px 12px; border-radius: 6px;
+  background: transparent; border: 0; cursor: pointer;
+  color: var(--tl-fg-2); font: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+[data-theme="the-line"] .tl-nav-link-btn:hover { color: var(--tl-fg); background: var(--tl-surface); }
+[data-theme="the-line"] .tl-nav-link-btn.active { color: var(--tl-fg); }
+
+[data-theme="the-line"] .tl-nav-submenu {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  min-width: 160px;
+  background: var(--tl-surface);
+  border: 1px solid var(--tl-border);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+  padding: 6px;
+  display: flex; flex-direction: column; gap: 2px;
+  z-index: 50;
+}
+[data-theme="the-line"] .tl-nav-submenu a {
+  padding: 8px 12px; border-radius: 6px;
+  color: var(--tl-fg-2); text-decoration: none; font-size: 13.5px;
+  transition: background 0.15s, color 0.15s;
+}
+[data-theme="the-line"] .tl-nav-submenu a:hover { color: var(--tl-fg); background: var(--tl-bg-2, rgba(255,255,255,0.04)); }
+[data-theme="the-line"] .tl-nav-submenu a.active { color: var(--tl-fg); }
+
 @media (max-width: 900px) { [data-theme="the-line"] .tl-nav-links { display: none; } }
 
 [data-theme="the-line"] .tl-nav-right { display: flex; align-items: center; gap: 8px; }
@@ -2596,6 +2627,25 @@
 [data-theme="the-line"] .tl-drawer-nav a:last-child { border-bottom: 0; }
 [data-theme="the-line"] .tl-drawer-nav a .arr {
   font-family: "Geist Mono"; font-style: normal; font-size: 14px; color: var(--tl-fg-4);
+}
+
+/* PR69 — drawer nav group for nested NAV_ITEMS (Social parent). The
+   label sits as a section header; child rows get indented + a tiny
+   muted left border so the hierarchy is visible without a real
+   collapsible. */
+[data-theme="the-line"] .tl-drawer-nav-group {
+  display: contents;
+}
+[data-theme="the-line"] .tl-drawer-nav-group-label {
+  font-family: "Geist Mono"; font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--tl-fg-4);
+  padding: 14px 0 6px;
+  border-bottom: 1px solid var(--tl-border);
+}
+[data-theme="the-line"] .tl-drawer-nav .tl-drawer-nav-child {
+  padding-left: 12px;
+  border-left: 2px solid var(--tl-border);
 }
 
 [data-theme="the-line"] .tl-drawer-nav-secondary {

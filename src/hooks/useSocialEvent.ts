@@ -2,9 +2,9 @@
 // useSocialEvent — fetch a social_events row by slug, with public-friendly RLS
 // ----------------------------------------------------------------------------
 // Used by:
-//   - /su-kien/:slug landing page (PR2)
-//   - /su-kien/:slug/danh-sach roster (PR3)
-//   - /su-kien/:slug/xep-cap matchmaking (PR3)
+//   - /social/:slug landing page (PR2)
+//   - /social/:slug/danh-sach roster (PR3)
+//   - /social/:slug/xep-cap matchmaking (PR3)
 //
 // RLS lets anonymous viewers see published+public events. Draft + club_only
 // events are visible only to the organizer and admins — the row simply

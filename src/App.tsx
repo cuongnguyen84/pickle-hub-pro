@@ -400,6 +400,31 @@ const LivestreamRedirect = () => {
   return <Navigate to={`/live/${id}`} replace />;
 };
 
+// PR69 — SPA-internal aliases for the legacy /su-kien/* paths. Fresh
+// hits get a server-side 301 from public/_redirects; these handle any
+// stale internal Link that still references the old path so the user
+// lands on the new /social/* equivalent instead of seeing a 404.
+const NavigateSuKienDetail = () => {
+  const slug = window.location.pathname.match(/\/su-kien\/([^/?#]+)/)?.[1] ?? "";
+  return <Navigate to={`/social/${slug}`} replace />;
+};
+const NavigateSuKienDanhSach = () => {
+  const slug = window.location.pathname.match(/\/su-kien\/([^/?#]+)\/danh-sach/)?.[1] ?? "";
+  return <Navigate to={`/social/${slug}/danh-sach`} replace />;
+};
+const NavigateSuKienXepCap = () => {
+  const slug = window.location.pathname.match(/\/su-kien\/([^/?#]+)\/xep-cap/)?.[1] ?? "";
+  return <Navigate to={`/social/${slug}/xep-cap`} replace />;
+};
+const NavigateSuKienLive = () => {
+  const slug = window.location.pathname.match(/\/su-kien\/([^/?#]+)\/live/)?.[1] ?? "";
+  return <Navigate to={`/social/${slug}/live`} replace />;
+};
+const NavigateSuKienLiveVi = () => {
+  const slug = window.location.pathname.match(/\/vi\/su-kien\/([^/?#]+)\/live/)?.[1] ?? "";
+  return <Navigate to={`/vi/social/${slug}/live`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
@@ -442,19 +467,31 @@ const App = () => (
                     <Route path="/onboarding" element={<Onboarding />} />
                     {/* Bet #1 Sprint 3 Phase 3B: public PlayerProfile (no auth wrapper) */}
                     <Route path="/nguoi-choi/:username" element={<PlayerProfile />} />
-                    {/* Social Events MVP Sprint 1 PR2 — public landing pages (no auth) */}
-                    <Route path="/su-kien" element={<SocialEventList />} />
-                    <Route path="/vi/su-kien" element={<SocialEventList />} />
-                    <Route path="/su-kien/:slug" element={<SocialEventDetail />} />
+                    {/* Social Events MVP — public landing pages (no auth).
+                        PR69 renamed /su-kien → /social; the cloudflare
+                        _redirects file 301s fresh hits server-side. The
+                        client-side `Navigate` aliases below catch any
+                        stale SPA-internal Link that still uses the old
+                        path so users never see a 404. */}
+                    <Route path="/social" element={<SocialEventList />} />
+                    <Route path="/vi/social" element={<SocialEventList />} />
+                    <Route path="/social/:slug" element={<SocialEventDetail />} />
+                    <Route path="/social/:slug/danh-sach" element={<SocialEventRoster />} />
+                    <Route path="/social/:slug/xep-cap" element={<SocialEventMatchmaking />} />
+                    <Route path="/social/:slug/live" element={<SocialEventLive />} />
+                    <Route path="/vi/social/:slug/live" element={<SocialEventLive />} />
+                    {/* Legacy /su-kien — SPA-internal Navigate fallback */}
+                    <Route path="/su-kien" element={<Navigate to="/social" replace />} />
+                    <Route path="/vi/su-kien" element={<Navigate to="/vi/social" replace />} />
+                    <Route path="/su-kien/:slug" element={<NavigateSuKienDetail />} />
+                    <Route path="/su-kien/:slug/danh-sach" element={<NavigateSuKienDanhSach />} />
+                    <Route path="/su-kien/:slug/xep-cap" element={<NavigateSuKienXepCap />} />
+                    <Route path="/su-kien/:slug/live" element={<NavigateSuKienLive />} />
+                    <Route path="/vi/su-kien/:slug/live" element={<NavigateSuKienLiveVi />} />
                     <Route path="/clb/:slug" element={<ClubLanding />} />
                     {/* Social Events MVP Sprint 1 PR3 — organizer surfaces (auth + ownership) */}
                     <Route path="/clb/:slug/quan-ly" element={<ClubManage />} />
                     <Route path="/clb/:slug/su-kien/moi" element={<CreateSocialEvent />} />
-                    <Route path="/su-kien/:slug/danh-sach" element={<SocialEventRoster />} />
-                    <Route path="/su-kien/:slug/xep-cap" element={<SocialEventMatchmaking />} />
-                    {/* Social Events MVP PR47 — Live Event UX (public; spectator when not registered) */}
-                    <Route path="/su-kien/:slug/live" element={<SocialEventLive />} />
-                    <Route path="/vi/su-kien/:slug/live" element={<SocialEventLive />} />
                     {/* Social Events MVP PR53 — public profile + match history + badges */}
                     <Route path="/u/:slug" element={<PublicProfile />} />
                     <Route path="/vi/u/:slug" element={<PublicProfile />} />

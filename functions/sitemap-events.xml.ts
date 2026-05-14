@@ -7,7 +7,7 @@
  * bounded.
  *
  * Hreflang: single canonical URL serves both VI and EN (SPA toggles via
- * useI18n context), so en/vi/x-default all point at the same /su-kien/*
+ * useI18n context), so en/vi/x-default all point at the same /social/*
  * or /clb/* path. Matches the convention from sitemap-players.xml.
  */
 
@@ -76,7 +76,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const eventEntries = ((eventsRes.data ?? []) as EventRow[])
       .filter((e) => e.slug && URL_SAFE_SLUG_RE.test(e.slug))
       .map((e) => {
-        const loc = `${siteUrl}/su-kien/${e.slug}`;
+        const loc = `${siteUrl}/social/${e.slug}`;
         return buildUrlEntry({
           loc,
           lastmod: toLastmod(e.updated_at, TODAY),

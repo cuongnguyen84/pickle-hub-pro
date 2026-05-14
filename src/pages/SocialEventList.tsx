@@ -1,5 +1,5 @@
 // ============================================================================
-// SocialEventList (`/su-kien`) — public collection of upcoming social events.
+// SocialEventList (`/social`) — public collection of upcoming social events.
 // ----------------------------------------------------------------------------
 // Mobile-first card grid. Public RLS surfaces only published+public events.
 // Page lives under the TheLine "events" nav slot so the top-of-page header
@@ -27,7 +27,7 @@ function EventCard({ event, lang }: { event: UpcomingEventRow; lang: "vi" | "en"
 
   return (
     <Link
-      to={`/su-kien/${event.slug}`}
+      to={`/social/${event.slug}`}
       className="tl-card-link"
       style={{
         display: "block",

@@ -27,7 +27,7 @@ import "@/styles/the-line.css";
  * - Children render INSIDE the chrome
  * ------------------------------------------------------------------------- */
 
-type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs";
+type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social";
 
 export interface TheLineLayoutProps {
   title: string;
@@ -45,12 +45,38 @@ const STORAGE_KEY = "tl-theme-mode";
  * a labelVi keep the existing English-only behaviour (Live, Tournaments,
  * etc. read the same in both locales). Feed gets a Vietnamese label
  * because "Feed" doesn't carry meaning for VI-only readers.
+ *
+ * PR69 — items may declare `children` for a 2-level dropdown. Parents with
+ * children render as a button that toggles a popup; clicking a child
+ * navigates. The parent itself has no `to` (it's only a menu trigger). The
+ * highlight matches on the parent's `key` when any child is the active page.
  */
-const NAV_ITEMS: { label: string; labelVi?: string; to: string; key: Active }[] = [
+interface NavLeaf {
+  label: string;
+  labelVi?: string;
+  to: string;
+  key: Active;
+}
+interface NavParent {
+  label: string;
+  labelVi?: string;
+  key: Active;
+  children: NavLeaf[];
+}
+type NavItem = NavLeaf | NavParent;
+
+const NAV_ITEMS: NavItem[] = [
   { label: "Live", to: "/live", key: "live" },
   { label: "Tournaments", to: "/tournaments", key: "tournaments" },
-  { label: "Events", labelVi: "Sự kiện", to: "/su-kien", key: "events" },
-  { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
+  {
+    label: "Social",
+    labelVi: "Social",
+    key: "social",
+    children: [
+      { label: "Tickets", labelVi: "Xé vé", to: "/social", key: "events" },
+      { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
+    ],
+  },
   { label: "Bracket Lab", to: "/tools", key: "lab" },
   { label: "Rankings", to: "/rankings", key: "rankings" },
   { label: "Feed", labelVi: "Bảng tin", to: "/feed", key: "feed" },
@@ -85,8 +111,8 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
     "/vi",
     "/clubs",
     "/vi/clubs",
-    "/su-kien",
-    "/vi/su-kien",
+    "/social",
+    "/vi/social",
     "/live",
     "/vi/live",
     "/tournaments",
@@ -149,6 +175,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const [search, setSearch] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const avatarRef = useRef<HTMLDivElement>(null);
+  // PR69 — open state for nav-parent dropdowns (currently only the
+  // "Social" group with Tickets + Clubs children). Keyed by NavItem.key
+  // so a future second parent stays independent.
+  const [openNavKey, setOpenNavKey] = useState<Active | null>(null);
+  const navDropdownRef = useRef<HTMLDivElement>(null);
 
   // Click outside / Escape closes avatar dropdown
   useEffect(() => {
@@ -168,6 +199,25 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
       window.removeEventListener("keydown", onKey);
     };
   }, [avatarOpen]);
+
+  // PR69 — same click-outside/Escape pattern for nav-parent dropdowns.
+  useEffect(() => {
+    if (openNavKey === null) return;
+    const onClick = (e: MouseEvent) => {
+      if (navDropdownRef.current && !navDropdownRef.current.contains(e.target as Node)) {
+        setOpenNavKey(null);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenNavKey(null);
+    };
+    window.addEventListener("mousedown", onClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [openNavKey]);
 
   // Derived user display values
   const userEmail = user?.email ?? "";
@@ -274,15 +324,71 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
         </Link>
 
         <div className="tl-nav-links">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.key}
-              to={localizedPath(item.to, language)}
-              className={active === item.key ? "active" : ""}
-            >
-              {language === "vi" && item.labelVi ? item.labelVi : item.label}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const label = language === "vi" && item.labelVi ? item.labelVi : item.label;
+            // Leaf — same render as before.
+            if (!("children" in item)) {
+              return (
+                <Link
+                  key={item.key}
+                  to={localizedPath(item.to, language)}
+                  className={active === item.key ? "active" : ""}
+                >
+                  {label}
+                </Link>
+              );
+            }
+            // Parent — button + popup of children. Active when ANY child
+            // matches the current page.
+            const isActive =
+              active === item.key ||
+              item.children.some((c) => c.key === active);
+            const isOpen = openNavKey === item.key;
+            return (
+              <div
+                key={item.key}
+                ref={isOpen ? navDropdownRef : undefined}
+                style={{ position: "relative", display: "inline-block" }}
+              >
+                <button
+                  type="button"
+                  className={`tl-nav-link-btn${isActive ? " active" : ""}`}
+                  aria-haspopup="menu"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenNavKey((k) => (k === item.key ? null : item.key))}
+                >
+                  {label}
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ marginLeft: 6, opacity: 0.7 }}
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+                {isOpen && (
+                  <div className="tl-nav-submenu" role="menu">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.key}
+                        role="menuitem"
+                        to={localizedPath(child.to, language)}
+                        className={active === child.key ? "active" : ""}
+                        onClick={() => setOpenNavKey(null)}
+                      >
+                        {language === "vi" && child.labelVi ? child.labelVi : child.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="tl-nav-right">
@@ -521,19 +627,45 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 <span>{language === "vi" ? "Trang chủ" : "Home"}</span>
                 <span className="arr">→</span>
               </Link>
-              {NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.key}
-                  to={localizedPath(item.to, language)}
-                  onClick={() => setMenuOpen(false)}
-                  className={active === item.key ? "active" : ""}
-                >
-                  <span>
-                    {language === "vi" && item.labelVi ? item.labelVi : item.label}
-                  </span>
-                  <span className="arr">→</span>
-                </Link>
-              ))}
+              {NAV_ITEMS.map((item) => {
+                const label = language === "vi" && item.labelVi ? item.labelVi : item.label;
+                // Leaf — keep existing single-row Link.
+                if (!("children" in item)) {
+                  return (
+                    <Link
+                      key={item.key}
+                      to={localizedPath(item.to, language)}
+                      onClick={() => setMenuOpen(false)}
+                      className={active === item.key ? "active" : ""}
+                    >
+                      <span>{label}</span>
+                      <span className="arr">→</span>
+                    </Link>
+                  );
+                }
+                // Parent — render section header + indented child rows.
+                // Drawer is collapsible-friendly but for now we just
+                // show both children inline; that's the same affordance
+                // a top-level item would have.
+                return (
+                  <div key={item.key} className="tl-drawer-nav-group">
+                    <div className="tl-drawer-nav-group-label">{label}</div>
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.key}
+                        to={localizedPath(child.to, language)}
+                        onClick={() => setMenuOpen(false)}
+                        className={active === child.key ? "active tl-drawer-nav-child" : "tl-drawer-nav-child"}
+                      >
+                        <span>
+                          {language === "vi" && child.labelVi ? child.labelVi : child.label}
+                        </span>
+                        <span className="arr">→</span>
+                      </Link>
+                    ))}
+                  </div>
+                );
+              })}
               {user ? (
                 <>
                   <Link to="/account" onClick={() => setMenuOpen(false)}>

@@ -78,7 +78,7 @@ export function MatchHistoryList({ matches, hasMore, onLoadMore, loadingMore }: 
             <div className="font-mono text-xs text-muted-foreground">{dateStr}</div>
             <div className="min-w-0">
               <Link
-                to={`/su-kien/${m.event_slug}`}
+                to={`/social/${m.event_slug}`}
                 className="block truncate font-medium hover:underline"
               >
                 {m.event_title}

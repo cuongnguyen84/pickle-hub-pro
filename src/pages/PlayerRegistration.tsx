@@ -285,7 +285,7 @@ export default function PlayerRegistration() {
           <div className="kicker">◆ {tr.eyebrow}</div>
           <h1>{title}</h1>
           <p>
-            <Link to={`/su-kien/${data.event_slug}`} className="hover:underline">
+            <Link to={`/social/${data.event_slug}`} className="hover:underline">
               {tr.viewPublic} →
             </Link>
           </p>

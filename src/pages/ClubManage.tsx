@@ -128,7 +128,7 @@ export default function ClubManage() {
             {/* TheLine vibrant-green pill primary CTA — matches the
                 bracket-lab header pattern ("+ Start a Quick Table →"). */}
             <Link
-              to={`/clb/${clubData.club.slug}/su-kien/moi`}
+              to={`/clb/${clubData.club.slug}/social/moi`}
               className="tl-btn green"
             >
               <Plus className="h-4 w-4" /> {manage.newEventCta} →
@@ -158,7 +158,7 @@ export default function ClubManage() {
             </p>
             <div className="mt-6 flex justify-center">
               <Link
-                to={`/clb/${clubData.club.slug}/su-kien/moi`}
+                to={`/clb/${clubData.club.slug}/social/moi`}
                 className="tl-btn green"
               >
                 <Plus className="h-4 w-4" /> {manage.emptyCta} →
@@ -220,28 +220,28 @@ export default function ClubManage() {
                   }}
                 >
                   <Link
-                    to={`/su-kien/${event.slug}/danh-sach`}
+                    to={`/social/${event.slug}/danh-sach`}
                     style={{ color: "var(--tl-fg)", textDecoration: "none" }}
                     className="inline-flex items-center gap-1 hover:underline"
                   >
                     <ClipboardList className="h-3 w-3" /> {manage.manageRoster} →
                   </Link>
                   <Link
-                    to={`/su-kien/${event.slug}/xep-cap`}
+                    to={`/social/${event.slug}/xep-cap`}
                     style={{ color: "var(--tl-fg)", textDecoration: "none" }}
                     className="inline-flex items-center gap-1 hover:underline"
                   >
                     <Sparkles className="h-3 w-3" /> {manage.shufflePairs} →
                   </Link>
                   <Link
-                    to={`/clb/${clubData.club.slug}/quan-ly/su-kien/${event.slug}/sua`}
+                    to={`/clb/${clubData.club.slug}/quan-ly/social/${event.slug}/sua`}
                     style={{ color: "var(--tl-fg)", textDecoration: "none" }}
                     className="inline-flex items-center gap-1 hover:underline"
                   >
                     <Pencil className="h-3 w-3" /> {manage.editEvent} →
                   </Link>
                   <Link
-                    to={`/su-kien/${event.slug}`}
+                    to={`/social/${event.slug}`}
                     style={{ color: "var(--tl-fg-3)", textDecoration: "none" }}
                     className="inline-flex items-center gap-1 hover:underline"
                   >

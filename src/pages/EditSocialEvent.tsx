@@ -1,5 +1,5 @@
 // ============================================================================
-// EditSocialEvent (`/clb/:slug/quan-ly/su-kien/:event_slug/sua`) — PR58.
+// EditSocialEvent (`/clb/:slug/quan-ly/social/:event_slug/sua`) — PR58.
 // ----------------------------------------------------------------------------
 // Organizer-only edit page. Pre-fills the same fields as CreateSocialEvent
 // but in a single non-wizard form (the user already knows the fields).
@@ -407,7 +407,7 @@ export default function EditSocialEvent() {
             <div className="space-y-1">
               <Label>{edit.slugLabel}</Label>
               <p className="rounded-md border border-border bg-muted/30 px-3 py-2 font-mono text-sm text-muted-foreground">
-                /su-kien/{evSlug}
+                /social/{evSlug}
               </p>
               <p className="text-xs text-muted-foreground">{edit.slugImmutableHint}</p>
             </div>

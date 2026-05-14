@@ -1840,7 +1840,7 @@ export const en: Translations = {
       titleEnPlaceholder: "Saturday Night Open Play",
       slug: "URL slug",
       slugHint:
-        "Shown in the URL: thepicklehub.net/su-kien/<slug>. Lowercase letters, digits, hyphens only.",
+        "Shown in the URL: thepicklehub.net/social/<slug>. Lowercase letters, digits, hyphens only.",
       slugAuto: "Generate from title",
       descriptionVi: "Description (Vietnamese)",
       descriptionEn: "Description (English, optional)",

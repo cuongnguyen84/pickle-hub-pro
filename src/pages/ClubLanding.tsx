@@ -36,7 +36,7 @@ function EventCard({
     <Card className="p-4 transition hover:shadow-md">
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <Link
-          to={`/su-kien/${event.slug}`}
+          to={`/social/${event.slug}`}
           style={{ textDecoration: "none", color: "inherit", display: "block", flex: 1, minWidth: 0 }}
         >
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
@@ -65,7 +65,7 @@ function EventCard({
             className="shrink-0 gap-1"
             title={manageLabel}
           >
-            <Link to={`/su-kien/${event.slug}/danh-sach`} aria-label={manageLabel}>
+            <Link to={`/social/${event.slug}/danh-sach`} aria-label={manageLabel}>
               <ListChecks className="h-4 w-4" />
               <span className="hidden sm:inline">{manageLabel}</span>
             </Link>
