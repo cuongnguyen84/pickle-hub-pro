@@ -83,6 +83,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // typical refresh cadence — kudos/comments shift the order constantly.
     { loc: "/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
     { loc: "/vi/feed", changefreq: "hourly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/feed", "/vi/feed") },
+    // PR73 Phase 2B — Social Events MVP hub list pages.
+    // Single canonical URL serves both locales (SPA toggles via i18n
+    // context), so the hreflang array points every alt-lang entry at
+    // the same /social or /clubs URL — same pattern as /nguoi-choi/*.
+    { loc: "/social", changefreq: "daily", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/social", "/social") },
+    { loc: "/clubs", changefreq: "daily", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/clubs", "/clubs") },
     { loc: "/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/vi/tools", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/tools", "/vi/tools") },
     { loc: "/tools/flex-tournament", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: enOnly("/tools/flex-tournament") },

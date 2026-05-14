@@ -13,9 +13,9 @@ import { buildHtml, htmlResponse } from "../html";
 import {
   escapeHtml,
   buildTitle,
-  buildMetaDescription,
   breadcrumb,
 } from "../utils";
+import { pickMetaDescription } from "../seo-helpers";
 import { render404 } from "./index";
 
 interface SocialEventRow {
@@ -138,14 +138,23 @@ export async function renderSocialEvent(
     `${venueLabel ? ` tại ${venueLabel}` : ""}.` +
     ` Tối đa ${ev.max_players} người · ${priceLabel}.` +
     ` Đăng ký bằng số điện thoại trên ThePickleHub.`;
-  const description = buildMetaDescription(ev.description_vi, {
-    type: "default",
-    title: titleVi,
-  }) || fallbackDesc;
+  // PR73 Phase 2C (audit I-3) — pickMetaDescription returns the
+  // event-specific date/venue/capacity/price fallback when the organizer
+  // hasn't written a description. The previous wiring used
+  // buildMetaDescription's generic-platform fallback which made the
+  // `|| fallbackDesc` branch dead code (same Codex P2 issue as PR #19).
+  const description = pickMetaDescription(ev.description_vi, fallbackDesc);
 
+  // PR73 Phase 2D (audit I-13) — breadcrumb label = actual club name
+  // (e.g. "175 Định Công") instead of the generic literal "Sự kiện CLB"
+  // that previously pointed at the same club page. When there is no
+  // club we fall back to the generic "Sự kiện" hub link.
+  const clubCrumb = ev.club
+    ? { label: ev.club.name, href: `${siteUrl}/clb/${ev.club.slug}` }
+    : { label: "Sự kiện", href: `${siteUrl}/social` };
   const bc = breadcrumb([
     { label: "Trang chủ", href: siteUrl },
-    { label: "Sự kiện CLB", href: ev.club ? `${siteUrl}/clb/${ev.club.slug}` : siteUrl },
+    clubCrumb,
     { label: titleVi },
   ]);
 
@@ -220,6 +229,21 @@ export async function renderSocialEvent(
       jsonLd,
       bodyContent: bodyParts.join("\n"),
       lang: "vi",
+      // PR73 Phase 2D (audit I-5) — single-canonical event URL serves
+      // both languages (SPA toggles via i18n context). Emit reciprocal
+      // hreflang so Google connects this page across vi/en searches
+      // even though the URL is identical. Matches /nguoi-choi/* and
+      // /feed conventions.
+      alternates: [
+        { hreflang: "en", href: url },
+        { hreflang: "vi", href: url },
+        { hreflang: "x-default", href: url },
+      ],
+      // PR73 Phase 2D (audit I-11) — bodyContent already opens with a
+      // clean `<h1>${titleVi}</h1>`, so skip buildHtml's auto h1 (which
+      // would have emitted the decorated full page-title as a second
+      // h1, the duplicate flagged by Ahrefs).
+      omitAutoHeader: true,
     }),
   );
 }
@@ -246,10 +270,12 @@ export async function renderClub(
   const fallbackDesc =
     `${club.name}${club.location_text ? ` tại ${club.location_text}` : ""} — ` +
     "lịch sự kiện pickleball, đăng ký, kết quả. Tổ chức trên ThePickleHub.";
-  const description = buildMetaDescription(club.description, {
-    type: "default",
-    title: club.name,
-  }) || fallbackDesc;
+  // PR73 Phase 2C (audit I-3) — see renderSocialEvent above. Same dead
+  // fallback pattern: clubs without a description ended up with the
+  // generic platform copy instead of the location/CTA-specific
+  // fallbackDesc built right above. pickMetaDescription routes to
+  // fallback when the description is empty/too-short.
+  const description = pickMetaDescription(club.description, fallbackDesc);
 
   // List a snapshot of upcoming events as bot-readable links.
   const { data: events } = await supabase
@@ -278,9 +304,13 @@ export async function renderClub(
         }
       : undefined;
 
+  // PR73 Phase 2D (audit I-13) — "CLB" crumb now links to the /clubs hub
+  // list instead of the homepage (it was pointing at siteUrl, identical
+  // to the Trang-chủ crumb — duplicate-link signal). Phase 2B added the
+  // /clubs prerender so the link now resolves to real content.
   const bc = breadcrumb([
     { label: "Trang chủ", href: siteUrl },
-    { label: "CLB", href: siteUrl },
+    { label: "Câu lạc bộ", href: `${siteUrl}/clubs` },
     { label: club.name },
   ]);
 
@@ -310,6 +340,16 @@ export async function renderClub(
       jsonLd: itemListJsonLd,
       bodyContent,
       lang: "vi",
+      // PR73 Phase 2D (audit I-5) — reciprocal hreflang on the single-
+      // canonical /clb/{slug} URL.
+      alternates: [
+        { hreflang: "en", href: url },
+        { hreflang: "vi", href: url },
+        { hreflang: "x-default", href: url },
+      ],
+      // PR73 Phase 2D (audit I-11) — bodyContent already emits its own
+      // `<h1>${club.name}</h1>`. Skip the auto h1 to avoid double-h1.
+      omitAutoHeader: true,
     }),
   );
 }
