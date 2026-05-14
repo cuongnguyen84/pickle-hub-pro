@@ -2,9 +2,12 @@
  * send-blog-blast — Supabase Edge Function
  *
  * Triggered by a Supabase Database Webhook when vi_blog_posts.status
- * transitions to 'published'. Creates a Mailchimp variate (A/B subject)
- * campaign using Template V2, then schedules it for the next
- * Tue/Wed/Thu at 8:30 AM ICT (01:30 UTC).
+ * transitions to 'published'. Creates a Mailchimp regular campaign using
+ * Template V2 and SENDS IT IMMEDIATELY (no A/B variate, no Tue/Wed/Thu
+ * schedule window). From address: info@thepicklehub.net.
+ *
+ * 14/5/2026 change: removed variate A/B + scheduled send (kept old helpers
+ * below behind comments in case we want to revert).
  *
  * Required secrets:
  *   MAILCHIMP_API_KEY          e.g. "abc123def456-us7"
@@ -288,19 +291,12 @@ async function withRetry<T>(
 }
 
 interface MailchimpCampaignCreatePayload {
-  type: "variate";
+  type: "regular";
   recipients: { list_id: string };
-  variate_settings: {
-    winner_criteria: string;
-    wait_time: number;
-    test_size: number;
-    subject_lines: string[];
-    from_names: string[];
-    reply_to_addresses: string[];
-  };
   settings: {
     title: string;
     from_name: string;
+    from_email: string;
     reply_to: string;
     subject_line: string;
   };
@@ -479,7 +475,9 @@ Deno.serve(async (req) => {
     `${SITE_URL}/vi/blog/${post.slug}` +
     `?utm_source=newsletter&utm_medium=email&utm_campaign=${post.slug}`;
   const bullets = extractTopBullets((post.content_html as string | null) || "", 4);
-  const [subjectA, subjectB] = buildSubjects(post.title as string, isVI);
+  // 14/5/2026: A/B variate removed — use subject A only. buildSubjects still
+  // returns a tuple; we discard subject B but keep the helper as-is.
+  const [subjectA] = buildSubjects(post.title as string, isVI);
   const psNote =
     "Nếu bài viết hữu ích, anh/chị có thể chia sẻ cho bạn pickleball nhé! 🙏";
 
@@ -493,7 +491,9 @@ Deno.serve(async (req) => {
     psNote,
   });
 
-  const scheduledFor = getNextSendTime();
+  // 14/5/2026: scheduled send removed — fire immediately. sentAt is logged
+  // for posts_blasts traceability; getNextSendTime() retained above for rollback.
+  const sentAt = new Date();
 
   // -------------------------------------------------------------------------
   // Mailchimp API calls
@@ -501,22 +501,15 @@ Deno.serve(async (req) => {
   let campaignId: string;
 
   try {
-    // 1. Create variate campaign
+    // 1. Create regular campaign (no A/B variate — 14/5/2026 change)
     const createPayload: MailchimpCampaignCreatePayload = {
-      type: "variate",
+      type: "regular",
       recipients: { list_id: audienceId },
-      variate_settings: {
-        winner_criteria: "clicks",
-        wait_time: 240,
-        test_size: 50,
-        subject_lines: [subjectA, subjectB],
-        from_names: ["Cường"],
-        reply_to_addresses: ["tapickleballvn@gmail.com"],
-      },
       settings: {
         title: `[Blog] ${post.slug}`,
         from_name: "Cường",
-        reply_to: "tapickleballvn@gmail.com",
+        from_email: "info@thepicklehub.net",
+        reply_to: "info@thepicklehub.net",
         subject_line: subjectA,
       },
       tracking: {
@@ -556,22 +549,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 3. Schedule campaign
-    // Mailchimp schedule_time must be in ISO 8601 UTC: "2026-04-17T01:30:00+00:00"
-    const scheduleTime = scheduledFor.toISOString().replace(".000Z", "+00:00");
-    const scheduleRes = await withRetry(() =>
-      mailchimpRequest("POST", `/campaigns/${campaignId}/actions/schedule`, apiKey, {
-        schedule_time: scheduleTime,
-      })
+    // 3. Send campaign immediately (14/5/2026: replaces scheduled send)
+    const sendRes = await withRetry(() =>
+      mailchimpRequest("POST", `/campaigns/${campaignId}/actions/send`, apiKey)
     );
 
-    if (!scheduleRes.ok) {
+    if (!sendRes.ok) {
       throw new Error(
-        `Mailchimp schedule failed: ${scheduleRes.status} — ${JSON.stringify(scheduleRes.data)}`,
+        `Mailchimp send failed: ${sendRes.status} — ${JSON.stringify(sendRes.data)}`,
       );
     }
 
-    console.log(`Scheduled campaign ${campaignId} for ${scheduleTime}`);
+    console.log(`Sent campaign ${campaignId} at ${sentAt.toISOString()}`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("Mailchimp error:", msg);
@@ -598,7 +587,7 @@ Deno.serve(async (req) => {
     .update({
       mailchimp_campaign_id: campaignId,
       mailchimp_campaign_url: `https://us1.admin.mailchimp.com/campaigns/wizard/neapolitan?id=${campaignId}`,
-      scheduled_for: scheduledFor.toISOString(),
+      scheduled_for: sentAt.toISOString(),
     })
     .eq("post_id", post.id)
     .eq("post_language", language);
@@ -607,8 +596,8 @@ Deno.serve(async (req) => {
     JSON.stringify({
       success: true,
       campaign_id: campaignId,
-      scheduled_for: scheduledFor.toISOString(),
-      subjects: [subjectA, subjectB],
+      sent_at: sentAt.toISOString(),
+      subject: subjectA,
     }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );
