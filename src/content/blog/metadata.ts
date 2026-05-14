@@ -367,6 +367,25 @@ export const blogMetadata: BlogPostMetadata[] = [
     metaDescriptionEn: "DUPR, TA Pickleball, and ThePickleHub have signed a preliminary partnership to bring the global pickleball rating system to Vietnam. First step of a three-phase roadmap.",
     metaDescriptionVi: "DUPR, TA Pickleball và ThePickleHub vừa ký thỏa thuận sơ bộ đưa hệ thống xếp hạng pickleball toàn cầu vào Việt Nam. Bước đầu của lộ trình ba giai đoạn.",
   },
+  {
+    slug: "dupr-algorithm-explained-performance-vs-expectation",
+    publishedDate: "2026-05-14",
+    updatedDate: "2026-05-14",
+    author: "Cuong Nguyen",
+    tags: ["dupr", "dupr algorithm", "pickleball rating", "performance vs expectation", "reliability score", "ppa tour", "mlp", "vietnam"],
+    ctaPath: "/blog/what-is-dupr-pickleball-rating-system",
+    ctaLabel: { en: "Read Part 1: What Is DUPR?", vi: "Đọc Phần 1: DUPR là gì?" },
+    heroImage: {
+      src: "/images/blog/dupr-algorithm-performance-vs-expectation-hero.webp",
+      alt: "Diagram explaining how the DUPR (Dynamic Universal Pickleball Rating) algorithm works after the July 2025 rewrite: it compares actual match score to an expected score derived from the average rating of both sides, so a player can win a match and still lose rating points if they underperformed expectation, or lose a match and still gain points if they overperformed."
+    },
+    titleEn: "How the DUPR Algorithm Works: Performance vs Expectation Explained (Part 2 of 3)",
+    titleVi: "Thuật toán DUPR: Vì sao thắng vẫn mất điểm, thua vẫn tăng điểm? (Phần 2/3)",
+    metaTitleEn: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3",
+    metaTitleVi: "Thuật toán DUPR 2025 giải thích | Thắng mất điểm, thua tăng điểm — Phần 2/3",
+    metaDescriptionEn: "DUPR's July 2025 algorithm rewrite explained. Why you can win a match and still lose rating points, or lose a match and gain them. Match weights, exclusion rules, reliability score — Part 2 of 3.",
+    metaDescriptionVi: "DUPR thay đổi thuật toán tháng 7/2025: thắng có thể vẫn mất điểm, thua có thể vẫn tăng điểm. Performance vs Expectation, trọng số trận, Reliability Score — Phần 2/3 series DUPR.",
+  },
 ];
 
 export const blogSlugs: string[] = blogMetadata.map((p) => p.slug);

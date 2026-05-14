@@ -24,6 +24,7 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "dupr-algorithm-explained-performance-vs-expectation",
   "dupr-vietnam-partnership-ta-pickleball-thepicklehub",
   "tama-shimabukuro-ppa-atlanta-final-15-year-old",
   "what-is-dupr-pickleball-rating-system",
