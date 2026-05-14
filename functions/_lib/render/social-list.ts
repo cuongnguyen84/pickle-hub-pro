@@ -77,6 +77,34 @@ function fmtPrice(vnd: number, lang: Lang): string {
   return `${vnd.toLocaleString("vi-VN")}₫`;
 }
 
+/**
+ * Pick the locale-appropriate title for an event listing, with safe
+ * fallback when the English title is null, undefined, an empty string,
+ * or whitespace-only.
+ *
+ * PR75 Codex P2 follow-up on PR #73: the ItemList JSON-LD branch
+ * originally used `title_en ?? title_vi`. The `??` operator only falls
+ * back on null/undefined, so an event with `title_en = ""` (a common
+ * data-entry shape — the organizer left the EN field blank in the
+ * editor and the SQL persisted "" instead of NULL) emitted
+ * `"name": ""` into structured data. Google's Rich Results parser
+ * treats that as an invalid ItemList element and may suppress the
+ * whole card.
+ *
+ * Centralising the policy in one helper keeps the HTML body heading
+ * (line ~130) and the JSON-LD name (line ~155) on the same fallback
+ * rule, so the next caller can't accidentally re-introduce the same
+ * `??` bug.
+ */
+function pickListingTitle(
+  lang: Lang,
+  title_vi: string,
+  title_en: string | null | undefined,
+): string {
+  if (lang === "vi") return title_vi;
+  return title_en && title_en.trim().length > 0 ? title_en : title_vi;
+}
+
 // ─── /social + /vi/social ────────────────────────────────────────────────
 
 export async function renderSocialList(
@@ -124,10 +152,7 @@ export async function renderSocialList(
 
   const itemsHtml = rows
     .map((e) => {
-      const evTitle =
-        lang === "vi"
-          ? e.title_vi
-          : (e.title_en && e.title_en.trim().length > 0 ? e.title_en : e.title_vi);
+      const evTitle = pickListingTitle(lang, e.title_vi, e.title_en);
       const dateStr = fmtDateVN(e.start_at, lang);
       const startTime = fmtTime(e.start_at);
       const venue = e.location_text ?? "";
@@ -152,7 +177,7 @@ export async function renderSocialList(
             "@type": "ListItem",
             position: i + 1,
             url: `${siteUrl}/social/${e.slug}`,
-            name: lang === "vi" ? e.title_vi : (e.title_en ?? e.title_vi),
+            name: pickListingTitle(lang, e.title_vi, e.title_en),
           })),
         }
       : undefined;
