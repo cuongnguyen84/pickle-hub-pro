@@ -64,9 +64,12 @@ Deno.serve(async (req) => {
   );
 
   // Load the order + its registration so we can verify the token.
+  // PR70 — also pull amount_vnd + reference_code here so the organizer
+  // push (fired after a successful first-claim update) doesn't need a
+  // second roundtrip to format the body text.
   const { data: order, error: orderErr } = await supabase
     .from("payment_orders")
-    .select("id, registration_id, player_claimed_paid, player_claimed_at")
+    .select("id, registration_id, amount_vnd, reference_code, player_claimed_paid, player_claimed_at")
     .eq("id", orderId)
     .maybeSingle();
   if (orderErr) {
@@ -131,6 +134,90 @@ Deno.serve(async (req) => {
     order_id: orderId,
     registration_id: order.registration_id,
   });
+
+  // PR70 — best-effort organizer push notification. Fires only on the
+  // genuine first-claim transition (this branch runs only when the
+  // UPDATE flipped player_claimed_paid: false → true; idempotent
+  // re-calls short-circuit earlier and never reach here). Try/catch
+  // everything so a push failure never blocks the claim response.
+  try {
+    type RegRow = {
+      display_name: string;
+      social_events: {
+        title_vi: string;
+        slug: string;
+        created_by: string;
+        clubs: { slug: string } | null;
+      } | null;
+    };
+    const { data: ctx } = await supabase
+      .from("event_registrations")
+      .select(
+        `display_name,
+         social_events!event_registrations_event_id_fkey(
+           title_vi, slug, created_by,
+           clubs!social_events_club_id_fkey ( slug )
+         )`,
+      )
+      .eq("id", order.registration_id)
+      .maybeSingle<RegRow>();
+
+    const event = ctx?.social_events;
+    const organizerId = event?.created_by;
+    if (organizerId && event) {
+      const amount = (order.amount_vnd as number) ?? 0;
+      const amountFormatted = new Intl.NumberFormat("vi-VN").format(amount);
+      const refCode = (order.reference_code as string) ?? "";
+      const displayName = ctx?.display_name ?? "";
+      const eventTitle = event.title_vi ?? "";
+
+      const pushBody = `${displayName} • ${amountFormatted}đ • ${refCode} • ${eventTitle}`;
+
+      const invokeRes = await supabase.functions.invoke("send-push-notification", {
+        body: {
+          user_ids: [organizerId],
+          title: "Player đã chuyển tiền",
+          body: pushBody,
+          data: {
+            type: "payment_claimed",
+            registration_id: order.registration_id,
+            event_slug: event.slug,
+            club_slug: event.clubs?.slug ?? "",
+            reference_code: refCode,
+          },
+        },
+      });
+
+      if (invokeRes.error) {
+        logEvent({
+          step: "push_notify_failed",
+          order_id: orderId,
+          organizer_id: organizerId,
+          error: String(invokeRes.error),
+        });
+      } else {
+        logEvent({
+          step: "push_notify_ok",
+          order_id: orderId,
+          organizer_id: organizerId,
+        });
+      }
+    } else {
+      logEvent({
+        step: "push_notify_skipped_no_organizer",
+        order_id: orderId,
+      });
+    }
+  } catch (e) {
+    // Push failure must never break the claim flow — the organizer
+    // can still see the claim on the roster page.
+    logEvent({
+      step: "push_notify_exception",
+      order_id: orderId,
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+
   return jsonResponse({
     ok: true,
     order_id: updated.id,
