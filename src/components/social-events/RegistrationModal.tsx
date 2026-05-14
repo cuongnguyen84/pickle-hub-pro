@@ -810,8 +810,8 @@ export function RegistrationModal({
 
             <p className="text-center text-xs text-muted-foreground">
               {language === "vi"
-                ? `Lưu liên kết: thepicklehub.net/su-kien/${eventSlug}`
-                : `Bookmark: thepicklehub.net/su-kien/${eventSlug}`}
+                ? `Lưu liên kết: thepicklehub.net/social/${eventSlug}`
+                : `Bookmark: thepicklehub.net/social/${eventSlug}`}
             </p>
           </div>
         )}

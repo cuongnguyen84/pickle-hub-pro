@@ -1,5 +1,5 @@
 // ============================================================================
-// SocialEventMatchmaking (`/su-kien/:slug/xep-cap`) — Mexicano / RoundRobin
+// SocialEventMatchmaking (`/social/:slug/xep-cap`) — Mexicano / RoundRobin
 // ----------------------------------------------------------------------------
 // Pick checked-in players → generate Mexicano / Round-Robin schedule →
 // print/copy/save. On mount the page reads any existing saved schedule
@@ -413,7 +413,7 @@ export default function SocialEventMatchmaking() {
         <header className="tl-page-head">
           <div className="kicker">
             ◆{" "}
-            <Link to={`/su-kien/${event.slug}/danh-sach`} style={{ color: "inherit", textDecoration: "none" }}>
+            <Link to={`/social/${event.slug}/danh-sach`} style={{ color: "inherit", textDecoration: "none" }}>
               {eventTitle}
             </Link>
           </div>
@@ -537,7 +537,7 @@ export default function SocialEventMatchmaking() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/su-kien/${event.slug}/live`)}
+                  onClick={() => navigate(`/social/${event.slug}/live`)}
                 >
                   <PlayCircle className="mr-1 h-3.5 w-3.5" /> {mm.openLivePage}
                 </Button>

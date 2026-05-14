@@ -173,7 +173,13 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Social event detail (Social Events MVP Sprint 1 PR2). Public landing
   // with SportsEvent JSON-LD + Offer (availability). Bots see the
   // pre-rendered shell; SPA path handles real users.
-  match = path.match(/^\/su-kien\/([^/]+)$/);
+  //
+  // PR69 — primary canonical is /social/{slug}; legacy /su-kien/{slug}
+  // still matches so external links pointing at the old path keep
+  // returning prerendered HTML (Cloudflare _redirects 301s humans, but
+  // the prerender path needs to handle the URL inline because some
+  // crawlers don't follow redirects to canonical content).
+  match = path.match(/^\/(?:social|su-kien)\/([^/]+)$/);
   if (match) return await renderSocialEvent(supabase, match[1], siteUrl);
 
   // Club landing (Social Events MVP Sprint 1 PR2). Public ItemList of

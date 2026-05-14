@@ -27,7 +27,7 @@ export function EntityNotFound({ entity, active }: Props) {
     entity === "club"
       ? "/clubs"
       : entity === "event"
-        ? "/su-kien"
+        ? "/social"
         : homeHref;
 
   return (

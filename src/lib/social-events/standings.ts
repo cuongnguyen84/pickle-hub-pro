@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------
 // Computes per-player record (wins / losses / point_diff) from a list of
 // completed matches. Used by:
-//   - /su-kien/:slug/live  →  "Standings" zone (top 5, highlight me)
+//   - /social/:slug/live  →  "Standings" zone (top 5, highlight me)
 //   - PR48 ELO ingestion   →  pre-aggregated win/loss feed
 //
 // Conventions:

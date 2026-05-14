@@ -1,5 +1,5 @@
 // ============================================================================
-// SocialEventLive (`/su-kien/:slug/live`) — mobile-first 5-zone player screen
+// SocialEventLive (`/social/:slug/live`) — mobile-first 5-zone player screen
 // ----------------------------------------------------------------------------
 // Renders during a live social event. Reads the persisted match schedule
 // (social_event_matches) + subscribes to realtime updates so every connected
@@ -551,7 +551,7 @@ export default function SocialEventLive() {
         <header className="tl-page-head">
           <div className="kicker">
             ◆{" "}
-            <Link to={`/su-kien/${event.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
+            <Link to={`/social/${event.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
               {eventTitle}
             </Link>
           </div>
@@ -568,7 +568,7 @@ export default function SocialEventLive() {
             {canManage && (
               <div style={{ marginTop: 12 }}>
                 <Button asChild variant="outline" size="sm">
-                  <Link to={`/su-kien/${event.slug}/xep-cap`}>
+                  <Link to={`/social/${event.slug}/xep-cap`}>
                     <ClipboardList className="mr-1 h-3.5 w-3.5" /> {live.organizerCta}
                   </Link>
                 </Button>
@@ -778,11 +778,11 @@ export default function SocialEventLive() {
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 24 }}>
           <Button asChild variant="ghost" size="sm">
-            <Link to={`/su-kien/${event.slug}`}>{live.backToEvent}</Link>
+            <Link to={`/social/${event.slug}`}>{live.backToEvent}</Link>
           </Button>
           {isOrganizer && (
             <Button asChild variant="ghost" size="sm">
-              <Link to={`/su-kien/${event.slug}/xep-cap`}>{live.organizerCta}</Link>
+              <Link to={`/social/${event.slug}/xep-cap`}>{live.organizerCta}</Link>
             </Button>
           )}
         </div>

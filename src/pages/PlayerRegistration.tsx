@@ -28,6 +28,8 @@ import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatEventDateRange } from "@/lib/social-events/format";
+import { generateVietQRUrl } from "@/lib/payment/vietqr";
+import { findBankByCode } from "@/lib/payment/banks";
 
 interface RegistrationView {
   registration_id: string;
@@ -45,6 +47,12 @@ interface RegistrationView {
   /** PR67 — populated by get_registration_by_token. */
   event_requires_prepayment: boolean;
   event_prepayment_deadline_hours: number;
+  /** PR69 — bank info from event_payment_config, used to build the
+   *  VietQR card when the player has pending_payment. Null when the
+   *  organizer hasn't enabled payment for this event. */
+  event_bank_code: string | null;
+  event_bank_account_number: string | null;
+  event_bank_account_name: string | null;
   active_registrations: number;
   display_name: string;
   phone: string | null;
@@ -285,7 +293,7 @@ export default function PlayerRegistration() {
           <div className="kicker">◆ {tr.eyebrow}</div>
           <h1>{title}</h1>
           <p>
-            <Link to={`/su-kien/${data.event_slug}`} className="hover:underline">
+            <Link to={`/social/${data.event_slug}`} className="hover:underline">
               {tr.viewPublic} →
             </Link>
           </p>
@@ -414,6 +422,118 @@ export default function PlayerRegistration() {
                       )}
                     </div>
                   </div>
+                </Card>
+              );
+            })()
+          )}
+
+        {/* PR69 — QR + bank info card. Renders directly under the
+            countdown banner whenever the player is in pending_payment
+            on a requires_prepayment event AND the organizer has set
+            up event_payment_config (so we have bank details). Lets the
+            player finish their bank transfer without going back through
+            the registration modal. Markup mirrors QRPaymentStep State 1
+            so the visual treatment is consistent. */}
+        {!isCancelled && !eventCancelled && data.event_requires_prepayment &&
+          data.payment_status === "pending_payment" && !data.player_claimed_paid &&
+          data.event_bank_code && data.event_bank_account_number &&
+          data.event_bank_account_name && data.payment_reference_code && (
+            (() => {
+              const qrUrl = generateVietQRUrl({
+                bankCode: data.event_bank_code,
+                accountNumber: data.event_bank_account_number,
+                accountName: data.event_bank_account_name,
+                amount: data.event_price_vnd,
+                memo: data.payment_reference_code,
+              });
+              const bank = findBankByCode(data.event_bank_code);
+              const bankLabel = bank
+                ? `${bank.shortName} (${bank.code})`
+                : data.event_bank_code;
+              const amountFormatted = data.event_price_vnd.toLocaleString(
+                language === "vi" ? "vi-VN" : "en-US",
+              );
+              const copyTo = (text: string) => {
+                void navigator.clipboard.writeText(text);
+                toast({ title: t.socialEvents.payment.copiedToast });
+              };
+              return (
+                <Card className="mb-4 p-5">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {t.socialEvents.payment.amountLabel}
+                    </p>
+                    <p className="font-mono text-3xl font-semibold">
+                      {amountFormatted} ₫
+                    </p>
+                  </div>
+                  <div className="mt-3 flex justify-center">
+                    <img
+                      src={qrUrl}
+                      alt={t.socialEvents.payment.qrAlt}
+                      width={260}
+                      height={340}
+                      className="rounded-md border border-border bg-white"
+                      loading="lazy"
+                    />
+                  </div>
+                  <dl className="mt-3 space-y-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-muted-foreground">
+                        {t.socialEvents.payment.bankLabel}
+                      </dt>
+                      <dd className="text-right font-medium">{bankLabel}</dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-muted-foreground">
+                        {t.socialEvents.payment.accountNumberLabel}
+                      </dt>
+                      <dd className="flex items-center gap-2">
+                        <span className="font-mono">{data.event_bank_account_number}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          aria-label={t.common.copyLink}
+                          onClick={() => copyTo(data.event_bank_account_number ?? "")}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-muted-foreground">
+                        {t.socialEvents.payment.accountNameLabel}
+                      </dt>
+                      <dd className="text-right font-medium">
+                        {data.event_bank_account_name}
+                      </dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt className="text-muted-foreground">
+                        {t.socialEvents.payment.memoLabel}
+                      </dt>
+                      <dd className="flex items-center gap-2">
+                        <span className="font-mono font-semibold text-primary">
+                          {data.payment_reference_code}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          aria-label={t.common.copyLink}
+                          onClick={() => copyTo(data.payment_reference_code ?? "")}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="mt-3 rounded-md border border-amber-400/40 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                    ⚠️ {t.socialEvents.payment.warning}
+                  </p>
                 </Card>
               );
             })()

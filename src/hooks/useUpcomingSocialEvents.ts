@@ -1,7 +1,7 @@
 // ============================================================================
 // useUpcomingSocialEvents — public list of upcoming social events
 // ----------------------------------------------------------------------------
-// Used by the /su-kien collection page. Public RLS only returns
+// Used by the /social collection page. Public RLS only returns
 // status='published' + visibility='public' rows. Sort by start_at asc so
 // the nearest event surfaces first.
 // ============================================================================

@@ -1,5 +1,5 @@
 // ============================================================================
-// SocialEventRoster (`/su-kien/:slug/danh-sach`) — organizer roster table.
+// SocialEventRoster (`/social/:slug/danh-sach`) — organizer roster table.
 // ----------------------------------------------------------------------------
 // Lists all registrations with inline organizer actions (check-in,
 // payment toggle, no-show, cancel, edit notes). Manual add of a guest
@@ -326,7 +326,7 @@ export default function SocialEventRoster() {
           <div>
             <div className="kicker">
               ◆{" "}
-              <Link to={`/su-kien/${event.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
+              <Link to={`/social/${event.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
                 {eventTitle}
               </Link>
             </div>
@@ -349,7 +349,7 @@ export default function SocialEventRoster() {
             }}
           >
             <Link
-              to={`/su-kien/${event.slug}/xep-cap`}
+              to={`/social/${event.slug}/xep-cap`}
               style={{ color: "var(--tl-fg)", textDecoration: "none" }}
               className="inline-flex items-center gap-1 hover:underline"
             >

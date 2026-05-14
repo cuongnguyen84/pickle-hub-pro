@@ -1,5 +1,5 @@
 // ============================================================================
-// CreateSocialEvent (`/clb/:slug/su-kien/moi`) — organizer wizard (PR50a).
+// CreateSocialEvent (`/clb/:slug/social/moi`) — organizer wizard (PR50a).
 // ----------------------------------------------------------------------------
 // Refactored from a single-form page into a 2-step wizard:
 //   Step 1 — event details (name, schedule, location, capacity, visibility)
@@ -253,7 +253,7 @@ export default function CreateSocialEvent() {
       const row = Array.isArray(rows) && rows.length > 0 ? (rows[0] as { event_slug: string }) : null;
       const newSlug = row?.event_slug ?? finalSlug;
       toast({ title: publish ? create.successPublished : create.successDraft });
-      navigate(`/su-kien/${newSlug}`);
+      navigate(`/social/${newSlug}`);
     } finally {
       setSubmitting(false);
     }

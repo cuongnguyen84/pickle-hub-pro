@@ -1,5 +1,5 @@
 // ============================================================================
-// useEventLive — Live event data + realtime subscription for /su-kien/:slug/live
+// useEventLive — Live event data + realtime subscription for /social/:slug/live
 // ----------------------------------------------------------------------------
 // Returns:
 //   - allMatches:        every social_event_matches row for the event

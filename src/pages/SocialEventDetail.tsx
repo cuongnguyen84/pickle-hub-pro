@@ -1,5 +1,5 @@
 // ============================================================================
-// SocialEventDetail (`/su-kien/:slug`) — public landing page for one event.
+// SocialEventDetail (`/social/:slug`) — public landing page for one event.
 // ----------------------------------------------------------------------------
 // Public; renders for anonymous + authed users alike. Mobile-first card
 // layout following TheLineLayout convention.
@@ -9,7 +9,7 @@
 // Below: description, cancellation policy, registered roster (masked
 // names), Zalo CTA, share buttons.
 //
-// SEO: client-side JSON-LD SportsEvent injection so /su-kien/:slug pages
+// SEO: client-side JSON-LD SportsEvent injection so /social/:slug pages
 // pick up rich-results coverage even without the Cloudflare prerender
 // (the prerender path covers bot traffic in functions/_lib/render).
 // ============================================================================
@@ -135,7 +135,7 @@ export default function SocialEventDetail() {
     if (!data) return;
     const script = document.createElement("script");
     script.type = "application/ld+json";
-    const url = `${SITE_URL}/su-kien/${data.slug}`;
+    const url = `${SITE_URL}/social/${data.slug}`;
     const jsonLd: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "SportsEvent",
@@ -209,7 +209,7 @@ export default function SocialEventDetail() {
   // CTA instead of letting the user click through to a generic error toast.
   const canRegister =
     !eventEnded && !eventStarted && !cancelled && !isPreviewOnly && remaining > 0 && data.allow_guests;
-  const eventUrl = `${SITE_URL}/su-kien/${data.slug}`;
+  const eventUrl = `${SITE_URL}/social/${data.slug}`;
   const levelRange = formatLevelRange(data.level_min, data.level_max);
 
   // Share UX (per Sprint-1 decision): mobile gets native picker (95% VN
