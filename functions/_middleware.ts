@@ -53,13 +53,14 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // Magic-link player flows (CRITICAL — token in URL)
   /^\/(?:vi\/)?dang-ky(?:\/|$)/,
   /^\/(?:vi\/)?khoi-phuc-dang-ky(?:\/|$)/,
-  // Organizer dashboards
+  // Organizer dashboards (no /vi variant — /clb/* paths are
+  // Vietnamese-first and the SPA toggles locale on the same URL).
   /^\/clb\/[^/]+\/quan-ly(?:\/|$)/,
   /^\/clb\/[^/]+\/(?:social|su-kien)\/moi(?:\/|$)/,
   // Per-event organizer + ephemeral surfaces
   /^\/(?:vi\/)?(?:social|su-kien)\/[^/]+\/(?:danh-sach|xep-cap|live)(?:\/|$)/,
   // Create flows
-  /^\/clubs\/new(?:\/|$)/,
+  /^\/(?:vi\/)?clubs\/new(?:\/|$)/,
   // Auth + account
   /^\/login(?:\/|$)/,
   /^\/vi\/login(?:\/|$)/,
@@ -76,11 +77,21 @@ const NOINDEX_PATTERNS: RegExp[] = [
   /^\/embed(?:\/|$)/,
   /^\/matches(?:\/|$)/,
   /^\/join(?:\/|$)/,
-  // Internal tournament scoring + dashboard tools (auth-gated)
-  /^\/tools\/dashboard(?:\/|$)/,
-  /^\/tools\/[^/]+\/new(?:\/|$)/,
-  /^\/tools\/[^/]+\/[^/]+\/setup(?:\/|$)/,
-  /^\/tools\/doubles-elimination\/match\/[^/]+\/score(?:\/|$)/,
+  // Internal tournament scoring + dashboard tools (auth-gated).
+  //
+  // PR74 Codex P2 follow-up — wrap every /tools/* private pattern with
+  // an optional /vi/ prefix. src/App.tsx routes Vietnamese versions of
+  // each one through the same component (e.g. /vi/tools/dashboard,
+  // /vi/tools/team-match/new, /vi/tools/doubles-elimination/match/:id/
+  // score). The earlier patterns only matched the raw EN paths, so a
+  // Vietnamese viewer hitting any /vi/tools/* private route bypassed
+  // the X-Robots-Tag header and the bot path served the generic
+  // renderDefault shell instead of the noindex shell — leaving a gap
+  // in the same privacy surface Phase 2A was meant to close.
+  /^\/(?:vi\/)?tools\/dashboard(?:\/|$)/,
+  /^\/(?:vi\/)?tools\/[^/]+\/new(?:\/|$)/,
+  /^\/(?:vi\/)?tools\/[^/]+\/[^/]+\/setup(?:\/|$)/,
+  /^\/(?:vi\/)?tools\/doubles-elimination\/match\/[^/]+\/score(?:\/|$)/,
 ];
 
 const X_ROBOTS_NOINDEX = "noindex, nofollow, noarchive";
