@@ -1485,3 +1485,8 @@ ${rows.length > 0 ? `<ol>${items}</ol>` : `<p>${empty}</p>`}
 // the other handlers. Implementation lives in ./social-event.ts to keep
 // this file from sprawling further.
 export { renderSocialEvent, renderClub } from "./social-event";
+
+// PR73 Phase 2B (audit I-1 + I-2): hub list pages for /social + /clubs.
+// Previously fell through to renderDefault → bot saw generic "ThePickleHub
+// - Pickleball Community" with no upcoming-event content or schema.
+export { renderSocialList, renderClubList } from "./social-list";
