@@ -19,6 +19,8 @@ import {
   renderFeed,
   renderSocialEvent,
   renderClub,
+  renderSocialList,
+  renderClubList,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage,
@@ -28,6 +30,22 @@ import {
   renderNotificationsShell,
   renderDefault, render404,
 } from "./_lib/render";
+
+// PR73 Phase 2B — per-path KV cache TTL override. Hub list pages
+// (/social + /clubs) need a shorter window than the default 6h because a
+// freshly-published event/club should appear in the bot view within
+// minutes, not hours. Detail pages and blog posts keep the standard 6h
+// because their content rarely changes after the initial publish.
+const HUB_LIST_TTL_SECONDS = 300; // 5 minutes
+const DEFAULT_TTL_SECONDS = 21600; // 6 hours
+
+function pathCacheTtl(pathname: string): number {
+  const stripped = pathname.replace(/^\/vi(?=\/|$)/, "") || "/";
+  if (stripped === "/social" || stripped === "/clubs") {
+    return HUB_LIST_TTL_SECONDS;
+  }
+  return DEFAULT_TTL_SECONDS;
+}
 
 interface Env {
   SUPABASE_URL: string;
@@ -111,8 +129,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       // get the SPA in real time. 6h cache keeps bot view warm across
       // typical crawler revisit cycles without serving stale data to
       // users.
+      //
+      // PR73 Phase 2B — pathCacheTtl returns 5 minutes for /social +
+      // /clubs (hub list pages) so newly-published events/clubs reach
+      // the bot view within minutes, not hours.
+      const ttl = pathCacheTtl(url.pathname);
       context.waitUntil(
-        env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: 21600 }),
+        env.PRERENDER_CACHE.put(cacheKey, html, { expirationTtl: ttl }),
       );
     }
 
@@ -169,6 +192,14 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Match permalink (Sprint 2 Phase 3B.3)
   match = path.match(/^\/tran-dau\/([^/]+)$/);
   if (match && match[1] !== "moi") return await renderMatch(supabase, match[1], siteUrl);
+
+  // PR73 Phase 2B (audit I-1 + I-2) — hub list pages. Previously fell
+  // through to renderDefault → generic shell with no upcoming-event
+  // schema. Now they render top-20 entries server-side + ItemList
+  // JSON-LD + hreflang. KV TTL set to 5 minutes by pathCacheTtl above
+  // so a freshly-published event/club is discoverable within minutes.
+  if (path === "/social") return await renderSocialList(supabase, siteUrl, lang);
+  if (path === "/clubs") return await renderClubList(supabase, siteUrl, lang);
 
   // Social event detail (Social Events MVP Sprint 1 PR2). Public landing
   // with SportsEvent JSON-LD + Offer (availability). Bots see the
