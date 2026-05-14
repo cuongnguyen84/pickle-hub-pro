@@ -13,9 +13,9 @@ import { buildHtml, htmlResponse } from "../html";
 import {
   escapeHtml,
   buildTitle,
-  buildMetaDescription,
   breadcrumb,
 } from "../utils";
+import { pickMetaDescription } from "../seo-helpers";
 import { render404 } from "./index";
 
 interface SocialEventRow {
@@ -138,10 +138,12 @@ export async function renderSocialEvent(
     `${venueLabel ? ` tại ${venueLabel}` : ""}.` +
     ` Tối đa ${ev.max_players} người · ${priceLabel}.` +
     ` Đăng ký bằng số điện thoại trên ThePickleHub.`;
-  const description = buildMetaDescription(ev.description_vi, {
-    type: "default",
-    title: titleVi,
-  }) || fallbackDesc;
+  // PR73 Phase 2C (audit I-3) — pickMetaDescription returns the
+  // event-specific date/venue/capacity/price fallback when the organizer
+  // hasn't written a description. The previous wiring used
+  // buildMetaDescription's generic-platform fallback which made the
+  // `|| fallbackDesc` branch dead code (same Codex P2 issue as PR #19).
+  const description = pickMetaDescription(ev.description_vi, fallbackDesc);
 
   const bc = breadcrumb([
     { label: "Trang chủ", href: siteUrl },
@@ -246,10 +248,12 @@ export async function renderClub(
   const fallbackDesc =
     `${club.name}${club.location_text ? ` tại ${club.location_text}` : ""} — ` +
     "lịch sự kiện pickleball, đăng ký, kết quả. Tổ chức trên ThePickleHub.";
-  const description = buildMetaDescription(club.description, {
-    type: "default",
-    title: club.name,
-  }) || fallbackDesc;
+  // PR73 Phase 2C (audit I-3) — see renderSocialEvent above. Same dead
+  // fallback pattern: clubs without a description ended up with the
+  // generic platform copy instead of the location/CTA-specific
+  // fallbackDesc built right above. pickMetaDescription routes to
+  // fallback when the description is empty/too-short.
+  const description = pickMetaDescription(club.description, fallbackDesc);
 
   // List a snapshot of upcoming events as bot-readable links.
   const { data: events } = await supabase

@@ -133,6 +133,41 @@ export function pickProfileMetaDescription(
   return source.slice(0, PROFILE_DESCRIPTION_MAX - 3).trim() + "...";
 }
 
+/**
+ * Generic version of pickProfileMetaDescription — pick rawDesc when
+ * meaningful, otherwise fall through to a caller-provided fallback.
+ *
+ * PR73 Phase 2C (audit I-3) — fixes the dead-code fallback pattern in
+ * renderSocialEvent + renderClub:
+ *   const description = buildMetaDescription(ev.description_vi, …) || fallbackDesc;
+ * buildMetaDescription always returns a non-empty string (it pads short
+ * input with generic "ThePickleHub là nền tảng pickleball…" copy), so
+ * the `|| fallbackDesc` branch never fired. Every event/club without a
+ * description got the generic snippet instead of the
+ * date/venue/capacity/price one — exact same class of bug as Codex P2
+ * fixed for profile bio in PR #19.
+ *
+ * This helper makes the choice explicit:
+ *   - rawDesc trimmed length >= MIN → use rawDesc
+ *   - otherwise → use fallback
+ * Then clamp to MAX chars with the same "..." tail buildMetaDescription
+ * uses for long input.
+ */
+const PICK_META_MIN_LENGTH = 30;
+const PICK_META_MAX_LENGTH = 160;
+
+export function pickMetaDescription(
+  rawDesc: string | null | undefined,
+  fallback: string,
+  maxLength = PICK_META_MAX_LENGTH,
+): string {
+  const trimmed = (rawDesc ?? "").trim();
+  const source =
+    trimmed.length >= PICK_META_MIN_LENGTH ? trimmed : fallback;
+  if (source.length <= maxLength) return source;
+  return source.slice(0, maxLength - 3).trim() + "...";
+}
+
 /* ─── Feed (CollectionPage / ItemList) ────────────────────────────────── */
 
 export interface FeedSeoParticipant {
