@@ -110,6 +110,9 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
       <ul>
         <li><a href="${siteUrl}/live">Live courts</a> — Watch matches streaming right now</li>
         <li><a href="${siteUrl}/tournaments">Tournaments</a> — Schedules, brackets, results across PPA Asia and beyond</li>
+        <li><a href="${siteUrl}/social">Community events</a> — Open pickleball events you can register for by phone</li>
+        <li><a href="${siteUrl}/clubs">Clubs</a> — Pickleball clubs across Vietnam with schedules + events</li>
+        <li><a href="${siteUrl}/feed">Match feed</a> — Latest community matches, scores, and DUPR ratings</li>
         <li><a href="${siteUrl}/tools">Bracket Lab</a> — Free tournament tools (round robin, single/double elimination, MLP)</li>
         <li><a href="${siteUrl}/rankings">Rankings</a> — Player rankings (placeholder, coming soon)</li>
         <li><a href="${siteUrl}/blog">Stories</a> — Match reports and longform coverage</li>
@@ -190,6 +193,9 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
       <ul>
         <li><a href="${siteUrl}/vi/live">Sân trực tiếp</a> — Xem trận đấu đang diễn ra</li>
         <li><a href="${siteUrl}/vi/tournaments">Giải đấu</a> — Lịch, bracket, kết quả</li>
+        <li><a href="${siteUrl}/social">Sự kiện cộng đồng</a> — Đăng ký sự kiện pickleball mở bằng số điện thoại</li>
+        <li><a href="${siteUrl}/clubs">Câu lạc bộ</a> — CLB pickleball khắp Việt Nam, lịch sinh hoạt và sự kiện</li>
+        <li><a href="${siteUrl}/vi/feed">Bảng tin trận đấu</a> — Trận đấu cộng đồng mới nhất + rating DUPR</li>
         <li><a href="${siteUrl}/vi/tools">Bracket Lab</a> — Công cụ tổ chức miễn phí</li>
         <li><a href="${siteUrl}/vi/rankings">Bảng xếp hạng</a> — Sắp ra mắt</li>
         <li><a href="${siteUrl}/vi/blog">Bài viết</a> — Tường thuật và bài chuyên sâu</li>
