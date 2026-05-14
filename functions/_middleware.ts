@@ -137,6 +137,21 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
+  // ─── 1b. PR79 Phase 2F (audit I-8) — /u/* + /vi/u/* → /nguoi-choi/* 301.
+  //       public/_redirects already has this rule but CF Pages middleware
+  //       runs BEFORE _redirects is consulted, so bots hitting /u/<slug>
+  //       were getting renderDefault's generic shell at status 200
+  //       instead of the 301 humans see. Mirror the same rule here so
+  //       both code paths converge on /nguoi-choi/* as the single
+  //       canonical profile URL.
+  const uMatch = url.pathname.match(/^\/(?:vi\/)?u\/([^/?#]+)$/);
+  if (uMatch) {
+    return Response.redirect(
+      `https://${url.hostname}/nguoi-choi/${uMatch[1]}${url.search}`,
+      301,
+    );
+  }
+
   // ─── 2. Static asset bypass (before bot detection) ───
   const pathname = url.pathname;
   const STATIC_PREFIXES = ["/og-images/", "/assets/", "/images/", "/fonts/", "/icons/", "/static/"];
