@@ -60,7 +60,13 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     url: siteUrl,
     siteUrl,
     lang: "en",
-    extraMeta: `<link rel="alternate" hreflang="en" href="${siteUrl}/"/>\n<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/"/>`,
+    // PR73 Phase 2D (audit I-12) — canonical (set via `url: siteUrl` above)
+    // has no trailing slash, but the hreflang en + x-default previously
+    // pointed at `${siteUrl}/` (with slash). Mismatched canonical and
+    // hreflang values are a Google "invalid signal" — fixed by dropping
+    // the trailing slash from hreflang en + x-default so all three refer
+    // to the same URL string.
+    extraMeta: `<link rel="alternate" hreflang="en" href="${siteUrl}"/>\n<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}"/>`,
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
@@ -137,7 +143,10 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
     url: `${siteUrl}/vi`,
     siteUrl,
     lang: "vi",
-    extraMeta: `<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="en" href="${siteUrl}/"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/"/>`,
+    // PR73 Phase 2D (audit I-12) — see renderHome above. Same trailing-
+    // slash mismatch (canonical without slash vs hreflang en/x-default
+    // with slash). Aligned to the no-trailing-slash convention.
+    extraMeta: `<link rel="alternate" hreflang="vi" href="${siteUrl}/vi"/>\n<link rel="alternate" hreflang="en" href="${siteUrl}"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}"/>`,
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
