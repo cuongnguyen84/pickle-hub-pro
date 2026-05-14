@@ -4,7 +4,8 @@ import type { Language } from "@/lib/social/feed-formatters";
 export type FeedEmptyVariant =
   | "no_follows"           // Following tab + 0 follows
   | "no_recent_matches"    // Following tab + has follows + 0 recent matches
-  | "trending_empty";      // Trending tab + 0 results (rare)
+  | "trending_empty"       // Trending tab (matches-only legacy) + 0 results
+  | "timeline_empty";      // Sprint 7 mixed timeline + 0 results
 
 interface FeedEmptyStateProps {
   variant: FeedEmptyVariant;
@@ -80,6 +81,29 @@ export function FeedEmptyState({
             <span aria-hidden="true">→</span>
           </button>
         )}
+      </div>
+    );
+  }
+
+  if (variant === "timeline_empty") {
+    // Sprint 7 — generic empty for the mixed timeline (matches + blog +
+    // video). Glyph differs from trending_empty so QA can tell which
+    // branch fired from a screenshot alone.
+    return (
+      <div className="tl-feed-empty">
+        <div className="tl-feed-empty-mark" aria-hidden="true">◇</div>
+        <h2 className="tl-feed-empty-title">
+          {language === "vi" ? (
+            <>Chưa có <em>gì mới.</em></>
+          ) : (
+            <>Nothing <em>new yet.</em></>
+          )}
+        </h2>
+        <p className="tl-feed-empty-sub">
+          {language === "vi"
+            ? "Quay lại sau — cộng đồng đang chuẩn bị trận đấu, bài viết và video mới."
+            : "Check back later — fresh matches, posts, and videos are on the way."}
+        </p>
       </div>
     );
   }

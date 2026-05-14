@@ -279,3 +279,142 @@ export function buildFeedJsonLd(input: FeedJsonLdInput): Record<string, unknown>
     },
   };
 }
+
+/* ─── Feed Timeline (Sprint 7 mixed-content) ──────────────────────────── */
+
+/**
+ * Sprint 7 — get_feed_timeline returns one wide row per item with
+ * item_type discriminating the source. The prerender flattens that into
+ * an ItemList containing SportsEvent (match) / BlogPosting (blog) /
+ * VideoObject (video) so Googlebot indexes recent activity beyond
+ * individual detail pages.
+ *
+ * Kept separate from FeedRowForSeo + buildFeedJsonLd so the existing
+ * tests (and any other consumer of the matches-only shape) don't have to
+ * change. renderFeed switches to this builder now that /feed is mixed.
+ */
+export interface TimelineRowForSeo {
+  item_type: "match" | "blog" | "video" | string;
+  item_id: string;
+  published_at: string;
+  // match-specific
+  slug?: string | null;
+  venue_name?: string | null;
+  team_a_score?: number[] | null;
+  team_b_score?: number[] | null;
+  participants?: unknown;
+  // blog/video shared
+  title?: string | null;
+  excerpt?: string | null;
+  cover_image_url?: string | null;
+  category?: string | null;
+  duration_seconds?: number | null;
+}
+
+export interface TimelineFeedJsonLdInput {
+  rows: TimelineRowForSeo[];
+  canonical: string;
+  siteUrl: string;
+  title: string;
+  description: string;
+  lang: Lang;
+}
+
+export function buildTimelineFeedJsonLd(
+  input: TimelineFeedJsonLdInput,
+): Record<string, unknown> {
+  const { rows, canonical, siteUrl, title, description, lang } = input;
+
+  const itemListElement = rows
+    .map((row, i) => {
+      const item = rowToSchemaItem(row, siteUrl, lang);
+      if (!item) return null;
+      return {
+        "@type": "ListItem",
+        position: i + 1,
+        item,
+      };
+    })
+    .filter((x): x is { "@type": string; position: number; item: Record<string, unknown> } => x != null);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: title,
+    description,
+    url: canonical,
+    inLanguage: lang === "vi" ? "vi-VN" : "en-US",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "ThePickleHub",
+      url: siteUrl,
+    },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: itemListElement.length,
+      itemListElement,
+    },
+  };
+}
+
+function rowToSchemaItem(
+  row: TimelineRowForSeo,
+  siteUrl: string,
+  lang: Lang,
+): Record<string, unknown> | null {
+  if (row.item_type === "match" && row.slug) {
+    const parts = Array.isArray(row.participants)
+      ? (row.participants as FeedSeoParticipant[])
+      : [];
+    const teamA = feedTeamLabel(parts, "a");
+    const teamB = feedTeamLabel(parts, "b");
+    const matchUrl = `${siteUrl}/tran-dau/${row.slug}`;
+    const item: Record<string, unknown> = {
+      "@type": "SportsEvent",
+      name: `${teamA} vs ${teamB}`,
+      sport: "Pickleball",
+      startDate: row.published_at,
+      url: matchUrl,
+    };
+    if (row.venue_name) {
+      item.location = {
+        "@type": "SportsActivityLocation",
+        name: row.venue_name,
+      };
+    }
+    return item;
+  }
+  if (row.item_type === "blog" && row.slug && row.title) {
+    const blogUrl = `${siteUrl}/vi/blog/${row.slug}`;
+    const item: Record<string, unknown> = {
+      "@type": "BlogPosting",
+      headline: row.title,
+      datePublished: row.published_at,
+      url: blogUrl,
+      inLanguage: "vi-VN",
+    };
+    if (row.excerpt) item.description = row.excerpt;
+    if (row.cover_image_url) item.image = row.cover_image_url;
+    return item;
+  }
+  if (row.item_type === "video" && row.item_id && row.title) {
+    const videoUrl = `${siteUrl}/watch/${row.item_id}`;
+    const item: Record<string, unknown> = {
+      "@type": "VideoObject",
+      name: row.title,
+      uploadDate: row.published_at,
+      url: videoUrl,
+      inLanguage: lang === "vi" ? "vi-VN" : "en-US",
+    };
+    if (row.excerpt) item.description = row.excerpt;
+    if (row.cover_image_url) item.thumbnailUrl = row.cover_image_url;
+    if (row.duration_seconds && row.duration_seconds > 0) {
+      // ISO 8601 duration, schema.org standard for VideoObject.
+      const m = Math.floor(row.duration_seconds / 60);
+      const s = Math.floor(row.duration_seconds % 60);
+      item.duration = `PT${m}M${s}S`;
+    }
+    return item;
+  }
+  return null;
+}

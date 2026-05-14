@@ -4401,6 +4401,41 @@ export type Database = {
           org_id: string
         }[]
       }
+      get_feed_timeline: {
+        Args: {
+          p_limit?: number
+          p_cursor_published_at?: string | null
+          p_cursor_item_id?: string | null
+          p_viewer_id?: string | null
+        }
+        Returns: {
+          item_type: string
+          item_id: string
+          published_at: string
+          slug: string | null
+          format: string | null
+          match_type: string | null
+          verification_status: string | null
+          venue_name: string | null
+          team_a_score: number[] | null
+          team_b_score: number[] | null
+          winning_team: string | null
+          participants: Json | null
+          kudos_count: number | null
+          viewer_kudoed: boolean | null
+          comment_count: number | null
+          source_provider: string | null
+          source_url: string | null
+          tournament_name: string | null
+          tournament_event: string | null
+          round_name: string | null
+          title: string | null
+          excerpt: string | null
+          cover_image_url: string | null
+          category: string | null
+          duration_seconds: number | null
+        }[]
+      }
       get_following_feed: {
         Args: {
           p_viewer_id: string

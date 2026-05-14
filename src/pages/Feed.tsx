@@ -5,27 +5,35 @@ import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollowingCount } from "@/hooks/social/useFollowingCount";
 import { useFollowingFeed, type FeedMatch } from "@/hooks/social/useFollowingFeed";
-import { useTrendingFeed } from "@/hooks/social/useTrendingFeed";
+import {
+  useFeedTimeline,
+  type FeedTimelineItem,
+} from "@/hooks/social/useFeedTimeline";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
+import { FeedBlogCard } from "@/components/social/feed/FeedBlogCard";
+import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
 
 /**
- * /feed — Sprint 4 Phase 4A entry point for the social loop.
+ * /feed — social discovery surface. Two tabs:
  *
- * Read-only timeline. Two tabs:
- *   - Following: matches from people the viewer follows (+ own matches)
- *   - Trending:  recency-weighted public matches in the last 7 days
+ *   - Following: matches from people the viewer follows (+ own matches).
+ *                Stays matches-only (Sprint 7 anti-scope).
+ *   - Trending:  Sprint 7 mixed timeline — matches + VI/EN blog + videos
+ *                sorted purely by recency (no engagement weighting).
  *
  * Anonymous viewers see Trending only (Following tab hidden) plus a
  * sign-in nudge above the stream. Tab state is URL-controlled
  * (?tab=following / ?tab=trending) for deep-linking + browser back.
  *
- * Mockup: .claude/mockups/feed-page-mockup.html
- * Anti-scope: no kudos (4B), no comments (4C), no real-time (Sprint 5),
- * no filter chips, no avatars on cards.
+ * Sprint 7 product change: Trending used to be engagement-weighted and
+ * matches-only. We swapped in get_feed_timeline so the page becomes a
+ * Facebook-style single chronological stream across all three sources.
+ * useTrendingFeed remains exported for backward compatibility but is
+ * intentionally no longer wired up here.
  */
 const Feed = () => {
   const { language } = useI18n();
@@ -43,23 +51,30 @@ const Feed = () => {
   const followingFeed = useFollowingFeed(
     tab === "following" ? user?.id : undefined,
   );
-  const trendingFeed = useTrendingFeed();
+  const timelineFeed = useFeedTimeline();
+  const activeQuery = tab === "following" ? followingFeed : timelineFeed;
 
-  const activeQuery = tab === "following" ? followingFeed : trendingFeed;
-  const matches: FeedMatch[] = useMemo(
-    () => activeQuery.data?.pages.flat() ?? [],
-    [activeQuery.data],
+  const followingMatches: FeedMatch[] = useMemo(
+    () => followingFeed.data?.pages.flat() ?? [],
+    [followingFeed.data],
   );
+  const timelineItems: FeedTimelineItem[] = useMemo(
+    () => timelineFeed.data?.pages.flat() ?? [],
+    [timelineFeed.data],
+  );
+
+  const itemCount =
+    tab === "following" ? followingMatches.length : timelineItems.length;
 
   const isLoadingFirstPage =
     activeQuery.isLoading ||
-    (activeQuery.isFetching && matches.length === 0);
+    (activeQuery.isFetching && itemCount === 0);
 
   const pageTitle = language === "vi" ? "Bảng tin" : "Feed";
   const pageDescription =
     language === "vi"
-      ? "Trận đấu mới từ cộng đồng pickleball Việt Nam — theo dõi người chơi và xem trận đấu của họ."
-      : "New matches from the Vietnamese pickleball community — follow players and see their matches.";
+      ? "Trận đấu, bài viết và video mới từ cộng đồng pickleball Việt Nam."
+      : "Latest matches, posts, and videos from the Vietnamese pickleball community.";
 
   return (
     <TheLineLayout
@@ -110,8 +125,8 @@ const Feed = () => {
             }}
           >
             {language === "vi"
-              ? "Trận đấu mới từ những người bạn theo dõi. Cuộn để xem thêm, chạm vào tên người chơi để mở hồ sơ."
-              : "New matches from across the community. Tap a player name to open their profile, scroll for older results."}
+              ? "Trận đấu, bài viết và video mới từ cộng đồng. Cuộn để xem thêm, chạm vào tên người chơi để mở hồ sơ."
+              : "New matches, articles, and videos from across the community. Tap a player name to open their profile, scroll for older items."}
           </p>
         </header>
 
@@ -143,14 +158,14 @@ const Feed = () => {
                 style={{ color: "var(--tl-fg-3)" }}
               />
             </div>
-          ) : matches.length === 0 ? (
+          ) : itemCount === 0 ? (
             <FeedEmptyState
               variant={
                 tab === "following"
                   ? followingCount === 0
                     ? "no_follows"
                     : "no_recent_matches"
-                  : "trending_empty"
+                  : "timeline_empty"
               }
               language={language}
               onSwitchToTrending={
@@ -161,14 +176,23 @@ const Feed = () => {
             />
           ) : (
             <>
-              {matches.map((match, i) => (
-                <FeedMatchCard
-                  key={match.match_id}
-                  match={match}
-                  language={language}
-                  staggerIndex={i}
-                />
-              ))}
+              {tab === "following"
+                ? followingMatches.map((match, i) => (
+                    <FeedMatchCard
+                      key={match.match_id}
+                      match={match}
+                      language={language}
+                      staggerIndex={i}
+                    />
+                  ))
+                : timelineItems.map((item, i) => (
+                    <TimelineRow
+                      key={`${item.type}:${item.cursor_id}`}
+                      item={item}
+                      language={language}
+                      staggerIndex={i}
+                    />
+                  ))}
 
               {activeQuery.hasNextPage && (
                 <button
@@ -183,15 +207,17 @@ const Feed = () => {
                   )}
                   {language === "vi" ? "Tải thêm" : "Load more"}
                   <span className="ct">
-                    {language === "vi" ? "— trận trước đó" : "— earlier matches"}
+                    {language === "vi"
+                      ? "— mục cũ hơn"
+                      : "— earlier items"}
                   </span>
                 </button>
               )}
 
               <div className="tl-feed-foot">
                 {language === "vi"
-                  ? "Cập nhật theo thời gian thực · Thịnh hành = trọng số tương tác, 7 ngày gần đây"
-                  : "Real-time updates · Trending = engagement-weighted, last 7 days"}
+                  ? "Cập nhật theo thời gian thực · Sắp xếp theo thời gian, 30 ngày gần đây"
+                  : "Real-time updates · Sorted by recency, last 30 days"}
               </div>
             </>
           )}
@@ -200,5 +226,58 @@ const Feed = () => {
     </TheLineLayout>
   );
 };
+
+/**
+ * Discriminated dispatch — picks the right card per timeline item. Kept
+ * inline (not exported) because the union shape is tightly coupled to the
+ * useFeedTimeline hook and only this page renders it today.
+ */
+function TimelineRow({
+  item,
+  language,
+  staggerIndex,
+}: {
+  item: FeedTimelineItem;
+  language: import("@/lib/social/feed-formatters").Language;
+  staggerIndex: number;
+}) {
+  if (item.type === "match") {
+    return (
+      <FeedMatchCard
+        match={item}
+        language={language}
+        staggerIndex={staggerIndex}
+      />
+    );
+  }
+  if (item.type === "blog") {
+    return (
+      <FeedBlogCard
+        slug={item.slug}
+        title={item.title}
+        excerpt={item.excerpt}
+        cover_image_url={item.cover_image_url}
+        category={item.category}
+        published_at={item.published_at}
+        lang={item.lang}
+        language={language}
+        staggerIndex={staggerIndex}
+      />
+    );
+  }
+  return (
+    <FeedVideoCard
+      id={item.id}
+      title={item.title}
+      description={item.description}
+      thumbnail_url={item.thumbnail_url}
+      duration_seconds={item.duration_seconds}
+      video_type={item.video_type}
+      published_at={item.published_at}
+      language={language}
+      staggerIndex={staggerIndex}
+    />
+  );
+}
 
 export default Feed;
