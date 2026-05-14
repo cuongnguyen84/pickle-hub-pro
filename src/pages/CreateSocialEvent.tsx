@@ -220,6 +220,11 @@ export default function CreateSocialEvent() {
           form.zalo_group_url.trim() === "" ? null : form.zalo_group_url.trim(),
         status: publish ? "published" : "draft",
         visibility: form.visibility,
+        // PR67 — only meaningful for paid events. Default for free
+        // events is false / 12 (the column DEFAULT backstop), so passing
+        // it through unconditionally is safe.
+        requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
+        prepayment_deadline_hours: form.prepayment_deadline_hours,
       };
       const paymentPayload =
         form.price_vnd > 0

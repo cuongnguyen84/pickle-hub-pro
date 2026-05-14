@@ -1916,6 +1916,13 @@ export const en: Translations = {
       previewAlt: "Preview VietQR code",
       errorAccountNumber: "Account number must be 6–20 digits.",
       errorAccountName: "Account holder name needs at least 3 letters, no digits.",
+      requirePrepayment: "Require prepayment",
+      requirePrepaymentDescription:
+        "Players must complete payment within the specified time or registration will be cancelled automatically.",
+      paymentDeadlineHours: "Payment deadline (hours)",
+      paymentDeadlineHint:
+        "Counts from registration time. If the deadline passes the event start time, registration is cancelled immediately.",
+      errorPrepaymentDeadlineRange: "Deadline must be between 1 and 168 hours (1 week max).",
     },
     manage: {
       pageTitle: "Manage events",
@@ -2063,6 +2070,17 @@ export const en: Translations = {
       alreadyRegisteredCta: "View your registration",
       cancelledBanner: "You cancelled your registration for this event",
       reregisterCta: "Manage / re-register",
+      unpaidRegistrationBannerTitle: "Registration unpaid",
+      unpaidRegistrationBannerDescription:
+        "This event requires prepayment. Complete the bank transfer with the reference code below, then tap \"Paid\" to confirm.",
+      timeRemaining: "Time remaining: {hours}h {minutes}m",
+      paymentOverdue: "Payment overdue — registration will be cancelled soon.",
+      payNowButton: "I've transferred",
+      payNowConfirmPrompt:
+        "Only confirm if you've actually sent the bank transfer. The organizer will reconcile with the reference code.",
+      payNowConfirm: "Confirm transfer",
+      payNowCancel: "Cancel",
+      payNowSuccess: "Marked as paid. The organizer will confirm.",
       errors: {
         generic: "Something went wrong, please try again.",
         invalid_magic_token: "Invalid link.",
@@ -2376,6 +2394,11 @@ export const en: Translations = {
       claimedToast: "Marked as paid.",
       claimError: "Couldn't submit. Try again.",
       copiedToast: "Copied!",
+      prepaymentWarningTitle: "This event requires prepayment",
+      prepaymentWarningDescription:
+        "If you don't complete payment within {hours} hours ({deadline}), your registration will be auto-cancelled.",
+      payLater: "I'll pay later",
+      unpaidStatusBadge: "Unpaid",
     },
     profile: {
       notFoundTitle: "Profile not found",

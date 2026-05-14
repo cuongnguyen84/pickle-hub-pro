@@ -1904,6 +1904,12 @@ export interface Translations {
       previewAlt: string;
       errorAccountNumber: string;
       errorAccountName: string;
+      // PR67 — prepayment toggle + deadline
+      requirePrepayment: string;
+      requirePrepaymentDescription: string;
+      paymentDeadlineHours: string;
+      paymentDeadlineHint: string;
+      errorPrepaymentDeadlineRange: string;
     };
     manage: {
       pageTitle: string;
@@ -2085,6 +2091,16 @@ export interface Translations {
       alreadyRegisteredCta: string;
       cancelledBanner: string;
       reregisterCta: string;
+      // PR67 — prepayment countdown banner
+      unpaidRegistrationBannerTitle: string;
+      unpaidRegistrationBannerDescription: string;
+      timeRemaining: string;
+      paymentOverdue: string;
+      payNowButton: string;
+      payNowConfirmPrompt: string;
+      payNowConfirm: string;
+      payNowCancel: string;
+      payNowSuccess: string;
       errors: {
         generic: string;
         invalid_magic_token: string;
@@ -2319,6 +2335,11 @@ export interface Translations {
       claimedToast: string;
       claimError: string;
       copiedToast: string;
+      // PR67 — prepayment warning + "pay later" button + unpaid badge
+      prepaymentWarningTitle: string;
+      prepaymentWarningDescription: string;
+      payLater: string;
+      unpaidStatusBadge: string;
     };
     profile: {
       notFoundTitle: string;
@@ -4279,6 +4300,13 @@ export const vi: Translations = {
       previewAlt: "Mã VietQR preview",
       errorAccountNumber: "Số tài khoản phải là 6–20 chữ số.",
       errorAccountName: "Tên chủ tài khoản tối thiểu 3 ký tự, không chứa số.",
+      requirePrepayment: "Bắt buộc chuyển khoản trước",
+      requirePrepaymentDescription:
+        "Player phải hoàn tất chuyển khoản trong thời gian quy định, nếu không đăng ký sẽ tự động bị huỷ.",
+      paymentDeadlineHours: "Thời hạn thanh toán (giờ)",
+      paymentDeadlineHint:
+        "Tính từ lúc player đăng ký. Nếu thời hạn vượt qua giờ bắt đầu event, đăng ký bị huỷ ngay.",
+      errorPrepaymentDeadlineRange: "Thời hạn phải trong khoảng 1–168 giờ (tối đa 1 tuần).",
     },
     manage: {
       pageTitle: "Quản lý sự kiện",
@@ -4426,6 +4454,17 @@ export const vi: Translations = {
       alreadyRegisteredCta: "Xem đăng ký của bạn",
       cancelledBanner: "Bạn đã huỷ đăng ký sự kiện này",
       reregisterCta: "Quản lý / Đăng ký lại",
+      unpaidRegistrationBannerTitle: "Đăng ký chưa thanh toán",
+      unpaidRegistrationBannerDescription:
+        "Sự kiện này yêu cầu chuyển khoản trước. Hoàn tất chuyển khoản theo mã thanh toán bên dưới rồi bấm \"Đã thanh toán\" để xác nhận.",
+      timeRemaining: "Còn lại: {hours} giờ {minutes} phút",
+      paymentOverdue: "Đã quá hạn thanh toán, đăng ký sẽ sớm bị huỷ.",
+      payNowButton: "Tôi đã chuyển tiền",
+      payNowConfirmPrompt:
+        "Chỉ xác nhận khi bạn đã thực sự chuyển khoản. BTC sẽ đối chiếu với mã thanh toán.",
+      payNowConfirm: "Xác nhận đã chuyển",
+      payNowCancel: "Huỷ",
+      payNowSuccess: "Đã đánh dấu đã thanh toán. BTC sẽ xác nhận.",
       errors: {
         generic: "Có lỗi xảy ra, vui lòng thử lại.",
         invalid_magic_token: "Link không hợp lệ.",
@@ -4739,6 +4778,11 @@ export const vi: Translations = {
       claimedToast: "Đã đánh dấu đã chuyển tiền.",
       claimError: "Không gửi được yêu cầu. Thử lại.",
       copiedToast: "Đã sao chép!",
+      prepaymentWarningTitle: "Event này yêu cầu chuyển khoản trước",
+      prepaymentWarningDescription:
+        "Nếu không hoàn tất thanh toán trong {hours} giờ ({deadline}), đăng ký của bạn sẽ tự động bị huỷ.",
+      payLater: "Tôi sẽ thanh toán sau",
+      unpaidStatusBadge: "Chưa thanh toán",
     },
     profile: {
       notFoundTitle: "Không tìm thấy profile",
