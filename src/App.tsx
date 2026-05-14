@@ -424,6 +424,20 @@ const NavigateSuKienLiveVi = () => {
   const slug = window.location.pathname.match(/\/vi\/su-kien\/([^/?#]+)\/live/)?.[1] ?? "";
   return <Navigate to={`/vi/social/${slug}/live`} replace />;
 };
+// PR69 follow-up — organizer routes under /clb/:slug also moved
+// from /su-kien/* to /social/*. Same Navigate-alias pattern.
+const NavigateClbCreateEvent = () => {
+  const club = window.location.pathname.match(/\/clb\/([^/?#]+)\/su-kien\/moi/)?.[1] ?? "";
+  return <Navigate to={`/clb/${club}/social/moi`} replace />;
+};
+const NavigateClbEditEvent = () => {
+  const m = window.location.pathname.match(
+    /\/clb\/([^/?#]+)\/quan-ly\/su-kien\/([^/?#]+)\/sua/,
+  );
+  const club = m?.[1] ?? "";
+  const ev = m?.[2] ?? "";
+  return <Navigate to={`/clb/${club}/quan-ly/social/${ev}/sua`} replace />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -491,7 +505,12 @@ const App = () => (
                     <Route path="/clb/:slug" element={<ClubLanding />} />
                     {/* Social Events MVP Sprint 1 PR3 — organizer surfaces (auth + ownership) */}
                     <Route path="/clb/:slug/quan-ly" element={<ClubManage />} />
-                    <Route path="/clb/:slug/su-kien/moi" element={<CreateSocialEvent />} />
+                    {/* PR69 — Create event route renamed to match the
+                        /social/* rebrand. Legacy /clb/:slug/su-kien/moi
+                        still mounted as a Navigate alias so any cached
+                        client bundle with the old path lands here. */}
+                    <Route path="/clb/:slug/social/moi" element={<CreateSocialEvent />} />
+                    <Route path="/clb/:slug/su-kien/moi" element={<NavigateClbCreateEvent />} />
                     {/* Social Events MVP PR53 — public profile + match history + badges */}
                     <Route path="/u/:slug" element={<PublicProfile />} />
                     <Route path="/vi/u/:slug" element={<PublicProfile />} />
@@ -504,7 +523,9 @@ const App = () => (
                     {/* Social Events MVP PR58 — player-facing registration page + organizer event edit */}
                     <Route path="/dang-ky/:magic_token" element={<PlayerRegistration />} />
                     <Route path="/vi/dang-ky/:magic_token" element={<ViLanguageWrapper><PlayerRegistration /></ViLanguageWrapper>} />
-                    <Route path="/clb/:slug/quan-ly/su-kien/:event_slug/sua" element={<EditSocialEvent />} />
+                    {/* PR69 — Edit event route renamed to /social/. */}
+                    <Route path="/clb/:slug/quan-ly/social/:event_slug/sua" element={<EditSocialEvent />} />
+                    <Route path="/clb/:slug/quan-ly/su-kien/:event_slug/sua" element={<NavigateClbEditEvent />} />
                     {/* Social Events MVP PR59 — phone-keyed recovery page */}
                     <Route path="/khoi-phuc-dang-ky" element={<RecoveryRegistration />} />
                     <Route path="/vi/khoi-phuc-dang-ky" element={<ViLanguageWrapper><RecoveryRegistration /></ViLanguageWrapper>} />
