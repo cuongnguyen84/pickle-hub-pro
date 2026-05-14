@@ -145,9 +145,16 @@ export async function renderSocialEvent(
   // `|| fallbackDesc` branch dead code (same Codex P2 issue as PR #19).
   const description = pickMetaDescription(ev.description_vi, fallbackDesc);
 
+  // PR73 Phase 2D (audit I-13) — breadcrumb label = actual club name
+  // (e.g. "175 Định Công") instead of the generic literal "Sự kiện CLB"
+  // that previously pointed at the same club page. When there is no
+  // club we fall back to the generic "Sự kiện" hub link.
+  const clubCrumb = ev.club
+    ? { label: ev.club.name, href: `${siteUrl}/clb/${ev.club.slug}` }
+    : { label: "Sự kiện", href: `${siteUrl}/social` };
   const bc = breadcrumb([
     { label: "Trang chủ", href: siteUrl },
-    { label: "Sự kiện CLB", href: ev.club ? `${siteUrl}/clb/${ev.club.slug}` : siteUrl },
+    clubCrumb,
     { label: titleVi },
   ]);
 
@@ -222,6 +229,21 @@ export async function renderSocialEvent(
       jsonLd,
       bodyContent: bodyParts.join("\n"),
       lang: "vi",
+      // PR73 Phase 2D (audit I-5) — single-canonical event URL serves
+      // both languages (SPA toggles via i18n context). Emit reciprocal
+      // hreflang so Google connects this page across vi/en searches
+      // even though the URL is identical. Matches /nguoi-choi/* and
+      // /feed conventions.
+      alternates: [
+        { hreflang: "en", href: url },
+        { hreflang: "vi", href: url },
+        { hreflang: "x-default", href: url },
+      ],
+      // PR73 Phase 2D (audit I-11) — bodyContent already opens with a
+      // clean `<h1>${titleVi}</h1>`, so skip buildHtml's auto h1 (which
+      // would have emitted the decorated full page-title as a second
+      // h1, the duplicate flagged by Ahrefs).
+      omitAutoHeader: true,
     }),
   );
 }
@@ -282,9 +304,13 @@ export async function renderClub(
         }
       : undefined;
 
+  // PR73 Phase 2D (audit I-13) — "CLB" crumb now links to the /clubs hub
+  // list instead of the homepage (it was pointing at siteUrl, identical
+  // to the Trang-chủ crumb — duplicate-link signal). Phase 2B added the
+  // /clubs prerender so the link now resolves to real content.
   const bc = breadcrumb([
     { label: "Trang chủ", href: siteUrl },
-    { label: "CLB", href: siteUrl },
+    { label: "Câu lạc bộ", href: `${siteUrl}/clubs` },
     { label: club.name },
   ]);
 
@@ -314,6 +340,16 @@ export async function renderClub(
       jsonLd: itemListJsonLd,
       bodyContent,
       lang: "vi",
+      // PR73 Phase 2D (audit I-5) — reciprocal hreflang on the single-
+      // canonical /clb/{slug} URL.
+      alternates: [
+        { hreflang: "en", href: url },
+        { hreflang: "vi", href: url },
+        { hreflang: "x-default", href: url },
+      ],
+      // PR73 Phase 2D (audit I-11) — bodyContent already emits its own
+      // `<h1>${club.name}</h1>`. Skip the auto h1 to avoid double-h1.
+      omitAutoHeader: true,
     }),
   );
 }

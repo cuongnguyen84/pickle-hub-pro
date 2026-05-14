@@ -30,6 +30,13 @@ interface BuildHtmlOptions {
    *  [{ hreflang: "vi", href }, { hreflang: "en", href }, { hreflang: "x-default", href }]
    *  so search engines connect the two language versions. */
   alternates?: BuildHtmlAlternate[];
+  /** PR73 Phase 2D (audit I-11) — skip the auto-emitted <h1>${title}</h1>
+   *  + <p>${description}</p> pair when the caller's bodyContent already
+   *  provides its own page heading. Defaults to false so existing
+   *  renderers keep working unchanged. renderSocialEvent + renderClub
+   *  pass true so the page has exactly one h1 with the clean event /
+   *  club name instead of the decorated full title. */
+  omitAutoHeader?: boolean;
 }
 
 function getHeaderHtml(lang: Lang, siteUrl: string): string {
@@ -91,6 +98,7 @@ export function buildHtml(opts: BuildHtmlOptions): string {
     extraMeta = "",
     lang = "en",
     alternates,
+    omitAutoHeader = false,
   } = opts;
 
   const jsonLdScript = jsonLd
@@ -119,6 +127,10 @@ export function buildHtml(opts: BuildHtmlOptions): string {
   const headerHtml = getHeaderHtml(lang, siteUrl);
   const footerHtml = getFooterHtml(lang, siteUrl);
 
+  const autoHeader = omitAutoHeader
+    ? ""
+    : `<h1>${escapeHtml(title)}</h1>\n<p>${escapeHtml(description)}</p>\n`;
+
   return `<!DOCTYPE html>
 <html lang="${htmlLang}">
 <head>
@@ -146,9 +158,7 @@ ${jsonLdScript}
 <body>
 ${headerHtml}
 <main>
-<h1>${escapeHtml(title)}</h1>
-<p>${escapeHtml(description)}</p>
-${bodyContent}
+${autoHeader}${bodyContent}
 </main>
 ${footerHtml}
 </body>
