@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { useNoindex } from "@/hooks/useNoindex";
 
 /**
  * Auth Callback Page
@@ -15,6 +16,10 @@ import { Loader2 } from "lucide-react";
  * - Standard session handling via Supabase client.
  */
 const AuthCallback = () => {
+  // PR72 (SEO Phase 2A I-7): auth callback URLs carry single-use codes
+  // — must never be cached or indexed.
+  useNoindex();
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const handledRef = useRef(false);

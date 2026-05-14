@@ -895,6 +895,34 @@ export function renderNotificationsShell(siteUrl: string, rawPath: string, lang:
   }));
 }
 
+// ─── Noindex private-route shell (PR72 — SEO Phase 2A I-7) ────────────────
+//
+// Single bot-facing shell for every NOINDEX_PATTERNS match in
+// functions/_middleware.ts. We deliberately don't embed any of the
+// path's actual data (the magic_token, the club slug, etc.) — the
+// crawler just needs a clean noindex signal + a link back to the
+// public surface. The middleware also sets X-Robots-Tag on the
+// response; the meta tag in this body is belt-and-braces for crawlers
+// that ignore the header.
+
+export function renderNoindexShell(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const title = lang === "vi"
+    ? "Trang riêng tư | ThePickleHub"
+    : "Private page | ThePickleHub";
+  const description = lang === "vi"
+    ? "Đây là một trang nội bộ trên ThePickleHub. Quay lại trang chủ để xem giải đấu, livestream và sự kiện công khai."
+    : "This is a private surface on ThePickleHub. Return to the homepage for tournaments, livestreams, and public events.";
+  return htmlResponse(buildHtml({
+    title,
+    description,
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    lang,
+    extraMeta: `<meta name="robots" content="noindex, nofollow, noarchive"/>`,
+    bodyContent: `<p>${escapeHtml(description)}</p><p><a href="${siteUrl}/">${lang === "vi" ? "Về trang chủ" : "Go to homepage"}</a></p>`,
+  }));
+}
+
 // ─── Default fallback ───────────────��─────────────────────
 
 export function renderDefault(path: string, siteUrl: string, lang: Lang): Response {
@@ -915,6 +943,10 @@ export function render404(path: string, siteUrl: string): Response {
     description: "Trang bạn tìm không tồn tại. Quay lại trang chủ ThePickleHub để khám phá giải đấu, livestream và cộng đồng pickleball Việt Nam.",
     url: `${siteUrl}${path}`,
     siteUrl,
+    // PR72 (SEO Phase 2A I-15) — defense-in-depth noindex on the 404
+    // shell. Google normally drops 404s anyway, but an explicit signal
+    // protects against accidental indexing when a soft-404 ranks.
+    extraMeta: `<meta name="robots" content="noindex, nofollow"/>`,
     bodyContent: `<p>Trang bạn tìm không tồn tại.</p><p><a href="${siteUrl}/">Quay lại trang chủ</a></p>`,
   }), 404);
 }

@@ -33,6 +33,7 @@ import {
   CLUB_LOGO_MAX_BYTES,
 } from "@/hooks/useClubLogoUpload";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
+import { useNoindex } from "@/hooks/useNoindex";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
 const MAX_CLUBS_PER_USER = 3;
@@ -50,6 +51,9 @@ function slugify(input: string): string {
 }
 
 export default function CreateClub() {
+  // PR72 (SEO Phase 2A I-7): auth-gated creation form.
+  useNoindex();
+
   const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

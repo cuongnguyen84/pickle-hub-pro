@@ -25,6 +25,7 @@ import {
   normalizeVietnamPhone,
 } from "@/lib/phone";
 import { TurnstileWidget } from "@/components/registration/TurnstileWidget";
+import { useNoindex } from "@/hooks/useNoindex";
 
 type ResultState =
   | { kind: "idle" }
@@ -47,6 +48,10 @@ interface RecoveryResponse {
 }
 
 export default function RecoveryRegistration() {
+  // PR72 (SEO Phase 2A I-7): recovery flow exposes phone numbers in
+  // form state + masked email; must stay out of any search index.
+  useNoindex();
+
   const { t } = useI18n();
   const tr = t.socialEvents.recovery;
 

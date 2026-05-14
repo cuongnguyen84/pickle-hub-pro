@@ -16,10 +16,18 @@ Allow: /
 
 Disallow: /admin
 Disallow: /admin/
+Disallow: /creator
+Disallow: /creator/
 Disallow: /auth/
 Disallow: /login
+Disallow: /vi/login
 Disallow: /account
+Disallow: /vi/account
+Disallow: /onboarding
 Disallow: /notifications
+Disallow: /vi/notifications
+Disallow: /thong-bao
+Disallow: /vi/thong-bao
 Disallow: /embed/
 Disallow: /matches/
 Disallow: /join/
@@ -36,6 +44,30 @@ Allow: /tools/flex-tournament$
 Allow: /tools/doubles-elimination$
 Allow: /tools/quick-tables$
 Allow: /tools/team-match$
+
+# PR72 (SEO Phase 2A I-7+I-14) — social-event private surfaces.
+# Magic-link pages carry a UUID bearer token in the URL — must never
+# be indexed. Same for organizer dashboards + create flows + per-event
+# ephemeral surfaces (roster, matchmaking, live). Belt-and-braces with
+# the X-Robots-Tag header that functions/_middleware.ts sets on the
+# matching response, and the client-side useNoindex() hook in
+# src/hooks/useNoindex.ts.
+Disallow: /dang-ky/
+Disallow: /vi/dang-ky/
+Disallow: /khoi-phuc-dang-ky
+Disallow: /vi/khoi-phuc-dang-ky
+Disallow: /clubs/new
+Disallow: /clb/*/quan-ly
+Disallow: /clb/*/social/moi
+Disallow: /clb/*/su-kien/moi
+Disallow: /social/*/danh-sach
+Disallow: /social/*/xep-cap
+Disallow: /social/*/live
+Disallow: /vi/social/*/live
+Disallow: /su-kien/*/danh-sach
+Disallow: /su-kien/*/xep-cap
+Disallow: /su-kien/*/live
+Disallow: /vi/su-kien/*/live
 
 # AI training opt-out
 User-agent: GPTBot

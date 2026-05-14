@@ -34,6 +34,7 @@ import { useI18n } from "@/i18n";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations, type EventRegistrationRow } from "@/hooks/useEventRegistrations";
 import { useEventOwnership } from "@/hooks/useClubOwnership";
+import { useNoindex } from "@/hooks/useNoindex";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -120,6 +121,9 @@ function rebuildScheduleFromSaved(
 }
 
 export default function SocialEventMatchmaking() {
+  // PR72 (SEO Phase 2A I-7): organizer-only matchmaking config.
+  useNoindex();
+
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

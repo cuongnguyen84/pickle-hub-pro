@@ -6,8 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Lock, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
+import { useNoindex } from "@/hooks/useNoindex";
 
 const ResetPassword = () => {
+  // PR72 (SEO Phase 2A I-7): password reset session is bearer auth via
+  // recovery link — never index.
+  useNoindex();
+
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

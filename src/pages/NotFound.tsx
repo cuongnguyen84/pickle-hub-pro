@@ -2,8 +2,14 @@ import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Home } from "lucide-react";
+import { useNoindex } from "@/hooks/useNoindex";
 
 const NotFound = () => {
+  // PR72 (SEO Phase 2A I-15): defense-in-depth noindex on the SPA
+  // 404 page. Bot path uses functions/_lib/render/index.ts render404
+  // which now also injects robots noindex.
+  useNoindex();
+
   const { t } = useI18n();
 
   return (

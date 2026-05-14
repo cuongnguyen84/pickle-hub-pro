@@ -38,6 +38,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations } from "@/hooks/useEventRegistrations";
 import { useEventLive, type LiveMatchRow, type MyRegistration } from "@/hooks/useEventLive";
+import { useNoindex } from "@/hooks/useNoindex";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { StandingRow } from "@/lib/social-events/standings";
@@ -473,6 +474,11 @@ function StandingsTable({ standings, names, myProfileId, limit = 8 }: StandingsT
 }
 
 export default function SocialEventLive() {
+  // PR72 (SEO Phase 2A I-7): live realtime view — ephemeral, mutates
+  // rapidly, not useful in a search index. Public /social/:slug remains
+  // the canonical indexable landing.
+  useNoindex();
+
   const { slug } = useParams<{ slug: string }>();
   const { t, language } = useI18n();
   const live = t.socialEvents.live;

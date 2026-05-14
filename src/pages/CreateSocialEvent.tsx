@@ -43,6 +43,7 @@ import {
   type FormErrors,
 } from "@/components/social/create-event/types";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
+import { useNoindex } from "@/hooks/useNoindex";
 
 function slugify(input: string): string {
   return input
@@ -69,6 +70,9 @@ function composeIso(dateStr: string, timeStr: string): string | null {
 }
 
 export default function CreateSocialEvent() {
+  // PR72 (SEO Phase 2A I-7): organizer-only wizard.
+  useNoindex();
+
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

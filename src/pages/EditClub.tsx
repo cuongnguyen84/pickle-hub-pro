@@ -29,8 +29,12 @@ import {
   CLUB_LOGO_MAX_BYTES,
 } from "@/hooks/useClubLogoUpload";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
+import { useNoindex } from "@/hooks/useNoindex";
 
 export default function EditClub() {
+  // PR72 (SEO Phase 2A I-7): club settings + danger-zone archive.
+  useNoindex();
+
   const { slug } = useParams<{ slug: string }>();
   const { t } = useI18n();
   const navigate = useNavigate();
