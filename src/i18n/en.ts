@@ -2075,7 +2075,11 @@ export const en: Translations = {
         "This event requires prepayment. Complete the bank transfer with the reference code below, then tap \"Paid\" to confirm.",
       timeRemaining: "Time remaining: {hours}h {minutes}m",
       paymentOverdue: "Payment overdue — registration will be cancelled soon.",
-      payNowButton: "Paid",
+      payNowButton: "I've transferred",
+      payNowConfirmPrompt:
+        "Only confirm if you've actually sent the bank transfer. The organizer will reconcile with the reference code.",
+      payNowConfirm: "Confirm transfer",
+      payNowCancel: "Cancel",
       payNowSuccess: "Marked as paid. The organizer will confirm.",
       errors: {
         generic: "Something went wrong, please try again.",

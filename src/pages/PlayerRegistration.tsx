@@ -94,6 +94,14 @@ export default function PlayerRegistration() {
   // PR67 — bumps every minute so the prepayment countdown re-renders.
   const [nowTick, setNowTick] = useState(() => Date.now());
   const [markingPaid, setMarkingPaid] = useState(false);
+  // PR67 follow-up — two-step confirmation guard on the prepayment
+  // claim button. Original single-click variant was too easy to fire
+  // accidentally (a label-looking button on a focused user-visit),
+  // resulting in payment_orders.player_claimed_paid=true even when
+  // the user only meant to inspect the page. Now click 1 transforms
+  // the button into a Confirm + Cancel pair; only Confirm actually
+  // calls mark-payment-claimed.
+  const [confirmingClaim, setConfirmingClaim] = useState(false);
 
   useEffect(() => {
     // 60s tick is plenty for an HH:MM countdown display.
@@ -333,44 +341,76 @@ export default function PlayerRegistration() {
                         {countdownLabel}
                       </p>
                       {data.payment_order_id && magic_token && (
-                        <Button
-                          type="button"
-                          variant="default"
-                          size="sm"
-                          className="mt-3"
-                          disabled={markingPaid}
-                          onClick={async () => {
-                            if (!magic_token || !data.payment_order_id) return;
-                            setMarkingPaid(true);
-                            try {
-                              const { error } = await supabase.functions.invoke(
-                                "mark-payment-claimed",
-                                {
-                                  body: {
-                                    order_id: data.payment_order_id,
-                                    magic_token,
-                                  },
-                                },
-                              );
-                              if (error) {
-                                toast({
-                                  title: tr.errors.generic,
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-                              await refetch();
-                              toast({ title: tr.payNowSuccess });
-                            } finally {
-                              setMarkingPaid(false);
-                            }
-                          }}
-                        >
-                          {markingPaid ? (
-                            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                          ) : null}
-                          {tr.payNowButton}
-                        </Button>
+                        // PR67 follow-up — 2-step confirmation. Click 1
+                        // transforms button into a Confirm + Cancel pair.
+                        // Single accidental tap no longer claims.
+                        !confirmingClaim ? (
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            className="mt-3"
+                            disabled={markingPaid}
+                            onClick={() => setConfirmingClaim(true)}
+                          >
+                            {tr.payNowButton}
+                          </Button>
+                        ) : (
+                          <div className="mt-3 flex flex-col gap-2 rounded-md border border-amber-500/40 bg-amber-100/40 p-3 dark:bg-amber-900/30">
+                            <p className="text-xs font-medium text-amber-900 dark:text-amber-100">
+                              {tr.payNowConfirmPrompt}
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                disabled={markingPaid}
+                                onClick={async () => {
+                                  if (!magic_token || !data.payment_order_id) return;
+                                  setMarkingPaid(true);
+                                  try {
+                                    const { error } = await supabase.functions.invoke(
+                                      "mark-payment-claimed",
+                                      {
+                                        body: {
+                                          order_id: data.payment_order_id,
+                                          magic_token,
+                                        },
+                                      },
+                                    );
+                                    if (error) {
+                                      toast({
+                                        title: tr.errors.generic,
+                                        variant: "destructive",
+                                      });
+                                      return;
+                                    }
+                                    await refetch();
+                                    setConfirmingClaim(false);
+                                    toast({ title: tr.payNowSuccess });
+                                  } finally {
+                                    setMarkingPaid(false);
+                                  }
+                                }}
+                              >
+                                {markingPaid ? (
+                                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                ) : null}
+                                {tr.payNowConfirm}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                disabled={markingPaid}
+                                onClick={() => setConfirmingClaim(false)}
+                              >
+                                {tr.payNowCancel}
+                              </Button>
+                            </div>
+                          </div>
+                        )
                       )}
                     </div>
                   </div>
