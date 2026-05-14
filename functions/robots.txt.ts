@@ -37,6 +37,20 @@ Disallow: /tools/flex-tournament/
 Disallow: /tools/doubles-elimination/
 Disallow: /tools/quick-tables/
 Disallow: /tools/team-match/
+Disallow: /tools/dashboard
+Disallow: /tools/dashboard/
+
+# PR74 Codex P2 follow-up — /vi/tools/* mirrors of the four user-
+# generated tool prefixes + the dashboard. src/App.tsx mounts every
+# /tools/* private route at /vi/tools/* too; without these the
+# Vietnamese paths leak through robots.txt the same way they were
+# leaking through NOINDEX_PATTERNS before this PR.
+Disallow: /vi/tools/flex-tournament/
+Disallow: /vi/tools/doubles-elimination/
+Disallow: /vi/tools/quick-tables/
+Disallow: /vi/tools/team-match/
+Disallow: /vi/tools/dashboard
+Disallow: /vi/tools/dashboard/
 
 # Allow tool hub pages specifically
 Allow: /tools$
@@ -44,6 +58,11 @@ Allow: /tools/flex-tournament$
 Allow: /tools/doubles-elimination$
 Allow: /tools/quick-tables$
 Allow: /tools/team-match$
+Allow: /vi/tools$
+Allow: /vi/tools/flex-tournament$
+Allow: /vi/tools/doubles-elimination$
+Allow: /vi/tools/quick-tables$
+Allow: /vi/tools/team-match$
 
 # PR72 (SEO Phase 2A I-7+I-14) — social-event private surfaces.
 # Magic-link pages carry a UUID bearer token in the URL — must never
@@ -57,6 +76,7 @@ Disallow: /vi/dang-ky/
 Disallow: /khoi-phuc-dang-ky
 Disallow: /vi/khoi-phuc-dang-ky
 Disallow: /clubs/new
+Disallow: /vi/clubs/new
 Disallow: /clb/*/quan-ly
 Disallow: /clb/*/social/moi
 Disallow: /clb/*/su-kien/moi
