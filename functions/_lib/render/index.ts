@@ -1059,6 +1059,19 @@ export async function renderProfile(
   //
   // Defensive: also destructure `error` and log it so a future column
   // drift can't silently regress this path again.
+  //
+  // PR79 Phase 2F follow-up — accept hex profile_slug too. The `:username`
+  // route param is actually a slug-shaped value that can be EITHER a
+  // human-readable username OR the 8-/12-char hex profile_slug derived
+  // from profileIdToSlug(). SocialEventRoster, SocialEventLive, and
+  // ClubCard all build /u/<hex> links that 301 to /nguoi-choi/<hex>,
+  // so this resolver must accept both shapes or the in-app player
+  // links 404. Single .or() PostgREST clause = one query, exact
+  // username match preferred over prefix-LIKE on profile_slug.
+  const isHexSlug = /^[0-9a-f]{8,12}$/i.test(username);
+  const orFilter = isHexSlug
+    ? `username.eq.${username},profile_slug.like.${username}%`
+    : `username.eq.${username}`;
   const { data: profileRow, error: profileErr } = await supabase
     .from("profiles")
     .select(
@@ -1067,9 +1080,10 @@ export async function renderProfile(
        dupr_singles, dupr_doubles,
        is_ghost, onboarding_completed_at, created_at`,
     )
-    .eq("username", username)
+    .or(orFilter)
     .eq("is_ghost", false)
     .not("onboarding_completed_at", "is", null)
+    .limit(1)
     .maybeSingle();
 
   if (profileErr) {

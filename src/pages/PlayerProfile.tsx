@@ -17,9 +17,15 @@ const JSONLD_ID = "player-profile-jsonld";
 
 const PlayerProfile = () => {
   const { language } = useI18n();
-  const { username } = useParams<{ username: string }>();
-  const profileQuery = usePlayerProfile(username);
-  const statsQuery = usePlayerStats(username);
+  const { username: slugFromUrl } = useParams<{ username: string }>();
+  // PR79 Phase 2F follow-up — the URL param is a SLUG that can be
+  // either the human-readable username OR the 8-/12-char hex
+  // profile_slug. usePlayerProfile resolves both shapes; downstream
+  // hooks (usePlayerStats RPC + the JSON-LD URL) need the canonical
+  // username, so we read it back off the resolved profile row.
+  const profileQuery = usePlayerProfile(slugFromUrl);
+  const resolvedUsername = profileQuery.data?.username ?? null;
+  const statsQuery = usePlayerStats(resolvedUsername ?? undefined);
   const matchesQuery = usePlayerMatchHistory(profileQuery.data?.id);
   const historyQuery = useDuprRatingHistory(profileQuery.data?.id);
 

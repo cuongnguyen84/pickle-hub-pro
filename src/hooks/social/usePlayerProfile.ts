@@ -29,21 +29,34 @@ export type PlayerProfile = Pick<
 /**
  * Fetch the public profile for /nguoi-choi/:username.
  *
- * Returns null when the username doesn't exist or maps to a ghost row
+ * Returns null when the slug doesn't resolve or maps to a ghost row
  * (caller renders 404 in either case). 5-minute staleTime — profile data
  * rarely changes during a single browsing session.
+ *
+ * PR79 Phase 2F follow-up — the `:username` route param accepts EITHER
+ * a human-readable username OR the 8-/12-char hex profile_slug derived
+ * from profileIdToSlug(). SocialEventRoster, SocialEventLive, and
+ * ClubCard all build /u/<hex> links that 301 to /nguoi-choi/<hex>;
+ * this hook must resolve both shapes or those in-app player links
+ * 404 in the SPA. Single PostgREST .or() clause: one query, username
+ * exact match preferred, profile_slug prefix-LIKE as fallback.
  */
-export function usePlayerProfile(username: string | undefined) {
+export function usePlayerProfile(usernameOrSlug: string | undefined) {
   return useQuery({
-    queryKey: ["player-profile", username],
+    queryKey: ["player-profile", usernameOrSlug],
     queryFn: async () => {
-      if (!username) return null;
+      if (!usernameOrSlug) return null;
+      const isHexSlug = /^[0-9a-f]{8,12}$/i.test(usernameOrSlug);
+      const orFilter = isHexSlug
+        ? `username.eq.${usernameOrSlug},profile_slug.like.${usernameOrSlug}%`
+        : `username.eq.${usernameOrSlug}`;
       const { data, error } = await supabase
         .from("profiles")
         .select(
           "id, username, display_name, avatar_url, bio, city, country, skill_level, favorite_venue_id, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at, is_pro, is_verified, is_ghost, created_at",
         )
-        .eq("username", username)
+        .or(orFilter)
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
       // Ghost rows (placeholder profiles created via PlayerSelector for
@@ -51,7 +64,7 @@ export function usePlayerProfile(username: string | undefined) {
       if (!data || data.is_ghost) return null;
       return data as PlayerProfile;
     },
-    enabled: !!username,
+    enabled: !!usernameOrSlug,
     staleTime: 5 * 60_000,
   });
 }
