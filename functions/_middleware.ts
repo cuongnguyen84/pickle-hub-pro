@@ -26,8 +26,68 @@ import {
   renderViBlogPost, renderViBlogIndex,
   renderLivestreamList, renderPrivacy, renderTerms,
   renderNotificationsShell,
+  renderNoindexShell,
   renderDefault, render404,
 } from "./_lib/render";
+
+// ─── PR72 (SEO Phase 2A I-7) — noindex route patterns ────────
+// Private / auth-gated / ephemeral surfaces. We never want these in
+// any search-engine index.
+//
+// Critical: /dang-ky/:token carries a magic_token UUID that is the
+// player's only bearer credential. If Google indexed it, anyone could
+// search Google + open a stranger's registration page and cancel /
+// edit. Same shape for /khoi-phuc-dang-ky after the captcha solve
+// (the URL drops the token after redirect but the form itself sees
+// the phone number).
+//
+// We respond with two SEO signals:
+//   1. X-Robots-Tag: noindex, nofollow, noarchive — added below for
+//      both bot and user paths so the SPA HTML and the prerendered
+//      HTML carry the same instruction even before any client meta
+//      rehydrates.
+//   2. renderNoindexShell (bot path only) — replaces the generic
+//      renderDefault fallback so the bot also sees a meta robots
+//      noindex tag in the HTML body, not just the header.
+const NOINDEX_PATTERNS: RegExp[] = [
+  // Magic-link player flows (CRITICAL — token in URL)
+  /^\/(?:vi\/)?dang-ky(?:\/|$)/,
+  /^\/(?:vi\/)?khoi-phuc-dang-ky(?:\/|$)/,
+  // Organizer dashboards
+  /^\/clb\/[^/]+\/quan-ly(?:\/|$)/,
+  /^\/clb\/[^/]+\/(?:social|su-kien)\/moi(?:\/|$)/,
+  // Per-event organizer + ephemeral surfaces
+  /^\/(?:vi\/)?(?:social|su-kien)\/[^/]+\/(?:danh-sach|xep-cap|live)(?:\/|$)/,
+  // Create flows
+  /^\/clubs\/new(?:\/|$)/,
+  // Auth + account
+  /^\/login(?:\/|$)/,
+  /^\/vi\/login(?:\/|$)/,
+  /^\/auth(?:\/|$)/,
+  /^\/account(?:\/|$)/,
+  /^\/vi\/account(?:\/|$)/,
+  /^\/onboarding(?:\/|$)/,
+  // Personal pages
+  /^\/(?:vi\/)?notifications(?:\/|$)/,
+  /^\/(?:vi\/)?thong-bao(?:\/|$)/,
+  // Already-disallowed-by-robots-txt routes — defense-in-depth
+  /^\/admin(?:\/|$)/,
+  /^\/creator(?:\/|$)/,
+  /^\/embed(?:\/|$)/,
+  /^\/matches(?:\/|$)/,
+  /^\/join(?:\/|$)/,
+  // Internal tournament scoring + dashboard tools (auth-gated)
+  /^\/tools\/dashboard(?:\/|$)/,
+  /^\/tools\/[^/]+\/new(?:\/|$)/,
+  /^\/tools\/[^/]+\/[^/]+\/setup(?:\/|$)/,
+  /^\/tools\/doubles-elimination\/match\/[^/]+\/score(?:\/|$)/,
+];
+
+const X_ROBOTS_NOINDEX = "noindex, nofollow, noarchive";
+
+function shouldNoindex(pathname: string): boolean {
+  return NOINDEX_PATTERNS.some((re) => re.test(pathname));
+}
 
 interface Env {
   SUPABASE_URL: string;
@@ -65,13 +125,46 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const ua = request.headers.get("user-agent") || "";
   const isBot = BOT_UA.test(ua);
 
+  // ─── 3b. PR72 (SEO Phase 2A I-7): noindex header for private routes.
+  //      Applies to BOTH bot and user paths. For users we still want
+  //      the header so any HTTP-aware crawler (Twitterbot, FacebookExt,
+  //      Slackbot, AhrefsBot tier-2) that doesn't trigger BOT_UA still
+  //      sees the noindex signal. Header set BEFORE next() so we can
+  //      mutate the response headers without re-buffering body.
+  const isNoindex = shouldNoindex(pathname);
   if (!isBot) {
-    // Normal user → serve SPA
+    if (isNoindex) {
+      const response = await next();
+      const headers = new Headers(response.headers);
+      headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
+    }
+    // Normal user, public route → serve SPA
     return next();
   }
 
   // ─── 4. Bot path: KV cache + SSR render ───────────────
   const siteUrl = env.CANONICAL_HOST || "https://www.thepicklehub.net";
+
+  // PR72 — Bot path noindex shortcut. Skip cache + skip routeAndRender;
+  // return a minimal HTML shell with meta robots noindex + X-Robots-Tag
+  // header. We don't cache the shell because magic_token URLs are
+  // unique per user (would blow KV with single-use entries).
+  if (isNoindex) {
+    const lang = detectLang(pathname);
+    const shell = renderNoindexShell(siteUrl, pathname, lang);
+    const headers = new Headers(shell.headers);
+    headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
+    headers.set("X-Prerender-Cache", "BYPASS");
+    return new Response(shell.body, {
+      status: shell.status,
+      headers,
+    });
+  }
   // Cache key version bumped pr:v3 → pr:v4 on 2026-05-11 (second bump
   // same day) to invalidate cached responses with the broken nested
   // SportsEvent superEvent that produced two Rich Results errors —

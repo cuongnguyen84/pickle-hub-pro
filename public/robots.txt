@@ -33,12 +33,40 @@ Disallow: /admin/
 Disallow: /creator
 Disallow: /creator/
 Disallow: /account
+Disallow: /vi/account
 Disallow: /login
+Disallow: /vi/login
 Disallow: /auth/
+Disallow: /onboarding
 Disallow: /notifications
+Disallow: /vi/notifications
+Disallow: /thong-bao
+Disallow: /vi/thong-bao
 Disallow: /embed/
 Disallow: /matches/
 Disallow: /join/
+
+# PR72 (SEO Phase 2A I-7) — social-event private surfaces
+# Magic-link pages carry a UUID bearer token in the URL.
+Disallow: /dang-ky/
+Disallow: /vi/dang-ky/
+Disallow: /khoi-phuc-dang-ky
+Disallow: /vi/khoi-phuc-dang-ky
+# Organizer dashboards + create flows
+Disallow: /clubs/new
+Disallow: /clb/*/quan-ly
+Disallow: /clb/*/quan-ly/
+Disallow: /clb/*/social/moi
+Disallow: /clb/*/su-kien/moi
+# Per-event organizer / ephemeral surfaces
+Disallow: /social/*/danh-sach
+Disallow: /social/*/xep-cap
+Disallow: /social/*/live
+Disallow: /vi/social/*/live
+Disallow: /su-kien/*/danh-sach
+Disallow: /su-kien/*/xep-cap
+Disallow: /su-kien/*/live
+Disallow: /vi/su-kien/*/live
 
 # Sitemap location
 Sitemap: https://www.thepicklehub.net/sitemap.xml

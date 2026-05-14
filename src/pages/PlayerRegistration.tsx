@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useNoindex } from "@/hooks/useNoindex";
 import { formatEventDateRange } from "@/lib/social-events/format";
 import { generateVietQRUrl } from "@/lib/payment/vietqr";
 import { findBankByCode } from "@/lib/payment/banks";
@@ -90,6 +91,10 @@ function formatTimestamp(iso: string, lang: "vi" | "en"): string {
 }
 
 export default function PlayerRegistration() {
+  // PR72 (SEO Phase 2A I-7): magic_token in the URL is the bearer
+  // credential — must never end up in any search engine index.
+  useNoindex();
+
   const { magic_token } = useParams<{ magic_token: string }>();
   const { t, language } = useI18n();
   const tr = t.socialEvents.playerRegistration;

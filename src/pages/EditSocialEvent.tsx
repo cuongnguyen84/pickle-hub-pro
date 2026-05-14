@@ -30,6 +30,7 @@ import { useEventOwnership } from "@/hooks/useClubOwnership";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
+import { useNoindex } from "@/hooks/useNoindex";
 import {
   validateField,
   type FormErrors,
@@ -53,6 +54,9 @@ function localToIso(date: string, time: string): string {
 }
 
 export default function EditSocialEvent() {
+  // PR72 (SEO Phase 2A I-7): organizer-only edit page.
+  useNoindex();
+
   const { slug: clubSlug, event_slug } = useParams<{ slug: string; event_slug: string }>();
   const { t } = useI18n();
   const navigate = useNavigate();

@@ -62,6 +62,7 @@ import { useI18n } from "@/i18n";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations, type EventRegistrationRow } from "@/hooks/useEventRegistrations";
 import { useEventOwnership } from "@/hooks/useClubOwnership";
+import { useNoindex } from "@/hooks/useNoindex";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -128,6 +129,10 @@ function buildCsv(rows: EventRegistrationRow[]): string {
 }
 
 export default function SocialEventRoster() {
+  // PR72 (SEO Phase 2A I-7): roster has masked PII (phone, display_name)
+  // for every registered player — organizer-only surface, never index.
+  useNoindex();
+
   const { slug } = useParams<{ slug: string }>();
   const { t, language } = useI18n();
   const roster = t.socialEvents.roster;

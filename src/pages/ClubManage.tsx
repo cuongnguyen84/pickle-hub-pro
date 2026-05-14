@@ -19,8 +19,12 @@ import { useClubEventsManage } from "@/hooks/useClubEventsManage";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { formatEventDateRange } from "@/lib/social-events/format";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
+import { useNoindex } from "@/hooks/useNoindex";
 
 export default function ClubManage() {
+  // PR72 (SEO Phase 2A I-7): organizer dashboard — private surface.
+  useNoindex();
+
   const { slug } = useParams<{ slug: string }>();
   const { t, language } = useI18n();
   const permission = useClubOwnership(slug);
