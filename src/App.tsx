@@ -113,7 +113,12 @@ const SocialEventList = lazy(() => import("./pages/SocialEventList"));
 // Social Events MVP — Sprint 1.5 PR47 (live event UX)
 const SocialEventLive = lazy(() => import("./pages/SocialEventLive"));
 // Social Events MVP — PR53 (public profile + match history + badges)
-const PublicProfile = lazy(() => import("./pages/PublicProfile"));
+// PR79 Phase 2F (audit I-8) — PublicProfile is deprecated. /u/:slug now
+// redirects to the canonical /nguoi-choi/:username (handled by the
+// NavigateUSlug alias below + a server 301 in functions/_middleware.ts).
+// The component still exists for any in-flight links but is no longer
+// mounted on a route. Delete file once we confirm no external /u/<hex>
+// links are still flowing.
 // Social Events MVP — PR55 (self-service club creation + discovery)
 const ClubsList = lazy(() => import("./pages/ClubsList"));
 const CreateClub = lazy(() => import("./pages/CreateClub"));
@@ -439,6 +444,20 @@ const NavigateClbEditEvent = () => {
   return <Navigate to={`/clb/${club}/quan-ly/social/${ev}/sua`} replace />;
 };
 
+// PR79 Phase 2F (audit I-8) — /u/:slug + /vi/u/:slug aliases. Canonical
+// is /nguoi-choi/:username (single-canonical pattern, prerender lives
+// there, sitemap-players.xml emits there). The CF Pages middleware
+// also serves a 301 for bots; this client redirect catches SPA-routed
+// hits + any in-app Link still using the old path.
+const NavigateUSlug = () => {
+  const slug = window.location.pathname.match(/\/u\/([^/?#]+)/)?.[1] ?? "";
+  return <Navigate to={`/nguoi-choi/${slug}`} replace />;
+};
+const NavigateUSlugVi = () => {
+  const slug = window.location.pathname.match(/\/vi\/u\/([^/?#]+)/)?.[1] ?? "";
+  return <Navigate to={`/nguoi-choi/${slug}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
@@ -512,8 +531,19 @@ const App = () => (
                     <Route path="/clb/:slug/social/moi" element={<CreateSocialEvent />} />
                     <Route path="/clb/:slug/su-kien/moi" element={<NavigateClbCreateEvent />} />
                     {/* Social Events MVP PR53 — public profile + match history + badges */}
-                    <Route path="/u/:slug" element={<PublicProfile />} />
-                    <Route path="/vi/u/:slug" element={<PublicProfile />} />
+                    {/* PR79 Phase 2F (audit I-8) — consolidate to single
+                        canonical profile route /nguoi-choi/:username.
+                        The /u/:slug alias was a PR53 vanity-URL prototype
+                        but never reached prerender parity. Both surfaces
+                        now redirect (client-side + server 301) to the
+                        canonical to retire the duplicate-content risk.
+                        The slug value is forwarded verbatim — when it
+                        was a real username the resolved page works;
+                        when it was the old hex profile_slug it 404s
+                        cleanly (hex slugs never had prerender + were
+                        never in any sitemap). */}
+                    <Route path="/u/:slug" element={<NavigateUSlug />} />
+                    <Route path="/vi/u/:slug" element={<NavigateUSlugVi />} />
                     {/* Social Events MVP PR55 — self-service club discovery + creation */}
                     <Route path="/clubs" element={<ClubsList />} />
                     <Route path="/vi/clubs" element={<ViLanguageWrapper><ClubsList /></ViLanguageWrapper>} />
