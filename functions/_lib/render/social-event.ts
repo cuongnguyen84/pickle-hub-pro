@@ -1,7 +1,9 @@
 // ============================================================================
 // renderSocialEvent + renderClub — Social Events MVP prerender targets.
 // ----------------------------------------------------------------------------
-// Cloudflare Pages bot-prerender for /su-kien/:slug and /clb/:slug.
+// Cloudflare Pages bot-prerender for /social/:slug and /clb/:slug.
+// PR69 — renamed from /su-kien; legacy path still served via the
+// middleware regex /^\/(?:social|su-kien)\/([^/]+)$/.
 // Mirrors the renderMatch / renderProfile pattern — service-role Supabase
 // query, build SportsEvent JSON-LD, hand off to buildHtml.
 // ============================================================================
@@ -100,11 +102,13 @@ export async function renderSocialEvent(
     console.error("renderSocialEvent: lookup error", { slug, error });
   }
 
-  if (!data) return render404(`/su-kien/${slug}`, siteUrl);
+  if (!data) return render404(`/social/${slug}`, siteUrl);
 
   const ev = data as unknown as SocialEventRow;
   const titleVi = ev.title_vi;
-  const url = `${siteUrl}/su-kien/${ev.slug}`;
+  // PR69 — canonical is /social/{slug}; the legacy /su-kien/{slug}
+  // path 301s server-side via _redirects and the SPA Navigate alias.
+  const url = `${siteUrl}/social/${ev.slug}`;
 
   // Registered count for offers.availability ("InStock" / "SoldOut").
   let registeredCount = 0;
@@ -268,7 +272,7 @@ export async function renderClub(
           itemListElement: upcoming.map((e, i) => ({
             "@type": "ListItem",
             position: i + 1,
-            url: `${siteUrl}/su-kien/${e.slug}`,
+            url: `${siteUrl}/social/${e.slug}`,
             name: e.title_vi,
           })),
         }
@@ -283,7 +287,7 @@ export async function renderClub(
   const eventList = upcoming
     .map(
       (e) =>
-        `<li><a href="${siteUrl}/su-kien/${escapeHtml(e.slug)}">${escapeHtml(e.title_vi)}</a> — ${escapeHtml(fmtDateVN(e.start_at))}</li>`,
+        `<li><a href="${siteUrl}/social/${escapeHtml(e.slug)}">${escapeHtml(e.title_vi)}</a> — ${escapeHtml(fmtDateVN(e.start_at))}</li>`,
     )
     .join("");
   const eventListBlock =
