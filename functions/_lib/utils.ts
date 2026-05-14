@@ -32,12 +32,28 @@ export function escapeHtml(text: string): string {
 
 /**
  * Build a page title, truncated to 60 chars with optional suffix.
+ *
+ * PR73 Phase 2C (audit I-4) — when the raw title is too long we now
+ * break at the last whitespace before the budget instead of a hard
+ * char cut, so "175 Định Công" no longer renders as "175 Đị…" in
+ * the SERP. We accept a slightly shorter title rather than orphan a
+ * partial Vietnamese glyph. Falls back to the hard cut only when the
+ * budget leaves no whitespace to break on (or the break would land
+ * too early in the title).
  */
 export function buildTitle(rawTitle: string, suffix = " | ThePickleHub"): string {
   const maxTotal = 60;
   if ((rawTitle + suffix).length <= maxTotal) return rawTitle + suffix;
   if (rawTitle.length <= maxTotal) return rawTitle;
-  return rawTitle.slice(0, maxTotal - 1).trim() + "\u2026";
+  const budget = maxTotal - 1;
+  const head = rawTitle.slice(0, budget);
+  const lastSpace = head.lastIndexOf(" ");
+  // Require >=50% of the budget to remain after the break — a tiny
+  // break early in the title would orphan most of the headline.
+  if (lastSpace > budget * 0.5) {
+    return head.slice(0, lastSpace).trimEnd() + "\u2026";
+  }
+  return head.trim() + "\u2026";
 }
 
 /**
