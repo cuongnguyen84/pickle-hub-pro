@@ -73,7 +73,7 @@ const QuickTableView = () => {
     isPlayoffRoundComplete, createNextPlayoffRound, movePlayerToGroup,
     addPlayerToGroup, removePlayerFromGroup, regenerateGroupMatches,
     updateTableCourtSettings, reassignCourtsAndTimes, deleteTable,
-    updateCourtName,
+    updateCourtName, pending,
   } = useQuickTable();
   const { isAdmin } = useAdminAuth();
   const { user } = useAuth();
@@ -635,9 +635,10 @@ const QuickTableView = () => {
                   type="button"
                   className="tl-btn"
                   onClick={handleDeleteTable}
+                  disabled={pending.deleteTable}
                   style={{ color: 'var(--tl-live)', borderColor: 'var(--tl-border)' }}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className={`w-4 h-4 ${pending.deleteTable ? 'animate-spin' : ''}`} />
                   <span className="hidden sm:inline">{t.quickTable.view.deleteBtn}</span>
                 </button>
               )}
