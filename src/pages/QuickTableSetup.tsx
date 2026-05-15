@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { TheLineLayout } from '@/components/layout';
-import { useQuickTable, type QuickTable, distributePlayersToGroups } from '@/hooks/useQuickTable';
+import { useQuickTable, type QuickTable } from '@/hooks/useQuickTable';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand } from 'lucide-react';
@@ -15,7 +13,7 @@ import { toast } from 'sonner';
 import { ManualGroupAssignment } from '@/components/quicktable/ManualGroupAssignment';
 import CourtTimeSettings from '@/components/quicktable/CourtTimeSettings';
 import { useI18n } from '@/i18n';
-import { parseCourtsInput, assignCourtsToMatches, calculateMatchTimes } from '@/lib/round-robin';
+import { parseCourtsInput } from '@/lib/round-robin';
 
 interface PlayerInput {
   id: string;
@@ -27,13 +25,52 @@ interface PlayerInput {
 type AssignmentMode = 'auto' | 'manual';
 type Step = 'input' | 'assignment';
 
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+  padding: 28,
+};
+
+const stepKickerStyle: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-green)',
+  marginBottom: 8,
+};
+
+const stepHeadingStyle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 28,
+  letterSpacing: '-0.015em',
+  lineHeight: 1.05,
+  margin: 0,
+  color: 'var(--tl-fg)',
+};
+
+const stepDescStyle: React.CSSProperties = {
+  fontSize: 14.5,
+  color: 'var(--tl-fg-3)',
+  marginTop: 6,
+  lineHeight: 1.5,
+};
+
 const QuickTableSetup = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
-  const { getTableByShareId, addPlayers, createGroups, assignPlayersToGroups, createGroupMatches, updateTableStatus, updateTableCourtSettings, reassignCourtsAndTimes, deleteTable } = useQuickTable();
+  const {
+    getTableByShareId, addPlayers, createGroups, assignPlayersToGroups,
+    createGroupMatches, updateTableStatus, updateTableCourtSettings,
+    reassignCourtsAndTimes, deleteTable,
+  } = useQuickTable();
 
   const [table, setTable] = useState<QuickTable | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,34 +78,30 @@ const QuickTableSetup = () => {
   const [players, setPlayers] = useState<PlayerInput[]>([]);
   const [assignmentMode, setAssignmentMode] = useState<AssignmentMode>('auto');
   const [step, setStep] = useState<Step>('input');
-  
-  // Court and time settings
+
   const [courts, setCourts] = useState('');
   const [startTime, setStartTime] = useState('');
 
   useEffect(() => {
     const loadTable = async () => {
       if (!shareId) return;
-      
+
       setLoading(true);
       const data = await getTableByShareId(shareId);
-      
+
       if (data) {
         setTable(data.table);
-        
-        // If requires registration, redirect to view page for registration management
+
         if (data.table.requires_registration) {
           navigate(`/tools/quick-tables/${shareId}`);
           return;
         }
-        
-        // If already has players, redirect to view
+
         if (data.players.length > 0) {
           navigate(`/tools/quick-tables/${shareId}`);
           return;
         }
-        
-        // Initialize empty player slots
+
         const initialPlayers: PlayerInput[] = Array.from(
           { length: data.table.player_count },
           (_, i) => ({
@@ -76,11 +109,11 @@ const QuickTableSetup = () => {
             name: '',
             team: '',
             seed: '',
-          })
+          }),
         );
         setPlayers(initialPlayers);
       }
-      
+
       setLoading(false);
     };
 
@@ -98,7 +131,7 @@ const QuickTableSetup = () => {
   const addPlayerSlot = () => {
     setPlayers(prev => [
       ...prev,
-      { id: `new-${prev.length}`, name: '', team: '', seed: '' }
+      { id: `new-${prev.length}`, name: '', team: '', seed: '' },
     ]);
   };
 
@@ -120,30 +153,25 @@ const QuickTableSetup = () => {
 
   const filledPlayers = players.filter(p => p.name.trim());
 
-  // Handle proceeding to assignment step
   const handleProceedToAssignment = () => {
     if (filledPlayers.length < 2) {
       toast.error(t.quickTable.setup.minPlayersError);
       return;
     }
 
-    // For manual mode with round robin, go to assignment step
     if (assignmentMode === 'manual' && table?.format === 'round_robin' && table.group_count) {
       setStep('assignment');
     } else {
-      // Auto mode - submit directly
       handleAutoSubmit();
     }
   };
 
-  // Auto assignment submit (original logic)
   const handleAutoSubmit = async () => {
     if (!table) return;
 
     setSaving(true);
 
     try {
-      // Add players to database
       const playerData = filledPlayers.map(p => ({
         name: p.name.trim(),
         team: p.team.trim() || undefined,
@@ -153,31 +181,26 @@ const QuickTableSetup = () => {
       const createdPlayers = await addPlayers(table.id, playerData);
       if (createdPlayers.length === 0) throw new Error('Failed to add players');
 
-      // Parse courts
       const parsedCourts = parseCourtsInput(courts);
       const hasCourtSettings = parsedCourts.length > 0;
 
-      // Save court settings to table
       if (hasCourtSettings || startTime) {
         await updateTableCourtSettings(
-          table.id, 
-          parsedCourts.map(String), 
-          startTime || null
+          table.id,
+          parsedCourts.map(String),
+          startTime || null,
         );
       }
 
-      // If round robin, create groups and assign players automatically
       if (table.format === 'round_robin' && table.group_count) {
         const groups = await createGroups(table.id, table.group_count);
         if (groups.length === 0) throw new Error('Failed to create groups');
 
         await assignPlayersToGroups(createdPlayers, groups);
 
-        // Refresh players with group assignments
         const refreshed = await getTableByShareId(shareId!);
         if (!refreshed) throw new Error('Failed to refresh data');
 
-        // Create matches for each group (using Circle Method)
         for (let i = 0; i < groups.length; i++) {
           const group = groups[i];
           const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
@@ -186,7 +209,6 @@ const QuickTableSetup = () => {
           }
         }
 
-        // Assign courts and times if configured
         if (hasCourtSettings) {
           const refreshedAgain = await getTableByShareId(shareId!);
           if (refreshedAgain) {
@@ -195,16 +217,14 @@ const QuickTableSetup = () => {
               parsedCourts,
               startTime || null,
               groups,
-              refreshedAgain.matches
+              refreshedAgain.matches,
             );
           }
         }
 
-        // Update table status
         await updateTableStatus(table.id, 'group_stage');
       } else {
-        // Large playoff - will be handled differently
-        await updateTableStatus(table.id, 'group_stage'); // First round
+        await updateTableStatus(table.id, 'group_stage');
       }
 
       toast.success(t.quickTable.setup.createdSuccess);
@@ -217,14 +237,12 @@ const QuickTableSetup = () => {
     }
   };
 
-  // Manual assignment complete handler
   const handleManualAssignmentComplete = async (groupAssignments: Map<number, PlayerInput[]>) => {
     if (!table || !table.group_count) return;
 
     setSaving(true);
 
     try {
-      // Add all players to database first
       const playerData = filledPlayers.map(p => ({
         name: p.name.trim(),
         team: p.team.trim() || undefined,
@@ -234,37 +252,30 @@ const QuickTableSetup = () => {
       const createdPlayers = await addPlayers(table.id, playerData);
       if (createdPlayers.length === 0) throw new Error('Failed to add players');
 
-      // Create a map from input player id to created player
       const playerMap = new Map<string, typeof createdPlayers[0]>();
       filledPlayers.forEach((inputPlayer, index) => {
         playerMap.set(inputPlayer.id, createdPlayers[index]);
       });
 
-      // Create groups
       const groups = await createGroups(table.id, table.group_count);
       if (groups.length === 0) throw new Error('Failed to create groups');
 
-      // Manually assign players to groups based on user selection
       for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
         const group = groups[groupIndex];
         const assignedInputPlayers = groupAssignments.get(groupIndex) || [];
-        
-        // Get the created player IDs for this group
+
         const playersToAssign = assignedInputPlayers
           .map(ip => playerMap.get(ip.id))
           .filter(Boolean) as typeof createdPlayers;
 
         if (playersToAssign.length > 0) {
-          // Assign these specific players to this group
           await assignPlayersToGroups(playersToAssign, [group]);
         }
       }
 
-      // Refresh players with group assignments
       const refreshed = await getTableByShareId(shareId!);
       if (!refreshed) throw new Error('Failed to refresh data');
 
-      // Create matches for each group
       for (const group of groups) {
         const groupPlayers = refreshed.players.filter(p => p.group_id === group.id);
         if (groupPlayers.length >= 2) {
@@ -272,7 +283,6 @@ const QuickTableSetup = () => {
         }
       }
 
-      // Update table status
       await updateTableStatus(table.id, 'group_stage');
 
       toast.success(t.quickTable.setup.manualSuccess);
@@ -285,12 +295,25 @@ const QuickTableSetup = () => {
     }
   };
 
+  // ─── Loading + 404 states ────────────────────────────────────────────────
   if (loading) {
     return (
       <TheLineLayout title="Quick Table Setup" noindex={true} active="lab">
-        <div className="container-wide py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-foreground-muted">{t.common.loading}</div>
+        <div className="tl-shell">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 400,
+              color: 'var(--tl-fg-3)',
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 12,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t.common.loading}
           </div>
         </div>
       </TheLineLayout>
@@ -300,276 +323,410 @@ const QuickTableSetup = () => {
   if (!table) {
     return (
       <TheLineLayout title="Quick Table Setup" noindex={true} active="lab">
-        <div className="container-wide py-8">
-          <div className="text-center">
-            <h1 className="text-xl font-bold mb-2">{t.quickTable.setup.notFound}</h1>
-            <p className="text-foreground-secondary">{t.quickTable.setup.notFoundDesc}</p>
+        <div className="tl-shell">
+          <div className="tl-empty" style={{ marginTop: 56 }}>
+            <h3>{t.quickTable.setup.notFound}</h3>
+            <p>{t.quickTable.setup.notFoundDesc}</p>
+            <Link to="/tools/quick-tables" className="tl-btn">
+              ← {t.quickTable.view.goBack}
+            </Link>
           </div>
         </div>
       </TheLineLayout>
     );
   }
 
-  // Show manual assignment UI
+  const formatLabel = table.format === 'round_robin' ? 'Round Robin' : t.quickTable.largePlayoff;
+
+  // ─── Manual assignment step ─────────────────────────────────────────────
   if (step === 'assignment' && table.group_count) {
     return (
       <TheLineLayout title={`Chia bảng - ${table.name}`} noindex={true} active="lab">
-        <div className="container-wide py-8">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold mb-1">{table.name}</h1>
-              <div className="flex items-center gap-2 text-foreground-secondary">
-              <Badge variant="outline">
-                {table.format === 'round_robin' ? 'Round Robin' : t.quickTable.largePlayoff}
-              </Badge>
-              <Badge variant="outline">{table.group_count} {t.quickTable.groups.groups}</Badge>
-              <span>•</span>
-              <span>{filledPlayers.length} {t.quickTable.players}</span>
-              <span>•</span>
-              <Badge variant="secondary">{t.quickTable.manualAssignment.title}</Badge>
-            </div>
-          </div>
+        <div className="tl-shell">
+          <nav className="tl-breadcrumb">
+            <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+            <span className="sep">/</span>
+            <Link to="/tools/quick-tables">Quick Tables</Link>
+            <span className="sep">/</span>
+            <span className="current">{table.name}</span>
+          </nav>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Hand className="w-5 h-5" />
+          <header className="tl-page-head">
+            <div className="kicker">
+              ◆ {language === 'vi' ? 'Chia bảng thủ công' : 'Manual group assignment'}
+            </div>
+            <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
+              <em className="tl-serif">{table.name}</em>
+            </h1>
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                flexWrap: 'wrap',
+                marginTop: 12,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 11,
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              <span>{formatLabel}</span>
+              <span style={{ color: 'var(--tl-fg-4)' }}>·</span>
+              <span>{table.group_count} {t.quickTable.groups.groups}</span>
+              <span style={{ color: 'var(--tl-fg-4)' }}>·</span>
+              <span>{filledPlayers.length} {t.quickTable.players}</span>
+            </div>
+          </header>
+
+          <section style={{ padding: '32px 0 80px', maxWidth: 960, margin: '0 auto' }}>
+            <div style={surfaceCard}>
+              <div style={{ marginBottom: 20 }}>
+                <div style={stepKickerStyle}>
+                  <Hand className="inline w-3 h-3" style={{ verticalAlign: 'middle', marginRight: 4 }} />
                   {t.quickTable.manualAssignment.title}
-                </CardTitle>
-                <CardDescription>
-                  {t.quickTable.manualAssignment.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ManualGroupAssignment
-                  players={filledPlayers}
-                  groupCount={table.group_count}
-                  onComplete={handleManualAssignmentComplete}
-                  onCancel={() => setStep('input')}
-                />
-                {saving && (
-                  <div className="mt-4 text-center text-muted-foreground">
-                    {t.quickTable.setup.processing}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+                <h2 style={stepHeadingStyle}>{t.quickTable.manualAssignment.title}</h2>
+                <p style={stepDescStyle}>{t.quickTable.manualAssignment.description}</p>
+              </div>
+              <ManualGroupAssignment
+                players={filledPlayers}
+                groupCount={table.group_count}
+                onComplete={handleManualAssignmentComplete}
+                onCancel={() => setStep('input')}
+              />
+              {saving && (
+                <div
+                  style={{
+                    marginTop: 16,
+                    textAlign: 'center',
+                    color: 'var(--tl-fg-3)',
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 12,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {t.quickTable.setup.processing}
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </TheLineLayout>
     );
   }
 
-  // Handle delete table
   const handleDeleteTable = async () => {
     if (!table) return;
     if (!confirm(`Bạn có chắc chắn muốn xoá giải "${table.name}"? Tất cả dữ liệu sẽ bị xoá vĩnh viễn.`)) {
       return;
     }
-    
     const success = await deleteTable(table.id);
     if (success) {
       navigate('/tools/quick-tables');
     }
   };
 
-  // Check if user can delete this table
   const canDeleteTable = isAdmin || (user && table.creator_user_id === user.id);
 
+  // ─── Player input step ──────────────────────────────────────────────────
   return (
     <TheLineLayout title={`Nhập VĐV - ${table.name}`} noindex={true} active="lab">
-      <div className="container-wide py-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold mb-1">{table.name}</h1>
-              {canDeleteTable && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleDeleteTable} 
-                  className="text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Xoá giải
-                </Button>
-              )}
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <span className="sep">/</span>
+          <Link to="/tools/quick-tables">Quick Tables</Link>
+          <span className="sep">/</span>
+          <span className="current">{table.name}</span>
+        </nav>
+
+        <header className="tl-page-head">
+          <div className="kicker">
+            ◆ {language === 'vi' ? 'Nhập danh sách VĐV' : 'Enter player roster'}
+          </div>
+          <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
+            <em className="tl-serif">{table.name}</em>
+          </h1>
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              marginTop: 12,
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 11,
+              color: 'var(--tl-fg-3)',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <span>{formatLabel}</span>
+            {table.group_count && (
+              <>
+                <span style={{ color: 'var(--tl-fg-4)' }}>·</span>
+                <span>{table.group_count} {t.quickTable.groups.groups}</span>
+              </>
+            )}
+            <span style={{ color: 'var(--tl-fg-4)' }}>·</span>
+            <span>{table.player_count} {t.quickTable.players}</span>
+            {canDeleteTable && (
+              <button
+                type="button"
+                onClick={handleDeleteTable}
+                style={{
+                  marginLeft: 'auto',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  background: 'transparent',
+                  border: '1px solid var(--tl-border)',
+                  color: 'var(--tl-live)',
+                  font: 'inherit',
+                  fontSize: 11,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  cursor: 'pointer',
+                }}
+              >
+                <Trash2 className="w-3 h-3" />
+                {language === 'vi' ? 'Xoá giải' : 'Delete'}
+              </button>
+            )}
+          </div>
+        </header>
+
+        <section style={{ padding: '32px 0 0', maxWidth: 720, margin: '0 auto', width: '100%' }}>
+          <div style={surfaceCard}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: 12,
+                marginBottom: 24,
+              }}
+            >
+              <div>
+                <div style={stepKickerStyle}>◆ {language === 'vi' ? 'VĐV' : 'Players'}</div>
+                <h2 style={stepHeadingStyle}>{t.quickTable.setup.inputPlayers}</h2>
+                <p style={stepDescStyle}>{t.quickTable.setup.inputPlayersDesc}</p>
+              </div>
+              <button type="button" className="tl-btn" onClick={shufflePlayers}>
+                <Shuffle className="w-4 h-4" />
+                {t.quickTable.setup.shuffle}
+              </button>
             </div>
-            <div className="flex items-center gap-2 text-foreground-secondary">
-              <Badge variant="outline">
-                {table.format === 'round_robin' ? 'Round Robin' : t.quickTable.largePlayoff}
-              </Badge>
-              {table.group_count && (
-                <Badge variant="outline">{table.group_count} {t.quickTable.groups.groups}</Badge>
-              )}
-              <span>•</span>
-              <span>{table.player_count} {t.quickTable.players}</span>
+
+            <div className="space-y-2">
+              {players.map((player, index) => (
+                <div key={player.id} className="flex items-center gap-2">
+                  <span
+                    style={{
+                      width: 24,
+                      flexShrink: 0,
+                      textAlign: 'center',
+                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      fontSize: 12,
+                      color: 'var(--tl-fg-3)',
+                    }}
+                  >
+                    {index + 1}
+                  </span>
+                  <Input
+                    value={player.name}
+                    onChange={(e) => updatePlayer(index, 'name', e.target.value)}
+                    placeholder={t.quickTable.setup.playerNamePlaceholder}
+                    className="flex-1 min-w-0 h-10 sm:h-9"
+                  />
+                  <Input
+                    value={player.team}
+                    onChange={(e) => updatePlayer(index, 'team', e.target.value)}
+                    placeholder={t.quickTable.setup.teamPlaceholder}
+                    className="w-16 sm:w-24 h-10 sm:h-9 flex-shrink-0"
+                  />
+                  <Input
+                    type="number"
+                    value={player.seed}
+                    onChange={(e) => updatePlayer(index, 'seed', e.target.value)}
+                    placeholder={t.quickTable.setup.seedPlaceholder}
+                    className="w-14 sm:w-16 h-10 sm:h-9 flex-shrink-0"
+                    min={1}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removePlayerSlot(index)}
+                    disabled={players.length <= 2}
+                    className="text-foreground-muted hover:text-destructive flex-shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--tl-border)' }}>
+              <button type="button" className="tl-btn" onClick={addPlayerSlot} style={{ width: '100%', justifyContent: 'center' }}>
+                <Plus className="w-4 h-4" />
+                {t.quickTable.setup.addPlayer}
+              </button>
+            </div>
+
+            {/* Assignment Mode (round robin only) */}
+            {table.format === 'round_robin' && table.group_count && (
+              <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--tl-border)' }}>
+                <Label className="text-sm font-medium mb-3 block">
+                  {t.quickTable.setup.assignmentMethod}
+                </Label>
+                <RadioGroup
+                  value={assignmentMode}
+                  onValueChange={(value) => setAssignmentMode(value as AssignmentMode)}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                >
+                  <AssignmentModeOption
+                    value="auto"
+                    icon={<Wand2 className="w-5 h-5" />}
+                    title={t.quickTable.setup.autoMode}
+                    desc={t.quickTable.setup.autoModeDesc}
+                    selected={assignmentMode === 'auto'}
+                  />
+                  <AssignmentModeOption
+                    value="manual"
+                    icon={<Hand className="w-5 h-5" />}
+                    title={t.quickTable.setup.manualMode}
+                    desc={t.quickTable.setup.manualModeDesc}
+                    selected={assignmentMode === 'manual'}
+                  />
+                </RadioGroup>
+              </div>
+            )}
+
+            {table.format === 'round_robin' && (
+              <CourtTimeSettings
+                courts={courts}
+                onCourtsChange={setCourts}
+                startTime={startTime}
+                onStartTimeChange={setStartTime}
+              />
+            )}
+
+            <div
+              style={{
+                marginTop: 20,
+                padding: 16,
+                borderRadius: 'var(--tl-radius)',
+                background: 'var(--tl-bg)',
+                border: '1px solid var(--tl-border)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <Users className="w-4 h-4" style={{ color: 'var(--tl-green)', flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <p style={{ fontWeight: 500, color: 'var(--tl-fg)', fontSize: 13.5, margin: 0 }}>
+                    {t.quickTable.setup.tips}
+                  </p>
+                  <ul
+                    style={{
+                      color: 'var(--tl-fg-2)',
+                      fontSize: 13,
+                      lineHeight: 1.55,
+                      margin: '6px 0 0',
+                      paddingLeft: 0,
+                      listStyle: 'none',
+                    }}
+                  >
+                    <li>· {t.quickTable.setup.tipTeam}</li>
+                    <li>· {t.quickTable.setup.tipSeed}</li>
+                    {assignmentMode === 'auto' && <li>· {t.quickTable.setup.tipAuto}</li>}
+                    {assignmentMode === 'manual' && <li>· {t.quickTable.setup.tipManual}</li>}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 24,
+                position: 'sticky',
+                bottom: 16,
+                zIndex: 5,
+              }}
+            >
+              <button
+                type="button"
+                className="tl-btn green"
+                style={{ width: '100%', justifyContent: 'center', padding: '14px 18px' }}
+                onClick={handleProceedToAssignment}
+                disabled={saving || filledPlayers.length < 2}
+              >
+                {saving
+                  ? t.quickTable.setup.processing
+                  : assignmentMode === 'manual' && table.format === 'round_robin' && table.group_count
+                    ? t.quickTable.setup.continueManual
+                    : t.quickTable.setup.createBracketBtn}
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
-
-          {/* Player Input */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    {t.quickTable.setup.inputPlayers}
-                  </CardTitle>
-                  <CardDescription>
-                    {t.quickTable.setup.inputPlayersDesc}
-                  </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={shufflePlayers}>
-                  <Shuffle className="w-4 h-4 mr-2" />
-                  {t.quickTable.setup.shuffle}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {players.map((player, index) => (
-                  <div key={player.id} className="flex items-center gap-2">
-                    <span className="w-6 sm:w-8 text-sm text-foreground-muted text-center flex-shrink-0">
-                      {index + 1}
-                    </span>
-                    <Input
-                      value={player.name}
-                      onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                      placeholder={t.quickTable.setup.playerNamePlaceholder}
-                      className="flex-1 min-w-0 h-10 sm:h-9"
-                    />
-                    <Input
-                      value={player.team}
-                      onChange={(e) => updatePlayer(index, 'team', e.target.value)}
-                      placeholder={t.quickTable.setup.teamPlaceholder}
-                      className="w-16 sm:w-24 h-10 sm:h-9 flex-shrink-0"
-                    />
-                    <Input
-                      type="number"
-                      value={player.seed}
-                      onChange={(e) => updatePlayer(index, 'seed', e.target.value)}
-                      placeholder={t.quickTable.setup.seedPlaceholder}
-                      className="w-14 sm:w-16 h-10 sm:h-9 flex-shrink-0"
-                      min={1}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removePlayerSlot(index)}
-                      disabled={players.length <= 2}
-                      className="text-foreground-muted hover:text-destructive flex-shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-border-subtle">
-                <Button variant="outline" onClick={addPlayerSlot} className="w-full">
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t.quickTable.setup.addPlayer}
-                </Button>
-              </div>
-
-              {/* Assignment Mode Selection - Only for round robin */}
-              {table.format === 'round_robin' && table.group_count && (
-                <div className="mt-4 pt-4 border-t border-border-subtle">
-                  <Label className="text-sm font-medium mb-3 block">{t.quickTable.setup.assignmentMethod}</Label>
-                  <RadioGroup
-                    value={assignmentMode}
-                    onValueChange={(value) => setAssignmentMode(value as AssignmentMode)}
-                    className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                  >
-                    <div className="relative">
-                      <RadioGroupItem
-                        value="auto"
-                        id="mode-auto"
-                        className="peer sr-only"
-                      />
-                      <Label
-                        htmlFor="mode-auto"
-                        className="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/50"
-                      >
-                        <Wand2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-sm">{t.quickTable.setup.autoMode}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {t.quickTable.setup.autoModeDesc}
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                    <div className="relative">
-                      <RadioGroupItem
-                        value="manual"
-                        id="mode-manual"
-                        className="peer sr-only"
-                      />
-                      <Label
-                        htmlFor="mode-manual"
-                        className="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted/50"
-                      >
-                        <Hand className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-sm">{t.quickTable.setup.manualMode}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {t.quickTable.setup.manualModeDesc}
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
-
-              {/* Court and Time Settings */}
-              {table.format === 'round_robin' && (
-                <CourtTimeSettings
-                  courts={courts}
-                  onCourtsChange={setCourts}
-                  startTime={startTime}
-                  onStartTimeChange={setStartTime}
-                />
-              )}
-
-              <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm">
-                <div className="flex items-start gap-2">
-                  <Users className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">{t.quickTable.setup.tips}</p>
-                    <ul className="text-foreground-secondary mt-1 space-y-1">
-                      <li>• {t.quickTable.setup.tipTeam}</li>
-                      <li>• {t.quickTable.setup.tipSeed}</li>
-                      {assignmentMode === 'auto' && (
-                        <li>• {t.quickTable.setup.tipAuto}</li>
-                      )}
-                      {assignmentMode === 'manual' && (
-                        <li>• {t.quickTable.setup.tipManual}</li>
-                      )}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <Button
-                  className="w-full"
-                  onClick={handleProceedToAssignment}
-                  disabled={saving || filledPlayers.length < 2}
-                >
-                  {saving ? t.quickTable.setup.processing : assignmentMode === 'manual' && table.format === 'round_robin' && table.group_count ? t.quickTable.setup.continueManual : t.quickTable.setup.createBracketBtn}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        </section>
+        <div style={{ height: 80 }} />
       </div>
     </TheLineLayout>
   );
 };
+
+function AssignmentModeOption({
+  value, icon, title, desc, selected,
+}: {
+  value: string;
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  selected: boolean;
+}) {
+  return (
+    <div className="relative">
+      <RadioGroupItem value={value} id={`mode-${value}`} className="peer sr-only" />
+      <Label
+        htmlFor={`mode-${value}`}
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+          padding: 14,
+          borderRadius: 'var(--tl-radius)',
+          border: `1px solid ${selected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+          background: selected ? 'var(--tl-green-glow)' : 'var(--tl-bg)',
+          cursor: 'pointer',
+          transition: 'border-color 0.15s, background 0.15s',
+        }}
+      >
+        <span
+          style={{
+            color: selected ? 'var(--tl-green)' : 'var(--tl-fg-2)',
+            flexShrink: 0,
+            marginTop: 2,
+          }}
+        >
+          {icon}
+        </span>
+        <div>
+          <p style={{ fontWeight: 600, fontSize: 13.5, margin: 0, color: 'var(--tl-fg)' }}>
+            {title}
+          </p>
+          <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', margin: '4px 0 0' }}>
+            {desc}
+          </p>
+        </div>
+      </Label>
+    </div>
+  );
+}
 
 export default QuickTableSetup;

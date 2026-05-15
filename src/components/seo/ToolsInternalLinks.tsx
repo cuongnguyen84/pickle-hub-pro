@@ -19,7 +19,7 @@ export const ToolsInternalLinks = ({ currentTool }: ToolsInternalLinksProps) => 
       path: "/tools",
       icon: Users,
       title: language === "vi" ? "Tất cả công cụ giải đấu" : "All Tournament Tools",
-      description: language === "vi" 
+      description: language === "vi"
         ? "Phần mềm tổ chức giải pickleball miễn phí — bracket, team match, loại kép"
         : "Free pickleball tournament software — brackets, team match, elimination",
     },
@@ -28,7 +28,7 @@ export const ToolsInternalLinks = ({ currentTool }: ToolsInternalLinksProps) => 
       path: "/tools/quick-tables",
       icon: Users,
       title: language === "vi" ? "Pickleball Bracket Generator" : "Pickleball Bracket Generator",
-      description: language === "vi" 
+      description: language === "vi"
         ? "Tạo bracket tự động, lịch thi đấu round robin hoặc playoff"
         : "Auto bracket generator for round robin or playoff formats",
     },
@@ -61,30 +61,98 @@ export const ToolsInternalLinks = ({ currentTool }: ToolsInternalLinksProps) => 
     },
   ];
 
-  // Filter out current tool
   const otherTools = tools.filter((tool) => tool.id !== currentTool);
 
   return (
-    <nav className="mt-8 pt-6 border-t border-border">
-      <h3 className="text-base font-semibold text-foreground mb-4">
-        {language === "vi" ? "Công cụ giải đấu khác" : "Other Tournament Tools"}
-      </h3>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <nav style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid var(--tl-border)" }}>
+      <div
+        style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--tl-fg-3)",
+          marginBottom: 16,
+        }}
+      >
+        ◆ {language === "vi" ? "Công cụ khác" : "Other tools"}
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: 1,
+          background: "var(--tl-border)",
+          border: "1px solid var(--tl-border)",
+          borderRadius: "var(--tl-radius-lg)",
+          overflow: "hidden",
+        }}
+      >
         {otherTools.map((tool) => (
           <Link
             key={tool.id}
             to={tool.path}
-            className="group flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors"
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 14,
+              padding: 18,
+              background: "var(--tl-bg)",
+              textDecoration: "none",
+              color: "inherit",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "var(--tl-bg-elev)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "var(--tl-bg)";
+            }}
           >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-              <tool.icon className="w-5 h-5 text-primary" />
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                background: "var(--tl-green-glow)",
+                color: "var(--tl-green)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <tool.icon className="w-5 h-5" />
             </div>
-            <div>
-              <h4 className="font-medium text-foreground group-hover:text-primary transition-colors">
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h4
+                style={{
+                  fontFamily: "Instrument Serif, serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  fontSize: 18,
+                  letterSpacing: "-0.015em",
+                  lineHeight: 1.15,
+                  color: "var(--tl-fg)",
+                  margin: 0,
+                }}
+              >
                 {tool.title}
               </h4>
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+              <p
+                style={{
+                  fontSize: 12.5,
+                  color: "var(--tl-fg-3)",
+                  margin: "6px 0 0",
+                  lineHeight: 1.5,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
                 {tool.description}
               </p>
             </div>

@@ -1,9 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Check, Wand2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 import {
   type SeededPlayer,
@@ -19,6 +16,36 @@ interface PlayoffPreviewDialogProps {
   groupNames: Map<string, string>;
   onConfirm: (pairings: BracketPairing[]) => void;
 }
+
+const seedBadge: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 28,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  padding: '2px 0',
+  borderRadius: 4,
+  border: '1px solid var(--tl-border)',
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-2)',
+  flexShrink: 0,
+  letterSpacing: '0.04em',
+};
+
+const groupBadge: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 9.5,
+  fontWeight: 500,
+  padding: '2px 6px',
+  borderRadius: 3,
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-3)',
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  flexShrink: 0,
+};
 
 export default function PlayoffPreviewDialog({
   open,
@@ -62,7 +89,6 @@ export default function PlayoffPreviewDialog({
       return;
     }
 
-    // Swap players
     const newPairings = pairings.map(p => ({ ...p }));
     const fromPair = newPairings[selectedPlayer.pairIndex];
     const toPair = newPairings[pairIndex];
@@ -93,11 +119,29 @@ export default function PlayoffPreviewDialog({
   const renderPlayer = (player: SeededPlayer, pairIndex: number, side: 'player1' | 'player2') => {
     if (isBye(player)) {
       return (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-md w-full text-sm opacity-50">
-          <Badge variant="outline" className="text-xs shrink-0 w-8 justify-center">
-            {player.seed}
-          </Badge>
-          <span className="truncate flex-1 font-medium italic text-muted-foreground">BYE</span>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 12px',
+            borderRadius: 6,
+            width: '100%',
+            opacity: 0.5,
+          }}
+        >
+          <span style={seedBadge}>{player.seed}</span>
+          <span
+            style={{
+              flex: 1,
+              fontStyle: 'italic',
+              fontWeight: 500,
+              color: 'var(--tl-fg-3)',
+              fontSize: 13,
+            }}
+          >
+            BYE
+          </span>
         </div>
       );
     }
@@ -105,23 +149,61 @@ export default function PlayoffPreviewDialog({
     const isSelected = selectedPlayer?.pairIndex === pairIndex && selectedPlayer?.side === side;
     const isConflict = conflicts.includes(pairIndex);
 
+    const buttonBg =
+      isSelected ? 'var(--tl-green-glow)' :
+      isConflict ? 'rgba(255, 65, 54, 0.10)' :
+      'transparent';
+    const buttonBorder =
+      isSelected ? 'var(--tl-green)' :
+      isConflict ? 'rgba(255, 65, 54, 0.35)' :
+      'transparent';
+
     return (
       <button
-        className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-md text-left w-full transition-all text-sm',
-          isSelected && 'ring-2 ring-primary bg-primary/10',
-          isConflict && !isSelected && 'bg-destructive/10',
-          !isSelected && !isConflict && 'hover:bg-muted/50'
-        )}
+        type="button"
         onClick={() => handlePlayerClick(pairIndex, side)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 12px',
+          borderRadius: 6,
+          width: '100%',
+          textAlign: 'left',
+          background: buttonBg,
+          border: `1px solid ${buttonBorder}`,
+          color: 'var(--tl-fg)',
+          font: 'inherit',
+          fontSize: 13,
+          cursor: 'pointer',
+          transition: 'background 0.15s, border-color 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          if (!isSelected && !isConflict) {
+            (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isSelected && !isConflict) {
+            (e.currentTarget as HTMLElement).style.background = 'transparent';
+          }
+        }}
       >
-        <Badge variant="outline" className="text-xs shrink-0 w-8 justify-center">
-          {player.seed}
-        </Badge>
-        <span className="truncate flex-1 font-medium">{player.name}</span>
-        <Badge variant="secondary" className="text-[10px] shrink-0">
+        <span style={seedBadge}>{player.seed}</span>
+        <span
+          style={{
+            flex: 1,
+            fontWeight: 500,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {player.name}
+        </span>
+        <span style={groupBadge}>
           {t.quickTable.playoffPreview.fromGroup} {getGroupName(player.sourceGroupId)}
-        </Badge>
+        </span>
       </button>
     );
   };
@@ -134,60 +216,129 @@ export default function PlayoffPreviewDialog({
           <DialogDescription>{t.quickTable.playoffPreview.subtitle}</DialogDescription>
         </DialogHeader>
 
-        {hasConflicts && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-            <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
-            <div className="flex-1 text-sm">
-              <p className="font-medium text-destructive">{t.quickTable.playoffPreview.conflictWarning}</p>
-              <p className="text-muted-foreground text-xs mt-0.5">{t.quickTable.playoffPreview.clickToSwap}</p>
+        {hasConflicts ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: 12,
+              borderRadius: 'var(--tl-radius)',
+              background: 'rgba(255, 65, 54, 0.10)',
+              border: '1px solid rgba(255, 65, 54, 0.35)',
+            }}
+          >
+            <AlertTriangle
+              className="w-4 h-4"
+              style={{ color: 'var(--tl-live)', flexShrink: 0 }}
+            />
+            <div style={{ flex: 1, fontSize: 13 }}>
+              <p
+                style={{
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--tl-live)',
+                  margin: 0,
+                }}
+              >
+                {t.quickTable.playoffPreview.conflictWarning}
+              </p>
+              <p style={{ color: 'var(--tl-fg-3)', fontSize: 12, margin: '2px 0 0' }}>
+                {t.quickTable.playoffPreview.clickToSwap}
+              </p>
             </div>
-            <Button size="sm" variant="outline" onClick={handleAutoResolve} className="gap-1 shrink-0">
+            <button
+              type="button"
+              className="tl-btn"
+              onClick={handleAutoResolve}
+              style={{ flexShrink: 0, padding: '6px 10px', fontSize: 12 }}
+            >
               <Wand2 className="w-3 h-3" />
               {t.quickTable.playoffPreview.autoResolve}
-            </Button>
+            </button>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: 12,
+              borderRadius: 'var(--tl-radius)',
+              background: 'var(--tl-green-glow)',
+              border: '1px solid rgba(0, 185, 107, 0.30)',
+            }}
+          >
+            <Check className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+            <span style={{ fontSize: 13, color: 'var(--tl-fg-2)' }}>
+              {t.quickTable.playoffPreview.noConflicts}
+            </span>
           </div>
         )}
 
-        {!hasConflicts && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
-            <Check className="w-4 h-4 text-primary" />
-            <span className="text-sm">{t.quickTable.playoffPreview.noConflicts}</span>
-          </div>
-        )}
-
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {pairings.map((pairing, i) => {
             const isConflict = conflicts.includes(i);
             return (
               <div
                 key={i}
-                className={cn(
-                  'rounded-lg border p-2 space-y-1',
-                  isConflict ? 'border-destructive/50' : 'border-border'
-                )}
+                style={{
+                  borderRadius: 'var(--tl-radius)',
+                  border: `1px solid ${isConflict ? 'rgba(255, 65, 54, 0.45)' : 'var(--tl-border)'}`,
+                  padding: 8,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                  background: 'var(--tl-bg-elev)',
+                }}
               >
-                <div className="text-[10px] text-muted-foreground px-1">
+                <div
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 10,
+                    color: 'var(--tl-fg-3)',
+                    padding: '0 4px',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
                   {t.quickTable.playoff.match} {pairing.matchNumber}
                   {isConflict && (
-                    <span className="text-destructive ml-2">⚠</span>
+                    <span style={{ color: 'var(--tl-live)', marginLeft: 6 }}>⚠</span>
                   )}
                 </div>
                 {renderPlayer(pairing.player1, i, 'player1')}
-                <div className="text-center text-[10px] text-muted-foreground">vs</div>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 10,
+                    color: 'var(--tl-fg-4)',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  vs
+                </div>
                 {renderPlayer(pairing.player2, i, 'player2')}
               </div>
             );
           })}
         </div>
 
-        <Button
-          className="w-full"
+        <button
+          type="button"
+          className="tl-btn green"
           onClick={handleConfirm}
           disabled={hasConflicts}
+          style={{ width: '100%', justifyContent: 'center', padding: '12px 18px' }}
         >
-          <Check className="w-4 h-4 mr-2" />
+          <Check className="w-4 h-4" />
           {t.quickTable.playoffPreview.confirmBracket}
-        </Button>
+        </button>
       </DialogContent>
     </Dialog>
   );
