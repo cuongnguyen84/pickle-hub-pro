@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useI18n } from '@/i18n';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DraggablePlayer } from './DraggablePlayer';
 import { Plus, Users, ChevronDown, ChevronUp } from 'lucide-react';
@@ -36,29 +34,84 @@ export function PlayerPool({ players, onAddPlayer, isCreator }: PlayerPoolProps)
   };
 
   return (
-    <Card>
+    <div
+      style={{
+        background: 'var(--tl-bg-elev)',
+        border: '1px solid var(--tl-border)',
+        borderRadius: 'var(--tl-radius-lg)',
+        padding: 14,
+      }}
+    >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CardHeader className="pb-2">
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between cursor-pointer">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Users className="w-4 h-4" />
-                {t.tools.flexTournament.playerPool}
-                <span className="text-muted-foreground font-normal">({players.length})</span>
-              </CardTitle>
-              {isMobile && (
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </Button>
-              )}
+        <CollapsibleTrigger asChild>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              gap: 8,
+              paddingBottom: isOpen ? 12 : 0,
+              borderBottom: isOpen ? '1px solid var(--tl-border)' : 'none',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'var(--tl-fg-2)',
+              }}
+            >
+              <Users className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+              {t.tools.flexTournament.playerPool}
+              <span
+                style={{
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 10.5,
+                  fontWeight: 500,
+                  padding: '2px 7px',
+                  borderRadius: 999,
+                  background: 'var(--tl-surface)',
+                  border: '1px solid var(--tl-border)',
+                  color: 'var(--tl-fg-3)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {players.length}
+              </span>
             </div>
-          </CollapsibleTrigger>
-        </CardHeader>
+            {isMobile && (
+              <button
+                type="button"
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  color: 'var(--tl-fg-3)',
+                  cursor: 'pointer',
+                  width: 24,
+                  height: 24,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                aria-label={isOpen ? 'Collapse' : 'Expand'}
+              >
+                {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+        </CollapsibleTrigger>
         <CollapsibleContent>
-          <CardContent className="pt-0 space-y-2">
+          <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* Add player input */}
             {isCreator && (
-              <div className="flex gap-2">
+              <div style={{ display: 'flex', gap: 6 }}>
                 <Input
                   value={newPlayerName}
                   onChange={(e) => setNewPlayerName(e.target.value)}
@@ -66,16 +119,43 @@ export function PlayerPool({ players, onAddPlayer, isCreator }: PlayerPoolProps)
                   placeholder={t.tools.flexTournament.addPlayers}
                   className="flex-1 text-base h-9"
                 />
-                <Button size="sm" onClick={handleAddPlayer} disabled={!newPlayerName.trim()} className="h-9 w-9 p-0">
+                <button
+                  type="button"
+                  className="tl-btn green"
+                  onClick={handleAddPlayer}
+                  disabled={!newPlayerName.trim()}
+                  style={{ padding: '8px 10px', flexShrink: 0 }}
+                  aria-label="Add player"
+                >
                   <Plus className="w-4 h-4" />
-                </Button>
+                </button>
               </div>
             )}
 
             {/* Player list */}
-            <div className="space-y-1.5 max-h-[40vh] overflow-y-auto">
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                maxHeight: '40vh',
+                overflowY: 'auto',
+                paddingRight: 2,
+              }}
+            >
               {players.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-3">
+                <p
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 11,
+                    color: 'var(--tl-fg-3)',
+                    textAlign: 'center',
+                    padding: '12px 0',
+                    margin: 0,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
                   {t.tools.flexTournament.noPlayers}
                 </p>
               ) : (
@@ -90,9 +170,9 @@ export function PlayerPool({ players, onAddPlayer, isCreator }: PlayerPoolProps)
                 ))
               )}
             </div>
-          </CardContent>
+          </div>
         </CollapsibleContent>
       </Collapsible>
-    </Card>
+    </div>
   );
 }

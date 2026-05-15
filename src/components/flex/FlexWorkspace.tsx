@@ -484,10 +484,10 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="space-y-4 pb-20">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 80 }}>
           {/* Action buttons */}
           {isCreator && (
-            <div className="grid grid-cols-3 gap-2">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
               <ActionButtons
                 onAddTeam={handleAddTeam}
                 onAddGroup={handleAddGroup}
@@ -589,21 +589,23 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
                   />
                 ))
               ) : (
-                <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground text-center text-sm">
+                <div className="tl-empty-card">
+                  <span className="tl-empty-card-mark">◌</span>
+                  <span className="tl-empty-card-label">
                     {t.tools.flexTournament.noMatches}
-                  </p>
+                  </span>
                 </div>
               )}
             </TabsContent>
           </Tabs>
 
-          {/* Empty state - only show if no content at all */}
+          {/* Empty state — only show if no content at all */}
           {!hasContent && (
-            <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground text-center text-sm">
+            <div className="tl-empty-card">
+              <span className="tl-empty-card-mark">◌</span>
+              <span className="tl-empty-card-label">
                 {isCreator ? t.tools.flexTournament.subtitle : t.tools.flexTournament.noMatches}
-              </p>
+              </span>
             </div>
           )}
         </div>
@@ -645,20 +647,30 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4">
+      <div style={{ display: 'flex', gap: 16 }}>
         {/* Left sidebar */}
-        <div className="w-56 flex-shrink-0 space-y-4">
+        <div style={{ width: 224, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <PlayerPool
             players={data.players}
             onAddPlayer={handleAddPlayer}
             isCreator={isCreator}
           />
-          
+
           {/* Team chips for dragging */}
           {draggableTeams.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-xs font-medium text-muted-foreground px-1">
-                Teams
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div
+                style={{
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--tl-fg-3)',
+                  padding: '0 4px',
+                }}
+              >
+                {t.tools.flexTournament.teams}
               </div>
               {draggableTeams.map(team => (
                 <DraggablePlayer
@@ -682,7 +694,7 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
         </div>
 
         {/* Main workspace */}
-        <div className="flex-1 space-y-4">
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
           {/* Teams row - using tab-based selector */}
           {sortedTeams.length > 0 && (
             <TeamSelector
@@ -768,18 +780,14 @@ export function FlexWorkspace({ data, isCreator, onRefresh }: FlexWorkspaceProps
 
           {/* Empty state */}
           {!hasContent && (
-            <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground text-center">
-                {isCreator ? (
-                  <>
-                    {t.tools.flexTournament.noTeams}
-                    <br />
-                    <span className="text-sm">{t.tools.flexTournament.subtitle}</span>
-                  </>
-                ) : (
-                  t.tools.flexTournament.noMatches
-                )}
-              </p>
+            <div className="tl-empty-card" style={{ padding: '48px 28px' }}>
+              <span className="tl-empty-card-mark">◌</span>
+              <span className="tl-empty-card-label">
+                {isCreator ? t.tools.flexTournament.noTeams : t.tools.flexTournament.noMatches}
+              </span>
+              {isCreator && (
+                <p className="tl-empty-card-hint">{t.tools.flexTournament.subtitle}</p>
+              )}
             </div>
           )}
         </div>

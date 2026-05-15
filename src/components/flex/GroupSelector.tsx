@@ -1,13 +1,8 @@
 import { useState } from 'react';
 import { useI18n } from '@/i18n';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Grid3X3, User, Users, Trash2, X, RefreshCw, Swords } from 'lucide-react';
+import { Grid3X3, User, Users, Trash2, X, RefreshCw } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { MatchBlock } from './MatchBlock';
 import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember, FlexMatch } from '@/hooks/useFlexTournament';
@@ -29,13 +24,11 @@ interface GroupSelectorProps {
   onRemoveItem: (itemId: string) => void;
   onGenerateRR: (groupId: string) => void;
   onToggleIncludeDoubles: (groupId: string, include: boolean) => void;
-  // Match handlers for inline match display
   onUpdateMatchName: (matchId: string, name: string) => void;
   onDeleteMatch: (matchId: string) => void;
   onUpdateMatchScore: (matchId: string, scoreA: number, scoreB: number) => void;
   onClearMatchSlot: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2' | 'a_team' | 'b_team') => void;
   onToggleMatchCountsForStandings: (matchId: string, counts: boolean) => void;
-  // Child match handlers for team matches in groups
   onAddChildMatch?: (parentMatchId: string) => void;
   onUpdateChildMatchScore?: (matchId: string, scoreA: number, scoreB: number) => void;
   onClearChildMatchSlot?: (matchId: string, slot: 'a1' | 'a2' | 'b1' | 'b2') => void;
@@ -43,6 +36,71 @@ interface GroupSelectorProps {
   onDeleteChildMatch?: (matchId: string) => void;
   getChildMatches?: (parentMatchId: string) => FlexMatch[];
 }
+
+const surfaceCardStyle: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
+
+// shadcn TabsList override (! prefix to beat 'rounded-md bg-muted p-1' base)
+const tlTabsListClass =
+  'flex w-full !h-auto !p-0 !bg-transparent !border-b !border-[var(--tl-border)] !rounded-none gap-2';
+
+// shadcn TabsTrigger override (! prefix to beat 'rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm' base)
+const tlTabsTriggerClass = [
+  'flex-1 inline-flex items-center justify-center gap-1.5',
+  '!px-3 !py-2',
+  '!text-[11px] !font-medium tracking-[0.06em] uppercase',
+  'font-[family-name:Geist_Mono,ui-monospace,monospace]',
+  '!text-[var(--tl-fg-3)] !bg-transparent !rounded-none !shadow-none',
+  'border-b-2 border-transparent',
+  'data-[state=active]:!text-[var(--tl-fg)]',
+  'data-[state=active]:!border-[var(--tl-green)]',
+  'data-[state=active]:!bg-transparent data-[state=active]:!shadow-none',
+  'transition-colors',
+  'hover:!text-[var(--tl-fg-2)]',
+].join(' ');
+
+const tableHeadStyle: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-3)',
+  padding: '8px 8px',
+  textAlign: 'left',
+  borderBottom: '1px solid var(--tl-border)',
+  whiteSpace: 'nowrap',
+};
+
+const tableCellStyle: React.CSSProperties = {
+  padding: '10px 8px',
+  fontSize: 12.5,
+  color: 'var(--tl-fg)',
+  borderBottom: '1px solid var(--tl-border)',
+  fontVariantNumeric: 'tabular-nums',
+};
+
+const onRowEnter = (e: React.MouseEvent<HTMLTableRowElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg)';
+};
+const onRowLeave = (e: React.MouseEvent<HTMLTableRowElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'transparent';
+};
+
+const onXEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'rgba(255, 65, 54, 0.10)';
+  (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)';
+};
+const onXLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'transparent';
+  (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)';
+};
+
+const pointDiffColor = (diff: number) =>
+  diff > 0 ? 'var(--tl-green)' : diff < 0 ? 'var(--tl-live)' : 'var(--tl-fg-2)';
 
 export function GroupSelector({
   groups,
@@ -56,7 +114,6 @@ export function GroupSelector({
   isCreator,
   selectedGroupId,
   onSelectGroup,
-  onUpdateGroupName,
   onDeleteGroup,
   onRemoveItem,
   onGenerateRR,
@@ -81,18 +138,15 @@ export function GroupSelector({
   const selectedGroupItems = groupItems.filter(gi => gi.group_id === selectedGroupId);
   const selectedGroupMatches = matches.filter(m => m.group_id === selectedGroupId);
 
-  // Determine group type
   const groupType = selectedGroupItems.length > 0
     ? selectedGroupItems[0].item_type === 'team' ? 'team' : 'player'
     : null;
 
-  // Get teams in selected group
   const teamsInGroup = selectedGroupItems
     .filter(item => item.item_type === 'team')
     .map(item => teams.find(t => t.id === item.team_id))
     .filter(Boolean) as FlexTeam[];
 
-  // Initialize selectedTeamIds when teams change
   if (teamsInGroup.length > 0 && selectedTeamIds.length === 0) {
     setSelectedTeamIds(teamsInGroup.map(t => t.id));
   }
@@ -103,7 +157,6 @@ export function GroupSelector({
     disabled: !selectedGroupId,
   });
 
-  // Stats helpers
   const getSinglesStats = (playerId: string) => {
     const stats = playerStats.find(s => s.player_id === playerId && s.group_id === selectedGroupId);
     return stats || { wins: 0, losses: 0, point_diff: 0 };
@@ -131,42 +184,21 @@ export function GroupSelector({
     return `${p1} / ${p2}`;
   };
 
-  // Team stats - calculated from TEAM MATCHES (parent matches with slot_a_team_id/slot_b_team_id)
   const getTeamStats = (teamId: string) => {
     let wins = 0, losses = 0, pointDiff = 0;
-    
     for (const match of matches) {
-      // Only count team matches (with team assignments)
       if (!match.slot_a_team_id && !match.slot_b_team_id) continue;
-      
-      // Skip matches that don't count for standings
       if (!match.counts_for_standings) continue;
-      
-      // Skip matches without a winner
       if (!match.winner_side) continue;
-
       const scoreDiff = Math.abs(match.score_a - match.score_b);
-
-      // Check if this team participated in this match
       if (match.slot_a_team_id === teamId) {
-        if (match.winner_side === 'a') {
-          wins += 1;
-          pointDiff += scoreDiff;
-        } else {
-          losses += 1;
-          pointDiff -= scoreDiff;
-        }
+        if (match.winner_side === 'a') { wins += 1; pointDiff += scoreDiff; }
+        else { losses += 1; pointDiff -= scoreDiff; }
       } else if (match.slot_b_team_id === teamId) {
-        if (match.winner_side === 'b') {
-          wins += 1;
-          pointDiff += scoreDiff;
-        } else {
-          losses += 1;
-          pointDiff -= scoreDiff;
-        }
+        if (match.winner_side === 'b') { wins += 1; pointDiff += scoreDiff; }
+        else { losses += 1; pointDiff -= scoreDiff; }
       }
     }
-    
     return { wins, losses, point_diff: pointDiff };
   };
 
@@ -177,7 +209,6 @@ export function GroupSelector({
     return statsB.point_diff - statsA.point_diff;
   });
 
-  // Players from selected teams
   const playersFromSelectedTeams = (() => {
     if (selectedTeamIds.length === 0) return [];
     const playerIds = new Set<string>();
@@ -201,14 +232,14 @@ export function GroupSelector({
   };
 
   const handleTeamToggle = (teamId: string) => {
-    setSelectedTeamIds(prev => 
-      prev.includes(teamId) ? prev.filter(id => id !== teamId) : [...prev, teamId]
+    setSelectedTeamIds(prev =>
+      prev.includes(teamId) ? prev.filter(id => id !== teamId) : [...prev, teamId],
     );
   };
 
   const handleSelectAllTeams = () => {
-    setSelectedTeamIds(prev => 
-      prev.length === teamsInGroup.length ? [] : teamsInGroup.map(t => t.id)
+    setSelectedTeamIds(prev =>
+      prev.length === teamsInGroup.length ? [] : teamsInGroup.map(t => t.id),
     );
   };
 
@@ -221,15 +252,13 @@ export function GroupSelector({
 
   if (groups.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
-        <p className="text-muted-foreground text-center text-sm">
-          {t.tools.flexTournament.noGroups}
-        </p>
+      <div className="tl-empty-card">
+        <span className="tl-empty-card-mark">◌</span>
+        <span className="tl-empty-card-label">{t.tools.flexTournament.noGroups}</span>
       </div>
     );
   }
 
-  // Determine group type for each group
   const getGroupType = (groupId: string): 'team' | 'player' | null => {
     const items = groupItems.filter(gi => gi.group_id === groupId);
     if (items.length === 0) return null;
@@ -237,83 +266,189 @@ export function GroupSelector({
   };
 
   return (
-    <div className="space-y-3">
-      {/* Group selector tabs */}
-      <div className="flex flex-wrap gap-1.5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Group selector pills — token-styled, NOT shadcn Button */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {groups.map(group => {
           const itemCount = groupItems.filter(gi => gi.group_id === group.id).length;
           const matchCount = matches.filter(m => m.group_id === group.id).length;
           const type = getGroupType(group.id);
           const GroupIcon = type === 'team' ? Users : User;
+          const isSelected = selectedGroupId === group.id;
           return (
-            <Button
+            <button
               key={group.id}
-              variant={selectedGroupId === group.id ? "default" : "outline"}
-              size="sm"
-              className="text-xs h-8 gap-1"
+              type="button"
               onClick={() => {
                 onSelectGroup(group.id);
                 setSelectedTeamIds([]);
               }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 12px',
+                borderRadius: 999,
+                background: isSelected ? 'var(--tl-green)' : 'transparent',
+                border: `1px solid ${isSelected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                color: isSelected ? 'var(--tl-bg)' : 'var(--tl-fg-2)',
+                font: 'inherit',
+                fontSize: 12.5,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border-2)';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border)';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-2)';
+                }
+              }}
             >
-              {type ? <GroupIcon className="w-3 h-3" /> : <Grid3X3 className="w-3 h-3" />}
+              {type ? <GroupIcon className="w-3.5 h-3.5" /> : <Grid3X3 className="w-3.5 h-3.5" />}
               {group.name}
-              <Badge variant="secondary" className="ml-1 text-[10px] px-1 h-4">
+              <span
+                style={{
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 10.5,
+                  fontWeight: 500,
+                  padding: '1px 6px',
+                  borderRadius: 4,
+                  background: isSelected ? 'rgba(0,0,0,0.20)' : 'var(--tl-surface)',
+                  color: isSelected ? 'var(--tl-bg)' : 'var(--tl-fg-3)',
+                  letterSpacing: '0.04em',
+                  fontVariantNumeric: 'tabular-nums',
+                  marginLeft: 2,
+                }}
+              >
                 {itemCount}/{matchCount}
-              </Badge>
-            </Button>
+              </span>
+            </button>
           );
         })}
       </div>
 
       {/* Selected group content */}
       {selectedGroup && (
-        <Card
+        <div
           ref={setNodeRef}
-          className={cn(
-            "transition-all",
-            isOver && "ring-2 ring-primary border-primary bg-primary/5"
-          )}
+          style={{
+            ...surfaceCardStyle,
+            borderColor: isOver ? 'var(--tl-green)' : 'var(--tl-border)',
+            boxShadow: isOver ? '0 0 0 4px var(--tl-green-glow)' : 'none',
+            background: isOver ? 'var(--tl-green-glow)' : 'var(--tl-bg-elev)',
+            transition: 'border-color 0.15s, box-shadow 0.15s, background 0.15s',
+          }}
         >
-          <CardHeader className="py-2 px-3">
-            <div className="flex items-center justify-between gap-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Grid3X3 className="w-4 h-4 text-muted-foreground" />
+          {/* Header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              padding: '10px 12px',
+              borderBottom: '1px solid var(--tl-border)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+              <Grid3X3 className="w-4 h-4" style={{ color: 'var(--tl-fg-3)', flexShrink: 0 }} />
+              <h4
+                style={{
+                  fontFamily: 'Instrument Serif, serif',
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  fontSize: 18,
+                  letterSpacing: '-0.015em',
+                  color: 'var(--tl-fg)',
+                  margin: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {selectedGroup.name}
-                <span className="text-xs text-muted-foreground">
-                  ({selectedGroupItems.length} {groupType === 'team' ? t.tools.flexTournament.tabTeams.toLowerCase() : 'VĐV'})
-                </span>
-              </CardTitle>
-              <div className="flex items-center gap-1">
-                {isCreator && (
-                  <>
-                    {selectedGroupItems.length >= 2 && groupType === 'player' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onGenerateRR(selectedGroup.id)}
-                        className="h-7 text-xs px-2"
-                      >
-                        <RefreshCw className="w-3 h-3 mr-1" />
-                        RR
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => onDeleteGroup(selectedGroup.id)}
-                    >
-                      <Trash2 className="w-3 h-3 text-destructive" />
-                    </Button>
-                  </>
-                )}
-              </div>
+              </h4>
+              <span
+                style={{
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 10.5,
+                  fontWeight: 500,
+                  padding: '2px 7px',
+                  borderRadius: 999,
+                  background: 'var(--tl-surface)',
+                  border: '1px solid var(--tl-border)',
+                  color: 'var(--tl-fg-3)',
+                  flexShrink: 0,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {selectedGroupItems.length} {groupType === 'team' ? t.tools.flexTournament.tabTeams.toLowerCase() : 'VĐV'}
+              </span>
             </div>
-          </CardHeader>
-          <CardContent className="pt-0 px-3 pb-3">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              {isCreator && (
+                <>
+                  {selectedGroupItems.length >= 2 && groupType === 'player' && (
+                    <button
+                      type="button"
+                      className="tl-btn"
+                      onClick={() => onGenerateRR(selectedGroup.id)}
+                      style={{ padding: '5px 10px', fontSize: 11.5, fontFamily: 'Geist Mono, ui-monospace, monospace', letterSpacing: '0.04em' }}
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      RR
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onDeleteGroup(selectedGroup.id)}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255, 65, 54, 0.10)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                    style={{
+                      background: 'transparent',
+                      border: 0,
+                      color: 'var(--tl-live)',
+                      cursor: 'pointer',
+                      padding: 4,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 4,
+                      transition: 'background 0.15s',
+                    }}
+                    aria-label="Delete group"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Body */}
+          <div style={{ padding: 12 }}>
             {selectedGroupItems.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-4 border-2 border-dashed rounded-lg">
+              <p
+                style={{
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 11,
+                  color: 'var(--tl-fg-3)',
+                  textAlign: 'center',
+                  padding: '14px 0',
+                  border: '1px dashed var(--tl-border)',
+                  borderRadius: 'var(--tl-radius)',
+                  margin: 0,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                }}
+              >
                 {t.tools.flexTournament.dropPlayerHere}
               </p>
             ) : groupType === 'team' ? (
@@ -322,18 +457,18 @@ export function GroupSelector({
                 value={activeTab === 'singles' || activeTab === 'doubles' ? 'teams' : activeTab}
                 onValueChange={(v) => setActiveTab(v as 'teams' | 'individuals')}
               >
-                <TabsList className="grid w-full grid-cols-2 h-8">
-                  <TabsTrigger value="teams" className="text-xs gap-1">
+                <TabsList className={tlTabsListClass}>
+                  <TabsTrigger value="teams" className={tlTabsTriggerClass}>
                     <Users className="w-3 h-3" />
                     {t.tools.flexTournament.groupTabTeams}
                   </TabsTrigger>
-                  <TabsTrigger value="individuals" className="text-xs gap-1">
+                  <TabsTrigger value="individuals" className={tlTabsTriggerClass}>
                     <User className="w-3 h-3" />
                     {t.tools.flexTournament.groupTabIndividuals}
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="teams" className="mt-2">
+                <TabsContent value="teams" className="mt-3">
                   <StandingsTable
                     items={sortedTeams.map((team, idx) => {
                       const stats = getTeamStats(team.id);
@@ -352,28 +487,28 @@ export function GroupSelector({
                   />
                 </TabsContent>
 
-                <TabsContent value="individuals" className="mt-2 space-y-2">
+                <TabsContent value="individuals" className="mt-3">
                   {/* Team filter */}
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <div className="flex items-center gap-1.5">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Checkbox
                         id="all-teams-selector"
                         checked={selectedTeamIds.length === teamsInGroup.length}
                         onCheckedChange={handleSelectAllTeams}
                       />
-                      <label htmlFor="all-teams-selector" className="text-xs cursor-pointer font-medium">
+                      <label htmlFor="all-teams-selector" style={{ fontSize: 12, cursor: 'pointer', fontWeight: 500, color: 'var(--tl-fg)' }}>
                         {t.tools.flexTournament.allTeams}
                       </label>
                     </div>
-                    <span className="text-muted-foreground">|</span>
+                    <span style={{ color: 'var(--tl-fg-4)' }}>|</span>
                     {teamsInGroup.map(team => (
-                      <div key={team.id} className="flex items-center gap-1.5">
+                      <div key={team.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Checkbox
                           id={`team-filter-${team.id}`}
                           checked={selectedTeamIds.includes(team.id)}
                           onCheckedChange={() => handleTeamToggle(team.id)}
                         />
-                        <label htmlFor={`team-filter-${team.id}`} className="text-xs cursor-pointer">
+                        <label htmlFor={`team-filter-${team.id}`} style={{ fontSize: 12, cursor: 'pointer', color: 'var(--tl-fg-2)' }}>
                           {team.name}
                         </label>
                       </div>
@@ -381,7 +516,18 @@ export function GroupSelector({
                   </div>
 
                   {sortedPlayersFromTeams.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-4">
+                    <p
+                      style={{
+                        fontFamily: 'Geist Mono, ui-monospace, monospace',
+                        fontSize: 11,
+                        color: 'var(--tl-fg-3)',
+                        textAlign: 'center',
+                        padding: '16px 0',
+                        margin: 0,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
                       {t.tools.flexTournament.selectTeamsToShow}
                     </p>
                   ) : (
@@ -408,19 +554,19 @@ export function GroupSelector({
                 value={activeTab === 'teams' || activeTab === 'individuals' ? 'singles' : activeTab}
                 onValueChange={(v) => setActiveTab(v as 'singles' | 'doubles')}
               >
-                <TabsList className="grid w-full grid-cols-2 h-8">
-                  <TabsTrigger value="singles" className="text-xs gap-1">
+                <TabsList className={tlTabsListClass}>
+                  <TabsTrigger value="singles" className={tlTabsTriggerClass}>
                     <User className="w-3 h-3" />
                     {t.tools.flexTournament.matchType.singles}
                   </TabsTrigger>
-                  <TabsTrigger value="doubles" className="text-xs gap-1">
+                  <TabsTrigger value="doubles" className={tlTabsTriggerClass}>
                     <Users className="w-3 h-3" />
                     {t.tools.flexTournament.matchType.doubles}
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="singles" className="mt-2 space-y-2">
-                  <div className="flex items-center gap-2">
+                <TabsContent value="singles" className="mt-3">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                     <Checkbox
                       id={`include-doubles-${selectedGroup.id}`}
                       checked={selectedGroup.include_doubles_in_singles ?? true}
@@ -429,7 +575,7 @@ export function GroupSelector({
                     />
                     <label
                       htmlFor={`include-doubles-${selectedGroup.id}`}
-                      className="text-xs text-muted-foreground cursor-pointer"
+                      style={{ fontSize: 12, color: 'var(--tl-fg-3)', cursor: 'pointer' }}
                     >
                       {t.tools.flexTournament.includeDoublesInSingles}
                     </label>
@@ -452,9 +598,20 @@ export function GroupSelector({
                   />
                 </TabsContent>
 
-                <TabsContent value="doubles" className="mt-2">
+                <TabsContent value="doubles" className="mt-3">
                   {sortedPairStats.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-4">
+                    <p
+                      style={{
+                        fontFamily: 'Geist Mono, ui-monospace, monospace',
+                        fontSize: 11,
+                        color: 'var(--tl-fg-3)',
+                        textAlign: 'center',
+                        padding: '16px 0',
+                        margin: 0,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
                       {t.tools.flexTournament.noPairStats}
                     </p>
                   ) : (
@@ -473,9 +630,18 @@ export function GroupSelector({
               </Tabs>
             )}
 
-            {/* Group matches - displayed inline */}
+            {/* Group matches inline */}
             {selectedGroupMatches.length > 0 && (
-              <div className="mt-3 pt-3 border-t space-y-3">
+              <div
+                style={{
+                  marginTop: 14,
+                  paddingTop: 14,
+                  borderTop: '1px solid var(--tl-border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                }}
+              >
                 {selectedGroupMatches.filter(m => !m.parent_match_id).map(match => (
                   <MatchBlock
                     key={match.id}
@@ -502,14 +668,14 @@ export function GroupSelector({
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-// Reusable standings table
+// Reusable token-driven standings table (native HTML <table>)
 interface StandingsTableProps {
   items: {
     rank: number;
@@ -528,49 +694,78 @@ function StandingsTable({ items, isCreator, onRemoveItem }: StandingsTableProps)
   const { t } = useI18n();
 
   return (
-    <div className="overflow-x-auto -mx-1">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-6 px-1 text-xs">#</TableHead>
-            <TableHead className="px-1 text-xs">{t.tools.flexTournament.stats.name}</TableHead>
-            <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.wins}</TableHead>
-            <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.losses}</TableHead>
-            <TableHead className="text-center w-10 px-1 text-xs">{t.tools.flexTournament.stats.pointDiff}</TableHead>
-            {isCreator && onRemoveItem && <TableHead className="w-6 px-1"></TableHead>}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={{ ...tableHeadStyle, width: 28, textAlign: 'center' }}>#</th>
+            <th style={tableHeadStyle}>{t.tools.flexTournament.stats.name}</th>
+            <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.wins}</th>
+            <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.losses}</th>
+            <th style={{ ...tableHeadStyle, width: 44, textAlign: 'center' }}>{t.tools.flexTournament.stats.pointDiff}</th>
+            {isCreator && onRemoveItem && <th style={{ ...tableHeadStyle, width: 28 }}></th>}
+          </tr>
+        </thead>
+        <tbody>
           {items.map((item) => (
-            <TableRow key={item.name + item.rank}>
-              <TableCell className="font-medium px-1 py-1.5 text-xs">{item.rank}</TableCell>
-              <TableCell className="px-1 py-1.5 text-xs">
-                <div className="truncate max-w-[120px]">{item.name}</div>
+            <tr key={item.name + item.rank} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
+              <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{item.rank}</td>
+              <td style={tableCellStyle}>
+                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140, fontWeight: 500 }}>
+                  {item.name}
+                </div>
                 {item.subtitle && (
-                  <div className="text-[10px] text-muted-foreground truncate">{item.subtitle}</div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: 'var(--tl-fg-3)',
+                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      letterSpacing: '0.02em',
+                      marginTop: 2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: 140,
+                    }}
+                  >
+                    {item.subtitle}
+                  </div>
                 )}
-              </TableCell>
-              <TableCell className="text-center px-1 py-1.5 text-xs">{item.wins}</TableCell>
-              <TableCell className="text-center px-1 py-1.5 text-xs">{item.losses}</TableCell>
-              <TableCell className="text-center px-1 py-1.5 text-xs">
+              </td>
+              <td style={{ ...tableCellStyle, textAlign: 'center' }}>{item.wins}</td>
+              <td style={{ ...tableCellStyle, textAlign: 'center' }}>{item.losses}</td>
+              <td style={{ ...tableCellStyle, textAlign: 'center', color: pointDiffColor(item.pointDiff), fontWeight: 600 }}>
                 {item.pointDiff > 0 ? `+${item.pointDiff}` : item.pointDiff}
-              </TableCell>
+              </td>
               {isCreator && onRemoveItem && item.itemId && (
-                <TableCell className="px-1 py-1.5">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
+                <td style={{ ...tableCellStyle, textAlign: 'center' }}>
+                  <button
+                    type="button"
                     onClick={() => onRemoveItem(item.itemId!)}
+                    onMouseEnter={onXEnter}
+                    onMouseLeave={onXLeave}
+                    style={{
+                      background: 'transparent',
+                      border: 0,
+                      color: 'var(--tl-fg-3)',
+                      cursor: 'pointer',
+                      padding: 4,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 4,
+                      transition: 'background 0.15s, color 0.15s',
+                    }}
+                    aria-label="Remove item"
                   >
                     <X className="w-3 h-3" />
-                  </Button>
-                </TableCell>
+                  </button>
+                </td>
               )}
-            </TableRow>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 }

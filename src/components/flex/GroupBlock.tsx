@@ -1,13 +1,9 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useI18n } from '@/i18n';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Grid3X3, Trash2, X, RefreshCw, User, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useState, useMemo, useEffect } from 'react';
 import type { FlexGroup, FlexGroupItem, FlexPlayer, FlexTeam, FlexPlayerStats, FlexPairStats, FlexTeamMember, FlexMatch } from '@/hooks/useFlexTournament';
 
@@ -27,6 +23,71 @@ interface GroupBlockProps {
   onGenerateRR: () => void;
   onToggleIncludeDoubles: (include: boolean) => void;
 }
+
+const tableHeadStyle: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-3)',
+  padding: '8px 8px',
+  textAlign: 'left',
+  borderBottom: '1px solid var(--tl-border)',
+  whiteSpace: 'nowrap',
+  background: 'transparent',
+};
+
+const tableCellStyle: React.CSSProperties = {
+  padding: '10px 8px',
+  fontSize: 12.5,
+  color: 'var(--tl-fg)',
+  borderBottom: '1px solid var(--tl-border)',
+  fontVariantNumeric: 'tabular-nums',
+};
+
+// shadcn TabsList base: 'inline-flex h-10 items-center justify-center rounded-md bg-muted p-1
+// text-muted-foreground'. We need to NUKE the pill bg + rounded + padding via !important
+// because tailwind-merge isn't reliably overriding the arbitrary-variant utilities here.
+const tlTabsListClass =
+  'flex w-full !h-auto !p-0 !bg-transparent !border-b !border-[var(--tl-border)] !rounded-none gap-2';
+
+// shadcn TabsTrigger base: 'rounded-sm px-3 py-1.5 text-sm font-medium
+// data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm'.
+// We replace with mono-caps text + green underline active state. ! prefix forces override of
+// the shadcn data-[state=active]:bg-background pill and the active shadow.
+const tlTabsTriggerClass = [
+  'flex-1 inline-flex items-center justify-center gap-1.5',
+  '!px-3 !py-2',
+  '!text-[11px] !font-medium tracking-[0.06em] uppercase',
+  'font-[family-name:Geist_Mono,ui-monospace,monospace]',
+  '!text-[var(--tl-fg-3)] !bg-transparent !rounded-none !shadow-none',
+  'border-b-2 border-transparent',
+  'data-[state=active]:!text-[var(--tl-fg)]',
+  'data-[state=active]:!border-[var(--tl-green)]',
+  'data-[state=active]:!bg-transparent data-[state=active]:!shadow-none',
+  'transition-colors',
+  // subtle hover for inactive
+  'hover:!text-[var(--tl-fg-2)]',
+].join(' ');
+
+// Body row hover — applied via inline event handlers since native <tr> + token bg.
+const onRowEnter = (e: React.MouseEvent<HTMLTableRowElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg)';
+};
+const onRowLeave = (e: React.MouseEvent<HTMLTableRowElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'transparent';
+};
+
+// X delete button hover — token red on hover.
+const onXEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'rgba(255, 65, 54, 0.10)';
+  (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)';
+};
+const onXLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'transparent';
+  (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)';
+};
 
 export function GroupBlock({
   group,
@@ -55,13 +116,11 @@ export function GroupBlock({
     data: { type: 'group', groupId: group.id },
   });
 
-  // Determine group type: 'player' or 'team' based on items
   const groupType = useMemo(() => {
     if (items.length === 0) return null;
     return items[0].item_type === 'team' ? 'team' : 'player';
   }, [items]);
 
-  // Get teams in this group
   const teamsInGroup = useMemo(() => {
     return items
       .filter(item => item.item_type === 'team')
@@ -69,7 +128,6 @@ export function GroupBlock({
       .filter(Boolean) as FlexTeam[];
   }, [items, teams]);
 
-  // Initialize selectedTeamIds when teams change
   useEffect(() => {
     if (teamsInGroup.length > 0 && selectedTeamIds.length === 0) {
       setSelectedTeamIds(teamsInGroup.map(t => t.id));
@@ -90,13 +148,11 @@ export function GroupBlock({
     return teams.find(t => t.id === item.team_id)?.name || 'Unknown';
   };
 
-  // Singles stats: per player
   const getSinglesStats = (playerId: string) => {
     const stats = playerStats.find(s => s.player_id === playerId && s.group_id === group.id);
     return stats || { wins: 0, losses: 0, point_diff: 0 };
   };
 
-  // Sort items by wins, then point_diff for singles
   const sortedSinglesItems = [...items]
     .filter(item => item.item_type === 'player')
     .sort((a, b) => {
@@ -106,7 +162,6 @@ export function GroupBlock({
       return statsB.point_diff - statsA.point_diff;
     });
 
-  // Doubles stats: per pair
   const sortedPairStats = [...pairStats]
     .filter(ps => ps.group_id === group.id)
     .sort((a, b) => {
@@ -122,30 +177,19 @@ export function GroupBlock({
 
   const includeDoubles = group.include_doubles_in_singles ?? true;
 
-  // Get team stats from TEAM MATCHES (parent matches with slot_a_team_id/slot_b_team_id)
-  // Each team match = 1 win or 1 loss for the team
-  // IMPORTANT: Only count matches that belong to THIS group
   const getTeamStats = (teamId: string) => {
     let wins = 0;
     let losses = 0;
     let pointDiff = 0;
-    
+
     for (const match of matches) {
-      // CRITICAL: Only count matches in THIS group
       if (match.group_id !== group.id) continue;
-      
-      // Only count team matches (with team assignments)
       if (!match.slot_a_team_id && !match.slot_b_team_id) continue;
-      
-      // Skip matches that don't count for standings
       if (!match.counts_for_standings) continue;
-      
-      // Skip matches without a winner
       if (!match.winner_side) continue;
 
       const scoreDiff = Math.abs(match.score_a - match.score_b);
 
-      // Check if this team participated in this match
       if (match.slot_a_team_id === teamId) {
         if (match.winner_side === 'a') {
           wins += 1;
@@ -164,11 +208,10 @@ export function GroupBlock({
         }
       }
     }
-    
+
     return { wins, losses, point_diff: pointDiff };
   };
 
-  // Sort teams by wins, then point_diff
   const sortedTeams = useMemo(() => {
     return [...teamsInGroup].sort((a, b) => {
       const statsA = getTeamStats(a.id);
@@ -178,20 +221,18 @@ export function GroupBlock({
     });
   }, [teamsInGroup, matches, group.id]);
 
-  // Get players from selected teams for individual tab
   const playersFromSelectedTeams = useMemo(() => {
     if (selectedTeamIds.length === 0) return [];
-    
+
     const playerIds = new Set<string>();
     selectedTeamIds.forEach(teamId => {
       const members = teamMembers.filter(m => m.team_id === teamId);
       members.forEach(m => playerIds.add(m.player_id));
     });
-    
+
     return players.filter(p => playerIds.has(p.id));
   }, [selectedTeamIds, teamMembers, players]);
 
-  // Sort players from selected teams by stats
   const sortedPlayersFromTeams = useMemo(() => {
     return [...playersFromSelectedTeams].sort((a, b) => {
       const statsA = getSinglesStats(a.id);
@@ -201,7 +242,6 @@ export function GroupBlock({
     });
   }, [playersFromSelectedTeams, playerStats]);
 
-  // Get team name for player
   const getPlayerTeamName = (playerId: string) => {
     const member = teamMembers.find(m => m.player_id === playerId);
     if (!member) return '';
@@ -227,122 +267,207 @@ export function GroupBlock({
     }
   };
 
+  const pointDiffColor = (diff: number) =>
+    diff > 0 ? 'var(--tl-green)' : diff < 0 ? 'var(--tl-live)' : 'var(--tl-fg-2)';
+
   return (
-    <Card
+    <div
       ref={setNodeRef}
-      className={cn(
-        "transition-all",
-        isOver && "ring-2 ring-primary border-primary bg-primary/5"
-      )}
+      style={{
+        background: 'var(--tl-bg-elev)',
+        border: `1px solid ${isOver ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+        borderRadius: 'var(--tl-radius-lg)',
+        boxShadow: isOver ? '0 0 0 4px var(--tl-green-glow)' : 'none',
+        transition: 'border-color 0.15s, box-shadow 0.15s, background 0.15s',
+        ...(isOver ? { background: 'var(--tl-green-glow)' } : {}),
+      }}
     >
-      <CardHeader className="py-2 px-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Grid3X3 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            {isEditing ? (
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                onBlur={handleSaveName}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                className="h-7 text-sm font-semibold"
-                autoFocus
-              />
-            ) : (
-              <CardTitle
-                className="text-sm cursor-pointer hover:text-primary truncate"
-                onClick={() => isCreator && setIsEditing(true)}
-              >
-                {group.name}
-              </CardTitle>
-            )}
-            <span className="text-xs text-muted-foreground flex-shrink-0">({items.length})</span>
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {isCreator && items.length >= 2 && groupType === 'player' && (
-              <Button variant="ghost" size="sm" onClick={onGenerateRR} className="h-7 text-xs px-2">
-                <RefreshCw className="w-3 h-3 mr-1" />
-                RR
-              </Button>
-            )}
-            {isCreator && (
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
-                <Trash2 className="w-3 h-3 text-destructive" />
-              </Button>
-            )}
-          </div>
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          padding: '10px 12px',
+          borderBottom: '1px solid var(--tl-border)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+          <Grid3X3 className="w-4 h-4" style={{ color: 'var(--tl-fg-3)', flexShrink: 0 }} />
+          {isEditing ? (
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+              className="h-7 text-sm font-semibold"
+              autoFocus
+            />
+          ) : (
+            <h4
+              style={{
+                fontFamily: 'Instrument Serif, serif',
+                fontStyle: 'italic',
+                fontWeight: 400,
+                fontSize: 17,
+                letterSpacing: '-0.015em',
+                color: 'var(--tl-fg)',
+                margin: 0,
+                cursor: isCreator ? 'pointer' : 'default',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+              onClick={() => isCreator && setIsEditing(true)}
+            >
+              {group.name}
+            </h4>
+          )}
+          <span
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 10.5,
+              fontWeight: 500,
+              padding: '2px 7px',
+              borderRadius: 999,
+              background: 'var(--tl-surface)',
+              border: '1px solid var(--tl-border)',
+              color: 'var(--tl-fg-3)',
+              flexShrink: 0,
+              letterSpacing: '0.04em',
+            }}
+          >
+            {items.length}
+          </span>
         </div>
-      </CardHeader>
-      <CardContent className="pt-0 px-3 pb-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {isCreator && items.length >= 2 && groupType === 'player' && (
+            <button
+              type="button"
+              className="tl-btn"
+              onClick={onGenerateRR}
+              style={{ padding: '5px 10px', fontSize: 11.5, fontFamily: 'Geist Mono, ui-monospace, monospace', letterSpacing: '0.04em' }}
+            >
+              <RefreshCw className="w-3 h-3" />
+              RR
+            </button>
+          )}
+          {isCreator && (
+            <button
+              type="button"
+              onClick={onDelete}
+              style={{
+                background: 'transparent',
+                border: 0,
+                color: 'var(--tl-live)',
+                cursor: 'pointer',
+                padding: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 4,
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(255, 65, 54, 0.10)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = 'transparent';
+              }}
+              aria-label="Delete group"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: 12 }}>
         {items.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-2 border-2 border-dashed rounded-lg">
+          <p
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 11,
+              color: 'var(--tl-fg-3)',
+              textAlign: 'center',
+              padding: '10px 0',
+              border: '1px dashed var(--tl-border)',
+              borderRadius: 'var(--tl-radius)',
+              margin: 0,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
             {t.tools.flexTournament.dropPlayerHere}
           </p>
         ) : groupType === 'team' ? (
           // Team-based group: Teams / Individuals tabs
           <Tabs value={activeTab === 'singles' || activeTab === 'doubles' ? 'teams' : activeTab} onValueChange={(v) => setActiveTab(v as 'teams' | 'individuals')}>
-            <TabsList className="grid w-full grid-cols-2 h-8">
-              <TabsTrigger value="teams" className="text-xs gap-1">
+            <TabsList className={tlTabsListClass}>
+              <TabsTrigger value="teams" className={tlTabsTriggerClass}>
                 <Users className="w-3 h-3" />
                 {t.tools.flexTournament.groupTabTeams}
               </TabsTrigger>
-              <TabsTrigger value="individuals" className="text-xs gap-1">
+              <TabsTrigger value="individuals" className={tlTabsTriggerClass}>
                 <User className="w-3 h-3" />
                 {t.tools.flexTournament.groupTabIndividuals}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="teams" className="mt-2">
-              {/* Teams standings table */}
-              <div className="overflow-x-auto -mx-1">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-6 px-1 text-xs">#</TableHead>
-                      <TableHead className="px-1 text-xs">{t.tools.flexTournament.stats.name}</TableHead>
-                      <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.wins}</TableHead>
-                      <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.losses}</TableHead>
-                      <TableHead className="text-center w-10 px-1 text-xs">{t.tools.flexTournament.stats.pointDiff}</TableHead>
-                      {isCreator && <TableHead className="w-6 px-1"></TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+            <TabsContent value="teams" className="mt-3">
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ ...tableHeadStyle, width: 28, textAlign: 'center' }}>#</th>
+                      <th style={tableHeadStyle}>{t.tools.flexTournament.stats.name}</th>
+                      <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.wins}</th>
+                      <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.losses}</th>
+                      <th style={{ ...tableHeadStyle, width: 44, textAlign: 'center' }}>{t.tools.flexTournament.stats.pointDiff}</th>
+                      {isCreator && <th style={{ ...tableHeadStyle, width: 28 }}></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
                     {sortedTeams.map((team, index) => {
                       const stats = getTeamStats(team.id);
                       const item = items.find(i => i.team_id === team.id);
                       return (
-                        <TableRow key={team.id}>
-                          <TableCell className="font-medium px-1 py-1.5 text-xs">{index + 1}</TableCell>
-                          <TableCell className="px-1 py-1.5 text-xs truncate max-w-[120px]">{team.name}</TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">{stats.wins}</TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">{stats.losses}</TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">
+                        <tr key={team.id} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
+                          <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{index + 1}</td>
+                          <td style={{ ...tableCellStyle, fontWeight: 500, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name}</td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center' }}>{stats.wins}</td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center' }}>{stats.losses}</td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center', color: pointDiffColor(stats.point_diff), fontWeight: 600 }}>
                             {stats.point_diff > 0 ? `+${stats.point_diff}` : stats.point_diff}
-                          </TableCell>
+                          </td>
                           {isCreator && item && (
-                            <TableCell className="px-1 py-1.5">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5"
+                            <td style={{ ...tableCellStyle, textAlign: 'center' }}>
+                              <button
+                                type="button"
                                 onClick={() => onRemoveItem(item.id)}
+                                onMouseEnter={onXEnter}
+                                onMouseLeave={onXLeave}
+                                style={{ background: 'transparent', border: 0, color: 'var(--tl-fg-3)', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, transition: 'background 0.15s, color 0.15s' }}
+                                aria-label="Remove item"
                               >
                                 <X className="w-3 h-3" />
-                              </Button>
-                            </TableCell>
+                              </button>
+                            </td>
                           )}
-                        </TableRow>
+                        </tr>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
             </TabsContent>
 
-            <TabsContent value="individuals" className="mt-2 space-y-2">
+            <TabsContent value="individuals" className="mt-3">
               {/* Team filter checkboxes */}
-              <div className="flex flex-wrap gap-2 items-center">
-                <div className="flex items-center gap-1.5">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Checkbox
                     id={`all-teams-${group.id}`}
                     checked={selectedTeamIds.length === teamsInGroup.length}
@@ -350,14 +475,14 @@ export function GroupBlock({
                   />
                   <label
                     htmlFor={`all-teams-${group.id}`}
-                    className="text-xs cursor-pointer font-medium"
+                    style={{ fontSize: 12, cursor: 'pointer', fontWeight: 500, color: 'var(--tl-fg)' }}
                   >
                     {t.tools.flexTournament.allTeams}
                   </label>
                 </div>
-                <span className="text-muted-foreground">|</span>
+                <span style={{ color: 'var(--tl-fg-4)' }}>|</span>
                 {teamsInGroup.map(team => (
-                  <div key={team.id} className="flex items-center gap-1.5">
+                  <div key={team.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Checkbox
                       id={`team-filter-${team.id}`}
                       checked={selectedTeamIds.includes(team.id)}
@@ -365,7 +490,7 @@ export function GroupBlock({
                     />
                     <label
                       htmlFor={`team-filter-${team.id}`}
-                      className="text-xs cursor-pointer"
+                      style={{ fontSize: 12, cursor: 'pointer', color: 'var(--tl-fg-2)' }}
                     >
                       {team.name}
                     </label>
@@ -373,43 +498,67 @@ export function GroupBlock({
                 ))}
               </div>
 
-              {/* Individual player stats from selected teams */}
               {sortedPlayersFromTeams.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
+                <p
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 11,
+                    color: 'var(--tl-fg-3)',
+                    textAlign: 'center',
+                    padding: '16px 0',
+                    margin: 0,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
                   {t.tools.flexTournament.selectTeamsToShow}
                 </p>
               ) : (
-                <div className="overflow-x-auto -mx-1">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-6 px-1 text-xs">#</TableHead>
-                        <TableHead className="px-1 text-xs">{t.tools.flexTournament.stats.name}</TableHead>
-                        <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.wins}</TableHead>
-                        <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.losses}</TableHead>
-                        <TableHead className="text-center w-10 px-1 text-xs">{t.tools.flexTournament.stats.pointDiff}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...tableHeadStyle, width: 28, textAlign: 'center' }}>#</th>
+                        <th style={tableHeadStyle}>{t.tools.flexTournament.stats.name}</th>
+                        <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.wins}</th>
+                        <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.losses}</th>
+                        <th style={{ ...tableHeadStyle, width: 44, textAlign: 'center' }}>{t.tools.flexTournament.stats.pointDiff}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {sortedPlayersFromTeams.map((player, index) => {
                         const stats = getSinglesStats(player.id);
                         return (
-                          <TableRow key={player.id}>
-                            <TableCell className="font-medium px-1 py-1.5 text-xs">{index + 1}</TableCell>
-                            <TableCell className="px-1 py-1.5 text-xs">
-                              <div className="truncate max-w-[100px]">{player.name}</div>
-                              <div className="text-[10px] text-muted-foreground truncate">{getPlayerTeamName(player.id)}</div>
-                            </TableCell>
-                            <TableCell className="text-center px-1 py-1.5 text-xs">{stats.wins}</TableCell>
-                            <TableCell className="text-center px-1 py-1.5 text-xs">{stats.losses}</TableCell>
-                            <TableCell className="text-center px-1 py-1.5 text-xs">
+                          <tr key={player.id} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
+                            <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{index + 1}</td>
+                            <td style={tableCellStyle}>
+                              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120, fontWeight: 500 }}>{player.name}</div>
+                              <div
+                                style={{
+                                  fontSize: 10,
+                                  color: 'var(--tl-fg-3)',
+                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                  letterSpacing: '0.02em',
+                                  marginTop: 2,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  maxWidth: 120,
+                                }}
+                              >
+                                {getPlayerTeamName(player.id)}
+                              </div>
+                            </td>
+                            <td style={{ ...tableCellStyle, textAlign: 'center' }}>{stats.wins}</td>
+                            <td style={{ ...tableCellStyle, textAlign: 'center' }}>{stats.losses}</td>
+                            <td style={{ ...tableCellStyle, textAlign: 'center', color: pointDiffColor(stats.point_diff), fontWeight: 600 }}>
                               {stats.point_diff > 0 ? `+${stats.point_diff}` : stats.point_diff}
-                            </TableCell>
-                          </TableRow>
+                            </td>
+                          </tr>
                         );
                       })}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               )}
             </TabsContent>
@@ -417,20 +566,20 @@ export function GroupBlock({
         ) : (
           // Player-based group: Singles / Doubles tabs
           <Tabs value={activeTab === 'teams' || activeTab === 'individuals' ? 'singles' : activeTab} onValueChange={(v) => setActiveTab(v as 'singles' | 'doubles')}>
-            <TabsList className="grid w-full grid-cols-2 h-8">
-              <TabsTrigger value="singles" className="text-xs gap-1">
+            <TabsList className={tlTabsListClass}>
+              <TabsTrigger value="singles" className={tlTabsTriggerClass}>
                 <User className="w-3 h-3" />
                 {t.tools.flexTournament.matchType.singles}
               </TabsTrigger>
-              <TabsTrigger value="doubles" className="text-xs gap-1">
+              <TabsTrigger value="doubles" className={tlTabsTriggerClass}>
                 <Users className="w-3 h-3" />
                 {t.tools.flexTournament.matchType.doubles}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="singles" className="mt-2 space-y-2">
+            <TabsContent value="singles" className="mt-3">
               {/* Include doubles checkbox */}
-              <div className="flex items-center gap-2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <Checkbox
                   id={`include-doubles-${group.id}`}
                   checked={includeDoubles}
@@ -439,97 +588,108 @@ export function GroupBlock({
                 />
                 <label
                   htmlFor={`include-doubles-${group.id}`}
-                  className="text-xs text-muted-foreground cursor-pointer"
+                  style={{ fontSize: 12, color: 'var(--tl-fg-3)', cursor: 'pointer' }}
                 >
                   {t.tools.flexTournament.includeDoublesInSingles}
                 </label>
               </div>
 
-              {/* Singles standings table */}
-              <div className="overflow-x-auto -mx-1">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-6 px-1 text-xs">#</TableHead>
-                      <TableHead className="px-1 text-xs">{t.tools.flexTournament.stats.name}</TableHead>
-                      <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.wins}</TableHead>
-                      <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.losses}</TableHead>
-                      <TableHead className="text-center w-10 px-1 text-xs">{t.tools.flexTournament.stats.pointDiff}</TableHead>
-                      {isCreator && <TableHead className="w-6 px-1"></TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ ...tableHeadStyle, width: 28, textAlign: 'center' }}>#</th>
+                      <th style={tableHeadStyle}>{t.tools.flexTournament.stats.name}</th>
+                      <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.wins}</th>
+                      <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.losses}</th>
+                      <th style={{ ...tableHeadStyle, width: 44, textAlign: 'center' }}>{t.tools.flexTournament.stats.pointDiff}</th>
+                      {isCreator && <th style={{ ...tableHeadStyle, width: 28 }}></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
                     {sortedSinglesItems.map((item, index) => {
                       const stats = getSinglesStats(item.player_id!);
                       return (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium px-1 py-1.5 text-xs">{index + 1}</TableCell>
-                          <TableCell className="px-1 py-1.5 text-xs truncate max-w-[120px]">{getItemName(item)}</TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">{stats.wins}</TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">{stats.losses}</TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">
+                        <tr key={item.id} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
+                          <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{index + 1}</td>
+                          <td style={{ ...tableCellStyle, fontWeight: 500, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getItemName(item)}</td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center' }}>{stats.wins}</td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center' }}>{stats.losses}</td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center', color: pointDiffColor(stats.point_diff), fontWeight: 600 }}>
                             {stats.point_diff > 0 ? `+${stats.point_diff}` : stats.point_diff}
-                          </TableCell>
+                          </td>
                           {isCreator && (
-                            <TableCell className="px-1 py-1.5">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-5 w-5"
+                            <td style={{ ...tableCellStyle, textAlign: 'center' }}>
+                              <button
+                                type="button"
                                 onClick={() => onRemoveItem(item.id)}
+                                onMouseEnter={onXEnter}
+                                onMouseLeave={onXLeave}
+                                style={{ background: 'transparent', border: 0, color: 'var(--tl-fg-3)', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, transition: 'background 0.15s, color 0.15s' }}
+                                aria-label="Remove item"
                               >
                                 <X className="w-3 h-3" />
-                              </Button>
-                            </TableCell>
+                              </button>
+                            </td>
                           )}
-                        </TableRow>
+                        </tr>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
             </TabsContent>
 
-            <TabsContent value="doubles" className="mt-2">
-              {/* Doubles standings table - by pair */}
+            <TabsContent value="doubles" className="mt-3">
               {sortedPairStats.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
+                <p
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 11,
+                    color: 'var(--tl-fg-3)',
+                    textAlign: 'center',
+                    padding: '16px 0',
+                    margin: 0,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
                   {t.tools.flexTournament.noDoublesStats}
                 </p>
               ) : (
-                <div className="overflow-x-auto -mx-1">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-6 px-1 text-xs">#</TableHead>
-                        <TableHead className="px-1 text-xs">{t.tools.flexTournament.stats.pair}</TableHead>
-                        <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.wins}</TableHead>
-                        <TableHead className="text-center w-8 px-1 text-xs">{t.tools.flexTournament.stats.losses}</TableHead>
-                        <TableHead className="text-center w-10 px-1 text-xs">{t.tools.flexTournament.stats.pointDiff}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...tableHeadStyle, width: 28, textAlign: 'center' }}>#</th>
+                        <th style={tableHeadStyle}>{t.tools.flexTournament.stats.pair}</th>
+                        <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.wins}</th>
+                        <th style={{ ...tableHeadStyle, width: 36, textAlign: 'center' }}>{t.tools.flexTournament.stats.losses}</th>
+                        <th style={{ ...tableHeadStyle, width: 44, textAlign: 'center' }}>{t.tools.flexTournament.stats.pointDiff}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {sortedPairStats.map((pair, index) => (
-                        <TableRow key={`${pair.player1_id}-${pair.player2_id}`}>
-                          <TableCell className="font-medium px-1 py-1.5 text-xs">{index + 1}</TableCell>
-                          <TableCell className="px-1 py-1.5 text-xs truncate max-w-[150px]">
+                        <tr key={`${pair.player1_id}-${pair.player2_id}`} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
+                          <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{index + 1}</td>
+                          <td style={{ ...tableCellStyle, fontWeight: 500, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {getPairName(pair.player1_id, pair.player2_id)}
-                          </TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">{pair.wins}</TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">{pair.losses}</TableCell>
-                          <TableCell className="text-center px-1 py-1.5 text-xs">
+                          </td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center' }}>{pair.wins}</td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center' }}>{pair.losses}</td>
+                          <td style={{ ...tableCellStyle, textAlign: 'center', color: pointDiffColor(pair.point_diff), fontWeight: 600 }}>
                             {pair.point_diff > 0 ? `+${pair.point_diff}` : pair.point_diff}
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
               )}
             </TabsContent>
           </Tabs>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

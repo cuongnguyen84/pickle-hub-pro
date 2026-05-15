@@ -1,15 +1,11 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useI18n } from '@/i18n';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Swords, Trash2, X, User, Users, ChevronDown, Plus, Grid3X3 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useState, useMemo, useEffect, forwardRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChildMatchBlock } from './ChildMatchBlock';
 import type { FlexMatch, FlexPlayer, FlexTeam, FlexTeamMember, FlexGroup } from '@/hooks/useFlexTournament';
 
@@ -21,8 +17,8 @@ interface MatchBlockProps {
   groups: FlexGroup[];
   isCreator: boolean;
   hasGroups: boolean;
-  isTeamMatch?: boolean; // True when this is a team vs team match (show 2 team slots instead of 4 player slots)
-  childMatches?: FlexMatch[]; // Child matches for team matches
+  isTeamMatch?: boolean;
+  childMatches?: FlexMatch[];
   onUpdateName: (name: string) => void;
   onDelete: () => void;
   onUpdateScore: (scoreA: number, scoreB: number) => void;
@@ -45,8 +41,8 @@ interface DroppableSlotProps {
   isCreator: boolean;
   onClear: () => void;
   disabled?: boolean;
-  isSecondSlot?: boolean; // True for slot a2/b2 - show faded delete button when empty
-  isTeamSlot?: boolean; // True when this slot is for teams, not players
+  isSecondSlot?: boolean;
+  isTeamSlot?: boolean;
 }
 
 function DroppableSlot({ id, playerId, teamId, players, teams, isCreator, onClear, disabled, isSecondSlot, isTeamSlot }: DroppableSlotProps) {
@@ -71,36 +67,119 @@ function DroppableSlot({ id, playerId, teamId, players, teams, isCreator, onClea
   const Icon = isTeamSlot || teamId ? Users : User;
   const placeholderText = isTeamSlot ? t.tools.flexTournament.dropTeamHere : t.tools.flexTournament.dropPlayerHere;
 
+  const filled = !!name;
+
+  const slotStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '8px 10px',
+    borderRadius: 'var(--tl-radius)',
+    border: filled
+      ? '1px solid var(--tl-border)'
+      : `1px dashed ${isOver && !disabled ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+    background: isOver && !disabled
+      ? 'var(--tl-green-glow)'
+      : filled
+        ? 'var(--tl-bg)'
+        : 'transparent',
+    minHeight: 40,
+    transition: 'border-color 0.15s, background 0.15s, transform 0.15s',
+    transform: isOver && !disabled ? 'scale(1.02)' : 'scale(1)',
+    opacity: disabled ? 0.5 : 1,
+  };
+
   return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "flex items-center justify-between px-2 py-2 rounded border-2 border-dashed min-h-[40px] transition-all",
-        isOver && !disabled && "border-primary bg-primary/10 scale-[1.02]",
-        name && "border-solid bg-muted/50 border-muted-foreground/20",
-        disabled && "opacity-50"
-      )}
-    >
-      {name ? (
+    <div ref={setNodeRef} style={slotStyle}>
+      {filled ? (
         <>
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Icon className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-            <span className="text-sm truncate">{name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+            <Icon className="w-3 h-3" style={{ color: 'var(--tl-fg-3)', flexShrink: 0 }} />
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--tl-fg)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {name}
+            </span>
           </div>
           {isCreator && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={onClear}>
+            <button
+              type="button"
+              onClick={onClear}
+              style={{
+                background: 'transparent',
+                border: 0,
+                color: 'var(--tl-fg-3)',
+                cursor: 'pointer',
+                padding: 2,
+                flexShrink: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 4,
+                transition: 'background 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)';
+              }}
+              aria-label="Clear slot"
+            >
               <X className="w-3 h-3" />
-            </Button>
+            </button>
           )}
         </>
       ) : (
         <>
-          <span className="text-xs text-muted-foreground">{placeholderText}</span>
-          {/* Show faded delete button for second slot when empty - allows user to know they can remove slot 2 */}
+          <span
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 11,
+              color: 'var(--tl-fg-3)',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {placeholderText}
+          </span>
           {isSecondSlot && isCreator && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0 opacity-30 hover:opacity-100" onClick={onClear}>
+            <button
+              type="button"
+              onClick={onClear}
+              style={{
+                background: 'transparent',
+                border: 0,
+                color: 'var(--tl-fg-4)',
+                cursor: 'pointer',
+                padding: 2,
+                flexShrink: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 4,
+                opacity: 0.4,
+                transition: 'opacity 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = '1';
+                (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = '0.4';
+                (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-4)';
+              }}
+              aria-label="Remove second slot"
+            >
               <X className="w-3 h-3" />
-            </Button>
+            </button>
           )}
         </>
       )}
@@ -137,24 +216,20 @@ export function MatchBlock({
   const [scoreB, setScoreB] = useState(match.score_b.toString());
   const [isChildrenOpen, setIsChildrenOpen] = useState(true);
 
-  // Sync score state when match prop updates (e.g., from realtime/child match updates)
   useEffect(() => {
     setScoreA(match.score_a.toString());
     setScoreB(match.score_b.toString());
   }, [match.score_a, match.score_b]);
 
-  // Check if this is a team match with child matches
   const hasChildMatches = childMatches.length > 0;
   const isTeamMatchWithTeams = isTeamMatch && (match.slot_a_team_id || match.slot_b_team_id);
 
-  // Helper: find team that contains a player
   const getPlayerTeam = (playerId: string): FlexTeam | null => {
     const member = teamMembers.find(m => m.player_id === playerId);
     if (!member) return null;
     return teams.find(t => t.id === member.team_id) || null;
   };
 
-  // Check if both players on same side belong to same team
   const sideATeam = useMemo(() => {
     if (!match.slot_a1_player_id || !match.slot_a2_player_id) return null;
     const team1 = getPlayerTeam(match.slot_a1_player_id);
@@ -171,9 +246,8 @@ export function MatchBlock({
     return null;
   }, [match.slot_b1_player_id, match.slot_b2_player_id, teamMembers, teams]);
 
-  // Get group name if match belongs to a group
-  const groupName = match.group_id 
-    ? groups.find(g => g.id === match.group_id)?.name 
+  const groupName = match.group_id
+    ? groups.find(g => g.id === match.group_id)?.name
     : null;
 
   const handleSaveName = () => {
@@ -192,58 +266,129 @@ export function MatchBlock({
   };
 
   const isDoubles = match.match_type === 'doubles';
-  
-  // Check if match is "complete" (has all required players)
+
   const isMatchFilled = isDoubles
     ? (match.slot_a1_player_id && match.slot_a2_player_id && match.slot_b1_player_id && match.slot_b2_player_id) ||
       (match.slot_a_team_id && match.slot_b_team_id)
     : match.slot_a1_player_id && match.slot_b1_player_id;
 
-  // Show hint if match is filled, counts for standings, but no groups exist
   const showNoGroupHint = isMatchFilled && match.counts_for_standings && !hasGroups;
 
+  const sideStyle = (highlight: boolean): React.CSSProperties => ({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    padding: 8,
+    borderRadius: 'var(--tl-radius)',
+    background: highlight ? 'var(--tl-green-glow)' : 'transparent',
+    border: highlight ? '1px solid rgba(0, 185, 107, 0.30)' : '1px solid transparent',
+  });
+
   return (
-    <Card>
-      <CardHeader className="py-2 px-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            <Swords className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            {isEditing ? (
-              <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                onBlur={handleSaveName}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                className="h-7 text-sm font-semibold"
-                autoFocus
-              />
-            ) : (
-              <CardTitle
-                className="text-sm cursor-pointer hover:text-primary truncate"
-                onClick={() => isCreator && setIsEditing(true)}
-              >
-                {match.name}
-              </CardTitle>
-            )}
-            {/* Removed "Đơn/Đôi" badge per user request */}
-            {groupName && (
-              <Badge variant="outline" className="text-xs flex-shrink-0">
-                {groupName}
-              </Badge>
-            )}
-          </div>
-          {isCreator && (
-            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onDelete}>
-              <Trash2 className="w-3 h-3 text-destructive" />
-            </Button>
+    <div
+      style={{
+        background: 'var(--tl-bg-elev)',
+        border: '1px solid var(--tl-border)',
+        borderRadius: 'var(--tl-radius-lg)',
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          padding: '10px 12px',
+          borderBottom: '1px solid var(--tl-border)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+          <Swords className="w-4 h-4" style={{ color: 'var(--tl-fg-3)', flexShrink: 0 }} />
+          {isEditing ? (
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+              className="h-7 text-sm font-semibold"
+              autoFocus
+            />
+          ) : (
+            <h4
+              style={{
+                fontFamily: 'Instrument Serif, serif',
+                fontStyle: 'italic',
+                fontWeight: 400,
+                fontSize: 17,
+                letterSpacing: '-0.015em',
+                color: 'var(--tl-fg)',
+                margin: 0,
+                cursor: isCreator ? 'pointer' : 'default',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+              onClick={() => isCreator && setIsEditing(true)}
+            >
+              {match.name}
+            </h4>
+          )}
+          {groupName && (
+            <span
+              style={{
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10,
+                fontWeight: 500,
+                padding: '2px 7px',
+                borderRadius: 4,
+                background: 'var(--tl-surface)',
+                color: 'var(--tl-fg-3)',
+                border: '1px solid var(--tl-border)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                flexShrink: 0,
+              }}
+            >
+              {groupName}
+            </span>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="pt-0 px-3 pb-3 space-y-2">
-        {/* Group assignment dropdown - only show for standalone matches (not child matches) */}
+        {isCreator && (
+          <button
+            type="button"
+            onClick={onDelete}
+            style={{
+              background: 'transparent',
+              border: 0,
+              color: 'var(--tl-live)',
+              cursor: 'pointer',
+              padding: 4,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 4,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(255, 65, 54, 0.10)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'transparent';
+            }}
+            aria-label="Delete match"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {/* Group assignment dropdown */}
         {!match.parent_match_id && isCreator && hasGroups && onUpdateGroupId && (
-          <div className="flex items-center gap-2">
-            <Grid3X3 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Grid3X3 className="w-3.5 h-3.5" style={{ color: 'var(--tl-fg-3)', flexShrink: 0 }} />
             <Select
               value={match.group_id || 'none'}
               onValueChange={(value) => onUpdateGroupId(value === 'none' ? null : value)}
@@ -266,7 +411,7 @@ export function MatchBlock({
         )}
 
         {/* Counts for standings checkbox */}
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Checkbox
             id={`counts-standings-${match.id}`}
             checked={match.counts_for_standings}
@@ -275,34 +420,51 @@ export function MatchBlock({
           />
           <label
             htmlFor={`counts-standings-${match.id}`}
-            className="text-xs text-muted-foreground cursor-pointer"
+            style={{ fontSize: 12, color: 'var(--tl-fg-3)', cursor: 'pointer' }}
           >
             {t.tools.flexTournament.countsForStandings}
           </label>
         </div>
 
-        {/* No group hint - only show when no group assigned and "counts for standings" is checked */}
+        {/* No group hint */}
         {showNoGroupHint && !match.group_id && (
-          <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5 rounded">
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--tl-gold)',
+              background: 'rgba(233, 182, 73, 0.10)',
+              border: '1px solid rgba(233, 182, 73, 0.25)',
+              padding: '6px 10px',
+              borderRadius: 'var(--tl-radius)',
+            }}
+          >
             {t.tools.flexTournament.noGroupHint}
           </div>
         )}
 
         {/* Side A */}
-        <div className={cn(
-          "space-y-1 p-2 rounded",
-          isTeamMatch && match.slot_a_team_id && "bg-primary/10 border border-primary/20"
-        )}>
-          {/* Team highlight for Side A - only show for player matches when both players are from same team */}
+        <div style={sideStyle(!!(isTeamMatch && match.slot_a_team_id))}>
           {!isTeamMatch && sideATeam && (
-            <div className="flex items-center gap-1 text-xs text-primary font-medium px-1">
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                fontWeight: 500,
+                color: 'var(--tl-green)',
+                padding: '0 4px',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
               <Users className="w-3 h-3" />
               {sideATeam.name}
             </div>
           )}
-          
+
           {isTeamMatch ? (
-            // Team match: single slot for team
             <DroppableSlot
               id={`match-${match.id}-slot-a1`}
               playerId={null}
@@ -314,7 +476,6 @@ export function MatchBlock({
               isTeamSlot
             />
           ) : (
-            // Player match: slot for first player
             <>
               <DroppableSlot
                 id={`match-${match.id}-slot-a1`}
@@ -325,7 +486,6 @@ export function MatchBlock({
                 isCreator={isCreator}
                 onClear={() => onClearSlot('a1')}
               />
-              {/* Slot a2 for doubles */}
               <DroppableSlot
                 id={`match-${match.id}-slot-a2`}
                 playerId={match.slot_a2_player_id}
@@ -340,12 +500,25 @@ export function MatchBlock({
           )}
         </div>
 
-        {/* VS + Score - disabled for team matches with child matches */}
-        <div className="flex items-center justify-center gap-2 py-1">
-          <div className={cn(
-            "w-14 h-9 flex items-center justify-center text-base font-medium rounded border",
-            isTeamMatchWithTeams ? "bg-muted border-border" : "bg-background border-input"
-          )}>
+        {/* VS + Score */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '4px 0' }}>
+          <div
+            style={{
+              width: 56,
+              height: 36,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 'var(--tl-radius)',
+              background: isTeamMatchWithTeams ? 'var(--tl-surface)' : 'var(--tl-bg)',
+              border: '1px solid var(--tl-border)',
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 16,
+              fontWeight: 600,
+              color: 'var(--tl-fg)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
             {isTeamMatchWithTeams ? (
               <span>{match.score_a}</span>
             ) : (
@@ -354,16 +527,40 @@ export function MatchBlock({
                 value={scoreA}
                 onChange={(e) => setScoreA(e.target.value)}
                 onBlur={handleScoreBlur}
-                className="w-14 text-center h-9 text-base border-0 p-0"
+                className="w-14 text-center h-9 text-base border-0 p-0 bg-transparent"
                 disabled={!isCreator}
               />
             )}
           </div>
-          <span className="text-sm font-medium text-muted-foreground">{t.tools.flexTournament.vs}</span>
-          <div className={cn(
-            "w-14 h-9 flex items-center justify-center text-base font-medium rounded border",
-            isTeamMatchWithTeams ? "bg-muted border-border" : "bg-background border-input"
-          )}>
+          <span
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 11,
+              fontWeight: 500,
+              color: 'var(--tl-fg-3)',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t.tools.flexTournament.vs}
+          </span>
+          <div
+            style={{
+              width: 56,
+              height: 36,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 'var(--tl-radius)',
+              background: isTeamMatchWithTeams ? 'var(--tl-surface)' : 'var(--tl-bg)',
+              border: '1px solid var(--tl-border)',
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 16,
+              fontWeight: 600,
+              color: 'var(--tl-fg)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
             {isTeamMatchWithTeams ? (
               <span>{match.score_b}</span>
             ) : (
@@ -372,7 +569,7 @@ export function MatchBlock({
                 value={scoreB}
                 onChange={(e) => setScoreB(e.target.value)}
                 onBlur={handleScoreBlur}
-                className="w-14 text-center h-9 text-base border-0 p-0"
+                className="w-14 text-center h-9 text-base border-0 p-0 bg-transparent"
                 disabled={!isCreator}
               />
             )}
@@ -380,20 +577,28 @@ export function MatchBlock({
         </div>
 
         {/* Side B */}
-        <div className={cn(
-          "space-y-1 p-2 rounded",
-          isTeamMatch && match.slot_b_team_id && "bg-primary/10 border border-primary/20"
-        )}>
-          {/* Team highlight for Side B - only show for player matches when both players are from same team */}
+        <div style={sideStyle(!!(isTeamMatch && match.slot_b_team_id))}>
           {!isTeamMatch && sideBTeam && (
-            <div className="flex items-center gap-1 text-xs text-primary font-medium px-1">
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                fontWeight: 500,
+                color: 'var(--tl-green)',
+                padding: '0 4px',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
               <Users className="w-3 h-3" />
               {sideBTeam.name}
             </div>
           )}
-          
+
           {isTeamMatch ? (
-            // Team match: single slot for team
             <DroppableSlot
               id={`match-${match.id}-slot-b1`}
               playerId={null}
@@ -405,7 +610,6 @@ export function MatchBlock({
               isTeamSlot
             />
           ) : (
-            // Player match: slots for players
             <>
               <DroppableSlot
                 id={`match-${match.id}-slot-b1`}
@@ -416,7 +620,6 @@ export function MatchBlock({
                 isCreator={isCreator}
                 onClear={() => onClearSlot('b1')}
               />
-              {/* Slot b2 for doubles */}
               <DroppableSlot
                 id={`match-${match.id}-slot-b2`}
                 playerId={match.slot_b2_player_id}
@@ -431,10 +634,25 @@ export function MatchBlock({
           )}
         </div>
 
-        {/* Winner indicator - show winner name */}
+        {/* Winner indicator */}
         {match.winner_side && (
-          <div className="text-center pt-1">
-            <Badge variant="default" className="text-xs">
+          <div style={{ textAlign: 'center', paddingTop: 4 }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                fontWeight: 600,
+                padding: '4px 10px',
+                borderRadius: 999,
+                background: 'var(--tl-green)',
+                color: 'var(--tl-bg)',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+              }}
+            >
               {(() => {
                 const winnerSide = match.winner_side;
                 if (winnerSide === 'a') {
@@ -452,60 +670,91 @@ export function MatchBlock({
                   const p2 = match.slot_b2_player_id ? players.find(p => p.id === match.slot_b2_player_id)?.name : null;
                   return p2 ? `${p1} & ${p2}` : p1 || 'B';
                 }
-              })()} {t.tools.flexTournament.wins}
-            </Badge>
+              })()}{' '}
+              {t.tools.flexTournament.wins}
+            </span>
           </div>
         )}
 
-        {/* Child matches section - for team matches */}
+        {/* Child matches section */}
         {isTeamMatchWithTeams && (
           <Collapsible open={isChildrenOpen} onOpenChange={setIsChildrenOpen}>
-            <div className="border-t pt-2 mt-2">
+            <div style={{ borderTop: '1px solid var(--tl-border)', paddingTop: 8, marginTop: 4 }}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between text-xs h-7">
-                  <span className="flex items-center gap-1">
+                <button
+                  type="button"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '6px 8px',
+                    borderRadius: 'var(--tl-radius)',
+                    background: 'transparent',
+                    border: 0,
+                    color: 'var(--tl-fg-2)',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--tl-surface)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <Swords className="w-3 h-3" />
                     {t.tools.flexTournament.childMatches} ({childMatches.length})
                   </span>
-                  <ChevronDown className={cn("w-3 h-3 transition-transform", isChildrenOpen && "rotate-180")} />
-                </Button>
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent className="space-y-2 mt-2">
-                {childMatches.map((childMatch, idx) => (
-                  <ChildMatchBlock
-                    key={childMatch.id}
-                    match={childMatch}
-                    players={players}
-                    teams={teams}
-                    teamMembers={teamMembers}
-                    parentMatch={match}
-                    isCreator={isCreator}
-                    matchIndex={idx + 1}
-                    onUpdateScore={(scoreA, scoreB) => onUpdateChildMatchScore?.(childMatch.id, scoreA, scoreB)}
-                    onClearSlot={(slot) => onClearChildMatchSlot?.(childMatch.id, slot)}
-                    onSelectPlayer={(slot, playerId) => onSelectChildMatchPlayer?.(childMatch.id, slot, playerId)}
-                    onDelete={() => onDeleteChildMatch?.(childMatch.id)}
+                  <ChevronDown
+                    className="w-3 h-3"
+                    style={{
+                      transition: 'transform 0.15s',
+                      transform: isChildrenOpen ? 'rotate(180deg)' : 'rotate(0)',
+                    }}
                   />
-                ))}
-                
-                {/* Add child match button */}
-                {isCreator && onAddChildMatch && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs h-8"
-                    onClick={onAddChildMatch}
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    {t.tools.flexTournament.addChildMatch}
-                  </Button>
-                )}
+                </button>
+              </CollapsibleTrigger>
+
+              <CollapsibleContent>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  {childMatches.map((childMatch, idx) => (
+                    <ChildMatchBlock
+                      key={childMatch.id}
+                      match={childMatch}
+                      players={players}
+                      teams={teams}
+                      teamMembers={teamMembers}
+                      parentMatch={match}
+                      isCreator={isCreator}
+                      matchIndex={idx + 1}
+                      onUpdateScore={(scoreA, scoreB) => onUpdateChildMatchScore?.(childMatch.id, scoreA, scoreB)}
+                      onClearSlot={(slot) => onClearChildMatchSlot?.(childMatch.id, slot)}
+                      onSelectPlayer={(slot, playerId) => onSelectChildMatchPlayer?.(childMatch.id, slot, playerId)}
+                      onDelete={() => onDeleteChildMatch?.(childMatch.id)}
+                    />
+                  ))}
+
+                  {isCreator && onAddChildMatch && (
+                    <button
+                      type="button"
+                      className="tl-btn"
+                      onClick={onAddChildMatch}
+                      style={{ width: '100%', justifyContent: 'center', padding: '6px 10px', fontSize: 12 }}
+                    >
+                      <Plus className="w-3 h-3" />
+                      {t.tools.flexTournament.addChildMatch}
+                    </button>
+                  )}
+                </div>
               </CollapsibleContent>
             </div>
           </Collapsible>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
