@@ -94,6 +94,9 @@ const NOINDEX_PATTERNS: RegExp[] = [
   /^\/(?:vi\/)?tools\/[^/]+\/new(?:\/|$)/,
   /^\/(?:vi\/)?tools\/[^/]+\/[^/]+\/setup(?:\/|$)/,
   /^\/(?:vi\/)?tools\/doubles-elimination\/match\/[^/]+\/score(?:\/|$)/,
+  // Create + search flows migrated in PR 2 (TheLineLayout)
+  /^\/(?:vi\/)?forum\/new(?:\/|$)/,
+  /^\/(?:vi\/)?search(?:\/|$)/,
 ];
 
 const X_ROBOTS_NOINDEX = "noindex, nofollow, noarchive";
@@ -415,6 +418,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
   if (path === "/terms") return renderTerms(siteUrl, rawPath, lang);
 
-  // Default fallback
-  return renderDefault(rawPath, siteUrl, lang);
+  // 404 fallback — unmatched routes get a proper 404 + noindex, not a
+  // generic 200 shell that would waste crawl budget and create soft-404s.
+  return render404(rawPath, siteUrl);
 }
