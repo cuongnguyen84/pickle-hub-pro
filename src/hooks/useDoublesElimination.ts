@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Json } from '@/integrations/supabase/types';
 import { getBestOfForRound, generateSeedPositions, generateShareId, assignCourtAndTime } from '@/lib/doubles-bracket-utils';
+import { logMutationError } from './_mutationErrors';
+
+const HOOK = 'useDoublesElimination';
 
 export type TournamentStatus = 'setup' | 'ongoing' | 'completed';
 export type MatchStatus = 'pending' | 'live' | 'completed';
@@ -122,6 +125,7 @@ export function useDoublesElimination() {
       if (error) throw error;
       return { success: true, tournament: data as Tournament };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     } finally {
@@ -151,6 +155,7 @@ export function useDoublesElimination() {
       if (error) throw error;
       return { success: true, teams: data as Team[] };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     } finally {
@@ -306,6 +311,7 @@ export function useDoublesElimination() {
 
       return { success: true, matches: insertedMatches as Match[] };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     } finally {
@@ -344,7 +350,8 @@ export function useDoublesElimination() {
         teams: (teams || []) as Team[],
         matches: (matches || []) as Match[]
       };
-    } catch {
+    } catch (error) {
+      logMutationError(HOOK, 'getTournamentByShareId', error);
       return { tournament: null, teams: [], matches: [] };
     }
   }, []);
@@ -385,7 +392,8 @@ export function useDoublesElimination() {
           creator_display_name: profile?.display_name,
         } as Tournament;
       });
-    } catch {
+    } catch (error) {
+      logMutationError(HOOK, 'getUserTournaments', error);
       return [];
     }
   }, [user]);
@@ -403,6 +411,7 @@ export function useDoublesElimination() {
       if (error) throw error;
       return { success: true };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     }
@@ -450,6 +459,7 @@ export function useDoublesElimination() {
       if (updateError) throw updateError;
       return { success: true, matchCompleted: isCompleted };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     }
@@ -522,6 +532,7 @@ export function useDoublesElimination() {
 
       return { success: true };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     }
@@ -536,6 +547,7 @@ export function useDoublesElimination() {
       if (error) throw error;
       return { success: true };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     }
@@ -670,6 +682,7 @@ export function useDoublesElimination() {
 
       return { success: true, r3Teams: r3TeamIds, r4Teams: r4TeamIds, tiedTeamsInfo };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     }
@@ -856,6 +869,7 @@ export function useDoublesElimination() {
 
       return { success: true };
     } catch (error: unknown) {
+      logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
     }
