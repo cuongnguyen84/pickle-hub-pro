@@ -4404,7 +4404,7 @@ export type Database = {
       get_feed_timeline: {
         Args: {
           p_limit?: number
-          p_cursor_published_at?: string | null
+          p_cursor_score?: number | null
           p_cursor_item_id?: string | null
           p_viewer_id?: string | null
         }
@@ -4412,6 +4412,7 @@ export type Database = {
           item_type: string
           item_id: string
           published_at: string
+          score: number
           slug: string | null
           format: string | null
           match_type: string | null

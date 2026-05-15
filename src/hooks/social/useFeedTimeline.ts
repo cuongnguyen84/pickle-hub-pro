@@ -16,15 +16,15 @@ import { blogMetadata } from "@/content/blog/metadata";
  *
  * The hook also merges the static EN blog metadata (src/content/blog/
  * metadata.ts) into the same timeline — those posts are file-shipped
- * content with no DB row so the RPC can't see them. We do the merge
- * client-side, scoped to each page's time window so the combined list
- * stays monotonically DESC across pages (Codex P2 fix on the original
- * PR #80 review).
+ * content with no DB row so the RPC can't see them. We compute the same
+ * Phase 1 score for EN items client-side and merge by score DESC so the
+ * combined list matches the server's ordering.
  *
- * Composite cursor pagination on (published_at, item_id) — same defensive
- * pattern as useFollowingFeed/useTrendingFeed. The cursor is computed
- * from the last DB row in the page; EN blog rows are static overlays
- * and don't drive pagination.
+ * Keyset pagination is now (score, item_id) lex order — Codex P1 on
+ * PR #82 flagged that the previous (published_at, item_id) cursor
+ * silently dropped rows whose recency disagreed with the score order.
+ * The hook stores the last DB row's `score` and passes it back as
+ * p_cursor_score for the next page.
  */
 
 export type FeedTimelineItem =
@@ -32,6 +32,7 @@ export type FeedTimelineItem =
       type: "match";
       cursor_id: string;
       published_at: string;
+      score: number;
     } & FeedMatch)
   | {
       type: "blog";
@@ -43,6 +44,7 @@ export type FeedTimelineItem =
       cover_image_url: string | null;
       category: string | null;
       published_at: string;
+      score: number;
       lang: "vi" | "en";
     }
   | {
@@ -55,10 +57,11 @@ export type FeedTimelineItem =
       duration_seconds: number | null;
       video_type: "short" | "long";
       published_at: string;
+      score: number;
     };
 
 export interface FeedTimelineCursor {
-  published_at: string;
+  score: number;
   item_id: string;
 }
 
@@ -66,6 +69,7 @@ interface RpcRow {
   item_type: string;
   item_id: string;
   published_at: string;
+  score: number;
   // match-specific
   slug: string | null;
   format: string | null;
@@ -95,6 +99,13 @@ interface RpcRow {
 const PAGE_SIZE = 20;
 const WINDOW_DAYS = 30;
 
+// Phase 1 scoring constants — kept here in sync with the SQL function
+// body in supabase/migrations/20260515100000_feed_timeline_scored.sql.
+// EN blog rows have no DB engagement signals, so client-side scoring
+// reduces to recency_decay + type_bonus.
+const HALF_LIFE_HOURS = 48;
+const BLOG_TYPE_BONUS = 1.0;
+
 export function useFeedTimeline() {
   const { user } = useAuth();
 
@@ -105,7 +116,7 @@ export function useFeedTimeline() {
     queryFn: async ({ pageParam }) => {
       const { data, error } = await supabase.rpc("get_feed_timeline", {
         p_limit: PAGE_SIZE,
-        p_cursor_published_at: pageParam?.published_at ?? null,
+        p_cursor_score: pageParam?.score ?? null,
         p_cursor_item_id: pageParam?.item_id ?? null,
         p_viewer_id: user?.id ?? null,
       });
@@ -114,64 +125,46 @@ export function useFeedTimeline() {
         .map(normalizeRow)
         .filter((item): item is FeedTimelineItem => item != null);
 
-      // TODO (Phase 2) — same-author diversity pass. Once the score-based
-      // sort (migration 20260515100000) is in production we may see the
-      // same author/organization streak when several of their items land
-      // in a tight score band. Author key resolution is messy though
-      // (matches have 2–4 participants; pro tour rows have ghost players;
-      // videos expose organization_id but it's not in the RPC return
-      // shape today). Skipping for Phase 1 — revisit if the feed looks
-      // visually repetitive after a couple of weeks of real traffic.
-
-      // Merge static EN blog metadata into the SAME chronological window
-      // that this page covers. Codex P2 (PR #80 review): doing a single
-      // first-page merge breaks monotonic DESC order when the DB has
-      // more than one page — e.g. an EN post older than page 1's 20th
-      // DB row would still render on page 1, then page 2 would pull
-      // newer DB rows that appear visually below it.
-      //
-      // Fix: bound EN injection by the page's actual time range:
-      //   - upper  = pageParam.published_at (exclusive), or +∞ on page 1
-      //   - lower  = last DB row's published_at this page (exclusive),
-      //              or -∞ on the final page so any remaining EN posts
-      //              get flushed.
-      //
-      // Strict bounds mirror the RPC's cursor semantics (m.played_at <
-      // p_cursor_published_at). EN published dates are date-only midnight
-      // UTC so collisions with DB timestamps are essentially impossible.
-      const upperExclusive = pageParam?.published_at ?? null;
+      // Merge static EN blog metadata into the SAME score window the
+      // server returned for this page. Codex P2 (PR #80 review) needed
+      // a windowed merge for chronological order; the score-based
+      // version of the same fix is: only fold in EN items whose
+      // client-computed score falls between the score of the previous
+      // page's last row (exclusive upper) and the score of this page's
+      // last DB row (exclusive lower, or unbounded on the final page).
+      const upperExclusive = pageParam?.score ?? null;
       const isFinalPage = dbItems.length < PAGE_SIZE;
       const lastDbInPage = dbItems[dbItems.length - 1];
       const lowerExclusive = isFinalPage
         ? null
-        : lastDbInPage?.published_at ?? null;
+        : lastDbInPage?.score ?? null;
 
       const enItems = buildEnBlogItems().filter((item) => {
-        if (upperExclusive != null && item.published_at >= upperExclusive) {
+        if (upperExclusive != null && item.score >= upperExclusive) {
           return false;
         }
-        if (lowerExclusive != null && item.published_at <= lowerExclusive) {
+        if (lowerExclusive != null && item.score <= lowerExclusive) {
           return false;
         }
         return true;
       });
 
       if (enItems.length === 0) return dbItems;
-      return [...dbItems, ...enItems].sort(byPublishedDesc);
+      // Merge by score DESC (server ORDER BY) so EN cards interleave
+      // with DB cards at their correct ranking position rather than
+      // being dumped at the bottom.
+      return [...dbItems, ...enItems].sort(byScoreDesc);
     },
     getNextPageParam: (lastPage): FeedTimelineCursor | undefined => {
-      // Use the cursor from the last item that has a real RPC origin
-      // (i.e. type=match | type=video | type=blog with lang='vi'). EN
-      // blog rows are static overlays and shouldn't drive pagination.
+      // Cursor advances from the last DB row in the page. EN blog rows
+      // are static overlays — using them as the cursor would skip DB
+      // rows that fall between two EN scores. DB items only.
       const lastDb = [...lastPage].reverse().find(isDbItem);
       if (!lastDb) return undefined;
-      // We need a full page to keep paging. Count DB items only — if
-      // the underlying RPC returned fewer than PAGE_SIZE rows, there's
-      // nothing left server-side.
       const dbCount = lastPage.filter(isDbItem).length;
       if (dbCount < PAGE_SIZE) return undefined;
       return {
-        published_at: lastDb.published_at,
+        score: lastDb.score,
         item_id: lastDb.cursor_id,
       };
     },
@@ -184,13 +177,12 @@ function isDbItem(item: FeedTimelineItem): boolean {
   return item.type === "blog" && item.lang === "vi";
 }
 
-function byPublishedDesc(a: FeedTimelineItem, b: FeedTimelineItem): number {
-  if (a.published_at === b.published_at) {
-    // Stable secondary sort by cursor_id so two items sharing a timestamp
-    // don't shuffle between renders. Matches the RPC's tiebreaker.
+function byScoreDesc(a: FeedTimelineItem, b: FeedTimelineItem): number {
+  if (a.score === b.score) {
+    // Match the SQL tiebreaker — item_id DESC. Stable across renders.
     return a.cursor_id < b.cursor_id ? 1 : -1;
   }
-  return a.published_at < b.published_at ? 1 : -1;
+  return a.score < b.score ? 1 : -1;
 }
 
 function normalizeRow(row: RpcRow): FeedTimelineItem | null {
@@ -199,6 +191,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       type: "match",
       cursor_id: row.item_id,
       published_at: row.published_at,
+      score: row.score,
       match_id: row.item_id,
       slug: row.slug ?? "",
       played_at: row.published_at,
@@ -233,6 +226,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       cover_image_url: row.cover_image_url,
       category: row.category,
       published_at: row.published_at,
+      score: row.score,
       lang: "vi",
     };
   }
@@ -252,6 +246,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       duration_seconds: row.duration_seconds,
       video_type: videoType,
       published_at: row.published_at,
+      score: row.score,
     };
   }
   return null;
@@ -260,9 +255,10 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
 /**
  * Build FeedTimelineItem rows for EN blog posts that fall inside the
  * timeline window. publishedDate is a date-only string ("YYYY-MM-DD") in
- * the metadata file — we treat it as midnight UTC, then convert to an ISO
- * timestamp so the merged sort lines up with RPC rows. A blog whose date
- * is older than WINDOW_DAYS or in the future is dropped.
+ * the metadata file — we treat it as midnight UTC, then convert to an
+ * ISO timestamp + compute the Phase 1 score (recency_decay + 1.0 type
+ * bonus, no engagement signals) so the merged sort lines up with what
+ * the SQL function would have produced if the row lived in vi_blog_posts.
  */
 function buildEnBlogItems(): FeedTimelineItem[] {
   const now = Date.now();
@@ -273,6 +269,9 @@ function buildEnBlogItems(): FeedTimelineItem[] {
       if (Number.isNaN(ts)) return null;
       if (ts < windowStartMs || ts > now) return null;
       const publishedAt = new Date(ts).toISOString();
+      const ageHours = (now - ts) / (1000 * 60 * 60);
+      const recencyDecay = Math.exp(-ageHours / HALF_LIFE_HOURS);
+      const score = recencyDecay + BLOG_TYPE_BONUS;
       const item: FeedTimelineItem = {
         type: "blog",
         // Synthetic cursor id so the static row has a stable React key
@@ -285,6 +284,7 @@ function buildEnBlogItems(): FeedTimelineItem[] {
         cover_image_url: post.heroImage?.src ?? null,
         category: null,
         published_at: publishedAt,
+        score,
         lang: "en",
       };
       return item;

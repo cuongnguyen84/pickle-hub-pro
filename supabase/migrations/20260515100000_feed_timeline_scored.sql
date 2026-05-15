@@ -18,11 +18,11 @@
 --   engagement_score = kudos_count*1.0 + comment_count*5.0   (matches only;
 --                      blog/video set to 0 → collapses to 1)
 --   age_hours        = EXTRACT(EPOCH FROM (NOW() - published_at)) / 3600.0
---   type_bonus       = source_provider='ppa_tour' → 2.0
+--   type_bonus       = source_provider='ppa_tour'  → 2.0
 --                      source_provider='community' → 0.5
---                      item_type='blog'           → 1.0
---                      item_type='video'          → 1.0
---                      everything else            → 0
+--                      item_type='blog'            → 1.0
+--                      item_type='video'           → 1.0
+--                      everything else             → 0
 --
 -- Constants are hardcoded. We'll promote them to function parameters if
 -- tuning becomes a frequent need; for now a single follow-up migration
@@ -54,26 +54,47 @@
 -- community match with healthy engagement score about the same — that's
 -- the curve we want. Engagement can overtake recency around the 24h mark.
 --
--- Cursor consistency caveat
--- -------------------------
--- The outer query ORDER BY uses the score, but cursor pagination still
--- filters on (published_at, item_id) — DO NOT switch the cursor to score,
--- because score changes over time as recency decays, which would make
--- pagination non-idempotent across pages. The trade-off is that
--- "page 2" becomes "older content scrolled down by time", not "next 20
--- by score". For Phase 1 this is acceptable: the top of page 1 still
--- reflects the score, and users scrolling further naturally drop into
--- older material.
+-- Cursor pagination (score-based)
+-- -------------------------------
+-- Codex P1 on the original draft: pure ORDER BY score with a cursor on
+-- (published_at, item_id) silently drops rows whose published_at is
+-- newer than the last row of the previous page but whose score didn't
+-- make page 1. Keyset pagination has to track the ORDER BY keys.
 --
--- IDEMPOTENT — CREATE OR REPLACE FUNCTION. Signature + return shape are
--- unchanged from 20260514120000 so no type regen is needed; the hook in
--- src/hooks/social/useFeedTimeline.ts continues to compile against the
--- existing Supabase types.
+-- Fix: cursor is now (score, item_id) lexicographic, and the function
+-- exposes the computed `score` in the return shape so the client can
+-- pass the last row's value back as p_cursor_score for the next page.
+--
+-- Drift caveat: between page 1 and page 2 a row's score shifts slightly
+-- as recency_decay advances (e.g. 2.98 at t=0 → 2.97 30 seconds later).
+-- Because the decay applies uniformly to all rows, the relative
+-- ordering is essentially preserved over a single user-session reading
+-- pace — items don't jump pages. If a fresh item gets ingested between
+-- fetches it WILL be missed (it would only fit on page 1, which has
+-- already been rendered). For Phase 1 this is acceptable; same trade-off
+-- live feeds like X/FB make. Refresh-from-top remedies any drift.
+--
+-- Signature changes vs migration 20260514120000:
+--   * p_cursor_published_at TIMESTAMPTZ → p_cursor_score DOUBLE PRECISION
+--   * RETURNS TABLE gains `score DOUBLE PRECISION` (so the client has a
+--     cursor value to send back). All other columns unchanged.
+--
+-- IDEMPOTENT — DROP guards for both the pre-Phase-1 and post-Phase-1
+-- signatures so re-running the migration is safe.
 -- ============================================================================
+
+-- Pre-Phase-1 signature (TIMESTAMPTZ cursor) from migration 20260514120000.
+DROP FUNCTION IF EXISTS public.get_feed_timeline(
+  INTEGER, TIMESTAMPTZ, UUID, UUID
+);
+-- Phase-1 signature (DOUBLE PRECISION cursor) — for re-application.
+DROP FUNCTION IF EXISTS public.get_feed_timeline(
+  INTEGER, DOUBLE PRECISION, UUID, UUID
+);
 
 CREATE OR REPLACE FUNCTION public.get_feed_timeline(
   p_limit                  INTEGER DEFAULT 20,
-  p_cursor_published_at    TIMESTAMPTZ DEFAULT NULL,
+  p_cursor_score           DOUBLE PRECISION DEFAULT NULL,
   p_cursor_item_id         UUID DEFAULT NULL,
   p_viewer_id              UUID DEFAULT NULL
 )
@@ -81,6 +102,7 @@ RETURNS TABLE (
   item_type            TEXT,
   item_id              UUID,
   published_at         TIMESTAMPTZ,
+  score                DOUBLE PRECISION,
   -- match-specific (NULL when item_type <> 'match')
   slug                 TEXT,
   format               TEXT,
@@ -110,9 +132,6 @@ LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = public
 AS $$
   WITH
-  -- 30-day rolling window applied uniformly so each branch only scans a
-  -- bounded slice. Tunable: bump to 60 if the feed starts feeling sparse
-  -- after blog/video cadence settles.
   window_start AS (
     SELECT NOW() - INTERVAL '30 days' AS ts
   ),
@@ -244,17 +263,49 @@ AS $$
       AND vid.published_at IS NOT NULL
       AND vid.published_at >= (SELECT ts FROM window_start)
   ),
-  all_rows AS (
-    SELECT * FROM match_rows
-    UNION ALL
-    SELECT * FROM blog_rows
-    UNION ALL
-    SELECT * FROM video_rows
+  -- Materialize the score per row so the outer cursor filter and ORDER
+  -- BY agree on a single numeric key, and so the client receives the
+  -- value to pass back as p_cursor_score for the next page.
+  scored_rows AS (
+    SELECT
+      *,
+      (
+        EXP(
+          -EXTRACT(EPOCH FROM (NOW() - published_at)) / 3600.0 / 48.0
+        )
+        * (
+            1.0
+            + LN(
+                1.0
+                + COALESCE(kudos_count, 0) * 1.0
+                + COALESCE(comment_count, 0) * 5.0
+              )
+          )
+        + CASE item_type
+            WHEN 'match' THEN
+              CASE source_provider
+                WHEN 'ppa_tour'  THEN 2.0
+                WHEN 'community' THEN 0.5
+                ELSE 0.0
+              END
+            WHEN 'blog'  THEN 1.0
+            WHEN 'video' THEN 1.0
+            ELSE 0.0
+          END
+      )::DOUBLE PRECISION AS _score
+    FROM (
+      SELECT * FROM match_rows
+      UNION ALL
+      SELECT * FROM blog_rows
+      UNION ALL
+      SELECT * FROM video_rows
+    ) unioned
   )
   SELECT
     item_type,
     item_id,
     published_at,
+    _score AS score,
     slug,
     format,
     match_type,
@@ -277,54 +328,25 @@ AS $$
     cover_image_url,
     category,
     duration_seconds
-  FROM all_rows
+  FROM scored_rows
+  -- Keyset pagination on (score, item_id) — matches the ORDER BY below.
+  -- The earlier (published_at, item_id) cursor silently dropped rows
+  -- whose recency disagreed with the score order (Codex P1, PR #82).
   WHERE (
-    p_cursor_published_at IS NULL
-    OR all_rows.published_at < p_cursor_published_at
+    p_cursor_score IS NULL
+    OR _score < p_cursor_score
     OR (
-      all_rows.published_at = p_cursor_published_at
+      _score = p_cursor_score
       AND p_cursor_item_id IS NOT NULL
-      AND all_rows.item_id < p_cursor_item_id
+      AND item_id < p_cursor_item_id
     )
   )
-  ORDER BY
-    -- Phase 1 score. Computed inline so we don't materialize an extra
-    -- column into the function return shape. PostgreSQL evaluates the
-    -- expression per row once for ORDER BY; the inner CTEs are already
-    -- bounded by the 30-day window so the row count stays in the low
-    -- thousands at worst.
-    (
-      EXP(
-        -EXTRACT(EPOCH FROM (NOW() - all_rows.published_at)) / 3600.0 / 48.0
-      )
-      * (
-          1.0
-          + LN(
-              1.0
-              + COALESCE(all_rows.kudos_count, 0) * 1.0
-              + COALESCE(all_rows.comment_count, 0) * 5.0
-            )
-        )
-      + CASE all_rows.item_type
-          WHEN 'match' THEN
-            CASE all_rows.source_provider
-              WHEN 'ppa_tour'  THEN 2.0
-              WHEN 'community' THEN 0.5
-              ELSE 0.0
-            END
-          WHEN 'blog'  THEN 1.0
-          WHEN 'video' THEN 1.0
-          ELSE 0.0
-        END
-    ) DESC,
-    -- Recency tiebreaker — matters when two items in the same content
-    -- bucket have nearly identical scores (e.g. two fresh pro tour
-    -- matches an hour apart with zero engagement).
-    all_rows.published_at DESC,
-    -- Final tiebreaker — UUIDs sort stably so the result set is
-    -- deterministic for snapshot diffs / pagination boundaries.
-    all_rows.item_id DESC
+  ORDER BY _score DESC, item_id DESC
   LIMIT GREATEST(LEAST(p_limit, 100), 1);
 $$;
+
+GRANT EXECUTE ON FUNCTION public.get_feed_timeline(
+  INTEGER, DOUBLE PRECISION, UUID, UUID
+) TO anon, authenticated;
 
 NOTIFY pgrst, 'reload schema';
