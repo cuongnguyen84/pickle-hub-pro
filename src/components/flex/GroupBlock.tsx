@@ -46,25 +46,29 @@ const tableCellStyle: React.CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 };
 
-// shadcn TabsList: flatten the rounded pill bg, replace with token border-bottom + flex.
+// shadcn TabsList base: 'inline-flex h-10 items-center justify-center rounded-md bg-muted p-1
+// text-muted-foreground'. We need to NUKE the pill bg + rounded + padding via !important
+// because tailwind-merge isn't reliably overriding the arbitrary-variant utilities here.
 const tlTabsListClass =
-  'flex w-full h-auto p-0 bg-transparent border-b border-[var(--tl-border)] rounded-none gap-2';
+  'flex w-full !h-auto !p-0 !bg-transparent !border-b !border-[var(--tl-border)] !rounded-none gap-2';
 
-// shadcn TabsTrigger: kill rounded shadow pill, add green underline on active state.
-// Uses data-[state=active] which shadcn TabsTrigger exposes via Radix.
+// shadcn TabsTrigger base: 'rounded-sm px-3 py-1.5 text-sm font-medium
+// data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm'.
+// We replace with mono-caps text + green underline active state. ! prefix forces override of
+// the shadcn data-[state=active]:bg-background pill and the active shadow.
 const tlTabsTriggerClass = [
   'flex-1 inline-flex items-center justify-center gap-1.5',
-  'px-3 pt-2 pb-2.5',
-  'text-[11px] font-medium tracking-[0.06em] uppercase',
+  '!px-3 !py-2',
+  '!text-[11px] !font-medium tracking-[0.06em] uppercase',
   'font-[family-name:Geist_Mono,ui-monospace,monospace]',
-  'text-[var(--tl-fg-3)] bg-transparent rounded-none shadow-none border-0',
+  '!text-[var(--tl-fg-3)] !bg-transparent !rounded-none !shadow-none',
   'border-b-2 border-transparent',
-  'data-[state=active]:text-[var(--tl-fg)]',
-  'data-[state=active]:border-[var(--tl-green)]',
-  'data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+  'data-[state=active]:!text-[var(--tl-fg)]',
+  'data-[state=active]:!border-[var(--tl-green)]',
+  'data-[state=active]:!bg-transparent data-[state=active]:!shadow-none',
   'transition-colors',
   // subtle hover for inactive
-  'hover:text-[var(--tl-fg-2)]',
+  'hover:!text-[var(--tl-fg-2)]',
 ].join(' ');
 
 // Body row hover — applied via inline event handlers since native <tr> + token bg.
