@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useI18n } from '@/i18n';
-import { MainLayout } from '@/components/layout';
-import { DynamicMeta } from '@/components/seo';
+import { TheLineLayout } from '@/components/layout';
 import { useFlexTournament, type FlexTournamentData } from '@/hooks/useFlexTournament';
 import { useFlexRealtime } from '@/hooks/useFlexRealtime';
 import { useAuth } from '@/hooks/useAuth';
@@ -111,17 +110,17 @@ const FlexTournamentView = () => {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Flex Tournament" noindex={true} active="lab">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (!data) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Flex Tournament" noindex={true} active="lab">
         <div className="container-wide py-8 text-center">
           <h1 className="text-2xl font-bold mb-4">{t.common.error}</h1>
           <p className="text-muted-foreground mb-6">Tournament not found</p>
@@ -129,7 +128,7 @@ const FlexTournamentView = () => {
             <Link to="/tools/flex-tournament">{t.tools.flexTournament.myTournaments}</Link>
           </Button>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -138,13 +137,7 @@ const FlexTournamentView = () => {
   const seoDescription = `${language === 'vi' ? 'Xem bracket và kết quả trực tiếp của giải đấu' : 'View bracket and live results for'} ${data.tournament.name}. ${data.players.length} ${language === 'vi' ? 'VĐV' : 'players'}, ${data.matches.length} ${language === 'vi' ? 'trận đấu' : 'matches'}.`;
 
   return (
-    <MainLayout>
-      <DynamicMeta 
-        title={seoTitle}
-        description={seoDescription}
-        url={`https://www.thepicklehub.net/tools/flex-tournament/${shareId}`}
-        noindex={true}
-      />
+    <TheLineLayout title={seoTitle} description={seoDescription} noindex={true} active="lab">
       <div className="container-wide py-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -247,7 +240,7 @@ const FlexTournamentView = () => {
           onRefresh={loadData}
         />
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

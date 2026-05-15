@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { MainLayout } from '@/components/layout';
+import { TheLineLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DynamicMeta } from '@/components/seo';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -381,7 +380,7 @@ export default function TeamMatchView() {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Team Match" noindex={true} active="lab">
         <div className="container max-w-4xl py-6 space-y-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10" />
@@ -392,13 +391,13 @@ export default function TeamMatchView() {
           </div>
           <Skeleton className="h-64 w-full" />
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (error || !tournament) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Team Match" noindex={true} active="lab">
         <div className="container max-w-4xl py-12 text-center">
           <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <h1 className="text-2xl font-bold mb-2">{t.teamMatch.view.notFound}</h1>
@@ -410,17 +409,12 @@ export default function TeamMatchView() {
             {t.teamMatch.view.backToList}
           </Button>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <DynamicMeta 
-        title={`${tournament.name} | Team Match`}
-        description={`${tournament.name} – Team Match Pickleball`}
-        noindex={true}
-      />
+    <TheLineLayout title={`${tournament.name} | Team Match`} description={`${tournament.name} – Team Match Pickleball`} noindex={true} active="lab">
       <div className="container max-w-4xl py-6 space-y-6">
         {/* Sticky Header with Settings */}
         <div className="sticky top-14 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 py-3 border-b md:relative md:top-0 md:border-b-0 md:py-0 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none">
@@ -764,6 +758,6 @@ export default function TeamMatchView() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 }

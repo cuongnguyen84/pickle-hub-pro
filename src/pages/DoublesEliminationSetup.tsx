@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
-import { DynamicMeta } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -219,22 +218,17 @@ export default function DoublesEliminationSetup() {
 
   if (!user) {
     return (
-      <MainLayout>
+      <TheLineLayout title={t.doublesElimination.setup.title} noindex={true} active="lab">
         <div className="container max-w-2xl mx-auto py-12 text-center">
           <h2 className="text-xl font-semibold mb-4">{t.doublesElimination.loginRequired}</h2>
           <Button onClick={() => navigate(getLoginUrl('/tools/doubles-elimination/new'))}>{t.auth.login}</Button>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <DynamicMeta 
-        title={t.doublesElimination.setup.title}
-        description={t.doublesElimination.description}
-        noindex={true}
-      />
+    <TheLineLayout title={t.doublesElimination.setup.title} description={t.doublesElimination.description} noindex={true} active="lab">
       
       <div className="container max-w-3xl mx-auto py-6 px-4">
         <Button 
@@ -623,6 +617,6 @@ export default function DoublesEliminationSetup() {
           </Card>
         )}
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 }

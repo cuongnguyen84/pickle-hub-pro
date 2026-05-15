@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MainLayout } from '@/components/layout';
+import { TheLineLayout } from '@/components/layout';
 import { useI18n } from '@/i18n';
 import { useParentTournament, type ParentTournament } from '@/hooks/useParentTournament';
 import type { QuickTable } from '@/hooks/useQuickTable';
@@ -87,17 +87,17 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
 
   if (loading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Tournament" active="lab">
         <div className="container-wide py-8">
           <div className="text-center text-foreground-muted">{t.common.loading}</div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (!parent) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Tournament" active="lab">
         <div className="container-wide py-8">
           <div className="text-center">
             <p className="text-foreground-muted mb-4">{t.quickTable.view.notFound}</p>
@@ -106,14 +106,14 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
             </Link>
           </div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   const canEdit = isOwner(parent);
 
   return (
-    <MainLayout>
+    <TheLineLayout title={parent.name} active="lab">
       <div className="container-wide py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           <Link
@@ -210,6 +210,6 @@ export default function ParentTournamentView({ shareId }: ParentTournamentViewPr
           )}
         </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 }
