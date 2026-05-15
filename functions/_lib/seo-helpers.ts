@@ -296,6 +296,12 @@ export function buildFeedJsonLd(input: FeedJsonLdInput): Record<string, unknown>
 export interface TimelineRowForSeo {
   item_type: "match" | "blog" | "video" | string;
   item_id: string;
+  /**
+   * Recency anchor — for matches this is COALESCE(verified_at, played_at).
+   * Used as the BlogPosting.datePublished and VideoObject.uploadDate;
+   * for matches we prefer match_played_at (the actual event start) when
+   * emitting SportsEvent.startDate, since that's what Google indexes.
+   */
   published_at: string;
   // match-specific
   slug?: string | null;
@@ -303,6 +309,12 @@ export interface TimelineRowForSeo {
   team_a_score?: number[] | null;
   team_b_score?: number[] | null;
   participants?: unknown;
+  /**
+   * Actual match start (literal scheduled/played time). Sprint 7
+   * follow-up — populated by get_feed_timeline only for match rows.
+   * Falls back to published_at if missing (pre-migration shapes).
+   */
+  match_played_at?: string | null;
   // blog/video shared
   title?: string | null;
   excerpt?: string | null;
@@ -373,7 +385,11 @@ function rowToSchemaItem(
       "@type": "SportsEvent",
       name: `${teamA} vs ${teamB}`,
       sport: "Pickleball",
-      startDate: row.published_at,
+      // Prefer the literal match time over the feed recency anchor for
+      // SEO — Google's SportsEvent.startDate is "when the event takes/
+      // took place", not "when we learned about it". Falls back to
+      // published_at when match_played_at is missing (pre-migration shape).
+      startDate: row.match_played_at ?? row.published_at,
       url: matchUrl,
     };
     if (row.venue_name) {

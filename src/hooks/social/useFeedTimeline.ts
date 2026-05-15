@@ -68,6 +68,10 @@ export interface FeedTimelineCursor {
 interface RpcRow {
   item_type: string;
   item_id: string;
+  /**
+   * Recency anchor — for matches this is COALESCE(verified_at, played_at)
+   * (i.e. "when this became news"). Used for sort + cursor only.
+   */
   published_at: string;
   score: number;
   // match-specific
@@ -88,6 +92,12 @@ interface RpcRow {
   tournament_name: string | null;
   tournament_event: string | null;
   round_name: string | null;
+  /**
+   * Display anchor for match cards — the literal scheduled/actual play
+   * time. NULL for blog and video rows (they use published_at for both
+   * sort and display). Sprint 7 follow-up migration 20260515120001.
+   */
+  match_played_at: string | null;
   // blog/video shared
   title: string | null;
   excerpt: string | null;
@@ -194,7 +204,12 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       score: row.score,
       match_id: row.item_id,
       slug: row.slug ?? "",
-      played_at: row.published_at,
+      // Card display uses the literal match time (match_played_at),
+      // NOT the feed recency anchor (published_at = COALESCE
+      // (verified_at, played_at)). Fall back to published_at if the
+      // RPC didn't populate match_played_at — defensive for pre-Sprint-7
+      // schemas where the column doesn't exist yet.
+      played_at: row.match_played_at ?? row.published_at,
       format: row.format ?? "",
       match_type: row.match_type ?? "",
       verification_status: row.verification_status ?? "",

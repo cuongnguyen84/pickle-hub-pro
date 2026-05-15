@@ -7,16 +7,21 @@
 //   1. profiles ghost rows (one per ScrapedPlayer external_id, INSERT ON
 //      CONFLICT DO NOTHING via the partial unique index from migration
 //      20260510160000)
-//   2. matches rows (INSERT ON CONFLICT DO NOTHING, dedupe on
-//      (source_provider, external_match_id))
+//   2. matches rows — first scrape INSERTs, subsequent scrapes that
+//      change a pending row's resolution UPDATE in place (Sprint 7
+//      reconcile path). Dedupe on (source_provider, external_match_id).
 //   3. match_participants rows (one per player on each match, position
 //      derived from team order)
 //   4. pro_tour_ingestion_logs row tracking matches_imported,
-//      players_created, players_matched, duration_ms
+//      matches_resolved, players_created, players_matched, duration_ms
 //
 // Idempotent: re-ingesting the same TournamentScrapeResult is a no-op for
-// matches that already exist + zero-create for players that already exist.
-// players_matched counts the latter.
+// matches that already exist + are already verified. Pending matches that
+// have since acquired a winner via a re-scrape get UPDATEd in place with
+// scores + verification_status='verified' + verified_at=NOW(). The
+// verified_at signal feeds get_feed_timeline so a freshly-resolved match
+// surfaces at the top of /feed instead of sinking back to its scheduled
+// played_at slot.
 //
 // Auth: service_role key required (the Worker is the only legitimate
 // caller; admin UI hits the Worker, not this directly). verify_jwt is
@@ -44,6 +49,7 @@ interface IngestRequestBody {
 interface IngestResponse {
   log_id: string;
   matches_imported: number;
+  matches_resolved: number;
   players_created: number;
   players_matched: number;
 }
@@ -125,7 +131,7 @@ Deno.serve(async (req) => {
     const { players_created, players_matched, externalIdToProfileId } =
       await reconcilePlayers(supabase, body.scrape_result.source_provider, body.scrape_result.players);
 
-    const matches_imported = await reconcileMatches(
+    const { matches_imported, matches_resolved } = await reconcileMatches(
       supabase,
       body.scrape_result,
       externalIdToProfileId,
@@ -136,6 +142,10 @@ Deno.serve(async (req) => {
       .update({
         status: "success",
         matches_imported,
+        // matches_resolved is a Sprint 7 addition; if the logs table
+        // doesn't have the column yet the UPDATE silently drops it.
+        // Once a follow-up migration adds the column the count surfaces.
+        matches_resolved,
         players_created,
         players_matched,
         duration_ms: Date.now() - startMs + (body.duration_ms ?? 0),
@@ -146,6 +156,7 @@ Deno.serve(async (req) => {
     const result: IngestResponse = {
       log_id,
       matches_imported,
+      matches_resolved,
       players_created,
       players_matched,
     };
@@ -260,39 +271,124 @@ async function reconcilePlayers(
 
 /* ─── Match reconciliation ──────────────────────────────────────────── */
 
+interface ReconcileSummary {
+  matches_imported: number;
+  matches_resolved: number;
+}
+
 async function reconcileMatches(
   supabase: ReturnType<typeof createClient>,
   scrape: TournamentScrapeResult,
   externalIdToProfileId: Map<string, string>,
-): Promise<number> {
-  if (scrape.matches.length === 0) return 0;
+): Promise<ReconcileSummary> {
+  if (scrape.matches.length === 0) {
+    return { matches_imported: 0, matches_resolved: 0 };
+  }
 
-  // Bulk-check which matches already exist so we skip them cleanly.
+  // Bulk-fetch existing rows so we can decide INSERT vs UPDATE for each.
+  // The select pulls the verification_status + winning_team so we can
+  // detect "still pending in DB, has winner in scrape" → flip path.
   const externalIds = scrape.matches.map((m) => m.external_match_id);
   const { data: existing, error } = await supabase
     .from("matches")
-    .select("external_match_id")
+    .select("id, external_match_id, verification_status, winning_team")
     .eq("source_provider", scrape.source_provider)
     .in("external_match_id", externalIds);
   if (error) throw new Error(`Match lookup: ${error.message}`);
 
-  const existingSet = new Set(
-    (existing ?? []).map((r) => r.external_match_id as string),
-  );
-
-  let imported = 0;
-  for (const match of scrape.matches) {
-    if (existingSet.has(match.external_match_id)) continue;
-
-    const inserted = await insertMatchWithParticipants(
-      supabase,
-      scrape,
-      match,
-      externalIdToProfileId,
-    );
-    if (inserted) imported += 1;
+  const existingByExt = new Map<
+    string,
+    { id: string; verification_status: string; winning_team: string | null }
+  >();
+  for (const row of existing ?? []) {
+    existingByExt.set(row.external_match_id as string, {
+      id: row.id as string,
+      verification_status: (row.verification_status as string) ?? "pending",
+      winning_team: (row.winning_team as string | null) ?? null,
+    });
   }
-  return imported;
+
+  let matches_imported = 0;
+  let matches_resolved = 0;
+  for (const match of scrape.matches) {
+    const prior = existingByExt.get(match.external_match_id);
+    if (!prior) {
+      const inserted = await insertMatchWithParticipants(
+        supabase,
+        scrape,
+        match,
+        externalIdToProfileId,
+      );
+      if (inserted) matches_imported += 1;
+      continue;
+    }
+
+    // Existing row. Skip unless the scrape has new info we want to
+    // adopt — specifically the pending→verified flip. Already-verified
+    // rows are never overwritten so an admin's manual correction can't
+    // be clobbered by a re-scrape.
+    const winning_team = scrapeWinnerToTeam(match.winner_team);
+    const isFlipCandidate =
+      prior.verification_status === "pending" && winning_team !== null;
+    if (!isFlipCandidate) continue;
+
+    const flipped = await flipMatchToVerified(supabase, prior.id, match, winning_team);
+    if (flipped) matches_resolved += 1;
+  }
+  return { matches_imported, matches_resolved };
+}
+
+function scrapeWinnerToTeam(
+  winner: "one" | "two" | null | undefined,
+): "a" | "b" | null {
+  if (winner === "one") return "a";
+  if (winner === "two") return "b";
+  return null;
+}
+
+/**
+ * pending → verified flip. Updates only the fields that can legitimately
+ * change between an "announced bracket slot" and a "completed result":
+ * scores, winning_team, verification_status, round/court refinements,
+ * played_at if the bracket revised it, and the new `verified_at` anchor.
+ *
+ * verified_at is set to NOW() — it represents the moment ThePickleHub
+ * learned the result, not the match's actual start time. The /feed RPC
+ * uses COALESCE(verified_at, played_at) as the recency anchor so a
+ * freshly-flipped match surfaces at the top, while the card UI still
+ * shows played_at as the displayed match time.
+ *
+ * We intentionally do NOT set verified_at on the INSERT path above:
+ * matches scraped fresh with results already present could be a
+ * retroactive import of a months-old tournament, in which case dating
+ * the feed by scrape time would mis-surface ancient matches as "fresh
+ * news". COALESCE falls back to played_at for those, which is correct.
+ */
+async function flipMatchToVerified(
+  supabase: ReturnType<typeof createClient>,
+  match_id: string,
+  match: ScrapedMatch,
+  winning_team: "a" | "b",
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("matches")
+    .update({
+      team_a_score: match.scores_team_one,
+      team_b_score: match.scores_team_two,
+      winning_team,
+      verification_status: "verified",
+      played_at: match.played_at ?? undefined,
+      court_number: match.court ?? undefined,
+      round_name: match.round_name ?? undefined,
+      verified_at: new Date().toISOString(),
+    })
+    .eq("id", match_id);
+  if (error) {
+    throw new Error(
+      `Flip match ${match_id} to verified failed: ${error.message}`,
+    );
+  }
+  return true;
 }
 
 async function insertMatchWithParticipants(
@@ -323,8 +419,7 @@ async function insertMatchWithParticipants(
   // Singles distinction (mixed handling deferred Sprint 7).
   const format = teamAIds.length === 1 ? "singles" : "doubles";
   const slug = `${scrape.source_provider}-${match.external_match_id}`.toLowerCase();
-  const winning_team =
-    match.winner_team === "one" ? "a" : match.winner_team === "two" ? "b" : null;
+  const winning_team = scrapeWinnerToTeam(match.winner_team);
 
   const { data: matchRow, error: matchErr } = await supabase
     .from("matches")
@@ -349,6 +444,10 @@ async function insertMatchWithParticipants(
       tournament_event: scrape.tournament_event,
       round_name: match.round_name,
       court_number: match.court,
+      // verified_at intentionally NULL on first insert — see
+      // flipMatchToVerified() docblock for the rationale. COALESCE in
+      // get_feed_timeline falls back to played_at so retroactively
+      // imported completed matches don't claim "fresh news" status.
     })
     .select("id")
     .single();

@@ -4430,6 +4430,7 @@ export type Database = {
           tournament_name: string | null
           tournament_event: string | null
           round_name: string | null
+          match_played_at: string | null
           title: string | null
           excerpt: string | null
           cover_image_url: string | null
