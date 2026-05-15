@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState, useCallback, useRef, FormEvent } from "react";
+import { ReactNode, useEffect, useState, useCallback, useRef, useMemo, FormEvent } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
@@ -97,6 +97,12 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const navigate = useNavigate();
   const location = useLocation();
   usePresenceHeartbeat();
+  const canonicalUrl = useMemo(() => {
+    if (typeof window === "undefined") {
+      return `https://www.thepicklehub.net${location.pathname}`;
+    }
+    return `${window.location.origin}${location.pathname}`;
+  }, [location.pathname]);
   // PR63 — universal back button. iOS users in the Capacitor wrapper
   // don't have a browser back gesture by default (true edge-swipe
   // requires an AppDelegate.swift edit — see capacitor.config.ts
@@ -289,7 +295,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
   return (
     <div className="tl-root">
-      <DynamicMeta title={title} description={description} noindex={noindex} url={`${window.location.origin}${location.pathname}`} />
+      <DynamicMeta title={title} description={description} noindex={noindex} url={canonicalUrl} />
 
       <div className="tl-scroll">
       <nav className="tl-nav">

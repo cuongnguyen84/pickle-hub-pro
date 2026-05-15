@@ -25,7 +25,7 @@ export const DynamicMeta = ({
 }: DynamicMetaProps) => {
   const { language } = useI18n();
   // Strip trailing slash for canonical consistency (except root "/")
-  const rawUrl = url || window.location.href;
+  const rawUrl = url || (typeof window !== "undefined" ? window.location.href : "https://www.thepicklehub.net");
   const currentUrl = rawUrl.endsWith("/") && rawUrl.length > 1
     ? rawUrl.replace(/\/+$/, "")
     : rawUrl;
