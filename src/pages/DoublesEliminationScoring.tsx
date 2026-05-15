@@ -1,15 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useDoublesElimination } from "@/hooks/useDoublesElimination";
+import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Minus, Plus, RotateCcw, Check, Trophy } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Minus, Plus, RotateCcw, Check, Trophy } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,13 +58,19 @@ interface TournamentData {
   creator_user_id: string;
 }
 
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+  padding: 24,
+};
+
 // Helper to propagate winner to next round
 async function propagateWinnerToNextRound(
   match: MatchData,
   winnerId: string,
-  tournamentId: string
+  tournamentId: string,
 ) {
-  // For R3 matches, find R4 match slot to fill
   if (match.round_number === 3) {
     const { data: r4Matches } = await supabase
       .from('doubles_elimination_matches')
@@ -75,7 +78,7 @@ async function propagateWinnerToNextRound(
       .eq('tournament_id', tournamentId)
       .eq('round_number', 4)
       .order('match_number', { ascending: true });
-    
+
     if (r4Matches) {
       for (const r4Match of r4Matches) {
         if (!r4Match.team_a_id) {
@@ -94,9 +97,7 @@ async function propagateWinnerToNextRound(
         }
       }
     }
-  }
-  // For R4+ matches, follow bracket position
-  else if (match.round_number >= 4) {
+  } else if (match.round_number >= 4) {
     const nextRound = match.round_number + 1;
     const { data: nextRoundMatches } = await supabase
       .from('doubles_elimination_matches')
@@ -105,12 +106,12 @@ async function propagateWinnerToNextRound(
       .eq('round_number', nextRound)
       .neq('round_type', 'third_place')
       .order('match_number', { ascending: true });
-    
+
     if (nextRoundMatches && nextRoundMatches.length > 0) {
       const matchIndex = match.match_number - 1;
       const nextMatchIndex = Math.floor(matchIndex / 2);
       const slot = matchIndex % 2;
-      
+
       const targetMatch = nextRoundMatches[nextMatchIndex];
       if (targetMatch) {
         const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
@@ -128,6 +129,7 @@ export default function DoublesEliminationScoring() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { language } = useI18n();
   const { checkAndAssignR3, checkAndGeneratePlayoff } = useDoublesElimination();
 
   const [match, setMatch] = useState<MatchData | null>(null);
@@ -137,13 +139,77 @@ export default function DoublesEliminationScoring() {
   const [loading, setLoading] = useState(true);
   const [canEdit, setCanEdit] = useState(false);
 
-  // Local scores for current game
   const [localScoreA, setLocalScoreA] = useState(0);
   const [localScoreB, setLocalScoreB] = useState(0);
   const [currentGameNumber, setCurrentGameNumber] = useState(1);
 
   const [showEndDialog, setShowEndDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
+
+  // ─── Bilingual short strings (inline ternary, matching PR A pattern) ─────
+  const lang = language;
+  const tx = {
+    loading: lang === 'vi' ? 'Đang tải…' : 'Loading…',
+    notFound: lang === 'vi' ? 'Không tìm thấy trận đấu' : 'Match not found',
+    goBack: lang === 'vi' ? 'Quay lại' : 'Go back',
+    loadError: lang === 'vi' ? 'Lỗi tải dữ liệu trận đấu' : 'Failed to load match data',
+    resetSuccess: lang === 'vi' ? 'Đã reset điểm' : 'Score reset',
+    scoresMustDiffer: lang === 'vi' ? 'Điểm phải khác nhau' : 'Scores must differ',
+    matchEnded: lang === 'vi' ? 'Trận đấu kết thúc!' : 'Match ended!',
+    bestOf: (n: number, wins: number) =>
+      lang === 'vi' ? `Best of ${n} (Thắng ${wins})` : `Best of ${n} (Win ${wins})`,
+    clickToScore: lang === 'vi'
+      ? 'Click vào ô game để chấm điểm game đó'
+      : 'Click a game slot to score it',
+    gameLong: lang === 'vi' ? 'game' : 'game',
+    matchLabel: lang === 'vi' ? 'Trận' : 'Match',
+    reset: 'Reset',
+    saveGame: (n: number) => lang === 'vi' ? `Lưu Game ${n}` : `Save Game ${n}`,
+    endMatch: lang === 'vi' ? 'Kết thúc trận' : 'End match',
+    matchEndedTitle: lang === 'vi' ? 'Trận đấu đã kết thúc' : 'Match ended',
+    won: (name: string) => lang === 'vi' ? `${name} chiến thắng` : `${name} wins`,
+    noPermission: lang === 'vi'
+      ? 'Bạn không có quyền chỉnh sửa điểm trận này'
+      : "You don't have permission to score this match",
+    resetTitle: lang === 'vi' ? 'Reset điểm?' : 'Reset score?',
+    resetDesc: lang === 'vi' ? 'Điểm hiện tại sẽ được đặt về 0–0.' : 'Score will be reset to 0–0.',
+    cancel: lang === 'vi' ? 'Hủy' : 'Cancel',
+    confirm: lang === 'vi' ? 'Xác nhận' : 'Confirm',
+    endGameTitle: (n: number) => lang === 'vi' ? `Kết thúc Game ${n}?` : `End Game ${n}?`,
+    endMatchTitle: lang === 'vi' ? 'Kết thúc trận đấu?' : 'End match?',
+    endResult: (a: string, sa: number, sb: number, b: string) =>
+      lang === 'vi' ? `Kết quả: ${a} ${sa} – ${sb} ${b}` : `Result: ${a} ${sa} – ${sb} ${b}`,
+    winsThis: (name: string, isBestOfMatch: boolean) =>
+      lang === 'vi'
+        ? `${name} thắng${isBestOfMatch ? ' game này' : ''}.`
+        : `${name} wins${isBestOfMatch ? ' this game' : ''}.`,
+    savedGameN: (n: number) => lang === 'vi' ? `Đã lưu Game ${n}` : `Saved Game ${n}`,
+  };
+
+  const getRoundLabel = (roundType: string) => {
+    if (lang === 'vi') {
+      switch (roundType) {
+        case 'winner_r1': return 'Vòng 1 (Winner)';
+        case 'loser_r2': return 'Vòng 2 (Loser)';
+        case 'merge_r3': return 'Vòng 3 (Merge)';
+        case 'quarterfinal': return 'Tứ kết';
+        case 'semifinal': return 'Bán kết';
+        case 'third_place': return 'Tranh hạng 3';
+        case 'final': return 'Chung kết';
+        default: return 'Vòng loại';
+      }
+    }
+    switch (roundType) {
+      case 'winner_r1': return 'Round 1 (Winner)';
+      case 'loser_r2': return 'Round 2 (Loser)';
+      case 'merge_r3': return 'Round 3 (Merge)';
+      case 'quarterfinal': return 'Quarter-final';
+      case 'semifinal': return 'Semi-final';
+      case 'third_place': return '3rd place';
+      case 'final': return 'Final';
+      default: return 'Preliminary';
+    }
+  };
 
   useEffect(() => {
     if (matchId) {
@@ -156,7 +222,6 @@ export default function DoublesEliminationScoring() {
     setLoading(true);
 
     try {
-      // Fetch match
       const { data: matchData, error: matchError } = await supabase
         .from('doubles_elimination_matches')
         .select('*')
@@ -167,11 +232,9 @@ export default function DoublesEliminationScoring() {
 
       const gamesArray = (Array.isArray(matchData.games) ? matchData.games : []) as unknown as GameScore[];
       setMatch({ ...matchData, games: gamesArray } as unknown as MatchData);
-      
-      // Set current game number
+
       setCurrentGameNumber(gamesArray.length + 1);
-      
-      // If match is live with no completed games, use current scores
+
       if (gamesArray.length === 0) {
         setLocalScoreA(matchData.score_a || 0);
         setLocalScoreB(matchData.score_b || 0);
@@ -180,7 +243,6 @@ export default function DoublesEliminationScoring() {
         setLocalScoreB(0);
       }
 
-      // Fetch teams
       if (matchData.team_a_id) {
         const { data: teamAData } = await supabase
           .from('doubles_elimination_teams')
@@ -199,7 +261,6 @@ export default function DoublesEliminationScoring() {
         setTeamB(teamBData as TeamData);
       }
 
-      // Fetch tournament
       const { data: tournamentData } = await supabase
         .from('doubles_elimination_tournaments')
         .select('*')
@@ -207,10 +268,9 @@ export default function DoublesEliminationScoring() {
         .single();
       setTournament(tournamentData as TournamentData);
 
-      // Check permissions
       if (user && tournamentData) {
         const isCreator = user.id === tournamentData.creator_user_id;
-        
+
         const { data: refereeData } = await supabase
           .from('doubles_elimination_referees')
           .select('id')
@@ -222,7 +282,7 @@ export default function DoublesEliminationScoring() {
       }
     } catch (error) {
       console.error('Load match error:', error);
-      toast({ title: "Lỗi tải dữ liệu trận đấu", variant: "destructive" });
+      toast({ title: tx.loadError, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -237,13 +297,12 @@ export default function DoublesEliminationScoring() {
     setLocalScoreA(newScoreA);
     setLocalScoreB(newScoreB);
 
-    // Update in database
     await supabase
       .from('doubles_elimination_matches')
       .update({
         score_a: newScoreA,
         score_b: newScoreB,
-        status: 'live'
+        status: 'live',
       })
       .eq('id', match.id);
   }, [match, canEdit, localScoreA, localScoreB]);
@@ -260,14 +319,12 @@ export default function DoublesEliminationScoring() {
       .eq('id', match.id);
 
     setShowResetDialog(false);
-    toast({ title: "Đã reset điểm" });
+    toast({ title: tx.resetSuccess });
   };
 
-  // Handle selecting a game to score
   const handleSelectGame = (gameNum: number) => {
     if (!match || !canEdit || match.status === 'completed') return;
-    
-    // Load existing game data if available
+
     const existingGame = match.games?.[gameNum - 1];
     if (existingGame) {
       setLocalScoreA(existingGame.score_a);
@@ -279,11 +336,10 @@ export default function DoublesEliminationScoring() {
     setCurrentGameNumber(gameNum);
   };
 
-  // Save current game score
   const handleSaveGame = async () => {
     if (!match || !canEdit) return;
     if (localScoreA === localScoreB) {
-      toast({ title: "Điểm phải khác nhau", variant: "destructive" });
+      toast({ title: tx.scoresMustDiffer, variant: "destructive" });
       return;
     }
 
@@ -291,32 +347,27 @@ export default function DoublesEliminationScoring() {
       game: currentGameNumber,
       score_a: localScoreA,
       score_b: localScoreB,
-      winner: localScoreA > localScoreB ? 'a' : 'b'
+      winner: localScoreA > localScoreB ? 'a' : 'b',
     };
 
-    // Update or add game
     const existingGames = [...(match.games || [])];
     const gameIndex = currentGameNumber - 1;
-    
+
     if (gameIndex < existingGames.length) {
-      // Update existing game
       existingGames[gameIndex] = newGame;
     } else {
-      // Add new game (fill gaps if needed)
       while (existingGames.length < gameIndex) {
         existingGames.push({ game: existingGames.length + 1, score_a: 0, score_b: 0, winner: 'a' });
       }
       existingGames.push(newGame);
     }
 
-    // Recalculate wins
     const winsA = existingGames.filter(g => g.winner === 'a').length;
     const winsB = existingGames.filter(g => g.winner === 'b').length;
     const winsNeededForMatch = Math.ceil(match.best_of / 2);
     const isMatchComplete = winsA >= winsNeededForMatch || winsB >= winsNeededForMatch;
 
     if (isMatchComplete) {
-      // End match
       const winnerId = winsA > winsB ? match.team_a_id : match.team_b_id;
       const loserId = winsA > winsB ? match.team_b_id : match.team_a_id;
 
@@ -329,27 +380,24 @@ export default function DoublesEliminationScoring() {
           winner_id: winnerId,
           status: 'completed',
           score_a: 0,
-          score_b: 0
+          score_b: 0,
         })
         .eq('id', match.id);
 
-      // Mark loser as eliminated
       if (loserId && match.round_type !== 'winner_r1') {
         await supabase
           .from('doubles_elimination_teams')
           .update({
             status: 'eliminated',
-            eliminated_at_round: match.round_number
+            eliminated_at_round: match.round_number,
           })
           .eq('id', loserId);
       }
 
-      // Propagate winner to next round for R3+ matches
       if (winnerId && match.round_number >= 3 && tournament) {
         await propagateWinnerToNextRound(match, winnerId, tournament.id);
       }
 
-      // If final match, mark tournament as completed
       if (match.round_type === 'final' && tournament) {
         await supabase
           .from('doubles_elimination_tournaments')
@@ -357,31 +405,26 @@ export default function DoublesEliminationScoring() {
           .eq('id', tournament.id);
       }
 
-      // Trigger auto-generation of next rounds
       if (tournament) {
-        // Check if R2 is complete and trigger R3 assignment
         if (match.round_number === 2) {
           await checkAndAssignR3(tournament.id);
         }
-        // Check if R3 is complete and trigger playoff generation
         if (match.round_number === 3) {
           await checkAndGeneratePlayoff(tournament.id);
         }
       }
 
-      // Update local state
       setMatch({
         ...match,
         games: existingGames,
         games_won_a: winsA,
         games_won_b: winsB,
         winner_id: winnerId,
-        status: 'completed'
+        status: 'completed',
       });
 
-      toast({ title: "Trận đấu kết thúc!" });
+      toast({ title: tx.matchEnded });
     } else {
-      // Save game and continue
       await supabase
         .from('doubles_elimination_matches')
         .update({
@@ -390,19 +433,17 @@ export default function DoublesEliminationScoring() {
           games_won_b: winsB,
           status: 'live',
           score_a: 0,
-          score_b: 0
+          score_b: 0,
         })
         .eq('id', match.id);
 
-      // Update local state
       setMatch({
         ...match,
         games: existingGames,
         games_won_a: winsA,
-        games_won_b: winsB
+        games_won_b: winsB,
       });
 
-      // Move to next empty game slot
       const nextEmptyGame = existingGames.length + 1;
       if (nextEmptyGame <= match.best_of) {
         setCurrentGameNumber(nextEmptyGame);
@@ -410,11 +451,10 @@ export default function DoublesEliminationScoring() {
         setLocalScoreB(0);
       }
 
-      toast({ title: `Đã lưu Game ${currentGameNumber}` });
+      toast({ title: tx.savedGameN(currentGameNumber) });
     }
   };
 
-  // Legacy handleEndGame for dialog confirmation (redirects to handleSaveGame)
   const handleEndGame = async () => {
     await handleSaveGame();
     setShowEndDialog(false);
@@ -423,7 +463,6 @@ export default function DoublesEliminationScoring() {
   const handleEndMatchDirectly = async () => {
     if (!match || !canEdit) return;
 
-    // For BO1, just use current scores
     const winnerId = localScoreA > localScoreB ? match.team_a_id : match.team_b_id;
     const loserId = localScoreA > localScoreB ? match.team_b_id : match.team_a_id;
 
@@ -433,27 +472,24 @@ export default function DoublesEliminationScoring() {
         score_a: localScoreA,
         score_b: localScoreB,
         winner_id: winnerId,
-        status: 'completed'
+        status: 'completed',
       })
       .eq('id', match.id);
 
-    // Mark loser as eliminated (if applicable)
     if (loserId && match.round_type !== 'winner_r1') {
       await supabase
         .from('doubles_elimination_teams')
         .update({
           status: 'eliminated',
-          eliminated_at_round: match.round_number
+          eliminated_at_round: match.round_number,
         })
         .eq('id', loserId);
     }
 
-    // Propagate winner to next round for R3+ matches
     if (winnerId && match.round_number >= 3 && tournament) {
       await propagateWinnerToNextRound(match, winnerId, tournament.id);
     }
 
-    // If this is the final match, mark tournament as completed
     if (match.round_type === 'final' && tournament) {
       await supabase
         .from('doubles_elimination_tournaments')
@@ -461,41 +497,40 @@ export default function DoublesEliminationScoring() {
         .eq('id', tournament.id);
     }
 
-    // Trigger auto-generation of next rounds
     if (tournament) {
-      // Check if R2 is complete and trigger R3 assignment
       if (match.round_number === 2) {
         await checkAndAssignR3(tournament.id);
       }
-      // Check if R3 is complete and trigger playoff generation
       if (match.round_number === 3) {
         await checkAndGeneratePlayoff(tournament.id);
       }
     }
 
-    toast({ title: "Trận đấu kết thúc!" });
+    toast({ title: tx.matchEnded });
     navigate(`/tools/doubles-elimination/${tournament?.share_id}`);
     setShowEndDialog(false);
   };
 
-  const getRoundLabel = (roundType: string) => {
-    switch (roundType) {
-      case 'winner_r1': return 'Vòng 1 (Winner)';
-      case 'loser_r2': return 'Vòng 2 (Loser)';
-      case 'merge_r3': return 'Vòng 3 (Merge)';
-      case 'quarterfinal': return 'Tứ kết';
-      case 'semifinal': return 'Bán kết';
-      case 'third_place': return 'Tranh hạng 3';
-      case 'final': return 'Chung kết';
-      default: return 'Vòng loại';
-    }
-  };
-
+  // ─── Loading + 404 states ────────────────────────────────────────────────
   if (loading) {
     return (
       <TheLineLayout title="Doubles Elimination Scoring" noindex={true} active="lab">
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="animate-pulse text-muted-foreground">Đang tải...</div>
+        <div className="tl-shell">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 400,
+              color: 'var(--tl-fg-3)',
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 12,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {tx.loading}
+          </div>
         </div>
       </TheLineLayout>
     );
@@ -504,308 +539,639 @@ export default function DoublesEliminationScoring() {
   if (!match || !teamA || !teamB) {
     return (
       <TheLineLayout title="Doubles Elimination Scoring" noindex={true} active="lab">
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-4">Không tìm thấy trận đấu</h2>
-            <Button onClick={() => navigate(-1)}>Quay lại</Button>
+        <div className="tl-shell">
+          <div className="tl-empty" style={{ marginTop: 56 }}>
+            <h3>{tx.notFound}</h3>
+            <button type="button" className="tl-btn" onClick={() => navigate(-1)}>
+              ← {tx.goBack}
+            </button>
           </div>
         </div>
       </TheLineLayout>
     );
   }
 
-  const isBestOf = match.best_of > 1;
+  const isBestOfMatch = match.best_of > 1;
   const winsNeeded = Math.ceil(match.best_of / 2);
 
   return (
-    <TheLineLayout title={`Chấm điểm - ${teamA.team_name} vs ${teamB.team_name}`} noindex={true} active="lab">
-      <div className="container max-w-lg mx-auto py-6 px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate(`/tools/doubles-elimination/${tournament?.share_id}`)}
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="text-center">
-            <div className="font-medium">{tournament?.name}</div>
-            <div className="text-sm text-muted-foreground">
-              {getRoundLabel(match.round_type)} - Trận {match.match_number}
-            </div>
+    <TheLineLayout
+      title={`${lang === 'vi' ? 'Chấm điểm' : 'Score'} - ${teamA.team_name} vs ${teamB.team_name}`}
+      noindex={true}
+      active="lab"
+    >
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to="/tools">{lang === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <span className="sep">/</span>
+          <Link to="/tools/doubles-elimination">Doubles Elimination</Link>
+          {tournament && (
+            <>
+              <span className="sep">/</span>
+              <Link to={`/tools/doubles-elimination/${tournament.share_id}`}>{tournament.name}</Link>
+            </>
+          )}
+          <span className="sep">/</span>
+          <span className="current">
+            {lang === 'vi' ? 'Chấm điểm' : 'Score'}
+          </span>
+        </nav>
+
+        <header className="tl-page-head">
+          <div className="kicker">
+            ◆ {getRoundLabel(match.round_type)}
+            <span style={{ color: 'var(--tl-fg-4)', margin: '0 8px' }}>·</span>
+            {tx.matchLabel} {match.match_number}
           </div>
-          <div className="w-10" />
-        </div>
+          <h1 style={{ fontSize: 'clamp(24px, 3.6vw, 44px)' }}>
+            <em className="tl-serif">{teamA.team_name}</em>{' '}
+            <span style={{ color: 'var(--tl-fg-3)', fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: '0.6em' }}>
+              vs
+            </span>{' '}
+            <em className="tl-serif">{teamB.team_name}</em>
+          </h1>
+        </header>
 
-        {/* Best of indicator with clickable game slots */}
-        {isBestOf && (
-          <div className="text-center mb-6">
-            <Badge variant="outline" className="text-base px-4 py-1 mb-4">
-              Best of {match.best_of} (Thắng {winsNeeded})
-            </Badge>
-            
-            {/* Clickable Game slots */}
-            <div className="flex justify-center gap-2 mt-3">
-              {Array.from({ length: match.best_of }).map((_, gameIndex) => {
-                const gameNum = gameIndex + 1;
-                const gameData = match.games?.[gameIndex];
-                const isCurrentGame = gameNum === currentGameNumber;
-                const isCompleted = !!gameData;
-                const winnerTeam = gameData?.winner;
-                const canClickGame = canEdit && match.status !== 'completed';
-                
-                return (
-                  <button
-                    key={gameIndex}
-                    onClick={() => handleSelectGame(gameNum)}
-                    disabled={!canClickGame}
-                    className={cn(
-                      "flex flex-col items-center justify-center w-16 h-20 rounded-lg border-2 transition-all",
-                      canClickGame && "cursor-pointer hover:border-primary/50 hover:bg-primary/5",
-                      isCurrentGame && "border-primary bg-primary/10 ring-2 ring-primary/30",
-                      isCompleted && !isCurrentGame && "border-muted bg-muted/30",
-                      !isCompleted && !isCurrentGame && "border-dashed border-muted-foreground/30 bg-muted/10",
-                      !canClickGame && "cursor-not-allowed"
-                    )}
-                  >
-                    <div className={cn(
-                      "text-[10px] font-medium mb-1",
-                      isCurrentGame ? "text-primary" : "text-muted-foreground"
-                    )}>
-                      G{gameNum}
-                    </div>
-                    {isCompleted ? (
-                      <div className="text-center">
-                        <span className={cn(
-                          "text-sm font-bold",
-                          winnerTeam === 'a' ? "text-primary" : "text-muted-foreground"
-                        )}>
-                          {gameData.score_a}
-                        </span>
-                        <span className="text-xs text-muted-foreground mx-0.5">-</span>
-                        <span className={cn(
-                          "text-sm font-bold",
-                          winnerTeam === 'b' ? "text-primary" : "text-muted-foreground"
-                        )}>
-                          {gameData.score_b}
-                        </span>
-                      </div>
-                    ) : isCurrentGame ? (
-                      <div className="text-xs text-primary font-medium">
-                        {localScoreA}-{localScoreB}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">—</div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            
-            {/* Games won summary */}
-            <div className="flex justify-center items-center gap-3 mt-3">
-              <span className={cn(
-                "text-lg font-bold",
-                match.games_won_a > match.games_won_b ? "text-primary" : "text-foreground"
-              )}>{match.games_won_a}</span>
-              <span className="text-muted-foreground">game</span>
-              <span className="text-muted-foreground">-</span>
-              <span className={cn(
-                "text-lg font-bold",
-                match.games_won_b > match.games_won_a ? "text-primary" : "text-foreground"
-              )}>{match.games_won_b}</span>
-              <span className="text-muted-foreground">game</span>
-            </div>
-            
-            {canEdit && match.status !== 'completed' && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Click vào ô game để chấm điểm game đó
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Score Board */}
-        <Card className="mb-6">
-          <CardContent className="py-8">
-            {/* Current game indicator for BO3/BO5 */}
-            {isBestOf && (
-              <div className="text-center mb-4">
-                <Badge variant="secondary" className="text-sm">
-                  Game {currentGameNumber}
-                </Badge>
-              </div>
-            )}
-            {/* Scores - centered on same line */}
-            <div className="flex items-center justify-center gap-3">
-              <div className="text-center">
-                {teamA.seed !== null && teamA.seed !== undefined && (
-                  <div className="text-xs text-muted-foreground">#{teamA.seed}</div>
-                )}
-                <div className="text-sm font-medium truncate max-w-[80px]">{teamA.team_name}</div>
-              </div>
-              <div className="text-5xl font-bold font-mono whitespace-nowrap">
-                {localScoreA}
-              </div>
-              <div className="text-3xl font-bold text-muted-foreground">:</div>
-              <div className="text-5xl font-bold font-mono whitespace-nowrap">
-                {localScoreB}
-              </div>
-              <div className="text-center">
-                {teamB.seed !== null && teamB.seed !== undefined && (
-                  <div className="text-xs text-muted-foreground">#{teamB.seed}</div>
-                )}
-                <div className="text-sm font-medium truncate max-w-[80px]">{teamB.team_name}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Score Controls */}
-        {canEdit && match.status !== 'completed' && (
-          <div className="space-y-4">
-            {/* Team names row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center text-sm font-medium">{teamA.team_name}</div>
-              <div className="text-center text-sm font-medium">{teamB.team_name}</div>
-            </div>
-            
-            {/* Score controls row - all buttons on same line */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Team A controls */}
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-12 h-14"
-                  onClick={() => handleScoreChange('a', -1)}
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="default" 
-                  size="lg" 
-                  className="flex-1 h-14"
-                  onClick={() => handleScoreChange('a', 1)}
-                >
-                  <Plus className="w-6 h-6" />
-                </Button>
-              </div>
-
-              {/* Team B controls */}
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-12 h-14"
-                  onClick={() => handleScoreChange('b', -1)}
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="default" 
-                  size="lg" 
-                  className="flex-1 h-14"
-                  onClick={() => handleScoreChange('b', 1)}
-                >
-                  <Plus className="w-6 h-6" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setShowResetDialog(true)}
+        <section
+          style={{
+            maxWidth: 540,
+            margin: '0 auto',
+            padding: '24px 0 0',
+            width: '100%',
+          }}
+        >
+          {/* Best-of indicator with clickable game slots */}
+          {isBestOfMatch && (
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  padding: '6px 14px',
+                  borderRadius: 999,
+                  background: 'var(--tl-surface)',
+                  border: '1px solid var(--tl-border)',
+                  color: 'var(--tl-fg-2)',
+                  letterSpacing: '0.04em',
+                  marginBottom: 16,
+                }}
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset
-              </Button>
-              {isBestOf ? (
-                <Button 
-                  variant="default" 
-                  className="flex-1"
-                  onClick={handleSaveGame}
-                  disabled={localScoreA === localScoreB}
+                {tx.bestOf(match.best_of, winsNeeded)}
+              </span>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                {Array.from({ length: match.best_of }).map((_, gameIndex) => {
+                  const gameNum = gameIndex + 1;
+                  const gameData = match.games?.[gameIndex];
+                  const isCurrentGame = gameNum === currentGameNumber;
+                  const isCompleted = !!gameData;
+                  const winnerTeam = gameData?.winner;
+                  const canClickGame = canEdit && match.status !== 'completed';
+
+                  const slotBg =
+                    isCurrentGame ? 'var(--tl-green-glow)' :
+                    isCompleted ? 'var(--tl-bg-elev)' :
+                    'var(--tl-bg)';
+                  const slotBorder =
+                    isCurrentGame ? 'var(--tl-green)' :
+                    isCompleted ? 'var(--tl-border)' :
+                    'var(--tl-border)';
+
+                  return (
+                    <button
+                      key={gameIndex}
+                      type="button"
+                      onClick={() => handleSelectGame(gameNum)}
+                      disabled={!canClickGame}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 64,
+                        height: 80,
+                        borderRadius: 'var(--tl-radius)',
+                        border: `2px solid ${slotBorder}`,
+                        background: slotBg,
+                        cursor: canClickGame ? 'pointer' : 'not-allowed',
+                        boxShadow: isCurrentGame ? '0 0 0 4px var(--tl-green-glow)' : 'none',
+                        transition: 'border-color 0.15s, background 0.15s',
+                        font: 'inherit',
+                        color: 'var(--tl-fg)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: 'Geist Mono, ui-monospace, monospace',
+                          fontSize: 10,
+                          fontWeight: 500,
+                          marginBottom: 4,
+                          color: isCurrentGame ? 'var(--tl-green)' : 'var(--tl-fg-3)',
+                          letterSpacing: '0.06em',
+                        }}
+                      >
+                        G{gameNum}
+                      </div>
+                      {isCompleted ? (
+                        <div
+                          style={{
+                            textAlign: 'center',
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: winnerTeam === 'a' ? 'var(--tl-green)' : 'var(--tl-fg-3)',
+                            }}
+                          >
+                            {gameData.score_a}
+                          </span>
+                          <span style={{ color: 'var(--tl-fg-4)', margin: '0 2px' }}>–</span>
+                          <span
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: winnerTeam === 'b' ? 'var(--tl-green)' : 'var(--tl-fg-3)',
+                            }}
+                          >
+                            {gameData.score_b}
+                          </span>
+                        </div>
+                      ) : isCurrentGame ? (
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: 'var(--tl-green)',
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          {localScoreA}–{localScoreB}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 14, color: 'var(--tl-fg-4)' }}>—</div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Games won summary */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'baseline',
+                  gap: 10,
+                  marginTop: 16,
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: match.games_won_a > match.games_won_b ? 'var(--tl-green)' : 'var(--tl-fg)',
+                  }}
                 >
-                  <Check className="w-4 h-4 mr-2" />
-                  Lưu Game {currentGameNumber}
-                </Button>
-              ) : (
-                <Button 
-                  variant="default" 
-                  className="flex-1"
-                  onClick={() => setShowEndDialog(true)}
-                  disabled={localScoreA === localScoreB}
+                  {match.games_won_a}
+                </span>
+                <span style={{ color: 'var(--tl-fg-3)', fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  {tx.gameLong}
+                </span>
+                <span style={{ color: 'var(--tl-fg-4)' }}>—</span>
+                <span
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: match.games_won_b > match.games_won_a ? 'var(--tl-green)' : 'var(--tl-fg)',
+                  }}
                 >
-                  <Check className="w-4 h-4 mr-2" />
-                  Kết thúc trận
-                </Button>
+                  {match.games_won_b}
+                </span>
+                <span style={{ color: 'var(--tl-fg-3)', fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  {tx.gameLong}
+                </span>
+              </div>
+
+              {canEdit && match.status !== 'completed' && (
+                <p style={{ fontSize: 12, color: 'var(--tl-fg-3)', marginTop: 12, fontStyle: 'italic' }}>
+                  {tx.clickToScore}
+                </p>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Completed state */}
-        {match.status === 'completed' && (
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="py-6 text-center">
-              <Trophy className="w-12 h-12 mx-auto text-primary mb-2" />
-              <div className="font-semibold">Trận đấu đã kết thúc</div>
-              <div className="text-sm text-muted-foreground">
-                {match.winner_id === match.team_a_id ? teamA.team_name : teamB.team_name} chiến thắng
+          {/* Score Board */}
+          <div style={{ ...surfaceCard, marginBottom: 20, padding: '32px 20px' }}>
+            {isBestOfMatch && (
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <span
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    padding: '3px 10px',
+                    borderRadius: 4,
+                    background: 'var(--tl-green-glow)',
+                    color: 'var(--tl-green)',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Game {currentGameNumber}
+                </span>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+              }}
+            >
+              <div style={{ textAlign: 'center', minWidth: 80 }}>
+                {teamA.seed !== null && teamA.seed !== undefined && (
+                  <div
+                    style={{
+                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      fontSize: 11,
+                      color: 'var(--tl-fg-3)',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    #{teamA.seed}
+                  </div>
+                )}
+                <div
+                  style={{
+                    fontSize: 13.5,
+                    fontWeight: 500,
+                    color: 'var(--tl-fg)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 80,
+                  }}
+                >
+                  {teamA.team_name}
+                </div>
+              </div>
+              <div
+                style={{
+                  fontSize: 56,
+                  fontWeight: 700,
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontVariantNumeric: 'tabular-nums',
+                  color: 'var(--tl-fg)',
+                  lineHeight: 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {localScoreA}
+              </div>
+              <div
+                style={{
+                  fontSize: 32,
+                  fontWeight: 700,
+                  color: 'var(--tl-fg-4)',
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                }}
+              >
+                :
+              </div>
+              <div
+                style={{
+                  fontSize: 56,
+                  fontWeight: 700,
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontVariantNumeric: 'tabular-nums',
+                  color: 'var(--tl-fg)',
+                  lineHeight: 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {localScoreB}
+              </div>
+              <div style={{ textAlign: 'center', minWidth: 80 }}>
+                {teamB.seed !== null && teamB.seed !== undefined && (
+                  <div
+                    style={{
+                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      fontSize: 11,
+                      color: 'var(--tl-fg-3)',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    #{teamB.seed}
+                  </div>
+                )}
+                <div
+                  style={{
+                    fontSize: 13.5,
+                    fontWeight: 500,
+                    color: 'var(--tl-fg)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 80,
+                  }}
+                >
+                  {teamB.team_name}
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* Read-only notice */}
-        {!canEdit && match.status !== 'completed' && (
-          <Card className="bg-muted">
-            <CardContent className="py-4 text-center text-sm text-muted-foreground">
-              Bạn không có quyền chỉnh sửa điểm trận này
-            </CardContent>
-          </Card>
-        )}
+          {/* Score Controls */}
+          {canEdit && match.status !== 'completed' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Team names row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: 'var(--tl-fg-2)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {teamA.team_name}
+                </div>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: 'var(--tl-fg-2)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {teamB.team_name}
+                </div>
+              </div>
+
+              {/* Score controls — minus / plus per team */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleScoreChange('a', -1)}
+                    style={{
+                      width: 48,
+                      height: 56,
+                      background: 'transparent',
+                      border: '1px solid var(--tl-border)',
+                      borderRadius: 'var(--tl-radius)',
+                      color: 'var(--tl-fg-2)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'var(--tl-surface)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border-2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'transparent';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border)';
+                    }}
+                    aria-label={`-1 ${teamA.team_name}`}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleScoreChange('a', 1)}
+                    style={{
+                      flex: 1,
+                      height: 56,
+                      background: 'var(--tl-green)',
+                      border: '1px solid var(--tl-green)',
+                      borderRadius: 'var(--tl-radius)',
+                      color: 'var(--tl-bg)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'opacity 0.15s, background 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'var(--tl-green-dim)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-green-dim)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'var(--tl-green)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-green)';
+                    }}
+                    aria-label={`+1 ${teamA.team_name}`}
+                  >
+                    <Plus className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => handleScoreChange('b', -1)}
+                    style={{
+                      width: 48,
+                      height: 56,
+                      background: 'transparent',
+                      border: '1px solid var(--tl-border)',
+                      borderRadius: 'var(--tl-radius)',
+                      color: 'var(--tl-fg-2)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'var(--tl-surface)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border-2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'transparent';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border)';
+                    }}
+                    aria-label={`-1 ${teamB.team_name}`}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleScoreChange('b', 1)}
+                    style={{
+                      flex: 1,
+                      height: 56,
+                      background: 'var(--tl-green)',
+                      border: '1px solid var(--tl-green)',
+                      borderRadius: 'var(--tl-radius)',
+                      color: 'var(--tl-bg)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'opacity 0.15s, background 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'var(--tl-green-dim)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-green-dim)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = 'var(--tl-green)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-green)';
+                    }}
+                    aria-label={`+1 ${teamB.team_name}`}
+                  >
+                    <Plus className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Action buttons — sticky bottom dock with safe-area padding */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  position: 'sticky',
+                  bottom: 0,
+                  paddingTop: 14,
+                  paddingBottom: 'calc(env(safe-area-inset-bottom) + 14px)',
+                  background: 'linear-gradient(to top, var(--tl-bg) 60%, transparent)',
+                }}
+              >
+                <button
+                  type="button"
+                  className="tl-btn"
+                  onClick={() => setShowResetDialog(true)}
+                  style={{ flex: 1, justifyContent: 'center', padding: '12px 14px' }}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  {tx.reset}
+                </button>
+                {isBestOfMatch ? (
+                  <button
+                    type="button"
+                    className="tl-btn green"
+                    onClick={handleSaveGame}
+                    disabled={localScoreA === localScoreB}
+                    style={{ flex: 1, justifyContent: 'center', padding: '12px 14px' }}
+                  >
+                    <Check className="w-4 h-4" />
+                    {tx.saveGame(currentGameNumber)}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="tl-btn green"
+                    onClick={() => setShowEndDialog(true)}
+                    disabled={localScoreA === localScoreB}
+                    style={{ flex: 1, justifyContent: 'center', padding: '12px 14px' }}
+                  >
+                    <Check className="w-4 h-4" />
+                    {tx.endMatch}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Completed state */}
+          {match.status === 'completed' && (
+            <div
+              style={{
+                ...surfaceCard,
+                background: 'var(--tl-green-glow)',
+                borderColor: 'rgba(0, 185, 107, 0.30)',
+                textAlign: 'center',
+                padding: '28px 20px',
+              }}
+            >
+              <Trophy className="w-12 h-12" style={{ color: 'var(--tl-green)', margin: '0 auto 10px' }} />
+              <div
+                style={{
+                  fontFamily: 'Instrument Serif, serif',
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  fontSize: 22,
+                  color: 'var(--tl-fg)',
+                }}
+              >
+                {tx.matchEndedTitle}
+              </div>
+              <div style={{ fontSize: 13.5, color: 'var(--tl-fg-2)', marginTop: 6 }}>
+                {tx.won(match.winner_id === match.team_a_id ? teamA.team_name : teamB.team_name)}
+              </div>
+            </div>
+          )}
+
+          {/* Read-only notice */}
+          {!canEdit && match.status !== 'completed' && (
+            <div
+              style={{
+                ...surfaceCard,
+                background: 'var(--tl-surface)',
+                textAlign: 'center',
+                padding: '14px 16px',
+              }}
+            >
+              <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', margin: 0 }}>
+                {tx.noPermission}
+              </p>
+            </div>
+          )}
+        </section>
+        <div style={{ height: 24 }} />
       </div>
 
-      {/* Reset Dialog */}
+      {/* Reset dialog */}
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reset điểm?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Điểm hiện tại sẽ được đặt về 0-0.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{tx.resetTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{tx.resetDesc}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel>{tx.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={handleReset}>Reset</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* End Game Dialog */}
+      {/* End game / match dialog */}
       <AlertDialog open={showEndDialog} onOpenChange={setShowEndDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {isBestOf ? `Kết thúc Game ${currentGameNumber}?` : 'Kết thúc trận đấu?'}
+              {isBestOfMatch ? tx.endGameTitle(currentGameNumber) : tx.endMatchTitle}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Kết quả: {teamA.team_name} {localScoreA} - {localScoreB} {teamB.team_name}
+              {tx.endResult(teamA.team_name, localScoreA, localScoreB, teamB.team_name)}
               <br />
-              {localScoreA > localScoreB ? teamA.team_name : teamB.team_name} thắng
-              {isBestOf && ` game này`}.
+              {tx.winsThis(localScoreA > localScoreB ? teamA.team_name : teamB.team_name, isBestOfMatch)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={isBestOf ? handleEndGame : handleEndMatchDirectly}>
-              Xác nhận
+            <AlertDialogCancel>{tx.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={isBestOfMatch ? handleEndGame : handleEndMatchDirectly}>
+              {tx.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -813,3 +1179,4 @@ export default function DoublesEliminationScoring() {
     </TheLineLayout>
   );
 }
+
