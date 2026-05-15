@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { TheLineLayout } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -13,9 +10,9 @@ import { useVisibilityRefresh } from "@/hooks/useVisibilityRefresh";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RefereeManagement } from "@/components/quicktable/RefereeManagement";
-import { 
-  ArrowLeft, Share2, Check, Trophy, Users, 
-  Calendar, Trash2, RefreshCw 
+import {
+  Share2, Check, Trophy, Users,
+  Calendar, Trash2, RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi as viLocale, enUS } from "date-fns/locale";
@@ -32,6 +29,23 @@ import {
 } from "@/components/ui/alert-dialog";
 import DoublesEliminationBracket from "@/components/tournament/DoublesEliminationBracket";
 import { useI18n } from "@/i18n";
+
+const surfaceCard: React.CSSProperties = {
+  background: "var(--tl-bg-elev)",
+  border: "1px solid var(--tl-border)",
+  borderRadius: "var(--tl-radius-lg)",
+  padding: 24,
+};
+
+const sectionTitle: React.CSSProperties = {
+  fontFamily: "Instrument Serif, serif",
+  fontStyle: "italic",
+  fontWeight: 400,
+  fontSize: 22,
+  letterSpacing: "-0.015em",
+  margin: 0,
+  color: "var(--tl-fg)",
+};
 
 export default function DoublesEliminationView() {
   const { shareId } = useParams<{ shareId: string }>();
@@ -107,22 +121,20 @@ export default function DoublesEliminationView() {
     setMatches(data.matches);
   }, [shareId, getTournamentByShareId]);
 
-  // Manual refresh handler
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await softReload();
     setTimeout(() => setIsRefreshing(false), 600);
   }, [softReload]);
 
-  // Layer 1 & 2: Visibility-change auto-refresh + polling fallback
   useVisibilityRefresh(softReload, { minInterval: 5000, pollingInterval: 20000 });
 
   const skipNextRealtimeRef = useRef(false);
 
   const handleMatchUpdated = (matchId: string, updates: Partial<Match>) => {
     skipNextRealtimeRef.current = true;
-    setMatches(prevMatches => 
-      prevMatches.map(m => m.id === matchId ? { ...m, ...updates } : m)
+    setMatches(prevMatches =>
+      prevMatches.map(m => m.id === matchId ? { ...m, ...updates } : m),
     );
     setTimeout(() => { skipNextRealtimeRef.current = false; }, 2000);
   };
@@ -134,12 +146,12 @@ export default function DoublesEliminationView() {
         description: t.doublesElimination.view.r3TiedDesc
           .replace('{count}', String(tiedTeamsInfo.count))
           .replace('{names}', tiedTeamsInfo.names.join(', ')),
-        duration: 8000
+        duration: 8000,
       });
     } else {
       toast({
         title: t.doublesElimination.view.r3AssignedTitle,
-        description: t.doublesElimination.view.r3NormalDesc
+        description: t.doublesElimination.view.r3NormalDesc,
       });
     }
   };
@@ -149,7 +161,7 @@ export default function DoublesEliminationView() {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     try {
       channel = supabase
-        .channel(`doubles_elimination_${shareId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .channel(`doubles_elimination_${shareId}:${Date.now()}_${Math.random().toString(36).slice(2, 7)}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'doubles_elimination_matches' }, () => {
           if (skipNextRealtimeRef.current) return;
           softReload();
@@ -184,13 +196,25 @@ export default function DoublesEliminationView() {
     }
   };
 
+  // ─── Loading + 404 states ────────────────────────────────────────────────
   if (loading) {
     return (
       <TheLineLayout title="Doubles Elimination" noindex={true} active="lab">
-        <div className="container max-w-6xl mx-auto py-6 px-4">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/3" />
-            <div className="h-64 bg-muted rounded" />
+        <div className="tl-shell">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 400,
+              color: 'var(--tl-fg-3)',
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 12,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t.common.loading}
           </div>
         </div>
       </TheLineLayout>
@@ -200,11 +224,13 @@ export default function DoublesEliminationView() {
   if (!tournament) {
     return (
       <TheLineLayout title="Doubles Elimination" noindex={true} active="lab">
-        <div className="container max-w-2xl mx-auto py-12 text-center">
-          <h2 className="text-xl font-semibold mb-4">{t.doublesElimination.view.notFound}</h2>
-          <Button onClick={() => navigate('/tools/doubles-elimination')}>
-            {t.doublesElimination.view.backToList}
-          </Button>
+        <div className="tl-shell">
+          <div className="tl-empty" style={{ marginTop: 56 }}>
+            <h3>{t.doublesElimination.view.notFound}</h3>
+            <Link to="/tools/doubles-elimination" className="tl-btn">
+              ← {t.doublesElimination.view.backToList}
+            </Link>
+          </div>
         </div>
       </TheLineLayout>
     );
@@ -212,190 +238,365 @@ export default function DoublesEliminationView() {
 
   const dateLocale = language === 'vi' ? viLocale : enUS;
 
-  const statusLabel = tournament.status === 'setup' ? t.doublesElimination.status.setup : 
-    tournament.status === 'ongoing' ? t.doublesElimination.status.ongoing : t.doublesElimination.status.completed;
+  const statusKey = tournament.status;
+  const statusLabel =
+    statusKey === 'setup' ? t.doublesElimination.status.setup :
+    statusKey === 'ongoing' ? t.doublesElimination.status.ongoing :
+    statusKey === 'completed' ? t.doublesElimination.status.completed : statusKey;
+  const statusPillBg =
+    statusKey === 'completed' ? 'var(--tl-surface)' :
+    statusKey === 'ongoing' ? 'var(--tl-green-glow)' :
+    'rgba(233, 182, 73, 0.12)';
+  const statusPillFg =
+    statusKey === 'completed' ? 'var(--tl-fg-3)' :
+    statusKey === 'ongoing' ? 'var(--tl-green)' :
+    'var(--tl-gold)';
 
   return (
-    <TheLineLayout title={`${tournament.name} - Doubles Elimination`} description={`${tournament.name} - ${tournament.team_count} ${t.doublesElimination.teams}`} noindex={true} active="lab">
-      
-      <div className="container max-w-6xl mx-auto py-6 px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/tools/doubles-elimination')}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">{tournament.name}</h1>
-                <Badge variant={tournament.status === 'ongoing' ? 'default' : 'secondary'}>
-                  {statusLabel}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                <span className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  {tournament.team_count} {t.doublesElimination.teams}
+    <TheLineLayout
+      title={`${tournament.name} - Doubles Elimination`}
+      description={`${tournament.name} - ${tournament.team_count} ${t.doublesElimination.teams}`}
+      noindex={true}
+      active="lab"
+    >
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <span className="sep">/</span>
+          <Link to="/tools/doubles-elimination">Doubles Elimination</Link>
+          <span className="sep">/</span>
+          <span className="current">{tournament.name}</span>
+        </nav>
+
+        <header className="tl-page-head">
+          <div className="kicker">
+            ◆ {language === 'vi' ? 'Loại kép' : 'Double elimination'}
+            <span style={{ color: 'var(--tl-fg-4)', margin: '0 8px' }}>·</span>
+            {tournament.team_count} {t.doublesElimination.teams}
+            <span style={{ color: 'var(--tl-fg-4)', margin: '0 8px' }}>·</span>
+            {tournament.early_rounds_format.toUpperCase()} / {tournament.finals_format.toUpperCase()}
+          </div>
+          <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
+            <em className="tl-serif">{tournament.name}</em>
+          </h1>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              alignItems: 'center',
+              marginTop: 14,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                fontWeight: 500,
+                padding: '4px 10px',
+                borderRadius: 4,
+                background: statusPillBg,
+                color: statusPillFg,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {statusLabel}
+            </span>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 11,
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
+            </span>
+
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="tl-btn"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                aria-label={language === 'vi' ? 'Tải lại' : 'Refresh'}
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <button type="button" className="tl-btn" onClick={handleShare}>
+                {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                <span className="hidden sm:inline">
+                  {copied ? t.doublesElimination.view.copied : t.doublesElimination.view.share}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Trophy className="w-4 h-4" />
-                  {tournament.early_rounds_format.toUpperCase()} / {tournament.finals_format.toUpperCase()}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
-                </span>
-              </div>
+              </button>
+              {canManage && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="tl-btn"
+                      style={{ color: 'var(--tl-live)' }}
+                      aria-label={t.common.delete}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t.doublesElimination.view.deleteConfirm}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t.doublesElimination.view.deleteConfirmDesc}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {t.common.delete}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           </div>
+        </header>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleShare}>
-              {copied ? <Check className="w-4 h-4 mr-1" /> : <Share2 className="w-4 h-4 mr-1" />}
-              {copied ? t.doublesElimination.view.copied : t.doublesElimination.view.share}
-            </Button>
-            
-            {canManage && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t.doublesElimination.view.deleteConfirm}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t.doublesElimination.view.deleteConfirmDesc}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      {t.common.delete}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-        </div>
+        <section style={{ marginTop: 32, marginBottom: 56 }}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="flex-wrap h-auto gap-1">
+              <TabsTrigger value="preliminary">{t.doublesElimination.view.preliminary}</TabsTrigger>
+              <TabsTrigger
+                value="playoff"
+                style={
+                  preliminaryComplete
+                    ? {
+                        background: 'var(--tl-green-glow)',
+                        color: 'var(--tl-green)',
+                        fontWeight: 600,
+                        animation: 'tl-pulse 1.6s ease-in-out infinite',
+                      }
+                    : undefined
+                }
+              >
+                {preliminaryComplete && <Trophy className="w-3.5 h-3.5 mr-1.5" />}
+                {t.doublesElimination.view.playoff}
+              </TabsTrigger>
+              <TabsTrigger value="teams">
+                {t.doublesElimination.view.teams} ({teams.length})
+              </TabsTrigger>
+              {canManage && <TabsTrigger value="settings">{t.doublesElimination.view.settings}</TabsTrigger>}
+            </TabsList>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="preliminary">{t.doublesElimination.view.preliminary}</TabsTrigger>
-            <TabsTrigger 
-              value="playoff"
-              className={preliminaryComplete ? "bg-primary/20 text-primary font-semibold animate-pulse" : ""}
-            >
-              {preliminaryComplete && <Trophy className="w-3.5 h-3.5 mr-1.5" />}
-              {t.doublesElimination.view.playoff}
-            </TabsTrigger>
-            <TabsTrigger value="teams">{t.doublesElimination.view.teams} ({teams.length})</TabsTrigger>
-            {canManage && <TabsTrigger value="settings">{t.doublesElimination.view.settings}</TabsTrigger>}
-          </TabsList>
+            {/* Preliminary tab — bracket renderer is a child component left untouched */}
+            <TabsContent value="preliminary" className="space-y-6">
+              <DoublesEliminationBracket
+                matches={matches} teams={teams} tournamentId={tournament?.id}
+                showPreliminaryOnly={true} canEdit={canEdit}
+                onScoreUpdated={softReload} onMatchUpdated={handleMatchUpdated} onR3Assigned={handleR3Assigned}
+              />
+            </TabsContent>
 
-          <TabsContent value="preliminary" className="space-y-6">
-            <DoublesEliminationBracket 
-              matches={matches} teams={teams} tournamentId={tournament?.id}
-              showPreliminaryOnly={true} canEdit={canEdit}
-              onScoreUpdated={softReload} onMatchUpdated={handleMatchUpdated} onR3Assigned={handleR3Assigned}
-            />
-          </TabsContent>
+            <TabsContent value="playoff" className="space-y-6">
+              <DoublesEliminationBracket
+                matches={matches} teams={teams} tournamentId={tournament?.id}
+                showPlayoffOnly={true} canEdit={canEdit}
+                onScoreUpdated={softReload} onMatchUpdated={handleMatchUpdated} onR3Assigned={handleR3Assigned}
+              />
+            </TabsContent>
 
-          <TabsContent value="playoff" className="space-y-6">
-            <DoublesEliminationBracket 
-              matches={matches} teams={teams} tournamentId={tournament?.id}
-              showPlayoffOnly={true} canEdit={canEdit}
-              onScoreUpdated={softReload} onMatchUpdated={handleMatchUpdated} onR3Assigned={handleR3Assigned}
-            />
-          </TabsContent>
-
-          <TabsContent value="teams">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t.doublesElimination.view.teamList}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+            <TabsContent value="teams">
+              <div style={surfaceCard}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    paddingBottom: 14,
+                    borderBottom: '1px solid var(--tl-border)',
+                    marginBottom: 16,
+                  }}
+                >
+                  <Users className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+                  <h3 style={{ ...sectionTitle, fontSize: 18 }}>{t.doublesElimination.view.teamList}</h3>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {teams.map((team) => (
-                    <div 
+                    <div
                       key={team.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border
-                        ${team.status === 'eliminated' ? 'opacity-50' : ''}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 14px',
+                        borderRadius: 'var(--tl-radius)',
+                        background: 'var(--tl-bg)',
+                        border: '1px solid var(--tl-border)',
+                        opacity: team.status === 'eliminated' ? 0.5 : 1,
+                      }}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            background: 'var(--tl-surface)',
+                            border: '1px solid var(--tl-border)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: 'var(--tl-fg-2)',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
                           #{team.seed}
                         </span>
                         <div>
-                          <div className="font-medium">{team.team_name}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div style={{ fontWeight: 500, fontSize: 14.5, color: 'var(--tl-fg)' }}>
+                            {team.team_name}
+                          </div>
+                          <div style={{ fontSize: 12.5, color: 'var(--tl-fg-3)' }}>
                             {team.player1_name}
                             {team.player2_name && ` / ${team.player2_name}`}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right text-sm">
-                          <div>+{team.total_points_for} / -{team.total_points_against}</div>
-                          <div className={`font-medium ${team.point_diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div
+                          style={{
+                            textAlign: 'right',
+                            fontSize: 12.5,
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          <div style={{ color: 'var(--tl-fg-3)' }}>
+                            +{team.total_points_for} / -{team.total_points_against}
+                          </div>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              color: team.point_diff >= 0 ? 'var(--tl-green)' : 'var(--tl-live)',
+                            }}
+                          >
                             {team.point_diff >= 0 ? '+' : ''}{team.point_diff}
                           </div>
                         </div>
                         {team.status === 'eliminated' && (
-                          <Badge variant="secondary">{t.doublesElimination.view.eliminatedRound}{team.eliminated_at_round}</Badge>
+                          <span
+                            style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontSize: 10.5,
+                              fontWeight: 500,
+                              padding: '3px 8px',
+                              borderRadius: 4,
+                              background: 'var(--tl-surface)',
+                              color: 'var(--tl-fg-3)',
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {t.doublesElimination.view.eliminatedRound}{team.eliminated_at_round}
+                          </span>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {canManage && (
-            <TabsContent value="settings" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t.doublesElimination.view.tournamentSettings}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-sm text-muted-foreground">{t.doublesElimination.earlyRounds}</span>
-                      <div className="font-medium">{tournament.early_rounds_format.toUpperCase()}</div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">{t.doublesElimination.semifinalPlus}</span>
-                      <div className="font-medium">{tournament.finals_format.toUpperCase()}</div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">{t.doublesElimination.view.thirdPlaceMatch}</span>
-                      <div className="font-medium">{tournament.has_third_place_match ? t.doublesElimination.view.yes : t.doublesElimination.view.no}</div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">{t.doublesElimination.view.courts}</span>
-                      <div className="font-medium">{tournament.court_count}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <RefereeManagement
-                referees={referees.map(r => ({ id: r.id, email: r.email, display_name: r.display_name }))}
-                loading={refereesLoading}
-                onAddReferee={addRefereeByEmail}
-                onRemoveReferee={removeReferee}
-              />
+              </div>
             </TabsContent>
-          )}
-        </Tabs>
+
+            {canManage && (
+              <TabsContent value="settings" className="space-y-4">
+                <div style={surfaceCard}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      paddingBottom: 14,
+                      borderBottom: '1px solid var(--tl-border)',
+                      marginBottom: 16,
+                    }}
+                  >
+                    <Trophy className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+                    <h3 style={{ ...sectionTitle, fontSize: 18 }}>
+                      {t.doublesElimination.view.tournamentSettings}
+                    </h3>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <SettingItem
+                      label={t.doublesElimination.earlyRounds}
+                      value={tournament.early_rounds_format.toUpperCase()}
+                    />
+                    <SettingItem
+                      label={t.doublesElimination.semifinalPlus}
+                      value={tournament.finals_format.toUpperCase()}
+                    />
+                    <SettingItem
+                      label={t.doublesElimination.view.thirdPlaceMatch}
+                      value={tournament.has_third_place_match ? t.doublesElimination.view.yes : t.doublesElimination.view.no}
+                    />
+                    <SettingItem
+                      label={t.doublesElimination.view.courts}
+                      value={String(tournament.court_count)}
+                    />
+                  </div>
+                </div>
+
+                <RefereeManagement
+                  referees={referees.map(r => ({ id: r.id, email: r.email, display_name: r.display_name }))}
+                  loading={refereesLoading}
+                  onAddReferee={addRefereeByEmail}
+                  onRemoveReferee={removeReferee}
+                />
+              </TabsContent>
+            )}
+          </Tabs>
+        </section>
       </div>
     </TheLineLayout>
+  );
+}
+
+function SettingItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div
+        style={{
+          fontFamily: 'Geist Mono, ui-monospace, monospace',
+          fontSize: 11,
+          color: 'var(--tl-fg-3)',
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: 'Geist Mono, ui-monospace, monospace',
+          fontSize: 14,
+          fontWeight: 600,
+          color: 'var(--tl-fg)',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {value}
+      </div>
+    </div>
   );
 }
