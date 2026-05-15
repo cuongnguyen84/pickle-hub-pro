@@ -684,6 +684,76 @@ export function renderToolPage(toolSlug: string, siteUrl: string, rawPath: strin
   }));
 }
 
+// W1.1 (2026-05-15) — page-specific metadata for /tools/{tool}/new
+// setup pages. Previously these were caught by the
+// /^\/(?:vi\/)?tools\/[^/]+\/new(?:\/|$)/ noindex pattern in
+// _middleware.ts so bots saw the renderNoindexShell — wasting all of
+// their organic SEO potential. Now the bot path serves a real
+// SoftwareApplication-typed shell with create-flow copy. Quick Tables
+// has no /new variant (the list page IS the create flow), so only 3
+// tools are mapped here.
+const TOOL_NEW_PAGE_META: Record<string, {
+  en: { title: string; description: string };
+  vi: { title: string; description: string };
+}> = {
+  "doubles-elimination": {
+    en: {
+      title: "Create Doubles Elimination Bracket | ThePickleHub",
+      description: "Free doubles elimination bracket generator. Auto bracket draw, live scoring, shareable results. No signup — ThePickleHub.",
+    },
+    vi: {
+      title: "Tạo Doubles Elimination Bracket | ThePickleHub",
+      description: "Công cụ miễn phí tạo bracket loại kép pickleball. Bốc thăm tự động, chấm điểm trực tiếp, chia sẻ kết quả qua link. Không cần đăng ký — ThePickleHub.",
+    },
+  },
+  "flex-tournament": {
+    en: {
+      title: "Create Flex Tournament | ThePickleHub",
+      description: "Free flexible tournament generator. Custom groups, brackets, and match formats. No signup — ThePickleHub.",
+    },
+    vi: {
+      title: "Tạo Flex Tournament | ThePickleHub",
+      description: "Công cụ miễn phí tạo giải đấu pickleball với cấu trúc tự do. Tự thiết kế nhóm, bracket, và thể thức trận đấu. Không cần đăng ký — ThePickleHub.",
+    },
+  },
+  "team-match": {
+    en: {
+      title: "Create MLP Team Match | ThePickleHub",
+      description: "Free MLP-style team match software. Lineup management, multi-round scoring, dreambreaker support. No signup — ThePickleHub.",
+    },
+    vi: {
+      title: "Tạo Team Match (MLP) | ThePickleHub",
+      description: "Phần mềm miễn phí cho đấu đồng đội theo format MLP. Quản lý lineup, chấm điểm nhiều ván, hỗ trợ dreambreaker. Không cần đăng ký — ThePickleHub.",
+    },
+  },
+};
+
+export function renderToolNewPage(toolSlug: string, siteUrl: string, rawPath: string, lang: "en" | "vi" = "en"): Response {
+  const entry = TOOL_NEW_PAGE_META[toolSlug];
+  // Unknown tool → fall back to noindex shell rather than a generic
+  // shell. /tools/<unknown>/new is almost certainly a typo or stale
+  // link; better to signal noindex than serve a thin 200.
+  if (!entry) return renderNoindexShell(siteUrl, rawPath, lang);
+  const meta = entry[lang] || entry.en;
+
+  return htmlResponse(buildHtml({
+    title: meta.title,
+    description: meta.description,
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: meta.title,
+      applicationCategory: "SportsApplication",
+      operatingSystem: "Web",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    bodyContent: `<h2>${meta.title}</h2><p>${meta.description}</p>
+      <p><a href="${siteUrl}/tools/${toolSlug}">← ${lang === "vi" ? "Quay lại" : "Back to"} ${toolSlug}</a></p>`,
+  }));
+}
+
 // ─── Blog ─────────────────────��───────────────────────────
 
 // Prerender metadata for bot-rendered EN blog posts. MUST stay in sync with
