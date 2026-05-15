@@ -1,6 +1,6 @@
 import { usePublishedViBlogPosts } from "@/hooks/useViBlogPosts";
-import { DynamicMeta, HreflangTags, BreadcrumbSchema } from "@/components/seo";
-import MainLayout from "@/components/layout/MainLayout";
+import { HreflangTags, BreadcrumbSchema } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ViBlogCard } from "@/components/content/ViBlogCard";
 import { useBlogPostViewCountsBatch, pairKey } from "@/hooks/useBlogPostViewCountsBatch";
@@ -16,11 +16,11 @@ const ViBlog = () => {
   ];
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title="Blog Pickleball Việt Nam"
-        description="Đọc blog pickleball Việt Nam: luật chơi, kỹ thuật, sân chơi, giải đấu, và mọi điều về cộng đồng pickleball Việt từ ThePickleHub."
-      />
+    <TheLineLayout
+      title="Blog Pickleball Việt Nam"
+      description="Đọc blog pickleball Việt Nam: luật chơi, kỹ thuật, sân chơi, giải đấu, và mọi điều về cộng đồng pickleball Việt từ ThePickleHub."
+      active="stories"
+    >
       <HreflangTags enPath="/blog" viPath="/vi/blog" />
       <BreadcrumbSchema items={breadcrumbItems} />
 
@@ -52,7 +52,7 @@ const ViBlog = () => {
           </div>
         )}
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

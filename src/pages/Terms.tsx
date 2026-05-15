@@ -1,18 +1,14 @@
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { ArrowLeft, FileText, Mail } from "lucide-react";
-import { DynamicMeta } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
 
 const Terms = () => {
   const { t } = useI18n();
   const terms = t.terms;
 
   return (
-    <>
-      <DynamicMeta
-        title={terms.title}
-        description={terms.intro.description}
-      />
+    <TheLineLayout title={terms.title} description={terms.intro.description}>
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -141,7 +137,7 @@ const Terms = () => {
           </div>
         </main>
       </div>
-    </>
+    </TheLineLayout>
   );
 };
 

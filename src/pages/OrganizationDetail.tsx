@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
+import { TheLineLayout } from "@/components/layout";
 import { ContentCard, LiveCard, EmptyState } from "@/components/content";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
@@ -107,7 +107,7 @@ const OrganizationDetail = () => {
 
   if (orgLoading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Loading..." active="tournaments">
         <div className="container-wide py-8">
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-12 w-96 mb-4" />
@@ -125,13 +125,13 @@ const OrganizationDetail = () => {
             ))}
           </div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (!organization) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Organization Not Found" active="tournaments">
         <div className="container-wide py-16 text-center">
           <Building2 className="w-16 h-16 mx-auto mb-4 text-foreground-muted" />
           <h1 className="text-xl font-semibold mb-2">{t.errors.notFound}</h1>
@@ -140,7 +140,7 @@ const OrganizationDetail = () => {
             {t.nav.home}
           </Link>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -149,7 +149,7 @@ const OrganizationDetail = () => {
   const isFiltering = debouncedSearch || contentType !== "all";
 
   return (
-    <MainLayout>
+    <TheLineLayout title={organization.name} active="tournaments">
       {/* Hero Section */}
       <OrganizationHero
         id={organization.id}
@@ -370,7 +370,7 @@ const OrganizationDetail = () => {
           </div>
         )}
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

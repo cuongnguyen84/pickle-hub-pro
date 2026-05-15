@@ -7,8 +7,7 @@ import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useI18n } from "@/i18n";
-import MainLayout from "@/components/layout/MainLayout";
-import { DynamicMeta } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
 import { UserAvatar } from "@/components/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,11 +115,11 @@ const Account = () => {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Tài khoản" noindex={true}>
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -138,8 +137,7 @@ const Account = () => {
   const displayName = profile?.display_name || user.email?.split("@")[0] || "User";
 
   return (
-    <MainLayout>
-      <DynamicMeta title="Tài khoản" noindex={true} />
+    <TheLineLayout title="Tài khoản" noindex={true}>
       <div className="container-narrow py-8">
         <div className="max-w-md mx-auto">
           {/* Profile Card */}
@@ -330,7 +328,7 @@ const Account = () => {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 
