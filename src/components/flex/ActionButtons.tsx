@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useI18n } from '@/i18n';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -67,63 +66,66 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: Ac
           <DialogTitle>{getDialogTitle()}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>{getDialogTitle()}</Label>
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={getDialogTitle()}
-              autoFocus
-              className="text-base"
-            />
-          </div>
+        <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Label>{getDialogTitle()}</Label>
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={getDialogTitle()}
+            autoFocus
+            className="text-base"
+          />
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpenDialog(null)}>
+          <button type="button" className="tl-btn" onClick={() => setOpenDialog(null)}>
             {t.common.cancel}
-          </Button>
-          <Button onClick={handleSubmit} disabled={!inputValue.trim()}>
+          </button>
+          <button
+            type="button"
+            className="tl-btn green"
+            onClick={handleSubmit}
+            disabled={!inputValue.trim()}
+          >
             {t.common.create}
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 
-  // Compact mode for mobile - returns fragment with buttons
+  // Compact mode for mobile — returns fragment with token buttons
   if (compact) {
     return (
       <>
-        <Button
-          variant="outline"
-          size="sm"
-          className="justify-center text-xs h-9"
+        <button
+          type="button"
+          className="tl-btn"
           onClick={() => setOpenDialog('team')}
+          style={{ justifyContent: 'center', padding: '8px 10px', fontSize: 12 }}
         >
-          <Users className="w-3.5 h-3.5 mr-1" />
+          <Users className="w-3.5 h-3.5" />
           {t.tools.flexTournament.addTeam}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="justify-center text-xs h-9"
+        </button>
+        <button
+          type="button"
+          className="tl-btn"
           onClick={() => setOpenDialog('group')}
+          style={{ justifyContent: 'center', padding: '8px 10px', fontSize: 12 }}
         >
-          <Grid3X3 className="w-3.5 h-3.5 mr-1" />
+          <Grid3X3 className="w-3.5 h-3.5" />
           {t.tools.flexTournament.addGroup}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="justify-center text-xs h-9"
+        </button>
+        <button
+          type="button"
+          className="tl-btn"
           onClick={onAddMatch}
+          style={{ justifyContent: 'center', padding: '8px 10px', fontSize: 12 }}
         >
-          <Swords className="w-3.5 h-3.5 mr-1" />
+          <Swords className="w-3.5 h-3.5" />
           {t.tools.flexTournament.addMatch}
-        </Button>
+        </button>
         {dialogContent}
       </>
     );
@@ -131,31 +133,34 @@ export function ActionButtons({ onAddTeam, onAddGroup, onAddMatch, compact }: Ac
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <Button
-          variant="outline"
-          className="justify-start"
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button
+          type="button"
+          className="tl-btn"
           onClick={() => setOpenDialog('team')}
+          style={{ justifyContent: 'flex-start', padding: '10px 14px' }}
         >
-          <Users className="w-4 h-4 mr-2" />
+          <Users className="w-4 h-4" />
           {t.tools.flexTournament.addTeam}
-        </Button>
-        <Button
-          variant="outline"
-          className="justify-start"
+        </button>
+        <button
+          type="button"
+          className="tl-btn"
           onClick={() => setOpenDialog('group')}
+          style={{ justifyContent: 'flex-start', padding: '10px 14px' }}
         >
-          <Grid3X3 className="w-4 h-4 mr-2" />
+          <Grid3X3 className="w-4 h-4" />
           {t.tools.flexTournament.addGroup}
-        </Button>
-        <Button
-          variant="outline"
-          className="justify-start"
+        </button>
+        <button
+          type="button"
+          className="tl-btn"
           onClick={onAddMatch}
+          style={{ justifyContent: 'flex-start', padding: '10px 14px' }}
         >
-          <Swords className="w-4 h-4 mr-2" />
+          <Swords className="w-4 h-4" />
           {t.tools.flexTournament.addMatch}
-        </Button>
+        </button>
       </div>
       {dialogContent}
     </>
