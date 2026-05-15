@@ -114,6 +114,15 @@ export function useFeedTimeline() {
         .map(normalizeRow)
         .filter((item): item is FeedTimelineItem => item != null);
 
+      // TODO (Phase 2) — same-author diversity pass. Once the score-based
+      // sort (migration 20260515100000) is in production we may see the
+      // same author/organization streak when several of their items land
+      // in a tight score band. Author key resolution is messy though
+      // (matches have 2–4 participants; pro tour rows have ghost players;
+      // videos expose organization_id but it's not in the RPC return
+      // shape today). Skipping for Phase 1 — revisit if the feed looks
+      // visually repetitive after a couple of weeks of real traffic.
+
       // Merge static EN blog metadata into the SAME chronological window
       // that this page covers. Codex P2 (PR #80 review): doing a single
       // first-page merge breaks monotonic DESC order when the DB has
