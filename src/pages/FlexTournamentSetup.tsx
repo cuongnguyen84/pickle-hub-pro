@@ -1,22 +1,54 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, Layers, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 import { getLoginUrl } from "@/lib/auth-config";
 
+const surfaceCard: React.CSSProperties = {
+  background: "var(--tl-bg-elev)",
+  border: "1px solid var(--tl-border)",
+  borderRadius: "var(--tl-radius-lg)",
+  padding: 28,
+};
+
+const stepKickerStyle: React.CSSProperties = {
+  fontFamily: "Geist Mono, ui-monospace, monospace",
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--tl-green)",
+  marginBottom: 8,
+};
+
+const stepHeadingStyle: React.CSSProperties = {
+  fontFamily: "Instrument Serif, serif",
+  fontStyle: "italic",
+  fontWeight: 400,
+  fontSize: 28,
+  letterSpacing: "-0.015em",
+  lineHeight: 1.05,
+  margin: 0,
+  color: "var(--tl-fg)",
+};
+
+const stepDescStyle: React.CSSProperties = {
+  fontSize: 14.5,
+  color: "var(--tl-fg-3)",
+  marginTop: 6,
+  lineHeight: 1.5,
+};
+
 const FlexTournamentSetup = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const { createTournament, isCreating } = useFlexTournament();
   const navigate = useNavigate();
@@ -28,7 +60,7 @@ const FlexTournamentSetup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast({ title: t.common.error, description: t.tools.flexTournament.tournamentName, variant: "destructive" });
       return;
@@ -50,25 +82,63 @@ const FlexTournamentSetup = () => {
       toast({ title: t.tools.flexTournament.createSuccess });
       navigate(`/tools/flex-tournament/${tournament.share_id}`);
     } catch (error) {
-      toast({ 
-        title: t.common.error, 
-        description: t.tools.flexTournament.createError, 
-        variant: "destructive" 
+      toast({
+        title: t.common.error,
+        description: t.tools.flexTournament.createError,
+        variant: "destructive",
       });
     }
   };
 
+  // ─── Login gate ──────────────────────────────────────────────────────────
   if (!user) {
     return (
       <TheLineLayout title="Flex Tournament Setup" active="lab">
-        <div className="container-wide py-8">
-          <div className="text-center py-12">
-            <h1 className="text-2xl font-bold mb-4">{t.tools.flexTournament.title}</h1>
-            <p className="text-muted-foreground mb-6">{t.auth.loginRequired}</p>
-            <Button asChild>
-              <Link to={getLoginUrl('/tools/flex-tournament/new')}>{t.auth.login}</Link>
-            </Button>
-          </div>
+        <div className="tl-shell">
+          <nav className="tl-breadcrumb">
+            <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
+            <span className="sep">/</span>
+            <Link to="/tools/flex-tournament">Flex Tournament</Link>
+            <span className="sep">/</span>
+            <span className="current">{language === "vi" ? "Tạo mới" : "New"}</span>
+          </nav>
+
+          <section style={{ padding: "48px 0 80px" }}>
+            <div
+              style={{
+                ...surfaceCard,
+                maxWidth: 480,
+                margin: "0 auto",
+                textAlign: "center",
+                padding: "40px 28px",
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  background: "var(--tl-green-glow)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 20,
+                }}
+              >
+                <Layers className="w-7 h-7" style={{ color: "var(--tl-green)" }} />
+              </div>
+              <h2 style={{ ...stepHeadingStyle, fontSize: 24, marginBottom: 10 }}>
+                {t.tools.flexTournament.title}
+              </h2>
+              <p style={{ ...stepDescStyle, marginTop: 0, marginBottom: 24, fontSize: 14 }}>
+                {t.auth.loginRequired}
+              </p>
+              <Link to={getLoginUrl('/tools/flex-tournament/new')} className="tl-btn green">
+                <LogIn className="w-4 h-4" />
+                {t.auth.login}
+              </Link>
+            </div>
+          </section>
         </div>
       </TheLineLayout>
     );
@@ -76,25 +146,42 @@ const FlexTournamentSetup = () => {
 
   return (
     <TheLineLayout title="Flex Tournament Setup" active="lab">
-      <div className="container-wide py-8 max-w-2xl mx-auto">
-        {/* Back button */}
-        <Button variant="ghost" asChild className="mb-6">
-          <Link to="/tools/flex-tournament">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {t.tools.flexTournament.myTournaments}
-          </Link>
-        </Button>
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to="/tools">{language === "vi" ? "Bracket Lab" : "Bracket Lab"}</Link>
+          <span className="sep">/</span>
+          <Link to="/tools/flex-tournament">Flex Tournament</Link>
+          <span className="sep">/</span>
+          <span className="current">{language === "vi" ? "Tạo mới" : "New"}</span>
+        </nav>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.tools.flexTournament.create}</CardTitle>
-            <CardDescription>{t.tools.flexTournament.subtitleFull}</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <header className="tl-page-head">
+          <div className="kicker">
+            ◆ {language === "vi" ? "Tạo giải mới · Tự do format" : "New tournament · Custom format"}
+          </div>
+          <h1 style={{ fontSize: "clamp(28px, 4vw, 56px)" }}>
+            <em className="tl-serif">{language === "vi" ? "Tạo" : "Create"}</em>{" "}
+            <span className="sans">{language === "vi" ? "giải đấu." : "tournament."}</span>
+          </h1>
+        </header>
+
+        <section style={{ maxWidth: 720, margin: "0 auto", padding: "32px 0 80px", width: "100%" }}>
+          <div style={surfaceCard}>
+            <div style={{ marginBottom: 24 }}>
+              <div style={stepKickerStyle}>
+                ◆ {language === "vi" ? "Thông tin cơ bản" : "Basics"}
+              </div>
+              <h2 style={stepHeadingStyle}>{t.tools.flexTournament.create}</h2>
+              <p style={stepDescStyle}>{t.tools.flexTournament.subtitleFull}</p>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Tournament Name */}
               <div className="space-y-2">
-                <Label htmlFor="name">{t.tools.flexTournament.tournamentName}</Label>
+                <Label htmlFor="name">
+                  {t.tools.flexTournament.tournamentName}{" "}
+                  <span style={{ color: "var(--tl-live)" }}>*</span>
+                </Label>
                 <Input
                   id="name"
                   value={name}
@@ -106,21 +193,40 @@ const FlexTournamentSetup = () => {
               </div>
 
               {/* Visibility */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>{t.tools.flexTournament.visibility}</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  padding: 16,
+                  borderRadius: "var(--tl-radius)",
+                  background: "var(--tl-bg)",
+                  border: "1px solid var(--tl-border)",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: "var(--tl-fg)" }}>
+                    {t.tools.flexTournament.visibility}
+                  </div>
+                  <p style={{ fontSize: 12.5, color: "var(--tl-fg-3)", margin: "4px 0 0", lineHeight: 1.5 }}>
                     {t.tools.flexTournament.visibilityHint}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span
+                    style={{
+                      fontFamily: "Geist Mono, ui-monospace, monospace",
+                      fontSize: 11,
+                      fontWeight: 500,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: isPublic ? "var(--tl-green)" : "var(--tl-fg-3)",
+                    }}
+                  >
                     {isPublic ? t.tools.flexTournament.public : t.tools.flexTournament.unlisted}
                   </span>
-                  <Switch
-                    checked={isPublic}
-                    onCheckedChange={setIsPublic}
-                  />
+                  <Switch checked={isPublic} onCheckedChange={setIsPublic} />
                 </div>
               </div>
 
@@ -134,19 +240,33 @@ const FlexTournamentSetup = () => {
                   placeholder={t.tools.flexTournament.addPlayersPlaceholder}
                   rows={8}
                 />
-                <p className="text-sm text-muted-foreground">
+                <p style={{ fontSize: 12.5, color: "var(--tl-fg-3)", margin: "6px 0 0", lineHeight: 1.5 }}>
                   {t.tools.flexTournament.addPlayersHint}
                 </p>
               </div>
 
               {/* Submit */}
-              <Button type="submit" className="w-full" disabled={isCreating}>
-                {isCreating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {t.tools.flexTournament.create}
-              </Button>
+              <div
+                style={{
+                  paddingTop: 8,
+                  position: "sticky",
+                  bottom: 16,
+                  background: "var(--tl-bg-elev)",
+                }}
+              >
+                <button
+                  type="submit"
+                  className="tl-btn green"
+                  disabled={isCreating}
+                  style={{ width: "100%", justifyContent: "center", padding: "14px 18px" }}
+                >
+                  {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {t.tools.flexTournament.create}
+                </button>
+              </div>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </div>
     </TheLineLayout>
   );
