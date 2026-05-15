@@ -1473,7 +1473,7 @@ export async function renderFeed(
   try {
     const { data, error } = await supabase.rpc("get_feed_timeline", {
       p_limit: 20,
-      p_cursor_published_at: null,
+      p_cursor_score: null,
       p_cursor_item_id: null,
       p_viewer_id: null,
     });
