@@ -28,21 +28,61 @@ const tableHeadStyle: React.CSSProperties = {
   fontFamily: 'Geist Mono, ui-monospace, monospace',
   fontSize: 10.5,
   fontWeight: 500,
-  letterSpacing: '0.04em',
+  letterSpacing: '0.06em',
   textTransform: 'uppercase',
   color: 'var(--tl-fg-3)',
-  padding: '8px 6px',
+  padding: '8px 8px',
   textAlign: 'left',
   borderBottom: '1px solid var(--tl-border)',
   whiteSpace: 'nowrap',
+  background: 'transparent',
 };
 
 const tableCellStyle: React.CSSProperties = {
-  padding: '8px 6px',
+  padding: '10px 8px',
   fontSize: 12.5,
   color: 'var(--tl-fg)',
   borderBottom: '1px solid var(--tl-border)',
   fontVariantNumeric: 'tabular-nums',
+};
+
+// shadcn TabsList: flatten the rounded pill bg, replace with token border-bottom + flex.
+const tlTabsListClass =
+  'flex w-full h-auto p-0 bg-transparent border-b border-[var(--tl-border)] rounded-none gap-2';
+
+// shadcn TabsTrigger: kill rounded shadow pill, add green underline on active state.
+// Uses data-[state=active] which shadcn TabsTrigger exposes via Radix.
+const tlTabsTriggerClass = [
+  'flex-1 inline-flex items-center justify-center gap-1.5',
+  'px-3 pt-2 pb-2.5',
+  'text-[11px] font-medium tracking-[0.06em] uppercase',
+  'font-[family-name:Geist_Mono,ui-monospace,monospace]',
+  'text-[var(--tl-fg-3)] bg-transparent rounded-none shadow-none border-0',
+  'border-b-2 border-transparent',
+  'data-[state=active]:text-[var(--tl-fg)]',
+  'data-[state=active]:border-[var(--tl-green)]',
+  'data-[state=active]:bg-transparent data-[state=active]:shadow-none',
+  'transition-colors',
+  // subtle hover for inactive
+  'hover:text-[var(--tl-fg-2)]',
+].join(' ');
+
+// Body row hover — applied via inline event handlers since native <tr> + token bg.
+const onRowEnter = (e: React.MouseEvent<HTMLTableRowElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg)';
+};
+const onRowLeave = (e: React.MouseEvent<HTMLTableRowElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'transparent';
+};
+
+// X delete button hover — token red on hover.
+const onXEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'rgba(255, 65, 54, 0.10)';
+  (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)';
+};
+const onXLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+  (e.currentTarget as HTMLElement).style.background = 'transparent';
+  (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)';
 };
 
 export function GroupBlock({
@@ -361,12 +401,12 @@ export function GroupBlock({
         ) : groupType === 'team' ? (
           // Team-based group: Teams / Individuals tabs
           <Tabs value={activeTab === 'singles' || activeTab === 'doubles' ? 'teams' : activeTab} onValueChange={(v) => setActiveTab(v as 'teams' | 'individuals')}>
-            <TabsList className="grid w-full grid-cols-2 h-8">
-              <TabsTrigger value="teams" className="text-xs gap-1">
+            <TabsList className={tlTabsListClass}>
+              <TabsTrigger value="teams" className={tlTabsTriggerClass}>
                 <Users className="w-3 h-3" />
                 {t.tools.flexTournament.groupTabTeams}
               </TabsTrigger>
-              <TabsTrigger value="individuals" className="text-xs gap-1">
+              <TabsTrigger value="individuals" className={tlTabsTriggerClass}>
                 <User className="w-3 h-3" />
                 {t.tools.flexTournament.groupTabIndividuals}
               </TabsTrigger>
@@ -390,7 +430,7 @@ export function GroupBlock({
                       const stats = getTeamStats(team.id);
                       const item = items.find(i => i.team_id === team.id);
                       return (
-                        <tr key={team.id}>
+                        <tr key={team.id} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
                           <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{index + 1}</td>
                           <td style={{ ...tableCellStyle, fontWeight: 500, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{team.name}</td>
                           <td style={{ ...tableCellStyle, textAlign: 'center' }}>{stats.wins}</td>
@@ -403,8 +443,10 @@ export function GroupBlock({
                               <button
                                 type="button"
                                 onClick={() => onRemoveItem(item.id)}
-                                style={{ background: 'transparent', border: 0, color: 'var(--tl-fg-3)', cursor: 'pointer', padding: 2, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}
-                                aria-label="Remove team"
+                                onMouseEnter={onXEnter}
+                                onMouseLeave={onXLeave}
+                                style={{ background: 'transparent', border: 0, color: 'var(--tl-fg-3)', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, transition: 'background 0.15s, color 0.15s' }}
+                                aria-label="Remove item"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -483,7 +525,7 @@ export function GroupBlock({
                       {sortedPlayersFromTeams.map((player, index) => {
                         const stats = getSinglesStats(player.id);
                         return (
-                          <tr key={player.id}>
+                          <tr key={player.id} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
                             <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{index + 1}</td>
                             <td style={tableCellStyle}>
                               <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120, fontWeight: 500 }}>{player.name}</div>
@@ -520,12 +562,12 @@ export function GroupBlock({
         ) : (
           // Player-based group: Singles / Doubles tabs
           <Tabs value={activeTab === 'teams' || activeTab === 'individuals' ? 'singles' : activeTab} onValueChange={(v) => setActiveTab(v as 'singles' | 'doubles')}>
-            <TabsList className="grid w-full grid-cols-2 h-8">
-              <TabsTrigger value="singles" className="text-xs gap-1">
+            <TabsList className={tlTabsListClass}>
+              <TabsTrigger value="singles" className={tlTabsTriggerClass}>
                 <User className="w-3 h-3" />
                 {t.tools.flexTournament.matchType.singles}
               </TabsTrigger>
-              <TabsTrigger value="doubles" className="text-xs gap-1">
+              <TabsTrigger value="doubles" className={tlTabsTriggerClass}>
                 <Users className="w-3 h-3" />
                 {t.tools.flexTournament.matchType.doubles}
               </TabsTrigger>
@@ -564,7 +606,7 @@ export function GroupBlock({
                     {sortedSinglesItems.map((item, index) => {
                       const stats = getSinglesStats(item.player_id!);
                       return (
-                        <tr key={item.id}>
+                        <tr key={item.id} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
                           <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{index + 1}</td>
                           <td style={{ ...tableCellStyle, fontWeight: 500, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getItemName(item)}</td>
                           <td style={{ ...tableCellStyle, textAlign: 'center' }}>{stats.wins}</td>
@@ -577,7 +619,9 @@ export function GroupBlock({
                               <button
                                 type="button"
                                 onClick={() => onRemoveItem(item.id)}
-                                style={{ background: 'transparent', border: 0, color: 'var(--tl-fg-3)', cursor: 'pointer', padding: 2, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}
+                                onMouseEnter={onXEnter}
+                                onMouseLeave={onXLeave}
+                                style={{ background: 'transparent', border: 0, color: 'var(--tl-fg-3)', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4, transition: 'background 0.15s, color 0.15s' }}
                                 aria-label="Remove item"
                               >
                                 <X className="w-3 h-3" />
@@ -622,7 +666,7 @@ export function GroupBlock({
                     </thead>
                     <tbody>
                       {sortedPairStats.map((pair, index) => (
-                        <tr key={`${pair.player1_id}-${pair.player2_id}`}>
+                        <tr key={`${pair.player1_id}-${pair.player2_id}`} onMouseEnter={onRowEnter} onMouseLeave={onRowLeave}>
                           <td style={{ ...tableCellStyle, textAlign: 'center', fontWeight: 600, color: 'var(--tl-fg-2)' }}>{index + 1}</td>
                           <td style={{ ...tableCellStyle, fontWeight: 500, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {getPairName(pair.player1_id, pair.player2_id)}
