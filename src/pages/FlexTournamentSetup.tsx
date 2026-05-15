@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { MainLayout } from "@/components/layout";
+import { TheLineLayout } from "@/components/layout";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ const FlexTournamentSetup = () => {
 
   if (!user) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Flex Tournament Setup" active="lab">
         <div className="container-wide py-8">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold mb-4">{t.tools.flexTournament.title}</h1>
@@ -70,12 +70,12 @@ const FlexTournamentSetup = () => {
             </Button>
           </div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <TheLineLayout title="Flex Tournament Setup" active="lab">
       <div className="container-wide py-8 max-w-2xl mx-auto">
         {/* Back button */}
         <Button variant="ghost" asChild className="mb-6">
@@ -148,7 +148,7 @@ const FlexTournamentSetup = () => {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

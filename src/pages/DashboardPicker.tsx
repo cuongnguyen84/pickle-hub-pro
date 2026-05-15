@@ -1,6 +1,5 @@
 import { useI18n } from "@/i18n";
-import { MainLayout } from "@/components/layout";
-import { DynamicMeta } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,12 +31,7 @@ const DashboardPicker = () => {
   };
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title={`${t.dashboard.title} – The PickleHub`}
-        description={t.dashboard.description}
-        url="https://www.thepicklehub.net/tools/dashboard"
-      />
+    <TheLineLayout title={`${t.dashboard.title} – The PickleHub`} description={t.dashboard.description} active="lab">
       <div className="container-wide py-8">
         <div className="flex items-center gap-3 mb-6">
           <Monitor className="w-6 h-6 text-primary" />
@@ -82,7 +76,7 @@ const DashboardPicker = () => {
           </div>
         )}
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

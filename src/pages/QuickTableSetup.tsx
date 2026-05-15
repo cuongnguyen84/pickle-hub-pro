@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MainLayout } from '@/components/layout';
-import { DynamicMeta } from '@/components/seo';
+import { TheLineLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, distributePlayersToGroups } from '@/hooks/useQuickTable';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAuth } from '@/hooks/useAuth';
@@ -288,34 +287,33 @@ const QuickTableSetup = () => {
 
   if (loading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Quick Table Setup" noindex={true} active="lab">
         <div className="container-wide py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-foreground-muted">{t.common.loading}</div>
           </div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (!table) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Quick Table Setup" noindex={true} active="lab">
         <div className="container-wide py-8">
           <div className="text-center">
             <h1 className="text-xl font-bold mb-2">{t.quickTable.setup.notFound}</h1>
             <p className="text-foreground-secondary">{t.quickTable.setup.notFoundDesc}</p>
           </div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   // Show manual assignment UI
   if (step === 'assignment' && table.group_count) {
     return (
-      <MainLayout>
-        <DynamicMeta title={`Chia bảng - ${table.name}`} noindex={true} />
+      <TheLineLayout title={`Chia bảng - ${table.name}`} noindex={true} active="lab">
         <div className="container-wide py-8">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
@@ -359,7 +357,7 @@ const QuickTableSetup = () => {
             </Card>
           </div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -380,8 +378,7 @@ const QuickTableSetup = () => {
   const canDeleteTable = isAdmin || (user && table.creator_user_id === user.id);
 
   return (
-    <MainLayout>
-      <DynamicMeta title={`Nhập VĐV - ${table.name}`} noindex={true} />
+    <TheLineLayout title={`Nhập VĐV - ${table.name}`} noindex={true} active="lab">
       <div className="container-wide py-8">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
@@ -571,7 +568,7 @@ const QuickTableSetup = () => {
           </Card>
         </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

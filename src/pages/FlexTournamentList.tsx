@@ -1,6 +1,6 @@
 import { useI18n } from "@/i18n";
-import { MainLayout } from "@/components/layout";
-import { DynamicMeta, HreflangTags, WebApplicationSchema, FlexTournamentSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
+import { HreflangTags, WebApplicationSchema, FlexTournamentSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -53,12 +53,7 @@ const FlexTournamentList = () => {
   // But show login prompt for creating
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title="Pickleball Flex Tournament – Custom Bracket Maker"
-        description="Create flexible pickleball tournament brackets with custom groups, team play, singles, doubles, and mixed formats. Free tool with real-time scoring and live standings for any tournament structure."
-        url="https://www.thepicklehub.net/tools/flex-tournament"
-      />
+    <TheLineLayout title="Pickleball Flex Tournament – Custom Bracket Maker" description="Create flexible pickleball tournament brackets with custom groups, team play, singles, doubles, and mixed formats. Free tool with real-time scoring and live standings for any tournament structure." active="lab">
       <HreflangTags enPath="/tools/flex-tournament" />
       <WebApplicationSchema
         name="Flex Tournament - Custom Pickleball Bracket Maker"
@@ -255,7 +250,7 @@ const FlexTournamentList = () => {
         {/* SEO Content Section */}
         <FlexTournamentSeoContent />
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

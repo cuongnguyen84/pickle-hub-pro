@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { MainLayout } from "@/components/layout";
-import { DynamicMeta } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { CourtCard, TeamMatchDashboard, TVModeView } from "@/components/dashboard";
 import { useDashboardData, type DashboardType } from "@/hooks/useDashboardData";
@@ -54,11 +53,7 @@ const TournamentDashboard = () => {
   }
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title={`${t.dashboard.title} – ${tournamentName || "..."}`}
-        description={t.dashboard.description}
-      />
+    <TheLineLayout title={`${t.dashboard.title} – ${tournamentName || "..."}`} description={t.dashboard.description} active="lab">
       <div className="container-wide py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
@@ -114,7 +109,7 @@ const TournamentDashboard = () => {
           />
         )}
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

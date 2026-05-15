@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
-import { DynamicMeta } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -187,27 +186,27 @@ export default function DoublesEliminationView() {
 
   if (loading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Doubles Elimination" noindex={true} active="lab">
         <div className="container max-w-6xl mx-auto py-6 px-4">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-muted rounded w-1/3" />
             <div className="h-64 bg-muted rounded" />
           </div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (!tournament) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Doubles Elimination" noindex={true} active="lab">
         <div className="container max-w-2xl mx-auto py-12 text-center">
           <h2 className="text-xl font-semibold mb-4">{t.doublesElimination.view.notFound}</h2>
           <Button onClick={() => navigate('/tools/doubles-elimination')}>
             {t.doublesElimination.view.backToList}
           </Button>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -217,12 +216,7 @@ export default function DoublesEliminationView() {
     tournament.status === 'ongoing' ? t.doublesElimination.status.ongoing : t.doublesElimination.status.completed;
 
   return (
-    <MainLayout>
-      <DynamicMeta 
-        title={`${tournament.name} - Doubles Elimination`}
-        description={`${tournament.name} - ${tournament.team_count} ${t.doublesElimination.teams}`}
-        noindex={true}
-      />
+    <TheLineLayout title={`${tournament.name} - Doubles Elimination`} description={`${tournament.name} - ${tournament.team_count} ${t.doublesElimination.teams}`} noindex={true} active="lab">
       
       <div className="container max-w-6xl mx-auto py-6 px-4">
         {/* Header */}
@@ -402,6 +396,6 @@ export default function DoublesEliminationView() {
           )}
         </Tabs>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { MainLayout } from '@/components/layout';
+import { TheLineLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,7 @@ import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { DynamicMeta, HreflangTags, WebApplicationSchema, TeamMatchSeoContent, ToolsInternalLinks, FAQSchema } from '@/components/seo';
+import { HreflangTags, WebApplicationSchema, TeamMatchSeoContent, ToolsInternalLinks, FAQSchema } from '@/components/seo';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -153,12 +153,7 @@ export default function TeamMatchList() {
   const { myTournaments, publicTournaments, isLoading, deleteTournament } = useTeamMatch();
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title="Pickleball Team Match Tool – MLP Style Tournament Format"
-        description="Create MLP-style pickleball team competitions. Features lineup management, dreambreaker games, rally scoring, and team standings. Free tool for clubs, leagues, and tournament organizers."
-        url="https://www.thepicklehub.net/tools/team-match"
-      />
+    <TheLineLayout title="Pickleball Team Match Tool – MLP Style Tournament Format" description="Create MLP-style pickleball team competitions. Features lineup management, dreambreaker games, rally scoring, and team standings. Free tool for clubs, leagues, and tournament organizers." active="lab">
       <HreflangTags enPath="/tools/team-match" />
       <WebApplicationSchema
         name="Team Match - MLP Style Pickleball Tournament"
@@ -271,6 +266,6 @@ export default function TeamMatchList() {
         {/* SEO Content Section */}
         <TeamMatchSeoContent />
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 }

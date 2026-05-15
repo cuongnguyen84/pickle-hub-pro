@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { MainLayout } from '@/components/layout';
-import { DynamicMeta } from '@/components/seo';
+import { TheLineLayout } from '@/components/layout';
 import { useQuickTable, type QuickTable, type QuickTableGroup, type QuickTablePlayer, type QuickTableMatch } from '@/hooks/useQuickTable';
 import { useRefereeManagement } from '@/hooks/useRefereeManagement';
 import { useRegistration, type Registration } from '@/hooks/useRegistration';
@@ -558,34 +557,29 @@ const QuickTableView = () => {
 
   if (loading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Quick Table" noindex={true} active="lab">
         <div className="container-wide py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-foreground-muted">{t.quickTable.view.loading}</div>
           </div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (!table) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Quick Table" noindex={true} active="lab">
         <div className="container-wide py-8 text-center">
           <h1 className="text-xl font-bold mb-2">{t.quickTable.view.notFound}</h1>
           <Link to="/tools/quick-tables"><Button variant="outline">{t.quickTable.view.goBack}</Button></Link>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <DynamicMeta 
-        title={`${table.name} | Quick Table`}
-        description={`${table.name} – ${table.player_count} VĐV`}
-        noindex={true}
-      />
+    <TheLineLayout title={`${table.name} | Quick Table`} description={`${table.name} – ${table.player_count} VĐV`} noindex={true} active="lab">
       <div className="container-wide py-8">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">
@@ -1070,7 +1064,7 @@ const QuickTableView = () => {
           onSave={handleSaveCourtsAndTime}
         />
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

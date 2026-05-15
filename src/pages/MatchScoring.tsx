@@ -3,8 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n';
-import { MainLayout } from '@/components/layout';
-import { DynamicMeta } from '@/components/seo';
+import { TheLineLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -876,17 +875,17 @@ const MatchScoring = () => {
 
   if (authLoading || loading) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Match Scoring" noindex={true} active="lab">
         <div className="container-wide py-8 flex items-center justify-center min-h-[60vh]">
           <div className="text-muted-foreground">{t.quickTable.matchScoring.loading}</div>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   if (!canEdit && !isReadOnly) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Match Scoring" noindex={true} active="lab">
         <div className="container-wide py-8 text-center">
           <h1 className="text-xl font-bold mb-2">{t.quickTable.matchScoring.noPermission}</h1>
           <p className="text-muted-foreground mb-4">{t.quickTable.matchScoring.noPermissionDesc}</p>
@@ -897,7 +896,7 @@ const MatchScoring = () => {
             </Button>
           )}
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -919,11 +918,7 @@ const MatchScoring = () => {
   const receivingScore = localServingSide === 1 ? localScore2 : localScore1;
 
   return (
-    <MainLayout>
-      <DynamicMeta 
-        title={`${t.quickTable.matchScoring.match} - ${formatPlayerName(player1)} vs ${formatPlayerName(player2)}`} 
-        noindex={true} 
-      />
+    <TheLineLayout title={`${t.quickTable.matchScoring.match} - ${formatPlayerName(player1)} vs ${formatPlayerName(player2)}`} noindex={true} active="lab">
       <div className="container max-w-lg mx-auto py-4 px-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -1367,7 +1362,7 @@ const MatchScoring = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 

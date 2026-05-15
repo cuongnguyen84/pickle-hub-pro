@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MainLayout } from '@/components/layout';
-import { DynamicMeta } from '@/components/seo';
+import { TheLineLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -123,7 +122,7 @@ export default function TeamMatchSetup() {
 
   if (!user) {
     return (
-      <MainLayout>
+      <TheLineLayout title={t.teamMatch.setup.title} noindex={true} active="lab">
         <div className="container max-w-2xl py-12 text-center">
           <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <h1 className="text-2xl font-bold mb-2">{t.teamMatch.setup.loginRequired}</h1>
@@ -134,13 +133,12 @@ export default function TeamMatchSetup() {
             {t.auth.login}
           </Button>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
   return (
-    <MainLayout>
-      <DynamicMeta title={t.teamMatch.setup.title} noindex={true} />
+    <TheLineLayout title={t.teamMatch.setup.title} noindex={true} active="lab">
       <div className="container max-w-3xl py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -534,6 +532,6 @@ export default function TeamMatchSetup() {
           )}
         </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 }

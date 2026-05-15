@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout";
-import { DynamicMeta, HreflangTags, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
+import { HreflangTags, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -74,12 +74,7 @@ export default function DoublesEliminationList() {
   };
 
   return (
-    <MainLayout>
-      <DynamicMeta
-        title="Pickleball Double Elimination Bracket Generator"
-        description="Free double elimination bracket generator for pickleball tournaments. Create winners and losers brackets for 32-128+ teams. Automatic court scheduling, best-of-1/3/5 formats, referee assignment."
-        url="https://www.thepicklehub.net/tools/doubles-elimination"
-      />
+    <TheLineLayout title="Pickleball Double Elimination Bracket Generator" description="Free double elimination bracket generator for pickleball tournaments. Create winners and losers brackets for 32-128+ teams. Automatic court scheduling, best-of-1/3/5 formats, referee assignment." active="lab">
       <HreflangTags enPath="/tools/doubles-elimination" />
       <WebApplicationSchema
         name="Doubles Elimination Bracket Generator"
@@ -253,7 +248,7 @@ export default function DoublesEliminationList() {
         {/* Internal Links */}
         <ToolsInternalLinks currentTool="doubles-elimination" />
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 }
 
