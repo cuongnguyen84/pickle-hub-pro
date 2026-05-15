@@ -14,18 +14,17 @@ import { blogMetadata } from "@/content/blog/metadata";
  *   - vi_blog_posts (status='published')
  *   - videos (status='published')
  *
- * The hook then merges the static EN blog metadata (src/content/blog/
- * metadata.ts) on top of page 1 only — those posts are file-shipped
- * content with no DB row, so the RPC can't see them. We intentionally
- * do this client-side rather than dual-source the RPC to keep the
- * Postgres function provider-agnostic.
+ * The hook also merges the static EN blog metadata (src/content/blog/
+ * metadata.ts) into the same timeline — those posts are file-shipped
+ * content with no DB row so the RPC can't see them. We do the merge
+ * client-side, scoped to each page's time window so the combined list
+ * stays monotonically DESC across pages (Codex P2 fix on the original
+ * PR #80 review).
  *
  * Composite cursor pagination on (published_at, item_id) — same defensive
- * pattern as useFollowingFeed/useTrendingFeed. EN blog merge runs on the
- * first fetch only so subsequent pages don't keep re-inserting the same
- * static rows (the cursor for page 2 is based on the last DB row, not the
- * last visible row, which is the right thing — EN blog posts are all
- * within 30 days and all sit on page 1 anyway).
+ * pattern as useFollowingFeed/useTrendingFeed. The cursor is computed
+ * from the last DB row in the page; EN blog rows are static overlays
+ * and don't drive pagination.
  */
 
 export type FeedTimelineItem =
@@ -115,17 +114,41 @@ export function useFeedTimeline() {
         .map(normalizeRow)
         .filter((item): item is FeedTimelineItem => item != null);
 
-      // First-page-only merge of static EN blog metadata. We treat the
-      // initial query (pageParam == null) as page 1 — that's where all
-      // EN posts within the 30-day window get folded in, then the whole
-      // list is re-sorted by published_at DESC so cards interleave with
-      // matches/VI blog/videos by recency. Subsequent pages skip this
-      // merge so the same posts don't appear twice.
-      if (pageParam == null) {
-        const enItems = buildEnBlogItems();
-        return [...dbItems, ...enItems].sort(byPublishedDesc);
-      }
-      return dbItems;
+      // Merge static EN blog metadata into the SAME chronological window
+      // that this page covers. Codex P2 (PR #80 review): doing a single
+      // first-page merge breaks monotonic DESC order when the DB has
+      // more than one page — e.g. an EN post older than page 1's 20th
+      // DB row would still render on page 1, then page 2 would pull
+      // newer DB rows that appear visually below it.
+      //
+      // Fix: bound EN injection by the page's actual time range:
+      //   - upper  = pageParam.published_at (exclusive), or +∞ on page 1
+      //   - lower  = last DB row's published_at this page (exclusive),
+      //              or -∞ on the final page so any remaining EN posts
+      //              get flushed.
+      //
+      // Strict bounds mirror the RPC's cursor semantics (m.played_at <
+      // p_cursor_published_at). EN published dates are date-only midnight
+      // UTC so collisions with DB timestamps are essentially impossible.
+      const upperExclusive = pageParam?.published_at ?? null;
+      const isFinalPage = dbItems.length < PAGE_SIZE;
+      const lastDbInPage = dbItems[dbItems.length - 1];
+      const lowerExclusive = isFinalPage
+        ? null
+        : lastDbInPage?.published_at ?? null;
+
+      const enItems = buildEnBlogItems().filter((item) => {
+        if (upperExclusive != null && item.published_at >= upperExclusive) {
+          return false;
+        }
+        if (lowerExclusive != null && item.published_at <= lowerExclusive) {
+          return false;
+        }
+        return true;
+      });
+
+      if (enItems.length === 0) return dbItems;
+      return [...dbItems, ...enItems].sort(byPublishedDesc);
     },
     getNextPageParam: (lastPage): FeedTimelineCursor | undefined => {
       // Use the cursor from the last item that has a real RPC origin
