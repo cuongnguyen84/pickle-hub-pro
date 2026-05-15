@@ -93,116 +93,262 @@ export const ToolsHubSeoContent = () => (
 );
 
 /**
- * SEO content for /tools/quick-tables
+ * SEO content for /tools/quick-tables — refreshed to TheLineLayout
+ * design language. Other functions in this file stay on legacy
+ * styling until PR B/C/D refresh their respective tools.
  */
-export const QuickTablesSeoContent = () => (
-  <section className="mt-12 border-t border-border pt-10 space-y-8 max-w-3xl text-left">
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        What Is a Pickleball Bracket Generator?
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        A pickleball bracket generator is a tool that automatically creates tournament brackets based on your player count and chosen format. Instead of manually drawing brackets on a whiteboard or wrestling with spreadsheets, you enter your players, select round robin or playoff format, and the system generates a complete schedule with balanced groups, match ordering, and court assignments.
-      </p>
-      <p className="text-muted-foreground">
-        Quick Tables is The Pickle Hub's bracket generator, designed specifically for pickleball tournaments. It handles the nuances that generic tools miss: automatic group balancing by skill level, team-aware seeding to prevent teammates from being in the same group, and scheduling that minimizes court wait times — a critical factor when venues have limited courts.
-      </p>
-    </div>
+export const QuickTablesSeoContent = () => {
+  const sectionStyle: React.CSSProperties = {
+    marginTop: 32,
+  };
+  const h2Style: React.CSSProperties = {
+    fontFamily: "Instrument Serif, serif",
+    fontStyle: "italic",
+    fontWeight: 400,
+    fontSize: "clamp(24px, 3vw, 32px)",
+    letterSpacing: "-0.02em",
+    lineHeight: 1.1,
+    color: "var(--tl-fg)",
+    margin: "0 0 14px",
+  };
+  const pStyle: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+    margin: "0 0 12px",
+  };
+  const ulStyle: React.CSSProperties = {
+    margin: "0 0 12px",
+    padding: 0,
+    listStyle: "none",
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+  };
+  const liStyle: React.CSSProperties = {
+    paddingLeft: 18,
+    position: "relative",
+    margin: "8px 0",
+  };
+  const linkStyle: React.CSSProperties = {
+    color: "var(--tl-green)",
+    textDecoration: "none",
+    borderBottom: "1px solid color-mix(in srgb, var(--tl-green) 35%, transparent)",
+    paddingBottom: 1,
+  };
+  const faqQ: React.CSSProperties = {
+    fontWeight: 600,
+    color: "var(--tl-fg)",
+    fontSize: 15,
+    margin: "0 0 6px",
+  };
+  const faqA: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 14.5,
+    lineHeight: 1.6,
+    margin: 0,
+  };
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Why Use a Pickleball-Specific Bracket Generator?
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Generic bracket tools like Challonge or Excel work for simple single-elimination events, but pickleball tournaments have unique needs:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Court rotation</strong> — With 4–8 courts, scheduling must ensure no player waits too long between matches. Our tool optimizes match order for maximum court utilization.</li>
-        <li><strong>Round robin fairness</strong> — In group stages, every player needs to face every other player. Our algorithm creates balanced schedules regardless of odd or even player counts.</li>
-        <li><strong>Skill-based seeding</strong> — Enter player skill levels and the system distributes top players evenly across groups, preventing lopsided competition.</li>
-        <li><strong>Instant playoff brackets</strong> — After round robin, the system automatically seeds players into playoff brackets based on group standings and point differentials.</li>
-      </ul>
-      <p className="text-muted-foreground">
-        Organizers save hours of manual work. Players get a professional tournament experience. Referees can score matches from their phone with live updates for everyone.
-      </p>
-    </div>
+  return (
+    <section
+      style={{
+        marginTop: 48,
+        paddingTop: 40,
+        borderTop: "1px solid var(--tl-border)",
+        maxWidth: 768,
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--tl-green)",
+          marginBottom: 20,
+        }}
+      >
+        ◆ The long read
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        How Quick Tables Works for Real Pickleball Events
-      </h2>
-      <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Enter player count</strong> — Tell us how many players or teams are competing (2–200 supported).</li>
-        <li><strong>Choose your format</strong> — Select round robin for group play, or large playoff for elimination-style tournaments with 48+ players.</li>
-        <li><strong>Configure groups</strong> — The system suggests optimal group sizes. You can adjust or manually assign players to specific groups.</li>
-        <li><strong>Add player names & seeds</strong> — Enter names, optional team affiliations, and skill ratings for intelligent distribution.</li>
-        <li><strong>Generate bracket</strong> — One click creates your complete tournament bracket with match schedule and court assignments.</li>
-        <li><strong>Score & track live</strong> — Referees update scores in real-time. Standings, point differentials, and playoff qualification update automatically.</li>
-      </ol>
-      <p className="text-muted-foreground">
-        The entire setup takes under 2 minutes for a typical 16-player club tournament.
-      </p>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>What Is a Pickleball Bracket Generator?</h2>
+        <p style={pStyle}>
+          A pickleball bracket generator is a tool that automatically creates tournament brackets
+          based on your player count and chosen format. Instead of manually drawing brackets on a
+          whiteboard or wrestling with spreadsheets, you enter your players, select round robin or
+          playoff format, and the system generates a complete schedule with balanced groups, match
+          ordering, and court assignments.
+        </p>
+        <p style={pStyle}>
+          Quick Tables is The Pickle Hub's bracket generator, designed specifically for pickleball
+          tournaments. It handles the nuances that generic tools miss: automatic group balancing by
+          skill level, team-aware seeding to prevent teammates from being in the same group, and
+          scheduling that minimizes court wait times — a critical factor when venues have limited
+          courts.
+        </p>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        When to Use Round Robin vs Other Pickleball Formats
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Round robin is the most popular format for recreational and club pickleball because every player gets to play multiple matches. But it's not always the best choice:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Round Robin (Quick Tables)</strong> — Best for 4–32 players. Everyone plays everyone in their group. Maximum court time for all players. Ideal for social/club events.</li>
-        <li><strong><Link to="/tools/doubles-elimination" className="text-primary hover:underline">Double Elimination</Link></strong> — Best for 32+ teams in competitive settings. Players get a second chance through the losers bracket.</li>
-        <li><strong><Link to="/tools/team-match" className="text-primary hover:underline">Team Match (MLP)</Link></strong> — Best for team-based events. Teams compete across multiple game types with lineup strategy.</li>
-        <li><strong><Link to="/tools/flex-tournament" className="text-primary hover:underline">Flex Tournament</Link></strong> — Best for custom formats, training, or experimental tournament structures with no rules restrictions.</li>
-      </ul>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Why Use a Pickleball-Specific Bracket Generator?</h2>
+        <p style={pStyle}>
+          Generic bracket tools like Challonge or Excel work for simple single-elimination events,
+          but pickleball tournaments have unique needs:
+        </p>
+        <ul style={ulStyle}>
+          {[
+            ["Court rotation", "With 4–8 courts, scheduling must ensure no player waits too long between matches. Our tool optimizes match order for maximum court utilization."],
+            ["Round robin fairness", "In group stages, every player needs to face every other player. Our algorithm creates balanced schedules regardless of odd or even player counts."],
+            ["Skill-based seeding", "Enter player skill levels and the system distributes top players evenly across groups, preventing lopsided competition."],
+            ["Instant playoff brackets", "After round robin, the system automatically seeds players into playoff brackets based on group standings and point differentials."],
+          ].map(([k, v]) => (
+            <li key={k} style={liStyle}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  color: "var(--tl-green)",
+                  fontFamily: "Geist Mono, ui-monospace, monospace",
+                  fontSize: 13,
+                }}
+              >
+                ◆
+              </span>
+              <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>{k}</strong> — {v}
+            </li>
+          ))}
+        </ul>
+        <p style={pStyle}>
+          Organizers save hours of manual work. Players get a professional tournament experience.
+          Referees can score matches from their phone with live updates for everyone.
+        </p>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Related Pickleball Tournament Tools on The Pickle Hub
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Quick Tables is part of The Pickle Hub's complete tournament toolkit. Explore our other tools for different tournament formats and needs:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-        <li><Link to="/tools/team-match" className="text-primary hover:underline">Pickleball Team Match format</Link> — Run MLP-style team competitions with dreambreaker games and rally scoring.</li>
-        <li><Link to="/tools/doubles-elimination" className="text-primary hover:underline">Double elimination pickleball tournaments</Link> — Fair bracket system for competitive 32+ team events.</li>
-        <li><Link to="/tools/flex-tournament" className="text-primary hover:underline">Flexible pickleball tournament formats</Link> — Create custom tournament structures with no format restrictions.</li>
-        <li><Link to="/tools" className="text-primary hover:underline">All pickleball tournament tools</Link> — Browse the complete suite of free tournament management tools.</li>
-      </ul>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>How Quick Tables Works for Real Pickleball Events</h2>
+        <ol
+          style={{
+            margin: "0 0 12px",
+            paddingLeft: 22,
+            color: "var(--tl-fg-2)",
+            fontSize: 15,
+            lineHeight: 1.7,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Enter player count</strong> — Tell us how many players or teams are competing (2–200 supported).
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Choose your format</strong> — Select round robin for group play, or large playoff for elimination-style tournaments with 48+ players.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Configure groups</strong> — The system suggests optimal group sizes. You can adjust or manually assign players to specific groups.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Add player names & seeds</strong> — Enter names, optional team affiliations, and skill ratings for intelligent distribution.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Generate bracket</strong> — One click creates your complete tournament bracket with match schedule and court assignments.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Score & track live</strong> — Referees update scores in real-time. Standings, point differentials, and playoff qualification update automatically.
+          </li>
+        </ol>
+        <p style={pStyle}>
+          The entire setup takes under 2 minutes for a typical 16-player club tournament.
+        </p>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Pickleball Bracket Generator FAQ
-      </h2>
-      <div className="space-y-5">
-        <div>
-          <p className="font-semibold text-foreground mb-1">Is Quick Tables free to use?</p>
-          <p className="text-muted-foreground">Yes — Quick Tables is completely free for clubs, organizers, and individual players. There are no ads, no subscriptions, and no signup required to view a bracket. An account is only needed to create and manage your own tournaments.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">How many players can Quick Tables handle?</p>
-          <p className="text-muted-foreground">Quick Tables supports 2 to 200 players. For 2–48 players, the round robin format automatically creates balanced groups. For 48+ players, the large playoff format uses an elimination bracket structure that scales to any size event.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">Can I use Quick Tables for doubles pickleball tournaments?</p>
-          <p className="text-muted-foreground">Yes. Quick Tables supports both singles and doubles tournament formats. You can enter individual players or pair players as doubles teams before generating the bracket. The system handles group balancing and match scheduling identically for both formats.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">Does Quick Tables work on mobile devices?</p>
-          <p className="text-muted-foreground">Fully mobile-friendly. The entire tool — from bracket creation to live scoring — is optimized for phones and tablets. Referees can update match scores from the court using any smartphone browser without installing an app.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">What's the difference between round robin and large playoff format?</p>
-          <p className="text-muted-foreground">Round robin means every player faces every other player in their group, maximizing court time for all participants. Large playoff uses a seeded single-elimination bracket for 48+ player events where time or court constraints make full round robin impractical. Both formats are free and generated instantly.</p>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>When to Use Round Robin vs Other Pickleball Formats</h2>
+        <p style={pStyle}>
+          Round robin is the most popular format for recreational and club pickleball because every
+          player gets to play multiple matches. But it's not always the best choice:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Round Robin (Quick Tables)</strong> — Best for 4–32 players. Everyone plays everyone in their group. Maximum court time for all players. Ideal for social/club events.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/doubles-elimination" style={linkStyle}>Double Elimination</Link>
+            </strong> — Best for 32+ teams in competitive settings. Players get a second chance through the losers bracket.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/team-match" style={linkStyle}>Team Match (MLP)</Link>
+            </strong> — Best for team-based events. Teams compete across multiple game types with lineup strategy.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/flex-tournament" style={linkStyle}>Flex Tournament</Link>
+            </strong> — Best for custom formats, training, or experimental tournament structures with no rules restrictions.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Related Pickleball Tournament Tools on The Pickle Hub</h2>
+        <p style={pStyle}>
+          Quick Tables is part of The Pickle Hub's complete tournament toolkit. Explore our other
+          tools for different tournament formats and needs:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <Link to="/tools/team-match" style={linkStyle}>Pickleball Team Match format</Link> — Run MLP-style team competitions with dreambreaker games and rally scoring.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <Link to="/tools/doubles-elimination" style={linkStyle}>Double elimination pickleball tournaments</Link> — Fair bracket system for competitive 32+ team events.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <Link to="/tools/flex-tournament" style={linkStyle}>Flexible pickleball tournament formats</Link> — Create custom tournament structures with no format restrictions.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <Link to="/tools" style={linkStyle}>All pickleball tournament tools</Link> — Browse the complete suite of free tournament management tools.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Pickleball Bracket Generator FAQ</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <p style={faqQ}>Is Quick Tables free to use?</p>
+            <p style={faqA}>Yes — Quick Tables is completely free for clubs, organizers, and individual players. There are no ads, no subscriptions, and no signup required to view a bracket. An account is only needed to create and manage your own tournaments.</p>
+          </div>
+          <div>
+            <p style={faqQ}>How many players can Quick Tables handle?</p>
+            <p style={faqA}>Quick Tables supports 2 to 200 players. For 2–48 players, the round robin format automatically creates balanced groups. For 48+ players, the large playoff format uses an elimination bracket structure that scales to any size event.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Can I use Quick Tables for doubles pickleball tournaments?</p>
+            <p style={faqA}>Yes. Quick Tables supports both singles and doubles tournament formats. You can enter individual players or pair players as doubles teams before generating the bracket. The system handles group balancing and match scheduling identically for both formats.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Does Quick Tables work on mobile devices?</p>
+            <p style={faqA}>Fully mobile-friendly. The entire tool — from bracket creation to live scoring — is optimized for phones and tablets. Referees can update match scores from the court using any smartphone browser without installing an app.</p>
+          </div>
+          <div>
+            <p style={faqQ}>What's the difference between round robin and large playoff format?</p>
+            <p style={faqA}>Round robin means every player faces every other player in their group, maximizing court time for all participants. Large playoff uses a seeded single-elimination bracket for 48+ player events where time or court constraints make full round robin impractical. Both formats are free and generated instantly.</p>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 /**
  * SEO content for /tools/team-match

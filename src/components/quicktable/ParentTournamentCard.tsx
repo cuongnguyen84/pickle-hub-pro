@@ -1,9 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Trophy, Calendar, MapPin, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { ParentTournamentWithPreview } from "@/hooks/useParentTournament";
 import { useI18n } from "@/i18n";
@@ -14,30 +10,42 @@ interface ParentTournamentCardProps {
   variant?: "default" | "featured";
 }
 
-const STATUS_CONFIG: Record<string, { labelVi: string; labelEn: string; className: string }> = {
+// Status pill colour map — token-driven so it tracks light/dark mode.
+const STATUS_CONFIG: Record<
+  string,
+  { labelVi: string; labelEn: string; bg: string; fg: string }
+> = {
   setup: {
     labelVi: "Sắp diễn",
     labelEn: "Upcoming",
-    className: "border-muted-foreground/30 text-muted-foreground",
+    bg: "var(--tl-surface)",
+    fg: "var(--tl-fg-3)",
   },
   group_stage: {
     labelVi: "Vòng bảng",
     labelEn: "Group stage",
-    className: "border-blue-500/30 text-blue-400 bg-blue-500/10",
+    bg: "rgba(79, 155, 255, 0.12)",
+    fg: "rgb(79, 155, 255)",
   },
   playoff: {
     labelVi: "Playoff",
     labelEn: "Playoff",
-    className: "border-orange-500/30 text-orange-400 bg-orange-500/10",
+    bg: "rgba(233, 182, 73, 0.12)",
+    fg: "var(--tl-gold)",
   },
   completed: {
     labelVi: "Hoàn thành",
     labelEn: "Completed",
-    className: "border-green-500/30 text-green-400 bg-green-500/10",
+    bg: "var(--tl-green-glow)",
+    fg: "var(--tl-green)",
   },
 };
 
-const ParentTournamentCard = ({ parent, isOwner, variant = "default" }: ParentTournamentCardProps) => {
+const ParentTournamentCard = ({
+  parent,
+  isOwner,
+  variant = "default",
+}: ParentTournamentCardProps) => {
   const navigate = useNavigate();
   const { language, t } = useI18n();
   const isVi = language === "vi";
@@ -61,63 +69,125 @@ const ParentTournamentCard = ({ parent, isOwner, variant = "default" }: ParentTo
   const remaining = parent.subEventCount - parent.previewSubEvents.length;
 
   return (
-    <Card
-      className={cn(
-        "p-5 space-y-3 relative overflow-hidden border-white/[0.06] backdrop-blur-xl",
-        isFeatured
-          ? "bg-gradient-to-br from-amber-500/[0.07] via-transparent to-orange-500/[0.07] ring-1 ring-amber-500/30"
-          : "bg-transparent"
-      )}
+    <div
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        padding: 20,
+        borderRadius: "var(--tl-radius-lg)",
+        background: "var(--tl-bg-elev)",
+        border: `1px solid ${isFeatured ? "rgba(233, 182, 73, 0.35)" : "var(--tl-border)"}`,
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+      }}
     >
-      {/* Featured shimmer accent */}
+      {/* Featured top accent rule (gold) */}
       {isFeatured && (
-        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-500 via-orange-400 to-amber-500" />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 2,
+            background:
+              "linear-gradient(90deg, var(--tl-gold), color-mix(in srgb, var(--tl-gold) 60%, transparent), var(--tl-gold))",
+          }}
+        />
       )}
 
       {/* Banner image for featured */}
       {isFeatured && parent.banner_url && (
-        <div className="-mx-5 -mt-5 mb-3">
+        <div style={{ margin: "-20px -20px 4px" }}>
           <img
             src={parent.banner_url}
             alt={parent.name}
-            className="w-full aspect-[3/1] object-cover"
+            style={{
+              width: "100%",
+              aspectRatio: "3 / 1",
+              objectFit: "cover",
+              display: "block",
+            }}
           />
         </div>
       )}
 
       {/* Header — clickable to parent page */}
-      <div className="cursor-pointer" onClick={handleHeaderClick}>
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Trophy className={cn("w-5 h-5 shrink-0", isFeatured ? "text-amber-500" : "text-primary")} />
-            <h3 className="text-lg font-semibold text-foreground line-clamp-2">
+      <div style={{ cursor: "pointer" }} onClick={handleHeaderClick}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <Trophy
+              className="w-5 h-5"
+              style={{
+                flexShrink: 0,
+                color: isFeatured ? "var(--tl-gold)" : "var(--tl-green)",
+                marginTop: 2,
+              }}
+            />
+            <h3
+              style={{
+                fontFamily: "Instrument Serif, serif",
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: 22,
+                letterSpacing: "-0.015em",
+                lineHeight: 1.15,
+                color: "var(--tl-fg)",
+                margin: 0,
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
               {parent.name}
             </h3>
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              "text-xs whitespace-nowrap w-fit",
-              isFeatured
-                ? "border-amber-500/40 text-amber-500"
-                : "border-primary/50 text-primary"
-            )}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              alignSelf: "flex-start",
+              fontFamily: "Geist Mono, ui-monospace, monospace",
+              fontSize: 10.5,
+              fontWeight: 500,
+              padding: "3px 10px",
+              borderRadius: 999,
+              background: isFeatured ? "rgba(233, 182, 73, 0.12)" : "var(--tl-green-glow)",
+              color: isFeatured ? "var(--tl-gold)" : "var(--tl-green)",
+              border: `1px solid ${isFeatured ? "rgba(233, 182, 73, 0.35)" : "rgba(0, 185, 107, 0.25)"}`,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+            }}
           >
             {pt.subEventCount.replace("{count}", String(parent.subEventCount))}
-          </Badge>
+          </span>
         </div>
 
         {/* Meta row */}
         {(parent.event_date || parent.location) && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm text-muted-foreground">
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: "4px 14px",
+              marginTop: 10,
+              fontFamily: "Geist Mono, ui-monospace, monospace",
+              fontSize: 11,
+              color: "var(--tl-fg-3)",
+              letterSpacing: "0.02em",
+            }}
+          >
             {parent.event_date && (
-              <span className="flex items-center gap-1">
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                 <Calendar className="w-3.5 h-3.5" />
                 {format(new Date(parent.event_date), "dd/MM/yyyy")}
               </span>
             )}
             {parent.location && (
-              <span className="flex items-center gap-1">
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                 <MapPin className="w-3.5 h-3.5" />
                 {parent.location}
               </span>
@@ -127,40 +197,98 @@ const ParentTournamentCard = ({ parent, isOwner, variant = "default" }: ParentTo
       </div>
 
       {/* Divider */}
-      <div className={cn("border-t", isFeatured ? "border-amber-500/20" : "border-border/50")} />
+      <div
+        style={{
+          borderTop: `1px solid ${isFeatured ? "rgba(233, 182, 73, 0.18)" : "var(--tl-border)"}`,
+        }}
+      />
 
       {/* Sub-event preview list */}
       {parent.previewSubEvents.length > 0 ? (
-        <div className="space-y-1">
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {parent.previewSubEvents.map((se) => {
             const config = STATUS_CONFIG[se.status];
             return (
               <div
                 key={se.id}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/30 cursor-pointer transition-colors"
                 onClick={(e) => handleSubEventClick(e, se.share_id)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 8px",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "var(--tl-bg)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                }}
               >
-                <span className="text-muted-foreground text-sm">•</span>
-                <span className="flex-1 text-sm font-medium truncate min-w-0">
+                <span
+                  style={{
+                    color: "var(--tl-fg-4)",
+                    fontFamily: "Geist Mono, ui-monospace, monospace",
+                    fontSize: 13,
+                  }}
+                >
+                  ◆
+                </span>
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 13.5,
+                    fontWeight: 500,
+                    color: "var(--tl-fg)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {se.name}
                 </span>
                 {config && (
-                  <Badge
-                    variant="outline"
-                    className={cn("text-xs shrink-0 px-2 py-0", config.className)}
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      fontFamily: "Geist Mono, ui-monospace, monospace",
+                      fontSize: 10,
+                      fontWeight: 500,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      padding: "2px 7px",
+                      borderRadius: 4,
+                      background: config.bg,
+                      color: config.fg,
+                    }}
                   >
                     {isVi ? config.labelVi : config.labelEn}
-                  </Badge>
+                  </span>
                 )}
               </div>
             );
           })}
 
-          {/* "+ N more" link */}
           {remaining > 0 && (
             <div
-              className="text-sm text-muted-foreground italic text-center pt-1 cursor-pointer hover:text-primary transition-colors"
               onClick={handleHeaderClick}
+              style={{
+                fontFamily: "Geist Mono, ui-monospace, monospace",
+                fontSize: 11,
+                color: "var(--tl-fg-3)",
+                textAlign: "center",
+                paddingTop: 8,
+                cursor: "pointer",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                transition: "color 0.15s",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--tl-green)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--tl-fg-3)"; }}
             >
               {pt.moreEvents
                 ? pt.moreEvents.replace("{count}", String(remaining))
@@ -169,25 +297,26 @@ const ParentTournamentCard = ({ parent, isOwner, variant = "default" }: ParentTo
           )}
         </div>
       ) : (
-        /* Empty state */
-        <div className="text-center py-3 space-y-2">
-          <p className="text-sm text-muted-foreground italic">
+        // Empty state
+        <div className="tl-empty-card" style={{ padding: "24px 16px" }}>
+          <span className="tl-empty-card-mark">◌</span>
+          <span className="tl-empty-card-label">
             {pt.noEventsYet || (isVi ? "Chưa có nội dung nào" : "No events yet")}
-          </p>
+          </span>
           {isOwner && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-primary"
+            <button
+              type="button"
+              className="tl-btn"
               onClick={handleAddEvent}
+              style={{ marginTop: 12, padding: "6px 12px", fontSize: 12.5 }}
             >
-              <Plus className="w-4 h-4 mr-1" />
+              <Plus className="w-4 h-4" />
               {pt.addFirstEvent || pt.addSubEvent}
-            </Button>
+            </button>
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 };
 

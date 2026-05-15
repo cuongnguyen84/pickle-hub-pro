@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Users, UserPlus, UserMinus, Mail, Loader2 } from 'lucide-react';
 import { useI18n } from '@/i18n';
 
-// Generic referee display type - works for both Quick Tables and Doubles Elimination
+// Generic referee display type — works for both Quick Tables and Doubles Elimination
 interface RefereeDisplay {
   id: string;
   email?: string;
@@ -49,93 +46,198 @@ export const RefereeManagement = ({
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Users className="w-4 h-4 text-primary" />
+    <div
+      style={{
+        background: 'var(--tl-bg-elev)',
+        border: '1px solid var(--tl-border)',
+        borderRadius: 'var(--tl-radius-lg)',
+        padding: 24,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          paddingBottom: 14,
+          borderBottom: '1px solid var(--tl-border)',
+          marginBottom: 18,
+        }}
+      >
+        <Users className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+        <h3
+          style={{
+            fontFamily: 'Instrument Serif, serif',
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: 20,
+            letterSpacing: '-0.015em',
+            margin: 0,
+            color: 'var(--tl-fg)',
+          }}
+        >
           {r.title}
-          {referees.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {referees.length}
-            </Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Add referee form */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
-            <Input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={r.emailPlaceholder}
-              className="pl-9"
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            />
-          </div>
-          <Button onClick={handleAdd} disabled={isAdding || !email.trim()} size="sm">
-            {isAdding ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <UserPlus className="w-4 h-4 mr-1" />
-                {r.addBtn}
-              </>
-            )}
-          </Button>
-        </div>
-
-        {/* Referee list */}
-        {loading ? (
-          <div className="text-sm text-foreground-muted text-center py-4">
-            {r.loading}
-          </div>
-        ) : referees.length === 0 ? (
-          <div className="text-sm text-foreground-muted text-center py-4">
-            {r.emptyState}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {referees.map((referee) => (
-              <div
-                key={referee.id}
-                className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/50 border border-border/50"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm truncate">
-                    {referee.display_name || r.noName}
-                  </div>
-                  <div className="text-xs text-foreground-muted truncate">
-                    {referee.email}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleRemove(referee.id)}
-                  disabled={removingId === referee.id}
-                >
-                  {removingId === referee.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <UserMinus className="w-4 h-4 mr-1" />
-                      {r.removeBtn}
-                    </>
-                  )}
-                </Button>
-              </div>
-            ))}
-          </div>
+        </h3>
+        {referees.length > 0 && (
+          <span
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 11,
+              fontWeight: 500,
+              padding: '2px 8px',
+              borderRadius: 999,
+              background: 'var(--tl-surface)',
+              border: '1px solid var(--tl-border)',
+              color: 'var(--tl-fg-3)',
+              letterSpacing: '0.04em',
+            }}
+          >
+            {referees.length}
+          </span>
         )}
+      </div>
 
-        <p className="text-xs text-foreground-muted">
-          {r.description}
-        </p>
-      </CardContent>
-    </Card>
+      {/* Add referee form */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Mail
+            className="w-4 h-4"
+            style={{
+              position: 'absolute',
+              left: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'var(--tl-fg-3)',
+              pointerEvents: 'none',
+            }}
+          />
+          <Input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={r.emailPlaceholder}
+            className="pl-9"
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+          />
+        </div>
+        <button
+          type="button"
+          className="tl-btn green"
+          onClick={handleAdd}
+          disabled={isAdding || !email.trim()}
+          style={{ flexShrink: 0 }}
+        >
+          {isAdding ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              <UserPlus className="w-4 h-4" />
+              {r.addBtn}
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Referee list / empty state */}
+      {loading ? (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '24px 0',
+            color: 'var(--tl-fg-3)',
+            fontFamily: 'Geist Mono, ui-monospace, monospace',
+            fontSize: 12,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+          }}
+        >
+          {r.loading}
+        </div>
+      ) : referees.length === 0 ? (
+        <div className="tl-empty-card" style={{ marginBottom: 14 }}>
+          <span className="tl-empty-card-mark">◌</span>
+          <span className="tl-empty-card-label">{r.emptyState}</span>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+          {referees.map((referee) => (
+            <div
+              key={referee.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                padding: '10px 12px',
+                borderRadius: 'var(--tl-radius)',
+                background: 'var(--tl-bg)',
+                border: '1px solid var(--tl-border)',
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontWeight: 500,
+                    fontSize: 13.5,
+                    color: 'var(--tl-fg)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {referee.display_name || r.noName}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 11,
+                    color: 'var(--tl-fg-3)',
+                    letterSpacing: '0.02em',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    marginTop: 2,
+                  }}
+                >
+                  {referee.email}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="tl-btn"
+                onClick={() => handleRemove(referee.id)}
+                disabled={removingId === referee.id}
+                style={{
+                  padding: '6px 10px',
+                  fontSize: 11.5,
+                  color: 'var(--tl-live)',
+                  borderColor: 'var(--tl-border)',
+                }}
+              >
+                {removingId === referee.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <UserMinus className="w-4 h-4" />
+                    {r.removeBtn}
+                  </>
+                )}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p
+        style={{
+          fontSize: 12.5,
+          color: 'var(--tl-fg-3)',
+          margin: 0,
+          lineHeight: 1.5,
+        }}
+      >
+        {r.description}
+      </p>
+    </div>
   );
 };
 

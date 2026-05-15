@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Check, Clock, Pencil, Play, Radio, MapPin } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 import type { QuickTableMatch, QuickTablePlayer } from '@/hooks/useQuickTable';
 
@@ -19,7 +16,9 @@ interface QuickTableMatchRowProps {
   formatPlayerName: (player: QuickTablePlayer | undefined) => string;
 }
 
-export default function QuickTableMatchRow({ match, index, player1, player2, canEdit, onScoreUpdate, onCourtNameUpdate, formatPlayerName }: QuickTableMatchRowProps) {
+export default function QuickTableMatchRow({
+  match, index, player1, player2, canEdit, onScoreUpdate, onCourtNameUpdate, formatPlayerName,
+}: QuickTableMatchRowProps) {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
@@ -55,37 +54,116 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
     navigate(`/matches/${match.id}/score`);
   };
 
+  // ─── Token-driven container styling ──────────────────────────────────────
+  const rowBackground =
+    isLive && !isCompleted ? 'rgba(255, 65, 54, 0.08)' :
+    isCompleted && !isEditing ? 'var(--tl-bg)' :
+    'var(--tl-bg)';
+  const rowBorderColor =
+    isLive && !isCompleted ? 'rgba(255, 65, 54, 0.45)' :
+    'var(--tl-border)';
+
+  const winnerColor = 'var(--tl-green)';
+  const playerNameStyle = (isWinner: boolean): React.CSSProperties => ({
+    flex: 1,
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    fontSize: 14.5,
+    fontWeight: isWinner ? 700 : 500,
+    color: isWinner ? winnerColor : 'var(--tl-fg)',
+  });
+
+  const scoreCellStyle = (isWinner: boolean): React.CSSProperties => ({
+    fontSize: 14.5,
+    fontWeight: isWinner ? 700 : 500,
+    color: isWinner ? winnerColor : 'var(--tl-fg)',
+    fontVariantNumeric: 'tabular-nums',
+  });
+
+  const metaTextStyle: React.CSSProperties = {
+    fontFamily: 'Geist Mono, ui-monospace, monospace',
+    fontSize: 10.5,
+    color: 'var(--tl-fg-3)',
+    letterSpacing: '0.02em',
+    lineHeight: 1.4,
+  };
+
+  const courtNameInputStyle = "w-20 h-5 text-[10px] px-1 py-0";
+
   return (
     <div
-      className={cn(
-        "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border",
-        isCompleted && !isEditing ? "bg-muted/30 border-border" : "border-border-subtle",
-        isLive && !isCompleted && "border-red-500/50 bg-red-50/50 dark:bg-red-950/20"
-      )}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        padding: 12,
+        borderRadius: 'var(--tl-radius)',
+        border: `1px solid ${rowBorderColor}`,
+        background: rowBackground,
+        transition: 'background 0.15s, border-color 0.15s',
+      }}
+      className="sm:flex-row sm:items-center sm:gap-3 sm:p-3"
     >
-      <div className="flex items-center gap-1 sm:gap-3 flex-1">
-        <div className="flex flex-col items-start gap-0.5 min-w-[1rem] sm:w-14 flex-shrink-0">
-          <div className="flex items-center gap-1">
-            <span className="text-sm font-medium text-foreground-muted">{index + 1}</span>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            minWidth: 16,
+            flexShrink: 0,
+          }}
+          className="sm:w-14"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--tl-fg-3)',
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {index + 1}
+            </span>
             {isLive && !isCompleted && (
-              <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 animate-pulse">
-                <Radio className="w-2 h-2 mr-0.5" />
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  padding: '1px 5px',
+                  borderRadius: 3,
+                  background: 'var(--tl-live)',
+                  color: 'var(--tl-bg)',
+                  animation: 'tl-pulse 1.6s ease-in-out infinite',
+                }}
+              >
+                <Radio className="w-2 h-2" />
                 LIVE
-              </Badge>
+              </span>
             )}
           </div>
-          <div className="flex flex-col text-[10px] sm:text-[11px] text-foreground-muted leading-tight">
+          <div style={{ display: 'flex', flexDirection: 'column', ...metaTextStyle }}>
             {(match.court_name || match.court_id != null) && (
-              <span className="flex items-center gap-0.5">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
                 <MapPin className="w-3 h-3" />
                 {match.court_name || `${t.quickTable.view.court} ${match.court_id}`}
               </span>
             )}
             {!match.court_name && match.court_id == null && canEdit && onCourtNameUpdate && (
               editingCourtName ? (
-                <span className="flex items-center gap-1">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   <Input
-                    className="w-20 h-5 text-[10px] px-1 py-0"
+                    className={courtNameInputStyle}
                     value={courtNameValue}
                     onChange={(e) => setCourtNameValue(e.target.value)}
                     onBlur={() => {
@@ -106,17 +184,45 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
                 </span>
               ) : (
                 <button
-                  className="flex items-center gap-0.5 text-foreground-muted hover:text-foreground transition-colors"
+                  type="button"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    background: 'transparent',
+                    border: 0,
+                    padding: 0,
+                    color: 'var(--tl-fg-3)',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                    ...metaTextStyle,
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)'; }}
                   onClick={() => setEditingCourtName(true)}
                 >
                   <MapPin className="w-3 h-3" />
-                  <span className="underline decoration-dashed">{t.quickTable.view.courtName}</span>
+                  <span style={{ textDecoration: 'underline', textDecorationStyle: 'dashed' }}>
+                    {t.quickTable.view.courtName}
+                  </span>
                 </button>
               )
             )}
             {(match.court_name || match.court_id != null) && canEdit && onCourtNameUpdate && !editingCourtName && (
               <button
-                className="text-foreground-muted hover:text-foreground transition-colors underline decoration-dashed"
+                type="button"
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  padding: 0,
+                  color: 'var(--tl-fg-3)',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textDecorationStyle: 'dashed',
+                  ...metaTextStyle,
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)'; }}
                 onClick={() => {
                   setCourtNameValue(match.court_name ?? '');
                   setEditingCourtName(true);
@@ -126,9 +232,9 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
               </button>
             )}
             {editingCourtName && (match.court_name || match.court_id != null) && (
-              <span className="flex items-center gap-1">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <Input
-                  className="w-20 h-5 text-[10px] px-1 py-0"
+                  className={courtNameInputStyle}
                   value={courtNameValue}
                   onChange={(e) => setCourtNameValue(e.target.value)}
                   onBlur={() => {
@@ -149,7 +255,7 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
               </span>
             )}
             {match.start_at && (
-              <span className="flex items-center gap-0.5">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
                 <Clock className="w-3 h-3" />
                 {match.start_at}
               </span>
@@ -157,41 +263,56 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
-          <span className={cn(
-            "flex-1 text-right truncate text-sm sm:text-base font-medium",
-            match.winner_id === match.player1_id && "text-primary font-bold"
-          )}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ ...playerNameStyle(match.winner_id === match.player1_id), textAlign: 'right' }}>
             {formatPlayerName(player1)}
           </span>
 
           {!isEditing && (
-            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded bg-muted min-w-[50px] sm:min-w-[60px] justify-center flex-shrink-0">
-              <span className={cn("text-sm sm:text-base font-medium", match.winner_id === match.player1_id && "font-bold")}>
-                {match.score1 ?? '-'}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                borderRadius: 6,
+                background: 'var(--tl-surface)',
+                border: '1px solid var(--tl-border)',
+                minWidth: 56,
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <span style={scoreCellStyle(match.winner_id === match.player1_id)}>
+                {match.score1 ?? '–'}
               </span>
-              <span className="text-foreground-muted">:</span>
-              <span className={cn("text-sm sm:text-base font-medium", match.winner_id === match.player2_id && "font-bold")}>
-                {match.score2 ?? '-'}
+              <span style={{ color: 'var(--tl-fg-4)', fontFamily: 'Geist Mono, ui-monospace, monospace' }}>:</span>
+              <span style={scoreCellStyle(match.winner_id === match.player2_id)}>
+                {match.score2 ?? '–'}
               </span>
             </div>
           )}
 
-          <span className={cn(
-            "flex-1 truncate text-sm sm:text-base font-medium",
-            match.winner_id === match.player2_id && "text-primary font-bold"
-          )}>
+          <span style={playerNameStyle(match.winner_id === match.player2_id)}>
             {formatPlayerName(player2)}
           </span>
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2 sm:gap-1 flex-shrink-0">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          gap: 6,
+          flexShrink: 0,
+        }}
+      >
         {canEdit && (
           <>
             {isEditing ? (
               <>
-                <div className="flex items-center gap-1 mr-2">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8 }}>
                   <Input
                     type="number"
                     className="w-14 sm:w-16 h-9 text-center text-base p-1"
@@ -200,7 +321,7 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
                     onChange={(e) => setS1(e.target.value)}
                     autoFocus
                   />
-                  <span className="text-foreground-muted font-medium">-</span>
+                  <span style={{ color: 'var(--tl-fg-3)', fontWeight: 500 }}>–</span>
                   <Input
                     type="number"
                     className="w-14 sm:w-16 h-9 text-center text-base p-1"
@@ -209,44 +330,73 @@ export default function QuickTableMatchRow({ match, index, player1, player2, can
                     onChange={(e) => setS2(e.target.value)}
                   />
                 </div>
-                <Button variant="ghost" size="sm" className="h-9 px-3 text-sm" onClick={handleCancel}>
+                <button type="button" className="tl-btn" style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleCancel}>
                   {t.quickTable.view.cancelEdit}
-                </Button>
-                <Button size="sm" className="h-9 px-3 text-sm" onClick={handleSubmit}>
-                  <Check className="w-4 h-4 mr-1" />
+                </button>
+                <button type="button" className="tl-btn green" style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleSubmit}>
+                  <Check className="w-4 h-4" />
                   {t.quickTable.view.saveScore}
-                </Button>
+                </button>
               </>
             ) : (
               <>
-                <Button
-                  variant={isLive ? "destructive" : "outline"}
-                  size="sm"
-                  className="h-8 px-3 text-xs"
+                <button
+                  type="button"
+                  className="tl-btn"
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: 11.5,
+                    ...(isLive
+                      ? { background: 'var(--tl-live)', color: 'var(--tl-bg)', borderColor: 'var(--tl-live)' }
+                      : {}),
+                  }}
                   onClick={handleOpenScoring}
                   title={t.quickTable.view.openScoringPage}
                 >
-                  <Play className="w-3 h-3 sm:mr-1" />
+                  <Play className="w-3 h-3" />
                   <span className="hidden sm:inline">{t.quickTable.view.openScoringPage}</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="h-8 px-3 text-xs" onClick={handleStartEdit}>
-                  <Pencil className="w-3 h-3 sm:mr-1" />
-                  <span className="hidden sm:inline">{isCompleted ? t.quickTable.view.editInlineScore : t.quickTable.view.inputInlineScore}</span>
-                </Button>
+                </button>
+                <button
+                  type="button"
+                  className="tl-btn"
+                  style={{ padding: '6px 10px', fontSize: 11.5 }}
+                  onClick={handleStartEdit}
+                >
+                  <Pencil className="w-3 h-3" />
+                  <span className="hidden sm:inline">
+                    {isCompleted ? t.quickTable.view.editInlineScore : t.quickTable.view.inputInlineScore}
+                  </span>
+                </button>
               </>
             )}
           </>
         )}
         {!canEdit && (
           isCompleted ? (
-            <Check className="w-4 h-4 text-green-500" />
+            <Check className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
           ) : isLive ? (
-            <Badge variant="destructive" className="text-xs animate-pulse">
-              <Radio className="w-3 h-3 mr-1" />
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                padding: '3px 7px',
+                borderRadius: 3,
+                background: 'var(--tl-live)',
+                color: 'var(--tl-bg)',
+                animation: 'tl-pulse 1.6s ease-in-out infinite',
+              }}
+            >
+              <Radio className="w-3 h-3" />
               LIVE
-            </Badge>
+            </span>
           ) : (
-            <Clock className="w-4 h-4 text-foreground-muted" />
+            <Clock className="w-4 h-4" style={{ color: 'var(--tl-fg-3)' }} />
           )
         )}
       </div>
