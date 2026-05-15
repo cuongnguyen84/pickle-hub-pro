@@ -18,6 +18,7 @@ import { vi as viLocale, enUS } from "date-fns/locale";
 import { ShareDialog } from "@/components/share";
 import { DynamicMeta } from "@/components/seo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 
 /**
  * /watch/:id — video detail page.
@@ -509,19 +510,33 @@ const WatchVideo = () => {
                         position: "relative",
                       }}
                     >
-                      {v.thumbnail_url && (
-                        <img
-                          src={v.thumbnail_url}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
+                      {/* Codex P2 fix: storage-uploaded videos without a
+                          generated thumbnail still get a poster from the
+                          file's first frame via VideoThumbnail — without
+                          this fallback the box renders empty. */}
+                      <VideoThumbnail
+                        thumbnailUrl={v.thumbnail_url}
+                        storagePath={v.storage_path}
+                        title={v.title}
+                        className="w-full h-full object-cover block"
+                        showIconFallback={false}
+                      />
+                      {!v.thumbnail_url && !v.storage_path && (
+                        <div
+                          aria-hidden="true"
                           style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block",
+                            position: "absolute",
+                            inset: 0,
+                            display: "grid",
+                            placeItems: "center",
+                            color: "var(--tl-fg-4)",
+                            fontFamily: "'Geist Mono', monospace",
+                            fontSize: 9,
+                            letterSpacing: "0.1em",
                           }}
-                        />
+                        >
+                          NO PREVIEW
+                        </div>
                       )}
                       {v.duration_seconds && (
                         <span
