@@ -22,11 +22,11 @@ import {
   buildPersonJsonLd,
   buildProfileFallbackDescription,
   pickProfileMetaDescription,
-  buildFeedJsonLd,
+  buildTimelineFeedJsonLd,
   feedTeamLabel,
   feedScoreCompact,
   type FeedSeoParticipant,
-  type FeedRowForSeo,
+  type TimelineRowForSeo,
 } from "../seo-helpers";
 import {
   buildMatchDescription,
@@ -1444,16 +1444,22 @@ ${winnerLabel ? `<p>Đội thắng: <strong>${escapeHtml(winnerLabel)}</strong><
   );
 }
 
-// ─── Feed (Sprint 4 Phase 4D) ─────────────────────────────
+// ─── Feed (Sprint 7 mixed timeline) ────────────────────────
 //
-// /feed (en) and /vi/feed (vi) — discovery surface. Renders the top 20
-// trending matches as a CollectionPage / ItemList of SportsEvent so
-// Googlebot can index recent activity beyond individual /tran-dau/* pages.
+// /feed (en) and /vi/feed (vi) — discovery surface. Sprint 7 swapped the
+// matches-only trending RPC for get_feed_timeline, which UNION-ALLs
+// matches + VI blog posts + videos into one recency-sorted stream.
 //
-// We call the existing get_trending_feed RPC with viewer_id = NULL so
-// the bot sees the public anonymous trending order (engagement-weighted
-// by Phase 4B kudos + Phase 4C comments). Canonical strips ?tab=*
-// so /feed and /feed?tab=trending dedupe to the same indexed URL.
+// The prerender mirrors that shape so Googlebot indexes the same mixed
+// content that a human sees — SportsEvent items for matches, BlogPosting
+// for VI blog rows, VideoObject for videos. EN static blog metadata is
+// intentionally NOT folded in here; those posts already render under
+// /blog/<slug> with their own per-page schema, and dual-emitting the same
+// BlogPosting from /feed risks duplicate-entity noise in Search Console.
+//
+// Anonymous viewer (NULL) so viewer_kudoed comes back false uniformly.
+// Canonical strips ?tab=* so /feed and /feed?tab=trending dedupe to one
+// indexed URL.
 
 export async function renderFeed(
   supabase: SupabaseClient,
@@ -1461,24 +1467,20 @@ export async function renderFeed(
   lang: Lang,
 ): Promise<Response> {
   const path = lang === "vi" ? "/vi/feed" : "/feed";
-  // Canonical drops query string — /feed?tab=trending dedupes to /feed.
   const canonical = `${siteUrl}${path}`;
 
-  let rows: FeedRowForSeo[] = [];
+  let rows: TimelineRowForSeo[] = [];
   try {
-    // Anonymous viewer (NULL) so engagement weighting applies and
-    // viewer_kudoed comes back false uniformly. Default weights from
-    // the RPC signature (kudos=3, comments=5, decay=168h).
-    const { data, error } = await supabase.rpc("get_trending_feed", {
+    const { data, error } = await supabase.rpc("get_feed_timeline", {
       p_limit: 20,
-      p_cursor_played_at: null,
-      p_cursor_match_id: null,
+      p_cursor_published_at: null,
+      p_cursor_item_id: null,
       p_viewer_id: null,
     });
     if (error) {
-      console.error("renderFeed: get_trending_feed error:", error);
+      console.error("renderFeed: get_feed_timeline error:", error);
     } else {
-      rows = (data ?? []) as FeedRowForSeo[];
+      rows = (data ?? []) as TimelineRowForSeo[];
     }
   } catch (err) {
     // Don't fail the whole prerender on RPC error — emit the SEO shell
@@ -1486,27 +1488,23 @@ export async function renderFeed(
     console.error("renderFeed: RPC fatal:", err);
   }
 
-  const titleVi = "Bảng tin pickleball — Trận đấu mới nhất | ThePickleHub";
-  const titleEn = "Pickleball Feed — Latest Matches | ThePickleHub";
+  const titleVi = "Bảng tin pickleball — Trận đấu, bài viết & video mới | ThePickleHub";
+  const titleEn = "Pickleball Feed — Latest Matches, Posts & Videos | ThePickleHub";
   const descVi =
-    "Bảng tin pickleball cộng đồng — xem trận đấu, kết quả, và DUPR rating của người chơi pickleball Việt Nam mỗi ngày trên ThePickleHub.";
+    "Bảng tin pickleball — trận đấu, bài viết, video mới nhất từ cộng đồng pickleball Việt Nam và châu Á trên ThePickleHub.";
   const descEn =
-    "Pickleball community feed — browse the latest matches, scores, and DUPR ratings from players across Vietnam and Asia on ThePickleHub.";
+    "Pickleball community feed — the latest matches, articles, and videos from Vietnam and across Asia on ThePickleHub.";
 
   const title = lang === "vi" ? titleVi : titleEn;
   const description = lang === "vi" ? descVi : descEn;
 
-  // Reciprocal hreflang — Phase 4A shipped both /feed and /vi/feed routes.
   const extraMeta = [
     `<link rel="alternate" hreflang="en" href="${siteUrl}/feed"/>`,
     `<link rel="alternate" hreflang="vi" href="${siteUrl}/vi/feed"/>`,
     `<link rel="alternate" hreflang="x-default" href="${siteUrl}/feed"/>`,
   ].join("\n");
 
-  // CollectionPage → ItemList → SportsEvent. Pure shape lives in
-  // functions/_lib/seo-helpers.ts so the team-label and venue fallbacks
-  // are unit-tested for edge cases (empty participants, missing venue).
-  const jsonLd = buildFeedJsonLd({
+  const jsonLd = buildTimelineFeedJsonLd({
     rows,
     canonical,
     siteUrl,
@@ -1515,28 +1513,20 @@ export async function renderFeed(
     lang,
   });
 
-  // Body content — semantic list of matches so a fully-text bot like the
-  // legacy IA Crawler still sees structure even before parsing JSON-LD.
+  // Body content — semantic list per item type so a fully-text bot like
+  // the legacy IA Crawler still sees structure even before parsing JSON-LD.
   const items = rows
-    .map((row) => {
-      const parts = Array.isArray(row.participants)
-        ? (row.participants as FeedSeoParticipant[])
-        : [];
-      const teamA = feedTeamLabel(parts, "a");
-      const teamB = feedTeamLabel(parts, "b");
-      const score = feedScoreCompact(row.team_a_score, row.team_b_score);
-      const venue = row.venue_name ? ` · ${escapeHtml(row.venue_name)}` : "";
-      return `<li><a href="${siteUrl}/tran-dau/${escapeHtml(row.slug)}">${escapeHtml(`${teamA} vs ${teamB}`)}</a> — <strong>${escapeHtml(score)}</strong>${venue}</li>`;
-    })
+    .map((row) => renderTimelineRowHtml(row, siteUrl))
+    .filter((html): html is string => html != null)
     .join("");
 
-  const headingVi = "Trận đấu nổi bật";
-  const headingEn = "Trending matches";
+  const headingVi = "Cập nhật mới nhất";
+  const headingEn = "Latest updates";
   const heading = lang === "vi" ? headingVi : headingEn;
   const empty =
     lang === "vi"
-      ? "Chưa có trận đấu nào trong tuần."
-      : "No matches in the trending window yet.";
+      ? "Chưa có gì mới trong 30 ngày qua."
+      : "Nothing new in the last 30 days.";
 
   const bodyContent = `<section>
 <h2>${heading}</h2>
@@ -1561,6 +1551,34 @@ ${rows.length > 0 ? `<ol>${items}</ol>` : `<p>${empty}</p>`}
       lang,
     }),
   );
+}
+
+function renderTimelineRowHtml(
+  row: TimelineRowForSeo,
+  siteUrl: string,
+): string | null {
+  if (row.item_type === "match" && row.slug) {
+    const parts = Array.isArray(row.participants)
+      ? (row.participants as FeedSeoParticipant[])
+      : [];
+    const teamA = feedTeamLabel(parts, "a");
+    const teamB = feedTeamLabel(parts, "b");
+    const score = feedScoreCompact(
+      row.team_a_score ?? [],
+      row.team_b_score ?? [],
+    );
+    const venue = row.venue_name ? ` · ${escapeHtml(row.venue_name)}` : "";
+    return `<li><a href="${siteUrl}/tran-dau/${escapeHtml(row.slug)}">${escapeHtml(`${teamA} vs ${teamB}`)}</a> — <strong>${escapeHtml(score)}</strong>${venue}</li>`;
+  }
+  if (row.item_type === "blog" && row.slug && row.title) {
+    const excerpt = row.excerpt ? ` — ${escapeHtml(row.excerpt)}` : "";
+    return `<li><a href="${siteUrl}/vi/blog/${escapeHtml(row.slug)}">${escapeHtml(row.title)}</a>${excerpt}</li>`;
+  }
+  if (row.item_type === "video" && row.title) {
+    const desc = row.excerpt ? ` — ${escapeHtml(row.excerpt)}` : "";
+    return `<li><a href="${siteUrl}/watch/${escapeHtml(row.item_id)}">${escapeHtml(row.title)}</a>${desc}</li>`;
+  }
+  return null;
 }
 
 // ─── Social Events MVP (Sprint 1 PR2) ─────────────────────
