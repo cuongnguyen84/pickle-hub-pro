@@ -15,6 +15,7 @@ import {
   breadcrumb,
   relatedBlogLinks,
   relatedToolLinks,
+  detectLang,
   type Lang,
   DEFAULT_OG_IMAGE,
 } from "../utils";
@@ -1008,17 +1009,42 @@ export function renderDefault(path: string, siteUrl: string, lang: Lang): Respon
 // ─── 404 ──────────────────────────────��───────────────────
 
 export function render404(path: string, siteUrl: string): Response {
-  return htmlResponse(buildHtml({
-    title: "404 - Không tìm thấy trang | ThePickleHub",
-    description: "Trang bạn tìm không tồn tại. Quay lại trang chủ ThePickleHub để khám phá giải đấu, livestream và cộng đồng pickleball Việt Nam.",
-    url: `${siteUrl}${path}`,
-    siteUrl,
-    // PR72 (SEO Phase 2A I-15) — defense-in-depth noindex on the 404
-    // shell. Google normally drops 404s anyway, but an explicit signal
-    // protects against accidental indexing when a soft-404 ranks.
-    extraMeta: `<meta name="robots" content="noindex, nofollow"/>`,
-    bodyContent: `<p>Trang bạn tìm không tồn tại.</p><p><a href="${siteUrl}/">Quay lại trang chủ</a></p>`,
-  }), 404);
+  const isVi = detectLang(path) === "vi";
+  const title = isVi
+    ? "404 - Không tìm thấy trang | ThePickleHub"
+    : "404 - Page Not Found | ThePickleHub";
+  const description = isVi
+    ? "Trang bạn tìm không tồn tại. Quay lại trang chủ ThePickleHub để khám phá giải đấu, livestream và cộng đồng pickleball Việt Nam."
+    : "The page you're looking for doesn't exist. Return to ThePickleHub for pickleball tournaments, livestreams, and Vietnam's pickleball community.";
+  const homeHref = isVi ? `${siteUrl}/vi/` : `${siteUrl}/`;
+  const homeLabel = isVi ? "Quay lại trang chủ" : "Return to home";
+  // No canonical or og:url — emitting a canonical on a 404 sends a
+  // contradictory signal (canonical = "this URL is authoritative" vs.
+  // noindex = "don't index this"). Omitting both is correct for 404s.
+  const html = `<!DOCTYPE html>
+<html lang="${isVi ? "vi" : "en"}">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>${escapeHtml(title)}</title>
+<meta name="description" content="${escapeHtml(description)}"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="${escapeHtml(title)}"/>
+<meta property="og:description" content="${escapeHtml(description)}"/>
+<meta property="og:site_name" content="ThePickleHub"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@ThePickleHub"/>
+<meta name="twitter:title" content="${escapeHtml(title)}"/>
+<meta name="twitter:description" content="${escapeHtml(description)}"/>
+</head>
+<body>
+<h1>${escapeHtml(title)}</h1>
+<p>${escapeHtml(description)}</p>
+<p><a href="${escapeHtml(homeHref)}">${escapeHtml(homeLabel)}</a></p>
+</body>
+</html>`;
+  return htmlResponse(html, 404);
 }
 
 // ─── Player profile ──────────────────────────────────────

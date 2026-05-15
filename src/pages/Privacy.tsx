@@ -1,18 +1,14 @@
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { ArrowLeft, Shield, Mail } from "lucide-react";
-import { DynamicMeta } from "@/components/seo";
+import { TheLineLayout } from "@/components/layout";
 
 const Privacy = () => {
   const { t } = useI18n();
   const p = t.privacy;
 
   return (
-    <>
-      <DynamicMeta
-        title={p.title}
-        description={p.intro.description}
-      />
+    <TheLineLayout title={p.title} description={p.intro.description}>
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -126,7 +122,7 @@ const Privacy = () => {
           </div>
         </main>
       </div>
-    </>
+    </TheLineLayout>
   );
 };
 

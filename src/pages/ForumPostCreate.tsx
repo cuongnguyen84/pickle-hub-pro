@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { X, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import MainLayout from "@/components/layout/MainLayout";
+import { TheLineLayout } from "@/components/layout";
 import { getLoginUrl } from "@/lib/auth-config";
 
 const ForumPostCreate = () => {
@@ -35,14 +35,14 @@ const ForumPostCreate = () => {
 
   if (!user) {
     return (
-      <MainLayout>
+      <TheLineLayout title="Bài viết mới" noindex={true}>
         <div className="container-wide max-w-2xl py-12 text-center">
           <p className="text-muted-foreground mb-4">{t.forum.loginToPost}</p>
           <Button asChild>
             <Link to={getLoginUrl("/forum/new")}>{t.nav.login}</Link>
           </Button>
         </div>
-      </MainLayout>
+      </TheLineLayout>
     );
   }
 
@@ -79,7 +79,7 @@ const ForumPostCreate = () => {
   };
 
   return (
-    <MainLayout>
+    <TheLineLayout title={t.forum.newPost} noindex={true}>
       <div className="container-wide max-w-2xl py-6 space-y-6">
         <Link to="/forum" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" />
@@ -163,7 +163,7 @@ const ForumPostCreate = () => {
           </Button>
         </div>
       </div>
-    </MainLayout>
+    </TheLineLayout>
   );
 };
 
