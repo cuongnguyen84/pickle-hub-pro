@@ -1,9 +1,5 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { TheLineLayout } from '@/components/layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
@@ -16,8 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Trophy, Calendar, Settings, Gamepad2, Copy, Plus, Play, ClipboardList, LayoutGrid, Mail, Trash2, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Users, Trophy, Calendar, Settings, Copy, Plus, Trash2, RefreshCw } from 'lucide-react';
 import { useTeamMatchTournament, useTeamMatch } from '@/hooks/useTeamMatch';
 import { useUserTeam, useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
@@ -29,11 +24,11 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { vi as viLocale, enUS } from 'date-fns/locale';
-import { useState, useMemo, useCallback } from 'react';
-import { 
+import { useState, useCallback } from 'react';
+import {
   CreateTeamDialog,
   TeamRegistrationDialog,
-  TeamList, 
+  TeamList,
   TeamDetailSheet,
   MatchDetailSheet,
   GenerateMatchesDialog,
@@ -56,14 +51,38 @@ import { useVisibilityRefresh } from '@/hooks/useVisibilityRefresh';
 import { useI18n } from '@/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 
-const STATUS_COLORS: Record<string, string> = {
-  setup: 'bg-muted text-muted-foreground',
-  registration: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  ongoing: 'bg-green-500/10 text-green-500 border-green-500/20',
-  completed: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
 };
 
-// STATUS_LABELS and FORMAT_LABELS moved inside component to use i18n
+// Status pill — token-driven so it tracks light/dark mode
+const statusPillStyle = (status: string): React.CSSProperties => {
+  if (status === 'completed') return { background: 'var(--tl-surface)', color: 'var(--tl-fg-3)' };
+  if (status === 'ongoing') return { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' };
+  if (status === 'registration') return { background: 'rgba(79, 155, 255, 0.12)', color: 'rgb(79, 155, 255)' };
+  return { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' };
+};
+
+// shadcn TabsList override — flatten the rounded pill bg, replace with token border-bottom + flex.
+const tlTabsListClass =
+  'flex w-full !h-auto !p-0 !bg-transparent !border-b !border-[var(--tl-border)] !rounded-none gap-2';
+
+// shadcn TabsTrigger override — green underline on active state.
+const tlTabsTriggerClass = [
+  'flex-1 inline-flex items-center justify-center gap-1.5',
+  '!px-3 !py-2',
+  '!text-[11px] !font-medium tracking-[0.06em] uppercase',
+  'font-[family-name:Geist_Mono,ui-monospace,monospace]',
+  '!text-[var(--tl-fg-3)] !bg-transparent !rounded-none !shadow-none',
+  'border-b-2 border-transparent',
+  'data-[state=active]:!text-[var(--tl-fg)]',
+  'data-[state=active]:!border-[var(--tl-green)]',
+  'data-[state=active]:!bg-transparent data-[state=active]:!shadow-none',
+  'transition-colors',
+  'hover:!text-[var(--tl-fg-2)]',
+].join(' ');
 
 export default function TeamMatchView() {
   const { id } = useParams<{ id: string }>();
@@ -72,7 +91,7 @@ export default function TeamMatchView() {
   const { isAdmin } = useAdminAuth();
   const { toast } = useToast();
   const { t, language } = useI18n();
-  
+
   const STATUS_LABELS: Record<string, string> = {
     setup: t.teamMatch.statusSetup,
     registration: t.teamMatch.statusRegistration,
@@ -89,23 +108,22 @@ export default function TeamMatchView() {
   const { data: tournament, isLoading, error } = useTeamMatchTournament(id);
   const { data: userTeam } = useUserTeam(tournament?.id);
   const { updateTournamentStatus, isUpdatingStatus, deleteTournament } = useTeamMatch();
-  
+
   const { data: teams } = useTeamMatchTeams(tournament?.id);
   const { data: matches } = useTeamMatchMatches(tournament?.id);
   const { data: groups } = useTeamMatchGroups(tournament?.id);
   const { generateMatches, isGenerating, generatePlayoffMatches, isGeneratingPlayoff, generateSingleElimination, isGeneratingSE } = useTeamMatchMatchManagement();
   const { createGroups, isCreatingGroups } = useTeamMatchGroupManagement();
-  const { 
-    standings, 
-    roundRobinComplete, 
+  const {
+    standings,
+    roundRobinComplete,
     hasPlayoff,
     hasGroups: standingsHasGroups,
     generatePlayoffSeeding,
   } = useTeamMatchStandings(tournament?.id, {
     topPerGroup: tournament?.top_per_group || 2,
   });
-  
-  // Referee management
+
   const {
     referees,
     loading: refereesLoading,
@@ -114,7 +132,6 @@ export default function TeamMatchView() {
     removeReferee,
   } = useTeamMatchRefereeManagement(tournament?.id, tournament?.created_by);
 
-  // Realtime subscription for matches and games
   useTeamMatchRealtime(tournament?.id);
 
   const [showCreateTeam, setShowCreateTeam] = useState(false);
@@ -128,12 +145,10 @@ export default function TeamMatchView() {
   const [showGroupSetupDialog, setShowGroupSetupDialog] = useState(false);
   const [showInviteTeamDialog, setShowInviteTeamDialog] = useState(false);
   const [showSESetupDialog, setShowSESetupDialog] = useState(false);
-  const [startRoundNumber, setStartRoundNumber] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
 
-  // Manual refresh handler
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ['team-match-matches', tournament?.id] });
@@ -142,33 +157,27 @@ export default function TeamMatchView() {
     setTimeout(() => setIsRefreshing(false), 600);
   }, [queryClient, tournament?.id]);
 
-  // Layer 1 & 2: Visibility-change auto-refresh + polling fallback
   useVisibilityRefresh(
     useCallback(() => {
       queryClient.invalidateQueries({ queryKey: ['team-match-matches', tournament?.id] });
       queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournament?.id] });
     }, [queryClient, tournament?.id]),
-    { minInterval: 5000, pollingInterval: 20000 }
+    { minInterval: 5000, pollingInterval: 20000 },
   );
-  // For BTC lineup: track which team to lineup for
+
   const [lineupTeamId, setLineupTeamId] = useState<string | null>(null);
-  // For scoring sheet
   const [scoringMatch, setScoringMatch] = useState<TeamMatchMatch | null>(null);
 
   const isOwner = tournament?.created_by === user?.id;
-  const canManage = isOwner || isAdmin; // Admin or owner can manage
-  const isSingleElimination = tournament?.format === 'single_elimination';
+  const canManage = isOwner || isAdmin;
   const canRegister = (tournament?.status === 'registration' || tournament?.status === 'setup') && !userTeam && user;
   const approvedTeamsCount = teams?.filter(t => t.status === 'approved').length || 0;
   const pendingTeamsCount = teams?.filter(t => t.status === 'pending').length || 0;
   const hasMatches = matches && matches.length > 0;
   const hasGroups = groups && groups.length > 0;
-  const roundRobinMatches = matches?.filter(m => !m.is_playoff) || [];
-  const playoffMatches = matches?.filter(m => m.is_playoff) || [];
   const isGroupPlayoffFormat = tournament?.format === 'rr_playoff';
   const canStartGroupSetup = canManage && isGroupPlayoffFormat && !hasGroups && pendingTeamsCount === 0 && approvedTeamsCount >= 6;
 
-  // Handle delete tournament
   const handleDeleteTournament = async () => {
     if (!tournament) return;
     try {
@@ -179,7 +188,6 @@ export default function TeamMatchView() {
     }
   };
 
-  // Filter out rejected teams for display
   const displayTeams = teams?.filter(t => t.status !== 'rejected') || [];
 
   const handleCopyLink = () => {
@@ -191,22 +199,21 @@ export default function TeamMatchView() {
   const handleGenerateMatches = async () => {
     if (!tournament || !teams) return;
     try {
-      // Fetch actual game templates from database
       const { data: templates, error: templatesError } = await supabase
         .from('team_match_game_templates')
         .select('*')
         .eq('tournament_id', tournament.id)
         .order('order_index');
-      
+
       if (templatesError) throw templatesError;
-      
+
       const gameTemplates = (templates || []).map(t => ({
         game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
         scoring_type: t.scoring_type as 'rally21' | 'sideout11',
         display_name: t.display_name,
         order_index: t.order_index,
       }));
-      
+
       await generateMatches({
         tournamentId: tournament.id,
         teams,
@@ -230,11 +237,10 @@ export default function TeamMatchView() {
   };
 
   const handleStartRound = async (roundNumber: number) => {
-    // Update all matches in this round to in_progress
     if (!tournament || !matches) return;
-    
+
     const roundMatches = matches.filter(m => m.round_number === roundNumber);
-    
+
     try {
       for (const match of roundMatches) {
         await supabase
@@ -242,7 +248,7 @@ export default function TeamMatchView() {
           .update({ status: 'in_progress' })
           .eq('id', match.id);
       }
-      
+
       toast({ title: t.teamMatch.view.roundStarted + ' ' + roundNumber });
       window.location.reload();
     } catch (error) {
@@ -252,24 +258,22 @@ export default function TeamMatchView() {
 
   const handleCreatePlayoff = async (teamCount: number) => {
     if (!tournament) return;
-    
+
     try {
-      // Use cross-group seeding if available
       const playoffSeeding = generatePlayoffSeeding(teamCount);
       const qualifyingTeams = playoffSeeding.seeds.map((seed, index) => ({
         teamId: seed.teamId,
         seed: index + 1,
       }));
 
-      // Fetch actual game templates from database
       const { data: templates, error: templatesError } = await supabase
         .from('team_match_game_templates')
         .select('*')
         .eq('tournament_id', tournament.id)
         .order('order_index');
-      
+
       if (templatesError) throw templatesError;
-      
+
       const gameTemplates = (templates || []).map(t => ({
         game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
         scoring_type: t.scoring_type as 'rally21' | 'sideout11',
@@ -277,7 +281,6 @@ export default function TeamMatchView() {
         order_index: t.order_index,
       }));
 
-      // Pass pairings for proper bracket structure
       await generatePlayoffMatches({
         tournamentId: tournament.id,
         qualifyingTeams,
@@ -290,7 +293,7 @@ export default function TeamMatchView() {
           team2Id: p.team2.teamId,
         })),
       });
-      
+
       setShowPlayoffDialog(false);
       setActiveTab('matches');
     } catch (error: any) {
@@ -304,17 +307,16 @@ export default function TeamMatchView() {
 
   const handleCreateGroups = async (groupCount: number, distribution: Array<Array<{ id: string; name: string }>>) => {
     if (!tournament) return;
-    
+
     try {
-      // Fetch actual game templates from database
       const { data: templates, error: templatesError } = await supabase
         .from('team_match_game_templates')
         .select('*')
         .eq('tournament_id', tournament.id)
         .order('order_index');
-      
+
       if (templatesError) throw templatesError;
-      
+
       const gameTemplates = (templates || []).map(t => ({
         game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
         scoring_type: t.scoring_type as 'rally21' | 'sideout11',
@@ -329,7 +331,7 @@ export default function TeamMatchView() {
         gameTemplates,
         hasDreambreaker: tournament.has_dreambreaker,
       });
-      
+
       setShowGroupSetupDialog(false);
       setActiveTab('matches');
     } catch (error) {
@@ -337,23 +339,21 @@ export default function TeamMatchView() {
     }
   };
 
-  // Handler for Single Elimination bracket generation
   const handleGenerateSingleElimination = async (
     pairingType: 'random' | 'manual',
-    manualPairings?: Array<{ team1Id: string; team2Id: string }>
+    manualPairings?: Array<{ team1Id: string; team2Id: string }>,
   ) => {
     if (!tournament || !teams) return;
-    
+
     try {
-      // Fetch actual game templates from database
       const { data: templates, error: templatesError } = await supabase
         .from('team_match_game_templates')
         .select('*')
         .eq('tournament_id', tournament.id)
         .order('order_index');
-      
+
       if (templatesError) throw templatesError;
-      
+
       const gameTemplates = (templates || []).map(t => ({
         game_type: t.game_type as 'WD' | 'MD' | 'MX' | 'WS' | 'MS',
         scoring_type: t.scoring_type as 'rally21' | 'sideout11',
@@ -370,7 +370,7 @@ export default function TeamMatchView() {
         pairingType,
         manualPairings,
       });
-      
+
       setShowSESetupDialog(false);
       setActiveTab('matches');
     } catch (error) {
@@ -378,18 +378,26 @@ export default function TeamMatchView() {
     }
   };
 
+  // ─── Loading + 404 states ────────────────────────────────────────────────
   if (isLoading) {
     return (
       <TheLineLayout title="Team Match" noindex={true} active="lab">
-        <div className="container max-w-4xl py-6 space-y-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-8 w-1/2" />
-              <Skeleton className="h-4 w-1/3" />
-            </div>
+        <div className="tl-shell">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 400,
+              color: 'var(--tl-fg-3)',
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 12,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t.common.loading}
           </div>
-          <Skeleton className="h-64 w-full" />
         </div>
       </TheLineLayout>
     );
@@ -398,69 +406,121 @@ export default function TeamMatchView() {
   if (error || !tournament) {
     return (
       <TheLineLayout title="Team Match" noindex={true} active="lab">
-        <div className="container max-w-4xl py-12 text-center">
-          <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2">{t.teamMatch.view.notFound}</h1>
-          <p className="text-muted-foreground mb-6">
-            {t.teamMatch.view.notFoundDesc}
-          </p>
-          <Button onClick={() => navigate('/tools/team-match')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t.teamMatch.view.backToList}
-          </Button>
+        <div className="tl-shell">
+          <div className="tl-empty" style={{ marginTop: 56 }}>
+            <h3>{t.teamMatch.view.notFound}</h3>
+            <p>{t.teamMatch.view.notFoundDesc}</p>
+            <Link to="/tools/team-match" className="tl-btn">
+              ← {t.teamMatch.view.backToList}
+            </Link>
+          </div>
         </div>
       </TheLineLayout>
     );
   }
 
+  const showStandingsTab = tournament.format !== 'single_elimination';
+  const dateLocale = language === 'vi' ? viLocale : enUS;
+
   return (
-    <TheLineLayout title={`${tournament.name} | Team Match`} description={`${tournament.name} – Team Match Pickleball`} noindex={true} active="lab">
-      <div className="container max-w-4xl py-6 space-y-6">
-        {/* Sticky Header with Settings */}
-        <div className="sticky top-14 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-4 px-4 py-3 border-b md:relative md:top-0 md:border-b-0 md:py-0 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none">
-          <div className="flex items-start gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/tools/team-match')} className="shrink-0">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl md:text-2xl font-bold truncate">{tournament.name}</h1>
-                <Badge variant="outline" className={cn("shrink-0", STATUS_COLORS[tournament.status])}>
-                  {STATUS_LABELS[tournament.status]}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-3 mt-1 text-xs md:text-sm text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: language === 'vi' ? viLocale : enUS })}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users className="h-3.5 w-3.5" />
-                  {tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size} {t.teamMatch.players}
-                </span>
-                <span className="hidden sm:flex items-center gap-1">
-                  <Trophy className="h-3.5 w-3.5" />
-                  {FORMAT_LABELS[tournament.format]}
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing} title="Refresh">
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleCopyLink} title={t.teamMatch.view.copyLink}>
-                <Copy className="h-4 w-4" />
-              </Button>
+    <TheLineLayout
+      title={`${tournament.name} | Team Match`}
+      description={`${tournament.name} – Team Match Pickleball`}
+      noindex={true}
+      active="lab"
+    >
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <span className="sep">/</span>
+          <Link to="/tools/team-match">Team Match</Link>
+          <span className="sep">/</span>
+          <span className="current">{tournament.name}</span>
+        </nav>
+
+        <header className="tl-page-head">
+          <div className="kicker">
+            ◆ {language === 'vi' ? 'Team Match · MLP' : 'Team Match · MLP'}
+            <span style={{ color: 'var(--tl-fg-4)', margin: '0 8px' }}>·</span>
+            {tournament.team_count} {t.teamMatch.teams} × {tournament.team_roster_size}
+            <span style={{ color: 'var(--tl-fg-4)', margin: '0 8px' }}>·</span>
+            {FORMAT_LABELS[tournament.format]}
+          </div>
+          <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
+            <em className="tl-serif">{tournament.name}</em>
+          </h1>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              alignItems: 'center',
+              marginTop: 14,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                fontWeight: 500,
+                padding: '4px 10px',
+                borderRadius: 4,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                ...statusPillStyle(tournament.status),
+              }}
+            >
+              {STATUS_LABELS[tournament.status]}
+            </span>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 11,
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              {format(new Date(tournament.created_at), 'dd/MM/yyyy', { locale: dateLocale })}
+            </span>
+
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="tl-btn"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                aria-label={language === 'vi' ? 'Tải lại' : 'Refresh'}
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <button type="button" className="tl-btn" onClick={handleCopyLink}>
+                <Copy className="w-4 h-4" />
+                <span className="hidden sm:inline">{t.teamMatch.view.copyLink}</span>
+              </button>
               {canManage && (
                 <>
-                  <Button variant="outline" size="icon" onClick={() => setShowSettingsDialog(true)} title={t.teamMatch.view.settings}>
-                    <Settings className="h-4 w-4" />
-                  </Button>
+                  <button
+                    type="button"
+                    className="tl-btn"
+                    onClick={() => setShowSettingsDialog(true)}
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t.teamMatch.view.settings}</span>
+                  </button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="icon" className="text-destructive hover:bg-destructive/10" title={t.teamMatch.view.deleteBtn}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <button
+                        type="button"
+                        className="tl-btn"
+                        style={{ color: 'var(--tl-live)' }}
+                        aria-label={t.teamMatch.view.deleteBtn}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -471,7 +531,10 @@ export default function TeamMatchView() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>{t.teamMatch.view.cancelBtn}</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteTournament} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogAction
+                          onClick={handleDeleteTournament}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
                           {t.teamMatch.view.deleteAction}
                         </AlertDialogAction>
                       </AlertDialogFooter>
@@ -481,138 +544,157 @@ export default function TeamMatchView() {
               )}
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Tabs */}
-        {/* Hide standings tab for single_elimination format */}
-        {(() => {
-          const showStandingsTab = tournament.format !== 'single_elimination';
-          return (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className={`grid w-full ${showStandingsTab ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <TabsTrigger value="overview">{t.teamMatch.view.overview}</TabsTrigger>
-                <TabsTrigger value="teams">{t.teamMatch.view.teams}</TabsTrigger>
-                <TabsTrigger value="matches">{t.teamMatch.view.matches}</TabsTrigger>
-                {showStandingsTab && <TabsTrigger value="standings">{t.teamMatch.view.standings}</TabsTrigger>}
-              </TabsList>
+        <section style={{ marginTop: 32, marginBottom: 56 }}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className={tlTabsListClass}>
+              <TabsTrigger value="overview" className={tlTabsTriggerClass}>
+                {t.teamMatch.view.overview}
+              </TabsTrigger>
+              <TabsTrigger value="teams" className={tlTabsTriggerClass}>
+                {t.teamMatch.view.teams}
+              </TabsTrigger>
+              <TabsTrigger value="matches" className={tlTabsTriggerClass}>
+                {t.teamMatch.view.matches}
+              </TabsTrigger>
+              {showStandingsTab && (
+                <TabsTrigger value="standings" className={tlTabsTriggerClass}>
+                  {t.teamMatch.view.standings}
+                </TabsTrigger>
+              )}
+            </TabsList>
 
-          <TabsContent value="overview" className="space-y-4 mt-4">
-            <TeamMatchOverviewTab
-              tournament={{
-                id: tournament.id,
-                format: tournament.format,
-                status: tournament.status,
-                team_roster_size: tournament.team_roster_size,
-                top_per_group: tournament.top_per_group,
-              }}
-              isOwner={isOwner}
-              userTeam={userTeam || null}
-              displayTeams={displayTeams}
-              hasMatches={!!hasMatches}
-              hasGroups={!!hasGroups}
-              approvedTeamsCount={approvedTeamsCount}
-              pendingTeamsCount={pendingTeamsCount}
-              canStartGroupSetup={canStartGroupSetup}
-              onTeamClick={(team) => setSelectedTeam(team)}
-              onGenerateMatches={() => setShowGenerateDialog(true)}
-              onShowInviteTeam={() => setShowInviteTeamDialog(true)}
-              onShowGroupSetup={() => setShowGroupSetupDialog(true)}
-              onShowSESetup={() => setShowSESetupDialog(true)}
-            />
-          </TabsContent>
+            <TabsContent value="overview" className="space-y-4 mt-6">
+              <TeamMatchOverviewTab
+                tournament={{
+                  id: tournament.id,
+                  format: tournament.format,
+                  status: tournament.status,
+                  team_roster_size: tournament.team_roster_size,
+                  top_per_group: tournament.top_per_group,
+                }}
+                isOwner={isOwner}
+                userTeam={userTeam || null}
+                displayTeams={displayTeams}
+                hasMatches={!!hasMatches}
+                hasGroups={!!hasGroups}
+                approvedTeamsCount={approvedTeamsCount}
+                pendingTeamsCount={pendingTeamsCount}
+                canStartGroupSetup={canStartGroupSetup}
+                onTeamClick={(team) => setSelectedTeam(team)}
+                onGenerateMatches={() => setShowGenerateDialog(true)}
+                onShowInviteTeam={() => setShowInviteTeamDialog(true)}
+                onShowGroupSetup={() => setShowGroupSetupDialog(true)}
+                onShowSESetup={() => setShowSESetupDialog(true)}
+              />
+            </TabsContent>
 
-          <TabsContent value="teams" className="mt-4 space-y-4">
-            {/* Registration action for users - Only show if no team yet */}
-            {canRegister && (
-              <Card className="border-dashed border-2">
-                <CardContent className="py-6 flex items-center justify-between">
+            <TabsContent value="teams" className="mt-6 space-y-4">
+              {/* Registration prompt — token-styled surface card */}
+              {canRegister && (
+                <div
+                  style={{
+                    ...surfaceCard,
+                    borderStyle: 'dashed',
+                    padding: 18,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <div>
-                    <p className="font-medium">{t.teamMatch.view.registerForTournament}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p style={{ fontWeight: 500, color: 'var(--tl-fg)', margin: 0, fontSize: 14.5 }}>
+                      {t.teamMatch.view.registerForTournament}
+                    </p>
+                    <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, margin: 0, lineHeight: 1.5 }}>
                       {t.teamMatch.view.createTeamToJoin}
                     </p>
                   </div>
-                  <Button onClick={() => setShowCreateTeam(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
+                  <button
+                    type="button"
+                    className="tl-btn green"
+                    onClick={() => setShowCreateTeam(true)}
+                  >
+                    <Plus className="w-4 h-4" />
                     {t.teamMatch.view.createTeam}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+                  </button>
+                </div>
+              )}
 
-            {/* Captain's team roster display - mobile-friendly large font */}
-            {userTeam && (
-              <TeamRosterDisplay
-                team={userTeam}
-                maxRosterSize={tournament.team_roster_size}
-                onManageClick={() => setSelectedTeam(userTeam)}
-              />
-            )}
-
-            {/* Other teams list - for BTC or viewing other teams */}
-            {(isOwner || !userTeam) && (
-              <TeamList
-                tournamentId={tournament.id}
-                isOwner={false}
-                onTeamClick={(team) => setSelectedTeam(team)}
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="matches" className="mt-4 space-y-4">
-            <TeamMatchMatchesTab
-              tournament={{
-                id: tournament.id,
-                format: tournament.format,
-                status: tournament.status,
-                has_dreambreaker: tournament.has_dreambreaker,
-                has_third_place_match: tournament.has_third_place_match,
-              }}
-              isOwner={isOwner}
-              userTeam={userTeam || null}
-              matches={matches}
-              hasMatches={!!hasMatches}
-              hasGroups={!!hasGroups}
-              hasPlayoff={hasPlayoff}
-              roundRobinComplete={roundRobinComplete}
-              standings={standings}
-              approvedTeamsCount={approvedTeamsCount}
-              pendingTeamsCount={pendingTeamsCount}
-              userRole={userRole}
-              isUpdatingStatus={isUpdatingStatus}
-              onGenerateMatches={() => setShowGenerateDialog(true)}
-              onShowSESetup={() => setShowSESetupDialog(true)}
-              onShowStartTournament={() => setShowStartTournamentDialog(true)}
-              onShowPlayoffDialog={() => setShowPlayoffDialog(true)}
-              onMatchClick={(match) => setSelectedMatch(match)}
-              onLineupClick={(match, teamId) => {
-                setLineupMatch(match);
-                setLineupTeamId(teamId || null);
-              }}
-              onStartRound={handleStartRound}
-              onScoreMatch={(match) => setScoringMatch(match)}
-              onStartTournament={handleStartTournament}
-            />
-          </TabsContent>
-
-          {showStandingsTab && (
-            <TabsContent value="standings" className="mt-4">
-              {/* Group-based Standings for rr_playoff format */}
-              {hasGroups ? (
-                <GroupStandingsTable 
-                  tournamentId={tournament.id} 
-                  topPerGroup={(tournament as any).top_per_group || 2}
+              {/* Captain's team roster — child component (deferred PR D.2) */}
+              {userTeam && (
+                <TeamRosterDisplay
+                  team={userTeam}
+                  maxRosterSize={tournament.team_roster_size}
+                  onManageClick={() => setSelectedTeam(userTeam)}
                 />
-              ) : (
-                <StandingsTable tournamentId={tournament.id} />
+              )}
+
+              {/* Other teams list — child component (deferred PR D.2) */}
+              {(isOwner || !userTeam) && (
+                <TeamList
+                  tournamentId={tournament.id}
+                  isOwner={false}
+                  onTeamClick={(team) => setSelectedTeam(team)}
+                />
               )}
             </TabsContent>
-          )}
-            </Tabs>
-          );
-        })()}
 
-        {/* Team Registration Dialog - for users to register */}
+            <TabsContent value="matches" className="mt-6 space-y-4">
+              <TeamMatchMatchesTab
+                tournament={{
+                  id: tournament.id,
+                  format: tournament.format,
+                  status: tournament.status,
+                  has_dreambreaker: tournament.has_dreambreaker,
+                  has_third_place_match: tournament.has_third_place_match,
+                }}
+                isOwner={isOwner}
+                userTeam={userTeam || null}
+                matches={matches}
+                hasMatches={!!hasMatches}
+                hasGroups={!!hasGroups}
+                hasPlayoff={hasPlayoff}
+                roundRobinComplete={roundRobinComplete}
+                standings={standings}
+                approvedTeamsCount={approvedTeamsCount}
+                pendingTeamsCount={pendingTeamsCount}
+                userRole={userRole}
+                isUpdatingStatus={isUpdatingStatus}
+                onGenerateMatches={() => setShowGenerateDialog(true)}
+                onShowSESetup={() => setShowSESetupDialog(true)}
+                onShowStartTournament={() => setShowStartTournamentDialog(true)}
+                onShowPlayoffDialog={() => setShowPlayoffDialog(true)}
+                onMatchClick={(match) => setSelectedMatch(match)}
+                onLineupClick={(match, teamId) => {
+                  setLineupMatch(match);
+                  setLineupTeamId(teamId || null);
+                }}
+                onStartRound={handleStartRound}
+                onScoreMatch={(match) => setScoringMatch(match)}
+                onStartTournament={handleStartTournament}
+              />
+            </TabsContent>
+
+            {showStandingsTab && (
+              <TabsContent value="standings" className="mt-6">
+                {hasGroups ? (
+                  <GroupStandingsTable
+                    tournamentId={tournament.id}
+                    topPerGroup={(tournament as any).top_per_group || 2}
+                  />
+                ) : (
+                  <StandingsTable tournamentId={tournament.id} />
+                )}
+              </TabsContent>
+            )}
+          </Tabs>
+        </section>
+
+        {/* Dialog wiring — all kept intact, child components handle their own visuals */}
         {!isOwner && (
           <TeamRegistrationDialog
             open={showCreateTeam}
@@ -622,8 +704,7 @@ export default function TeamMatchView() {
             onSuccess={() => setActiveTab('overview')}
           />
         )}
-        
-        {/* Create Team Dialog - for BTC to add teams */}
+
         {isOwner && (
           <CreateTeamDialog
             open={showCreateTeam}
@@ -633,7 +714,6 @@ export default function TeamMatchView() {
           />
         )}
 
-        {/* Team Detail Sheet */}
         <TeamDetailSheet
           open={!!selectedTeam}
           onOpenChange={(open) => !open && setSelectedTeam(null)}
@@ -642,7 +722,6 @@ export default function TeamMatchView() {
           isOwner={isOwner}
         />
 
-        {/* Match Detail Sheet */}
         <MatchDetailSheet
           open={!!selectedMatch}
           onOpenChange={(open) => !open && setSelectedMatch(null)}
@@ -655,7 +734,6 @@ export default function TeamMatchView() {
           }}
         />
 
-        {/* Scoring Sheet for referees */}
         <TeamMatchScoringSheet
           open={!!scoringMatch}
           onOpenChange={(open) => !open && setScoringMatch(null)}
@@ -663,7 +741,6 @@ export default function TeamMatchView() {
           tournamentId={tournament.id}
         />
 
-        {/* Lineup Selection Sheet - For Captain's own team OR BTC for any team */}
         {(userTeam || isOwner) && lineupMatch && (
           <LineupSelectionSheet
             open={!!lineupMatch}
@@ -681,7 +758,6 @@ export default function TeamMatchView() {
           />
         )}
 
-        {/* Invite Team Dialog */}
         <InviteTeamDialog
           open={showInviteTeamDialog}
           onOpenChange={setShowInviteTeamDialog}
@@ -699,7 +775,6 @@ export default function TeamMatchView() {
           onConfirm={handleGenerateMatches}
         />
 
-        {/* Playoff Setup Dialog */}
         <PlayoffSetupDialog
           open={showPlayoffDialog}
           onOpenChange={setShowPlayoffDialog}
@@ -710,7 +785,6 @@ export default function TeamMatchView() {
           onConfirm={handleCreatePlayoff}
         />
 
-        {/* Group Setup Dialog */}
         <GroupSetupDialog
           open={showGroupSetupDialog}
           onOpenChange={setShowGroupSetupDialog}
@@ -719,7 +793,6 @@ export default function TeamMatchView() {
           onConfirm={handleCreateGroups}
         />
 
-        {/* Single Elimination Setup Dialog */}
         <SingleEliminationSetupDialog
           open={showSESetupDialog}
           onOpenChange={setShowSESetupDialog}
@@ -729,7 +802,6 @@ export default function TeamMatchView() {
           onConfirm={handleGenerateSingleElimination}
         />
 
-        {/* Settings Dialog with Referee Management */}
         <TeamMatchSettingsDialog
           open={showSettingsDialog}
           onOpenChange={setShowSettingsDialog}
@@ -740,7 +812,6 @@ export default function TeamMatchView() {
           onRemoveReferee={removeReferee}
         />
 
-        {/* Start Tournament Confirmation */}
         <AlertDialog open={showStartTournamentDialog} onOpenChange={setShowStartTournamentDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
