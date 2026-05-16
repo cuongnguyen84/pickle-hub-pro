@@ -8,14 +8,40 @@ import {
 import { TeamRosterManager } from './TeamRosterManager';
 import { TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useAuth } from '@/hooks/useAuth';
-import { Badge } from '@/components/ui/badge';
 import { useI18n } from '@/i18n';
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
-  approved: 'bg-green-500/10 text-green-600 border-green-500/20',
-  rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
+// ─── W2.4d shared tokens ─────────────────────────────────────────────────
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 20,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
 };
+
+const statusPillBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+};
+
+type StatusKind = 'approved' | 'pending' | 'rejected';
+
+function statusPillStyle(kind: StatusKind): React.CSSProperties {
+  if (kind === 'approved') return { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' };
+  if (kind === 'pending') return { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' };
+  return { background: 'rgba(255, 65, 54, 0.10)', color: 'var(--tl-live)' };
+}
 
 interface TeamDetailSheetProps {
   open: boolean;
@@ -36,7 +62,7 @@ export function TeamDetailSheet({
   const { t } = useI18n();
   const c = t.teamMatchComponents;
 
-  const STATUS_LABELS: Record<string, string> = {
+  const STATUS_LABELS: Record<StatusKind, string> = {
     pending: c.statusPending,
     approved: c.statusApproved,
     rejected: c.statusRejected,
@@ -45,19 +71,27 @@ export function TeamDetailSheet({
   if (!team) return null;
 
   const isCaptain = user?.id === team.captain_user_id;
+  const statusKind = team.status as StatusKind;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
-          <div className="flex items-center gap-2">
-            <SheetTitle>{team.team_name}</SheetTitle>
-            <Badge variant="outline" className={STATUS_COLORS[team.status]}>
-              {STATUS_LABELS[team.status]}
-            </Badge>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <SheetTitle style={sectionTitle}>{team.team_name}</SheetTitle>
+            <span style={{ ...statusPillBase, ...statusPillStyle(statusKind) }}>
+              {STATUS_LABELS[statusKind]}
+            </span>
           </div>
-          <SheetDescription>
-            {isOwner 
+          <SheetDescription
+            style={{
+              marginTop: 4,
+              fontFamily: 'inherit',
+              fontSize: 13,
+              color: 'var(--tl-fg-3)',
+            }}
+          >
+            {isOwner
               ? c.manageAsOrganizer
               : isCaptain
                 ? c.youAreCaptain
@@ -65,7 +99,7 @@ export function TeamDetailSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6">
+        <div style={{ marginTop: 20 }}>
           <TeamRosterManager
             teamId={team.id}
             maxRosterSize={maxRosterSize}

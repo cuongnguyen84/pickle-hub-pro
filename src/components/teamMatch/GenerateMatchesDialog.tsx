@@ -8,11 +8,38 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Loader2, Users, Gamepad2, AlertTriangle } from 'lucide-react';
 import { TeamMatchTeam, TeamMatchRosterMember } from '@/hooks/useTeamMatchTeams';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useI18n } from '@/i18n';
+
+// ─── W2.4d shared tokens ─────────────────────────────────────────────────
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 20,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const tinyPill: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-2)',
+  border: '1px solid var(--tl-border)',
+};
 
 interface GenerateMatchesDialogProps {
   open: boolean;
@@ -33,26 +60,50 @@ export function GenerateMatchesDialog({
   isGenerating,
   onConfirm,
 }: GenerateMatchesDialogProps) {
+  const { language } = useI18n();
   const approvedTeams = teams.filter(t => t.status === 'approved');
   const n = approvedTeams.length;
-  
+
   // Calculate number of matches in round-robin
   const numMatches = n > 1 ? (n * (n - 1)) / 2 : 0;
   const numRounds = n > 1 ? (n % 2 === 0 ? n - 1 : n) : 0;
+
+  const txt = {
+    title: language === 'vi' ? 'Tạo lịch thi đấu?' : 'Generate schedule?',
+    intro: language === 'vi'
+      ? 'Hệ thống sẽ tự động tạo lịch thi đấu vòng tròn cho các đội đã được duyệt.'
+      : 'The system will auto-generate a round-robin schedule for all approved teams.',
+    teams: (count: number) => language === 'vi' ? `${count} đội` : `${count} teams`,
+    matches: (count: number) => language === 'vi' ? `${count} trận` : `${count} matches`,
+    rounds: (count: number) => language === 'vi' ? `${count} vòng` : `${count} rounds`,
+    games: (count: number) => language === 'vi' ? `${count} ván/trận` : `${count} games/match`,
+    needMinTeams: language === 'vi'
+      ? 'Cần ít nhất 2 đội đã được duyệt để tạo lịch thi đấu'
+      : 'Need at least 2 approved teams to generate a schedule',
+    incompleteTitle: language === 'vi'
+      ? 'Không thể tạo lịch — Có đội chưa đủ người'
+      : 'Cannot generate — some teams are incomplete',
+    teamMissing: (name: string, current: number, max: number) =>
+      language === 'vi'
+        ? `${name}: ${current}/${max} VĐV`
+        : `${name}: ${current}/${max} players`,
+    cancel: language === 'vi' ? 'Hủy' : 'Cancel',
+    confirm: language === 'vi' ? 'Xác nhận' : 'Confirm',
+  };
 
   // Fetch rosters to check completeness
   const { data: allRosters } = useQuery({
     queryKey: ['team-match-all-rosters-check', approvedTeams.map(t => t.id).join(',')],
     queryFn: async () => {
       if (approvedTeams.length === 0) return {};
-      
+
       const { data, error } = await supabase
         .from('team_match_roster')
         .select('*')
         .in('team_id', approvedTeams.map(t => t.id));
-      
+
       if (error) throw error;
-      
+
       const grouped: Record<string, TeamMatchRosterMember[]> = {};
       (data as TeamMatchRosterMember[]).forEach(member => {
         if (!grouped[member.team_id]) {
@@ -78,51 +129,84 @@ export function GenerateMatchesDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-sm mx-4">
         <AlertDialogHeader>
-          <AlertDialogTitle>Tạo lịch thi đấu?</AlertDialogTitle>
+          <AlertDialogTitle style={sectionTitle}>{txt.title}</AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <div className="space-y-4">
-              <p className="text-sm">
-                Hệ thống sẽ tự động tạo lịch thi đấu vòng tròn cho các đội đã được duyệt.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 6 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--tl-fg-2)', lineHeight: 1.5 }}>
+                {txt.intro}
               </p>
-              
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="flex items-center gap-1">
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <span style={tinyPill}>
                   <Users className="h-3 w-3" />
-                  {n} đội
-                </Badge>
-                <Badge variant="secondary" className="flex items-center gap-1">
+                  {txt.teams(n)}
+                </span>
+                <span style={tinyPill}>
                   <Gamepad2 className="h-3 w-3" />
-                  {numMatches} trận
-                </Badge>
-                <Badge variant="secondary">
-                  {numRounds} vòng
-                </Badge>
+                  {txt.matches(numMatches)}
+                </span>
+                <span style={tinyPill}>{txt.rounds(numRounds)}</span>
                 {gameTemplatesCount > 0 && (
-                  <Badge variant="secondary">
-                    {gameTemplatesCount} ván/trận
-                  </Badge>
+                  <span style={tinyPill}>{txt.games(gameTemplatesCount)}</span>
                 )}
               </div>
 
               {n < 2 && (
-                <p className="text-destructive text-sm">
-                  ⚠️ Cần ít nhất 2 đội đã được duyệt để tạo lịch thi đấu
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    color: 'var(--tl-live)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  {txt.needMinTeams}
                 </p>
               )}
 
               {/* Warning for incomplete teams */}
               {hasIncompleteTeams && (
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2">
-                  <div className="flex items-center gap-2 text-destructive font-medium text-sm">
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: 'var(--tl-radius)',
+                    background: 'rgba(255, 65, 54, 0.08)',
+                    border: '1px solid rgba(255, 65, 54, 0.35)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      color: 'var(--tl-live)',
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
+                  >
                     <AlertTriangle className="h-4 w-4 shrink-0" />
-                    <span>Không thể tạo lịch - Có đội chưa đủ người</span>
+                    <span>{txt.incompleteTitle}</span>
                   </div>
-                  <ul className="text-xs text-destructive/80 space-y-1 ml-6">
+                  <ul
+                    style={{
+                      margin: 0,
+                      paddingLeft: 18,
+                      fontSize: 12,
+                      color: 'var(--tl-fg-2)',
+                      lineHeight: 1.6,
+                    }}
+                  >
                     {incompleteTeams.map(team => {
                       const rosterCount = allRosters?.[team.id]?.length || 0;
                       return (
                         <li key={team.id}>
-                          • {team.team_name}: {rosterCount}/{maxRosterSize} VĐV
+                          {txt.teamMissing(team.team_name, rosterCount, maxRosterSize)}
                         </li>
                       );
                     })}
@@ -133,14 +217,21 @@ export function GenerateMatchesDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row gap-2">
-          <AlertDialogCancel disabled={isGenerating} className="flex-1">Hủy</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirm} 
-            disabled={isGenerating || !canGenerate}
-            className="flex-1"
+          <AlertDialogCancel
+            disabled={isGenerating}
+            className="flex-1 tl-btn"
+            style={{ minHeight: 36 }}
           >
-            {isGenerating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Xác nhận
+            {txt.cancel}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={isGenerating || !canGenerate}
+            className="flex-1 tl-btn green"
+            style={{ minHeight: 36 }}
+          >
+            {isGenerating && <Loader2 className="h-4 w-4 animate-spin" />}
+            {txt.confirm}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

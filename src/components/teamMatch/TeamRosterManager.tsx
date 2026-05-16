@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
@@ -34,18 +31,53 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Users, Plus, Trash2, Crown, Copy, Loader2, UserPlus, Check } from 'lucide-react';
-import { useTeamMatchTeam, useTeamMatchTeamManagement, TeamMatchRosterMember } from '@/hooks/useTeamMatchTeams';
+import { useTeamMatchTeam, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useI18n } from '@/i18n';
 
-const addMemberSchema = z.object({
-  player_name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự').max(50),
-  gender: z.enum(['male', 'female']),
-  skill_level: z.number().min(1).max(8).optional(),
-});
+// ─── W2.4d shared tokens ─────────────────────────────────────────────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
 
-type AddMemberValues = z.infer<typeof addMemberSchema>;
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 18,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const tinyPill: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-2)',
+  border: '1px solid var(--tl-border)',
+};
 
 interface PreviousRosterMember {
   id: string;
@@ -77,19 +109,79 @@ export function TeamRosterManager({
   tournamentId,
 }: TeamRosterManagerProps) {
   const { toast } = useToast();
-  const { team, roster, isLoading } = useTeamMatchTeam(teamId);
-  const { addRosterMember, isAddingMember, removeRosterMember, isRemovingMember } = useTeamMatchTeamManagement();
+  const { roster, isLoading } = useTeamMatchTeam(teamId);
+  const { addRosterMember, isAddingMember, removeRosterMember } = useTeamMatchTeamManagement();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedPreviousMembers, setSelectedPreviousMembers] = useState<Set<string>>(new Set());
   const [isAddingFromPrevious, setIsAddingFromPrevious] = useState(false);
+  const { language, t } = useI18n();
+  const c = t.teamMatchComponents;
+
+  const txt = {
+    listTitle: language === 'vi' ? 'Danh sách thành viên' : 'Member list',
+    counterShort: (n: number, max: number) =>
+      language === 'vi' ? `${n}/${max} người` : `${n}/${max} players`,
+    inviteCode: (code: string) =>
+      language === 'vi' ? `Mã mời: ${code}` : `Invite code: ${code}`,
+    inviteCopied: language === 'vi' ? 'Đã sao chép mã mời!' : 'Invite code copied!',
+    noMembers: language === 'vi' ? 'Chưa có thành viên nào' : 'No members yet',
+    levelLabel: language === 'vi' ? 'Level' : 'Level',
+    deleteTitle: language === 'vi' ? 'Xóa thành viên?' : 'Remove member?',
+    deleteDesc: (name: string) =>
+      language === 'vi'
+        ? `Bạn có chắc muốn xóa ${name} khỏi đội?`
+        : `Are you sure you want to remove ${name} from the team?`,
+    cancel: language === 'vi' ? 'Hủy' : 'Cancel',
+    remove: language === 'vi' ? 'Xóa' : 'Remove',
+    previousTitle: (n: number) =>
+      language === 'vi'
+        ? `Chọn từ giải trước (${n} người)`
+        : `Pick from previous tournament (${n})`,
+    fromTournament: (name: string) =>
+      language === 'vi' ? `Từ giải: ${name}` : `From: ${name}`,
+    fallbackTournament: language === 'vi' ? 'Giải trước' : 'Previous tournament',
+    addSelected: (n: number) =>
+      language === 'vi'
+        ? `Thêm ${n} thành viên đã chọn`
+        : `Add ${n} selected member${n === 1 ? '' : 's'}`,
+    addedToast: (n: number) =>
+      language === 'vi'
+        ? `Đã thêm ${n} thành viên`
+        : `Added ${n} member${n === 1 ? '' : 's'}`,
+    addedErrorToast: language === 'vi' ? 'Lỗi khi thêm thành viên' : 'Failed to add member',
+    fullToast: language === 'vi' ? 'Đã đủ số lượng thành viên' : 'Roster is full',
+    addMemberLabel: c.members,
+    nameLabel: language === 'vi' ? 'Tên thành viên' : 'Member name',
+    namePh: language === 'vi' ? 'Nhập tên' : 'Enter name',
+    nameError: language === 'vi' ? 'Tên phải có ít nhất 2 ký tự' : 'Name must be at least 2 characters',
+    genderLabel: language === 'vi' ? 'Giới tính' : 'Gender',
+    skillLabel: language === 'vi' ? 'Trình độ' : 'Skill',
+    skillPh: language === 'vi' ? 'Tùy chọn' : 'Optional',
+    addBtn: language === 'vi' ? 'Thêm' : 'Add',
+    addNew: (cur: number, max: number) =>
+      language === 'vi'
+        ? `Thêm thành viên mới (${cur}/${max})`
+        : `Add new member (${cur}/${max})`,
+    fullState: language === 'vi' ? 'Đội đã đủ số lượng thành viên' : 'Team roster is full',
+    male: c.male,
+    female: c.female,
+    captain: language === 'vi' ? 'Đội trưởng' : 'Captain',
+  };
+
+  const addMemberSchema = z.object({
+    player_name: z.string().min(2, txt.nameError).max(50),
+    gender: z.enum(['male', 'female']),
+    skill_level: z.number().min(1).max(8).optional(),
+  });
+
+  type AddMemberValues = z.infer<typeof addMemberSchema>;
 
   // Fetch roster from most recent tournament with same master_team_id
   const { data: previousRoster, isLoading: isLoadingPrevious } = useQuery({
     queryKey: ['previous-tournament-roster', masterTeamId, tournamentId],
     queryFn: async () => {
       if (!masterTeamId || !tournamentId) return [];
-      
-      // Find teams with same master_team_id from other tournaments
+
       const { data: otherTeams, error: teamError } = await supabase
         .from('team_match_teams')
         .select(`
@@ -104,25 +196,24 @@ export function TeamRosterManager({
         .neq('tournament_id', tournamentId)
         .order('team_match_tournaments(created_at)', { ascending: false })
         .limit(1);
-      
+
       if (teamError || !otherTeams?.length) return [];
-      
+
       const latestTeam = otherTeams[0];
       const tournamentInfo = latestTeam.team_match_tournaments as any;
-      
-      // Fetch roster from that team
+
       const { data: rosterData, error: rosterError } = await supabase
         .from('team_match_roster')
         .select('id, player_name, gender, skill_level, user_id, is_captain')
         .eq('team_id', latestTeam.id)
         .order('is_captain', { ascending: false })
         .order('created_at', { ascending: true });
-      
+
       if (rosterError) throw rosterError;
-      
+
       return (rosterData || []).map(r => ({
         ...r,
-        tournament_name: tournamentInfo?.name || 'Giải trước',
+        tournament_name: tournamentInfo?.name || txt.fallbackTournament,
       })) as PreviousRosterMember[];
     },
     enabled: !!masterTeamId && !!tournamentId && isOwner,
@@ -161,18 +252,18 @@ export function TeamRosterManager({
   const handleCopyInviteCode = () => {
     if (inviteCode) {
       navigator.clipboard.writeText(inviteCode);
-      toast({ title: 'Đã sao chép mã mời!' });
+      toast({ title: txt.inviteCopied });
     }
   };
 
   // Add selected members from previous tournament roster
   const handleAddFromPrevious = async () => {
     if (selectedPreviousMembers.size === 0) return;
-    
+
     setIsAddingFromPrevious(true);
     try {
       const membersToAdd = (previousRoster || []).filter(m => selectedPreviousMembers.has(m.id));
-      
+
       for (const member of membersToAdd) {
         await addRosterMember({
           team_id: teamId,
@@ -182,11 +273,11 @@ export function TeamRosterManager({
           user_id: member.user_id || undefined,
         });
       }
-      
+
       setSelectedPreviousMembers(new Set());
-      toast({ title: `Đã thêm ${membersToAdd.length} thành viên` });
+      toast({ title: txt.addedToast(membersToAdd.length) });
     } catch (error) {
-      toast({ title: 'Lỗi khi thêm thành viên', variant: 'destructive' });
+      toast({ title: txt.addedErrorToast, variant: 'destructive' });
     } finally {
       setIsAddingFromPrevious(false);
     }
@@ -197,11 +288,10 @@ export function TeamRosterManager({
     if (newSet.has(memberId)) {
       newSet.delete(memberId);
     } else {
-      // Check if can add more
       if (roster.length + newSet.size < maxRosterSize) {
         newSet.add(memberId);
       } else {
-        toast({ title: 'Đã đủ số lượng thành viên', variant: 'destructive' });
+        toast({ title: txt.fullToast, variant: 'destructive' });
       }
     }
     setSelectedPreviousMembers(newSet);
@@ -209,97 +299,178 @@ export function TeamRosterManager({
 
   const canEdit = isCaptain || isOwner;
   const canAddMore = roster.length < maxRosterSize;
-  
+
   // Get list of already added player names to filter out
   const addedPlayerNames = new Set(roster.map(r => r.player_name.toLowerCase()));
   const availablePreviousMembers = (previousRoster || []).filter(
-    m => !addedPlayerNames.has(m.player_name.toLowerCase())
+    m => !addedPlayerNames.has(m.player_name.toLowerCase()),
   );
 
   if (isLoading || (isOwner && isLoadingPrevious)) {
     return (
-      <Card>
-        <CardContent className="py-8 flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: 32, display: 'flex', justifyContent: 'center' }}>
+        <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--tl-fg-3)' }} />
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Danh sách thành viên
-            </CardTitle>
-            <CardDescription>
-              {roster.length}/{maxRosterSize} người
-            </CardDescription>
-          </div>
-          {(isCaptain || isOwner) && inviteCode && (
-            <Button variant="outline" size="sm" onClick={handleCopyInviteCode}>
-              <Copy className="h-4 w-4 mr-2" />
-              Mã mời: {inviteCode}
-            </Button>
-          )}
+    <div style={{ ...surfaceCard, padding: 16 }}>
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 16,
+        }}
+      >
+        <div>
+          <h3 style={{ ...sectionTitle, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Users className="h-4 w-4" style={{ color: 'var(--tl-fg-2)' }} />
+            {txt.listTitle}
+          </h3>
+          <p
+            style={{
+              fontSize: 12,
+              color: 'var(--tl-fg-3)',
+              margin: '4px 0 0',
+            }}
+          >
+            {txt.counterShort(roster.length, maxRosterSize)}
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        {(isCaptain || isOwner) && inviteCode && (
+          <button
+            type="button"
+            className="tl-btn"
+            onClick={handleCopyInviteCode}
+            style={{ padding: '5px 10px', fontSize: 12 }}
+          >
+            <Copy className="h-3.5 w-3.5" />
+            {txt.inviteCode(inviteCode)}
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Current roster list */}
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {roster.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground text-sm">
-              Chưa có thành viên nào
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '20px 0',
+                color: 'var(--tl-fg-3)',
+                fontSize: 13,
+              }}
+            >
+              {txt.noMembers}
             </div>
           ) : (
             roster.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  padding: '10px 12px',
+                  borderRadius: 'var(--tl-radius)',
+                  border: '1px solid var(--tl-border)',
+                  background: 'var(--tl-surface)',
+                }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-medium">{member.player_name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span
+                        style={{
+                          fontFamily: 'Instrument Serif, serif',
+                          fontStyle: 'italic',
+                          fontSize: 16,
+                          letterSpacing: '-0.01em',
+                          color: 'var(--tl-fg)',
+                        }}
+                      >
+                        {member.player_name}
+                      </span>
                       {member.is_captain && (
-                        <Crown className="h-4 w-4 text-amber-500" />
+                        <Crown className="h-3.5 w-3.5" style={{ color: 'var(--tl-gold)' }} />
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <Badge variant="secondary" className="text-sm">
-                        {member.gender === 'male' ? 'Nam' : 'Nữ'}
-                      </Badge>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--tl-fg-3)' }}>
+                      <span style={tinyPill}>
+                        {member.gender === 'male' ? txt.male : txt.female}
+                      </span>
                       {member.skill_level && (
-                        <span>Level: {member.skill_level.toFixed(1)}</span>
+                        <span>
+                          {txt.levelLabel}: {member.skill_level.toFixed(1)}
+                        </span>
                       )}
                     </div>
                   </div>
                 </div>
-                
+
                 {canEdit && !member.is_captain && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive">
+                      <button
+                        type="button"
+                        aria-label={txt.remove}
+                        style={{
+                          width: 32,
+                          height: 32,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'transparent',
+                          border: '1px solid transparent',
+                          borderRadius: 'var(--tl-radius)',
+                          color: 'var(--tl-fg-3)',
+                          cursor: 'pointer',
+                          transition: 'color 0.15s, border-color 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)';
+                          (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border)';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)';
+                          (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
+                        }}
+                      >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Xóa thành viên?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Bạn có chắc muốn xóa {member.player_name} khỏi đội?
+                        <AlertDialogTitle style={sectionTitle}>{txt.deleteTitle}</AlertDialogTitle>
+                        <AlertDialogDescription
+                          style={{
+                            marginTop: 4,
+                            fontFamily: 'inherit',
+                            fontSize: 13,
+                            color: 'var(--tl-fg-3)',
+                          }}
+                        >
+                          {txt.deleteDesc(member.player_name)}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogCancel className="tl-btn">{txt.cancel}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleRemoveMember(member.id)}
-                          className="bg-destructive text-destructive-foreground"
+                          className="tl-btn"
+                          style={{
+                            background: 'rgba(255, 65, 54, 0.10)',
+                            color: 'var(--tl-live)',
+                            borderColor: 'rgba(255, 65, 54, 0.35)',
+                          }}
                         >
-                          Xóa
+                          {txt.remove}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -312,182 +483,271 @@ export function TeamRosterManager({
 
         {/* BTC: Select from previous tournament roster */}
         {isOwner && canAddMore && availablePreviousMembers.length > 0 && (
-          <Card className="border-primary/30 bg-primary/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <UserPlus className="h-4 w-4" />
-                Chọn từ giải trước ({availablePreviousMembers.length} người)
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Từ giải: {previousRoster?.[0]?.tournament_name}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                {availablePreviousMembers.map((member) => {
-                  const isSelected = selectedPreviousMembers.has(member.id);
-                  return (
-                    <div
-                      key={member.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
-                        isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
-                      }`}
-                      onClick={() => togglePreviousMember(member.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Checkbox 
-                          checked={isSelected}
-                          onCheckedChange={() => togglePreviousMember(member.id)}
-                        />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{member.player_name}</span>
-                            {member.is_captain && (
-                              <Crown className="h-3 w-3 text-amber-500" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{member.gender === 'male' ? 'Nam' : 'Nữ'}</span>
-                            {member.skill_level && (
-                              <span>• Level: {member.skill_level.toFixed(1)}</span>
-                            )}
-                          </div>
+          <div
+            style={{
+              ...surfaceCard,
+              padding: 14,
+              background: 'var(--tl-green-glow)',
+              borderColor: 'var(--tl-green)',
+            }}
+          >
+            <div style={{ marginBottom: 10 }}>
+              <h4
+                style={{
+                  ...sectionTitle,
+                  fontSize: 15,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <UserPlus className="h-4 w-4" style={{ color: 'var(--tl-green)' }} />
+                {txt.previousTitle(availablePreviousMembers.length)}
+              </h4>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: 'var(--tl-fg-3)',
+                  margin: '4px 0 0',
+                }}
+              >
+                {txt.fromTournament(previousRoster?.[0]?.tournament_name || txt.fallbackTournament)}
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                maxHeight: 200,
+                overflowY: 'auto',
+              }}
+            >
+              {availablePreviousMembers.map((member) => {
+                const isSelected = selectedPreviousMembers.has(member.id);
+                return (
+                  <div
+                    key={member.id}
+                    onClick={() => togglePreviousMember(member.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 'var(--tl-radius)',
+                      border: `1px solid ${isSelected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                      background: isSelected ? 'var(--tl-green-glow)' : 'var(--tl-bg-elev)',
+                      cursor: 'pointer',
+                      transition: 'border-color 0.15s, background 0.15s',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => togglePreviousMember(member.id)}
+                      />
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span
+                            style={{
+                              fontFamily: 'Instrument Serif, serif',
+                              fontStyle: 'italic',
+                              fontSize: 15,
+                              color: 'var(--tl-fg)',
+                            }}
+                          >
+                            {member.player_name}
+                          </span>
+                          {member.is_captain && (
+                            <Crown className="h-3 w-3" style={{ color: 'var(--tl-gold)' }} />
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            fontSize: 11.5,
+                            color: 'var(--tl-fg-3)',
+                            marginTop: 2,
+                          }}
+                        >
+                          <span>{member.gender === 'male' ? txt.male : txt.female}</span>
+                          {member.skill_level && (
+                            <span>• {txt.levelLabel}: {member.skill_level.toFixed(1)}</span>
+                          )}
                         </div>
                       </div>
-                      {isSelected && <Check className="h-4 w-4 text-primary" />}
                     </div>
-                  );
-                })}
-              </div>
-              
-              {selectedPreviousMembers.size > 0 && (
-                <Button 
-                  className="w-full" 
-                  onClick={handleAddFromPrevious}
-                  disabled={isAddingFromPrevious}
-                >
-                  {isAddingFromPrevious && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Thêm {selectedPreviousMembers.size} thành viên đã chọn
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                    {isSelected && <Check className="h-4 w-4" style={{ color: 'var(--tl-green)' }} />}
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedPreviousMembers.size > 0 && (
+              <button
+                type="button"
+                className="tl-btn green"
+                onClick={handleAddFromPrevious}
+                disabled={isAddingFromPrevious}
+                style={{ width: '100%', justifyContent: 'center', padding: '8px 12px', marginTop: 10 }}
+              >
+                {isAddingFromPrevious && <Loader2 className="h-4 w-4 animate-spin" />}
+                {txt.addSelected(selectedPreviousMembers.size)}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Add new member form */}
         {canEdit && canAddMore && (
           <>
             {showAddForm ? (
-              <Card className="border-dashed">
-                <CardContent className="pt-4">
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleAddMember)} className="space-y-4">
+              <div
+                style={{
+                  ...surfaceCard,
+                  padding: 14,
+                  borderStyle: 'dashed',
+                }}
+              >
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(handleAddMember)}
+                    style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+                  >
+                    <FormField
+                      control={form.control}
+                      name="player_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="roster-add-name" style={fieldLabel}>
+                            {txt.nameLabel}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              id="roster-add-name"
+                              name="roster-add-name"
+                              placeholder={txt.namePh}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       <FormField
                         control={form.control}
-                        name="player_name"
+                        name="gender"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tên thành viên</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nhập tên" {...field} />
-                            </FormControl>
+                            <FormLabel style={fieldLabel}>{txt.genderLabel}</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="male">{txt.male}</SelectItem>
+                                <SelectItem value="female">{txt.female}</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="gender"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Giới tính</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="male">Nam</SelectItem>
-                                  <SelectItem value="female">Nữ</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <FormField
+                        control={form.control}
+                        name="skill_level"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel style={fieldLabel}>{txt.skillLabel}</FormLabel>
+                            <Select
+                              onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
+                              value={field.value?.toString()}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={txt.skillPh} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map((level) => (
+                                  <SelectItem key={level} value={level.toString()}>
+                                    {level.toFixed(1)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                        <FormField
-                          control={form.control}
-                          name="skill_level"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Trình độ</FormLabel>
-                              <Select
-                                onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
-                                value={field.value?.toString()}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Tùy chọn" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {[1, 2, 3, 4, 5, 6, 7, 8].map((level) => (
-                                    <SelectItem key={level} value={level.toString()}>
-                                      {level.toFixed(1)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            form.reset();
-                            setShowAddForm(false);
-                          }}
-                        >
-                          Hủy
-                        </Button>
-                        <Button type="submit" className="flex-1" disabled={isAddingMember}>
-                          {isAddingMember && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          Thêm
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        className="tl-btn"
+                        onClick={() => {
+                          form.reset();
+                          setShowAddForm(false);
+                        }}
+                        style={{ flex: 1, justifyContent: 'center' }}
+                      >
+                        {txt.cancel}
+                      </button>
+                      <button
+                        type="submit"
+                        className="tl-btn green"
+                        disabled={isAddingMember}
+                        style={{ flex: 1, justifyContent: 'center' }}
+                      >
+                        {isAddingMember && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {txt.addBtn}
+                      </button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
             ) : (
-              <Button
-                variant="outline"
-                className="w-full border-dashed"
+              <button
+                type="button"
+                className="tl-btn"
                 onClick={() => setShowAddForm(true)}
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  padding: '10px 12px',
+                  borderStyle: 'dashed',
+                }}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Thêm thành viên mới ({roster.length}/{maxRosterSize})
-              </Button>
+                <Plus className="h-4 w-4" />
+                {txt.addNew(roster.length, maxRosterSize)}
+              </button>
             )}
           </>
         )}
 
         {!canAddMore && (
-          <p className="text-sm text-center text-muted-foreground">
-            Đội đã đủ số lượng thành viên
+          <p
+            style={{
+              textAlign: 'center',
+              fontSize: 12.5,
+              color: 'var(--tl-fg-3)',
+              margin: 0,
+            }}
+          >
+            {txt.fullState}
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
