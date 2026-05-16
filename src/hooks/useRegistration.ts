@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { sanitizeString, sanitizeProfileLink } from '@/lib/validation';
+import { tStandalone } from '@/lib/i18n-standalone';
 
 export type RegistrationStatus = 'pending' | 'approved' | 'rejected';
 export type SkillRatingSystem = 'DUPR' | 'other' | 'none';
@@ -106,7 +107,7 @@ export function useRegistration() {
     formData: RegistrationFormData
   ): Promise<Registration | null> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập để đăng ký');
+      toast.error(tStandalone('toast.registration.submit.authRequired'));
       return null;
     }
 
@@ -114,7 +115,7 @@ export function useRegistration() {
     try {
       const safeDisplayName = sanitizeString(formData.display_name, 100);
       if (!safeDisplayName) {
-        toast.error('Tên hiển thị không được để trống');
+        toast.error(tStandalone('toast.registration.submit.displayNameRequired'));
         return null;
       }
 
@@ -136,18 +137,18 @@ export function useRegistration() {
 
       if (error) {
         if (error.code === '23505') {
-          toast.error('Bạn đã đăng ký tham gia giải này rồi');
+          toast.error(tStandalone('toast.registration.submit.duplicate'));
         } else {
           throw error;
         }
         return null;
       }
 
-      toast.success('Đăng ký thành công! Vui lòng chờ BTC duyệt.');
+      toast.success(tStandalone('toast.registration.submit.success'));
       return data as unknown as Registration;
     } catch (error) {
       console.error('Error submitting registration:', error);
-      toast.error('Không thể đăng ký, vui lòng thử lại');
+      toast.error(tStandalone('toast.registration.submit.error'));
       return null;
     } finally {
       setLoading(false);
@@ -176,11 +177,11 @@ export function useRegistration() {
 
       if (error) throw error;
 
-      toast.success('Đã cập nhật đăng ký');
+      toast.success(tStandalone('toast.registration.update.success'));
       return true;
     } catch (error) {
       console.error('Error updating registration:', error);
-      toast.error('Không thể cập nhật, vui lòng thử lại');
+      toast.error(tStandalone('toast.registration.update.error'));
       return false;
     } finally {
       setLoading(false);
@@ -198,11 +199,11 @@ export function useRegistration() {
 
       if (error) throw error;
 
-      toast.success('Đã hủy đăng ký');
+      toast.success(tStandalone('toast.registration.cancel.success'));
       return true;
     } catch (error) {
       console.error('Error canceling registration:', error);
-      toast.error('Không thể hủy đăng ký');
+      toast.error(tStandalone('toast.registration.cancel.error'));
       return false;
     } finally {
       setLoading(false);
@@ -219,11 +220,11 @@ export function useRegistration() {
 
       if (error) throw error;
 
-      toast.success('Đã duyệt đăng ký');
+      toast.success(tStandalone('toast.registration.approve.success'));
       return true;
     } catch (error) {
       console.error('Error approving registration:', error);
-      toast.error('Không thể duyệt đăng ký');
+      toast.error(tStandalone('toast.registration.approve.error'));
       return false;
     }
   }, []);
@@ -238,11 +239,11 @@ export function useRegistration() {
 
       if (error) throw error;
 
-      toast.success('Đã từ chối đăng ký');
+      toast.success(tStandalone('toast.registration.reject.success'));
       return true;
     } catch (error) {
       console.error('Error rejecting registration:', error);
-      toast.error('Không thể từ chối đăng ký');
+      toast.error(tStandalone('toast.registration.reject.error'));
       return false;
     }
   }, []);
@@ -257,11 +258,11 @@ export function useRegistration() {
 
       if (error) throw error;
 
-      toast.success(`Đã duyệt ${registrationIds.length} đăng ký`);
+      toast.success(tStandalone('toast.registration.bulkApprove.success', { count: registrationIds.length }));
       return true;
     } catch (error) {
       console.error('Error bulk approving:', error);
-      toast.error('Không thể duyệt hàng loạt');
+      toast.error(tStandalone('toast.registration.bulkApprove.error'));
       return false;
     }
   }, []);
@@ -283,11 +284,11 @@ export function useRegistration() {
 
       if (error) throw error;
 
-      toast.success('Đã cập nhật thông tin');
+      toast.success(tStandalone('toast.registration.btcOverride.success'));
       return true;
     } catch (error) {
       console.error('Error updating BTC override:', error);
-      toast.error('Không thể cập nhật');
+      toast.error(tStandalone('toast.registration.btcOverride.error'));
       return false;
     }
   }, []);

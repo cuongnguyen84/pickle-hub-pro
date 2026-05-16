@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { sanitizeString } from '@/lib/validation';
 import { handleMutationError, logMutationError } from './_mutationErrors';
+import { tStandalone } from '@/lib/i18n-standalone';
 
 const HOOK = 'useParentTournament';
 
@@ -44,14 +45,14 @@ export function useParentTournament() {
     location?: string;
   }): Promise<ParentTournament | null> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập');
+      toast.error(tStandalone('toast.common.authRequired'));
       return null;
     }
     setLoading(true);
     try {
       const safeName = sanitizeString(data.name, 100);
       if (!safeName) {
-        toast.error('Tên giải không được để trống');
+        toast.error(tStandalone('toast.parentTournament.create.nameRequired'));
         return null;
       }
       const { data: result, error } = await supabase
@@ -70,8 +71,8 @@ export function useParentTournament() {
       return result as ParentTournament;
     } catch (error) {
       handleMutationError(HOOK, 'createParent', error, {
-        genericMsg: 'Không thể tạo giải tổng',
-        permissionDeniedMsg: 'Bạn không có quyền tạo giải tổng',
+        genericMsg: tStandalone('toast.parentTournament.create.error'),
+        permissionDeniedMsg: tStandalone('toast.parentTournament.create.permissionDenied'),
       });
       return null;
     } finally {
@@ -183,7 +184,7 @@ export function useParentTournament() {
     try {
       const count = await getSubEventCount(parentId);
       if (count > 0) {
-        toast.error('Bạn phải xoá tất cả nội dung con trước khi xoá giải tổng');
+        toast.error(tStandalone('toast.parentTournament.delete.hasChildren'));
         return false;
       }
       const { error } = await supabase
@@ -192,12 +193,12 @@ export function useParentTournament() {
         .eq('id', parentId);
 
       if (error) throw error;
-      toast.success('Đã xoá giải tổng');
+      toast.success(tStandalone('toast.parentTournament.delete.success'));
       return true;
     } catch (error) {
       handleMutationError(HOOK, 'deleteParent', error, {
-        genericMsg: 'Không thể xoá giải tổng',
-        permissionDeniedMsg: 'Bạn không có quyền xoá giải tổng này',
+        genericMsg: tStandalone('toast.parentTournament.delete.error'),
+        permissionDeniedMsg: tStandalone('toast.parentTournament.delete.permissionDenied'),
       });
       return false;
     }

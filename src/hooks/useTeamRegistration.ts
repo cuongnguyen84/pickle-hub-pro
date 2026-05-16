@@ -4,6 +4,7 @@ import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import type { SkillRatingSystem } from './useRegistration';
 import { sanitizeString, sanitizeProfileLink } from '@/lib/validation';
+import { tStandalone } from '@/lib/i18n-standalone';
 
 export type TeamStatus = 
   | 'draft' 
@@ -131,7 +132,7 @@ export function useTeamRegistration() {
     formData: TeamFormData
   ): Promise<Team | null> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập để đăng ký');
+      toast.error(tStandalone('toast.teamRegistration.createTeam.authRequired'));
       return null;
     }
 
@@ -146,13 +147,13 @@ export function useTeamRegistration() {
         .maybeSingle();
 
       if (existingTeam) {
-        toast.error('Bạn đã đăng ký tham gia giải này rồi');
+        toast.error(tStandalone('toast.teamRegistration.createTeam.duplicate'));
         return null;
       }
 
       const safeDisplayName = sanitizeString(formData.display_name, 100);
       if (!safeDisplayName) {
-        toast.error('Tên hiển thị không được để trống');
+        toast.error(tStandalone('toast.teamRegistration.createTeam.displayNameRequired'));
         return null;
       }
 
@@ -173,18 +174,18 @@ export function useTeamRegistration() {
 
       if (error) {
         if (error.code === '23505') {
-          toast.error('Bạn đã đăng ký tham gia giải này rồi');
+          toast.error(tStandalone('toast.teamRegistration.createTeam.duplicate'));
         } else {
           throw error;
         }
         return null;
       }
 
-      toast.success('Đăng ký thành công! Bạn có thể mời partner ngay bây giờ.');
+      toast.success(tStandalone('toast.teamRegistration.createTeam.success'));
       return data as Team;
     } catch (error) {
       console.error('Error creating team:', error);
-      toast.error('Không thể đăng ký, vui lòng thử lại');
+      toast.error(tStandalone('toast.teamRegistration.createTeam.error'));
       return null;
     } finally {
       setLoading(false);
@@ -211,7 +212,7 @@ export function useTeamRegistration() {
   // Create invitation (max 3 active)
   const createInvitation = useCallback(async (teamId: string, tableId: string): Promise<PartnerInvitation | null> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập');
+      toast.error(tStandalone('toast.common.authRequired'));
       return null;
     }
 
@@ -220,10 +221,10 @@ export function useTeamRegistration() {
       // Check active invitation count using RPC
       const { data: countResult } = await supabase
         .rpc('get_active_invitation_count', { _team_id: teamId });
-      
+
       const activeCount = countResult || 0;
       if (activeCount >= 3) {
-        toast.error('Bạn đã gửi tối đa 3 lời mời. Vui lòng hủy bớt để tạo mới.');
+        toast.error(tStandalone('toast.teamRegistration.createInvitation.maxReached'));
         return null;
       }
 
@@ -239,11 +240,11 @@ export function useTeamRegistration() {
 
       if (error) throw error;
 
-      toast.success('Đã tạo link mời partner');
+      toast.success(tStandalone('toast.teamRegistration.createInvitation.success'));
       return data as PartnerInvitation;
     } catch (error) {
       console.error('Error creating invitation:', error);
-      toast.error('Không thể tạo lời mời');
+      toast.error(tStandalone('toast.teamRegistration.createInvitation.error'));
       return null;
     } finally {
       setLoading(false);
@@ -259,11 +260,11 @@ export function useTeamRegistration() {
         .eq('id', invitationId);
 
       if (error) throw error;
-      toast.success('Đã hủy lời mời');
+      toast.success(tStandalone('toast.teamRegistration.cancelInvitation.success'));
       return true;
     } catch (error) {
       console.error('Error cancelling invitation:', error);
-      toast.error('Không thể hủy lời mời');
+      toast.error(tStandalone('toast.teamRegistration.cancelInvitation.error'));
       return false;
     }
   }, []);
@@ -274,7 +275,7 @@ export function useTeamRegistration() {
     formData: TeamFormData
   ): Promise<{ success: boolean; teamId?: string; error?: string }> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập');
+      toast.error(tStandalone('toast.common.authRequired'));
       return { success: false, error: 'AUTH_REQUIRED' };
     }
 
@@ -293,26 +294,25 @@ export function useTeamRegistration() {
       if (error) throw error;
 
       const result = data as { success: boolean; team_id?: string; error?: string };
-      
+
       if (!result.success) {
-        const errorMessages: Record<string, string> = {
-          INVITATION_NOT_FOUND: 'Link mời không tồn tại',
-          INVITATION_ALREADY_USED: 'Link mời đã được sử dụng',
-          INVITATION_EXPIRED: 'Link mời đã hết hạn',
-          TEAM_NOT_FOUND: 'Đội không tồn tại',
-          TEAM_ALREADY_COMPLETE: 'Đội đã đủ 2 người',
-          TABLE_LOCKED: 'Giải đấu đã diễn ra',
-          CANNOT_JOIN_OWN_TEAM: 'Bạn không thể tham gia đội của chính mình',
-        };
-        toast.error(errorMessages[result.error || ''] || 'Có lỗi xảy ra');
+        const codeKey = result.error
+          ? `toast.teamRegistration.acceptInvitation.codes.${result.error}`
+          : '';
+        const looked = codeKey ? tStandalone(codeKey) : '';
+        // tStandalone returns the key itself when the lookup misses
+        const message = looked && looked !== codeKey
+          ? looked
+          : tStandalone('toast.common.unknownError');
+        toast.error(message);
         return { success: false, error: result.error };
       }
 
-      toast.success('Đã tham gia đội thành công!');
+      toast.success(tStandalone('toast.teamRegistration.acceptInvitation.success'));
       return { success: true, teamId: result.team_id };
     } catch (error) {
       console.error('Error accepting invitation:', error);
-      toast.error('Không thể tham gia đội');
+      toast.error(tStandalone('toast.teamRegistration.acceptInvitation.error'));
       return { success: false, error: 'UNKNOWN_ERROR' };
     } finally {
       setLoading(false);
@@ -322,7 +322,7 @@ export function useTeamRegistration() {
   // Remove partner from team (by VDV1)
   const removePartner = useCallback(async (teamId: string): Promise<boolean> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập');
+      toast.error(tStandalone('toast.common.authRequired'));
       return false;
     }
 
@@ -337,20 +337,22 @@ export function useTeamRegistration() {
 
       const result = data as { success: boolean; error?: string };
       if (!result.success) {
-        const errorMessages: Record<string, string> = {
-          TEAM_NOT_FOUND: 'Đội không tồn tại',
-          PERMISSION_DENIED: 'Bạn không có quyền thực hiện thao tác này',
-          TABLE_LOCKED: 'Giải đấu đã diễn ra',
-        };
-        toast.error(errorMessages[result.error || ''] || 'Có lỗi xảy ra');
+        const codeKey = result.error
+          ? `toast.teamRegistration.removePartner.codes.${result.error}`
+          : '';
+        const looked = codeKey ? tStandalone(codeKey) : '';
+        const message = looked && looked !== codeKey
+          ? looked
+          : tStandalone('toast.common.unknownError');
+        toast.error(message);
         return false;
       }
 
-      toast.success('Đã xóa partner khỏi đội');
+      toast.success(tStandalone('toast.teamRegistration.removePartner.success'));
       return true;
     } catch (error) {
       console.error('Error removing partner:', error);
-      toast.error('Không thể xóa partner');
+      toast.error(tStandalone('toast.teamRegistration.removePartner.error'));
       return false;
     } finally {
       setLoading(false);
@@ -374,25 +376,27 @@ export function useTeamRegistration() {
 
       const result = data as { success: boolean; error?: string };
       if (!result.success) {
-        const errorMessages: Record<string, string> = {
-          TEAM_NOT_FOUND: 'Đội không tồn tại',
-          PERMISSION_DENIED: 'Bạn không có quyền thực hiện thao tác này',
-          INVALID_ACTION: 'Thao tác không hợp lệ',
-        };
-        toast.error(errorMessages[result.error || ''] || 'Có lỗi xảy ra');
+        const codeKey = result.error
+          ? `toast.teamRegistration.btcManage.codes.${result.error}`
+          : '';
+        const looked = codeKey ? tStandalone(codeKey) : '';
+        const message = looked && looked !== codeKey
+          ? looked
+          : tStandalone('toast.common.unknownError');
+        toast.error(message);
         return false;
       }
 
-      const messages = {
-        approve: 'Đã duyệt đội',
-        reject: 'Đã từ chối đội',
-        remove: 'Đã loại đội khỏi giải',
+      const successKey: Record<typeof action, string> = {
+        approve: 'toast.teamRegistration.btcManage.approved',
+        reject: 'toast.teamRegistration.btcManage.rejected',
+        remove: 'toast.teamRegistration.btcManage.removed',
       };
-      toast.success(messages[action]);
+      toast.success(tStandalone(successKey[action]));
       return true;
     } catch (error) {
       console.error('Error managing team:', error);
-      toast.error('Không thể thực hiện thao tác');
+      toast.error(tStandalone('toast.teamRegistration.btcManage.error'));
       return false;
     }
   }, []);

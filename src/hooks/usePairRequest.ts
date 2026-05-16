@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { tStandalone } from '@/lib/i18n-standalone';
 
 export interface PairRequest {
   id: string;
@@ -80,7 +81,7 @@ export function usePairRequest() {
     toTeamId: string
   ): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập');
+      toast.error(tStandalone('toast.common.authRequired'));
       return { success: false, error: 'AUTH_REQUIRED' };
     }
 
@@ -94,31 +95,24 @@ export function usePairRequest() {
       if (error) throw error;
 
       const result = data as { success: boolean; request_id?: string; error?: string };
-      
+
       if (!result.success) {
-        const errorMessages: Record<string, string> = {
-          AUTH_REQUIRED: 'Vui lòng đăng nhập',
-          TABLE_NOT_FOUND: 'Giải không tồn tại',
-          TABLE_LOCKED: 'Giải đấu đã diễn ra',
-          NO_TEAM: 'Bạn chưa đăng ký tham gia giải',
-          TEAM_REJECTED: 'Bạn đã bị từ chối tham gia giải',
-          ALREADY_HAS_PARTNER: 'Bạn đã có partner',
-          TARGET_TEAM_NOT_FOUND: 'Người chơi không tồn tại',
-          TARGET_TEAM_REJECTED: 'Người chơi đã bị từ chối',
-          TARGET_HAS_PARTNER: 'Người chơi đã có partner',
-          SAME_TEAM: 'Không thể ghép đôi với chính mình',
-          REQUEST_ALREADY_SENT: 'Bạn đã gửi yêu cầu ghép đôi này rồi',
-          REQUEST_PENDING_FROM_TARGET: 'Người này đang chờ bạn xác nhận ghép đôi',
-        };
-        toast.error(errorMessages[result.error || ''] || 'Có lỗi xảy ra');
+        const codeKey = result.error
+          ? `toast.pairRequest.create.codes.${result.error}`
+          : '';
+        const looked = codeKey ? tStandalone(codeKey) : '';
+        const message = looked && looked !== codeKey
+          ? looked
+          : tStandalone('toast.common.unknownError');
+        toast.error(message);
         return { success: false, error: result.error };
       }
 
-      toast.success('Đã gửi yêu cầu ghép đôi. Đang chờ xác nhận.');
+      toast.success(tStandalone('toast.pairRequest.create.success'));
       return { success: true };
     } catch (error) {
       console.error('Error creating pair request:', error);
-      toast.error('Không thể gửi yêu cầu ghép đôi');
+      toast.error(tStandalone('toast.pairRequest.create.error'));
       return { success: false, error: 'UNKNOWN_ERROR' };
     } finally {
       setLoading(false);
@@ -131,7 +125,7 @@ export function usePairRequest() {
     accept: boolean
   ): Promise<{ success: boolean; teamId?: string; error?: string }> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập');
+      toast.error(tStandalone('toast.common.authRequired'));
       return { success: false, error: 'AUTH_REQUIRED' };
     }
 
@@ -145,30 +139,28 @@ export function usePairRequest() {
       if (error) throw error;
 
       const result = data as { success: boolean; team_id?: string; error?: string };
-      
+
       if (!result.success) {
-        const errorMessages: Record<string, string> = {
-          AUTH_REQUIRED: 'Vui lòng đăng nhập',
-          REQUEST_NOT_FOUND: 'Yêu cầu không tồn tại',
-          NOT_TARGET_USER: 'Bạn không có quyền xử lý yêu cầu này',
-          REQUEST_NOT_PENDING: 'Yêu cầu đã được xử lý',
-          TABLE_LOCKED: 'Giải đấu đã diễn ra',
-          FROM_TEAM_ALREADY_PAIRED: 'Người gửi yêu cầu đã có partner',
-          TO_TEAM_ALREADY_PAIRED: 'Bạn đã có partner',
-        };
-        toast.error(errorMessages[result.error || ''] || 'Có lỗi xảy ra');
+        const codeKey = result.error
+          ? `toast.pairRequest.respond.codes.${result.error}`
+          : '';
+        const looked = codeKey ? tStandalone(codeKey) : '';
+        const message = looked && looked !== codeKey
+          ? looked
+          : tStandalone('toast.common.unknownError');
+        toast.error(message);
         return { success: false, error: result.error };
       }
 
       if (accept) {
-        toast.success('Đã ghép đôi thành công!');
+        toast.success(tStandalone('toast.pairRequest.respond.acceptSuccess'));
       } else {
-        toast.success('Đã từ chối yêu cầu ghép đôi');
+        toast.success(tStandalone('toast.pairRequest.respond.rejectSuccess'));
       }
       return { success: true, teamId: result.team_id };
     } catch (error) {
       console.error('Error responding to pair request:', error);
-      toast.error('Không thể xử lý yêu cầu');
+      toast.error(tStandalone('toast.pairRequest.respond.error'));
       return { success: false, error: 'UNKNOWN_ERROR' };
     } finally {
       setLoading(false);
@@ -178,7 +170,7 @@ export function usePairRequest() {
   // Cancel own pair request
   const cancelPairRequest = useCallback(async (requestId: string): Promise<boolean> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập');
+      toast.error(tStandalone('toast.common.authRequired'));
       return false;
     }
 
@@ -191,17 +183,17 @@ export function usePairRequest() {
       if (error) throw error;
 
       const result = data as { success: boolean; error?: string };
-      
+
       if (!result.success) {
-        toast.error('Không thể hủy yêu cầu');
+        toast.error(tStandalone('toast.pairRequest.cancel.error'));
         return false;
       }
 
-      toast.success('Đã hủy yêu cầu ghép đôi');
+      toast.success(tStandalone('toast.pairRequest.cancel.success'));
       return true;
     } catch (error) {
       console.error('Error canceling pair request:', error);
-      toast.error('Không thể hủy yêu cầu');
+      toast.error(tStandalone('toast.pairRequest.cancel.error'));
       return false;
     } finally {
       setLoading(false);
