@@ -48,24 +48,16 @@ CREATE INDEX IF NOT EXISTS idx_flex_tournament_referees_user_id
 
 ALTER TABLE public.flex_tournament_referees ENABLE ROW LEVEL SECURITY;
 
--- Helper: is the caller the creator of the given flex tournament?
-CREATE OR REPLACE FUNCTION public.is_flex_tournament_creator(_tournament_id uuid, _user_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.flex_tournaments
-    WHERE id = _tournament_id
-      AND creator_user_id = _user_id
-  )
-$$;
+-- NOTE: public.is_flex_tournament_creator(p_tournament_id, p_user_id) already
+-- exists on prod with the p_-prefixed signature and is referenced by 8 RLS
+-- policies on flex_* tables. We DO NOT redefine it here — attempting to
+-- CREATE OR REPLACE with a different param name fails because RLS policies
+-- depend on the function. The two helpers below were aligned to the same
+-- p_-prefix convention so they can call is_flex_tournament_creator with
+-- positional args without ambiguity.
 
 -- Helper: is the caller a referee on the given flex tournament?
-CREATE OR REPLACE FUNCTION public.is_flex_tournament_referee(_tournament_id uuid, _user_id uuid)
+CREATE OR REPLACE FUNCTION public.is_flex_tournament_referee(p_tournament_id uuid, p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -75,21 +67,21 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.flex_tournament_referees
-    WHERE tournament_id = _tournament_id
-      AND user_id = _user_id
+    WHERE tournament_id = p_tournament_id
+      AND user_id = p_user_id
   )
 $$;
 
 -- Helper: can the caller edit scores (creator or referee)?
-CREATE OR REPLACE FUNCTION public.can_edit_flex_tournament_scores(_tournament_id uuid, _user_id uuid)
+CREATE OR REPLACE FUNCTION public.can_edit_flex_tournament_scores(p_tournament_id uuid, p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT public.is_flex_tournament_creator(_tournament_id, _user_id)
-      OR public.is_flex_tournament_referee(_tournament_id, _user_id)
+  SELECT public.is_flex_tournament_creator(p_tournament_id, p_user_id)
+      OR public.is_flex_tournament_referee(p_tournament_id, p_user_id)
 $$;
 
 -- Policies — drop-then-create pattern (CREATE POLICY does not support
