@@ -114,6 +114,14 @@ CREATE POLICY "Creator can remove flex tournament referees"
 
 -- Admin overrides (mirrors team_match_referees / doubles_elimination admin
 -- policies added in 20260131105545_*)
+DROP POLICY IF EXISTS "Admins can add flex tournament referees"
+  ON public.flex_tournament_referees;
+CREATE POLICY "Admins can add flex tournament referees"
+  ON public.flex_tournament_referees
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (public.is_admin());
+
 DROP POLICY IF EXISTS "Admins can delete any flex tournament referee"
   ON public.flex_tournament_referees;
 CREATE POLICY "Admins can delete any flex tournament referee"

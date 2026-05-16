@@ -71,11 +71,13 @@ export type RemoveRefereeResult =
 
 /**
  * Look up a user by email via the SECURITY DEFINER RPC. Returns the profile
- * row (id + display_name + avatar_url) or null when no match.
+ * row (id = profiles.id = auth.users.id; display_name; email) or null when
+ * no match. The live RPC (migration 20260208034409) returns `id`, not
+ * `user_id` — callers must read `profile.id` to get the auth user id.
  */
 export async function lookupUserByEmail(
   email: string
-): Promise<{ user_id: string; display_name: string | null; avatar_url: string | null } | null> {
+): Promise<{ id: string; display_name: string | null; email: string | null } | null> {
   const trimmed = email.toLowerCase().trim();
   const { data, error } = await supabase.rpc('lookup_user_by_email', {
     lookup_email: trimmed,
@@ -154,15 +156,15 @@ export async function addRefereeByEmailHelper(
     const profile = await lookupUserByEmail(email);
     if (!profile) return { ok: false, reason: 'not-found' };
 
-    const alreadyReferee = await isExistingReferee(table, fkColumn, parentId, profile.user_id);
+    const alreadyReferee = await isExistingReferee(table, fkColumn, parentId, profile.id);
     if (alreadyReferee) return { ok: false, reason: 'already-exists' };
 
-    const insertRow = { [fkColumn]: parentId, user_id: profile.user_id };
+    const insertRow = { [fkColumn]: parentId, user_id: profile.id };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: insertError } = await (supabase.from(table) as any).insert(insertRow);
     if (insertError) throw insertError;
 
-    return { ok: true, displayName: profile.display_name, userId: profile.user_id };
+    return { ok: true, displayName: profile.display_name, userId: profile.id };
   } catch (error) {
     return { ok: false, reason: 'error', error };
   }
