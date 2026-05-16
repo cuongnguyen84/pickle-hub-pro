@@ -171,18 +171,45 @@ export function useFlexTournament() {
       // Limit players
       const limitedPlayers = input.playerNames.slice(0, MAX_PLAYERS_CREATE);
 
-      // Create tournament
-      const { data: tournament, error: tournamentError } = await supabase
-        .from('flex_tournaments')
-        .insert({
-          name: safeName,
-          creator_user_id: user.id,
-          is_public: input.isPublic,
-        })
-        .select()
-        .single();
+      // W3.2 — call quota-enforced RPC instead of direct insert. Mirrors
+      // useQuickTable.createTable. Returns json {success, tournament?,
+      // error?, count?, quota?} — LIMIT_REACHED surfaces as a friendly
+      // toast; other errors fall through to the existing onError handler.
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'create_flex_tournament_with_quota' as any,
+        {
+          _name: safeName,
+          _is_public: input.isPublic,
+        },
+      );
 
-      if (tournamentError) throw tournamentError;
+      if (rpcError) {
+        console.error('[useFlexTournament] create:', rpcError);
+        throw rpcError;
+      }
+
+      const result = rpcData as {
+        success: boolean;
+        error?: string;
+        tournament?: FlexTournament;
+        count?: number;
+        quota?: number;
+      };
+
+      if (!result.success) {
+        if (result.error === 'LIMIT_REACHED') {
+          const limitErr = new Error('LIMIT_REACHED');
+          (limitErr as Error & { code?: string }).code = 'LIMIT_REACHED';
+          console.error('[useFlexTournament] create: quota exceeded', result);
+          throw limitErr;
+        }
+        if (result.error === 'AUTH_REQUIRED') {
+          throw new Error('Not authenticated');
+        }
+        throw new Error(result.error || 'Unknown error');
+      }
+
+      const tournament = result.tournament as FlexTournament;
 
       // Add players
       if (limitedPlayers.length > 0) {

@@ -98,33 +98,55 @@ export function useDoublesElimination() {
     courts: number[] = [],
     startTime?: string,
     semifinalsFormat?: BestOfFormat
-  ): Promise<{ success: boolean; tournament?: Tournament; error?: string }> => {
+  ): Promise<{ success: boolean; tournament?: Tournament; error?: string; count?: number; quota?: number }> => {
     if (!user) return { success: false, error: 'AUTH_REQUIRED' };
 
     setLoading(true);
     try {
       const shareId = generateShareId();
 
-      const { data, error } = await supabase
-        .from('doubles_elimination_tournaments')
-        .insert({
-          name,
-          share_id: shareId,
-          creator_user_id: user.id,
-          team_count: teamCount,
-          has_third_place_match: hasThirdPlaceMatch,
-          early_rounds_format: earlyRoundsFormat,
-          semifinals_format: semifinalsFormat || finalsFormat,
-          finals_format: finalsFormat,
-          court_count: courts.length || 1,
-          start_time: startTime || null
-        })
-        .select()
-        .single();
+      // W3.2 — call quota-enforced RPC. Mirrors create_quick_table_with_quota.
+      // Returns json {success, tournament?, error?, count?, quota?} —
+      // LIMIT_REACHED is propagated to caller as a structured result so the
+      // setup page can surface a quota-specific toast.
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'create_doubles_elimination_with_quota' as any,
+        {
+          _name: name,
+          _share_id: shareId,
+          _team_count: teamCount,
+          _has_third_place_match: hasThirdPlaceMatch,
+          _early_rounds_format: earlyRoundsFormat,
+          _semifinals_format: semifinalsFormat || finalsFormat,
+          _finals_format: finalsFormat,
+          _court_count: courts.length || 1,
+          _start_time: startTime || null,
+        },
+      );
 
-      if (error) throw error;
-      return { success: true, tournament: data as Tournament };
+      if (rpcError) throw rpcError;
+
+      const result = rpcData as {
+        success: boolean;
+        error?: string;
+        tournament?: Tournament;
+        count?: number;
+        quota?: number;
+      };
+
+      if (!result.success) {
+        console.error('[useDoublesElimination] create:', result);
+        return {
+          success: false,
+          error: result.error || 'UNKNOWN',
+          count: result.count,
+          quota: result.quota,
+        };
+      }
+
+      return { success: true, tournament: result.tournament as Tournament };
     } catch (error: unknown) {
+      console.error('[useDoublesElimination] create:', error);
       logMutationError(HOOK, 'rpc', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return { success: false, error: message };
