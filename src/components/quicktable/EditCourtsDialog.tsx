@@ -20,6 +20,15 @@ const helpStyle: React.CSSProperties = {
   lineHeight: 1.5,
 };
 
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
 export function EditCourtsDialog({
   open,
   onOpenChange,
@@ -59,11 +68,12 @@ export function EditCourtsDialog({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '16px 0' }}>
           <div className="space-y-2">
-            <Label htmlFor="edit-courts">
+            <Label htmlFor="edit-courts" style={fieldLabel}>
               {language === 'vi' ? 'Danh sách sân' : 'Courts'}
             </Label>
             <Input
               id="edit-courts"
+              name="edit-courts"
               value={courts}
               onChange={(e) => setCourts(e.target.value)}
               placeholder={language === 'vi' ? 'VD: 2, 3, 8' : 'E.g.: 2, 3, 8'}
@@ -76,11 +86,12 @@ export function EditCourtsDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-startTime">
+            <Label htmlFor="edit-startTime" style={fieldLabel}>
               {language === 'vi' ? 'Giờ bắt đầu' : 'Start time'}
             </Label>
             <Input
               id="edit-startTime"
+              name="edit-startTime"
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}

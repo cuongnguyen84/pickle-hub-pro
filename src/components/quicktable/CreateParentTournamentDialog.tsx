@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +19,19 @@ interface CreateParentTournamentDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function CreateParentTournamentDialog({ open, onOpenChange }: CreateParentTournamentDialogProps) {
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+export default function CreateParentTournamentDialog({
+  open,
+  onOpenChange,
+}: CreateParentTournamentDialogProps) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { createParent, loading } = useParentTournament();
@@ -43,36 +61,56 @@ export default function CreateParentTournamentDialog({ open, onOpenChange }: Cre
           <DialogTitle>{t.quickTable.parentTournament.createParent}</DialogTitle>
           <DialogDescription>{t.quickTable.parentTournament.multiDesc}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '8px 0 4px' }}>
           <div className="space-y-2">
-            <Label>{t.quickTable.parentTournament.parentName}</Label>
+            <Label htmlFor="parentName" style={fieldLabel}>
+              {t.quickTable.parentTournament.parentName}
+            </Label>
             <Input
+              id="parentName"
+              name="parentName"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.quickTable.parentTournament.parentNamePlaceholder}
               maxLength={100}
             />
           </div>
+
           <div className="space-y-2">
-            <Label>{t.quickTable.parentTournament.eventDate}</Label>
+            <Label htmlFor="parentEventDate" style={fieldLabel}>
+              {t.quickTable.parentTournament.eventDate}
+            </Label>
             <Input
+              id="parentEventDate"
+              name="parentEventDate"
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
             />
           </div>
+
           <div className="space-y-2">
-            <Label>{t.quickTable.parentTournament.location}</Label>
+            <Label htmlFor="parentLocation" style={fieldLabel}>
+              {t.quickTable.parentTournament.location}
+            </Label>
             <Input
+              id="parentLocation"
+              name="parentLocation"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder={t.quickTable.parentTournament.locationPlaceholder}
               maxLength={200}
             />
           </div>
+
           <div className="space-y-2">
-            <Label>{t.quickTable.parentTournament.description}</Label>
+            <Label htmlFor="parentDescription" style={fieldLabel}>
+              {t.quickTable.parentTournament.description}
+            </Label>
             <Textarea
+              id="parentDescription"
+              name="parentDescription"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t.quickTable.parentTournament.descriptionPlaceholder}
@@ -80,14 +118,26 @@ export default function CreateParentTournamentDialog({ open, onOpenChange }: Cre
               maxLength={500}
             />
           </div>
-          <Button
-            className="w-full"
+        </div>
+
+        <DialogFooter>
+          <button
+            type="button"
+            className="tl-btn"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            {t.common.cancel}
+          </button>
+          <button
+            type="button"
+            className="tl-btn green"
             onClick={handleSubmit}
             disabled={!name.trim() || loading}
           >
             {loading ? t.common.loading : t.quickTable.parentTournament.createParent}
-          </Button>
-        </div>
+          </button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
