@@ -72,7 +72,7 @@ const MyTournaments = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { quota, used: quotaUsed } = useUserCreateQuota();
+  const { quota, used: quotaUsed, refetch: refetchQuota } = useUserCreateQuota();
 
   const [filter, setFilter] = useState<FilterKind>("all");
   const [deleteTarget, setDeleteTarget] = useState<UnifiedTournament | null>(null);
@@ -132,7 +132,7 @@ const MyTournaments = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("team_match_tournaments")
-        .select("id, name, status, created_at")
+        .select("id, name, status, created_at, share_id")
         .eq("created_by", user!.id);
       if (error) throw error;
       return data ?? [];
@@ -183,15 +183,17 @@ const MyTournaments = () => {
     });
 
     teamRows.forEach((r) => {
-      // team_match URLs use raw UUID, not share_id
+      // TeamMatchView resolves the :id route param via .eq('share_id', ...)
+      // — see useTeamMatchTournament. So the path segment must be share_id,
+      // not the UUID primary key.
       rows.push({
         id: r.id,
         toolKind: "team",
         name: r.name ?? "",
         status: r.status ?? "active",
         created_at: r.created_at,
-        url: `/tools/team-match/${r.id}`,
-        shareUrl: `${origin}/tools/team-match/${r.id}`,
+        url: `/tools/team-match/${r.share_id}`,
+        shareUrl: `${origin}/tools/team-match/${r.share_id}`,
       });
     });
 
@@ -257,8 +259,11 @@ const MyTournaments = () => {
         description: deleteTarget.name,
       });
 
-      // Invalidate all 4 query slices + any quota-dependent ones
+      // Invalidate the 4 row queries and refresh quota. The quota hook
+      // isn't a React Query key (useEffect-based), so cache invalidation
+      // alone leaves quotaUsed stale until the page remounts.
       queryClient.invalidateQueries({ queryKey: ["my-tournaments"] });
+      await refetchQuota();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       toast({
