@@ -1,5 +1,3 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Gamepad2, Play, Trophy } from 'lucide-react';
 import { useI18n } from '@/i18n';
 import {
@@ -41,6 +39,150 @@ interface TeamMatchMatchesTabProps {
   onStartTournament: () => void;
 }
 
+// ─── W2.4a shared tokens (mirror QuickTable cluster) ─────────────────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
+
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 22,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const promptTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 18,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const promptSub: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11.5,
+  color: 'var(--tl-fg-3)',
+  letterSpacing: '0.02em',
+  marginTop: 4,
+};
+
+interface ActionPromptProps {
+  accent: 'neutral' | 'green' | 'gold';
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  ctaIcon: React.ReactNode;
+  ctaVariant: 'neutral' | 'green' | 'gold';
+  ctaDisabled?: boolean;
+  onCtaClick: () => void;
+}
+
+/**
+ * W2.4a — BTC action prompt card. Replaces the four shadcn `<Card>` blocks
+ * that used Tailwind palette borders (border-primary/50, border-green-500/50,
+ * border-yellow-500/50). Accent maps to TheLine token glow + ring.
+ */
+function ActionPrompt({
+  accent,
+  icon,
+  title,
+  description,
+  ctaLabel,
+  ctaIcon,
+  ctaVariant,
+  ctaDisabled,
+  onCtaClick,
+}: ActionPromptProps) {
+  const ringByAccent: Record<typeof accent, string> = {
+    neutral: 'var(--tl-border-2)',
+    green: 'var(--tl-green)',
+    gold: 'var(--tl-gold)',
+  };
+  const glowByAccent: Record<typeof accent, string> = {
+    neutral: 'transparent',
+    green: 'var(--tl-green-glow)',
+    gold: 'rgba(233, 182, 73, 0.10)',
+  };
+  const iconColorByAccent: Record<typeof accent, string> = {
+    neutral: 'var(--tl-fg-2)',
+    green: 'var(--tl-green)',
+    gold: 'var(--tl-gold)',
+  };
+
+  const ctaStyleByVariant: Record<typeof ctaVariant, React.CSSProperties> = {
+    neutral: {},
+    green: {},
+    gold: {
+      background: 'var(--tl-gold)',
+      color: 'var(--tl-bg)',
+      borderColor: 'var(--tl-gold)',
+    },
+  };
+
+  return (
+    <div
+      style={{
+        ...surfaceCard,
+        borderColor: ringByAccent[accent],
+        background: accent === 'neutral' ? 'var(--tl-bg-elev)' : glowByAccent[accent],
+        padding: '14px 18px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        flexWrap: 'wrap',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 'var(--tl-radius)',
+            background: 'var(--tl-surface)',
+            color: iconColorByAccent[accent],
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </span>
+        <div style={{ minWidth: 0 }}>
+          <p style={promptTitle}>{title}</p>
+          <p style={promptSub}>{description}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        className={ctaVariant === 'green' ? 'tl-btn green' : 'tl-btn'}
+        style={{
+          padding: '8px 14px',
+          fontSize: 12.5,
+          opacity: ctaDisabled ? 0.5 : 1,
+          cursor: ctaDisabled ? 'not-allowed' : 'pointer',
+          ...ctaStyleByVariant[ctaVariant],
+        }}
+        disabled={ctaDisabled}
+        onClick={onCtaClick}
+      >
+        {ctaIcon}
+        {ctaLabel}
+      </button>
+    </div>
+  );
+}
+
 export function TeamMatchMatchesTab({
   tournament,
   isOwner,
@@ -65,91 +207,85 @@ export function TeamMatchMatchesTab({
   onScoreMatch,
   onStartTournament,
 }: TeamMatchMatchesTabProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const v = t.teamMatch.view;
   const isSingleElimination = tournament.format === 'single_elimination';
   const roundRobinMatches = matches?.filter(m => !m.is_playoff) || [];
   const playoffMatches = matches?.filter(m => m.is_playoff) || [];
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Generate matches (RR) */}
       {isOwner && !hasMatches && tournament.status !== 'completed' && !isSingleElimination && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardContent className="py-4 flex items-center justify-between">
-            <div>
-              <p className="font-medium">{t.teamMatch.view.createSchedule}</p>
-              <p className="text-sm text-muted-foreground">
-                {t.teamMatch.view.teamsReadyForSchedule.replace('{count}', String(approvedTeamsCount))}
-              </p>
-            </div>
-            <Button onClick={onGenerateMatches} disabled={approvedTeamsCount < 2}>
-              <Play className="h-4 w-4 mr-2" />
-              {t.teamMatch.view.createScheduleBtn}
-            </Button>
-          </CardContent>
-        </Card>
+        <ActionPrompt
+          accent="neutral"
+          icon={<Play className="h-5 w-5" />}
+          title={v.createSchedule}
+          description={v.teamsReadyForSchedule.replace('{count}', String(approvedTeamsCount))}
+          ctaLabel={v.createScheduleBtn}
+          ctaIcon={<Play className="h-4 w-4" />}
+          ctaVariant="neutral"
+          ctaDisabled={approvedTeamsCount < 2}
+          onCtaClick={onGenerateMatches}
+        />
       )}
 
       {/* Generate bracket (SE) */}
       {isOwner && !hasMatches && tournament.status !== 'completed' && isSingleElimination && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardContent className="py-4 flex items-center justify-between">
-            <div>
-              <p className="font-medium">{t.teamMatch.view.generateBracketBtn}</p>
-              <p className="text-sm text-muted-foreground">
-                {t.teamMatch.view.teamsReadySE.replace('{count}', String(approvedTeamsCount))}
-              </p>
-            </div>
-            <Button onClick={onShowSESetup} disabled={approvedTeamsCount < 4 || pendingTeamsCount > 0}>
-              <Trophy className="h-4 w-4 mr-2" />
-              {t.teamMatch.view.generateBracketBtn}
-            </Button>
-          </CardContent>
-        </Card>
+        <ActionPrompt
+          accent="neutral"
+          icon={<Trophy className="h-5 w-5" />}
+          title={v.generateBracketBtn}
+          description={v.teamsReadySE.replace('{count}', String(approvedTeamsCount))}
+          ctaLabel={v.generateBracketBtn}
+          ctaIcon={<Trophy className="h-4 w-4" />}
+          ctaVariant="neutral"
+          ctaDisabled={approvedTeamsCount < 4 || pendingTeamsCount > 0}
+          onCtaClick={onShowSESetup}
+        />
       )}
 
       {/* Start tournament */}
       {isOwner && hasMatches && tournament.status === 'registration' && (
-        <Card className="border-green-500/50 bg-green-500/5">
-          <CardContent className="py-4 flex items-center justify-between">
-            <div>
-              <p className="font-medium text-green-600">{t.teamMatch.view.startTournamentLabel}</p>
-              <p className="text-sm text-muted-foreground">
-                {t.teamMatch.view.matchesGeneratedCount.replace('{count}', String(matches?.length))}
-              </p>
-            </div>
-            <Button onClick={onShowStartTournament} className="bg-green-600 hover:bg-green-700">
-              <Play className="h-4 w-4 mr-2" />
-              {t.teamMatch.view.startBtn}
-            </Button>
-          </CardContent>
-        </Card>
+        <ActionPrompt
+          accent="green"
+          icon={<Play className="h-5 w-5" />}
+          title={v.startTournamentLabel}
+          description={v.matchesGeneratedCount.replace('{count}', String(matches?.length))}
+          ctaLabel={v.startBtn}
+          ctaIcon={<Play className="h-4 w-4" />}
+          ctaVariant="green"
+          onCtaClick={onShowStartTournament}
+        />
       )}
 
       {/* Create Playoff */}
       {isOwner && roundRobinComplete && !hasPlayoff && (
-        <Card className="border-yellow-500/50 bg-yellow-500/5">
-          <CardContent className="py-4 flex items-center justify-between">
-            <div>
-              <p className="font-medium text-yellow-600">{t.teamMatch.view.createPlayoffTitle}</p>
-              <p className="text-sm text-muted-foreground">
-                {t.teamMatch.view.roundRobinDone.replace('{count}', String(standings.length))}
-              </p>
-            </div>
-            <Button onClick={onShowPlayoffDialog} className="bg-yellow-600 hover:bg-yellow-700">
-              <Trophy className="h-4 w-4 mr-2" />
-              {t.teamMatch.view.createPlayoff}
-            </Button>
-          </CardContent>
-        </Card>
+        <ActionPrompt
+          accent="gold"
+          icon={<Trophy className="h-5 w-5" />}
+          title={v.createPlayoffTitle}
+          description={v.roundRobinDone.replace('{count}', String(standings.length))}
+          ctaLabel={v.createPlayoff}
+          ctaIcon={<Trophy className="h-4 w-4" />}
+          ctaVariant="gold"
+          onCtaClick={onShowPlayoffDialog}
+        />
       )}
 
       {/* Playoff bracket */}
       {playoffMatches.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            {isSingleElimination ? t.teamMatch.view.seBracketTitle : t.teamMatch.view.playoffRound}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <h3
+            style={{
+              ...sectionTitle,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Trophy className="h-5 w-5" style={{ color: 'var(--tl-gold)' }} />
+            {isSingleElimination ? v.seBracketTitle : v.playoffRound}
           </h3>
           <PlayoffBracket
             matches={playoffMatches}
@@ -166,10 +302,17 @@ export function TeamMatchMatchesTab({
 
       {/* Group-based matches */}
       {hasGroups && roundRobinMatches.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5" />
-            {t.teamMatch.view.groupStageTitle}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <h3
+            style={{
+              ...sectionTitle,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Gamepad2 className="h-5 w-5" style={{ color: 'var(--tl-fg-2)' }} />
+            {v.groupStageTitle}
           </h3>
           <GroupMatchList
             tournamentId={tournament.id}
@@ -186,10 +329,17 @@ export function TeamMatchMatchesTab({
 
       {/* Regular RR matches */}
       {!hasGroups && roundRobinMatches.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5" />
-            {t.teamMatch.view.roundRobinTitle}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <h3
+            style={{
+              ...sectionTitle,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <Gamepad2 className="h-5 w-5" style={{ color: 'var(--tl-fg-2)' }} />
+            {v.roundRobinTitle}
           </h3>
           <MatchList
             tournamentId={tournament.id}
@@ -206,13 +356,19 @@ export function TeamMatchMatchesTab({
 
       {/* Empty */}
       {!hasMatches && !isOwner && (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Gamepad2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>{t.teamMatch.view.noMatchesEmpty}</p>
-            <p className="text-sm mt-1">{t.teamMatch.view.noMatchesScheduleDesc}</p>
-          </CardContent>
-        </Card>
+        <div style={{ ...surfaceCard, padding: 32 }}>
+          <div className="tl-empty-card" style={{ margin: 0, padding: '24px 16px' }}>
+            <span className="tl-empty-card-mark">
+              <Gamepad2 className="h-6 w-6" />
+            </span>
+            <span className="tl-empty-card-label">{v.noMatchesEmpty}</span>
+            <span className="tl-empty-card-hint">
+              {language === 'vi'
+                ? v.noMatchesScheduleDesc
+                : v.noMatchesScheduleDesc}
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

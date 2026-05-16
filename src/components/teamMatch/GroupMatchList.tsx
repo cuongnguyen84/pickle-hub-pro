@@ -1,8 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gamepad2, Trophy, Clock, Play, ClipboardList, Check, AlertTriangle, Users, Radio } from 'lucide-react';
 import { useTeamMatchMatches, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
@@ -20,31 +16,84 @@ interface GroupMatchListProps {
   onScoreMatch?: (match: TeamMatchMatch) => void;
 }
 
-export function GroupMatchList({ 
-  tournamentId, 
-  userTeamId, 
+// ─── W2.4a shared tokens ─────────────────────────────────────────────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
+
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const statusPillBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+};
+
+type StatusKind = 'pending' | 'lineup' | 'in_progress' | 'completed';
+
+function statusPillStyle(kind: StatusKind): React.CSSProperties {
+  if (kind === 'completed') return { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' };
+  if (kind === 'in_progress') return { background: 'rgba(255, 65, 54, 0.10)', color: 'var(--tl-live)' };
+  if (kind === 'lineup') return { background: 'rgba(120, 165, 255, 0.10)', color: 'var(--tl-fg-2)' };
+  return { background: 'var(--tl-surface)', color: 'var(--tl-fg-3)' };
+}
+
+interface StatusEntry {
+  label: string;
+  kind: StatusKind;
+  icon: typeof Clock;
+}
+
+export function GroupMatchList({
+  tournamentId,
+  userTeamId,
   isOwner,
   canEditScores,
-  onMatchClick, 
-  onLineupClick, 
+  onMatchClick,
+  onLineupClick,
   onStartRound,
   onScoreMatch,
 }: GroupMatchListProps) {
   const { data: matches, isLoading: isLoadingMatches } = useTeamMatchMatches(tournamentId);
   const { data: groups, isLoading: isLoadingGroups } = useTeamMatchGroups(tournamentId);
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const c = t.teamMatchComponents;
+  const v = t.teamMatch.view;
 
-  const STATUS_CONFIG = {
-    pending: { label: c.notStarted, color: 'bg-muted text-muted-foreground', icon: Clock },
-    lineup: { label: c.liningUp, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: ClipboardList },
-    in_progress: { label: c.live, color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Radio },
-    completed: { label: c.ended, color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: Trophy },
+  const txt = {
+    lineupBtn: language === 'vi' ? 'Line up' : 'Lineup',
+    noMatchesTitle: v.noMatches,
+    noMatchesHint: c.noMatchesCreateSchedule,
+    noGroupsTitle: c.noGroupsYet,
+  };
+
+  const STATUS_CONFIG: Record<StatusKind, StatusEntry> = {
+    pending: { label: c.notStarted, kind: 'pending', icon: Clock },
+    lineup: { label: c.liningUp, kind: 'lineup', icon: ClipboardList },
+    in_progress: { label: c.live, kind: 'in_progress', icon: Radio },
+    completed: { label: c.ended, kind: 'completed', icon: Trophy },
   };
 
   if (isLoadingMatches || isLoadingGroups) {
     return (
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-24 w-full" />
         ))}
@@ -54,20 +103,22 @@ export function GroupMatchList({
 
   if (!matches || matches.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          <Gamepad2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>{t.teamMatch.view.noMatches}</p>
-          <p className="text-sm mt-1">{c.noMatchesCreateSchedule}</p>
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: 32 }}>
+        <div className="tl-empty-card" style={{ margin: 0, padding: '24px 16px' }}>
+          <span className="tl-empty-card-mark">
+            <Gamepad2 className="h-6 w-6" />
+          </span>
+          <span className="tl-empty-card-label">{txt.noMatchesTitle}</span>
+          <span className="tl-empty-card-hint">{txt.noMatchesHint}</span>
+        </div>
+      </div>
     );
   }
 
   // Group matches by group_id
   const roundRobinMatches = matches.filter(m => !m.is_playoff);
   const matchesByGroup = new Map<string, TeamMatchMatch[]>();
-  
+
   roundRobinMatches.forEach(match => {
     const groupId = match.group_id || 'no-group';
     if (!matchesByGroup.has(groupId)) {
@@ -81,12 +132,14 @@ export function GroupMatchList({
 
   if (sortedGroups.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>{c.noGroupsYet}</p>
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: 32 }}>
+        <div className="tl-empty-card" style={{ margin: 0, padding: '24px 16px' }}>
+          <span className="tl-empty-card-mark">
+            <Users className="h-6 w-6" />
+          </span>
+          <span className="tl-empty-card-label">{txt.noGroupsTitle}</span>
+        </div>
+      </div>
     );
   }
 
@@ -110,6 +163,8 @@ export function GroupMatchList({
             canEditScores={canEditScores}
             statusConfig={STATUS_CONFIG}
             c={c}
+            language={language}
+            lineupBtnLabel={txt.lineupBtn}
             onMatchClick={onMatchClick}
             onLineupClick={onLineupClick}
             onStartRound={(round) => onStartRound?.(round, group.id)}
@@ -130,6 +185,8 @@ function GroupMatches({
   canEditScores,
   statusConfig,
   c,
+  language,
+  lineupBtnLabel,
   onMatchClick,
   onLineupClick,
   onStartRound,
@@ -140,8 +197,10 @@ function GroupMatches({
   userTeamId?: string;
   isOwner?: boolean;
   canEditScores?: boolean;
-  statusConfig: any;
+  statusConfig: Record<StatusKind, StatusEntry>;
   c: any;
+  language: 'vi' | 'en';
+  lineupBtnLabel: string;
   onMatchClick?: (match: TeamMatchMatch) => void;
   onLineupClick?: (match: TeamMatchMatch, teamId?: string) => void;
   onStartRound?: (roundNumber: number) => void;
@@ -149,11 +208,11 @@ function GroupMatches({
 }) {
   if (matches.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          <p>{c.noMatchesInGroup} {group.name}</p>
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: 24 }}>
+        <div className="tl-empty-card" style={{ margin: 0, padding: '16px 12px' }}>
+          <span className="tl-empty-card-label">{c.noMatchesInGroup} {group.name}</span>
+        </div>
+      </div>
     );
   }
 
@@ -168,18 +227,18 @@ function GroupMatches({
   const rounds = Object.keys(matchesByRound).map(Number).filter(r => r > 0).sort((a, b) => a - b);
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {rounds.map((round) => {
         const roundMatches = matchesByRound[round];
-        
-        const allLineupsSubmitted = roundMatches.every(match => 
+
+        const allLineupsSubmitted = roundMatches.every(match =>
           match.lineup_a_submitted && match.lineup_b_submitted
         );
-        
-        const roundStarted = roundMatches.some(match => 
+
+        const roundStarted = roundMatches.some(match =>
           match.status === 'in_progress' || match.status === 'completed'
         );
-        
+
         const missingLineups: string[] = [];
         roundMatches.forEach(match => {
           if (!match.lineup_a_submitted && match.team_a) {
@@ -192,188 +251,289 @@ function GroupMatches({
 
         return (
           <div key={round}>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-sm text-muted-foreground">{c.roundLabel} {round}</h4>
-              
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 10,
+                gap: 12,
+                flexWrap: 'wrap',
+              }}
+            >
+              <h4 style={{ ...fieldLabel, color: 'var(--tl-fg-3)' }}>
+                {c.roundLabel} {round}
+              </h4>
+
               {isOwner && !roundStarted && (
-                <div className="flex items-center gap-2">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {allLineupsSubmitted ? (
-                    <Button 
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
+                    <button
+                      type="button"
+                      className="tl-btn green"
+                      style={{ padding: '5px 10px', fontSize: 11.5 }}
                       onClick={() => onStartRound?.(round)}
                     >
-                      <Play className="h-3 w-3 mr-1" />
+                      <Play className="h-3 w-3" />
                       {c.startRound}
-                    </Button>
+                    </button>
                   ) : (
-                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs">
-                      <Clock className="h-3 w-3 mr-1" />
+                    <span style={{ ...statusPillBase, background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' }}>
+                      <Clock className="h-3 w-3" />
                       {c.waitingLineup}
-                    </Badge>
+                    </span>
                   )}
                 </div>
               )}
             </div>
-            
+
             {isOwner && !roundStarted && missingLineups.length > 0 && (
-              <Alert className="mb-3">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription className="text-xs">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  marginBottom: 10,
+                  padding: '8px 10px',
+                  borderRadius: 'var(--tl-radius)',
+                  background: 'rgba(233, 182, 73, 0.08)',
+                  border: '1px solid rgba(233, 182, 73, 0.35)',
+                  color: 'var(--tl-fg-2)',
+                  fontSize: 11.5,
+                }}
+              >
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5" style={{ color: 'var(--tl-gold)' }} />
+                <span>
                   {c.missingLineup} {missingLineups.join(', ')}
-                </AlertDescription>
-              </Alert>
+                </span>
+              </div>
             )}
 
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {roundMatches.map((match) => {
-                const config = statusConfig[match.status] || statusConfig.pending;
+                const config = statusConfig[match.status as StatusKind] || statusConfig.pending;
                 const StatusIcon = config.icon;
                 const isMyMatch = userTeamId && (match.team_a_id === userTeamId || match.team_b_id === userTeamId);
+                const isLive = match.status === 'in_progress';
                 const matchStarted = match.status === 'in_progress' || match.status === 'completed';
-                
+
                 const needsLineupA = !match.lineup_a_submitted && !matchStarted;
                 const needsLineupB = !match.lineup_b_submitted && !matchStarted;
-                
+
                 const canLineupA = needsLineupA && (isOwner || match.team_a_id === userTeamId);
                 const canLineupB = needsLineupB && (isOwner || match.team_b_id === userTeamId);
-                
+
                 const isTeamA = match.team_a_id === userTeamId;
                 const myLineupSubmitted = isMyMatch && (isTeamA ? match.lineup_a_submitted : match.lineup_b_submitted);
-                
+
+                const winnerA = match.winner_team_id === match.team_a_id;
+                const winnerB = match.winner_team_id === match.team_b_id;
+                const teamAColor = winnerA ? 'var(--tl-fg)' : (matchStarted && !winnerA && match.status === 'completed' ? 'var(--tl-fg-3)' : 'var(--tl-fg)');
+                const teamBColor = winnerB ? 'var(--tl-fg)' : (matchStarted && !winnerB && match.status === 'completed' ? 'var(--tl-fg-3)' : 'var(--tl-fg)');
+
+                const cardShadow = isLive
+                  ? '0 0 0 1px var(--tl-green), 0 0 12px var(--tl-green-glow)'
+                  : isMyMatch
+                    ? '0 0 0 1px var(--tl-green-dim)'
+                    : 'none';
+
                 return (
-                  <Card 
-                    key={match.id} 
-                    className={`cursor-pointer hover:border-primary/50 transition-colors ${isMyMatch ? 'border-primary/30 bg-primary/5' : ''}`}
+                  <div
+                    key={match.id}
                     onClick={() => onMatchClick?.(match)}
+                    style={{
+                      ...surfaceCard,
+                      padding: 12,
+                      cursor: 'pointer',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxShadow: cardShadow,
+                    }}
                   >
-                    <CardContent className="py-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            {/* Team A */}
-                            <div className={`flex-1 text-right text-sm ${match.winner_team_id === match.team_a_id ? 'font-bold' : ''} ${match.team_a_id === userTeamId ? 'text-primary' : ''}`}>
-                              <span>
-                                {(match.team_a as any)?.team_name || 'TBD'}
-                              </span>
-                              {match.lineup_a_submitted && (
-                                <Check className="h-3 w-3 inline-block ml-1 text-green-600" />
-                              )}
-                            </div>
-                            
-                            {/* Score */}
-                            <div className="flex items-center gap-1 px-3 py-1 bg-muted rounded min-w-[70px] justify-center">
-                              <span className={`text-lg font-bold ${match.winner_team_id === match.team_a_id ? 'text-green-600' : ''}`}>
-                                {match.games_won_a}
-                              </span>
-                              <span className="text-muted-foreground">-</span>
-                              <span className={`text-lg font-bold ${match.winner_team_id === match.team_b_id ? 'text-green-600' : ''}`}>
-                                {match.games_won_b}
-                              </span>
-                            </div>
-                            
-                            {/* Team B */}
-                            <div className={`flex-1 text-sm ${match.winner_team_id === match.team_b_id ? 'font-bold' : ''} ${match.team_b_id === userTeamId ? 'text-primary' : ''}`}>
-                              {match.lineup_b_submitted && (
-                                <Check className="h-3 w-3 inline-block mr-1 text-green-600" />
-                              )}
-                              <span>
-                                {(match.team_b as any)?.team_name || 'TBD'}
-                              </span>
-                            </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 220 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          {/* Team A */}
+                          <div
+                            style={{
+                              flex: 1,
+                              textAlign: 'right',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              fontFamily: 'Instrument Serif, serif',
+                              fontStyle: 'italic',
+                              fontWeight: winnerA ? 600 : 400,
+                              fontSize: 16,
+                              letterSpacing: '-0.01em',
+                              color: teamAColor,
+                            }}
+                          >
+                            <span>{(match.team_a as any)?.team_name || 'TBD'}</span>
+                            {match.lineup_a_submitted && (
+                              <Check className="h-3 w-3 inline-block ml-1" style={{ color: 'var(--tl-green)' }} />
+                            )}
+                          </div>
+
+                          {/* Score */}
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '4px 10px',
+                              borderRadius: 6,
+                              background: 'var(--tl-surface)',
+                              border: '1px solid var(--tl-border)',
+                              minWidth: 70,
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 17,
+                                fontWeight: 600,
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontVariantNumeric: 'tabular-nums',
+                                color: winnerA ? 'var(--tl-green)' : 'var(--tl-fg)',
+                              }}
+                            >
+                              {match.games_won_a}
+                            </span>
+                            <span style={{ color: 'var(--tl-fg-4)', fontFamily: 'Geist Mono, ui-monospace, monospace' }}>:</span>
+                            <span
+                              style={{
+                                fontSize: 17,
+                                fontWeight: 600,
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontVariantNumeric: 'tabular-nums',
+                                color: winnerB ? 'var(--tl-green)' : 'var(--tl-fg)',
+                              }}
+                            >
+                              {match.games_won_b}
+                            </span>
+                          </div>
+
+                          {/* Team B */}
+                          <div
+                            style={{
+                              flex: 1,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              fontFamily: 'Instrument Serif, serif',
+                              fontStyle: 'italic',
+                              fontWeight: winnerB ? 600 : 400,
+                              fontSize: 16,
+                              letterSpacing: '-0.01em',
+                              color: teamBColor,
+                            }}
+                          >
+                            {match.lineup_b_submitted && (
+                              <Check className="h-3 w-3 inline-block mr-1" style={{ color: 'var(--tl-green)' }} />
+                            )}
+                            <span>{(match.team_b as any)?.team_name || 'TBD'}</span>
                           </div>
                         </div>
-                        
-                        <div className="ml-3 flex flex-col items-end gap-1">
-                          <Badge 
-                            variant="outline" 
-                            className={`${config.color} text-xs ${match.status === 'in_progress' ? 'animate-pulse' : ''}`}
-                          >
-                            <StatusIcon className={`h-3 w-3 mr-1 ${match.status === 'in_progress' ? 'animate-pulse' : ''}`} />
-                            {config.label}
-                          </Badge>
-                          
-                          {/* BTC lineup buttons */}
-                          {isOwner && (canLineupA || canLineupB) && (
-                            <div className="flex gap-1">
-                              {canLineupA && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="text-xs h-6 px-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onLineupClick?.(match, match.team_a_id!);
-                                  }}
-                                >
-                                  <ClipboardList className="h-3 w-3 mr-1" />
-                                  A
-                                </Button>
-                              )}
-                              {canLineupB && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="text-xs h-6 px-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onLineupClick?.(match, match.team_b_id!);
-                                  }}
-                                >
-                                  <ClipboardList className="h-3 w-3 mr-1" />
-                                  B
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                          
-                          {/* Captain lineup button */}
-                          {!isOwner && isMyMatch && !myLineupSubmitted && !matchStarted && (
-                            <Button 
-                              variant="default" 
-                              size="sm"
-                              className="text-xs h-7"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onLineupClick?.(match, userTeamId);
-                              }}
-                            >
-                              <ClipboardList className="h-3 w-3 mr-1" />
-                              Line up
-                            </Button>
-                          )}
-                          
-                          {/* Captain already lined up badge */}
-                          {!isOwner && myLineupSubmitted && !matchStarted && (
-                            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
-                              <Check className="h-3 w-3 mr-1" />
-                              {c.lineupDone}
-                            </Badge>
-                          )}
-                          
-                          {/* Referee Score Button */}
-                          {canEditScores && (
-                            (match.lineup_a_submitted && match.lineup_b_submitted) || 
-                            match.status === 'in_progress' || 
-                            match.status === 'completed'
-                          ) && (
-                            <Button 
-                              variant="default" 
-                              size="sm"
-                              className="text-xs h-7"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onScoreMatch?.(match);
-                              }}
-                            >
-                              <Play className="h-3 w-3 mr-1" />
-                              {c.scoreBtn}
-                            </Button>
-                          )}
-                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                        <span
+                          style={{
+                            ...statusPillBase,
+                            ...statusPillStyle(config.kind),
+                            ...(isLive ? { animation: 'tl-pulse 1.6s ease-in-out infinite' } : {}),
+                          }}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {config.label}
+                        </span>
+
+                        {/* BTC lineup buttons */}
+                        {isOwner && (canLineupA || canLineupB) && (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            {canLineupA && (
+                              <button
+                                type="button"
+                                className="tl-btn"
+                                style={{ padding: '3px 7px', fontSize: 10.5 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onLineupClick?.(match, match.team_a_id!);
+                                }}
+                              >
+                                <ClipboardList className="h-3 w-3" />
+                                A
+                              </button>
+                            )}
+                            {canLineupB && (
+                              <button
+                                type="button"
+                                className="tl-btn"
+                                style={{ padding: '3px 7px', fontSize: 10.5 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onLineupClick?.(match, match.team_b_id!);
+                                }}
+                              >
+                                <ClipboardList className="h-3 w-3" />
+                                B
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Captain lineup button */}
+                        {!isOwner && isMyMatch && !myLineupSubmitted && !matchStarted && (
+                          <button
+                            type="button"
+                            className="tl-btn green"
+                            style={{ padding: '5px 9px', fontSize: 11 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onLineupClick?.(match, userTeamId);
+                            }}
+                          >
+                            <ClipboardList className="h-3 w-3" />
+                            {lineupBtnLabel}
+                          </button>
+                        )}
+
+                        {/* Captain already lined up badge */}
+                        {!isOwner && myLineupSubmitted && !matchStarted && (
+                          <span
+                            style={{
+                              ...statusPillBase,
+                              ...statusPillStyle('completed'),
+                            }}
+                          >
+                            <Check className="h-3 w-3" />
+                            {c.lineupDone}
+                          </span>
+                        )}
+
+                        {/* Referee Score Button */}
+                        {canEditScores && (
+                          (match.lineup_a_submitted && match.lineup_b_submitted) ||
+                          match.status === 'in_progress' ||
+                          match.status === 'completed'
+                        ) && (
+                          <button
+                            type="button"
+                            className="tl-btn green"
+                            style={{ padding: '5px 9px', fontSize: 11 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onScoreMatch?.(match);
+                            }}
+                          >
+                            <Play className="h-3 w-3" />
+                            {c.scoreBtn}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
