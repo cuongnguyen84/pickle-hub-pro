@@ -1,20 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTeamRegistration, type Team } from '@/hooks/useTeamRegistration';
 import { useI18n } from '@/i18n';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Check, X, MoreVertical, Users, Clock, CheckCircle2, XCircle, 
-  RefreshCw, Swords, AlertCircle, UserMinus, Trash2
+import {
+  Check, X, MoreVertical, Users, Clock, CheckCircle2, XCircle,
+  RefreshCw, Swords, UserMinus, Trash2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -28,8 +22,157 @@ interface TeamManagerProps {
   onPendingCountChange?: (count: number) => void;
 }
 
+// ─── Shared tokens (mirror W2.1a / W2.1b / RegistrationManager) ─────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
+
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 18,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const headStyle: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-3)',
+  padding: '10px 12px',
+  textAlign: 'left',
+  borderBottom: '1px solid var(--tl-border)',
+  whiteSpace: 'nowrap',
+  background: 'transparent',
+};
+
+const cellStyle: React.CSSProperties = {
+  padding: '12px',
+  fontSize: 13,
+  color: 'var(--tl-fg)',
+  borderBottom: '1px solid var(--tl-border)',
+  fontVariantNumeric: 'tabular-nums',
+  verticalAlign: 'top',
+};
+
+type StatusKind = 'approved' | 'pending' | 'rejected' | 'removed' | 'pair-complete' | 'pair-incomplete' | 'neutral';
+
+const statusPillPalette = (kind: StatusKind): { bg: string; fg: string; border?: string } => {
+  if (kind === 'approved') return { bg: 'var(--tl-green-glow)', fg: 'var(--tl-green)' };
+  if (kind === 'pending') return { bg: 'rgba(233, 182, 73, 0.12)', fg: 'var(--tl-gold)' };
+  if (kind === 'rejected') return { bg: 'rgba(255, 65, 54, 0.10)', fg: 'var(--tl-live)' };
+  if (kind === 'removed') return { bg: 'var(--tl-surface)', fg: 'var(--tl-fg-3)' };
+  if (kind === 'pair-complete')
+    return { bg: 'var(--tl-green-glow)', fg: 'var(--tl-green)', border: 'rgba(0, 185, 107, 0.30)' };
+  if (kind === 'pair-incomplete')
+    return { bg: 'rgba(233, 182, 73, 0.12)', fg: 'var(--tl-gold)', border: 'rgba(233, 182, 73, 0.30)' };
+  return { bg: 'var(--tl-surface)', fg: 'var(--tl-fg-3)' };
+};
+
+const statusPillBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+};
+
+const duprPillStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '2px 8px',
+  borderRadius: 999,
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-2)',
+  border: '1px solid var(--tl-border)',
+  letterSpacing: '0.04em',
+  whiteSpace: 'nowrap',
+};
+
+function onRowEnter(e: React.MouseEvent<HTMLTableRowElement>) {
+  (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg)';
+}
+function onRowLeave(e: React.MouseEvent<HTMLTableRowElement>) {
+  (e.currentTarget as HTMLElement).style.background = 'transparent';
+}
+
+function StatCell({
+  icon,
+  count,
+  label,
+  kind,
+}: {
+  icon: React.ReactNode;
+  count: number;
+  label: string;
+  kind: StatusKind;
+}) {
+  const palette = statusPillPalette(kind);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16 }}>
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          background: palette.bg,
+          color: palette.fg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </div>
+      <div>
+        <p
+          style={{
+            fontFamily: 'Geist Mono, ui-monospace, monospace',
+            fontVariantNumeric: 'tabular-nums',
+            fontSize: 24,
+            fontWeight: 600,
+            color: 'var(--tl-fg)',
+            margin: 0,
+            lineHeight: 1,
+          }}
+        >
+          {count}
+        </p>
+        <p style={{ ...fieldLabel, margin: '4px 0 0' }}>{label}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Component ──────────────────────────────────────────────────────────
 export function TeamManager({ tableId, shareId, table, onPendingCountChange }: TeamManagerProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { getTableTeams, btcManageTeam } = useTeamRegistration();
 
   const [teams, setTeams] = useState<Team[]>([]);
@@ -37,29 +180,79 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
   const [showBracketSetup, setShowBracketSetup] = useState(false);
   const [noteDialog, setNoteDialog] = useState<{ team: Team; action: 'approve' | 'reject' | 'remove' } | null>(null);
   const [notes, setNotes] = useState('');
-  
-  // Batch selection state
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchLoading, setBatchLoading] = useState(false);
+
+  // Bilingual labels — inline ternary, scoped to BTC chrome only
+  const txt = {
+    team: language === 'vi' ? 'Đội' : 'Team',
+    player1: language === 'vi' ? 'VĐV 1' : 'Player 1',
+    player2: language === 'vi' ? 'VĐV 2 (Partner)' : 'Player 2 (Partner)',
+    skill: language === 'vi' ? 'Trình độ' : 'Skill',
+    status: language === 'vi' ? 'Trạng thái' : 'Status',
+    actions: language === 'vi' ? 'Thao tác' : 'Actions',
+    pairComplete: language === 'vi' ? 'Đủ đội' : 'Full pair',
+    pairIncomplete: language === 'vi' ? 'Thiếu partner' : 'Missing partner',
+    waitingPartner: language === 'vi' ? 'Chờ partner accept' : 'Awaiting partner',
+    noPartnerYet: language === 'vi' ? 'Chưa có' : 'None yet',
+    removeFromTour: language === 'vi' ? 'Loại khỏi giải' : 'Remove from event',
+    pendingTeams: language === 'vi' ? 'Đội chờ duyệt' : 'Pending teams',
+    approvedTeams: language === 'vi' ? 'Đội đã duyệt' : 'Approved teams',
+    rejectedTeams: language === 'vi' ? 'Đội bị từ chối / loại' : 'Rejected / removed teams',
+    allRegistered: language === 'vi' ? 'Các đội đã đăng ký' : 'Registered teams',
+    fullPairs: language === 'vi' ? 'Đủ đội' : 'Full pairs',
+    rejectedOrRemoved: language === 'vi' ? 'Từ chối / Loại' : 'Rejected / Removed',
+    minTeamsToast: language === 'vi' ? 'Cần ít nhất 3 đội được duyệt' : 'Need at least 3 approved teams',
+    selected: language === 'vi' ? 'đã chọn' : 'selected',
+    approveSelected: language === 'vi' ? 'Duyệt' : 'Approve',
+    rejectSelected: language === 'vi' ? 'Từ chối' : 'Reject',
+    rejectTeam: language === 'vi' ? 'Từ chối đội' : 'Reject team',
+    removeTeam: language === 'vi' ? 'Loại đội khỏi giải' : 'Remove team from event',
+    noteOptional: language === 'vi' ? 'Ghi chú (tùy chọn)' : 'Note (optional)',
+    notePlaceholder: language === 'vi' ? 'Lý do từ chối hoặc loại...' : 'Reason for rejection or removal...',
+    cancel: language === 'vi' ? 'Hủy' : 'Cancel',
+    rejectConfirm: language === 'vi' ? 'Từ chối' : 'Reject',
+    removeConfirm: language === 'vi' ? 'Loại khỏi giải' : 'Remove from event',
+    selectAll: language === 'vi' ? 'Chọn tất cả' : 'Select all',
+    readyToBracket: language === 'vi' ? 'Sẵn sàng chia bảng' : 'Ready to create brackets',
+    teamsApprovedCount: (n: number) =>
+      language === 'vi' ? `Có ${n} đội đã được duyệt` : `${n} teams approved`,
+    createBracket: language === 'vi' ? 'Chia bảng' : 'Create brackets',
+    noTeamsYet: language === 'vi' ? 'Chưa có đội nào đăng ký' : 'No teams have registered yet',
+    shareLink: language === 'vi' ? 'Chia sẻ link đăng ký để VĐV có thể tham gia' : 'Share the registration link so players can join',
+    btcApprovedToast: (n: number) =>
+      language === 'vi' ? `Đã duyệt ${n} đội` : `Approved ${n} teams`,
+    btcRejectedToast: (n: number) =>
+      language === 'vi' ? `Đã từ chối ${n} đội` : `Rejected ${n} teams`,
+    chooseName: (name: string) =>
+      language === 'vi' ? `Chọn ${name}` : `Select ${name}`,
+    notesLabel: language === 'vi' ? 'Ghi chú' : 'Notes',
+    btcRemoved: language === 'vi' ? 'Đã loại' : 'Removed',
+    btcRejected: language === 'vi' ? 'Từ chối' : 'Rejected',
+    btcApproved: language === 'vi' ? 'Đã duyệt' : 'Approved',
+    btcPending: language === 'vi' ? 'Chờ duyệt' : 'Pending',
+  };
 
   const loadTeams = async () => {
     setLoading(true);
     const data = await getTableTeams(tableId);
     setTeams(data);
     setLoading(false);
-    
-    const pendingCount = data.filter(t => !t.btc_approved && t.team_status !== 'rejected' && t.team_status !== 'removed').length;
+
+    const pendingCount = data.filter(
+      tm => !tm.btc_approved && tm.team_status !== 'rejected' && tm.team_status !== 'removed',
+    ).length;
     onPendingCountChange?.(pendingCount);
   };
 
   useEffect(() => {
     loadTeams();
 
-    // Subscribe to realtime updates
     let channel: ReturnType<typeof supabase.channel> | null = null;
     try {
       channel = supabase
-        .channel(`teams-${tableId}:${Date.now()}_${Math.random().toString(36).slice(2,7)}`)
+        .channel(`teams-${tableId}:${Date.now()}_${Math.random().toString(36).slice(2, 7)}`)
         .on(
           'postgres_changes',
           {
@@ -70,11 +263,11 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
           },
           () => {
             loadTeams();
-          }
+          },
         )
         .subscribe();
     } catch (err) {
-      console.warn("[TeamManager] Realtime setup failed:", err);
+      console.warn('[TeamManager] Realtime setup failed:', err);
     }
 
     return () => {
@@ -82,25 +275,24 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
     };
   }, [tableId]);
 
-  // All registered teams (excluding removed/rejected) for display
-  const allRegisteredTeams = teams.filter(t => t.team_status !== 'rejected' && t.team_status !== 'removed');
-  const pendingTeams = teams.filter(t => !t.btc_approved && t.team_status !== 'rejected' && t.team_status !== 'removed');
-  const approvedTeams = teams.filter(t => t.btc_approved && t.team_status !== 'removed');
-  const rejectedTeams = teams.filter(t => t.team_status === 'rejected');
-  const removedTeams = teams.filter(t => t.team_status === 'removed');
+  const allRegisteredTeams = teams.filter(tm => tm.team_status !== 'rejected' && tm.team_status !== 'removed');
+  const pendingTeams = teams.filter(
+    tm => !tm.btc_approved && tm.team_status !== 'rejected' && tm.team_status !== 'removed',
+  );
+  const approvedTeams = teams.filter(tm => tm.btc_approved && tm.team_status !== 'removed');
+  const rejectedTeams = teams.filter(tm => tm.team_status === 'rejected');
+  const removedTeams = teams.filter(tm => tm.team_status === 'removed');
 
-  const handleAction = async (teamId: string, action: 'approve' | 'reject' | 'remove', notes?: string) => {
-    const success = await btcManageTeam(teamId, action, notes);
+  const handleAction = async (teamId: string, action: 'approve' | 'reject' | 'remove', actionNotes?: string) => {
+    const success = await btcManageTeam(teamId, action, actionNotes);
     if (success) {
       loadTeams();
       setNoteDialog(null);
       setNotes('');
-      // Clear selection if the approved/rejected team was selected
       setSelectedIds(prev => prev.filter(id => id !== teamId));
     }
   };
 
-  // Batch approve/reject
   const handleBatchApprove = async () => {
     if (selectedIds.length === 0) return;
     setBatchLoading(true);
@@ -112,9 +304,7 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
     setBatchLoading(false);
     setSelectedIds([]);
     loadTeams();
-    if (successCount > 0) {
-      toast.success(`Đã duyệt ${successCount} đội`);
-    }
+    if (successCount > 0) toast.success(txt.btcApprovedToast(successCount));
   };
 
   const handleBatchReject = async () => {
@@ -128,19 +318,15 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
     setBatchLoading(false);
     setSelectedIds([]);
     loadTeams();
-    if (successCount > 0) {
-      toast.success(`Đã từ chối ${successCount} đội`);
-    }
+    if (successCount > 0) toast.success(txt.btcRejectedToast(successCount));
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
+    setSelectedIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
   };
 
   const toggleSelectAllPending = () => {
-    const pendingIds = pendingTeams.map(t => t.id);
+    const pendingIds = pendingTeams.map(tm => tm.id);
     const allSelected = pendingIds.every(id => selectedIds.includes(id));
     if (allSelected) {
       setSelectedIds(prev => prev.filter(id => !pendingIds.includes(id)));
@@ -151,279 +337,454 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
 
   const handleStartBracket = () => {
     if (approvedTeams.length < 3) {
-      toast.error('Cần ít nhất 3 đội được duyệt');
+      toast.error(txt.minTeamsToast);
       return;
     }
     setShowBracketSetup(true);
   };
 
-  const getTeamStatusBadge = (team: Team) => {
+  // ─── Helpers: pair pill + status pill + skill pill ──────────────────────
+  const renderPairStatus = (team: Team) => {
+    if (team.player2_user_id) {
+      const p = statusPillPalette('pair-complete');
+      return (
+        <span style={{ ...statusPillBase, background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>
+          <Users className="w-3 h-3" />
+          {txt.pairComplete}
+        </span>
+      );
+    }
+    const p = statusPillPalette('pair-incomplete');
+    return (
+      <span style={{ ...statusPillBase, background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>
+        <UserMinus className="w-3 h-3" />
+        {txt.pairIncomplete}
+      </span>
+    );
+  };
+
+  const renderTeamStatusPill = (team: Team) => {
     if (team.team_status === 'removed') {
-      return <Badge variant="destructive" className="gap-1"><Trash2 className="w-3 h-3" /> Đã loại</Badge>;
+      const p = statusPillPalette('removed');
+      return (
+        <span style={{ ...statusPillBase, background: p.bg, color: p.fg }}>
+          <Trash2 className="w-3 h-3" />
+          {txt.btcRemoved}
+        </span>
+      );
     }
     if (team.team_status === 'rejected') {
-      return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> Từ chối</Badge>;
+      const p = statusPillPalette('rejected');
+      return (
+        <span style={{ ...statusPillBase, background: p.bg, color: p.fg }}>
+          <XCircle className="w-3 h-3" />
+          {txt.btcRejected}
+        </span>
+      );
     }
     if (team.btc_approved) {
-      return <Badge className="gap-1 bg-green-600"><CheckCircle2 className="w-3 h-3" /> Đã duyệt</Badge>;
+      const p = statusPillPalette('approved');
+      return (
+        <span style={{ ...statusPillBase, background: p.bg, color: p.fg }}>
+          <CheckCircle2 className="w-3 h-3" />
+          {txt.btcApproved}
+        </span>
+      );
     }
-    return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Chờ duyệt</Badge>;
+    const p = statusPillPalette('pending');
+    return (
+      <span style={{ ...statusPillBase, background: p.bg, color: p.fg }}>
+        <Clock className="w-3 h-3" />
+        {txt.btcPending}
+      </span>
+    );
   };
 
-  const getPartnerStatus = (team: Team) => {
-    if (team.player2_user_id) {
-      return <Badge variant="outline" className="gap-1 text-green-600 border-green-600"><Users className="w-3 h-3" /> Đủ đội</Badge>;
+  // DUPR / Skill pill per player (slot reserved for upcoming DUPR integration)
+  const renderPlayerSkillPill = (
+    skillLevel: number | null | undefined,
+    ratingSystem: string | null | undefined,
+    profileLink: string | null | undefined,
+  ) => {
+    if (ratingSystem === 'DUPR' && skillLevel != null) {
+      return <span style={duprPillStyle}>DUPR {skillLevel}</span>;
     }
-    return <Badge variant="outline" className="gap-1 text-amber-600 border-amber-600"><UserMinus className="w-3 h-3" /> Thiếu partner</Badge>;
+    if (ratingSystem === 'other' && skillLevel != null) {
+      const labelMatch = profileLink?.startsWith('[') ? profileLink.match(/\[(.*?)\]/)?.[1] : null;
+      return (
+        <span style={duprPillStyle}>
+          {labelMatch ? `${labelMatch} ` : ''}
+          {skillLevel}
+        </span>
+      );
+    }
+    if (skillLevel != null) {
+      return <span style={duprPillStyle}>{skillLevel}</span>;
+    }
+    return <span style={{ color: 'var(--tl-fg-4)', fontSize: 12 }}>—</span>;
   };
 
-  // Prepare data for bracket setup
-  const approvedPlayersForBracket = approvedTeams.map(team => ({
-    name: `${team.player1_display_name}${team.player2_display_name ? ` / ${team.player2_display_name}` : ''}`,
-    team: team.player1_team || team.player2_team,
-    skill: team.player1_skill_level || null,
-  }));
-
+  // ─── Loading ────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <RefreshCw className="w-6 h-6 mx-auto mb-2 animate-spin text-muted-foreground" />
-          <p className="text-muted-foreground">Đang tải...</p>
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: 32, textAlign: 'center' }}>
+        <RefreshCw
+          className="w-6 h-6 animate-spin"
+          style={{ color: 'var(--tl-fg-3)', margin: '0 auto 8px' }}
+        />
+        <p
+          style={{
+            fontFamily: 'Geist Mono, ui-monospace, monospace',
+            fontSize: 12,
+            color: 'var(--tl-fg-3)',
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            margin: 0,
+          }}
+        >
+          {t.quickTable.loading}
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{pendingTeams.length}</p>
-              <p className="text-sm text-muted-foreground">Chờ duyệt</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{approvedTeams.length}</p>
-              <p className="text-sm text-muted-foreground">Đã duyệt</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <Users className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{approvedTeams.filter(t => t.player2_user_id).length}</p>
-              <p className="text-sm text-muted-foreground">Đủ đội</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{rejectedTeams.length + removedTeams.length}</p>
-              <p className="text-sm text-muted-foreground">Từ chối/Loại</p>
-            </div>
-          </div>
-        </Card>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Stats — 4 cells */}
+      <div
+        style={{
+          ...surfaceCard,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 1,
+          background: 'var(--tl-border)',
+          overflow: 'hidden',
+        }}
+        className="md:!grid-cols-4"
+      >
+        <div style={{ background: 'var(--tl-bg-elev)' }}>
+          <StatCell icon={<Clock className="w-5 h-5" />} count={pendingTeams.length} label={txt.pendingTeams} kind="pending" />
+        </div>
+        <div style={{ background: 'var(--tl-bg-elev)' }}>
+          <StatCell
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            count={approvedTeams.length}
+            label={txt.approvedTeams}
+            kind="approved"
+          />
+        </div>
+        <div style={{ background: 'var(--tl-bg-elev)' }}>
+          <StatCell
+            icon={<Users className="w-5 h-5" />}
+            count={approvedTeams.filter(tm => tm.player2_user_id).length}
+            label={txt.fullPairs}
+            kind="pair-complete"
+          />
+        </div>
+        <div style={{ background: 'var(--tl-bg-elev)' }}>
+          <StatCell
+            icon={<XCircle className="w-5 h-5" />}
+            count={rejectedTeams.length + removedTeams.length}
+            label={txt.rejectedOrRemoved}
+            kind="rejected"
+          />
+        </div>
       </div>
 
-      {/* Start Bracket Button */}
+      {/* Ready-to-bracket banner */}
       {approvedTeams.length >= 3 && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="font-semibold flex items-center gap-2">
-                  <Swords className="w-4 h-4 text-primary" />
-                  Sẵn sàng chia bảng
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Có {approvedTeams.length} đội đã được duyệt
-                </p>
-              </div>
-              <Button onClick={handleStartBracket}>
-                <Swords className="w-4 h-4 mr-2" />
-                Chia bảng
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div
+          style={{
+            ...surfaceCard,
+            borderColor: 'var(--tl-green)',
+            background: 'var(--tl-green-glow)',
+            padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <h3 style={{ ...sectionTitle, fontSize: 20, marginBottom: 4 }}>
+              <Swords
+                className="inline w-4 h-4 mr-2"
+                style={{ color: 'var(--tl-green)', verticalAlign: 'middle' }}
+              />
+              {txt.readyToBracket}
+            </h3>
+            <p style={{ fontSize: 13.5, color: 'var(--tl-fg-2)', margin: 0 }}>
+              {txt.teamsApprovedCount(approvedTeams.length)}
+            </p>
+          </div>
+          <button type="button" className="tl-btn green" onClick={handleStartBracket}>
+            <Swords className="w-4 h-4" />
+            {txt.createBracket}
+          </button>
+        </div>
       )}
 
-      {/* All Registered Teams */}
+      {/* Registered teams */}
       {allRegisteredTeams.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                Các VĐV đã đăng ký ({allRegisteredTeams.length})
-              </CardTitle>
-              {/* Batch actions */}
-              {pendingTeams.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    {selectedIds.length > 0 && `${selectedIds.length} đã chọn`}
-                  </span>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={handleBatchApprove}
-                    disabled={selectedIds.length === 0 || batchLoading}
-                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                    Duyệt ({selectedIds.length})
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={handleBatchReject}
-                    disabled={selectedIds.length === 0 || batchLoading}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    Từ chối ({selectedIds.length})
-                  </Button>
-                </div>
-              )}
+        <div style={surfaceCard}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              padding: '14px 16px',
+              borderBottom: '1px solid var(--tl-border)',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Users className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+              <h3 style={sectionTitle}>{txt.allRegistered}</h3>
+              <span
+                style={{
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 10.5,
+                  fontWeight: 500,
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  background: 'var(--tl-surface)',
+                  border: '1px solid var(--tl-border)',
+                  color: 'var(--tl-fg-3)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {allRegisteredTeams.length}
+              </span>
             </div>
-          </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
+            {pendingTeams.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {selectedIds.length > 0 && (
+                  <span
+                    style={{
+                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      fontSize: 11,
+                      color: 'var(--tl-fg-3)',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    {selectedIds.length} {txt.selected}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="tl-btn"
+                  onClick={handleBatchApprove}
+                  disabled={selectedIds.length === 0 || batchLoading}
+                  style={{
+                    padding: '5px 10px',
+                    fontSize: 12,
+                    color: 'var(--tl-green)',
+                  }}
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  {txt.approveSelected} ({selectedIds.length})
+                </button>
+                <button
+                  type="button"
+                  className="tl-btn"
+                  onClick={handleBatchReject}
+                  disabled={selectedIds.length === 0 || batchLoading}
+                  style={{
+                    padding: '5px 10px',
+                    fontSize: 12,
+                    color: 'var(--tl-live)',
+                  }}
+                >
+                  <XCircle className="w-4 h-4" />
+                  {txt.rejectSelected} ({selectedIds.length})
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
                   {pendingTeams.length > 0 && (
-                    <TableHead className="w-10">
+                    <th style={{ ...headStyle, width: 44 }}>
                       <Checkbox
-                        checked={pendingTeams.length > 0 && pendingTeams.every(t => selectedIds.includes(t.id))}
+                        checked={pendingTeams.length > 0 && pendingTeams.every(tm => selectedIds.includes(tm.id))}
                         onCheckedChange={toggleSelectAllPending}
-                        aria-label="Chọn tất cả"
+                        aria-label={txt.selectAll}
                       />
-                    </TableHead>
+                    </th>
                   )}
-                  <TableHead className="w-10">#</TableHead>
-                  <TableHead>Đội</TableHead>
-                  <TableHead>VĐV 1</TableHead>
-                  <TableHead>VĐV 2 (Partner)</TableHead>
-                  <TableHead>Trình độ</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+                  <th style={{ ...headStyle, width: 36, textAlign: 'center' }}>#</th>
+                  <th style={headStyle}>{txt.team}</th>
+                  <th style={headStyle}>{txt.player1}</th>
+                  <th style={headStyle}>{txt.player2}</th>
+                  <th style={{ ...headStyle, width: 160 }}>
+                    DUPR / {txt.skill}
+                  </th>
+                  <th style={{ ...headStyle, width: 130 }}>{txt.status}</th>
+                  <th style={{ ...headStyle, textAlign: 'right', width: 110 }}>{txt.actions}</th>
+                </tr>
+              </thead>
+              <tbody>
                 {allRegisteredTeams.map((team, idx) => (
-                  <TableRow key={team.id}>
+                  <tr
+                    key={team.id}
+                    onMouseEnter={onRowEnter}
+                    onMouseLeave={onRowLeave}
+                    style={{ transition: 'background 0.15s' }}
+                  >
                     {pendingTeams.length > 0 && (
-                      <TableCell>
+                      <td style={cellStyle}>
                         {!team.btc_approved && (
                           <Checkbox
                             checked={selectedIds.includes(team.id)}
                             onCheckedChange={() => toggleSelect(team.id)}
-                            aria-label={`Chọn ${team.player1_display_name}`}
+                            aria-label={txt.chooseName(team.player1_display_name)}
                           />
                         )}
-                      </TableCell>
+                      </td>
                     )}
-                    <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                    <TableCell>
-                      {getPartnerStatus(team)}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{team.player1_display_name}</p>
+                    <td
+                      style={{
+                        ...cellStyle,
+                        textAlign: 'center',
+                        color: 'var(--tl-fg-2)',
+                        fontWeight: 600,
+                        fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      }}
+                    >
+                      {idx + 1}
+                    </td>
+                    <td style={cellStyle}>{renderPairStatus(team)}</td>
+                    <td style={cellStyle}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span
+                          style={{
+                            fontFamily: 'Instrument Serif, serif',
+                            fontStyle: 'italic',
+                            fontSize: 17,
+                            fontWeight: 400,
+                            letterSpacing: '-0.01em',
+                            color: 'var(--tl-fg)',
+                          }}
+                        >
+                          {team.player1_display_name}
+                        </span>
                         {team.player1_team && (
-                          <p className="text-sm text-muted-foreground">{team.player1_team}</p>
+                          <span style={{ fontSize: 12, color: 'var(--tl-fg-3)' }}>{team.player1_team}</span>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td style={cellStyle}>
                       {team.player2_user_id ? (
-                        <div>
-                          <p className="font-medium">{team.player2_display_name}</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span
+                            style={{
+                              fontFamily: 'Instrument Serif, serif',
+                              fontStyle: 'italic',
+                              fontSize: 17,
+                              fontWeight: 400,
+                              letterSpacing: '-0.01em',
+                              color: 'var(--tl-fg)',
+                            }}
+                          >
+                            {team.player2_display_name}
+                          </span>
                           {team.player2_team && (
-                            <p className="text-sm text-muted-foreground">{team.player2_team}</p>
+                            <span style={{ fontSize: 12, color: 'var(--tl-fg-3)' }}>{team.player2_team}</span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground italic">Chưa có</span>
+                        <span
+                          style={{
+                            fontStyle: 'italic',
+                            color: 'var(--tl-fg-4)',
+                            fontSize: 13,
+                          }}
+                        >
+                          {txt.noPartnerYet}
+                        </span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {team.player1_skill_level && (
-                          <p className="text-xs">
-                            <span className="text-muted-foreground">VĐV1:</span>{' '}
-                            {team.player1_rating_system === 'DUPR' ? 'DUPR ' : 
-                             team.player1_rating_system === 'other' ? '' : ''}{team.player1_skill_level}
-                            {team.player1_profile_link && team.player1_rating_system === 'other' && team.player1_profile_link.startsWith('[') && (
-                              <span className="text-muted-foreground ml-1">
-                                ({team.player1_profile_link.match(/\[(.*?)\]/)?.[1] || 'Khác'})
-                              </span>
-                            )}
-                          </p>
-                        )}
-                        {team.player2_skill_level && (
-                          <p className="text-xs">
-                            <span className="text-muted-foreground">VĐV2:</span>{' '}
-                            {team.player2_rating_system === 'DUPR' ? 'DUPR ' : ''}{team.player2_skill_level}
-                            {team.player2_profile_link && team.player2_rating_system === 'other' && team.player2_profile_link.startsWith('[') && (
-                              <span className="text-muted-foreground ml-1">
-                                ({team.player2_profile_link.match(/\[(.*?)\]/)?.[1] || 'Khác'})
-                              </span>
-                            )}
-                          </p>
-                        )}
-                        {!team.player1_skill_level && !team.player2_skill_level && (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+                    </td>
+                    <td style={cellStyle}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span
+                            style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontSize: 10,
+                              color: 'var(--tl-fg-4)',
+                              letterSpacing: '0.04em',
+                              minWidth: 24,
+                            }}
+                          >
+                            P1
+                          </span>
+                          {renderPlayerSkillPill(
+                            team.player1_skill_level,
+                            team.player1_rating_system,
+                            team.player1_profile_link,
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span
+                            style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontSize: 10,
+                              color: 'var(--tl-fg-4)',
+                              letterSpacing: '0.04em',
+                              minWidth: 24,
+                            }}
+                          >
+                            P2
+                          </span>
+                          {team.player2_user_id
+                            ? renderPlayerSkillPill(
+                                team.player2_skill_level,
+                                team.player2_rating_system,
+                                team.player2_profile_link,
+                              )
+                            : <span style={{ color: 'var(--tl-fg-4)', fontSize: 12 }}>—</span>}
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>{getTeamStatusBadge(team)}</TableCell>
-                    <TableCell className="text-right">
+                    </td>
+                    <td style={cellStyle}>{renderTeamStatusPill(team)}</td>
+                    <td style={{ ...cellStyle, textAlign: 'right' }}>
                       {!team.btc_approved ? (
-                        <div className="flex items-center justify-end gap-1">
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-8 w-8 text-green-600" 
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <button
+                            type="button"
+                            className="tl-btn"
                             onClick={() => handleAction(team.id, 'approve')}
+                            aria-label={t.quickTable.approve}
+                            style={{ padding: '5px 8px', color: 'var(--tl-green)' }}
                           >
                             <Check className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-8 w-8 text-red-600" 
+                          </button>
+                          <button
+                            type="button"
+                            className="tl-btn"
                             onClick={() => setNoteDialog({ team, action: 'reject' })}
+                            aria-label={t.quickTable.reject}
+                            style={{ padding: '5px 8px', color: 'var(--tl-live)' }}
                           >
                             <X className="w-4 h-4" />
-                          </Button>
+                          </button>
                         </div>
                       ) : (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
+                            <button
+                              type="button"
+                              className="tl-btn"
+                              style={{ padding: '5px 8px' }}
+                              aria-label="more"
+                            >
                               <MoreVertical className="w-4 h-4" />
-                            </Button>
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
@@ -431,115 +792,157 @@ export function TeamManager({ tableId, shareId, table, onPendingCountChange }: T
                               onClick={() => setNoteDialog({ team, action: 'remove' })}
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
-                              Loại khỏi giải
+                              {txt.removeFromTour}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
-      {/* Rejected/Removed Teams (collapsed) */}
+      {/* Rejected / Removed (faded) */}
       {(rejectedTeams.length > 0 || removedTeams.length > 0) && (
-        <Card className="opacity-60">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <XCircle className="w-4 h-4 text-red-600" />
-              Từ chối / Đã loại ({rejectedTeams.length + removedTeams.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>VĐV</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Ghi chú</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[...rejectedTeams, ...removedTeams].map((team) => (
-                  <TableRow key={team.id}>
-                    <TableCell>
-                      <p className="font-medium">{team.player1_display_name}</p>
-                    </TableCell>
-                    <TableCell>{getTeamStatusBadge(team)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+        <div style={{ ...surfaceCard, opacity: 0.7 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '14px 16px',
+              borderBottom: '1px solid var(--tl-border)',
+            }}
+          >
+            <XCircle className="w-4 h-4" style={{ color: 'var(--tl-fg-3)' }} />
+            <h3 style={{ ...sectionTitle, color: 'var(--tl-fg-2)' }}>{txt.rejectedTeams}</h3>
+            <span
+              style={{
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                fontWeight: 500,
+                padding: '2px 8px',
+                borderRadius: 999,
+                background: 'var(--tl-surface)',
+                border: '1px solid var(--tl-border)',
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {rejectedTeams.length + removedTeams.length}
+            </span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={headStyle}>{txt.team}</th>
+                  <th style={{ ...headStyle, width: 140 }}>{txt.status}</th>
+                  <th style={headStyle}>{txt.notesLabel}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...rejectedTeams, ...removedTeams].map(team => (
+                  <tr
+                    key={team.id}
+                    onMouseEnter={onRowEnter}
+                    onMouseLeave={onRowLeave}
+                    style={{ transition: 'background 0.15s' }}
+                  >
+                    <td
+                      style={{
+                        ...cellStyle,
+                        fontFamily: 'Instrument Serif, serif',
+                        fontStyle: 'italic',
+                        fontSize: 16,
+                      }}
+                    >
+                      {team.player1_display_name}
+                      {team.player2_display_name && (
+                        <span style={{ color: 'var(--tl-fg-3)' }}> / {team.player2_display_name}</span>
+                      )}
+                    </td>
+                    <td style={cellStyle}>{renderTeamStatusPill(team)}</td>
+                    <td style={{ ...cellStyle, fontSize: 12.5, color: 'var(--tl-fg-3)' }}>
                       {team.btc_notes || '—'}
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* Empty state */}
       {teams.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="font-semibold mb-2">Chưa có đội nào đăng ký</h3>
-            <p className="text-muted-foreground">
-              Chia sẻ link đăng ký để VĐV có thể tham gia
-            </p>
-          </CardContent>
-        </Card>
+        <div className="tl-empty-card" style={{ padding: '48px 24px' }}>
+          <span className="tl-empty-card-mark">◌</span>
+          <span className="tl-empty-card-label">{txt.noTeamsYet}</span>
+          <p className="tl-empty-card-hint">{txt.shareLink}</p>
+        </div>
       )}
 
-      {/* Note Dialog */}
+      {/* Note Dialog (reject / remove confirm) */}
       <Dialog open={!!noteDialog} onOpenChange={() => setNoteDialog(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {noteDialog?.action === 'reject' && 'Từ chối đội'}
-              {noteDialog?.action === 'remove' && 'Loại đội khỏi giải'}
+              {noteDialog?.action === 'reject' && txt.rejectTeam}
+              {noteDialog?.action === 'remove' && txt.removeTeam}
             </DialogTitle>
             <DialogDescription>
               {noteDialog?.team.player1_display_name}
               {noteDialog?.team.player2_display_name && ` / ${noteDialog.team.player2_display_name}`}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="space-y-2">
-              <Label>Ghi chú (tùy chọn)</Label>
+              <Label htmlFor="btcRejectNotes" style={fieldLabel}>
+                {txt.noteOptional}
+              </Label>
               <Textarea
+                id="btcRejectNotes"
+                name="btcRejectNotes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Lý do từ chối hoặc loại..."
+                placeholder={txt.notePlaceholder}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNoteDialog(null)}>
-              Hủy
-            </Button>
-            <Button
-              variant="destructive"
+            <button type="button" className="tl-btn" onClick={() => setNoteDialog(null)}>
+              {txt.cancel}
+            </button>
+            <button
+              type="button"
+              className="tl-btn"
               onClick={() => noteDialog && handleAction(noteDialog.team.id, noteDialog.action, notes)}
+              style={{ color: 'var(--tl-live)' }}
             >
-              {noteDialog?.action === 'reject' ? 'Từ chối' : 'Loại khỏi giải'}
-            </Button>
+              {noteDialog?.action === 'reject' ? txt.rejectConfirm : txt.removeConfirm}
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Bracket Setup Dialog */}
+      {/* Bracket Setup Dialog — child component, refresh tracked in W2.1d audit */}
       {table && shareId && (
         <BracketSetupDialog
           open={showBracketSetup}
           onOpenChange={setShowBracketSetup}
           table={table}
           shareId={shareId}
-          approvedPlayers={approvedPlayersForBracket}
+          approvedPlayers={approvedTeams.map(team => ({
+            name: `${team.player1_display_name}${team.player2_display_name ? ` / ${team.player2_display_name}` : ''}`,
+            team: team.player1_team || team.player2_team,
+            skill: team.player1_skill_level || null,
+          }))}
         />
       )}
     </div>
