@@ -114,11 +114,24 @@ async function propagateWinnerToNextRound(
 
       const targetMatch = nextRoundMatches[nextMatchIndex];
       if (targetMatch) {
-        const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
-        await supabase
-          .from('doubles_elimination_matches')
-          .update({ [updateField]: winnerId })
-          .eq('id', targetMatch.id);
+        // W1.3 — explicit branches instead of dynamic-key
+        // `update({ [updateField]: winnerId })`. The Supabase
+        // generated types reject `{ [string]: string }` because the
+        // column union is fully constrained at the type level; the
+        // dynamic-key form forced a `never` index signature error
+        // (Scoring.tsx:120 pre-fix). Behaviour is identical — slot 0
+        // writes team_a_id, slot 1 writes team_b_id.
+        if (slot === 0) {
+          await supabase
+            .from('doubles_elimination_matches')
+            .update({ team_a_id: winnerId })
+            .eq('id', targetMatch.id);
+        } else {
+          await supabase
+            .from('doubles_elimination_matches')
+            .update({ team_b_id: winnerId })
+            .eq('id', targetMatch.id);
+        }
       }
     }
   }
