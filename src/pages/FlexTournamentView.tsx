@@ -4,11 +4,13 @@ import { useI18n } from '@/i18n';
 import { TheLineLayout } from '@/components/layout';
 import { useFlexTournament, type FlexTournamentData } from '@/hooks/useFlexTournament';
 import { useFlexRealtime } from '@/hooks/useFlexRealtime';
+import { useFlexTournamentReferees } from '@/hooks/useFlexTournamentReferees';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { FlexWorkspace } from '@/components/flex/FlexWorkspace';
+import { RefereeManagement } from '@/components/quicktable/RefereeManagement';
 import { Share2, Globe, Lock, Loader2, Settings, Trash2, Layers } from 'lucide-react';
 import {
   Sheet,
@@ -44,6 +46,13 @@ const FlexTournamentView = () => {
   const [isCreator, setIsCreator] = useState(false);
 
   const canManage = isCreator || isAdmin;
+
+  const {
+    referees,
+    loading: refereesLoading,
+    addRefereeByEmail,
+    removeReferee,
+  } = useFlexTournamentReferees(data?.tournament.id);
 
   const loadData = useCallback(async () => {
     if (!shareId) return;
@@ -244,6 +253,18 @@ const FlexTournamentView = () => {
                             onCheckedChange={handleVisibilityChange}
                           />
                         </div>
+
+                        {/* Referees — W3.4 unified referee model */}
+                        <RefereeManagement
+                          referees={referees.map((r) => ({
+                            id: r.id,
+                            email: r.email,
+                            display_name: r.display_name,
+                          }))}
+                          loading={refereesLoading}
+                          onAddReferee={addRefereeByEmail}
+                          onRemoveReferee={removeReferee}
+                        />
                       </div>
                     </SheetContent>
                   </Sheet>

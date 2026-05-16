@@ -1329,6 +1329,35 @@ export type Database = {
           },
         ]
       }
+      flex_tournament_referees: {
+        Row: {
+          created_at: string
+          id: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flex_tournament_referees_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "flex_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flex_tournaments: {
         Row: {
           created_at: string
