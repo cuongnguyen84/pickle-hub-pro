@@ -23,7 +23,7 @@ import {
   renderClubList,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
-  renderTools, renderToolPage,
+  renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
   renderLivestreamList, renderPrivacy, renderTerms,
@@ -90,8 +90,17 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // the X-Robots-Tag header and the bot path served the generic
   // renderDefault shell instead of the noindex shell — leaving a gap
   // in the same privacy surface Phase 2A was meant to close.
+  //
+  // W1.1 (2026-05-15) — REMOVED `/^\/(?:vi\/)?tools\/[^/]+\/new(?:\/|$)/`
+  // because /tools/doubles-elimination/new, /tools/flex-tournament/new,
+  // and /tools/team-match/new are public landing pages with high SEO
+  // value (CTAs to sign up + create tournament). They were getting
+  // X-Robots-Tag noindex + the renderNoindexShell bot view, which
+  // wasted their organic traffic potential. They now route to
+  // renderToolNewPage with page-specific metadata. The auth gate
+  // is enforced inside the React page (redirect to /login when no
+  // user) — that's a UX gate, not a search-indexability concern.
   /^\/(?:vi\/)?tools\/dashboard(?:\/|$)/,
-  /^\/(?:vi\/)?tools\/[^/]+\/new(?:\/|$)/,
   /^\/(?:vi\/)?tools\/[^/]+\/[^/]+\/setup(?:\/|$)/,
   /^\/(?:vi\/)?tools\/doubles-elimination\/match\/[^/]+\/score(?:\/|$)/,
   // Create + search flows migrated in PR 2 (TheLineLayout)
@@ -381,6 +390,16 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Organization
   match = path.match(/^\/org\/([^/]+)$/);
   if (match) return await renderOrgDetail(supabase, match[1], siteUrl);
+
+  // W1.1 (2026-05-15) — Setup pages /tools/{tool}/new are public
+  // landing pages with create-flow CTAs. They MUST be matched here
+  // BEFORE the tool-instance pattern below because that pattern's
+  // [^/]+ shareId capture would otherwise treat "new" as a tournament
+  // shareId and try to fetch a row that doesn't exist. Quick Tables
+  // has no /new variant — its list page IS the create flow.
+  if (path === "/tools/doubles-elimination/new") return renderToolNewPage("doubles-elimination", siteUrl, rawPath, lang);
+  if (path === "/tools/flex-tournament/new") return renderToolNewPage("flex-tournament", siteUrl, rawPath, lang);
+  if (path === "/tools/team-match/new") return renderToolNewPage("team-match", siteUrl, rawPath, lang);
 
   // Tool instances (noindex)
   match = path.match(/^\/tools\/quick-tables\/([^/]+)$/);
