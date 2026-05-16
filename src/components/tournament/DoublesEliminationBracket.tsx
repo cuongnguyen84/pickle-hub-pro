@@ -1,19 +1,164 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Crown, Trophy, Radio, Play, Pencil, Check, X, RefreshCw, AlertCircle } from 'lucide-react';
+import { Crown, Trophy, Radio, Play, Pencil, Check, X, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Match, Team, useDoublesElimination } from '@/hooks/useDoublesElimination';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useI18n } from '@/i18n';
 
-// Bracket connector component - draws the bracket lines like in traditional tournament brackets
-// Pattern: vertical line on left side of pair, horizontal line extending to next round
+// ─── Shared TheLineLayout tokens ─────────────────────────────────────────
+// Match the W2.1 pattern from src/components/quicktable/RegistrationManager.tsx
+// and src/components/quicktable/TeamManager.tsx. No raw hex, no Tailwind
+// palette — every visual decision flows through CSS variables from
+// the-line.css.
+
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
+
+const matchCardStyle: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius)',
+  overflow: 'hidden',
+  transition: 'border-color 0.15s, box-shadow 0.15s',
+};
+
+const teamNameStyle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 17,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  lineHeight: 1.15,
+};
+
+const monoKicker: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const monoMicro: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-3)',
+};
+
+const scoreCellBase: React.CSSProperties = {
+  width: 38,
+  height: 32,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 6,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 14,
+  fontWeight: 600,
+  fontVariantNumeric: 'tabular-nums',
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-2)',
+  flexShrink: 0,
+};
+
+const scoreCellWinner: React.CSSProperties = {
+  ...scoreCellBase,
+  background: 'var(--tl-green)',
+  color: 'var(--tl-bg)',
+};
+
+const pillBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10,
+  fontWeight: 500,
+  padding: '2px 7px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+};
+
+const livePillStyle: React.CSSProperties = {
+  ...pillBase,
+  background: 'rgba(255, 65, 54, 0.12)',
+  color: 'var(--tl-live)',
+};
+
+const donePillStyle: React.CSSProperties = {
+  ...pillBase,
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-3)',
+};
+
+const finalPillStyle: React.CSSProperties = {
+  ...pillBase,
+  background: 'var(--tl-green-glow)',
+  color: 'var(--tl-green)',
+  border: '1px solid rgba(0, 185, 107, 0.30)',
+};
+
+const formatPillStyle: React.CSSProperties = {
+  ...pillBase,
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-2)',
+  border: '1px solid var(--tl-border)',
+};
+
+const thirdPlacePillStyle: React.CSSProperties = {
+  ...pillBase,
+  background: 'rgba(233, 182, 73, 0.12)',
+  color: 'var(--tl-gold)',
+  border: '1px solid rgba(233, 182, 73, 0.30)',
+};
+
+// Inline button — small, tokenized. Matches `.tl-btn` look but rendered
+// inline because the canonical class targets `[data-theme="the-line"]`
+// only and we want the bracket buttons sized down for dense rows.
+const inlineBtnStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  padding: '5px 10px',
+  borderRadius: 6,
+  border: '1px solid var(--tl-border)',
+  background: 'transparent',
+  color: 'var(--tl-fg)',
+  cursor: 'pointer',
+  transition: 'background 0.15s, border-color 0.15s',
+};
+
+const inlineBtnPrimaryStyle: React.CSSProperties = {
+  ...inlineBtnStyle,
+  background: 'var(--tl-green)',
+  color: 'var(--tl-bg)',
+  borderColor: 'var(--tl-green)',
+  fontWeight: 600,
+};
+
+const inlineBtnGhostStyle: React.CSSProperties = {
+  ...inlineBtnStyle,
+  border: '1px solid transparent',
+  color: 'var(--tl-fg-2)',
+};
 
 interface DoublesEliminationBracketProps {
   matches: Match[];
@@ -30,8 +175,8 @@ interface DoublesEliminationBracketProps {
   onR3Assigned?: (tiedTeamsInfo?: { count: number; names: string[] }) => void;
 }
 
-const DoublesEliminationBracket = ({ 
-  matches, 
+const DoublesEliminationBracket = ({
+  matches,
   teams,
   tournamentId,
   onMatchClick,
@@ -40,7 +185,7 @@ const DoublesEliminationBracket = ({
   canEdit = false,
   onScoreUpdated,
   onMatchUpdated,
-  onR3Assigned
+  onR3Assigned,
 }: DoublesEliminationBracketProps) => {
   const { checkAndAssignR3, checkAndGeneratePlayoff } = useDoublesElimination();
   const { toast } = useToast();
@@ -48,17 +193,17 @@ const DoublesEliminationBracket = ({
   const b = t.doublesElimination.bracket;
   const [isAssigningR3, setIsAssigningR3] = useState(false);
   const [isGeneratingPlayoff, setIsGeneratingPlayoff] = useState(false);
-  
+
   // Track if we've already triggered generation in this session to prevent duplicate calls
   const hasTriggeredR3Ref = React.useRef(false);
   const hasTriggeredPlayoffRef = React.useRef(false);
-  
+
   // Reset refs when matches change significantly (e.g., after reload)
   const matchStatusKey = React.useMemo(() => {
     return matches.map(m => `${m.id}:${m.status}`).join(',');
   }, [matches]);
-  
-  const getTeam = (id: string | null): Team | undefined => 
+
+  const getTeam = (id: string | null): Team | undefined =>
     id ? teams.find(t => t.id === id) : undefined;
 
   const formatTeamName = (team: Team | undefined): string => {
@@ -71,39 +216,39 @@ const DoublesEliminationBracket = ({
   };
 
   const { rounds, champion, loserMatches, r1Completed, r2Completed, r3NeedsAssignment, r3Completed, playoffNeedsGeneration } = useMemo(() => {
-    if (matches.length === 0) return { 
-      rounds: [], 
-      champion: null, 
-      loserMatches: [], 
-      r1Completed: false, 
+    if (matches.length === 0) return {
+      rounds: [],
+      champion: null,
+      loserMatches: [],
+      r1Completed: false,
       r2Completed: false,
       r3NeedsAssignment: false,
       r3Completed: false,
-      playoffNeedsGeneration: false
+      playoffNeedsGeneration: false,
     };
 
     const r1Matches = matches.filter(m => m.round_number === 1 && m.bracket_type === 'winner');
     const r2LoserMatches = matches.filter(m => m.round_number === 2 && m.bracket_type === 'loser');
     const r3Matches = matches.filter(m => m.round_number === 3);
     const playoffMatches = matches.filter(m => m.round_number >= 4);
-    
+
     const r1CompletedCheck = r1Matches.length > 0 && r1Matches.every(m => m.status === 'completed');
     const r2CompletedCheck = r2LoserMatches.length > 0 && r2LoserMatches.every(m => m.status === 'completed');
     const r3NeedsAssignmentCheck = r3Matches.length > 0 && r3Matches.some(m => !m.team_a_id || !m.team_b_id);
     const r3CompletedCheck = r3Matches.length > 0 && r3Matches.every(m => m.status === 'completed');
     const playoffNeedsGenerationCheck = r3CompletedCheck && playoffMatches.length === 0;
-    
-    const mainBracketMatches = matches.filter(m => 
+
+    const mainBracketMatches = matches.filter(m =>
       (m.round_number >= 3 && (m.bracket_type === 'merged' || m.bracket_type === 'single')) ||
       m.round_type === 'final'
     ).filter(m => m.round_type !== 'third_place');
 
     const roundMap = new Map<number, Match[]>();
-    
+
     if (r1Matches.length > 0) {
       roundMap.set(1, r1Matches.sort((a, b) => a.match_number - b.match_number));
     }
-    
+
     mainBracketMatches.forEach(match => {
       const round = match.round_number;
       if (!roundMap.has(round)) {
@@ -119,25 +264,25 @@ const DoublesEliminationBracket = ({
     const roundNumbers = Array.from(roundMap.keys()).sort((a, b) => a - b);
     const roundsArray = roundNumbers.map(roundNum => {
       const roundMatches = roundMap.get(roundNum) || [];
-      return { 
-        roundNumber: roundNum, 
+      return {
+        roundNumber: roundNum,
         matches: roundMatches,
-        roundType: roundMatches[0]?.round_type || 'elimination'
+        roundType: roundMatches[0]?.round_type || 'elimination',
       };
     });
 
     const finalMatch = matches.find(m => m.round_type === 'final');
     const champion = finalMatch?.winner_id ? getTeam(finalMatch.winner_id) : null;
 
-    return { 
-      rounds: roundsArray, 
+    return {
+      rounds: roundsArray,
       champion,
       loserMatches: r2LoserMatches.sort((a, b) => a.match_number - b.match_number),
       r1Completed: r1CompletedCheck,
       r2Completed: r2CompletedCheck,
       r3NeedsAssignment: r3NeedsAssignmentCheck,
       r3Completed: r3CompletedCheck,
-      playoffNeedsGeneration: playoffNeedsGenerationCheck
+      playoffNeedsGeneration: playoffNeedsGenerationCheck,
     };
   }, [matches, teams]);
 
@@ -172,9 +317,9 @@ const DoublesEliminationBracket = ({
         setIsGeneratingPlayoff(true);
         const result = await checkAndGeneratePlayoff(tournamentId);
         if (result.generated) {
-          toast({ 
-            title: b.playoffCreated, 
-            description: b.playoffCreatedDesc 
+          toast({
+            title: b.playoffCreated,
+            description: b.playoffCreatedDesc,
           });
           onScoreUpdated?.(); // Reload to show new playoff matches
         }
@@ -194,7 +339,7 @@ const DoublesEliminationBracket = ({
       onR3Assigned?.(result.tiedTeamsInfo);
       onScoreUpdated?.();
     } else if (result.error === 'NOT_ALL_MATCHES_COMPLETED') {
-      toast({ title: b.waitingR1R2, description: b.waitingR1R2, variant: "destructive" });
+      toast({ title: b.waitingR1R2, description: b.waitingR1R2, variant: 'destructive' });
     }
     setIsAssigningR3(false);
   };
@@ -216,13 +361,13 @@ const DoublesEliminationBracket = ({
     }
   };
 
+  // ─── Empty bracket ────────────────────────────────────────────────────
   if (matches.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          {b.noBracket}
-        </CardContent>
-      </Card>
+      <div className="tl-empty-card">
+        <div className="tl-empty-card-mark">◌</div>
+        <div className="tl-empty-card-label">{b.noBracket}</div>
+      </div>
     );
   }
 
@@ -230,234 +375,284 @@ const DoublesEliminationBracket = ({
   const r3Rounds = rounds.filter(r => r.roundNumber === 3);
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* ─── Champion banner ────────────────────────────────────────────── */}
       {!showPreliminaryOnly && champion && (
-        <Card className="border-primary/50 bg-gradient-to-r from-primary/10 to-primary/5">
-          <CardContent className="py-6">
-            <div className="flex items-center justify-center gap-3">
-              <Trophy className="w-8 h-8 text-primary" />
-              <div className="text-center">
-                <div className="text-sm text-muted-foreground">{b.champion}</div>
-                <div className="text-2xl font-bold text-primary">{formatTeamName(champion)}</div>
-              </div>
-              <Trophy className="w-8 h-8 text-primary" />
+        <div
+          style={{
+            ...surfaceCard,
+            background:
+              'linear-gradient(180deg, var(--tl-green-glow) 0%, transparent 100%)',
+            border: '1px solid rgba(0, 185, 107, 0.35)',
+            padding: '22px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 18,
+          }}
+        >
+          <Trophy
+            className="w-8 h-8"
+            style={{ color: 'var(--tl-green)' }}
+            aria-hidden
+          />
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ ...monoKicker, color: 'var(--tl-green)', marginBottom: 6 }}>
+              {b.champion}
             </div>
-          </CardContent>
-        </Card>
+            <div
+              style={{
+                fontFamily: 'Instrument Serif, serif',
+                fontStyle: 'italic',
+                fontWeight: 400,
+                fontSize: 30,
+                letterSpacing: '-0.02em',
+                color: 'var(--tl-fg)',
+                lineHeight: 1.1,
+              }}
+            >
+              {formatTeamName(champion)}
+            </div>
+          </div>
+          <Trophy
+            className="w-8 h-8"
+            style={{ color: 'var(--tl-green)' }}
+            aria-hidden
+          />
+        </div>
       )}
 
-      {/* PRELIMINARY VIEW */}
+      {/* ─── PRELIMINARY VIEW ───────────────────────────────────────────── */}
       {!showPlayoffOnly && (
-        <div className="space-y-4">
-          {/* Progress bar */}
-          <div className="flex items-center gap-2 px-1">
-            <div className="flex items-center gap-1.5">
-              <div className={cn(
-                "w-2.5 h-2.5 rounded-full transition-colors",
-                r1Completed ? "bg-emerald-500" : "bg-muted-foreground/30"
-              )} />
-              <span className={cn(
-                "text-xs font-medium transition-colors",
-                r1Completed ? "text-emerald-500" : "text-muted-foreground"
-              )}>V1</span>
-            </div>
-            <div className="w-6 h-px bg-border" />
-            <div className="flex items-center gap-1.5">
-              <div className={cn(
-                "w-2.5 h-2.5 rounded-full transition-colors",
-                r2Completed ? "bg-amber-500" : "bg-muted-foreground/30"
-              )} />
-              <span className={cn(
-                "text-xs font-medium transition-colors",
-                r2Completed ? "text-amber-500" : "text-muted-foreground"
-              )}>V2</span>
-            </div>
-            <div className="w-6 h-px bg-border" />
-            <div className="flex items-center gap-1.5">
-              <div className={cn(
-                "w-2.5 h-2.5 rounded-full transition-colors",
-                !r3NeedsAssignment && r1Completed && r2Completed ? "bg-blue-500" : "bg-muted-foreground/30"
-              )} />
-              <span className={cn(
-                "text-xs font-medium transition-colors",
-                !r3NeedsAssignment && r1Completed && r2Completed ? "text-blue-500" : "text-muted-foreground"
-              )}>V3</span>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Progress strip — V1 / V2 / V3 dots */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 2px' }}>
+            <ProgressDot label="V1" active={r1Completed} tone="green" />
+            <div
+              style={{
+                width: 24,
+                height: 1,
+                background: 'var(--tl-border)',
+                flexShrink: 0,
+              }}
+            />
+            <ProgressDot label="V2" active={r2Completed} tone="gold" />
+            <div
+              style={{
+                width: 24,
+                height: 1,
+                background: 'var(--tl-border)',
+                flexShrink: 0,
+              }}
+            />
+            <ProgressDot
+              label="V3"
+              active={!r3NeedsAssignment && r1Completed && r2Completed}
+              tone="green"
+            />
 
             {/* Manual R3 assignment button */}
             {canEdit && r1Completed && r2Completed && r3NeedsAssignment && (
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <button
+                type="button"
+                name="assign-r3"
                 onClick={handleManualR3Assignment}
                 disabled={isAssigningR3}
-                className="ml-auto h-7 text-xs"
+                style={{
+                  ...inlineBtnStyle,
+                  marginLeft: 'auto',
+                  opacity: isAssigningR3 ? 0.5 : 1,
+                  cursor: isAssigningR3 ? 'wait' : 'pointer',
+                }}
               >
-                <RefreshCw className={cn("w-3 h-3 mr-1", isAssigningR3 && "animate-spin")} />
+                <RefreshCw
+                  className={cn('w-3 h-3', isAssigningR3 && 'animate-spin')}
+                />
                 {b.assignR3}
-              </Button>
+              </button>
             )}
           </div>
 
           {/* Horizontal bracket layout */}
-          <div className="overflow-x-auto pb-4 -mx-4 px-4">
-            <div className="flex gap-6 min-w-max items-start">
+          <div
+            style={{
+              overflowX: 'auto',
+              paddingBottom: 16,
+              marginLeft: -16,
+              marginRight: -16,
+              paddingLeft: 16,
+              paddingRight: 16,
+            }}
+          >
+            <div style={{ display: 'flex', gap: 24, minWidth: 'max-content', alignItems: 'flex-start' }}>
               {/* R1 Winner Matches */}
               {rounds.find(r => r.roundNumber === 1) && (
-                <div className="flex flex-col min-w-[280px]">
-                  <div className="mb-3 pb-2 border-b border-emerald-500/30">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-1 h-5 rounded-full bg-emerald-500" />
-                        <span className="font-semibold text-sm text-foreground">{b.round} 1</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                        {rounds.find(r => r.roundNumber === 1)?.matches.filter(m => m.status === 'completed').length || 0}/
-                        {rounds.find(r => r.roundNumber === 1)?.matches.length || 0}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 ml-3">{b.winnerBracket}</p>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
-                      <BracketMatchCard
-                        key={match.id}
-                        match={match}
-                        allMatches={matches}
-                        teamA={getTeam(match.team_a_id)}
-                        teamB={getTeam(match.team_b_id)}
-                        formatTeamName={formatTeamName}
-                        isFinal={false}
-                        canEdit={canEdit}
-                        onScoreUpdated={onScoreUpdated}
-                        onMatchUpdated={onMatchUpdated}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <RoundColumn
+                  title={`${b.round} 1`}
+                  subtitle={b.winnerBracket}
+                  completed={rounds.find(r => r.roundNumber === 1)?.matches.filter(m => m.status === 'completed').length || 0}
+                  total={rounds.find(r => r.roundNumber === 1)?.matches.length || 0}
+                  accent="var(--tl-green)"
+                >
+                  {rounds.find(r => r.roundNumber === 1)?.matches.map((match) => (
+                    <BracketMatchCard
+                      key={match.id}
+                      match={match}
+                      allMatches={matches}
+                      teamA={getTeam(match.team_a_id)}
+                      teamB={getTeam(match.team_b_id)}
+                      formatTeamName={formatTeamName}
+                      isFinal={false}
+                      canEdit={canEdit}
+                      onScoreUpdated={onScoreUpdated}
+                      onMatchUpdated={onMatchUpdated}
+                    />
+                  ))}
+                </RoundColumn>
               )}
 
               {/* R2 Loser Matches */}
               {loserMatches.length > 0 && (
-                <div className="flex flex-col min-w-[280px]">
-                  <div className="mb-3 pb-2 border-b border-amber-500/30">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-1 h-5 rounded-full bg-amber-500" />
-                        <span className="font-semibold text-sm text-foreground">{b.round} 2</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                        {loserMatches.filter(m => m.status === 'completed').length}/{loserMatches.length}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 ml-3">{b.loserBracket}</p>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {loserMatches.map((match) => (
-                      <BracketMatchCard
-                        key={match.id}
-                        match={match}
-                        allMatches={matches}
-                        teamA={getTeam(match.team_a_id)}
-                        teamB={getTeam(match.team_b_id)}
-                        formatTeamName={formatTeamName}
-                        isFinal={false}
-                        canEdit={canEdit}
-                        onScoreUpdated={onScoreUpdated}
-                        onMatchUpdated={onMatchUpdated}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <RoundColumn
+                  title={`${b.round} 2`}
+                  subtitle={b.loserBracket}
+                  completed={loserMatches.filter(m => m.status === 'completed').length}
+                  total={loserMatches.length}
+                  accent="var(--tl-gold)"
+                >
+                  {loserMatches.map((match) => (
+                    <BracketMatchCard
+                      key={match.id}
+                      match={match}
+                      allMatches={matches}
+                      teamA={getTeam(match.team_a_id)}
+                      teamB={getTeam(match.team_b_id)}
+                      formatTeamName={formatTeamName}
+                      isFinal={false}
+                      canEdit={canEdit}
+                      onScoreUpdated={onScoreUpdated}
+                      onMatchUpdated={onMatchUpdated}
+                    />
+                  ))}
+                </RoundColumn>
               )}
 
               {/* R3 Merge Matches */}
-              <div className="flex flex-col min-w-[280px]">
-                <div className="mb-3 pb-2 border-b border-blue-500/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1 h-5 rounded-full bg-blue-500" />
-                      <span className="font-semibold text-sm text-foreground">{b.round} 3</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                      {r3Rounds[0]?.matches.filter(m => m.status === 'completed').length || 0}/
-                      {r3Rounds[0]?.matches.length || 0}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 ml-3">{b.finalElimination}</p>
-                </div>
-                
+              <RoundColumn
+                title={`${b.round} 3`}
+                subtitle={b.finalElimination}
+                completed={r3Rounds[0]?.matches.filter(m => m.status === 'completed').length || 0}
+                total={r3Rounds[0]?.matches.length || 0}
+                accent="var(--tl-green)"
+              >
                 {r3NeedsAssignment && r1Completed && r2Completed ? (
-                  <div className="flex flex-col items-center justify-center py-6 text-center border border-dashed border-muted rounded-lg">
-                    <RefreshCw className={cn(
-                      "w-5 h-5 mb-2",
-                      isAssigningR3 ? "animate-spin text-primary" : "text-muted-foreground"
-                    )} />
-                    <p className="text-xs text-muted-foreground">
+                  <div
+                    style={{
+                      ...surfaceCard,
+                      borderStyle: 'dashed',
+                      padding: '20px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <RefreshCw
+                      className={cn(
+                        'w-5 h-5',
+                        isAssigningR3 && 'animate-spin',
+                      )}
+                      style={{ color: isAssigningR3 ? 'var(--tl-green)' : 'var(--tl-fg-3)' }}
+                    />
+                    <p style={{ ...monoMicro, margin: 0, textAlign: 'center' }}>
                       {isAssigningR3 ? b.assigning : b.waitingAssignment}
                     </p>
                   </div>
                 ) : r3Rounds.length > 0 && r3Rounds[0].matches.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {r3Rounds[0].matches.map((match) => (
-                      <BracketMatchCard
-                        key={match.id}
-                        match={match}
-                        allMatches={matches}
-                        teamA={getTeam(match.team_a_id)}
-                        teamB={getTeam(match.team_b_id)}
-                        formatTeamName={formatTeamName}
-                        isFinal={false}
-                        canEdit={canEdit}
-                        onScoreUpdated={onScoreUpdated}
-                        onMatchUpdated={onMatchUpdated}
-                      />
-                    ))}
-                  </div>
+                  r3Rounds[0].matches.map((match) => (
+                    <BracketMatchCard
+                      key={match.id}
+                      match={match}
+                      allMatches={matches}
+                      teamA={getTeam(match.team_a_id)}
+                      teamB={getTeam(match.team_b_id)}
+                      formatTeamName={formatTeamName}
+                      isFinal={false}
+                      canEdit={canEdit}
+                      onScoreUpdated={onScoreUpdated}
+                      onMatchUpdated={onMatchUpdated}
+                    />
+                  ))
                 ) : (
-                  <div className="flex items-center justify-center py-6 text-center border border-dashed border-muted rounded-lg">
-                    <p className="text-xs text-muted-foreground">
-                      {!r1Completed || !r2Completed 
-                        ? b.waitingR1R2 
-                        : b.noMatches}
+                  <div
+                    style={{
+                      ...surfaceCard,
+                      borderStyle: 'dashed',
+                      padding: '20px 16px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <p style={{ ...monoMicro, margin: 0 }}>
+                      {!r1Completed || !r2Completed ? b.waitingR1R2 : b.noMatches}
                     </p>
                   </div>
                 )}
-              </div>
+              </RoundColumn>
             </div>
           </div>
         </div>
       )}
 
-      {/* PLAYOFF VIEW */}
+      {/* ─── PLAYOFF VIEW ───────────────────────────────────────────────── */}
       {!showPreliminaryOnly && playoffRounds.length > 0 && (
-        <div className="overflow-x-auto pb-4 -mx-4 px-4">
-          <div className="flex min-w-max items-stretch">
+        <div
+          style={{
+            overflowX: 'auto',
+            paddingBottom: 16,
+            marginLeft: -16,
+            marginRight: -16,
+            paddingLeft: 16,
+            paddingRight: 16,
+          }}
+        >
+          <div style={{ display: 'flex', minWidth: 'max-content', alignItems: 'stretch' }}>
             {/* Regular playoff rounds (non-final) */}
             {playoffRounds.filter(r => r.roundType !== 'final').map((round, roundIdx, filteredRounds) => {
               const isLastBeforeFinal = roundIdx === filteredRounds.length - 1;
               const matchCount = round.matches.length;
               const hasNextRound = roundIdx < filteredRounds.length - 1 || isLastBeforeFinal;
-              
+
               // Group matches into pairs for bracket visualization
               const matchPairs: Match[][] = [];
               for (let i = 0; i < round.matches.length; i += 2) {
                 matchPairs.push(round.matches.slice(i, i + 2));
               }
-              
+
               return (
                 <React.Fragment key={round.roundNumber}>
-                  <div className="flex flex-col min-w-[260px]">
-                    <div className="text-center mb-4">
-                      <Badge variant="outline" className="px-4 py-1">
-                        {getRoundLabel(round.roundType, round.matches.length)}
-                        <span className="ml-2 opacity-70">({round.matches.length})</span>
-                      </Badge>
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 260 }}>
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        marginBottom: 16,
+                        ...monoKicker,
+                        color: 'var(--tl-fg-2)',
+                      }}
+                    >
+                      {getRoundLabel(round.roundType, round.matches.length)}
+                      <span style={{ marginLeft: 6, color: 'var(--tl-fg-4)' }}>
+                        ({round.matches.length})
+                      </span>
                     </div>
 
-                    <div 
-                      className="flex flex-col flex-1 justify-around"
-                      style={{ gap: roundIdx === 0 ? '12px' : `${Math.pow(2, roundIdx) * 24}px` }}
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: 1,
+                        justifyContent: 'space-around',
+                        gap: roundIdx === 0 ? '12px' : `${Math.pow(2, roundIdx) * 24}px`,
+                      }}
                     >
                       {round.matches.map((match) => (
                         <BracketMatchCard
@@ -476,31 +671,44 @@ const DoublesEliminationBracket = ({
                     </div>
                   </div>
 
-                  {/* Bracket connector lines */}
+                  {/* Bracket connector lines — token border color, no
+                      hardcoded grays. */}
                   {hasNextRound && matchCount >= 2 && (
-                    <div className="flex flex-col justify-around flex-shrink-0 w-10" style={{ paddingTop: '2.5rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-around',
+                        flexShrink: 0,
+                        width: 40,
+                        paddingTop: '2.5rem',
+                      }}
+                    >
                       {matchPairs.map((pair, pairIdx) => {
                         if (pair.length < 2) return null;
                         return (
-                          <div key={pairIdx} className="relative flex-1">
+                          <div key={pairIdx} style={{ position: 'relative', flex: 1 }}>
                             {/* Vertical line connecting match pair */}
-                            <div 
-                              className="absolute left-0 bg-muted-foreground/50"
-                              style={{ 
+                            <div
+                              style={{
+                                position: 'absolute',
+                                left: 0,
                                 top: '25%',
                                 height: '50%',
-                                width: '2px'
+                                width: 2,
+                                background: 'var(--tl-border-2)',
                               }}
                             />
-                            {/* Horizontal line to next round (from middle of vertical) */}
-                            <div 
-                              className="absolute bg-muted-foreground/50"
-                              style={{ 
+                            {/* Horizontal line to next round */}
+                            <div
+                              style={{
+                                position: 'absolute',
+                                left: 0,
                                 top: '50%',
-                                left: '0',
                                 width: '100%',
-                                height: '2px',
-                                transform: 'translateY(-1px)'
+                                height: 2,
+                                background: 'var(--tl-border-2)',
+                                transform: 'translateY(-1px)',
                               }}
                             />
                           </div>
@@ -512,24 +720,23 @@ const DoublesEliminationBracket = ({
               );
             })}
 
-            {/* Finals Column - Chung kết + Tranh hạng 3 */}
+            {/* Finals Column — Grand final + 3rd place */}
             {(() => {
               const finalMatch = matches.find(m => m.round_type === 'final');
               const thirdPlaceMatch = matches.find(m => m.round_type === 'third_place');
-              
+
               if (!finalMatch) return null;
-              
+
               return (
-                <div className="flex flex-col min-w-[260px] justify-center">
-                  {/* Centered container for both matches */}
-                  <div className="flex flex-col gap-3">
-                    {/* Finals match with title */}
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 260, justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {/* Finals match */}
                     <div>
-                      <div className="text-center mb-2">
-                        <Badge variant="default" className="px-3 py-1 bg-primary">
-                           <Trophy className="w-3 h-3 mr-1" />
+                      <div style={{ textAlign: 'center', marginBottom: 10 }}>
+                        <span style={finalPillStyle}>
+                          <Trophy className="w-3 h-3" />
                           {b.finals}
-                        </Badge>
+                        </span>
                       </div>
                       <BracketMatchCard
                         match={finalMatch}
@@ -544,13 +751,11 @@ const DoublesEliminationBracket = ({
                       />
                     </div>
 
-                    {/* 3rd place match with title */}
+                    {/* 3rd place match */}
                     {thirdPlaceMatch && (
                       <div>
-                        <div className="text-center mb-2">
-                          <Badge variant="outline" className="text-xs px-2 py-0.5 border-amber-500/50 text-amber-600 dark:text-amber-400">
-                            {b.thirdPlace}
-                          </Badge>
+                        <div style={{ textAlign: 'center', marginBottom: 10 }}>
+                          <span style={thirdPlacePillStyle}>{b.thirdPlace}</span>
                         </div>
                         <BracketMatchCard
                           match={thirdPlaceMatch}
@@ -575,22 +780,119 @@ const DoublesEliminationBracket = ({
       )}
 
       {showPlayoffOnly && playoffRounds.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            {b.playoffNotReady}
-          </CardContent>
-        </Card>
+        <div className="tl-empty-card">
+          <div className="tl-empty-card-mark">◌</div>
+          <div className="tl-empty-card-label">{b.playoffNotReady}</div>
+        </div>
       )}
     </div>
   );
 };
 
+// ─── Progress dot subcomponent ──────────────────────────────────────────
+function ProgressDot({
+  label,
+  active,
+  tone,
+}: {
+  label: string;
+  active: boolean;
+  tone: 'green' | 'gold';
+}) {
+  const accent = tone === 'green' ? 'var(--tl-green)' : 'var(--tl-gold)';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: '50%',
+          background: active ? accent : 'var(--tl-border-2)',
+          transition: 'background 0.2s',
+        }}
+      />
+      <span
+        style={{
+          fontFamily: 'Geist Mono, ui-monospace, monospace',
+          fontSize: 10.5,
+          fontWeight: 500,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: active ? accent : 'var(--tl-fg-3)',
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ─── Round column subcomponent ──────────────────────────────────────────
+function RoundColumn({
+  title,
+  subtitle,
+  completed,
+  total,
+  accent,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  completed: number;
+  total: number;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 280 }}>
+      <div
+        style={{
+          marginBottom: 14,
+          paddingBottom: 10,
+          borderBottom: '1px solid var(--tl-border)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              style={{
+                width: 3,
+                height: 16,
+                borderRadius: 2,
+                background: accent,
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ ...monoKicker, color: 'var(--tl-fg)' }}>{title}</span>
+          </div>
+          <span
+            style={{
+              ...monoMicro,
+              padding: '2px 8px',
+              borderRadius: 999,
+              background: 'var(--tl-surface)',
+              color: 'var(--tl-fg-2)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {completed}/{total}
+          </span>
+        </div>
+        <p style={{ ...monoMicro, marginTop: 4, marginLeft: 11, margin: '4px 0 0 11px' }}>
+          {subtitle}
+        </p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
+    </div>
+  );
+}
+
 // Helper to propagate loser to R2 match using match_index (0-based)
 // Now fetches R2 matches directly from database to ensure we have latest data
 async function propagateLoserToR2(
   matchIndex: number, // 0-based index of R1 match
-  loserId: string, 
-  allMatches: Match[]
+  loserId: string,
+  allMatches: Match[],
 ) {
   // First try from allMatches (for optimistic update when data is fresh)
   let r2Match = allMatches.find(m => {
@@ -610,7 +912,7 @@ async function propagateLoserToR2(
         .select('*')
         .eq('tournament_id', tournamentId)
         .eq('round_number', 2);
-      
+
       if (r2Matches) {
         r2Match = r2Matches.find(m => {
           const sourceA = m.source_a as { type: string; match_index?: number } | null;
@@ -624,7 +926,7 @@ async function propagateLoserToR2(
   if (r2Match) {
     const sourceA = r2Match.source_a as { type: string; match_index?: number } | null;
     const updateField = sourceA?.match_index === matchIndex ? 'team_a_id' : 'team_b_id';
-    
+
     await supabase
       .from('doubles_elimination_matches')
       .update({ [updateField]: loserId })
@@ -638,7 +940,7 @@ async function propagateWinnerToNextRound(
   match: Match,
   winnerId: string,
   allMatches: Match[],
-  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void
+  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void,
 ) {
   // For R3 matches, find corresponding R4 match slot
   // R3 winners fill empty slots in R4 (teams with high point diff already have byes to R4)
@@ -646,7 +948,7 @@ async function propagateWinnerToNextRound(
     const r4Matches = allMatches
       .filter(m => m.round_number === 4)
       .sort((a, b) => a.match_number - b.match_number);
-    
+
     // Find R4 match with an empty slot to fill
     for (const r4Match of r4Matches) {
       // Check for empty slots (not already filled)
@@ -670,17 +972,17 @@ async function propagateWinnerToNextRound(
       }
     }
   }
-// For R4+ rounds, follow the bracket position pattern
+  // For R4+ rounds, follow the bracket position pattern
   else if (match.round_number >= 4) {
     const nextRoundMatches = allMatches
       .filter(m => m.round_number === match.round_number + 1 && m.round_type !== 'third_place')
       .sort((a, b) => a.match_number - b.match_number);
-    
+
     // Find the next match based on bracket position
     const matchIndex = match.match_number - 1;
     const nextMatchIndex = Math.floor(matchIndex / 2);
     const slot = matchIndex % 2;
-    
+
     const targetMatch = nextRoundMatches[nextMatchIndex];
     if (targetMatch) {
       const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
@@ -699,14 +1001,14 @@ async function propagateLoserToThirdPlace(
   match: Match,
   loserId: string,
   allMatches: Match[],
-  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void
+  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void,
 ) {
   const thirdPlaceMatch = allMatches.find(m => m.round_type === 'third_place');
   if (!thirdPlaceMatch) return;
 
   // Determine slot based on match_number (match 1 loser -> team_a, match 2 loser -> team_b)
   const slot = match.match_number === 1 ? 'team_a_id' : 'team_b_id';
-  
+
   // Check if slot is not already filled
   if (!thirdPlaceMatch[slot]) {
     await supabase
@@ -717,322 +1019,6 @@ async function propagateLoserToThirdPlace(
     onMatchUpdated?.(thirdPlaceMatch.id, { [slot]: loserId });
   }
 }
-
-// Loser Bracket Card
-interface LoserBracketCardProps {
-  match: Match;
-  allMatches: Match[];
-  teamA: Team | undefined;
-  teamB: Team | undefined;
-  formatTeamName: (team: Team | undefined) => string;
-  sourceAMatchNum: number | string;
-  sourceBMatchNum: number | string;
-  canEdit?: boolean;
-  onScoreUpdated?: () => void;
-  onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void;
-  tournamentId?: string;
-  onR3Assigned?: (tiedTeamsInfo?: { count: number; names: string[] }) => void;
-}
-
-const LoserBracketCard = ({
-  match,
-  allMatches,
-  teamA,
-  teamB,
-  formatTeamName,
-  sourceAMatchNum,
-  sourceBMatchNum,
-  canEdit = false,
-  onScoreUpdated,
-  onMatchUpdated,
-  tournamentId,
-  onR3Assigned
-}: LoserBracketCardProps) => {
-  const { checkAndAssignR3 } = useDoublesElimination();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { t } = useI18n();
-  const b = t.doublesElimination.bracket;
-  const [isEditing, setIsEditing] = useState(false);
-  const [editScoreA, setEditScoreA] = useState(match.score_a?.toString() || '0');
-  const [editScoreB, setEditScoreB] = useState(match.score_b?.toString() || '0');
-  const [saving, setSaving] = useState(false);
-  
-  const isCompleted = match.status === 'completed';
-  const isLive = match.status === 'live';
-  const isAWinner = match.winner_id === match.team_a_id && isCompleted;
-  const isBWinner = match.winner_id === match.team_b_id && isCompleted;
-
-  // "Sửa" button = inline edit
-  const handleStartInlineEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditScoreA(match.score_a?.toString() || '0');
-    setEditScoreB(match.score_b?.toString() || '0');
-    setIsEditing(true);
-  };
-
-  // "Chấm" button = go to scoring page
-  const handleGoToScoringPage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/tools/doubles-elimination/match/${match.id}/score`);
-  };
-
-  const handleCancelEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(false);
-  };
-
-  const handleSaveScore = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSaving(true);
-
-    const scoreA = parseInt(editScoreA) || 0;
-    const scoreB = parseInt(editScoreB) || 0;
-    const winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
-    const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
-    const isMatchComplete = scoreA !== scoreB;
-
-    // Optimistic update - immediately update local state
-    const matchUpdates: Partial<Match> = {
-      score_a: scoreA,
-      score_b: scoreB,
-      winner_id: isMatchComplete ? winnerId : null,
-      status: isMatchComplete ? 'completed' : 'live'
-    };
-    onMatchUpdated?.(match.id, matchUpdates);
-
-    try {
-      await supabase
-        .from('doubles_elimination_matches')
-        .update({
-          score_a: scoreA,
-          score_b: scoreB,
-          winner_id: isMatchComplete ? winnerId : null,
-          status: isMatchComplete ? 'completed' : 'live'
-        })
-        .eq('id', match.id);
-
-      // Mark loser as eliminated (R2 loser bracket = elimination)
-      if (isMatchComplete && loserId) {
-        await supabase
-          .from('doubles_elimination_teams')
-          .update({
-            status: 'eliminated',
-            eliminated_at_round: match.round_number
-          })
-          .eq('id', loserId);
-      }
-
-      toast({ title: isMatchComplete ? b.matchSaved : b.scoreSaved });
-      setIsEditing(false);
-
-      // After R2 match completion, check if we need to assign R3
-      if (isMatchComplete && match.round_number === 2 && tournamentId) {
-        const result = await checkAndAssignR3(tournamentId);
-        if (result.triggered) {
-          onR3Assigned?.(result.tiedTeamsInfo);
-          // Reload to show R3 assignments
-          onScoreUpdated?.();
-        }
-      }
-    } catch (error) {
-      toast({ title: b.scoreSaveError, variant: "destructive" });
-      // Revert on error - trigger full reload
-      onScoreUpdated?.();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Card 
-      className={cn(
-        "overflow-hidden transition-all border-orange-200/50 dark:border-orange-800/50",
-        isCompleted && "opacity-90",
-        isLive && "border-red-500/50 ring-2 ring-red-500/20"
-      )}
-    >
-      {/* Match header */}
-      <div className={cn(
-        "px-3 py-1.5 border-b flex items-center justify-between",
-        isLive ? "bg-red-50 dark:bg-red-950/30" : "bg-muted/50 dark:bg-muted/30"
-      )}>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground">{b.match} {match.match_number}</span>
-          {(match.court_number || match.start_time) && (
-            <span className="text-[10px] text-muted-foreground">
-              {match.court_number && `S${match.court_number}`}
-              {match.court_number && match.start_time && ' • '}
-              {match.start_time}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          {isLive && (
-            <Badge variant="destructive" className="text-[10px] py-0 px-1 h-4 animate-pulse">
-              <Radio className="w-2 h-2 mr-0.5" />
-              LIVE
-            </Badge>
-          )}
-          {isCompleted && (
-            <Badge variant="secondary" className="text-[10px] py-0 px-1 h-4">
-              {b.done}
-            </Badge>
-          )}
-        </div>
-      </div>
-      
-      {/* Teams */}
-      <div className="divide-y divide-border/50">
-        {/* Team A Slot */}
-        <div 
-          className={cn(
-            "flex items-center gap-2 p-2 transition-colors",
-            isAWinner && "bg-primary/10 border-l-2 border-primary",
-            !teamA && "bg-muted/20"
-          )}
-        >
-          <div className="flex-1 min-w-0">
-            {teamA ? (
-              <div className={cn(
-                "font-medium text-sm truncate",
-                isAWinner && "text-primary"
-              )}>
-                {formatTeamName(teamA)}
-              </div>
-            ) : sourceAMatchNum ? (
-              <div className="text-muted-foreground text-sm italic">
-                {b.loserOf} {sourceAMatchNum}
-              </div>
-            ) : (
-              <div className="text-muted-foreground text-sm italic">TBD</div>
-            )}
-          </div>
-          
-          {/* Score A */}
-          {isEditing ? (
-            <Input
-              type="number"
-              value={editScoreA}
-              onChange={(e) => setEditScoreA(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              className="w-14 h-8 text-center text-sm font-bold p-1"
-              min={0}
-            />
-          ) : (
-            <div className={cn(
-              "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
-              isAWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-            )}>
-              {match.best_of > 1 ? match.games_won_a : match.score_a}
-            </div>
-          )}
-          
-          {isAWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
-        </div>
-        
-        {/* Team B Slot */}
-        <div 
-          className={cn(
-            "flex items-center gap-2 p-2 transition-colors",
-            isBWinner && "bg-primary/10 border-l-2 border-primary",
-            !teamB && "bg-muted/20"
-          )}
-        >
-          <div className="flex-1 min-w-0">
-            {teamB ? (
-              <div className={cn(
-                "font-medium text-sm truncate",
-                isBWinner && "text-primary"
-              )}>
-                {formatTeamName(teamB)}
-              </div>
-            ) : sourceBMatchNum ? (
-              <div className="text-muted-foreground text-sm italic">
-                {b.loserOf} {sourceBMatchNum}
-              </div>
-            ) : (
-              <div className="text-muted-foreground text-sm italic">TBD</div>
-            )}
-          </div>
-          
-          {/* Score B */}
-          {isEditing ? (
-            <Input
-              type="number"
-              value={editScoreB}
-              onChange={(e) => setEditScoreB(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              className="w-14 h-8 text-center text-sm font-bold p-1"
-              min={0}
-            />
-          ) : (
-            <div className={cn(
-              "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
-              isBWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-            )}>
-              {match.best_of > 1 ? match.games_won_b : match.score_b}
-            </div>
-          )}
-          
-          {isBWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
-        </div>
-      </div>
-
-      {/* Edit Controls for BTC/Referee */}
-      {canEdit && (
-        <div className="px-3 py-2 border-t bg-muted/20 flex items-center justify-end gap-2">
-          {isEditing ? (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleCancelEdit}
-                disabled={saving}
-                className="h-7 px-2"
-              >
-                <X className="w-3 h-3 mr-1" />
-                {b.cancel}
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSaveScore}
-                disabled={saving}
-                className="h-7 px-2"
-              >
-                <Check className="w-3 h-3 mr-1" />
-                {b.save}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleGoToScoringPage}
-                disabled={!teamA || !teamB}
-                className="h-7 px-2"
-              >
-                <Play className="w-3 h-3 mr-1" />
-                {b.openScoring}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleStartInlineEdit}
-                disabled={!teamA || !teamB}
-                className="h-7 px-2"
-              >
-                <Pencil className="w-3 h-3 mr-1" />
-                {b.editScore}
-              </Button>
-            </>
-          )}
-        </div>
-      )}
-    </Card>
-  );
-};
 
 interface BracketMatchCardProps {
   match: Match;
@@ -1047,17 +1033,17 @@ interface BracketMatchCardProps {
   onMatchUpdated?: (matchId: string, updates: Partial<Match>) => void;
 }
 
-const BracketMatchCard = ({ 
-  match, 
+const BracketMatchCard = ({
+  match,
   allMatches,
-  teamA, 
-  teamB, 
+  teamA,
+  teamB,
   formatTeamName,
   isFinal,
   isThirdPlace = false,
   canEdit = false,
   onScoreUpdated,
-  onMatchUpdated
+  onMatchUpdated,
 }: BracketMatchCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -1067,12 +1053,12 @@ const BracketMatchCard = ({
   const [editScoreA, setEditScoreA] = useState(match.score_a?.toString() || '0');
   const [editScoreB, setEditScoreB] = useState(match.score_b?.toString() || '0');
   const [saving, setSaving] = useState(false);
-  
+
   // State for BO3/BO5 game-by-game editing
   const [editingGameIndex, setEditingGameIndex] = useState<number | null>(null);
   const [gameScoreA, setGameScoreA] = useState('0');
   const [gameScoreB, setGameScoreB] = useState('0');
-  
+
   const isCompleted = match.status === 'completed';
   const isLive = match.status === 'live';
   const isAWinner = match.winner_id === match.team_a_id && isCompleted;
@@ -1110,9 +1096,9 @@ const BracketMatchCard = ({
 
     const scoreA = parseInt(gameScoreA) || 0;
     const scoreB = parseInt(gameScoreB) || 0;
-    
+
     if (scoreA === scoreB) {
-      toast({ title: b.tieNotAllowed, variant: "destructive" });
+      toast({ title: b.tieNotAllowed, variant: 'destructive' });
       setSaving(false);
       return;
     }
@@ -1126,14 +1112,14 @@ const BracketMatchCard = ({
       game: gameNum,
       score_a: scoreA,
       score_b: scoreB,
-      winner: gameWinner
+      winner: gameWinner,
     };
 
     // Calculate games won
     const gamesWonA = updatedGames.filter(g => g?.winner === 'a').length;
     const gamesWonB = updatedGames.filter(g => g?.winner === 'b').length;
     const winsNeededForMatch = Math.ceil(match.best_of / 2);
-    
+
     const matchComplete = gamesWonA >= winsNeededForMatch || gamesWonB >= winsNeededForMatch;
     const winnerId = matchComplete ? (gamesWonA > gamesWonB ? match.team_a_id : match.team_b_id) : null;
     const loserId = matchComplete ? (gamesWonA > gamesWonB ? match.team_b_id : match.team_a_id) : null;
@@ -1144,7 +1130,7 @@ const BracketMatchCard = ({
       games_won_a: gamesWonA,
       games_won_b: gamesWonB,
       winner_id: winnerId,
-      status: matchComplete ? 'completed' : 'live'
+      status: matchComplete ? 'completed' : 'live',
     };
     onMatchUpdated?.(match.id, matchUpdates);
 
@@ -1156,7 +1142,7 @@ const BracketMatchCard = ({
           games_won_a: gamesWonA,
           games_won_b: gamesWonB,
           winner_id: winnerId,
-          status: matchComplete ? 'completed' : 'live'
+          status: matchComplete ? 'completed' : 'live',
         })
         .eq('id', match.id);
 
@@ -1183,7 +1169,7 @@ const BracketMatchCard = ({
             .from('doubles_elimination_teams')
             .update({
               status: 'eliminated',
-              eliminated_at_round: match.round_number
+              eliminated_at_round: match.round_number,
             })
             .eq('id', loserId);
         }
@@ -1199,13 +1185,13 @@ const BracketMatchCard = ({
 
       toast({ title: matchComplete ? b.matchSaved : `${b.gameSaved} ${gameNum}` });
       setEditingGameIndex(null);
-      
+
       // Trigger reload to update data and auto-generate next round if needed
       if (matchComplete) {
         onScoreUpdated?.();
       }
     } catch (error) {
-      toast({ title: b.scoreSaveError, variant: "destructive" });
+      toast({ title: b.scoreSaveError, variant: 'destructive' });
       onScoreUpdated?.();
     } finally {
       setSaving(false);
@@ -1229,7 +1215,7 @@ const BracketMatchCard = ({
 
     const scoreA = parseInt(editScoreA) || 0;
     const scoreB = parseInt(editScoreB) || 0;
-    
+
     // For BO1: higher score wins
     const winnerId = scoreA > scoreB ? match.team_a_id : scoreB > scoreA ? match.team_b_id : null;
     const loserId = scoreA > scoreB ? match.team_b_id : scoreB > scoreA ? match.team_a_id : null;
@@ -1240,7 +1226,7 @@ const BracketMatchCard = ({
       score_a: scoreA,
       score_b: scoreB,
       winner_id: isMatchComplete ? winnerId : null,
-      status: isMatchComplete ? 'completed' : 'live'
+      status: isMatchComplete ? 'completed' : 'live',
     };
     onMatchUpdated?.(match.id, matchUpdates);
 
@@ -1251,7 +1237,7 @@ const BracketMatchCard = ({
           score_a: scoreA,
           score_b: scoreB,
           winner_id: isMatchComplete ? winnerId : null,
-          status: isMatchComplete ? 'completed' : 'live'
+          status: isMatchComplete ? 'completed' : 'live',
         })
         .eq('id', match.id);
 
@@ -1277,11 +1263,11 @@ const BracketMatchCard = ({
           .from('doubles_elimination_teams')
           .update({
             status: 'eliminated',
-            eliminated_at_round: match.round_number
+            eliminated_at_round: match.round_number,
           })
           .eq('id', loserId);
       }
-      
+
       // If this is the final match, mark tournament as completed
       if (isMatchComplete && match.round_type === 'final') {
         await supabase
@@ -1292,13 +1278,13 @@ const BracketMatchCard = ({
 
       toast({ title: isMatchComplete ? b.matchSaved : b.scoreSaved });
       setIsEditing(false);
-      
+
       // Trigger reload to update data and auto-generate next round if needed
       if (isMatchComplete) {
         onScoreUpdated?.();
       }
     } catch (error) {
-      toast({ title: b.scoreSaveError, variant: "destructive" });
+      toast({ title: b.scoreSaveError, variant: 'destructive' });
       onScoreUpdated?.();
     } finally {
       setSaving(false);
@@ -1306,307 +1292,447 @@ const BracketMatchCard = ({
   };
 
   const isBestOf = match.best_of > 1;
-  const winsNeeded = Math.ceil(match.best_of / 2);
   const formatLabel = match.best_of === 1 ? '' : `BO${match.best_of}`;
 
+  // Border / glow treatment per match state. LIVE matches get the
+  // signature green-glow ring (matches the live broadcast convention
+  // in TheLineLayout).
+  const cardStyle: React.CSSProperties = {
+    ...matchCardStyle,
+    ...(isFinal && {
+      borderColor: 'var(--tl-green)',
+      boxShadow: '0 0 0 1px var(--tl-green), 0 0 18px var(--tl-green-glow)',
+      background:
+        'linear-gradient(180deg, var(--tl-green-glow) 0%, var(--tl-bg-elev) 60%)',
+    }),
+    ...(isThirdPlace && {
+      borderColor: 'rgba(233, 182, 73, 0.55)',
+      boxShadow: '0 0 0 1px rgba(233, 182, 73, 0.20)',
+    }),
+    ...(isLive && {
+      borderColor: 'var(--tl-live)',
+      boxShadow: '0 0 0 1px var(--tl-live), 0 0 14px rgba(255, 65, 54, 0.18)',
+    }),
+    ...(isCompleted && !isFinal && !isLive && {
+      opacity: 0.92,
+    }),
+  };
+
+  // Header background tinted by state
+  const headerBg = isLive
+    ? 'rgba(255, 65, 54, 0.08)'
+    : isFinal
+    ? 'rgba(0, 185, 107, 0.10)'
+    : 'var(--tl-surface)';
+
   return (
-    <Card 
-      className={cn(
-        "overflow-hidden transition-all",
-        isFinal && "border-primary shadow-lg ring-2 ring-primary/30 bg-gradient-to-b from-primary/5 to-transparent",
-        isThirdPlace && "border-amber-500/50 ring-1 ring-amber-500/20",
-        !isFinal && !isThirdPlace && "border-border/50",
-        isCompleted && !isFinal && "opacity-90",
-        isLive && "border-red-500/50 ring-2 ring-red-500/20"
-      )}
-    >
-      {/* Match header - hide match number for finals and 3rd place */}
-      <div className={cn(
-        "px-3 py-1.5 border-b flex items-center justify-between",
-        isLive ? "bg-red-50 dark:bg-red-950/30" : 
-        isFinal ? "bg-primary/10" : "bg-muted/50"
-      )}>
-        <div className="flex items-center gap-2">
+    <div style={cardStyle}>
+      {/* Match header */}
+      <div
+        style={{
+          padding: '8px 12px',
+          borderBottom: '1px solid var(--tl-border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: headerBg,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {!isFinal && !isThirdPlace && (
-            <span className="text-sm font-medium text-foreground">{b.match} {match.match_number}</span>
+            <span style={{ ...monoKicker, color: 'var(--tl-fg)' }}>
+              {b.match} {match.match_number}
+            </span>
           )}
           {(match.court_number || match.start_time) && (
-            <span className="text-[10px] text-muted-foreground">
+            <span style={{ ...monoMicro, color: 'var(--tl-fg-3)' }}>
               {match.court_number && `S${match.court_number}`}
               {match.court_number && match.start_time && ' • '}
               {match.start_time}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {/* Best-of format badge */}
-          {isBestOf && (
-            <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 font-medium border-blue-500/50 text-blue-600 dark:text-blue-400">
-              {formatLabel}
-            </Badge>
-          )}
+          {isBestOf && <span style={formatPillStyle}>{formatLabel}</span>}
           {isLive && (
-            <Badge variant="destructive" className="text-[10px] py-0 px-1 h-4 animate-pulse">
-              <Radio className="w-2 h-2 mr-0.5" />
+            <span style={livePillStyle} className="animate-pulse">
+              <Radio className="w-2.5 h-2.5" />
               LIVE
-            </Badge>
+            </span>
           )}
           {isFinal && (
-            <Badge variant="default" className="text-xs py-0.5 px-2">
-              <Trophy className="w-3 h-3 mr-1" />
+            <span style={finalPillStyle}>
+              <Trophy className="w-2.5 h-2.5" />
               {b.finalBadge}
-            </Badge>
+            </span>
           )}
-          {isCompleted && !isFinal && (
-            <Badge variant="secondary" className="text-[10px] py-0 px-1 h-4">
-              {b.done}
-            </Badge>
-          )}
-        </div>
-      </div>
-      
-      {/* Teams */}
-      <div className="divide-y divide-border/50">
-        {/* Team A Slot */}
-        <div 
-          className={cn(
-            "flex items-center gap-2 p-2 min-h-[40px] transition-colors",
-            isAWinner && "bg-primary/10 border-l-2 border-primary",
-            !teamA && "bg-muted/20"
-          )}
-        >
-          <div className="flex-1 min-w-0">
-            <div className={cn(
-              "font-medium text-sm truncate",
-              isAWinner && "text-primary",
-              !teamA && "text-muted-foreground italic"
-            )}>
-              {formatTeamName(teamA)}
-            </div>
-          </div>
-          
-          {/* Score A */}
-          {isEditing ? (
-            <Input
-              type="number"
-              value={editScoreA}
-              onChange={(e) => setEditScoreA(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              className="w-14 h-8 text-center text-sm font-bold p-1"
-              min={0}
-            />
-          ) : (
-            <div className={cn(
-              "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
-              isAWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-            )}>
-              {match.best_of > 1 ? match.games_won_a : match.score_a}
-            </div>
-          )}
-          
-          {isAWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
-        </div>
-        
-        {/* Team B Slot */}
-        <div 
-          className={cn(
-            "flex items-center gap-2 p-2 min-h-[40px] transition-colors",
-            isBWinner && "bg-primary/10 border-l-2 border-primary",
-            !teamB && "bg-muted/20"
-          )}
-        >
-          <div className="flex-1 min-w-0">
-            <div className={cn(
-              "font-medium text-sm truncate",
-              isBWinner && "text-primary",
-              !teamB && "text-muted-foreground italic"
-            )}>
-              {formatTeamName(teamB)}
-            </div>
-          </div>
-          
-          {/* Score B */}
-          {isEditing ? (
-            <Input
-              type="number"
-              value={editScoreB}
-              onChange={(e) => setEditScoreB(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              className="w-14 h-8 text-center text-sm font-bold p-1"
-              min={0}
-            />
-          ) : (
-            <div className={cn(
-              "w-10 h-8 flex items-center justify-center rounded text-sm font-bold",
-              isBWinner ? "bg-primary text-primary-foreground" : "bg-muted"
-            )}>
-              {match.best_of > 1 ? match.games_won_b : match.score_b}
-            </div>
-          )}
-          
-          {isBWinner && !isEditing && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
+          {isCompleted && !isFinal && <span style={donePillStyle}>{b.done}</span>}
         </div>
       </div>
 
-      {/* BO3/BO5 game slots visualization */}
+      {/* Teams */}
+      <div>
+        <TeamRow
+          team={teamA}
+          isWinner={isAWinner}
+          isLoser={isCompleted && !isAWinner}
+          score={match.best_of > 1 ? match.games_won_a : match.score_a}
+          formatTeamName={formatTeamName}
+          isEditing={isEditing}
+          editScore={editScoreA}
+          setEditScore={setEditScoreA}
+          isTop={true}
+        />
+        <TeamRow
+          team={teamB}
+          isWinner={isBWinner}
+          isLoser={isCompleted && !isBWinner}
+          score={match.best_of > 1 ? match.games_won_b : match.score_b}
+          formatTeamName={formatTeamName}
+          isEditing={isEditing}
+          editScore={editScoreB}
+          setEditScore={setEditScoreB}
+          isTop={false}
+        />
+      </div>
+
+      {/* BO3/BO5 game slots */}
       {isBestOf && (
-        <div className="px-2 py-2 border-t bg-muted/20">
-          <div className="flex justify-center gap-1">
+        <div
+          style={{
+            padding: '10px 10px',
+            borderTop: '1px solid var(--tl-border)',
+            background: 'var(--tl-surface)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
             {Array.from({ length: match.best_of }).map((_, gameIndex) => {
               const gameData = existingGames[gameIndex];
               const gameCompleted = !!gameData;
               const winnerTeam = gameData?.winner;
               const isEditingThis = editingGameIndex === gameIndex;
               const canEditGame = canEdit && teamA && teamB;
-              
+
+              const slotStyle: React.CSSProperties = {
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 6,
+                transition: 'border-color 0.15s, background 0.15s',
+                width: isEditingThis ? 84 : 44,
+                height: isEditingThis ? 64 : 44,
+                border: isEditingThis
+                  ? '1px solid var(--tl-green)'
+                  : gameCompleted
+                  ? '1px solid var(--tl-border)'
+                  : '1px dashed var(--tl-border-2)',
+                background: isEditingThis
+                  ? 'var(--tl-green-glow)'
+                  : gameCompleted
+                  ? 'var(--tl-bg-elev)'
+                  : 'transparent',
+                cursor: canEditGame && !isEditingThis ? 'pointer' : 'default',
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontVariantNumeric: 'tabular-nums',
+              };
+
               return (
                 <div
                   key={gameIndex}
                   onClick={(e) => canEditGame && handleStartGameEdit(gameIndex, e)}
-                  className={cn(
-                    "flex flex-col items-center justify-center rounded border text-[10px] transition-all",
-                    isEditingThis ? "w-20 h-16 border-primary ring-2 ring-primary/30 bg-primary/10" : "w-10 h-10",
-                    gameCompleted && !isEditingThis && "border-muted bg-muted/50",
-                    !gameCompleted && !isEditingThis && "border-dashed border-muted-foreground/30",
-                    canEditGame && !isEditingThis && "cursor-pointer hover:border-primary/50 hover:bg-primary/5"
-                  )}
+                  style={slotStyle}
                   title={canEditGame ? `${b.clickGameToEdit} ${gameIndex + 1}` : `Game ${gameIndex + 1}`}
                 >
-                  <div className="text-[8px] text-muted-foreground">G{gameIndex + 1}</div>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 500,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      color: 'var(--tl-fg-3)',
+                    }}
+                  >
+                    G{gameIndex + 1}
+                  </div>
                   {isEditingThis ? (
-                    <div className="flex items-center gap-1 mt-1">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
                       <Input
                         type="number"
                         value={gameScoreA}
                         onChange={(e) => setGameScoreA(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-8 h-5 text-center text-[10px] font-bold p-0"
+                        className="text-center font-bold p-0"
+                        style={{
+                          width: 30,
+                          height: 22,
+                          fontSize: 11,
+                          fontFamily: 'Geist Mono, ui-monospace, monospace',
+                        }}
                         min={0}
                       />
-                      <span className="text-muted-foreground text-[10px]">-</span>
+                      <span style={{ color: 'var(--tl-fg-3)', fontSize: 11 }}>-</span>
                       <Input
                         type="number"
                         value={gameScoreB}
                         onChange={(e) => setGameScoreB(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-8 h-5 text-center text-[10px] font-bold p-0"
+                        className="text-center font-bold p-0"
+                        style={{
+                          width: 30,
+                          height: 22,
+                          fontSize: 11,
+                          fontFamily: 'Geist Mono, ui-monospace, monospace',
+                        }}
                         min={0}
                       />
                     </div>
                   ) : gameCompleted ? (
-                    <div className="flex items-center gap-0.5">
-                      <span className={winnerTeam === 'a' ? 'text-primary font-bold' : 'text-muted-foreground'}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span
+                        style={{
+                          color:
+                            winnerTeam === 'a' ? 'var(--tl-green)' : 'var(--tl-fg-3)',
+                        }}
+                      >
                         {gameData.score_a}
                       </span>
-                      <span className="text-muted-foreground">-</span>
-                      <span className={winnerTeam === 'b' ? 'text-primary font-bold' : 'text-muted-foreground'}>
+                      <span style={{ color: 'var(--tl-fg-4)' }}>-</span>
+                      <span
+                        style={{
+                          color:
+                            winnerTeam === 'b' ? 'var(--tl-green)' : 'var(--tl-fg-3)',
+                        }}
+                      >
                         {gameData.score_b}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">—</span>
+                    <span style={{ color: 'var(--tl-fg-4)', fontSize: 12 }}>—</span>
                   )}
                 </div>
               );
             })}
           </div>
-          
+
           {/* Save/Cancel buttons for game editing */}
           {editingGameIndex !== null && (
-            <div className="flex justify-center gap-2 mt-2">
-              <Button
-                size="sm"
-                variant="ghost"
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 8 }}>
+              <button
+                type="button"
+                name="cancel-game-edit"
                 onClick={handleCancelGameEdit}
                 disabled={saving}
-                className="h-6 px-2 text-xs"
+                style={{ ...inlineBtnGhostStyle, opacity: saving ? 0.5 : 1 }}
               >
-                <X className="w-3 h-3 mr-1" />
+                <X className="w-3 h-3" />
                 {b.cancel}
-              </Button>
-              <Button
-                size="sm"
+              </button>
+              <button
+                type="button"
+                name="save-game-score"
                 onClick={handleSaveGameScore}
                 disabled={saving}
-                className="h-6 px-2 text-xs"
+                style={{ ...inlineBtnPrimaryStyle, opacity: saving ? 0.5 : 1 }}
               >
-                <Check className="w-3 h-3 mr-1" />
+                <Check className="w-3 h-3" />
                 {b.saveGameN}{editingGameIndex + 1}
-              </Button>
+              </button>
             </div>
           )}
-          
+
           {editingGameIndex === null && canEdit && teamA && teamB && (
-            <div className="text-[10px] text-muted-foreground text-center mt-1">
+            <div style={{ ...monoMicro, textAlign: 'center', marginTop: 6 }}>
               {b.clickGameToEdit}
             </div>
           )}
-          
-          {/* Message when teams are not ready */}
+
           {editingGameIndex === null && canEdit && (!teamA || !teamB) && (
-            <div className="text-[10px] text-muted-foreground text-center mt-1">
+            <div style={{ ...monoMicro, textAlign: 'center', marginTop: 6 }}>
               {b.waitingTeams}
             </div>
           )}
         </div>
       )}
 
-      {/* Edit Controls for BTC/Referee */}
+      {/* Edit controls for organizer / referee */}
       {canEdit && (
-        <div className="px-3 py-2 border-t bg-muted/20 flex items-center justify-end gap-2">
+        <div
+          style={{
+            padding: '8px 12px',
+            borderTop: '1px solid var(--tl-border)',
+            background: 'var(--tl-surface)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 6,
+          }}
+        >
           {isEditing ? (
             <>
-              <Button
-                size="sm"
-                variant="ghost"
+              <button
+                type="button"
+                name="cancel-score-edit"
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="h-7 px-2"
+                style={{ ...inlineBtnGhostStyle, opacity: saving ? 0.5 : 1 }}
               >
-                <X className="w-3 h-3 mr-1" />
+                <X className="w-3 h-3" />
                 {b.cancel}
-              </Button>
-              <Button
-                size="sm"
+              </button>
+              <button
+                type="button"
+                name="save-score"
                 onClick={handleSaveScore}
                 disabled={saving}
-                className="h-7 px-2"
+                style={{ ...inlineBtnPrimaryStyle, opacity: saving ? 0.5 : 1 }}
               >
-                <Check className="w-3 h-3 mr-1" />
+                <Check className="w-3 h-3" />
                 {b.save}
-              </Button>
+              </button>
             </>
           ) : (
             <>
-              <Button
-                size="sm"
-                variant="outline"
+              <button
+                type="button"
+                name="open-scoring"
                 onClick={handleGoToScoringPage}
                 disabled={!teamA || !teamB}
-                className="h-7 px-2"
+                style={{
+                  ...inlineBtnStyle,
+                  opacity: !teamA || !teamB ? 0.4 : 1,
+                  cursor: !teamA || !teamB ? 'not-allowed' : 'pointer',
+                }}
               >
-                <Play className="w-3 h-3 mr-1" />
+                <Play className="w-3 h-3" />
                 {b.openScoring}
-              </Button>
+              </button>
               {/* For BO1: show edit button. For BO3/BO5: game slots are clickable instead */}
               {!isBestOf && (
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <button
+                  type="button"
+                  name="edit-score"
                   onClick={handleStartInlineEdit}
                   disabled={!teamA || !teamB}
-                  className="h-7 px-2"
+                  style={{
+                    ...inlineBtnGhostStyle,
+                    opacity: !teamA || !teamB ? 0.4 : 1,
+                    cursor: !teamA || !teamB ? 'not-allowed' : 'pointer',
+                  }}
                 >
-                  <Pencil className="w-3 h-3 mr-1" />
+                  <Pencil className="w-3 h-3" />
                   {b.editScore}
-                </Button>
+                </button>
               )}
             </>
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 };
+
+// ─── Team row subcomponent ──────────────────────────────────────────────
+function TeamRow({
+  team,
+  isWinner,
+  isLoser,
+  score,
+  formatTeamName,
+  isEditing,
+  editScore,
+  setEditScore,
+  isTop,
+}: {
+  team: Team | undefined;
+  isWinner: boolean;
+  isLoser: boolean;
+  score: number | null | undefined;
+  formatTeamName: (team: Team | undefined) => string;
+  isEditing: boolean;
+  editScore: string;
+  setEditScore: (v: string) => void;
+  isTop: boolean;
+}) {
+  const rowStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 12px',
+    minHeight: 44,
+    borderTop: isTop ? 'none' : '1px solid var(--tl-border)',
+    background: isWinner
+      ? 'var(--tl-green-glow)'
+      : !team
+      ? 'transparent'
+      : 'transparent',
+    borderLeft: isWinner ? '2px solid var(--tl-green)' : '2px solid transparent',
+    transition: 'background 0.15s',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    ...teamNameStyle,
+    color: isWinner
+      ? 'var(--tl-fg)'
+      : isLoser
+      ? 'var(--tl-fg-3)'
+      : !team
+      ? 'var(--tl-fg-3)'
+      : 'var(--tl-fg)',
+    fontStyle: !team ? 'italic' : 'italic',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    flex: 1,
+    minWidth: 0,
+  };
+
+  return (
+    <div style={rowStyle}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={labelStyle}>{formatTeamName(team)}</div>
+      </div>
+
+      {isEditing ? (
+        <Input
+          type="number"
+          value={editScore}
+          onChange={(e) => setEditScore(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          className="text-center font-bold p-1"
+          style={{
+            width: 52,
+            height: 32,
+            fontFamily: 'Geist Mono, ui-monospace, monospace',
+            fontSize: 14,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+          min={0}
+        />
+      ) : (
+        <div style={isWinner ? scoreCellWinner : scoreCellBase}>
+          {score ?? 0}
+        </div>
+      )}
+
+      {isWinner && !isEditing && (
+        <Crown
+          className="w-4 h-4"
+          style={{ color: 'var(--tl-green)', flexShrink: 0 }}
+          aria-hidden
+        />
+      )}
+    </div>
+  );
+}
 
 export default DoublesEliminationBracket;

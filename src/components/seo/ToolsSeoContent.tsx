@@ -460,114 +460,246 @@ export const TeamMatchSeoContent = () => (
 );
 
 /**
- * SEO content for /tools/doubles-elimination
+ * SEO content for /tools/doubles-elimination — refreshed to TheLineLayout
+ * design language in PR W2.2. Mirrors the QuickTablesSeoContent treatment
+ * (Instrument Serif h2, mono kicker, green diamond bullets, token colors).
+ * Copy + heading structure kept verbatim for SEO continuity.
  */
-export const DoublesEliminationSeoContent = () => (
-  <section className="mt-12 border-t border-border pt-10 space-y-8 max-w-3xl text-left">
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        What Is Double Elimination in Pickleball Tournaments?
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Double elimination is a tournament format where a team must lose twice before being eliminated. After the first loss, a team drops to the losers bracket and continues competing. Only a second loss ends their tournament run. The winners bracket and losers bracket eventually converge, ensuring the final champion has proven themselves against the strongest competition.
-      </p>
-      <p className="text-muted-foreground">
-        This format is widely used in competitive pickleball events because it rewards consistency and gives teams a second chance — particularly valuable when travel and entry fees are involved. The Pickle Hub's double elimination tool generates complete brackets for 32 to 128+ teams with automatic court scheduling and best-of-1, best-of-3, or best-of-5 match options.
-      </p>
-    </div>
+export const DoublesEliminationSeoContent = () => {
+  const sectionStyle: React.CSSProperties = {
+    marginTop: 32,
+  };
+  const h2Style: React.CSSProperties = {
+    fontFamily: "Instrument Serif, serif",
+    fontStyle: "italic",
+    fontWeight: 400,
+    fontSize: "clamp(24px, 3vw, 32px)",
+    letterSpacing: "-0.02em",
+    lineHeight: 1.1,
+    color: "var(--tl-fg)",
+    margin: "0 0 14px",
+  };
+  const pStyle: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+    margin: "0 0 12px",
+  };
+  const ulStyle: React.CSSProperties = {
+    margin: "0 0 12px",
+    padding: 0,
+    listStyle: "none",
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+  };
+  const liStyle: React.CSSProperties = {
+    paddingLeft: 18,
+    position: "relative",
+    margin: "8px 0",
+  };
+  const diamondStyle: React.CSSProperties = {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    color: "var(--tl-green)",
+    fontFamily: "Geist Mono, ui-monospace, monospace",
+    fontSize: 13,
+  };
+  const linkStyle: React.CSSProperties = {
+    color: "var(--tl-green)",
+    textDecoration: "none",
+    borderBottom: "1px solid color-mix(in srgb, var(--tl-green) 35%, transparent)",
+    paddingBottom: 1,
+  };
+  const faqQ: React.CSSProperties = {
+    fontWeight: 600,
+    color: "var(--tl-fg)",
+    fontSize: 15,
+    margin: "0 0 6px",
+  };
+  const faqA: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 14.5,
+    lineHeight: 1.6,
+    margin: 0,
+  };
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Why Use a Pickleball-Specific Double Elimination Tool?
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Double elimination brackets are significantly more complex than single elimination. Managing the winners bracket, losers bracket, bye rounds, and convergence rounds manually is error-prone and time-consuming. Here's why our dedicated tool matters:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Automatic bracket generation</strong> — Enter your team count and the system creates perfectly balanced winners and losers brackets with correct bye assignments.</li>
-        <li><strong>Dynamic court scheduling</strong> — Advanced rounds automatically reassign courts and calculate start times based on when previous rounds finish.</li>
-        <li><strong>Variable match formats</strong> — Use best-of-1 for early rounds to save time, then switch to best-of-3 or best-of-5 for semifinals and finals for competitive depth.</li>
-        <li><strong>Third-place match option</strong> — Optionally add a consolation final for teams that lose in the semifinals.</li>
-        <li><strong>Referee assignment</strong> — Assign referees to specific matches. Officials can score directly from their phones.</li>
-      </ul>
-      <p className="text-muted-foreground">
-        Compare this to Challonge or other generic platforms: our tool understands pickleball's court rotation needs, supports multi-game match formats, and provides a mobile-first experience designed for on-court use.
-      </p>
-    </div>
+  return (
+    <section
+      style={{
+        marginTop: 48,
+        paddingTop: 40,
+        borderTop: "1px solid var(--tl-border)",
+        maxWidth: 768,
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--tl-green)",
+          marginBottom: 20,
+        }}
+      >
+        ◆ The long read
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        How Double Elimination Works in Real Pickleball Events
-      </h2>
-      <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Create tournament</strong> — Name your event, set team count (32–128+), number of courts, and start time.</li>
-        <li><strong>Choose match formats</strong> — Select best-of-1, best-of-3, or best-of-5 for early rounds, semifinals, and finals independently.</li>
-        <li><strong>Add teams</strong> — Enter team names with player rosters. Optionally shuffle seeding for random draws.</li>
-        <li><strong>Generate bracket</strong> — The system creates winners bracket, losers bracket, bye assignments, and complete match schedule with court and time slots.</li>
-        <li><strong>Run the tournament</strong> — As matches complete, losers drop to the losers bracket. Winners advance. The system handles all bracket progression automatically.</li>
-        <li><strong>Crown the champion</strong> — Winners and losers brackets converge for the grand final. The undefeated team has bracket advantage.</li>
-      </ol>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>What Is Double Elimination in Pickleball Tournaments?</h2>
+        <p style={pStyle}>
+          Double elimination is a tournament format where a team must lose twice before being eliminated. After the first loss, a team drops to the losers bracket and continues competing. Only a second loss ends their tournament run. The winners bracket and losers bracket eventually converge, ensuring the final champion has proven themselves against the strongest competition.
+        </p>
+        <p style={pStyle}>
+          This format is widely used in competitive pickleball events because it rewards consistency and gives teams a second chance — particularly valuable when travel and entry fees are involved. The Pickle Hub's double elimination tool generates complete brackets for 32 to 128+ teams with automatic court scheduling and best-of-1, best-of-3, or best-of-5 match options.
+        </p>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        When to Use Double Elimination vs Other Pickleball Formats
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Double elimination excels for competitive events but isn't always the right choice. Here's a comparison with other formats on The Pickle Hub:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Double Elimination (this tool)</strong> — Best for 32+ teams in competitive settings. Gives every team a second chance. Requires more time and courts than single elimination.</li>
-        <li><strong><Link to="/tools/quick-tables" className="text-primary hover:underline">Quick Tables (Round Robin)</Link></strong> — Best for smaller events (4–48 players) where everyone wants maximum playing time. More social, less competitive pressure.</li>
-        <li><strong><Link to="/tools/team-match" className="text-primary hover:underline">Team Match (MLP)</Link></strong> — Best for team-based competition with strategic lineup management. Different competitive dynamic than bracket play.</li>
-        <li><strong><Link to="/tools/flex-tournament" className="text-primary hover:underline">Flex Tournament</Link></strong> — Best for custom formats or when you need to combine elements from multiple format types.</li>
-      </ul>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Why Use a Pickleball-Specific Double Elimination Tool?</h2>
+        <p style={pStyle}>
+          Double elimination brackets are significantly more complex than single elimination. Managing the winners bracket, losers bracket, bye rounds, and convergence rounds manually is error-prone and time-consuming. Here's why our dedicated tool matters:
+        </p>
+        <ul style={ulStyle}>
+          {[
+            ["Automatic bracket generation", "Enter your team count and the system creates perfectly balanced winners and losers brackets with correct bye assignments."],
+            ["Dynamic court scheduling", "Advanced rounds automatically reassign courts and calculate start times based on when previous rounds finish."],
+            ["Variable match formats", "Use best-of-1 for early rounds to save time, then switch to best-of-3 or best-of-5 for semifinals and finals for competitive depth."],
+            ["Third-place match option", "Optionally add a consolation final for teams that lose in the semifinals."],
+            ["Referee assignment", "Assign referees to specific matches. Officials can score directly from their phones."],
+          ].map(([k, v]) => (
+            <li key={k} style={liStyle}>
+              <span style={diamondStyle}>◆</span>
+              <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>{k}</strong> — {v}
+            </li>
+          ))}
+        </ul>
+        <p style={pStyle}>
+          Compare this to Challonge or other generic platforms: our tool understands pickleball's court rotation needs, supports multi-game match formats, and provides a mobile-first experience designed for on-court use.
+        </p>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Related Pickleball Tournament Tools on The Pickle Hub
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Double Elimination is part of The Pickle Hub's tournament platform. Combine it with our other tools for complete event management:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-        <li><Link to="/tools/quick-tables" className="text-primary hover:underline">Pickleball bracket generator</Link> — Round robin brackets with automatic group balancing and playoff seeding.</li>
-        <li><Link to="/tools/team-match" className="text-primary hover:underline">Pickleball team match format</Link> — MLP-style team competitions with lineup management and dreambreaker games.</li>
-        <li><Link to="/tools/flex-tournament" className="text-primary hover:underline">Flexible pickleball tournament formats</Link> — Build any tournament structure with complete creative freedom.</li>
-        <li><Link to="/tools" className="text-primary hover:underline">All pickleball tournament tools</Link> — Browse the complete suite of free tools for pickleball organizers.</li>
-      </ul>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>How Double Elimination Works in Real Pickleball Events</h2>
+        <ol
+          style={{
+            margin: "0 0 12px",
+            paddingLeft: 22,
+            color: "var(--tl-fg-2)",
+            fontSize: 15,
+            lineHeight: 1.7,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Create tournament</strong> — Name your event, set team count (32–128+), number of courts, and start time.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Choose match formats</strong> — Select best-of-1, best-of-3, or best-of-5 for early rounds, semifinals, and finals independently.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Add teams</strong> — Enter team names with player rosters. Optionally shuffle seeding for random draws.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Generate bracket</strong> — The system creates winners bracket, losers bracket, bye assignments, and complete match schedule with court and time slots.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Run the tournament</strong> — As matches complete, losers drop to the losers bracket. Winners advance. The system handles all bracket progression automatically.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Crown the champion</strong> — Winners and losers brackets converge for the grand final. The undefeated team has bracket advantage.
+          </li>
+        </ol>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Pickleball Double Elimination FAQ
-      </h2>
-      <div className="space-y-5">
-        <div>
-          <p className="font-semibold text-foreground mb-1">What is the minimum number of teams for a double elimination bracket?</p>
-          <p className="text-muted-foreground">Double elimination works best with 8 or more teams, though the tool supports as few as 4. Below 8 teams, the bracket has very few losers bracket rounds, reducing the format's advantage over single elimination. For larger competitive events, 16–64 teams is the ideal range.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">Does the tool automatically move teams between winners and losers brackets?</p>
-          <p className="text-muted-foreground">Yes. All bracket progression is fully automatic. When you enter a match result, the winning team advances in the winners bracket and the losing team drops to the correct position in the losers bracket. No manual bracket management is needed — the system handles all seeding and advancement logic.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">Can I use different match formats in different rounds?</p>
-          <p className="text-muted-foreground">Yes. You can configure best-of-1 for early rounds to save time, then switch to best-of-3 for quarterfinals and semifinals, and best-of-5 for the grand final. Each round can have an independently configured match format, giving you full control over how your event flows.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">What happens if the losers bracket winner beats the winners bracket finalist in the grand final?</p>
-          <p className="text-muted-foreground">In true double elimination, a bracket reset (true final) is required because the winners bracket finalist has no losses yet. Our tool flags this scenario automatically and creates the bracket reset match. The team that wins the reset match is crowned champion with both teams having lost exactly once.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">Is double elimination fair for all skill levels?</p>
-          <p className="text-muted-foreground">Double elimination is one of the fairest competitive formats available because every team is guaranteed at least two matches before elimination. This is especially important for events where teams have traveled significant distances or paid registration fees — a single bad game doesn't end their tournament. It also allows teams to warm up and improve as the event progresses.</p>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>When to Use Double Elimination vs Other Pickleball Formats</h2>
+        <p style={pStyle}>
+          Double elimination excels for competitive events but isn't always the right choice. Here's a comparison with other formats on The Pickle Hub:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Double Elimination (this tool)</strong> — Best for 32+ teams in competitive settings. Gives every team a second chance. Requires more time and courts than single elimination.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/quick-tables" style={linkStyle}>Quick Tables (Round Robin)</Link>
+            </strong> — Best for smaller events (4–48 players) where everyone wants maximum playing time. More social, less competitive pressure.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/team-match" style={linkStyle}>Team Match (MLP)</Link>
+            </strong> — Best for team-based competition with strategic lineup management. Different competitive dynamic than bracket play.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/flex-tournament" style={linkStyle}>Flex Tournament</Link>
+            </strong> — Best for custom formats or when you need to combine elements from multiple format types.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Related Pickleball Tournament Tools on The Pickle Hub</h2>
+        <p style={pStyle}>
+          Double Elimination is part of The Pickle Hub's tournament platform. Combine it with our other tools for complete event management:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <Link to="/tools/quick-tables" style={linkStyle}>Pickleball bracket generator</Link> — Round robin brackets with automatic group balancing and playoff seeding.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <Link to="/tools/team-match" style={linkStyle}>Pickleball team match format</Link> — MLP-style team competitions with lineup management and dreambreaker games.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <Link to="/tools/flex-tournament" style={linkStyle}>Flexible pickleball tournament formats</Link> — Build any tournament structure with complete creative freedom.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <Link to="/tools" style={linkStyle}>All pickleball tournament tools</Link> — Browse the complete suite of free tools for pickleball organizers.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Pickleball Double Elimination FAQ</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <p style={faqQ}>What is the minimum number of teams for a double elimination bracket?</p>
+            <p style={faqA}>Double elimination works best with 8 or more teams, though the tool supports as few as 4. Below 8 teams, the bracket has very few losers bracket rounds, reducing the format's advantage over single elimination. For larger competitive events, 16–64 teams is the ideal range.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Does the tool automatically move teams between winners and losers brackets?</p>
+            <p style={faqA}>Yes. All bracket progression is fully automatic. When you enter a match result, the winning team advances in the winners bracket and the losing team drops to the correct position in the losers bracket. No manual bracket management is needed — the system handles all seeding and advancement logic.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Can I use different match formats in different rounds?</p>
+            <p style={faqA}>Yes. You can configure best-of-1 for early rounds to save time, then switch to best-of-3 for quarterfinals and semifinals, and best-of-5 for the grand final. Each round can have an independently configured match format, giving you full control over how your event flows.</p>
+          </div>
+          <div>
+            <p style={faqQ}>What happens if the losers bracket winner beats the winners bracket finalist in the grand final?</p>
+            <p style={faqA}>In true double elimination, a bracket reset (true final) is required because the winners bracket finalist has no losses yet. Our tool flags this scenario automatically and creates the bracket reset match. The team that wins the reset match is crowned champion with both teams having lost exactly once.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Is double elimination fair for all skill levels?</p>
+            <p style={faqA}>Double elimination is one of the fairest competitive formats available because every team is guaranteed at least two matches before elimination. This is especially important for events where teams have traveled significant distances or paid registration fees — a single bad game doesn't end their tournament. It also allows teams to warm up and improve as the event progresses.</p>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 /**
  * SEO content for /tools/flex-tournament
