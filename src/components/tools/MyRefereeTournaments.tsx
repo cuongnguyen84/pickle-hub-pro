@@ -59,10 +59,12 @@ export function MyRefereeTournaments() {
   };
 
   const TournamentItem = ({ tournament }: { tournament: typeof tournaments[0] }) => {
-    const href = tournament.type === 'quick_table' 
+    const href = tournament.type === 'quick_table'
       ? `/tools/quick-table/${tournament.share_id}`
       : tournament.type === 'doubles_elimination'
       ? `/tools/doubles-elimination/${tournament.share_id}`
+      : tournament.type === 'flex_tournament'
+      ? `/tools/flex-tournament/${tournament.share_id}`
       : `/tools/team-match/${tournament.share_id}`;
 
     const statusColor = 

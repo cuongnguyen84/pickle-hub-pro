@@ -7,7 +7,7 @@ interface RefereeTournament {
   name: string;
   share_id: string;
   status: string;
-  type: 'quick_table' | 'doubles_elimination' | 'team_match';
+  type: 'quick_table' | 'doubles_elimination' | 'team_match' | 'flex_tournament';
   player_count?: number;
   team_count?: number;
   format?: string;
@@ -92,6 +92,27 @@ export function useMyRefereeTournaments() {
         });
       }
 
+      // Fetch Flex Tournaments where user is referee (W3.4)
+      const { data: flexReferees } = await supabase
+        .from('flex_tournament_referees')
+        .select('tournament_id')
+        .eq('user_id', user.id);
+
+      let flexTournaments: any[] = [];
+      if (flexReferees && flexReferees.length > 0) {
+        const tournamentIds = flexReferees.map((r) => r.tournament_id).filter(Boolean) as string[];
+        if (tournamentIds.length > 0) {
+          const { data } = await supabase
+            .from('flex_tournaments')
+            .select('id, name, share_id, status, created_at, creator_user_id')
+            .in('id', tournamentIds);
+          flexTournaments = data || [];
+          flexTournaments.forEach((ft) => {
+            if (ft.creator_user_id) creatorIds.add(ft.creator_user_id);
+          });
+        }
+      }
+
       // Fetch all creator profiles
       let profilesMap = new Map<string, { display_name: string | null }>();
       if (creatorIds.size > 0) {
@@ -99,7 +120,7 @@ export function useMyRefereeTournaments() {
           .from('public_profiles')
           .select('id, display_name')
           .in('id', Array.from(creatorIds));
-        
+
         if (profilesData) {
           profilesData.forEach(p => profilesMap.set(p.id, { display_name: p.display_name }));
         }
@@ -155,6 +176,20 @@ export function useMyRefereeTournaments() {
         });
       }
 
+      for (const ft of flexTournaments) {
+        const profile = profilesMap.get(ft.creator_user_id);
+        allTournaments.push({
+          id: ft.id,
+          name: ft.name,
+          share_id: ft.share_id,
+          status: ft.status || 'active',
+          type: 'flex_tournament',
+          created_at: ft.created_at || undefined,
+          creator_user_id: ft.creator_user_id,
+          creator_display_name: profile?.display_name,
+        });
+      }
+
       // Sort by created_at desc
       allTournaments.sort((a, b) => {
         const dateA = new Date(a.created_at || 0).getTime();
@@ -164,7 +199,7 @@ export function useMyRefereeTournaments() {
 
       setTournaments(allTournaments);
     } catch (error) {
-      console.error('Error fetching referee tournaments:', error);
+      console.error('[useMyRefereeTournaments] fetchMyRefereeTournaments:', error);
     } finally {
       setLoading(false);
     }
