@@ -2382,6 +2382,149 @@ export interface Translations {
       };
     };
   };
+  // Sonner toast strings consumed by mutation hooks via tStandalone()
+  // (hooks live outside React render tree, can't use useI18n()).
+  toast: {
+    common: {
+      authRequired: string;
+      unknownError: string;
+    };
+    registration: {
+      submit: {
+        authRequired: string;
+        displayNameRequired: string;
+        duplicate: string;
+        success: string;
+        error: string;
+      };
+      update: {
+        success: string;
+        error: string;
+      };
+      cancel: {
+        success: string;
+        error: string;
+      };
+      approve: {
+        success: string;
+        error: string;
+      };
+      reject: {
+        success: string;
+        error: string;
+      };
+      bulkApprove: {
+        success: string;
+        error: string;
+      };
+      btcOverride: {
+        success: string;
+        error: string;
+      };
+    };
+    teamRegistration: {
+      createTeam: {
+        authRequired: string;
+        duplicate: string;
+        displayNameRequired: string;
+        success: string;
+        error: string;
+      };
+      createInvitation: {
+        maxReached: string;
+        success: string;
+        error: string;
+      };
+      cancelInvitation: {
+        success: string;
+        error: string;
+      };
+      acceptInvitation: {
+        success: string;
+        error: string;
+        codes: {
+          INVITATION_NOT_FOUND: string;
+          INVITATION_ALREADY_USED: string;
+          INVITATION_EXPIRED: string;
+          TEAM_NOT_FOUND: string;
+          TEAM_ALREADY_COMPLETE: string;
+          TABLE_LOCKED: string;
+          CANNOT_JOIN_OWN_TEAM: string;
+        };
+      };
+      removePartner: {
+        success: string;
+        error: string;
+        codes: {
+          TEAM_NOT_FOUND: string;
+          PERMISSION_DENIED: string;
+          TABLE_LOCKED: string;
+        };
+      };
+      btcManage: {
+        approved: string;
+        rejected: string;
+        removed: string;
+        error: string;
+        codes: {
+          TEAM_NOT_FOUND: string;
+          PERMISSION_DENIED: string;
+          INVALID_ACTION: string;
+        };
+      };
+    };
+    pairRequest: {
+      create: {
+        success: string;
+        error: string;
+        codes: {
+          AUTH_REQUIRED: string;
+          TABLE_NOT_FOUND: string;
+          TABLE_LOCKED: string;
+          NO_TEAM: string;
+          TEAM_REJECTED: string;
+          ALREADY_HAS_PARTNER: string;
+          TARGET_TEAM_NOT_FOUND: string;
+          TARGET_TEAM_REJECTED: string;
+          TARGET_HAS_PARTNER: string;
+          SAME_TEAM: string;
+          REQUEST_ALREADY_SENT: string;
+          REQUEST_PENDING_FROM_TARGET: string;
+        };
+      };
+      respond: {
+        acceptSuccess: string;
+        rejectSuccess: string;
+        error: string;
+        codes: {
+          AUTH_REQUIRED: string;
+          REQUEST_NOT_FOUND: string;
+          NOT_TARGET_USER: string;
+          REQUEST_NOT_PENDING: string;
+          TABLE_LOCKED: string;
+          FROM_TEAM_ALREADY_PAIRED: string;
+          TO_TEAM_ALREADY_PAIRED: string;
+        };
+      };
+      cancel: {
+        success: string;
+        error: string;
+      };
+    };
+    parentTournament: {
+      create: {
+        nameRequired: string;
+        error: string;
+        permissionDenied: string;
+      };
+      delete: {
+        hasChildren: string;
+        success: string;
+        error: string;
+        permissionDenied: string;
+      };
+    };
+  };
 }
 
 // Vietnamese translations
@@ -4822,6 +4965,147 @@ export const vi: Translations = {
         win_streak_3:  { title: "Streak 3",          description: "Thắng 3 trận liên tiếp." },
         win_streak_5:  { title: "Streak 5",          description: "Thắng 5 trận liên tiếp." },
         night_owl:     { title: "Cú đêm",            description: "Đăng ký event diễn ra sau 21:00." },
+      },
+    },
+  },
+  toast: {
+    common: {
+      authRequired: "Vui lòng đăng nhập",
+      unknownError: "Có lỗi xảy ra",
+    },
+    registration: {
+      submit: {
+        authRequired: "Vui lòng đăng nhập để đăng ký",
+        displayNameRequired: "Tên hiển thị không được để trống",
+        duplicate: "Bạn đã đăng ký tham gia giải này rồi",
+        success: "Đăng ký thành công! Vui lòng chờ BTC duyệt.",
+        error: "Không thể đăng ký, vui lòng thử lại",
+      },
+      update: {
+        success: "Đã cập nhật đăng ký",
+        error: "Không thể cập nhật, vui lòng thử lại",
+      },
+      cancel: {
+        success: "Đã hủy đăng ký",
+        error: "Không thể hủy đăng ký",
+      },
+      approve: {
+        success: "Đã duyệt đăng ký",
+        error: "Không thể duyệt đăng ký",
+      },
+      reject: {
+        success: "Đã từ chối đăng ký",
+        error: "Không thể từ chối đăng ký",
+      },
+      bulkApprove: {
+        success: "Đã duyệt {count} đăng ký",
+        error: "Không thể duyệt hàng loạt",
+      },
+      btcOverride: {
+        success: "Đã cập nhật thông tin",
+        error: "Không thể cập nhật",
+      },
+    },
+    teamRegistration: {
+      createTeam: {
+        authRequired: "Vui lòng đăng nhập để đăng ký",
+        duplicate: "Bạn đã đăng ký tham gia giải này rồi",
+        displayNameRequired: "Tên hiển thị không được để trống",
+        success: "Đăng ký thành công! Bạn có thể mời partner ngay bây giờ.",
+        error: "Không thể đăng ký, vui lòng thử lại",
+      },
+      createInvitation: {
+        maxReached: "Bạn đã gửi tối đa 3 lời mời. Vui lòng hủy bớt để tạo mới.",
+        success: "Đã tạo link mời partner",
+        error: "Không thể tạo lời mời",
+      },
+      cancelInvitation: {
+        success: "Đã hủy lời mời",
+        error: "Không thể hủy lời mời",
+      },
+      acceptInvitation: {
+        success: "Đã tham gia đội thành công!",
+        error: "Không thể tham gia đội",
+        codes: {
+          INVITATION_NOT_FOUND: "Link mời không tồn tại",
+          INVITATION_ALREADY_USED: "Link mời đã được sử dụng",
+          INVITATION_EXPIRED: "Link mời đã hết hạn",
+          TEAM_NOT_FOUND: "Đội không tồn tại",
+          TEAM_ALREADY_COMPLETE: "Đội đã đủ 2 người",
+          TABLE_LOCKED: "Giải đấu đã diễn ra",
+          CANNOT_JOIN_OWN_TEAM: "Bạn không thể tham gia đội của chính mình",
+        },
+      },
+      removePartner: {
+        success: "Đã xóa partner khỏi đội",
+        error: "Không thể xóa partner",
+        codes: {
+          TEAM_NOT_FOUND: "Đội không tồn tại",
+          PERMISSION_DENIED: "Bạn không có quyền thực hiện thao tác này",
+          TABLE_LOCKED: "Giải đấu đã diễn ra",
+        },
+      },
+      btcManage: {
+        approved: "Đã duyệt đội",
+        rejected: "Đã từ chối đội",
+        removed: "Đã loại đội khỏi giải",
+        error: "Không thể thực hiện thao tác",
+        codes: {
+          TEAM_NOT_FOUND: "Đội không tồn tại",
+          PERMISSION_DENIED: "Bạn không có quyền thực hiện thao tác này",
+          INVALID_ACTION: "Thao tác không hợp lệ",
+        },
+      },
+    },
+    pairRequest: {
+      create: {
+        success: "Đã gửi yêu cầu ghép đôi. Đang chờ xác nhận.",
+        error: "Không thể gửi yêu cầu ghép đôi",
+        codes: {
+          AUTH_REQUIRED: "Vui lòng đăng nhập",
+          TABLE_NOT_FOUND: "Giải không tồn tại",
+          TABLE_LOCKED: "Giải đấu đã diễn ra",
+          NO_TEAM: "Bạn chưa đăng ký tham gia giải",
+          TEAM_REJECTED: "Bạn đã bị từ chối tham gia giải",
+          ALREADY_HAS_PARTNER: "Bạn đã có partner",
+          TARGET_TEAM_NOT_FOUND: "Người chơi không tồn tại",
+          TARGET_TEAM_REJECTED: "Người chơi đã bị từ chối",
+          TARGET_HAS_PARTNER: "Người chơi đã có partner",
+          SAME_TEAM: "Không thể ghép đôi với chính mình",
+          REQUEST_ALREADY_SENT: "Bạn đã gửi yêu cầu ghép đôi này rồi",
+          REQUEST_PENDING_FROM_TARGET: "Người này đang chờ bạn xác nhận ghép đôi",
+        },
+      },
+      respond: {
+        acceptSuccess: "Đã ghép đôi thành công!",
+        rejectSuccess: "Đã từ chối yêu cầu ghép đôi",
+        error: "Không thể xử lý yêu cầu",
+        codes: {
+          AUTH_REQUIRED: "Vui lòng đăng nhập",
+          REQUEST_NOT_FOUND: "Yêu cầu không tồn tại",
+          NOT_TARGET_USER: "Bạn không có quyền xử lý yêu cầu này",
+          REQUEST_NOT_PENDING: "Yêu cầu đã được xử lý",
+          TABLE_LOCKED: "Giải đấu đã diễn ra",
+          FROM_TEAM_ALREADY_PAIRED: "Người gửi yêu cầu đã có partner",
+          TO_TEAM_ALREADY_PAIRED: "Bạn đã có partner",
+        },
+      },
+      cancel: {
+        success: "Đã hủy yêu cầu ghép đôi",
+        error: "Không thể hủy yêu cầu",
+      },
+    },
+    parentTournament: {
+      create: {
+        nameRequired: "Tên giải không được để trống",
+        error: "Không thể tạo giải tổng",
+        permissionDenied: "Bạn không có quyền tạo giải tổng",
+      },
+      delete: {
+        hasChildren: "Bạn phải xoá tất cả nội dung con trước khi xoá giải tổng",
+        success: "Đã xoá giải tổng",
+        error: "Không thể xoá giải tổng",
+        permissionDenied: "Bạn không có quyền xoá giải tổng này",
       },
     },
   },

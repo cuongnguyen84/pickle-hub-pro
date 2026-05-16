@@ -2441,4 +2441,145 @@ export const en: Translations = {
       },
     },
   },
+  toast: {
+    common: {
+      authRequired: "Please sign in",
+      unknownError: "Something went wrong",
+    },
+    registration: {
+      submit: {
+        authRequired: "Please sign in to register",
+        displayNameRequired: "Display name is required",
+        duplicate: "You have already registered for this tournament",
+        success: "Registered! Awaiting organizer approval.",
+        error: "Failed to register, please try again",
+      },
+      update: {
+        success: "Registration updated",
+        error: "Failed to update, please try again",
+      },
+      cancel: {
+        success: "Registration cancelled",
+        error: "Failed to cancel registration",
+      },
+      approve: {
+        success: "Registration approved",
+        error: "Failed to approve registration",
+      },
+      reject: {
+        success: "Registration rejected",
+        error: "Failed to reject registration",
+      },
+      bulkApprove: {
+        success: "Approved {count} registrations",
+        error: "Failed to bulk approve",
+      },
+      btcOverride: {
+        success: "Information updated",
+        error: "Failed to update",
+      },
+    },
+    teamRegistration: {
+      createTeam: {
+        authRequired: "Please sign in to register",
+        duplicate: "You have already registered for this tournament",
+        displayNameRequired: "Display name is required",
+        success: "Registered! You can invite a partner now.",
+        error: "Failed to register, please try again",
+      },
+      createInvitation: {
+        maxReached: "You have sent the maximum of 3 invitations. Cancel some to create new ones.",
+        success: "Partner invite link created",
+        error: "Failed to create invitation",
+      },
+      cancelInvitation: {
+        success: "Invitation cancelled",
+        error: "Failed to cancel invitation",
+      },
+      acceptInvitation: {
+        success: "Joined team successfully",
+        error: "Failed to join team",
+        codes: {
+          INVITATION_NOT_FOUND: "Invitation link does not exist",
+          INVITATION_ALREADY_USED: "Invitation link already used",
+          INVITATION_EXPIRED: "Invitation link expired",
+          TEAM_NOT_FOUND: "Team does not exist",
+          TEAM_ALREADY_COMPLETE: "Team already has 2 players",
+          TABLE_LOCKED: "Tournament has already started",
+          CANNOT_JOIN_OWN_TEAM: "You cannot join your own team",
+        },
+      },
+      removePartner: {
+        success: "Partner removed from team",
+        error: "Failed to remove partner",
+        codes: {
+          TEAM_NOT_FOUND: "Team does not exist",
+          PERMISSION_DENIED: "You do not have permission to perform this action",
+          TABLE_LOCKED: "Tournament has already started",
+        },
+      },
+      btcManage: {
+        approved: "Team approved",
+        rejected: "Team rejected",
+        removed: "Team removed from tournament",
+        error: "Failed to perform action",
+        codes: {
+          TEAM_NOT_FOUND: "Team does not exist",
+          PERMISSION_DENIED: "You do not have permission to perform this action",
+          INVALID_ACTION: "Invalid action",
+        },
+      },
+    },
+    pairRequest: {
+      create: {
+        success: "Pair request sent. Waiting for confirmation.",
+        error: "Failed to send pair request",
+        codes: {
+          AUTH_REQUIRED: "Please sign in",
+          TABLE_NOT_FOUND: "Tournament does not exist",
+          TABLE_LOCKED: "Tournament has already started",
+          NO_TEAM: "You have not registered for this tournament",
+          TEAM_REJECTED: "Your registration was rejected",
+          ALREADY_HAS_PARTNER: "You already have a partner",
+          TARGET_TEAM_NOT_FOUND: "Player does not exist",
+          TARGET_TEAM_REJECTED: "Player's registration was rejected",
+          TARGET_HAS_PARTNER: "Player already has a partner",
+          SAME_TEAM: "You cannot pair with yourself",
+          REQUEST_ALREADY_SENT: "You have already sent this pair request",
+          REQUEST_PENDING_FROM_TARGET: "This player is waiting for you to confirm pairing",
+        },
+      },
+      respond: {
+        acceptSuccess: "Paired successfully",
+        rejectSuccess: "Pair request rejected",
+        error: "Failed to process request",
+        codes: {
+          AUTH_REQUIRED: "Please sign in",
+          REQUEST_NOT_FOUND: "Request does not exist",
+          NOT_TARGET_USER: "You do not have permission to handle this request",
+          REQUEST_NOT_PENDING: "Request already handled",
+          TABLE_LOCKED: "Tournament has already started",
+          FROM_TEAM_ALREADY_PAIRED: "Sender already has a partner",
+          TO_TEAM_ALREADY_PAIRED: "You already have a partner",
+        },
+      },
+      cancel: {
+        success: "Pair request cancelled",
+        error: "Failed to cancel request",
+      },
+    },
+    parentTournament: {
+      create: {
+        nameRequired: "Tournament name is required",
+        error: "Failed to create parent tournament",
+        permissionDenied: "You do not have permission to create a parent tournament",
+      },
+      delete: {
+        hasChildren: "You must delete all sub-events before deleting the parent tournament",
+        success: "Parent tournament deleted",
+        error: "Failed to delete parent tournament",
+        permissionDenied: "You do not have permission to delete this parent tournament",
+      },
+    },
+  },
 };
