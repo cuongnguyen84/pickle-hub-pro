@@ -508,7 +508,12 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                         {language === "vi" ? "Xem hồ sơ" : "View my profile"}
                       </span>
                     )}
-                    <Link to="/account" onClick={() => setAvatarOpen(false)}>Account</Link>
+                    <Link to="/account" onClick={() => setAvatarOpen(false)}>
+                      {language === "vi" ? "Tài khoản" : "Account"}
+                    </Link>
+                    <Link to="/account/my-tournaments" onClick={() => setAvatarOpen(false)}>
+                      {language === "vi" ? "Giải đấu của tôi" : "My Tournaments"}
+                    </Link>
                     <Link to="/creator" onClick={() => setAvatarOpen(false)}>Creator dashboard</Link>
                     <Link to="/admin" onClick={() => setAvatarOpen(false)}>Admin</Link>
                     <div className="divider" />
