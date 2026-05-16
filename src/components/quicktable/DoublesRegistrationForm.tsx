@@ -3,23 +3,17 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTeamRegistration, type Team, type TeamFormData } from '@/hooks/useTeamRegistration';
 import { usePairRequest, type PairRequest } from '@/hooks/usePairRequest';
 import type { SkillRatingSystem } from '@/hooks/useRegistration';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn, 
-  Users, UserMinus, Handshake, Loader2, Bell
+import {
+  UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn,
+  Users, UserMinus, Handshake, Loader2, Bell,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useTranslation } from '@/i18n';
+import { useTranslation, useI18n } from '@/i18n';
 
 interface DoublesRegistrationFormProps {
   tableId: string;
@@ -31,6 +25,162 @@ interface DoublesRegistrationFormProps {
   allTeams?: Team[];
   tableStatus?: string;
   onRegistrationComplete?: () => void;
+}
+
+// ─── Shared tokens (mirror RegistrationForm.tsx) ─────────────────────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
+
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 22,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const requiredMarker: React.CSSProperties = {
+  color: 'var(--tl-green)',
+  marginLeft: 2,
+};
+
+const statusPillStyle = (kind: 'approved' | 'pending' | 'rejected' | 'info'): React.CSSProperties => {
+  if (kind === 'approved') return { background: 'var(--tl-green-glow)', color: 'var(--tl-green)' };
+  if (kind === 'pending') return { background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' };
+  if (kind === 'rejected') return { background: 'rgba(255, 65, 54, 0.10)', color: 'var(--tl-live)' };
+  return { background: 'rgba(79, 155, 255, 0.12)', color: 'rgb(79, 155, 255)' };
+};
+
+const statusBannerStyle = (variant: 'approved' | 'pending' | 'rejected' | 'info'): React.CSSProperties => {
+  if (variant === 'approved') {
+    return {
+      background: 'var(--tl-green-glow)',
+      border: '1px solid rgba(0, 185, 107, 0.30)',
+    };
+  }
+  if (variant === 'pending') {
+    return {
+      background: 'rgba(233, 182, 73, 0.10)',
+      border: '1px solid rgba(233, 182, 73, 0.30)',
+    };
+  }
+  if (variant === 'rejected') {
+    return {
+      background: 'rgba(255, 65, 54, 0.10)',
+      border: '1px solid rgba(255, 65, 54, 0.30)',
+    };
+  }
+  return {
+    background: 'rgba(79, 155, 255, 0.10)',
+    border: '1px solid rgba(79, 155, 255, 0.30)',
+  };
+};
+
+const statusBannerIconColor = (variant: 'approved' | 'pending' | 'rejected' | 'info'): string => {
+  if (variant === 'approved') return 'var(--tl-green)';
+  if (variant === 'pending') return 'var(--tl-gold)';
+  if (variant === 'rejected') return 'var(--tl-live)';
+  return 'rgb(79, 155, 255)';
+};
+
+const skillDescPillStyle = (selected: boolean): React.CSSProperties => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '6px 12px',
+  borderRadius: 999,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11.5,
+  fontWeight: 500,
+  letterSpacing: '0.02em',
+  cursor: 'pointer',
+  background: selected ? 'var(--tl-green-glow)' : 'transparent',
+  border: `1px solid ${selected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+  color: selected ? 'var(--tl-green)' : 'var(--tl-fg-2)',
+  transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+});
+
+const ratingOptionStyle = (selected: boolean): React.CSSProperties => ({
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 12,
+  padding: 14,
+  borderRadius: 'var(--tl-radius)',
+  border: `1px solid ${selected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+  background: selected ? 'var(--tl-green-glow)' : 'var(--tl-bg)',
+  cursor: 'pointer',
+  transition: 'border-color 0.15s, background 0.15s',
+});
+
+const ratingRadioCircleStyle = (selected: boolean): React.CSSProperties => ({
+  width: 18,
+  height: 18,
+  borderRadius: '50%',
+  border: `2px solid ${selected ? 'var(--tl-green)' : 'var(--tl-border-2)'}`,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  marginTop: 2,
+  background: selected ? 'var(--tl-green)' : 'transparent',
+  transition: 'background 0.15s, border-color 0.15s',
+});
+
+const visuallyHiddenStyle: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0,0,0,0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
+// Inline status banner — shared by approved / pending / rejected / info
+// states across the multiple flows in this component.
+function StatusBanner({
+  variant,
+  icon,
+  children,
+}: {
+  variant: 'approved' | 'pending' | 'rejected' | 'info';
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        ...statusBannerStyle(variant),
+        padding: 14,
+        borderRadius: 'var(--tl-radius)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 10,
+      }}
+    >
+      <span style={{ color: statusBannerIconColor(variant), flexShrink: 0, marginTop: 2 }}>
+        {icon}
+      </span>
+      <div style={{ fontSize: 13, color: 'var(--tl-fg-2)', flex: 1, lineHeight: 1.5 }}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export function DoublesRegistrationForm({
@@ -46,14 +196,15 @@ export function DoublesRegistrationForm({
 }: DoublesRegistrationFormProps) {
   const { user } = useAuth();
   const t = useTranslation();
+  const { language } = useI18n();
   const { createTeam, removePartner, loading: teamLoading } = useTeamRegistration();
-  const { 
-    getIncomingRequests, 
-    getOutgoingRequests, 
-    createPairRequest, 
+  const {
+    getIncomingRequests,
+    getOutgoingRequests,
+    createPairRequest,
     respondToPairRequest,
     cancelPairRequest,
-    loading: pairLoading 
+    loading: pairLoading,
   } = usePairRequest();
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,19 +216,17 @@ export function DoublesRegistrationForm({
   const [skillDescription, setSkillDescription] = useState('');
   const [profileLink, setProfileLink] = useState('');
   const [otherSystemName, setOtherSystemName] = useState('');
-  
-  // Pair request state
+
   const [incomingRequests, setIncomingRequests] = useState<PairRequest[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<PairRequest[]>([]);
-  
-  // Confirm dialog
+
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedTeamForPairing, setSelectedTeamForPairing] = useState<Team | null>(null);
 
   const loading = teamLoading || pairLoading;
   const isTableLocked = tableStatus !== 'setup';
+  const youLabel = language === 'vi' ? 'Bạn' : 'You';
 
-  // Load pair requests when team exists
   useEffect(() => {
     if (existingTeam && user) {
       loadPairRequests();
@@ -98,16 +247,14 @@ export function DoublesRegistrationForm({
     navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
   };
 
-  // Filter available teams for pairing
-  const availableTeamsForPairing = allTeams.filter(t => 
-    t.id !== existingTeam?.id && // Not self
-    t.player2_user_id === null && // No partner yet
-    t.team_status !== 'rejected' && 
+  const availableTeamsForPairing = allTeams.filter(t =>
+    t.id !== existingTeam?.id &&
+    t.player2_user_id === null &&
+    t.team_status !== 'rejected' &&
     t.team_status !== 'removed' &&
-    t.player1_user_id !== user?.id // Not current user's team
+    t.player1_user_id !== user?.id,
   );
 
-  // Handle pair request
   const handlePairRequest = (targetTeam: Team) => {
     setSelectedTeamForPairing(targetTeam);
     setConfirmDialogOpen(true);
@@ -115,7 +262,7 @@ export function DoublesRegistrationForm({
 
   const confirmPairRequest = async () => {
     if (!selectedTeamForPairing) return;
-    
+
     const result = await createPairRequest(tableId, selectedTeamForPairing.id);
     if (result.success) {
       setConfirmDialogOpen(false);
@@ -125,243 +272,291 @@ export function DoublesRegistrationForm({
     }
   };
 
-  // Check if user has a pending request to a specific team
-  const hasPendingRequestTo = (teamId: string) => {
-    return outgoingRequests.some(r => r.to_team_id === teamId);
-  };
+  const hasPendingRequestTo = (teamId: string) =>
+    outgoingRequests.some(r => r.to_team_id === teamId);
 
-  // Check if user has incoming request from a specific team
-  const hasIncomingRequestFrom = (teamId: string) => {
-    return incomingRequests.some(r => r.from_team_id === teamId);
-  };
+  const hasIncomingRequestFrom = (teamId: string) =>
+    incomingRequests.some(r => r.from_team_id === teamId);
 
-  // Not logged in
+  // ─── State 1: Not logged in ────────────────────────────────────────────
   if (!user) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <LogIn className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground mb-4">
-            {t.quickTable.loginToRegister}
-          </p>
-          <Button onClick={handleLoginClick}>{t.quickTable.login}</Button>
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: '40px 28px', textAlign: 'center' }}>
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: '50%',
+            background: 'var(--tl-green-glow)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 20,
+          }}
+        >
+          <LogIn className="w-7 h-7" style={{ color: 'var(--tl-green)' }} />
+        </div>
+        <p style={{ fontSize: 14, color: 'var(--tl-fg-2)', marginBottom: 20, lineHeight: 1.5 }}>
+          {t.quickTable.loginToRegister}
+        </p>
+        <button type="button" className="tl-btn green" onClick={handleLoginClick}>
+          <LogIn className="w-4 h-4" />
+          {t.quickTable.login}
+        </button>
+      </div>
     );
   }
 
-  // User is partner in a team (player2)
+  // ─── State 2: User is partner (player2) ────────────────────────────────
   if (existingTeam && existingTeam.player2_user_id === user.id) {
     const isApproved = existingTeam.btc_approved || existingTeam.team_status === 'approved';
-    
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            {t.quickTable.yourTeam}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Status Alert */}
+      <div style={surfaceCard}>
+        <div
+          style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid var(--tl-border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <Users className="w-5 h-5" style={{ color: 'var(--tl-green)' }} />
+          <h2 style={sectionTitle}>{t.quickTable.yourTeam}</h2>
+        </div>
+
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {isApproved ? (
-            <Alert className="bg-green-50 border-green-200">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 font-medium">
+            <StatusBanner variant="approved" icon={<CheckCircle2 className="w-4 h-4" />}>
+              <strong style={{ color: 'var(--tl-green)' }}>
                 {t.quickTable.registration.approved}
-              </AlertDescription>
-            </Alert>
+              </strong>
+            </StatusBanner>
           ) : (
-            <Alert className="bg-amber-50 border-amber-200">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800 font-medium">
+            <StatusBanner variant="pending" icon={<Clock className="w-4 h-4" />}>
+              <strong style={{ color: 'var(--tl-gold)' }}>
                 {t.quickTable.registration.waitingApproval}
-              </AlertDescription>
-            </Alert>
+              </strong>
+            </StatusBanner>
           )}
 
-          {/* Team Info */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{t.quickTable.statusHeader}:</span>
-              <TeamStatusBadge status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} t={t} />
+          <div
+            style={{
+              padding: 18,
+              borderRadius: 'var(--tl-radius)',
+              background: 'var(--tl-bg)',
+              border: '1px solid var(--tl-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={fieldLabel}>{t.quickTable.statusHeader}</span>
+              <TeamStatusPill status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} t={t} />
             </div>
-            
-            <Separator />
-            
-            {/* VDV1 Info */}
-            <div className="space-y-1">
-              <p className="text-sm font-medium">{t.quickTable.teamLeader}:</p>
-              <p className="text-sm text-muted-foreground">
+
+            <div style={{ borderTop: '1px solid var(--tl-border)' }} />
+
+            <div>
+              <p style={{ ...fieldLabel, marginBottom: 4 }}>{t.quickTable.teamLeader}</p>
+              <p style={{ fontSize: 14, color: 'var(--tl-fg)', margin: 0 }}>
                 {existingTeam.player1_display_name}
-                {existingTeam.player1_team && ` - ${existingTeam.player1_team}`}
+                {existingTeam.player1_team && (
+                  <span style={{ color: 'var(--tl-fg-3)' }}> — {existingTeam.player1_team}</span>
+                )}
               </p>
             </div>
-            
-            {/* Partner Info (Bạn) */}
-            <div className="space-y-1">
-              <p className="text-sm font-medium">{t.quickTable.partner} ({t.auth.hasAccount ? 'You' : 'Bạn'}):</p>
-              <p className="text-sm text-muted-foreground">
+
+            <div>
+              <p style={{ ...fieldLabel, marginBottom: 4 }}>
+                {t.quickTable.partner} ({youLabel})
+              </p>
+              <p style={{ fontSize: 14, color: 'var(--tl-fg)', margin: 0 }}>
                 {existingTeam.player2_display_name}
-                {existingTeam.player2_team && ` - ${existingTeam.player2_team}`}
+                {existingTeam.player2_team && (
+                  <span style={{ color: 'var(--tl-fg-3)' }}> — {existingTeam.player2_team}</span>
+                )}
               </p>
             </div>
           </div>
 
-          <Alert variant="default" className="bg-muted/30">
-            <Users className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              {t.quickTable.waitingPartnerApproval} ({existingTeam.player1_display_name}) {t.quickTable.waitingForApproval}
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+          <StatusBanner variant="info" icon={<Users className="w-4 h-4" />}>
+            {t.quickTable.waitingPartnerApproval} ({existingTeam.player1_display_name}) {t.quickTable.waitingForApproval}
+          </StatusBanner>
+        </div>
+      </div>
     );
   }
 
-  // User has registered and their team is REJECTED
+  // ─── State 3: Team rejected / removed ──────────────────────────────────
   if (existingTeam && (existingTeam.team_status === 'rejected' || existingTeam.team_status === 'removed')) {
     return (
-      <Card>
-        <CardContent className="py-6">
-          <div className="text-center">
-            <XCircle className="w-12 h-12 mx-auto mb-3 text-destructive" />
-            <h3 className="font-semibold text-lg mb-1">{t.quickTable.registration.rejected}</h3>
-            {existingTeam.btc_notes && (
-              <p className="text-muted-foreground mt-2">
-                {t.quickTable.registration.rejectedMessage}: {existingTeam.btc_notes}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: '40px 28px', textAlign: 'center' }}>
+        <XCircle className="w-12 h-12" style={{ color: 'var(--tl-live)', margin: '0 auto 12px' }} />
+        <h3 style={{ ...sectionTitle, marginBottom: 4 }}>
+          {t.quickTable.registration.rejected}
+        </h3>
+        {existingTeam.btc_notes && (
+          <p style={{ fontSize: 14, color: 'var(--tl-fg-3)', marginTop: 8 }}>
+            {t.quickTable.registration.rejectedMessage}: {existingTeam.btc_notes}
+          </p>
+        )}
+      </div>
     );
   }
 
-  // User is VDV1 (team owner) - show team management + pairing
+  // ─── State 4: User is team leader (player1) ────────────────────────────
   if (existingTeam && existingTeam.player1_user_id === user.id) {
     const hasPartner = existingTeam.player2_user_id !== null;
+    const isApproved = existingTeam.btc_approved || existingTeam.team_status === 'approved';
 
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            {t.quickTable.yourTeam}
-          </CardTitle>
-          <CardDescription>
+      <div style={surfaceCard}>
+        <div
+          style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid var(--tl-border)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <Users className="w-5 h-5" style={{ color: 'var(--tl-green)' }} />
+            <h2 style={sectionTitle}>{t.quickTable.yourTeam}</h2>
+          </div>
+          <p style={{ fontSize: 14, color: 'var(--tl-fg-2)', margin: 0, lineHeight: 1.5 }}>
             {t.quickTable.manageTeam}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Status Alert */}
-          {existingTeam.btc_approved || existingTeam.team_status === 'approved' ? (
-            <Alert className="bg-green-50 border-green-200">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 font-medium">
+          </p>
+        </div>
+
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {isApproved ? (
+            <StatusBanner variant="approved" icon={<CheckCircle2 className="w-4 h-4" />}>
+              <strong style={{ color: 'var(--tl-green)' }}>
                 {t.quickTable.registration.approved}
-              </AlertDescription>
-            </Alert>
+              </strong>
+            </StatusBanner>
           ) : (
-            <Alert className="bg-amber-50 border-amber-200">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800 font-medium">
+            <StatusBanner variant="pending" icon={<Clock className="w-4 h-4" />}>
+              <strong style={{ color: 'var(--tl-gold)' }}>
                 {t.quickTable.registration.waitingApproval}
-              </AlertDescription>
-            </Alert>
+              </strong>
+            </StatusBanner>
           )}
 
-          {/* Incoming Pair Requests Banner */}
+          {/* Incoming pair requests */}
           {incomingRequests.length > 0 && !hasPartner && (
-            <Alert className="bg-blue-50 border-blue-200">
-              <Bell className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <div className="font-medium mb-2">
-                  {t.quickTable.pairing.incomingRequests} ({incomingRequests.length}):
-                </div>
-                <div className="space-y-2">
-                  {incomingRequests.map((req) => (
-                    <div key={req.id} className="flex items-center justify-between bg-white rounded-lg p-2 border">
-                      <span className="font-medium">
-                        {req.from_team?.player1_display_name || 'VĐV'}
-                        {req.from_team?.player1_team && (
-                          <span className="text-muted-foreground ml-1">
-                            ({req.from_team.player1_team})
-                          </span>
-                        )}
-                      </span>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={async () => {
-                            const result = await respondToPairRequest(req.id, true);
-                            if (result.success) {
-                              // Force refetch to update userTeam state
-                              onRegistrationComplete?.();
-                              // Show success toast
-                              toast.success(t.quickTable.pairing.pairUp + '!');
-                            }
-                          }}
-                          disabled={loading || isTableLocked}
-                        >
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          {t.quickTable.pairing.accept}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={async () => {
-                            const result = await respondToPairRequest(req.id, false);
-                            if (result.success) {
-                              loadPairRequests();
-                            }
-                          }}
-                          disabled={loading || isTableLocked}
-                        >
-                          <XCircle className="w-3 h-3 mr-1" />
-                          {t.quickTable.pairing.decline}
-                        </Button>
-                      </div>
+            <StatusBanner variant="info" icon={<Bell className="w-4 h-4" />}>
+              <div style={{ fontWeight: 600, color: 'rgb(79, 155, 255)', marginBottom: 10 }}>
+                {t.quickTable.pairing.incomingRequests} ({incomingRequests.length})
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {incomingRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      padding: 10,
+                      borderRadius: 'var(--tl-radius)',
+                      background: 'var(--tl-bg-elev)',
+                      border: '1px solid var(--tl-border)',
+                    }}
+                  >
+                    <span style={{ fontWeight: 500, color: 'var(--tl-fg)' }}>
+                      {req.from_team?.player1_display_name || (language === 'vi' ? 'VĐV' : 'Player')}
+                      {req.from_team?.player1_team && (
+                        <span style={{ color: 'var(--tl-fg-3)', marginLeft: 4 }}>
+                          ({req.from_team.player1_team})
+                        </span>
+                      )}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        className="tl-btn green"
+                        onClick={async () => {
+                          const result = await respondToPairRequest(req.id, true);
+                          if (result.success) {
+                            onRegistrationComplete?.();
+                            toast.success(t.quickTable.pairing.pairUp + '!');
+                          }
+                        }}
+                        disabled={loading || isTableLocked}
+                        style={{ padding: '5px 10px', fontSize: 12 }}
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        {t.quickTable.pairing.accept}
+                      </button>
+                      <button
+                        type="button"
+                        className="tl-btn"
+                        onClick={async () => {
+                          const result = await respondToPairRequest(req.id, false);
+                          if (result.success) {
+                            loadPairRequests();
+                          }
+                        }}
+                        disabled={loading || isTableLocked}
+                        style={{ padding: '5px 10px', fontSize: 12 }}
+                      >
+                        <XCircle className="w-3 h-3" />
+                        {t.quickTable.pairing.decline}
+                      </button>
                     </div>
-                  ))}
-                </div>
-              </AlertDescription>
-            </Alert>
+                  </div>
+                ))}
+              </div>
+            </StatusBanner>
           )}
 
-          {/* Team Status */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{t.quickTable.statusHeader}:</span>
-              <TeamStatusBadge status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} t={t} />
+          {/* Team status block */}
+          <div
+            style={{
+              padding: 18,
+              borderRadius: 'var(--tl-radius)',
+              background: 'var(--tl-bg)',
+              border: '1px solid var(--tl-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={fieldLabel}>{t.quickTable.statusHeader}</span>
+              <TeamStatusPill status={existingTeam.team_status} btcApproved={existingTeam.btc_approved} t={t} />
             </div>
-            
-            <Separator />
-            
-            {/* VDV1 Info */}
-            <div className="space-y-1">
-              <p className="text-sm font-medium">{t.quickTable.teamLeader.replace(' (Đội trưởng)', '').replace(' (Team Leader)', '')} ({t.auth.hasAccount ? 'You' : 'Bạn'}):</p>
-              <p className="text-sm text-muted-foreground">
+
+            <div style={{ borderTop: '1px solid var(--tl-border)' }} />
+
+            <div>
+              <p style={{ ...fieldLabel, marginBottom: 4 }}>
+                {t.quickTable.teamLeader.replace(' (Đội trưởng)', '').replace(' (Team Leader)', '')} ({youLabel})
+              </p>
+              <p style={{ fontSize: 14, color: 'var(--tl-fg)', margin: 0 }}>
                 {existingTeam.player1_display_name}
-                {existingTeam.player1_team && ` - ${existingTeam.player1_team}`}
+                {existingTeam.player1_team && (
+                  <span style={{ color: 'var(--tl-fg-3)' }}> — {existingTeam.player1_team}</span>
+                )}
               </p>
             </div>
-            
-            {/* Partner Info */}
-            <div className="space-y-1">
-              <p className="text-sm font-medium">{t.quickTable.partner}:</p>
+
+            <div>
+              <p style={{ ...fieldLabel, marginBottom: 4 }}>{t.quickTable.partner}</p>
               {hasPartner ? (
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <p style={{ fontSize: 14, color: 'var(--tl-fg)', margin: 0 }}>
                     {existingTeam.player2_display_name}
-                    {existingTeam.player2_team && ` - ${existingTeam.player2_team}`}
+                    {existingTeam.player2_team && (
+                      <span style={{ color: 'var(--tl-fg-3)' }}> — {existingTeam.player2_team}</span>
+                    )}
                   </p>
                   {!isTableLocked && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
+                    <button
+                      type="button"
+                      className="tl-btn"
                       onClick={async () => {
                         if (confirm(t.quickTable.removePartnerConfirm)) {
                           const success = await removePartner(existingTeam.id);
@@ -369,39 +564,58 @@ export function DoublesRegistrationForm({
                         }
                       }}
                       disabled={loading}
+                      style={{ padding: '5px 10px', fontSize: 12, color: 'var(--tl-live)' }}
                     >
-                      <UserMinus className="w-4 h-4 mr-1" />
+                      <UserMinus className="w-3.5 h-3.5" />
                       {t.quickTable.remove}
-                    </Button>
+                    </button>
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-amber-600">{t.quickTable.pairing.noPartner}</p>
+                <p style={{ fontSize: 13, color: 'var(--tl-gold)', margin: 0, fontWeight: 500 }}>
+                  {t.quickTable.pairing.noPartner}
+                </p>
               )}
             </div>
           </div>
 
           {/* Outgoing requests */}
           {outgoingRequests.length > 0 && !hasPartner && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{t.quickTable.pairing.outgoingRequests}:</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ ...fieldLabel, margin: 0 }}>
+                {t.quickTable.pairing.outgoingRequests}
+              </p>
               {outgoingRequests.map((req) => (
-                <div key={req.id} className="flex items-center justify-between bg-muted/30 rounded-lg p-2 text-sm">
-                  <span>
-                    {t.quickTable.pairing.waitingConfirm}: <strong>{req.to_team?.player1_display_name}</strong>
+                <div
+                  key={req.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    padding: '10px 12px',
+                    borderRadius: 'var(--tl-radius)',
+                    background: 'var(--tl-bg)',
+                    border: '1px solid var(--tl-border)',
+                    fontSize: 13,
+                  }}
+                >
+                  <span style={{ color: 'var(--tl-fg-2)' }}>
+                    {t.quickTable.pairing.waitingConfirm}:{' '}
+                    <strong style={{ color: 'var(--tl-fg)' }}>{req.to_team?.player1_display_name}</strong>
                   </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive"
+                  <button
+                    type="button"
+                    className="tl-btn"
                     onClick={async () => {
                       const success = await cancelPairRequest(req.id);
                       if (success) loadPairRequests();
                     }}
                     disabled={loading}
+                    style={{ padding: '4px 10px', fontSize: 12, color: 'var(--tl-live)' }}
                   >
                     {t.quickTable.pairing.cancel}
-                  </Button>
+                  </button>
                 </div>
               ))}
             </div>
@@ -409,51 +623,159 @@ export function DoublesRegistrationForm({
 
           {/* Available players for pairing */}
           {!hasPartner && !isTableLocked && availableTeamsForPairing.length > 0 && (
-            <div className="space-y-3">
-              <Separator />
-              <h4 className="font-medium flex items-center gap-2">
-                <Handshake className="w-4 h-4" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ borderTop: '1px solid var(--tl-border)' }} />
+              <h4
+                style={{
+                  ...sectionTitle,
+                  fontSize: 18,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Handshake className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
                 {t.quickTable.pairing.availablePlayers} ({availableTeamsForPairing.length})
               </h4>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {availableTeamsForPairing.map((team) => {
-                  const hasSentRequest = hasPendingRequestTo(team.id);
-                  const hasReceivedRequest = hasIncomingRequestFrom(team.id);
-                  
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  maxHeight: 360,
+                  overflowY: 'auto',
+                }}
+              >
+                {availableTeamsForPairing.map((tm) => {
+                  const hasSentRequest = hasPendingRequestTo(tm.id);
+                  const hasReceivedRequest = hasIncomingRequestFrom(tm.id);
+                  const approved = tm.btc_approved || tm.team_status === 'approved';
+
                   return (
-                    <div key={team.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{team.player1_display_name}</p>
-                        {team.player1_team && (
-                          <p className="text-sm text-muted-foreground">{team.player1_team}</p>
+                    <div
+                      key={tm.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        padding: 12,
+                        borderRadius: 'var(--tl-radius)',
+                        background: 'var(--tl-bg)',
+                        border: '1px solid var(--tl-border)',
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <p
+                          style={{
+                            fontFamily: 'Instrument Serif, serif',
+                            fontStyle: 'italic',
+                            fontWeight: 400,
+                            fontSize: 16,
+                            color: 'var(--tl-fg)',
+                            margin: 0,
+                          }}
+                        >
+                          {tm.player1_display_name}
+                        </p>
+                        {tm.player1_team && (
+                          <p
+                            style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontSize: 11,
+                              color: 'var(--tl-fg-3)',
+                              letterSpacing: '0.02em',
+                              margin: '2px 0 0',
+                            }}
+                          >
+                            {tm.player1_team}
+                          </p>
                         )}
-                        <div className="flex gap-1 mt-1">
-                          {(team.btc_approved || team.team_status === 'approved') && (
-                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
+                          {approved && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontSize: 10,
+                                fontWeight: 500,
+                                padding: '2px 7px',
+                                borderRadius: 4,
+                                letterSpacing: '0.06em',
+                                textTransform: 'uppercase',
+                                ...statusPillStyle('approved'),
+                              }}
+                            >
                               {t.quickTable.approved}
-                            </Badge>
+                            </span>
                           )}
-                          {team.player1_skill_level && (
-                            <Badge variant="outline" className="text-xs">
-                              {team.player1_rating_system}: {team.player1_skill_level}
-                            </Badge>
+                          {tm.player1_skill_level && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontSize: 10,
+                                fontWeight: 500,
+                                padding: '2px 7px',
+                                borderRadius: 4,
+                                background: 'var(--tl-surface)',
+                                color: 'var(--tl-fg-2)',
+                                border: '1px solid var(--tl-border)',
+                                letterSpacing: '0.04em',
+                              }}
+                            >
+                              {tm.player1_rating_system}: {tm.player1_skill_level}
+                            </span>
                           )}
                         </div>
                       </div>
                       {hasSentRequest ? (
-                        <Badge variant="secondary">{t.quickTable.pairing.waitingConfirm}</Badge>
-                      ) : hasReceivedRequest ? (
-                        <Badge variant="default" className="bg-blue-600">{t.quickTable.pairing.waitingYourConfirm}</Badge>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handlePairRequest(team)}
-                          disabled={loading}
+                        <span
+                          style={{
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontSize: 10.5,
+                            fontWeight: 500,
+                            padding: '3px 9px',
+                            borderRadius: 4,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            ...statusPillStyle('pending'),
+                          }}
                         >
-                          <Handshake className="w-4 h-4 mr-1" />
+                          {t.quickTable.pairing.waitingConfirm}
+                        </span>
+                      ) : hasReceivedRequest ? (
+                        <span
+                          style={{
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontSize: 10.5,
+                            fontWeight: 500,
+                            padding: '3px 9px',
+                            borderRadius: 4,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            ...statusPillStyle('info'),
+                          }}
+                        >
+                          {t.quickTable.pairing.waitingYourConfirm}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="tl-btn green"
+                          onClick={() => handlePairRequest(tm)}
+                          disabled={loading}
+                          style={{ padding: '6px 12px', fontSize: 12, flexShrink: 0 }}
+                        >
+                          <Handshake className="w-3.5 h-3.5" />
                           {t.quickTable.pairing.pairUp}
-                        </Button>
+                        </button>
                       )}
                     </div>
                   );
@@ -462,57 +784,64 @@ export function DoublesRegistrationForm({
             </div>
           )}
 
-          {/* Table locked message */}
           {isTableLocked && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {t.quickTable.pairing.teamLocked}
-              </AlertDescription>
-            </Alert>
+            <StatusBanner variant="info" icon={<AlertCircle className="w-4 h-4" />}>
+              {t.quickTable.pairing.teamLocked}
+            </StatusBanner>
           )}
-        </CardContent>
+        </div>
 
-        {/* Confirm Pair Dialog */}
+        {/* Confirm pair dialog */}
         <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t.quickTable.pairing.confirmPair}</DialogTitle>
               <DialogDescription>
-                {t.quickTable.pairing.confirmPairWith} <strong>{selectedTeamForPairing?.player1_display_name}</strong>?
+                {t.quickTable.pairing.confirmPairWith}{' '}
+                <strong style={{ color: 'var(--tl-fg)' }}>
+                  {selectedTeamForPairing?.player1_display_name}
+                </strong>?
                 {selectedTeamForPairing?.player1_team && (
                   <span> ({selectedTeamForPairing.player1_team})</span>
                 )}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+              <button
+                type="button"
+                className="tl-btn"
+                onClick={() => setConfirmDialogOpen(false)}
+              >
                 {t.quickTable.pairing.cancel}
-              </Button>
-              <Button onClick={confirmPairRequest} disabled={loading}>
+              </button>
+              <button
+                type="button"
+                className="tl-btn green"
+                onClick={confirmPairRequest}
+                disabled={loading}
+              >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     {t.quickTable.pairing.sending}
                   </>
                 ) : (
                   t.quickTable.pairing.confirm
                 )}
-              </Button>
+              </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </Card>
+      </div>
     );
   }
 
-  // New registration form
+  // ─── State 5: New registration form ────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!displayName.trim()) return;
-    
-    // Validate other system name if selected
+
     if (ratingSystem === 'other' && !otherSystemName.trim()) {
       toast.error(t.quickTable.registration.systemName);
       return;
@@ -523,7 +852,7 @@ export function DoublesRegistrationForm({
       team: team || undefined,
       rating_system: ratingSystem,
       skill_level: skillLevel ? parseFloat(skillLevel) : undefined,
-      profile_link: ratingSystem === 'other' 
+      profile_link: ratingSystem === 'other'
         ? `[${otherSystemName.trim()}] ${profileLink || ''}`.trim()
         : profileLink || undefined,
     };
@@ -534,195 +863,353 @@ export function DoublesRegistrationForm({
     }
   };
 
+  const duprScoreLabel = `${t.quickTable.registration.duprScore} ${language === 'vi' ? '(VD: 3.25, 4.1)' : '(e.g. 3.25, 4.1)'}`;
+
+  const ratingOptions: Array<{ value: SkillRatingSystem; title: string; desc: string }> = [
+    {
+      value: 'DUPR',
+      title: t.quickTable.registration.dupr,
+      desc: t.quickTable.registration.duprDesc,
+    },
+    {
+      value: 'other',
+      title: t.quickTable.registration.otherSystem,
+      desc: t.quickTable.registration.otherSystemDesc,
+    },
+    {
+      value: 'none',
+      title: t.quickTable.registration.noRating,
+      desc: t.quickTable.registration.noRatingDesc,
+    },
+  ];
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserPlus className="w-5 h-5 text-primary" />
-          {t.quickTable.registration.doublesTitle}
-        </CardTitle>
-        <CardDescription>
-          {t.quickTable.registerDesc} <strong>{tableName}</strong>. {t.quickTable.registration.afterRegisterNote}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {registrationMessage && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{registrationMessage}</AlertDescription>
-            </Alert>
+    <div style={surfaceCard}>
+      <div
+        style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid var(--tl-border)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <UserPlus className="w-5 h-5" style={{ color: 'var(--tl-green)' }} />
+          <h2 style={sectionTitle}>{t.quickTable.registration.doublesTitle}</h2>
+        </div>
+        <p style={{ fontSize: 14, color: 'var(--tl-fg-2)', margin: 0, lineHeight: 1.5 }}>
+          {t.quickTable.registerDesc}{' '}
+          <strong style={{ color: 'var(--tl-fg)' }}>{tableName}</strong>.{' '}
+          {t.quickTable.registration.afterRegisterNote}
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {registrationMessage && (
+          <StatusBanner variant="pending" icon={<AlertCircle className="w-4 h-4" />}>
+            {registrationMessage}
+          </StatusBanner>
+        )}
+
+        {/* Basic Info */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="space-y-2">
+            <Label htmlFor="displayName" style={fieldLabel}>
+              {t.quickTable.registration.displayName}
+              <span style={requiredMarker}>*</span>
+            </Label>
+            <Input
+              id="displayName"
+              name="displayName"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder={t.quickTable.registration.displayName}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="team" style={fieldLabel}>
+              {t.quickTable.registration.teamClub}
+            </Label>
+            <Input
+              id="team"
+              name="team"
+              value={team}
+              onChange={(e) => setTeam(e.target.value)}
+              placeholder={t.quickTable.exampleClub}
+            />
+          </div>
+        </div>
+
+        {/* Skill Level — DUPR-ready group */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Label style={fieldLabel}>
+            {t.quickTable.registration.skillLevel}
+            {requiresSkillLevel && <span style={requiredMarker}>*</span>}
+          </Label>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {ratingOptions.map((opt) => {
+              const selected = ratingSystem === opt.value;
+              return (
+                <label
+                  key={opt.value}
+                  htmlFor={`rating-${opt.value}`}
+                  style={ratingOptionStyle(selected)}
+                >
+                  <input
+                    type="radio"
+                    id={`rating-${opt.value}`}
+                    name="ratingSystem"
+                    value={opt.value}
+                    checked={selected}
+                    onChange={(e) => setRatingSystem(e.target.value as SkillRatingSystem)}
+                    style={visuallyHiddenStyle}
+                  />
+                  <span style={ratingRadioCircleStyle(selected)}>
+                    {selected && (
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: 'var(--tl-bg)',
+                        }}
+                      />
+                    )}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: 'Instrument Serif, serif',
+                        fontStyle: 'italic',
+                        fontWeight: 400,
+                        fontSize: 17,
+                        letterSpacing: '-0.01em',
+                        color: 'var(--tl-fg)',
+                        marginBottom: 2,
+                      }}
+                    >
+                      {opt.title}
+                    </div>
+                    <p
+                      style={{
+                        fontSize: 12.5,
+                        color: 'var(--tl-fg-3)',
+                        margin: 0,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {opt.desc}
+                    </p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+
+          {ratingSystem === 'DUPR' && (
+            <div
+              style={{
+                paddingLeft: 16,
+                borderLeft: '2px solid var(--tl-green)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="skillLevel" style={fieldLabel}>
+                  {duprScoreLabel}
+                </Label>
+                <Input
+                  id="skillLevel"
+                  name="skillLevel"
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  max="8"
+                  value={skillLevel}
+                  onChange={(e) => setSkillLevel(e.target.value)}
+                  placeholder="3.50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="profileLink" style={fieldLabel}>
+                  {t.quickTable.registration.duprLink}
+                </Label>
+                <Input
+                  id="profileLink"
+                  name="profileLink"
+                  type="url"
+                  value={profileLink}
+                  onChange={(e) => setProfileLink(e.target.value)}
+                  placeholder={t.quickTable.exampleDuprLink}
+                />
+              </div>
+            </div>
           )}
 
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="displayName">{t.quickTable.registration.displayName} *</Label>
-              <Input
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder={t.quickTable.registration.displayName}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="team">{t.quickTable.registration.teamClub}</Label>
-              <Input
-                id="team"
-                value={team}
-                onChange={(e) => setTeam(e.target.value)}
-                placeholder={t.quickTable.exampleClub}
-              />
-            </div>
-          </div>
-
-          {/* Skill Level */}
-          <div className="space-y-4">
-            <Label>{t.quickTable.registration.skillLevel} {requiresSkillLevel && '*'}</Label>
-            
-            <RadioGroup
-              value={ratingSystem}
-              onValueChange={(v) => setRatingSystem(v as SkillRatingSystem)}
-              className="space-y-3"
+          {ratingSystem === 'other' && (
+            <div
+              style={{
+                paddingLeft: 16,
+                borderLeft: '2px solid var(--tl-green)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
             >
-              <div className="flex items-start space-x-3">
-                <RadioGroupItem value="DUPR" id="dupr" />
-                <div className="flex-1">
-                  <Label htmlFor="dupr" className="cursor-pointer font-medium">{t.quickTable.registration.dupr}</Label>
-                  <p className="text-sm text-muted-foreground">{t.quickTable.registration.duprDesc}</p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="otherSystemName" style={fieldLabel}>
+                  {t.quickTable.registration.systemName}
+                  <span style={requiredMarker}>*</span>
+                </Label>
+                <Input
+                  id="otherSystemName"
+                  name="otherSystemName"
+                  value={otherSystemName}
+                  onChange={(e) => setOtherSystemName(e.target.value)}
+                  placeholder={t.quickTable.registration.systemNamePlaceholder}
+                  required
+                />
               </div>
-
-              <div className="flex items-start space-x-3">
-                <RadioGroupItem value="other" id="other" />
-                <div className="flex-1">
-                  <Label htmlFor="other" className="cursor-pointer font-medium">{t.quickTable.registration.otherSystem}</Label>
-                  <p className="text-sm text-muted-foreground">{t.quickTable.registration.otherSystemDesc}</p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="skillLevelOther" style={fieldLabel}>
+                  {t.quickTable.registration.skillScore}
+                </Label>
+                <Input
+                  id="skillLevelOther"
+                  name="skillLevel"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="10"
+                  value={skillLevel}
+                  onChange={(e) => setSkillLevel(e.target.value)}
+                  placeholder={t.quickTable.registration.skillScore}
+                />
               </div>
+            </div>
+          )}
 
-              <div className="flex items-start space-x-3">
-                <RadioGroupItem value="none" id="none" />
-                <div className="flex-1">
-                  <Label htmlFor="none" className="cursor-pointer font-medium">{t.quickTable.registration.noRating}</Label>
-                  <p className="text-sm text-muted-foreground">{t.quickTable.registration.noRatingDesc}</p>
+          {ratingSystem === 'none' && (
+            <div
+              style={{
+                paddingLeft: 16,
+                borderLeft: '2px solid var(--tl-green)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="skillDescription" style={fieldLabel}>
+                  {t.quickTable.registration.skillDescription}
+                </Label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                  {t.quickTable.skillDescOptions.map((desc: string) => (
+                    <span
+                      key={desc}
+                      onClick={() => setSkillDescription(desc)}
+                      style={skillDescPillStyle(skillDescription === desc)}
+                    >
+                      {desc}
+                    </span>
+                  ))}
                 </div>
+                <Textarea
+                  id="skillDescription"
+                  name="skillDescription"
+                  value={skillDescription}
+                  onChange={(e) => setSkillDescription(e.target.value)}
+                  placeholder={t.quickTable.exampleSkillDesc}
+                  rows={2}
+                />
               </div>
-            </RadioGroup>
+            </div>
+          )}
+        </div>
 
-            {ratingSystem === 'DUPR' && (
-              <div className="pl-6 space-y-3 border-l-2 border-primary/20">
-                <div className="space-y-2">
-                  <Label htmlFor="skillLevel">{t.quickTable.registration.duprScore}</Label>
-                  <Input
-                    id="skillLevel"
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    max="8"
-                    value={skillLevel}
-                    onChange={(e) => setSkillLevel(e.target.value)}
-                    placeholder="3.50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="profileLink">{t.quickTable.registration.duprLink}</Label>
-                  <Input
-                    id="profileLink"
-                    type="url"
-                    value={profileLink}
-                    onChange={(e) => setProfileLink(e.target.value)}
-                    placeholder={t.quickTable.exampleDuprLink}
-                  />
-                </div>
-              </div>
-            )}
+        {/* After-register note */}
+        <div
+          style={{
+            padding: 14,
+            borderRadius: 'var(--tl-radius)',
+            background: 'var(--tl-bg)',
+            border: '1px dashed var(--tl-border)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+          }}
+        >
+          <Users className="w-4 h-4" style={{ color: 'var(--tl-green)', flexShrink: 0, marginTop: 2 }} />
+          <p style={{ fontSize: 12.5, color: 'var(--tl-fg-2)', margin: 0, lineHeight: 1.5 }}>
+            {t.quickTable.registration.afterRegisterNote}
+          </p>
+        </div>
 
-            {ratingSystem === 'other' && (
-              <div className="pl-6 space-y-3 border-l-2 border-primary/20">
-                <div className="space-y-2">
-                  <Label htmlFor="otherSystemName">{t.quickTable.registration.systemName} *</Label>
-                  <Input
-                    id="otherSystemName"
-                    value={otherSystemName}
-                    onChange={(e) => setOtherSystemName(e.target.value)}
-                    placeholder={t.quickTable.registration.systemNamePlaceholder}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="skillLevelOther">{t.quickTable.registration.skillScore}</Label>
-                  <Input
-                    id="skillLevelOther"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="10"
-                    value={skillLevel}
-                    onChange={(e) => setSkillLevel(e.target.value)}
-                    placeholder={t.quickTable.registration.skillScore}
-                  />
-                </div>
-              </div>
-            )}
-
-            {ratingSystem === 'none' && (
-              <div className="pl-6 space-y-3 border-l-2 border-primary/20">
-                <div className="space-y-2">
-                  <Label>{t.quickTable.registration.skillDescription}</Label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {t.quickTable.skillDescOptions.map((desc: string) => (
-                      <Badge
-                        key={desc}
-                        variant={skillDescription === desc ? 'default' : 'outline'}
-                        className="cursor-pointer"
-                        onClick={() => setSkillDescription(desc)}
-                      >
-                        {desc}
-                      </Badge>
-                    ))}
-                  </div>
-                  <Textarea
-                    value={skillDescription}
-                    onChange={(e) => setSkillDescription(e.target.value)}
-                    placeholder={t.quickTable.exampleSkillDesc}
-                    rows={2}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <Alert variant="default" className="bg-muted/50">
-            <Users className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              {t.quickTable.registration.afterRegisterNote}
-            </AlertDescription>
-          </Alert>
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? t.quickTable.registration.submitting : t.quickTable.registration.submit}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        {/* Submit */}
+        <button
+          type="submit"
+          className="tl-btn green"
+          disabled={loading}
+          style={{ width: '100%', justifyContent: 'center', padding: '12px 18px' }}
+        >
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {loading ? t.quickTable.registration.submitting : t.quickTable.registration.submit}
+        </button>
+      </form>
+    </div>
   );
 }
 
-// Helper Components
-function TeamStatusBadge({ status, btcApproved, t }: { status: string; btcApproved: boolean; t: any }) {
+// W2.1b — token status pill for team state. Mirrors the anchor pattern
+// from W2.1a RegisteredPlayersList so the visual language stays unified.
+function TeamStatusPill({
+  status,
+  btcApproved,
+  t,
+}: {
+  status: string;
+  btcApproved: boolean;
+  t: any;
+}) {
+  const baseStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    fontFamily: 'Geist Mono, ui-monospace, monospace',
+    fontSize: 10.5,
+    fontWeight: 500,
+    padding: '3px 9px',
+    borderRadius: 4,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    whiteSpace: 'nowrap',
+  };
+
   if (status === 'approved' || btcApproved) {
-    return <Badge className="gap-1 bg-green-600"><CheckCircle2 className="w-3 h-3" /> {t.quickTable.approved}</Badge>;
+    return (
+      <span style={{ ...baseStyle, ...statusPillStyle('approved') }}>
+        <CheckCircle2 className="w-3 h-3" />
+        {t.quickTable.approved}
+      </span>
+    );
   }
-  if (status === 'rejected') {
-    return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> {t.quickTable.rejected}</Badge>;
+  if (status === 'rejected' || status === 'removed') {
+    return (
+      <span style={{ ...baseStyle, ...statusPillStyle('rejected') }}>
+        <XCircle className="w-3 h-3" />
+        {t.quickTable.rejected}
+      </span>
+    );
   }
-  if (status === 'removed') {
-    return <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" /> {t.quickTable.rejected}</Badge>;
-  }
-  return <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> {t.quickTable.pending}</Badge>;
+  return (
+    <span style={{ ...baseStyle, ...statusPillStyle('pending') }}>
+      <Clock className="w-3 h-3" />
+      {t.quickTable.pending}
+    </span>
+  );
 }
 
 export default DoublesRegistrationForm;
