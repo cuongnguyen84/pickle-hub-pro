@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { tStandalone } from '@/lib/i18n-standalone';
 import {
   fetchRefereesWithProfiles,
   addRefereeByEmailHelper,
@@ -58,18 +59,18 @@ export function useFlexTournamentReferees(tournamentId: string | undefined) {
       );
 
       if (result.ok) {
-        toast.success(`Đã thêm trọng tài: ${result.displayName || email}`);
+        toast.success(tStandalone('toast.referee.add.success', { name: result.displayName || email }));
         await fetchReferees();
         return true;
       }
 
       if (result.reason === 'not-found') {
-        toast.error('Không tìm thấy người dùng với email này');
+        toast.error(tStandalone('toast.referee.add.notFound'));
       } else if (result.reason === 'already-exists') {
-        toast.error('Người này đã là trọng tài');
+        toast.error(tStandalone('toast.referee.add.duplicate'));
       } else {
         console.error('[useFlexTournamentReferees] addRefereeByEmail:', result.error);
-        toast.error('Không thể thêm trọng tài');
+        toast.error(tStandalone('toast.referee.add.error'));
       }
       return false;
     },
@@ -82,13 +83,13 @@ export function useFlexTournamentReferees(tournamentId: string | undefined) {
 
       const result = await removeRefereeHelper('flex_tournament_referees', refereeId);
       if (result.ok) {
-        toast.success('Đã gỡ trọng tài');
+        toast.success(tStandalone('toast.referee.remove.success'));
         await fetchReferees();
         return true;
       }
 
       console.error('[useFlexTournamentReferees] removeReferee:', result.error);
-      toast.error('Không thể gỡ trọng tài');
+      toast.error(tStandalone('toast.referee.remove.error'));
       return false;
     },
     [tournamentId, user, fetchReferees]

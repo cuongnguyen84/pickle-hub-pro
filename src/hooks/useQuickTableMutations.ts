@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tStandalone } from '@/lib/i18n-standalone';
 import type { QuickTable, QuickTableGroup, QuickTablePlayer, QuickTableMatch, QuickMatchStatus, QuickTableStatus } from './useQuickTable';
 import { generateRoundRobinMatches } from '@/lib/quick-table-utils';
 
@@ -97,9 +98,9 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] addPlayers:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền thêm VĐV cho giải này');
+        toast.error(tStandalone('toast.table.addPlayers.permissionDenied'));
       } else {
-        toast.error('Không thể thêm người chơi');
+        toast.error(tStandalone('toast.table.addPlayers.error'));
       }
       return [];
     } finally {
@@ -133,9 +134,9 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] createGroups:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền tạo bảng cho giải này');
+        toast.error(tStandalone('toast.table.createGroups.permissionDenied'));
       } else {
-        toast.error('Không thể tạo bảng');
+        toast.error(tStandalone('toast.table.createGroups.error'));
       }
       return [];
     } finally {
@@ -175,9 +176,9 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] createGroupMatches:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền tạo trận đấu');
+        toast.error(tStandalone('toast.table.createGroupMatches.permissionDenied'));
       } else {
-        toast.error('Không thể tạo trận đấu');
+        toast.error(tStandalone('toast.table.createGroupMatches.error'));
       }
       return [];
     } finally {
@@ -219,7 +220,7 @@ export function useQuickTableMutations() {
       if (updateError) {
         console.error('[useQuickTableMutations] updateMatchScore:', updateError);
         if (isPermissionDenied(updateError)) {
-          toast.error('Bạn không có quyền chấm điểm trận này');
+          toast.error(tStandalone('toast.table.updateMatchScore.permissionDenied'));
         }
         return;
       }
@@ -352,7 +353,7 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] updateTableStatus:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền cập nhật trạng thái giải');
+        toast.error(tStandalone('toast.table.updateTableStatus.permissionDenied'));
       }
     } finally {
       setPendingFor('updateTableStatus', false);
@@ -375,9 +376,9 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] movePlayerToGroup:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền di chuyển VĐV');
+        toast.error(tStandalone('toast.table.movePlayer.permissionDenied'));
       } else {
-        toast.error('Không thể di chuyển VĐV');
+        toast.error(tStandalone('toast.table.movePlayer.error'));
       }
       return false;
     } finally {
@@ -410,9 +411,9 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] addPlayerToGroup:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền thêm VĐV vào bảng');
+        toast.error(tStandalone('toast.table.addPlayerToGroup.permissionDenied'));
       } else {
-        toast.error('Không thể thêm VĐV');
+        toast.error(tStandalone('toast.table.addPlayerToGroup.error'));
       }
       return null;
     } finally {
@@ -440,9 +441,9 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] removePlayerFromGroup:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền xoá VĐV');
+        toast.error(tStandalone('toast.table.removePlayer.permissionDenied'));
       } else {
-        toast.error('Không thể xoá VĐV');
+        toast.error(tStandalone('toast.table.removePlayer.error'));
       }
       return false;
     } finally {
@@ -483,7 +484,7 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] regenerateGroupMatches:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền tạo lại trận');
+        toast.error(tStandalone('toast.table.regenerateGroupMatches.permissionDenied'));
       }
       return false;
     } finally {
@@ -511,7 +512,7 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] updateTableCourtSettings:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền cập nhật sân/giờ');
+        toast.error(tStandalone('toast.table.updateCourtSettings.permissionDenied'));
       }
       return false;
     } finally {
@@ -582,7 +583,7 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] reassignCourtsAndTimes:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền cập nhật lịch');
+        toast.error(tStandalone('toast.table.reassignCourtsAndTimes.permissionDenied'));
       }
       return false;
     } finally {
@@ -599,15 +600,15 @@ export function useQuickTableMutations() {
 
       if (error) throw error;
 
-      toast.success('Đã xoá giải đấu');
+      toast.success(tStandalone('toast.table.deleteTable.success'));
       return true;
     } catch (error: unknown) {
       console.error('[useQuickTableMutations] deleteTable:', error);
       const msg = error instanceof Error ? error.message : '';
       if (isPermissionDenied(error) || msg.includes('Permission denied')) {
-        toast.error('Bạn không có quyền xoá giải đấu này');
+        toast.error(tStandalone('toast.table.deleteTable.permissionDenied'));
       } else {
-        toast.error('Không thể xoá giải đấu');
+        toast.error(tStandalone('toast.table.deleteTable.error'));
       }
       return false;
     } finally {
@@ -631,7 +632,7 @@ export function useQuickTableMutations() {
     } catch (error) {
       console.error('[useQuickTableMutations] updateCourtName:', error);
       if (isPermissionDenied(error)) {
-        toast.error('Bạn không có quyền đổi tên sân');
+        toast.error(tStandalone('toast.table.updateCourtName.permissionDenied'));
       }
       return false;
     } finally {

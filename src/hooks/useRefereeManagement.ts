@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { tStandalone } from '@/lib/i18n-standalone';
 import {
   fetchRefereesWithProfiles,
   addRefereeByEmailHelper,
@@ -86,18 +87,18 @@ export function useRefereeManagement(tableId: string | undefined, creatorUserId:
     const result = await addRefereeByEmailHelper('quick_table_referees', 'table_id', tableId, email);
 
     if (result.ok) {
-      toast.success(`Đã thêm trọng tài: ${result.displayName || email}`);
+      toast.success(tStandalone('toast.referee.add.success', { name: result.displayName || email }));
       await fetchReferees();
       return true;
     }
 
     if (result.reason === 'not-found') {
-      toast.error('Không tìm thấy người dùng với email này');
+      toast.error(tStandalone('toast.referee.add.notFound'));
     } else if (result.reason === 'already-exists') {
-      toast.error('Người này đã là trọng tài');
+      toast.error(tStandalone('toast.referee.add.duplicate'));
     } else {
       console.error('[useRefereeManagement] addRefereeByEmail:', result.error);
-      toast.error('Không thể thêm trọng tài');
+      toast.error(tStandalone('toast.referee.add.error'));
     }
     return false;
   }, [tableId, user, fetchReferees]);
@@ -108,13 +109,13 @@ export function useRefereeManagement(tableId: string | undefined, creatorUserId:
 
     const result = await removeRefereeHelper('quick_table_referees', refereeId);
     if (result.ok) {
-      toast.success('Đã gỡ trọng tài');
+      toast.success(tStandalone('toast.referee.remove.success'));
       await fetchReferees();
       return true;
     }
 
     console.error('[useRefereeManagement] removeReferee:', result.error);
-    toast.error('Không thể gỡ trọng tài');
+    toast.error(tStandalone('toast.referee.remove.error'));
     return false;
   }, [tableId, user, fetchReferees]);
 

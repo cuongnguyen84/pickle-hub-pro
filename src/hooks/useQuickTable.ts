@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { tStandalone } from '@/lib/i18n-standalone';
 import { sanitizeString } from '@/lib/validation';
 import { useQuickTableMutations } from './useQuickTableMutations';
 import {
@@ -141,7 +142,7 @@ export function useQuickTable() {
     }
   ): Promise<QuickTable | null> => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập để tạo bảng đấu');
+      toast.error(tStandalone('toast.table.createTable.authRequired'));
       return null;
     }
 
@@ -149,7 +150,7 @@ export function useQuickTable() {
     try {
       const safeName = sanitizeString(name, 100);
       if (!safeName) {
-        toast.error('Tên giải không được để trống');
+        toast.error(tStandalone('toast.table.createTable.nameRequired'));
         return null;
       }
       const safeMessage = registrationOptions?.registration_message
@@ -175,19 +176,19 @@ export function useQuickTable() {
       
       if (!result.success) {
         if (result.error === 'LIMIT_REACHED') {
-          toast.error('Đã đạt giới hạn soft launch: mỗi tài khoản chỉ được tạo tối đa 3 giải.');
+          toast.error(tStandalone('toast.table.createTable.limitReached'));
           return null;
         }
         if (result.error === 'AUTH_REQUIRED') {
-          toast.error('Vui lòng đăng nhập để tạo bảng đấu');
+          toast.error(tStandalone('toast.table.createTable.authRequired'));
           return null;
         }
         throw new Error(result.error || 'Unknown error');
       }
-      
+
       return result.table as QuickTable;
     } catch {
-      toast.error('Không thể tạo bảng đấu');
+      toast.error(tStandalone('toast.table.createTable.error'));
       return null;
     } finally {
       setLoading(false);
