@@ -50,6 +50,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const WatchVideo = lazy(() => import("./pages/WatchVideo"));
 const WatchLive = lazy(() => import("./pages/WatchLive"));
 const Account = lazy(() => import("./pages/Account"));
+const MyTournaments = lazy(() => import("./pages/MyTournaments"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Search = lazy(() => import("./pages/Search"));
 const OrganizationDetail = lazy(() => import("./pages/OrganizationDetail"));
@@ -492,6 +493,7 @@ const App = () => (
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/auth/reset-password" element={<ResetPassword />} />
                     <Route path="/account" element={<Account />} />
+                    <Route path="/account/my-tournaments" element={<RequireAuth><MyTournaments /></RequireAuth>} />
                     {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />
                     {/* Bet #1: match permalink (Vietnamese canonical /tran-dau/:slug) */}
@@ -710,6 +712,7 @@ const App = () => (
                     <Route path="/vi/terms" element={<ViLanguageWrapper><Terms /></ViLanguageWrapper>} />
                     <Route path="/vi/login" element={<ViLanguageWrapper><Login /></ViLanguageWrapper>} />
                     <Route path="/vi/account" element={<ViLanguageWrapper><Account /></ViLanguageWrapper>} />
+                    <Route path="/vi/account/my-tournaments" element={<ViLanguageWrapper><RequireAuth><MyTournaments /></RequireAuth></ViLanguageWrapper>} />
                     <Route path="/vi/notifications" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
                     <Route path="/vi/thong-bao" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
 
