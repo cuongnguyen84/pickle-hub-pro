@@ -29,15 +29,16 @@ export default function DoublesEliminationList() {
     setLanguageFromUrl("en");
   }, [setLanguageFromUrl]);
   const { getUserTournaments } = useDoublesElimination();
-  const { quota } = useUserCreateQuota();
+  const { quota, used: totalUsed } = useUserCreateQuota();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // W3.2 — quota usage for the stats-row. Reads the same column the
-  // create_doubles_elimination_with_quota RPC enforces against.
+  // TOTAL quota across all 4 tournament tools (Codex P1 fix on #106):
+  // quota check + stats-row "X/Y" reflects the cross-tool sum. usedCount
+  // below stays the per-tool count for the "Của tôi" display box.
   const usedCount = tournaments.length;
-  const quotaPct = quota > 0 ? Math.min(100, Math.round((usedCount / quota) * 100)) : 0;
-  const quotaReached = usedCount >= quota;
+  const quotaPct = quota > 0 ? Math.min(100, Math.round((totalUsed / quota) * 100)) : 0;
+  const quotaReached = totalUsed >= quota;
 
   const dateLocale = language === 'vi' ? vi : enUS;
 
@@ -157,7 +158,7 @@ export default function DoublesEliminationList() {
             <div className="tl-stat-box">
               <div className="lbl">{language === "vi" ? "Hạn mức" : "Quota"}</div>
               <div className="val">
-                <span className={quotaReached ? "" : "green"}>{usedCount}</span>
+                <span className={quotaReached ? "" : "green"}>{totalUsed}</span>
                 <span style={{ color: "var(--tl-fg-4)", fontSize: "0.6em" }}>/{quota}</span>
               </div>
               <div className="sub">{quotaPct}% {language === "vi" ? "đã dùng" : "used"}</div>

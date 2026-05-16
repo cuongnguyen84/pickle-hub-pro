@@ -3,19 +3,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 /**
- * W3.2 — Fetch the caller's per-account tournament-create quota.
+ * W3.2 — TOTAL tournament-create quota across all 4 tools.
  *
  * Reads `profiles.tournament_create_quota` (default 3, admin override =
- * higher integer). Used by the Flex / Doubles Elimination / Team Match
- * list pages to render a "X / Y" stats-row alongside their own count.
+ * higher integer) for the cap, and `count_user_tournaments(user)` for the
+ * SUM of the caller's tournaments across Quick + Flex + Doubles + TeamMatch.
  *
- * Quick Tables already has a dedicated RPC (`get_user_quota_info`) that
- * also returns the table count; for the other three tools the list page
- * already knows its own count from React Query, so we only need the cap.
+ * Used by the Flex / Doubles Elimination / Team Match list pages to render
+ * a "TOTAL_USED / QUOTA" stats-row alongside the page's own per-tool count.
+ * Quick Tables list page reads the same numbers via getUserQuotaInfo() in
+ * useQuickTable (the underlying get_user_quota_info RPC is now TOTAL-aware
+ * via the same helper).
  */
-export function useUserCreateQuota(): { quota: number; loading: boolean } {
+export function useUserCreateQuota(): {
+  quota: number;
+  used: number;
+  loading: boolean;
+} {
   const { user } = useAuth();
   const [quota, setQuota] = useState<number>(3);
+  const [used, setUsed] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -28,21 +35,28 @@ export function useUserCreateQuota(): { quota: number; loading: boolean } {
       }
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('tournament_create_quota')
-          .eq('id', user.id)
-          .maybeSingle();
+        const [{ data: quotaRow, error: quotaErr }, { data: countData, error: countErr }] =
+          await Promise.all([
+            supabase
+              .from('profiles')
+              .select('tournament_create_quota')
+              .eq('id', user.id)
+              .maybeSingle(),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (supabase.rpc as any)('count_user_tournaments', { _user_id: user.id }),
+          ]);
 
         if (cancelled) return;
-        if (error) {
-          console.error('[useUserCreateQuota] fetch:', error);
-          setQuota(3);
-          return;
-        }
-        const value = (data as { tournament_create_quota?: number | null } | null)
+
+        if (quotaErr) console.error('[useUserCreateQuota] quota:', quotaErr);
+        if (countErr) console.error('[useUserCreateQuota] count:', countErr);
+
+        const quotaValue = (quotaRow as { tournament_create_quota?: number | null } | null)
           ?.tournament_create_quota;
-        setQuota(typeof value === 'number' && value > 0 ? value : 3);
+        setQuota(typeof quotaValue === 'number' && quotaValue > 0 ? quotaValue : 3);
+
+        const countValue = typeof countData === 'number' ? countData : 0;
+        setUsed(countValue);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -54,5 +68,5 @@ export function useUserCreateQuota(): { quota: number; loading: boolean } {
     };
   }, [user]);
 
-  return { quota, loading };
+  return { quota, used, loading };
 }
