@@ -2581,5 +2581,72 @@ export const en: Translations = {
         permissionDenied: "You do not have permission to delete this parent tournament",
       },
     },
+    table: {
+      createTable: {
+        authRequired: "Please sign in to create a table",
+        nameRequired: "Tournament name is required",
+        limitReached: "Soft launch limit reached: each account can create up to 3 tables.",
+        error: "Failed to create table",
+      },
+      addPlayers: {
+        permissionDenied: "You do not have permission to add players to this table",
+        error: "Failed to add players",
+      },
+      createGroups: {
+        permissionDenied: "You do not have permission to create groups for this table",
+        error: "Failed to create groups",
+      },
+      createGroupMatches: {
+        permissionDenied: "You do not have permission to create matches",
+        error: "Failed to create matches",
+      },
+      updateMatchScore: {
+        permissionDenied: "You do not have permission to score this match",
+      },
+      updateTableStatus: {
+        permissionDenied: "You do not have permission to update table status",
+      },
+      movePlayer: {
+        permissionDenied: "You do not have permission to move players",
+        error: "Failed to move player",
+      },
+      addPlayerToGroup: {
+        permissionDenied: "You do not have permission to add players to this group",
+        error: "Failed to add player",
+      },
+      removePlayer: {
+        permissionDenied: "You do not have permission to remove players",
+        error: "Failed to remove player",
+      },
+      regenerateGroupMatches: {
+        permissionDenied: "You do not have permission to regenerate matches",
+      },
+      updateCourtSettings: {
+        permissionDenied: "You do not have permission to update courts/time",
+      },
+      reassignCourtsAndTimes: {
+        permissionDenied: "You do not have permission to update the schedule",
+      },
+      deleteTable: {
+        success: "Table deleted",
+        permissionDenied: "You do not have permission to delete this table",
+        error: "Failed to delete table",
+      },
+      updateCourtName: {
+        permissionDenied: "You do not have permission to rename courts",
+      },
+    },
+    referee: {
+      add: {
+        success: "Referee added: {name}",
+        notFound: "No user found with that email",
+        duplicate: "This person is already a referee",
+        error: "Failed to add referee",
+      },
+      remove: {
+        success: "Referee removed",
+        error: "Failed to remove referee",
+      },
+    },
   },
 };

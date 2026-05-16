@@ -5108,5 +5108,72 @@ export const vi: Translations = {
         permissionDenied: "Bạn không có quyền xoá giải tổng này",
       },
     },
+    table: {
+      createTable: {
+        authRequired: "Vui lòng đăng nhập để tạo bảng đấu",
+        nameRequired: "Tên giải không được để trống",
+        limitReached: "Đã đạt giới hạn soft launch: mỗi tài khoản chỉ được tạo tối đa 3 giải.",
+        error: "Không thể tạo bảng đấu",
+      },
+      addPlayers: {
+        permissionDenied: "Bạn không có quyền thêm VĐV cho giải này",
+        error: "Không thể thêm người chơi",
+      },
+      createGroups: {
+        permissionDenied: "Bạn không có quyền tạo bảng cho giải này",
+        error: "Không thể tạo bảng",
+      },
+      createGroupMatches: {
+        permissionDenied: "Bạn không có quyền tạo trận đấu",
+        error: "Không thể tạo trận đấu",
+      },
+      updateMatchScore: {
+        permissionDenied: "Bạn không có quyền chấm điểm trận này",
+      },
+      updateTableStatus: {
+        permissionDenied: "Bạn không có quyền cập nhật trạng thái giải",
+      },
+      movePlayer: {
+        permissionDenied: "Bạn không có quyền di chuyển VĐV",
+        error: "Không thể di chuyển VĐV",
+      },
+      addPlayerToGroup: {
+        permissionDenied: "Bạn không có quyền thêm VĐV vào bảng",
+        error: "Không thể thêm VĐV",
+      },
+      removePlayer: {
+        permissionDenied: "Bạn không có quyền xoá VĐV",
+        error: "Không thể xoá VĐV",
+      },
+      regenerateGroupMatches: {
+        permissionDenied: "Bạn không có quyền tạo lại trận",
+      },
+      updateCourtSettings: {
+        permissionDenied: "Bạn không có quyền cập nhật sân/giờ",
+      },
+      reassignCourtsAndTimes: {
+        permissionDenied: "Bạn không có quyền cập nhật lịch",
+      },
+      deleteTable: {
+        success: "Đã xoá giải đấu",
+        permissionDenied: "Bạn không có quyền xoá giải đấu này",
+        error: "Không thể xoá giải đấu",
+      },
+      updateCourtName: {
+        permissionDenied: "Bạn không có quyền đổi tên sân",
+      },
+    },
+    referee: {
+      add: {
+        success: "Đã thêm trọng tài: {name}",
+        notFound: "Không tìm thấy người dùng với email này",
+        duplicate: "Người này đã là trọng tài",
+        error: "Không thể thêm trọng tài",
+      },
+      remove: {
+        success: "Đã gỡ trọng tài",
+        error: "Không thể gỡ trọng tài",
+      },
+    },
   },
 };
