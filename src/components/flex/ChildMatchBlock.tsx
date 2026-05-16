@@ -1,14 +1,9 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useI18n } from '@/i18n';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, X, User, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import type { FlexMatch, FlexPlayer, FlexTeam, FlexTeamMember } from '@/hooks/useFlexTournament';
 
 interface ChildMatchBlockProps {
@@ -16,7 +11,7 @@ interface ChildMatchBlockProps {
   players: FlexPlayer[];
   teams: FlexTeam[];
   teamMembers: FlexTeamMember[];
-  parentMatch?: FlexMatch | null; // Parent team match to get team members
+  parentMatch?: FlexMatch | null;
   isCreator: boolean;
   matchIndex: number;
   onUpdateScore: (scoreA: number, scoreB: number) => void;
@@ -29,9 +24,9 @@ interface SelectableSlotProps {
   id: string;
   playerId: string | null;
   players: FlexPlayer[];
-  availablePlayers: FlexPlayer[]; // Players from the team for this side
+  availablePlayers: FlexPlayer[];
   isCreator: boolean;
-  usedPlayerIds: Set<string>; // Players already used in this match
+  usedPlayerIds: Set<string>;
   onClear: () => void;
   onSelect: (playerId: string) => void;
   isSecondSlot?: boolean;
@@ -43,60 +38,133 @@ function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, us
     id,
     data: { type: 'match-slot', slotId: id },
   });
-  
-  // Local state for optimistic updates
+
   const [localPlayerId, setLocalPlayerId] = useState(playerId);
-  
-  // Sync when prop changes
+
   useEffect(() => {
     setLocalPlayerId(playerId);
   }, [playerId]);
 
   const selectedPlayer = localPlayerId ? players.find(p => p.id === localPlayerId) : null;
-  
-  // Filter out already used players (except current selection)
+
   const filteredAvailablePlayers = useMemo(() => {
     return availablePlayers.filter(p => !usedPlayerIds.has(p.id) || p.id === localPlayerId);
   }, [availablePlayers, usedPlayerIds, localPlayerId]);
 
-  // Handle selection with optimistic update
   const handleSelect = useCallback((value: string) => {
     if (value) {
-      setLocalPlayerId(value); // Optimistic update
+      setLocalPlayerId(value);
       onSelect(value);
     }
   }, [onSelect]);
 
-  // If no available players from team, show simple drop zone
+  // No team members available — simple drop zone with token border
   if (availablePlayers.length === 0) {
+    const slotStyle: React.CSSProperties = {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '6px 8px',
+      borderRadius: 'var(--tl-radius)',
+      border: selectedPlayer
+        ? '1px solid var(--tl-border)'
+        : `1px dashed ${isOver ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+      background: isOver
+        ? 'var(--tl-green-glow)'
+        : selectedPlayer
+          ? 'var(--tl-bg)'
+          : 'transparent',
+      minHeight: 32,
+      transition: 'border-color 0.15s, background 0.15s, transform 0.15s',
+      transform: isOver ? 'scale(1.02)' : 'scale(1)',
+      fontSize: 12,
+    };
+
     return (
-      <div
-        ref={setNodeRef}
-        className={cn(
-          "flex items-center justify-between px-2 py-1.5 rounded border-2 border-dashed min-h-[32px] transition-all text-xs",
-          isOver && "border-primary bg-primary/10 scale-[1.02]",
-          selectedPlayer && "border-solid bg-muted/50 border-muted-foreground/20"
-        )}
-      >
+      <div ref={setNodeRef} style={slotStyle}>
         {selectedPlayer ? (
           <>
-            <div className="flex items-center gap-1 min-w-0">
-              <User className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-              <span className="truncate">{selectedPlayer.name}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+              <User className="w-3 h-3" style={{ color: 'var(--tl-fg-3)', flexShrink: 0 }} />
+              <span
+                style={{
+                  fontSize: 12,
+                  color: 'var(--tl-fg)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {selectedPlayer.name}
+              </span>
             </div>
             {isCreator && (
-              <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0" onClick={onClear}>
+              <button
+                type="button"
+                onClick={onClear}
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  color: 'var(--tl-fg-3)',
+                  cursor: 'pointer',
+                  padding: 2,
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 4,
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)'; }}
+                aria-label="Clear slot"
+              >
                 <X className="w-2.5 h-2.5" />
-              </Button>
+              </button>
             )}
           </>
         ) : (
           <>
-            <span className="text-xs text-muted-foreground">{t.tools.flexTournament.dropPlayerHere}</span>
+            <span
+              style={{
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10,
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t.tools.flexTournament.dropPlayerHere}
+            </span>
             {isSecondSlot && isCreator && (
-              <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0 opacity-30 hover:opacity-100" onClick={onClear}>
+              <button
+                type="button"
+                onClick={onClear}
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  color: 'var(--tl-fg-4)',
+                  cursor: 'pointer',
+                  padding: 2,
+                  opacity: 0.4,
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 4,
+                  transition: 'opacity 0.15s, color 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = '1';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = '0.4';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-4)';
+                }}
+                aria-label="Remove second slot"
+              >
                 <X className="w-2.5 h-2.5" />
-              </Button>
+              </button>
             )}
           </>
         )}
@@ -104,29 +172,37 @@ function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, us
     );
   }
 
-  // Show select dropdown when team members are available
+  // With team members — Select dropdown (auto-themed via D4)
   return (
     <div
       ref={setNodeRef}
-      className={cn(
-        "flex items-center gap-1 transition-all",
-        isOver && "scale-[1.02]"
-      )}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        transition: 'transform 0.15s',
+        transform: isOver ? 'scale(1.02)' : 'scale(1)',
+      }}
     >
       <Select
         value={localPlayerId || ''}
         onValueChange={handleSelect}
         disabled={!isCreator}
       >
-        <SelectTrigger className={cn(
-          "h-8 text-xs flex-1",
-          !localPlayerId && "border-dashed"
-        )}>
+        <SelectTrigger className={`h-8 text-xs flex-1 ${!localPlayerId ? 'border-dashed' : ''}`}>
           <SelectValue placeholder={t.tools.flexTournament.selectPlayer}>
             {selectedPlayer && (
-              <div className="flex items-center gap-1">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <User className="w-3 h-3" />
-                <span className="truncate">{selectedPlayer.name}</span>
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {selectedPlayer.name}
+                </span>
               </div>
             )}
           </SelectValue>
@@ -134,7 +210,7 @@ function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, us
         <SelectContent className="z-50">
           {filteredAvailablePlayers.map(player => (
             <SelectItem key={player.id} value={player.id}>
-              <div className="flex items-center gap-1.5">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <User className="w-3 h-3" />
                 {player.name}
               </div>
@@ -143,9 +219,28 @@ function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, us
         </SelectContent>
       </Select>
       {localPlayerId && isCreator && (
-        <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={onClear}>
+        <button
+          type="button"
+          onClick={onClear}
+          style={{
+            background: 'transparent',
+            border: 0,
+            color: 'var(--tl-fg-3)',
+            cursor: 'pointer',
+            padding: 2,
+            flexShrink: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 4,
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--tl-live)'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--tl-fg-3)'; }}
+          aria-label="Clear slot"
+        >
           <X className="w-3 h-3" />
-        </Button>
+        </button>
       )}
     </div>
   );
@@ -154,7 +249,7 @@ function SelectableSlot({ id, playerId, players, availablePlayers, isCreator, us
 export function ChildMatchBlock({
   match,
   players,
-  teams,
+  teams: _teams,
   teamMembers,
   parentMatch,
   isCreator,
@@ -176,7 +271,6 @@ export function ChildMatchBlock({
     }
   };
 
-  // Get players from Team A (parent match's slot_a_team_id)
   const teamAPlayers = useMemo(() => {
     if (!parentMatch?.slot_a_team_id) return [];
     const memberIds = teamMembers
@@ -185,7 +279,6 @@ export function ChildMatchBlock({
     return players.filter(p => memberIds.includes(p.id));
   }, [parentMatch?.slot_a_team_id, teamMembers, players]);
 
-  // Get players from Team B (parent match's slot_b_team_id)
   const teamBPlayers = useMemo(() => {
     if (!parentMatch?.slot_b_team_id) return [];
     const memberIds = teamMembers
@@ -194,7 +287,6 @@ export function ChildMatchBlock({
     return players.filter(p => memberIds.includes(p.id));
   }, [parentMatch?.slot_b_team_id, teamMembers, players]);
 
-  // Get all used player IDs in this match (for duplicate validation)
   const usedPlayerIds = useMemo(() => {
     const ids = new Set<string>();
     if (match.slot_a1_player_id) ids.add(match.slot_a1_player_id);
@@ -204,20 +296,18 @@ export function ChildMatchBlock({
     return ids;
   }, [match.slot_a1_player_id, match.slot_a2_player_id, match.slot_b1_player_id, match.slot_b2_player_id]);
 
-  // Check for duplicate player warning
   const hasDuplicateWarning = useMemo(() => {
     const allPlayers = [
       match.slot_a1_player_id,
       match.slot_a2_player_id,
       match.slot_b1_player_id,
-      match.slot_b2_player_id
+      match.slot_b2_player_id,
     ].filter(Boolean) as string[];
-    
+
     const uniquePlayers = new Set(allPlayers);
     return allPlayers.length !== uniquePlayers.size;
   }, [match.slot_a1_player_id, match.slot_a2_player_id, match.slot_b1_player_id, match.slot_b2_player_id]);
 
-  // Get winner name
   const getWinnerName = () => {
     if (!match.winner_side) return null;
     const side = match.winner_side;
@@ -235,111 +325,167 @@ export function ChildMatchBlock({
   const winnerName = getWinnerName();
 
   return (
-    <Card className={cn("bg-muted/30", hasDuplicateWarning && "ring-2 ring-destructive")}>
-      <CardContent className="p-2 space-y-2">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t.tools.flexTournament.childMatch} {matchIndex}
-            </span>
-            {hasDuplicateWarning && (
-              <div className="flex items-center gap-1 text-destructive">
-                <AlertTriangle className="w-3 h-3" />
-                <span className="text-[10px]">VĐV trùng!</span>
-              </div>
-            )}
-          </div>
-          {isCreator && (
-            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onDelete}>
-              <Trash2 className="w-3 h-3 text-destructive" />
-            </Button>
+    <div
+      style={{
+        background: 'var(--tl-bg)',
+        border: `1px solid ${hasDuplicateWarning ? 'rgba(255, 65, 54, 0.45)' : 'var(--tl-border)'}`,
+        borderRadius: 'var(--tl-radius)',
+        boxShadow: hasDuplicateWarning ? '0 0 0 2px rgba(255, 65, 54, 0.15)' : 'none',
+        padding: 8,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 10.5,
+              fontWeight: 500,
+              color: 'var(--tl-fg-3)',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {t.tools.flexTournament.childMatch} {matchIndex}
+          </span>
+          {hasDuplicateWarning && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--tl-live)' }}>
+              <AlertTriangle className="w-3 h-3" />
+              <span style={{ fontSize: 10, fontWeight: 600 }}>VĐV trùng!</span>
+            </div>
           )}
         </div>
+        {isCreator && (
+          <button
+            type="button"
+            onClick={onDelete}
+            style={{
+              background: 'transparent',
+              border: 0,
+              color: 'var(--tl-live)',
+              cursor: 'pointer',
+              padding: 2,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 4,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255, 65, 54, 0.10)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+            aria-label="Delete child match"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        )}
+      </div>
 
-        {/* Stacked layout: Team A row, Score, Team B row */}
-        <div className="space-y-2">
-          {/* Team A Row */}
-          <div className="grid grid-cols-2 gap-1">
-            <SelectableSlot
-              id={`match-${match.id}-slot-a1`}
-              playerId={match.slot_a1_player_id}
-              players={players}
-              availablePlayers={teamAPlayers}
-              isCreator={isCreator}
-              usedPlayerIds={usedPlayerIds}
-              onClear={() => onClearSlot('a1')}
-              onSelect={(id) => onSelectPlayer('a1', id)}
-            />
-            <SelectableSlot
-              id={`match-${match.id}-slot-a2`}
-              playerId={match.slot_a2_player_id}
-              players={players}
-              availablePlayers={teamAPlayers}
-              isCreator={isCreator}
-              usedPlayerIds={usedPlayerIds}
-              onClear={() => onClearSlot('a2')}
-              onSelect={(id) => onSelectPlayer('a2', id)}
-              isSecondSlot
-            />
-          </div>
-
-          {/* Score - centered with larger inputs */}
-          <div className="flex items-center justify-center gap-3">
-            <Input
-              type="number"
-              value={scoreA}
-              onChange={(e) => setScoreA(e.target.value)}
-              onBlur={handleScoreBlur}
-              className="w-16 text-center h-10 text-lg font-semibold"
-              disabled={!isCreator}
-            />
-            <span className="text-lg text-muted-foreground font-bold">-</span>
-            <Input
-              type="number"
-              value={scoreB}
-              onChange={(e) => setScoreB(e.target.value)}
-              onBlur={handleScoreBlur}
-              className="w-16 text-center h-10 text-lg font-semibold"
-              disabled={!isCreator}
-            />
-          </div>
-
-          {/* Team B Row */}
-          <div className="grid grid-cols-2 gap-1">
-            <SelectableSlot
-              id={`match-${match.id}-slot-b1`}
-              playerId={match.slot_b1_player_id}
-              players={players}
-              availablePlayers={teamBPlayers}
-              isCreator={isCreator}
-              usedPlayerIds={usedPlayerIds}
-              onClear={() => onClearSlot('b1')}
-              onSelect={(id) => onSelectPlayer('b1', id)}
-            />
-            <SelectableSlot
-              id={`match-${match.id}-slot-b2`}
-              playerId={match.slot_b2_player_id}
-              players={players}
-              availablePlayers={teamBPlayers}
-              isCreator={isCreator}
-              usedPlayerIds={usedPlayerIds}
-              onClear={() => onClearSlot('b2')}
-              onSelect={(id) => onSelectPlayer('b2', id)}
-              isSecondSlot
-            />
-          </div>
+      {/* Stacked layout: Team A row, Score, Team B row */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+          <SelectableSlot
+            id={`match-${match.id}-slot-a1`}
+            playerId={match.slot_a1_player_id}
+            players={players}
+            availablePlayers={teamAPlayers}
+            isCreator={isCreator}
+            usedPlayerIds={usedPlayerIds}
+            onClear={() => onClearSlot('a1')}
+            onSelect={(id) => onSelectPlayer('a1', id)}
+          />
+          <SelectableSlot
+            id={`match-${match.id}-slot-a2`}
+            playerId={match.slot_a2_player_id}
+            players={players}
+            availablePlayers={teamAPlayers}
+            isCreator={isCreator}
+            usedPlayerIds={usedPlayerIds}
+            onClear={() => onClearSlot('a2')}
+            onSelect={(id) => onSelectPlayer('a2', id)}
+            isSecondSlot
+          />
         </div>
 
-        {/* Winner indicator */}
-        {winnerName && (
-          <div className="text-center">
-            <Badge variant="secondary" className="text-xs">
-              {winnerName} {t.tools.flexTournament.wins}
-            </Badge>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        {/* Score — token Geist Mono inputs */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+          <Input
+            type="number"
+            value={scoreA}
+            onChange={(e) => setScoreA(e.target.value)}
+            onBlur={handleScoreBlur}
+            className="w-16 text-center h-10 text-lg font-semibold"
+            disabled={!isCreator}
+          />
+          <span
+            style={{
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 18,
+              fontWeight: 700,
+              color: 'var(--tl-fg-4)',
+            }}
+          >
+            –
+          </span>
+          <Input
+            type="number"
+            value={scoreB}
+            onChange={(e) => setScoreB(e.target.value)}
+            onBlur={handleScoreBlur}
+            className="w-16 text-center h-10 text-lg font-semibold"
+            disabled={!isCreator}
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+          <SelectableSlot
+            id={`match-${match.id}-slot-b1`}
+            playerId={match.slot_b1_player_id}
+            players={players}
+            availablePlayers={teamBPlayers}
+            isCreator={isCreator}
+            usedPlayerIds={usedPlayerIds}
+            onClear={() => onClearSlot('b1')}
+            onSelect={(id) => onSelectPlayer('b1', id)}
+          />
+          <SelectableSlot
+            id={`match-${match.id}-slot-b2`}
+            playerId={match.slot_b2_player_id}
+            players={players}
+            availablePlayers={teamBPlayers}
+            isCreator={isCreator}
+            usedPlayerIds={usedPlayerIds}
+            onClear={() => onClearSlot('b2')}
+            onSelect={(id) => onSelectPlayer('b2', id)}
+            isSecondSlot
+          />
+        </div>
+      </div>
+
+      {winnerName && (
+        <div style={{ textAlign: 'center' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              fontFamily: 'Geist Mono, ui-monospace, monospace',
+              fontSize: 10.5,
+              fontWeight: 600,
+              padding: '3px 8px',
+              borderRadius: 999,
+              background: 'var(--tl-green-glow)',
+              color: 'var(--tl-green)',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {winnerName} {t.tools.flexTournament.wins}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
