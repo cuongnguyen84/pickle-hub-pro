@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { sanitizeString } from '@/lib/validation';
+import { handleMutationError, logMutationError } from './_mutationErrors';
+
+const HOOK = 'useParentTournament';
 
 export interface ParentTournament {
   id: string;
@@ -65,8 +68,11 @@ export function useParentTournament() {
 
       if (error) throw error;
       return result as ParentTournament;
-    } catch {
-      toast.error('Không thể tạo giải tổng');
+    } catch (error) {
+      handleMutationError(HOOK, 'createParent', error, {
+        genericMsg: 'Không thể tạo giải tổng',
+        permissionDeniedMsg: 'Bạn không có quyền tạo giải tổng',
+      });
       return null;
     } finally {
       setLoading(false);
@@ -84,7 +90,8 @@ export function useParentTournament() {
 
       if (error) throw error;
       return (data || []) as ParentTournament[];
-    } catch {
+    } catch (error) {
+      logMutationError(HOOK, 'getUserParentTournaments', error);
       return [];
     }
   }, [user]);
@@ -99,7 +106,8 @@ export function useParentTournament() {
 
       if (error) throw error;
       return data as ParentTournament | null;
-    } catch {
+    } catch (error) {
+      logMutationError(HOOK, 'getParentByShareId', error);
       return null;
     }
   }, []);
@@ -150,7 +158,8 @@ export function useParentTournament() {
         subEventCount: counts.get(p.id) || 0,
         previewSubEvents: grouped.get(p.id) || [],
       }));
-    } catch {
+    } catch (error) {
+      logMutationError(HOOK, 'getUserParentTournamentsWithPreview', error);
       return [];
     }
   }, [user]);
@@ -164,7 +173,8 @@ export function useParentTournament() {
 
       if (error) throw error;
       return count || 0;
-    } catch {
+    } catch (error) {
+      logMutationError(HOOK, 'getSubEventCount', error);
       return 0;
     }
   }, []);
@@ -184,8 +194,11 @@ export function useParentTournament() {
       if (error) throw error;
       toast.success('Đã xoá giải tổng');
       return true;
-    } catch {
-      toast.error('Không thể xoá giải tổng');
+    } catch (error) {
+      handleMutationError(HOOK, 'deleteParent', error, {
+        genericMsg: 'Không thể xoá giải tổng',
+        permissionDeniedMsg: 'Bạn không có quyền xoá giải tổng này',
+      });
       return false;
     }
   }, [getSubEventCount]);
