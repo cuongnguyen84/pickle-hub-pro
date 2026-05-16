@@ -351,113 +351,250 @@ export const QuickTablesSeoContent = () => {
 };
 
 /**
- * SEO content for /tools/team-match
+ * SEO content for /tools/team-match — refreshed to TheLineLayout design
+ * language (W2.4a). Mirrors the QuickTablesSeoContent pattern: serif h2,
+ * mono kicker, diamond bullets in --tl-green. Copy preserved verbatim.
  */
-export const TeamMatchSeoContent = () => (
-  <section className="mt-12 border-t border-border pt-10 space-y-8 max-w-3xl text-left">
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        What Is a Pickleball Team Match (MLP Format)?
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        A pickleball team match is a competition format where teams of players compete against each other across multiple game types — typically men's doubles, women's doubles, mixed doubles, and a dreambreaker tiebreaker. This format is inspired by Major League Pickleball (MLP), the professional team league that has popularized team-based pickleball competition worldwide.
-      </p>
-      <p className="text-muted-foreground">
-        The Pickle Hub's Team Match tool lets you organize MLP-style competitions at any level — from casual inter-club matches to structured league seasons. Captains manage lineups, the system tracks team standings, and dreambreaker games add exciting tiebreak drama to close matches.
-      </p>
-    </div>
+export const TeamMatchSeoContent = () => {
+  const sectionStyle: React.CSSProperties = {
+    marginTop: 32,
+  };
+  const h2Style: React.CSSProperties = {
+    fontFamily: "Instrument Serif, serif",
+    fontStyle: "italic",
+    fontWeight: 400,
+    fontSize: "clamp(24px, 3vw, 32px)",
+    letterSpacing: "-0.02em",
+    lineHeight: 1.1,
+    color: "var(--tl-fg)",
+    margin: "0 0 14px",
+  };
+  const pStyle: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+    margin: "0 0 12px",
+  };
+  const ulStyle: React.CSSProperties = {
+    margin: "0 0 12px",
+    padding: 0,
+    listStyle: "none",
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+  };
+  const liStyle: React.CSSProperties = {
+    paddingLeft: 18,
+    position: "relative",
+    margin: "8px 0",
+  };
+  const linkStyle: React.CSSProperties = {
+    color: "var(--tl-green)",
+    textDecoration: "none",
+    borderBottom: "1px solid color-mix(in srgb, var(--tl-green) 35%, transparent)",
+    paddingBottom: 1,
+  };
+  const faqQ: React.CSSProperties = {
+    fontWeight: 600,
+    color: "var(--tl-fg)",
+    fontSize: 15,
+    margin: "0 0 6px",
+  };
+  const faqA: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 14.5,
+    lineHeight: 1.6,
+    margin: 0,
+  };
+  const diamondBullet: React.CSSProperties = {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    color: "var(--tl-green)",
+    fontFamily: "Geist Mono, ui-monospace, monospace",
+    fontSize: 13,
+  };
+  const strongStyle: React.CSSProperties = { color: "var(--tl-fg)", fontWeight: 600 };
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Why Use a Pickleball-Specific Team Match Tool?
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Running team-based pickleball competitions manually is complex. You need to track rosters, manage lineups for each match, calculate team scores across multiple game types, and handle tiebreakers. Spreadsheets quickly become unmanageable. Here's why our dedicated tool is better:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Lineup management</strong> — Captains assign players to each game type strategically. The system validates lineup rules and prevents conflicts.</li>
-        <li><strong>Dreambreaker support</strong> — When team matches are tied, the dreambreaker format creates sudden-death excitement. Our tool handles the unique scoring rules automatically.</li>
-        <li><strong>Rally scoring tracking</strong> — MLP uses rally scoring (every rally scores a point). Our system tracks this format natively, unlike generic scorekeepers.</li>
-        <li><strong>Team standings</strong> — Automatic calculation of wins, losses, game differentials, and tiebreakers across round robin or playoff stages.</li>
-      </ul>
-      <p className="text-muted-foreground">
-        For pickleball clubs and leagues looking to add team competition, this tool handles all the complexity so organizers can focus on the competition itself.
-      </p>
-    </div>
+  return (
+    <section
+      style={{
+        marginTop: 48,
+        paddingTop: 40,
+        borderTop: "1px solid var(--tl-border)",
+        maxWidth: 768,
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--tl-green)",
+          marginBottom: 20,
+        }}
+      >
+        ◆ The long read
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        How Team Match Works in Real Pickleball Events
-      </h2>
-      <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Create tournament</strong> — Set the number of teams, players per team, and choose round robin, single elimination, or round robin + playoff format.</li>
-        <li><strong>Configure game templates</strong> — Define which game types each match includes (men's doubles, women's doubles, mixed doubles, singles, dreambreaker).</li>
-        <li><strong>Register teams</strong> — Teams register with full rosters. Captains can be assigned for lineup decisions.</li>
-        <li><strong>Set lineups</strong> — Before each team match, captains select which players play in each game type.</li>
-        <li><strong>Score matches</strong> — Referees score individual games. Team match winners are determined by total games won.</li>
-        <li><strong>Track standings</strong> — The system automatically updates team standings, qualifications, and playoff seedings.</li>
-      </ol>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>What Is a Pickleball Team Match (MLP Format)?</h2>
+        <p style={pStyle}>
+          A pickleball team match is a competition format where teams of players compete against each other across multiple game types — typically men's doubles, women's doubles, mixed doubles, and a dreambreaker tiebreaker. This format is inspired by Major League Pickleball (MLP), the professional team league that has popularized team-based pickleball competition worldwide.
+        </p>
+        <p style={pStyle}>
+          The Pickle Hub's Team Match tool lets you organize MLP-style competitions at any level — from casual inter-club matches to structured league seasons. Captains manage lineups, the system tracks team standings, and dreambreaker games add exciting tiebreak drama to close matches.
+        </p>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        When to Use Team Match vs Other Pickleball Formats
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Team match format shines when you want team identity and strategic depth. Here's how it compares to other formats available on The Pickle Hub:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-3">
-        <li><strong>Team Match (this tool)</strong> — Best for 2–16 teams. Creates team rivalry, strategic lineup decisions, and multiple game types per match. Ideal for leagues and inter-club competition.</li>
-        <li><strong><Link to="/tools/quick-tables" className="text-primary hover:underline">Quick Tables (Round Robin)</Link></strong> — Best for individual player tournaments with 4–48 players. Everyone plays everyone, no team structure needed.</li>
-        <li><strong><Link to="/tools/doubles-elimination" className="text-primary hover:underline">Double Elimination</Link></strong> — Best for large competitive brackets with 32+ teams. Pure elimination format with a losers bracket for fairness.</li>
-        <li><strong><Link to="/tools/flex-tournament" className="text-primary hover:underline">Flex Tournament</Link></strong> — Best for custom or experimental formats. Full flexibility when standard formats don't fit your event.</li>
-      </ul>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Why Use a Pickleball-Specific Team Match Tool?</h2>
+        <p style={pStyle}>
+          Running team-based pickleball competitions manually is complex. You need to track rosters, manage lineups for each match, calculate team scores across multiple game types, and handle tiebreakers. Spreadsheets quickly become unmanageable. Here's why our dedicated tool is better:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Lineup management</strong> — Captains assign players to each game type strategically. The system validates lineup rules and prevents conflicts.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Dreambreaker support</strong> — When team matches are tied, the dreambreaker format creates sudden-death excitement. Our tool handles the unique scoring rules automatically.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Rally scoring tracking</strong> — MLP uses rally scoring (every rally scores a point). Our system tracks this format natively, unlike generic scorekeepers.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Team standings</strong> — Automatic calculation of wins, losses, game differentials, and tiebreakers across round robin or playoff stages.
+          </li>
+        </ul>
+        <p style={pStyle}>
+          For pickleball clubs and leagues looking to add team competition, this tool handles all the complexity so organizers can focus on the competition itself.
+        </p>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Related Pickleball Tournament Tools on The Pickle Hub
-      </h2>
-      <p className="text-muted-foreground mb-3">
-        Team Match is one of several tournament tools available on The Pickle Hub. Use them together for complete event management:
-      </p>
-      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-        <li><Link to="/tools/quick-tables" className="text-primary hover:underline">Pickleball bracket generator</Link> — Create round robin brackets for individual player tournaments.</li>
-        <li><Link to="/tools/doubles-elimination" className="text-primary hover:underline">Double elimination pickleball tournaments</Link> — Fair bracket system for large competitive events.</li>
-        <li><Link to="/tools/flex-tournament" className="text-primary hover:underline">Flexible pickleball tournament formats</Link> — Build custom tournament structures for any scenario.</li>
-        <li><Link to="/tools" className="text-primary hover:underline">All pickleball tournament tools</Link> — Explore the complete toolkit for pickleball event organizers.</li>
-      </ul>
-    </div>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>How Team Match Works in Real Pickleball Events</h2>
+        <ol
+          style={{
+            margin: "0 0 12px",
+            paddingLeft: 22,
+            color: "var(--tl-fg-2)",
+            fontSize: 15,
+            lineHeight: 1.7,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Create tournament</strong> — Set the number of teams, players per team, and choose round robin, single elimination, or round robin + playoff format.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Configure game templates</strong> — Define which game types each match includes (men's doubles, women's doubles, mixed doubles, singles, dreambreaker).
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Register teams</strong> — Teams register with full rosters. Captains can be assigned for lineup decisions.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Set lineups</strong> — Before each team match, captains select which players play in each game type.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Score matches</strong> — Referees score individual games. Team match winners are determined by total games won.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Track standings</strong> — The system automatically updates team standings, qualifications, and playoff seedings.
+          </li>
+        </ol>
+      </div>
 
-    <div>
-      <h2 className="text-xl font-bold text-foreground mb-4">
-        Pickleball Team Match FAQ
-      </h2>
-      <div className="space-y-5">
-        <div>
-          <p className="font-semibold text-foreground mb-1">What is the dreambreaker in a pickleball team match?</p>
-          <p className="text-muted-foreground">The dreambreaker is a tiebreaker format used when a team match is tied after all doubles and mixed doubles games. Each team selects one player for a sudden-death singles rally-scoring match. The first player to reach 21 points (win by 2) wins the match for their team. It's the MLP's signature finish to close matches.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">How many teams can compete in a Team Match tournament?</p>
-          <p className="text-muted-foreground">The Team Match tool supports 2 to 16 teams per event. You can run a simple head-to-head match between two clubs or a full league season with up to 16 teams across round robin and playoff stages.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">Does Team Match support both round robin and playoff formats?</p>
-          <p className="text-muted-foreground">Yes. You can run a round robin league where every team plays each other, a single elimination playoff for rapid-fire competition, or a combined format with a round robin group stage that feeds into an elimination playoff. The system handles scheduling and standings automatically for all three options.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">Can team captains manage their own lineups?</p>
-          <p className="text-muted-foreground">Yes. Captains can be assigned to their teams and given access to submit lineups before each match. This gives your competition strategic depth — captains decide which players compete in men's doubles, women's doubles, mixed doubles, and the dreambreaker based on the opposing team's lineup.</p>
-        </div>
-        <div>
-          <p className="font-semibold text-foreground mb-1">What scoring system does the Team Match tool use?</p>
-          <p className="text-muted-foreground">Rally scoring is the default (every rally scores a point, regardless of who served), matching the MLP format. Traditional side-out scoring is also supported if your league prefers it. Game scores, team match scores, and standings are all tracked and displayed automatically.</p>
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>When to Use Team Match vs Other Pickleball Formats</h2>
+        <p style={pStyle}>
+          Team match format shines when you want team identity and strategic depth. Here's how it compares to other formats available on The Pickle Hub:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Team Match (this tool)</strong> — Best for 2–16 teams. Creates team rivalry, strategic lineup decisions, and multiple game types per match. Ideal for leagues and inter-club competition.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>
+              <Link to="/tools/quick-tables" style={linkStyle}>Quick Tables (Round Robin)</Link>
+            </strong> — Best for individual player tournaments with 4–48 players. Everyone plays everyone, no team structure needed.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>
+              <Link to="/tools/doubles-elimination" style={linkStyle}>Double Elimination</Link>
+            </strong> — Best for large competitive brackets with 32+ teams. Pure elimination format with a losers bracket for fairness.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>
+              <Link to="/tools/flex-tournament" style={linkStyle}>Flex Tournament</Link>
+            </strong> — Best for custom or experimental formats. Full flexibility when standard formats don't fit your event.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Related Pickleball Tournament Tools on The Pickle Hub</h2>
+        <p style={pStyle}>
+          Team Match is one of several tournament tools available on The Pickle Hub. Use them together for complete event management:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <Link to="/tools/quick-tables" style={linkStyle}>Pickleball bracket generator</Link> — Create round robin brackets for individual player tournaments.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <Link to="/tools/doubles-elimination" style={linkStyle}>Double elimination pickleball tournaments</Link> — Fair bracket system for large competitive events.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <Link to="/tools/flex-tournament" style={linkStyle}>Flexible pickleball tournament formats</Link> — Build custom tournament structures for any scenario.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <Link to="/tools" style={linkStyle}>All pickleball tournament tools</Link> — Explore the complete toolkit for pickleball event organizers.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Pickleball Team Match FAQ</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <p style={faqQ}>What is the dreambreaker in a pickleball team match?</p>
+            <p style={faqA}>The dreambreaker is a tiebreaker format used when a team match is tied after all doubles and mixed doubles games. Each team selects one player for a sudden-death singles rally-scoring match. The first player to reach 21 points (win by 2) wins the match for their team. It's the MLP's signature finish to close matches.</p>
+          </div>
+          <div>
+            <p style={faqQ}>How many teams can compete in a Team Match tournament?</p>
+            <p style={faqA}>The Team Match tool supports 2 to 16 teams per event. You can run a simple head-to-head match between two clubs or a full league season with up to 16 teams across round robin and playoff stages.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Does Team Match support both round robin and playoff formats?</p>
+            <p style={faqA}>Yes. You can run a round robin league where every team plays each other, a single elimination playoff for rapid-fire competition, or a combined format with a round robin group stage that feeds into an elimination playoff. The system handles scheduling and standings automatically for all three options.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Can team captains manage their own lineups?</p>
+            <p style={faqA}>Yes. Captains can be assigned to their teams and given access to submit lineups before each match. This gives your competition strategic depth — captains decide which players compete in men's doubles, women's doubles, mixed doubles, and the dreambreaker based on the opposing team's lineup.</p>
+          </div>
+          <div>
+            <p style={faqQ}>What scoring system does the Team Match tool use?</p>
+            <p style={faqA}>Rally scoring is the default (every rally scores a point, regardless of who served), matching the MLP format. Traditional side-out scoring is also supported if your league prefers it. Game scores, team match scores, and standings are all tracked and displayed automatically.</p>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 /**
  * SEO content for /tools/doubles-elimination
