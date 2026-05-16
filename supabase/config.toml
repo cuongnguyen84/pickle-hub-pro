@@ -237,3 +237,29 @@ verify_jwt = false
 
 [functions.auto-cancel-unpaid-registrations]
 verify_jwt = false
+# ============================================================================
+# supabase/config.toml — APPEND these blocks at the end of the file.
+# Do NOT replace the whole file — copy these 3 sections in.
+# ============================================================================
+
+# ─── DUPR RaaS (PR1 — SSO foundation) ──────────────────────────────────────
+# verify_jwt = false per the project-wide ES256/HS256 workaround (CLAUDE.md).
+# All three functions verify auth internally:
+#   - dupr-partner-token  → checks bearer == SUPABASE_SERVICE_ROLE_KEY
+#   - dupr-sso-callback   → getAuthUser() against the user JWT
+#   - dupr-disconnect     → getAuthUser() against the user JWT
+#
+# Required secrets (set via `supabase secrets set --project-ref ajvlcamxemgbxduhiqrl`):
+#   DUPR_ENV            uat | prod   (defaults to uat)
+#   DUPR_CLIENT_ID      partner numeric id from onboarding email
+#   DUPR_CLIENT_KEY     partner client key (test-ck-... in UAT)
+#   DUPR_CLIENT_SECRET  partner client secret (test-cs-... in UAT)
+
+[functions.dupr-partner-token]
+verify_jwt = false
+
+[functions.dupr-sso-callback]
+verify_jwt = false
+
+[functions.dupr-disconnect]
+verify_jwt = false
