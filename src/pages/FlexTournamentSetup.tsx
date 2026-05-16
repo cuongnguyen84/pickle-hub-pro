@@ -82,6 +82,18 @@ const FlexTournamentSetup = () => {
       toast({ title: t.tools.flexTournament.createSuccess });
       navigate(`/tools/flex-tournament/${tournament.share_id}`);
     } catch (error) {
+      // W3.2 — quota-aware error toast. The hook throws an Error with
+      // .code='LIMIT_REACHED' when the user has hit their per-account cap.
+      const code = (error as { code?: string })?.code;
+      const message = error instanceof Error ? error.message : '';
+      if (code === 'LIMIT_REACHED' || message === 'LIMIT_REACHED') {
+        toast({
+          title: t.quickTable.quota.limitReached,
+          description: t.quickTable.quota.limitReachedDesc,
+          variant: "destructive",
+        });
+        return;
+      }
       toast({
         title: t.common.error,
         description: t.tools.flexTournament.createError,

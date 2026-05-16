@@ -2,6 +2,7 @@ import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout";
 import { HreflangTags, WebApplicationSchema, FlexTournamentSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
 import { useFlexTournament } from "@/hooks/useFlexTournament";
+import { useUserCreateQuota } from "@/hooks/useUserCreateQuota";
 import { useAuth } from "@/hooks/useAuth";
 import { Plus, Eye, Trash2, Globe, Lock, Loader2, LogIn, Layers } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -37,9 +38,17 @@ const FlexTournamentList = () => {
     setLanguageFromUrl("en");
   }, [setLanguageFromUrl]);
   const { myTournaments, isLoadingTournaments, publicTournaments, isLoadingPublic, deleteTournament, isDeleting } = useFlexTournament();
+  const { quota } = useUserCreateQuota();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // W3.2 — quota usage for the stats-row. Reads the same column the
+  // create_flex_tournament_with_quota RPC enforces against, so the UI
+  // and the server agree on "X / Y".
+  const usedCount = myTournaments.length;
+  const quotaPct = quota > 0 ? Math.min(100, Math.round((usedCount / quota) * 100)) : 0;
+  const quotaReached = usedCount >= quota;
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -100,9 +109,11 @@ const FlexTournamentList = () => {
                 type="button"
                 className="tl-btn green"
                 onClick={() => navigate('/tools/flex-tournament/new')}
+                disabled={quotaReached}
+                title={quotaReached ? t.quickTable.quota.limitReached : undefined}
               >
                 <Plus className="w-4 h-4" />
-                {t.tools.flexTournament.createNew}
+                {quotaReached ? t.quickTable.quota.limitReached : t.tools.flexTournament.createNew}
               </button>
             ) : (
               <Link to={getLoginUrl(location.pathname)} className="tl-btn green">
@@ -112,6 +123,27 @@ const FlexTournamentList = () => {
             )}
           </div>
         </header>
+
+        {/* W3.2 — Quota stats-row (matches Quick Tables visual language). */}
+        {user && (
+          <section className="tl-stats-row" style={{ marginTop: 32 }}>
+            <div className="tl-stat-box">
+              <div className="lbl">{language === "vi" ? "Của tôi" : "Mine"}</div>
+              <div className="val">
+                <span className={usedCount > 0 ? "green" : ""}>{usedCount}</span>
+              </div>
+              <div className="sub">{language === "vi" ? "Tổng số giải" : "Tournaments"}</div>
+            </div>
+            <div className="tl-stat-box">
+              <div className="lbl">{language === "vi" ? "Hạn mức" : "Quota"}</div>
+              <div className="val">
+                <span className={quotaReached ? "" : "green"}>{usedCount}</span>
+                <span style={{ color: "var(--tl-fg-4)", fontSize: "0.6em" }}>/{quota}</span>
+              </div>
+              <div className="sub">{quotaPct}% {language === "vi" ? "đã dùng" : "used"}</div>
+            </div>
+          </section>
+        )}
 
         {/* Microcopy strip */}
         <section style={{ marginTop: 32 }}>

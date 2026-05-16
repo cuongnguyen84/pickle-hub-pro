@@ -4,6 +4,7 @@ import { TheLineLayout } from '@/components/layout';
 import { Plus, Users, Calendar, Trophy, Trash2, ExternalLink, Mail, LogIn } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, TeamMatchTournament } from '@/hooks/useTeamMatch';
+import { useUserCreateQuota } from '@/hooks/useUserCreateQuota';
 import { useI18n } from '@/i18n';
 import { getLoginUrl } from '@/lib/auth-config';
 import { format } from 'date-fns';
@@ -237,6 +238,13 @@ export default function TeamMatchList() {
     setLanguageFromUrl("en");
   }, [setLanguageFromUrl]);
   const { myTournaments, isLoading, deleteTournament } = useTeamMatch();
+  const { quota } = useUserCreateQuota();
+
+  // W3.2 — quota usage for the stats-row. Reads the same column the
+  // create_team_match_with_quota RPC enforces against.
+  const usedCount = myTournaments.length;
+  const quotaPct = quota > 0 ? Math.min(100, Math.round((usedCount / quota) * 100)) : 0;
+  const quotaReached = usedCount >= quota;
 
   return (
     <TheLineLayout
@@ -286,13 +294,36 @@ export default function TeamMatchList() {
                 type="button"
                 className="tl-btn green"
                 onClick={() => navigate('/tools/team-match/new')}
+                disabled={quotaReached}
+                title={quotaReached ? t.quickTable.quota.limitReached : undefined}
               >
                 <Plus className="w-4 h-4" />
-                {t.teamMatch.createNew}
+                {quotaReached ? t.quickTable.quota.limitReached : t.teamMatch.createNew}
               </button>
             </div>
           )}
         </header>
+
+        {/* W3.2 — Quota stats-row (matches Quick Tables visual language). */}
+        {user && (
+          <section className="tl-stats-row" style={{ marginTop: 32 }}>
+            <div className="tl-stat-box">
+              <div className="lbl">{language === "vi" ? "Của tôi" : "Mine"}</div>
+              <div className="val">
+                <span className={usedCount > 0 ? "green" : ""}>{usedCount}</span>
+              </div>
+              <div className="sub">{language === "vi" ? "Tổng số giải" : "Tournaments"}</div>
+            </div>
+            <div className="tl-stat-box">
+              <div className="lbl">{language === "vi" ? "Hạn mức" : "Quota"}</div>
+              <div className="val">
+                <span className={quotaReached ? "" : "green"}>{usedCount}</span>
+                <span style={{ color: "var(--tl-fg-4)", fontSize: "0.6em" }}>/{quota}</span>
+              </div>
+              <div className="sub">{quotaPct}% {language === "vi" ? "đã dùng" : "used"}</div>
+            </div>
+          </section>
+        )}
 
         {/* My Tournaments */}
         {user && (

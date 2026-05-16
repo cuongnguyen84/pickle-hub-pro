@@ -219,6 +219,17 @@ export default function DoublesEliminationSetup() {
     );
 
     if (!result.success || !result.tournament) {
+      // W3.2 — quota-aware toast. LIMIT_REACHED comes from the
+      // create_doubles_elimination_with_quota RPC when the user has hit
+      // their profiles.tournament_create_quota cap.
+      if (result.error === 'LIMIT_REACHED') {
+        toast({
+          title: t.quickTable.quota.limitReached,
+          description: t.quickTable.quota.limitReachedDesc,
+          variant: "destructive",
+        });
+        return;
+      }
       toast({ title: t.doublesElimination.setup.createError || "Error creating tournament", description: result.error, variant: "destructive" });
       return;
     }

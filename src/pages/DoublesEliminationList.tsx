@@ -4,6 +4,7 @@ import { TheLineLayout } from "@/components/layout";
 import { HreflangTags, WebApplicationSchema, DoublesEliminationSeoContent, ToolsInternalLinks, FAQSchema } from "@/components/seo";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoublesElimination, Tournament } from "@/hooks/useDoublesElimination";
+import { useUserCreateQuota } from "@/hooks/useUserCreateQuota";
 import { useI18n } from "@/i18n";
 import { Plus, Trophy, Calendar, Users, Mail, LogIn } from "lucide-react";
 import { format, type Locale } from "date-fns";
@@ -28,8 +29,15 @@ export default function DoublesEliminationList() {
     setLanguageFromUrl("en");
   }, [setLanguageFromUrl]);
   const { getUserTournaments } = useDoublesElimination();
+  const { quota } = useUserCreateQuota();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // W3.2 — quota usage for the stats-row. Reads the same column the
+  // create_doubles_elimination_with_quota RPC enforces against.
+  const usedCount = tournaments.length;
+  const quotaPct = quota > 0 ? Math.min(100, Math.round((usedCount / quota) * 100)) : 0;
+  const quotaReached = usedCount >= quota;
 
   const dateLocale = language === 'vi' ? vi : enUS;
 
@@ -126,13 +134,36 @@ export default function DoublesEliminationList() {
                 type="button"
                 className="tl-btn green"
                 onClick={() => navigate('/tools/doubles-elimination/new')}
+                disabled={quotaReached}
+                title={quotaReached ? t.quickTable.quota.limitReached : undefined}
               >
                 <Plus className="w-4 h-4" />
-                {t.doublesElimination.createNew}
+                {quotaReached ? t.quickTable.quota.limitReached : t.doublesElimination.createNew}
               </button>
             </div>
           )}
         </header>
+
+        {/* W3.2 — Quota stats-row (matches Quick Tables visual language). */}
+        {user && !loading && (
+          <section className="tl-stats-row" style={{ marginTop: 32 }}>
+            <div className="tl-stat-box">
+              <div className="lbl">{language === "vi" ? "Của tôi" : "Mine"}</div>
+              <div className="val">
+                <span className={usedCount > 0 ? "green" : ""}>{usedCount}</span>
+              </div>
+              <div className="sub">{language === "vi" ? "Tổng số giải" : "Tournaments"}</div>
+            </div>
+            <div className="tl-stat-box">
+              <div className="lbl">{language === "vi" ? "Hạn mức" : "Quota"}</div>
+              <div className="val">
+                <span className={quotaReached ? "" : "green"}>{usedCount}</span>
+                <span style={{ color: "var(--tl-fg-4)", fontSize: "0.6em" }}>/{quota}</span>
+              </div>
+              <div className="sub">{quotaPct}% {language === "vi" ? "đã dùng" : "used"}</div>
+            </div>
+          </section>
+        )}
 
         {/* Login gate */}
         {!user ? (

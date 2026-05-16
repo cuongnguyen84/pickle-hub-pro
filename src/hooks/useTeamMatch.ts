@@ -134,33 +134,55 @@ export function useTeamMatch() {
       if (!user) throw new Error('Not authenticated');
 
       const shareId = generateShareId();
-      
-      // Create tournament - default to 'registration' status
-      // Note: dreambreaker_game_type and dreambreaker_scoring_type are set to null
-      // because Dreambreaker is now fixed: Singles (4 players) + Rally Scoring
-      const { data: tournament, error: tournamentError } = await supabase
-        .from('team_match_tournaments')
-        .insert({
-          share_id: shareId,
-          name: input.name,
-          team_roster_size: input.team_roster_size,
-          team_count: input.team_count,
-          format: input.format,
-          playoff_team_count: input.playoff_team_count || null,
-          require_registration: input.require_registration,
-          has_dreambreaker: input.has_dreambreaker,
-          dreambreaker_game_type: null, // Fixed: Singles
-          dreambreaker_scoring_type: null, // Fixed: Rally Scoring
-          require_min_games_per_player: input.require_min_games_per_player,
-          has_third_place_match: input.has_third_place_match || false,
-          bracket_pairing_type: input.bracket_pairing_type || 'random',
-          created_by: user.id,
-          status: 'registration', // Default to open registration
-        })
-        .select()
-        .single();
 
-      if (tournamentError) throw tournamentError;
+      // W3.2 — call quota-enforced RPC. Mirrors useQuickTable/useFlex.
+      // RPC handles the tournament row insert + quota enforcement against
+      // profiles.tournament_create_quota (default 3). Game templates are
+      // still inserted client-side after the parent row exists.
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'create_team_match_with_quota' as any,
+        {
+          _name: input.name,
+          _share_id: shareId,
+          _team_roster_size: input.team_roster_size,
+          _team_count: input.team_count,
+          _format: input.format,
+          _playoff_team_count: input.playoff_team_count || null,
+          _require_registration: input.require_registration,
+          _has_dreambreaker: input.has_dreambreaker,
+          _require_min_games_per_player: input.require_min_games_per_player,
+          _has_third_place_match: input.has_third_place_match || false,
+          _bracket_pairing_type: input.bracket_pairing_type || 'random',
+        },
+      );
+
+      if (rpcError) {
+        console.error('[useTeamMatch] create:', rpcError);
+        throw rpcError;
+      }
+
+      const result = rpcData as {
+        success: boolean;
+        error?: string;
+        tournament?: TeamMatchTournament;
+        count?: number;
+        quota?: number;
+      };
+
+      if (!result.success) {
+        console.error('[useTeamMatch] create:', result);
+        if (result.error === 'LIMIT_REACHED') {
+          const limitErr = new Error('LIMIT_REACHED');
+          (limitErr as Error & { code?: string }).code = 'LIMIT_REACHED';
+          throw limitErr;
+        }
+        if (result.error === 'AUTH_REQUIRED') {
+          throw new Error('Not authenticated');
+        }
+        throw new Error(result.error || 'Unknown error');
+      }
+
+      const tournament = result.tournament as TeamMatchTournament;
 
       // Create game templates
       if (input.game_templates.length > 0) {
@@ -179,7 +201,7 @@ export function useTeamMatch() {
         if (templatesError) throw templatesError;
       }
 
-      return tournament as TeamMatchTournament;
+      return tournament;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-match-tournaments'] });
@@ -189,6 +211,17 @@ export function useTeamMatch() {
       });
     },
     onError: (error: Error) => {
+      // W3.2 — quota-aware toast. The mutation throws Error with
+      // .code='LIMIT_REACHED' when the user has hit their per-account cap.
+      const code = (error as Error & { code?: string }).code;
+      if (code === 'LIMIT_REACHED' || error.message === 'LIMIT_REACHED') {
+        toast({
+          title: 'Đã đạt giới hạn',
+          description: 'Mỗi tài khoản chỉ được tạo tối đa 3 giải. Liên hệ tapickleballvn@gmail.com để mở rộng.',
+          variant: 'destructive',
+        });
+        return;
+      }
       toast({
         title: 'Lỗi',
         description: error.message,
