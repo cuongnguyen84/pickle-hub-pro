@@ -5,15 +5,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Trophy, Play, RotateCcw, Check, Plus, Minus, Radio } from 'lucide-react';
-import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch, TeamMatchGame } from '@/hooks/useTeamMatchMatches';
+import { Loader2, Trophy, RotateCcw, Check, Plus, Minus, Radio } from 'lucide-react';
+import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchMatchRealtime } from '@/hooks/useTeamMatchRealtime';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,23 +29,64 @@ interface TeamMatchScoringSheetProps {
   tournamentId: string;
 }
 
-const GAME_TYPE_LABELS: Record<string, string> = {
-  WD: 'Đôi Nữ',
-  MD: 'Đôi Nam',
-  MX: 'Đôi Nam Nữ',
-  WS: 'Đơn Nữ',
-  MS: 'Đơn Nam',
+// ─── W2.4c shared tokens ─────────────────────────────────────────────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
 };
 
-export function TeamMatchScoringSheet({ 
-  open, 
-  onOpenChange, 
-  match, 
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 18,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const statusPillBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+};
+
+const teamNameStyle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontSize: 17,
+  letterSpacing: '-0.01em',
+  color: 'var(--tl-fg)',
+};
+
+export function TeamMatchScoringSheet({
+  open,
+  onOpenChange,
+  match,
   tournamentId,
 }: TeamMatchScoringSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
-  
+  const { language } = useI18n();
+
   // Subscribe to realtime updates for this match
   useTeamMatchMatchRealtime(match?.id);
 
@@ -57,6 +95,41 @@ export function TeamMatchScoringSheet({
   const [localScoreB, setLocalScoreB] = useState(0);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  const GAME_TYPE_LABELS: Record<string, string> = useMemo(() => (
+    language === 'vi'
+      ? { WD: 'Đôi Nữ', MD: 'Đôi Nam', MX: 'Đôi Nam Nữ', WS: 'Đơn Nữ', MS: 'Đơn Nam' }
+      : { WD: 'WD', MD: 'MD', MX: 'Mixed', WS: 'WS', MS: 'MS' }
+  ), [language]);
+
+  const txt = {
+    matchLabel: language === 'vi' ? 'Trận đấu' : 'Match',
+    live: language === 'vi' ? 'LIVE' : 'LIVE',
+    noGames: language === 'vi' ? 'Chưa có ván đấu nào' : 'No games yet',
+    hint: language === 'vi' ? 'Chọn ô ván để chấm điểm' : 'Tap a game slot to score it',
+    gameShort: language === 'vi' ? 'Ván' : 'Game',
+    gamesUnit: language === 'vi' ? 'ván' : 'games',
+    reset: language === 'vi' ? 'Đặt lại' : 'Reset',
+    saveGame: (n: number) =>
+      language === 'vi' ? `Lưu ván ${n}` : `Save game ${n}`,
+    gamesViewTitle: language === 'vi' ? 'Các ván đấu' : 'Games',
+    completedTitle: language === 'vi' ? 'Trận đấu đã kết thúc' : 'Match completed',
+    completedWinner: (name: string) =>
+      language === 'vi' ? `${name} chiến thắng` : `${name} won`,
+    resetDialogTitle: language === 'vi' ? 'Đặt lại điểm?' : 'Reset score?',
+    resetDialogDesc: language === 'vi'
+      ? 'Điểm hiện tại sẽ được đặt về 0-0.'
+      : 'Current score will be reset to 0-0.',
+    saveDialogTitle: (n: number) =>
+      language === 'vi' ? `Lưu ván ${n}?` : `Save game ${n}?`,
+    saveDialogResultLabel: language === 'vi' ? 'Kết quả' : 'Result',
+    saveDialogWonGame: (name: string) =>
+      language === 'vi' ? `${name} thắng ván này.` : `${name} won this game.`,
+    cancelBtn: language === 'vi' ? 'Hủy' : 'Cancel',
+    confirmBtn: language === 'vi' ? 'Lưu' : 'Save',
+    resetConfirm: language === 'vi' ? 'Đặt lại' : 'Reset',
+    tbd: 'TBD',
+  };
 
   // Collect all roster IDs from games to fetch player names
   const allRosterIds = useMemo(() => {
@@ -73,14 +146,14 @@ export function TeamMatchScoringSheet({
     queryKey: ['roster-names', allRosterIds],
     queryFn: async () => {
       if (allRosterIds.length === 0) return {};
-      
+
       const { data, error } = await supabase
         .from('team_match_roster')
         .select('id, player_name')
         .in('id', allRosterIds);
-      
+
       if (error) throw error;
-      
+
       const map: Record<string, string> = {};
       data?.forEach(r => {
         map[r.id] = r.player_name;
@@ -97,12 +170,12 @@ export function TeamMatchScoringSheet({
   const calculatedGamesWon = useMemo(() => {
     let gamesWonA = 0;
     let gamesWonB = 0;
-    
+
     games.forEach(game => {
       if (game.score_a > game.score_b) gamesWonA++;
       else if (game.score_b > game.score_a) gamesWonB++;
     });
-    
+
     return { a: gamesWonA, b: gamesWonB };
   }, [games]);
 
@@ -142,7 +215,7 @@ export function TeamMatchScoringSheet({
 
   const handleSaveGame = async () => {
     if (!match || !currentGame) return;
-    
+
     try {
       // Update this game's score
       await updateGameScore({
@@ -161,10 +234,10 @@ export function TeamMatchScoringSheet({
       games.forEach((game, index) => {
         const scoreA = index === selectedGameIndex ? localScoreA : game.score_a;
         const scoreB = index === selectedGameIndex ? localScoreB : game.score_b;
-        
+
         totalPointsA += scoreA;
         totalPointsB += scoreB;
-        
+
         if (scoreA > scoreB) gamesWonA++;
         else if (scoreB > scoreA) gamesWonB++;
       });
@@ -173,7 +246,7 @@ export function TeamMatchScoringSheet({
       const totalGames = games.length;
       const requiredToWin = Math.ceil(totalGames / 2);
       let winnerId: string | null = null;
-      
+
       if (gamesWonA >= requiredToWin && match.team_a_id) {
         winnerId = match.team_a_id;
       } else if (gamesWonB >= requiredToWin && match.team_b_id) {
@@ -203,8 +276,8 @@ export function TeamMatchScoringSheet({
 
   if (!match) return null;
 
-  const teamAName = (match.team_a as any)?.team_name || 'TBD';
-  const teamBName = (match.team_b as any)?.team_name || 'TBD';
+  const teamAName = (match.team_a as any)?.team_name || txt.tbd;
+  const teamBName = (match.team_b as any)?.team_name || txt.tbd;
 
   // Get player names for current game
   const currentLineupA = currentGame?.lineup_team_a || [];
@@ -214,256 +287,436 @@ export function TeamMatchScoringSheet({
 
   const isMatchCompleted = match.status === 'completed';
   const totalGames = games.length;
+  const winnerA = match.winner_team_id === match.team_a_id;
+  const winnerB = match.winner_team_id === match.team_b_id;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-y-auto p-0">
-        <SheetHeader className="px-4 pt-4 pb-2">
-          <SheetTitle className="flex items-center justify-center gap-2">
-            <Badge variant="outline" className="text-primary border-primary">
+        <SheetHeader
+          style={{
+            padding: '16px 16px 8px',
+            borderBottom: '1px solid var(--tl-border)',
+          }}
+        >
+          <SheetTitle
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span
+              style={{
+                ...statusPillBase,
+                background: 'var(--tl-surface)',
+                color: 'var(--tl-fg)',
+                border: '1px solid var(--tl-border)',
+              }}
+            >
               BO{totalGames}
-            </Badge>
+            </span>
             {!isMatchCompleted && (
-              <Badge className="bg-destructive text-destructive-foreground animate-pulse">
-                <Radio className="h-3 w-3 mr-1" />
-                LIVE
-              </Badge>
+              <span
+                style={{
+                  ...statusPillBase,
+                  background: 'rgba(255, 65, 54, 0.10)',
+                  color: 'var(--tl-live)',
+                  animation: 'tl-pulse 1.6s ease-in-out infinite',
+                }}
+              >
+                <Radio className="h-3 w-3" />
+                {txt.live}
+              </span>
             )}
-            <Badge variant="secondary">
-              <Trophy className="h-3 w-3 mr-1" />
-              Trận đấu
-            </Badge>
+            <span
+              style={{
+                ...statusPillBase,
+                background: 'var(--tl-surface)',
+                color: 'var(--tl-fg-2)',
+              }}
+            >
+              <Trophy className="h-3 w-3" />
+              {txt.matchLabel}
+            </span>
           </SheetTitle>
         </SheetHeader>
 
-        <div className="p-4 space-y-4">
-          {/* Match Header with scores */}
-          <Card className="border-primary/20">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className={cn(
-                  "flex-1 text-center",
-                  match.winner_team_id === match.team_a_id && "text-primary"
-                )}>
-                  <p className="font-semibold text-lg">{teamAName}</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-3xl font-bold tabular-nums">
-                    {calculatedGamesWon.a} - {calculatedGamesWon.b}
-                  </div>
-                  <p className="text-xs text-muted-foreground">game</p>
-                </div>
-                
-                <div className={cn(
-                  "flex-1 text-center",
-                  match.winner_team_id === match.team_b_id && "text-primary"
-                )}>
-                  <p className="font-semibold text-lg">{teamBName}</p>
-                </div>
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Match Header with games score */}
+          <div style={{ ...surfaceCard, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <p
+                  style={{
+                    ...teamNameStyle,
+                    fontSize: 18,
+                    margin: 0,
+                    fontWeight: winnerA ? 600 : 400,
+                    color: winnerA ? 'var(--tl-green)' : 'var(--tl-fg)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {teamAName}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+
+              <div style={{ textAlign: 'center' }}>
+                <div
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontVariantNumeric: 'tabular-nums',
+                    fontSize: 28,
+                    fontWeight: 700,
+                    color: 'var(--tl-fg)',
+                  }}
+                >
+                  {calculatedGamesWon.a} - {calculatedGamesWon.b}
+                </div>
+                <p style={{ ...fieldLabel, marginTop: 2, color: 'var(--tl-fg-3)' }}>{txt.gamesUnit}</p>
+              </div>
+
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <p
+                  style={{
+                    ...teamNameStyle,
+                    fontSize: 18,
+                    margin: 0,
+                    fontWeight: winnerB ? 600 : 400,
+                    color: winnerB ? 'var(--tl-green)' : 'var(--tl-fg)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {teamBName}
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Game slots */}
           {isLoading ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+            <div style={{ textAlign: 'center', padding: 32 }}>
+              <Loader2
+                className="h-6 w-6 animate-spin mx-auto"
+                style={{ color: 'var(--tl-fg-3)' }}
+              />
             </div>
           ) : games.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">
-              Chưa có ván đấu nào
+            <p style={{ color: 'var(--tl-fg-3)', textAlign: 'center', padding: 16, fontSize: 13 }}>
+              {txt.noGames}
             </p>
           ) : (
             <>
               {/* Clickable game slots */}
-              <div className="flex justify-center gap-2 flex-wrap">
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {games.map((game, index) => {
                   const isSelected = index === selectedGameIndex;
                   const hasScore = game.score_a > 0 || game.score_b > 0;
                   const isCompleted = game.score_a !== game.score_b && hasScore;
                   const winnerSide = game.score_a > game.score_b ? 'a' : game.score_b > game.score_a ? 'b' : null;
-                  
+
+                  const slotBg = isSelected
+                    ? 'var(--tl-green-glow)'
+                    : isCompleted
+                      ? 'var(--tl-surface)'
+                      : 'transparent';
+                  const slotBorder = isSelected
+                    ? '2px solid var(--tl-green)'
+                    : isCompleted
+                      ? '1px solid var(--tl-border)'
+                      : '1px dashed var(--tl-border-2)';
+
                   return (
                     <button
                       key={game.id}
+                      type="button"
                       onClick={() => setSelectedGameIndex(index)}
-                      className={cn(
-                        "flex flex-col items-center justify-center w-14 h-16 rounded-lg border-2 transition-all",
-                        "cursor-pointer hover:border-primary/50 hover:bg-primary/5",
-                        isSelected && "border-primary bg-primary/10 ring-2 ring-primary/30",
-                        isCompleted && !isSelected && "border-muted bg-muted/30",
-                        !isCompleted && !isSelected && "border-dashed border-muted-foreground/30 bg-muted/10"
-                      )}
+                      style={{
+                        width: 56,
+                        height: 64,
+                        borderRadius: 8,
+                        border: slotBorder,
+                        background: slotBg,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
                     >
-                      <div className={cn(
-                        "text-[10px] font-medium mb-0.5",
-                        isSelected ? "text-primary" : "text-muted-foreground"
-                      )}>
+                      <div
+                        style={{
+                          ...fieldLabel,
+                          fontSize: 10,
+                          marginBottom: 2,
+                          color: isSelected ? 'var(--tl-green)' : 'var(--tl-fg-3)',
+                        }}
+                      >
                         G{index + 1}
                       </div>
                       {hasScore ? (
-                        <div className="text-center">
-                          <span className={cn(
-                            "text-xs font-bold",
-                            winnerSide === 'a' ? "text-primary" : "text-muted-foreground"
-                          )}>
+                        <div
+                          style={{
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontVariantNumeric: 'tabular-nums',
+                            fontSize: 12,
+                            fontWeight: 600,
+                          }}
+                        >
+                          <span style={{ color: winnerSide === 'a' ? 'var(--tl-green)' : 'var(--tl-fg-3)' }}>
                             {game.score_a}
                           </span>
-                          <span className="text-xs text-muted-foreground mx-0.5">-</span>
-                          <span className={cn(
-                            "text-xs font-bold",
-                            winnerSide === 'b' ? "text-primary" : "text-muted-foreground"
-                          )}>
+                          <span style={{ color: 'var(--tl-fg-4)', margin: '0 2px' }}>-</span>
+                          <span style={{ color: winnerSide === 'b' ? 'var(--tl-green)' : 'var(--tl-fg-3)' }}>
                             {game.score_b}
                           </span>
                         </div>
                       ) : (
-                        <div className="text-xs text-muted-foreground">—</div>
+                        <div style={{ fontSize: 13, color: 'var(--tl-fg-4)' }}>—</div>
                       )}
                     </button>
                   );
                 })}
               </div>
-              
-              <p className="text-xs text-muted-foreground text-center">
-                Click vào ô game để chấm điểm game đó
+
+              <p
+                style={{
+                  ...fieldLabel,
+                  fontSize: 10.5,
+                  textAlign: 'center',
+                  color: 'var(--tl-fg-3)',
+                  textTransform: 'none',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {txt.hint}
               </p>
 
               {/* Current game card */}
               {currentGame && (
-                <Card className="overflow-hidden border-2 border-primary/20">
-                  <CardContent className="py-4 px-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <Badge variant="secondary" className="text-sm">
-                        Game {selectedGameIndex + 1}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {GAME_TYPE_LABELS[currentGame.game_type]}
-                      </Badge>
+                <div
+                  style={{
+                    ...surfaceCard,
+                    padding: 14,
+                    borderColor: 'var(--tl-green-dim)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 12,
+                    }}
+                  >
+                    <span
+                      style={{
+                        ...statusPillBase,
+                        background: 'var(--tl-green-glow)',
+                        color: 'var(--tl-green)',
+                      }}
+                    >
+                      {txt.gameShort} {selectedGameIndex + 1}
+                    </span>
+                    <span
+                      style={{
+                        ...statusPillBase,
+                        background: 'var(--tl-surface)',
+                        color: 'var(--tl-fg-2)',
+                      }}
+                    >
+                      {GAME_TYPE_LABELS[currentGame.game_type] || currentGame.game_type}
+                    </span>
+                  </div>
+
+                  {/* Lineup display with score */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                    <div style={{ flex: 1, textAlign: 'right', minWidth: 0 }}>
+                      <p
+                        style={{
+                          ...teamNameStyle,
+                          fontWeight: localScoreA > localScoreB ? 600 : 400,
+                          color: localScoreA > localScoreB ? 'var(--tl-green)' : 'var(--tl-fg)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          margin: 0,
+                        }}
+                      >
+                        {playersA || teamAName}
+                      </p>
                     </div>
-                    
-                    {/* Lineup display with score */}
-                    <div className="flex items-center justify-center gap-3">
-                      <div className="flex-1 text-right">
-                        <p className={cn(
-                          "text-sm font-medium truncate",
-                          localScoreA > localScoreB && "text-primary"
-                        )}>
-                          {playersA || teamAName}
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center gap-1 tabular-nums">
-                        <span className={cn(
-                          "text-4xl font-bold",
-                          localScoreA > localScoreB && "text-primary"
-                        )}>
-                          {localScoreA}
-                        </span>
-                        <span className="text-2xl font-bold text-muted-foreground">:</span>
-                        <span className={cn(
-                          "text-4xl font-bold",
-                          localScoreB > localScoreA && "text-primary"
-                        )}>
-                          {localScoreB}
-                        </span>
-                      </div>
-                      
-                      <div className="flex-1 text-left">
-                        <p className={cn(
-                          "text-sm font-medium truncate",
-                          localScoreB > localScoreA && "text-primary"
-                        )}>
-                          {playersB || teamBName}
-                        </p>
-                      </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontFamily: 'Geist Mono, ui-monospace, monospace',
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 36,
+                          fontWeight: 700,
+                          color: localScoreA > localScoreB ? 'var(--tl-green)' : 'var(--tl-fg)',
+                        }}
+                      >
+                        {localScoreA}
+                      </span>
+                      <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--tl-fg-4)' }}>:</span>
+                      <span
+                        style={{
+                          fontSize: 36,
+                          fontWeight: 700,
+                          color: localScoreB > localScoreA ? 'var(--tl-green)' : 'var(--tl-fg)',
+                        }}
+                      >
+                        {localScoreB}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
+
+                    <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+                      <p
+                        style={{
+                          ...teamNameStyle,
+                          fontWeight: localScoreB > localScoreA ? 600 : 400,
+                          color: localScoreB > localScoreA ? 'var(--tl-green)' : 'var(--tl-fg)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          margin: 0,
+                        }}
+                      >
+                        {playersB || teamBName}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Score controls */}
               {!isMatchCompleted && currentGame && (
-                <div className="space-y-4">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {/* Team names row */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center text-sm font-medium truncate">{teamAName}</div>
-                    <div className="text-center text-sm font-medium truncate">{teamBName}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        ...fieldLabel,
+                        color: 'var(--tl-fg)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {teamAName}
+                    </div>
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        ...fieldLabel,
+                        color: 'var(--tl-fg)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {teamBName}
+                    </div>
                   </div>
-                  
+
                   {/* Score controls row */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                     {/* Team A controls */}
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-12 h-14"
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        className="tl-btn"
+                        style={{ width: 48, height: 56, justifyContent: 'center', padding: 0 }}
                         onClick={() => handleScoreChange('a', -1)}
                       >
                         <Minus className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="default" 
-                        size="lg" 
-                        className="flex-1 h-14"
+                      </button>
+                      <button
+                        type="button"
+                        className="tl-btn green"
+                        style={{ flex: 1, height: 56, justifyContent: 'center', padding: 0 }}
                         onClick={() => handleScoreChange('a', 1)}
                       >
                         <Plus className="w-6 h-6" />
-                      </Button>
+                      </button>
                     </div>
 
                     {/* Team B controls */}
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-12 h-14"
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        className="tl-btn"
+                        style={{ width: 48, height: 56, justifyContent: 'center', padding: 0 }}
                         onClick={() => handleScoreChange('b', -1)}
                       >
                         <Minus className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="default" 
-                        size="lg" 
-                        className="flex-1 h-14"
+                      </button>
+                      <button
+                        type="button"
+                        className="tl-btn green"
+                        style={{ flex: 1, height: 56, justifyContent: 'center', padding: 0 }}
                         onClick={() => handleScoreChange('b', 1)}
                       >
                         <Plus className="w-6 h-6" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="tl-btn"
+                      style={{ flex: 1, justifyContent: 'center', padding: '10px 12px' }}
                       onClick={() => setShowResetDialog(true)}
                     >
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Reset
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      className="flex-1"
+                      <RotateCcw className="w-4 h-4" />
+                      {txt.reset}
+                    </button>
+                    <button
+                      type="button"
+                      className="tl-btn green"
+                      style={{ flex: 1, justifyContent: 'center', padding: '10px 12px' }}
                       onClick={() => setShowSaveDialog(true)}
                       disabled={isUpdatingScore || isUpdatingResult}
                     >
-                      {(isUpdatingScore || isUpdatingResult) && (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {(isUpdatingScore || isUpdatingResult) ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
                       )}
-                      <Check className="w-4 h-4 mr-2" />
-                      Lưu Game {selectedGameIndex + 1}
-                    </Button>
+                      {txt.saveGame(selectedGameIndex + 1)}
+                    </button>
                   </div>
                 </div>
               )}
 
               {/* Games list - view only */}
-              <div className="space-y-2 pt-4 border-t">
-                <h4 className="font-semibold text-sm text-muted-foreground">Các ván đấu</h4>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  paddingTop: 14,
+                  borderTop: '1px solid var(--tl-border)',
+                }}
+              >
+                <h4 style={{ ...fieldLabel, margin: 0 }}>{txt.gamesViewTitle}</h4>
                 {games.map((game, index) => {
                   const lineupA = game.lineup_team_a || [];
                   const lineupB = game.lineup_team_b || [];
@@ -471,59 +724,109 @@ export function TeamMatchScoringSheet({
                   const gamePlayersB = lineupB.map(id => rosterMap?.[id] || id).join(', ');
                   const gameWinner = game.score_a > game.score_b ? 'a' : game.score_b > game.score_a ? 'b' : null;
                   const isSelected = index === selectedGameIndex;
-                  
+
                   return (
-                    <Card 
-                      key={game.id} 
-                      className={cn(
-                        "overflow-hidden cursor-pointer hover:border-primary/30 transition-colors",
-                        isSelected && "border-primary ring-1 ring-primary/30"
-                      )}
+                    <div
+                      key={game.id}
                       onClick={() => setSelectedGameIndex(index)}
+                      style={{
+                        ...surfaceCard,
+                        padding: 12,
+                        cursor: 'pointer',
+                        borderColor: isSelected ? 'var(--tl-green-dim)' : 'var(--tl-border)',
+                        boxShadow: isSelected ? '0 0 0 1px var(--tl-green-dim)' : 'none',
+                      }}
                     >
-                      <CardContent className="py-3 px-4">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="text-sm font-medium">
-                            Game {index + 1}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: 8,
+                        }}
+                      >
+                        <span style={fieldLabel}>{txt.gameShort} {index + 1}</span>
+                        <span
+                          style={{
+                            ...statusPillBase,
+                            background: 'var(--tl-surface)',
+                            color: 'var(--tl-fg-2)',
+                          }}
+                        >
+                          {GAME_TYPE_LABELS[game.game_type] || game.game_type}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                        <div
+                          style={{
+                            flex: 1,
+                            textAlign: 'right',
+                            fontSize: 13,
+                            fontWeight: gameWinner === 'a' ? 600 : 400,
+                            color: gameWinner === 'a' ? 'var(--tl-green)' : 'var(--tl-fg-2)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {gamePlayersA || teamAName}
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 14px',
+                            borderRadius: 6,
+                            background: 'var(--tl-surface)',
+                            border: '1px solid var(--tl-border)',
+                            minWidth: 88,
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontVariantNumeric: 'tabular-nums',
+                              fontSize: 17,
+                              fontWeight: 700,
+                              color: gameWinner === 'a' ? 'var(--tl-green)' : 'var(--tl-fg)',
+                            }}
+                          >
+                            {game.score_a}
                           </span>
-                          <Badge variant="secondary" className="text-xs">
-                            {GAME_TYPE_LABELS[game.game_type]}
-                          </Badge>
+                          <span style={{ color: 'var(--tl-fg-4)' }}>-</span>
+                          <span
+                            style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontVariantNumeric: 'tabular-nums',
+                              fontSize: 17,
+                              fontWeight: 700,
+                              color: gameWinner === 'b' ? 'var(--tl-green)' : 'var(--tl-fg)',
+                            }}
+                          >
+                            {game.score_b}
+                          </span>
                         </div>
-                        
-                        <div className="flex items-center justify-center gap-4">
-                          <div className={cn(
-                            "flex-1 text-right text-sm",
-                            gameWinner === 'a' && "text-primary font-bold"
-                          )}>
-                            {gamePlayersA || teamAName}
-                          </div>
-                          
-                          <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded">
-                            <span className={cn(
-                              "text-lg font-bold",
-                              gameWinner === 'a' && "text-primary"
-                            )}>
-                              {game.score_a}
-                            </span>
-                            <span className="text-muted-foreground">-</span>
-                            <span className={cn(
-                              "text-lg font-bold",
-                              gameWinner === 'b' && "text-primary"
-                            )}>
-                              {game.score_b}
-                            </span>
-                          </div>
-                          
-                          <div className={cn(
-                            "flex-1 text-sm",
-                            gameWinner === 'b' && "text-primary font-bold"
-                          )}>
-                            {gamePlayersB || teamBName}
-                          </div>
+
+                        <div
+                          style={{
+                            flex: 1,
+                            textAlign: 'left',
+                            fontSize: 13,
+                            fontWeight: gameWinner === 'b' ? 600 : 400,
+                            color: gameWinner === 'b' ? 'var(--tl-green)' : 'var(--tl-fg-2)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {gamePlayersB || teamBName}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -532,15 +835,28 @@ export function TeamMatchScoringSheet({
 
           {/* Completed state */}
           {isMatchCompleted && (
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="py-6 text-center">
-                <Trophy className="w-12 h-12 mx-auto text-primary mb-2" />
-                <div className="font-semibold">Trận đấu đã kết thúc</div>
-                <div className="text-sm text-muted-foreground">
-                  {match.winner_team_id === match.team_a_id ? teamAName : teamBName} chiến thắng
-                </div>
-              </CardContent>
-            </Card>
+            <div
+              style={{
+                ...surfaceCard,
+                background: 'var(--tl-green-glow)',
+                borderColor: 'var(--tl-green-dim)',
+                padding: '24px 16px',
+                textAlign: 'center',
+              }}
+            >
+              <Trophy
+                className="w-10 h-10 mx-auto mb-2"
+                style={{ color: 'var(--tl-green)' }}
+              />
+              <div style={{ ...sectionTitle, color: 'var(--tl-fg)' }}>
+                {txt.completedTitle}
+              </div>
+              <div style={{ marginTop: 4, fontSize: 13, color: 'var(--tl-fg-2)' }}>
+                {txt.completedWinner(
+                  match.winner_team_id === match.team_a_id ? teamAName : teamBName,
+                )}
+              </div>
+            </div>
           )}
         </div>
       </SheetContent>
@@ -549,14 +865,12 @@ export function TeamMatchScoringSheet({
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reset điểm?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Điểm hiện tại sẽ được đặt về 0-0.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{txt.resetDialogTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{txt.resetDialogDesc}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReset}>Reset</AlertDialogAction>
+            <AlertDialogCancel>{txt.cancelBtn}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReset}>{txt.resetConfirm}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -565,20 +879,22 @@ export function TeamMatchScoringSheet({
       <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Lưu Game {selectedGameIndex + 1}?</AlertDialogTitle>
+            <AlertDialogTitle>{txt.saveDialogTitle(selectedGameIndex + 1)}</AlertDialogTitle>
             <AlertDialogDescription>
-              Kết quả: {playersA || teamAName} {localScoreA} - {localScoreB} {playersB || teamBName}
+              {txt.saveDialogResultLabel}: {playersA || teamAName} {localScoreA} - {localScoreB} {playersB || teamBName}
               {localScoreA !== localScoreB && (
                 <>
                   <br />
-                  {localScoreA > localScoreB ? (playersA || teamAName) : (playersB || teamBName)} thắng game này.
+                  {txt.saveDialogWonGame(
+                    localScoreA > localScoreB ? (playersA || teamAName) : (playersB || teamBName),
+                  )}
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSaveGame}>Lưu</AlertDialogAction>
+            <AlertDialogCancel>{txt.cancelBtn}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveGame}>{txt.confirmBtn}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

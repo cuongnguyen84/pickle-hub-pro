@@ -1,20 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Trophy, Medal, Award, CheckCircle2, Star } from 'lucide-react';
+import { Trophy, CheckCircle2, Star } from 'lucide-react';
 import { useTeamMatchMatches } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchTeams, TeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { useTeamMatchGroups } from '@/hooks/useTeamMatchGroups';
 import { useMemo } from 'react';
+import { useI18n } from '@/i18n';
 
 interface GroupStandingsTableProps {
   tournamentId: string;
@@ -36,14 +27,106 @@ interface TeamStanding {
   isWildcard?: boolean;
 }
 
-export function GroupStandingsTable({ 
-  tournamentId, 
+// ─── W2.4c shared tokens (mirror StandingsTable.tsx) ─────────────────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
+
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 18,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const headStyle: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-3)',
+  padding: '10px 12px',
+  textAlign: 'left',
+  borderBottom: '1px solid var(--tl-border)',
+  whiteSpace: 'nowrap',
+};
+
+const cellStyle: React.CSSProperties = {
+  padding: '12px',
+  fontSize: 13,
+  color: 'var(--tl-fg)',
+  borderBottom: '1px solid var(--tl-border)',
+  fontVariantNumeric: 'tabular-nums',
+  verticalAlign: 'middle',
+};
+
+const statusPillBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+};
+
+export function GroupStandingsTable({
+  tournamentId,
   topPerGroup = 2,
   wildcardCount = 0,
 }: GroupStandingsTableProps) {
   const { data: matches, isLoading: isLoadingMatches } = useTeamMatchMatches(tournamentId);
   const { data: teams, isLoading: isLoadingTeams } = useTeamMatchTeams(tournamentId);
   const { data: groups, isLoading: isLoadingGroups } = useTeamMatchGroups(tournamentId);
+  const { language } = useI18n();
+
+  const txt = {
+    topPerGroup: (n: number) =>
+      language === 'vi' ? `Top ${n}/bảng vào playoff` : `Top ${n}/group advance to playoff`,
+    wildcardLabel: (n: number) =>
+      language === 'vi' ? `${n} wildcard` : `${n} wildcard`,
+    emptyTitle: language === 'vi' ? 'Chưa chia bảng' : 'No groups yet',
+    emptyHint: language === 'vi' ? 'Chia bảng để xem bảng xếp hạng' : 'Create groups to view standings',
+    standingsFor: (name: string) =>
+      language === 'vi' ? `Xếp hạng ${name}` : `${name} standings`,
+    emptyGroup: language === 'vi' ? 'Chưa có đội nào trong bảng này' : 'No teams in this group yet',
+    colTeam: language === 'vi' ? 'Đội' : 'Team',
+    colPlayed: language === 'vi' ? 'Đ' : 'P',
+    colWon: language === 'vi' ? 'T' : 'W',
+    colLost: language === 'vi' ? 'B' : 'L',
+    colGames: language === 'vi' ? 'Ván' : 'Games',
+    colDiff: '+/-',
+    legend: language === 'vi'
+      ? [
+          { mark: 'Đ', meaning: 'Đã đấu' },
+          { mark: 'T', meaning: 'Thắng' },
+          { mark: 'B', meaning: 'Thua' },
+        ]
+      : [
+          { mark: 'P', meaning: 'Played' },
+          { mark: 'W', meaning: 'Won' },
+          { mark: 'L', meaning: 'Lost' },
+        ],
+  };
 
   // Calculate standings per group
   const standingsByGroup = useMemo(() => {
@@ -72,10 +155,10 @@ export function GroupStandingsTable({
       });
 
       // Process completed matches in this group
-      const groupMatches = matches.filter(m => 
-        m.group_id === group.id && 
-        !m.is_playoff && 
-        m.status === 'completed' && 
+      const groupMatches = matches.filter(m =>
+        m.group_id === group.id &&
+        !m.is_playoff &&
+        m.status === 'completed' &&
         m.winner_team_id
       );
 
@@ -92,7 +175,7 @@ export function GroupStandingsTable({
           teamA.pointsFor += match.total_points_a;
           teamA.pointsAgainst += match.total_points_b;
           teamA.pointsDiff = teamA.pointsFor - teamA.pointsAgainst;
-          
+
           if (match.winner_team_id === match.team_a_id) {
             teamA.won++;
           } else {
@@ -107,7 +190,7 @@ export function GroupStandingsTable({
           teamB.pointsFor += match.total_points_b;
           teamB.pointsAgainst += match.total_points_a;
           teamB.pointsDiff = teamB.pointsFor - teamB.pointsAgainst;
-          
+
           if (match.winner_team_id === match.team_b_id) {
             teamB.won++;
           } else {
@@ -136,7 +219,7 @@ export function GroupStandingsTable({
     // Handle wildcards across all groups
     if (wildcardCount > 0) {
       const allNonQualified: { standing: TeamStanding; groupId: string }[] = [];
-      
+
       result.forEach((standings, groupId) => {
         standings.forEach((standing, index) => {
           if (index >= topPerGroup) {
@@ -165,42 +248,51 @@ export function GroupStandingsTable({
 
   if (isLoadingMatches || isLoadingTeams || isLoadingGroups) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: 16 }}>
+        <Skeleton className="h-6 w-32 mb-4" />
+        <Skeleton className="h-64 w-full" />
+      </div>
     );
   }
 
   if (!groups || groups.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Chưa chia bảng</p>
-          <p className="text-sm mt-1">Chia bảng để xem bảng xếp hạng</p>
-        </CardContent>
-      </Card>
+      <div style={{ ...surfaceCard, padding: 32 }}>
+        <div className="tl-empty-card" style={{ margin: 0, padding: '24px 16px' }}>
+          <span className="tl-empty-card-mark">
+            <Trophy className="h-6 w-6" />
+          </span>
+          <span className="tl-empty-card-label">{txt.emptyTitle}</span>
+          <span className="tl-empty-card-hint">{txt.emptyHint}</span>
+        </div>
+      </div>
     );
   }
 
   const sortedGroups = [...groups].sort((a, b) => a.display_order - b.display_order);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <CheckCircle2 className="h-4 w-4 text-green-500" />
-        <span>Top {topPerGroup}/bảng vào playoff</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Legend banner */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 10,
+          padding: '10px 14px',
+          ...surfaceCard,
+        }}
+      >
+        <span style={{ ...statusPillBase, background: 'var(--tl-green-glow)', color: 'var(--tl-green)' }}>
+          <CheckCircle2 className="h-3 w-3" />
+          {txt.topPerGroup(topPerGroup)}
+        </span>
         {wildcardCount > 0 && (
-          <>
-            <span className="mx-2">•</span>
-            <Star className="h-4 w-4 text-yellow-500" />
-            <span>{wildcardCount} wildcard</span>
-          </>
+          <span style={{ ...statusPillBase, background: 'rgba(233, 182, 73, 0.12)', color: 'var(--tl-gold)' }}>
+            <Star className="h-3 w-3" />
+            {txt.wildcardLabel(wildcardCount)}
+          </span>
         )}
       </div>
 
@@ -215,20 +307,24 @@ export function GroupStandingsTable({
 
         {sortedGroups.map((group) => (
           <TabsContent key={group.id} value={group.id} className="mt-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Trophy className="h-4 w-4" />
-                  Xếp hạng {group.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <StandingsTableContent 
-                  standings={standingsByGroup.get(group.id) || []} 
-                  topPerGroup={topPerGroup}
-                />
-              </CardContent>
-            </Card>
+            <div style={{ ...surfaceCard, padding: 0 }}>
+              <header
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '14px 16px',
+                  borderBottom: '1px solid var(--tl-border)',
+                }}
+              >
+                <Trophy className="h-4 w-4" style={{ color: 'var(--tl-fg-2)' }} />
+                <h3 style={sectionTitle}>{txt.standingsFor(group.name)}</h3>
+              </header>
+              <StandingsTableContent
+                standings={standingsByGroup.get(group.id) || []}
+                txt={txt}
+              />
+            </div>
           </TabsContent>
         ))}
       </Tabs>
@@ -236,95 +332,172 @@ export function GroupStandingsTable({
   );
 }
 
-function StandingsTableContent({ 
-  standings,
-  topPerGroup,
-}: { 
-  standings: TeamStanding[];
-  topPerGroup: number;
-}) {
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return <Trophy className="h-4 w-4 text-yellow-500" />;
-      case 2:
-        return <Medal className="h-4 w-4 text-gray-400" />;
-      case 3:
-        return <Award className="h-4 w-4 text-amber-600" />;
-      default:
-        return <span className="w-4 text-center text-sm font-medium">{rank}</span>;
-    }
-  };
+interface StandingsContentTxt {
+  emptyGroup: string;
+  colTeam: string;
+  colPlayed: string;
+  colWon: string;
+  colLost: string;
+  colGames: string;
+  colDiff: string;
+  legend: { mark: string; meaning: string }[];
+}
 
+function StandingsTableContent({
+  standings,
+  txt,
+}: {
+  standings: TeamStanding[];
+  txt: StandingsContentTxt;
+}) {
   if (standings.length === 0) {
     return (
-      <div className="py-8 text-center text-muted-foreground text-sm">
-        Chưa có đội nào trong bảng này
+      <div
+        style={{
+          padding: '32px 16px',
+          textAlign: 'center',
+          color: 'var(--tl-fg-3)',
+          fontSize: 13,
+        }}
+      >
+        {txt.emptyGroup}
       </div>
     );
   }
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10 text-center">#</TableHead>
-              <TableHead>Đội</TableHead>
-              <TableHead className="text-center w-10">Đ</TableHead>
-              <TableHead className="text-center w-10">T</TableHead>
-              <TableHead className="text-center w-10">B</TableHead>
-              <TableHead className="text-center w-16">Ván</TableHead>
-              <TableHead className="text-center w-12">+/-</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {standings.map((standing, index) => (
-              <TableRow 
-                key={standing.team.id}
-                className={standing.isQualified ? 'bg-green-500/10' : standing.isWildcard ? 'bg-yellow-500/10' : ''}
-              >
-                <TableCell className="text-center">
-                  <div className="flex justify-center">
-                    {getRankIcon(index + 1)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{standing.team.team_name}</span>
-                    {standing.isQualified && (
-                      <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    )}
-                    {standing.isWildcard && (
-                      <Star className="h-3 w-3 text-yellow-500" />
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="text-center text-sm">{standing.played}</TableCell>
-                <TableCell className="text-center text-sm text-green-600 font-medium">
-                  {standing.won}
-                </TableCell>
-                <TableCell className="text-center text-sm text-red-500">
-                  {standing.lost}
-                </TableCell>
-                <TableCell className="text-center text-xs">
-                  {standing.gamesWon}-{standing.gamesLost}
-                </TableCell>
-                <TableCell className={`text-center text-sm font-medium ${standing.pointsDiff > 0 ? 'text-green-600' : standing.pointsDiff < 0 ? 'text-red-500' : ''}`}>
-                  {standing.pointsDiff > 0 ? '+' : ''}{standing.pointsDiff}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ ...headStyle, textAlign: 'center', width: 44 }}>#</th>
+              <th style={headStyle}>{txt.colTeam}</th>
+              <th style={{ ...headStyle, textAlign: 'center', width: 44 }}>{txt.colPlayed}</th>
+              <th style={{ ...headStyle, textAlign: 'center', width: 44 }}>{txt.colWon}</th>
+              <th style={{ ...headStyle, textAlign: 'center', width: 44 }}>{txt.colLost}</th>
+              <th style={{ ...headStyle, textAlign: 'center', width: 72 }}>{txt.colGames}</th>
+              <th style={{ ...headStyle, textAlign: 'center', width: 60 }}>{txt.colDiff}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {standings.map((standing, index) => {
+              const rank = index + 1;
+              const rowBg = standing.isQualified
+                ? 'var(--tl-green-glow)'
+                : standing.isWildcard
+                  ? 'rgba(233, 182, 73, 0.10)'
+                  : 'transparent';
+
+              const rankColor = standing.isQualified
+                ? 'var(--tl-green)'
+                : standing.isWildcard
+                  ? 'var(--tl-gold)'
+                  : 'var(--tl-fg)';
+
+              const diffColor =
+                standing.pointsDiff > 0
+                  ? 'var(--tl-green)'
+                  : standing.pointsDiff < 0
+                    ? 'var(--tl-fg-3)'
+                    : 'var(--tl-fg-2)';
+
+              return (
+                <tr key={standing.team.id} style={{ background: rowBg }}>
+                  <td
+                    style={{
+                      ...cellStyle,
+                      textAlign: 'center',
+                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      fontWeight: 600,
+                      color: rankColor,
+                    }}
+                  >
+                    {rank}
+                  </td>
+                  <td style={cellStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span
+                        style={{
+                          fontFamily: 'Instrument Serif, serif',
+                          fontStyle: 'italic',
+                          fontSize: 17,
+                          letterSpacing: '-0.01em',
+                          color: 'var(--tl-fg)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {standing.team.team_name}
+                      </span>
+                      {standing.isQualified && (
+                        <CheckCircle2
+                          className="h-3 w-3 flex-shrink-0"
+                          style={{ color: 'var(--tl-green)' }}
+                        />
+                      )}
+                      {standing.isWildcard && (
+                        <Star
+                          className="h-3 w-3 flex-shrink-0"
+                          style={{ color: 'var(--tl-gold)' }}
+                        />
+                      )}
+                    </div>
+                  </td>
+                  <td style={{ ...cellStyle, textAlign: 'center', color: 'var(--tl-fg-2)' }}>
+                    {standing.played}
+                  </td>
+                  <td
+                    style={{
+                      ...cellStyle,
+                      textAlign: 'center',
+                      fontWeight: 600,
+                      color: 'var(--tl-green)',
+                    }}
+                  >
+                    {standing.won}
+                  </td>
+                  <td style={{ ...cellStyle, textAlign: 'center', color: 'var(--tl-fg-3)' }}>
+                    {standing.lost}
+                  </td>
+                  <td style={{ ...cellStyle, textAlign: 'center', color: 'var(--tl-fg-2)' }}>
+                    {standing.gamesWon}-{standing.gamesLost}
+                  </td>
+                  <td
+                    style={{
+                      ...cellStyle,
+                      textAlign: 'center',
+                      fontWeight: 600,
+                      color: diffColor,
+                    }}
+                  >
+                    {standing.pointsDiff > 0 ? '+' : ''}
+                    {standing.pointsDiff}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-      
+
       {/* Legend */}
-      <div className="p-3 border-t text-xs text-muted-foreground flex flex-wrap gap-3">
-        <span><strong>Đ</strong> = Đã đấu</span>
-        <span><strong>T</strong> = Thắng</span>
-        <span><strong>B</strong> = Thua</span>
+      <div
+        style={{
+          padding: '10px 16px',
+          borderTop: '1px solid var(--tl-border)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 12,
+          ...fieldLabel,
+        }}
+      >
+        {txt.legend.map(({ mark, meaning }) => (
+          <span key={mark}>
+            <strong style={{ color: 'var(--tl-fg)' }}>{mark}</strong> = {meaning}
+          </span>
+        ))}
       </div>
     </>
   );
