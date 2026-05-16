@@ -40,13 +40,14 @@ interface CallbackBody {
 interface DuprUserDetail {
   status?: string;
   result?: {
-    id?: number | string;
-    duprId?: string;
+    id?: string;
     fullName?: string;
-    singles?: number | string;
-    doubles?: number | string;
-    singlesRating?: number | string;
-    doublesRating?: number | string;
+    firstName?: string;
+    lastName?: string;
+    ratings?: {
+      singles?: number | string | null;
+      doubles?: number | string | null;
+    };
   };
 }
 
@@ -128,14 +129,16 @@ Deno.serve(async (req) => {
   let doubles: number | null = parseRating(body.stats?.doubles ?? null);
 
   try {
-    const detailRes = await partnerFetch(supabase, `/user/v1.0/${duprUserId}`);
+    // Partner API expects the alphanumeric duprId (e.g. "YGONMK"), not the
+    // numeric event.id from the SSO postMessage.
+    const detailRes = await partnerFetch(supabase, `/user/v1.0/${duprId}`);
     if (detailRes.ok) {
       const detail = (await detailRes.json()) as DuprUserDetail;
       const r = detail.result;
       if (r) {
         if (typeof r.fullName === "string") displayName = r.fullName;
-        const fetchedSingles = parseRating(r.singles ?? r.singlesRating);
-        const fetchedDoubles = parseRating(r.doubles ?? r.doublesRating);
+        const fetchedSingles = parseRating(r.ratings?.singles);
+        const fetchedDoubles = parseRating(r.ratings?.doubles);
         if (fetchedSingles !== null) singles = fetchedSingles;
         if (fetchedDoubles !== null) doubles = fetchedDoubles;
       }
