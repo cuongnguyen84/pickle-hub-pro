@@ -18,7 +18,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -26,26 +25,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
-import { useMasterTeams, useMasterTeamWithRoster, useMasterTeamManagement, MasterTeam } from '@/hooks/useMasterTeams';
-import { Loader2, Plus, Users, Check, AlertCircle, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
+import { useMasterTeams, useMasterTeamWithRoster, useMasterTeamManagement } from '@/hooks/useMasterTeams';
+import { Loader2, Plus, Users, Check, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useI18n } from '@/i18n';
 
-const formSchema = z.object({
-  team_name: z.string().min(2, 'Tên đội phải có ít nhất 2 ký tự').max(50),
-  captain_name: z.string().min(2, 'Tên đội trưởng phải có ít nhất 2 ký tự').max(50),
-  captain_gender: z.enum(['male', 'female']),
-  captain_skill_level: z.number().min(1).max(8).optional(),
-});
+// ─── W2.4d shared tokens ─────────────────────────────────────────────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+};
 
-type FormValues = z.infer<typeof formSchema>;
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 20,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const tinyPill: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  background: 'var(--tl-surface)',
+  color: 'var(--tl-fg-2)',
+  border: '1px solid var(--tl-border)',
+};
 
 interface TeamRegistrationDialogProps {
   open: boolean;
@@ -67,18 +97,85 @@ export function TeamRegistrationDialog({
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { createTeam, isCreatingTeam } = useTeamMatchTeamManagement();
+  const { isCreatingTeam } = useTeamMatchTeamManagement();
   const { createMasterTeam } = useMasterTeamManagement();
   const { data: masterTeams, isLoading: isLoadingMasterTeams } = useMasterTeams();
-  
+  const { language, t } = useI18n();
+  const c = t.teamMatchComponents;
+
   const [mode, setMode] = useState<RegistrationMode>('select');
   const [selectedMasterTeamId, setSelectedMasterTeamId] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [excludedMemberIds, setExcludedMemberIds] = useState<Set<string>>(new Set());
 
   const { team: selectedMasterTeam, roster: masterRoster, isLoading: isLoadingRoster } = useMasterTeamWithRoster(
-    selectedMasterTeamId || undefined
+    selectedMasterTeamId || undefined,
   );
+
+  const txt = {
+    titleSelect: language === 'vi' ? 'Đăng ký đội' : 'Register team',
+    titleCreate: c.createTeamTitle,
+    titleUseExisting: language === 'vi' ? 'Chọn đội đã có' : 'Pick an existing team',
+    descSelect: language === 'vi'
+      ? 'Chọn cách đăng ký đội của bạn'
+      : 'Pick how you want to register your team',
+    descCreate: language === 'vi'
+      ? 'Đăng ký đội mới để tham gia giải đấu'
+      : 'Register a new team for this tournament',
+    descUseExisting: language === 'vi'
+      ? 'Sử dụng đội đã tạo trước đó'
+      : 'Use a team you already created',
+    createOpt: language === 'vi' ? 'Tạo đội mới' : 'Create new team',
+    createOptDesc: language === 'vi'
+      ? 'Đăng ký đội mới cho giải đấu này'
+      : 'Register a brand-new team for this tournament',
+    useOpt: language === 'vi' ? 'Sử dụng đội đã có' : 'Use an existing team',
+    useOptCountLoading: language === 'vi' ? 'Đang tải...' : 'Loading...',
+    useOptCount: (n: number) =>
+      language === 'vi' ? `Bạn có ${n} đội` : `You have ${n} team${n === 1 ? '' : 's'}`,
+    useOptNone: language === 'vi' ? 'Bạn chưa có đội nào' : 'No teams yet',
+    teamNameLabel: c.teamNameLabel,
+    teamNamePh: language === 'vi' ? 'VD: Dragon Warriors' : 'E.g. Dragon Warriors',
+    captainNameLabel: c.captainNameLabel,
+    captainNamePh: language === 'vi' ? 'Tên của bạn' : 'Your name',
+    genderLabel: language === 'vi' ? 'Giới tính' : 'Gender',
+    male: c.male,
+    female: c.female,
+    skillLabel: language === 'vi' ? 'Trình độ (tùy chọn)' : 'Skill (optional)',
+    skillPh: language === 'vi' ? 'Chọn trình độ' : 'Pick skill',
+    back: language === 'vi' ? 'Quay lại' : 'Back',
+    create: language === 'vi' ? 'Tạo đội' : 'Create team',
+    register: language === 'vi' ? 'Đăng ký' : 'Register',
+    createdAt: (date: Date) =>
+      language === 'vi'
+        ? `Tạo lúc: ${date.toLocaleDateString('vi-VN')}`
+        : `Created: ${date.toLocaleDateString('en-US')}`,
+    rosterTitle: language === 'vi' ? 'Thành viên đội' : 'Team roster',
+    counter: (cur: number, max: number) =>
+      language === 'vi' ? `${cur}/${max} người` : `${cur}/${max} players`,
+    deselectHint: (n: number) =>
+      language === 'vi'
+        ? `Bỏ chọn ${n > 0 ? `thêm ${n}` : '0'} người nữa để đăng ký`
+        : `Deselect ${n > 0 ? `${n} more` : '0'} member${n === 1 ? '' : 's'} to continue`,
+    captainTag: language === 'vi' ? 'Đội trưởng' : 'Captain',
+    overLimit: (current: number, max: number, deselectCount: number) =>
+      language === 'vi'
+        ? `Đội có ${current} người, vượt quá giới hạn ${max} người. Bỏ chọn ${deselectCount} thành viên để tiếp tục.`
+        : `Roster has ${current} members, exceeding limit of ${max}. Deselect ${deselectCount} member${deselectCount === 1 ? '' : 's'} to continue.`,
+    successCreated: language === 'vi' ? 'Đã tạo đội mới' : 'Team created',
+    successRegistered: language === 'vi' ? 'Đã đăng ký đội vào giải' : 'Team registered',
+    successTitle: language === 'vi' ? 'Thành công' : 'Success',
+    errorTitle: language === 'vi' ? 'Lỗi' : 'Error',
+  };
+
+  const formSchema = z.object({
+    team_name: z.string().min(2, c.teamNameError).max(50),
+    captain_name: z.string().min(2, c.captainNameError).max(50),
+    captain_gender: z.enum(['male', 'female']),
+    captain_skill_level: z.number().min(1).max(8).optional(),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   // Calculate effective roster (excluding selected members)
   const effectiveRoster = masterRoster.filter(m => !excludedMemberIds.has(m.id));
@@ -88,7 +185,7 @@ export function TeamRegistrationDialog({
 
   const toggleExcludeMember = (memberId: string, isCaptain: boolean) => {
     if (isCaptain) return; // Cannot exclude captain
-    
+
     setExcludedMemberIds(prev => {
       const next = new Set(prev);
       if (next.has(memberId)) {
@@ -117,9 +214,10 @@ export function TeamRegistrationDialog({
 
   const hasMasterTeams = masterTeams && masterTeams.length > 0;
   const canRegisterWithExisting = selectedMasterTeam && !rosterExceedsLimit;
+
   const handleCreateNewTeam = async (values: FormValues) => {
     if (!user) return;
-    
+
     try {
       // Create master team first (auto-save)
       const masterTeam = await createMasterTeam({
@@ -157,15 +255,15 @@ export function TeamRegistrationDialog({
 
       queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
       queryClient.invalidateQueries({ queryKey: ['team-match-user-team', tournamentId] });
-      
-      toast({ title: 'Thành công', description: 'Đã tạo đội mới' });
+
+      toast({ title: txt.successTitle, description: txt.successCreated });
       form.reset();
       setMode('select');
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
       toast({
-        title: 'Lỗi',
+        title: txt.errorTitle,
         description: error.message,
         variant: 'destructive',
       });
@@ -174,10 +272,9 @@ export function TeamRegistrationDialog({
 
   const handleUseExistingTeam = async () => {
     if (!user || !selectedMasterTeam) return;
-    
+
     setIsRegistering(true);
     try {
-      // Create tournament team linked to master team
       const { data: tournamentTeam, error: teamError } = await supabase
         .from('team_match_teams')
         .insert({
@@ -192,7 +289,6 @@ export function TeamRegistrationDialog({
 
       if (teamError) throw teamError;
 
-      // Copy roster from master team (snapshot) - excluding selected members
       const rosterToInsert = effectiveRoster.map((member) => ({
         team_id: tournamentTeam.id,
         player_name: member.player_name,
@@ -207,15 +303,15 @@ export function TeamRegistrationDialog({
 
       queryClient.invalidateQueries({ queryKey: ['team-match-teams', tournamentId] });
       queryClient.invalidateQueries({ queryKey: ['team-match-user-team', tournamentId] });
-      
-      toast({ title: 'Thành công', description: 'Đã đăng ký đội vào giải' });
+
+      toast({ title: txt.successTitle, description: txt.successRegistered });
       setMode('select');
       setSelectedMasterTeamId(null);
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
       toast({
-        title: 'Lỗi',
+        title: txt.errorTitle,
         description: error.message,
         variant: 'destructive',
       });
@@ -239,73 +335,163 @@ export function TeamRegistrationDialog({
     onOpenChange(false);
   };
 
+  const title =
+    mode === 'select' ? txt.titleSelect : mode === 'create' ? txt.titleCreate : txt.titleUseExisting;
+  const desc =
+    mode === 'select' ? txt.descSelect : mode === 'create' ? txt.descCreate : txt.descUseExisting;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {mode === 'select' && 'Đăng ký đội'}
-            {mode === 'create' && 'Tạo đội mới'}
-            {mode === 'use-existing' && 'Chọn đội đã có'}
-          </DialogTitle>
-          <DialogDescription>
-            {mode === 'select' && 'Chọn cách đăng ký đội của bạn'}
-            {mode === 'create' && 'Đăng ký đội mới để tham gia giải đấu'}
-            {mode === 'use-existing' && 'Sử dụng đội đã tạo trước đó'}
+          <DialogTitle style={sectionTitle}>{title}</DialogTitle>
+          <DialogDescription
+            style={{
+              marginTop: 4,
+              fontFamily: 'inherit',
+              fontSize: 13,
+              color: 'var(--tl-fg-3)',
+            }}
+          >
+            {desc}
           </DialogDescription>
         </DialogHeader>
 
         {/* Mode Selection */}
         {mode === 'select' && (
-          <div className="space-y-4 py-4">
-            <Button
-              variant="outline"
-              className="w-full justify-start h-auto py-4 px-4"
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '8px 0' }}>
+            <button
+              type="button"
               onClick={() => setMode('create')}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+                padding: 14,
+                borderRadius: 'var(--tl-radius)',
+                border: '1px solid var(--tl-border)',
+                background: 'var(--tl-bg-elev)',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background 0.15s, border-color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-green)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--tl-green-glow)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg-elev)';
+              }}
             >
-              <Plus className="h-5 w-5 mr-3 flex-shrink-0" />
-              <div className="text-left">
-                <div className="font-medium">Tạo đội mới</div>
-                <div className="text-sm text-muted-foreground">
-                  Đăng ký đội mới cho giải đấu này
+              <Plus className="h-5 w-5" style={{ color: 'var(--tl-fg-2)', flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <div
+                  style={{
+                    fontFamily: 'Instrument Serif, serif',
+                    fontStyle: 'italic',
+                    fontSize: 17,
+                    color: 'var(--tl-fg)',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {txt.createOpt}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    color: 'var(--tl-fg-3)',
+                    marginTop: 4,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {txt.createOptDesc}
                 </div>
               </div>
-            </Button>
+            </button>
 
-            <Button
-              variant="outline"
-              className="w-full justify-start h-auto py-4 px-4"
+            <button
+              type="button"
               onClick={() => setMode('use-existing')}
               disabled={!hasMasterTeams && !isLoadingMasterTeams}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+                padding: 14,
+                borderRadius: 'var(--tl-radius)',
+                border: '1px solid var(--tl-border)',
+                background: 'var(--tl-bg-elev)',
+                cursor: !hasMasterTeams && !isLoadingMasterTeams ? 'not-allowed' : 'pointer',
+                opacity: !hasMasterTeams && !isLoadingMasterTeams ? 0.5 : 1,
+                textAlign: 'left',
+                transition: 'background 0.15s, border-color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                if (hasMasterTeams || isLoadingMasterTeams) {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-green)';
+                  (e.currentTarget as HTMLElement).style.background = 'var(--tl-green-glow)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--tl-border)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg-elev)';
+              }}
             >
-              <Users className="h-5 w-5 mr-3 flex-shrink-0" />
-              <div className="text-left">
-                <div className="font-medium">Sử dụng đội đã có</div>
-                <div className="text-sm text-muted-foreground">
-                  {isLoadingMasterTeams 
-                    ? 'Đang tải...' 
-                    : hasMasterTeams 
-                      ? `Bạn có ${masterTeams.length} đội`
-                      : 'Bạn chưa có đội nào'
-                  }
+              <Users className="h-5 w-5" style={{ color: 'var(--tl-fg-2)', flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <div
+                  style={{
+                    fontFamily: 'Instrument Serif, serif',
+                    fontStyle: 'italic',
+                    fontSize: 17,
+                    color: 'var(--tl-fg)',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {txt.useOpt}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    color: 'var(--tl-fg-3)',
+                    marginTop: 4,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {isLoadingMasterTeams
+                    ? txt.useOptCountLoading
+                    : hasMasterTeams
+                      ? txt.useOptCount(masterTeams.length)
+                      : txt.useOptNone}
                 </div>
               </div>
-            </Button>
+            </button>
           </div>
         )}
 
         {/* Create New Team Form */}
         {mode === 'create' && (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleCreateNewTeam)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleCreateNewTeam)}
+              style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '8px 0' }}
+            >
               <FormField
                 control={form.control}
                 name="team_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tên đội</FormLabel>
+                    <FormLabel htmlFor="register-team-name" style={fieldLabel}>
+                      {txt.teamNameLabel}
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="VD: Dragon Warriors" {...field} />
+                      <Input
+                        id="register-team-name"
+                        name="register-team-name"
+                        placeholder={txt.teamNamePh}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -317,9 +503,16 @@ export function TeamRegistrationDialog({
                 name="captain_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tên đội trưởng (bạn)</FormLabel>
+                    <FormLabel htmlFor="register-captain-name" style={fieldLabel}>
+                      {txt.captainNameLabel}
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Tên của bạn" {...field} />
+                      <Input
+                        id="register-captain-name"
+                        name="register-captain-name"
+                        placeholder={txt.captainNamePh}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -331,7 +524,7 @@ export function TeamRegistrationDialog({
                 name="captain_gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Giới tính</FormLabel>
+                    <FormLabel style={fieldLabel}>{txt.genderLabel}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -339,8 +532,8 @@ export function TeamRegistrationDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="male">Nam</SelectItem>
-                        <SelectItem value="female">Nữ</SelectItem>
+                        <SelectItem value="male">{txt.male}</SelectItem>
+                        <SelectItem value="female">{txt.female}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -353,14 +546,14 @@ export function TeamRegistrationDialog({
                 name="captain_skill_level"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Trình độ (tùy chọn)</FormLabel>
+                    <FormLabel style={fieldLabel}>{txt.skillLabel}</FormLabel>
                     <Select
                       onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
                       value={field.value?.toString()}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Chọn trình độ" />
+                          <SelectValue placeholder={txt.skillPh} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -376,14 +569,24 @@ export function TeamRegistrationDialog({
                 )}
               />
 
-              <div className="flex gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={handleBack} className="flex-1">
-                  Quay lại
-                </Button>
-                <Button type="submit" disabled={isCreatingTeam} className="flex-1">
-                  {isCreatingTeam && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Tạo đội
-                </Button>
+              <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
+                <button
+                  type="button"
+                  className="tl-btn"
+                  onClick={handleBack}
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {txt.back}
+                </button>
+                <button
+                  type="submit"
+                  className="tl-btn green"
+                  disabled={isCreatingTeam}
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {isCreatingTeam && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {txt.create}
+                </button>
               </div>
             </form>
           </Form>
@@ -391,126 +594,215 @@ export function TeamRegistrationDialog({
 
         {/* Use Existing Team Selection */}
         {mode === 'use-existing' && (
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '8px 0' }}>
             {isLoadingMasterTeams ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+                <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--tl-fg-3)' }} />
               </div>
             ) : (
               <>
-                <RadioGroup
-                  value={selectedMasterTeamId || ''}
-                  onValueChange={handleSelectMasterTeam}
-                  className="space-y-3"
-                >
-                  {masterTeams?.map((team) => (
-                    <div key={team.id}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {masterTeams?.map((team) => {
+                    const checked = selectedMasterTeamId === team.id;
+                    return (
                       <label
-                        htmlFor={team.id}
-                        className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
-                          selectedMasterTeamId === team.id
-                            ? 'border-primary bg-primary/5'
-                            : 'hover:bg-muted/50'
-                        }`}
+                        key={team.id}
+                        htmlFor={`master-team-${team.id}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 10,
+                          padding: '12px 14px',
+                          borderRadius: 'var(--tl-radius)',
+                          border: `1px solid ${checked ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                          background: checked ? 'var(--tl-green-glow)' : 'var(--tl-bg-elev)',
+                          cursor: 'pointer',
+                          transition: 'border-color 0.15s, background 0.15s',
+                          position: 'relative',
+                        }}
                       >
-                        <div className="flex items-center gap-3">
-                          <RadioGroupItem value={team.id} id={team.id} />
-                          <div>
-                            <div className="font-medium">{team.team_name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              Tạo lúc: {new Date(team.created_at).toLocaleDateString('vi-VN')}
-                            </div>
+                        <input
+                          type="radio"
+                          id={`master-team-${team.id}`}
+                          name="master-team-select"
+                          value={team.id}
+                          checked={checked}
+                          onChange={() => handleSelectMasterTeam(team.id)}
+                          style={{
+                            position: 'absolute',
+                            width: 1,
+                            height: 1,
+                            padding: 0,
+                            margin: -1,
+                            overflow: 'hidden',
+                            clip: 'rect(0,0,0,0)',
+                            whiteSpace: 'nowrap',
+                            border: 0,
+                          }}
+                        />
+                        <div>
+                          <div
+                            style={{
+                              fontFamily: 'Instrument Serif, serif',
+                              fontStyle: 'italic',
+                              fontSize: 17,
+                              color: 'var(--tl-fg)',
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {team.team_name}
+                          </div>
+                          <div style={{ fontSize: 12, color: 'var(--tl-fg-3)', marginTop: 4 }}>
+                            {txt.createdAt(new Date(team.created_at))}
                           </div>
                         </div>
-                        {selectedMasterTeamId === team.id && (
-                          <Check className="h-5 w-5 text-primary" />
+                        {checked && (
+                          <Check className="h-5 w-5" style={{ color: 'var(--tl-green)' }} />
                         )}
                       </label>
-                    </div>
-                  ))}
-                </RadioGroup>
+                    );
+                  })}
+                </div>
 
                 {/* Selected Team Preview */}
                 {selectedMasterTeamId && (
-                  <Card className="mt-4">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center justify-between">
-                        <span>Thành viên đội</span>
-                        {isLoadingRoster ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Badge variant={rosterExceedsLimit ? 'destructive' : 'secondary'}>
-                            {effectiveRoster.length}/{maxRosterSize} người
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      {needToExclude > 0 && (
-                        <CardDescription className="text-xs">
-                          Bỏ chọn {needToExclude - currentlyExcluded > 0 
-                            ? `thêm ${needToExclude - currentlyExcluded}` 
-                            : '0'} người nữa để đăng ký
-                        </CardDescription>
+                  <div style={{ ...surfaceCard, padding: 14 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <h4 style={{ ...sectionTitle, fontSize: 15 }}>{txt.rosterTitle}</h4>
+                      {isLoadingRoster ? (
+                        <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--tl-fg-3)' }} />
+                      ) : (
+                        <span
+                          style={{
+                            ...tinyPill,
+                            ...(rosterExceedsLimit
+                              ? {
+                                  background: 'rgba(255, 65, 54, 0.10)',
+                                  color: 'var(--tl-live)',
+                                  borderColor: 'rgba(255, 65, 54, 0.35)',
+                                }
+                              : {}),
+                          }}
+                        >
+                          {txt.counter(effectiveRoster.length, maxRosterSize)}
+                        </span>
                       )}
-                    </CardHeader>
-                    <CardContent className="space-y-2">
+                    </div>
+                    {needToExclude > 0 && (
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--tl-fg-3)',
+                          margin: '0 0 8px',
+                        }}
+                      >
+                        {txt.deselectHint(needToExclude - currentlyExcluded)}
+                      </p>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {masterRoster.map((member) => {
                         const isExcluded = excludedMemberIds.has(member.id);
-                        const isCaptain = member.is_captain;
-                        
+                        const memberIsCaptain = member.is_captain;
+
                         return (
-                          <div 
-                            key={member.id} 
-                            className={`flex items-center gap-3 text-sm p-2 rounded-md transition-colors ${
-                              isExcluded ? 'bg-muted/50 opacity-50' : ''
-                            } ${!isCaptain ? 'cursor-pointer hover:bg-muted/30' : ''}`}
-                            onClick={() => !isCaptain && toggleExcludeMember(member.id, isCaptain)}
+                          <div
+                            key={member.id}
+                            onClick={() => !memberIsCaptain && toggleExcludeMember(member.id, memberIsCaptain)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 10,
+                              padding: '8px 10px',
+                              borderRadius: 'var(--tl-radius)',
+                              border: '1px solid var(--tl-border)',
+                              background: 'var(--tl-bg-elev)',
+                              opacity: isExcluded ? 0.5 : 1,
+                              cursor: memberIsCaptain ? 'default' : 'pointer',
+                              transition: 'opacity 0.15s',
+                            }}
                           >
                             <Checkbox
                               checked={!isExcluded}
-                              disabled={isCaptain}
-                              onCheckedChange={() => toggleExcludeMember(member.id, isCaptain)}
+                              disabled={memberIsCaptain}
+                              onCheckedChange={() => toggleExcludeMember(member.id, memberIsCaptain)}
                               onClick={(e) => e.stopPropagation()}
                             />
-                            <Badge variant="outline" className="text-xs">
-                              {member.gender === 'male' ? 'Nam' : 'Nữ'}
-                            </Badge>
-                            <span className={isExcluded ? 'line-through' : ''}>
+                            <span style={tinyPill}>
+                              {member.gender === 'male' ? txt.male : txt.female}
+                            </span>
+                            <span
+                              style={{
+                                flex: 1,
+                                fontSize: 13.5,
+                                color: 'var(--tl-fg)',
+                                textDecoration: isExcluded ? 'line-through' : 'none',
+                              }}
+                            >
                               {member.player_name}
                             </span>
-                            {isCaptain && (
-                              <Badge variant="secondary" className="text-xs">
-                                Đội trưởng
-                              </Badge>
+                            {memberIsCaptain && (
+                              <span style={{ ...tinyPill, background: 'var(--tl-green-glow)', color: 'var(--tl-green)' }}>
+                                {txt.captainTag}
+                              </span>
                             )}
                           </div>
                         );
                       })}
 
                       {needToExclude > 0 && rosterExceedsLimit && (
-                        <div className="flex items-start gap-2 mt-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 10,
+                            padding: '10px 12px',
+                            borderRadius: 'var(--tl-radius)',
+                            background: 'rgba(255, 65, 54, 0.08)',
+                            border: '1px solid rgba(255, 65, 54, 0.35)',
+                            color: 'var(--tl-fg-2)',
+                            fontSize: 12.5,
+                            marginTop: 6,
+                          }}
+                        >
+                          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: 'var(--tl-live)' }} />
                           <div>
-                            Đội có {masterRoster.length} người, vượt quá giới hạn {maxRosterSize} người.
-                            Bỏ chọn {needToExclude - currentlyExcluded} thành viên để tiếp tục.
+                            {txt.overLimit(masterRoster.length, maxRosterSize, needToExclude - currentlyExcluded)}
                           </div>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 )}
 
-                <div className="flex gap-2 pt-4">
-                  <Button variant="outline" onClick={handleBack} className="flex-1">
-                    Quay lại
-                  </Button>
-                  <Button
+                <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
+                  <button
+                    type="button"
+                    className="tl-btn"
+                    onClick={handleBack}
+                    style={{ flex: 1, justifyContent: 'center' }}
+                  >
+                    {txt.back}
+                  </button>
+                  <button
+                    type="button"
+                    className="tl-btn green"
                     onClick={handleUseExistingTeam}
                     disabled={!canRegisterWithExisting || isRegistering}
-                    className="flex-1"
+                    style={{ flex: 1, justifyContent: 'center' }}
                   >
-                    {isRegistering && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Đăng ký
-                  </Button>
+                    {isRegistering && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {txt.register}
+                  </button>
                 </div>
               </>
             )}

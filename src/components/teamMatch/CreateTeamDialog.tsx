@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,6 +7,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -18,7 +18,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -27,16 +26,28 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
+import { useI18n } from '@/i18n';
 import { Loader2 } from 'lucide-react';
 
-const formSchema = z.object({
-  team_name: z.string().min(2, 'Tên đội phải có ít nhất 2 ký tự').max(50),
-  captain_name: z.string().min(2, 'Tên đội trưởng phải có ít nhất 2 ký tự').max(50),
-  captain_gender: z.enum(['male', 'female']),
-  captain_skill_level: z.number().min(1).max(8).optional(),
-});
+// ─── W2.4d shared tokens ─────────────────────────────────────────────────
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 20,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
 
-type FormValues = z.infer<typeof formSchema>;
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
 
 interface CreateTeamDialogProps {
   open: boolean;
@@ -52,6 +63,33 @@ export function CreateTeamDialog({
   onSuccess,
 }: CreateTeamDialogProps) {
   const { createTeam, isCreatingTeam } = useTeamMatchTeamManagement();
+  const { language, t } = useI18n();
+  const c = t.teamMatchComponents;
+
+  const txt = {
+    title: c.createTeamTitle,
+    desc: c.createTeamDesc,
+    teamNameLabel: c.teamNameLabel,
+    teamNamePh: language === 'vi' ? 'VD: Dragon Warriors' : 'E.g. Dragon Warriors',
+    captainNameLabel: c.captainNameLabel,
+    captainNamePh: language === 'vi' ? 'Tên của bạn' : 'Your name',
+    genderLabel: language === 'vi' ? 'Giới tính' : 'Gender',
+    male: c.male,
+    female: c.female,
+    skillLabel: language === 'vi' ? 'Trình độ (tùy chọn)' : 'Skill (optional)',
+    skillPh: language === 'vi' ? 'Chọn trình độ' : 'Pick skill',
+    cancel: language === 'vi' ? 'Hủy' : 'Cancel',
+    submit: language === 'vi' ? 'Tạo đội' : 'Create team',
+  };
+
+  const formSchema = z.object({
+    team_name: z.string().min(2, c.teamNameError).max(50),
+    captain_name: z.string().min(2, c.captainNameError).max(50),
+    captain_gender: z.enum(['male', 'female']),
+    captain_skill_level: z.number().min(1).max(8).optional(),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -83,22 +121,39 @@ export function CreateTeamDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Tạo đội mới</DialogTitle>
-          <DialogDescription>
-            Đăng ký đội của bạn để tham gia giải đấu. Bạn sẽ là đội trưởng.
+          <DialogTitle style={sectionTitle}>{txt.title}</DialogTitle>
+          <DialogDescription
+            style={{
+              marginTop: 4,
+              fontFamily: 'inherit',
+              fontSize: 13,
+              color: 'var(--tl-fg-3)',
+            }}
+          >
+            {txt.desc}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '8px 0' }}
+          >
             <FormField
               control={form.control}
               name="team_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tên đội</FormLabel>
+                  <FormLabel htmlFor="create-team-name" style={fieldLabel}>
+                    {txt.teamNameLabel}
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="VD: Dragon Warriors" {...field} />
+                    <Input
+                      id="create-team-name"
+                      name="create-team-name"
+                      placeholder={txt.teamNamePh}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -110,9 +165,16 @@ export function CreateTeamDialog({
               name="captain_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tên đội trưởng (bạn)</FormLabel>
+                  <FormLabel htmlFor="create-team-captain" style={fieldLabel}>
+                    {txt.captainNameLabel}
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Tên của bạn" {...field} />
+                    <Input
+                      id="create-team-captain"
+                      name="create-team-captain"
+                      placeholder={txt.captainNamePh}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -124,7 +186,7 @@ export function CreateTeamDialog({
               name="captain_gender"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Giới tính</FormLabel>
+                  <FormLabel style={fieldLabel}>{txt.genderLabel}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -132,8 +194,8 @@ export function CreateTeamDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="male">Nam</SelectItem>
-                      <SelectItem value="female">Nữ</SelectItem>
+                      <SelectItem value="male">{txt.male}</SelectItem>
+                      <SelectItem value="female">{txt.female}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -146,14 +208,14 @@ export function CreateTeamDialog({
               name="captain_skill_level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Trình độ (tùy chọn)</FormLabel>
+                  <FormLabel style={fieldLabel}>{txt.skillLabel}</FormLabel>
                   <Select
                     onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
                     value={field.value?.toString()}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn trình độ" />
+                        <SelectValue placeholder={txt.skillPh} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -169,19 +231,20 @@ export function CreateTeamDialog({
               )}
             />
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
+            <DialogFooter>
+              <button
                 type="button"
-                variant="outline"
+                className="tl-btn"
                 onClick={() => onOpenChange(false)}
+                disabled={isCreatingTeam}
               >
-                Hủy
-              </Button>
-              <Button type="submit" disabled={isCreatingTeam}>
-                {isCreatingTeam && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Tạo đội
-              </Button>
-            </div>
+                {txt.cancel}
+              </button>
+              <button type="submit" className="tl-btn green" disabled={isCreatingTeam}>
+                {isCreatingTeam && <Loader2 className="h-4 w-4 animate-spin" />}
+                {txt.submit}
+              </button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
