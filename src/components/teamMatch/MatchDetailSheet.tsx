@@ -6,15 +6,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Save, Trophy, Play } from 'lucide-react';
 import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useI18n } from '@/i18n';
 
 interface MatchDetailSheetProps {
   open: boolean;
@@ -25,27 +23,96 @@ interface MatchDetailSheetProps {
   onScoreMatch?: (match: TeamMatchMatch) => void;
 }
 
-const GAME_TYPE_LABELS: Record<string, string> = {
-  WD: 'Đôi Nữ',
-  MD: 'Đôi Nam',
-  MX: 'Nam Nữ',
-  WS: 'Đơn',
-  MS: 'Đơn',
+// ─── W2.4c shared tokens ─────────────────────────────────────────────────
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
 };
 
-export function MatchDetailSheet({ 
-  open, 
-  onOpenChange, 
-  match, 
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 18,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+  margin: 0,
+};
+
+const fieldLabel: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-2)',
+};
+
+const statusPillBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 10.5,
+  fontWeight: 500,
+  padding: '3px 9px',
+  borderRadius: 4,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+};
+
+const teamNameStyle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontSize: 19,
+  letterSpacing: '-0.015em',
+  color: 'var(--tl-fg)',
+};
+
+const scoreNumStyle: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontVariantNumeric: 'tabular-nums',
+  fontWeight: 700,
+  fontSize: 32,
+  color: 'var(--tl-fg)',
+};
+
+export function MatchDetailSheet({
+  open,
+  onOpenChange,
+  match,
   isOwner,
   tournamentId,
   onScoreMatch,
 }: MatchDetailSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
-  
+  const { language } = useI18n();
+
   const [scores, setScores] = useState<Record<string, { a: number; b: number }>>({});
   const [hasChanges, setHasChanges] = useState(false);
+
+  const GAME_TYPE_LABELS: Record<string, string> = useMemo(() => (
+    language === 'vi'
+      ? { WD: 'Đôi Nữ', MD: 'Đôi Nam', MX: 'Nam Nữ', WS: 'Đơn', MS: 'Đơn' }
+      : { WD: 'WD', MD: 'MD', MX: 'Mixed', WS: 'WS', MS: 'MS' }
+  ), [language]);
+
+  const txt = {
+    title: language === 'vi' ? 'Chi tiết trận đấu' : 'Match detail',
+    roundLabel: (n: number | null | undefined) =>
+      language === 'vi' ? `Vòng ${n ?? ''}`.trim() : `Round ${n ?? ''}`.trim(),
+    tbd: 'TBD',
+    winner: language === 'vi' ? 'Thắng' : 'Winner',
+    pointsSuffix: language === 'vi' ? 'điểm' : 'pts',
+    scoreMatchBtn: language === 'vi' ? 'Chấm điểm trận đấu' : 'Score match',
+    gamesTitle: language === 'vi' ? 'Các ván đấu' : 'Games',
+    noGames: language === 'vi' ? 'Chưa có ván đấu nào' : 'No games yet',
+    gameNum: (n: number) => language === 'vi' ? `Ván ${n}` : `Game ${n}`,
+    saveScores: language === 'vi' ? 'Lưu điểm số' : 'Save scores',
+  };
 
   // Collect all roster IDs from games to fetch player names
   const allRosterIds = useMemo(() => {
@@ -62,14 +129,14 @@ export function MatchDetailSheet({
     queryKey: ['roster-names', allRosterIds],
     queryFn: async () => {
       if (allRosterIds.length === 0) return {};
-      
+
       const { data, error } = await supabase
         .from('team_match_roster')
         .select('id, player_name')
         .in('id', allRosterIds);
-      
+
       if (error) throw error;
-      
+
       const map: Record<string, string> = {};
       data?.forEach(r => {
         map[r.id] = r.player_name;
@@ -134,7 +201,7 @@ export function MatchDetailSheet({
       const totalGames = games.length;
       const requiredToWin = Math.ceil(totalGames / 2);
       let winnerId: string | null = null;
-      
+
       if (gamesWonA >= requiredToWin && match.team_a_id) {
         winnerId = match.team_a_id;
       } else if (gamesWonB >= requiredToWin && match.team_b_id) {
@@ -159,159 +226,292 @@ export function MatchDetailSheet({
 
   if (!match) return null;
 
-  const teamAName = (match.team_a as any)?.team_name || 'TBD';
-  const teamBName = (match.team_b as any)?.team_name || 'TBD';
-  
+  const teamAName = (match.team_a as any)?.team_name || txt.tbd;
+  const teamBName = (match.team_b as any)?.team_name || txt.tbd;
+
   // Ready to start = both lineups submitted
   const hasBothTeams = match.team_a_id && match.team_b_id;
   const isReadyToStart = hasBothTeams && match.lineup_a_submitted && match.lineup_b_submitted;
   const canScore = isOwner && (isReadyToStart || match.status === 'in_progress' || match.status === 'completed');
 
+  const winnerA = match.winner_team_id === match.team_a_id;
+  const winnerB = match.winner_team_id === match.team_b_id;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5" />
-            Chi tiết trận đấu
+          <SheetTitle
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              ...sectionTitle,
+              fontSize: 20,
+            }}
+          >
+            <Trophy className="h-5 w-5" style={{ color: 'var(--tl-fg-2)' }} />
+            {txt.title}
           </SheetTitle>
-          <SheetDescription>
-            Vòng {match.round_number}
+          <SheetDescription style={{ ...fieldLabel, marginTop: 4 }}>
+            {txt.roundLabel(match.round_number)}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 18 }}>
           {/* Match Header */}
-          <Card>
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 text-center">
-                  <p className={`font-semibold text-lg ${match.winner_team_id === match.team_a_id ? 'text-green-600' : ''}`}>
-                    {teamAName}
-                  </p>
-                  {match.winner_team_id === match.team_a_id && (
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 mt-1">
-                      Thắng
-                    </Badge>
-                  )}
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-3xl font-bold">
-                    {match.games_won_a} - {match.games_won_b}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ({match.total_points_a} - {match.total_points_b} điểm)
-                  </p>
-                </div>
-                
-                <div className="flex-1 text-center">
-                  <p className={`font-semibold text-lg ${match.winner_team_id === match.team_b_id ? 'text-green-600' : ''}`}>
-                    {teamBName}
-                  </p>
-                  {match.winner_team_id === match.team_b_id && (
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 mt-1">
-                      Thắng
-                    </Badge>
-                  )}
-                </div>
+          <div style={{ ...surfaceCard, padding: 16 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <p
+                  style={{
+                    ...teamNameStyle,
+                    fontWeight: winnerA ? 600 : 400,
+                    color: winnerA ? 'var(--tl-green)' : 'var(--tl-fg)',
+                    margin: 0,
+                  }}
+                >
+                  {teamAName}
+                </p>
+                {winnerA && (
+                  <span
+                    style={{
+                      ...statusPillBase,
+                      background: 'var(--tl-green-glow)',
+                      color: 'var(--tl-green)',
+                      marginTop: 6,
+                    }}
+                  >
+                    {txt.winner}
+                  </span>
+                )}
               </div>
-            </CardContent>
-          </Card>
-          
+
+              <div style={{ textAlign: 'center', minWidth: 80 }}>
+                <div style={scoreNumStyle}>
+                  {match.games_won_a} - {match.games_won_b}
+                </div>
+                <p
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 11,
+                    color: 'var(--tl-fg-3)',
+                    marginTop: 4,
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  ({match.total_points_a} - {match.total_points_b} {txt.pointsSuffix})
+                </p>
+              </div>
+
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <p
+                  style={{
+                    ...teamNameStyle,
+                    fontWeight: winnerB ? 600 : 400,
+                    color: winnerB ? 'var(--tl-green)' : 'var(--tl-fg)',
+                    margin: 0,
+                  }}
+                >
+                  {teamBName}
+                </p>
+                {winnerB && (
+                  <span
+                    style={{
+                      ...statusPillBase,
+                      background: 'var(--tl-green-glow)',
+                      color: 'var(--tl-green)',
+                      marginTop: 6,
+                    }}
+                  >
+                    {txt.winner}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Score Button */}
           {canScore && onScoreMatch && (
-            <Button 
+            <button
+              type="button"
+              className="tl-btn green"
+              style={{ width: '100%', justifyContent: 'center', padding: '10px 14px' }}
               onClick={() => onScoreMatch(match)}
-              className="w-full"
-              variant="default"
             >
-              <Play className="h-4 w-4 mr-2" />
-              Chấm điểm trận đấu
-            </Button>
+              <Play className="h-4 w-4" />
+              {txt.scoreMatchBtn}
+            </button>
           )}
 
-          <Separator />
-
           {/* Games List */}
-          <div className="space-y-4">
-            <h4 className="font-semibold">Các ván đấu</h4>
-            
+          <div>
+            <h4 style={{ ...sectionTitle, fontSize: 17, marginBottom: 12 }}>{txt.gamesTitle}</h4>
+
             {isLoading ? (
-              <div className="text-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+              <div style={{ ...surfaceCard, padding: 16 }}>
+                <Skeleton className="h-20 w-full" />
               </div>
             ) : games.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
-                Chưa có ván đấu nào
+              <p
+                style={{
+                  textAlign: 'center',
+                  color: 'var(--tl-fg-3)',
+                  fontSize: 13,
+                  padding: '16px 0',
+                }}
+              >
+                {txt.noGames}
               </p>
             ) : (
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {games.map((game, index) => {
                   const score = scores[game.id] || { a: 0, b: 0 };
                   const gameWinner = score.a > score.b ? 'a' : score.b > score.a ? 'b' : null;
-                  
-                  // Get lineup player names
+
                   const lineupA = game.lineup_team_a || [];
                   const lineupB = game.lineup_team_b || [];
-                  
+
                   return (
-                    <Card key={game.id} className="overflow-hidden">
-                      <CardContent className="py-3 px-4">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="text-sm font-medium">
-                            Game {index + 1}
-                          </span>
-                          <Badge variant="secondary" className="text-xs">
-                            {GAME_TYPE_LABELS[game.game_type]}
-                          </Badge>
+                    <div key={game.id} style={{ ...surfaceCard, padding: 12 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 8,
+                          marginBottom: 10,
+                        }}
+                      >
+                        <span style={fieldLabel}>{txt.gameNum(index + 1)}</span>
+                        <span
+                          style={{
+                            ...statusPillBase,
+                            background: 'var(--tl-surface)',
+                            color: 'var(--tl-fg-2)',
+                          }}
+                        >
+                          {GAME_TYPE_LABELS[game.game_type] || game.game_type}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                        <div
+                          style={{
+                            flex: 1,
+                            textAlign: 'right',
+                            fontSize: 13,
+                            fontWeight: gameWinner === 'a' ? 600 : 400,
+                            color: gameWinner === 'a' ? 'var(--tl-green)' : 'var(--tl-fg-2)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {lineupA.length > 0
+                            ? lineupA.map(id => rosterMap?.[id] || id).join(', ')
+                            : teamAName}
                         </div>
-                        
-                        <div className="flex items-center justify-center gap-4">
-                          <div className={`flex-1 text-right text-sm ${gameWinner === 'a' ? 'text-green-600 font-bold' : ''}`}>
-                            {lineupA.length > 0 
-                              ? lineupA.map(id => rosterMap?.[id] || id).join(', ') 
-                              : teamAName}
+
+                        {isOwner ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Input
+                              type="number"
+                              min="0"
+                              name={`score-${game.id}-a`}
+                              value={score.a}
+                              onChange={(e) => handleScoreChange(game.id, 'a', e.target.value)}
+                              className="w-16 text-center"
+                              style={{
+                                background: 'var(--tl-surface)',
+                                border: '1px solid var(--tl-border)',
+                                color: 'var(--tl-fg)',
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            />
+                            <span style={{ color: 'var(--tl-fg-3)' }}>-</span>
+                            <Input
+                              type="number"
+                              min="0"
+                              name={`score-${game.id}-b`}
+                              value={score.b}
+                              onChange={(e) => handleScoreChange(game.id, 'b', e.target.value)}
+                              className="w-16 text-center"
+                              style={{
+                                background: 'var(--tl-surface)',
+                                border: '1px solid var(--tl-border)',
+                                color: 'var(--tl-fg)',
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            />
                           </div>
-                          
-                          {isOwner ? (
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                min="0"
-                                value={score.a}
-                                onChange={(e) => handleScoreChange(game.id, 'a', e.target.value)}
-                                className="w-16 text-center"
-                              />
-                              <span className="text-muted-foreground">-</span>
-                              <Input
-                                type="number"
-                                min="0"
-                                value={score.b}
-                                onChange={(e) => handleScoreChange(game.id, 'b', e.target.value)}
-                                className="w-16 text-center"
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded">
-                              <span className={`text-lg font-bold ${gameWinner === 'a' ? 'text-green-600' : ''}`}>
-                                {score.a}
-                              </span>
-                              <span className="text-muted-foreground">-</span>
-                              <span className={`text-lg font-bold ${gameWinner === 'b' ? 'text-green-600' : ''}`}>
-                                {score.b}
-                              </span>
-                            </div>
-                          )}
-                          
-                          <div className={`flex-1 text-sm ${gameWinner === 'b' ? 'text-green-600 font-bold' : ''}`}>
-                            {lineupB.length > 0 
-                              ? lineupB.map(id => rosterMap?.[id] || id).join(', ') 
-                              : teamBName}
+                        ) : (
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              padding: '6px 14px',
+                              borderRadius: 6,
+                              background: 'var(--tl-surface)',
+                              border: '1px solid var(--tl-border)',
+                              minWidth: 88,
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontVariantNumeric: 'tabular-nums',
+                                fontSize: 17,
+                                fontWeight: 600,
+                                color: gameWinner === 'a' ? 'var(--tl-green)' : 'var(--tl-fg)',
+                              }}
+                            >
+                              {score.a}
+                            </span>
+                            <span style={{ color: 'var(--tl-fg-4)' }}>-</span>
+                            <span
+                              style={{
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontVariantNumeric: 'tabular-nums',
+                                fontSize: 17,
+                                fontWeight: 600,
+                                color: gameWinner === 'b' ? 'var(--tl-green)' : 'var(--tl-fg)',
+                              }}
+                            >
+                              {score.b}
+                            </span>
                           </div>
+                        )}
+
+                        <div
+                          style={{
+                            flex: 1,
+                            textAlign: 'left',
+                            fontSize: 13,
+                            fontWeight: gameWinner === 'b' ? 600 : 400,
+                            color: gameWinner === 'b' ? 'var(--tl-green)' : 'var(--tl-fg-2)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {lineupB.length > 0
+                            ? lineupB.map(id => rosterMap?.[id] || id).join(', ')
+                            : teamBName}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -320,17 +520,20 @@ export function MatchDetailSheet({
 
           {/* Save Button */}
           {isOwner && hasChanges && (
-            <Button 
-              onClick={handleSaveScores} 
-              className="w-full"
+            <button
+              type="button"
+              className="tl-btn green"
+              style={{ width: '100%', justifyContent: 'center', padding: '10px 14px' }}
+              onClick={handleSaveScores}
               disabled={isUpdatingScore || isUpdatingResult}
             >
-              {(isUpdatingScore || isUpdatingResult) && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {(isUpdatingScore || isUpdatingResult) ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
               )}
-              <Save className="h-4 w-4 mr-2" />
-              Lưu điểm số
-            </Button>
+              {txt.saveScores}
+            </button>
           )}
         </div>
       </SheetContent>
