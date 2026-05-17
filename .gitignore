@@ -26,6 +26,8 @@ dist-ssr
 # Local Cowork session artifacts
 .claude/worktrees/
 .claude/settings.local.json
+.claude/secrets.local.*
+.claude/scheduled_tasks.lock
 
 # Supabase CLI temp
 supabase/.temp/
