@@ -37,7 +37,7 @@ type Action = "create" | "verify" | "dispute" | "approve" | "reject";
 interface ProposalRow {
   id: string;
   created_by: string;
-  club_id: number;
+  club_id: number | null;
   format: "SINGLES" | "DOUBLES";
   match_type: "SIDEOUT" | "RALLY";
   match_date: string;
@@ -109,10 +109,15 @@ async function handleCreate(
   const teamB = (body.team_b_player_ids as string[]) ?? [];
   const scoresA = (body.team_a_scores as number[]) ?? [];
   const scoresB = (body.team_b_scores as number[]) ?? [];
-  const clubId = Number(body.club_id ?? 0);
+  // club_id is optional — null/0 means matchSource=PARTNER (DUPR FAQ:
+  // valid match sources are CLUB and PARTNER; clubId omitted for PARTNER).
+  const clubIdRaw = body.club_id;
+  const clubId =
+    clubIdRaw === null || clubIdRaw === undefined || clubIdRaw === "" || Number(clubIdRaw) === 0
+      ? null
+      : Number(clubIdRaw);
   const matchDate = String(body.match_date ?? "");
 
-  if (!clubId) return err("missing_club_id", 400, "missing_club_id");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(matchDate)) return err("bad_match_date", 400, "bad_match_date");
   if (format === "SINGLES" && (teamA.length !== 1 || teamB.length !== 1)) {
     return err("singles_needs_one_player_per_side", 400, "bad_teams");
@@ -139,7 +144,7 @@ async function handleCreate(
     .from("match_proposals")
     .insert({
       created_by: callerId,
-      club_id: clubId,
+      club_id: clubId,                       // null → matchSource=PARTNER
       format,
       match_type: body.match_type === "RALLY" ? "RALLY" : "SIDEOUT",
       match_date: matchDate,
@@ -255,16 +260,34 @@ async function handleApprove(
     return err("not_verified", 409, "not_verified", { status: proposal.status });
   }
 
-  // Caller must be DIRECTOR/ORGANIZER of the club.
-  const { data: canApprove } = await supabase.rpc("dupr_user_can_submit_club_matches_for", {
-    p_user_id: callerId,
-    p_club_id: proposal.club_id,
-  });
-  if (!canApprove) {
-    return err("not_club_admin", 403, "not_club_admin", {
-      club_id: proposal.club_id,
-      hint: "Need DIRECTOR or ORGANIZER role. Refresh cache via dupr-clubs?force=1.",
+  // Role gate splits by match source:
+  //   - CLUB match (club_id != null) → caller must be DIRECTOR/ORGANIZER
+  //     on the DUPR club (via dupr_user_clubs cache).
+  //   - PARTNER match (club_id == null) → caller must hold the
+  //     ThePickleHub admin or creator role.
+  if (proposal.club_id) {
+    const { data: canApprove } = await supabase.rpc("dupr_user_can_submit_club_matches_for", {
+      p_user_id: callerId,
+      p_club_id: proposal.club_id,
     });
+    if (!canApprove) {
+      return err("not_club_admin", 403, "not_club_admin", {
+        club_id: proposal.club_id,
+        hint: "Need DIRECTOR or ORGANIZER role. Refresh cache via dupr-clubs?force=1.",
+      });
+    }
+  } else {
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId);
+    const allowed = new Set(["admin", "creator"]);
+    const hasRole = (roles ?? []).some((r: { role: string }) => allowed.has(r.role));
+    if (!hasRole) {
+      return err("not_platform_admin", 403, "not_platform_admin", {
+        hint: "PARTNER match approval requires user_roles ∈ ('admin','creator').",
+      });
+    }
   }
 
   // Resolve each player's dupr_id from dupr_user_tokens.
@@ -335,7 +358,7 @@ async function handleApprove(
   const env = (Deno.env.get("DUPR_ENV") ?? "uat") === "prod" ? "prod" : "uat";
   const partnerBase = env === "prod" ? "https://prod.mydupr.com/api" : "https://uat.mydupr.com/api";
 
-  const partnerBody = {
+  const partnerBody: Record<string, unknown> = {
     identifier,
     location: proposal.location ?? "",
     matchDate: proposal.match_date,
@@ -345,9 +368,10 @@ async function handleApprove(
     event: proposal.event ?? "ThePickleHub match",
     bracket: proposal.bracket ?? "",
     matchType: proposal.match_type,
-    clubId: proposal.club_id,
-    matchSource: "CLUB",
+    matchSource: proposal.club_id ? "CLUB" : "PARTNER",
   };
+  // Omit clubId for PARTNER (per DUPR FAQ Valid Match Sources).
+  if (proposal.club_id) partnerBody.clubId = proposal.club_id;
 
   const partnerRes = await fetch(`${partnerBase}/match/v1.0/create`, {
     method: "POST",
@@ -378,7 +402,7 @@ async function handleApprove(
     match_code: matchCode,
     hashed_match_code: hashedMatchCode,
     submitted_by: callerId,
-    club_id: proposal.club_id,
+    club_id: proposal.club_id,                  // null for PARTNER matches
     match_format: proposal.format,
     match_date: proposal.match_date,
     raw_request: partnerBody,
@@ -425,11 +449,23 @@ async function handleReject(
     return err("proposal_locked", 409, "proposal_locked", { status: proposal.status });
   }
 
-  const { data: canReject } = await supabase.rpc("dupr_user_can_submit_club_matches_for", {
-    p_user_id: callerId,
-    p_club_id: proposal.club_id,
-  });
-  if (!canReject) return err("not_club_admin", 403, "not_club_admin");
+  // Same role split as approve.
+  if (proposal.club_id) {
+    const { data: canReject } = await supabase.rpc("dupr_user_can_submit_club_matches_for", {
+      p_user_id: callerId,
+      p_club_id: proposal.club_id,
+    });
+    if (!canReject) return err("not_club_admin", 403, "not_club_admin");
+  } else {
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId);
+    const allowed = new Set(["admin", "creator"]);
+    if (!(roles ?? []).some((r: { role: string }) => allowed.has(r.role))) {
+      return err("not_platform_admin", 403, "not_platform_admin");
+    }
+  }
 
   await supabase
     .from("match_proposals")

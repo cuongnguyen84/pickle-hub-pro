@@ -23,7 +23,7 @@ type Tab = "create" | "pending" | "queue" | "history";
 interface ProposalRow {
   id: string;
   created_by: string;
-  club_id: number;
+  club_id: number | null;
   format: "SINGLES" | "DOUBLES";
   match_date: string;
   event: string | null;
@@ -213,10 +213,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
   );
 
   const handleSubmit = async () => {
-    if (clubId === "") {
-      toast({ variant: "destructive", title: vi ? "Chọn club" : "Pick a club" });
-      return;
-    }
+    // club_id is optional — empty means matchSource=PARTNER per DUPR FAQ.
     if (!a1 || !b1 || (format === "DOUBLES" && (!a2 || !b2))) {
       toast({ variant: "destructive", title: vi ? "Thiếu player" : "Missing players" });
       return;
@@ -235,7 +232,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
       const { data, error } = await supabase.functions.invoke("match-proposal", {
         body: {
           action: "create",
-          club_id: Number(clubId),
+          club_id: clubId === "" ? null : Number(clubId),
           format,
           match_date: matchDate,
           location,
@@ -288,14 +285,14 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
         </label>
 
         <label className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
-          Club
+          Club (optional)
           <select
             value={String(clubId)}
             onChange={(e) => setClubId(e.target.value === "" ? "" : Number(e.target.value))}
             className="mt-1 w-full rounded border p-2 text-sm"
             style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }}
           >
-            <option value="">— Pick a DUPR club —</option>
+            <option value="">{vi ? "— Không club (PARTNER) —" : "— None (PARTNER) —"}</option>
             {submitterClubs.map((c) => (
               <option key={c.club_id} value={c.club_id}>
                 {c.club_name} ({c.role})
@@ -418,7 +415,9 @@ function ProposalCard({
           <span className="font-mono text-xs" style={{ color: "var(--tl-fg-3)" }}>{row.id.slice(0, 8)}</span>
           <span className="ml-2">{row.format}</span>
           <span className="ml-2" style={{ color: "var(--tl-fg-3)" }}>{row.match_date}</span>
-          <span className="ml-2" style={{ color: "var(--tl-fg-3)" }}>club {row.club_id}</span>
+          <span className="ml-2" style={{ color: "var(--tl-fg-3)" }}>
+            {row.club_id ? `club ${row.club_id}` : "PARTNER"}
+          </span>
         </div>
         {statusPill(row.status)}
       </div>
