@@ -293,3 +293,7 @@ verify_jwt = false
 # ─── DUPR RaaS (PR5 — club integration) ────────────────────────────────────
 [functions.dupr-clubs]
 verify_jwt = false
+
+# ─── Match proposals (PR6 — player-initiated match flow) ───────────────────
+[functions.match-proposal]
+verify_jwt = false
