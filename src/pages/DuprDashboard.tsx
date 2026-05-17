@@ -251,6 +251,15 @@ function ClubsSection() {
   const { language } = useI18n();
   const vi = language === "vi";
   const clubs = useDuprClubs();
+  const [clubIdInput, setClubIdInput] = useState("");
+
+  const env = (import.meta.env.VITE_DUPR_ENV as string | undefined) ?? "uat";
+  const duprBase = env === "prod" ? "https://dashboard.dupr.com" : "https://uat.dupr.gg";
+
+  const openClub = (id: string) => {
+    if (!id) return;
+    window.open(`${duprBase}/club/${id}`, "_blank", "noopener");
+  };
 
   return (
     <Section
@@ -284,6 +293,7 @@ function ClubsSection() {
               <th className="text-left font-normal pb-2">Club</th>
               <th className="text-left font-normal pb-2">Role</th>
               <th className="text-left font-normal pb-2">Club ID</th>
+              <th className="text-left font-normal pb-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -296,12 +306,67 @@ function ClubsSection() {
                     label={c.role}
                   />
                 </td>
-                <td className="py-2" style={{ color: "var(--tl-fg-3)" }}>{c.club_id}</td>
+                <td className="py-2 font-mono" style={{ color: "var(--tl-fg-3)" }}>{c.club_id}</td>
+                <td className="py-2 text-right">
+                  <a
+                    href={`${duprBase}/club/${c.club_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs underline"
+                  >
+                    {vi ? "Mở trên DUPR" : "Open on DUPR"} <ExternalLink className="inline h-3 w-3" />
+                  </a>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
+      {/* ─── Join a new club ─── */}
+      <div
+        className="mt-5 rounded border p-3"
+        style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)" }}
+      >
+        <div className="mb-2 text-sm font-medium" style={{ color: "var(--tl-fg)" }}>
+          {vi ? "Tham gia club DUPR mới" : "Join a new DUPR club"}
+        </div>
+        <p className="mb-3 text-xs" style={{ color: "var(--tl-fg-3)" }}>
+          {vi
+            ? "DUPR không cho join club qua API. Anh sang DUPR dashboard, gửi yêu cầu tham gia, đợi admin club approve rồi quay lại bấm Refresh ở trên."
+            : "DUPR doesn't expose a join-club API. Open DUPR dashboard, request to join, wait for the club admin to approve, then come back and click Refresh above."}
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={`${duprBase}/clubs`}
+            target="_blank"
+            rel="noreferrer"
+            className="tl-btn"
+          >
+            {vi ? "Mở danh sách club DUPR" : "Browse DUPR clubs"} <ExternalLink className="inline h-3 w-3" />
+          </a>
+
+          <div className="flex gap-1">
+            <input
+              type="text"
+              value={clubIdInput}
+              onChange={(e) => setClubIdInput(e.target.value.trim())}
+              placeholder={vi ? "Club ID (vd 7628571463)" : "Club ID (e.g. 7628571463)"}
+              className="rounded border px-2 py-1 text-sm font-mono"
+              style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)", minWidth: 200 }}
+            />
+            <button
+              type="button"
+              className="tl-btn"
+              onClick={() => openClub(clubIdInput)}
+              disabled={!clubIdInput}
+            >
+              {vi ? "Mở club" : "Open club"}
+            </button>
+          </div>
+        </div>
+      </div>
     </Section>
   );
 }
