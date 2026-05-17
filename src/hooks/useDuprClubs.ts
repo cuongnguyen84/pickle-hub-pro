@@ -19,17 +19,23 @@ export interface DuprClubMembership {
 }
 
 async function fetchCached(userId: string): Promise<DuprClubMembership[] | null> {
+  // Freshness lives in dupr_user_clubs_meta so empty membership lists still
+  // count as a fresh cache hit (zero-club users would otherwise re-fetch on
+  // every render).
+  const { data: meta, error: metaErr } = await supabase
+    .from("dupr_user_clubs_meta")
+    .select("expires_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (metaErr) throw metaErr;
+  if (!meta || new Date(meta.expires_at).getTime() <= Date.now()) return null;
+
   const { data, error } = await supabase
     .from("dupr_user_clubs")
-    .select("club_id, club_name, role, expires_at")
+    .select("club_id, club_name, role")
     .eq("user_id", userId);
   if (error) throw error;
-  if (!data || data.length === 0) return null;
-  const fresh = data.every(
-    (r: { expires_at: string }) => new Date(r.expires_at).getTime() > Date.now(),
-  );
-  if (!fresh) return null;
-  return data.map(({ expires_at: _e, ...rest }: { expires_at: string } & DuprClubMembership) => rest);
+  return (data ?? []) as DuprClubMembership[];
 }
 
 async function fetchFromEdge(force = false): Promise<DuprClubMembership[]> {

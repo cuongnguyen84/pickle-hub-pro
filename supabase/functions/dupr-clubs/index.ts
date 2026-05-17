@@ -82,21 +82,27 @@ Deno.serve(async (req) => {
   }
 
   // ─── Cache hit ──────────────────────────────────────────────────────────
+  // Freshness is tracked via dupr_user_clubs_meta (one row per user) so
+  // users with zero clubs still get a valid cache window — without a meta
+  // row, an empty membership response would never produce a cache hit
+  // and we'd hammer DUPR on every call.
   if (!force) {
-    const { data: cached } = await supabase
-      .from("dupr_user_clubs")
-      .select("club_id, club_name, role, fetched_at, expires_at")
-      .eq("user_id", user.id);
+    const { data: meta } = await supabase
+      .from("dupr_user_clubs_meta")
+      .select("expires_at")
+      .eq("user_id", user.id)
+      .maybeSingle<{ expires_at: string }>();
 
-    const rows = (cached ?? []) as Pick<
-      CachedRow,
-      "club_id" | "club_name" | "role" | "fetched_at" | "expires_at"
-    >[];
-    const fresh = rows.length > 0 &&
-      rows.every((r) => new Date(r.expires_at).getTime() > Date.now());
-    if (fresh) {
+    if (meta && new Date(meta.expires_at).getTime() > Date.now()) {
+      const { data: cached } = await supabase
+        .from("dupr_user_clubs")
+        .select("club_id, club_name, role")
+        .eq("user_id", user.id);
       return jsonResponse({
-        clubs: rows.map(({ expires_at: _e, fetched_at: _f, ...rest }) => rest),
+        clubs: (cached ?? []) as Pick<
+          CachedRow,
+          "club_id" | "club_name" | "role"
+        >[],
         cached: true,
       });
     }
@@ -151,6 +157,18 @@ Deno.serve(async (req) => {
       // Non-fatal — still return data to caller.
     }
   }
+
+  // ─── Always update the freshness marker (even for empty memberships) ───
+  await supabase
+    .from("dupr_user_clubs_meta")
+    .upsert(
+      {
+        user_id: user.id,
+        fetched_at: now.toISOString(),
+        expires_at: expires.toISOString(),
+      },
+      { onConflict: "user_id" },
+    );
 
   return jsonResponse({
     clubs: rows.map(({ expires_at: _e, fetched_at: _f, ...rest }) => rest),

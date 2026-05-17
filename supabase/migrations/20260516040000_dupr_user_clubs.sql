@@ -40,29 +40,13 @@ CREATE POLICY dupr_user_clubs_self_read
 GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT SELECT ON public.dupr_user_clubs TO authenticated;
 
--- ─── Helper: does user hold an admin role on this club? ────────────────────
--- Returns true if the user has DIRECTOR or ORGANIZER for the club AND the
--- cache is still fresh. Used by dupr-match-submit when matchSource=CLUB.
-CREATE OR REPLACE FUNCTION public.dupr_user_can_submit_club_matches(
-  p_user_id uuid,
-  p_club_id bigint
-)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.dupr_user_clubs
-    WHERE user_id = p_user_id
-      AND club_id = p_club_id
-      AND role IN ('DIRECTOR', 'ORGANIZER')
-      AND expires_at > now()
-  );
-$$;
-
-GRANT EXECUTE ON FUNCTION public.dupr_user_can_submit_club_matches TO authenticated;
+-- Helper functions are defined in 20260516050000_dupr_security_hardening.sql
+-- as two variants:
+--   - dupr_user_can_submit_club_matches(bigint) — caller-pinned, granted to
+--     authenticated; uses auth.uid() internally.
+--   - dupr_user_can_submit_club_matches_for(uuid, bigint) — service-role
+--     only, used by edge functions that need to gate ACROSS users.
+-- Defining them here with an arbitrary p_user_id grant would let any
+-- signed-in client probe other users' roles — moved out for that reason.
 
 NOTIFY pgrst, 'reload schema';
