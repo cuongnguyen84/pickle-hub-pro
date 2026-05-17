@@ -66,3 +66,11 @@ enabled = true
 # CLAUDE.md notes). Reduces ingest POST round-trip from the Worker.
 [placement]
 mode = "smart"
+
+# tsconfig "paths" resolves @/lib/pro-tour/* during type-check but
+# wrangler's esbuild bundler doesn't honor tsconfig paths — we have to
+# mirror the alias here. Without this, `wrangler deploy` errors with
+# 'Could not resolve "@/lib/pro-tour/adapters/rsc-scraper"'.
+[alias]
+"@/lib/pro-tour/adapters/rsc-scraper" = "../../src/lib/pro-tour/adapters/rsc-scraper.ts"
+"@/lib/pro-tour/types" = "../../src/lib/pro-tour/types.ts"
