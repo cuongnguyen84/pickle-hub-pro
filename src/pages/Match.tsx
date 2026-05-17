@@ -515,7 +515,19 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
       body: { action, proposal_id: proposalId, reason },
     });
     if (error) {
-      toast({ variant: "destructive", title: action, description: error.message });
+      // supabase-js wraps non-2xx as FunctionsHttpError with a Response on
+      // error.context — pull the real error body so we don't surface the
+      // generic "Edge Function returned a non-2xx status code".
+      const ctx = (error as { context?: Response }).context;
+      let detail = error.message;
+      if (ctx) {
+        try {
+          const body = await ctx.clone().json();
+          detail = body.error ?? body.code ?? body.message ?? JSON.stringify(body);
+          if (body.details?.hint) detail += ` — ${body.details.hint}`;
+        } catch { /* keep error.message */ }
+      }
+      toast({ variant: "destructive", title: action, description: detail });
     } else {
       toast({ title: action, description: JSON.stringify(data) });
       qc.invalidateQueries({ queryKey: ["match-proposals"] });
