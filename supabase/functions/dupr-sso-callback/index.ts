@@ -21,7 +21,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, getAuthUser, jsonResponse } from "../_shared/auth.ts";
-import { partnerFetch } from "../_shared/dupr-client.ts";
+import { partnerFetch, subscribeRating } from "../_shared/dupr-client.ts";
 
 interface CallbackBody {
   userToken?: unknown;
@@ -173,6 +173,26 @@ Deno.serve(async (req) => {
   if (tokenError) {
     console.error("dupr_user_tokens upsert failed:", tokenError);
     return err("token_persist_failed", 500, "token_persist_failed");
+  }
+
+  // ─── 4b. Subscribe to RATING webhook (best-effort) ─────────────────────
+  // Idempotent on DUPR side — re-subscribe is a no-op. If the webhook URL
+  // hasn't been registered yet (dupr-webhook-register), DUPR returns 400;
+  // we log and continue so SSO still succeeds.
+  let webhookSubscribedAt: string | null = null;
+  try {
+    const sub = await subscribeRating(supabase, duprId);
+    if (sub.ok) {
+      webhookSubscribedAt = new Date().toISOString();
+      await supabase
+        .from("dupr_user_tokens")
+        .update({ webhook_subscribed_at: webhookSubscribedAt })
+        .eq("user_id", user.id);
+    } else {
+      console.warn("subscribeRating non-ok:", sub.status, sub.body);
+    }
+  } catch (e) {
+    console.warn("subscribeRating failed:", e);
   }
 
   // ─── 5. Update profile ──────────────────────────────────────────────────

@@ -1,17 +1,20 @@
 // ============================================================================
 // dupr-disconnect — user unlinks their DUPR account
 // ----------------------------------------------------------------------------
-// Soft-revokes the user's row in dupr_user_tokens (sets revoked_at) and
-// nulls the DUPR fields on profiles. History rows are kept for audit.
+// 1. Best-effort unsubscribe from RATING webhook on DUPR side (so we stop
+//    receiving updates immediately, not just when the next event fires
+//    against a missing user_token row).
+// 2. Soft-revokes the user's row in dupr_user_tokens (sets revoked_at).
+// 3. Nulls the DUPR fields on profiles.
 //
-// PR3 will add a follow-up call to DUPR's webhook-unsubscribe endpoint
-// once we're issuing subscriptions. For now disconnect is local-only.
+// History rows are kept for audit.
 //
 // verify_jwt = false in config.toml; bearer verified internally.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, getAuthUser, jsonResponse } from "../_shared/auth.ts";
+import { unsubscribeRating } from "../_shared/dupr-client.ts";
 
 function err(error: string, status: number, code?: string) {
   return jsonResponse({ error, ...(code ? { code } : {}) }, status);
@@ -39,9 +42,28 @@ Deno.serve(async (req) => {
 
   const now = new Date().toISOString();
 
+  // ─── 1. Unsubscribe from DUPR RATING webhook (best-effort) ─────────────
+  const { data: tokenLookup } = await supabase
+    .from("dupr_user_tokens")
+    .select("dupr_id")
+    .eq("user_id", user.id)
+    .is("revoked_at", null)
+    .maybeSingle<{ dupr_id: string }>();
+
+  if (tokenLookup?.dupr_id) {
+    try {
+      const unsub = await unsubscribeRating(supabase, tokenLookup.dupr_id);
+      if (!unsub.ok) {
+        console.warn("unsubscribeRating non-ok:", unsub.status, unsub.body);
+      }
+    } catch (e) {
+      console.warn("unsubscribeRating failed:", e);
+    }
+  }
+
   const { error: tokenError } = await supabase
     .from("dupr_user_tokens")
-    .update({ revoked_at: now })
+    .update({ revoked_at: now, webhook_subscribed_at: null })
     .eq("user_id", user.id)
     .is("revoked_at", null);
 
