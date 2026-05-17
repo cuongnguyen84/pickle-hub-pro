@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.dupr_match_submissions (
   identifier          text NOT NULL,    -- what we sent to DUPR (== `tph:<src>:<id>`)
   match_code          text NOT NULL,    -- DUPR matchCode (10-digit)
   hashed_match_code   text,             -- DUPR hashedMatchCode (9-char)
-  submitted_by        uuid NOT NULL REFERENCES public.profiles(id) ON DELETE SET NULL,
+  submitted_by        uuid NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
   club_id             bigint,           -- NULL for matchSource=PARTNER
   match_format        text NOT NULL CHECK (match_format IN ('SINGLES', 'DOUBLES')),
   match_date          date NOT NULL,

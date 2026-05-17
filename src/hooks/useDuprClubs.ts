@@ -38,7 +38,8 @@ async function fetchFromEdge(force = false): Promise<DuprClubMembership[]> {
     error?: string;
   }>("dupr-clubs", { body: force ? { force: true } : {} });
   if (error) {
-    if (error.message?.includes("412")) return [];
+    const status = (error as { context?: { status?: number } }).context?.status;
+    if (status === 412) return [];
     throw error;
   }
   return data?.clubs ?? [];

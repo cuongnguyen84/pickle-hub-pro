@@ -208,7 +208,7 @@ async function ensureAllPlayersBasic(
       missing.push(duprId);
       continue;
     }
-    const { data, error } = await supabase.rpc("dupr_user_has_entitlement", {
+    const { data, error } = await supabase.rpc("dupr_user_has_entitlement_for", {
       p_user_id: userId,
       p_entitlement: "BASIC_L1",
       p_resource: "tournaments",
@@ -251,7 +251,7 @@ async function handleCreate(
   // Club role gate (PR5) — matchSource=CLUB requires DIRECTOR or ORGANIZER.
   if (p.club_id) {
     const { data: canSubmit, error: clubErr } = await supabase.rpc(
-      "dupr_user_can_submit_club_matches",
+      "dupr_user_can_submit_club_matches_for",
       { p_user_id: submitterId, p_club_id: p.club_id },
     );
     if (clubErr || !canSubmit) {
@@ -396,7 +396,7 @@ async function handleUpdate(
         body,
       });
     }
-    await supabase
+    const { error: persistErr } = await supabase
       .from("dupr_match_submissions")
       .update({
         last_updated_at: new Date().toISOString(),
@@ -406,6 +406,14 @@ async function handleUpdate(
       .eq("environment", env)
       .eq("internal_source", p.internal_source)
       .eq("internal_match_id", p.internal_match_id);
+    if (persistErr) {
+      console.error("dupr_match_submissions update audit-write failed:", persistErr);
+      return jsonResponse({
+        updated: true,
+        match_code: existing.match_code,
+        persist_warning: persistErr.message,
+      });
+    }
     return jsonResponse({ updated: true, match_code: existing.match_code });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -448,7 +456,7 @@ async function handleDelete(
         body,
       });
     }
-    await supabase
+    const { error: persistErr } = await supabase
       .from("dupr_match_submissions")
       .update({
         deleted_at: new Date().toISOString(),
@@ -457,6 +465,16 @@ async function handleDelete(
       .eq("environment", env)
       .eq("internal_source", p.internal_source)
       .eq("internal_match_id", p.internal_match_id);
+    if (persistErr) {
+      // DUPR delete succeeded but our row still looks live — surface to
+      // caller so they don't retry-DELETE and create state drift.
+      console.error("dupr_match_submissions delete audit-write failed:", persistErr);
+      return jsonResponse({
+        deleted: true,
+        match_code: existing.match_code,
+        persist_warning: persistErr.message,
+      });
+    }
     return jsonResponse({ deleted: true, match_code: existing.match_code });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
