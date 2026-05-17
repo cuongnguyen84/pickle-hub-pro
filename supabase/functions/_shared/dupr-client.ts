@@ -169,3 +169,47 @@ export async function partnerFetch(
 
   return res;
 }
+
+/**
+ * Subscribe one DUPR user to RATING webhook events. Idempotent on DUPR's
+ * side — re-subscribing returns SUCCESS with no side effects. Safe to call
+ * from dupr-sso-callback every time a user re-connects.
+ */
+export async function subscribeRating(
+  supabase: SupabaseClient,
+  duprId: string,
+  env: DuprEnv = getDuprEnv(),
+): Promise<{ ok: boolean; status: number; body: unknown }> {
+  const res = await partnerFetch(
+    supabase,
+    "/user/v1.0/subscribe/webhook-event",
+    {
+      method: "POST",
+      body: JSON.stringify({ duprIds: [duprId], topic: "RATING" }),
+    },
+    env,
+  );
+  const body = await res.json().catch(() => null);
+  return { ok: res.ok, status: res.status, body };
+}
+
+/**
+ * Inverse of subscribeRating. Called from dupr-disconnect.
+ */
+export async function unsubscribeRating(
+  supabase: SupabaseClient,
+  duprId: string,
+  env: DuprEnv = getDuprEnv(),
+): Promise<{ ok: boolean; status: number; body: unknown }> {
+  const res = await partnerFetch(
+    supabase,
+    "/user/v1.0/subscribe/webhook-event",
+    {
+      method: "DELETE",
+      body: JSON.stringify({ duprIds: [duprId], topic: "RATING" }),
+    },
+    env,
+  );
+  const body = await res.json().catch(() => null);
+  return { ok: res.ok, status: res.status, body };
+}

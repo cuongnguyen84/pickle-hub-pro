@@ -6,6 +6,7 @@ import {
   type DuprSsoResult,
 } from "./DuprSsoModal";
 import { useInvalidateDuprConnection } from "@/hooks/useDuprConnection";
+import { useInvalidateDuprEntitlements } from "@/hooks/useDuprEntitlements";
 
 interface Props {
   /** Custom label override. */
@@ -31,6 +32,7 @@ export function DuprConnectButton({
   const { language } = useI18n();
   const { toast } = useToast();
   const invalidate = useInvalidateDuprConnection();
+  const invalidateEntitlements = useInvalidateDuprEntitlements();
   const [open, setOpen] = useState(false);
 
   const defaultLabel =
@@ -39,6 +41,7 @@ export function DuprConnectButton({
   const handleSuccess = (result: DuprSsoResult) => {
     setOpen(false);
     invalidate();
+    invalidateEntitlements();
     toast({
       title:
         language === "vi" ? "Đã kết nối DUPR" : "DUPR connected",

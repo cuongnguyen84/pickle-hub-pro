@@ -263,3 +263,22 @@ verify_jwt = false
 
 [functions.dupr-disconnect]
 verify_jwt = false
+
+# ─── DUPR RaaS (PR2 — entitlements) ────────────────────────────────────────
+# verify_jwt = false per ES256/HS256 workaround. Function verifies the
+# user JWT internally via supabase.auth.getUser().
+
+[functions.dupr-entitlements]
+verify_jwt = false
+
+# ─── DUPR RaaS (PR3 — webhooks) ────────────────────────────────────────────
+# dupr-webhook is PUBLIC — DUPR servers POST RATING events to it. The
+# function validates clientId internally against DUPR_CLIENT_KEY before
+# touching DB.
+# dupr-webhook-register is service-role only (admin/setup).
+
+[functions.dupr-webhook]
+verify_jwt = false
+
+[functions.dupr-webhook-register]
+verify_jwt = false
