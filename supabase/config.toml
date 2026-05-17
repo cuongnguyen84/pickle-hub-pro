@@ -282,3 +282,10 @@ verify_jwt = false
 
 [functions.dupr-webhook-register]
 verify_jwt = false
+
+# ─── DUPR RaaS (PR4 — match submit) ────────────────────────────────────────
+# verify_jwt = false per ES256/HS256 workaround. Function verifies the
+# user JWT internally + role gate (admin|creator).
+
+[functions.dupr-match-submit]
+verify_jwt = false
