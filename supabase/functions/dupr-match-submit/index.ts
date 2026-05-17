@@ -248,6 +248,20 @@ async function handleCreate(
     });
   }
 
+  // Club role gate (PR5) — matchSource=CLUB requires DIRECTOR or ORGANIZER.
+  if (p.club_id) {
+    const { data: canSubmit, error: clubErr } = await supabase.rpc(
+      "dupr_user_can_submit_club_matches",
+      { p_user_id: submitterId, p_club_id: p.club_id },
+    );
+    if (clubErr || !canSubmit) {
+      return err("club_role_required", 403, "club_role_required", {
+        club_id: p.club_id,
+        hint: "Submitter must be DIRECTOR or ORGANIZER. Refresh DUPR club cache via dupr-clubs?force=1.",
+      });
+    }
+  }
+
   const partnerBody: Record<string, unknown> = {
     identifier,
     location: p.location ?? "",

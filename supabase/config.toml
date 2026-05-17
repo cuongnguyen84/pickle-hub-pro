@@ -289,3 +289,7 @@ verify_jwt = false
 
 [functions.dupr-match-submit]
 verify_jwt = false
+
+# ─── DUPR RaaS (PR5 — club integration) ────────────────────────────────────
+[functions.dupr-clubs]
+verify_jwt = false
