@@ -121,33 +121,40 @@ Deno.serve(async (req) => {
   const refreshToken = body.refreshToken;
 
   // ─── 3. Confirm DUPR account via partner API ────────────────────────────
-  // Best-effort enrichment — if the partner call fails (network / DUPR
-  // 403 on unconnected user during early integration), we still proceed
-  // with the inline `stats` payload from the SSO event.
+  // Required server-side verification — without confirming the claimed
+  // duprId actually exists on DUPR side, any authenticated caller could
+  // POST arbitrary {duprId, userToken, refreshToken} and we'd persist
+  // them. We FAIL CLOSED if the partner lookup doesn't return SUCCESS
+  // with a matching id.
   let displayName: string | null = null;
   let singles: number | null = parseRating(body.stats?.singles ?? null);
   let doubles: number | null = parseRating(body.stats?.doubles ?? null);
 
+  let detail: DuprUserDetail | null = null;
   try {
-    // Partner API expects the alphanumeric duprId (e.g. "YGONMK"), not the
-    // numeric event.id from the SSO postMessage.
     const detailRes = await partnerFetch(supabase, `/user/v1.0/${duprId}`);
-    if (detailRes.ok) {
-      const detail = (await detailRes.json()) as DuprUserDetail;
-      const r = detail.result;
-      if (r) {
-        if (typeof r.fullName === "string") displayName = r.fullName;
-        const fetchedSingles = parseRating(r.ratings?.singles);
-        const fetchedDoubles = parseRating(r.ratings?.doubles);
-        if (fetchedSingles !== null) singles = fetchedSingles;
-        if (fetchedDoubles !== null) doubles = fetchedDoubles;
-      }
-    } else {
-      console.warn("dupr user detail non-ok:", detailRes.status);
+    detail = (await detailRes.json().catch(() => null)) as DuprUserDetail | null;
+    if (!detailRes.ok || detail?.status !== "SUCCESS" || !detail.result?.id) {
+      console.warn("dupr user detail rejected:", detailRes.status, detail);
+      return err("dupr_verification_failed", 502, "dupr_verification_failed");
     }
   } catch (e) {
-    console.warn("dupr user detail fetch failed:", e);
+    console.error("dupr user detail fetch failed:", e);
+    return err("dupr_verification_failed", 502, "dupr_verification_failed");
   }
+
+  // Confirm the partner-reported id matches what the client claimed.
+  if (String(detail.result.id).toUpperCase() !== duprId.toUpperCase()) {
+    console.warn("dupr id mismatch:", detail.result.id, "vs claimed", duprId);
+    return err("dupr_id_mismatch", 400, "dupr_id_mismatch");
+  }
+
+  const r = detail.result;
+  if (typeof r.fullName === "string") displayName = r.fullName;
+  const fetchedSingles = parseRating(r.ratings?.singles);
+  const fetchedDoubles = parseRating(r.ratings?.doubles);
+  if (fetchedSingles !== null) singles = fetchedSingles;
+  if (fetchedDoubles !== null) doubles = fetchedDoubles;
 
   const now = new Date().toISOString();
   const profileUrl = `https://mydupr.com/dupr/players/${duprId}`;

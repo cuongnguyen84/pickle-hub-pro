@@ -101,7 +101,29 @@ Deno.serve(async (req) => {
   const event = String(payload.event ?? "");
   const duprId = payload.message?.duprId ?? null;
 
-  // ─── Log raw event first ────────────────────────────────────────────────
+  // ─── Fail closed if no expected client id is configured ────────────────
+  // Without secrets set, this public endpoint would accept arbitrary
+  // payloads from anyone — refuse rather than fail open.
+  if (!expectedClientKey && !expectedClientId) {
+    console.error("dupr-webhook: DUPR_CLIENT_KEY/ID secrets unset — refusing");
+    return jsonResponse(
+      { status: "error", reason: "server_misconfigured" },
+      500,
+    );
+  }
+
+  // ─── Validate clientId BEFORE persisting (avoid storage amplification) ─
+  const clientIdMatch =
+    (expectedClientKey && incomingClientId === expectedClientKey) ||
+    (expectedClientId && incomingClientId === expectedClientId);
+  if (!clientIdMatch) {
+    // Don't log to dupr_webhook_events — unauthenticated callers could
+    // otherwise force unbounded DB inserts from this public endpoint.
+    console.warn("dupr-webhook: client_id_mismatch", incomingClientId);
+    return jsonResponse({ status: "ignored", reason: "client_id_mismatch" });
+  }
+
+  // ─── Log raw event (clientId already validated) ────────────────────────
   const { data: logRow } = await supabase
     .from("dupr_webhook_events")
     .insert({
@@ -125,16 +147,6 @@ Deno.serve(async (req) => {
       })
       .eq("id", logId);
   };
-
-  // ─── Validate clientId ──────────────────────────────────────────────────
-  const clientIdMatch =
-    (expectedClientKey && incomingClientId === expectedClientKey) ||
-    (expectedClientId && incomingClientId === expectedClientId);
-  if ((expectedClientKey || expectedClientId) && !clientIdMatch) {
-    await markProcessed("client_id_mismatch");
-    // Still 200 — don't make DUPR retry; we just ignore.
-    return jsonResponse({ status: "ignored", reason: "client_id_mismatch" });
-  }
 
   // ─── REGISTRATION + RATING_SEED are handshake events — ack but no-op ───
   if (event === "REGISTRATION" || event === "RATING_SEED") {

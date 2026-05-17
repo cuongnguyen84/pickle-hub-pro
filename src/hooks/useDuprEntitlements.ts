@@ -80,8 +80,11 @@ async function fetchFromEdge(
     body: force ? { force: true } : {},
   });
   if (error) {
-    // 412 = dupr_not_connected; treat as null, not an error
-    if (error.message?.includes("412")) return null;
+    // 412 = dupr_not_connected; supabase-js exposes the upstream Response
+    // on error.context — read the actual status instead of relying on
+    // string matching (which silently breaks if error.message changes).
+    const status = (error as { context?: { status?: number } }).context?.status;
+    if (status === 412) return null;
     throw error;
   }
   if (!data || (data as { error?: string }).error) return null;
