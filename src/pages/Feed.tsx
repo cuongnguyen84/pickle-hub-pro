@@ -58,10 +58,17 @@ const Feed = () => {
     () => followingFeed.data?.pages.flat() ?? [],
     [followingFeed.data],
   );
-  const timelineItems: FeedTimelineItem[] = useMemo(
-    () => timelineFeed.data?.pages.flat() ?? [],
-    [timelineFeed.data],
-  );
+  const timelineItems: FeedTimelineItem[] = useMemo(() => {
+    const all = timelineFeed.data?.pages.flat() ?? [];
+    // Blog posts are file-shipped per locale (VI in vi_blog_posts, EN in
+    // src/content/blog/metadata.ts) — same article appears once per lang.
+    // Hide the off-locale copy so EN viewers don't see the VI version
+    // stacked above the EN version (and vice-versa). Matches and videos
+    // stay unfiltered: they're locale-agnostic activity.
+    return all.filter(
+      (item) => item.type !== "blog" || item.lang === language,
+    );
+  }, [timelineFeed.data, language]);
 
   const itemCount =
     tab === "following" ? followingMatches.length : timelineItems.length;
