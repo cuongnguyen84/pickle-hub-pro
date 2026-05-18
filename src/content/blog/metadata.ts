@@ -10,6 +10,24 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "professional-pickleball-tours-guide-2026",
+    publishedDate: "2026-05-18",
+    updatedDate: "2026-05-18",
+    author: "Cuong Nguyen",
+    tags: ["professional pickleball", "ppa tour", "mlp", "ppa tour asia", "app tour", "upa", "2026", "pro pickleball comparison", "asia"],
+    ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
+    ctaLabel: { en: "Read: PPA Tour Asia 2026 Complete Guide", vi: "Đọc: Hướng dẫn đầy đủ PPA Tour Asia 2026" },
+    heroImage: {
+      src: "/images/blog/professional-pickleball-tours-guide-2026-hero.webp",
+      alt: "Professional pickleball tours 2026 — PPA Tour, MLP, PPA Tour Asia, and APP Tour shown across global venues with crowded stadiums and broadcast cameras, the four pro circuits operating under the UPA umbrella that define competitive pickleball in 2026"
+    },
+    titleEn: "Professional Pickleball Tours 2026: Complete Guide to PPA, MLP, PPA Tour Asia, and APP",
+    titleVi: "Các giải Pickleball chuyên nghiệp 2026: Hướng dẫn đầy đủ về PPA, MLP, PPA Tour Asia và APP",
+    metaTitleEn: "Pro Pickleball Tours 2026 | PPA vs MLP vs APP vs PPA Asia Compared",
+    metaTitleVi: "Pro Pickleball 2026 | PPA, MLP, APP, PPA Tour Asia — So sánh đầy đủ",
+    metaDescriptionEn: "Complete 2026 guide to professional pickleball tours — PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, and how to watch from Asia.",
+    metaDescriptionVi: "Hướng dẫn đầy đủ về 4 giải pickleball chuyên nghiệp 2026 — PPA Tour, MLP, PPA Tour Asia, APP — lịch thi đấu, tiền thưởng, format, top VĐV và cách xem từ Việt Nam.",
+  },  {
     slug: "pickleball-tour-wars-2023-explained",
     publishedDate: "2026-05-05",
     updatedDate: "2026-05-05",
