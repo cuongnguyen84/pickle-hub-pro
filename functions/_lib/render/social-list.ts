@@ -215,11 +215,14 @@ ${rows.length > 0 ? `<ol>${itemsHtml}</ol>` : `<p>${escapeHtml(emptyMsg)}</p>`}
       siteUrl,
       lang,
       type: "website",
-      alternates: [
-        { hreflang: "en", href: canonical },
-        { hreflang: "vi", href: canonical },
-        { hreflang: "x-default", href: canonical },
-      ],
+      // PR (2026-05-18 Ahrefs Site Audit fix) — Ahrefs flagged
+      // "One page is linked for more than one language" because previous
+      // emit had en+vi+x-default all pointing to the same canonical URL.
+      // Google's hreflang spec requires DIFFERENT URLs for different
+      // languages; same-URL pattern is "invalid signal." Since this
+      // page serves a single canonical for both locales (the SPA
+      // toggles language client-side), we omit hreflang entirely —
+      // safer than wrong signal.
       jsonLd: itemListJsonLd,
       bodyContent,
     }),
@@ -340,11 +343,14 @@ ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
       siteUrl,
       lang,
       type: "website",
-      alternates: [
-        { hreflang: "en", href: canonical },
-        { hreflang: "vi", href: canonical },
-        { hreflang: "x-default", href: canonical },
-      ],
+      // PR (2026-05-18 Ahrefs Site Audit fix) — Ahrefs flagged
+      // "One page is linked for more than one language" because previous
+      // emit had en+vi+x-default all pointing to the same canonical URL.
+      // Google's hreflang spec requires DIFFERENT URLs for different
+      // languages; same-URL pattern is "invalid signal." Since this
+      // page serves a single canonical for both locales (the SPA
+      // toggles language client-side), we omit hreflang entirely —
+      // safer than wrong signal.
       jsonLd: itemListJsonLd,
       bodyContent,
     }),

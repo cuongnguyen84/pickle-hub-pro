@@ -239,11 +239,9 @@ export async function renderSocialEvent(
       // hreflang so Google connects this page across vi/en searches
       // even though the URL is identical. Matches /nguoi-choi/* and
       // /feed conventions.
-      alternates: [
-        { hreflang: "en", href: url },
-        { hreflang: "vi", href: url },
-        { hreflang: "x-default", href: url },
-      ],
+      // PR (2026-05-18 Ahrefs Site Audit fix) — same as social-list:
+      // single-canonical /clb/{slug} can't emit en+vi hreflang to the
+      // same URL (Ahrefs / Google flag as conflicting). Omit instead.
       // PR73 Phase 2D (audit I-11) — bodyContent already opens with a
       // clean `<h1>${titleVi}</h1>`, so skip buildHtml's auto h1 (which
       // would have emitted the decorated full page-title as a second
@@ -352,11 +350,9 @@ export async function renderClub(
       lang: "vi",
       // PR73 Phase 2D (audit I-5) — reciprocal hreflang on the single-
       // canonical /clb/{slug} URL.
-      alternates: [
-        { hreflang: "en", href: url },
-        { hreflang: "vi", href: url },
-        { hreflang: "x-default", href: url },
-      ],
+      // PR (2026-05-18 Ahrefs Site Audit fix) — same as social-list:
+      // single-canonical /clb/{slug} can't emit en+vi hreflang to the
+      // same URL (Ahrefs / Google flag as conflicting). Omit instead.
       // PR73 Phase 2D (audit I-11) — bodyContent already emits its own
       // `<h1>${club.name}</h1>`. Skip the auto h1 to avoid double-h1.
       omitAutoHeader: true,

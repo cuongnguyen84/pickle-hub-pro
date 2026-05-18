@@ -41,6 +41,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .eq("is_ghost", false)
       .eq("country", "VN")
       .not("username", "is", null)
+      // PR (2026-05-18 Ahrefs Site Audit fix) — align with renderProfile
+      // filter (functions/_lib/render/index.ts:1198). SSR rejects profiles
+      // without onboarding_completed_at = NOT NULL with render404, but the
+      // sitemap was emitting them anyway. Ahrefs Site Audit 18/5 flagged
+      // 4 test profiles (lyhoangnam-test, nguyenvana-test, vothanh-test,
+      // dinhmai-test) as 404s coming from this sitemap.
+      .not("onboarding_completed_at", "is", null)
       .order("created_at", { ascending: false })
       .limit(5000);
 

@@ -35,7 +35,12 @@ const SEGMENT_PATHS = [
   "/sitemap-matches.xml",
   "/sitemap-events.xml",
   "/sitemap-players.xml",
-  "/sitemap-venues.xml",
+  // PR (2026-05-18 Ahrefs Site Audit fix) — /sitemap-venues.xml
+  // emitted /san/{slug} URLs but no `renderVenue` SSR handler exists
+  // in functions/_middleware.ts (Sprint 5 page). Bots got 404 from
+  // 3 emitted venues (tang-bat-ho-ha-noi, tang-bat-ho-ha-noi-2,
+  // thepicklehub-ha-noi). Re-enable once /san/{slug} ships SSR.
+  // "/sitemap-venues.xml",
 ];
 
 export const onRequest: PagesFunction<Env> = (context) => {
