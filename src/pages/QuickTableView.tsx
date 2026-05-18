@@ -1020,7 +1020,7 @@ const QuickTableView = () => {
                                       ...cellBase,
                                       textAlign: 'center',
                                       fontWeight: 600,
-                                      color: 'var(--tl-green)',
+                                      color: 'var(--tl-fg)',
                                       fontFamily: 'Geist Mono, ui-monospace, monospace',
                                     }}
                                   >

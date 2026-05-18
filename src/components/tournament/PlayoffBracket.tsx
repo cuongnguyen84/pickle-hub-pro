@@ -1,8 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Crown, Trophy, Check, Pencil, Play, Radio, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,8 +44,8 @@ interface PlayoffBracketProps {
 
 const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameUpdate, groupNames }: PlayoffBracketProps) => {
   const { t } = useI18n();
-  
-  const getPlayer = (id: string | null): BracketPlayer | undefined => 
+
+  const getPlayer = (id: string | null): BracketPlayer | undefined =>
     id ? players.find(p => p.id === id) : undefined;
 
   const formatPlayerName = (player: BracketPlayer | undefined): string => {
@@ -79,15 +76,15 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameU
     const roundsArray = roundNumbers.map(roundNum => {
       const roundMatches = roundMap.get(roundNum) || [];
       const matchCount = roundMatches.length;
-      
+
       return { roundNumber: roundNum, matches: roundMatches, matchCount };
     });
 
     const lastRound = roundsArray[roundsArray.length - 1];
     const finalMatch = lastRound?.matches.length === 1 ? lastRound.matches[0] : null;
-    const champion = finalMatch?.winner_id ? getPlayer(finalMatch.winner_id) : null;
+    const championPlayer = finalMatch?.winner_id ? getPlayer(finalMatch.winner_id) : null;
 
-    return { rounds: roundsArray, champion };
+    return { rounds: roundsArray, champion: championPlayer };
   }, [matches, players]);
 
   const getGroupName = (player: BracketPlayer | undefined): string | null => {
@@ -105,84 +102,173 @@ const PlayoffBracket = ({ matches, players, canEdit, onScoreUpdate, onCourtNameU
 
   if (matches.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center text-foreground-muted">
-          {t.quickTable.playoff.noMatches}
-        </CardContent>
-      </Card>
+      <div className="tl-empty-card">
+        <span className="tl-empty-card-mark">◌</span>
+        <span className="tl-empty-card-label">{t.quickTable.playoff.noMatches}</span>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Champion banner — editorial: single green Trophy accent + neutral serif name */}
       {champion && (
-        <Card className="border-primary/50 bg-gradient-to-r from-primary/10 to-primary/5">
-          <CardContent className="py-6">
-            <div className="flex items-center justify-center gap-3">
-              <Trophy className="w-8 h-8 text-primary" />
-              <div className="text-center">
-                <div className="text-sm text-foreground-secondary">{t.quickTable.playoff.champion}</div>
-                <div className="text-2xl font-bold text-primary">{formatPlayerName(champion)}</div>
-              </div>
-              <Trophy className="w-8 h-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="overflow-x-auto pb-4 -mx-4 px-4">
-        <div className="flex gap-6 min-w-max items-stretch">
-          {rounds.map((round, roundIdx) => (
-            <div key={round.roundNumber} className="flex flex-col min-w-[280px]">
-              <div className="text-center mb-4">
-                <Badge 
-                  variant={round.matchCount === 1 ? 'default' : 'outline'} 
-                  className={cn(
-                    'px-4 py-1',
-                    round.matchCount === 1 && 'bg-primary'
-                  )}
-                >
-                  {round.matchCount === 1 && <Trophy className="w-3 h-3 mr-1" />}
-                  {getRoundName(round.matchCount)}
-                </Badge>
-              </div>
-
-              <div 
-                className="flex flex-col flex-1"
+        <div
+          className="tl-panel"
+          style={{
+            padding: '28px 24px',
+            borderColor: 'var(--tl-border-2)',
+            background:
+              'linear-gradient(180deg, rgba(0,185,107,0.05) 0%, var(--tl-bg) 60%)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Trophy
+              className="w-7 h-7"
+              style={{ color: 'var(--tl-green)', flexShrink: 0 }}
+            />
+            <div style={{ textAlign: 'center', minWidth: 0 }}>
+              <div
                 style={{
-                  justifyContent: 'space-around',
-                  gap: roundIdx === 0 ? '1rem' : `${Math.pow(2, roundIdx) * 2}rem`
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 10.5,
+                  fontWeight: 500,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'var(--tl-fg-3)',
+                  marginBottom: 6,
                 }}
               >
-                {round.matches.map((match) => (
-                  <BracketMatchCard
-                    key={match.id}
-                    match={match}
-                    player1={getPlayer(match.player1_id)}
-                    player2={getPlayer(match.player2_id)}
-                    canEdit={canEdit && !!match.player1_id && !!match.player2_id}
-                    canEditCourt={canEdit}
-                    onScoreUpdate={onScoreUpdate}
-                    onCourtNameUpdate={onCourtNameUpdate}
-                    getGroupName={getGroupName}
-                    formatPlayerName={formatPlayerName}
-                    isFinal={round.matchCount === 1}
-                    t={t}
-                  />
-                ))}
+                {t.quickTable.playoff.champion}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'Instrument Serif, serif',
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  fontSize: 'clamp(28px, 4vw, 40px)',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.05,
+                  color: 'var(--tl-fg)',
+                }}
+              >
+                {formatPlayerName(champion)}
               </div>
             </div>
-          ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ overflowX: 'auto', paddingBottom: 16, margin: '0 -16px', padding: '0 16px 16px' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 24,
+            minWidth: 'max-content',
+            alignItems: 'stretch',
+          }}
+        >
+          {rounds.map((round, roundIdx) => {
+            const isFinal = round.matchCount === 1;
+            return (
+              <div
+                key={round.roundNumber}
+                style={{ display: 'flex', flexDirection: 'column', minWidth: 280 }}
+              >
+                <div
+                  style={{
+                    textAlign: 'center',
+                    marginBottom: 18,
+                  }}
+                >
+                  <span
+                    className={cn('tl-filter', isFinal && 'active')}
+                    style={{ cursor: 'default' }}
+                  >
+                    {isFinal && (
+                      <Trophy
+                        className="w-3 h-3"
+                        style={{ color: 'var(--tl-bg)' }}
+                      />
+                    )}
+                    {getRoundName(round.matchCount)}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                    justifyContent: 'space-around',
+                    gap: roundIdx === 0 ? 16 : Math.pow(2, roundIdx) * 32,
+                  }}
+                >
+                  {round.matches.map((match) => (
+                    <BracketMatchCard
+                      key={match.id}
+                      match={match}
+                      player1={getPlayer(match.player1_id)}
+                      player2={getPlayer(match.player2_id)}
+                      canEdit={canEdit && !!match.player1_id && !!match.player2_id}
+                      canEditCourt={canEdit}
+                      onScoreUpdate={onScoreUpdate}
+                      onCourtNameUpdate={onCourtNameUpdate}
+                      getGroupName={getGroupName}
+                      formatPlayerName={formatPlayerName}
+                      isFinal={isFinal}
+                      t={t}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
 
           {rounds.length > 0 && rounds[rounds.length - 1].matchCount > 1 && (
-            <div className="flex flex-col min-w-[280px]">
-              <div className="text-center mb-4">
-                <Badge variant="outline" className="px-4 py-1 border-dashed">
+            <div
+              style={{ display: 'flex', flexDirection: 'column', minWidth: 280 }}
+            >
+              <div style={{ textAlign: 'center', marginBottom: 18 }}>
+                <span
+                  className="tl-filter"
+                  style={{
+                    cursor: 'default',
+                    borderStyle: 'dashed',
+                    color: 'var(--tl-fg-4)',
+                  }}
+                >
                   {getRoundName(Math.floor(rounds[rounds.length - 1].matchCount / 2))}
-                </Badge>
+                </span>
               </div>
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-foreground-muted text-sm text-center p-4 border border-dashed rounded-lg">
+              <div
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 11,
+                    color: 'var(--tl-fg-3)',
+                    letterSpacing: '0.04em',
+                    textAlign: 'center',
+                    padding: 16,
+                    border: '1px dashed var(--tl-border)',
+                    borderRadius: 'var(--tl-radius)',
+                  }}
+                >
                   {t.quickTable.playoff.enterNextRound}
                 </div>
               </div>
@@ -208,10 +294,10 @@ interface BracketMatchCardProps {
   t: ReturnType<typeof useI18n>['t'];
 }
 
-const BracketMatchCard = ({ 
-  match, 
-  player1, 
-  player2, 
+const BracketMatchCard = ({
+  match,
+  player1,
+  player2,
   canEdit,
   canEditCourt,
   onScoreUpdate,
@@ -219,7 +305,7 @@ const BracketMatchCard = ({
   getGroupName,
   formatPlayerName,
   isFinal,
-  t
+  t,
 }: BracketMatchCardProps) => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -227,10 +313,10 @@ const BracketMatchCard = ({
   const [localScore2, setLocalScore2] = useState<string>(match.score2?.toString() ?? '');
   const [editingCourtName, setEditingCourtName] = useState(false);
   const [courtNameValue, setCourtNameValue] = useState(match.court_name ?? '');
-  
+
   const score1Ref = useRef<HTMLInputElement>(null);
   const score2Ref = useRef<HTMLInputElement>(null);
-  
+
   const isCompleted = match.status === 'completed';
   const isLive = !!match.live_referee_id;
   const isP1Winner = match.winner_id === match.player1_id && isCompleted;
@@ -246,12 +332,12 @@ const BracketMatchCard = ({
   const handleSubmit = useCallback(() => {
     const score1 = parseInt(localScore1) || 0;
     const score2 = parseInt(localScore2) || 0;
-    
+
     if (score1 === score2) {
       toast.error(t.quickTable.playoff.tieNotAllowed);
       return;
     }
-    
+
     if (score1 > 0 || score2 > 0) {
       onScoreUpdate(match.id, score1, score2);
       setIsEditing(false);
@@ -291,35 +377,137 @@ const BracketMatchCard = ({
     navigate(`/matches/${match.id}/score`);
   };
 
+  // ─── Token-driven styles ────────────────────────────────────────────────
+  const cardBorderColor =
+    isLive && !isCompleted ? 'rgba(255, 65, 54, 0.45)' : 'var(--tl-border)';
+
+  const playerRowStyle = (isWinner: boolean, missing: boolean): React.CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 12px',
+    background: isWinner
+      ? 'var(--tl-green-glow)'
+      : missing
+        ? 'var(--tl-bg)'
+        : 'transparent',
+    borderBottom: '1px solid var(--tl-border)',
+    transition: 'background 0.15s',
+  });
+
+  const playerNameStyle = (isWinner: boolean, missing: boolean): React.CSSProperties => ({
+    flex: 1,
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    fontSize: 14,
+    fontWeight: isWinner ? 600 : 500,
+    color: missing
+      ? 'var(--tl-fg-4)'
+      : isWinner
+        ? 'var(--tl-fg)'
+        : 'var(--tl-fg-2)',
+    fontStyle: missing ? 'italic' : 'normal',
+  });
+
+  const scoreBoxStyle = (isWinner: boolean): React.CSSProperties => ({
+    width: 40,
+    height: 32,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
+    fontFamily: 'Geist Mono, ui-monospace, monospace',
+    fontVariantNumeric: 'tabular-nums',
+    fontSize: 14,
+    fontWeight: 700,
+    background: isWinner ? 'var(--tl-surface-2)' : 'var(--tl-surface)',
+    color: isWinner ? 'var(--tl-fg)' : 'var(--tl-fg-3)',
+    border: `1px solid ${isWinner ? 'var(--tl-border-2)' : 'var(--tl-border)'}`,
+    flexShrink: 0,
+  });
+
+  const scoreInputCls =
+    'w-12 h-8 text-center text-sm p-1 rounded bg-background focus:outline-none';
+
   return (
-    <Card className={cn(
-      'overflow-hidden transition-shadow',
-      isFinal && 'border-primary/30 shadow-lg ring-2 ring-primary/10',
-      isCompleted && !isEditing && 'opacity-90',
-      isLive && !isCompleted && 'border-red-500/50 ring-2 ring-red-500/20'
-    )}>
-      <div className={cn(
-        'px-3 py-1.5 border-b flex items-start justify-between gap-3',
-        isLive && !isCompleted ? 'bg-red-50 dark:bg-red-950/30' : 'bg-muted/30'
-      )}>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-foreground-muted">{t.quickTable.playoff.match} {match.playoff_match_number}</span>
+    <div
+      className="tl-panel"
+      style={{
+        borderColor: cardBorderColor,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header strip — match number + court + live + CK pill */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 10,
+          padding: '8px 12px',
+          borderBottom: '1px solid var(--tl-border)',
+          background: isLive && !isCompleted ? 'rgba(255, 65, 54, 0.06)' : 'var(--tl-bg-elev)',
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                fontWeight: 500,
+              }}
+            >
+              {t.quickTable.playoff.match} {match.playoff_match_number}
+            </span>
             {isLive && !isCompleted && (
-              <Badge variant="destructive" className="text-[10px] py-0 px-1 h-4 animate-pulse">
-                <Radio className="w-2 h-2 mr-0.5" />
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  padding: '1px 5px',
+                  borderRadius: 3,
+                  background: 'var(--tl-live)',
+                  color: 'var(--tl-bg)',
+                  animation: 'tl-pulse 1.6s ease-in-out infinite',
+                }}
+              >
+                <Radio className="w-2 h-2" />
                 LIVE
-              </Badge>
+              </span>
             )}
           </div>
 
           {(hasCourtInfo || (canEditCourt && onCourtNameUpdate)) && (
-            <div className="mt-1 min-h-5 flex items-center gap-1 text-xs text-foreground-muted">
+            <div
+              style={{
+                marginTop: 4,
+                minHeight: 18,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.02em',
+              }}
+            >
               {editingCourtName && canEditCourt && onCourtNameUpdate ? (
                 <>
                   <MapPin className="w-3 h-3 flex-shrink-0" />
                   <Input
-                    className="h-7 w-28 text-xs"
+                    className="h-6 w-24 text-[10px] px-1.5"
                     value={courtNameValue}
                     onChange={(e) => setCourtNameValue(e.target.value)}
                     onBlur={handleCourtSave}
@@ -335,11 +523,19 @@ const BracketMatchCard = ({
               ) : hasCourtInfo ? (
                 <>
                   <MapPin className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">{match.court_name || `${t.quickTable.view.court} ${match.court_id}`}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {match.court_name || `${t.quickTable.view.court} ${match.court_id}`}
+                  </span>
                   {canEditCourt && onCourtNameUpdate && (
                     <button
                       type="button"
-                      className="text-foreground-muted hover:text-foreground transition-colors"
+                      style={{
+                        background: 'transparent',
+                        border: 0,
+                        padding: 0,
+                        color: 'var(--tl-fg-3)',
+                        cursor: 'pointer',
+                      }}
                       onClick={() => {
                         setCourtNameValue(match.court_name ?? '');
                         setEditingCourtName(true);
@@ -353,176 +549,265 @@ const BracketMatchCard = ({
               ) : (
                 <button
                   type="button"
-                  className="flex items-center gap-1 text-foreground-muted hover:text-foreground transition-colors"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    background: 'transparent',
+                    border: 0,
+                    padding: 0,
+                    color: 'var(--tl-fg-3)',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                    fontSize: 10.5,
+                  }}
                   onClick={() => {
                     setCourtNameValue(match.court_name ?? '');
                     setEditingCourtName(true);
                   }}
                 >
                   <MapPin className="w-3 h-3" />
-                  <span className="underline decoration-dashed">{t.quickTable.view.courtName}</span>
+                  <span style={{ textDecoration: 'underline', textDecorationStyle: 'dashed' }}>
+                    {t.quickTable.view.courtName}
+                  </span>
                 </button>
               )}
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {isFinal && (
-            <Badge variant="default" className="text-xs py-0">
-              <Trophy className="w-3 h-3 mr-1" />
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 3,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                padding: '2px 7px',
+                borderRadius: 3,
+                background: 'var(--tl-green-glow)',
+                color: 'var(--tl-green)',
+                border: '1px solid rgba(0, 185, 107, 0.30)',
+              }}
+            >
+              <Trophy className="w-3 h-3" />
               CK
-            </Badge>
+            </span>
           )}
           {canEdit && player1 && player2 && (
             <>
-              <Button 
-                size="sm" 
-                variant={isLive ? 'destructive' : 'outline'}
-                className="h-6 px-2 text-xs ml-1"
+              <button
+                type="button"
+                className="tl-btn"
                 onClick={handleOpenScoring}
                 title={t.quickTable.playoff.openScoring}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: 11,
+                  ...(isLive
+                    ? { background: 'var(--tl-live)', color: 'var(--tl-bg)', borderColor: 'var(--tl-live)' }
+                    : {}),
+                }}
               >
                 <Play className="w-3 h-3" />
-              </Button>
-              
+              </button>
+
               {isEditing ? (
-                <div className="flex gap-1 ml-1">
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="h-6 px-2 text-xs"
+                <>
+                  <button
+                    type="button"
+                    className="tl-btn"
                     onClick={handleCancel}
+                    style={{ padding: '4px 8px', fontSize: 11 }}
                   >
                     {t.common.cancel}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    className="h-6 px-2 text-xs"
+                  </button>
+                  <button
+                    type="button"
+                    className="tl-btn green"
                     onClick={handleSubmit}
+                    style={{ padding: '4px 8px', fontSize: 11 }}
                   >
-                    <Check className="w-3 h-3 mr-1" />
+                    <Check className="w-3 h-3" />
                     {t.common.save}
-                  </Button>
-                </div>
+                  </button>
+                </>
               ) : (
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="h-6 px-2 text-xs ml-1"
+                <button
+                  type="button"
+                  className="tl-btn"
                   onClick={handleStartEdit}
+                  style={{ padding: '4px 8px', fontSize: 11 }}
                 >
-                  <Pencil className="w-3 h-3 mr-1" />
+                  <Pencil className="w-3 h-3" />
                   {isCompleted ? t.quickTable.playoff.editScore : t.quickTable.playoff.inputScore}
-                </Button>
+                </button>
               )}
             </>
           )}
         </div>
       </div>
-      
-      <div className="divide-y divide-border/50">
-        <div 
-          className={cn(
-            'flex items-center gap-2 p-2 transition-colors',
-            isP1Winner && 'bg-primary/10 border-l-2 border-primary',
-            !player1 && 'bg-muted/20'
-          )}
-        >
-          <div className="flex-1 min-w-0">
-            <div className={cn(
-              'font-medium text-sm truncate',
-              isP1Winner && 'text-primary',
-              !player1 && 'text-foreground-muted italic'
-            )}>
-              {formatPlayerName(player1)}
+
+      {/* Player 1 row */}
+      <div style={playerRowStyle(isP1Winner, !player1)}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={playerNameStyle(isP1Winner, !player1)}>
+            {formatPlayerName(player1)}
+          </div>
+          {player1 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                marginTop: 2,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {getGroupName(player1) && (
+                <span>
+                  {t.quickTable.playoff.group} {getGroupName(player1)}
+                </span>
+              )}
+              {player1.is_wildcard && (
+                <span
+                  style={{
+                    padding: '1px 6px',
+                    borderRadius: 3,
+                    background: 'var(--tl-surface)',
+                    border: '1px solid var(--tl-border)',
+                    color: 'var(--tl-fg-3)',
+                    fontSize: 9.5,
+                    fontWeight: 500,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  WC
+                </span>
+              )}
             </div>
-            {player1 && (
-              <div className="flex items-center gap-1 text-xs text-foreground-muted">
-                {getGroupName(player1) && <span>{t.quickTable.playoff.group} {getGroupName(player1)}</span>}
-                {player1.is_wildcard && (
-                  <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">WC</Badge>
-                )}
-              </div>
-            )}
-          </div>
-          
-          <div className="w-12">
-            {isEditing && player1 ? (
-              <input
-                ref={score1Ref}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                className="w-12 h-8 text-center text-sm p-1 border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                value={localScore1}
-                onChange={handleScore1Change}
-                onFocus={(e) => e.target.select()}
-              />
-            ) : (
-              <div className={cn(
-                'w-10 h-8 flex items-center justify-center rounded text-sm font-bold mx-auto',
-                isP1Winner ? 'bg-primary text-primary-foreground' : 'bg-muted'
-              )}>
-                {match.score1 ?? '-'}
-              </div>
-            )}
-          </div>
-          
-          {isP1Winner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
-        </div>
-        
-        <div 
-          className={cn(
-            'flex items-center gap-2 p-2 transition-colors',
-            isP2Winner && 'bg-primary/10 border-l-2 border-primary',
-            !player2 && 'bg-muted/20'
           )}
-        >
-          <div className="flex-1 min-w-0">
-            <div className={cn(
-              'font-medium text-sm truncate',
-              isP2Winner && 'text-primary',
-              !player2 && 'text-foreground-muted italic'
-            )}>
-              {formatPlayerName(player2)}
-            </div>
-            {player2 && (
-              <div className="flex items-center gap-1 text-xs text-foreground-muted">
-                {getGroupName(player2) && <span>{t.quickTable.playoff.group} {getGroupName(player2)}</span>}
-                {player2.is_wildcard && (
-                  <Badge variant="outline" className="text-[10px] py-0 px-1 h-4">WC</Badge>
-                )}
-              </div>
-            )}
-          </div>
-          
-          <div className="w-12">
-            {isEditing && player2 ? (
-              <input
-                ref={score2Ref}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                className="w-12 h-8 text-center text-sm p-1 border rounded bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                value={localScore2}
-                onChange={handleScore2Change}
-                onFocus={(e) => e.target.select()}
-              />
-            ) : (
-              <div className={cn(
-                'w-10 h-8 flex items-center justify-center rounded text-sm font-bold mx-auto',
-                isP2Winner ? 'bg-primary text-primary-foreground' : 'bg-muted'
-              )}>
-                {match.score2 ?? '-'}
-              </div>
-            )}
-          </div>
-          
-          {isP2Winner && <Crown className="w-4 h-4 text-primary flex-shrink-0" />}
         </div>
+
+        <div style={{ width: 48, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+          {isEditing && player1 ? (
+            <input
+              ref={score1Ref}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className={scoreInputCls}
+              style={{
+                border: '1px solid var(--tl-border-2)',
+                color: 'var(--tl-fg)',
+                background: 'var(--tl-surface)',
+              }}
+              value={localScore1}
+              onChange={handleScore1Change}
+              onFocus={(e) => e.target.select()}
+            />
+          ) : (
+            <div style={scoreBoxStyle(isP1Winner)}>{match.score1 ?? '–'}</div>
+          )}
+        </div>
+
+        {isP1Winner && (
+          <Crown
+            className="w-4 h-4"
+            style={{ color: 'var(--tl-green)', flexShrink: 0 }}
+          />
+        )}
       </div>
-    </Card>
+
+      {/* Player 2 row */}
+      <div
+        style={{
+          ...playerRowStyle(isP2Winner, !player2),
+          borderBottom: 0,
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={playerNameStyle(isP2Winner, !player2)}>
+            {formatPlayerName(player2)}
+          </div>
+          {player2 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                marginTop: 2,
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 10.5,
+                color: 'var(--tl-fg-3)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {getGroupName(player2) && (
+                <span>
+                  {t.quickTable.playoff.group} {getGroupName(player2)}
+                </span>
+              )}
+              {player2.is_wildcard && (
+                <span
+                  style={{
+                    padding: '1px 6px',
+                    borderRadius: 3,
+                    background: 'var(--tl-surface)',
+                    border: '1px solid var(--tl-border)',
+                    color: 'var(--tl-fg-3)',
+                    fontSize: 9.5,
+                    fontWeight: 500,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  WC
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ width: 48, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+          {isEditing && player2 ? (
+            <input
+              ref={score2Ref}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className={scoreInputCls}
+              style={{
+                border: '1px solid var(--tl-border-2)',
+                color: 'var(--tl-fg)',
+                background: 'var(--tl-surface)',
+              }}
+              value={localScore2}
+              onChange={handleScore2Change}
+              onFocus={(e) => e.target.select()}
+            />
+          ) : (
+            <div style={scoreBoxStyle(isP2Winner)}>{match.score2 ?? '–'}</div>
+          )}
+        </div>
+
+        {isP2Winner && (
+          <Crown
+            className="w-4 h-4"
+            style={{ color: 'var(--tl-green)', flexShrink: 0 }}
+          />
+        )}
+      </div>
+    </div>
   );
 };
 
