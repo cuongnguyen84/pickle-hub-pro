@@ -997,6 +997,26 @@ export function renderLivestreamList(siteUrl: string, rawPath: string, lang: Lan
   }));
 }
 
+// PR (2026-05-18 Ahrefs Site Audit fix) — /rankings was returning 404
+// for bots (8 broken-link reports tracing to homepage `/` linking to
+// `/rankings`). Routes exist in React (App.tsx line 572) but middleware
+// had no SSR handler. Same fix as /live below.
+export function renderRankings(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const title = lang === "vi"
+    ? "Bảng xếp hạng DUPR Pickleball Việt Nam | ThePickleHub"
+    : "Pickleball DUPR Rankings — Vietnam | ThePickleHub";
+  const description = lang === "vi"
+    ? "Bảng xếp hạng DUPR mới nhất cho VĐV pickleball Việt Nam — đơn nam, đôi nam, đôi nữ, đôi hỗn hợp. Theo dõi top player Việt Nam và Đông Nam Á."
+    : "Latest DUPR rankings for Vietnamese pickleball players — men's singles, doubles, mixed doubles. Track top players from Vietnam and Southeast Asia.";
+  return htmlResponse(buildHtml({
+    title,
+    description,
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    lang,
+  }));
+}
+
 export function renderPrivacy(siteUrl: string, rawPath: string, lang: Lang): Response {
   return htmlResponse(buildHtml({
     title: lang === "vi" ? "Chính sách bảo mật | ThePickleHub" : "Privacy Policy | ThePickleHub",

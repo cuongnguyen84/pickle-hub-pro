@@ -26,7 +26,7 @@ import {
   renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
-  renderLivestreamList, renderPrivacy, renderTerms,
+  renderLivestreamList, renderRankings, renderPrivacy, renderTerms,
   renderNotificationsShell,
   renderNoindexShell,
   renderDefault, render404,
@@ -432,6 +432,14 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
 
   // Livestream listing
   if (path === "/livestream") return renderLivestreamList(siteUrl, rawPath, lang);
+  // PR (2026-05-18 Ahrefs Site Audit fix) — /live (+ /vi/live) is the
+  // livestream landing page, distinct from /live/:id (single stream
+  // handled at line ~312). React Route at App.tsx line 482. Without
+  // this handler, bots got 404 and Ahrefs flagged it as a broken
+  // internal link from homepage `/` + 8 other source pages.
+  if (path === "/live" || path === "/vi/live") return renderLivestreamList(siteUrl, rawPath, lang);
+  // /rankings DUPR table — React Route at App.tsx line 572 with /vi alias.
+  if (path === "/rankings" || path === "/vi/rankings") return renderRankings(siteUrl, rawPath, lang);
 
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
