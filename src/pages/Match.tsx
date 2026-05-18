@@ -546,6 +546,30 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
   const { toast } = useToast();
   const q = useProposals(filter);
   const qc = useQueryClient();
+  const clubsQ = useDuprClubs();
+
+  // For the queue tab, find out whether the current user can actually
+  // approve. PARTNER matches (club_id IS NULL) need user_roles ∈
+  // ('admin', 'creator'); CLUB matches need DIRECTOR/ORGANIZER on the
+  // specific club_id. Without this, every viewer-level player sees
+  // the buttons and hits 403 when clicking.
+  const roleQ = useQuery({
+    queryKey: ["user-roles", user?.id],
+    enabled: !!user?.id && filter === "queue",
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id);
+      return new Set<string>((data ?? []).map((r: { role: string }) => r.role));
+    },
+  });
+  const myRoles = roleQ.data ?? new Set<string>();
+  const isPlatformApprover = myRoles.has("admin") || myRoles.has("creator");
+  const adminClubIds = new Set(
+    (clubsQ.submitterClubs ?? []).map((c) => c.club_id),
+  );
 
   const callAction = async (proposalId: string, action: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke("match-proposal", {
@@ -604,7 +628,12 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
           actions.push("verify", "dispute");
         }
         if (filter === "queue") {
-          actions.push("approve", "reject");
+          const canApprove = row.club_id != null
+            ? adminClubIds.has(row.club_id)
+            : isPlatformApprover;
+          if (canApprove) {
+            actions.push("approve", "reject");
+          }
         }
         return (
           <ProposalCard
