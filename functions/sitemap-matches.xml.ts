@@ -48,7 +48,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const entries = (matches || [])
+      // PR (2026-05-18 Ahrefs Site Audit Round 2 fix) — exclude test
+      // matches that flagged as orphan (3 URLs: qt-7fcd1bb8-55bd1577,
+      // qt-7fcd1bb8-446a4be8, nguyenvana-test-vs-tranthib-test-*).
+      // `qt-` prefix = QuickTable share IDs (admin-internal bracket tool
+      // exports, not real competitive matches). `-test` suffix = seed
+      // data accounts. Real PPA Tour matches (ppa_tour-* prefix) stay.
       .filter((m: any) => m.slug && URL_SAFE_SLUG_RE.test(m.slug))
+      .filter((m: any) => !m.slug.startsWith("qt-"))
+      .filter((m: any) => !m.slug.includes("-test"))
       .map((m: any) => {
         const lastmod = toLastmod(m.updated_at, TODAY);
         return buildUrlEntry({
