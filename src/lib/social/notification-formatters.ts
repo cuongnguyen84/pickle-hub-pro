@@ -80,6 +80,16 @@ export function notificationTitleEn(
   }
 }
 
+// PR7 — match-flow notification types. The edge function writes the
+// Vietnamese title into `.title` (matches the trigger convention) and
+// stows the English string in `payload.title_en` so this layer can
+// swap it in for `language === 'en'` viewers.
+const MATCH_FLOW_TYPES = new Set<string>([
+  "match_confirm_needed",
+  "match_approval_needed",
+  "match_submitted",
+]);
+
 /** Resolve the title to render given the viewer's language preference. */
 export function resolveNotificationTitle(
   notification: NotificationLike,
@@ -87,6 +97,10 @@ export function resolveNotificationTitle(
 ): string {
   if (language === "en" && isSprint5Type(notification.type)) {
     return notificationTitleEn(notification);
+  }
+  if (language === "en" && MATCH_FLOW_TYPES.has(notification.type)) {
+    const titleEn = (notification.payload as { title_en?: string } | null)?.title_en;
+    if (typeof titleEn === "string" && titleEn.length > 0) return titleEn;
   }
   return notification.title;
 }
