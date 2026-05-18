@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
@@ -150,6 +152,14 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   // menu item disables itself in that state.
   const { profile } = useUserProfile();
   const profileUsername = (profile as { username?: string | null } | null | undefined)?.username ?? null;
+
+  // Role flags for the avatar dropdown. We DON'T gate the dropdown opening
+  // on `isLoading` because that would briefly show no role links to admins
+  // on every page navigation; instead each link renders only once its role
+  // hook has confirmed access. Both hooks already key off `user`, so they
+  // return false for signed-out viewers without an extra check.
+  const { isAdmin } = useAdminAuth();
+  const { isCreator } = useCreatorAuth(); // true for creator OR admin
 
   // PR55: surface the viewer's own clubs in the avatar dropdown so they
   // can jump straight to /clb/<slug>/quan-ly. Limit 3 because that's
@@ -514,8 +524,16 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                     <Link to="/account/my-tournaments" onClick={() => setAvatarOpen(false)}>
                       {language === "vi" ? "Giải đấu của tôi" : "My Tournaments"}
                     </Link>
-                    <Link to="/creator" onClick={() => setAvatarOpen(false)}>Creator dashboard</Link>
-                    <Link to="/admin" onClick={() => setAvatarOpen(false)}>Admin</Link>
+                    {isCreator && (
+                      <Link to="/creator" onClick={() => setAvatarOpen(false)}>
+                        {language === "vi" ? "Bảng điều khiển Creator" : "Creator dashboard"}
+                      </Link>
+                    )}
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setAvatarOpen(false)}>
+                        Admin
+                      </Link>
+                    )}
                     <div className="divider" />
                     {/* PR55 — my-clubs section. Header label + flat list
                         of the viewer's clubs (up to 5) so they can jump
