@@ -136,8 +136,10 @@ export default function MatchNew() {
         description: vi ? "Đối thủ sẽ nhận thông báo xác nhận." : "Your opponent has been notified.",
       });
       qc.invalidateQueries({ queryKey: ["match-proposals"] });
-      const pid = (data as { proposal_id?: string }).proposal_id;
-      navigate(pid ? `/match?tab=history&just=${pid}` : "/match?tab=history");
+      // Clean redirect to /match — the page itself defaults to the
+      // "Đợi confirm" tab and has its own "+ Log trận mới" entry point.
+      // Skip ?tab= / ?just= so the URL stays readable.
+      navigate("/match");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast({ variant: "destructive", title: vi ? "Lỗi" : "Submit failed", description: msg });
