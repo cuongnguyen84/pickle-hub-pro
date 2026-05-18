@@ -395,11 +395,13 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
 
 function ProposalCard({
   row,
+  players,
   showActions,
   hint,
   onAction,
 }: {
   row: ProposalRow;
+  players: Map<string, ProfileMini>;
   showActions: ("verify" | "dispute" | "approve" | "reject")[];
   hint?: string | null;
   onAction: (action: string, reason?: string) => void;
@@ -425,9 +427,19 @@ function ProposalCard({
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>
-        <div>Team A: {row.team_a_player_ids.length} players</div>
-        <div>Team B: {row.team_b_player_ids.length} players</div>
-        <div>Score: <span style={{ color: "var(--tl-fg)" }}>{fmtScore(row.team_a_scores, row.team_b_scores)}</span></div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--tl-fg-3)", fontFamily: "'Geist Mono', monospace" }}>
+            {vi ? "Đội A" : "Team A"}
+          </div>
+          <div style={{ color: "var(--tl-fg)" }}>{rosterLabel(row.team_a_player_ids, players)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--tl-fg-3)", fontFamily: "'Geist Mono', monospace" }}>
+            {vi ? "Đội B" : "Team B"}
+          </div>
+          <div style={{ color: "var(--tl-fg)" }}>{rosterLabel(row.team_b_player_ids, players)}</div>
+        </div>
+        <div className="col-span-2">Score: <span style={{ color: "var(--tl-fg)" }}>{fmtScore(row.team_a_scores, row.team_b_scores)}</span></div>
         {row.dupr_match_code && (
           <div>matchCode: <span className="font-mono">{row.dupr_match_code}</span></div>
         )}
@@ -493,9 +505,14 @@ interface VerificationLite {
   disputed_at: string | null;
 }
 
+type EnrichedProposal = ProposalRow & {
+  _verifications?: VerificationLite[];
+  _players: Map<string, ProfileMini>;
+};
+
 function useProposals(filter: "pending" | "queue" | "history") {
   const { user } = useAuth();
-  return useQuery({
+  return useQuery<EnrichedProposal[]>({
     queryKey: ["match-proposals", filter, user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -514,29 +531,53 @@ function useProposals(filter: "pending" | "queue" | "history") {
       if (error) throw error;
       const rows = (data ?? []) as ProposalRow[];
 
+      // Batch fetch profiles for every player referenced in the visible
+      // proposals, so the card can render names instead of "2 players".
+      const allPlayerIds = Array.from(
+        new Set(rows.flatMap((r) => [...r.team_a_player_ids, ...r.team_b_player_ids])),
+      );
+      const profilesMap = new Map<string, ProfileMini>();
+      if (allPlayerIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, display_name, email")
+          .in("id", allPlayerIds);
+        for (const p of (profs ?? []) as ProfileMini[]) profilesMap.set(p.id, p);
+      }
+
       // Fetch verifications for the pending tab so we can hide
       // verify/dispute buttons for players who've already responded
       // (notably the creator who self-verifies at insert time).
+      const verifMap = new Map<string, VerificationLite[]>();
       if (filter === "pending" && rows.length > 0) {
         const { data: verifs } = await supabase
           .from("match_proposal_verifications")
           .select("proposal_id, player_user_id, verified_at, disputed_at")
           .in("proposal_id", rows.map((r) => r.id));
-        const map = new Map<string, VerificationLite[]>();
         for (const v of (verifs ?? []) as VerificationLite[]) {
-          const arr = map.get(v.proposal_id) ?? [];
+          const arr = verifMap.get(v.proposal_id) ?? [];
           arr.push(v);
-          map.set(v.proposal_id, arr);
+          verifMap.set(v.proposal_id, arr);
         }
-        return rows.map((r) => ({
-          ...r,
-          _verifications: map.get(r.id) ?? [],
-        })) as Array<ProposalRow & { _verifications: VerificationLite[] }>;
       }
 
-      return rows;
+      return rows.map((r) => ({
+        ...r,
+        _verifications: verifMap.get(r.id) ?? [],
+        _players: profilesMap,
+      }));
     },
   });
+}
+
+/** Render player names for a roster, falling back to email/short-id. */
+function rosterLabel(ids: string[], players: Map<string, ProfileMini>): string {
+  return ids
+    .map((id) => {
+      const p = players.get(id);
+      return p?.display_name?.trim() || p?.email || id.slice(0, 8);
+    })
+    .join(" + ");
 }
 
 function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
@@ -639,6 +680,7 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
           <ProposalCard
             key={row.id}
             row={row}
+            players={row._players ?? new Map()}
             showActions={actions}
             hint={
               filter === "pending" && alreadyResponded
