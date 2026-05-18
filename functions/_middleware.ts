@@ -227,7 +227,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // missing startDate, missing location. New schema uses SportsSeries
   // for the parent (no required dates/location). Same TTL-skip
   // rationale as the previous v2→v3 bump.
-  const cacheKey = `pr:v4:${url.pathname}`;
+  // PR (2026-05-18 Ahrefs Site Audit fix) — bumped v4→v5 to invalidate
+  // cached responses with stale hreflang en+vi+x-default-all-to-same-URL
+  // pattern on /clb/{slug}, /clubs, /social, /social/{id}. Same TTL-skip
+  // rationale as v3→v4 bump (commit `52ba628`).
+  const cacheKey = `pr:v5:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
