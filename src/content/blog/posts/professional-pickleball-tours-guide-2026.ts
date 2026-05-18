@@ -260,7 +260,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Chi tiết: Luật chơi MLP — luân chuyển, DreamBreaker, scoring",
-              path: "/vi/blog/mlp-format-explained",
+              path: "/blog/mlp-format-explained",
             },
           ],
         },
@@ -271,7 +271,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Lịch đầy đủ PPA Tour Asia 2026 + cách đăng ký",
-              path: "/vi/blog/ppa-tour-asia-2026-lich-thi-dau-tien-thuong",
+              path: "/blog/ppa-tour-asia-2026-complete-guide",
             },
           ],
         },
@@ -337,7 +337,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Cách xem PPA Tour live 2026 — đầy đủ tùy chọn streaming + miễn phí",
-              path: "/vi/blog/how-to-watch-ppa-tour-live-2026",
+              path: "/blog/how-to-watch-ppa-tour-live-2026",
             },
           ],
         },
