@@ -9,9 +9,6 @@ import { useTeamRegistration, type Team } from '@/hooks/useTeamRegistration';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -44,23 +41,6 @@ import {
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
-const surfaceCard: React.CSSProperties = {
-  background: 'var(--tl-bg-elev)',
-  border: '1px solid var(--tl-border)',
-  borderRadius: 'var(--tl-radius-lg)',
-  padding: 24,
-};
-
-const sectionTitle: React.CSSProperties = {
-  fontFamily: 'Instrument Serif, serif',
-  fontStyle: 'italic',
-  fontWeight: 400,
-  fontSize: 22,
-  letterSpacing: '-0.015em',
-  margin: 0,
-  color: 'var(--tl-fg)',
-};
-
 const QuickTableView = () => {
   const { shareId } = useParams<{ shareId: string }>();
   const [searchParams] = useSearchParams();
@@ -86,6 +66,7 @@ const QuickTableView = () => {
   const [matches, setMatches] = useState<QuickTableMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>(() => searchParams.get('tab') || 'groups');
+  const [activeGroupId, setActiveGroupId] = useState<string>('');
 
   const [userRegistration, setUserRegistration] = useState<Registration | null>(null);
   const [userTeam, setUserTeam] = useState<Team | null>(null);
@@ -191,6 +172,17 @@ const QuickTableView = () => {
   };
 
   useEffect(() => { loadData(); }, [shareId, user]);
+
+  // Initialise group filter once groups land or when their list changes.
+  useEffect(() => {
+    if (groups.length === 0) {
+      if (activeGroupId !== '') setActiveGroupId('');
+      return;
+    }
+    if (!groups.some(g => g.id === activeGroupId)) {
+      setActiveGroupId(groups[0].id);
+    }
+  }, [groups, activeGroupId]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -650,10 +642,11 @@ const QuickTableView = () => {
         {canManageTable && groupStageComplete && !hasPlayoff && table.status === 'group_stage' && (
           <section style={{ marginTop: 32 }}>
             <div
+              className="tl-panel"
               style={{
-                ...surfaceCard,
-                borderColor: 'var(--tl-green)',
                 background: 'var(--tl-green-glow)',
+                borderColor: 'var(--tl-green)',
+                padding: 24,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -662,7 +655,17 @@ const QuickTableView = () => {
               }}
             >
               <div>
-                <h3 style={{ ...sectionTitle, fontSize: 22, color: 'var(--tl-fg)' }}>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontFamily: 'Instrument Serif, serif',
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    fontSize: 22,
+                    letterSpacing: '-0.015em',
+                    color: 'var(--tl-fg)',
+                  }}
+                >
                   {t.quickTable.view.groupCompleteTitle}
                 </h3>
                 <p style={{ color: 'var(--tl-fg-2)', fontSize: 13.5, margin: '4px 0 0' }}>
@@ -678,82 +681,103 @@ const QuickTableView = () => {
         )}
 
         <section style={{ marginTop: 32, marginBottom: 56 }}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="flex-wrap h-auto gap-1">
-              {table.requires_registration && (
-                <TabsTrigger value="registration">
-                  <ClipboardList className="w-4 h-4 mr-1" />
-                  {language === 'vi' ? 'Đăng ký' : 'Registration'}
-                  {registrationCount > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs">{registrationCount}</Badge>
-                  )}
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="groups">{t.quickTable.view.groupStage}</TabsTrigger>
-              <TabsTrigger value="playoff" disabled={!hasPlayoff}>
-                {t.quickTable.view.playoffTab}
-                {hasPlayoff && (
-                  <Badge variant="secondary" className="ml-2 text-xs">{playoffMatches.length}</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Registration Tab */}
+          {/* Primary tabs — TheLine editorial underline style */}
+          <div className="tl-tabs" role="tablist">
             {table.requires_registration && (
-              <TabsContent value="registration" className="space-y-4">
-                {canManageTable ? (
-                  table.is_doubles ? (
-                    <TeamManager
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'registration'}
+                className={cn('tl-tab', activeTab === 'registration' && 'active')}
+                onClick={() => setActiveTab('registration')}
+              >
+                <ClipboardList className="w-4 h-4 inline mr-1" style={{ verticalAlign: '-3px' }} />
+                {language === 'vi' ? 'Đăng ký' : 'Registration'}
+                {registrationCount > 0 && (
+                  <span className="count">{registrationCount}</span>
+                )}
+              </button>
+            )}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'groups'}
+              className={cn('tl-tab', activeTab === 'groups' && 'active')}
+              onClick={() => setActiveTab('groups')}
+            >
+              {t.quickTable.view.groupStage}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'playoff'}
+              className={cn('tl-tab', activeTab === 'playoff' && 'active')}
+              onClick={() => hasPlayoff && setActiveTab('playoff')}
+              disabled={!hasPlayoff}
+              style={!hasPlayoff ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+            >
+              {t.quickTable.view.playoffTab}
+              {hasPlayoff && <span className="count">{playoffMatches.length}</span>}
+            </button>
+          </div>
+
+          {/* Registration Tab */}
+          {table.requires_registration && activeTab === 'registration' && (
+            <div className="space-y-4">
+              {canManageTable ? (
+                table.is_doubles ? (
+                  <TeamManager
+                    tableId={table.id}
+                    shareId={shareId}
+                    table={table}
+                    onPendingCountChange={setRegistrationCount}
+                  />
+                ) : (
+                  <RegistrationManager
+                    tableId={table.id}
+                    shareId={shareId}
+                    table={table}
+                    onPendingCountChange={setRegistrationCount}
+                  />
+                )
+              ) : (
+                <div className="space-y-4">
+                  {table.is_doubles ? (
+                    <DoublesRegistrationForm
                       tableId={table.id}
-                      shareId={shareId}
-                      table={table}
-                      onPendingCountChange={setRegistrationCount}
+                      shareId={shareId || ''}
+                      tableName={table.name}
+                      requiresSkillLevel={table.requires_skill_level}
+                      registrationMessage={table.registration_message}
+                      existingTeam={userTeam}
+                      allTeams={allTeams}
+                      tableStatus={table.status}
+                      onRegistrationComplete={loadData}
                     />
                   ) : (
-                    <RegistrationManager
+                    <RegistrationForm
                       tableId={table.id}
-                      shareId={shareId}
-                      table={table}
-                      onPendingCountChange={setRegistrationCount}
+                      tableName={table.name}
+                      requiresSkillLevel={table.requires_skill_level}
+                      registrationMessage={table.registration_message}
+                      existingRegistration={userRegistration}
+                      onRegistrationComplete={loadData}
                     />
-                  )
-                ) : (
-                  <div className="space-y-4">
-                    {table.is_doubles ? (
-                      <DoublesRegistrationForm
-                        tableId={table.id}
-                        shareId={shareId || ''}
-                        tableName={table.name}
-                        requiresSkillLevel={table.requires_skill_level}
-                        registrationMessage={table.registration_message}
-                        existingTeam={userTeam}
-                        allTeams={allTeams}
-                        tableStatus={table.status}
-                        onRegistrationComplete={loadData}
-                      />
-                    ) : (
-                      <RegistrationForm
-                        tableId={table.id}
-                        tableName={table.name}
-                        requiresSkillLevel={table.requires_skill_level}
-                        registrationMessage={table.registration_message}
-                        existingRegistration={userRegistration}
-                        onRegistrationComplete={loadData}
-                      />
-                    )}
-                    <RegisteredPlayersList tableId={table.id} isDoubles={table.is_doubles} />
-                  </div>
-                )}
-              </TabsContent>
-            )}
+                  )}
+                  <RegisteredPlayersList tableId={table.id} isDoubles={table.is_doubles} />
+                </div>
+              )}
+            </div>
+          )}
 
-            {/* Groups Tab */}
-            <TabsContent value="groups" className="space-y-6">
+          {/* Groups Tab */}
+          {activeTab === 'groups' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {/* Toolbar — settings + edit groups */}
               {canManageTable && !hasPlayoff && (
                 <div
+                  className="tl-panel"
                   style={{
-                    ...surfaceCard,
                     padding: 14,
                     display: 'flex',
                     flexWrap: 'wrap',
@@ -768,7 +792,17 @@ const QuickTableView = () => {
                       checked={showTeam}
                       onCheckedChange={(checked) => setShowTeam(!!checked)}
                     />
-                    <Label htmlFor="show-team" className="text-sm cursor-pointer">
+                    <Label
+                      htmlFor="show-team"
+                      className="cursor-pointer"
+                      style={{
+                        fontFamily: 'Geist Mono, ui-monospace, monospace',
+                        fontSize: 11.5,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        color: 'var(--tl-fg-2)',
+                      }}
+                    >
                       {t.quickTable.view.showTeam}
                     </Label>
                   </div>
@@ -818,72 +852,196 @@ const QuickTableView = () => {
                 </div>
               )}
 
+              {/* Group selector — pill filters */}
               {groups.length > 0 && (
-                <Tabs defaultValue={groups[0]?.id} className="space-y-6">
-                  <TabsList className="flex-wrap h-auto gap-1">
-                    {groups.map(group => (
-                      <TabsTrigger key={group.id} value={group.id} className="px-4">
-                        {t.quickTable.view.group} {group.name}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
+                <div
+                  className="tl-filters"
+                  role="tablist"
+                  style={{ padding: 0, border: 0, margin: 0 }}
+                >
+                  {groups.map(group => (
+                    <button
+                      key={group.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeGroupId === group.id}
+                      className={cn('tl-filter', activeGroupId === group.id && 'active')}
+                      onClick={() => setActiveGroupId(group.id)}
+                    >
+                      {t.quickTable.view.group} {group.name}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-                  {groups.map(group => {
-                    const standings = getGroupStandings(group.id);
-                    const groupMatches = matches.filter(m => m.group_id === group.id && !m.is_playoff);
+              {/* Active group content */}
+              {groups.length > 0 && (() => {
+                const group = groups.find(g => g.id === activeGroupId) || groups[0];
+                if (!group) return null;
+                const standings = getGroupStandings(group.id);
+                const groupMatches = matches.filter(m => m.group_id === group.id && !m.is_playoff);
 
-                    return (
-                      <TabsContent key={group.id} value={group.id} className="space-y-6">
-                        {/* Standings */}
-                        <div style={surfaceCard}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 8,
-                              paddingBottom: 14,
-                              borderBottom: '1px solid var(--tl-border)',
-                              marginBottom: 4,
-                            }}
-                          >
-                            <Trophy className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
-                            <h3 style={{ ...sectionTitle, fontSize: 18 }}>{t.quickTable.view.standings}</h3>
-                          </div>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-12">#</TableHead>
-                                <TableHead>{t.quickTable.view.player}</TableHead>
-                                <TableHead className="text-center w-16">{t.quickTable.view.wins}</TableHead>
-                                <TableHead className="text-center w-16">{t.quickTable.view.matches}</TableHead>
-                                <TableHead className="text-center w-20">{t.quickTable.view.pointDiff}</TableHead>
-                                {isEditingGroups && <TableHead className="w-24 text-center">{t.quickTable.view.actions}</TableHead>}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {standings.map((player, idx) => (
-                                <TableRow key={player.id} className={cn(idx < 2 && hasPlayoff && "bg-primary/5")}>
-                                  <TableCell className="font-medium">
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                    {/* Standings */}
+                    <div className="tl-panel">
+                      <div className="tl-panel-head">
+                        <h3 style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                          <Trophy className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+                          {t.quickTable.view.standings}
+                        </h3>
+                        <span className="meta">
+                          {t.quickTable.view.group} {group.name} · {standings.length} {t.quickTable.players}
+                        </span>
+                      </div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table
+                          style={{
+                            width: '100%',
+                            borderCollapse: 'collapse',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          <thead>
+                            <tr>
+                              {(
+                                [
+                                  { key: 'pos', label: '#', width: 48, align: 'left' as const },
+                                  { key: 'player', label: t.quickTable.view.player, align: 'left' as const },
+                                  { key: 'w', label: t.quickTable.view.wins, width: 72, align: 'center' as const },
+                                  { key: 'm', label: t.quickTable.view.matches, width: 72, align: 'center' as const },
+                                  { key: 'd', label: t.quickTable.view.pointDiff, width: 84, align: 'center' as const },
+                                  ...(isEditingGroups
+                                    ? [{ key: 'a', label: t.quickTable.view.actions, width: 96, align: 'center' as const }]
+                                    : []),
+                                ]
+                              ).map(col => (
+                                <th
+                                  key={col.key}
+                                  style={{
+                                    width: col.width,
+                                    textAlign: col.align,
+                                    padding: '12px 14px',
+                                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                    fontSize: 10.5,
+                                    fontWeight: 500,
+                                    letterSpacing: '0.06em',
+                                    textTransform: 'uppercase',
+                                    color: 'var(--tl-fg-3)',
+                                    borderBottom: '1px solid var(--tl-border)',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {col.label}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {standings.map((player, idx) => {
+                              const isQualified = idx < 2 && hasPlayoff;
+                              const cellBase: React.CSSProperties = {
+                                padding: '14px',
+                                fontSize: 14,
+                                color: 'var(--tl-fg)',
+                                borderBottom: '1px solid var(--tl-border)',
+                                verticalAlign: 'middle',
+                              };
+                              return (
+                                <tr
+                                  key={player.id}
+                                  style={{
+                                    background: isQualified ? 'rgba(0, 185, 107, 0.04)' : 'transparent',
+                                    transition: 'background 0.15s',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    (e.currentTarget as HTMLElement).style.background = 'var(--tl-bg-elev)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    (e.currentTarget as HTMLElement).style.background = isQualified
+                                      ? 'rgba(0, 185, 107, 0.04)'
+                                      : 'transparent';
+                                  }}
+                                >
+                                  <td
+                                    style={{
+                                      ...cellBase,
+                                      width: 48,
+                                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                      fontSize: 13,
+                                      color: 'var(--tl-fg-2)',
+                                      fontWeight: 500,
+                                    }}
+                                  >
                                     {idx + 1}
-                                    {idx < 2 && hasPlayoff && (
-                                      <ChevronRight className="inline w-3 h-3 ml-1" style={{ color: 'var(--tl-green)' }} />
+                                    {isQualified && (
+                                      <ChevronRight
+                                        className="inline w-3 h-3 ml-1"
+                                        style={{ color: 'var(--tl-green)' }}
+                                      />
                                     )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium">{formatPlayerName(player)}</span>
+                                  </td>
+                                  <td style={cellBase}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                      <span
+                                        style={{
+                                          fontFamily: 'Instrument Serif, serif',
+                                          fontStyle: 'italic',
+                                          fontWeight: 400,
+                                          fontSize: 17,
+                                          letterSpacing: '-0.01em',
+                                          color: 'var(--tl-fg)',
+                                        }}
+                                      >
+                                        {formatPlayerName(player)}
+                                      </span>
                                       {player.is_wildcard && (
-                                        <Badge variant="outline" className="text-xs">WC</Badge>
+                                        <span
+                                          style={{
+                                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                            fontSize: 9.5,
+                                            fontWeight: 500,
+                                            letterSpacing: '0.06em',
+                                            textTransform: 'uppercase',
+                                            padding: '2px 6px',
+                                            borderRadius: 3,
+                                            background: 'var(--tl-surface)',
+                                            color: 'var(--tl-fg-3)',
+                                            border: '1px solid var(--tl-border)',
+                                          }}
+                                        >
+                                          WC
+                                        </span>
                                       )}
                                     </div>
-                                  </TableCell>
-                                  <TableCell className="text-center font-semibold" style={{ color: 'var(--tl-green)' }}>
-                                    {player.matches_won}
-                                  </TableCell>
-                                  <TableCell className="text-center">{player.matches_played}</TableCell>
-                                  <TableCell
-                                    className="text-center font-medium"
+                                  </td>
+                                  <td
                                     style={{
+                                      ...cellBase,
+                                      textAlign: 'center',
+                                      fontWeight: 600,
+                                      color: 'var(--tl-fg)',
+                                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                    }}
+                                  >
+                                    {player.matches_won}
+                                  </td>
+                                  <td
+                                    style={{
+                                      ...cellBase,
+                                      textAlign: 'center',
+                                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                      color: 'var(--tl-fg-2)',
+                                    }}
+                                  >
+                                    {player.matches_played}
+                                  </td>
+                                  <td
+                                    style={{
+                                      ...cellBase,
+                                      textAlign: 'center',
+                                      fontWeight: 500,
+                                      fontFamily: 'Geist Mono, ui-monospace, monospace',
                                       color:
                                         player.point_diff > 0 ? 'var(--tl-green)' :
                                         player.point_diff < 0 ? 'var(--tl-live)' :
@@ -891,87 +1049,97 @@ const QuickTableView = () => {
                                     }}
                                   >
                                     {player.point_diff > 0 ? '+' : ''}{player.point_diff}
-                                  </TableCell>
+                                  </td>
                                   {isEditingGroups && (
-                                    <TableCell className="text-center">
-                                      <div className="flex items-center justify-center gap-1">
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-7 w-7"
+                                    <td style={{ ...cellBase, textAlign: 'center' }}>
+                                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                        <button
+                                          type="button"
+                                          className="tl-btn"
+                                          aria-label={t.quickTable.view.movePlayer}
+                                          title={t.quickTable.view.movePlayer}
                                           onClick={() => {
                                             setSelectedPlayer(player);
                                             setTargetGroupId(groups.find(g => g.id !== group.id)?.id || '');
                                             setShowMoveDialog(true);
                                           }}
-                                          title={t.quickTable.view.movePlayer}
+                                          style={{ padding: '5px 8px' }}
                                         >
-                                          <ArrowLeftRight className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-7 w-7 text-destructive hover:text-destructive"
-                                          onClick={() => handleRemovePlayer(player)}
+                                          <ArrowLeftRight className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="tl-btn"
+                                          aria-label={t.quickTable.view.removePlayer}
                                           title={t.quickTable.view.removePlayer}
+                                          onClick={() => handleRemovePlayer(player)}
+                                          style={{
+                                            padding: '5px 8px',
+                                            color: 'var(--tl-live)',
+                                            borderColor: 'var(--tl-border)',
+                                          }}
                                         >
-                                          <UserMinus className="h-4 w-4" />
-                                        </Button>
+                                          <UserMinus className="w-4 h-4" />
+                                        </button>
                                       </div>
-                                    </TableCell>
+                                    </td>
                                   )}
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
 
-                        {/* Matches */}
-                        <div style={surfaceCard}>
-                          <div
-                            style={{
-                              paddingBottom: 14,
-                              borderBottom: '1px solid var(--tl-border)',
-                              marginBottom: 16,
-                            }}
-                          >
-                            <h3 style={{ ...sectionTitle, fontSize: 18 }}>{t.quickTable.view.matchList}</h3>
-                          </div>
-                          <div className="space-y-3">
-                            {groupMatches.map((match, idx) => (
-                              <QuickTableMatchRow
-                                key={match.id}
-                                match={match}
-                                index={idx}
-                                player1={getPlayerById(match.player1_id)}
-                                player2={getPlayerById(match.player2_id)}
-                                canEdit={canEditScores && !hasPlayoff}
-                                onScoreUpdate={(s1, s2) => handleScoreUpdate(match.id, s1, s2)}
-                                onCourtNameUpdate={(courtName) => updateCourtName(match.id, courtName).then(() => loadData())}
-                                formatPlayerName={formatPlayerName}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </TabsContent>
-                    );
-                  })}
-                </Tabs>
-              )}
-            </TabsContent>
+                    {/* Matches */}
+                    <div className="tl-panel">
+                      <div className="tl-panel-head">
+                        <h3>{t.quickTable.view.matchList}</h3>
+                        <span className="meta">
+                          {groupMatches.length} {t.quickTable.view.matches}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14 }}>
+                        {groupMatches.map((match, idx) => (
+                          <QuickTableMatchRow
+                            key={match.id}
+                            match={match}
+                            index={idx}
+                            player1={getPlayerById(match.player1_id)}
+                            player2={getPlayerById(match.player2_id)}
+                            canEdit={canEditScores && !hasPlayoff}
+                            onScoreUpdate={(s1, s2) => handleScoreUpdate(match.id, s1, s2)}
+                            onCourtNameUpdate={(courtName) => updateCourtName(match.id, courtName).then(() => loadData())}
+                            formatPlayerName={formatPlayerName}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
 
-            {/* Playoff Tab */}
-            <TabsContent value="playoff" className="space-y-6">
+          {/* Playoff Tab */}
+          {activeTab === 'playoff' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {hasPlayoff && !canEditScores && table.status !== 'completed' && (
                 <div
-                  style={{
-                    ...surfaceCard,
-                    background: 'var(--tl-bg)',
-                    padding: 14,
-                    textAlign: 'center',
-                  }}
+                  className="tl-panel"
+                  style={{ padding: 14, textAlign: 'center' }}
                 >
-                  <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', margin: 0 }}>
+                  <p
+                    style={{
+                      fontSize: 12.5,
+                      color: 'var(--tl-fg-3)',
+                      margin: 0,
+                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     {t.quickTable.view.onlyCreatorCanScore}
                   </p>
                 </div>
@@ -986,8 +1154,8 @@ const QuickTableView = () => {
                   onCourtNameUpdate={(matchId, courtName) => updateCourtName(matchId, courtName).then(() => loadData())}
                 />
               )}
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
         </section>
 
         {canManageTable && (
@@ -1014,18 +1182,20 @@ const QuickTableView = () => {
                 const groupName = groups.find(g => g.id === player.group_id)?.name || '';
                 const shortId = player.id.substring(0, 6);
 
+                const isSelected = selectedWildcards.includes(player.id);
                 return (
                   <label
                     key={player.id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                      selectedWildcards.includes(player.id)
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:bg-muted/50",
-                    )}
+                    className="flex items-center gap-3 p-3 cursor-pointer"
+                    style={{
+                      borderRadius: 'var(--tl-radius)',
+                      border: `1px solid ${isSelected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                      background: isSelected ? 'var(--tl-green-glow)' : 'var(--tl-bg)',
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }}
                   >
                     <Checkbox
-                      checked={selectedWildcards.includes(player.id)}
+                      checked={isSelected}
                       onCheckedChange={(checked) => {
                         if (checked) {
                           if (selectedWildcards.length < wildcardNeeded) {
@@ -1037,16 +1207,62 @@ const QuickTableView = () => {
                       }}
                     />
                     <div className="flex-1">
-                      <div className="font-medium">
+                      <div
+                        style={{
+                          fontFamily: 'Instrument Serif, serif',
+                          fontStyle: 'italic',
+                          fontWeight: 400,
+                          fontSize: 17,
+                          letterSpacing: '-0.01em',
+                          color: 'var(--tl-fg)',
+                        }}
+                      >
                         {player.name}
-                        {player.seed && <span className="text-foreground-secondary"> ({player.seed})</span>}
-                        <span className="text-foreground-muted text-xs ml-2">#{shortId}</span>
+                        {player.seed && (
+                          <span style={{ color: 'var(--tl-fg-3)' }}> ({player.seed})</span>
+                        )}
+                        <span
+                          style={{
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontStyle: 'normal',
+                            fontSize: 11,
+                            color: 'var(--tl-fg-4)',
+                            marginLeft: 8,
+                            letterSpacing: '0.02em',
+                          }}
+                        >
+                          #{shortId}
+                        </span>
                       </div>
-                      <div className="text-sm text-foreground-secondary">
-                        {t.quickTable.view.group} {groupName} • {player.matches_won} {t.quickTable.view.winsLabel} • {t.quickTable.view.pointDiffLabel}: {player.point_diff > 0 ? '+' : ''}{player.point_diff}
+                      <div
+                        style={{
+                          fontFamily: 'Geist Mono, ui-monospace, monospace',
+                          fontSize: 11.5,
+                          color: 'var(--tl-fg-3)',
+                          marginTop: 4,
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        {t.quickTable.view.group} {groupName} · {player.matches_won} {t.quickTable.view.winsLabel} · {t.quickTable.view.pointDiffLabel}: {player.point_diff > 0 ? '+' : ''}{player.point_diff}
                       </div>
                     </div>
-                    {idx === 0 && <Badge variant="secondary">{t.quickTable.view.recommended}</Badge>}
+                    {idx === 0 && (
+                      <span
+                        style={{
+                          fontFamily: 'Geist Mono, ui-monospace, monospace',
+                          fontSize: 10,
+                          fontWeight: 500,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          padding: '3px 8px',
+                          borderRadius: 3,
+                          background: 'var(--tl-green-glow)',
+                          color: 'var(--tl-green)',
+                        }}
+                      >
+                        {t.quickTable.view.recommended}
+                      </span>
+                    )}
                   </label>
                 );
               })}
