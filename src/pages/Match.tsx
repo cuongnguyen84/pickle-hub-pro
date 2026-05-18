@@ -396,10 +396,12 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
 function ProposalCard({
   row,
   showActions,
+  hint,
   onAction,
 }: {
   row: ProposalRow;
   showActions: ("verify" | "dispute" | "approve" | "reject")[];
+  hint?: string | null;
   onAction: (action: string, reason?: string) => void;
 }) {
   const { language } = useI18n();
@@ -435,6 +437,12 @@ function ProposalCard({
           </div>
         )}
       </div>
+
+      {hint && (
+        <p className="mt-3 text-xs" style={{ color: "var(--tl-fg-3)", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+          {hint}
+        </p>
+      )}
 
       {showActions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -478,6 +486,13 @@ function ProposalCard({
   );
 }
 
+interface VerificationLite {
+  proposal_id: string;
+  player_user_id: string;
+  verified_at: string | null;
+  disputed_at: string | null;
+}
+
 function useProposals(filter: "pending" | "queue" | "history") {
   const { user } = useAuth();
   return useQuery({
@@ -497,7 +512,29 @@ function useProposals(filter: "pending" | "queue" | "history") {
       }
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as ProposalRow[];
+      const rows = (data ?? []) as ProposalRow[];
+
+      // Fetch verifications for the pending tab so we can hide
+      // verify/dispute buttons for players who've already responded
+      // (notably the creator who self-verifies at insert time).
+      if (filter === "pending" && rows.length > 0) {
+        const { data: verifs } = await supabase
+          .from("match_proposal_verifications")
+          .select("proposal_id, player_user_id, verified_at, disputed_at")
+          .in("proposal_id", rows.map((r) => r.id));
+        const map = new Map<string, VerificationLite[]>();
+        for (const v of (verifs ?? []) as VerificationLite[]) {
+          const arr = map.get(v.proposal_id) ?? [];
+          arr.push(v);
+          map.set(v.proposal_id, arr);
+        }
+        return rows.map((r) => ({
+          ...r,
+          _verifications: map.get(r.id) ?? [],
+        })) as Array<ProposalRow & { _verifications: VerificationLite[] }>;
+      }
+
+      return rows;
     },
   });
 }
@@ -559,8 +596,11 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
         const isPlayer = userId
           ? row.team_a_player_ids.includes(userId) || row.team_b_player_ids.includes(userId)
           : false;
+        const verifs = ((row as ProposalRow & { _verifications?: VerificationLite[] })._verifications) ?? [];
+        const myResponse = userId ? verifs.find((v) => v.player_user_id === userId) : undefined;
+        const alreadyResponded = !!myResponse;
         const actions: ("verify" | "dispute" | "approve" | "reject")[] = [];
-        if (filter === "pending" && isPlayer) {
+        if (filter === "pending" && isPlayer && !alreadyResponded) {
           actions.push("verify", "dispute");
         }
         if (filter === "queue") {
@@ -571,6 +611,13 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
             key={row.id}
             row={row}
             showActions={actions}
+            hint={
+              filter === "pending" && alreadyResponded
+                ? myResponse?.verified_at
+                  ? (vi ? "Anh đã xác nhận — chờ đối thủ" : "You already confirmed — waiting for opponent")
+                  : (vi ? "Anh đã tranh chấp — chờ admin xử lý" : "You already disputed — pending admin")
+                : null
+            }
             onAction={(action, reason) => callAction(row.id, action, reason)}
           />
         );
@@ -582,7 +629,8 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; vi: string; en: string }[] = [
-  { id: "create", vi: "Tạo match", en: "Create" },
+  // 'create' lives at /match/new now — kept out of the tab strip so the
+  // surface is queue/history only and not a duplicate entry point.
   { id: "pending", vi: "Đợi confirm", en: "Pending" },
   { id: "queue", vi: "Đợi approve", en: "Queue" },
   { id: "history", vi: "Lịch sử", en: "History" },
@@ -593,7 +641,15 @@ export default function MatchPage() {
   const { language } = useI18n();
   const vi = language === "vi";
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>("create");
+  // Honor ?tab= from /match/new redirect; default is pending so users
+  // who arrive without a query see the queue they care about first.
+  const initialTab = ((): Tab => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab");
+    if (t === "pending" || t === "queue" || t === "history" || t === "create") return t;
+    return "pending";
+  })();
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   if (loading) {
     return <TheLineLayout><div className="p-6"><Loader2 className="h-5 w-5 animate-spin" /></div></TheLineLayout>;
@@ -611,15 +667,24 @@ export default function MatchPage() {
   return (
     <TheLineLayout>
       <div className="mx-auto max-w-3xl px-4 py-6">
-        <header className="mb-4">
-          <h1 className="text-2xl font-semibold" style={{ color: "var(--tl-fg)" }}>
-            {vi ? "Match" : "Match"}
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--tl-fg-3)" }}>
-            {vi
-              ? "Tạo match — đối phương xác nhận tỉ số — club admin gửi lên DUPR."
-              : "Players record matches, opponents confirm, club admins push to DUPR."}
-          </p>
+        <header className="mb-4 flex items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold" style={{ color: "var(--tl-fg)" }}>
+              {vi ? "Match" : "Match"}
+            </h1>
+            <p className="mt-1 text-sm" style={{ color: "var(--tl-fg-3)" }}>
+              {vi
+                ? "Đợi xác nhận từ đối thủ, club admin duyệt và đẩy lên DUPR."
+                : "Opponents confirm, club admins approve and push to DUPR."}
+            </p>
+          </div>
+          <a
+            href="/match/new"
+            className="tl-btn primary"
+            style={{ whiteSpace: "nowrap" }}
+          >
+            + {vi ? "Log trận mới" : "Log match"}
+          </a>
         </header>
 
         <div className="mb-4 flex gap-2 border-b" style={{ borderColor: "var(--tl-border)" }}>

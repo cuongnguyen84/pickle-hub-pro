@@ -1,17 +1,12 @@
 // ============================================================================
 // /match/new — three-step mobile-first match logging flow
 // ----------------------------------------------------------------------------
-// Step 1: Pick opponents (recent first, search fallback)
-// Step 2: Enter scores (single set by default, "+ Thêm set" reveals more)
+// Step 1: Pick opponents (inline pickers — search expands at the row)
+// Step 2: Enter scores
 // Step 3: Review + club picker + submit → match_proposal (pending_verify)
-//
-// Smart defaults: self auto-added to Team A · format auto-detected from
-// roster size · date = now · club = last used (localStorage). Opponent
-// gets a push notification; admin/director gets one after both sides
-// verify (handled by the trigger that flips status='verified').
 // ============================================================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, X, ArrowLeft, Check, Search, Plus } from "lucide-react";
 import { TheLineLayout } from "@/components/layout";
@@ -25,6 +20,7 @@ import { useRecentOpponents } from "@/hooks/useRecentOpponents";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
 
 type Step = 1 | 2 | 3;
+type Slot = "a2" | "b1" | "b2";
 
 interface PickedPlayer {
   player_id: string;
@@ -49,7 +45,6 @@ export default function MatchNew() {
   const recent = useRecentOpponents(userId);
 
   const [step, setStep] = useState<Step>(1);
-  // Self is always first in Team A.
   const [teamA2, setTeamA2] = useState<PickedPlayer | null>(null);
   const [teamB1, setTeamB1] = useState<PickedPlayer | null>(null);
   const [teamB2, setTeamB2] = useState<PickedPlayer | null>(null);
@@ -75,32 +70,6 @@ export default function MatchNew() {
 
   const isDoubles = !!(teamA2 && teamB2);
 
-  // ─── Search ─────────────────────────────────────────────────────────
-  const [q, setQ] = useState("");
-  const [activeSlot, setActiveSlot] = useState<"a2" | "b1" | "b2" | null>("b1");
-
-  const search = useQuery({
-    queryKey: ["match-new-search", q],
-    enabled: q.trim().length >= 2 && activeSlot !== null,
-    queryFn: async () => {
-      const term = q.trim();
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, display_name, email, username")
-        .or(
-          `display_name.ilike.%${term}%,email.ilike.%${term}%,username.ilike.%${term}%`,
-        )
-        .neq("id", userId ?? "00000000-0000-0000-0000-000000000000")
-        .limit(8);
-      return (data ?? []) as Array<{
-        id: string;
-        display_name: string | null;
-        email: string;
-        username: string | null;
-      }>;
-    },
-  });
-
   const excludeIds = useMemo(() => {
     const ids = new Set<string>();
     if (userId) ids.add(userId);
@@ -108,52 +77,24 @@ export default function MatchNew() {
     return ids;
   }, [userId, teamA2, teamB1, teamB2]);
 
-  const pickPlayer = (
-    p: {
-      id?: string;
-      player_id?: string;
-      display_name: string | null;
-      email: string;
-      username: string | null;
-    },
-  ) => {
-    const player: PickedPlayer = {
-      player_id: (p.id ?? p.player_id) as string,
-      display_name: p.display_name,
-      email: p.email,
-      username: p.username,
-    };
-    if (activeSlot === "a2") {
-      setTeamA2(player);
-      // Picking A2 implies doubles — open B2 next if B2 empty.
-      setActiveSlot(teamB1 ? "b2" : "b1");
-    } else if (activeSlot === "b1") {
-      setTeamB1(player);
-      setActiveSlot(teamA2 && !teamB2 ? "b2" : null);
-    } else if (activeSlot === "b2") {
-      setTeamB2(player);
-      setActiveSlot(null);
-    }
-    setQ("");
+  const pickPlayer = (slot: Slot, p: PickedPlayer) => {
+    if (slot === "a2") setTeamA2(p);
+    if (slot === "b1") setTeamB1(p);
+    if (slot === "b2") setTeamB2(p);
   };
 
-  const removePlayer = (slot: "a2" | "b1" | "b2") => {
+  const removePlayer = (slot: Slot) => {
     if (slot === "a2") setTeamA2(null);
     if (slot === "b1") setTeamB1(null);
     if (slot === "b2") setTeamB2(null);
-    setActiveSlot(slot);
   };
 
   const submit = async () => {
     if (!user || !teamB1) return;
     setSubmitting(true);
     try {
-      const team_a_player_ids = teamA2
-        ? [user.id, teamA2.player_id]
-        : [user.id];
-      const team_b_player_ids = teamB2
-        ? [teamB1.player_id, teamB2.player_id]
-        : [teamB1.player_id];
+      const team_a_player_ids = teamA2 ? [user.id, teamA2.player_id] : [user.id];
+      const team_b_player_ids = teamB2 ? [teamB1.player_id, teamB2.player_id] : [teamB1.player_id];
       const team_a_scores = [g1a];
       const team_b_scores = [g1b];
       if (show2 && g2a !== "" && g2b !== "") {
@@ -164,21 +105,18 @@ export default function MatchNew() {
         team_a_scores.push(Number(g3a));
         team_b_scores.push(Number(g3b));
       }
-      const { data, error } = await supabase.functions.invoke(
-        "match-proposal",
-        {
-          body: {
-            action: "create",
-            format: isDoubles ? "DOUBLES" : "SINGLES",
-            match_date: new Date().toISOString().slice(0, 10),
-            club_id: clubId === "" ? null : Number(clubId),
-            team_a_player_ids,
-            team_b_player_ids,
-            team_a_scores,
-            team_b_scores,
-          },
+      const { data, error } = await supabase.functions.invoke("match-proposal", {
+        body: {
+          action: "create",
+          format: isDoubles ? "DOUBLES" : "SINGLES",
+          match_date: new Date().toISOString().slice(0, 10),
+          club_id: clubId === "" ? null : Number(clubId),
+          team_a_player_ids,
+          team_b_player_ids,
+          team_a_scores,
+          team_b_scores,
         },
-      );
+      });
       if (error) {
         const ctx = (error as { context?: Response }).context;
         let detail = error.message;
@@ -191,19 +129,15 @@ export default function MatchNew() {
         throw new Error(detail);
       }
       if (clubId !== "") {
-        try {
-          localStorage.setItem(LAST_CLUB_KEY, String(clubId));
-        } catch { /* ignore */ }
+        try { localStorage.setItem(LAST_CLUB_KEY, String(clubId)); } catch { /* ignore */ }
       }
       toast({
-        title: vi ? "Đã gửi xác nhận" : "Sent for confirmation",
-        description: vi
-          ? "Đối thủ sẽ nhận thông báo để xác nhận tỉ số."
-          : "Your opponent has been notified to confirm.",
+        title: vi ? "Đã gửi" : "Sent",
+        description: vi ? "Đối thủ sẽ nhận thông báo xác nhận." : "Your opponent has been notified.",
       });
       qc.invalidateQueries({ queryKey: ["match-proposals"] });
       const pid = (data as { proposal_id?: string }).proposal_id;
-      navigate(pid ? `/match?tab=pending&just=${pid}` : "/match?tab=pending");
+      navigate(pid ? `/match?tab=history&just=${pid}` : "/match?tab=history");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast({ variant: "destructive", title: vi ? "Lỗi" : "Submit failed", description: msg });
@@ -214,13 +148,7 @@ export default function MatchNew() {
 
   // ─── Guards ─────────────────────────────────────────────────────────
   if (authLoading) {
-    return (
-      <TheLineLayout>
-        <div style={{ padding: 48 }}>
-          <Loader2 className="h-5 w-5 animate-spin" />
-        </div>
-      </TheLineLayout>
-    );
+    return <TheLineLayout><div style={{ padding: 48 }}><Loader2 className="h-5 w-5 animate-spin" /></div></TheLineLayout>;
   }
   if (!user) {
     return (
@@ -237,15 +165,7 @@ export default function MatchNew() {
     return (
       <TheLineLayout>
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "48px 20px" }}>
-          <h1
-            style={{
-              fontFamily: "'Instrument Serif', serif",
-              fontStyle: "italic",
-              fontSize: 40,
-              lineHeight: 1,
-              margin: "0 0 16px",
-            }}
-          >
+          <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 40, lineHeight: 1, margin: "0 0 16px" }}>
             {vi ? "Kết nối DUPR trước" : "Connect DUPR first"}
           </h1>
           <p style={{ color: "var(--tl-fg-2)", margin: "0 0 24px", lineHeight: 1.55 }}>
@@ -253,11 +173,7 @@ export default function MatchNew() {
               ? "Để log trận và đẩy kết quả lên DUPR, anh cần kết nối DUPR một lần. Mất ~30 giây."
               : "To log matches and push results to DUPR, you need to connect once. Takes ~30 seconds."}
           </p>
-          <button
-            type="button"
-            className="tl-btn primary"
-            onClick={() => navigate("/dupr")}
-          >
+          <button type="button" className="tl-btn primary" onClick={() => navigate("/dupr")}>
             {vi ? "Mở Cài đặt DUPR →" : "Open DUPR settings →"}
           </button>
         </div>
@@ -265,84 +181,40 @@ export default function MatchNew() {
     );
   }
 
-  // ─── Frame ──────────────────────────────────────────────────────────
   return (
     <TheLineLayout>
-      <div
-        style={{
-          maxWidth: 560,
-          margin: "0 auto",
-          padding: "24px 20px 80px",
-          minHeight: "100vh",
-        }}
-      >
-        <header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 24,
-          }}
-        >
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 20px 80px" }}>
+        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           {step > 1 ? (
             <button
               type="button"
               aria-label={vi ? "Quay lại" : "Back"}
               onClick={() => setStep((s) => (s - 1) as Step)}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "var(--tl-fg-2)",
-                padding: 8,
-                display: "inline-flex",
-                cursor: "pointer",
-              }}
+              style={{ background: "transparent", border: "none", color: "var(--tl-fg-2)", padding: 8, cursor: "pointer" }}
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
           ) : (
             <span style={{ width: 36 }} />
           )}
-          <span
-            style={{
-              fontFamily: "'Geist Mono', monospace",
-              fontSize: 10,
-              textTransform: "uppercase",
-              letterSpacing: "0.14em",
-              color: "var(--tl-fg-3)",
-            }}
-          >
+          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-fg-3)" }}>
             {vi ? `Bước ${step} / 3` : `Step ${step} / 3`}
           </span>
           <button
             type="button"
             aria-label={vi ? "Đóng" : "Close"}
             onClick={() => navigate(-1)}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--tl-fg-3)",
-              padding: 8,
-              display: "inline-flex",
-              cursor: "pointer",
-            }}
+            style={{ background: "transparent", border: "none", color: "var(--tl-fg-3)", padding: 8, cursor: "pointer" }}
           >
             <X className="h-5 w-5" />
           </button>
         </header>
 
-        {/* Progress */}
         <div style={{ display: "flex", gap: 6, margin: "0 0 28px" }}>
           {[1, 2, 3].map((i) => (
             <span
               key={i}
-              style={{
-                height: 3,
-                flex: 1,
-                background:
-                  i <= step ? "var(--tl-green)" : "var(--tl-border)",
-                borderRadius: 1.5,
-              }}
+              style={{ height: 3, flex: 1, background: i <= step ? "var(--tl-green)" : "var(--tl-border)", borderRadius: 1.5 }}
             />
           ))}
         </div>
@@ -359,12 +231,6 @@ export default function MatchNew() {
             teamA2={teamA2}
             teamB1={teamB1}
             teamB2={teamB2}
-            activeSlot={activeSlot}
-            setActiveSlot={setActiveSlot}
-            q={q}
-            setQ={setQ}
-            searchResults={search.data ?? []}
-            searchLoading={search.isLoading}
             recents={recent.data ?? []}
             excludeIds={excludeIds}
             onPick={pickPlayer}
@@ -422,23 +288,17 @@ export default function MatchNew() {
   );
 }
 
-// ─── Step 1: pick opponents ─────────────────────────────────────────────
+// ─── Step 1: pick opponents (inline pickers) ──────────────────────────
 function Step1(props: {
   vi: boolean;
   self: PickedPlayer;
   teamA2: PickedPlayer | null;
   teamB1: PickedPlayer | null;
   teamB2: PickedPlayer | null;
-  activeSlot: "a2" | "b1" | "b2" | null;
-  setActiveSlot: (s: "a2" | "b1" | "b2" | null) => void;
-  q: string;
-  setQ: (s: string) => void;
-  searchResults: Array<{ id: string; display_name: string | null; email: string; username: string | null }>;
-  searchLoading: boolean;
   recents: Array<{ player_id: string; display_name: string | null; email: string; username: string | null }>;
   excludeIds: Set<string>;
-  onPick: (p: { id?: string; player_id?: string; display_name: string | null; email: string; username: string | null }) => void;
-  onRemove: (slot: "a2" | "b1" | "b2") => void;
+  onPick: (slot: Slot, p: PickedPlayer) => void;
+  onRemove: (slot: Slot) => void;
   isDoubles: boolean;
   onContinue: () => void;
 }) {
@@ -446,176 +306,58 @@ function Step1(props: {
   const canContinue = !!props.teamB1;
   const continueLabel = props.isDoubles
     ? (vi ? "Tiếp tục — đôi 2v2" : "Continue — doubles 2v2")
-    : props.teamA2 || (props.teamB1 && !props.teamB2)
+    : props.teamB1
       ? (vi ? "Tiếp tục — đơn 1v1" : "Continue — singles 1v1")
       : (vi ? "Tiếp tục" : "Continue");
 
   return (
     <>
-      <h1
-        style={{
-          fontFamily: "'Instrument Serif', serif",
-          fontStyle: "italic",
-          fontSize: 32,
-          lineHeight: 1.05,
-          letterSpacing: "-0.02em",
-          margin: "0 0 24px",
-        }}
-      >
-        {vi ? (
-          <>Đối thủ của<br />anh là <i>ai?</i></>
-        ) : (
-          <>Who are<br />your <i>opponents?</i></>
-        )}
+      <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 32, lineHeight: 1.05, letterSpacing: "-0.02em", margin: "0 0 32px" }}>
+        {vi ? <>Đối thủ của<br />anh là <i>ai?</i></> : <>Who are<br />your <i>opponents?</i></>}
       </h1>
 
-      {/* Search */}
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          border: "1px solid var(--tl-border-strong)",
-          borderRadius: 2,
-          padding: "12px 14px",
-          marginBottom: 20,
-        }}
-      >
-        <Search className="h-4 w-4" style={{ color: "var(--tl-fg-3)" }} />
-        <input
-          type="text"
-          value={props.q}
-          onChange={(e) => props.setQ(e.target.value)}
-          placeholder={
-            vi ? "Tìm theo tên · email · @handle" : "Search by name · email · @handle"
-          }
-          style={{
-            flex: 1,
-            background: "transparent",
-            border: "none",
-            color: "var(--tl-fg)",
-            fontFamily: "'Geist Mono', monospace",
-            fontSize: 13,
-            outline: "none",
-          }}
-        />
-      </label>
-
-      {/* Roster */}
       <Group label={vi ? "Bên anh · Team A" : "Your side · Team A"}>
-        <Row
+        <SelectedRow
           self
           name={props.self.display_name ?? props.self.email}
           subtitle={vi ? "Bạn" : "You"}
-          state="selected"
         />
-        {props.teamA2 ? (
-          <Row
-            name={props.teamA2.display_name ?? props.teamA2.email}
-            subtitle={props.teamA2.username ? `@${props.teamA2.username}` : props.teamA2.email}
-            state="selected"
-            onRemove={() => props.onRemove("a2")}
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => props.setActiveSlot("a2")}
-            style={addRowStyle(props.activeSlot === "a2")}
-          >
-            <Plus className="h-4 w-4" />
-            <span>{vi ? "Thêm partner (doubles)" : "Add partner (doubles)"}</span>
-          </button>
-        )}
+        <SlotRow
+          vi={vi}
+          slot="a2"
+          picked={props.teamA2}
+          addLabel={vi ? "Thêm partner (doubles)" : "Add partner (doubles)"}
+          recents={props.recents}
+          excludeIds={props.excludeIds}
+          onPick={(p) => props.onPick("a2", p)}
+          onRemove={() => props.onRemove("a2")}
+        />
       </Group>
 
       <Group label={vi ? "Bên kia · Team B" : "Other side · Team B"}>
-        {props.teamB1 ? (
-          <Row
-            name={props.teamB1.display_name ?? props.teamB1.email}
-            subtitle={props.teamB1.username ? `@${props.teamB1.username}` : props.teamB1.email}
-            state="selected"
-            onRemove={() => props.onRemove("b1")}
+        <SlotRow
+          vi={vi}
+          slot="b1"
+          picked={props.teamB1}
+          addLabel={vi ? "Chọn đối thủ" : "Pick opponent"}
+          recents={props.recents}
+          excludeIds={props.excludeIds}
+          onPick={(p) => props.onPick("b1", p)}
+          onRemove={() => props.onRemove("b1")}
+        />
+        {props.teamA2 && (
+          <SlotRow
+            vi={vi}
+            slot="b2"
+            picked={props.teamB2}
+            addLabel={vi ? "Đối thủ thứ 2" : "Second opponent"}
+            recents={props.recents}
+            excludeIds={props.excludeIds}
+            onPick={(p) => props.onPick("b2", p)}
+            onRemove={() => props.onRemove("b2")}
           />
-        ) : (
-          <button
-            type="button"
-            onClick={() => props.setActiveSlot("b1")}
-            style={addRowStyle(props.activeSlot === "b1")}
-          >
-            <Plus className="h-4 w-4" />
-            <span>{vi ? "Chọn đối thủ" : "Pick opponent"}</span>
-          </button>
         )}
-        {props.teamA2 && props.teamB1 ? (
-          props.teamB2 ? (
-            <Row
-              name={props.teamB2.display_name ?? props.teamB2.email}
-              subtitle={props.teamB2.username ? `@${props.teamB2.username}` : props.teamB2.email}
-              state="selected"
-              onRemove={() => props.onRemove("b2")}
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => props.setActiveSlot("b2")}
-              style={addRowStyle(props.activeSlot === "b2")}
-            >
-              <Plus className="h-4 w-4" />
-              <span>{vi ? "Đối thủ thứ 2" : "Second opponent"}</span>
-            </button>
-          )
-        ) : null}
       </Group>
-
-      {/* Suggestions */}
-      {props.activeSlot && (
-        <Group label={
-          props.q.trim().length >= 2
-            ? vi ? "Kết quả" : "Search results"
-            : vi ? "Gần đây" : "Recent"
-        }>
-          {props.q.trim().length >= 2 ? (
-            props.searchLoading ? (
-              <div style={{ color: "var(--tl-fg-3)", padding: "8px 0", fontSize: 13 }}>
-                <Loader2 className="inline h-3 w-3 animate-spin" /> {vi ? "Đang tìm…" : "Searching…"}
-              </div>
-            ) : props.searchResults.length === 0 ? (
-              <div style={{ color: "var(--tl-fg-3)", padding: "8px 0", fontSize: 13 }}>
-                {vi ? "Không tìm thấy." : "No matches."}
-              </div>
-            ) : (
-              props.searchResults
-                .filter((p) => !props.excludeIds.has(p.id))
-                .map((p) => (
-                  <Row
-                    key={p.id}
-                    name={p.display_name ?? p.email}
-                    subtitle={p.username ? `@${p.username}` : p.email}
-                    state="add"
-                    onClick={() => props.onPick(p)}
-                  />
-                ))
-            )
-          ) : props.recents.length === 0 ? (
-            <div style={{ color: "var(--tl-fg-3)", padding: "8px 0", fontSize: 13 }}>
-              {vi ? "Chưa có trận nào gần đây — gõ tên để tìm." : "No recent matches — search by name."}
-            </div>
-          ) : (
-            props.recents
-              .filter((p) => !props.excludeIds.has(p.player_id))
-              .slice(0, 6)
-              .map((p) => (
-                <Row
-                  key={p.player_id}
-                  name={p.display_name ?? p.email}
-                  subtitle={p.username ? `@${p.username} · gần đây` : `${p.email} · gần đây`}
-                  state="add"
-                  onClick={() => props.onPick({ id: p.player_id, display_name: p.display_name, email: p.email, username: p.username })}
-                />
-              ))
-          )}
-        </Group>
-      )}
 
       <div style={{ marginTop: 32 }}>
         <button
@@ -634,17 +376,8 @@ function Step1(props: {
 
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginBottom: 12 }}>
-      <div
-        style={{
-          fontFamily: "'Geist Mono', monospace",
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.14em",
-          color: "var(--tl-fg-3)",
-          margin: "14px 0 8px",
-        }}
-      >
+    <section style={{ marginBottom: 16 }}>
+      <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-fg-3)", margin: "0 0 8px" }}>
         {label}
       </div>
       {children}
@@ -652,106 +385,268 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Row(props: {
-  self?: boolean;
-  name: string;
-  subtitle: string;
-  state: "selected" | "add";
-  onClick?: () => void;
-  onRemove?: () => void;
-}) {
+function SelectedRow(props: { self?: boolean; name: string; subtitle: string }) {
   return (
     <div
-      onClick={props.onClick}
       style={{
         display: "grid",
-        gridTemplateColumns: "32px 1fr auto",
+        gridTemplateColumns: "36px 1fr auto",
         gap: 12,
         alignItems: "center",
         padding: "12px 4px",
         borderBottom: "1px solid var(--tl-border)",
-        cursor: props.state === "add" ? "pointer" : "default",
       }}
     >
-      <span
-        aria-hidden="true"
-        style={{
-          width: 32, height: 32, borderRadius: "50%",
-          border: "1px solid var(--tl-border-strong)",
-          background: "linear-gradient(135deg, #1f1f1c, #0a0a0a)",
-          display: "inline-flex",
-          alignItems: "center", justifyContent: "center",
-          fontFamily: "'Instrument Serif', serif",
-          fontStyle: "italic",
-          fontSize: 13,
-          color: "var(--tl-fg-2)",
-        }}
-      >
-        {props.name?.charAt(0)?.toUpperCase() ?? "—"}
-      </span>
+      <Avatar name={props.name} />
       <div>
-        <div
-          style={{
-            fontFamily: "'Instrument Serif', serif",
-            fontStyle: "italic",
-            fontSize: 18,
-            color: props.state === "selected" ? "var(--tl-green)" : "var(--tl-fg)",
-            lineHeight: 1.1,
-          }}
-        >
-          {props.name}
-        </div>
-        <div
-          style={{
-            fontFamily: "'Geist Mono', monospace",
-            fontSize: 9.5,
-            textTransform: "uppercase",
-            letterSpacing: "0.12em",
-            color: "var(--tl-fg-3)",
-            marginTop: 3,
-          }}
-        >
-          {props.subtitle}
-        </div>
+        <div style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 19, color: "var(--tl-green)", lineHeight: 1.1 }}>{props.name}</div>
+        <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--tl-fg-3)", marginTop: 3 }}>{props.subtitle}</div>
       </div>
-      {props.state === "selected" ? (
-        props.onRemove ? (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); props.onRemove?.(); }}
-            style={{ background: "transparent", border: "none", color: "var(--tl-fg-3)", padding: 6 }}
-          >
-            <X className="h-4 w-4" />
-          </button>
-        ) : (
-          <Check className="h-4 w-4" style={{ color: "var(--tl-green)" }} />
-        )
-      ) : (
-        <Plus className="h-4 w-4" style={{ color: "var(--tl-fg-2)" }} />
-      )}
+      <Check className="h-4 w-4" style={{ color: "var(--tl-green)" }} />
     </div>
   );
 }
 
-function addRowStyle(active: boolean): React.CSSProperties {
-  return {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    width: "100%",
-    padding: "14px 12px",
-    border: "1px dashed var(--tl-border-strong)",
-    borderColor: active ? "var(--tl-green-dim)" : "var(--tl-border-strong)",
-    color: active ? "var(--tl-green)" : "var(--tl-fg-2)",
-    background: "transparent",
-    fontFamily: "'Geist Mono', monospace",
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: "0.14em",
-    cursor: "pointer",
-    borderRadius: 2,
-    marginBottom: 8,
-  };
+function Avatar({ name }: { name: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        width: 36, height: 36, borderRadius: "50%",
+        border: "1px solid var(--tl-border-strong)",
+        background: "linear-gradient(135deg, #1f1f1c, #0a0a0a)",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 14, color: "var(--tl-fg-2)",
+      }}
+    >
+      {name?.charAt(0)?.toUpperCase() ?? "—"}
+    </span>
+  );
+}
+
+function SlotRow(props: {
+  vi: boolean;
+  slot: Slot;
+  picked: PickedPlayer | null;
+  addLabel: string;
+  recents: Array<{ player_id: string; display_name: string | null; email: string; username: string | null }>;
+  excludeIds: Set<string>;
+  onPick: (p: PickedPlayer) => void;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const { vi } = props;
+
+  const search = useQuery({
+    queryKey: ["match-new-search-row", props.slot, q],
+    enabled: q.trim().length >= 2,
+    queryFn: async () => {
+      const term = q.trim();
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name, email, username")
+        .or(
+          `display_name.ilike.%${term}%,email.ilike.%${term}%,username.ilike.%${term}%`,
+        )
+        .limit(8);
+      return (data ?? []) as Array<{
+        id: string;
+        display_name: string | null;
+        email: string;
+        username: string | null;
+      }>;
+    },
+  });
+
+  // Picked state — render as selected row + small remove
+  if (props.picked) {
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "36px 1fr auto",
+          gap: 12,
+          alignItems: "center",
+          padding: "12px 4px",
+          borderBottom: "1px solid var(--tl-border)",
+        }}
+      >
+        <Avatar name={props.picked.display_name ?? props.picked.email} />
+        <div>
+          <div style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 19, color: "var(--tl-green)", lineHeight: 1.1 }}>
+            {props.picked.display_name ?? props.picked.email}
+          </div>
+          <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--tl-fg-3)", marginTop: 3 }}>
+            {props.picked.username ? `@${props.picked.username}` : props.picked.email}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={props.onRemove}
+          aria-label={vi ? "Bỏ chọn" : "Remove"}
+          style={{ background: "transparent", border: "none", color: "var(--tl-fg-3)", padding: 6, cursor: "pointer" }}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
+
+  // Closed state — show "+ Add" button
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          width: "100%",
+          padding: "14px 12px",
+          border: "1px dashed var(--tl-border-strong)",
+          color: "var(--tl-fg-2)",
+          background: "transparent",
+          fontFamily: "'Geist Mono', monospace",
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: "0.14em",
+          cursor: "pointer",
+          borderRadius: 2,
+          marginBottom: 8,
+        }}
+      >
+        <Plus className="h-4 w-4" />
+        <span>{props.addLabel}</span>
+      </button>
+    );
+  }
+
+  // Open — inline search + suggestions
+  const candidates = q.trim().length >= 2
+    ? (search.data ?? []).filter((p) => !props.excludeIds.has(p.id))
+    : props.recents.filter((p) => !props.excludeIds.has(p.player_id)).slice(0, 6);
+
+  return (
+    <div
+      style={{
+        border: "1px solid var(--tl-green-dim)",
+        background: "var(--tl-green-glow)",
+        borderRadius: 2,
+        padding: 12,
+        marginBottom: 8,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-green)" }}>
+          {props.addLabel}
+        </span>
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setQ(""); }}
+          aria-label={vi ? "Đóng" : "Cancel"}
+          style={{ background: "transparent", border: "none", color: "var(--tl-fg-3)", padding: 4, cursor: "pointer" }}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          border: "1px solid var(--tl-border-strong)",
+          background: "var(--tl-bg)",
+          borderRadius: 2,
+          padding: "10px 12px",
+          marginBottom: 10,
+        }}
+      >
+        <Search className="h-4 w-4" style={{ color: "var(--tl-fg-3)" }} />
+        <input
+          type="text"
+          autoFocus
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={vi ? "Tìm theo tên · email · @handle" : "Search by name · email · @handle"}
+          style={{
+            flex: 1,
+            background: "transparent",
+            border: "none",
+            color: "var(--tl-fg)",
+            fontFamily: "'Geist Mono', monospace",
+            fontSize: 13,
+            outline: "none",
+          }}
+        />
+      </label>
+
+      <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-fg-3)", margin: "4px 0 6px" }}>
+        {q.trim().length >= 2
+          ? (vi ? "Kết quả" : "Results")
+          : (vi ? "Gần đây" : "Recent")}
+      </div>
+
+      {q.trim().length >= 2 && search.isLoading ? (
+        <div style={{ padding: "8px 0", color: "var(--tl-fg-3)", fontSize: 13 }}>
+          <Loader2 className="inline h-3 w-3 animate-spin" /> {vi ? "Đang tìm…" : "Searching…"}
+        </div>
+      ) : candidates.length === 0 ? (
+        <div style={{ padding: "8px 0", color: "var(--tl-fg-3)", fontSize: 13 }}>
+          {q.trim().length >= 2
+            ? (vi ? "Không tìm thấy." : "No matches.")
+            : (vi ? "Chưa có trận nào gần đây — gõ tên để tìm." : "No recent matches — search by name.")}
+        </div>
+      ) : (
+        candidates.map((p) => {
+          const id = ("id" in p ? p.id : p.player_id) as string;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                props.onPick({
+                  player_id: id,
+                  display_name: p.display_name,
+                  email: p.email,
+                  username: p.username,
+                });
+                setOpen(false);
+                setQ("");
+              }}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "32px 1fr auto",
+                gap: 12,
+                width: "100%",
+                alignItems: "center",
+                padding: "10px 4px",
+                background: "transparent",
+                border: "none",
+                borderBottom: "1px solid var(--tl-border)",
+                color: "inherit",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <Avatar name={p.display_name ?? p.email} />
+              <div>
+                <div style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 18, color: "var(--tl-fg)", lineHeight: 1.1 }}>
+                  {p.display_name ?? p.email}
+                </div>
+                <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--tl-fg-3)", marginTop: 3 }}>
+                  {p.username ? `@${p.username}` : p.email}{q.trim().length >= 2 ? "" : " · gần đây"}
+                </div>
+              </div>
+              <Plus className="h-4 w-4" style={{ color: "var(--tl-fg-2)" }} />
+            </button>
+          );
+        })
+      )}
+    </div>
+  );
 }
 
 // ─── Step 2: scores ───────────────────────────────────────────────────
@@ -776,16 +671,7 @@ function Step2(props: {
   const teamAWins = props.g1a > props.g1b;
   return (
     <>
-      <h1
-        style={{
-          fontFamily: "'Instrument Serif', serif",
-          fontStyle: "italic",
-          fontSize: 32,
-          lineHeight: 1.05,
-          letterSpacing: "-0.02em",
-          margin: "0 0 24px",
-        }}
-      >
+      <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 32, lineHeight: 1.05, letterSpacing: "-0.02em", margin: "0 0 24px" }}>
         {vi ? <>Tỉ số trận<br /><i>vừa rồi.</i></> : <>Final<br /><i>score.</i></>}
       </h1>
 
@@ -829,24 +715,15 @@ function Step2(props: {
 
       <div style={{ marginTop: 16 }}>
         {!props.show2 && (
-          <button type="button" onClick={props.onAdd2} style={addSetStyle()}>
-            + {vi ? "Thêm set 2" : "Add game 2"}
-          </button>
+          <button type="button" onClick={props.onAdd2} style={addSetStyle()}>+ {vi ? "Thêm set 2" : "Add game 2"}</button>
         )}
         {props.show2 && !props.show3 && (
-          <button type="button" onClick={props.onAdd3} style={addSetStyle()}>
-            + {vi ? "Thêm set 3" : "Add game 3"}
-          </button>
+          <button type="button" onClick={props.onAdd3} style={addSetStyle()}>+ {vi ? "Thêm set 3" : "Add game 3"}</button>
         )}
       </div>
 
       <div style={{ marginTop: 24 }}>
-        <button
-          type="button"
-          className="tl-btn primary"
-          onClick={props.onContinue}
-          style={{ width: "100%", padding: 18, fontSize: 12 }}
-        >
+        <button type="button" className="tl-btn primary" onClick={props.onContinue} style={{ width: "100%", padding: 18, fontSize: 12 }}>
           {vi ? "Tiếp tục — xem lại" : "Continue — review"}
         </button>
       </div>
@@ -865,7 +742,7 @@ function ScoreSet(props: {
   onAChange: (v: number | "") => void;
   onBChange: (v: number | "") => void;
 }) {
-  const rowStyle = (win: boolean): React.CSSProperties => ({
+  const rowStyle = (): React.CSSProperties => ({
     display: "grid",
     gridTemplateColumns: "1fr 96px",
     gap: 16,
@@ -898,38 +775,19 @@ function ScoreSet(props: {
   });
   return (
     <div style={{ marginBottom: 12 }}>
-      <div
-        style={{
-          fontFamily: "'Geist Mono', monospace",
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.14em",
-          color: "var(--tl-fg-3)",
-          margin: "8px 0",
-        }}
-      >
-        {props.label}
-      </div>
-      <div style={rowStyle(props.aWin)}>
+      <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-fg-3)", margin: "8px 0" }}>{props.label}</div>
+      <div style={rowStyle()}>
         <div style={nameStyle(props.aWin)}>{props.aName}</div>
         <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={50}
-          value={props.aScore}
+          type="number" inputMode="numeric" min={0} max={50} value={props.aScore}
           onChange={(e) => props.onAChange(e.target.value === "" ? "" : Number(e.target.value))}
           style={inputStyle(props.aWin)}
         />
       </div>
-      <div style={rowStyle(props.bWin)}>
+      <div style={rowStyle()}>
         <div style={nameStyle(props.bWin)}>{props.bName}</div>
         <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={50}
-          value={props.bScore}
+          type="number" inputMode="numeric" min={0} max={50} value={props.bScore}
           onChange={(e) => props.onBChange(e.target.value === "" ? "" : Number(e.target.value))}
           style={inputStyle(props.bWin)}
         />
@@ -973,106 +831,45 @@ function Step3(props: {
   onSubmit: () => void;
 }) {
   const { vi } = props;
-  const teamLine = props.isDoubles
-    ? `${props.self} + ${props.teamA2Name}`
-    : props.self;
-  const oppLine = props.isDoubles
-    ? `${props.teamB1Name} + ${props.teamB2Name}`
-    : props.teamB1Name;
+  const teamLine = props.isDoubles ? `${props.self} + ${props.teamA2Name}` : props.self;
+  const oppLine = props.isDoubles ? `${props.teamB1Name} + ${props.teamB2Name}` : props.teamB1Name;
   const fmt = props.isDoubles ? "Doubles" : "Singles";
-  const winningSide =
-    props.scoresA.reduce((s, _, i) => s + (props.scoresA[i] > props.scoresB[i] ? 1 : -1), 0) > 0
-      ? "a"
-      : "b";
+  let aWins = 0, bWins = 0;
+  for (let i = 0; i < props.scoresA.length; i++) {
+    if (props.scoresA[i] > props.scoresB[i]) aWins++;
+    else if (props.scoresB[i] > props.scoresA[i]) bWins++;
+  }
+  const winningSide = aWins >= bWins ? "a" : "b";
 
   return (
     <>
-      <h1
-        style={{
-          fontFamily: "'Instrument Serif', serif",
-          fontStyle: "italic",
-          fontSize: 32,
-          lineHeight: 1.05,
-          letterSpacing: "-0.02em",
-          margin: "0 0 24px",
-        }}
-      >
+      <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 32, lineHeight: 1.05, letterSpacing: "-0.02em", margin: "0 0 24px" }}>
         {vi ? <>Gửi cho<br />đối thủ <i>xác nhận.</i></> : <>Send for<br /><i>confirmation.</i></>}
       </h1>
 
       <SummaryRow k={vi ? "Định dạng" : "Format"} v={`${fmt} · 11 rally`} />
-      <SummaryRow
-        k={vi ? "Ngày" : "Date"}
-        v={new Date().toLocaleString(vi ? "vi-VN" : "en-US", {
-          year: "numeric", month: "short", day: "numeric",
-          hour: "2-digit", minute: "2-digit",
-        })}
-      />
-      <SummaryRow
-        k={vi ? "Tỉ số" : "Score"}
-        v={props.scoresA.map((s, i) => `${s}-${props.scoresB[i]}`).join(" · ")}
-        big
-      />
-      <SummaryRow
-        k={vi ? "Bạn" : "You"}
-        v={`${teamLine} · ${winningSide === "a" ? (vi ? "thắng" : "won") : (vi ? "thua" : "lost")}`}
-      />
+      <SummaryRow k={vi ? "Ngày" : "Date"} v={new Date().toLocaleString(vi ? "vi-VN" : "en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })} />
+      <SummaryRow k={vi ? "Tỉ số" : "Score"} v={props.scoresA.map((s, i) => `${s}-${props.scoresB[i]}`).join(" · ")} big />
+      <SummaryRow k={vi ? "Bạn" : "You"} v={`${teamLine} · ${winningSide === "a" ? (vi ? "thắng" : "won") : (vi ? "thua" : "lost")}`} />
       <SummaryRow k={vi ? "Đối thủ" : "Opponent"} v={oppLine} />
 
-      <div
-        style={{
-          margin: "20px 0",
-          padding: 14,
-          border: "1px solid var(--tl-border-strong)",
-          borderRadius: 2,
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "'Geist Mono', monospace",
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
-            color: "var(--tl-fg-3)",
-            marginBottom: 8,
-          }}
-        >
+      <div style={{ margin: "20px 0", padding: 14, border: "1px solid var(--tl-border-strong)", borderRadius: 2 }}>
+        <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-fg-3)", marginBottom: 8 }}>
           {vi ? "Club (không bắt buộc)" : "Club (optional)"}
         </div>
         <select
           value={String(props.clubId)}
           onChange={(e) => props.setClubId(e.target.value === "" ? "" : Number(e.target.value))}
-          style={{
-            width: "100%",
-            background: "transparent",
-            color: "var(--tl-fg)",
-            fontFamily: "'Bricolage Grotesque', system-ui, sans-serif",
-            fontSize: 14,
-            border: "none",
-            outline: "none",
-            padding: "4px 0",
-          }}
+          style={{ width: "100%", background: "transparent", color: "var(--tl-fg)", fontFamily: "'Bricolage Grotesque', system-ui, sans-serif", fontSize: 14, border: "none", outline: "none", padding: "4px 0" }}
         >
           <option value="">{vi ? "— Không club (PARTNER) —" : "— None (PARTNER) —"}</option>
           {props.clubs.map((c) => (
-            <option key={c.club_id} value={c.club_id}>
-              {c.club_name} ({c.role})
-            </option>
+            <option key={c.club_id} value={c.club_id}>{c.club_name} ({c.role})</option>
           ))}
         </select>
       </div>
 
-      <p
-        style={{
-          fontFamily: "'Geist Mono', monospace",
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.14em",
-          color: "var(--tl-fg-3)",
-          lineHeight: 1.6,
-          margin: "16px 0 24px",
-        }}
-      >
+      <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-fg-3)", lineHeight: 1.6, margin: "16px 0 24px" }}>
         {vi
           ? "Đối thủ sẽ nhận thông báo để xác nhận tỉ số. Sau đó admin/Director duyệt và gửi DUPR."
           : "Your opponent will receive a notification to confirm. Then a club admin approves and pushes to DUPR."}
@@ -1093,38 +890,9 @@ function Step3(props: {
 
 function SummaryRow({ k, v, big }: { k: string; v: string; big?: boolean }) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "100px 1fr",
-        gap: 12,
-        padding: "12px 0",
-        borderBottom: "1px solid var(--tl-border)",
-        alignItems: "baseline",
-      }}
-    >
-      <div
-        style={{
-          fontFamily: "'Geist Mono', monospace",
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.14em",
-          color: "var(--tl-fg-3)",
-        }}
-      >
-        {k}
-      </div>
-      <div
-        style={{
-          fontFamily: big ? "'Instrument Serif', serif" : "'Bricolage Grotesque', system-ui, sans-serif",
-          fontStyle: big ? "italic" : "normal",
-          fontSize: big ? 26 : 14,
-          lineHeight: big ? 1 : 1.5,
-          color: "var(--tl-fg)",
-        }}
-      >
-        {v}
-      </div>
+    <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--tl-border)", alignItems: "baseline" }}>
+      <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-fg-3)" }}>{k}</div>
+      <div style={{ fontFamily: big ? "'Instrument Serif', serif" : "'Bricolage Grotesque', system-ui, sans-serif", fontStyle: big ? "italic" : "normal", fontSize: big ? 26 : 14, lineHeight: big ? 1 : 1.5, color: "var(--tl-fg)" }}>{v}</div>
     </div>
   );
 }
