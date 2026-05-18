@@ -361,14 +361,14 @@ async function handleApprove(
     }
   }
 
-  // Resolve each player's dupr_id from dupr_user_tokens. For players
-  // without an active SSO token we fall back to a guest object built
-  // from profiles.display_name — DUPR Partner API accepts either a
-  // duprId string or {firstName,lastName} per player slot.
-  //
-  // Rule: each team must contain at least one SSO'd player. That gives
-  // the resulting DUPR match at least one verifiable identity per side
-  // (otherwise it would be two ghost teams, which DUPR rejects).
+  // Resolve each player's dupr_id from dupr_user_tokens. DUPR Partner
+  // API /match/v1.0/create requires every player slot to be a real
+  // DUPR ID string — guest objects {firstName,lastName} are rejected
+  // ("Cannot deserialize value of type java.lang.String from Object").
+  // The USER::INVITE permission that would let us pre-mint a DUPR ID
+  // for unconnected players is gated by DUPR and returns 403 for our
+  // partner key. So: enforce all-SSO here, and return the human-readable
+  // names of the missing players so the approver can nudge them.
   const allPlayers = [...proposal.team_a_player_ids, ...proposal.team_b_player_ids];
   const [{ data: tokens }, { data: profiles }] = await Promise.all([
     supabase
@@ -389,34 +389,31 @@ async function handleApprove(
     profileMap.set(p.id, { display_name: p.display_name, email: p.email });
   }
 
-  const hasSso = (ids: string[]) => ids.some((id) => mapped.has(id));
-  if (!hasSso(proposal.team_a_player_ids) || !hasSso(proposal.team_b_player_ids)) {
-    return err("team_missing_sso", 412, "team_missing_sso", {
-      hint: "Each team needs at least one player with DUPR SSO. Players without SSO are sent as guests.",
-      team_a_has_sso: hasSso(proposal.team_a_player_ids),
-      team_b_has_sso: hasSso(proposal.team_b_player_ids),
+  const missing = allPlayers.filter((id) => !mapped.has(id));
+  if (missing.length > 0) {
+    const missingDetails = missing.map((id) => {
+      const p = profileMap.get(id);
+      return {
+        user_id: id,
+        display_name: p?.display_name ?? null,
+        email: p?.email ?? null,
+      };
+    });
+    const names = missingDetails
+      .map((m) => m.display_name ?? m.email ?? m.user_id.slice(0, 8))
+      .join(", ");
+    return err("players_not_sso_connected", 412, "players_not_sso_connected", {
+      missing: missingDetails,
+      hint: `Player(s) chưa connect DUPR: ${names}. Yêu cầu họ vào /dupr SSO link trước khi approve.`,
+      hint_en: `Player(s) without DUPR SSO: ${names}. Ask them to link at /dupr before approving.`,
     });
   }
 
-  // Guest player payload built from profiles.display_name. Split on
-  // first whitespace — DUPR doesn't mind one-word "first" names. Email
-  // falls in as a tiebreaker so duplicate names from different users
-  // still differentiate in DUPR's ledger.
-  const guestPlayer = (userId: string): Record<string, unknown> => {
-    const p = profileMap.get(userId);
-    const name = (p?.display_name ?? p?.email ?? "Guest Player").trim();
-    const parts = name.split(/\s+/);
-    const firstName = parts[0] || "Guest";
-    const lastName = parts.slice(1).join(" ") || "Player";
-    return { firstName, lastName };
-  };
-
-  // Build team payloads. SSO'd players → DUPR ID string; otherwise guest
-  // object. Match games come from scores array.
+  // Build team payloads. All players are guaranteed to have a DUPR ID
+  // by the missing-check above. Match games come from scores array.
   const buildTeam = (playerIds: string[], scores: number[]) => {
-    const slot = (id: string): unknown => mapped.get(id) ?? guestPlayer(id);
-    const team: Record<string, unknown> = { player1: slot(playerIds[0]) };
-    if (playerIds[1]) team.player2 = slot(playerIds[1]);
+    const team: Record<string, unknown> = { player1: mapped.get(playerIds[0]) };
+    if (playerIds[1]) team.player2 = mapped.get(playerIds[1]);
     for (let i = 0; i < scores.length; i++) {
       team[`game${i + 1}`] = scores[i];
     }
@@ -484,12 +481,20 @@ async function handleApprove(
     },
     body: JSON.stringify(partnerBody),
   });
-  const partnerJson = await partnerRes.json().catch(() => null);
+  const partnerRaw = await partnerRes.text();
+  let partnerJson: { status?: string; result?: { matchCode?: string; hashedMatchCode?: string }; message?: string } | null = null;
+  try { partnerJson = JSON.parse(partnerRaw); } catch { /* keep raw */ }
 
   if (!partnerRes.ok || partnerJson?.status !== "SUCCESS" || !partnerJson?.result?.matchCode) {
+    console.error("dupr_create_failed", {
+      status: partnerRes.status,
+      partnerRaw,
+      sentBody: partnerBody,
+    });
     return err("dupr_create_failed", 502, "dupr_create_failed", {
       status: partnerRes.status,
-      body: partnerJson,
+      body: partnerJson ?? partnerRaw,
+      hint: partnerJson?.message ?? null,
     });
   }
 
