@@ -231,7 +231,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // cached responses with stale hreflang en+vi+x-default-all-to-same-URL
   // pattern on /clb/{slug}, /clubs, /social, /social/{id}. Same TTL-skip
   // rationale as v3→v4 bump (commit `52ba628`).
-  const cacheKey = `pr:v5:${url.pathname}`;
+  const cacheKey = `pr:v6:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
