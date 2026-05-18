@@ -42,7 +42,7 @@ const post: BlogPost = {
       title: "Professional Pickleball Tours 2026: Complete Guide to PPA, MLP, PPA Tour Asia, and APP",
       metaTitle: "Pro Pickleball Tours 2026 | PPA vs MLP vs APP vs PPA Asia Compared",
       metaDescription:
-        "Complete 2026 guide to professional pickleball tours — PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, and how to watch from Asia.",
+        "2026 guide to pro pickleball tours: PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, how to watch from Asia.",
       sections: [
         {
           heading: "The Pro Pickleball Landscape in 2026, at a Glance",

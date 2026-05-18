@@ -16,7 +16,7 @@ const post: BlogPost = {
     en: {
       title: "DUPR x TA Pickleball x ThePickleHub: A Preliminary Partnership for Vietnamese Pickleball",
       metaTitle: "DUPR Vietnam Partnership Announced | TA Pickleball x ThePickleHub First Step",
-      metaDescription: "DUPR, TA Pickleball, and ThePickleHub have signed a preliminary partnership to bring the global pickleball rating system to Vietnam. First step of a three-phase roadmap.",
+      metaDescription: "DUPR, TA Pickleball and ThePickleHub signed a preliminary deal to bring the global pickleball rating system to Vietnam — phase 1 of a 3-phase roadmap.",
       sections: [
         {
           heading: "We've shaken hands. The journey ahead begins.",

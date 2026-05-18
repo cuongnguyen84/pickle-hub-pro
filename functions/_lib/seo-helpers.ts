@@ -90,10 +90,12 @@ export function buildProfileFallbackDescription(profile: ProfileForSeo): string 
   const duprBits: string[] = [];
   if (profile.dupr_doubles != null) duprBits.push(`DUPR đôi ${profile.dupr_doubles.toFixed(2)}`);
   if (profile.dupr_singles != null) duprBits.push(`DUPR đơn ${profile.dupr_singles.toFixed(2)}`);
-  const cityBit = profile.city ? `tại ${profile.city}` : "";
-  return `Hồ sơ pickleball của ${displayName} ${cityBit}${
-    duprBits.length ? `, ${duprBits.join(", ")}` : ""
-  }. Xem lịch sử trận đấu, thống kê và rating DUPR trên ThePickleHub.`;
+  const cityBit = profile.city ? ` tại ${profile.city}` : "";
+  const duprBit = duprBits.length ? `, ${duprBits.join(", ")}` : "";
+  // PR (2026-05-18 Ahrefs Site Audit Round 2 fix) — pad description so
+  // even profiles without bio/city/DUPR produce ≥120 chars (was 93-99,
+  // flagged as meta desc too short on 5 profile pages).
+  return `Hồ sơ pickleball của ${displayName}${cityBit}${duprBit} — lịch sử trận đấu, thống kê, rating DUPR và kết quả giải pickleball trên ThePickleHub Việt Nam.`;
 }
 
 /**

@@ -189,18 +189,36 @@ export function buildMatchDescription(
     return `${input.teamALabel} vs ${input.teamBLabel} ${fmt} match${tournPhrase}${venuePhrase} on ${dateStr}.`;
   }
 
+  // PR (2026-05-18 Ahrefs Site Audit Round 2 fix) — trim description to
+  // ≤155 chars (Ahrefs flagged 15 /tran-dau/* pages at 161-181ch).
+  // Strategy: build full text, then if > 155, drop the per-game scores
+  // parenthetical "(11-8, 11-6, 11-2)" — keeps the meaningful winner/
+  // tournament info, only loses set-by-set detail (which is on the page
+  // body anyway).
+  const trimToMax = (full: string, withoutScores: string): string => {
+    if (full.length <= 155) return full;
+    if (withoutScores.length <= 155) return withoutScores;
+    return withoutScores.length > 155
+      ? withoutScores.slice(0, 152).replace(/\s+\S*$/, "") + "..."
+      : withoutScores;
+  };
+
   if (lang === "vi") {
     const tournPhrase = tournamentChunk
       ? ` tại ${[tournamentChunk, eventChunk, round].filter(Boolean).join(" ")}`
       : "";
     const venuePhrase = venueChunk && !tournamentChunk ? ` tại ${venueChunk}` : "";
-    return `${left} thắng ${right} ${leftWins}-${rightWins} (${scoresList})${tournPhrase}${venuePhrase} ngày ${dateStr}.`;
+    const full = `${left} thắng ${right} ${leftWins}-${rightWins} (${scoresList})${tournPhrase}${venuePhrase} ngày ${dateStr}.`;
+    const withoutScores = `${left} thắng ${right} ${leftWins}-${rightWins}${tournPhrase}${venuePhrase} ngày ${dateStr}.`;
+    return trimToMax(full, withoutScores);
   }
   const tournPhrase = tournamentChunk
     ? ` at ${[tournamentChunk, eventChunk, round].filter(Boolean).join(" ")}`
     : "";
   const venuePhrase = venueChunk && !tournamentChunk ? ` at ${venueChunk}` : "";
-  return `${left} defeat ${right} ${leftWins}-${rightWins} (${scoresList})${tournPhrase}${venuePhrase} on ${dateStr}.`;
+  const full = `${left} defeat ${right} ${leftWins}-${rightWins} (${scoresList})${tournPhrase}${venuePhrase} on ${dateStr}.`;
+  const withoutScores = `${left} defeat ${right} ${leftWins}-${rightWins}${tournPhrase}${venuePhrase} on ${dateStr}.`;
+  return trimToMax(full, withoutScores);
 }
 
 /* ─── JSON-LD SportsEvent schema builder ─────────────────────────────── */
@@ -249,7 +267,7 @@ const DEFAULT_DURATION_MINUTES = 45;
  *   - winner pointing back at the winning competitor
  *   - location as a Place (court number) nested inside venue when
  *     both are present
- *   - eventStatus: EventCompleted when played_at < now, otherwise
+ *   - eventStatus: omitted for past matches (Schema.org doesn't have a valid
  *     EventScheduled — matches the result's actual state
  *   - superEvent linking to the tournament when known
  *   - endDate calculated from played_at + duration_minutes (or a
@@ -285,10 +303,15 @@ export function buildMatchSchema(
     ? new Date(startMs + durationMin * 60_000).toISOString()
     : null;
 
-  const eventStatus =
-    Number.isFinite(startMs) && startMs < Date.now()
-      ? "https://schema.org/EventCompleted"
-      : "https://schema.org/EventScheduled";
+  // PR (2026-05-18 Ahrefs Site Audit Round 2 fix) — Schema.org's
+  // `EventCompleted` is NOT a valid eventStatus value. Valid values:
+  // EventScheduled, EventRescheduled, EventPostponed, EventCancelled,
+  // EventMovedOnline. Ahrefs flagged 21 /tran-dau/* pages for this.
+  // For past matches we omit eventStatus entirely — Google treats
+  // absence as "default scheduled then happened" which is correct
+  // for our use case (match results, not a live calendar event).
+  const isPast = Number.isFinite(startMs) && startMs < Date.now();
+  const eventStatus = isPast ? null : "https://schema.org/EventScheduled";
 
   const out: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -305,8 +328,8 @@ export function buildMatchSchema(
     // property but performer is what generic Event-rich-result
     // crawlers look for.
     performer: [competitorA, competitorB],
-    eventStatus,
   };
+  if (eventStatus) out.eventStatus = eventStatus;
 
   if (endIso) out.endDate = endIso;
 

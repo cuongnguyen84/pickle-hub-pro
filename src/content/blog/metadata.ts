@@ -25,7 +25,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Các giải Pickleball chuyên nghiệp 2026: Hướng dẫn đầy đủ về PPA, MLP, PPA Tour Asia và APP",
     metaTitleEn: "Pro Pickleball Tours 2026 | PPA vs MLP vs APP vs PPA Asia Compared",
     metaTitleVi: "Pro Pickleball 2026 | PPA, MLP, APP, PPA Tour Asia — So sánh đầy đủ",
-    metaDescriptionEn: "Complete 2026 guide to professional pickleball tours — PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, and how to watch from Asia.",
+    metaDescriptionEn: "2026 guide to pro pickleball tours: PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, how to watch from Asia.",
     metaDescriptionVi: "Hướng dẫn đầy đủ về 4 giải pickleball chuyên nghiệp 2026 — PPA Tour, MLP, PPA Tour Asia, APP — lịch thi đấu, tiền thưởng, format, top VĐV và cách xem từ Việt Nam.",
   },  {
     slug: "pickleball-tour-wars-2023-explained",
@@ -344,7 +344,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Tama Shimabukuro: 15 tuổi, hạ số 1 và số 2 thế giới, vào chung kết PPA Atlanta",
     metaTitleEn: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud",
     metaTitleVi: "Tama Shimabukuro vào chung kết PPA Atlanta ở tuổi 15 | Hạ Hunter Johnson & Staksrud",
-    metaDescriptionEn: "15-year-old Tama Shimabukuro just beat world #1 Hunter Johnson and #2 Federico Staksrud at PPA Veolia Atlanta Championships to reach the final. His self-taught Hawaii origin story.",
+    metaDescriptionEn: "15-year-old Tama Shimabukuro beat world #1 Hunter Johnson and #2 Staksrud at PPA Atlanta Championships to reach the final. Self-taught Hawaii story.",
     metaDescriptionVi: "Tama Shimabukuro 15 tuổi vừa hạ số 1 thế giới Hunter Johnson và số 2 Federico Staksrud tại PPA Veolia Atlanta Championships. Câu chuyện tự học từ Hawaii.",
   },
   {
@@ -363,7 +363,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "DUPR là gì? Hệ thống xếp hạng pickleball toàn cầu cho người chơi Việt Nam (Phần 1/3)",
     metaTitleEn: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series",
     metaTitleVi: "DUPR là gì? Xếp hạng pickleball toàn cầu | Series 3 phần — Phần 1",
-    metaDescriptionEn: "DUPR explained: the global pickleball rating system used by PPA Tour, MLP, USA Pickleball, and Pickleball World Cup. How it works, who runs it, and why Vietnamese players need it.",
+    metaDescriptionEn: "DUPR explained: the global pickleball rating used by PPA, MLP, USA Pickleball, World Cup. How it works, who runs it, why Vietnamese players need it.",
     metaDescriptionVi: "DUPR — hệ thống xếp hạng pickleball toàn cầu dùng bởi PPA Tour, MLP, USA Pickleball, Pickleball World Cup. Cách hoạt động, ai điều hành và vì sao người chơi VN cần nó.",
   },
   {
@@ -382,7 +382,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "DUPR x TA Pickleball x ThePickleHub: Thỏa thuận sơ bộ cho cộng đồng pickleball Việt Nam",
     metaTitleEn: "DUPR Vietnam Partnership Announced | TA Pickleball x ThePickleHub First Step",
     metaTitleVi: "DUPR Việt Nam: Thỏa thuận sơ bộ với TA Pickleball x ThePickleHub | Bước đầu tiên",
-    metaDescriptionEn: "DUPR, TA Pickleball, and ThePickleHub have signed a preliminary partnership to bring the global pickleball rating system to Vietnam. First step of a three-phase roadmap.",
+    metaDescriptionEn: "DUPR, TA Pickleball and ThePickleHub signed a preliminary deal to bring the global pickleball rating system to Vietnam — phase 1 of a 3-phase roadmap.",
     metaDescriptionVi: "DUPR, TA Pickleball và ThePickleHub vừa ký thỏa thuận sơ bộ đưa hệ thống xếp hạng pickleball toàn cầu vào Việt Nam. Bước đầu của lộ trình ba giai đoạn.",
   },
   {
@@ -401,7 +401,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     titleVi: "Thuật toán DUPR: Vì sao thắng vẫn mất điểm, thua vẫn tăng điểm? (Phần 2/3)",
     metaTitleEn: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3",
     metaTitleVi: "Thuật toán DUPR 2025 giải thích | Thắng mất điểm, thua tăng điểm — Phần 2/3",
-    metaDescriptionEn: "DUPR's July 2025 algorithm rewrite explained. Why you can win a match and still lose rating points, or lose a match and gain them. Match weights, exclusion rules, reliability score — Part 2 of 3.",
+    metaDescriptionEn: "DUPR's July 2025 algorithm: why winning can lose points and losing can gain them. Match weights, exclusion rules, reliability score. Part 2 of 3.",
     metaDescriptionVi: "DUPR thay đổi thuật toán tháng 7/2025: thắng có thể vẫn mất điểm, thua có thể vẫn tăng điểm. Performance vs Expectation, trọng số trận, Reliability Score — Phần 2/3 series DUPR.",
   },
 ];
