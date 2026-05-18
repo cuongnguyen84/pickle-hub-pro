@@ -175,26 +175,26 @@ async function handleCreate(
     verified_at: new Date().toISOString(),
   });
 
-  // Notify other players (excluding the creator) so they see a
-  // "match_confirm_needed" in the bell. RLS lets each user read their
-  // own social_notifications row.
-  const otherPlayers = [...teamA, ...teamB].filter((id) => id !== callerId);
-  if (otherPlayers.length > 0) {
-    await sendMatchNotifications({
-      supabase,
-      userIds: otherPlayers,
-      type: "match_confirm_needed",
-      titleVi: "Có trận đấu mới cần anh xác nhận tỉ số",
-      titleEn: "New match needs your confirmation",
-      bodyVi: `Trận ${proposal.format.toLowerCase()} ngày ${proposal.match_date} — ${
-        proposal.team_a_scores.map((s, i) => `${s}-${proposal.team_b_scores[i]}`).join(", ")
-      }`,
-      bodyEn: `${proposal.format} match on ${proposal.match_date} — ${
-        proposal.team_a_scores.map((s, i) => `${s}-${proposal.team_b_scores[i]}`).join(", ")
-      }`,
-      linkUrl: `/match?tab=pending&just=${proposal.id}`,
-      payload: { proposal_id: proposal.id, format: proposal.format, club_id: proposal.club_id },
-    });
+  // Notify the other players in the match (creator already auto-verified
+  // above, so we exclude them). One social_notifications row each.
+  const others = [...teamA, ...teamB].filter((id) => id !== callerId);
+  if (others.length > 0) {
+    const uniq = Array.from(new Set(others));
+    const scoreLine = scoresA.map((s, i) => `${s}-${scoresB[i]}`).join(", ");
+    await supabase.from("social_notifications").insert(
+      uniq.map((uid) => ({
+        user_id: uid,
+        type: "match_confirm_needed",
+        title: "Có trận đấu mới cần anh xác nhận tỉ số",
+        body: `${format} ${matchDate} — ${scoreLine}`,
+        link_url: `/match?tab=pending&just=${proposal.id}`,
+        payload: {
+          proposal_id: proposal.id,
+          title_en: "New match needs your confirmation",
+          body_en: `${format} match on ${matchDate} — ${scoreLine}`,
+        },
+      })),
+    );
   }
 
   return jsonResponse({ proposal_id: proposal.id, status: proposal.status });
@@ -256,7 +256,7 @@ async function handleVerifyOrDispute(
   // Re-read status (trigger may have flipped it).
   const { data: updated } = await supabase
     .from("match_proposals")
-    .select("status, club_id, format, match_date, team_a_scores, team_b_scores, created_by")
+    .select("status, club_id, format, match_date, team_a_scores, team_b_scores")
     .eq("id", proposalId)
     .maybeSingle<{
       status: string;
@@ -265,27 +265,47 @@ async function handleVerifyOrDispute(
       match_date: string;
       team_a_scores: number[];
       team_b_scores: number[];
-      created_by: string;
     }>();
 
-  // If this verify just flipped the proposal to 'verified', notify the
-  // approver pool: club DIRECTOR/ORGANIZER for CLUB matches, or the
-  // platform admin/creator user_roles for PARTNER matches.
   if (mode === "verify" && updated?.status === "verified") {
-    const approvers = await resolveApprovers(supabase, updated.club_id);
-    if (approvers.length > 0) {
+    // Resolve approvers inline so we don't lean on a helper function
+    // (Deno edge runtime previously failed to boot when these were
+    // refactored into typed helpers — keeping the path inline).
+    let approverIds: string[] = [];
+    if (updated.club_id != null) {
+      const { data: clubRows } = await supabase
+        .from("dupr_user_clubs")
+        .select("user_id")
+        .eq("club_id", updated.club_id)
+        .in("role", ["DIRECTOR", "ORGANIZER"])
+        .gt("expires_at", new Date().toISOString());
+      approverIds = (clubRows ?? []).map((r) => (r as { user_id: string }).user_id);
+    } else {
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "creator"]);
+      approverIds = Array.from(
+        new Set((roleRows ?? []).map((r) => (r as { user_id: string }).user_id)),
+      );
+    }
+    if (approverIds.length > 0) {
       const scoreLine = updated.team_a_scores.map((s, i) => `${s}-${updated.team_b_scores[i]}`).join(", ");
-      await sendMatchNotifications({
-        supabase,
-        userIds: approvers,
-        type: "match_approval_needed",
-        titleVi: "Trận đấu sẵn sàng duyệt + gửi DUPR",
-        titleEn: "Match ready for approval + DUPR submission",
-        bodyVi: `${updated.format} ${updated.match_date} — ${scoreLine}`,
-        bodyEn: `${updated.format} on ${updated.match_date} — ${scoreLine}`,
-        linkUrl: `/match?tab=queue&just=${proposalId}`,
-        payload: { proposal_id: proposalId, club_id: updated.club_id },
-      });
+      await supabase.from("social_notifications").insert(
+        approverIds.map((uid) => ({
+          user_id: uid,
+          type: "match_approval_needed",
+          title: "Trận đấu sẵn sàng duyệt + gửi DUPR",
+          body: `${updated.format} ${updated.match_date} — ${scoreLine}`,
+          link_url: `/match?tab=queue&just=${proposalId}`,
+          payload: {
+            proposal_id: proposalId,
+            club_id: updated.club_id,
+            title_en: "Match ready for approval + DUPR submission",
+            body_en: `${updated.format} on ${updated.match_date} — ${scoreLine}`,
+          },
+        })),
+      );
     }
   }
 
@@ -473,30 +493,29 @@ async function handleApprove(
     })
     .eq("id", proposalId);
 
-  // Notify every player (including the creator) that the match has been
-  // approved and pushed to DUPR. The approver themselves doesn't need a
-  // notification — they just clicked the button.
-  const allPlayers = [
+  // Notify every player (except the approver themselves) that the
+  // match has been pushed to DUPR.
+  const playerIds = [
     ...proposal.team_a_player_ids,
     ...proposal.team_b_player_ids,
   ].filter((id) => id !== callerId);
-  if (allPlayers.length > 0) {
+  if (playerIds.length > 0) {
     const scoreLine = proposal.team_a_scores.map((s, i) => `${s}-${proposal.team_b_scores[i]}`).join(", ");
-    await sendMatchNotifications({
-      supabase,
-      userIds: allPlayers,
-      type: "match_submitted",
-      titleVi: "Trận đấu đã được duyệt và gửi lên DUPR",
-      titleEn: "Match approved and pushed to DUPR",
-      bodyVi: `${proposal.format} ${proposal.match_date} — ${scoreLine}. Rating sẽ cập nhật trong vài phút.`,
-      bodyEn: `${proposal.format} on ${proposal.match_date} — ${scoreLine}. Rating updates in a few minutes.`,
-      linkUrl: `/match?tab=history&just=${proposalId}`,
-      payload: {
-        proposal_id: proposalId,
-        match_code: matchCode,
-        hashed_match_code: hashedMatchCode,
-      },
-    });
+    await supabase.from("social_notifications").insert(
+      Array.from(new Set(playerIds)).map((uid) => ({
+        user_id: uid,
+        type: "match_submitted",
+        title: "Trận đấu đã được duyệt và gửi lên DUPR",
+        body: `${proposal.format} ${proposal.match_date} — ${scoreLine}. Rating sẽ cập nhật trong vài phút.`,
+        link_url: `/match?tab=history&just=${proposalId}`,
+        payload: {
+          proposal_id: proposalId,
+          match_code: matchCode,
+          title_en: "Match approved and pushed to DUPR",
+          body_en: `${proposal.format} on ${proposal.match_date} — ${scoreLine}. Rating updates in a few minutes.`,
+        },
+      })),
+    );
   }
 
   return jsonResponse({
@@ -556,69 +575,6 @@ async function handleReject(
     .eq("id", proposalId);
 
   return jsonResponse({ proposal_id: proposalId, status: "rejected" });
-}
-
-// ─── Notification helpers ─────────────────────────────────────────────────
-
-interface SendNotifsArgs {
-  supabase: SupabaseClient;
-  userIds: string[];
-  type: string;
-  titleVi: string;
-  titleEn: string;
-  bodyVi: string;
-  bodyEn: string;
-  linkUrl: string;
-  payload?: Record<string, unknown>;
-}
-
-/**
- * Insert one social_notifications row per recipient. VI-canonical title
- * (matches existing trigger pattern); EN string lives in payload for the
- * formatter to swap in. Best-effort — errors are logged but don't bubble.
- */
-async function sendMatchNotifications(args: SendNotifsArgs): Promise<void> {
-  if (args.userIds.length === 0) return;
-  const unique = Array.from(new Set(args.userIds));
-  const rows = unique.map((uid) => ({
-    user_id: uid,
-    type: args.type,
-    title: args.titleVi,
-    body: args.bodyVi,
-    link_url: args.linkUrl,
-    payload: {
-      ...(args.payload ?? {}),
-      title_en: args.titleEn,
-      body_en: args.bodyEn,
-    },
-  }));
-  const { error } = await args.supabase.from("social_notifications").insert(rows);
-  if (error) console.warn("social_notifications insert failed:", error.message);
-}
-
-/**
- * Who can approve this proposal?
- *   - club_id != null → DIRECTOR/ORGANIZER cached in dupr_user_clubs
- *   - club_id IS NULL → user_roles with role in ('admin','creator')
- */
-async function resolveApprovers(
-  supabase: SupabaseClient,
-  clubId: number | null,
-): Promise<string[]> {
-  if (clubId != null) {
-    const { data } = await supabase
-      .from("dupr_user_clubs")
-      .select("user_id")
-      .eq("club_id", clubId)
-      .in("role", ["DIRECTOR", "ORGANIZER"])
-      .gt("expires_at", new Date().toISOString());
-    return (data ?? []).map((r: { user_id: string }) => r.user_id);
-  }
-  const { data } = await supabase
-    .from("user_roles")
-    .select("user_id")
-    .in("role", ["admin", "creator"]);
-  return Array.from(new Set((data ?? []).map((r: { user_id: string }) => r.user_id)));
 }
 
 // ─── Partner token mint helper (inlined to avoid touching _shared) ─────────
