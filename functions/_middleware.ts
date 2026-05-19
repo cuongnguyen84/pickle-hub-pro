@@ -13,7 +13,7 @@ import {
   renderHome, renderHomeVi,
   renderLive, renderVideo,
   renderTournamentDetail, renderTournaments,
-  renderVideos, renderNews, renderForum, renderForumPost,
+  renderVideos, renderNews, renderNewsPost, renderViNewsPost, renderForum, renderForumPost,
   renderMatch,
   renderProfile,
   renderFeed,
@@ -26,7 +26,7 @@ import {
   renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
-  renderLivestreamList, renderRankings, renderPrivacy, renderTerms,
+  renderLivestreamList, renderPrivacy, renderTerms,
   renderNotificationsShell,
   renderNoindexShell,
   renderDefault, render404,
@@ -227,11 +227,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // missing startDate, missing location. New schema uses SportsSeries
   // for the parent (no required dates/location). Same TTL-skip
   // rationale as the previous v2→v3 bump.
-  // PR (2026-05-18 Ahrefs Site Audit fix) — bumped v4→v5 to invalidate
-  // cached responses with stale hreflang en+vi+x-default-all-to-same-URL
-  // pattern on /clb/{slug}, /clubs, /social, /social/{id}. Same TTL-skip
-  // rationale as v3→v4 bump (commit `52ba628`).
-  const cacheKey = `pr:v6:${url.pathname}`;
+  const cacheKey = `pr:v4:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -307,6 +303,12 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
     match = path.match(/^\/blog\/([^/]+)$/);
     if (match) return await renderViBlogPost(supabase, match[1], siteUrl);
     if (path === "/blog") return await renderViBlogIndex(supabase, siteUrl);
+    // VI news article — Phase 4 hot-fix 2026-05-19.
+    // `path` is already stripped of the /vi prefix here (see stripLangPrefix
+    // call earlier in the file), so /vi/news/foo arrives as /news/foo with
+    // lang="vi".
+    match = path.match(/^\/news\/([^/]+)$/);
+    if (match) return await renderViNewsPost(supabase, match[1], siteUrl);
   }
 
   // Home
@@ -384,6 +386,12 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // News
   if (path === "/news") return await renderNews(supabase, siteUrl, rawPath, lang);
 
+  // News article — Phase 4 hot-fix 2026-05-19. Mirrors the /blog/:slug
+  // pattern below. VI variant is handled inside the lang === "vi" branch
+  // above; this is the default (EN) match.
+  match = path.match(/^\/news\/([^/]+)$/);
+  if (match) return await renderNewsPost(supabase, match[1], siteUrl);
+
   // Forum
   if (path === "/forum") return await renderForum(supabase, siteUrl, rawPath, lang);
 
@@ -436,14 +444,6 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
 
   // Livestream listing
   if (path === "/livestream") return renderLivestreamList(siteUrl, rawPath, lang);
-  // PR (2026-05-18 Ahrefs Site Audit fix) — /live (+ /vi/live) is the
-  // livestream landing page, distinct from /live/:id (single stream
-  // handled at line ~312). React Route at App.tsx line 482. Without
-  // this handler, bots got 404 and Ahrefs flagged it as a broken
-  // internal link from homepage `/` + 8 other source pages.
-  if (path === "/live" || path === "/vi/live") return renderLivestreamList(siteUrl, rawPath, lang);
-  // /rankings DUPR table — React Route at App.tsx line 572 with /vi alias.
-  if (path === "/rankings" || path === "/vi/rankings") return renderRankings(siteUrl, rawPath, lang);
 
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
