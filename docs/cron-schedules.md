@@ -26,6 +26,7 @@ documentation. Mismatch ⇒ the dashboard wins; bring this file back in sync.
 | `auto-cancel-unpaid-registrations` | `*/15 * * * *` | Every 15 min | Cancel registrations that have been in `pending_payment` status for >24h. Releases the seat back to the pool so a paying user can claim it. | 2026-03-09 |
 | `news-check` | `0 */6 * * *` | Every 6 hours | Poll RSS feeds + scraper sources for new pickleball headlines. Lightweight check (no full ingest) to detect "is there anything new since last run?" | 2026-04-15 |
 | `news-ingest` | `30 */6 * * *` | Every 6 hours, 30 min after `news-check` | Ingest, dedupe, classify, and write new articles found by `news-check` into `news_articles`. Offset by 30 minutes so the check has finished before ingest starts. | 2026-04-15 |
+| `news-translate` | `30 0 * * *` | Daily 07:30 ICT | Drain pending EN news_items by calling Gemini Flash for EN→VI translation. Inserts VI siblings via parent_news_id. | 2026-05-19 |
 | `batch-view-events` | `*/5 * * * *` | Every 5 min | Drain the in-memory `view_events` queue from the SPA (livestream + video views) and bulk-insert into `view_events`. Backpressure: if the queue is empty the function exits in <100ms. | 2026-02-28 |
 | `mux-sync-assets` | `0 */4 * * *` | Every 4 hours | Reconcile Mux Asset state with our `livestreams` table. Picks up assets that finished after our `mux-webhook` retry budget exhausted, and marks abandoned livestreams as `ended`. | 2026-04-08 |
 
