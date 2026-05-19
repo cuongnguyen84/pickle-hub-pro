@@ -68,6 +68,7 @@ const TeamMatchList = lazy(() => import("./pages/TeamMatchList"));
 const TeamMatchSetup = lazy(() => import("./pages/TeamMatchSetup"));
 const TeamMatchView = lazy(() => import("./pages/TeamMatchView"));
 const News = lazy(() => import("./pages/News"));
+const NewsArticle = lazy(() => import("./pages/NewsArticle"));
 const ShareRedirect = lazy(() => import("./pages/ShareRedirect"));
 
 // Doubles Elimination pages
@@ -568,7 +569,8 @@ const App = () => (
                         working while VN viewers get a localized URL. */}
                     <Route path="/thong-bao" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
-                    <Route path="/news" element={<News />} />
+                    <Route path="/news" element={<News language="en" />} />
+                    <Route path="/news/:slug" element={<NewsArticle language="en" />} />
                     <Route path="/rankings" element={<Rankings />} />
                     <Route path="/vi/rankings" element={<Rankings />} />
                     {/* Bet #1 Sprint 4 Phase 4A: Feed page */}
@@ -683,7 +685,8 @@ const App = () => (
                     <Route path="/vi/tournaments" element={<ViLanguageWrapper><Tournaments /></ViLanguageWrapper>} />
                     <Route path="/vi/tournament/:slug" element={<ViLanguageWrapper><ConditionalAuth><TournamentDetail /></ConditionalAuth></ViLanguageWrapper>} />
                     <Route path="/vi/org/:slug" element={<ViLanguageWrapper><OrganizationDetail /></ViLanguageWrapper>} />
-                    <Route path="/vi/news" element={<ViLanguageWrapper><News /></ViLanguageWrapper>} />
+                    <Route path="/vi/news" element={<ViLanguageWrapper><News language="vi" /></ViLanguageWrapper>} />
+                    <Route path="/vi/news/:slug" element={<ViLanguageWrapper><NewsArticle language="vi" /></ViLanguageWrapper>} />
                     <Route path="/vi/blog" element={<ViLanguageWrapper><Blog /></ViLanguageWrapper>} />
                     <Route path="/vi/blog/:slug" element={<ViLanguageWrapper><ViBlogPost /></ViLanguageWrapper>} />
                     <Route path="/vi/forum" element={<ViLanguageWrapper><Forum /></ViLanguageWrapper>} />

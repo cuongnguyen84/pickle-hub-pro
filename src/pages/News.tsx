@@ -1,13 +1,42 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useNewsItems } from "@/hooks/useNewsItems";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { formatRelative } from "./preview/_shell";
 
-const News = () => {
-  const { language } = useI18n();
-  const { data: news = [], isLoading } = useNewsItems({ limit: 60 });
+interface NewsProps {
+  /**
+   * Explicit language for the list query. Routed in from App.tsx instead
+   * of read from i18n context — the i18n state can leak across routes
+   * (persisted in localStorage), which used to cause EN rows to appear on
+   * /vi/news (or vice versa) until the i18n state caught up. Deriving the
+   * language from the route definition makes this deterministic.
+   */
+  language?: "en" | "vi";
+}
+
+const News = ({ language: languageProp }: NewsProps = {}) => {
+  // Fallback: detect from URL pathname for backward compatibility when the
+  // route definition doesn't pass an explicit prop. /vi/news → vi, else en.
+  const { pathname } = useLocation();
+  const { language: i18nLanguage, setLanguageFromUrl } = useI18n();
+  const language =
+    languageProp ?? (pathname.startsWith("/vi/") ? "vi" : "en");
+
+  // Keep the i18n context in sync so the layout's nav switcher reflects
+  // the article's actual language (mirrors BlogPost / NewsArticle).
+  useEffect(() => {
+    if (i18nLanguage !== language) setLanguageFromUrl(language);
+  }, [language, i18nLanguage, setLanguageFromUrl]);
+
+  // Phase 4: list is language-scoped. /news returns EN rows, /vi/news
+  // returns AI-translated VI rows (with parent_news_id back to EN). This
+  // mirrors how /blog vs /vi/blog separate the two tracks.
+  const { data: news = [], isLoading } = useNewsItems({
+    limit: 60,
+    language,
+  });
   const [sourceFilter, setSourceFilter] = useState<string | null>(null);
 
   // Derive source pill list from data — newest sources first by frequency
@@ -105,26 +134,51 @@ const News = () => {
             </div>
           ) : (
             <div className="tl-news-list">
-              {items.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tl-news-row"
-                >
-                  <div className="tl-news-row-body">
-                    <div className="tl-news-row-kicker">◆ {item.source ?? "Wire"}</div>
-                    <h3 className="tl-news-row-title">{item.title}</h3>
-                    <p className="tl-news-row-summary">{item.summary}</p>
-                    <div className="tl-news-row-meta">
-                      <span>{formatRelative(item.published_at)}</span>
-                      <span className="sep">·</span>
-                      <span>{language === "vi" ? `Đọc tại ${item.source} →` : `Read at ${item.source} →`}</span>
+              {items.map((item) => {
+                // Phase 4: card now links to our own /news/:slug page (gives
+                // us pageviews, SEO surface, and a place to put the "Read at
+                // source" CTA). Falls back to source_url if the item somehow
+                // has no slug yet (legacy rows pre-Phase-1).
+                const internalPath = item.slug
+                  ? language === "vi"
+                    ? `/vi/news/${item.slug}`
+                    : `/news/${item.slug}`
+                  : null;
+                const linkProps = internalPath
+                  ? { to: internalPath as string }
+                  : ({
+                      href: item.source_url,
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                    } as const);
+                const LinkTag = internalPath ? (Link as React.ElementType) : "a";
+                return (
+                  <LinkTag
+                    key={item.id}
+                    {...linkProps}
+                    className="tl-news-row"
+                  >
+                    <div className="tl-news-row-body">
+                      <div className="tl-news-row-kicker">◆ {item.source ?? "Wire"}</div>
+                      <h3 className="tl-news-row-title">{item.title}</h3>
+                      <p className="tl-news-row-summary">{item.summary}</p>
+                      <div className="tl-news-row-meta">
+                        <span>{formatRelative(item.published_at)}</span>
+                        <span className="sep">·</span>
+                        <span>
+                          {internalPath
+                            ? language === "vi"
+                              ? "Đọc tóm tắt →"
+                              : "Read summary →"
+                            : language === "vi"
+                              ? `Đọc tại ${item.source} →`
+                              : `Read at ${item.source} →`}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </a>
-              ))}
+                  </LinkTag>
+                );
+              })}
             </div>
           )}
         </div>
