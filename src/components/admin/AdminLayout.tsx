@@ -22,6 +22,7 @@ import {
   MoreHorizontal,
   BarChart2,
   Zap,
+  Newspaper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +43,7 @@ const navItems = [
   { path: "/admin/pro-tour", icon: Zap, labelKey: "proTour" as const },
   { path: "/admin/moderation", icon: Shield, labelKey: "moderation" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
+  { path: "/admin/news", icon: Newspaper, labelKey: "news" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
   { path: "/admin/viewers", icon: Eye, labelKey: "viewers" as const },
   { path: "/admin/push", icon: Bell, labelKey: "push" as const },
