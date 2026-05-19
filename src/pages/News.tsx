@@ -1,18 +1,41 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useNewsItems } from "@/hooks/useNewsItems";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { formatRelative } from "./preview/_shell";
 
-const News = () => {
-  const { language } = useI18n();
-  // Phase 4: list is now language-scoped. /news returns EN rows, /vi/news
+interface NewsProps {
+  /**
+   * Explicit language for the list query. Routed in from App.tsx instead
+   * of read from i18n context — the i18n state can leak across routes
+   * (persisted in localStorage), which used to cause EN rows to appear on
+   * /vi/news (or vice versa) until the i18n state caught up. Deriving the
+   * language from the route definition makes this deterministic.
+   */
+  language?: "en" | "vi";
+}
+
+const News = ({ language: languageProp }: NewsProps = {}) => {
+  // Fallback: detect from URL pathname for backward compatibility when the
+  // route definition doesn't pass an explicit prop. /vi/news → vi, else en.
+  const { pathname } = useLocation();
+  const { language: i18nLanguage, setLanguageFromUrl } = useI18n();
+  const language =
+    languageProp ?? (pathname.startsWith("/vi/") ? "vi" : "en");
+
+  // Keep the i18n context in sync so the layout's nav switcher reflects
+  // the article's actual language (mirrors BlogPost / NewsArticle).
+  useEffect(() => {
+    if (i18nLanguage !== language) setLanguageFromUrl(language);
+  }, [language, i18nLanguage, setLanguageFromUrl]);
+
+  // Phase 4: list is language-scoped. /news returns EN rows, /vi/news
   // returns AI-translated VI rows (with parent_news_id back to EN). This
   // mirrors how /blog vs /vi/blog separate the two tracks.
   const { data: news = [], isLoading } = useNewsItems({
     limit: 60,
-    language: language === "vi" ? "vi" : "en",
+    language,
   });
   const [sourceFilter, setSourceFilter] = useState<string | null>(null);
 
