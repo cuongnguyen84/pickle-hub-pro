@@ -472,6 +472,7 @@ export async function renderNews(supabase: SupabaseClient, siteUrl: string, rawP
   }));
 }
 
+
 // ─── News article detail (Phase 4 hot-fix 2026-05-19) ─────────
 // Bot prerender for /news/:slug + /vi/news/:slug. Codex flagged that the
 // SPA routes existed but the middleware fell through to render404, so
@@ -498,8 +499,6 @@ async function renderNewsArticleByLang(
   if (!row) return render404(canonicalPath, siteUrl);
   const r = row as any;
 
-  // Sibling lookup for hreflang. EN row → find VI child (parent_news_id = me).
-  // VI row → find EN parent (id = my parent_news_id).
   let siblingSlug: string | null = null;
   if (language === "en") {
     const { data: vi } = await supabase
@@ -551,8 +550,6 @@ async function renderNewsArticleByLang(
     { label: r.title.length > 60 ? r.title.slice(0, 60) + "…" : r.title },
   ]);
 
-  // NewsArticle is the right Schema.org type for aggregated news headlines.
-  // Mark inLanguage so Google indexes both EN and VI correctly.
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -573,9 +570,6 @@ async function renderNewsArticleByLang(
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
   };
 
-  // Read-at-source CTA is the key fair-use signal — visible body content
-  // matches what users see in the SPA. Snippet only, link out for the full
-  // article.
   const readAtLabel = language === "vi"
     ? `Đọc nguyên văn tại ${r.source || "nguồn"}`
     : `Read the full article at ${r.source || "the source"}`;
@@ -907,10 +901,11 @@ const BLOG_POST_META: Record<string, {
   datePublished?: string;
   image?: string;
 }> = {
-  "dupr-algorithm-explained-performance-vs-expectation": { title: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3", description: "DUPR's July 2025 algorithm rewrite explained. Why you can win a match and still lose rating points, or lose a match and gain them. Match weights, exclusion rules, reliability score — Part 2 of 3.", datePublished: "2026-05-14", image: "/images/blog/dupr-algorithm-performance-vs-expectation-hero.webp" },
-  "tama-shimabukuro-ppa-atlanta-final-15-year-old": { title: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud", description: "15-year-old Tama Shimabukuro just beat world #1 Hunter Johnson and #2 Federico Staksrud at PPA Veolia Atlanta Championships to reach the final. His self-taught Hawaii origin story.", datePublished: "2026-05-11", image: "/images/blog/tama-shimabukuro-atlanta-hero.webp" },
-  "what-is-dupr-pickleball-rating-system": { title: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series", description: "DUPR explained: the global pickleball rating system used by PPA Tour, MLP, USA Pickleball, and Pickleball World Cup. How it works, who runs it, and why Vietnamese players need it.", datePublished: "2026-05-11", image: "/images/blog/dupr-pickleball-rating-hero.webp" },
-  "dupr-vietnam-partnership-ta-pickleball-thepicklehub": { title: "DUPR Vietnam Partnership Announced | TA Pickleball x ThePickleHub First Step", description: "DUPR, TA Pickleball, and ThePickleHub have signed a preliminary partnership to bring the global pickleball rating system to Vietnam. First step of a three-phase roadmap.", datePublished: "2026-05-13", image: "/images/blog/dupr-ta-picklehub-partnership-hero.webp" },
+  "professional-pickleball-tours-guide-2026": { title: "Pro Pickleball Tours 2026 | PPA vs MLP vs APP vs PPA Asia Compared", description: "2026 guide to pro pickleball tours: PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, how to watch from Asia.", datePublished: "2026-05-18", image: "/images/blog/professional-pickleball-tours-guide-2026-hero.webp" },
+  "dupr-algorithm-explained-performance-vs-expectation": { title: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3", description: "DUPR's July 2025 algorithm: why winning can lose points and losing can gain them. Match weights, exclusion rules, reliability score. Part 2 of 3.", datePublished: "2026-05-14", image: "/images/blog/dupr-algorithm-performance-vs-expectation-hero.webp" },
+  "tama-shimabukuro-ppa-atlanta-final-15-year-old": { title: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud", description: "15-year-old Tama Shimabukuro beat world #1 Hunter Johnson and #2 Staksrud at PPA Atlanta Championships to reach the final. Self-taught Hawaii story.", datePublished: "2026-05-11", image: "/images/blog/tama-shimabukuro-atlanta-hero.webp" },
+  "what-is-dupr-pickleball-rating-system": { title: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series", description: "DUPR explained: the global pickleball rating used by PPA, MLP, USA Pickleball, World Cup. How it works, who runs it, why Vietnamese players need it.", datePublished: "2026-05-11", image: "/images/blog/dupr-pickleball-rating-hero.webp" },
+  "dupr-vietnam-partnership-ta-pickleball-thepicklehub": { title: "DUPR Vietnam Partnership Announced | TA Pickleball x ThePickleHub First Step", description: "DUPR, TA Pickleball and ThePickleHub signed a preliminary deal to bring the global pickleball rating system to Vietnam — phase 1 of a 3-phase roadmap.", datePublished: "2026-05-13", image: "/images/blog/dupr-ta-picklehub-partnership-hero.webp" },
   "pickleball-tour-wars-2023-explained": { title: "Pickleball Tour Wars 2023 Explained | 10 Days That Changed Pro Pickleball", description: "Pickleball Tour Wars 2023: how PPA and MLP fought for 10 days, why Gold Contracts only exist from that window, and what it means for Vietnamese pros today.", datePublished: "2026-05-05", image: "/images/blog/pickleball-tour-wars-2023-hero.webp" },
   "app-tour-vs-ppa-tour-contracts-2026": { title: "APP Tour vs PPA Tour 2026 | Contracts, Money & Exclusivity Compared", description: "APP Tour vs PPA Tour 2026: contract structures, prize money, exclusivity, the Global Pickleball Alliance, and Quang Duong's APP deal explained.", datePublished: "2026-05-05", image: "/images/blog/app-tour-vs-ppa-tour-contracts-hero.webp" },
   "pickleball-world-cup-2026-da-nang": { title: "Pickleball World Cup 2026 Da Nang | Dates, Teams, Venues, How to Watch", description: "Pickleball World Cup 2026 in Da Nang, Vietnam (Aug 30–Sep 6). Up to 80 nations, 4,000 athletes. Dates, venues, format, Vietnam team.", datePublished: "2026-04-23", image: "/images/blog/pickleball-world-cup-2026-da-nang-hero.webp" },
@@ -1123,6 +1118,26 @@ export function renderLivestreamList(siteUrl: string, rawPath: string, lang: Lan
   return htmlResponse(buildHtml({
     title: "Livestream Pickleball | ThePickleHub",
     description: "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.",
+    url: `${siteUrl}${rawPath}`,
+    siteUrl,
+    lang,
+  }));
+}
+
+// PR (2026-05-18 Ahrefs Site Audit fix) — /rankings was returning 404
+// for bots (8 broken-link reports tracing to homepage `/` linking to
+// `/rankings`). Routes exist in React (App.tsx line 572) but middleware
+// had no SSR handler. Same fix as /live below.
+export function renderRankings(siteUrl: string, rawPath: string, lang: Lang): Response {
+  const title = lang === "vi"
+    ? "Bảng xếp hạng DUPR Pickleball Việt Nam | ThePickleHub"
+    : "Pickleball DUPR Rankings — Vietnam | ThePickleHub";
+  const description = lang === "vi"
+    ? "Bảng xếp hạng DUPR mới nhất cho VĐV pickleball Việt Nam — đơn nam, đôi nam, đôi nữ, đôi hỗn hợp. Theo dõi top player Việt Nam và Đông Nam Á."
+    : "Latest DUPR rankings for Vietnamese pickleball players — men's singles, doubles, mixed doubles. Track top players from Vietnam and Southeast Asia.";
+  return htmlResponse(buildHtml({
+    title,
+    description,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     lang,
@@ -1374,11 +1389,15 @@ export async function renderProfile(
   // bot view matches what humans see post-hydration (no cloaking). Pure
   // shape lives in functions/_lib/seo-helpers.ts so the JSON-LD edge
   // cases (no bio, no city, no DUPR, etc.) are unit-tested.
+  // PR (2026-05-18 Ahrefs Site Audit Round 2 fix) — always pass an image
+  // URL to the Person JSON-LD (fallback to DEFAULT_OG_IMAGE when the
+  // profile has no avatar). Schema.org/Google validators flag missing
+  // `image` on Person — Ahrefs reported 7 profile schema errors.
   const jsonLd = buildPersonJsonLd({
     profile: p,
     url,
     siteUrl,
-    absoluteImageUrl: p.avatar_url ? absImage(p.avatar_url, siteUrl) : undefined,
+    absoluteImageUrl: p.avatar_url ? absImage(p.avatar_url, siteUrl) : DEFAULT_OG_IMAGE,
   });
 
   const bc = breadcrumb([
