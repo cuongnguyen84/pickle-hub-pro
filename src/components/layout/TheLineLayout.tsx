@@ -170,6 +170,10 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
     "rankings", "live", "livestream", "social", "su-kien",
     "u", "org", "account", "notifications", "thong-bao",
     "dang-ky", "khoi-phuc-dang-ky", "search",
+    // 2026-05-19 codex P2 follow-up: App.tsx has /vi/tools + every
+    // /vi/tools/<subroute> mirror, so the toggle should navigate
+    // /tools ↔ /vi/tools instead of flipping i18n state only.
+    "tools",
   ]);
   const hasViTwin = (path: string): boolean => {
     const en = path === "/vi" || path === "/vi/"

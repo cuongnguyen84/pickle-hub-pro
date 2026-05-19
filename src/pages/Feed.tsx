@@ -79,15 +79,65 @@ const Feed = () => {
     );
 
     // Merge news client-side (already language-filtered in useFeedNews).
-    // News rows ride on the same score axis as everything else, so we just
-    // append and re-sort DESC. Older news naturally sinks below newer
-    // matches/videos as users "Load more".
+    // Codex P2 (#135) flagged that without a windowing pass, a low-score
+    // news row could appear above higher-score matches still on page 2.
+    // Fix: only include news whose score is >= the lowest already-loaded
+    // RPC item score; anything below that waits for the user to click
+    // "Load more" (which lowers the floor).
     const news = newsFeed.data ?? [];
-    if (news.length === 0) return filtered;
-    return [...filtered, ...news].sort((a, b) =>
-      b.score === a.score ? (a.cursor_id < b.cursor_id ? 1 : -1) : b.score - a.score,
-    );
-  }, [timelineFeed.data, language, newsFeed.data]);
+    const isLastPage = !timelineFeed.hasNextPage;
+    const loadedFloor = filtered.length > 0
+      ? Math.min(...filtered.map((i) => i.score))
+      : -Infinity;
+    const windowedNews = isLastPage
+      ? news
+      : news.filter((n) => n.score >= loadedFloor);
+
+    const merged: StreamItem[] = windowedNews.length === 0
+      ? filtered
+      : [...filtered, ...windowedNews];
+
+    // Final sort. Two adjustments to Anh's UX brief ("tin mới lên đầu,
+    // đã xem đẩy xuống"):
+    //   1. Age penalty — multiplier that decays anything older than 24h.
+    //      The RPC's pro_tour_boost keeps high-profile finals dominating
+    //      even when they're a week old (the 2026 PPA Finals match from
+    //      11 May was still pinned to the top of /feed on 19 May). This
+    //      dampens that so newer news + recent matches surface above
+    //      stale rows.
+    //   2. Viewed penalty — items the viewer has already clicked through
+    //      get a 0.4x multiplier so fresh content takes their slot. Not
+    //      a hard hide: user can still scroll back and re-open.
+    const now = Date.now();
+    const effectiveScore = (item: StreamItem): number => {
+      const ageHours = Math.max(
+        0,
+        (now - Date.parse(item.published_at)) / 3_600_000,
+      );
+      let mult = 1;
+      if (ageHours > 24 && ageHours <= 72) mult *= 0.7;
+      else if (ageHours > 72 && ageHours <= 168) mult *= 0.3;
+      else if (ageHours > 168) mult *= 0.1;
+      if (viewed.viewedSet.has(item.cursor_id)) mult *= 0.4;
+      return item.score * mult;
+    };
+
+    return merged
+      .map((item) => ({ item, eff: effectiveScore(item) }))
+      .sort((a, b) => {
+        if (a.eff === b.eff) {
+          return a.item.cursor_id < b.item.cursor_id ? 1 : -1;
+        }
+        return b.eff - a.eff;
+      })
+      .map(({ item }) => item);
+  }, [
+    timelineFeed.data,
+    timelineFeed.hasNextPage,
+    language,
+    newsFeed.data,
+    viewed.viewedSet,
+  ]);
 
   const itemCount =
     tab === "following" ? followingMatches.length : timelineItems.length;
@@ -212,12 +262,16 @@ const Feed = () => {
                     />
                   ))
                 : timelineItems.map((item, i) => (
-                    <TimelineRow
+                    <div
                       key={`${item.type}:${item.cursor_id}`}
-                      item={item}
-                      language={language}
-                      staggerIndex={i}
-                    />
+                      onClickCapture={() => viewed.markViewed(item.cursor_id)}
+                    >
+                      <TimelineRow
+                        item={item}
+                        language={language}
+                        staggerIndex={i}
+                      />
+                    </div>
                   ))}
 
               {activeQuery.hasNextPage && (
