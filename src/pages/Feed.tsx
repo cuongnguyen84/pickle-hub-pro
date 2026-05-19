@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { useI18n } from "@/i18n";
@@ -22,6 +22,19 @@ import { FeedNewsCard } from "@/components/social/feed/FeedNewsCard";
 // get_feed_timeline RPC — surfacing it through the same client merge that
 // already handles EN blog overlays keeps the SQL function untouched.
 type StreamItem = FeedTimelineItem | FeedNewsItem;
+
+// Tiny FNV-1a 32-bit hash for the per-mount jitter. Deterministic so two
+// renders inside the same mount produce the same ordering — React Query
+// reconciliation depends on stable keys.
+function hashStr(input: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < input.length; i += 1) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
@@ -47,6 +60,10 @@ import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
 const Feed = () => {
   const { language } = useI18n();
   const { user } = useAuth();
+  // Per-mount stable jitter seed for tie-breaking in the score sort. Resets
+  // on every page navigation TO /feed (React unmounts/remounts the route)
+  // so each visit reshuffles items in the same score band.
+  const sessionSeedRef = useRef(((Math.random() * 0x7fffffff) | 0));
   const isAuthenticated = !!user;
 
   const followingCountQuery = useFollowingCount(user?.id);
@@ -71,21 +88,11 @@ const Feed = () => {
   );
   const timelineItems: StreamItem[] = useMemo(() => {
     const all = timelineFeed.data?.pages.flat() ?? [];
-    // Blog posts are file-shipped per locale (VI in vi_blog_posts, EN in
-    // src/content/blog/metadata.ts) — same article appears once per lang.
-    // Hide the off-locale copy so EN viewers don't see the VI version
-    // stacked above the EN version (and vice-versa). Matches and videos
-    // stay unfiltered: they're locale-agnostic activity.
     const filtered: StreamItem[] = all.filter(
       (item) => item.type !== "blog" || item.lang === language,
     );
 
-    // Merge news client-side (already language-filtered in useFeedNews).
-    // Codex P2 (#135) flagged that without a windowing pass, a low-score
-    // news row could appear above higher-score matches still on page 2.
-    // Fix: only include news whose score is >= the lowest already-loaded
-    // RPC item score; anything below that waits for the user to click
-    // "Load more" (which lowers the floor).
+    // Window news into the loaded RPC cursor (codex P2 #135).
     const news = newsFeed.data ?? [];
     const isLastPage = !timelineFeed.hasNextPage;
     const loadedFloor = filtered.length > 0
@@ -99,17 +106,19 @@ const Feed = () => {
       ? filtered
       : [...filtered, ...windowedNews];
 
-    // Final sort. Two adjustments to Anh's UX brief ("tin mới lên đầu,
-    // đã xem đẩy xuống"):
-    //   1. Age penalty — multiplier that decays anything older than 24h.
-    //      The RPC's pro_tour_boost keeps high-profile finals dominating
-    //      even when they're a week old (the 2026 PPA Finals match from
-    //      11 May was still pinned to the top of /feed on 19 May). This
-    //      dampens that so newer news + recent matches surface above
-    //      stale rows.
-    //   2. Viewed penalty — items the viewer has already clicked through
-    //      get a 0.4x multiplier so fresh content takes their slot. Not
-    //      a hard hide: user can still scroll back and re-open.
+    // Effective score = RPC score × age_mult × viewed_mult × jitter.
+    //
+    // 2026-05-19 v2 (Anh feedback: "refresh không thấy data thay đổi"):
+    //   - Tightened age curve to start at 12h, not 24h. Pro-tour matches
+    //     get a large pro_tour_boost from the RPC; without faster decay,
+    //     yesterday's PPA Asia finals were still dominating today's view.
+    //   - Per-mount session jitter inside a ±15% band so the order
+    //     reshuffles between visits without the SQL/data changing. Seed
+    //     is stable for the lifetime of the Feed component instance
+    //     (set in a ref), so React re-renders don't reshuffle mid-scroll.
+    //   - Stale-content hide: items older than 14 days are dropped from
+    //     /feed entirely (still visible on /news, /blog directly).
+    const sessionSeed = sessionSeedRef.current;
     const now = Date.now();
     const effectiveScore = (item: StreamItem): number => {
       const ageHours = Math.max(
@@ -117,22 +126,76 @@ const Feed = () => {
         (now - Date.parse(item.published_at)) / 3_600_000,
       );
       let mult = 1;
-      if (ageHours > 24 && ageHours <= 72) mult *= 0.7;
-      else if (ageHours > 72 && ageHours <= 168) mult *= 0.3;
-      else if (ageHours > 168) mult *= 0.1;
+      if (ageHours > 12 && ageHours <= 24) mult *= 0.85;
+      else if (ageHours > 24 && ageHours <= 72) mult *= 0.55;
+      else if (ageHours > 72 && ageHours <= 168) mult *= 0.25;
+      else if (ageHours > 168 && ageHours <= 336) mult *= 0.08;
+      else if (ageHours > 336) return -Infinity; // >14d: drop from feed
       if (viewed.viewedSet.has(item.cursor_id)) mult *= 0.4;
-      return item.score * mult;
+      // Jitter: deterministic per (sessionSeed, cursor_id) so the same
+      // mount produces a stable order. fnv1a-style hash → fraction in
+      // [0.85, 1.15].
+      const seed = sessionSeed ^ hashStr(item.cursor_id);
+      const jitter = 0.85 + ((seed >>> 0) % 1000) / 1000 * 0.3;
+      return item.score * mult * jitter;
     };
 
-    return merged
+    const scored = merged
       .map((item) => ({ item, eff: effectiveScore(item) }))
+      .filter((row) => Number.isFinite(row.eff))
       .sort((a, b) => {
         if (a.eff === b.eff) {
           return a.item.cursor_id < b.item.cursor_id ? 1 : -1;
         }
         return b.eff - a.eff;
-      })
-      .map(({ item }) => item);
+      });
+
+    // Pin news into the top 20. Pro-tour boost on matches can starve news
+    // from the first screenful; reserve every 4th slot for the highest
+    // remaining news item until we've placed at least 5 (or run out).
+    const TOP_WINDOW = 20;
+    const MIN_NEWS_IN_TOP = 5;
+    const head = scored.slice(0, TOP_WINDOW);
+    const tail = scored.slice(TOP_WINDOW);
+    const headNewsCount = head.filter((r) => r.item.type === "news").length;
+    if (headNewsCount >= MIN_NEWS_IN_TOP) {
+      return [...head, ...tail].map((r) => r.item);
+    }
+    const headNonNews = head.filter((r) => r.item.type !== "news");
+    const headNews = head.filter((r) => r.item.type === "news");
+    const reserveNews = scored
+      .filter((r) => r.item.type === "news")
+      .slice(0, MIN_NEWS_IN_TOP);
+    const reserveIds = new Set(reserveNews.map((r) => r.item.cursor_id));
+    const remainingHeadNonNews = headNonNews.filter(
+      (r) => !reserveIds.has(r.item.cursor_id),
+    );
+    const remainingHeadNews = headNews.filter(
+      (r) => !reserveIds.has(r.item.cursor_id),
+    );
+    const merged2: typeof scored = [];
+    let nonNewsCursor = 0;
+    let newsCursor = 0;
+    const otherNewsQueue = remainingHeadNews;
+    for (let i = 0; i < TOP_WINDOW; i += 1) {
+      const slotIsNews = i % 4 === 3 && newsCursor < reserveNews.length;
+      if (slotIsNews) {
+        merged2.push(reserveNews[newsCursor]);
+        newsCursor += 1;
+        continue;
+      }
+      if (nonNewsCursor < remainingHeadNonNews.length) {
+        merged2.push(remainingHeadNonNews[nonNewsCursor]);
+        nonNewsCursor += 1;
+      } else if (newsCursor < reserveNews.length) {
+        merged2.push(reserveNews[newsCursor]);
+        newsCursor += 1;
+      } else if (otherNewsQueue.length > 0) {
+        const next = otherNewsQueue.shift();
+        if (next) merged2.push(next);
+      }
+    }
+    return [...merged2, ...tail].map((r) => r.item);
   }, [
     timelineFeed.data,
     timelineFeed.hasNextPage,

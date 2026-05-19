@@ -21,7 +21,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 const WINDOW_DAYS = 30;
 const HALF_LIFE_HOURS = 48;
-const NEWS_TYPE_BONUS = 0.6;
+// 1.2 (>1.0 blog) — news is fresher/higher cardinality, and Anh asked us
+// to push news visibility on /feed. With pro_tour_boost dominating match
+// scores, even 1.2 still ranks news below today's pro tour finals but at
+// least floats it above older matches and gives news a foothold in the
+// top 20 slots without touching the SQL function.
+const NEWS_TYPE_BONUS = 1.2;
 
 export interface FeedNewsItem {
   type: "news";
