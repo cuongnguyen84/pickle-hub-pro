@@ -169,36 +169,13 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
     return json({ skipped: true, news_item_id: item?.id ?? null, reason });
   }
 
-  // 2. Dedupe — already posted?
-  const existing = await fetchFbPostLogByNewsItem(env, item.id);
-  if (existing && existing.status === 'posted') {
-    return json({ skipped: true, news_item_id: item.id, reason: 'already_posted' });
-  }
-
-  // 3. Rate limit
-  if (!dryRun) {
-    const gapOk = await checkRateLimit(env);
-    if (!gapOk) {
-      return json(
-        {
-          deferred: true,
-          news_item_id: item.id,
-          reason: 'rate_limited',
-          min_gap_minutes: Number(env.FB_POST_MIN_GAP_MINUTES),
-        },
-        202,
-      );
-    }
-  }
-
-  // 4. Generate caption with Gemini
-  const caption = await generateCaption(env, item);
-
-  // 5. Build Graph API payload
-  const link = buildNewsLink(env, item);
-  const fbPayload = buildFbPayload(item, caption, link);
-
+  // 2. Dry-run path: preview caption without claiming the log row.
+  // Multiple concurrent dry-runs do not produce side effects, so we skip
+  // the atomic claim that the real pipeline needs below.
   if (dryRun) {
+    const caption = await generateCaption(env, item);
+    const link = buildNewsLink(env, item);
+    const fbPayload = buildFbPayload(item, caption, link);
     return json({
       dry_run: true,
       news_item_id: item.id,
@@ -209,13 +186,41 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
     });
   }
 
-  // 6. Mark pending in fb_post_log
-  await upsertFbPostLog(env, {
-    news_item_id: item.id,
-    caption,
-    status: 'pending',
-    attempt_count: (existing?.attempt_count ?? 0) + 1,
-  });
+  // 3. Rate limit — best-effort pre-check before the claim. Cheap, and avoids
+  // burning the per-row claim slot when we already know we'll defer.
+  const gapOk = await checkRateLimit(env);
+  if (!gapOk) {
+    return json(
+      {
+        deferred: true,
+        news_item_id: item.id,
+        reason: 'rate_limited',
+        min_gap_minutes: Number(env.FB_POST_MIN_GAP_MINUTES),
+      },
+      202,
+    );
+  }
+
+  // 4. Atomic claim on fb_post_log — only one concurrent invocation may
+  // proceed past this line for any given news_item_id. Prevents Supabase
+  // duplicate webhooks from producing duplicate FB posts.
+  const claim = await claimFbPostLog(env, item.id);
+  if (!claim.claimed) {
+    return json({
+      skipped: true,
+      news_item_id: item.id,
+      reason: claim.conflict === 'posted' ? 'already_posted' : 'in_progress',
+    });
+  }
+
+  const attemptCount = claim.row?.attempt_count ?? 1;
+
+  // 5. Generate caption with Gemini
+  const caption = await generateCaption(env, item);
+
+  // 6. Build Graph API payload
+  const link = buildNewsLink(env, item);
+  const fbPayload = buildFbPayload(item, caption, link);
 
   // 7. Post to FB
   let fbResult: { id?: string; post_id?: string; error?: unknown } | null = null;
@@ -236,7 +241,7 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
       news_item_id: item.id,
       caption,
       status: 'posted',
-      attempt_count: (existing?.attempt_count ?? 0) + 1,
+      attempt_count: attemptCount,
       fb_post_id: postedId,
       fb_permalink: permalink,
       raw_response: fbResult,
@@ -248,7 +253,7 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
       news_item_id: item.id,
       caption,
       status: 'failed',
-      attempt_count: (existing?.attempt_count ?? 0) + 1,
+      attempt_count: attemptCount,
       error_message: fbError ?? 'Unknown error',
       raw_response: fbResult,
     });
@@ -378,6 +383,100 @@ interface FbPostLogUpsert {
   error_message?: string;
   raw_response?: unknown;
   posted_at?: string;
+}
+
+interface ClaimResult {
+  // True if this invocation now owns the log row and must proceed to post.
+  claimed: boolean;
+  // Final row state after the claim attempt (null only when claim throws).
+  row: FbPostLogRow | null;
+  // Reason the claim was denied — set only when claimed=false.
+  conflict: 'posted' | 'pending' | null;
+}
+
+/**
+ * Atomic claim on fb_post_log for a given news_item_id.
+ *
+ * Behavior:
+ *   - If no row exists → INSERT pending and return claimed=true.
+ *   - If row exists with status='posted' → return claimed=false, conflict='posted'.
+ *   - If row exists with status='pending' → return claimed=false, conflict='pending'
+ *     (another invocation is mid-pipeline; let it finish).
+ *   - If row exists with status in ('failed','skipped') → atomically PATCH to
+ *     pending and bump attempt_count. If the PATCH affects 0 rows, another
+ *     retry already grabbed it → return claimed=false, conflict='pending'.
+ *
+ * Relies on the UNIQUE(news_item_id) constraint on fb_post_log and uses
+ * PostgREST `Prefer: resolution=ignore-duplicates` so the INSERT is a true
+ * atomic claim (no merge / upsert race).
+ */
+async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult> {
+  // Step 1 — try to atomically insert a fresh pending row.
+  const insertUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
+  insertUrl.searchParams.set('on_conflict', 'news_item_id');
+  const insertRes = await fetch(insertUrl.toString(), {
+    method: 'POST',
+    headers: {
+      ...supabaseRestHeaders(env),
+      Prefer: 'resolution=ignore-duplicates,return=representation',
+    },
+    body: JSON.stringify({
+      news_item_id: newsItemId,
+      status: 'pending',
+      attempt_count: 1,
+    }),
+  });
+  if (!insertRes.ok) {
+    throw new Error(
+      `claimFbPostLog insert failed: ${insertRes.status} ${await insertRes.text()}`,
+    );
+  }
+  const inserted = (await insertRes.json()) as FbPostLogRow[];
+  if (inserted.length > 0) {
+    return { claimed: true, row: inserted[0], conflict: null };
+  }
+
+  // Step 2 — insert was a no-op due to conflict. Inspect the existing row.
+  const existing = await fetchFbPostLogByNewsItem(env, newsItemId);
+  if (!existing) {
+    // Should be unreachable: conflict was reported but row vanished. Treat as
+    // pending to avoid double-posting.
+    return { claimed: false, row: null, conflict: 'pending' };
+  }
+  if (existing.status === 'posted') {
+    return { claimed: false, row: existing, conflict: 'posted' };
+  }
+  if (existing.status === 'pending') {
+    return { claimed: false, row: existing, conflict: 'pending' };
+  }
+
+  // Step 3 — existing row is failed/skipped: try to take ownership for retry.
+  // PATCH is filtered on (id, status) so two concurrent retries can't both win.
+  const retryUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
+  retryUrl.searchParams.set('id', `eq.${existing.id}`);
+  retryUrl.searchParams.set('status', `in.(failed,skipped)`);
+  const retryRes = await fetch(retryUrl.toString(), {
+    method: 'PATCH',
+    headers: {
+      ...supabaseRestHeaders(env),
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify({
+      status: 'pending',
+      attempt_count: existing.attempt_count + 1,
+    }),
+  });
+  if (!retryRes.ok) {
+    throw new Error(
+      `claimFbPostLog retry update failed: ${retryRes.status} ${await retryRes.text()}`,
+    );
+  }
+  const retried = (await retryRes.json()) as FbPostLogRow[];
+  if (retried.length === 0) {
+    // Another invocation grabbed the retry first.
+    return { claimed: false, row: existing, conflict: 'pending' };
+  }
+  return { claimed: true, row: retried[0], conflict: null };
 }
 
 async function upsertFbPostLog(env: Env, row: FbPostLogUpsert): Promise<void> {
