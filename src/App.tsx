@@ -19,20 +19,6 @@ import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
-// Legacy homepage — accessible at /legacy for 14-day rollback (REMOVE 2026-05-09)
-const IndexLegacy = lazy(() => import("./pages/Index.legacy"));
-// Sub-route legacy fallbacks for Phase 3 cutover (REMOVE 2026-05-09)
-const LiveLegacy = lazy(() => import("./pages/Live.legacy"));
-const TournamentsLegacy = lazy(() => import("./pages/Tournaments.legacy"));
-const BlogLegacy = lazy(() => import("./pages/Blog.legacy"));
-const VideosLegacy = lazy(() => import("./pages/Videos.legacy"));
-const NewsLegacy = lazy(() => import("./pages/News.legacy"));
-const ForumLegacy = lazy(() => import("./pages/Forum.legacy"));
-const ToolsLegacy = lazy(() => import("./pages/Tools.legacy"));
-// Phase 4 detail-page legacy fallbacks (REMOVE 2026-05-09)
-const WatchLiveLegacy = lazy(() => import("./pages/WatchLive.legacy"));
-const TournamentDetailLegacy = lazy(() => import("./pages/TournamentDetail.legacy"));
-const ForumPostDetailLegacy = lazy(() => import("./pages/ForumPostDetail.legacy"));
 import RequireAuth from "@/components/auth/RequireAuth";
 import ConditionalAuth from "@/components/auth/ConditionalAuth";
 
@@ -619,19 +605,6 @@ const App = () => (
                     {/* Embed routes - no layout, minimal UI */}
                     <Route path="/embed/live/:id" element={<EmbedLive />} />
                     <Route path="/embed/video/:id" element={<EmbedVideo />} />
-                    {/* Legacy homepage — rollback fallback (REMOVE 2026-05-09) */}
-                    <Route path="/legacy" element={<IndexLegacy />} />
-                    {/* Sub-route legacy fallbacks — Phase 3 cutover (REMOVE 2026-05-09) */}
-                    <Route path="/live-legacy" element={<LiveLegacy />} />
-                    <Route path="/tournaments-legacy" element={<TournamentsLegacy />} />
-                    <Route path="/blog-legacy" element={<BlogLegacy />} />
-                    <Route path="/videos-legacy" element={<VideosLegacy />} />
-                    <Route path="/news-legacy" element={<NewsLegacy />} />
-                    <Route path="/forum-legacy" element={<ForumLegacy />} />
-                    <Route path="/tools-legacy" element={<ToolsLegacy />} />
-                    <Route path="/live-watch-legacy/:id" element={<WatchLiveLegacy />} />
-                    <Route path="/tournament-legacy/:slug" element={<ConditionalAuth><TournamentDetailLegacy /></ConditionalAuth>} />
-                    <Route path="/forum-post-legacy/:postId" element={<ForumPostDetailLegacy />} />
                     {/* Preview routes - design direction exploration, noindex */}
                     <Route path="/preview/the-line" element={<PreviewTheLine />} />
                     <Route path="/preview/the-line/live" element={<PreviewLiveList />} />
