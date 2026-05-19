@@ -26,6 +26,11 @@ dist-ssr
 # Local Cowork session artifacts
 .claude/worktrees/
 .claude/settings.local.json
+.claude/gh-token
+.claude/gh-token*
+
+# Personal SEO/growth planning notes (not part of the codebase)
+growth-tasks/
 
 # Supabase CLI temp
 supabase/.temp/
