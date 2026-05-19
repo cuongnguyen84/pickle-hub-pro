@@ -9,7 +9,6 @@ import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
-import { ConnectDuprBanner } from "@/components/dupr/ConnectDuprBanner";
 import { supabase } from "@/integrations/supabase/client";
 import "@/styles/the-line.css";
 
@@ -830,7 +829,6 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
       {/* DUPR connect prompt — slim banner above every page for authed
           users who haven't linked. Component guards internally on
           useAuth + useDuprConnection; renders nothing otherwise. */}
-      <ConnectDuprBanner />
 
       {children}
 
