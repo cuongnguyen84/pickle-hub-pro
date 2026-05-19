@@ -34,3 +34,10 @@ growth-tasks/
 
 # Supabase CLI temp
 supabase/.temp/
+
+# Cloudflare Workers — Wrangler build artifacts
+workers/**/.wrangler/
+workers/**/.dev.vars
+
+# Bundle analysis output
+dist/stats.html
