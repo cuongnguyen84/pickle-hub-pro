@@ -1,0 +1,47 @@
+# news-fetcher Cloudflare Worker
+#
+# Pulls pickleball news from the active sources in news_sources table,
+# parses RSS/Atom feeds, and writes deduped rows into news_items.
+#
+# Triggers:
+#   - HTTP POST /run               → manual trigger (admin tooling, smoke tests).
+#                                    Requires header X-Auth-Secret: $SCRAPER_AUTH_SECRET.
+#   - Scheduled cron (every 2h)    → automatic pull.
+#
+# Bindings + env required:
+#   [vars]
+#     SUPABASE_URL                  Supabase project URL
+#   [secrets] (wrangler secret put)
+#     SUPABASE_SERVICE_ROLE_KEY     Supabase service role key (PostgREST).
+#                                   Used for: SELECT news_sources, INSERT news_items,
+#                                   UPDATE news_sources (last_fetched_at, last_error).
+#     SCRAPER_AUTH_SECRET           Shared secret required for manual /run trigger.
+#
+# Why write to PostgREST instead of calling news-ingest edge function?
+#   - Fewer hops, no extra auth dance (we already need service_role for
+#     reading news_sources).
+#   - Bulk upserts with ON CONFLICT DO NOTHING are atomic — no race window
+#     between news-check and news-ingest.
+#   - The news-ingest endpoint stays for external callers (admin paste UI,
+#     future integrations) but is no longer in the critical path.
+
+name = "news-fetcher"
+main = "src/index.ts"
+compatibility_date = "2026-05-19"
+compatibility_flags = ["nodejs_compat"]
+
+# Cron — every 2 hours UTC. PPA Tour Asia tournament weeks can have multiple
+# news drops per day; 6h was too slow. Worker handler is idempotent (UPSERT
+# ON CONFLICT) so over-triggering is safe.
+[triggers]
+crons = ["0 */2 * * *"]
+
+[vars]
+SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
+
+[observability]
+enabled = true
+
+# Run near Supabase (Tokyo) for low-latency PostgREST round-trips.
+[placement]
+mode = "smart"
