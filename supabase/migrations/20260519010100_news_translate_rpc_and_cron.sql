@@ -7,7 +7,8 @@
 --    runs race, each row gets claimed by exactly one. Without this, a
 --    naive SELECT + UPDATE would double-translate rows.
 --
--- 2. pg_cron job: news-translate every 30 minutes (set up separately by
+-- 2. pg_cron job: news-translate daily at 00:30 UTC = 07:30 ICT (set up
+--    separately by
 --    seeding `vault.decrypted_secrets` with the shared auth secret first,
 --    then running the cron.schedule() block below).
 -- ============================================================================
