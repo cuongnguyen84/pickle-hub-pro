@@ -309,3 +309,4 @@ const NewsArticle = ({ language }: Props) => {
 };
 
 export default NewsArticle;
+// kick rebuild
