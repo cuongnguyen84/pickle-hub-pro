@@ -157,14 +157,34 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   // the current path so the route prop changes. Convention in this app
   // is "/x" ↔ "/vi/x", so we strip or prepend "/vi" on the leading segment.
   //
-  // Edge cases:
-  //   - Page has no VI twin (e.g. /admin/*) → still set i18n state and stay
-  //     on the same URL. Better than 404.
-  //   - Already on the target language → no-op.
+  // 2026-05-19 follow-up (Codex P2): only navigate when the current page
+  // actually has a /vi twin. Routes like /clb/:slug, /nguoi-choi/:slug,
+  // and /tran-dau/:slug are Vietnamese-canonical URLs with no /vi prefix;
+  // admin pages, /onboarding, /tools/*, /privacy, and /terms have no VI
+  // variant. For those, blindly prepending /vi would send users to NotFound.
+  // Whitelist the first path segment to keep the toggle safe — flip i18n
+  // state only, stay on the same URL.
+  const VI_ENABLED_FIRST_SEGMENTS = new Set<string>([
+    "", "blog", "news", "forum", "feed", "clubs",
+    "tournaments", "tournament", "videos", "watch",
+    "rankings", "live", "livestream", "social", "su-kien",
+    "u", "org", "account", "notifications", "thong-bao",
+    "dang-ky", "khoi-phuc-dang-ky", "search",
+  ]);
+  const hasViTwin = (path: string): boolean => {
+    const en = path === "/vi" || path === "/vi/"
+      ? "/"
+      : path.startsWith("/vi/")
+        ? path.slice(3)
+        : path;
+    const seg = en.split("/")[1] ?? "";
+    return VI_ENABLED_FIRST_SEGMENTS.has(seg);
+  };
   const switchLanguage = (next: "en" | "vi") => {
     if (next === language) return;
     setLanguage(next);
     const cur = location.pathname;
+    if (!hasViTwin(cur)) return; // no localized twin → keep URL, flip state only
     let target = cur;
     if (next === "vi") {
       if (!cur.startsWith("/vi/") && cur !== "/vi") {
@@ -179,9 +199,6 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
     }
     if (target !== cur) navigate(target + location.search + location.hash);
   };
-  const { user, signOut } = useAuth();
-  // Pulled here purely for the "View my profile" dropdown link. The
-  // profile.username slug isn't stored on the auth User object — useAuth
   // gives us auth.users only. Defaults to undefined while loading; the
   // menu item disables itself in that state.
   const { profile } = useUserProfile();
