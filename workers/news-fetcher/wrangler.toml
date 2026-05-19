@@ -34,7 +34,7 @@ compatibility_flags = ["nodejs_compat"]
 # news drops per day; 6h was too slow. Worker handler is idempotent (UPSERT
 # ON CONFLICT) so over-triggering is safe.
 [triggers]
-crons = ["0 */2 * * *"]
+crons = ["0 0 * * *"]  # 00:00 UTC = 07:00 ICT, daily morning batch
 
 [vars]
 SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
