@@ -201,7 +201,12 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   };
   // gives us auth.users only. Defaults to undefined while loading; the
   // menu item disables itself in that state.
-  const { profile } = useUserProfile();
+  const { user, signOut } = useAuth();
+  // Pulled here purely for the "View my profile" dropdown link. The
+  // profile.username slug isn't stored on the auth User object — useAuth
+  // gives us auth.users only. Defaults to undefined while loading; the
+  // menu item disables itself in that state.
+    const { profile } = useUserProfile();
   const profileUsername = (profile as { username?: string | null } | null | undefined)?.username ?? null;
 
   // Role flags for the avatar dropdown. We DON'T gate the dropdown opening
