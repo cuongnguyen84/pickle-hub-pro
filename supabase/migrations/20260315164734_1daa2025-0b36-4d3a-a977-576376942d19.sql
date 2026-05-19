@@ -1,0 +1,1 @@
+ALTER TABLE public.chat_message_likes REPLICA IDENTITY FULL;

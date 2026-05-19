@@ -1,0 +1,924 @@
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { TheLineLayout } from '@/components/layout';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, LogIn } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useTeamMatch, CreateTournamentInput } from '@/hooks/useTeamMatch';
+import { GameTemplateEditor, GameTemplateItem, getDefaultTemplates } from '@/components/teamMatch/GameTemplateEditor';
+import { useI18n } from '@/i18n';
+import { getLoginUrl } from '@/lib/auth-config';
+
+type Step = 1 | 2 | 3 | 4;
+
+const isPowerOfTwo = (n: number): boolean => n > 0 && (n & (n - 1)) === 0;
+
+const ROSTER_SIZE_OPTIONS = [
+  { value: 4, label: '4' },
+  { value: 6, label: '6' },
+  { value: 8, label: '8' },
+];
+
+const surfaceCard: React.CSSProperties = {
+  background: 'var(--tl-bg-elev)',
+  border: '1px solid var(--tl-border)',
+  borderRadius: 'var(--tl-radius-lg)',
+  padding: 28,
+};
+
+const stepKickerStyle: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  fontWeight: 500,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-green)',
+  marginBottom: 8,
+};
+
+const stepHeadingStyle: React.CSSProperties = {
+  fontFamily: 'Instrument Serif, serif',
+  fontStyle: 'italic',
+  fontWeight: 400,
+  fontSize: 26,
+  letterSpacing: '-0.015em',
+  lineHeight: 1.05,
+  margin: 0,
+  color: 'var(--tl-fg)',
+};
+
+const stepDescStyle: React.CSSProperties = {
+  fontFamily: 'Geist Mono, ui-monospace, monospace',
+  fontSize: 11,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--tl-fg-3)',
+  marginTop: 6,
+};
+
+// Token-styled toggle row (replaces "rounded-lg border p-4")
+const toggleRowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+  padding: 16,
+  borderRadius: 'var(--tl-radius)',
+  background: 'var(--tl-bg)',
+  border: '1px solid var(--tl-border)',
+};
+
+// Token-styled info card (replaces ad-hoc bg-muted/50 / bg-amber-500/10 etc.)
+const infoCardStyle = (variant: 'neutral' | 'warning' | 'success' | 'destructive'): React.CSSProperties => {
+  if (variant === 'warning') {
+    return {
+      background: 'rgba(233, 182, 73, 0.10)',
+      border: '1px solid rgba(233, 182, 73, 0.30)',
+    };
+  }
+  if (variant === 'success') {
+    return {
+      background: 'var(--tl-green-glow)',
+      border: '1px solid rgba(0, 185, 107, 0.30)',
+    };
+  }
+  if (variant === 'destructive') {
+    return {
+      background: 'rgba(255, 65, 54, 0.10)',
+      border: '1px solid rgba(255, 65, 54, 0.30)',
+    };
+  }
+  return {
+    background: 'var(--tl-bg)',
+    border: '1px solid var(--tl-border)',
+  };
+};
+
+const infoCardIconColor = (variant: 'neutral' | 'warning' | 'success' | 'destructive'): string => {
+  if (variant === 'warning') return 'var(--tl-gold)';
+  if (variant === 'success') return 'var(--tl-green)';
+  if (variant === 'destructive') return 'var(--tl-live)';
+  return 'var(--tl-fg-3)';
+};
+
+export default function TeamMatchSetup() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { t, language } = useI18n();
+  const { createTournament, isCreating } = useTeamMatch();
+
+  const STEPS = [
+    { id: 1, title: t.teamMatch.setup.stepBasicInfo, icon: Users },
+    { id: 2, title: t.teamMatch.setup.stepGameTemplates, icon: Gamepad2 },
+    { id: 3, title: t.teamMatch.setup.stepDreambreaker, icon: Zap },
+    { id: 4, title: t.teamMatch.setup.stepFormat, icon: Trophy },
+  ];
+
+  const [step, setStep] = useState<Step>(1);
+
+  const [name, setName] = useState('');
+  const [rosterSize, setRosterSize] = useState<4 | 6 | 8>(4);
+  const [teamCount, setTeamCount] = useState(4);
+  const [requireRegistration, setRequireRegistration] = useState(false);
+  const [requireMinGames, setRequireMinGames] = useState(false);
+
+  const [templates, setTemplates] = useState<GameTemplateItem[]>(() => getDefaultTemplates(4));
+
+  const [hasDreambreaker, setHasDreambreaker] = useState(false);
+
+  const [format, setFormat] = useState<'round_robin' | 'single_elimination' | 'rr_playoff'>('round_robin');
+  const [playoffTeamCount, setPlayoffTeamCount] = useState(4);
+  const [hasThirdPlaceMatch, setHasThirdPlaceMatch] = useState(false);
+
+  const isSingleElimination = format === 'single_elimination';
+  const isValidTeamCountForSE = isPowerOfTwo(teamCount) && teamCount >= 4;
+  const teamCountWarning = isSingleElimination && !isValidTeamCountForSE
+    ? t.teamMatch.setup.invalidTeamCount
+    : null;
+
+  const handleRosterSizeChange = (size: 4 | 6 | 8) => {
+    setRosterSize(size);
+    setTemplates(getDefaultTemplates(size));
+  };
+
+  const isEvenGames = templates.length % 2 === 0;
+  const effectiveDreambreaker = isEvenGames && hasDreambreaker;
+
+  const canProceed = () => {
+    switch (step) {
+      case 1:
+        return name.trim().length >= 3 && teamCount >= 2;
+      case 2:
+        return templates.length >= 1;
+      case 3:
+        return true;
+      case 4:
+        if (format === 'single_elimination') {
+          return isValidTeamCountForSE;
+        }
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!user) {
+      navigate(getLoginUrl('/tools/team-match/new'));
+      return;
+    }
+
+    const input: CreateTournamentInput = {
+      name: name.trim(),
+      team_roster_size: rosterSize,
+      team_count: teamCount,
+      format,
+      playoff_team_count: format === 'rr_playoff' ? playoffTeamCount : undefined,
+      require_registration: requireRegistration,
+      has_dreambreaker: effectiveDreambreaker,
+      require_min_games_per_player: requireMinGames,
+      has_third_place_match: format === 'single_elimination' ? hasThirdPlaceMatch : false,
+      game_templates: templates.map(tpl => ({
+        order_index: tpl.order_index,
+        game_type: tpl.game_type,
+        display_name: tpl.display_name,
+        scoring_type: tpl.scoring_type,
+      })),
+    };
+
+    try {
+      const result = await createTournament(input);
+      navigate(`/tools/team-match/${result.share_id}`);
+    } catch (error) {
+      // Error handled in hook
+    }
+  };
+
+  // ─── Login gate ──────────────────────────────────────────────────────────
+  if (!user) {
+    return (
+      <TheLineLayout title={t.teamMatch.setup.title} noindex={true} active="lab">
+        <div className="tl-shell">
+          <nav className="tl-breadcrumb">
+            <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+            <span className="sep">/</span>
+            <Link to="/tools/team-match">Team Match</Link>
+            <span className="sep">/</span>
+            <span className="current">{language === 'vi' ? 'Tạo mới' : 'New'}</span>
+          </nav>
+          <section style={{ padding: '48px 0 80px' }}>
+            <div
+              style={{
+                ...surfaceCard,
+                maxWidth: 480,
+                margin: '0 auto',
+                textAlign: 'center',
+                padding: '40px 28px',
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  background: 'var(--tl-green-glow)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 20,
+                }}
+              >
+                <Users className="w-7 h-7" style={{ color: 'var(--tl-green)' }} />
+              </div>
+              <h2 style={{ ...stepHeadingStyle, fontSize: 24, marginBottom: 10 }}>
+                {t.teamMatch.setup.loginRequired}
+              </h2>
+              <p style={{ fontSize: 14, color: 'var(--tl-fg-3)', marginBottom: 24, lineHeight: 1.5 }}>
+                {t.teamMatch.setup.loginRequiredDesc}
+              </p>
+              <button
+                type="button"
+                className="tl-btn green"
+                onClick={() => navigate(getLoginUrl('/tools/team-match/new'))}
+              >
+                <LogIn className="w-4 h-4" />
+                {t.auth.login}
+              </button>
+            </div>
+          </section>
+        </div>
+      </TheLineLayout>
+    );
+  }
+
+  // ─── Wizard ──────────────────────────────────────────────────────────────
+  const stepIndex = step - 1;
+
+  return (
+    <TheLineLayout title={t.teamMatch.setup.title} noindex={true} active="lab">
+      <div className="tl-shell">
+        <nav className="tl-breadcrumb">
+          <Link to="/tools">{language === 'vi' ? 'Bracket Lab' : 'Bracket Lab'}</Link>
+          <span className="sep">/</span>
+          <Link to="/tools/team-match">Team Match</Link>
+          <span className="sep">/</span>
+          <span className="current">{language === 'vi' ? 'Tạo mới' : 'New'}</span>
+        </nav>
+
+        <header className="tl-page-head">
+          <div className="kicker">
+            ◆ {language === 'vi' ? 'Tạo giải mới · Team Match MLP' : 'New tournament · Team Match MLP'}
+          </div>
+          <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
+            <em className="tl-serif">{language === 'vi' ? 'Tạo' : 'Create'}</em>{' '}
+            <span className="sans">{language === 'vi' ? 'team match.' : 'team match.'}</span>
+          </h1>
+          <p>{t.teamMatch.setup.subtitle}</p>
+        </header>
+
+        {/* Step indicators — token-driven, mono caps below */}
+        <section style={{ marginTop: 32, marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              flexWrap: 'wrap',
+              padding: '0 8px',
+            }}
+          >
+            {STEPS.map((s, i) => {
+              const isActive = step === s.id;
+              const isPast = step > s.id;
+              const StepIcon = s.icon;
+              const circleBg = isActive
+                ? 'var(--tl-green)'
+                : isPast
+                  ? 'var(--tl-green-glow)'
+                  : 'var(--tl-surface)';
+              const circleFg = isActive
+                ? 'var(--tl-bg)'
+                : isPast
+                  ? 'var(--tl-green)'
+                  : 'var(--tl-fg-3)';
+              const circleBorder = isActive || isPast ? 'var(--tl-green)' : 'var(--tl-border)';
+
+              return (
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: circleBg,
+                        color: circleFg,
+                        border: `2px solid ${circleBorder}`,
+                        transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+                      }}
+                    >
+                      {isPast ? <Check className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />}
+                    </div>
+                    <span
+                      style={{
+                        display: 'none',
+                        fontFamily: 'Geist Mono, ui-monospace, monospace',
+                        fontSize: 11,
+                        fontWeight: isActive ? 600 : 500,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        color: isActive ? 'var(--tl-fg)' : 'var(--tl-fg-3)',
+                      }}
+                      className="md:inline"
+                    >
+                      {s.title}
+                    </span>
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <div
+                      style={{
+                        width: 32,
+                        height: 2,
+                        background: isPast ? 'var(--tl-green)' : 'var(--tl-border)',
+                        margin: '0 4px',
+                        transition: 'background 0.15s',
+                      }}
+                      className="hidden sm:block"
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section style={{ maxWidth: 720, margin: '0 auto', padding: '24px 0 0', width: '100%' }}>
+          <div style={surfaceCard}>
+            <div style={{ marginBottom: 24 }}>
+              <div style={stepKickerStyle}>
+                ◆ {language === 'vi' ? `Bước ${step}/${STEPS.length}` : `Step ${step}/${STEPS.length}`}
+              </div>
+              <h2 style={stepHeadingStyle}>{STEPS[stepIndex].title}</h2>
+            </div>
+
+            {/* Step 1: Basic Info */}
+            {step === 1 && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">
+                    {t.teamMatch.setup.tournamentName}{' '}
+                    <span style={{ color: 'var(--tl-live)' }}>*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t.teamMatch.setup.tournamentNamePlaceholder}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>
+                    {t.teamMatch.setup.playersPerTeam}{' '}
+                    <span style={{ color: 'var(--tl-live)' }}>*</span>
+                  </Label>
+                  <RadioGroup
+                    value={rosterSize.toString()}
+                    onValueChange={(v) => handleRosterSizeChange(Number(v) as 4 | 6 | 8)}
+                    className="grid grid-cols-3 gap-3"
+                  >
+                    {ROSTER_SIZE_OPTIONS.map(opt => {
+                      const selected = rosterSize === opt.value;
+                      return (
+                        <div key={opt.value}>
+                          <RadioGroupItem
+                            value={opt.value.toString()}
+                            id={`roster-${opt.value}`}
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor={`roster-${opt.value}`}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 16,
+                              borderRadius: 'var(--tl-radius)',
+                              border: `2px solid ${selected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                              background: selected ? 'var(--tl-green-glow)' : 'var(--tl-bg)',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.15s, background 0.15s',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontFamily: 'Instrument Serif, serif',
+                                fontStyle: 'italic',
+                                fontSize: 32,
+                                fontWeight: 400,
+                                lineHeight: 1,
+                                color: 'var(--tl-fg)',
+                              }}
+                            >
+                              {opt.label}
+                            </span>
+                            <span
+                              style={{
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontSize: 10.5,
+                                color: 'var(--tl-fg-3)',
+                                letterSpacing: '0.06em',
+                                textTransform: 'uppercase',
+                                marginTop: 6,
+                              }}
+                            >
+                              {language === 'vi' ? 'VĐV' : 'players'}
+                            </span>
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
+                  <p
+                    style={{
+                      fontSize: 12.5,
+                      color: 'var(--tl-fg-3)',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 6,
+                      lineHeight: 1.5,
+                      margin: 0,
+                    }}
+                  >
+                    <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>
+                      {language === 'vi'
+                        ? 'Số nam/nữ tham khảo theo kiểu MLP. BTC có thể tự quyết định tỷ lệ phù hợp.'
+                        : 'MLP-style player count. Organizers decide the actual male/female ratio.'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="teamCount">
+                    {t.teamMatch.setup.teamCount}{' '}
+                    <span style={{ color: 'var(--tl-live)' }}>*</span>
+                  </Label>
+                  <Input
+                    id="teamCount"
+                    type="number"
+                    min={2}
+                    max={32}
+                    value={teamCount}
+                    onChange={(e) => setTeamCount(Number(e.target.value))}
+                  />
+                </div>
+
+                <div style={toggleRowStyle}>
+                  <div>
+                    <Label>{t.teamMatch.setup.requireRegistration}</Label>
+                    <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                      {t.teamMatch.setup.requireRegistrationDesc}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={requireRegistration}
+                    onCheckedChange={setRequireRegistration}
+                  />
+                </div>
+
+                <div style={toggleRowStyle}>
+                  <div>
+                    <Label>{t.teamMatch.setup.requireMinGames}</Label>
+                    <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                      {t.teamMatch.setup.requireMinGamesDesc}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={requireMinGames}
+                    onCheckedChange={setRequireMinGames}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Game Templates — child component (deferred PR D.2) */}
+            {step === 2 && (
+              <GameTemplateEditor
+                templates={templates}
+                onChange={setTemplates}
+                rosterSize={rosterSize}
+              />
+            )}
+
+            {/* Step 3: DreamBreaker */}
+            {step === 3 && (
+              <div className="space-y-5">
+                {!isEvenGames ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      padding: 16,
+                      borderRadius: 'var(--tl-radius)',
+                      ...infoCardStyle('neutral'),
+                    }}
+                  >
+                    <Info className="w-5 h-5 mt-0.5" style={{ color: infoCardIconColor('neutral') }} />
+                    <div>
+                      <p style={{ fontWeight: 500, color: 'var(--tl-fg)', fontSize: 14, margin: 0 }}>
+                        {language === 'vi'
+                          ? `Số game là số lẻ (${templates.length} games)`
+                          : `Odd number of games (${templates.length} games)`}
+                      </p>
+                      <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.5 }}>
+                        {language === 'vi'
+                          ? 'Không cần DreamBreaker vì đã có ván quyết định (ván cuối cùng).'
+                          : 'No DreamBreaker needed as the last game serves as tiebreaker.'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 12,
+                        padding: 16,
+                        borderRadius: 'var(--tl-radius)',
+                        ...infoCardStyle('warning'),
+                      }}
+                    >
+                      <Info className="w-5 h-5 mt-0.5" style={{ color: infoCardIconColor('warning') }} />
+                      <div>
+                        <p style={{ fontWeight: 600, color: 'var(--tl-gold)', fontSize: 14, margin: 0 }}>
+                          {language === 'vi'
+                            ? `Số game là số chẵn (${templates.length} games)`
+                            : `Even number of games (${templates.length} games)`}
+                        </p>
+                        <p style={{ fontSize: 13, color: 'var(--tl-fg-2)', marginTop: 4, lineHeight: 1.5 }}>
+                          {language === 'vi'
+                            ? 'Khi 2 đội thắng số game bằng nhau, cần DreamBreaker để phân định. Khi bật, ván lẻ cuối cùng sẽ là ván Dreambreaker.'
+                            : 'When teams tie on game wins, DreamBreaker determines the winner.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={toggleRowStyle}>
+                      <div>
+                        <Label>{language === 'vi' ? 'Bật DreamBreaker' : 'Enable DreamBreaker'}</Label>
+                        <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                          {language === 'vi'
+                            ? 'Thêm ván quyết định khi 2 đội hòa về số game thắng'
+                            : 'Add tiebreaker when teams are tied on games won'}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={hasDreambreaker}
+                        onCheckedChange={setHasDreambreaker}
+                      />
+                    </div>
+
+                    {hasDreambreaker && (
+                      <div
+                        style={{
+                          paddingLeft: 16,
+                          borderLeft: '2px solid var(--tl-green)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 14,
+                        }}
+                      >
+                        <div
+                          style={{
+                            ...surfaceCard,
+                            background: 'var(--tl-bg)',
+                            padding: 16,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 12,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Zap className="w-5 h-5" style={{ color: 'var(--tl-green)' }} />
+                            <span
+                              style={{
+                                fontFamily: 'Instrument Serif, serif',
+                                fontStyle: 'italic',
+                                fontSize: 18,
+                                fontWeight: 400,
+                                color: 'var(--tl-fg)',
+                              }}
+                            >
+                              {language === 'vi' ? 'Ván Dreambreaker (Ván cuối cùng)' : 'Dreambreaker Game (Final Game)'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, fontSize: 13 }}>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 0',
+                                borderBottom: '1px solid var(--tl-border)',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                  fontSize: 11,
+                                  color: 'var(--tl-fg-3)',
+                                  letterSpacing: '0.06em',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {language === 'vi' ? 'Hình thức' : 'Format'}
+                              </span>
+                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>
+                                {language === 'vi' ? 'Đánh Đơn (Singles)' : 'Singles'}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 0',
+                                borderBottom: '1px solid var(--tl-border)',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                  fontSize: 11,
+                                  color: 'var(--tl-fg-3)',
+                                  letterSpacing: '0.06em',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {language === 'vi' ? 'Số VĐV mỗi đội' : 'Players per team'}
+                              </span>
+                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>
+                                {language === 'vi' ? '4 VĐV (Tự do chọn nam/nữ)' : '4 players (any gender)'}
+                              </span>
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 0',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                  fontSize: 11,
+                                  color: 'var(--tl-fg-3)',
+                                  letterSpacing: '0.06em',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {language === 'vi' ? 'Cách tính điểm' : 'Scoring'}
+                              </span>
+                              <span style={{ fontWeight: 600, color: 'var(--tl-fg)' }}>Rally Scoring</span>
+                            </div>
+                          </div>
+
+                          <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', margin: 0, lineHeight: 1.55 }}>
+                            {language === 'vi'
+                              ? 'Dreambreaker theo chuẩn MLP: 4 VĐV thi đấu đơn, mỗi pha bóng đều tính điểm. Đội trưởng sẽ chọn 4 VĐV bất kỳ (không phân biệt giới tính) khi line up.'
+                              : 'MLP-standard Dreambreaker: 4 singles players, rally scoring. Captain chooses 4 players (any gender) during lineup.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Step 4: Format */}
+            {step === 4 && (
+              <div className="space-y-5">
+                <RadioGroup
+                  value={format}
+                  onValueChange={(v) => setFormat(v as any)}
+                  className="space-y-3"
+                >
+                  {[
+                    { value: 'round_robin', title: t.teamMatch.setup.formatRoundRobin, desc: t.teamMatch.setup.formatRoundRobinDesc, id: 'format-rr' },
+                    { value: 'single_elimination', title: t.teamMatch.setup.formatSingleElimination, desc: t.teamMatch.setup.formatSingleEliminationDesc, id: 'format-se' },
+                    { value: 'rr_playoff', title: t.teamMatch.setup.formatRrPlayoff, desc: t.teamMatch.setup.formatRrPlayoffDesc, id: 'format-rrp' },
+                  ].map(opt => {
+                    const selected = format === opt.value;
+                    return (
+                      <div
+                        key={opt.value}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 12,
+                          padding: 16,
+                          borderRadius: 'var(--tl-radius)',
+                          border: `1px solid ${selected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                          background: selected ? 'var(--tl-green-glow)' : 'var(--tl-bg)',
+                          cursor: 'pointer',
+                          transition: 'border-color 0.15s, background 0.15s',
+                        }}
+                      >
+                        <RadioGroupItem value={opt.value} id={opt.id} className="mt-1" />
+                        <div style={{ flex: 1 }}>
+                          <Label htmlFor={opt.id} style={{ fontWeight: 600, fontSize: 14, cursor: 'pointer', color: 'var(--tl-fg)' }}>
+                            {opt.title}
+                          </Label>
+                          <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.5 }}>
+                            {opt.desc}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </RadioGroup>
+
+                {format === 'rr_playoff' && (
+                  <div
+                    style={{
+                      paddingLeft: 16,
+                      borderLeft: '2px solid var(--tl-green)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                    }}
+                  >
+                    <Label htmlFor="playoffCount">{t.teamMatch.setup.playoffTeams}</Label>
+                    <Select
+                      value={playoffTeamCount.toString()}
+                      onValueChange={(v) => setPlayoffTeamCount(Number(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">{language === 'vi' ? '2 đội (Chung kết)' : '2 teams (Finals)'}</SelectItem>
+                        <SelectItem value="4">{language === 'vi' ? '4 đội (Bán kết)' : '4 teams (Semifinals)'}</SelectItem>
+                        <SelectItem value="8">{language === 'vi' ? '8 đội (Tứ kết)' : '8 teams (Quarterfinals)'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {format === 'single_elimination' && (
+                  <div
+                    style={{
+                      paddingLeft: 16,
+                      borderLeft: '2px solid var(--tl-green)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 14,
+                    }}
+                  >
+                    {teamCountWarning && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: 12,
+                          borderRadius: 'var(--tl-radius)',
+                          ...infoCardStyle('destructive'),
+                        }}
+                      >
+                        <Info className="w-4 h-4 mt-0.5" style={{ color: infoCardIconColor('destructive') }} />
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tl-live)', margin: 0 }}>
+                            {teamCountWarning}
+                          </p>
+                          <p style={{ fontSize: 12, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                            {language === 'vi'
+                              ? `Hiện tại: ${teamCount} đội. Quay lại bước 1 để điều chỉnh.`
+                              : `Current: ${teamCount} teams. Go back to step 1 to adjust.`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {isValidTeamCountForSE && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: 12,
+                          borderRadius: 'var(--tl-radius)',
+                          ...infoCardStyle('success'),
+                        }}
+                      >
+                        <Check className="w-4 h-4 mt-0.5" style={{ color: infoCardIconColor('success') }} />
+                        <p style={{ fontSize: 13, color: 'var(--tl-green)', margin: 0, fontWeight: 500 }}>
+                          {language === 'vi'
+                            ? `${teamCount} đội — Hợp lệ cho Single Elimination`
+                            : `${teamCount} teams — Valid for Single Elimination`}
+                        </p>
+                      </div>
+                    )}
+
+                    <div style={toggleRowStyle}>
+                      <div>
+                        <Label>{t.teamMatch.setup.thirdPlaceMatch}</Label>
+                        <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', marginTop: 4, lineHeight: 1.45 }}>
+                          {t.teamMatch.setup.thirdPlaceMatchDesc}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={hasThirdPlaceMatch}
+                        onCheckedChange={setHasThirdPlaceMatch}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 10,
+                        padding: 12,
+                        borderRadius: 'var(--tl-radius)',
+                        ...infoCardStyle('neutral'),
+                      }}
+                    >
+                      <Info className="w-4 h-4 mt-0.5" style={{ color: infoCardIconColor('neutral') }} />
+                      <p style={{ fontSize: 13, color: 'var(--tl-fg-3)', margin: 0, lineHeight: 1.5 }}>
+                        {language === 'vi'
+                          ? 'Sau khi tạo giải, BTC sẽ chọn cách ghép đội: Bốc thăm ngẫu nhiên hoặc Xếp thủ công.'
+                          : 'After creation, organizers can choose: Random draw or Manual pairing.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Navigation buttons — sticky bottom dock */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 8,
+              marginTop: 24,
+              position: 'sticky',
+              bottom: 16,
+              padding: '12px 0',
+              background: 'linear-gradient(to top, var(--tl-bg) 50%, transparent)',
+            }}
+          >
+            <button
+              type="button"
+              className="tl-btn"
+              onClick={() => setStep((s) => (s - 1) as Step)}
+              disabled={step === 1}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              {t.quickTable.back}
+            </button>
+
+            {step < 4 ? (
+              <button
+                type="button"
+                className="tl-btn green"
+                onClick={() => setStep((s) => (s + 1) as Step)}
+                disabled={!canProceed()}
+              >
+                {t.quickTable.continue}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="tl-btn green"
+                onClick={handleSubmit}
+                disabled={isCreating}
+              >
+                {isCreating ? t.teamMatch.setup.creating : t.teamMatch.setup.createBtn}
+                <Check className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </section>
+        <div style={{ height: 80 }} />
+      </div>
+    </TheLineLayout>
+  );
+}

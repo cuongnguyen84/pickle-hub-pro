@@ -1,0 +1,946 @@
+import { Link } from "react-router-dom";
+
+/**
+ * SEO landing page content for /tools hub
+ * ~800 words of keyword-rich, educational content
+ */
+export const ToolsHubSeoContent = () => (
+  <section className="mt-16 border-t border-border pt-12 space-y-8 max-w-3xl">
+    <div>
+      <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+        What Are Pickleball Tournament Tools?
+      </h2>
+      <p className="text-muted-foreground mb-4">
+        Pickleball tournament tools are specialized software designed to help organizers create brackets, manage players, schedule matches, and track scores for pickleball competitions. Unlike generic tournament platforms, pickleball-specific tools account for the sport's unique requirements: court rotation, rest time between games, doubles pairing logic, and the various formats used across recreational, club, and competitive play.
+      </p>
+      <p className="text-muted-foreground">
+        The Pickle Hub offers a complete suite of free pickleball tournament tools that cover every format — from casual round robin events at your local club to MLP-style team competitions and large-scale double elimination brackets. Each tool is purpose-built for pickleball organizers, referees, and players.
+      </p>
+    </div>
+
+    <div>
+      <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+        Why Use Pickleball-Specific Tournament Software?
+      </h2>
+      <p className="text-muted-foreground mb-4">
+        Many organizers still rely on spreadsheets, whiteboards, or generic platforms like Challonge to run pickleball tournaments. While these work in a pinch, they create pain points that pickleball-specific tools solve:
+      </p>
+      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
+        <li><strong>Court rotation complexity</strong> — Pickleball venues often have limited courts. Our tools automatically schedule matches to maximize court usage and minimize player wait times.</li>
+        <li><strong>Doubles pairing logic</strong> — Round robin doubles tournaments need intelligent pairing to avoid rematches and ensure balanced competition. Generic bracket makers don't handle this.</li>
+        <li><strong>Real-time scoring</strong> — Referees and organizers can update scores from their phones, with live standings visible to all participants instantly.</li>
+        <li><strong>Format variety</strong> — Pickleball uses round robin, single elimination, double elimination, MLP team format, and hybrid formats. One platform handles them all.</li>
+      </ul>
+      <p className="text-muted-foreground">
+        The result: less time managing logistics, more time playing pickleball. Our tools are free, mobile-friendly, and require no app download — just open your browser and start organizing.
+      </p>
+    </div>
+
+    <div>
+      <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+        Choose the Right Pickleball Tournament Format
+      </h2>
+      <p className="text-muted-foreground mb-4">
+        Selecting the right tournament format depends on your player count, available courts, time constraints, and competitive level. Here's how each tool maps to common scenarios:
+      </p>
+      <div className="space-y-3">
+        <div className="p-4 rounded-lg bg-muted/50 border border-border">
+          <Link to="/tools/quick-tables" className="font-semibold text-primary hover:underline">Quick Tables — Pickleball Bracket Generator</Link>
+          <p className="text-sm text-muted-foreground mt-1">Best for: Club events with 4–48 players. Supports round robin groups with automatic playoff seeding. The fastest way to get a pickleball tournament running.</p>
+        </div>
+        <div className="p-4 rounded-lg bg-muted/50 border border-border">
+          <Link to="/tools/team-match" className="font-semibold text-primary hover:underline">Team Match — MLP-Style Pickleball Competition</Link>
+          <p className="text-sm text-muted-foreground mt-1">Best for: Team-based events with 2–16 teams. Inspired by Major League Pickleball with lineup management, dreambreaker games, and rally scoring.</p>
+        </div>
+        <div className="p-4 rounded-lg bg-muted/50 border border-border">
+          <Link to="/tools/doubles-elimination" className="font-semibold text-primary hover:underline">Doubles Elimination — Double Elimination Bracket</Link>
+          <p className="text-sm text-muted-foreground mt-1">Best for: Competitive events with 32+ teams. Gives every team a second chance through the losers bracket before elimination.</p>
+        </div>
+        <div className="p-4 rounded-lg bg-muted/50 border border-border">
+          <Link to="/tools/flex-tournament" className="font-semibold text-primary hover:underline">Flex Tournament — Custom Pickleball Bracket Maker</Link>
+          <p className="text-sm text-muted-foreground mt-1">Best for: Non-standard formats, training sessions, or creative tournament structures. Full control over groups, matches, and scoring rules.</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+        Built for Pickleball Organizers, Referees & Players
+      </h2>
+      <p className="text-muted-foreground">
+        Whether you're a club director running weekly round robins, a tournament director managing a 128-team bracket, or a referee scoring matches on the go — The Pickle Hub's tournament tools are designed for you. All tools are free, work on any device, and require no technical expertise. Create your first pickleball tournament bracket in under 60 seconds.
+      </p>
+    </div>
+
+    <div>
+      <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+        Learn More About Pickleball Tournament Organization
+      </h2>
+      <p className="text-muted-foreground mb-3">
+        Read our in-depth guides to get the most out of your pickleball events:
+      </p>
+      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+        <li><Link to="/blog/best-pickleball-tournament-software-2026" className="text-primary hover:underline">Best Pickleball Tournament Software 2026</Link> — Compare free tools for organizing pickleball competitions.</li>
+        <li><Link to="/blog/how-to-create-pickleball-bracket" className="text-primary hover:underline">How to Create a Pickleball Bracket</Link> — Step-by-step guide for round robin and elimination brackets.</li>
+        <li><Link to="/blog/pickleball-round-robin-generator-guide" className="text-primary hover:underline">Pickleball Round Robin Generator Guide</Link> — Everything you need to run the perfect round robin tournament.</li>
+        <li><Link to="/blog/free-pickleball-bracket-generator" className="text-primary hover:underline">Free Pickleball Bracket Generator</Link> — Create tournament brackets in 60 seconds with no signup required.</li>
+        <li><Link to="/blog/pickleball-bracket-templates" className="text-primary hover:underline">Pickleball Bracket Templates</Link> — Free templates for 4-64 players across all tournament formats.</li>
+        <li><Link to="/blog/mlp-format-explained" className="text-primary hover:underline">MLP Format Explained</Link> — Complete guide to Major League Pickleball team match rules and dreambreaker.</li>
+        <li><Link to="/blog/pickleball-live-streaming-guide" className="text-primary hover:underline">Pickleball Live Streaming Guide</Link> — How to watch and stream pickleball tournaments online for free.</li>
+      </ul>
+    </div>
+  </section>
+);
+
+/**
+ * SEO content for /tools/quick-tables — refreshed to TheLineLayout
+ * design language. Other functions in this file stay on legacy
+ * styling until PR B/C/D refresh their respective tools.
+ */
+export const QuickTablesSeoContent = () => {
+  const sectionStyle: React.CSSProperties = {
+    marginTop: 32,
+  };
+  const h2Style: React.CSSProperties = {
+    fontFamily: "Instrument Serif, serif",
+    fontStyle: "italic",
+    fontWeight: 400,
+    fontSize: "clamp(24px, 3vw, 32px)",
+    letterSpacing: "-0.02em",
+    lineHeight: 1.1,
+    color: "var(--tl-fg)",
+    margin: "0 0 14px",
+  };
+  const pStyle: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+    margin: "0 0 12px",
+  };
+  const ulStyle: React.CSSProperties = {
+    margin: "0 0 12px",
+    padding: 0,
+    listStyle: "none",
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+  };
+  const liStyle: React.CSSProperties = {
+    paddingLeft: 18,
+    position: "relative",
+    margin: "8px 0",
+  };
+  const linkStyle: React.CSSProperties = {
+    color: "var(--tl-green)",
+    textDecoration: "none",
+    borderBottom: "1px solid color-mix(in srgb, var(--tl-green) 35%, transparent)",
+    paddingBottom: 1,
+  };
+  const faqQ: React.CSSProperties = {
+    fontWeight: 600,
+    color: "var(--tl-fg)",
+    fontSize: 15,
+    margin: "0 0 6px",
+  };
+  const faqA: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 14.5,
+    lineHeight: 1.6,
+    margin: 0,
+  };
+
+  return (
+    <section
+      style={{
+        marginTop: 48,
+        paddingTop: 40,
+        borderTop: "1px solid var(--tl-border)",
+        maxWidth: 768,
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--tl-green)",
+          marginBottom: 20,
+        }}
+      >
+        ◆ The long read
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>What Is a Pickleball Bracket Generator?</h2>
+        <p style={pStyle}>
+          A pickleball bracket generator is a tool that automatically creates tournament brackets
+          based on your player count and chosen format. Instead of manually drawing brackets on a
+          whiteboard or wrestling with spreadsheets, you enter your players, select round robin or
+          playoff format, and the system generates a complete schedule with balanced groups, match
+          ordering, and court assignments.
+        </p>
+        <p style={pStyle}>
+          Quick Tables is The Pickle Hub's bracket generator, designed specifically for pickleball
+          tournaments. It handles the nuances that generic tools miss: automatic group balancing by
+          skill level, team-aware seeding to prevent teammates from being in the same group, and
+          scheduling that minimizes court wait times — a critical factor when venues have limited
+          courts.
+        </p>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Why Use a Pickleball-Specific Bracket Generator?</h2>
+        <p style={pStyle}>
+          Generic bracket tools like Challonge or Excel work for simple single-elimination events,
+          but pickleball tournaments have unique needs:
+        </p>
+        <ul style={ulStyle}>
+          {[
+            ["Court rotation", "With 4–8 courts, scheduling must ensure no player waits too long between matches. Our tool optimizes match order for maximum court utilization."],
+            ["Round robin fairness", "In group stages, every player needs to face every other player. Our algorithm creates balanced schedules regardless of odd or even player counts."],
+            ["Skill-based seeding", "Enter player skill levels and the system distributes top players evenly across groups, preventing lopsided competition."],
+            ["Instant playoff brackets", "After round robin, the system automatically seeds players into playoff brackets based on group standings and point differentials."],
+          ].map(([k, v]) => (
+            <li key={k} style={liStyle}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  color: "var(--tl-green)",
+                  fontFamily: "Geist Mono, ui-monospace, monospace",
+                  fontSize: 13,
+                }}
+              >
+                ◆
+              </span>
+              <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>{k}</strong> — {v}
+            </li>
+          ))}
+        </ul>
+        <p style={pStyle}>
+          Organizers save hours of manual work. Players get a professional tournament experience.
+          Referees can score matches from their phone with live updates for everyone.
+        </p>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>How Quick Tables Works for Real Pickleball Events</h2>
+        <ol
+          style={{
+            margin: "0 0 12px",
+            paddingLeft: 22,
+            color: "var(--tl-fg-2)",
+            fontSize: 15,
+            lineHeight: 1.7,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Enter player count</strong> — Tell us how many players or teams are competing (2–200 supported).
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Choose your format</strong> — Select round robin for group play, or large playoff for elimination-style tournaments with 48+ players.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Configure groups</strong> — The system suggests optimal group sizes. You can adjust or manually assign players to specific groups.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Add player names & seeds</strong> — Enter names, optional team affiliations, and skill ratings for intelligent distribution.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Generate bracket</strong> — One click creates your complete tournament bracket with match schedule and court assignments.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Score & track live</strong> — Referees update scores in real-time. Standings, point differentials, and playoff qualification update automatically.
+          </li>
+        </ol>
+        <p style={pStyle}>
+          The entire setup takes under 2 minutes for a typical 16-player club tournament.
+        </p>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>When to Use Round Robin vs Other Pickleball Formats</h2>
+        <p style={pStyle}>
+          Round robin is the most popular format for recreational and club pickleball because every
+          player gets to play multiple matches. But it's not always the best choice:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Round Robin (Quick Tables)</strong> — Best for 4–32 players. Everyone plays everyone in their group. Maximum court time for all players. Ideal for social/club events.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/doubles-elimination" style={linkStyle}>Double Elimination</Link>
+            </strong> — Best for 32+ teams in competitive settings. Players get a second chance through the losers bracket.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/team-match" style={linkStyle}>Team Match (MLP)</Link>
+            </strong> — Best for team-based events. Teams compete across multiple game types with lineup strategy.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/flex-tournament" style={linkStyle}>Flex Tournament</Link>
+            </strong> — Best for custom formats, training, or experimental tournament structures with no rules restrictions.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Related Pickleball Tournament Tools on The Pickle Hub</h2>
+        <p style={pStyle}>
+          Quick Tables is part of The Pickle Hub's complete tournament toolkit. Explore our other
+          tools for different tournament formats and needs:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <Link to="/tools/team-match" style={linkStyle}>Pickleball Team Match format</Link> — Run MLP-style team competitions with dreambreaker games and rally scoring.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <Link to="/tools/doubles-elimination" style={linkStyle}>Double elimination pickleball tournaments</Link> — Fair bracket system for competitive 32+ team events.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <Link to="/tools/flex-tournament" style={linkStyle}>Flexible pickleball tournament formats</Link> — Create custom tournament structures with no format restrictions.
+          </li>
+          <li style={liStyle}>
+            <span style={{ position: "absolute", left: 0, top: 0, color: "var(--tl-green)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 13 }}>◆</span>
+            <Link to="/tools" style={linkStyle}>All pickleball tournament tools</Link> — Browse the complete suite of free tournament management tools.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Pickleball Bracket Generator FAQ</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <p style={faqQ}>Is Quick Tables free to use?</p>
+            <p style={faqA}>Yes — Quick Tables is completely free for clubs, organizers, and individual players. There are no ads, no subscriptions, and no signup required to view a bracket. An account is only needed to create and manage your own tournaments.</p>
+          </div>
+          <div>
+            <p style={faqQ}>How many players can Quick Tables handle?</p>
+            <p style={faqA}>Quick Tables supports 2 to 200 players. For 2–48 players, the round robin format automatically creates balanced groups. For 48+ players, the large playoff format uses an elimination bracket structure that scales to any size event.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Can I use Quick Tables for doubles pickleball tournaments?</p>
+            <p style={faqA}>Yes. Quick Tables supports both singles and doubles tournament formats. You can enter individual players or pair players as doubles teams before generating the bracket. The system handles group balancing and match scheduling identically for both formats.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Does Quick Tables work on mobile devices?</p>
+            <p style={faqA}>Fully mobile-friendly. The entire tool — from bracket creation to live scoring — is optimized for phones and tablets. Referees can update match scores from the court using any smartphone browser without installing an app.</p>
+          </div>
+          <div>
+            <p style={faqQ}>What's the difference between round robin and large playoff format?</p>
+            <p style={faqA}>Round robin means every player faces every other player in their group, maximizing court time for all participants. Large playoff uses a seeded single-elimination bracket for 48+ player events where time or court constraints make full round robin impractical. Both formats are free and generated instantly.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/**
+ * SEO content for /tools/team-match — refreshed to TheLineLayout design
+ * language (W2.4a). Mirrors the QuickTablesSeoContent pattern: serif h2,
+ * mono kicker, diamond bullets in --tl-green. Copy preserved verbatim.
+ */
+export const TeamMatchSeoContent = () => {
+  const sectionStyle: React.CSSProperties = {
+    marginTop: 32,
+  };
+  const h2Style: React.CSSProperties = {
+    fontFamily: "Instrument Serif, serif",
+    fontStyle: "italic",
+    fontWeight: 400,
+    fontSize: "clamp(24px, 3vw, 32px)",
+    letterSpacing: "-0.02em",
+    lineHeight: 1.1,
+    color: "var(--tl-fg)",
+    margin: "0 0 14px",
+  };
+  const pStyle: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+    margin: "0 0 12px",
+  };
+  const ulStyle: React.CSSProperties = {
+    margin: "0 0 12px",
+    padding: 0,
+    listStyle: "none",
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+  };
+  const liStyle: React.CSSProperties = {
+    paddingLeft: 18,
+    position: "relative",
+    margin: "8px 0",
+  };
+  const linkStyle: React.CSSProperties = {
+    color: "var(--tl-green)",
+    textDecoration: "none",
+    borderBottom: "1px solid color-mix(in srgb, var(--tl-green) 35%, transparent)",
+    paddingBottom: 1,
+  };
+  const faqQ: React.CSSProperties = {
+    fontWeight: 600,
+    color: "var(--tl-fg)",
+    fontSize: 15,
+    margin: "0 0 6px",
+  };
+  const faqA: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 14.5,
+    lineHeight: 1.6,
+    margin: 0,
+  };
+  const diamondBullet: React.CSSProperties = {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    color: "var(--tl-green)",
+    fontFamily: "Geist Mono, ui-monospace, monospace",
+    fontSize: 13,
+  };
+  const strongStyle: React.CSSProperties = { color: "var(--tl-fg)", fontWeight: 600 };
+
+  return (
+    <section
+      style={{
+        marginTop: 48,
+        paddingTop: 40,
+        borderTop: "1px solid var(--tl-border)",
+        maxWidth: 768,
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--tl-green)",
+          marginBottom: 20,
+        }}
+      >
+        ◆ The long read
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>What Is a Pickleball Team Match (MLP Format)?</h2>
+        <p style={pStyle}>
+          A pickleball team match is a competition format where teams of players compete against each other across multiple game types — typically men's doubles, women's doubles, mixed doubles, and a dreambreaker tiebreaker. This format is inspired by Major League Pickleball (MLP), the professional team league that has popularized team-based pickleball competition worldwide.
+        </p>
+        <p style={pStyle}>
+          The Pickle Hub's Team Match tool lets you organize MLP-style competitions at any level — from casual inter-club matches to structured league seasons. Captains manage lineups, the system tracks team standings, and dreambreaker games add exciting tiebreak drama to close matches.
+        </p>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Why Use a Pickleball-Specific Team Match Tool?</h2>
+        <p style={pStyle}>
+          Running team-based pickleball competitions manually is complex. You need to track rosters, manage lineups for each match, calculate team scores across multiple game types, and handle tiebreakers. Spreadsheets quickly become unmanageable. Here's why our dedicated tool is better:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Lineup management</strong> — Captains assign players to each game type strategically. The system validates lineup rules and prevents conflicts.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Dreambreaker support</strong> — When team matches are tied, the dreambreaker format creates sudden-death excitement. Our tool handles the unique scoring rules automatically.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Rally scoring tracking</strong> — MLP uses rally scoring (every rally scores a point). Our system tracks this format natively, unlike generic scorekeepers.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Team standings</strong> — Automatic calculation of wins, losses, game differentials, and tiebreakers across round robin or playoff stages.
+          </li>
+        </ul>
+        <p style={pStyle}>
+          For pickleball clubs and leagues looking to add team competition, this tool handles all the complexity so organizers can focus on the competition itself.
+        </p>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>How Team Match Works in Real Pickleball Events</h2>
+        <ol
+          style={{
+            margin: "0 0 12px",
+            paddingLeft: 22,
+            color: "var(--tl-fg-2)",
+            fontSize: 15,
+            lineHeight: 1.7,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Create tournament</strong> — Set the number of teams, players per team, and choose round robin, single elimination, or round robin + playoff format.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Configure game templates</strong> — Define which game types each match includes (men's doubles, women's doubles, mixed doubles, singles, dreambreaker).
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Register teams</strong> — Teams register with full rosters. Captains can be assigned for lineup decisions.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Set lineups</strong> — Before each team match, captains select which players play in each game type.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Score matches</strong> — Referees score individual games. Team match winners are determined by total games won.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={strongStyle}>Track standings</strong> — The system automatically updates team standings, qualifications, and playoff seedings.
+          </li>
+        </ol>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>When to Use Team Match vs Other Pickleball Formats</h2>
+        <p style={pStyle}>
+          Team match format shines when you want team identity and strategic depth. Here's how it compares to other formats available on The Pickle Hub:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>Team Match (this tool)</strong> — Best for 2–16 teams. Creates team rivalry, strategic lineup decisions, and multiple game types per match. Ideal for leagues and inter-club competition.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>
+              <Link to="/tools/quick-tables" style={linkStyle}>Quick Tables (Round Robin)</Link>
+            </strong> — Best for individual player tournaments with 4–48 players. Everyone plays everyone, no team structure needed.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>
+              <Link to="/tools/doubles-elimination" style={linkStyle}>Double Elimination</Link>
+            </strong> — Best for large competitive brackets with 32+ teams. Pure elimination format with a losers bracket for fairness.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <strong style={strongStyle}>
+              <Link to="/tools/flex-tournament" style={linkStyle}>Flex Tournament</Link>
+            </strong> — Best for custom or experimental formats. Full flexibility when standard formats don't fit your event.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Related Pickleball Tournament Tools on The Pickle Hub</h2>
+        <p style={pStyle}>
+          Team Match is one of several tournament tools available on The Pickle Hub. Use them together for complete event management:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <Link to="/tools/quick-tables" style={linkStyle}>Pickleball bracket generator</Link> — Create round robin brackets for individual player tournaments.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <Link to="/tools/doubles-elimination" style={linkStyle}>Double elimination pickleball tournaments</Link> — Fair bracket system for large competitive events.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <Link to="/tools/flex-tournament" style={linkStyle}>Flexible pickleball tournament formats</Link> — Build custom tournament structures for any scenario.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondBullet}>◆</span>
+            <Link to="/tools" style={linkStyle}>All pickleball tournament tools</Link> — Explore the complete toolkit for pickleball event organizers.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Pickleball Team Match FAQ</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <p style={faqQ}>What is the dreambreaker in a pickleball team match?</p>
+            <p style={faqA}>The dreambreaker is a tiebreaker format used when a team match is tied after all doubles and mixed doubles games. Each team selects one player for a sudden-death singles rally-scoring match. The first player to reach 21 points (win by 2) wins the match for their team. It's the MLP's signature finish to close matches.</p>
+          </div>
+          <div>
+            <p style={faqQ}>How many teams can compete in a Team Match tournament?</p>
+            <p style={faqA}>The Team Match tool supports 2 to 16 teams per event. You can run a simple head-to-head match between two clubs or a full league season with up to 16 teams across round robin and playoff stages.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Does Team Match support both round robin and playoff formats?</p>
+            <p style={faqA}>Yes. You can run a round robin league where every team plays each other, a single elimination playoff for rapid-fire competition, or a combined format with a round robin group stage that feeds into an elimination playoff. The system handles scheduling and standings automatically for all three options.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Can team captains manage their own lineups?</p>
+            <p style={faqA}>Yes. Captains can be assigned to their teams and given access to submit lineups before each match. This gives your competition strategic depth — captains decide which players compete in men's doubles, women's doubles, mixed doubles, and the dreambreaker based on the opposing team's lineup.</p>
+          </div>
+          <div>
+            <p style={faqQ}>What scoring system does the Team Match tool use?</p>
+            <p style={faqA}>Rally scoring is the default (every rally scores a point, regardless of who served), matching the MLP format. Traditional side-out scoring is also supported if your league prefers it. Game scores, team match scores, and standings are all tracked and displayed automatically.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/**
+ * SEO content for /tools/doubles-elimination — refreshed to TheLineLayout
+ * design language in PR W2.2. Mirrors the QuickTablesSeoContent treatment
+ * (Instrument Serif h2, mono kicker, green diamond bullets, token colors).
+ * Copy + heading structure kept verbatim for SEO continuity.
+ */
+export const DoublesEliminationSeoContent = () => {
+  const sectionStyle: React.CSSProperties = {
+    marginTop: 32,
+  };
+  const h2Style: React.CSSProperties = {
+    fontFamily: "Instrument Serif, serif",
+    fontStyle: "italic",
+    fontWeight: 400,
+    fontSize: "clamp(24px, 3vw, 32px)",
+    letterSpacing: "-0.02em",
+    lineHeight: 1.1,
+    color: "var(--tl-fg)",
+    margin: "0 0 14px",
+  };
+  const pStyle: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+    margin: "0 0 12px",
+  };
+  const ulStyle: React.CSSProperties = {
+    margin: "0 0 12px",
+    padding: 0,
+    listStyle: "none",
+    color: "var(--tl-fg-2)",
+    fontSize: 15,
+    lineHeight: 1.65,
+  };
+  const liStyle: React.CSSProperties = {
+    paddingLeft: 18,
+    position: "relative",
+    margin: "8px 0",
+  };
+  const diamondStyle: React.CSSProperties = {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    color: "var(--tl-green)",
+    fontFamily: "Geist Mono, ui-monospace, monospace",
+    fontSize: 13,
+  };
+  const linkStyle: React.CSSProperties = {
+    color: "var(--tl-green)",
+    textDecoration: "none",
+    borderBottom: "1px solid color-mix(in srgb, var(--tl-green) 35%, transparent)",
+    paddingBottom: 1,
+  };
+  const faqQ: React.CSSProperties = {
+    fontWeight: 600,
+    color: "var(--tl-fg)",
+    fontSize: 15,
+    margin: "0 0 6px",
+  };
+  const faqA: React.CSSProperties = {
+    color: "var(--tl-fg-2)",
+    fontSize: 14.5,
+    lineHeight: 1.6,
+    margin: 0,
+  };
+
+  return (
+    <section
+      style={{
+        marginTop: 48,
+        paddingTop: 40,
+        borderTop: "1px solid var(--tl-border)",
+        maxWidth: 768,
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--tl-green)",
+          marginBottom: 20,
+        }}
+      >
+        ◆ The long read
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>What Is Double Elimination in Pickleball Tournaments?</h2>
+        <p style={pStyle}>
+          Double elimination is a tournament format where a team must lose twice before being eliminated. After the first loss, a team drops to the losers bracket and continues competing. Only a second loss ends their tournament run. The winners bracket and losers bracket eventually converge, ensuring the final champion has proven themselves against the strongest competition.
+        </p>
+        <p style={pStyle}>
+          This format is widely used in competitive pickleball events because it rewards consistency and gives teams a second chance — particularly valuable when travel and entry fees are involved. The Pickle Hub's double elimination tool generates complete brackets for 32 to 128+ teams with automatic court scheduling and best-of-1, best-of-3, or best-of-5 match options.
+        </p>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Why Use a Pickleball-Specific Double Elimination Tool?</h2>
+        <p style={pStyle}>
+          Double elimination brackets are significantly more complex than single elimination. Managing the winners bracket, losers bracket, bye rounds, and convergence rounds manually is error-prone and time-consuming. Here's why our dedicated tool matters:
+        </p>
+        <ul style={ulStyle}>
+          {[
+            ["Automatic bracket generation", "Enter your team count and the system creates perfectly balanced winners and losers brackets with correct bye assignments."],
+            ["Dynamic court scheduling", "Advanced rounds automatically reassign courts and calculate start times based on when previous rounds finish."],
+            ["Variable match formats", "Use best-of-1 for early rounds to save time, then switch to best-of-3 or best-of-5 for semifinals and finals for competitive depth."],
+            ["Third-place match option", "Optionally add a consolation final for teams that lose in the semifinals."],
+            ["Referee assignment", "Assign referees to specific matches. Officials can score directly from their phones."],
+          ].map(([k, v]) => (
+            <li key={k} style={liStyle}>
+              <span style={diamondStyle}>◆</span>
+              <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>{k}</strong> — {v}
+            </li>
+          ))}
+        </ul>
+        <p style={pStyle}>
+          Compare this to Challonge or other generic platforms: our tool understands pickleball's court rotation needs, supports multi-game match formats, and provides a mobile-first experience designed for on-court use.
+        </p>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>How Double Elimination Works in Real Pickleball Events</h2>
+        <ol
+          style={{
+            margin: "0 0 12px",
+            paddingLeft: 22,
+            color: "var(--tl-fg-2)",
+            fontSize: 15,
+            lineHeight: 1.7,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Create tournament</strong> — Name your event, set team count (32–128+), number of courts, and start time.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Choose match formats</strong> — Select best-of-1, best-of-3, or best-of-5 for early rounds, semifinals, and finals independently.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Add teams</strong> — Enter team names with player rosters. Optionally shuffle seeding for random draws.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Generate bracket</strong> — The system creates winners bracket, losers bracket, bye assignments, and complete match schedule with court and time slots.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Run the tournament</strong> — As matches complete, losers drop to the losers bracket. Winners advance. The system handles all bracket progression automatically.
+          </li>
+          <li style={{ margin: "8px 0" }}>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Crown the champion</strong> — Winners and losers brackets converge for the grand final. The undefeated team has bracket advantage.
+          </li>
+        </ol>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>When to Use Double Elimination vs Other Pickleball Formats</h2>
+        <p style={pStyle}>
+          Double elimination excels for competitive events but isn't always the right choice. Here's a comparison with other formats on The Pickle Hub:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>Double Elimination (this tool)</strong> — Best for 32+ teams in competitive settings. Gives every team a second chance. Requires more time and courts than single elimination.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/quick-tables" style={linkStyle}>Quick Tables (Round Robin)</Link>
+            </strong> — Best for smaller events (4–48 players) where everyone wants maximum playing time. More social, less competitive pressure.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/team-match" style={linkStyle}>Team Match (MLP)</Link>
+            </strong> — Best for team-based competition with strategic lineup management. Different competitive dynamic than bracket play.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <strong style={{ color: "var(--tl-fg)", fontWeight: 600 }}>
+              <Link to="/tools/flex-tournament" style={linkStyle}>Flex Tournament</Link>
+            </strong> — Best for custom formats or when you need to combine elements from multiple format types.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Related Pickleball Tournament Tools on The Pickle Hub</h2>
+        <p style={pStyle}>
+          Double Elimination is part of The Pickle Hub's tournament platform. Combine it with our other tools for complete event management:
+        </p>
+        <ul style={ulStyle}>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <Link to="/tools/quick-tables" style={linkStyle}>Pickleball bracket generator</Link> — Round robin brackets with automatic group balancing and playoff seeding.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <Link to="/tools/team-match" style={linkStyle}>Pickleball team match format</Link> — MLP-style team competitions with lineup management and dreambreaker games.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <Link to="/tools/flex-tournament" style={linkStyle}>Flexible pickleball tournament formats</Link> — Build any tournament structure with complete creative freedom.
+          </li>
+          <li style={liStyle}>
+            <span style={diamondStyle}>◆</span>
+            <Link to="/tools" style={linkStyle}>All pickleball tournament tools</Link> — Browse the complete suite of free tools for pickleball organizers.
+          </li>
+        </ul>
+      </div>
+
+      <div style={sectionStyle}>
+        <h2 style={h2Style}>Pickleball Double Elimination FAQ</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <div>
+            <p style={faqQ}>What is the minimum number of teams for a double elimination bracket?</p>
+            <p style={faqA}>Double elimination works best with 8 or more teams, though the tool supports as few as 4. Below 8 teams, the bracket has very few losers bracket rounds, reducing the format's advantage over single elimination. For larger competitive events, 16–64 teams is the ideal range.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Does the tool automatically move teams between winners and losers brackets?</p>
+            <p style={faqA}>Yes. All bracket progression is fully automatic. When you enter a match result, the winning team advances in the winners bracket and the losing team drops to the correct position in the losers bracket. No manual bracket management is needed — the system handles all seeding and advancement logic.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Can I use different match formats in different rounds?</p>
+            <p style={faqA}>Yes. You can configure best-of-1 for early rounds to save time, then switch to best-of-3 for quarterfinals and semifinals, and best-of-5 for the grand final. Each round can have an independently configured match format, giving you full control over how your event flows.</p>
+          </div>
+          <div>
+            <p style={faqQ}>What happens if the losers bracket winner beats the winners bracket finalist in the grand final?</p>
+            <p style={faqA}>In true double elimination, a bracket reset (true final) is required because the winners bracket finalist has no losses yet. Our tool flags this scenario automatically and creates the bracket reset match. The team that wins the reset match is crowned champion with both teams having lost exactly once.</p>
+          </div>
+          <div>
+            <p style={faqQ}>Is double elimination fair for all skill levels?</p>
+            <p style={faqA}>Double elimination is one of the fairest competitive formats available because every team is guaranteed at least two matches before elimination. This is especially important for events where teams have traveled significant distances or paid registration fees — a single bad game doesn't end their tournament. It also allows teams to warm up and improve as the event progresses.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/**
+ * SEO content for /tools/flex-tournament
+ */
+export const FlexTournamentSeoContent = () => (
+  <section className="mt-12 border-t border-border pt-10 space-y-8 max-w-3xl text-left">
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-4">
+        What Is a Flex Tournament in Pickleball?
+      </h2>
+      <p className="text-muted-foreground mb-3">
+        A Flex Tournament is a fully customizable competition format where the organizer has complete control over the tournament structure. Unlike standard bracket generators that enforce specific rules (round robin, single elimination, double elimination), Flex Tournament lets you create any combination of groups, matches, and scoring systems that fit your event.
+      </p>
+      <p className="text-muted-foreground">
+        This tool is ideal for pickleball organizers who need to run non-standard formats: training tournaments with rotating partners, skill-level mixing events, multi-format competitions that combine singles and doubles in one event, or any creative tournament structure that doesn't fit traditional bracket categories. You define the rules — the tool handles the logistics.
+      </p>
+    </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-4">
+        Why Use a Flexible Pickleball Tournament Format?
+      </h2>
+      <p className="text-muted-foreground mb-3">
+        Standard tournament formats work great for most events, but pickleball's diverse community often needs something different. Here's where Flex Tournament excels compared to rigid bracket systems:
+      </p>
+      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-3">
+        <li><strong>No format restrictions</strong> — Mix singles, doubles, and team matches in the same tournament. Create groups with different numbers of players. Run parallel brackets.</li>
+        <li><strong>Training & development events</strong> — Design round robins where players rotate partners each round, perfect for skill development sessions at clubs.</li>
+        <li><strong>Custom scoring</strong> — Track any metric you need. The flexible standings system adapts to your rules rather than forcing you into a standard format.</li>
+        <li><strong>Hybrid competitions</strong> — Combine group stages with custom knockout rounds, or run separate divisions that merge for a final playoff.</li>
+      </ul>
+      <p className="text-muted-foreground">
+        Generic platforms like Google Sheets give you flexibility but zero automation. Challonge gives you automation but limited flexibility. Flex Tournament gives you both — creative freedom with real-time scoring, automatic standings, and a mobile-friendly interface.
+      </p>
+    </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-4">
+        How Flex Tournament Works in Real Pickleball Events
+      </h2>
+      <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-3">
+        <li><strong>Create tournament</strong> — Name your event. The system creates a default group and starter matches to get you going quickly.</li>
+        <li><strong>Add players & teams</strong> — Add individual players or create teams with multiple members. Drag and drop to organize.</li>
+        <li><strong>Create groups</strong> — Define as many groups as you need. Each group can have different players, teams, and match structures.</li>
+        <li><strong>Build your matches</strong> — Create singles, doubles, or team matches within each group. Assign players or teams to each side.</li>
+        <li><strong>Score live</strong> — Referees and organizers update scores in real-time from any device. Standings recalculate automatically per group.</li>
+        <li><strong>Share publicly</strong> — Toggle public visibility so participants and spectators can follow the tournament in real-time.</li>
+      </ol>
+    </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-4">
+        When to Use Flex Tournament vs Other Pickleball Formats
+      </h2>
+      <p className="text-muted-foreground mb-3">
+        Flex Tournament is the most versatile option, but specialized tools are faster for standard formats. Here's when to choose what:
+      </p>
+      <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-3">
+        <li><strong>Flex Tournament (this tool)</strong> — Best for custom formats, training events, mixed-format competitions, or any scenario where standard brackets don't fit. Maximum flexibility, slightly more setup time.</li>
+        <li><strong><Link to="/tools/quick-tables" className="text-primary hover:underline">Quick Tables (Round Robin)</Link></strong> — Best for standard round robin with 4–48 players. Faster setup for straightforward group play.</li>
+        <li><strong><Link to="/tools/team-match" className="text-primary hover:underline">Team Match (MLP)</Link></strong> — Best for structured team competitions following the MLP format with defined game types and lineup rules.</li>
+        <li><strong><Link to="/tools/doubles-elimination" className="text-primary hover:underline">Double Elimination</Link></strong> — Best for large competitive brackets (32+ teams) with a standard double elimination structure.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-4">
+        Related Pickleball Tournament Tools on The Pickle Hub
+      </h2>
+      <p className="text-muted-foreground mb-3">
+        Flex Tournament works alongside The Pickle Hub's other tools. Use the right tool for each part of your event:
+      </p>
+      <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+        <li><Link to="/tools/quick-tables" className="text-primary hover:underline">Pickleball bracket generator</Link> — Instant round robin brackets with automatic group balancing for club events.</li>
+        <li><Link to="/tools/team-match" className="text-primary hover:underline">Pickleball team match format</Link> — MLP-style team competitions with lineup management and dreambreaker scoring.</li>
+        <li><Link to="/tools/doubles-elimination" className="text-primary hover:underline">Double elimination pickleball tournaments</Link> — Professional-grade brackets for large competitive events.</li>
+        <li><Link to="/tools" className="text-primary hover:underline">All pickleball tournament tools</Link> — The complete free toolkit for organizing pickleball competitions.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 className="text-xl font-bold text-foreground mb-6">Pickleball Flex Tournament FAQ</h2>
+      <div className="space-y-4">
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">What types of tournaments can I run with Flex Tournament?</h3>
+          <p className="text-muted-foreground">Flex Tournament supports any format you can design: singles, doubles, mixed doubles, team events, or combinations of all of these within a single tournament. You can create multiple groups with different player counts, define custom match formats per group, and structure your knockout rounds however you like. It's the only tool on The Pickle Hub with no restrictions on tournament structure.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Can Flex Tournament handle non-standard group sizes?</h3>
+          <p className="text-muted-foreground">Yes. Unlike Quick Tables (which is optimized for standard group sizes), Flex Tournament lets you create groups with any number of players or teams — 3, 5, 7, 11, or any other count. You manually assign matches within each group, so there are no algorithmic restrictions on group composition. This makes it ideal for odd-sized draws or events where players drop out mid-tournament.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">How is Flex Tournament different from Quick Tables?</h3>
+          <p className="text-muted-foreground">Quick Tables is optimized for standard round robin brackets — it auto-generates balanced schedules for 4–48 players in seconds. Flex Tournament gives you full manual control: you build every group, match, and scoring rule yourself. Quick Tables is faster for straightforward events; Flex Tournament is the right choice when your event structure doesn't fit standard round robin rules or when you need creative freedom over every detail.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Can I share my Flex Tournament bracket publicly?</h3>
+          <p className="text-muted-foreground">Yes. Each Flex Tournament has a public visibility toggle. When enabled, anyone with the link can view the bracket, group standings, and match scores in real-time — no account required. This is useful for sharing live updates with spectators, posting the link on social media, or embedding tournament results in a club newsletter. Organizers retain full control and can disable public access at any time.</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-foreground mb-1">Is Flex Tournament suitable for training sessions and clinic formats?</h3>
+          <p className="text-muted-foreground">It's one of the best tools for structured training. You can design rotating partner rounds, skill-based groupings, or drill-style match formats that standard bracket generators can't handle. Many coaches use Flex Tournament to run round-robin skill sessions where players rotate through different partners and opponents, with scores tracked in real-time to measure development progress over the session.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+);

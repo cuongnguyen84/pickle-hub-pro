@@ -1,0 +1,1 @@
+export { OrganizationHero } from "./OrganizationHero";

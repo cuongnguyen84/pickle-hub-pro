@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>The Pickleball Gazette · Direction 01 · ThePickleHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,300;1,9..144,600&family=Cardo:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f3ecdc;
+    --paper-deep: #e9dfc7;
+    --ink: #161310;
+    --ink-soft: #5a4f47;
+    --rule: #161310;
+    --red: #a8341e;
+    --red-deep: #7a1f10;
+    --green: #2a4629;
+    --gold: #b48446;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Cardo", "Times New Roman", serif;
+    color: var(--ink);
+    background: var(--paper);
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* paper grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 50;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0 0.04 0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.55; mix-blend-mode: multiply;
+  }
+  .display { font-family: "Fraunces", Georgia, serif; font-weight: 800; line-height: 0.93; letter-spacing: -0.025em; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+  a { color: inherit; }
+
+  /* ============ MASTHEAD ============ */
+  .masthead {
+    padding: 22px 48px 14px;
+    border-bottom: 3px double var(--rule);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: end;
+    gap: 32px;
+  }
+  .mh-left { font-family: "Cardo"; font-size: 12px; color: var(--ink-soft); font-style: italic; line-height: 1.5; }
+  .mh-left strong { display: block; text-transform: uppercase; letter-spacing: 0.16em; font-style: normal; font-weight: 400; color: var(--ink); margin-bottom: 4px; font-size: 11px; }
+  .wordmark {
+    font-family: "Fraunces", serif;
+    font-weight: 800;
+    font-size: clamp(38px, 5.4vw, 68px);
+    line-height: 0.88;
+    letter-spacing: -0.035em;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .wordmark em { font-style: italic; font-weight: 300; letter-spacing: -0.02em; padding: 0 2px; }
+  .mh-right { text-align: right; font-family: "JetBrains Mono"; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft); line-height: 1.7; }
+  .mh-right strong { color: var(--red); font-weight: 700; display: block; }
+
+  @media (max-width: 760px) {
+    .masthead { grid-template-columns: 1fr; padding: 20px 24px 14px; text-align: center; gap: 14px; }
+    .mh-left, .mh-right { text-align: center; }
+  }
+
+  /* ============ SUB NAV ============ */
+  .sub-nav {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    padding: 10px 48px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-family: "Cardo";
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .sub-nav a { text-decoration: none; color: var(--ink); padding-bottom: 2px; }
+  .sub-nav a:hover { color: var(--red); }
+  .sub-nav a.current { color: var(--red); border-bottom: 2px solid var(--red); font-weight: 700; }
+
+  /* ============ TICKER ============ */
+  .ticker {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule);
+    overflow: hidden;
+    background: var(--paper-deep);
+    font-family: "JetBrains Mono";
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .ticker-track {
+    display: inline-flex;
+    gap: 48px;
+    white-space: nowrap;
+    animation: ticker 45s linear infinite;
+    padding-left: 100%;
+  }
+  .ticker .dot { color: var(--red); }
+  .ticker .win { color: var(--green); font-weight: 700; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ============ MAIN GRID ============ */
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
+    gap: 48px;
+    padding: 48px;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; padding: 28px; gap: 40px; } }
+
+  /* ============ LEAD ARTICLE ============ */
+  .kicker {
+    font-family: "Cardo";
+    font-style: italic;
+    font-size: 13px;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .kicker::before { content: '§ '; color: var(--ink); font-style: normal; }
+
+  .headline {
+    font-family: "Fraunces";
+    font-weight: 800;
+    font-size: clamp(44px, 5.8vw, 88px);
+    line-height: 0.94;
+    letter-spacing: -0.028em;
+    margin: 0 0 22px;
+  }
+  .headline em { font-weight: 300; font-style: italic; color: var(--ink-soft); }
+
+  .lede {
+    font-family: "Cardo";
+    font-size: 20px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 40em;
+    margin: 0 0 28px;
+    font-style: italic;
+  }
+  .byline {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    padding: 14px 0 16px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .byline b { font-weight: 700; }
+
+  .hero-photo {
+    aspect-ratio: 16 / 10;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 14px;
+    background: linear-gradient(160deg, #2a4629 0%, #1a2e1c 60%, #0c1a0d 100%);
+    filter: contrast(1.1);
+  }
+  /* halftone dots on photo */
+  .hero-photo::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(243,236,220,0.35) 0.6px, transparent 1.2px);
+    background-size: 3px 3px;
+    mix-blend-mode: overlay;
+  }
+  /* court line graphic */
+  .court-lines {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(transparent 49.5%, rgba(243,236,220,0.35) 49.5%, rgba(243,236,220,0.35) 50.5%, transparent 50.5%),
+      linear-gradient(90deg, transparent 49.5%, rgba(243,236,220,0.35) 49.5%, rgba(243,236,220,0.35) 50.5%, transparent 50.5%),
+      linear-gradient(90deg, transparent 19.5%, rgba(243,236,220,0.25) 19.5%, rgba(243,236,220,0.25) 20.5%, transparent 20.5%, transparent 79.5%, rgba(243,236,220,0.25) 79.5%, rgba(243,236,220,0.25) 80.5%, transparent 80.5%);
+    transform: perspective(600px) rotateX(56deg) scale(1.5) translateY(12%);
+    transform-origin: center 70%;
+  }
+  .ball {
+    position: absolute;
+    width: 44px; height: 44px;
+    background: radial-gradient(circle at 30% 30%, #f7d96c 0%, #e6b939 60%, #a87a1d 100%);
+    border-radius: 50%;
+    right: 14%; bottom: 26%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  }
+  .ball::before, .ball::after {
+    content: ''; position: absolute;
+    width: 4px; height: 4px; background: rgba(0,0,0,0.35); border-radius: 50%;
+    box-shadow: 14px 3px 0 rgba(0,0,0,0.3), 8px 16px 0 rgba(0,0,0,0.3), 22px 18px 0 rgba(0,0,0,0.3), -4px 22px 0 rgba(0,0,0,0.3);
+    top: 8px; left: 8px;
+  }
+  .photo-stamp {
+    position: absolute;
+    top: 20px; left: 20px;
+    font-family: "JetBrains Mono";
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--red);
+    padding: 6px 10px;
+    font-weight: 700;
+  }
+
+  .caption {
+    font-family: "Cardo";
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 18px;
+    margin-bottom: 28px;
+  }
+  .caption strong { font-style: normal; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; margin-right: 8px; color: var(--ink); }
+
+  /* Article body */
+  .article-body { columns: 2; column-gap: 36px; column-rule: 1px solid var(--rule); font-size: 16.5px; text-align: justify; hyphens: auto; }
+  .article-body p { margin: 0 0 14px; }
+  .article-body p:first-of-type::first-letter {
+    font-family: "Fraunces"; font-weight: 800;
+    font-size: 84px; float: left;
+    line-height: 0.82; padding: 6px 12px 0 0;
+    color: var(--red);
+  }
+  @media (max-width: 760px) { .article-body { columns: 1; } }
+
+  /* Pull quote */
+  .pull-quote {
+    font-family: "Fraunces"; font-style: italic; font-weight: 300;
+    font-size: clamp(26px, 3vw, 34px); line-height: 1.3;
+    padding: 32px 12px; text-align: center;
+    border-top: 2px solid var(--rule); border-bottom: 2px solid var(--rule);
+    margin: 36px 0; break-inside: avoid;
+  }
+  .pull-quote::before, .pull-quote::after {
+    content: '"'; font-family: "Fraunces"; font-weight: 800; font-style: italic;
+    color: var(--red); font-size: 1.4em; line-height: 0;
+    display: inline-block; transform: translateY(0.2em);
+  }
+  .pull-quote cite {
+    display: block;
+    font-family: "Cardo"; font-style: italic;
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.24em;
+    margin-top: 18px; color: var(--ink-soft);
+  }
+  .pull-quote cite::before { content: '— '; }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar { padding-left: 32px; border-left: 1px solid var(--rule); }
+  @media (max-width: 980px) { .sidebar { border-left: none; padding-left: 0; border-top: 3px double var(--rule); padding-top: 32px; } }
+
+  .section-title {
+    font-family: "Fraunces"; font-weight: 800;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.28em;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--rule);
+    margin: 0 0 22px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .section-title small { font-family: "Cardo"; font-style: italic; font-weight: 400; font-size: 11px; letter-spacing: 0.1em; text-transform: none; color: var(--ink-soft); }
+
+  /* Live block */
+  .live-block {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 28px;
+    margin-bottom: 40px;
+    position: relative;
+  }
+  .live-block .section-title { color: var(--paper); border-color: var(--paper); }
+  .live-block .section-title small { color: rgba(243,236,220,0.6); }
+  .live-dot {
+    display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--red); margin-right: 8px;
+    box-shadow: 0 0 0 0 rgba(168,52,30,0.8);
+    animation: pulse 1.4s ease-out infinite;
+    vertical-align: 2px;
+  }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(168,52,30,0.7); } 100% { box-shadow: 0 0 0 12px rgba(168,52,30,0); } }
+
+  .match-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(243,236,220,0.18);
+    font-family: "JetBrains Mono";
+    font-size: 13px;
+    align-items: center;
+  }
+  .match-row:last-child { border-bottom: none; }
+  .match-row .p1 { text-align: left; }
+  .match-row .p2 { text-align: right; color: rgba(243,236,220,0.65); }
+  .match-row .p2.winning { color: var(--paper); }
+  .match-row .p1.winning { color: var(--paper); }
+  .match-row .p1:not(.winning) { color: rgba(243,236,220,0.65); }
+  .match-row .score { font-family: "Fraunces"; font-weight: 800; font-size: 24px; letter-spacing: 0.04em; color: #f3c26b; line-height: 1; }
+  .match-row .court { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(243,236,220,0.5); grid-column: 1 / -1; margin-bottom: -6px; padding-top: 4px; }
+
+  /* Upcoming tournaments */
+  .tourney-list { list-style: none; padding: 0; margin: 0; }
+  .tourney {
+    display: grid;
+    grid-template-columns: 68px 1fr;
+    gap: 18px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    color: var(--ink);
+    transition: background 0.15s;
+  }
+  .tourney:hover { background: rgba(22,19,16,0.04); }
+  .tourney:hover .t-title { color: var(--red); }
+  .t-date {
+    font-family: "Fraunces"; line-height: 0.9;
+    text-align: center; padding-top: 4px;
+    border-right: 1px solid var(--rule);
+    padding-right: 16px;
+  }
+  .t-date .day { font-size: 42px; font-weight: 800; display: block; }
+  .t-date .month { font-size: 10px; text-transform: uppercase; letter-spacing: 0.22em; color: var(--ink-soft); font-family: "Cardo"; }
+  .t-title { font-family: "Fraunces"; font-size: 20px; font-weight: 600; line-height: 1.14; margin: 0 0 6px; transition: color 0.15s; letter-spacing: -0.01em; }
+  .t-meta { font-size: 12px; color: var(--ink-soft); font-style: italic; line-height: 1.45; }
+  .t-tag { display: inline-block; font-family: "JetBrains Mono"; font-size: 10px; background: var(--paper-deep); padding: 2px 6px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); margin-top: 6px; font-style: normal; border: 1px solid var(--rule); }
+
+  /* Standings */
+  .standings { width: 100%; font-family: "JetBrains Mono"; font-size: 13px; border-collapse: collapse; margin-bottom: 40px; }
+  .standings th { text-align: left; padding: 10px 0 8px; border-bottom: 2px solid var(--rule); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; }
+  .standings th:last-child, .standings td:last-child { text-align: right; }
+  .standings td { padding: 10px 0; border-bottom: 1px solid rgba(22,19,16,0.12); }
+  .standings tr:last-child td { border-bottom: none; }
+  .standings .rank { color: var(--red); font-weight: 700; width: 32px; }
+  .standings .name { font-family: "Fraunces"; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .standings .pts { font-weight: 700; }
+
+  /* ============ SECONDARY GRID ============ */
+  .more {
+    padding: 48px;
+    max-width: 1440px;
+    margin: 0 auto;
+    border-top: 3px double var(--rule);
+  }
+  @media (max-width: 760px) { .more { padding: 28px; } }
+  .more-title {
+    font-family: "Fraunces"; font-weight: 300; font-style: italic;
+    font-size: clamp(32px, 4vw, 52px); letter-spacing: -0.015em; line-height: 1; margin: 0 0 32px;
+  }
+  .more-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; }
+  @media (max-width: 900px) { .more-grid { grid-template-columns: 1fr; gap: 28px; } }
+  .story { border-top: 1px solid var(--rule); padding-top: 18px; }
+  .story .meta { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--red); font-weight: 700; font-family: "Cardo"; }
+  .story h3 { font-family: "Fraunces"; font-weight: 600; font-size: 26px; line-height: 1.15; margin: 10px 0 12px; letter-spacing: -0.015em; }
+  .story h3 a { text-decoration: none; }
+  .story h3 a:hover { color: var(--red); }
+  .story p { font-size: 15px; color: var(--ink-soft); margin: 0; }
+  .story .author { display: block; margin-top: 12px; font-family: "JetBrains Mono"; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink); }
+
+  /* ============ CTA STRIP ============ */
+  .cta-strip {
+    padding: 56px 48px;
+    text-align: center;
+    border-top: 3px double var(--rule);
+    border-bottom: 3px double var(--rule);
+    background: var(--paper-deep);
+  }
+  .cta-strip h2 { font-family: "Fraunces"; font-weight: 800; font-size: clamp(36px, 5vw, 64px); line-height: 0.95; margin: 0 0 14px; letter-spacing: -0.025em; }
+  .cta-strip h2 em { font-weight: 300; font-style: italic; color: var(--red); }
+  .cta-strip p { font-family: "Cardo"; font-style: italic; color: var(--ink-soft); font-size: 17px; margin: 0 auto 28px; max-width: 44ch; }
+  .cta-btn {
+    display: inline-block;
+    font-family: "JetBrains Mono"; font-weight: 700;
+    font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase;
+    background: var(--ink); color: var(--paper);
+    padding: 18px 36px; text-decoration: none;
+    border: 2px solid var(--ink);
+    transition: background 0.15s, color 0.15s;
+  }
+  .cta-btn:hover { background: var(--red); border-color: var(--red); }
+
+  /* ============ FOOTER ============ */
+  footer { background: var(--ink); color: var(--paper); padding: 48px; text-align: center; }
+  footer .wordmark { color: var(--paper); font-size: 40px; }
+  footer p { font-family: "Cardo"; font-style: italic; font-size: 13px; color: rgba(243,236,220,0.6); max-width: 50ch; margin: 16px auto 0; }
+  footer .colophon { font-family: "JetBrains Mono"; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(243,236,220,0.4); margin-top: 28px; }
+
+  /* ============ ANIMATIONS ============ */
+  @keyframes reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { animation: reveal 0.8s cubic-bezier(0.2, 0.65, 0.25, 1) both; }
+  .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.15s; } .d3 { animation-delay: 0.25s; } .d4 { animation-delay: 0.35s; }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="mh-left reveal d1">
+    <strong>Vol. IV · Số 21</strong>
+    Ấn phẩm cộng đồng pickleball Việt Nam<br />
+    Xuất bản hằng ngày · Sài Gòn – Hà Nội – Đà Nẵng
+  </div>
+  <div class="wordmark reveal d2">The Pickleball <em>Gazette</em></div>
+  <div class="mh-right reveal d3">
+    <strong>● LIVE · 3 TRẬN</strong>
+    Thứ ba, 21 Tháng Tư 2026<br />
+    28°C · Gió Đông Nam · Trời nắng
+  </div>
+</div>
+
+<nav class="sub-nav">
+  <a class="current">Trang nhất</a>
+  <a>Giải đấu</a>
+  <a>Livestream</a>
+  <a>Bảng xếp hạng</a>
+  <a>Luật chơi</a>
+  <a>Kỹ thuật</a>
+  <a>Cộng đồng</a>
+  <a>Cửa hàng</a>
+</nav>
+
+<div class="ticker">
+  <div class="ticker-track">
+    <span><span class="dot">●</span> LIVE &nbsp; Quang Minh / Thu Hà <span class="win">11–7</span> Anh Tuấn / Lan Phương · Sân 3 · CLB Phú Mỹ Hưng</span>
+    <span>KẾT QUẢ · Nguyễn Đức Hùng <span class="win">21–15 / 21–18</span> Trần Hoài Nam · Bán kết Nam đơn</span>
+    <span><span class="dot">●</span> LIVE &nbsp; Phạm Ngọc Quỳnh / Võ Thị Mai <span class="win">9–5</span> Hoàng / Liên · Sân 7</span>
+    <span>SẮP DIỄN RA · Giải Mùa Xuân Sài Gòn 2026 · 25 Tháng Tư · Crescent Mall Arena</span>
+    <span><span class="dot">●</span> LIVE &nbsp; Quang Minh / Thu Hà <span class="win">11–7</span> Anh Tuấn / Lan Phương · Sân 3 · CLB Phú Mỹ Hưng</span>
+    <span>KẾT QUẢ · Nguyễn Đức Hùng <span class="win">21–15 / 21–18</span> Trần Hoài Nam · Bán kết Nam đơn</span>
+  </div>
+</div>
+
+<main>
+  <article>
+    <div class="kicker reveal d1">Phóng sự · Giải Mùa Xuân Sài Gòn</div>
+    <h1 class="headline reveal d2">
+      Cô gái 19 tuổi đến từ Cần Thơ <em>lật đổ</em> ngôi vương của pickleball miền Nam
+    </h1>
+    <p class="lede reveal d3">
+      Trong trận chung kết kéo dài gần ba giờ đồng hồ, Nguyễn Hà Phương — một tay vợt chưa đầy hai năm kinh nghiệm — đã đánh bại nhà đương kim vô địch Lê Thảo Vy bằng một cú dink bóng ngay vạch kitchen ở set quyết định.
+    </p>
+
+    <div class="byline reveal d3">
+      <span>Phóng sự của <b>Trần Anh Quân</b> · Ảnh: <b>Võ Minh Tuấn</b></span>
+      <span>Đọc 12 phút · 21.04.2026</span>
+    </div>
+
+    <figure class="hero-photo reveal d4">
+      <div class="court-lines"></div>
+      <div class="ball"></div>
+      <span class="photo-stamp">● Chung kết · Sân trung tâm</span>
+    </figure>
+    <div class="caption">
+      <strong>Ảnh</strong> Hà Phương ăn mừng cú dink quyết định ở set 3, đưa trận đấu đến tỉ số 11–9 trước sự chứng kiến của hơn 2.400 khán giả tại Crescent Mall Arena, tối Chủ nhật.
+    </div>
+
+    <div class="article-body">
+      <p>Khi cú bóng cuối cùng chạm đất bên phần sân của Lê Thảo Vy, cả nhà thi đấu im lặng trong đúng hai giây. Rồi tiếng vỗ tay vỡ oà. Hà Phương đứng sững giữa sân, hai tay còn ôm cây paddle, mắt nhìn về phía cha mẹ cô ở hàng ghế thứ ba. Không có cú ngã người ăn mừng, không có gào thét. Chỉ một nụ cười rất nhẹ — của một người biết mình vừa mở ra một chương mới cho pickleball Việt Nam.</p>
+      <p>"Con không nghĩ mình thắng được", Hà Phương nói trong buổi phỏng vấn sau trận, mắt vẫn còn đỏ. "Set đầu thua 4–11, con chỉ nghĩ làm sao để trận đấu đừng kết thúc quá nhanh. Nhưng chị Vy nghỉ tay lâu một chút ở set 2, và con cảm thấy nhịp đã thay đổi."</p>
+      <p>Chiến thắng của Hà Phương đánh dấu một bước ngoặt. Trong ba mùa giải liên tiếp từ 2023 đến 2025, Lê Thảo Vy gần như bất bại ở nội dung nữ đơn khu vực phía Nam. Bộ sưu tập 14 huy chương vàng của cô được xem là một kỷ lục khó phá. Nhưng ở Sài Gòn tối Chủ nhật, cú dink rơi đúng vạch kitchen đã khép lại một thời kỳ — và mở ra một thời kỳ khác.</p>
+      <p>Huấn luyện viên Nguyễn Đình Phong, người đã theo Hà Phương từ những ngày cô còn tập ở sân Bình Thuỷ, Cần Thơ, nói thế này: "Phương không có cú smash quá mạnh. Cũng không có serve quái. Nhưng nó có một thứ hiếm — đọc được đối phương trước một nhịp."</p>
+      <p class="pull-quote">
+        Con không tập để thắng giải. Con tập để mỗi cú bóng chạm paddle đều có một lý do.
+        <cite>Nguyễn Hà Phương, nhà vô địch mới của Giải Mùa Xuân Sài Gòn 2026</cite>
+      </p>
+      <p>Giải Mùa Xuân Sài Gòn năm nay thu hút 184 tay vợt từ 9 tỉnh thành, con số kỷ lục kể từ khi giải được tổ chức lần đầu vào 2022. Ban tổ chức cho biết họ đã phải từ chối hơn 60 đơn đăng ký vì hết sân — một vấn đề mà cách đây hai năm không ai nghĩ sẽ gặp.</p>
+      <p>Sự bùng nổ của pickleball Việt Nam, theo một báo cáo nội bộ từ Liên đoàn Pickleball TP.HCM, đã vượt qua cả cầu lông ở nhóm tuổi 25–40 tại các khu đô thị lớn. Trong vòng 18 tháng, số lượng sân tư nhân ở TP.HCM đã tăng gấp bốn lần, từ 28 sân (cuối 2024) lên 126 sân (tháng 4 năm nay).</p>
+    </div>
+  </article>
+
+  <aside class="sidebar">
+
+    <section class="live-block reveal d3">
+      <div class="section-title"><span><span class="live-dot"></span>Đang diễn ra</span><small>3 trận</small></div>
+
+      <div class="match-row">
+        <div class="court">Sân 3 · CLB Phú Mỹ Hưng · Set 3</div>
+        <div class="p1 winning">Minh / Thu Hà</div>
+        <div class="score">11–7</div>
+        <div class="p2">Tuấn / Phương</div>
+      </div>
+
+      <div class="match-row">
+        <div class="court">Sân 7 · Crescent Arena · Set 1</div>
+        <div class="p1 winning">Quỳnh / Mai</div>
+        <div class="score">9–5</div>
+        <div class="p2">Hoàng / Liên</div>
+      </div>
+
+      <div class="match-row">
+        <div class="court">Sân 1 · Hà Nội Pickleball Club · Set 2</div>
+        <div class="p1">Đức Hùng</div>
+        <div class="score">8–10</div>
+        <div class="p2 winning">Hoài Nam</div>
+      </div>
+    </section>
+
+    <section class="reveal d3" style="margin-bottom: 40px;">
+      <div class="section-title"><span>Giải sắp tới</span><small>28 sự kiện</small></div>
+      <ul class="tourney-list">
+        <li><a class="tourney" href="#">
+          <div class="t-date"><span class="day">25</span><span class="month">Tháng Tư</span></div>
+          <div>
+            <h3 class="t-title">Giải Mùa Xuân Sài Gòn 2026</h3>
+            <p class="t-meta">Crescent Mall Arena · 184 tay vợt · Giải thưởng ₫180 triệu</p>
+            <span class="t-tag">Open · Doubles</span>
+          </div>
+        </a></li>
+        <li><a class="tourney" href="#">
+          <div class="t-date"><span class="day">03</span><span class="month">Tháng Năm</span></div>
+          <div>
+            <h3 class="t-title">Cup Pickleball Hà Nội lần IV</h3>
+            <p class="t-meta">Aeon Mall Long Biên · 96 tay vợt · DUPR 3.5–4.5</p>
+            <span class="t-tag">Rating · Mixed</span>
+          </div>
+        </a></li>
+        <li><a class="tourney" href="#">
+          <div class="t-date"><span class="day">17</span><span class="month">Tháng Năm</span></div>
+          <div>
+            <h3 class="t-title">Đà Nẵng Beach Pickleball Open</h3>
+            <p class="t-meta">Bãi biển Mỹ Khê · Sân cát · Outdoor</p>
+            <span class="t-tag">Beach · Experimental</span>
+          </div>
+        </a></li>
+        <li><a class="tourney" href="#">
+          <div class="t-date"><span class="day">31</span><span class="month">Tháng Năm</span></div>
+          <div>
+            <h3 class="t-title">Giải Hè Cần Thơ 2026</h3>
+            <p class="t-meta">Sân Bình Thuỷ · Giải trẻ dưới 21</p>
+            <span class="t-tag">Junior · U21</span>
+          </div>
+        </a></li>
+      </ul>
+    </section>
+
+    <section class="reveal d3">
+      <div class="section-title"><span>Bảng xếp hạng · Nữ đơn</span><small>DUPR 4.5+</small></div>
+      <table class="standings">
+        <thead><tr><th>#</th><th>Tay vợt</th><th>CLB</th><th>Điểm</th></tr></thead>
+        <tbody>
+          <tr><td class="rank">01</td><td class="name">Nguyễn Hà Phương</td><td>Cần Thơ PC</td><td class="pts">1,284</td></tr>
+          <tr><td class="rank">02</td><td class="name">Lê Thảo Vy</td><td>Saigon Sports</td><td class="pts">1,261</td></tr>
+          <tr><td class="rank">03</td><td class="name">Phạm Ngọc Quỳnh</td><td>Phú Mỹ Hưng</td><td class="pts">1,198</td></tr>
+          <tr><td class="rank">04</td><td class="name">Võ Thị Mai</td><td>Hanoi PC</td><td class="pts">1,174</td></tr>
+          <tr><td class="rank">05</td><td class="name">Trần Thu Hà</td><td>Đà Nẵng Bay</td><td class="pts">1,142</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </aside>
+</main>
+
+<section class="more">
+  <h2 class="more-title"><em>Tin khác</em> trong ngày</h2>
+  <div class="more-grid">
+    <article class="story">
+      <div class="meta">Kỹ thuật · 6 phút đọc</div>
+      <h3><a href="#">Dink bóng chéo: kỹ thuật đơn giản nhất mà không ai tập đủ nghiêm túc</a></h3>
+      <p>Một video phân tích chậm 240fps cho thấy khác biệt giữa dink của tay vợt chuyên và tay vợt nghiệp dư nằm ở tư thế đầu gối, không phải cổ tay.</p>
+      <span class="author">Phân tích · Đặng Xuân Phúc</span>
+    </article>
+    <article class="story">
+      <div class="meta">Cộng đồng · Phú Nhuận</div>
+      <h3><a href="#">Sân Phan Xích Long cháy lịch đặt đến tháng Sáu — và tại sao đó là tin tốt</a></h3>
+      <p>Cơn sốt pickleball ở khu vực trung tâm TP.HCM đã đẩy giá thuê sân tăng 40% trong 6 tháng. Cộng đồng phản ứng bằng cách mở thêm sân ở quận vùng ven.</p>
+      <span class="author">Phóng sự · Lý Thị Kim Oanh</span>
+    </article>
+    <article class="story">
+      <div class="meta">Bình luận · Opinion</div>
+      <h3><a href="#">Liệu Việt Nam có thể đào tạo một tay vợt Top 50 thế giới trong 5 năm tới?</a></h3>
+      <p>Góc nhìn từ cựu huấn luyện viên đội tuyển cầu lông quốc gia, người đã chuyển hướng sang huấn luyện pickleball trẻ từ năm 2024.</p>
+      <span class="author">Bình luận · Nguyễn Đình Phong</span>
+    </article>
+  </div>
+</section>
+
+<section class="cta-strip">
+  <h2>Đọc <em>Gazette</em> mỗi sáng.</h2>
+  <p>Bản tin hằng ngày về pickleball Việt Nam — giải đấu, kết quả, kỹ thuật và những câu chuyện đáng đọc. Gửi lúc 7:00 sáng, không quảng cáo.</p>
+  <a class="cta-btn" href="#">Đăng ký nhận bản tin →</a>
+</section>
+
+<footer>
+  <div class="wordmark">The Pickleball <em>Gazette</em></div>
+  <p>Một ấn phẩm của ThePickleHub. Xuất bản tại Sài Gòn từ năm 2024. Mọi bài viết được phóng viên thực tế tại sân kiểm chứng.</p>
+  <div class="colophon">Set in Fraunces, Cardo & JetBrains Mono · © MMXXVI</div>
+</footer>
+
+</body>
+</html>

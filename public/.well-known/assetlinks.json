@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "net.thepicklehub.app",
+      "sha256_cert_fingerprints": [
+        "66:4D:07:2E:75:DA:C7:47:14:27:D1:6F:4D:DB:C6:1F:BB:52:61:F1:4A:C1:C3:3C:CB:E6:28:86:56:95:1C:57"
+      ]
+    }
+  }
+]

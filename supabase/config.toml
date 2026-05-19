@@ -1,0 +1,239 @@
+project_id = "ajvlcamxemgbxduhiqrl"
+
+[functions.send-blog-blast]
+verify_jwt = false
+
+[functions.newsletter-subscribe]
+verify_jwt = false
+
+[functions.video-thumbnail-proxy]
+verify_jwt = false
+
+[functions.mux-create-livestream]
+verify_jwt = false
+
+[functions.send-auth-email]
+verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = false
+
+[functions.batch-view-events]
+verify_jwt = false
+
+[functions.mux-webhook]
+verify_jwt = false
+
+[functions.news-ingest]
+verify_jwt = false
+
+[functions.api-keys-generate]
+verify_jwt = false
+
+[functions.api-keys-revoke]
+verify_jwt = false
+
+[functions.api-keys-list]
+verify_jwt = false
+
+[functions.api-keys-admin-generate]
+verify_jwt = false
+
+[functions.api-keys-admin-revoke]
+verify_jwt = false
+
+[functions.news-check]
+verify_jwt = false
+
+[functions.og-live]
+verify_jwt = false
+
+[functions.og-video]
+verify_jwt = false
+
+[functions.og-tournament]
+verify_jwt = false
+
+[functions.og-organization]
+verify_jwt = false
+
+[functions.og-flex-tournament]
+verify_jwt = false
+
+[functions.auto-archive-tournaments]
+verify_jwt = false
+
+[functions.geo-check]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.invite-team-to-tournament]
+verify_jwt = false
+
+# ─── Bet #1 social layer (Sprint 1 skeletons) ──────────────────────────────
+# verify_jwt = false per the existing ES256/HS256 workaround. Each function
+# verifies the bearer token internally via supabase.auth.getUser() —
+# helper at supabase/functions/_shared/auth.ts.
+
+[functions.match-create]
+verify_jwt = false
+
+[functions.match-confirm]
+verify_jwt = false
+
+[functions.dupr-link]
+verify_jwt = false
+# User-facing; JWT verified internally via _shared/auth.getAuthUser
+# (ES256/HS256 workaround — see CLAUDE.md).
+
+[functions.dupr-sync]
+verify_jwt = false
+# Cron schedule activated manually via Supabase Dashboard → Database → Cron Jobs
+# (older Supabase CLI versions reject a schedule key here; the dashboard cron
+# is the source of truth — daily at 20:00 UTC = 03:00 ICT next day, refreshes
+# up to 100 oldest-synced DUPR profiles per run).
+# schedule = "0 20 * * *"
+
+[functions.feed-generate]
+verify_jwt = false
+
+[functions.leaderboard-compute]
+verify_jwt = false
+
+[functions.notification-send]
+verify_jwt = false
+
+[functions.match-expire]
+verify_jwt = false
+# Cron schedule activated manually via Supabase Dashboard → Database → Cron Jobs
+# (older Supabase CLI versions reject a schedule key here; the dashboard cron
+# is the source of truth — daily at 21:00 UTC = 04:00 ICT, sweeps pending > 7d
+# matches → expired).
+# schedule = "0 21 * * *"
+
+[functions.sitemap]
+verify_jwt = false
+# Public endpoint — robots/Googlebot/social crawlers must reach without auth.
+# CF Pages /sitemap*.xml routes use service role key internally; this Supabase
+# endpoint is a backup direct-access path.
+
+[functions.og-image-match]
+verify_jwt = false
+# Public endpoint — Facebook/Twitter/LinkedIn/Slack scrapers must fetch the
+# 1200×630 PNG when a /tran-dau/{slug} URL is shared. CF Pages /og/match/*
+# proxies + caches in KV (7d TTL) — see functions/og/match/[slug].png.ts.
+
+[functions.og-image-social-event]
+verify_jwt = false
+# PR79 Phase 2E — Public endpoint. Generates a 1200×630 PNG for
+# /social/{slug} (Social Events MVP). Scrapers fetch via the CF Pages
+# proxy at /og/social/{slug}.png which adds a 7-day KV cache layer.
+
+[functions.og-image-club]
+verify_jwt = false
+# PR79 Phase 2E — Public endpoint. Generates a 1200×630 PNG for
+# /clb/{slug} (club landing pages). Scrapers fetch via the CF Pages
+# proxy at /og/clb/{slug}.png which adds a 7-day KV cache layer.
+
+# ─── Sprint 6 — pro tour data integration ──────────────────────────────────
+[functions.pro-tour-ingest]
+verify_jwt = false
+# Service-role gate: only the pro-tour-scraper Cloudflare Worker calls this
+# endpoint, with the Supabase service role key as the bearer token. The
+# function checks the bearer matches env.SUPABASE_SERVICE_ROLE_KEY exactly
+# before doing any work — verify_jwt would block legitimate calls because
+# the service role token isn't a user JWT.
+
+[functions.pro-tour-trigger-scrape]
+verify_jwt = false
+# Admin-gated scrape trigger called from /admin/pro-tour. verify_jwt = false
+# per the project-wide ES256/HS256 workaround (CLAUDE.md); the function
+# verifies the bearer JWT internally via supabase.auth.getUser() and
+# checks user_roles for admin role before forwarding the signed request
+# to the pro-tour-scraper Cloudflare Worker. Required secrets:
+#   SCRAPER_AUTH_SECRET    — must match the Worker's wrangler secret
+#   PRO_TOUR_SCRAPER_URL   — e.g. https://pro-tour-scraper.<account>.workers.dev
+
+# ─── Social Events MVP (Sprint 1 PR1) ──────────────────────────────────────
+# Public phone-OTP registration. No auth required — these endpoints take a
+# phone number + 6-digit code and write to event_registrations via the
+# service-role key. RLS on otp_codes blocks all non-service access.
+# Required secrets when running outside dev mode:
+#   ESMS_API_KEY      — eSMS.vn API key
+#   ESMS_SECRET_KEY   — eSMS.vn secret
+#   ESMS_BRAND_NAME   — registered brandname (e.g. "PickleHub")
+# Dev mode: set ENVIRONMENT=development to skip the gateway and emit the
+# OTP to console (the response also carries `dev_mode_code`).
+
+[functions.phone-otp-send]
+verify_jwt = false
+# PR61: tries Zalo ZNS first then falls back to eSMS. Extra secrets:
+#   ZALO_TEMPLATE_ID_OTP   — approved ZNS OTP template id (1-2 day review)
+# When ZALO_TEMPLATE_ID_OTP is unset the function silently uses eSMS only,
+# so the feature lands ahead of Zalo OA template approval without breaking.
+
+[functions.phone-otp-verify]
+verify_jwt = false
+
+# ─── Social Events MVP (PR47 Live Event UX) ────────────────────────────────
+# Player path: guest with localStorage magic_token. Organizer path: bearer
+# JWT verified internally via getAuthUser (ES256/HS256 workaround).
+# A single function handles both — verify_jwt=false at the gateway lets the
+# guest path through, the organizer path enforces auth itself.
+
+[functions.submit-match-score]
+verify_jwt = false
+
+# ─── Social Events MVP (PR49 Payment) ──────────────────────────────────────
+# Both functions take a magic_token verified against registration_secrets;
+# verify_jwt=false at the gateway because guests have no auth.users row.
+
+[functions.create-payment-order]
+verify_jwt = false
+
+[functions.mark-payment-claimed]
+verify_jwt = false
+
+# ─── Social Events MVP (PR58 pre-launch must-haves) ────────────────────────
+# Player-facing cancel + reactivate flow on /dang-ky/:magic_token. Auth via
+# magic_token (registration_secrets lookup, service-role only) — no JWT.
+
+[functions.cancel-registration]
+verify_jwt = false
+
+[functions.reactivate-registration]
+verify_jwt = false
+
+# ─── Social Events MVP (PR59 registration recovery) ────────────────────────
+# Public lookup-by-phone with tiered channel fan-out (Zalo ZNS → email →
+# Turnstile CAPTCHA). Service-role internally to read registration_secrets.
+# Required secrets:
+#   ZALO_OA_ACCESS_TOKEN       — Zalo OA access_token from the OA Console
+#   ZALO_TEMPLATE_ID_RECOVERY  — approved ZNS template id (1-2 day review)
+#   RESEND_API_KEY             — already set for send-auth-email
+#   TURNSTILE_SECRET           — Cloudflare Turnstile secret key
+#   SITE_URL                   — https://www.thepicklehub.net (origin for the link)
+
+[functions.request-recovery-link]
+verify_jwt = false
+
+# ─── Social Events MVP (PR67 prepayment auto-cancel) ───────────────────────
+# Hourly cron. Cancels paid-event registrations where the player hasn't
+# claimed payment within event.prepayment_deadline_hours of registering.
+# verify_jwt=false at the gateway; the function itself enforces
+# `x-cron-secret` header matches the CRON_SECRET env var.
+# Required secret:
+#   CRON_SECRET — random string; same value used in the pg_cron http_post
+#
+# Cron registration (manual via Supabase Dashboard → Database → Cron jobs):
+#   schedule: '0 * * * *'  (every hour at :00)
+#   SQL:
+#     SELECT net.http_post(
+#       url := 'https://ajvlcamxemgbxduhiqrl.supabase.co/functions/v1/auto-cancel-unpaid-registrations',
+#       headers := jsonb_build_object('x-cron-secret', '<CRON_SECRET>')
+#     );
+
+[functions.auto-cancel-unpaid-registrations]
+verify_jwt = false

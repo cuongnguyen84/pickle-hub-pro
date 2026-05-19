@@ -1,0 +1,1 @@
+ALTER TABLE public.forum_comments ADD COLUMN image_urls text[] DEFAULT '{}';
