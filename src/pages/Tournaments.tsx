@@ -354,7 +354,6 @@ const Tournaments = () => {
                 renderMeta={(t: any) => `${t.team_count} teams · ${t.team_roster_size}/team`}
                 linkBase="/tools/team-match"
                 createLink="/tools/team-match/new"
-                useIdLink
               />
 
               {/* Empty state */}
@@ -386,7 +385,6 @@ interface FormatSectionProps {
   renderMeta: (t: any) => string;
   linkBase: string;
   createLink: string;
-  useIdLink?: boolean;
 }
 
 const FormatSection = ({
@@ -399,7 +397,6 @@ const FormatSection = ({
   renderMeta,
   linkBase,
   createLink,
-  useIdLink,
 }: FormatSectionProps) => {
   const display = [...active, ...completed].slice(0, 8);
   if (display.length === 0) return null;
@@ -427,7 +424,7 @@ const FormatSection = ({
       <div className="tl-list">
         {display.map((t) => {
           const status = STATUS_LABEL[t.status] ?? { cls: "active" as const, label: t.status };
-          const href = useIdLink ? `${linkBase}/${t.id}` : `${linkBase}/${t.share_id}`;
+          const href = `${linkBase}/${t.share_id}`;
           return (
             <Link
               key={t.id}
