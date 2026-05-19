@@ -199,7 +199,6 @@ export default defineConfig(({ mode }) => ({
           "vendor-query": ["@tanstack/react-query"],
           "vendor-dnd": [
             "@dnd-kit/core",
-            "@dnd-kit/sortable",
             "@dnd-kit/utilities",
           ],
           "vendor-charts": ["recharts"],
