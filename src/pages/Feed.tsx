@@ -11,6 +11,7 @@ import {
 } from "@/hooks/social/useFeedTimeline";
 import { useFeedNews, type FeedNewsItem } from "@/hooks/social/useFeedNews";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
+import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
 import { FeedBlogCard } from "@/components/social/feed/FeedBlogCard";
 import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
@@ -62,6 +63,7 @@ const Feed = () => {
   const timelineFeed = useFeedTimeline();
   const newsFeed = useFeedNews(language === "vi" ? "vi" : "en");
   const activeQuery = tab === "following" ? followingFeed : timelineFeed;
+  const viewed = useFeedViewedTracking();
 
   const followingMatches: FeedMatch[] = useMemo(
     () => followingFeed.data?.pages.flat() ?? [],
