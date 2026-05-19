@@ -40,11 +40,13 @@ SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
 SITE_URL = "https://www.thepicklehub.net"
 FB_GRAPH_VERSION = "v20.0"
 FB_POST_MIN_GAP_MINUTES = "5"
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-flash-lite-latest"
 
 [observability]
 enabled = true
 
-# Co-locate with Supabase (Tokyo) for low-latency reads/writes.
-[placement]
-mode = "smart"
+# Note: NOT using [placement] mode = "smart" — Gemini API has region
+# restrictions and was rejecting Tokyo-region calls with FAILED_PRECONDITION
+# "User location is not supported". Letting the Worker run on the requester's
+# nearest POP avoids the issue at the cost of slightly higher Supabase
+# latency (acceptable for this non-time-critical pipeline).

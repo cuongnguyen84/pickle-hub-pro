@@ -499,38 +499,46 @@ async function upsertFbPostLog(env: Env, row: FbPostLogUpsert): Promise<void> {
 // Gemini caption generation
 // ---------------------------------------------------------------------------
 
+/**
+ * Caption generation. We proxy the Gemini call through the
+ * `social-caption` Supabase Edge Function instead of calling Gemini directly
+ * from this Worker because Gemini rejects requests from some Cloudflare-edge
+ * IPs with FAILED_PRECONDITION "User location is not supported". Supabase
+ * Edge Functions (Tokyo) are in the supported region — proven by
+ * `news-translate` which uses the same Gemini API key.
+ *
+ * The Worker still owns the prompt format here (kept for parity), but only
+ * uses it as a fallback if direct Gemini ever becomes possible. The Edge
+ * Function holds the canonical prompt — keep both in sync.
+ */
 async function generateCaption(env: Env, item: NewsItem): Promise<string> {
-  const prompt = buildGeminiPrompt(env, item);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL}:generateContent?key=${env.GEMINI_API_KEY}`;
+  const link = buildNewsLink(env, item);
+  const url = `${env.SUPABASE_URL.replace(/\/$/, '')}/functions/v1/social-caption`;
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Auth-Secret': env.SCRAPER_AUTH_SECRET,
+    },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.75,
-        topP: 0.9,
-        maxOutputTokens: 600,
-      },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      ],
+      title: item.title,
+      summary: item.summary,
+      content_html: item.content_html,
+      category: item.category,
+      link,
     }),
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gemini ${res.status}: ${text}`);
+    throw new Error(`social-caption ${res.status}: ${text}`);
   }
 
-  const data = (await res.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-  if (!text) throw new Error('Gemini returned empty caption');
-  return sanitizeCaption(text);
+  const data = (await res.json()) as { caption?: string; model?: string; error?: string };
+  if (data.error) throw new Error(`social-caption: ${data.error}`);
+  if (!data.caption) throw new Error('social-caption returned empty caption');
+  return sanitizeCaption(data.caption);
 }
 
 function buildGeminiPrompt(env: Env, item: NewsItem): string {
@@ -608,7 +616,7 @@ interface FbPayload {
 }
 
 function buildFbPayload(item: NewsItem, caption: string, link: string): FbPayload {
-  if (item.image_url) {
+  if (item.image_url && isContentImage(item.image_url)) {
     // Photo post — cover image embedded, caption goes in `caption`.
     // Note: link is included in caption text (already appended by Gemini prompt).
     return {
@@ -620,7 +628,8 @@ function buildFbPayload(item: NewsItem, caption: string, link: string): FbPayloa
       },
     };
   }
-  // Link/text post.
+  // Link/text post. FB will auto-fetch og:image from the linked URL,
+  // which is what we want when the news_items.image_url is suspect or missing.
   return {
     endpoint: 'feed',
     body: {
@@ -628,6 +637,74 @@ function buildFbPayload(item: NewsItem, caption: string, link: string): FbPayloa
       link,
     },
   };
+}
+
+/**
+ * Heuristic to reject image URLs that look like ads, promo banners, or
+ * unrelated CDN assets pulled in by the news scraper. Returning false here
+ * makes buildFbPayload fall back to a link post — FB then fetches og:image
+ * from the canonical news page, which is usually the correct cover image.
+ *
+ * Tuning rule of thumb: if you see ads/discount banners on the Page, add
+ * the offending pattern below. If FB shows the wrong og:image instead of a
+ * real news photo, fix it upstream in news-fetcher (og:image extraction).
+ */
+function isContentImage(rawUrl: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+
+  const host = parsed.hostname.toLowerCase();
+  const path = parsed.pathname.toLowerCase();
+
+  // Hostnames that almost never serve news cover images for pickleball.
+  const blockedHosts = [
+    'cdn.shopify.com',
+    'shopify.com',
+    'cdn.etsy.com',
+    'i.etsystatic.com',
+    'amazon.com',
+    'images-na.ssl-images-amazon.com',
+    'm.media-amazon.com',
+    'doubleclick.net',
+    'googletagmanager.com',
+    'googlesyndication.com',
+    'adservice.google.com',
+  ];
+  if (blockedHosts.some((h) => host === h || host.endsWith(`.${h}`))) {
+    return false;
+  }
+
+  // Path-level keyword blacklist — promo/ads/storefront content.
+  const blockedKeywords = [
+    'discount',
+    'promo',
+    'coupon',
+    'banner',
+    'ads/',
+    '/ad-',
+    'sponsor',
+    'storefront',
+    'product/',
+    'logo',
+    'favicon',
+  ];
+  if (blockedKeywords.some((k) => path.includes(k))) {
+    return false;
+  }
+
+  // Reject obviously tiny assets (often icons, tracking pixels).
+  if (/[?&](?:w|width)=([0-9]+)/.test(parsed.search)) {
+    const m = parsed.search.match(/[?&](?:w|width)=([0-9]+)/);
+    if (m && Number(m[1]) < 400) return false;
+  }
+
+  // Accept by default — only filter out the worst offenders.
+  return true;
 }
 
 async function postToFacebook(
