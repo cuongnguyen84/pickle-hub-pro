@@ -9,6 +9,7 @@ import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
+import { ConnectDuprBanner } from "@/components/dupr/ConnectDuprBanner";
 import { supabase } from "@/integrations/supabase/client";
 import "@/styles/the-line.css";
 
@@ -145,6 +146,40 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const onRootPath = ROOT_PATHS.has(location.pathname);
   const showBackButton = hasHistory && !onRootPath;
   const { language, setLanguage } = useI18n();
+
+  // Phase 4 news fix (2026-05-19): clicking EN/VI in the global toggle used
+  // to only call setLanguage(), which mutated i18n state but kept the URL
+  // unchanged. After we routed /news (EN) and /vi/news (VI) as DISTINCT
+  // pages that derive their language from the route prop (not i18n state),
+  // toggling on /news did nothing visible — News.tsx kept showing EN rows
+  // because its `language` prop is hard-coded to "en" in the route def.
+  //
+  // Fix: when the toggle is clicked, also navigate to the EN/VI twin of
+  // the current path so the route prop changes. Convention in this app
+  // is "/x" ↔ "/vi/x", so we strip or prepend "/vi" on the leading segment.
+  //
+  // Edge cases:
+  //   - Page has no VI twin (e.g. /admin/*) → still set i18n state and stay
+  //     on the same URL. Better than 404.
+  //   - Already on the target language → no-op.
+  const switchLanguage = (next: "en" | "vi") => {
+    if (next === language) return;
+    setLanguage(next);
+    const cur = location.pathname;
+    let target = cur;
+    if (next === "vi") {
+      if (!cur.startsWith("/vi/") && cur !== "/vi") {
+        target = cur === "/" ? "/vi" : `/vi${cur}`;
+      }
+    } else {
+      if (cur === "/vi" || cur === "/vi/") {
+        target = "/";
+      } else if (cur.startsWith("/vi/")) {
+        target = cur.slice(3); // "/vi/news" → "/news"
+      }
+    }
+    if (target !== cur) navigate(target + location.search + location.hash);
+  };
   const { user, signOut } = useAuth();
   // Pulled here purely for the "View my profile" dropdown link. The
   // profile.username slug isn't stored on the auth User object — useAuth
@@ -433,7 +468,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             <button
               type="button"
               className={language === "en" ? "active" : ""}
-              onClick={() => setLanguage("en")}
+              onClick={() => switchLanguage("en")}
               aria-pressed={language === "en"}
               aria-label="English"
             >
@@ -443,7 +478,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             <button
               type="button"
               className={language === "vi" ? "active" : ""}
-              onClick={() => setLanguage("vi")}
+              onClick={() => switchLanguage("vi")}
               aria-pressed={language === "vi"}
               aria-label="Tiếng Việt"
             >
@@ -741,7 +776,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 <button
                   type="button"
                   className={language === "en" ? "active" : ""}
-                  onClick={() => setLanguage("en")}
+                  onClick={() => switchLanguage("en")}
                 >
                   EN
                 </button>
@@ -749,7 +784,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 <button
                   type="button"
                   className={language === "vi" ? "active" : ""}
-                  onClick={() => setLanguage("vi")}
+                  onClick={() => switchLanguage("vi")}
                 >
                   VI
                 </button>
@@ -791,6 +826,11 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
           </aside>
         </>
       )}
+
+      {/* DUPR connect prompt — slim banner above every page for authed
+          users who haven't linked. Component guards internally on
+          useAuth + useDuprConnection; renders nothing otherwise. */}
+      <ConnectDuprBanner />
 
       {children}
 
