@@ -1,0 +1,70 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+
+/** Public-facing slice of profiles surfaced by /nguoi-choi/:username. */
+export type PlayerProfile = Pick<
+  ProfileRow,
+  | "id"
+  | "username"
+  | "display_name"
+  | "avatar_url"
+  | "bio"
+  | "city"
+  | "country"
+  | "skill_level"
+  | "favorite_venue_id"
+  | "dupr_id"
+  | "dupr_singles"
+  | "dupr_doubles"
+  | "dupr_synced_at"
+  | "is_pro"
+  | "is_verified"
+  | "is_ghost"
+  | "created_at"
+>;
+
+/**
+ * Fetch the public profile for /nguoi-choi/:username.
+ *
+ * Returns null when the slug doesn't resolve or maps to a ghost row
+ * (caller renders 404 in either case). 5-minute staleTime — profile data
+ * rarely changes during a single browsing session.
+ *
+ * PR79 Phase 2F follow-up — the `:username` route param accepts EITHER
+ * a human-readable username OR the 8-/12-char hex profile_slug derived
+ * from profileIdToSlug(). SocialEventRoster, SocialEventLive, and
+ * ClubCard all build /u/<hex> links that 301 to /nguoi-choi/<hex>;
+ * this hook must resolve both shapes or those in-app player links
+ * 404 in the SPA. Single PostgREST .or() clause: one query, username
+ * exact match preferred, profile_slug prefix-LIKE as fallback.
+ */
+export function usePlayerProfile(usernameOrSlug: string | undefined) {
+  return useQuery({
+    queryKey: ["player-profile", usernameOrSlug],
+    queryFn: async () => {
+      if (!usernameOrSlug) return null;
+      const isHexSlug = /^[0-9a-f]{8,12}$/i.test(usernameOrSlug);
+      const orFilter = isHexSlug
+        ? `username.eq.${usernameOrSlug},profile_slug.like.${usernameOrSlug}%`
+        : `username.eq.${usernameOrSlug}`;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(
+          "id, username, display_name, avatar_url, bio, city, country, skill_level, favorite_venue_id, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at, is_pro, is_verified, is_ghost, created_at",
+        )
+        .or(orFilter)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      // Ghost rows (placeholder profiles created via PlayerSelector for
+      // non-app teammates) are not user-facing.
+      if (!data || data.is_ghost) return null;
+      return data as PlayerProfile;
+    },
+    enabled: !!usernameOrSlug,
+    staleTime: 5 * 60_000,
+  });
+}

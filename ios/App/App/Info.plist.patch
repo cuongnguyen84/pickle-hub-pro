@@ -1,0 +1,51 @@
+<!--
+  iOS Info.plist Additions for ThePickleHub
+  
+  After running `npx cap add ios`, add these keys to ios/App/App/Info.plist:
+-->
+
+<!-- Allow arbitrary network loads (for Mux video streaming) -->
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+    <key>NSAllowsArbitraryLoadsForMedia</key>
+    <true/>
+    <key>NSAllowsArbitraryLoadsInWebContent</key>
+    <true/>
+</dict>
+
+<!-- Allow inline video playback (critical for livestreams) -->
+<key>UIWebViewAllowsInlineMediaPlayback</key>
+<true/>
+
+<!-- Allow autoplay without user gesture -->
+<key>MediaTypesRequiringUserActionForPlayback</key>
+<array/>
+
+<!-- Background audio for livestreams -->
+<key>UIBackgroundModes</key>
+<array>
+    <string>audio</string>
+</array>
+
+<!-- Status bar style -->
+<key>UIStatusBarStyle</key>
+<string>UIStatusBarStyleLightContent</string>
+<key>UIViewControllerBasedStatusBarAppearance</key>
+<true/>
+
+<!-- Orientation support -->
+<key>UISupportedInterfaceOrientations</key>
+<array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+</array>
+<key>UISupportedInterfaceOrientations~ipad</key>
+<array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+</array>

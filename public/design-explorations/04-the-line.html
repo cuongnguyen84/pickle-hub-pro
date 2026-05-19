@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex,nofollow" />
+<meta name="theme-color" content="#08090a" />
+<title>The Pickle Hub · Direction 04 · The Line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Neutral scale (dark-first) */
+    --bg:        #08090a;
+    --bg-elev:   #0f1012;
+    --surface:   #131416;
+    --surface-2: #1a1c1f;
+    --border:    #22252a;
+    --border-2:  #2e3238;
+    --fg:        #f5f3ee;
+    --fg-2:      #c7c3bb;
+    --fg-3:      #86837d;
+    --fg-4:      #54514c;
+
+    /* Accent — single */
+    --green:     #00b96b;
+    --green-dim: #047e48;
+    --green-glow: #00b96b26;
+
+    /* Semantic */
+    --live:      #ff4136;
+    --live-dim:  #a3241b;
+    --gold:      #e9b649;
+
+    /* System */
+    --radius:    10px;
+    --radius-lg: 14px;
+
+    /* Safe areas */
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+    --sar: env(safe-area-inset-right);
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Geist", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 15px;
+    line-height: 1.5;
+    font-feature-settings: "ss01", "cv01", "cv11";
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.005em;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; }
+
+  /* Editorial italic accent type */
+  .serif { font-family: "Instrument Serif", "Times New Roman", serif; font-weight: 400; font-style: italic; letter-spacing: -0.015em; }
+  .mono  { font-family: "Geist Mono", ui-monospace, monospace; font-feature-settings: "zero", "ss01"; }
+  .tnum  { font-variant-numeric: tabular-nums; }
+
+  /* Hairline utilities */
+  .hairline { background: var(--border); height: 1px; border: 0; width: 100%; }
+
+  /* ============ NAV ============ */
+  nav.top {
+    position: sticky; top: 0; z-index: 40;
+    padding: calc(var(--sat) + 12px) max(24px, var(--sal)) 12px max(24px, var(--sar));
+    background: color-mix(in oklab, var(--bg) 82%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    backdrop-filter: blur(14px) saturate(1.1);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  }
+  @supports not (backdrop-filter: blur(14px)) {
+    nav.top { background: var(--bg); }
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 16px; letter-spacing: -0.015em; font-weight: 500;
+  }
+  .brand-mark {
+    width: 22px; height: 22px; position: relative;
+    border: 1.5px solid var(--fg); border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .brand-mark::before {
+    content: ''; position: absolute; left: 50%; top: -2px; bottom: -2px;
+    border-left: 1.5px solid var(--fg); transform: translateX(-50%);
+  }
+  .brand-mark::after {
+    content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; position: relative;
+  }
+  .brand-name { }
+  .brand-name em { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-size: 18px; letter-spacing: -0.02em; padding-right: 2px; }
+
+  .nav-links {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 13.5px; color: var(--fg-2); font-weight: 400;
+  }
+  .nav-links a {
+    padding: 8px 12px; border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-links a:hover { color: var(--fg); background: var(--surface); }
+  .nav-links a.active { color: var(--fg); }
+  @media (max-width: 900px) { .nav-links { display: none; } }
+
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  .nav-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 7px 10px 7px 12px; border-radius: 8px;
+    font-size: 13px; color: var(--fg-3);
+    min-width: 220px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .nav-search:hover { border-color: var(--border-2); }
+  .nav-search kbd {
+    font-family: "Geist Mono"; font-size: 11px; padding: 2px 5px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+    color: var(--fg-3); margin-left: auto;
+  }
+  @media (max-width: 640px) { .nav-search { min-width: 0; padding: 7px; } .nav-search span, .nav-search kbd { display: none; } }
+
+  .nav-btn {
+    font-size: 13.5px; font-weight: 500;
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--fg); color: var(--bg); border: 0;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .nav-btn:hover { opacity: 0.85; }
+
+  /* ============ LIVE TICKER ============ */
+  .ticker {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    height: 34px;
+    display: flex; align-items: center;
+  }
+  .ticker-head {
+    flex: none; display: flex; align-items: center; gap: 8px;
+    padding: 0 14px; height: 100%;
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--live);
+    border-right: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+  .ticker-head .dot { width: 6px; height: 6px; background: var(--live); border-radius: 50%; animation: pulse 1.6s ease-in-out infinite; }
+  .ticker-body { flex: 1; overflow: hidden; position: relative; mask-image: linear-gradient(to right, transparent 0, black 3%, black 97%, transparent 100%); -webkit-mask-image: linear-gradient(to right, transparent 0, black 3%, black 97%, transparent 100%); }
+  .ticker-track {
+    display: inline-flex; gap: 40px; white-space: nowrap;
+    padding-left: 24px;
+    animation: ticker 80s linear infinite;
+    font-family: "Geist Mono"; font-size: 12px; font-weight: 400;
+    color: var(--fg-2);
+    line-height: 34px;
+  }
+  .ticker-track b { color: var(--fg); font-weight: 500; }
+  .ticker-track .s { color: var(--green); font-weight: 500; }
+  .ticker-track .sep { color: var(--fg-4); }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* ============ GRID SHELL ============ */
+  .shell {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 max(24px, var(--sal)) 0 max(24px, var(--sar));
+  }
+  @media (max-width: 640px) { .shell { padding: 0 16px; } }
+
+  /* ============ HERO ============ */
+  section.hero {
+    padding: 80px 0 56px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  @media (max-width: 800px) { section.hero { padding: 48px 0 40px; } }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 64px;
+    align-items: end;
+  }
+  @media (max-width: 1000px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; align-items: start; } }
+
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--fg-3); margin-bottom: 28px;
+  }
+  .hero-eyebrow .pip {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 0 3px var(--green-glow);
+  }
+  .hero-eyebrow .sep { color: var(--fg-4); }
+
+  h1.hero-title {
+    font-family: "Instrument Serif", serif;
+    font-style: italic; font-weight: 400;
+    font-size: clamp(52px, 6.4vw, 104px);
+    line-height: 0.94;
+    letter-spacing: -0.025em;
+    color: var(--fg);
+    margin: 0 0 28px;
+    max-width: 16ch;
+  }
+  h1.hero-title .not-italic { font-style: normal; font-family: "Geist"; font-weight: 500; letter-spacing: -0.04em; font-size: 0.85em; }
+  h1.hero-title .dim { color: var(--fg-3); }
+
+  .hero-lede {
+    font-size: 17px; color: var(--fg-2); line-height: 1.55;
+    max-width: 54ch; margin: 0 0 32px;
+  }
+
+  .hero-byline {
+    display: flex; align-items: center; gap: 14px;
+    font-family: "Geist Mono"; font-size: 11px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--fg-3);
+  }
+  .hero-byline .avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #3d5a47, #1a2820);
+    border: 1px solid var(--border-2);
+  }
+  .hero-byline b { color: var(--fg-2); font-weight: 500; letter-spacing: 0; text-transform: none; font-family: "Geist"; font-size: 13px; }
+
+  /* ============ HERO: LIVE SCOREBOARD CARD ============ */
+  .live-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    position: relative;
+  }
+  .lc-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--fg-3);
+  }
+  .lc-head .live {
+    color: var(--live); display: inline-flex; align-items: center; gap: 7px;
+  }
+  .lc-head .live::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--live);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  .lc-body { padding: 22px 20px; }
+  .lc-row {
+    display: grid; grid-template-columns: 28px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 10px 0;
+  }
+  .lc-row:first-child { padding-top: 0; }
+  .lc-row:last-child { padding-bottom: 0; border-top: 1px solid var(--border); padding-top: 14px; margin-top: 4px; }
+  .lc-seed {
+    font-family: "Geist Mono"; font-size: 10px; color: var(--fg-4);
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .lc-name {
+    font-family: "Geist"; font-size: 17px; font-weight: 500;
+    letter-spacing: -0.01em; color: var(--fg-2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .lc-name .flag { font-family: "Geist Mono"; font-size: 10px; color: var(--fg-4); padding: 2px 4px; border: 1px solid var(--border); border-radius: 3px; letter-spacing: 0.04em; }
+  .lc-name .leader-mark { color: var(--green); opacity: 0; transition: opacity 0.15s; }
+  .lc-row.leader .lc-name { color: var(--fg); font-weight: 600; }
+  .lc-row.leader .lc-name .leader-mark { opacity: 1; }
+
+  .lc-sets { display: flex; gap: 14px; align-items: center; font-family: "Geist Mono"; }
+  .lc-set {
+    font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums;
+    color: var(--fg-3); min-width: 16px; text-align: center;
+  }
+  .lc-set.current { color: var(--fg); font-weight: 600; }
+  .lc-set.won { color: var(--green); font-weight: 600; }
+  .lc-set.tick { animation: tick 1.8s ease-out; }
+  @keyframes tick {
+    0% { transform: translateY(0); color: var(--fg); }
+    30% { transform: translateY(-4px); color: var(--green); }
+    70% { transform: translateY(0); color: var(--green); }
+    100% { transform: translateY(0); color: var(--fg); }
+  }
+
+  .lc-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-elev);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "Geist Mono"; font-size: 11px; color: var(--fg-3);
+    letter-spacing: 0.04em;
+  }
+  .lc-footer .watch {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--fg); font-weight: 500;
+    padding: 2px 0;
+    border-bottom: 1px solid var(--fg);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .lc-footer .watch:hover { color: var(--green); border-color: var(--green); }
+
+  /* Hero CTAs */
+  .hero-ctas { display: flex; gap: 8px; margin-top: 36px; flex-wrap: wrap; }
+  .btn {
+    font-size: 14px; font-weight: 500;
+    padding: 11px 18px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--fg);
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { background: var(--surface); border-color: var(--border-2); }
+  .btn.primary {
+    background: var(--fg); color: var(--bg); border-color: var(--fg);
+  }
+  .btn.primary:hover { background: var(--fg-2); border-color: var(--fg-2); }
+  .btn.green {
+    background: var(--green); color: var(--bg); border-color: var(--green);
+    font-weight: 600;
+  }
+  .btn.green:hover { background: var(--green-dim); border-color: var(--green-dim); }
+  .btn svg { width: 14px; height: 14px; }
+
+  /* ============ LIVE FEED STRIP ============ */
+  section.feed {
+    padding: 56px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .sec-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 24px; flex-wrap: wrap; margin-bottom: 32px;
+  }
+  .sec-head h2 {
+    font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
+    font-size: clamp(34px, 3.8vw, 52px);
+    line-height: 1; letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .sec-head h2 .sans { font-family: "Geist"; font-style: normal; font-weight: 500; color: var(--fg-3); font-size: 0.55em; letter-spacing: -0.02em; margin-left: 14px; vertical-align: 0.3em; font-variant-numeric: tabular-nums; }
+  .sec-head .filters { display: flex; gap: 4px; font-family: "Geist Mono"; font-size: 12px; color: var(--fg-3); }
+  .sec-head .filters button {
+    background: transparent; border: 1px solid var(--border);
+    padding: 6px 11px; border-radius: 999px;
+    color: var(--fg-3); font-size: 12px; cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.15s;
+    font-family: "Geist"; font-weight: 500;
+  }
+  .sec-head .filters button:hover { border-color: var(--border-2); color: var(--fg-2); }
+  .sec-head .filters button.active { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .match {
+    background: var(--bg);
+    padding: 18px 20px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .match:hover { background: var(--bg-elev); }
+  .match-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-3);
+    margin-bottom: 18px;
+  }
+  .match-head .live { color: var(--live); display: inline-flex; align-items: center; gap: 6px; }
+  .match-head .live::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--live); animation: pulse 1.6s ease-in-out infinite; }
+  .match-head .upcoming { color: var(--gold); }
+  .match-head .final { color: var(--fg-3); }
+
+  .match-row {
+    display: grid; grid-template-columns: 1fr auto; gap: 10px;
+    align-items: center; padding: 6px 0;
+  }
+  .match-row .n {
+    font-size: 15px; font-weight: 500; color: var(--fg-2);
+    letter-spacing: -0.005em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .match-row .n .flag {
+    font-family: "Geist Mono"; font-size: 10px; color: var(--fg-4);
+    padding: 1px 4px; border: 1px solid var(--border-2); border-radius: 3px;
+    letter-spacing: 0.04em;
+  }
+  .match-row.leader .n { color: var(--fg); font-weight: 600; }
+  .match-row .sc {
+    font-family: "Geist Mono"; font-size: 18px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-3); letter-spacing: -0.01em;
+    min-width: 64px; text-align: right;
+  }
+  .match-row.leader .sc { color: var(--green); font-weight: 600; }
+
+  .match-foot {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between;
+    font-family: "Geist Mono"; font-size: 11px; color: var(--fg-4);
+    letter-spacing: 0.02em;
+  }
+  .match-foot .v { color: var(--fg-3); }
+
+  /* ============ FEATURE STORY ============ */
+  section.feature {
+    padding: 96px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 800px) { section.feature { padding: 64px 0; } }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 64px;
+    align-items: center;
+  }
+  @media (max-width: 900px) { .feature-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+  .feature-visual {
+    aspect-ratio: 4 / 5;
+    background: linear-gradient(160deg, #1a2820 0%, #0f1a14 50%, #080a08 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    position: relative; overflow: hidden;
+  }
+  .feature-visual::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(0, 185, 107, 0.12), transparent 60%),
+      radial-gradient(circle at 70% 80%, rgba(0, 185, 107, 0.06), transparent 50%);
+  }
+  .feature-visual .court {
+    position: absolute; inset: 10% 10% 12%;
+    border: 1px solid rgba(245, 243, 238, 0.08);
+    transform: perspective(700px) rotateX(62deg);
+    transform-origin: center bottom;
+  }
+  .feature-visual .court::before, .feature-visual .court::after {
+    content: ''; position: absolute; left: 20%; right: 20%;
+    border-top: 1px solid rgba(245, 243, 238, 0.08);
+  }
+  .feature-visual .court::before { top: 35%; }
+  .feature-visual .court::after { top: 65%; border-top: 2px solid rgba(245, 243, 238, 0.12); }
+  .feature-visual .net {
+    position: absolute; top: 48%; left: 0; right: 0; height: 1px;
+    background: rgba(245, 243, 238, 0.2);
+  }
+  .feature-visual .tag {
+    position: absolute; top: 20px; left: 20px;
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    color: var(--green); letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 5px 8px; border: 1px solid var(--green-dim);
+    border-radius: 4px;
+    background: rgba(0, 185, 107, 0.08);
+  }
+  .feature-visual .overlay-meta {
+    position: absolute; left: 20px; right: 20px; bottom: 20px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    font-family: "Geist Mono"; font-size: 11px; color: var(--fg-3);
+    letter-spacing: 0.04em;
+  }
+  .feature-visual .overlay-meta b { color: var(--fg); font-weight: 500; }
+
+  .feature-body { padding-right: 20px; }
+  @media (max-width: 900px) { .feature-body { padding-right: 0; } }
+
+  .feature-kicker {
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--green); margin-bottom: 18px;
+  }
+  .feature-title {
+    font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
+    font-size: clamp(38px, 4.4vw, 64px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 0 0 24px;
+  }
+  .feature-title .not-italic { font-style: normal; font-family: "Geist"; font-weight: 500; font-size: 0.78em; letter-spacing: -0.03em; }
+  .feature-title .dim { color: var(--fg-3); }
+
+  .feature-lede {
+    font-size: 18px; color: var(--fg-2); line-height: 1.55;
+    max-width: 52ch; margin: 0 0 28px;
+  }
+  .feature-lede p { margin: 0 0 16px; }
+
+  .feature-meta {
+    display: flex; align-items: center; gap: 20px;
+    padding-top: 20px; border-top: 1px solid var(--border);
+    font-family: "Geist Mono"; font-size: 12px; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--fg-3);
+  }
+  .feature-meta .b { color: var(--fg-2); text-transform: none; letter-spacing: 0; font-family: "Geist"; font-weight: 500; font-size: 13px; }
+
+  /* ============ DATA: RANKINGS ============ */
+  section.data {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 800px) { section.data { padding: 56px 0; } }
+  .data-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 40px;
+  }
+  @media (max-width: 900px) { .data-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+  .panel {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-head h3 {
+    margin: 0;
+    font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
+    font-size: 24px; letter-spacing: -0.015em;
+  }
+  .panel-head .tabs {
+    display: flex; gap: 0; border: 1px solid var(--border); border-radius: 7px; overflow: hidden;
+    background: var(--surface);
+  }
+  .panel-head .tabs button {
+    background: transparent; border: 0; padding: 6px 12px;
+    color: var(--fg-3); font-size: 12px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    border-right: 1px solid var(--border);
+    transition: color 0.15s, background 0.15s;
+  }
+  .panel-head .tabs button:last-child { border-right: 0; }
+  .panel-head .tabs button.active { background: var(--bg-elev); color: var(--fg); }
+
+  table.rankings { width: 100%; border-collapse: collapse; }
+  table.rankings th {
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--fg-3); text-align: left;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+  table.rankings th:last-child, table.rankings td:last-child { text-align: right; }
+  table.rankings td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  table.rankings tr:last-child td { border-bottom: 0; }
+  table.rankings tr:hover td { background: var(--bg-elev); }
+  .rk-pos {
+    font-family: "Geist Mono"; font-size: 13px; font-weight: 500;
+    color: var(--fg-3); width: 42px;
+  }
+  .rk-move {
+    font-family: "Geist Mono"; font-size: 11px;
+    display: inline-block; padding-left: 6px;
+  }
+  .rk-move.up { color: var(--green); }
+  .rk-move.down { color: var(--live); }
+  .rk-move.flat { color: var(--fg-4); }
+  .rk-name {
+    font-weight: 500; color: var(--fg);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .rk-name .flag { font-family: "Geist Mono"; font-size: 10px; color: var(--fg-3); padding: 1px 5px; border: 1px solid var(--border); border-radius: 3px; letter-spacing: 0.04em; }
+  .rk-pts { font-family: "Geist Mono"; font-size: 14px; font-weight: 500; color: var(--fg); }
+  .rk-bar {
+    display: inline-block; width: 60px; height: 4px; background: var(--border);
+    border-radius: 2px; vertical-align: middle; margin-right: 10px; position: relative;
+  }
+  .rk-bar::after {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--green); border-radius: 2px;
+    width: var(--w, 0%);
+  }
+
+  /* ============ SCHEDULE ============ */
+  .schedule { padding: 0; }
+  .sched-row {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .sched-row:last-child { border-bottom: 0; }
+  .sched-row:hover { background: var(--bg-elev); }
+  .sched-date {
+    text-align: center;
+    font-family: "Geist Mono"; font-weight: 500;
+    border-right: 1px solid var(--border);
+    padding-right: 16px;
+  }
+  .sched-date .d { font-size: 20px; color: var(--fg); line-height: 1; letter-spacing: -0.02em; display: block; }
+  .sched-date .m { font-size: 10px; color: var(--fg-3); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; display: block; }
+  .sched-body h4 {
+    margin: 0 0 4px;
+    font-size: 16px; font-weight: 500; letter-spacing: -0.01em;
+  }
+  .sched-body .meta {
+    font-family: "Geist Mono"; font-size: 11px; color: var(--fg-3);
+    letter-spacing: 0.02em;
+  }
+  .sched-body .meta .sep { color: var(--fg-4); margin: 0 6px; }
+  .sched-right {
+    text-align: right;
+    font-family: "Geist Mono"; font-size: 11px; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--fg-3);
+  }
+  .sched-right .prize {
+    display: block; color: var(--fg); font-weight: 500; font-size: 13px; letter-spacing: 0;
+    margin-bottom: 2px;
+  }
+  .sched-right .tag {
+    display: inline-block;
+    padding: 2px 6px; border: 1px solid var(--border); border-radius: 3px;
+    font-size: 10px; color: var(--fg-3);
+  }
+
+  /* ============ BROADCAST ============ */
+  section.broadcast {
+    padding: 96px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 800px) { section.broadcast { padding: 56px 0; } }
+  .broadcast-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 24px; margin-bottom: 32px; flex-wrap: wrap;
+  }
+  .broadcast-head h2 {
+    font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
+    font-size: clamp(34px, 3.8vw, 52px);
+    line-height: 1; letter-spacing: -0.02em;
+    margin: 0;
+    max-width: 18ch;
+  }
+  .broadcast-head h2 .sans { font-family: "Geist"; font-style: normal; font-weight: 500; color: var(--fg-3); }
+  .broadcast-head p { color: var(--fg-3); max-width: 44ch; font-size: 15px; margin: 0; }
+
+  .broadcast-main {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 900px) { .broadcast-main { grid-template-columns: 1fr; } }
+
+  .player {
+    aspect-ratio: 16 / 10;
+    background: #050606;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    position: relative; overflow: hidden;
+    cursor: pointer;
+  }
+  .player::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(0, 185, 107, 0.1), transparent 60%),
+      linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.7));
+  }
+  .player .court-bg {
+    position: absolute; inset: 20% 15% 22%;
+    border: 1px solid rgba(245, 243, 238, 0.1);
+    transform: perspective(900px) rotateX(58deg);
+  }
+  .player .court-bg::before { content: ''; position: absolute; left: 18%; right: 18%; top: 32%; border-top: 1px solid rgba(245, 243, 238, 0.08); }
+  .player .court-bg::after { content: ''; position: absolute; left: 18%; right: 18%; top: 68%; border-top: 1px solid rgba(245, 243, 238, 0.08); }
+  .player .net { position: absolute; left: 0; right: 0; top: 48%; border-top: 1px dashed rgba(245, 243, 238, 0.22); }
+
+  .player-play {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--fg); color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    transition: transform 0.15s;
+  }
+  .player:hover .player-play { transform: translate(-50%, -50%) scale(1.08); }
+  .player-play svg { width: 20px; height: 20px; fill: currentColor; margin-left: 3px; }
+
+  .player-overlay {
+    position: absolute; inset: 16px 16px auto 16px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    font-family: "Geist Mono"; font-size: 11px; color: var(--fg-2);
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .player-overlay .live {
+    color: var(--bg); background: var(--live);
+    padding: 4px 8px; border-radius: 4px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-weight: 600;
+  }
+  .player-overlay .live::before { content: ''; width: 5px; height: 5px; background: var(--bg); border-radius: 50%; animation: pulse 1.6s ease-in-out infinite; }
+  .player-overlay .viewers { background: rgba(8,9,10,0.6); padding: 4px 8px; border-radius: 4px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+  .player-caption {
+    position: absolute; bottom: 20px; left: 20px; right: 20px;
+    color: var(--fg);
+  }
+  .player-caption .title {
+    font-family: "Instrument Serif"; font-style: italic;
+    font-size: clamp(22px, 2.4vw, 32px); line-height: 1.05;
+    letter-spacing: -0.015em; margin: 0 0 6px;
+    max-width: 20ch;
+  }
+  .player-caption .meta {
+    font-family: "Geist Mono"; font-size: 11px; color: var(--fg-2);
+    letter-spacing: 0.04em;
+  }
+
+  .queue { display: flex; flex-direction: column; gap: 10px; }
+  .q-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+  }
+  .q-item:hover { border-color: var(--border-2); background: var(--bg-elev); }
+  .q-item .ql { min-width: 0; }
+  .q-item .ql-time {
+    font-family: "Geist Mono"; font-size: 11px; color: var(--fg-3);
+    letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .q-item .ql-time.live { color: var(--live); }
+  .q-item .ql-time .sep { color: var(--fg-4); margin: 0 5px; }
+  .q-item .ql-title {
+    font-size: 14px; font-weight: 500; color: var(--fg);
+    letter-spacing: -0.01em; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .q-item .ql-sub {
+    font-family: "Geist Mono"; font-size: 11px; color: var(--fg-3); margin-top: 3px;
+  }
+  .q-item .arrow { color: var(--fg-4); }
+
+  /* ============ MANIFESTO ============ */
+  section.manifesto {
+    padding: 120px 0;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  @media (max-width: 800px) { section.manifesto { padding: 80px 0; } }
+  .manifesto-inner {
+    max-width: 960px;
+  }
+  .manifesto .num {
+    font-family: "Geist Mono"; font-size: 12px;
+    color: var(--green); letter-spacing: 0.08em;
+    margin-bottom: 32px;
+  }
+  .manifesto h2 {
+    font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
+    font-size: clamp(44px, 5.6vw, 92px);
+    line-height: 0.98; letter-spacing: -0.025em;
+    margin: 0 0 48px;
+  }
+  .manifesto h2 .not-italic { font-family: "Geist"; font-style: normal; font-weight: 500; letter-spacing: -0.04em; }
+  .manifesto h2 .dim { color: var(--fg-3); }
+  .manifesto .grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px;
+    padding-top: 48px; border-top: 1px solid var(--border);
+  }
+  @media (max-width: 800px) { .manifesto .grid { grid-template-columns: 1fr; gap: 32px; } }
+  .manifesto .item h3 {
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--fg-3); margin: 0 0 14px;
+  }
+  .manifesto .item p {
+    font-size: 16px; color: var(--fg); line-height: 1.55;
+    margin: 0; max-width: 36ch;
+  }
+  .manifesto .item p em { font-family: "Instrument Serif"; font-style: italic; color: var(--green); font-size: 1.05em; }
+
+  /* ============ FOOTER ============ */
+  footer {
+    padding: 64px 0 40px;
+    background: var(--bg);
+  }
+  .foot-grid {
+    display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 48px;
+    margin-bottom: 56px;
+  }
+  @media (max-width: 860px) { .foot-grid { grid-template-columns: 1fr 1fr; gap: 32px; } }
+  .foot-brand h3 {
+    font-family: "Instrument Serif"; font-style: italic; font-weight: 400;
+    font-size: 28px; letter-spacing: -0.015em; margin: 0 0 12px;
+  }
+  .foot-brand p { color: var(--fg-3); font-size: 14px; max-width: 32ch; margin: 0 0 20px; }
+  .foot-brand .status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "Geist Mono"; font-size: 11px;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3);
+    padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px;
+  }
+  .foot-brand .status::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  }
+
+  .foot-col h4 {
+    font-family: "Geist Mono"; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--fg-3); margin: 0 0 16px;
+  }
+  .foot-col ul { list-style: none; padding: 0; margin: 0; }
+  .foot-col li { margin-bottom: 10px; }
+  .foot-col a {
+    color: var(--fg-2); font-size: 14px;
+    transition: color 0.15s;
+  }
+  .foot-col a:hover { color: var(--fg); }
+
+  .foot-bottom {
+    padding-top: 32px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "Geist Mono"; font-size: 11px; letter-spacing: 0.04em;
+    color: var(--fg-4); flex-wrap: wrap; gap: 12px;
+  }
+  .foot-bottom .legal { display: flex; gap: 20px; }
+
+  /* ============ ANIM ============ */
+  @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .up { animation: up 0.8s cubic-bezier(0.22, 0.68, 0.25, 1) both; }
+  .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.14s; } .d3 { animation-delay: 0.24s; } .d4 { animation-delay: 0.36s; } .d5 { animation-delay: 0.48s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; }
+  }
+
+  /* Selection */
+  ::selection { background: var(--green); color: var(--bg); }
+
+  /* Focus */
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--green); outline-offset: 2px; border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top">
+  <div class="brand">
+    <span class="brand-mark"></span>
+    <span class="brand-name"><em>Pickle</em> Hub</span>
+  </div>
+  <div class="nav-links">
+    <a class="active">Live</a>
+    <a>Tournaments</a>
+    <a>Rankings</a>
+    <a>Stories</a>
+    <a>Stats</a>
+    <a>Shop</a>
+  </div>
+  <div class="nav-right">
+    <button class="nav-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search players, events…</span><kbd>⌘K</kbd></button>
+    <button class="nav-btn">Sign in</button>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-head"><span class="dot"></span>Live</div>
+  <div class="ticker-body">
+    <div class="ticker-track">
+      <span><b>A.L. Waters</b> <span class="s">11–9</span> <b>Parenteau</b> <span class="sep">·</span> PPA Austin Open <span class="sep">·</span> W. Singles F</span>
+      <span><b>Johns</b> / <b>Johnson</b> <span class="s">6–4, 11–6</span> <b>Staksrud</b> / <b>Newman</b> <span class="sep">·</span> M. Doubles SF</span>
+      <span><b>Koop</b> <span class="s">11–8, 3–6</span> <b>Bright</b> <span class="sep">·</span> W. Singles SF</span>
+      <span><b>McGuffin</b> <span class="s">11–4</span> <b>Duong</b> <span class="sep">·</span> M. Singles R16</span>
+      <span><b>Kovalova</b> / <b>Cho</b> <span class="s">11–9, 6–3</span> <b>Irvine</b> / <b>Tereschenko</b> <span class="sep">·</span> Mixed D. QF</span>
+      <span>NEXT · <b>A.L. Waters</b> vs <b>Bright</b> in 00:22:14 <span class="sep">·</span> W. Singles F</span>
+      <span><b>A.L. Waters</b> <span class="s">11–9</span> <b>Parenteau</b> <span class="sep">·</span> PPA Austin Open <span class="sep">·</span> W. Singles F</span>
+      <span><b>Johns</b> / <b>Johnson</b> <span class="s">6–4, 11–6</span> <b>Staksrud</b> / <b>Newman</b> <span class="sep">·</span> M. Doubles SF</span>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="shell">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-eyebrow up d1">
+          <span class="pip"></span>
+          <span>Live · Court Centre</span>
+          <span class="sep">/</span>
+          <span>PPA Austin Open · Final · Set 3</span>
+        </div>
+
+        <h1 class="hero-title up d2">
+          The match <br/>
+          <span class="dim">that reset</span> <br/>
+          women's singles.
+        </h1>
+
+        <p class="hero-lede up d3">
+          At 15, Anna Leigh Waters has defended her title against Catherine Parenteau for the eighth consecutive PPA final. But the margins are narrowing &mdash; and the sport is watching.
+        </p>
+
+        <div class="hero-byline up d3">
+          <span class="avatar"></span>
+          <span>By <b>Marcus Reid</b></span>
+          <span style="color:var(--fg-4)">·</span>
+          <span>8 min read</span>
+          <span style="color:var(--fg-4)">·</span>
+          <span>Updated 19:42 CDT</span>
+        </div>
+
+        <div class="hero-ctas up d4">
+          <a class="btn green" href="#">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            Watch live · Court 1
+          </a>
+          <a class="btn" href="#">Read the full story →</a>
+        </div>
+      </div>
+
+      <!-- Live scoreboard card -->
+      <div class="live-card up d3">
+        <div class="lc-head">
+          <span class="live">Live</span>
+          <span>Court 1 · Set 3 · 19:42</span>
+        </div>
+        <div class="lc-body">
+          <div class="lc-row leader">
+            <span class="lc-seed">#1</span>
+            <div class="lc-name"><span>Anna Leigh Waters</span><span class="flag">USA</span><span class="leader-mark mono">●</span></div>
+            <div class="lc-sets"><span class="lc-set won">11</span><span class="lc-set">9</span><span class="lc-set current tick">11</span></div>
+          </div>
+          <div class="lc-row">
+            <span class="lc-seed">#2</span>
+            <div class="lc-name"><span>Catherine Parenteau</span><span class="flag">CAN</span><span class="leader-mark mono">●</span></div>
+            <div class="lc-sets"><span class="lc-set">9</span><span class="lc-set won">11</span><span class="lc-set current">9</span></div>
+          </div>
+          <div class="lc-row">
+            <span class="lc-seed"></span>
+            <div class="mono" style="font-size:11px; color:var(--fg-3); letter-spacing:0.04em; text-transform:uppercase;">Rally · 31 · Duration 1h 52m</div>
+            <div class="mono" style="font-size:11px; color:var(--fg-3); letter-spacing:0.04em;">Match point · Waters</div>
+          </div>
+        </div>
+        <div class="lc-footer">
+          <span>PPA Austin Open · W. Singles Final</span>
+          <a class="watch" href="#">Watch →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE FEED -->
+<section class="feed">
+  <div class="shell">
+    <div class="sec-head">
+      <h2>Live <em class="serif">courts.</em> <span class="sans">14 of 18</span></h2>
+      <div class="filters">
+        <button class="active">All</button>
+        <button>PPA</button>
+        <button>APP</button>
+        <button>MLP</button>
+        <button>International</button>
+      </div>
+    </div>
+
+    <div class="feed-grid">
+
+      <div class="match">
+        <div class="match-head"><span class="live">Live · Set 3</span><span>Court 1 · PPA</span></div>
+        <div class="match-row leader"><span class="n"><span>A.L. Waters</span><span class="flag">USA</span></span><span class="sc">11 · 9 · 11</span></div>
+        <div class="match-row"><span class="n"><span>C. Parenteau</span><span class="flag">CAN</span></span><span class="sc">9 · 11 · 9</span></div>
+        <div class="match-foot"><span class="v">42,814 watching</span><span>W. Singles · F</span></div>
+      </div>
+
+      <div class="match">
+        <div class="match-head"><span class="live">Live · Set 2</span><span>Court 3 · PPA</span></div>
+        <div class="match-row leader"><span class="n"><span>Johns / Johnson</span><span class="flag">USA</span></span><span class="sc">11 · 8</span></div>
+        <div class="match-row"><span class="n"><span>Staksrud / Newman</span><span class="flag">ARG</span></span><span class="sc">6 · 5</span></div>
+        <div class="match-foot"><span class="v">18,221 watching</span><span>M. Doubles · SF</span></div>
+      </div>
+
+      <div class="match">
+        <div class="match-head"><span class="live">Live · Set 2</span><span>Court 5 · PPA</span></div>
+        <div class="match-row"><span class="n"><span>A. Koop</span><span class="flag">USA</span></span><span class="sc">8 · 3</span></div>
+        <div class="match-row leader"><span class="n"><span>H. Bright</span><span class="flag">USA</span></span><span class="sc">11 · 6</span></div>
+        <div class="match-foot"><span class="v">9,402 watching</span><span>W. Singles · SF</span></div>
+      </div>
+
+      <div class="match">
+        <div class="match-head"><span class="upcoming">Upcoming · 20:45 CDT</span><span>Court 2 · PPA</span></div>
+        <div class="match-row"><span class="n"><span>T. McGuffin</span><span class="flag">USA</span></span><span class="sc">—</span></div>
+        <div class="match-row"><span class="n"><span>Q. Duong</span><span class="flag">VNM</span></span><span class="sc">—</span></div>
+        <div class="match-foot"><span class="v">Notify me</span><span>M. Singles · R16</span></div>
+      </div>
+
+      <div class="match">
+        <div class="match-head"><span class="final">Final · FT</span><span>Court 7 · APP</span></div>
+        <div class="match-row leader"><span class="n"><span>F. Kovalova</span><span class="flag">SVK</span></span><span class="sc">11 · 11</span></div>
+        <div class="match-row"><span class="n"><span>J. Irvine</span><span class="flag">USA</span></span><span class="sc">9 · 6</span></div>
+        <div class="match-foot"><span class="v">Watch replay</span><span>W. Singles · QF</span></div>
+      </div>
+
+      <div class="match">
+        <div class="match-head"><span class="live">Live · Set 1</span><span>Court 4 · International</span></div>
+        <div class="match-row leader"><span class="n"><span>K. Nakamura</span><span class="flag">JPN</span></span><span class="sc">8</span></div>
+        <div class="match-row"><span class="n"><span>L. Chen</span><span class="flag">TWN</span></span><span class="sc">4</span></div>
+        <div class="match-foot"><span class="v">2,104 watching</span><span>Asia Pacific · R32</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE STORY -->
+<section class="feature">
+  <div class="shell">
+    <div class="feature-grid">
+      <div class="feature-visual">
+        <span class="tag">● Feature</span>
+        <div class="court"></div>
+        <div class="net"></div>
+        <div class="overlay-meta">
+          <span><b>Q. Duong</b> · Ho Chi Minh City</span>
+          <span>Photo · T. Nguyễn</span>
+        </div>
+      </div>
+
+      <div class="feature-body">
+        <div class="feature-kicker">◆ Portrait · The International Field</div>
+        <h2 class="feature-title">
+          Quang Duong, <br/>
+          <span class="dim">and the quiet</span> <br/>
+          Vietnamese ascent.
+        </h2>
+        <div class="feature-lede">
+          <p>Nineteen months ago, Quang Duong was playing exhibition doubles at a shopping mall in District 7. This weekend he will walk onto a PPA Tour court in Austin seeded #12 &mdash; the first Vietnamese player inside the world's top 20.</p>
+          <p>His story reflects something larger: a generation of Southeast Asian players who skipped tennis entirely, went straight to pickleball, and are now quietly rewriting what the international field looks like.</p>
+        </div>
+        <div class="feature-meta">
+          <span class="b">Helena Cruz</span>
+          <span>· Longform · 14 min read</span>
+          <span>· Apr 21, 2026</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA: RANKINGS + SCHEDULE -->
+<section class="data">
+  <div class="shell">
+    <div class="data-grid">
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Rankings</h3>
+          <div class="tabs">
+            <button class="active">Women</button>
+            <button>Men</button>
+            <button>Doubles</button>
+            <button>Mixed</button>
+          </div>
+        </div>
+        <table class="rankings">
+          <thead><tr><th style="width: 52px;">#</th><th>Player</th><th style="width: 130px;">Form</th><th>Points</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="rk-pos">01 <span class="rk-move flat">–</span></td>
+              <td class="rk-name"><span>Anna Leigh Waters</span><span class="flag">USA</span></td>
+              <td><span class="rk-bar" style="--w: 98%"></span><span class="mono" style="font-size:11px;color:var(--fg-3)">W-W-W-W-W</span></td>
+              <td class="rk-pts">14,820</td>
+            </tr>
+            <tr>
+              <td class="rk-pos">02 <span class="rk-move flat">–</span></td>
+              <td class="rk-name"><span>Catherine Parenteau</span><span class="flag">CAN</span></td>
+              <td><span class="rk-bar" style="--w: 82%"></span><span class="mono" style="font-size:11px;color:var(--fg-3)">W-L-W-W-L</span></td>
+              <td class="rk-pts">12,320</td>
+            </tr>
+            <tr>
+              <td class="rk-pos">03 <span class="rk-move up">▲2</span></td>
+              <td class="rk-name"><span>Hayden Bright</span><span class="flag">USA</span></td>
+              <td><span class="rk-bar" style="--w: 74%"></span><span class="mono" style="font-size:11px;color:var(--fg-3)">W-W-L-W-W</span></td>
+              <td class="rk-pts">11,180</td>
+            </tr>
+            <tr>
+              <td class="rk-pos">04 <span class="rk-move down">▼1</span></td>
+              <td class="rk-name"><span>Andrea Koop</span><span class="flag">USA</span></td>
+              <td><span class="rk-bar" style="--w: 68%"></span><span class="mono" style="font-size:11px;color:var(--fg-3)">L-W-W-L-L</span></td>
+              <td class="rk-pts">10,042</td>
+            </tr>
+            <tr>
+              <td class="rk-pos">05 <span class="rk-move down">▼1</span></td>
+              <td class="rk-name"><span>Lea Jansen</span><span class="flag">USA</span></td>
+              <td><span class="rk-bar" style="--w: 61%"></span><span class="mono" style="font-size:11px;color:var(--fg-3)">W-L-W-L-L</span></td>
+              <td class="rk-pts">9,418</td>
+            </tr>
+            <tr>
+              <td class="rk-pos">06 <span class="rk-move up">▲3</span></td>
+              <td class="rk-name"><span>Federica Kovalova</span><span class="flag">SVK</span></td>
+              <td><span class="rk-bar" style="--w: 58%"></span><span class="mono" style="font-size:11px;color:var(--fg-3)">W-W-W-L-W</span></td>
+              <td class="rk-pts">8,920</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Schedule</h3>
+          <div class="tabs">
+            <button class="active">Upcoming</button>
+            <button>This week</button>
+            <button>All 2026</button>
+          </div>
+        </div>
+        <div class="schedule">
+          <div class="sched-row">
+            <div class="sched-date"><span class="d">25</span><span class="m">Apr</span></div>
+            <div class="sched-body">
+              <h4>PPA Veolia Championships</h4>
+              <div class="meta">Indian Wells, CA<span class="sep">·</span>M/W/D/Mixed<span class="sep">·</span>Hard indoor</div>
+            </div>
+            <div class="sched-right">
+              <span class="prize">$500K</span>
+              <span class="tag">Major</span>
+            </div>
+          </div>
+
+          <div class="sched-row">
+            <div class="sched-date"><span class="d">03</span><span class="m">May</span></div>
+            <div class="sched-body">
+              <h4>APP Next Gen Tour · Naples</h4>
+              <div class="meta">Naples, FL<span class="sep">·</span>U19 / U16 / U12<span class="sep">·</span>Outdoor</div>
+            </div>
+            <div class="sched-right">
+              <span class="prize">$75K</span>
+              <span class="tag">Junior</span>
+            </div>
+          </div>
+
+          <div class="sched-row">
+            <div class="sched-date"><span class="d">09</span><span class="m">May</span></div>
+            <div class="sched-body">
+              <h4>European Open Championships</h4>
+              <div class="meta">Barcelona, ES<span class="sep">·</span>Mixed / Doubles<span class="sep">·</span>Clay conversion</div>
+            </div>
+            <div class="sched-right">
+              <span class="prize">€180K</span>
+              <span class="tag">International</span>
+            </div>
+          </div>
+
+          <div class="sched-row">
+            <div class="sched-date"><span class="d">17</span><span class="m">May</span></div>
+            <div class="sched-body">
+              <h4>Asia Pacific Pickleball Series</h4>
+              <div class="meta">Singapore<span class="sep">·</span>Singles + Doubles<span class="sep">·</span>Indoor</div>
+            </div>
+            <div class="sched-right">
+              <span class="prize">S$220K</span>
+              <span class="tag">APP Asia</span>
+            </div>
+          </div>
+
+          <div class="sched-row">
+            <div class="sched-date"><span class="d">31</span><span class="m">May</span></div>
+            <div class="sched-body">
+              <h4>MLP Orlando Cup</h4>
+              <div class="meta">Orlando, FL<span class="sep">·</span>Team format<span class="sep">·</span>Dreambreaker</div>
+            </div>
+            <div class="sched-right">
+              <span class="prize">$1.2M</span>
+              <span class="tag">Team</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- BROADCAST -->
+<section class="broadcast">
+  <div class="shell">
+    <div class="broadcast-head">
+      <h2><span class="serif">Watch</span> <span class="sans" style="font-size:0.55em;letter-spacing:-0.02em;">· Next 24h</span></h2>
+      <p>One subscription. Every court, every tour. 4K HDR on flagship matches.</p>
+    </div>
+
+    <div class="broadcast-main">
+
+      <div class="player">
+        <div class="court-bg"></div>
+        <div class="net"></div>
+        <div class="player-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="player-overlay">
+          <span class="live">Live</span>
+          <span class="viewers">42,814 watching</span>
+        </div>
+        <div class="player-caption">
+          <h3 class="title">PPA Austin Open <em>&ndash;&nbsp;</em>Women's Singles Final</h3>
+          <div class="meta">A.L. Waters vs C. Parenteau · Court 1 · Set 3</div>
+        </div>
+      </div>
+
+      <div class="queue">
+        <div class="q-item">
+          <div class="ql">
+            <div class="ql-time live">● Live now</div>
+            <div class="ql-title">Men's Doubles SF · Johns/Johnson vs Staksrud/Newman</div>
+            <div class="ql-sub">Court 3 · 18,221 watching</div>
+          </div>
+          <span class="arrow">→</span>
+        </div>
+        <div class="q-item">
+          <div class="ql">
+            <div class="ql-time">20:45 CDT<span class="sep">·</span>in 22 min</div>
+            <div class="ql-title">M. Singles R16 · McGuffin vs Duong</div>
+            <div class="ql-sub">Court 2 · Notify me</div>
+          </div>
+          <span class="arrow">→</span>
+        </div>
+        <div class="q-item">
+          <div class="ql">
+            <div class="ql-time">22:00 CDT<span class="sep">·</span>in 1h 37m</div>
+            <div class="ql-title">Mixed Doubles Final</div>
+            <div class="ql-sub">Court Centre · PPA Austin Open</div>
+          </div>
+          <span class="arrow">→</span>
+        </div>
+        <div class="q-item">
+          <div class="ql">
+            <div class="ql-time">Tomorrow 09:00 ICT</div>
+            <div class="ql-title">Asia Pacific Series · Day 1 · All courts</div>
+            <div class="ql-sub">Singapore · 6 courts concurrent</div>
+          </div>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<section class="manifesto">
+  <div class="shell">
+    <div class="manifesto-inner">
+      <div class="num mono">/ 04 &mdash; What we believe</div>
+      <h2>
+        Pickleball deserves <br/>
+        the same <em class="serif">care</em> <br/>
+        <span class="dim">we'd give any sport</span> <br/>
+        <span class="dim">with a century</span> <br/>
+        <span class="dim">of reporting behind it.</span>
+      </h2>
+
+      <div class="grid">
+        <div class="item">
+          <h3>01 / Real journalism</h3>
+          <p>Match reports, player features, and analysis written by reporters who were <em>at the court.</em> No aggregation. No AI slop.</p>
+        </div>
+        <div class="item">
+          <h3>02 / Every tour, one app</h3>
+          <p>PPA. APP. MLP. European Open. APP Asia. Vietnam National. Every bracket, every score, every court &mdash; <em>in one place.</em></p>
+        </div>
+        <div class="item">
+          <h3>03 / Built for players</h3>
+          <p>Find a partner, book a court, track your DUPR. Everything a player needs — <em>and nothing they don't.</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="shell">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <h3><em style="font-family:inherit;">Pickle</em> Hub</h3>
+        <p>Global coverage of professional pickleball. Headquartered in Ho Chi Minh City, reporting from Austin, Naples, Barcelona, Singapore and elsewhere.</p>
+        <span class="status">All systems operational</span>
+      </div>
+
+      <div class="foot-col">
+        <h4>Watch</h4>
+        <ul>
+          <li><a>Live courts</a></li>
+          <li><a>Schedule</a></li>
+          <li><a>Replays</a></li>
+          <li><a>4K HDR</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Compete</h4>
+        <ul>
+          <li><a>Tournaments</a></li>
+          <li><a>Rankings</a></li>
+          <li><a>Brackets</a></li>
+          <li><a>DUPR</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Play</h4>
+        <ul>
+          <li><a>Find a partner</a></li>
+          <li><a>Book a court</a></li>
+          <li><a>Coaches</a></li>
+          <li><a>Shop</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Read</h4>
+        <ul>
+          <li><a>Stories</a></li>
+          <li><a>Opinion</a></li>
+          <li><a>Rules</a></li>
+          <li><a>Newsletter</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <span>© 2026 The Pickle Hub · Ho Chi Minh City / Austin / Barcelona / Singapore</span>
+      <div class="legal">
+        <a>Privacy</a>
+        <a>Terms</a>
+        <a>Press</a>
+        <a>Careers</a>
+        <a>EN ↓</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

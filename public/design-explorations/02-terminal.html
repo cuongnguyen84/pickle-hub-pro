@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Court Terminal · Direction 02 · ThePickleHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Sans+Condensed:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0e07;
+    --bg-elev: #121810;
+    --fg: #e4efd3;
+    --fg-dim: #85977a;
+    --fg-dimmer: #4a5842;
+    --line: #1e2818;
+    --neon: #b9ff2f;           /* court green phosphor */
+    --neon-deep: #7fd310;
+    --flame: #ff4b1f;          /* live / warning */
+    --gold: #ffcf3c;            /* leader highlight */
+    --ink: #000;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "IBM Plex Sans Condensed", system-ui, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* CRT scanlines */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.12) 3px,
+      rgba(0,0,0,0) 4px
+    );
+    mix-blend-mode: multiply;
+  }
+  /* vignette */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 99;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.5) 100%);
+  }
+  .mono { font-family: "JetBrains Mono", monospace; }
+  .display { font-family: "Archivo Black", sans-serif; letter-spacing: -0.02em; }
+  .caps { text-transform: uppercase; letter-spacing: 0.14em; }
+
+  /* ============ TOP BAR ============ */
+  .top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--ink);
+    border-bottom: 2px solid var(--neon);
+    font-family: "JetBrains Mono";
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+  }
+  .top .channel { color: var(--neon); font-weight: 700; }
+  .top .clock { color: var(--gold); font-weight: 700; }
+  .top .sig {
+    display: inline-block; width: 9px; height: 9px;
+    background: var(--flame); margin-right: 10px;
+    animation: blink 0.9s steps(2) infinite;
+    vertical-align: -1px;
+  }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  /* ============ HEADER / HERO ============ */
+  .hero {
+    position: relative;
+    background: var(--bg);
+    border-bottom: 2px solid var(--neon);
+    padding: 48px 20px 0;
+    overflow: hidden;
+  }
+  .hero-grid-bg {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at 70% 40%, rgba(0,0,0,0.7), transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at 70% 40%, rgba(0,0,0,0.7), transparent 70%);
+    opacity: 0.7;
+  }
+  .hero-inner {
+    max-width: 1400px; margin: 0 auto;
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 48px;
+  }
+  @media (max-width: 900px) { .hero-inner { grid-template-columns: 1fr; gap: 32px; padding-bottom: 32px; } }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: "JetBrains Mono"; font-size: 11px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--flame); font-weight: 700;
+    padding: 6px 10px;
+    border: 1px solid var(--flame);
+    margin-bottom: 28px;
+  }
+  .hero-tag::before {
+    content: ''; width: 8px; height: 8px; background: var(--flame); display: inline-block;
+    animation: blink 0.9s steps(2) infinite;
+  }
+
+  .hero-title {
+    font-family: "Archivo Black", sans-serif;
+    font-size: clamp(56px, 8.5vw, 132px);
+    line-height: 0.86;
+    letter-spacing: -0.035em;
+    margin: 0 0 24px;
+    text-transform: uppercase;
+    color: var(--fg);
+  }
+  .hero-title .glow {
+    color: var(--neon);
+    text-shadow:
+      0 0 12px rgba(185, 255, 47, 0.55),
+      0 0 2px rgba(185, 255, 47, 0.9);
+  }
+  .hero-title .strike {
+    display: inline-block; position: relative;
+    color: var(--fg-dim);
+  }
+  .hero-title .strike::after {
+    content: ''; position: absolute; left: -4%; right: -4%; top: 48%;
+    border-top: 6px solid var(--flame);
+    transform: rotate(-4deg);
+  }
+  .hero-sub {
+    font-family: "IBM Plex Sans Condensed"; font-weight: 300;
+    font-size: 18px; line-height: 1.5;
+    max-width: 44ch; color: var(--fg-dim); margin: 0 0 32px;
+  }
+  .hero-sub b { color: var(--fg); font-weight: 600; }
+  .hero-sub .neon { color: var(--neon); font-weight: 600; }
+
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    font-family: "JetBrains Mono"; font-weight: 700;
+    font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 14px 22px; text-decoration: none;
+    border: 2px solid currentColor; background: transparent; color: var(--fg);
+    transition: all 0.15s; cursor: pointer;
+    position: relative;
+  }
+  .btn:hover { background: var(--fg); color: var(--bg); }
+  .btn.primary { background: var(--neon); color: var(--ink); border-color: var(--neon); }
+  .btn.primary:hover { background: var(--fg); border-color: var(--fg); }
+  .btn.flame { border-color: var(--flame); color: var(--flame); }
+  .btn.flame:hover { background: var(--flame); color: var(--ink); border-color: var(--flame); }
+
+  /* ============ BIG SCOREBOARD ============ */
+  .scoreboard {
+    border: 2px solid var(--neon);
+    background: var(--ink);
+    padding: 0;
+    box-shadow: 0 0 40px rgba(185, 255, 47, 0.12), inset 0 0 60px rgba(185, 255, 47, 0.05);
+  }
+  .sb-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px;
+    background: var(--neon); color: var(--ink);
+    font-family: "JetBrains Mono"; font-weight: 700;
+    font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
+  }
+  .sb-head .dot { width: 8px; height: 8px; background: var(--flame); border-radius: 50%; display: inline-block; margin-right: 8px; animation: blink 0.9s steps(2) infinite; }
+  .sb-body { padding: 20px; }
+  .sb-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line);
+    font-family: "JetBrains Mono";
+  }
+  .sb-row:last-child { border-bottom: none; }
+  .sb-row .plr {
+    font-family: "Archivo Black"; font-size: 22px;
+    text-transform: uppercase; letter-spacing: -0.01em;
+    color: var(--fg);
+  }
+  .sb-row .plr.leader { color: var(--gold); }
+  .sb-row .seed {
+    font-family: "JetBrains Mono"; font-size: 10px;
+    color: var(--fg-dimmer); letter-spacing: 0.18em;
+    margin-right: 8px;
+  }
+  .sb-row .pts {
+    font-family: "Archivo Black"; font-size: 42px;
+    color: var(--neon); line-height: 1;
+    min-width: 60px; text-align: right;
+    text-shadow: 0 0 16px rgba(185, 255, 47, 0.5);
+    font-variant-numeric: tabular-nums;
+  }
+  .sb-row .pts.leader { color: var(--gold); text-shadow: 0 0 16px rgba(255, 207, 60, 0.5); }
+  .sb-meta {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 2px solid var(--line);
+    font-family: "JetBrains Mono"; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-dim);
+  }
+  .sb-meta > div { padding: 12px; border-right: 1px solid var(--line); }
+  .sb-meta > div:last-child { border-right: none; }
+  .sb-meta b { display: block; font-family: "Archivo Black"; font-size: 18px; color: var(--fg); letter-spacing: 0; margin-top: 2px; text-transform: none; }
+  .sb-meta .accent b { color: var(--neon); }
+
+  /* ============ LIVE MATCHES STRIP ============ */
+  .strip {
+    background: var(--bg-elev);
+    border-top: 2px solid var(--neon);
+    border-bottom: 2px solid var(--neon);
+    padding: 28px 20px;
+  }
+  .strip-inner { max-width: 1400px; margin: 0 auto; }
+  .strip-title {
+    font-family: "Archivo Black"; font-size: 28px;
+    text-transform: uppercase; letter-spacing: -0.01em;
+    margin: 0 0 18px;
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 20px;
+  }
+  .strip-title small {
+    font-family: "JetBrains Mono"; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.22em; color: var(--fg-dim); text-transform: uppercase;
+  }
+  .matches {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .mcard {
+    background: var(--ink);
+    border: 2px solid var(--line);
+    padding: 14px;
+    position: relative;
+    font-family: "JetBrains Mono";
+    transition: border-color 0.15s, transform 0.15s;
+    cursor: pointer;
+  }
+  .mcard:hover { border-color: var(--neon); transform: translateY(-2px); }
+  .mcard.live { border-color: var(--flame); }
+  .mcard-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--fg-dim); margin-bottom: 12px;
+  }
+  .mcard-head .live-tag { color: var(--flame); font-weight: 700; }
+  .mcard-head .live-tag::before { content: '●'; margin-right: 4px; animation: blink 0.9s steps(2) infinite; }
+  .mcard-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+  }
+  .mcard-row .n { font-family: "Archivo Black"; font-size: 15px; color: var(--fg); text-transform: uppercase; letter-spacing: -0.01em; }
+  .mcard-row.lead .n { color: var(--gold); }
+  .mcard-row .s { font-family: "Archivo Black"; font-size: 24px; color: var(--neon); font-variant-numeric: tabular-nums; }
+  .mcard-row.lead .s { color: var(--gold); }
+  .mcard-foot { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 10px; color: var(--fg-dimmer); letter-spacing: 0.18em; text-transform: uppercase; display: flex; justify-content: space-between; }
+
+  /* ============ SECTION ============ */
+  .section {
+    max-width: 1400px; margin: 0 auto;
+    padding: 64px 20px;
+  }
+  .sec-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 20px; margin-bottom: 32px; flex-wrap: wrap;
+  }
+  .sec-kicker {
+    font-family: "JetBrains Mono"; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--neon); margin-bottom: 6px;
+  }
+  .sec-title {
+    font-family: "Archivo Black"; font-size: clamp(36px, 5vw, 64px);
+    text-transform: uppercase; letter-spacing: -0.02em;
+    line-height: 0.9; margin: 0; color: var(--fg);
+  }
+  .sec-desc {
+    font-family: "IBM Plex Sans Condensed"; font-weight: 300;
+    color: var(--fg-dim); max-width: 50ch; margin: 0; font-size: 15px;
+  }
+
+  /* ============ BRACKET ============ */
+  .bracket {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  @media (max-width: 900px) { .bracket { grid-template-columns: repeat(4, 220px); } }
+  .bk-col { display: flex; flex-direction: column; gap: 12px; justify-content: space-around; }
+  .bk-col .stage {
+    font-family: "JetBrains Mono"; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--fg-dim); padding-bottom: 6px; border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .bk-match {
+    border: 2px solid var(--line);
+    background: var(--bg-elev);
+    font-family: "JetBrains Mono"; font-size: 12px;
+    padding: 0;
+  }
+  .bk-match.win { border-color: var(--neon); }
+  .bk-match .r {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .bk-match .r:last-child { border-bottom: none; }
+  .bk-match .r.winner { color: var(--gold); font-weight: 700; background: rgba(255, 207, 60, 0.04); }
+  .bk-match .r .sc { font-family: "Archivo Black"; font-size: 14px; }
+
+  /* ============ TOURNAMENT LIST ============ */
+  .tours {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    border: 2px solid var(--line);
+    background: var(--bg-elev);
+  }
+  @media (max-width: 760px) { .tours { grid-template-columns: 1fr; } }
+  .tour {
+    padding: 28px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tour:hover { background: rgba(185, 255, 47, 0.06); }
+  .tour:nth-child(2n) { border-right: none; }
+  @media (max-width: 760px) { .tour { border-right: none; } }
+  .tour-date {
+    font-family: "JetBrains Mono"; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--neon); margin-bottom: 8px;
+  }
+  .tour-name {
+    font-family: "Archivo Black"; font-size: 24px;
+    text-transform: uppercase; letter-spacing: -0.01em;
+    margin: 0 0 14px; line-height: 1;
+  }
+  .tour-meta {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    font-family: "JetBrains Mono"; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-dim);
+  }
+  .tour-meta b { display: block; font-family: "Archivo Black"; font-size: 16px; color: var(--fg); letter-spacing: 0; margin-top: 2px; text-transform: none; }
+  .tour-prize b { color: var(--neon); }
+  .tour-tags { margin-top: 16px; }
+  .tour-tag {
+    display: inline-block;
+    font-family: "JetBrains Mono"; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--fg-dim); color: var(--fg-dim);
+    margin-right: 4px;
+  }
+
+  /* ============ CTA ============ */
+  .cta {
+    position: relative;
+    padding: 80px 20px;
+    text-align: center;
+    border-top: 2px solid var(--neon);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(185,255,47,0.15), transparent 60%),
+      var(--ink);
+    overflow: hidden;
+  }
+  .cta::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.3;
+    mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+  }
+  .cta-inner { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+  .cta h2 {
+    font-family: "Archivo Black"; font-size: clamp(44px, 6vw, 84px);
+    text-transform: uppercase; letter-spacing: -0.025em; line-height: 0.9;
+    margin: 0 0 20px;
+  }
+  .cta h2 .glow { color: var(--neon); text-shadow: 0 0 24px rgba(185,255,47,0.6); }
+  .cta p { color: var(--fg-dim); font-size: 17px; max-width: 50ch; margin: 0 auto 32px; }
+  .cta .ctas { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+  /* ============ FOOTER ============ */
+  footer {
+    background: var(--ink);
+    border-top: 2px solid var(--neon);
+    padding: 40px 20px;
+    font-family: "JetBrains Mono"; font-size: 11px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--fg-dim);
+  }
+  .foot-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; gap: 28px; flex-wrap: wrap; }
+  .foot-brand { font-family: "Archivo Black"; font-size: 22px; color: var(--neon); letter-spacing: -0.01em; text-transform: uppercase; }
+  .foot-brand span { color: var(--fg); }
+
+  /* ============ ANIMATIONS ============ */
+  @keyframes glow-pulse { 0%, 100% { text-shadow: 0 0 12px rgba(185,255,47,0.55), 0 0 2px rgba(185,255,47,0.9); } 50% { text-shadow: 0 0 24px rgba(185,255,47,0.85), 0 0 4px rgba(185,255,47,1); } }
+  .glow { animation: glow-pulse 3.2s ease-in-out infinite; }
+
+  @keyframes score-flip {
+    0% { transform: rotateX(0); }
+    50% { transform: rotateX(-90deg); }
+    100% { transform: rotateX(0); }
+  }
+  .flip { display: inline-block; animation: score-flip 2.4s ease-in-out infinite; transform-origin: 50% 50%; }
+
+  @keyframes appear { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .appear { animation: appear 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.18s; } .d3 { animation-delay: 0.32s; } .d4 { animation-delay: 0.46s; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div><span class="sig"></span>CH.07 · COURT TERMINAL</div>
+  <div class="channel">● ON-AIR · 14 LIVE STREAMS · 2,841 ĐANG XEM</div>
+  <div class="clock mono">21.04.2026 · 19:42:07 GMT+7</div>
+</div>
+
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-tag appear d1">Finale · Nữ đơn · Set quyết định</div>
+      <h1 class="hero-title appear d2">
+        <span class="glow">11</span>–<span class="strike">09</span><br />
+        <span style="font-size: 0.42em; color: var(--fg-dim); letter-spacing: 0.01em;">HÀ PHƯƠNG</span><br />
+        <span style="font-size: 0.42em; color: var(--fg-dim); letter-spacing: 0.01em;">VS. THẢO VY</span>
+      </h1>
+      <p class="hero-sub appear d3">
+        Giải Mùa Xuân Sài Gòn · Crescent Mall Arena · Sân trung tâm.
+        <br /><b>Hà Phương</b> dẫn <span class="neon">11–9</span> set 3, match point thứ ba liên tiếp.
+        <br />Cốt bóng hiện tại: <b>rally dink thứ 42</b>.
+      </p>
+      <div class="hero-ctas appear d4">
+        <a class="btn primary" href="#">▶ XEM TRỰC TIẾP</a>
+        <a class="btn flame" href="#">● ĐẶT THÔNG BÁO</a>
+        <a class="btn" href="#">◼ BẢNG ĐẤU</a>
+      </div>
+    </div>
+
+    <div class="scoreboard appear d3">
+      <div class="sb-head">
+        <span><span class="dot"></span>LIVE · COURT 01 · SET 3</span>
+        <span>19:42 / RND 03</span>
+      </div>
+      <div class="sb-body">
+        <div class="sb-row">
+          <div>
+            <span class="seed">#1 SEED</span>
+            <div class="plr leader">HÀ PHƯƠNG</div>
+          </div>
+          <div style="font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.2em; color: var(--fg-dim);">CẦN THƠ PC · DUPR 4.9</div>
+          <div class="pts leader">11</div>
+        </div>
+        <div class="sb-row">
+          <div>
+            <span class="seed">#2 SEED</span>
+            <div class="plr">THẢO VY</div>
+          </div>
+          <div style="font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.2em; color: var(--fg-dim);">SAIGON SPORTS · DUPR 5.1</div>
+          <div class="pts">09</div>
+        </div>
+      </div>
+      <div class="sb-meta">
+        <div><span class="caps" style="color: var(--fg-dimmer);">SETS</span><b>2–1</b></div>
+        <div class="accent"><span class="caps" style="color: var(--fg-dimmer);">RALLY</span><b>42</b></div>
+        <div><span class="caps" style="color: var(--fg-dimmer);">TIME</span><b>1:42:11</b></div>
+        <div><span class="caps" style="color: var(--fg-dimmer);">ACES</span><b>03 / 07</b></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="strip">
+  <div class="strip-inner">
+    <h2 class="strip-title">● LIVE COURTS <small>14 đang diễn ra · cả nước</small></h2>
+    <div class="matches">
+
+      <div class="mcard live">
+        <div class="mcard-head"><span class="live-tag">LIVE · SET 3</span><span>SÂN 03 · CRESCENT</span></div>
+        <div class="mcard-row lead"><span class="n">Hà Phương</span><span class="s">11</span></div>
+        <div class="mcard-row"><span class="n">Thảo Vy</span><span class="s">09</span></div>
+        <div class="mcard-foot"><span>FINALE NỮ ĐƠN</span><span>2,841 xem</span></div>
+      </div>
+
+      <div class="mcard live">
+        <div class="mcard-head"><span class="live-tag">LIVE · SET 2</span><span>SÂN 07 · PHÚ MỸ HƯNG</span></div>
+        <div class="mcard-row lead"><span class="n">Quỳnh / Mai</span><span class="s">11</span></div>
+        <div class="mcard-row"><span class="n">Hoàng / Liên</span><span class="s">08</span></div>
+        <div class="mcard-foot"><span>BK MIXED DOUBLES</span><span>1,204 xem</span></div>
+      </div>
+
+      <div class="mcard live">
+        <div class="mcard-head"><span class="live-tag">LIVE · SET 2</span><span>SÂN 01 · HNPC</span></div>
+        <div class="mcard-row"><span class="n">Đức Hùng</span><span class="s">08</span></div>
+        <div class="mcard-row lead"><span class="n">Hoài Nam</span><span class="s">10</span></div>
+        <div class="mcard-foot"><span>BK NAM ĐƠN</span><span>642 xem</span></div>
+      </div>
+
+      <div class="mcard">
+        <div class="mcard-head"><span>UPCOMING · 22:00</span><span>SÂN 02 · ĐN BAY</span></div>
+        <div class="mcard-row"><span class="n">Minh / Khôi</span><span class="s">—</span></div>
+        <div class="mcard-row"><span class="n">Tuấn / Duy</span><span class="s">—</span></div>
+        <div class="mcard-foot"><span>TỨ KẾT NAM ĐÔI</span><span>Chờ trận</span></div>
+      </div>
+
+      <div class="mcard">
+        <div class="mcard-head"><span>UPCOMING · 23:30</span><span>SÂN 04 · CRESCENT</span></div>
+        <div class="mcard-row"><span class="n">Phương / Châu</span><span class="s">—</span></div>
+        <div class="mcard-row"><span class="n">Ngân / Linh</span><span class="s">—</span></div>
+        <div class="mcard-foot"><span>BK NỮ ĐÔI</span><span>Chờ trận</span></div>
+      </div>
+
+      <div class="mcard">
+        <div class="mcard-head"><span>FINAL · FT</span><span>SÂN 09 · SÀI GÒN</span></div>
+        <div class="mcard-row lead"><span class="n">Quốc Bảo</span><span class="s">21</span></div>
+        <div class="mcard-row"><span class="n">Trung Hiếu</span><span class="s">17</span></div>
+        <div class="mcard-foot"><span>NAM ĐƠN · U21</span><span>Hoàn tất</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="sec-head">
+    <div>
+      <div class="sec-kicker">◆ Giải Mùa Xuân Sài Gòn 2026</div>
+      <h2 class="sec-title">Nhánh chung kết</h2>
+    </div>
+    <p class="sec-desc">Bảng đấu loại trực tiếp nội dung nữ đơn. 16 tay vợt. 4 vòng. Set 3 quyết định. Cập nhật trực tiếp mỗi khi có điểm số mới.</p>
+  </div>
+
+  <div class="bracket">
+    <div class="bk-col">
+      <div class="stage">◼ Vòng 1 · 16→8</div>
+      <div class="bk-match win">
+        <div class="r winner"><span>Hà Phương</span><span class="sc">21</span></div>
+        <div class="r"><span>Ngân Giang</span><span class="sc">14</span></div>
+      </div>
+      <div class="bk-match">
+        <div class="r winner"><span>Quỳnh Chi</span><span class="sc">21</span></div>
+        <div class="r"><span>Bảo Trân</span><span class="sc">16</span></div>
+      </div>
+      <div class="bk-match">
+        <div class="r winner"><span>Thu Hà</span><span class="sc">21</span></div>
+        <div class="r"><span>Linh Chi</span><span class="sc">11</span></div>
+      </div>
+      <div class="bk-match">
+        <div class="r winner"><span>Thảo Vy</span><span class="sc">21</span></div>
+        <div class="r"><span>Phương Anh</span><span class="sc">09</span></div>
+      </div>
+    </div>
+
+    <div class="bk-col">
+      <div class="stage">◼ Tứ kết · 8→4</div>
+      <div class="bk-match win">
+        <div class="r winner"><span>Hà Phương</span><span class="sc">21</span></div>
+        <div class="r"><span>Quỳnh Chi</span><span class="sc">18</span></div>
+      </div>
+      <div class="bk-match">
+        <div class="r winner"><span>Thảo Vy</span><span class="sc">21</span></div>
+        <div class="r"><span>Thu Hà</span><span class="sc">19</span></div>
+      </div>
+    </div>
+
+    <div class="bk-col">
+      <div class="stage">◼ Bán kết · 4→2</div>
+      <div class="bk-match win">
+        <div class="r winner"><span>Hà Phương</span><span class="sc">21</span></div>
+        <div class="r"><span>Quỳnh / Vy</span><span class="sc">17</span></div>
+      </div>
+    </div>
+
+    <div class="bk-col">
+      <div class="stage">◼ Chung kết · 2→1</div>
+      <div class="bk-match win" style="border-color: var(--flame);">
+        <div class="r" style="color: var(--flame); font-weight: 700;">
+          <span>● LIVE · SET 3</span><span class="sc">—</span>
+        </div>
+        <div class="r winner"><span>HÀ PHƯƠNG</span><span class="sc">11</span></div>
+        <div class="r"><span>THẢO VY</span><span class="sc">09</span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="section" style="padding-top: 0;">
+  <div class="sec-head">
+    <div>
+      <div class="sec-kicker">◆ Lịch giải sắp tới</div>
+      <h2 class="sec-title">28 sự kiện<br />đã đăng ký</h2>
+    </div>
+    <p class="sec-desc">Tháng 4 – 6/2026. Từ giải DUPR có xếp hạng đến giải cộng đồng open entry. Nhấn vào một giải để xem bảng đấu, đăng ký và livestream.</p>
+  </div>
+
+  <div class="tours">
+
+    <div class="tour">
+      <div class="tour-date">25.04.26 · CRESCENT MALL · SÀI GÒN</div>
+      <h3 class="tour-name">Giải Mùa Xuân<br />Sài Gòn 2026</h3>
+      <div class="tour-meta">
+        <div class="tour-prize"><span>Giải thưởng</span><b>₫180,000,000</b></div>
+        <div><span>Tay vợt</span><b>184</b></div>
+        <div><span>Sân</span><b>12</b></div>
+      </div>
+      <div class="tour-tags">
+        <span class="tour-tag">OPEN</span>
+        <span class="tour-tag">DOUBLES</span>
+        <span class="tour-tag">DUPR 3.0+</span>
+      </div>
+    </div>
+
+    <div class="tour">
+      <div class="tour-date">03.05.26 · AEON MALL · HÀ NỘI</div>
+      <h3 class="tour-name">Cup Hà Nội<br />lần thứ IV</h3>
+      <div class="tour-meta">
+        <div class="tour-prize"><span>Giải thưởng</span><b>₫95,000,000</b></div>
+        <div><span>Tay vợt</span><b>96</b></div>
+        <div><span>Sân</span><b>8</b></div>
+      </div>
+      <div class="tour-tags">
+        <span class="tour-tag">RATING</span>
+        <span class="tour-tag">MIXED</span>
+        <span class="tour-tag">DUPR 3.5–4.5</span>
+      </div>
+    </div>
+
+    <div class="tour">
+      <div class="tour-date">17.05.26 · MỸ KHÊ · ĐÀ NẴNG</div>
+      <h3 class="tour-name">Beach Pickleball<br />Open</h3>
+      <div class="tour-meta">
+        <div class="tour-prize"><span>Giải thưởng</span><b>₫62,000,000</b></div>
+        <div><span>Tay vợt</span><b>128</b></div>
+        <div><span>Sân</span><b>6 CÁT</b></div>
+      </div>
+      <div class="tour-tags">
+        <span class="tour-tag">BEACH</span>
+        <span class="tour-tag">OUTDOOR</span>
+        <span class="tour-tag">EXPERIMENTAL</span>
+      </div>
+    </div>
+
+    <div class="tour">
+      <div class="tour-date">31.05.26 · BÌNH THUỶ · CẦN THƠ</div>
+      <h3 class="tour-name">Giải Hè Cần Thơ<br />U21 2026</h3>
+      <div class="tour-meta">
+        <div class="tour-prize"><span>Giải thưởng</span><b>₫38,000,000</b></div>
+        <div><span>Tay vợt</span><b>72</b></div>
+        <div><span>Sân</span><b>6</b></div>
+      </div>
+      <div class="tour-tags">
+        <span class="tour-tag">JUNIOR</span>
+        <span class="tour-tag">U21</span>
+        <span class="tour-tag">RATING</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="cta">
+  <div class="cta-inner">
+    <h2>KHÔNG BỎ LỠ<br />MỘT <span class="glow">CÚ BÓNG</span>.</h2>
+    <p>Cài ứng dụng ThePickleHub để nhận thông báo ngay khi giải yêu thích của bạn vào set quyết định. Không quảng cáo. Không spam. Chỉ pickleball.</p>
+    <div class="ctas">
+      <a class="btn primary" href="#">◼ TẢI iOS</a>
+      <a class="btn primary" href="#">◼ TẢI ANDROID</a>
+      <a class="btn" href="#">◇ MỞ TRÊN WEB</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-inner">
+    <div class="foot-brand">THE<span>PICKLEHUB</span> / CH.07</div>
+    <div>© 2026 · All scores are live · Saigon · Operated by Cuong Nguyen</div>
+    <div>v4.21.0 · uptime 99.94%</div>
+  </div>
+</footer>
+
+</body>
+</html>
