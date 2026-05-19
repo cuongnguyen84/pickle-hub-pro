@@ -9,10 +9,18 @@ import {
   useFeedTimeline,
   type FeedTimelineItem,
 } from "@/hooks/social/useFeedTimeline";
+import { useFeedNews, type FeedNewsItem } from "@/hooks/social/useFeedNews";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
 import { FeedBlogCard } from "@/components/social/feed/FeedBlogCard";
 import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
+import { FeedNewsCard } from "@/components/social/feed/FeedNewsCard";
+
+// Local union extending the RPC-driven FeedTimelineItem with news items
+// merged client-side (see useFeedNews). News is intentionally NOT in the
+// get_feed_timeline RPC — surfacing it through the same client merge that
+// already handles EN blog overlays keeps the SQL function untouched.
+type StreamItem = FeedTimelineItem | FeedNewsItem;
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
@@ -52,23 +60,34 @@ const Feed = () => {
     tab === "following" ? user?.id : undefined,
   );
   const timelineFeed = useFeedTimeline();
+  const newsFeed = useFeedNews(language === "vi" ? "vi" : "en");
   const activeQuery = tab === "following" ? followingFeed : timelineFeed;
 
   const followingMatches: FeedMatch[] = useMemo(
     () => followingFeed.data?.pages.flat() ?? [],
     [followingFeed.data],
   );
-  const timelineItems: FeedTimelineItem[] = useMemo(() => {
+  const timelineItems: StreamItem[] = useMemo(() => {
     const all = timelineFeed.data?.pages.flat() ?? [];
     // Blog posts are file-shipped per locale (VI in vi_blog_posts, EN in
     // src/content/blog/metadata.ts) — same article appears once per lang.
     // Hide the off-locale copy so EN viewers don't see the VI version
     // stacked above the EN version (and vice-versa). Matches and videos
     // stay unfiltered: they're locale-agnostic activity.
-    return all.filter(
+    const filtered: StreamItem[] = all.filter(
       (item) => item.type !== "blog" || item.lang === language,
     );
-  }, [timelineFeed.data, language]);
+
+    // Merge news client-side (already language-filtered in useFeedNews).
+    // News rows ride on the same score axis as everything else, so we just
+    // append and re-sort DESC. Older news naturally sinks below newer
+    // matches/videos as users "Load more".
+    const news = newsFeed.data ?? [];
+    if (news.length === 0) return filtered;
+    return [...filtered, ...news].sort((a, b) =>
+      b.score === a.score ? (a.cursor_id < b.cursor_id ? 1 : -1) : b.score - a.score,
+    );
+  }, [timelineFeed.data, language, newsFeed.data]);
 
   const itemCount =
     tab === "following" ? followingMatches.length : timelineItems.length;
@@ -244,10 +263,26 @@ function TimelineRow({
   language,
   staggerIndex,
 }: {
-  item: FeedTimelineItem;
+  item: StreamItem;
   language: import("@/lib/social/feed-formatters").Language;
   staggerIndex: number;
 }) {
+  if (item.type === "news") {
+    return (
+      <FeedNewsCard
+        slug={item.slug}
+        title={item.title}
+        summary={item.summary}
+        image_url={item.image_url}
+        source={item.source}
+        lang={item.language}
+        language={language}
+        published_at={item.published_at}
+        aiTranslated={item.ai_translated}
+        staggerIndex={staggerIndex}
+      />
+    );
+  }
   if (item.type === "match") {
     return (
       <FeedMatchCard
