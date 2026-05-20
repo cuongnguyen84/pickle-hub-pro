@@ -29,6 +29,10 @@ dist-ssr
 .claude/gh-token
 .claude/gh-token*
 
+# Local secrets — never commit
+.claude/secrets.local.*
+.claude/openai*
+
 # Personal SEO/growth planning notes (not part of the codebase)
 growth-tasks/
 
