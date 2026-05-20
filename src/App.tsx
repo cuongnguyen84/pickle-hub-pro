@@ -497,10 +497,23 @@ const App = () => (
                         stale SPA-internal Link that still uses the old
                         path so users never see a 404. */}
                     <Route path="/social" element={<SocialEventList />} />
-                    <Route path="/vi/social" element={<SocialEventList />} />
+                    <Route path="/vi/social" element={<ViLanguageWrapper><SocialEventList /></ViLanguageWrapper>} />
                     <Route path="/social/:slug" element={<SocialEventDetail />} />
+                    {/* 2026-05-20 — VI-canonical mirror for social event detail.
+                        Previously only /social/:slug existed and the SPA
+                        defaulted to EN for non-VN visitors. The new
+                        /vi/social/:slug route forces VI rendering via
+                        ViLanguageWrapper; the SSR middleware (functions/
+                        _middleware.ts) already strips the /vi prefix and
+                        falls through to renderSocialEvent, so bots see
+                        the same prerendered VI HTML. Subroutes mirrored
+                        for consistency with /vi/social/:slug/live which
+                        shipped earlier. */}
+                    <Route path="/vi/social/:slug" element={<ViLanguageWrapper><SocialEventDetail /></ViLanguageWrapper>} />
                     <Route path="/social/:slug/danh-sach" element={<SocialEventRoster />} />
+                    <Route path="/vi/social/:slug/danh-sach" element={<ViLanguageWrapper><SocialEventRoster /></ViLanguageWrapper>} />
                     <Route path="/social/:slug/xep-cap" element={<SocialEventMatchmaking />} />
+                    <Route path="/vi/social/:slug/xep-cap" element={<ViLanguageWrapper><SocialEventMatchmaking /></ViLanguageWrapper>} />
                     <Route path="/social/:slug/live" element={<SocialEventLive />} />
                     <Route path="/vi/social/:slug/live" element={<SocialEventLive />} />
                     {/* Legacy /su-kien — SPA-internal Navigate fallback */}

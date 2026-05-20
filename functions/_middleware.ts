@@ -231,7 +231,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // cached responses with stale hreflang en+vi+x-default-all-to-same-URL
   // pattern on /clb/{slug}, /clubs, /social, /social/{id}. Same TTL-skip
   // rationale as v3→v4 bump (commit `52ba628`).
-  const cacheKey = `pr:v6:${url.pathname}`;
+  // 2026-05-20 — bumped v6→v7 to invalidate cached /social/{slug}
+  // responses now that renderSocialEvent emits split EN/VI canonicals
+  // + reciprocal hreflang (new /vi/social/{slug} mirror). Old cache
+  // would have served single-canonical VI-only HTML to bots hitting
+  // either path.
+  const cacheKey = `pr:v7:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -351,7 +356,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // the prerender path needs to handle the URL inline because some
   // crawlers don't follow redirects to canonical content).
   match = path.match(/^\/(?:social|su-kien)\/([^/]+)$/);
-  if (match) return await renderSocialEvent(supabase, match[1], siteUrl);
+  if (match) return await renderSocialEvent(supabase, match[1], siteUrl, lang);
 
   // Club landing (Social Events MVP Sprint 1 PR2). Public ItemList of
   // upcoming events.
