@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "dupr-rating-improvement-30-day-plan",
+    publishedDate: "2026-05-20",
+    updatedDate: "2026-05-20",
+    author: "Cuong Nguyen",
+    tags: ["dupr", "dupr rating", "pickleball rating", "training plan", "improvement", "30 day plan", "dupr algorithm", "performance vs expectation", "vietnam pickleball"],
+    ctaPath: "/blog/dupr-algorithm-explained-performance-vs-expectation",
+    ctaLabel: { en: "Read Part 2: How the DUPR Algorithm Actually Works", vi: "Đọc Phần 2: Thuật toán DUPR — thắng mất điểm, thua tăng điểm" },
+    heroImage: {
+      src: "/images/blog/dupr-rating-improvement-30-day-plan-hero.webp",
+      alt: "A vertical bar chart showing a DUPR (Dynamic Universal Pickleball Rating) climbing from 3.50 to 4.20 across 30 days, beside a pickleball paddle and DUPR logo, illustrating a realistic week-by-week training plan to improve a pickleball rating."
+    },
+    titleEn: "How to Improve Your DUPR Rating: A Realistic 30-Day Plan",
+    titleVi: "Tăng điểm DUPR trong 30 ngày: kế hoạch thực tế (không hứa nhanh)",
+    metaTitleEn: "Improve DUPR Rating in 30 Days | Realistic Training Plan 2026",
+    metaTitleVi: "Tăng DUPR 30 ngày | Kế hoạch luyện tập thực tế 2026",
+    metaDescriptionEn: "A 30-day plan to raise your DUPR rating: how DUPR's algorithm rewards consistent play, the 4 rules from Part 2, and a week-by-week training schedule.",
+    metaDescriptionVi: "Kế hoạch 30 ngày tăng điểm DUPR thực tế: hiểu thuật toán DUPR, 4 quy tắc từ Phần 2, lịch luyện tập theo tuần, 3 sai lầm cần tránh.",
+  },
+  {
     slug: "professional-pickleball-tours-guide-2026",
     publishedDate: "2026-05-18",
     updatedDate: "2026-05-18",
