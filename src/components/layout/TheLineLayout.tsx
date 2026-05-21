@@ -223,28 +223,68 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const { isCreator } = useCreatorAuth(); // true for creator OR admin
 
   // PR55: surface the viewer's own clubs in the avatar dropdown so they
-  // can jump straight to /clb/<slug>/quan-ly. Limit 3 because that's
-  // also the self-service cap; if a user has more (e.g. admin-created)
-  // we still cap the menu to keep it scannable.
-  const { data: myClubs } = useQuery<{ slug: string; name: string }[]>({
+  // can jump straight to /clb/<slug>/quan-ly. Limit 5 to keep the menu
+  // scannable. 2026-05-21 (managers MVP): merge in clubs the viewer
+  // manages (via club_managers) so non-creator organizers also have a
+  // navigation entry point.
+  const { data: myClubs } = useQuery<
+    { slug: string; name: string; role: "creator" | "manager" }[]
+  >({
     queryKey: ["my-clubs", user?.id ?? null],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("clubs")
-        .select("slug, name")
-        .eq("created_by", user.id)
-        // Codex review: hide archived clubs from the avatar dropdown so
-        // an owner who archives a CLB doesn't keep seeing it as an
-        // active jump target. /clb/<slug> still loads via direct link.
-        .is("archived_at", null)
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (error) {
-        console.error("TheLineLayout: my-clubs error", error);
-        return [];
+
+      // Two parallel reads so latency doesn't double. Both queries are
+      // covered by existing RLS (clubs.select_all public + club_managers
+      // public select), so no role-elevation needed.
+      const [ownedRes, managedRes] = await Promise.all([
+        supabase
+          .from("clubs")
+          .select("id, slug, name, created_at")
+          // Hide archived clubs — the owner has explicitly removed the
+          // CLB from active rotation; direct link still works.
+          .eq("created_by", user.id)
+          .is("archived_at", null)
+          .order("created_at", { ascending: false })
+          .limit(10),
+        supabase
+          .from("club_managers")
+          .select("club_id, added_at, club:clubs!club_managers_club_id_fkey(id, slug, name, archived_at)")
+          .eq("profile_id", user.id)
+          .order("added_at", { ascending: false })
+          .limit(10),
+      ]);
+
+      if (ownedRes.error) {
+        console.error("TheLineLayout: owned-clubs error", ownedRes.error);
       }
-      return (data as { slug: string; name: string }[]) ?? [];
+      if (managedRes.error) {
+        console.error("TheLineLayout: managed-clubs error", managedRes.error);
+      }
+
+      const owned = (ownedRes.data ?? []) as { id: string; slug: string; name: string }[];
+      const managed = (managedRes.data ?? []) as {
+        club_id: string;
+        club: { id: string; slug: string; name: string; archived_at: string | null } | null;
+      }[];
+
+      const ownedIds = new Set(owned.map((c) => c.id));
+      const ownedRows = owned.map((c) => ({
+        slug: c.slug,
+        name: c.name,
+        role: "creator" as const,
+      }));
+      const managedRows = managed
+        .map((m) => m.club)
+        .filter(
+          (c): c is { id: string; slug: string; name: string; archived_at: string | null } =>
+            c != null && c.archived_at == null && !ownedIds.has(c.id),
+        )
+        .map((c) => ({ slug: c.slug, name: c.name, role: "manager" as const }));
+
+      // Creator rows first, then managed. Cap to 5 total to keep the
+      // dropdown scannable on small screens.
+      return [...ownedRows, ...managedRows].slice(0, 5);
     },
     enabled: Boolean(user?.id),
     staleTime: 60_000,
@@ -645,8 +685,36 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                           key={c.slug}
                           to={`/clb/${c.slug}/quan-ly`}
                           onClick={() => setAvatarOpen(false)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                          }}
                         >
-                          {c.name}
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {c.name}
+                          </span>
+                          {/* Visual cue so a viewer who manages multiple
+                              clubs can tell at a glance which ones they
+                              own vs which they help organize. */}
+                          {c.role === "manager" && (
+                            <span
+                              style={{
+                                fontSize: 9,
+                                letterSpacing: "0.05em",
+                                textTransform: "uppercase",
+                                fontFamily: "Geist Mono",
+                                color: "var(--tl-fg-3)",
+                                border: "1px solid var(--tl-border)",
+                                borderRadius: 3,
+                                padding: "1px 5px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {language === "vi" ? "QL" : "Mgr"}
+                            </span>
+                          )}
                         </Link>
                       ))
                     ) : (
