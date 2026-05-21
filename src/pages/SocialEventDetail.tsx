@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, Link as LinkIcon } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, LayoutGrid, Link as LinkIcon } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -313,6 +313,13 @@ export default function SocialEventDetail() {
               registered: data.registered_count ?? 0,
               max: data.max_players,
             })}
+          </Badge>
+          <Badge variant="secondary" className="text-sm">
+            <LayoutGrid className="mr-1 h-3.5 w-3.5" />
+            {data.court_count}{" "}
+            {language === "vi"
+              ? "sân"
+              : `court${data.court_count > 1 ? "s" : ""}`}
           </Badge>
           <Badge variant="secondary" className="text-sm">
             <Banknote className="mr-1 h-3.5 w-3.5" />

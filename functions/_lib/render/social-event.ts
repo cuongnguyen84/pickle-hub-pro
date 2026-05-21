@@ -31,6 +31,7 @@ interface SocialEventRow {
   location_text: string | null;
   location_lat: number | null;
   location_lng: number | null;
+  court_count: number;
   max_players: number;
   price_vnd: number;
   status: "draft" | "published" | "cancelled" | "completed";
@@ -92,7 +93,7 @@ export async function renderSocialEvent(
     .select(
       `id, slug, title_vi, title_en, description_vi, description_en,
        start_at, end_at, location_text, location_lat, location_lng,
-       max_players, price_vnd, status, visibility,
+       court_count, max_players, price_vnd, status, visibility,
        club:clubs!social_events_club_id_fkey ( slug, name )`,
     )
     .eq("slug", slug)
@@ -233,8 +234,12 @@ export async function renderSocialEvent(
   };
 
   const lbl = lang === "vi"
-    ? { time: "Thời gian", venue: "Địa điểm", max: "Số người tối đa", fee: "Phí" }
-    : { time: "When", venue: "Where", max: "Max players", fee: "Fee" };
+    ? { time: "Thời gian", venue: "Địa điểm", courts: "Số sân", max: "Số người tối đa", fee: "Phí" }
+    : { time: "When", venue: "Where", courts: "Courts", max: "Max players", fee: "Fee" };
+  const courtsLabel =
+    lang === "vi"
+      ? `${ev.court_count} sân`
+      : `${ev.court_count} court${ev.court_count > 1 ? "s" : ""}`;
   const descBody = lang === "vi"
     ? (ev.description_vi ?? "")
     : (ev.description_en && ev.description_en.trim().length > 0
@@ -247,6 +252,7 @@ export async function renderSocialEvent(
   if (ev.location_text) {
     bodyParts.push(`<p><strong>${lbl.venue}:</strong> ${escapeHtml(ev.location_text)}</p>`);
   }
+  bodyParts.push(`<p><strong>${lbl.courts}:</strong> ${escapeHtml(courtsLabel)}</p>`);
   bodyParts.push(`<p><strong>${lbl.max}:</strong> ${ev.max_players}</p>`);
   bodyParts.push(`<p><strong>${lbl.fee}:</strong> ${escapeHtml(priceLabel)}</p>`);
   if (descBody) {

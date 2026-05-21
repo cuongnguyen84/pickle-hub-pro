@@ -236,7 +236,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // + reciprocal hreflang (new /vi/social/{slug} mirror). Old cache
   // would have served single-canonical VI-only HTML to bots hitting
   // either path.
-  const cacheKey = `pr:v7:${url.pathname}`;
+  // 2026-05-20 — bumped v7→v8 to invalidate cached social list + detail
+  // HTML after surfacing court_count on /social and /social/{slug}.
+  const cacheKey = `pr:v8:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
