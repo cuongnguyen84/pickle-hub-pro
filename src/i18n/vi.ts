@@ -2245,6 +2245,33 @@ export interface Translations {
       archiveSuccessTitle: string;
       archiveSuccessBody: string;
     };
+    managers: {
+      heading: string;
+      subheading: string;
+      creatorBadge: string;
+      managerBadge: string;
+      addCta: string;
+      searchLabel: string;
+      searchPlaceholder: string;
+      searchButton: string;
+      searching: string;
+      searchEmpty: string;
+      searchInvalid: string;
+      addConfirm: string;
+      addSuccess: string;
+      addError: string;
+      removeAria: string;
+      removeConfirm: string;
+      removeSuccess: string;
+      removeError: string;
+      addedBy: string;
+      empty: string;
+      ownerOnly: string;
+      errAlreadyManager: string;
+      errAlreadyCreator: string;
+      errProfileNotFound: string;
+      errNotAuthorized: string;
+    };
     roster: {
       pageTitle: string;
       registeredCount: string;
@@ -4885,6 +4912,34 @@ export const vi: Translations = {
       archiving: "Đang lưu trữ…",
       archiveSuccessTitle: "Đã lưu trữ CLB",
       archiveSuccessBody: "CLB đã được ẩn khỏi danh sách công khai.",
+    },
+    managers: {
+      heading: "Người quản lý CLB",
+      subheading:
+        "Người tạo CLB có thể thêm tối đa nhiều người quản lý. Người quản lý có toàn quyền tạo / sửa / huỷ sự kiện, sửa thông tin CLB, nhưng KHÔNG thể xoá hay archive CLB.",
+      creatorBadge: "Người tạo",
+      managerBadge: "Quản lý",
+      addCta: "Thêm người quản lý",
+      searchLabel: "Tìm theo email hoặc số điện thoại",
+      searchPlaceholder: "vd: ten@email.com hoặc +84901234567",
+      searchButton: "Tìm",
+      searching: "Đang tìm…",
+      searchEmpty: "Không tìm thấy người dùng có email/SĐT này. Họ cần đăng ký tài khoản ThePickleHub trước.",
+      searchInvalid: "Vui lòng nhập email hoặc số điện thoại (≥4 ký tự).",
+      addConfirm: "Thêm {name} làm người quản lý?",
+      addSuccess: "Đã thêm {name} làm người quản lý.",
+      addError: "Không thể thêm người quản lý — vui lòng thử lại.",
+      removeAria: "Xoá người quản lý",
+      removeConfirm: "Xoá quyền quản lý của {name}?",
+      removeSuccess: "Đã xoá {name} khỏi danh sách quản lý.",
+      removeError: "Không thể xoá — vui lòng thử lại.",
+      addedBy: "Thêm vào {date}",
+      empty: "Chưa có người quản lý nào.",
+      ownerOnly: "Chỉ người tạo CLB có thể thêm/xoá quản lý.",
+      errAlreadyManager: "Người này đã là quản lý CLB.",
+      errAlreadyCreator: "Người này là người tạo CLB rồi — không cần thêm.",
+      errProfileNotFound: "Không tìm thấy hồ sơ này.",
+      errNotAuthorized: "Bạn không có quyền thực hiện hành động này.",
     },
     roster: {
       pageTitle: "Danh sách đăng ký",

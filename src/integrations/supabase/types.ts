@@ -527,6 +527,91 @@ export type Database = {
           },
         ]
       }
+      club_managers: {
+        Row: {
+          added_at: string
+          added_by: string
+          club_id: string
+          profile_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by: string
+          club_id: string
+          profile_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string
+          club_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_managers_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "club_managers_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_managers_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_managers_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "club_listing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_managers_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "club_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_managers_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_managers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "club_managers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_managers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubs: {
         Row: {
           archived_at: string | null
@@ -6096,6 +6181,21 @@ export type Database = {
         }
         Returns: Json
       }
+      add_club_manager: {
+        Args: { p_club_id: string; p_profile_id: string }
+        Returns: {
+          added_at: string
+          added_by: string
+          club_id: string
+          profile_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "club_managers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       add_match_comment: {
         Args: {
           p_body: string
@@ -6640,6 +6740,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_club_organizer: {
+        Args: { p_club_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_creator: { Args: never; Returns: boolean }
       is_doubles_elimination_creator: {
         Args: { _tournament_id: string; _user_id: string }
@@ -6647,6 +6751,10 @@ export type Database = {
       }
       is_doubles_elimination_referee: {
         Args: { _tournament_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_event_organizer: {
+        Args: { p_event_id: string; p_user_id: string }
         Returns: boolean
       }
       is_flex_tournament_creator: {
@@ -6679,6 +6787,18 @@ export type Database = {
         Returns: boolean
       }
       is_user_creator: { Args: { _user_id: string }; Returns: boolean }
+      list_club_managers: {
+        Args: { p_club_id: string }
+        Returns: {
+          added_at: string
+          added_by: string
+          avatar_url: string
+          display_name: string
+          email: string
+          phone: string
+          profile_id: string
+        }[]
+      }
       log_audit_event: {
         Args: {
           _actor_type?: string
@@ -6699,6 +6819,10 @@ export type Database = {
           id: string
         }[]
       }
+      remove_club_manager: {
+        Args: { p_club_id: string; p_profile_id: string }
+        Returns: number
+      }
       remove_partner_from_team: {
         Args: { _team_id: string; _user_id: string }
         Returns: Json
@@ -6718,6 +6842,16 @@ export type Database = {
           is_ghost: boolean
           is_verified: boolean
           username: string
+        }[]
+      }
+      search_profile_for_manager: {
+        Args: { p_query: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          email: string
+          phone: string
+          profile_id: string
         }[]
       }
       set_user_quota: {
