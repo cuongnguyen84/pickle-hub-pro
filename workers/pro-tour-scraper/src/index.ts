@@ -377,11 +377,16 @@ interface WatchlistRow {
 }
 
 async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
+  // PostgREST `lte` evaluates NULL as not-comparable, so rows that have
+  // never been scraped (next_scrape_at IS NULL — typical for fresh
+  // watchlist entries before any manual trigger) would never be picked
+  // up by the cron. `or=(...)` makes NULL count as "due now".
+  const now = new Date().toISOString();
   const url =
     `${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist` +
     `?select=id,tournament_url,scrape_frequency` +
     `&status=eq.active` +
-    `&next_scrape_at=lte.${new Date().toISOString()}`;
+    `&or=(next_scrape_at.is.null,next_scrape_at.lte.${now})`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,

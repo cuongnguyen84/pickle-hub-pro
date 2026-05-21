@@ -52,7 +52,11 @@ export function FeedMatchCard({
   // Round codes come from the parser's canonical map (rsc-scraper.ts):
   //   "F"  → Finals / Gold Medal Match
   //   "3P" → Bronze / third place — NOT a final, treated as normal.
-  const isFinal = match.round_name === "F";
+  // Community quick-tables surfaced via surface_quick_table_results
+  // write the round name out in full ("Final"); accept both.
+  const isFinal =
+    match.round_name === "F" ||
+    match.round_name?.trim().toLowerCase() === "final";
 
   const ariaLabel = buildAriaLabel({
     language,
@@ -141,10 +145,12 @@ export function FeedMatchCard({
         </div>
       </div>
 
-      {/* Pro tour tournament caption — only renders for non-community
-          matches. Position above the team rows so the tournament context
-          reads first ("PPA Tour: 2026 Finals · Mens Doubles · R32"). */}
-      {match.source_provider !== "community" && match.tournament_name && (
+      {/* Tournament caption — renders whenever a tournament_name is set
+          (pro tour rows, community quick-tables surfaced via
+          surface_quick_table_results, etc.). Position above the team
+          rows so the tournament context reads first ("Team CĂNG chào
+          hè 5.0 · Chung kết" or "PPA Tour: 2026 Finals · Mens Doubles · R32"). */}
+      {match.tournament_name && (
         <div
           style={{
             fontFamily: "'Geist Mono', monospace",
@@ -158,7 +164,7 @@ export function FeedMatchCard({
           {[
             match.tournament_name,
             match.tournament_event,
-            match.round_name,
+            localizeRoundName(match.round_name, language),
           ]
             .filter(Boolean)
             .join(" · ")}
@@ -242,6 +248,34 @@ export function FeedMatchCard({
       </div>
     </Link>
   );
+}
+
+/* ─── Round name localizer ───────────────────────────────────────────── */
+//
+// Maps the canonical round names stored in matches.round_name to VI/EN
+// display strings. Pro tour rows use short codes ("F" / "SF" / "QF" /
+// "R32" …) from the parser; community quick-tables surfaced via
+// surface_quick_table_results use full English names ("Final",
+// "Semifinal"). Anything unrecognized falls through verbatim.
+function localizeRoundName(
+  round: string | null | undefined,
+  language: Language,
+): string | null {
+  if (!round) return null;
+  const norm = round.trim().toLowerCase();
+  const map: Record<string, { vi: string; en: string }> = {
+    "f":          { vi: "Chung kết",       en: "Final" },
+    "final":      { vi: "Chung kết",       en: "Final" },
+    "sf":         { vi: "Bán kết",         en: "Semifinal" },
+    "semi":       { vi: "Bán kết",         en: "Semifinal" },
+    "semifinal":  { vi: "Bán kết",         en: "Semifinal" },
+    "qf":         { vi: "Tứ kết",          en: "Quarterfinal" },
+    "quarter":    { vi: "Tứ kết",          en: "Quarterfinal" },
+    "3p":         { vi: "Tranh hạng 3",    en: "Bronze Match" },
+  };
+  const hit = map[norm];
+  if (hit) return language === "vi" ? hit.vi : hit.en;
+  return round;
 }
 
 /* ─── Final / Gold Match badge (Sprint 6 PR-D) ───────────────────────── */

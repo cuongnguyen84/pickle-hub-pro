@@ -1823,6 +1823,60 @@ export interface Translations {
       slotInvalid: string;
       slotFull: string;
     };
+    // Proxy + Manual registration (PR: feat/proxy-and-manual-registration)
+    proxyRegister: {
+      // Entry buttons
+      proxyRegisterCta: string;
+      manualAddCta: string;
+      // Modal headings
+      modalHeading: string;
+      modalSubheading: string;
+      manualModalHeading: string;
+      manualModalSubheading: string;
+      // Section headings
+      guestSectionHeading: string;
+      playerSectionHeading: string;
+      // Form labels
+      guestPhoneLabel: string;
+      guestNameLabel: string;
+      guestLevelLabel: string;
+      guestLevelHint: string;
+      paymentStatusLabel: string;
+      paymentStatusUnpaid: string;
+      paymentStatusClaimedPaid: string;
+      paymentStatusWaived: string;
+      internalNotesLabel: string;
+      internalNotesHint: string;
+      internalNotesPlaceholder: string;
+      // CTAs
+      proxyConfirmCta: string;
+      manualConfirmCta: string;
+      // Warning
+      paymentWarningProxy: string;
+      // Skip warning on prepayment-required events (proxy success)
+      prepaymentSkipWarning: string;
+      // Success share
+      successHeading: string;          // "Đã thêm {name} vào sự kiện"
+      shareWarning: string;            // "Vui lòng gửi link sau cho {name}…"
+      shareLinkHeading: string;        // "Link quản lý đăng ký của {name}"
+      copyLinkLabel: string;
+      copyLinkSuccess: string;
+      shareZaloLabel: string;
+      shareFacebookLabel: string;
+      copyPaymentInfoLabel: string;
+      copyPaymentInfoSuccess: string;
+      addAnotherCta: string;
+      closeCta: string;
+      // Errors
+      errorAlreadyRegistered: string;
+      errorEventFull: string;
+      errorRateLimitProxy: string;
+      errorRateLimitManual: string;
+      errorUnauthorized: string;
+      // Roster badges (PR adds badges next to names for proxy/manual rows)
+      proxyBadgeLabel: string;
+      manualBadgeLabel: string;
+    };
     club: {
       upcomingHeading: string;
       pastHeading: string;
@@ -4436,6 +4490,54 @@ export const vi: Translations = {
       slotRequired: "Vui lòng chọn 1 nhóm chơi để tiếp tục",
       slotInvalid: "Nhóm chơi không hợp lệ — vui lòng tải lại trang",
       slotFull: "Nhóm này đã đầy — vui lòng chọn nhóm khác",
+    },
+    proxyRegister: {
+      proxyRegisterCta: "Đăng ký hộ bạn bè",
+      manualAddCta: "Thêm người thủ công",
+      modalHeading: "Đăng ký hộ bạn bè",
+      modalSubheading: "Đăng ký giúp người chơi khác tham gia event này.",
+      manualModalHeading: "Thêm người chơi vào sự kiện",
+      manualModalSubheading:
+        "Sử dụng khi bạn nhận đăng ký qua Zalo, gọi điện hoặc kênh ngoài web.",
+      guestSectionHeading: "Thông tin người được đăng ký",
+      playerSectionHeading: "Thông tin người chơi",
+      guestPhoneLabel: "Số điện thoại",
+      guestNameLabel: "Tên hiển thị",
+      guestLevelLabel: "Trình độ (tuỳ chọn)",
+      guestLevelHint: "Tự đánh giá level pickleball",
+      paymentStatusLabel: "Trạng thái thanh toán",
+      paymentStatusUnpaid:
+        "Chưa thanh toán — hiển thị link để gửi player tự chuyển khoản",
+      paymentStatusClaimedPaid: "Đã thanh toán tại sân / chuyển khoản",
+      paymentStatusWaived: "Miễn phí (bỏ qua)",
+      internalNotesLabel: "Ghi chú nội bộ (tuỳ chọn)",
+      internalNotesHint: "Chỉ BTC xem được",
+      internalNotesPlaceholder: "VD: VIP, bạn của BTC",
+      proxyConfirmCta: "Xác nhận đăng ký hộ",
+      manualConfirmCta: "Thêm vào danh sách",
+      paymentWarningProxy:
+        "Người được đăng ký hộ tự chuyển khoản hoặc bạn chuyển hộ. Mã thanh toán sẽ hiển thị sau khi đăng ký xong.",
+      prepaymentSkipWarning:
+        "Bạn đã đăng ký giúp {name}. Đây là sự kiện bắt buộc thanh toán trước nên slot sẽ tự động bị huỷ sau {hours} giờ nếu không hoàn tất chuyển khoản.",
+      successHeading: "Đã thêm {name} vào sự kiện",
+      shareWarning:
+        "Vui lòng gửi link sau cho {name} để họ tự quản lý đăng ký hoặc thanh toán (nếu event có phí):",
+      shareLinkHeading: "Link quản lý đăng ký của {name}",
+      copyLinkLabel: "Sao chép link",
+      copyLinkSuccess: "Đã sao chép link",
+      shareZaloLabel: "Chia sẻ Zalo",
+      shareFacebookLabel: "Chia sẻ Facebook",
+      copyPaymentInfoLabel: "Sao chép thông tin chuyển khoản",
+      copyPaymentInfoSuccess: "Đã sao chép thông tin chuyển khoản",
+      addAnotherCta: "+ Thêm người khác",
+      closeCta: "Đóng",
+      errorAlreadyRegistered: "SĐT này đã đăng ký event",
+      errorEventFull: "Sự kiện đã đầy",
+      errorRateLimitProxy: "Bạn đã đăng ký hộ tối đa 5 người/24h",
+      errorRateLimitManual: "Đã đạt giới hạn 50 lượt thêm/24h",
+      errorUnauthorized: "Bạn không có quyền thêm người vào sự kiện này",
+      proxyBadgeLabel: "đăng ký hộ",
+      manualBadgeLabel: "BTC thêm",
     },
     club: {
       upcomingHeading: "Sự kiện sắp diễn ra",

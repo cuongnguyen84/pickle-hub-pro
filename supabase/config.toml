@@ -240,3 +240,91 @@ verify_jwt = false
 
 [functions.auto-cancel-unpaid-registrations]
 verify_jwt = false
+# ============================================================================
+# supabase/config.toml — APPEND these blocks at the end of the file.
+# Do NOT replace the whole file — copy these 3 sections in.
+# ============================================================================
+
+# ─── DUPR RaaS (PR1 — SSO foundation) ──────────────────────────────────────
+# verify_jwt = false per the project-wide ES256/HS256 workaround (CLAUDE.md).
+# All three functions verify auth internally:
+#   - dupr-partner-token  → checks bearer == SUPABASE_SERVICE_ROLE_KEY
+#   - dupr-sso-callback   → getAuthUser() against the user JWT
+#   - dupr-disconnect     → getAuthUser() against the user JWT
+#
+# Required secrets (set via `supabase secrets set --project-ref ajvlcamxemgbxduhiqrl`):
+#   DUPR_ENV            uat | prod   (defaults to uat)
+#   DUPR_CLIENT_ID      partner numeric id from onboarding email
+#   DUPR_CLIENT_KEY     partner client key (test-ck-... in UAT)
+#   DUPR_CLIENT_SECRET  partner client secret (test-cs-... in UAT)
+
+[functions.dupr-partner-token]
+verify_jwt = false
+
+[functions.dupr-sso-callback]
+verify_jwt = false
+
+[functions.dupr-disconnect]
+verify_jwt = false
+
+# ─── DUPR RaaS (PR2 — user gating via entitlements) ────────────────────────
+# verify_jwt = false per the ES256/HS256 workaround. Internal auth:
+#   - dupr-entitlements         → getAuthUser() against user JWT
+#   - dupr-refresh-user-token   → getAuthUser() against user JWT
+
+[functions.dupr-entitlements]
+verify_jwt = false
+
+[functions.dupr-refresh-user-token]
+verify_jwt = false
+
+# ─── DUPR RaaS (PR3 — rating webhook subscribe + receive) ──────────────────
+# dupr-webhook is PUBLIC — DUPR servers POST RATING events to it. The
+# function validates clientId internally against DUPR_CLIENT_KEY before
+# touching DB. dupr-webhook-register + dupr-webhook-test-fire are service-
+# role only (admin/setup/demo helpers).
+
+[functions.dupr-webhook]
+verify_jwt = false
+
+[functions.dupr-webhook-register]
+verify_jwt = false
+
+[functions.dupr-webhook-test-fire]
+verify_jwt = false
+
+# ─── DUPR RaaS (PR4 — match upload, update, delete) ────────────────────────
+# Single function dispatching on action. getAuthUser() + admin/creator role
+# gate + BASIC_L1 entitlement check on every player.
+
+[functions.dupr-match-submit]
+verify_jwt = false
+
+# ─── DUPR RaaS (PR5 — club integration) ────────────────────────────────────
+# dupr-clubs lists the caller's eligible DUPR clubs. The two org-link
+# functions persist / clear the DUPR club ↔ organization link.
+
+[functions.dupr-clubs]
+verify_jwt = false
+
+[functions.dupr-org-link-club]
+verify_jwt = false
+
+[functions.dupr-org-unlink-club]
+verify_jwt = false
+
+# ─── Match proposals (PR6 — player-initiated match flow) ───────────────────
+[functions.match-proposal]
+verify_jwt = false
+
+# ─── Social Events MVP — proxy + manual registration ───────────────────────
+# add-registration-direct accepts two flows:
+#   - mode='proxy'   → authorized by proxy_magic_token (already-registered
+#                       player adding a friend)
+#   - mode='manual'  → authorized by organizer's supabase JWT
+#                       (verified internally via getAuthUser + verify_event_organizer)
+# verify_jwt=false at the gateway so the proxy flow (no JWT) can pass; the
+# function performs its own authorization inside.
+
+[functions.add-registration-direct]
+verify_jwt = false

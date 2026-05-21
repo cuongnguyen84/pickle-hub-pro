@@ -36,6 +36,8 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const WatchVideo = lazy(() => import("./pages/WatchVideo"));
 const WatchLive = lazy(() => import("./pages/WatchLive"));
 const Account = lazy(() => import("./pages/Account"));
+const DuprDashboard = lazy(() => import("./pages/DuprDashboard"));
+const MatchSubmitPage = lazy(() => import("./pages/Match"));
 const MyTournaments = lazy(() => import("./pages/MyTournaments"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Search = lazy(() => import("./pages/Search"));
@@ -481,6 +483,8 @@ const App = () => (
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/auth/reset-password" element={<ResetPassword />} />
                     <Route path="/account" element={<Account />} />
+                    <Route path="/dupr" element={<RequireAuth><DuprDashboard /></RequireAuth>} />
+                    <Route path="/match" element={<RequireAuth><MatchSubmitPage /></RequireAuth>} />
                     <Route path="/account/my-tournaments" element={<RequireAuth><MyTournaments /></RequireAuth>} />
                     {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />

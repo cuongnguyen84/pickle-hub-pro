@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Loader2, Trophy } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, Loader2, Trophy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ import { useI18n } from "@/i18n";
 import type { ParticipantSlot } from "./PlayerSelector";
 import type { Venue } from "@/hooks/social/types";
 import { validateScores, type ScoringFormat } from "@/lib/social";
+import { useDuprEntitlements } from "@/hooks/useDuprEntitlements";
 
 export type MatchType = "rec" | "open_play" | "tournament" | "league" | "practice";
 
@@ -167,6 +168,8 @@ export const MatchConfirmation = ({
   const { language } = useI18n();
   const MATCH_TYPES = language === "vi" ? MATCH_TYPES_VI : MATCH_TYPES_EN;
   const [showDetails, setShowDetails] = useState(false);
+  const { connected: duprConnected, hasBasic, loading: entLoading } =
+    useDuprEntitlements();
   const validation = validateScores(teamA, teamB, scoringFormat);
   const winner = validation.valid ? validation.winner : null;
   const venueLabel =
@@ -259,20 +262,47 @@ export const MatchConfirmation = ({
             />
             <p className="mt-1 text-xs text-muted-foreground">{details.notes.length}/500</p>
           </div>
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="flex-1">
-              <Label htmlFor="dupr-toggle" className="cursor-pointer">Submit to DUPR</Label>
-              <p className="text-xs text-muted-foreground">
-                {language === "vi"
-                  ? "Phase 1 chỉ ghi flag — chưa thực sự gửi DUPR."
-                  : "Phase 1 only stores the flag — DUPR submission not active yet."}
-              </p>
+          <div className="rounded-lg border p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <Label htmlFor="dupr-toggle" className="cursor-pointer">
+                  {language === "vi" ? "Gửi DUPR" : "Submit to DUPR"}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {language === "vi"
+                    ? "Bật để tự động gửi trận này lên DUPR sau khi cả 2 đội xác nhận điểm."
+                    : "Toggle on to auto-submit this match to DUPR after both teams confirm the score."}
+                </p>
+              </div>
+              <Switch
+                id="dupr-toggle"
+                checked={details.submit_to_dupr}
+                onCheckedChange={(v) => onDetailsChange({ ...details, submit_to_dupr: v })}
+                disabled={entLoading || (!hasBasic && !entLoading)}
+              />
             </div>
-            <Switch
-              id="dupr-toggle"
-              checked={details.submit_to_dupr}
-              onCheckedChange={(v) => onDetailsChange({ ...details, submit_to_dupr: v })}
-            />
+
+            {/* ─── PR2 gating: require BASIC_L1 entitlement ────────────── */}
+            {!entLoading && details.submit_to_dupr && !duprConnected && (
+              <div className="mt-2 flex items-start gap-2 rounded-md bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>
+                  {language === "vi"
+                    ? "Bạn chưa kết nối DUPR. Hãy kết nối ở Hồ sơ trước khi bật mục này."
+                    : "You haven't connected DUPR. Connect from your Profile before enabling this."}
+                </span>
+              </div>
+            )}
+            {!entLoading && details.submit_to_dupr && duprConnected && !hasBasic && (
+              <div className="mt-2 flex items-start gap-2 rounded-md bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>
+                  {language === "vi"
+                    ? "Tài khoản DUPR cần xác thực BASIC để submit match. Vui lòng hoàn thành xác thực trên DUPR rồi quay lại."
+                    : "Your DUPR account needs BASIC verification before matches can be submitted. Please complete verification on DUPR and return."}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

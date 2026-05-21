@@ -392,9 +392,13 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
           title: language === "vi" ? "Đã cập nhật" : "Updated",
         });
       } else {
+        // Stamp next_scrape_at on create so the every-6h worker cron
+        // picks the row up on its next tick. Without this the row sits
+        // at NULL and the cron filter (`next_scrape_at <= NOW()`)
+        // skips it indefinitely.
         const { error } = await supabase
           .from("pro_tour_watchlist")
-          .insert(payload);
+          .insert({ ...payload, next_scrape_at: new Date().toISOString() });
         if (error) throw error;
         toast({
           title: language === "vi" ? "Đã thêm vào watchlist" : "Added to watchlist",
