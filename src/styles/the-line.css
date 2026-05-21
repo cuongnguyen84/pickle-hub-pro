@@ -2595,8 +2595,19 @@
   background: var(--tl-green-dim);
   color: var(--tl-bg);
 }
+/* On very narrow phones (≤480px) the brand text + 2 auth pills +
+   dark-toggle + hamburger overflow the viewport, pushing the
+   hamburger off-screen — most visible on VI where "Đăng nhập" +
+   "Đăng ký" are longer than the EN equivalents. Drop the brand
+   word at that breakpoint and keep only the brand mark; the auth
+   pills carry the brand context. */
+@media (max-width: 480px) {
+  [data-theme="the-line"] .tl-brand-text { display: none; }
+  [data-theme="the-line"] .tl-auth-mobile { margin-left: 4px; gap: 5px; }
+  [data-theme="the-line"] .tl-auth-pill { padding: 6px 11px; font-size: 12px; }
+}
 @media (max-width: 360px) {
-  [data-theme="the-line"] .tl-auth-pill { padding: 6px 10px; font-size: 12px; }
+  [data-theme="the-line"] .tl-auth-pill { padding: 6px 9px; font-size: 11.5px; }
 }
 
 /* PR63 — back affordance lives at the leftmost edge of the nav.
