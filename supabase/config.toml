@@ -316,3 +316,15 @@ verify_jwt = false
 # ─── Match proposals (PR6 — player-initiated match flow) ───────────────────
 [functions.match-proposal]
 verify_jwt = false
+
+# ─── Social Events MVP — proxy + manual registration ───────────────────────
+# add-registration-direct accepts two flows:
+#   - mode='proxy'   → authorized by proxy_magic_token (already-registered
+#                       player adding a friend)
+#   - mode='manual'  → authorized by organizer's supabase JWT
+#                       (verified internally via getAuthUser + verify_event_organizer)
+# verify_jwt=false at the gateway so the proxy flow (no JWT) can pass; the
+# function performs its own authorization inside.
+
+[functions.add-registration-direct]
+verify_jwt = false
