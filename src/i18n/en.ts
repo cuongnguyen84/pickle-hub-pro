@@ -190,6 +190,7 @@ export const en: Translations = {
     tournaments: "Tournaments",
     tools: "Tools",
     feed: "Feed",
+    social: "Play",
     search: "Search",
     profile: "Profile",
     viewProfile: "View my profile",
@@ -1984,6 +1985,12 @@ export const en: Translations = {
       paymentDeadlineHint:
         "Counts from registration time. If the deadline passes the event start time, registration is cancelled immediately.",
       errorPrepaymentDeadlineRange: "Deadline must be between 1 and 168 hours (1 week max).",
+      repeatWeeksLabel: "Weekly repeat (optional)",
+      repeatWeeksUnit: "more weeks",
+      repeatWeeksHint: "0 = single event. 1 = also create one event a week later; 4 = create 4 extra events 7 days apart each. Max 12.",
+      repeatWeeksPreview: "→ Will create {count} identical events. Last one on {last}.",
+      errorRepeatWeeksRange: "Repeat weeks must be between 0 and 12.",
+      bulkCreatedToast: "Created {count} identical events.",
       // Slots
       slotsHeading: "Registration groups (optional)",
       slotsSubheading:

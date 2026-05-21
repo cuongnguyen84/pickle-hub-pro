@@ -62,6 +62,13 @@ export interface FormState {
    * the player must pick exactly one slot at registration time.
    */
   slots: SlotConfig[];
+  /**
+   * Weekly-repeat count. 0 = no repeat (single event), N = create N
+   * additional events 7, 14, …, 7N days after the base event with
+   * identical fields. Capped at 12 weeks (one quarter) to keep slug
+   * collisions + DB load manageable.
+   */
+  repeat_weeks: number;
 }
 
 export type FormErrors = Partial<Record<keyof FormState, string | null>>;
@@ -84,6 +91,7 @@ export const initialForm: FormState = {
   requires_prepayment: false,
   prepayment_deadline_hours: 12,
   slots: [],
+  repeat_weeks: 0,
 };
 
 /**
@@ -346,6 +354,13 @@ export function validateField(
       }
       return null;
     }
+    case "repeat_weeks": {
+      const n = Number(value);
+      if (!Number.isInteger(n) || n < 0 || n > 12) {
+        return create.errorRepeatWeeksRange;
+      }
+      return null;
+    }
   }
 }
 
@@ -360,6 +375,7 @@ const STEP1_FIELDS: ReadonlyArray<keyof FormState> = [
   "max_players",
   "zalo_group_url",
   "visibility",
+  "repeat_weeks",
 ];
 
 const STEP2_FIELDS: ReadonlyArray<keyof FormState> = [

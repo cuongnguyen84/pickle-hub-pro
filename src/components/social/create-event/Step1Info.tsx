@@ -197,6 +197,44 @@ export function Step1Info({ form, errors, touched, onChange, onBlur }: Props) {
         maxPlayers={form.max_players}
         onChange={(next) => onChange("slots", next)}
       />
+
+      {/* Weekly-repeat — tạo nhiều event giống hệt cách nhau 7 ngày. */}
+      <div className="space-y-2 rounded-md border bg-muted/20 px-4 py-3">
+        <Label htmlFor="ev-repeat">{create.repeatWeeksLabel}</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            id="ev-repeat"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={12}
+            value={form.repeat_weeks}
+            onChange={(e) => onChange("repeat_weeks", Math.max(0, Math.min(12, Number(e.target.value) || 0)))}
+            onBlur={() => onBlur("repeat_weeks")}
+            className="w-24"
+          />
+          <span className="text-sm text-muted-foreground">{create.repeatWeeksUnit}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">{create.repeatWeeksHint}</p>
+        {form.repeat_weeks > 0 && form.start_date && (
+          <p className="text-xs text-foreground">
+            {create.repeatWeeksPreview
+              .replace("{count}", String(form.repeat_weeks + 1))
+              .replace("{last}", (() => {
+                const base = new Date(form.start_date + "T00:00:00");
+                if (Number.isNaN(base.getTime())) return "";
+                base.setDate(base.getDate() + 7 * form.repeat_weeks);
+                return base.toLocaleDateString("vi-VN", {
+                  weekday: "short",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                });
+              })())}
+          </p>
+        )}
+        <ErrorText msg={showError("repeat_weeks")} />
+      </div>
     </div>
   );
 }
