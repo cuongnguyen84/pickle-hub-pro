@@ -121,9 +121,18 @@ Deno.serve(async (req) => {
         .eq("id", apiKeyResult.keyId);
     }
 
-    // Get source_url from query params
+    // Get source_url + language from query params.
+    //
+    // Why language is required (with a default): the news_items table now
+    // carries both EN originals and AI-translated VI rows that share the
+    // same source_url (see Phase 1 migration — UNIQUE index is on
+    // (source_url, language), not source_url alone). Looking up by URL
+    // without filtering language would return multiple rows once Phase 3
+    // ships, breaking maybeSingle(). Default to 'en' to preserve the
+    // previous behaviour for any caller that doesn't pass the param.
     const url = new URL(req.url);
     const sourceUrl = url.searchParams.get("source_url");
+    const language = (url.searchParams.get("language") ?? "en").toLowerCase();
 
     if (!sourceUrl) {
       return new Response(
@@ -132,13 +141,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("[news-check] Checking for existing news with source_url:", sourceUrl);
+    if (language !== "en" && language !== "vi") {
+      return new Response(
+        JSON.stringify({ error: "language must be 'en' or 'vi'" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Check if news item exists
+    console.log(
+      "[news-check] Checking for existing news with source_url:",
+      sourceUrl,
+      "language:",
+      language
+    );
+
+    // Check if news item exists for this (source_url, language) tuple.
     const { data, error } = await supabase
       .from("news_items")
-      .select("id, title, status, created_at")
+      .select("id, title, status, language, created_at")
       .eq("source_url", sourceUrl)
+      .eq("language", language)
       .maybeSingle();
 
     if (error) {

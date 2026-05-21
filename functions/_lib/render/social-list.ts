@@ -35,6 +35,7 @@ interface SocialListRow {
   location_text: string | null;
   price_vnd: number;
   max_players: number;
+  court_count: number;
   club: { slug: string; name: string } | null;
 }
 
@@ -121,7 +122,7 @@ export async function renderSocialList(
       .from("social_events")
       .select(
         `slug, title_vi, title_en, start_at, end_at, location_text,
-         price_vnd, max_players,
+         price_vnd, max_players, court_count,
          club:clubs!social_events_club_id_fkey ( slug, name )`,
       )
       .eq("status", "published")
@@ -161,7 +162,13 @@ export async function renderSocialList(
         ? ` — <a href="${siteUrl}/clb/${escapeHtml(e.club.slug)}">${escapeHtml(e.club.name)}</a>`
         : "";
       const priceLabel = fmtPrice(e.price_vnd, lang);
-      return `<li><a href="${siteUrl}/social/${escapeHtml(e.slug)}">${escapeHtml(evTitle)}</a> — <strong>${escapeHtml(dateStr)}${startTime ? ` ${escapeHtml(startTime)}` : ""}</strong>${venueText}${clubLink} · ${escapeHtml(priceLabel)}</li>`;
+      // 2026-05-20 — surface court_count alongside venue + price so the
+      // bot-readable summary line mirrors the new visual card.
+      const courtsLabel =
+        lang === "vi"
+          ? `${e.court_count} sân`
+          : `${e.court_count} court${e.court_count > 1 ? "s" : ""}`;
+      return `<li><a href="${siteUrl}/social/${escapeHtml(e.slug)}">${escapeHtml(evTitle)}</a> — <strong>${escapeHtml(dateStr)}${startTime ? ` ${escapeHtml(startTime)}` : ""}</strong>${venueText}${clubLink} · ${escapeHtml(courtsLabel)} · ${escapeHtml(priceLabel)}</li>`;
     })
     .join("");
 
@@ -215,11 +222,14 @@ ${rows.length > 0 ? `<ol>${itemsHtml}</ol>` : `<p>${escapeHtml(emptyMsg)}</p>`}
       siteUrl,
       lang,
       type: "website",
-      alternates: [
-        { hreflang: "en", href: canonical },
-        { hreflang: "vi", href: canonical },
-        { hreflang: "x-default", href: canonical },
-      ],
+      // PR (2026-05-18 Ahrefs Site Audit fix) — Ahrefs flagged
+      // "One page is linked for more than one language" because previous
+      // emit had en+vi+x-default all pointing to the same canonical URL.
+      // Google's hreflang spec requires DIFFERENT URLs for different
+      // languages; same-URL pattern is "invalid signal." Since this
+      // page serves a single canonical for both locales (the SPA
+      // toggles language client-side), we omit hreflang entirely —
+      // safer than wrong signal.
       jsonLd: itemListJsonLd,
       bodyContent,
     }),
@@ -340,11 +350,14 @@ ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
       siteUrl,
       lang,
       type: "website",
-      alternates: [
-        { hreflang: "en", href: canonical },
-        { hreflang: "vi", href: canonical },
-        { hreflang: "x-default", href: canonical },
-      ],
+      // PR (2026-05-18 Ahrefs Site Audit fix) — Ahrefs flagged
+      // "One page is linked for more than one language" because previous
+      // emit had en+vi+x-default all pointing to the same canonical URL.
+      // Google's hreflang spec requires DIFFERENT URLs for different
+      // languages; same-URL pattern is "invalid signal." Since this
+      // page serves a single canonical for both locales (the SPA
+      // toggles language client-side), we omit hreflang entirely —
+      // safer than wrong signal.
       jsonLd: itemListJsonLd,
       bodyContent,
     }),

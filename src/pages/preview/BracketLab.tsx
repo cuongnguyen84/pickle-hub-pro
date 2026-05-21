@@ -99,7 +99,7 @@ const BracketLab = () => {
         fmtLabel: "Team Match",
         meta: `${t.team_count} teams · ${t.team_roster_size}/team`,
         creator: t.creator_display_name,
-        href: `/tools/team-match/${t.id}`,
+        href: `/tools/team-match/${t.share_id}`,
         status: t.status,
         created_at: t.created_at,
       });

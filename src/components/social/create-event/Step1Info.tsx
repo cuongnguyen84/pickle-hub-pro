@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import type { FormState, FormErrors } from "./types";
+import { SlotManager } from "./SlotManager";
 
 interface Props {
   form: FormState;
@@ -187,6 +188,15 @@ export function Step1Info({ form, errors, touched, onChange, onBlur }: Props) {
           </label>
         </div>
       </div>
+
+      {/* Optional slot config — chia event thành các nhóm theo trình độ /
+          thời gian chơi. Mặc định không bật; organizer click "+ Thêm
+          slot" để bắt đầu. */}
+      <SlotManager
+        slots={form.slots}
+        maxPlayers={form.max_players}
+        onChange={(next) => onChange("slots", next)}
+      />
     </div>
   );
 }

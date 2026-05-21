@@ -19,20 +19,6 @@ import { initializeGoogleAuth } from "@/hooks/useNativeGoogleAuth";
 
 // Eagerly load the Index page for fast initial render
 import Index from "./pages/Index";
-// Legacy homepage — accessible at /legacy for 14-day rollback (REMOVE 2026-05-09)
-const IndexLegacy = lazy(() => import("./pages/Index.legacy"));
-// Sub-route legacy fallbacks for Phase 3 cutover (REMOVE 2026-05-09)
-const LiveLegacy = lazy(() => import("./pages/Live.legacy"));
-const TournamentsLegacy = lazy(() => import("./pages/Tournaments.legacy"));
-const BlogLegacy = lazy(() => import("./pages/Blog.legacy"));
-const VideosLegacy = lazy(() => import("./pages/Videos.legacy"));
-const NewsLegacy = lazy(() => import("./pages/News.legacy"));
-const ForumLegacy = lazy(() => import("./pages/Forum.legacy"));
-const ToolsLegacy = lazy(() => import("./pages/Tools.legacy"));
-// Phase 4 detail-page legacy fallbacks (REMOVE 2026-05-09)
-const WatchLiveLegacy = lazy(() => import("./pages/WatchLive.legacy"));
-const TournamentDetailLegacy = lazy(() => import("./pages/TournamentDetail.legacy"));
-const ForumPostDetailLegacy = lazy(() => import("./pages/ForumPostDetail.legacy"));
 import RequireAuth from "@/components/auth/RequireAuth";
 import ConditionalAuth from "@/components/auth/ConditionalAuth";
 
@@ -52,6 +38,7 @@ const WatchLive = lazy(() => import("./pages/WatchLive"));
 const Account = lazy(() => import("./pages/Account"));
 const DuprDashboard = lazy(() => import("./pages/DuprDashboard"));
 const MatchSubmitPage = lazy(() => import("./pages/Match"));
+const MyTournaments = lazy(() => import("./pages/MyTournaments"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Search = lazy(() => import("./pages/Search"));
 const OrganizationDetail = lazy(() => import("./pages/OrganizationDetail"));
@@ -69,6 +56,7 @@ const TeamMatchList = lazy(() => import("./pages/TeamMatchList"));
 const TeamMatchSetup = lazy(() => import("./pages/TeamMatchSetup"));
 const TeamMatchView = lazy(() => import("./pages/TeamMatchView"));
 const News = lazy(() => import("./pages/News"));
+const NewsArticle = lazy(() => import("./pages/NewsArticle"));
 const ShareRedirect = lazy(() => import("./pages/ShareRedirect"));
 
 // Doubles Elimination pages
@@ -170,6 +158,7 @@ const AdminTournaments = lazy(() => import("./pages/admin/AdminTournaments"));
 const AdminApiKeys = lazy(() => import("./pages/admin/AdminApiKeys"));
 const AdminModeration = lazy(() => import("./pages/admin/AdminModeration"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
+const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
 const AdminLivestreamViewers = lazy(() => import("./pages/admin/AdminLivestreamViewers"));
 const AdminPushNotification = lazy(() => import("./pages/admin/AdminPushNotification"));
 const AdminForum = lazy(() => import("./pages/admin/AdminForum"));
@@ -496,6 +485,7 @@ const App = () => (
                     <Route path="/account" element={<Account />} />
                     <Route path="/dupr" element={<RequireAuth><DuprDashboard /></RequireAuth>} />
                     <Route path="/match" element={<RequireAuth><MatchSubmitPage /></RequireAuth>} />
+                    <Route path="/account/my-tournaments" element={<RequireAuth><MyTournaments /></RequireAuth>} />
                     {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />
                     {/* Bet #1: match permalink (Vietnamese canonical /tran-dau/:slug) */}
@@ -511,10 +501,23 @@ const App = () => (
                         stale SPA-internal Link that still uses the old
                         path so users never see a 404. */}
                     <Route path="/social" element={<SocialEventList />} />
-                    <Route path="/vi/social" element={<SocialEventList />} />
+                    <Route path="/vi/social" element={<ViLanguageWrapper><SocialEventList /></ViLanguageWrapper>} />
                     <Route path="/social/:slug" element={<SocialEventDetail />} />
+                    {/* 2026-05-20 — VI-canonical mirror for social event detail.
+                        Previously only /social/:slug existed and the SPA
+                        defaulted to EN for non-VN visitors. The new
+                        /vi/social/:slug route forces VI rendering via
+                        ViLanguageWrapper; the SSR middleware (functions/
+                        _middleware.ts) already strips the /vi prefix and
+                        falls through to renderSocialEvent, so bots see
+                        the same prerendered VI HTML. Subroutes mirrored
+                        for consistency with /vi/social/:slug/live which
+                        shipped earlier. */}
+                    <Route path="/vi/social/:slug" element={<ViLanguageWrapper><SocialEventDetail /></ViLanguageWrapper>} />
                     <Route path="/social/:slug/danh-sach" element={<SocialEventRoster />} />
+                    <Route path="/vi/social/:slug/danh-sach" element={<ViLanguageWrapper><SocialEventRoster /></ViLanguageWrapper>} />
                     <Route path="/social/:slug/xep-cap" element={<SocialEventMatchmaking />} />
+                    <Route path="/vi/social/:slug/xep-cap" element={<ViLanguageWrapper><SocialEventMatchmaking /></ViLanguageWrapper>} />
                     <Route path="/social/:slug/live" element={<SocialEventLive />} />
                     <Route path="/vi/social/:slug/live" element={<SocialEventLive />} />
                     {/* Legacy /su-kien — SPA-internal Navigate fallback */}
@@ -570,7 +573,8 @@ const App = () => (
                         working while VN viewers get a localized URL. */}
                     <Route path="/thong-bao" element={<Notifications />} />
                     <Route path="/search" element={<Search />} />
-                    <Route path="/news" element={<News />} />
+                    <Route path="/news" element={<News language="en" />} />
+                    <Route path="/news/:slug" element={<NewsArticle language="en" />} />
                     <Route path="/rankings" element={<Rankings />} />
                     <Route path="/vi/rankings" element={<Rankings />} />
                     {/* Bet #1 Sprint 4 Phase 4A: Feed page */}
@@ -618,19 +622,6 @@ const App = () => (
                     {/* Embed routes - no layout, minimal UI */}
                     <Route path="/embed/live/:id" element={<EmbedLive />} />
                     <Route path="/embed/video/:id" element={<EmbedVideo />} />
-                    {/* Legacy homepage — rollback fallback (REMOVE 2026-05-09) */}
-                    <Route path="/legacy" element={<IndexLegacy />} />
-                    {/* Sub-route legacy fallbacks — Phase 3 cutover (REMOVE 2026-05-09) */}
-                    <Route path="/live-legacy" element={<LiveLegacy />} />
-                    <Route path="/tournaments-legacy" element={<TournamentsLegacy />} />
-                    <Route path="/blog-legacy" element={<BlogLegacy />} />
-                    <Route path="/videos-legacy" element={<VideosLegacy />} />
-                    <Route path="/news-legacy" element={<NewsLegacy />} />
-                    <Route path="/forum-legacy" element={<ForumLegacy />} />
-                    <Route path="/tools-legacy" element={<ToolsLegacy />} />
-                    <Route path="/live-watch-legacy/:id" element={<WatchLiveLegacy />} />
-                    <Route path="/tournament-legacy/:slug" element={<ConditionalAuth><TournamentDetailLegacy /></ConditionalAuth>} />
-                    <Route path="/forum-post-legacy/:postId" element={<ForumPostDetailLegacy />} />
                     {/* Preview routes - design direction exploration, noindex */}
                     <Route path="/preview/the-line" element={<PreviewTheLine />} />
                     <Route path="/preview/the-line/live" element={<PreviewLiveList />} />
@@ -652,6 +643,7 @@ const App = () => (
                     <Route path="/admin/api-keys" element={<AdminApiKeys />} />
                     <Route path="/admin/moderation" element={<AdminModeration />} />
                     <Route path="/admin/reports" element={<AdminReports />} />
+                    <Route path="/admin/news" element={<AdminNews />} />
                     <Route path="/admin/viewers" element={<AdminLivestreamViewers />} />
                     <Route path="/admin/push" element={<AdminPushNotification />} />
                     <Route path="/admin/pro-tour" element={<ProTourAdmin />} />
@@ -685,7 +677,8 @@ const App = () => (
                     <Route path="/vi/tournaments" element={<ViLanguageWrapper><Tournaments /></ViLanguageWrapper>} />
                     <Route path="/vi/tournament/:slug" element={<ViLanguageWrapper><ConditionalAuth><TournamentDetail /></ConditionalAuth></ViLanguageWrapper>} />
                     <Route path="/vi/org/:slug" element={<ViLanguageWrapper><OrganizationDetail /></ViLanguageWrapper>} />
-                    <Route path="/vi/news" element={<ViLanguageWrapper><News /></ViLanguageWrapper>} />
+                    <Route path="/vi/news" element={<ViLanguageWrapper><News language="vi" /></ViLanguageWrapper>} />
+                    <Route path="/vi/news/:slug" element={<ViLanguageWrapper><NewsArticle language="vi" /></ViLanguageWrapper>} />
                     <Route path="/vi/blog" element={<ViLanguageWrapper><Blog /></ViLanguageWrapper>} />
                     <Route path="/vi/blog/:slug" element={<ViLanguageWrapper><ViBlogPost /></ViLanguageWrapper>} />
                     <Route path="/vi/forum" element={<ViLanguageWrapper><Forum /></ViLanguageWrapper>} />
@@ -714,6 +707,7 @@ const App = () => (
                     <Route path="/vi/terms" element={<ViLanguageWrapper><Terms /></ViLanguageWrapper>} />
                     <Route path="/vi/login" element={<ViLanguageWrapper><Login /></ViLanguageWrapper>} />
                     <Route path="/vi/account" element={<ViLanguageWrapper><Account /></ViLanguageWrapper>} />
+                    <Route path="/vi/account/my-tournaments" element={<ViLanguageWrapper><RequireAuth><MyTournaments /></RequireAuth></ViLanguageWrapper>} />
                     <Route path="/vi/notifications" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
                     <Route path="/vi/thong-bao" element={<ViLanguageWrapper><Notifications /></ViLanguageWrapper>} />
 

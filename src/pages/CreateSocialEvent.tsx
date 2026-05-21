@@ -209,6 +209,26 @@ export default function CreateSocialEvent() {
       // PR51 atomic submit. The RPC writes social_events + (when paid)
       // event_payment_config inside one PL/pgSQL transaction so a
       // partial failure can't strand a paid event without bank config.
+      // Slots are persisted as JSONB. Trim/normalise the per-slot shape
+      // before submit so the DB stores tidy values + the edge function
+      // can lookup by id without surprises.
+      const cleanSlots = form.slots.map((s) => ({
+        id: s.id,
+        label: s.label.trim(),
+        kind: s.kind,
+        capacity: Number(s.capacity) || 0,
+        court_count: s.court_count ?? null,
+        skill_level:
+          s.kind === "skill" ? (s.skill_level?.trim() || null) : null,
+        min_play_months:
+          s.kind === "duration"
+            ? s.min_play_months == null
+              ? null
+              : Number(s.min_play_months)
+            : null,
+        notes: s.notes && s.notes.trim().length > 0 ? s.notes.trim() : null,
+      }));
+
       const eventPayload = {
         club_id: clubData.club.id,
         slug: finalSlug,
@@ -229,6 +249,7 @@ export default function CreateSocialEvent() {
         // it through unconditionally is safe.
         requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
         prepayment_deadline_hours: form.prepayment_deadline_hours,
+        slots: cleanSlots,
       };
       const paymentPayload =
         form.price_vnd > 0

@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { getLoginUrl } from "@/lib/auth-config";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
@@ -143,37 +146,145 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const onRootPath = ROOT_PATHS.has(location.pathname);
   const showBackButton = hasHistory && !onRootPath;
   const { language, setLanguage } = useI18n();
+
+  // Phase 4 news fix (2026-05-19): clicking EN/VI in the global toggle used
+  // to only call setLanguage(), which mutated i18n state but kept the URL
+  // unchanged. After we routed /news (EN) and /vi/news (VI) as DISTINCT
+  // pages that derive their language from the route prop (not i18n state),
+  // toggling on /news did nothing visible — News.tsx kept showing EN rows
+  // because its `language` prop is hard-coded to "en" in the route def.
+  //
+  // Fix: when the toggle is clicked, also navigate to the EN/VI twin of
+  // the current path so the route prop changes. Convention in this app
+  // is "/x" ↔ "/vi/x", so we strip or prepend "/vi" on the leading segment.
+  //
+  // 2026-05-19 follow-up (Codex P2): only navigate when the current page
+  // actually has a /vi twin. Routes like /clb/:slug, /nguoi-choi/:slug,
+  // and /tran-dau/:slug are Vietnamese-canonical URLs with no /vi prefix;
+  // admin pages, /onboarding, /tools/*, /privacy, and /terms have no VI
+  // variant. For those, blindly prepending /vi would send users to NotFound.
+  // Whitelist the first path segment to keep the toggle safe — flip i18n
+  // state only, stay on the same URL.
+  const VI_ENABLED_FIRST_SEGMENTS = new Set<string>([
+    "", "blog", "news", "forum", "feed", "clubs",
+    "tournaments", "tournament", "videos", "watch",
+    "rankings", "live", "livestream", "social", "su-kien",
+    "u", "org", "account", "notifications", "thong-bao",
+    "dang-ky", "khoi-phuc-dang-ky", "search",
+    // 2026-05-19 codex P2 follow-up: App.tsx has /vi/tools + every
+    // /vi/tools/<subroute> mirror, so the toggle should navigate
+    // /tools ↔ /vi/tools instead of flipping i18n state only.
+    "tools",
+  ]);
+  const hasViTwin = (path: string): boolean => {
+    const en = path === "/vi" || path === "/vi/"
+      ? "/"
+      : path.startsWith("/vi/")
+        ? path.slice(3)
+        : path;
+    const seg = en.split("/")[1] ?? "";
+    return VI_ENABLED_FIRST_SEGMENTS.has(seg);
+  };
+  const switchLanguage = (next: "en" | "vi") => {
+    if (next === language) return;
+    setLanguage(next);
+    const cur = location.pathname;
+    if (!hasViTwin(cur)) return; // no localized twin → keep URL, flip state only
+    let target = cur;
+    if (next === "vi") {
+      if (!cur.startsWith("/vi/") && cur !== "/vi") {
+        target = cur === "/" ? "/vi" : `/vi${cur}`;
+      }
+    } else {
+      if (cur === "/vi" || cur === "/vi/") {
+        target = "/";
+      } else if (cur.startsWith("/vi/")) {
+        target = cur.slice(3); // "/vi/news" → "/news"
+      }
+    }
+    if (target !== cur) navigate(target + location.search + location.hash);
+  };
+  // gives us auth.users only. Defaults to undefined while loading; the
+  // menu item disables itself in that state.
   const { user, signOut } = useAuth();
   // Pulled here purely for the "View my profile" dropdown link. The
   // profile.username slug isn't stored on the auth User object — useAuth
   // gives us auth.users only. Defaults to undefined while loading; the
   // menu item disables itself in that state.
-  const { profile } = useUserProfile();
+    const { profile } = useUserProfile();
   const profileUsername = (profile as { username?: string | null } | null | undefined)?.username ?? null;
 
+  // Role flags for the avatar dropdown. We DON'T gate the dropdown opening
+  // on `isLoading` because that would briefly show no role links to admins
+  // on every page navigation; instead each link renders only once its role
+  // hook has confirmed access. Both hooks already key off `user`, so they
+  // return false for signed-out viewers without an extra check.
+  const { isAdmin } = useAdminAuth();
+  const { isCreator } = useCreatorAuth(); // true for creator OR admin
+
   // PR55: surface the viewer's own clubs in the avatar dropdown so they
-  // can jump straight to /clb/<slug>/quan-ly. Limit 3 because that's
-  // also the self-service cap; if a user has more (e.g. admin-created)
-  // we still cap the menu to keep it scannable.
-  const { data: myClubs } = useQuery<{ slug: string; name: string }[]>({
+  // can jump straight to /clb/<slug>/quan-ly. Limit 5 to keep the menu
+  // scannable. 2026-05-21 (managers MVP): merge in clubs the viewer
+  // manages (via club_managers) so non-creator organizers also have a
+  // navigation entry point.
+  const { data: myClubs } = useQuery<
+    { slug: string; name: string; role: "creator" | "manager" }[]
+  >({
     queryKey: ["my-clubs", user?.id ?? null],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("clubs")
-        .select("slug, name")
-        .eq("created_by", user.id)
-        // Codex review: hide archived clubs from the avatar dropdown so
-        // an owner who archives a CLB doesn't keep seeing it as an
-        // active jump target. /clb/<slug> still loads via direct link.
-        .is("archived_at", null)
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (error) {
-        console.error("TheLineLayout: my-clubs error", error);
-        return [];
+
+      // Two parallel reads so latency doesn't double. Both queries are
+      // covered by existing RLS (clubs.select_all public + club_managers
+      // public select), so no role-elevation needed.
+      const [ownedRes, managedRes] = await Promise.all([
+        supabase
+          .from("clubs")
+          .select("id, slug, name, created_at")
+          // Hide archived clubs — the owner has explicitly removed the
+          // CLB from active rotation; direct link still works.
+          .eq("created_by", user.id)
+          .is("archived_at", null)
+          .order("created_at", { ascending: false })
+          .limit(10),
+        supabase
+          .from("club_managers")
+          .select("club_id, added_at, club:clubs!club_managers_club_id_fkey(id, slug, name, archived_at)")
+          .eq("profile_id", user.id)
+          .order("added_at", { ascending: false })
+          .limit(10),
+      ]);
+
+      if (ownedRes.error) {
+        console.error("TheLineLayout: owned-clubs error", ownedRes.error);
       }
-      return (data as { slug: string; name: string }[]) ?? [];
+      if (managedRes.error) {
+        console.error("TheLineLayout: managed-clubs error", managedRes.error);
+      }
+
+      const owned = (ownedRes.data ?? []) as { id: string; slug: string; name: string }[];
+      const managed = (managedRes.data ?? []) as {
+        club_id: string;
+        club: { id: string; slug: string; name: string; archived_at: string | null } | null;
+      }[];
+
+      const ownedIds = new Set(owned.map((c) => c.id));
+      const ownedRows = owned.map((c) => ({
+        slug: c.slug,
+        name: c.name,
+        role: "creator" as const,
+      }));
+      const managedRows = managed
+        .map((m) => m.club)
+        .filter(
+          (c): c is { id: string; slug: string; name: string; archived_at: string | null } =>
+            c != null && c.archived_at == null && !ownedIds.has(c.id),
+        )
+        .map((c) => ({ slug: c.slug, name: c.name, role: "manager" as const }));
+
+      // Creator rows first, then managed. Cap to 5 total to keep the
+      // dropdown scannable on small screens.
+      return [...ownedRows, ...managedRows].slice(0, 5);
     },
     enabled: Boolean(user?.id),
     staleTime: 60_000,
@@ -331,6 +442,32 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
           </span>
         </Link>
 
+        {/* 2026-05-20 — mobile-only login + signup pills for anonymous
+            visitors. Sits between brand and dark-toggle so the auth CTA
+            is visible without opening the hamburger drawer. CSS class
+            `.tl-auth-mobile` (in the-line.css) hides this group on
+            screens > 900px and on logged-in viewers. The signup link
+            passes `mode: signup` so /login lands on the create-account
+            tab directly. */}
+        {!user && (
+          <div className="tl-auth-mobile">
+            <Link
+              to={getLoginUrl(location.pathname + location.search)}
+              className="tl-auth-pill"
+              aria-label={language === "vi" ? "Đăng nhập" : "Log in"}
+            >
+              {language === "vi" ? "Đăng nhập" : "Log in"}
+            </Link>
+            <Link
+              to={getLoginUrl(location.pathname + location.search, { mode: "signup" })}
+              className="tl-auth-pill tl-auth-pill-primary"
+              aria-label={language === "vi" ? "Đăng ký" : "Sign up"}
+            >
+              {language === "vi" ? "Đăng ký" : "Sign up"}
+            </Link>
+          </div>
+        )}
+
         <div className="tl-nav-links">
           {NAV_ITEMS.map((item) => {
             const label = language === "vi" && item.labelVi ? item.labelVi : item.label;
@@ -423,7 +560,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             <button
               type="button"
               className={language === "en" ? "active" : ""}
-              onClick={() => setLanguage("en")}
+              onClick={() => switchLanguage("en")}
               aria-pressed={language === "en"}
               aria-label="English"
             >
@@ -433,7 +570,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             <button
               type="button"
               className={language === "vi" ? "active" : ""}
-              onClick={() => setLanguage("vi")}
+              onClick={() => switchLanguage("vi")}
               aria-pressed={language === "vi"}
               aria-label="Tiếng Việt"
             >
@@ -508,9 +645,22 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                         {language === "vi" ? "Xem hồ sơ" : "View my profile"}
                       </span>
                     )}
-                    <Link to="/account" onClick={() => setAvatarOpen(false)}>Account</Link>
-                    <Link to="/creator" onClick={() => setAvatarOpen(false)}>Creator dashboard</Link>
-                    <Link to="/admin" onClick={() => setAvatarOpen(false)}>Admin</Link>
+                    <Link to="/account" onClick={() => setAvatarOpen(false)}>
+                      {language === "vi" ? "Tài khoản" : "Account"}
+                    </Link>
+                    <Link to="/account/my-tournaments" onClick={() => setAvatarOpen(false)}>
+                      {language === "vi" ? "Giải đấu của tôi" : "My Tournaments"}
+                    </Link>
+                    {isCreator && (
+                      <Link to="/creator" onClick={() => setAvatarOpen(false)}>
+                        {language === "vi" ? "Bảng điều khiển Creator" : "Creator dashboard"}
+                      </Link>
+                    )}
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setAvatarOpen(false)}>
+                        Admin
+                      </Link>
+                    )}
                     <div className="divider" />
                     {/* PR55 — my-clubs section. Header label + flat list
                         of the viewer's clubs (up to 5) so they can jump
@@ -535,8 +685,36 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                           key={c.slug}
                           to={`/clb/${c.slug}/quan-ly`}
                           onClick={() => setAvatarOpen(false)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                          }}
                         >
-                          {c.name}
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {c.name}
+                          </span>
+                          {/* Visual cue so a viewer who manages multiple
+                              clubs can tell at a glance which ones they
+                              own vs which they help organize. */}
+                          {c.role === "manager" && (
+                            <span
+                              style={{
+                                fontSize: 9,
+                                letterSpacing: "0.05em",
+                                textTransform: "uppercase",
+                                fontFamily: "Geist Mono",
+                                color: "var(--tl-fg-3)",
+                                border: "1px solid var(--tl-border)",
+                                borderRadius: 3,
+                                padding: "1px 5px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {language === "vi" ? "QL" : "Mgr"}
+                            </span>
+                          )}
                         </Link>
                       ))
                     ) : (
@@ -718,7 +896,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 <button
                   type="button"
                   className={language === "en" ? "active" : ""}
-                  onClick={() => setLanguage("en")}
+                  onClick={() => switchLanguage("en")}
                 >
                   EN
                 </button>
@@ -726,7 +904,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
                 <button
                   type="button"
                   className={language === "vi" ? "active" : ""}
-                  onClick={() => setLanguage("vi")}
+                  onClick={() => switchLanguage("vi")}
                 >
                   VI
                 </button>
@@ -768,6 +946,10 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
           </aside>
         </>
       )}
+
+      {/* DUPR connect prompt — slim banner above every page for authed
+          users who haven't linked. Component guards internally on
+          useAuth + useDuprConnection; renders nothing otherwise. */}
 
       {children}
 

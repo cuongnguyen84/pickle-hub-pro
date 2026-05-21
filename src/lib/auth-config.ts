@@ -92,16 +92,32 @@ export const AUTH_CALLBACK_ROUTE = '/auth/callback';
 /**
  * Get login URL with optional redirect back to current page
  * @param currentPath - Current path to redirect back to after login
+ * @param opts - Optional flags. Pass `{ mode: 'signup' }` to land on the
+ *   sign-up tab instead of the default login form. Used by the mobile
+ *   header pills (2026-05-20) so the signup CTA opens the page in
+ *   signup mode directly instead of forcing a second tap to switch.
  */
-export const getLoginUrl = (currentPath?: string): string => {
+interface GetLoginUrlOptions {
+  mode?: 'login' | 'signup';
+}
+
+export const getLoginUrl = (
+  currentPath?: string,
+  opts: GetLoginUrlOptions = {},
+): string => {
   if (!currentPath) {
     if (typeof window !== 'undefined') {
       currentPath = window.location.pathname + window.location.search;
     } else {
-      return '/login';
+      currentPath = '/';
     }
   }
-  return `/login?redirect=${encodeURIComponent(currentPath)}`;
+  const params = new URLSearchParams();
+  params.set('redirect', currentPath);
+  if (opts.mode === 'signup') {
+    params.set('mode', 'signup');
+  }
+  return `/login?${params.toString()}`;
 };
 
 /**

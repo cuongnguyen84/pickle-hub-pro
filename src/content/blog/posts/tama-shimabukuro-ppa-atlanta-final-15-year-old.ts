@@ -16,7 +16,7 @@ const post: BlogPost = {
     en: {
       title: "Tama Shimabukuro: How a 15-Year-Old From Hawaii Took Down World #1 and #2 at PPA Atlanta",
       metaTitle: "Tama Shimabukuro Reaches PPA Atlanta Final at 15 | Beats Hunter Johnson & Staksrud",
-      metaDescription: "15-year-old Tama Shimabukuro just beat world #1 Hunter Johnson and #2 Federico Staksrud at PPA Veolia Atlanta Championships to reach the final. His self-taught Hawaii origin story.",
+      metaDescription: "15-year-old Tama Shimabukuro beat world #1 Hunter Johnson and #2 Staksrud at PPA Atlanta Championships to reach the final. Self-taught Hawaii story.",
       sections: [
         {
           heading: "15 years old. Beat World #2. Beat World #1. Into the PPA Atlanta Final.",

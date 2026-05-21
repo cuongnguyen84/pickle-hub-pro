@@ -28,6 +28,19 @@ dist-ssr
 .claude/settings.local.json
 .claude/secrets.local.*
 .claude/scheduled_tasks.lock
+.claude/gh-token
+.claude/gh-token*
+.claude/openai*
+
+# Personal SEO/growth planning notes (not part of the codebase)
+growth-tasks/
 
 # Supabase CLI temp
 supabase/.temp/
+
+# Cloudflare Workers — Wrangler build artifacts
+workers/**/.wrangler/
+workers/**/.dev.vars
+
+# Bundle analysis output
+dist/stats.html

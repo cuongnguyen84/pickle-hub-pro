@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -11,6 +12,15 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    // Bundle analysis — opt-in via ANALYZE=1 to avoid slowing every prod build.
+    process.env.ANALYZE === "1" &&
+      visualizer({
+        filename: "dist/stats.html",
+        template: "treemap",
+        gzipSize: true,
+        brotliSize: true,
+        open: false,
+      }),
     VitePWA({
       // Auto-update SW when new version deploys
       registerType: "autoUpdate",
@@ -199,7 +209,6 @@ export default defineConfig(({ mode }) => ({
           "vendor-query": ["@tanstack/react-query"],
           "vendor-dnd": [
             "@dnd-kit/core",
-            "@dnd-kit/sortable",
             "@dnd-kit/utilities",
           ],
           "vendor-charts": ["recharts"],

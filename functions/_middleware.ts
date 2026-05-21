@@ -13,7 +13,7 @@ import {
   renderHome, renderHomeVi,
   renderLive, renderVideo,
   renderTournamentDetail, renderTournaments,
-  renderVideos, renderNews, renderForum, renderForumPost,
+  renderVideos, renderNews, renderNewsPost, renderViNewsPost, renderForum, renderForumPost,
   renderMatch,
   renderProfile,
   renderFeed,
@@ -26,7 +26,7 @@ import {
   renderTools, renderToolPage, renderToolNewPage,
   renderBlogPost, renderBlog,
   renderViBlogPost, renderViBlogIndex,
-  renderLivestreamList, renderPrivacy, renderTerms,
+  renderLivestreamList, renderRankings, renderPrivacy, renderTerms,
   renderNotificationsShell,
   renderNoindexShell,
   renderDefault, render404,
@@ -227,7 +227,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // missing startDate, missing location. New schema uses SportsSeries
   // for the parent (no required dates/location). Same TTL-skip
   // rationale as the previous v2→v3 bump.
-  const cacheKey = `pr:v4:${url.pathname}`;
+  // PR (2026-05-18 Ahrefs Site Audit fix) — bumped v4→v5 to invalidate
+  // cached responses with stale hreflang en+vi+x-default-all-to-same-URL
+  // pattern on /clb/{slug}, /clubs, /social, /social/{id}. Same TTL-skip
+  // rationale as v3→v4 bump (commit `52ba628`).
+  // 2026-05-20 — bumped v6→v7 to invalidate cached /social/{slug}
+  // responses now that renderSocialEvent emits split EN/VI canonicals
+  // + reciprocal hreflang (new /vi/social/{slug} mirror). Old cache
+  // would have served single-canonical VI-only HTML to bots hitting
+  // either path.
+  // 2026-05-20 — bumped v7→v8 to invalidate cached social list + detail
+  // HTML after surfacing court_count on /social and /social/{slug}.
+  const cacheKey = `pr:v8:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -303,6 +314,11 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
     match = path.match(/^\/blog\/([^/]+)$/);
     if (match) return await renderViBlogPost(supabase, match[1], siteUrl);
     if (path === "/blog") return await renderViBlogIndex(supabase, siteUrl);
+    // VI news article — Phase 4 hot-fix 2026-05-19. `path` already had the
+    // /vi prefix stripped by stripLangPrefix above, so /vi/news/foo arrives
+    // as /news/foo with lang="vi".
+    match = path.match(/^\/news\/([^/]+)$/);
+    if (match) return await renderViNewsPost(supabase, match[1], siteUrl);
   }
 
   // Home
@@ -342,7 +358,7 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // the prerender path needs to handle the URL inline because some
   // crawlers don't follow redirects to canonical content).
   match = path.match(/^\/(?:social|su-kien)\/([^/]+)$/);
-  if (match) return await renderSocialEvent(supabase, match[1], siteUrl);
+  if (match) return await renderSocialEvent(supabase, match[1], siteUrl, lang);
 
   // Club landing (Social Events MVP Sprint 1 PR2). Public ItemList of
   // upcoming events.
@@ -379,6 +395,12 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
 
   // News
   if (path === "/news") return await renderNews(supabase, siteUrl, rawPath, lang);
+
+  // News article — Phase 4 hot-fix 2026-05-19. Mirrors /blog/:slug pattern.
+  // VI variant is handled inside the lang === "vi" branch above; this is
+  // the default (EN) match.
+  match = path.match(/^\/news\/([^/]+)$/);
+  if (match) return await renderNewsPost(supabase, match[1], siteUrl);
 
   // Forum
   if (path === "/forum") return await renderForum(supabase, siteUrl, rawPath, lang);
@@ -432,6 +454,14 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
 
   // Livestream listing
   if (path === "/livestream") return renderLivestreamList(siteUrl, rawPath, lang);
+  // PR (2026-05-18 Ahrefs Site Audit fix) — /live (+ /vi/live) is the
+  // livestream landing page, distinct from /live/:id (single stream
+  // handled at line ~312). React Route at App.tsx line 482. Without
+  // this handler, bots got 404 and Ahrefs flagged it as a broken
+  // internal link from homepage `/` + 8 other source pages.
+  if (path === "/live" || path === "/vi/live") return renderLivestreamList(siteUrl, rawPath, lang);
+  // /rankings DUPR table — React Route at App.tsx line 572 with /vi alias.
+  if (path === "/rankings" || path === "/vi/rankings") return renderRankings(siteUrl, rawPath, lang);
 
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);

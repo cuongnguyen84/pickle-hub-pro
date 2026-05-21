@@ -35,6 +35,19 @@ interface VerifyBody {
   code?: unknown;
   display_name?: unknown;
   self_rated_level?: unknown;
+  slot_id?: unknown;
+}
+
+/**
+ * Shape of one row in social_events.slots (JSONB array). Only the fields
+ * we need at verify-time are typed; the rest is intentionally loose since
+ * it's display-only.
+ */
+interface EventSlot {
+  id?: string;
+  label?: string;
+  kind?: string;
+  capacity?: number;
 }
 
 function err(error: string, status: number, code: string) {
@@ -104,6 +117,13 @@ Deno.serve(async (req) => {
     selfRatedLevel = Math.round(n * 100) / 100;
   }
 
+  // slot_id is optional — present only when the event has slots
+  // configured. Length/charset is checked below against the actual
+  // slots array; here we just normalise the type.
+  const slotIdRaw =
+    typeof body.slot_id === "string" ? body.slot_id.trim() : "";
+  const slotId: string | null = slotIdRaw.length > 0 ? slotIdRaw : null;
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -148,7 +168,9 @@ Deno.serve(async (req) => {
   // ─── Re-verify event still open ─────────────────────────────────────────
   const { data: event, error: eventErr } = await supabase
     .from("social_events")
-    .select("id, status, visibility, start_at, max_players, allow_guests, price_vnd, requires_prepayment")
+    .select(
+      "id, status, visibility, start_at, max_players, allow_guests, price_vnd, requires_prepayment, slots",
+    )
     .eq("id", eventId)
     .maybeSingle();
   if (eventErr || !event) {
@@ -171,6 +193,45 @@ Deno.serve(async (req) => {
   }
   if (!event.allow_guests) {
     return err("guests_not_allowed", 403, "guests_not_allowed");
+  }
+
+  // ─── Slot validation (only when the event has slots configured) ─────────
+  // Three states:
+  //   1. event.slots is empty []   → legacy gate (max_players); slot_id
+  //      from client is ignored to keep older flows backwards-compat.
+  //   2. event.slots non-empty + slot_id missing → reject; the player must
+  //      pick a slot before we'll commit a registration.
+  //   3. event.slots non-empty + slot_id present → validate id exists,
+  //      then re-check capacity (race-safe) right before the insert.
+  const eventSlots: EventSlot[] = Array.isArray(event.slots)
+    ? (event.slots as EventSlot[])
+    : [];
+  let selectedSlot: EventSlot | null = null;
+  if (eventSlots.length > 0) {
+    if (!slotId) {
+      return err("slot_required", 400, "slot_required");
+    }
+    selectedSlot = eventSlots.find((s) => s?.id === slotId) ?? null;
+    if (!selectedSlot) {
+      return err("slot_not_found", 404, "slot_not_found");
+    }
+    const cap = Number(selectedSlot.capacity ?? 0);
+    if (!Number.isFinite(cap) || cap < 1) {
+      return err("slot_capacity_invalid", 500, "slot_capacity_invalid");
+    }
+    const { count: slotCount, error: slotCountErr } = await supabase
+      .from("event_registrations")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .eq("slot_id", slotId)
+      .neq("status", "cancelled");
+    if (slotCountErr) {
+      logEvent({ error: slotCountErr.message, step: "slot_capacity_check" });
+      return err("capacity_check_failed", 500, "capacity_check_failed");
+    }
+    if ((slotCount ?? 0) >= cap) {
+      return err("slot_full", 409, "slot_full");
+    }
   }
 
   // ─── Find or create ghost profile by phone ──────────────────────────────
@@ -254,6 +315,10 @@ Deno.serve(async (req) => {
       self_rated_level: selfRatedLevel,
       status: "registered",
       payment_status: initialPaymentStatus,
+      // Only populated when the event has slots configured. NULL =
+      // legacy / no-slot registration so the column behaves the same
+      // as before for unchanged events.
+      slot_id: selectedSlot ? slotId : null,
     })
     .select("id, registered_at")
     .single();

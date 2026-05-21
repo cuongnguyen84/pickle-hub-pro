@@ -1810,6 +1810,18 @@ export interface Translations {
       paymentInstructions: string;
       openZalo: string;
       backToEvent: string;
+      // Slot picker — only rendered when the organizer configured slots.
+      slotPickerLabel: string;
+      slotPickerHint: string;
+      slotMetaSkill: string;
+      slotMetaDurationMonths: string;
+      slotMetaDurationNewbie: string;
+      slotMetaCourts: string;
+      slotRemainingBadge: string;
+      slotFullBadge: string;
+      slotRequired: string;
+      slotInvalid: string;
+      slotFull: string;
     };
     // Proxy + Manual registration (PR: feat/proxy-and-manual-registration)
     proxyRegister: {
@@ -1964,6 +1976,46 @@ export interface Translations {
       paymentDeadlineHours: string;
       paymentDeadlineHint: string;
       errorPrepaymentDeadlineRange: string;
+      // Slots — registration sub-buckets (skill / duration / general).
+      slotsHeading: string;
+      slotsSubheading: string;
+      slotsEmptyHint: string;
+      slotsTotalCapacity: string;
+      slotAddSkill: string;
+      slotAddDuration: string;
+      slotAddGeneral: string;
+      slotKindSkill: string;
+      slotKindDuration: string;
+      slotKindGeneral: string;
+      slotLabel: string;
+      slotLabelPlaceholderSkill: string;
+      slotLabelPlaceholderDuration: string;
+      slotLabelPlaceholderGeneral: string;
+      slotCapacity: string;
+      slotSkillLevel: string;
+      slotSkillChoose: string;
+      slotSkillNewbie: string;
+      slotCourtCount: string;
+      slotMinPlayMonths: string;
+      slotDurationChoose: string;
+      slotDurationLT3: string;
+      slotDuration3: string;
+      slotDuration6: string;
+      slotDuration12: string;
+      slotDuration24: string;
+      slotDuration36: string;
+      slotNotes: string;
+      slotNotesPlaceholder: string;
+      slotRemoveAria: string;
+      errorSlotLabelMin: string;
+      errorSlotLabelMax: string;
+      errorSlotCapacityMin: string;
+      errorSlotCapacityMax: string;
+      errorSlotSkillRequired: string;
+      errorSlotDurationRange: string;
+      errorSlotsExceedMaxPlayers: string;
+      errorSlotTooMany: string;
+      errorSlotDuplicateId: string;
     };
     manage: {
       pageTitle: string;
@@ -2246,6 +2298,33 @@ export interface Translations {
       archiving: string;
       archiveSuccessTitle: string;
       archiveSuccessBody: string;
+    };
+    managers: {
+      heading: string;
+      subheading: string;
+      creatorBadge: string;
+      managerBadge: string;
+      addCta: string;
+      searchLabel: string;
+      searchPlaceholder: string;
+      searchButton: string;
+      searching: string;
+      searchEmpty: string;
+      searchInvalid: string;
+      addConfirm: string;
+      addSuccess: string;
+      addError: string;
+      removeAria: string;
+      removeConfirm: string;
+      removeSuccess: string;
+      removeError: string;
+      addedBy: string;
+      empty: string;
+      ownerOnly: string;
+      errAlreadyManager: string;
+      errAlreadyCreator: string;
+      errProfileNotFound: string;
+      errNotAuthorized: string;
     };
     roster: {
       pageTitle: string;
@@ -4398,6 +4477,19 @@ export const vi: Translations = {
       paymentInstructions: "Hướng dẫn thanh toán",
       openZalo: "Mở nhóm Zalo",
       backToEvent: "Quay lại sự kiện",
+      // Slot picker
+      slotPickerLabel: "Chọn nhóm chơi",
+      slotPickerHint:
+        "BTC chia event thành nhiều nhóm theo trình độ hoặc thời gian chơi. Vui lòng chọn nhóm phù hợp với bạn.",
+      slotMetaSkill: "Trình độ",
+      slotMetaDurationMonths: "Đã chơi tối thiểu {n} tháng",
+      slotMetaDurationNewbie: "Người mới bắt đầu",
+      slotMetaCourts: "{n} sân",
+      slotRemainingBadge: "Còn {remaining}/{capacity} chỗ",
+      slotFullBadge: "Đã đầy",
+      slotRequired: "Vui lòng chọn 1 nhóm chơi để tiếp tục",
+      slotInvalid: "Nhóm chơi không hợp lệ — vui lòng tải lại trang",
+      slotFull: "Nhóm này đã đầy — vui lòng chọn nhóm khác",
     },
     proxyRegister: {
       proxyRegisterCta: "Đăng ký hộ bạn bè",
@@ -4552,6 +4644,49 @@ export const vi: Translations = {
       paymentDeadlineHint:
         "Tính từ lúc player đăng ký. Nếu thời hạn vượt qua giờ bắt đầu event, đăng ký bị huỷ ngay.",
       errorPrepaymentDeadlineRange: "Thời hạn phải trong khoảng 1–168 giờ (tối đa 1 tuần).",
+      // Slots
+      slotsHeading: "Nhóm đăng ký (tuỳ chọn)",
+      slotsSubheading:
+        "Chia event thành nhiều nhóm theo trình độ hoặc thời gian chơi. Player sẽ chọn 1 nhóm khi đăng ký.",
+      slotsEmptyHint:
+        "Chưa có nhóm — player đăng ký vào pool chung (giới hạn ở số người tối đa bên trên).",
+      slotsTotalCapacity: "Tổng chỗ trong nhóm: {total}/{max}",
+      slotAddSkill: "Thêm nhóm theo trình độ",
+      slotAddDuration: "Thêm nhóm theo thời gian chơi",
+      slotAddGeneral: "Thêm nhóm khác",
+      slotKindSkill: "Trình độ",
+      slotKindDuration: "Thời gian chơi",
+      slotKindGeneral: "Khác",
+      slotLabel: "Tên nhóm",
+      slotLabelPlaceholderSkill: "VD: Sân 1-2: Trình độ 2.5",
+      slotLabelPlaceholderDuration: "VD: Người mới chơi 6 tháng+",
+      slotLabelPlaceholderGeneral: "VD: Sân nâng cao",
+      slotCapacity: "Số chỗ",
+      slotSkillLevel: "Trình độ",
+      slotSkillChoose: "Chọn trình độ",
+      slotSkillNewbie: "Newbie (mới chơi)",
+      slotCourtCount: "Số sân (tuỳ chọn)",
+      slotMinPlayMonths: "Thời gian chơi tối thiểu",
+      slotDurationChoose: "Chọn thời gian",
+      slotDurationLT3: "Người mới (dưới 3 tháng)",
+      slotDuration3: "Đã chơi 3 tháng+",
+      slotDuration6: "Đã chơi 6 tháng+",
+      slotDuration12: "Đã chơi 1 năm+",
+      slotDuration24: "Đã chơi 2 năm+",
+      slotDuration36: "Đã chơi 3 năm+",
+      slotNotes: "Ghi chú (tuỳ chọn)",
+      slotNotesPlaceholder: "VD: Đem giày sân cứng, đi giờ A",
+      slotRemoveAria: "Xoá nhóm",
+      errorSlotLabelMin: "Tên nhóm cần ít nhất 2 ký tự",
+      errorSlotLabelMax: "Tên nhóm tối đa 80 ký tự",
+      errorSlotCapacityMin: "Số chỗ trong nhóm tối thiểu 1",
+      errorSlotCapacityMax: "Số chỗ trong nhóm tối đa 200",
+      errorSlotSkillRequired: "Vui lòng chọn trình độ cho nhóm",
+      errorSlotDurationRange: "Vui lòng chọn thời gian chơi cho nhóm",
+      errorSlotsExceedMaxPlayers:
+        "Tổng số chỗ trong các nhóm ({total}) đang vượt số người tối đa ({max}). Giảm bớt hoặc tăng số người tối đa.",
+      errorSlotTooMany: "Tối đa 12 nhóm cho 1 event",
+      errorSlotDuplicateId: "Nhóm bị trùng id — vui lòng xoá và tạo lại",
     },
     manage: {
       pageTitle: "Quản lý sự kiện",
@@ -4879,6 +5014,34 @@ export const vi: Translations = {
       archiving: "Đang lưu trữ…",
       archiveSuccessTitle: "Đã lưu trữ CLB",
       archiveSuccessBody: "CLB đã được ẩn khỏi danh sách công khai.",
+    },
+    managers: {
+      heading: "Người quản lý CLB",
+      subheading:
+        "Người tạo CLB có thể thêm tối đa nhiều người quản lý. Người quản lý có toàn quyền tạo / sửa / huỷ sự kiện, sửa thông tin CLB, nhưng KHÔNG thể xoá hay archive CLB.",
+      creatorBadge: "Người tạo",
+      managerBadge: "Quản lý",
+      addCta: "Thêm người quản lý",
+      searchLabel: "Tìm theo email hoặc số điện thoại",
+      searchPlaceholder: "vd: ten@email.com hoặc +84901234567",
+      searchButton: "Tìm",
+      searching: "Đang tìm…",
+      searchEmpty: "Không tìm thấy người dùng có email/SĐT này. Họ cần đăng ký tài khoản ThePickleHub trước.",
+      searchInvalid: "Vui lòng nhập email hoặc số điện thoại (≥4 ký tự).",
+      addConfirm: "Thêm {name} làm người quản lý?",
+      addSuccess: "Đã thêm {name} làm người quản lý.",
+      addError: "Không thể thêm người quản lý — vui lòng thử lại.",
+      removeAria: "Xoá người quản lý",
+      removeConfirm: "Xoá quyền quản lý của {name}?",
+      removeSuccess: "Đã xoá {name} khỏi danh sách quản lý.",
+      removeError: "Không thể xoá — vui lòng thử lại.",
+      addedBy: "Thêm vào {date}",
+      empty: "Chưa có người quản lý nào.",
+      ownerOnly: "Chỉ người tạo CLB có thể thêm/xoá quản lý.",
+      errAlreadyManager: "Người này đã là quản lý CLB.",
+      errAlreadyCreator: "Người này là người tạo CLB rồi — không cần thêm.",
+      errProfileNotFound: "Không tìm thấy hồ sơ này.",
+      errNotAuthorized: "Bạn không có quyền thực hiện hành động này.",
     },
     roster: {
       pageTitle: "Danh sách đăng ký",

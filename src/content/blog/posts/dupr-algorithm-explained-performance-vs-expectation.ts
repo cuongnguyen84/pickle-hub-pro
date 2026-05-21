@@ -16,7 +16,7 @@ const post: BlogPost = {
     en: {
       title: "How the DUPR Algorithm Works: Performance vs Expectation Explained (Part 2 of 3)",
       metaTitle: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3",
-      metaDescription: "DUPR's July 2025 algorithm rewrite explained. Why you can win a match and still lose rating points, or lose a match and gain them. Match weights, exclusion rules, reliability score — Part 2 of 3.",
+      metaDescription: "DUPR's July 2025 algorithm: why winning can lose points and losing can gain them. Match weights, exclusion rules, reliability score. Part 2 of 3.",
       sections: [
         {
           heading: "Part 2 of 3: The Brain Behind DUPR",

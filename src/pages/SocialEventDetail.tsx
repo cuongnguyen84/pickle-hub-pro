@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, Link as LinkIcon } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, LayoutGrid, Link as LinkIcon } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -354,6 +354,13 @@ export default function SocialEventDetail() {
             })}
           </Badge>
           <Badge variant="secondary" className="text-sm">
+            <LayoutGrid className="mr-1 h-3.5 w-3.5" />
+            {data.court_count}{" "}
+            {language === "vi"
+              ? "sân"
+              : `court${data.court_count > 1 ? "s" : ""}`}
+          </Badge>
+          <Badge variant="secondary" className="text-sm">
             <Banknote className="mr-1 h-3.5 w-3.5" />
             {data.price_vnd > 0
               ? interp(t.socialEvents.detail.priceVnd, {
@@ -370,7 +377,16 @@ export default function SocialEventDetail() {
 
         {/* Above-the-fold CTA card */}
         <Card className="p-5 mb-6">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 12,
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
             <div>
               <div style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
                 {countdown?.state === "started"
@@ -381,6 +397,17 @@ export default function SocialEventDetail() {
               </div>
               <div style={{ fontSize: 22, fontWeight: 600 }}>
                 {countdown?.state === "upcoming" ? countdown.text : "—"}
+              </div>
+            </div>
+            {/* 2026-05-20 — surface court_count next to spots-left so
+                players know capacity vs. court ratio at a glance
+                (e.g. 80 players / 10 courts = 8 per court). */}
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
+                {language === "vi" ? "Số sân" : "Courts"}
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 600 }}>
+                {data.court_count}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -679,6 +706,7 @@ export default function SocialEventDetail() {
           requiresPrepayment={data.requires_prepayment}
           prepaymentDeadlineHours={data.prepayment_deadline_hours}
           zaloGroupUrl={data.zalo_group_url}
+          slots={data.slots}
           defaultPhone={(profile as { phone?: string | null } | null)?.phone ?? null}
           defaultDisplayName={profile?.display_name ?? null}
           onSuccess={() => {

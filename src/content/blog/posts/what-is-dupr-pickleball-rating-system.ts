@@ -16,7 +16,7 @@ const post: BlogPost = {
     en: {
       title: "What Is DUPR? The Global Pickleball Rating System Explained (Part 1 of 3)",
       metaTitle: "What Is DUPR? Pickleball Rating System Explained | Part 1 of 3 Series",
-      metaDescription: "DUPR explained: the global pickleball rating system used by PPA Tour, MLP, USA Pickleball, and Pickleball World Cup. How it works, who runs it, and why Vietnamese players need it.",
+      metaDescription: "DUPR explained: the global pickleball rating used by PPA, MLP, USA Pickleball, World Cup. How it works, who runs it, why Vietnamese players need it.",
       sections: [
         {
           heading: "Part 1 of 3: What DUPR Is — and Why You Need to Know",

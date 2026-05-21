@@ -38,11 +38,14 @@ const STATUS_LABEL: Record<string, { cls: "active" | "setup" | "completed" | "re
 const Tournaments = () => {
   const { user } = useAuth();
   const { language } = useI18n();
-  const [tab, setTab] = useState<Tab>("watch");
+  const [userTab, setUserTab] = useState<Tab | null>(null);
 
   // Pro (Watch) data
   const { data: tournaments = [], isLoading: tournamentsLoading } = useTournaments();
   const { data: liveStreams = [] } = useLivestreams("live");
+
+  const hasWatchContent = tournaments.length > 0 || liveStreams.length > 0;
+  const tab: Tab = userTab ?? (hasWatchContent ? "watch" : "community");
 
   // Community data — all 4 formats, active + completed
   const { data: openRegTables = [] } = useOpenRegistrationTables({ limit: 20 });
@@ -122,7 +125,7 @@ const Tournaments = () => {
 
         {/* 2 hero cards — Watch / Play */}
         <div className="tl-hub-cards">
-          <Link to="#" className="tl-hub-card" onClick={(e) => { e.preventDefault(); setTab("watch"); }}>
+          <Link to="#" className="tl-hub-card" onClick={(e) => { e.preventDefault(); setUserTab("watch"); }}>
             <div className="tl-hub-kicker">
               <span className="dot" />
               <span>Watch the pros</span>
@@ -186,14 +189,14 @@ const Tournaments = () => {
           <button
             type="button"
             className={`tl-tab ${tab === "watch" ? "active" : ""}`}
-            onClick={() => setTab("watch")}
+            onClick={() => setUserTab("watch")}
           >
             Watch<span className="count">{tournaments.length}</span>
           </button>
           <button
             type="button"
             className={`tl-tab ${tab === "community" ? "active" : ""}`}
-            onClick={() => setTab("community")}
+            onClick={() => setUserTab("community")}
           >
             Community<span className="count">{communityCount}</span>
           </button>
@@ -354,7 +357,6 @@ const Tournaments = () => {
                 renderMeta={(t: any) => `${t.team_count} teams · ${t.team_roster_size}/team`}
                 linkBase="/tools/team-match"
                 createLink="/tools/team-match/new"
-                useIdLink
               />
 
               {/* Empty state */}
@@ -386,7 +388,6 @@ interface FormatSectionProps {
   renderMeta: (t: any) => string;
   linkBase: string;
   createLink: string;
-  useIdLink?: boolean;
 }
 
 const FormatSection = ({
@@ -399,7 +400,6 @@ const FormatSection = ({
   renderMeta,
   linkBase,
   createLink,
-  useIdLink,
 }: FormatSectionProps) => {
   const display = [...active, ...completed].slice(0, 8);
   if (display.length === 0) return null;
@@ -427,7 +427,7 @@ const FormatSection = ({
       <div className="tl-list">
         {display.map((t) => {
           const status = STATUS_LABEL[t.status] ?? { cls: "active" as const, label: t.status };
-          const href = useIdLink ? `${linkBase}/${t.id}` : `${linkBase}/${t.share_id}`;
+          const href = `${linkBase}/${t.share_id}`;
           return (
             <Link
               key={t.id}

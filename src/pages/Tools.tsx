@@ -103,7 +103,7 @@ const Tools = () => {
         fmtLabel: isVi ? "Đấu đồng đội" : "Team Match",
         meta: `${t.team_count} ${isVi ? "đội" : "teams"} · ${t.team_roster_size}/${isVi ? "đội" : "team"}`,
         creator: t.creator_display_name,
-        href: `/tools/team-match/${t.id}`,
+        href: `/tools/team-match/${t.share_id}`,
         status: t.status,
         created_at: t.created_at,
       });
