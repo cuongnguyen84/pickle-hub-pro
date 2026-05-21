@@ -338,7 +338,16 @@ export default function SocialEventDetail() {
 
         {/* Above-the-fold CTA card */}
         <Card className="p-5 mb-6">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 12,
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
             <div>
               <div style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
                 {countdown?.state === "started"
@@ -349,6 +358,17 @@ export default function SocialEventDetail() {
               </div>
               <div style={{ fontSize: 22, fontWeight: 600 }}>
                 {countdown?.state === "upcoming" ? countdown.text : "—"}
+              </div>
+            </div>
+            {/* 2026-05-20 — surface court_count next to spots-left so
+                players know capacity vs. court ratio at a glance
+                (e.g. 80 players / 10 courts = 8 per court). */}
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
+                {language === "vi" ? "Số sân" : "Courts"}
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 600 }}>
+                {data.court_count}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
