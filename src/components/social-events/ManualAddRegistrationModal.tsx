@@ -44,10 +44,7 @@ import {
   type AddRegistrationDirectResult,
   type ManualPaymentInitialStatus,
 } from "@/lib/social-events/addRegistrationDirect";
-import {
-  RegistrationSuccessShare,
-  type BankInfoForCopy,
-} from "./RegistrationSuccessShare";
+import { RegistrationSuccessShare } from "./RegistrationSuccessShare";
 
 interface Props {
   open: boolean;
@@ -55,8 +52,6 @@ interface Props {
   eventId: string;
   eventTitle: string;
   priceVnd: number;
-  /** Bank info pre-fetched by the parent — surfaced in the success state. */
-  bankInfo?: BankInfoForCopy | null;
   onSuccess?: () => void;
 }
 
@@ -90,7 +85,6 @@ export function ManualAddRegistrationModal({
   eventId,
   eventTitle,
   priceVnd,
-  bankInfo,
   onSuccess,
 }: Props) {
   const { t } = useI18n();
@@ -179,8 +173,12 @@ export function ManualAddRegistrationModal({
           <RegistrationSuccessShare
             result={result}
             showPaymentWarning={showPaymentWarning}
-            bankInfo={bankInfo ?? null}
+            /* Manual flow — organizer settles payment off-platform, so
+               we hide the reference-code + bank-info section entirely.
+               The shareable /dang-ky/<token> link stays. */
+            bankInfo={null}
             priceVnd={priceVnd}
+            showPaymentBlock={false}
             onAddAnother={() => {
               setPhoneInput("");
               setDisplayName("");
@@ -209,7 +207,6 @@ export function ManualAddRegistrationModal({
                   id="manual-phone"
                   type="tel"
                   inputMode="tel"
-                  placeholder={t.socialEvents.register.phonePlaceholder}
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
                   required

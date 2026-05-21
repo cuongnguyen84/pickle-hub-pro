@@ -180,34 +180,6 @@ export default function SocialEventRoster() {
   const [notesRow, setNotesRow] = useState<EventRegistrationRow | null>(null);
   const [notesValue, setNotesValue] = useState("");
   const [manualOpen, setManualOpen] = useState(false);
-  // PR proxy/manual — pre-fetch the event's bank info so the success
-  // card in ManualAddRegistrationModal can render a "copy transfer info"
-  // button without an extra round-trip. Only fetched when the event has
-  // a non-zero price.
-  const { data: bankInfo } = useQuery<{
-    code: string;
-    account_number: string;
-    account_name: string;
-  } | null>({
-    queryKey: ["event-bank-info", event?.id],
-    queryFn: async () => {
-      if (!event?.id || (event.price_vnd ?? 0) <= 0) return null;
-      const { data: cfg, error } = await supabase
-        .from("event_payment_config")
-        .select("bank_code, bank_account_number, bank_account_name, enabled")
-        .eq("event_id", event.id)
-        .maybeSingle();
-      if (error || !cfg || cfg.enabled !== true) return null;
-      return {
-        code: cfg.bank_code as string,
-        account_number: cfg.bank_account_number as string,
-        account_name: cfg.bank_account_name as string,
-      };
-    },
-    enabled: Boolean(event?.id && (event?.price_vnd ?? 0) > 0),
-    staleTime: 60_000,
-  });
-
   const stats = useMemo(() => {
     const list = registrations ?? [];
     // PR52: rename "Đã thanh toán" → "Player đã claim". With PR51 the
@@ -708,7 +680,6 @@ export default function SocialEventRoster() {
           eventId={event.id}
           eventTitle={eventTitle}
           priceVnd={event.price_vnd ?? 0}
-          bankInfo={bankInfo ?? null}
           onSuccess={() => {
             refetch();
             queryClient.invalidateQueries({ queryKey: ["club-events-manage"] });

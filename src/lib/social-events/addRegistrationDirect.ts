@@ -49,6 +49,7 @@ export interface AddRegistrationDirectResult {
   registration_id: string;
   magic_token: string;
   reference_code: string | null;
+  payment_order_id: string | null;
   recovery_url: string;
   guest_name: string;
   guest_phone: string;

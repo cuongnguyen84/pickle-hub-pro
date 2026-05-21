@@ -469,6 +469,7 @@ Deno.serve(async (req) => {
 
   // ─── Payment order (paid event) ───────────────────────────────────────────
   let referenceCode: string | null = null;
+  let paymentOrderId: string | null = null;
   if (priceVnd > 0) {
     // Idempotent — re-uses existing order on revive.
     const { data: existingOrder } = await supabase
@@ -478,6 +479,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (existingOrder) {
       referenceCode = existingOrder.reference_code as string;
+      paymentOrderId = existingOrder.id as string;
       if (mode === "manual" && initialPayment === "claimed_paid") {
         await supabase
           .from("payment_orders")
@@ -503,6 +505,7 @@ Deno.serve(async (req) => {
           .single();
         if (!orderErr && inserted) {
           referenceCode = inserted.reference_code as string;
+          paymentOrderId = inserted.id as string;
           break;
         }
         const m = (orderErr?.message ?? "").toLowerCase();
@@ -511,11 +514,12 @@ Deno.serve(async (req) => {
           // race — re-read
           const { data: raced } = await supabase
             .from("payment_orders")
-            .select("reference_code")
+            .select("id, reference_code")
             .eq("registration_id", registrationId)
             .maybeSingle();
           if (raced) {
             referenceCode = raced.reference_code as string;
+            paymentOrderId = raced.id as string;
           }
           break;
         }
@@ -547,6 +551,7 @@ Deno.serve(async (req) => {
     registration_id: registrationId,
     magic_token: magicToken,
     reference_code: referenceCode,
+    payment_order_id: paymentOrderId,
     recovery_url: recoveryUrl,
     guest_name: guestName,
     guest_phone: guestPhone,

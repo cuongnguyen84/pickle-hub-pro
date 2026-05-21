@@ -42,6 +42,7 @@ import {
   RegistrationSuccessShare,
   type BankInfoForCopy,
 } from "./RegistrationSuccessShare";
+import { QRPaymentStep, type PaymentOrder } from "@/components/payment/QRPaymentStep";
 
 interface Props {
   open: boolean;
@@ -102,6 +103,10 @@ export function ProxyRegistrationModal({
   const [selfLevel, setSelfLevel] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<AddRegistrationDirectResult | null>(null);
+  // PaymentOrder snapshot for the success state's QRPaymentStep. Holds
+  // the player_claimed_paid flag so when the friend (B) marks paid right
+  // here, A sees the green confirmation instead of the unpaid CTAs.
+  const [paymentOrder, setPaymentOrder] = useState<PaymentOrder | null>(null);
 
   // Reset form on close.
   useEffect(() => {
@@ -111,6 +116,7 @@ export function ProxyRegistrationModal({
       setSelfLevel("");
       setSubmitting(false);
       setResult(null);
+      setPaymentOrder(null);
     }
   }, [open]);
 
@@ -141,6 +147,23 @@ export function ProxyRegistrationModal({
         proxyMagicToken,
       });
       setResult(data);
+      // Build a PaymentOrder snapshot so the success state can mount a
+      // QRPaymentStep. Skip when the event is free OR when we don't
+      // have bank info (free-text fallback already in the share card).
+      if (priceVnd > 0 && bankInfo && data.reference_code && data.payment_order_id) {
+        setPaymentOrder({
+          order_id: data.payment_order_id,
+          reference_code: data.reference_code,
+          amount_vnd: priceVnd,
+          player_claimed_paid: data.player_claimed_paid,
+          player_claimed_at: null,
+          bank: {
+            code: bankInfo.code,
+            account_number: bankInfo.account_number,
+            account_name: bankInfo.account_name,
+          },
+        });
+      }
       onSuccess?.();
     } catch (e) {
       const code = e instanceof Error ? e.message : "network_error";
@@ -163,14 +186,30 @@ export function ProxyRegistrationModal({
         {result ? (
           <RegistrationSuccessShare
             result={result}
-            showPaymentWarning
+            /* Warning chỉ show khi player còn phải trả (claimed=false). */
+            showPaymentWarning={!paymentOrder?.player_claimed_paid}
             bankInfo={bankInfo ?? null}
             priceVnd={priceVnd}
+            paymentSlot={
+              paymentOrder && result.magic_token ? (
+                <QRPaymentStep
+                  order={paymentOrder}
+                  magicToken={result.magic_token}
+                  onClaimed={(next) => setPaymentOrder(next)}
+                  /* "Sẽ thanh toán tại sân" — đóng modal; A vẫn đã
+                     thấy link share ở trên rồi. */
+                  onSkip={() => onOpenChange(false)}
+                  zaloGroupUrl={null}
+                  onClose={() => onOpenChange(false)}
+                />
+              ) : undefined
+            }
             onAddAnother={() => {
               setPhoneInput("");
               setDisplayName("");
               setSelfLevel("");
               setResult(null);
+              setPaymentOrder(null);
             }}
             onClose={() => onOpenChange(false)}
           />

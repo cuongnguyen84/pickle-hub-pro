@@ -15,6 +15,7 @@
 // All copy comes through i18n.
 // ============================================================================
 
+import type { ReactNode } from "react";
 import { Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
@@ -41,6 +42,14 @@ interface Props {
   bankInfo?: BankInfoForCopy | null;
   /** Price in VND — only used to build the copy-bank-info text. */
   priceVnd: number;
+  /** When false, hide the reference code + bank info block entirely.
+   *  Manual flow uses this — the organizer handles payment off-platform
+   *  so they don't need the player's reference code in this card. */
+  showPaymentBlock?: boolean;
+  /** Optional QR/claim element to render instead of the bank-info card.
+   *  Proxy flow passes a QRPaymentStep so the friend (B) can mark paid
+   *  right from A's success state. */
+  paymentSlot?: ReactNode;
   /** Reset the form to add another player. */
   onAddAnother: () => void;
   /** Close the modal. */
@@ -52,6 +61,8 @@ export function RegistrationSuccessShare({
   showPaymentWarning,
   bankInfo,
   priceVnd,
+  showPaymentBlock = true,
+  paymentSlot,
   onAddAnother,
   onClose,
 }: Props) {
@@ -169,8 +180,13 @@ export function RegistrationSuccessShare({
         </div>
       </div>
 
-      {/* 4. Payment block (paid event) */}
-      {referenceCode && priceVnd > 0 && (
+      {/* 4. Payment block (paid event)
+          - paymentSlot wins when provided (proxy flow passes a full
+            QRPaymentStep so the friend can mark paid right here).
+          - Otherwise default reference-code + bank-info card. Hidden
+            entirely when showPaymentBlock is false (manual flow). */}
+      {showPaymentBlock && priceVnd > 0 && paymentSlot}
+      {showPaymentBlock && referenceCode && priceVnd > 0 && !paymentSlot && (
         <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
             {t.socialEvents.payment.referenceCodeLabel}
