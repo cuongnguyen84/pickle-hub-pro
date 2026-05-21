@@ -190,7 +190,7 @@ export const en: Translations = {
     tournaments: "Tournaments",
     tools: "Tools",
     feed: "Feed",
-    social: "Play",
+    social: "Social",
     search: "Search",
     profile: "Profile",
     viewProfile: "View my profile",

@@ -2859,7 +2859,7 @@ export const vi: Translations = {
     tournaments: "Giải đấu",
     tools: "Công cụ",
     feed: "Bảng tin",
-    social: "Đi đánh",
+    social: "Social",
     search: "Tìm kiếm",
     profile: "Tài khoản",
     viewProfile: "Xem hồ sơ",
