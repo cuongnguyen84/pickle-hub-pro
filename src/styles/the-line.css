@@ -2550,6 +2550,55 @@
   [data-theme="the-line"] .tl-nav-search { display: none; }
 }
 
+/* 2026-05-20 — Mobile-only login + signup pills.
+   Hidden on desktop (>900px) since the avatar/login button in tl-nav-right
+   already covers desktop auth. On mobile they bridge the visual gap
+   between the brand and the dark-toggle so anonymous visitors don't have
+   to open the hamburger to find auth. */
+[data-theme="the-line"] .tl-auth-mobile {
+  display: none;
+}
+@media (max-width: 900px) {
+  [data-theme="the-line"] .tl-auth-mobile {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+  }
+}
+[data-theme="the-line"] .tl-auth-pill {
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--tl-border);
+  background: transparent;
+  color: var(--tl-fg-2);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+[data-theme="the-line"] .tl-auth-pill:hover {
+  border-color: var(--tl-border-2);
+  color: var(--tl-fg);
+}
+[data-theme="the-line"] .tl-auth-pill-primary {
+  background: var(--tl-green);
+  color: var(--tl-bg);
+  border-color: transparent;
+}
+[data-theme="the-line"] .tl-auth-pill-primary:hover {
+  background: var(--tl-green-dim);
+  color: var(--tl-bg);
+}
+@media (max-width: 360px) {
+  [data-theme="the-line"] .tl-auth-pill { padding: 6px 10px; font-size: 12px; }
+}
+
 /* PR63 — back affordance lives at the leftmost edge of the nav.
    margin-right pushes the brand mark a little so they don't crowd. */
 [data-theme="the-line"] .tl-back-btn {

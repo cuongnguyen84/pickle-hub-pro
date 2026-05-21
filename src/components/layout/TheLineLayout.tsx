@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DynamicMeta } from "@/components/seo/DynamicMeta";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/hooks/useAuth";
+import { getLoginUrl } from "@/lib/auth-config";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useCreatorAuth } from "@/hooks/useCreatorAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -400,6 +401,32 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
             The <em>Pickle</em>Hub
           </span>
         </Link>
+
+        {/* 2026-05-20 — mobile-only login + signup pills for anonymous
+            visitors. Sits between brand and dark-toggle so the auth CTA
+            is visible without opening the hamburger drawer. CSS class
+            `.tl-auth-mobile` (in the-line.css) hides this group on
+            screens > 900px and on logged-in viewers. The signup link
+            passes `mode: signup` so /login lands on the create-account
+            tab directly. */}
+        {!user && (
+          <div className="tl-auth-mobile">
+            <Link
+              to={getLoginUrl(location.pathname + location.search)}
+              className="tl-auth-pill"
+              aria-label={language === "vi" ? "Đăng nhập" : "Log in"}
+            >
+              {language === "vi" ? "Đăng nhập" : "Log in"}
+            </Link>
+            <Link
+              to={getLoginUrl(location.pathname + location.search, { mode: "signup" })}
+              className="tl-auth-pill tl-auth-pill-primary"
+              aria-label={language === "vi" ? "Đăng ký" : "Sign up"}
+            >
+              {language === "vi" ? "Đăng ký" : "Sign up"}
+            </Link>
+          </div>
+        )}
 
         <div className="tl-nav-links">
           {NAV_ITEMS.map((item) => {
