@@ -12,13 +12,25 @@
 //   - Every player in the match must have BASIC_L1 entitlement on
 //     `tournaments` (verified via dupr_user_has_entitlement helper).
 //   - If matchSource=CLUB, clubId required + caller must be
-//     DIRECTOR/ORGANIZER of that club (PR5 will tighten this with the
-//     dupr_user_clubs cache; for now we trust the caller-provided clubId
-//     when role check is satisfied).
+//     DIRECTOR/ORGANIZER of that club via dupr_user_clubs cache.
 //
 // Per-match identifier convention: `tph:<source>:<internal_id>`. Stored
 // in dupr_match_submissions so we can map back to matchCode for
 // lifecycle ops.
+//
+// PR4 wiring (2026-05-20):
+//   - When internal_source === 'match' and internal_match_id is a row id
+//     in `matches`, we additionally mirror sync state onto the matches row
+//     itself (dupr_match_id, dupr_submitted_at, dupr_sync_status, etc.).
+//     The MatchDuprStatus component reads these columns to render a badge
+//     without joining dupr_match_submissions.
+//
+// PR5 club integration (2026-05-20):
+//   - For internal_source === 'match', we read the submitter's
+//     organization_id → organizations.dupr_club_id and use that as the
+//     CLUB source if no client-supplied club_id is present. This is the
+//     UAT-demo path; a future change will route through
+//     parent_tournaments.organization_id when that column exists.
 //
 // verify_jwt = false in config.toml; bearer verified internally.
 // ============================================================================
@@ -173,13 +185,67 @@ Deno.serve(async (req) => {
     case "create":
       return await handleCreate(supabase, user.id, env, body as CreatePayload, identifier);
     case "update":
-      return await handleUpdate(supabase, env, body as UpdatePayload, identifier);
+      return await handleUpdate(supabase, user.id, env, body as UpdatePayload, identifier);
     case "delete":
       return await handleDelete(supabase, env, body as DeletePayload, identifier);
     default:
       return err("unknown_action", 400, "unknown_action");
   }
 });
+
+// ─── matches-row mirror helpers (PR4 wiring) ─────────────────────────────
+async function mirrorMatchesRowOnSubmit(
+  supabase: ReturnType<typeof createClient>,
+  internal_source: string,
+  internal_match_id: string,
+  patch: {
+    dupr_match_id?: string | null;
+    dupr_hashed_match_code?: string | null;
+    dupr_submitted_at?: string | null;
+    dupr_sync_status: "pending" | "submitted" | "failed" | "superseded";
+    dupr_sync_error?: string | null;
+    dupr_sync_attempted_at: string;
+  },
+) {
+  if (internal_source !== "match") return;
+  const { error } = await supabase
+    .from("matches")
+    .update(patch)
+    .eq("id", internal_match_id);
+  if (error) {
+    console.warn(
+      "matches mirror update failed (non-fatal):",
+      internal_match_id,
+      error.message,
+    );
+  }
+}
+
+// Look up the org-linked DUPR club for a match's submitter, if any. Used so
+// matches submitted by users belonging to a DUPR-linked org carry
+// matchSource=CLUB automatically without the client passing club_id.
+async function resolveOrgClubForMatch(
+  supabase: ReturnType<typeof createClient>,
+  submitterId: string,
+): Promise<{ club_id: number; club_name: string | null } | null> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", submitterId)
+    .maybeSingle<{ organization_id: string | null }>();
+  if (!profile?.organization_id) return null;
+
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("dupr_club_id, dupr_club_name")
+    .eq("id", profile.organization_id)
+    .maybeSingle<{ dupr_club_id: string | null; dupr_club_name: string | null }>();
+  if (!org?.dupr_club_id) return null;
+
+  const clubIdNum = Number(org.dupr_club_id);
+  if (!Number.isFinite(clubIdNum)) return null;
+  return { club_id: clubIdNum, club_name: org.dupr_club_name };
+}
 
 async function ensureAllPlayersBasic(
   supabase: ReturnType<typeof createClient>,
@@ -248,19 +314,57 @@ async function handleCreate(
     });
   }
 
-  // Club role gate (PR5) — matchSource=CLUB requires DIRECTOR or ORGANIZER.
-  if (p.club_id) {
-    const { data: canSubmit, error: clubErr } = await supabase.rpc(
-      "dupr_user_can_submit_club_matches_for",
-      { p_user_id: submitterId, p_club_id: p.club_id },
-    );
-    if (clubErr || !canSubmit) {
-      return err("club_role_required", 403, "club_role_required", {
-        club_id: p.club_id,
-        hint: "Submitter must be DIRECTOR or ORGANIZER. Refresh DUPR club cache via dupr-clubs?force=1.",
-      });
+  // ─── Resolve club_id: PR5 says inherit from submitter's organization
+  // when no explicit club_id is passed and internal_source === 'match'.
+  // Explicit client-supplied club_id wins for backward compatibility with
+  // the existing flex/doubles flows.
+  let clubId: number | null = p.club_id ?? null;
+  let clubSource: "client" | "org_inherit" | null = clubId ? "client" : null;
+  if (!clubId && p.internal_source === "match") {
+    const inherited = await resolveOrgClubForMatch(supabase, submitterId);
+    if (inherited) {
+      clubId = inherited.club_id;
+      clubSource = "org_inherit";
     }
   }
+
+  // Club role gate (PR5) — matchSource=CLUB requires DIRECTOR or ORGANIZER.
+  if (clubId) {
+    const { data: canSubmit, error: clubErr } = await supabase.rpc(
+      "dupr_user_can_submit_club_matches_for",
+      { p_user_id: submitterId, p_club_id: clubId },
+    );
+    if (clubErr || !canSubmit) {
+      if (clubSource === "org_inherit") {
+        // Caller didn't ask for CLUB; fall back to PARTNER source silently
+        // so submission still succeeds.
+        console.warn(
+          "dropping inherited club_id (caller not DIRECTOR/ORGANIZER):",
+          clubId,
+        );
+        clubId = null;
+      } else {
+        return err("club_role_required", 403, "club_role_required", {
+          club_id: clubId,
+          hint: "Submitter must be DIRECTOR or ORGANIZER. Refresh DUPR club cache via dupr-clubs?force=1.",
+        });
+      }
+    }
+  }
+
+  // Mark the matches row as 'pending' before we call DUPR so the UI can
+  // show progress and so a network-loss retry can resume.
+  const attemptedAt = new Date().toISOString();
+  await mirrorMatchesRowOnSubmit(
+    supabase,
+    p.internal_source,
+    p.internal_match_id,
+    {
+      dupr_sync_status: "pending",
+      dupr_sync_attempted_at: attemptedAt,
+      dupr_sync_error: null,
+    },
+  );
 
   const partnerBody: Record<string, unknown> = {
     identifier,
@@ -272,9 +376,9 @@ async function handleCreate(
     event: p.event ?? "ThePickleHub event",
     bracket: p.bracket ?? "",
     matchType: p.match_type ?? "SIDEOUT",
-    matchSource: p.club_id ? "CLUB" : "PARTNER",
+    matchSource: clubId ? "CLUB" : "PARTNER",
   };
-  if (p.club_id) partnerBody.clubId = p.club_id;
+  if (clubId) partnerBody.clubId = clubId;
 
   let duprBody: DuprCreateResponse;
   try {
@@ -284,6 +388,17 @@ async function handleCreate(
     });
     duprBody = (await res.json().catch(() => null)) as DuprCreateResponse;
     if (!res.ok || duprBody?.status !== "SUCCESS" || !duprBody?.result?.matchCode) {
+      const errMsg = `dupr_http_${res.status}:${JSON.stringify(duprBody)}`.slice(0, 500);
+      await mirrorMatchesRowOnSubmit(
+        supabase,
+        p.internal_source,
+        p.internal_match_id,
+        {
+          dupr_sync_status: "failed",
+          dupr_sync_attempted_at: new Date().toISOString(),
+          dupr_sync_error: errMsg,
+        },
+      );
       return err("dupr_create_failed", 502, "dupr_create_failed", {
         status: res.status,
         body: duprBody,
@@ -292,12 +407,23 @@ async function handleCreate(
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("dupr match create failed:", msg);
+    await mirrorMatchesRowOnSubmit(
+      supabase,
+      p.internal_source,
+      p.internal_match_id,
+      {
+        dupr_sync_status: "failed",
+        dupr_sync_attempted_at: new Date().toISOString(),
+        dupr_sync_error: msg.slice(0, 500),
+      },
+    );
     return err("dupr_create_failed", 502, "dupr_create_failed");
   }
 
   const matchCode = duprBody.result!.matchCode!;
   const hashedMatchCode = duprBody.result!.hashedMatchCode ?? null;
 
+  const submittedAt = new Date().toISOString();
   const { error: insertError } = await supabase
     .from("dupr_match_submissions")
     .insert({
@@ -308,12 +434,29 @@ async function handleCreate(
       match_code: matchCode,
       hashed_match_code: hashedMatchCode,
       submitted_by: submitterId,
-      club_id: p.club_id ?? null,
+      club_id: clubId,
       match_format: p.format,
       match_date: p.match_date,
       raw_request: partnerBody,
       raw_response: duprBody as unknown as Record<string, unknown>,
     });
+
+  // Mirror onto matches row regardless of audit-insert result so the UI
+  // still shows the correct status. The dupr_match_submissions row is for
+  // the audit trail; matches row is for the UI.
+  await mirrorMatchesRowOnSubmit(
+    supabase,
+    p.internal_source,
+    p.internal_match_id,
+    {
+      dupr_match_id: matchCode,
+      dupr_hashed_match_code: hashedMatchCode,
+      dupr_submitted_at: submittedAt,
+      dupr_sync_status: "submitted",
+      dupr_sync_attempted_at: submittedAt,
+      dupr_sync_error: null,
+    },
+  );
 
   if (insertError) {
     console.error("dupr_match_submissions insert failed:", insertError);
@@ -323,6 +466,8 @@ async function handleCreate(
       match_code: matchCode,
       hashed_match_code: hashedMatchCode,
       identifier,
+      club_id: clubId,
+      match_source: clubId ? "CLUB" : "PARTNER",
       persist_warning: insertError.message,
     });
   }
@@ -332,11 +477,14 @@ async function handleCreate(
     match_code: matchCode,
     hashed_match_code: hashedMatchCode,
     identifier,
+    club_id: clubId,
+    match_source: clubId ? "CLUB" : "PARTNER",
   });
 }
 
 async function handleUpdate(
   supabase: ReturnType<typeof createClient>,
+  _submitterId: string,
   env: ReturnType<typeof getDuprEnv>,
   p: UpdatePayload,
   identifier: string,
@@ -456,15 +604,39 @@ async function handleDelete(
         body,
       });
     }
+    const now = new Date().toISOString();
     const { error: persistErr } = await supabase
       .from("dupr_match_submissions")
       .update({
-        deleted_at: new Date().toISOString(),
+        deleted_at: now,
         raw_response: body,
       })
       .eq("environment", env)
       .eq("internal_source", p.internal_source)
       .eq("internal_match_id", p.internal_match_id);
+    // Mirror onto matches row — clear match_id and mark superseded so
+    // the UI shows it can be re-submitted.
+    await mirrorMatchesRowOnSubmit(
+      supabase,
+      p.internal_source,
+      p.internal_match_id,
+      {
+        dupr_match_id: null,
+        dupr_hashed_match_code: null,
+        dupr_submitted_at: null,
+        dupr_sync_status: "superseded",
+        dupr_sync_attempted_at: now,
+        dupr_sync_error: null,
+      },
+    );
+    // Also flip submitted_to_dupr=false on matches row so the toggle in
+    // MatchConfirmation reflects the new state if user reopens the wizard.
+    if (p.internal_source === "match") {
+      await supabase
+        .from("matches")
+        .update({ submitted_to_dupr: false })
+        .eq("id", p.internal_match_id);
+    }
     if (persistErr) {
       // DUPR delete succeeded but our row still looks live — surface to
       // caller so they don't retry-DELETE and create state drift.

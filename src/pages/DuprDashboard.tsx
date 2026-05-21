@@ -1,19 +1,26 @@
 // ============================================================================
-// /dupr — DUPR RaaS integration dashboard
+// /dupr — DUPR RaaS integration dashboard (5-video demo target)
 // ----------------------------------------------------------------------------
-// One-stop page showing every backend touchpoint of the DUPR partnership:
-//   - Connection (SSO link / disconnect, profile + rating)
-//   - Entitlements (BASIC/PREMIUM/VERIFIED + refresh)
-//   - Clubs (memberships + role + refresh)
-//   - Match submit form (create / update / delete, lifecycle in table below)
-//   - Recently submitted matches
+// One-stop page showing every backend touchpoint of the DUPR partnership.
+// Sections map 1:1 to the 5 DUPR integration requirements so each can be
+// screen-recorded as a self-contained walkthrough:
+//
+//   1.   SSO Connection  ......................... PR1 (link, profile, rating)
+//   2.   Entitlements  ........................... PR2 (BASIC_L1 gating cache)
+//   3.   Webhook (RATING)  ....................... PR3 (subscription state,
+//                                                       live rating, last 5
+//                                                       events, fire-test btn)
+//   4a.  Submit match form  ...................... PR4 (create/update/delete)
+//   4b.  Submitted matches table  ................ PR4 (lifecycle visibility)
+//   5a.  Your DUPR clubs  ........................ PR5 (membership cache)
+//   5b.  Link DUPR Club ↔ Organization  .......... PR5 (org-side binding)
 //
 // Used by DUPR reviewers + ourselves during integration. Once flows are
 // wired into the real product pages, this becomes /admin-only.
 // ============================================================================
 
 import { useMemo, useState } from "react";
-import { Loader2, RefreshCw, ExternalLink, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, RefreshCw, ExternalLink, AlertCircle, CheckCircle2, Zap } from "lucide-react";
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
@@ -25,6 +32,7 @@ import { useDuprConnection } from "@/hooks/useDuprConnection";
 import { useDuprEntitlements } from "@/hooks/useDuprEntitlements";
 import { useDuprClubs } from "@/hooks/useDuprClubs";
 import { DuprConnectButton } from "@/components/dupr/DuprConnectButton";
+import { OrganizationDuprClubCard } from "@/components/organization/OrganizationDuprClubCard";
 
 // ─── small UI primitives — keep page self-contained ──────────────────────────
 
@@ -247,6 +255,276 @@ function EntitlementsSection() {
   );
 }
 
+// ─── PR3 — Webhook section ─────────────────────────────────────────────────
+//
+// Three things in one card so the reviewer sees the full picture:
+//   1. Subscription state (webhook_subscribed_at on dupr_user_tokens)
+//   2. Live rating snapshot from profiles (singles + doubles, dupr_synced_at)
+//   3. Last 5 rating events from dupr_webhook_events for the calling user
+//   4. "Fire test event" button — calls dupr-webhook-test-fire with the
+//      user's own JWT (the edge fn accepts user-JWT and forces the target
+//      to self). Lets the demo flow without curl.
+
+interface WebhookEventRow {
+  id: number;
+  received_at: string;
+  topic: string;
+  processed_at: string | null;
+  processing_error: string | null;
+  payload: Record<string, unknown>;
+}
+
+interface SubStateRow {
+  webhook_subscribed_at: string | null;
+  dupr_id: string | null;
+}
+
+interface ProfileRatingRow {
+  dupr_singles: number | null;
+  dupr_doubles: number | null;
+  dupr_synced_at: string | null;
+}
+
+function WebhookSection() {
+  const { user } = useAuth();
+  const { language } = useI18n();
+  const { toast } = useToast();
+  const vi = language === "vi";
+  const qc = useQueryClient();
+  const [firing, setFiring] = useState(false);
+  const [singles, setSingles] = useState(4.27);
+  const [doubles, setDoubles] = useState(4.41);
+  const [lastFire, setLastFire] = useState<unknown>(null);
+
+  const subQ = useQuery({
+    queryKey: ["dupr-webhook-sub", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("dupr_user_tokens")
+        .select("webhook_subscribed_at, dupr_id")
+        .eq("user_id", user!.id)
+        .is("revoked_at", null)
+        .maybeSingle<SubStateRow>();
+      return data ?? null;
+    },
+  });
+
+  const profileQ = useQuery({
+    queryKey: ["dupr-webhook-profile", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("dupr_singles, dupr_doubles, dupr_synced_at")
+        .eq("id", user!.id)
+        .maybeSingle<ProfileRatingRow>();
+      return data ?? null;
+    },
+  });
+
+  const eventsQ = useQuery({
+    queryKey: ["dupr-webhook-events", subQ.data?.dupr_id],
+    enabled: !!subQ.data?.dupr_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("dupr_webhook_events")
+        .select("id, received_at, topic, processed_at, processing_error, payload")
+        .eq("dupr_id", subQ.data!.dupr_id!)
+        .order("received_at", { ascending: false })
+        .limit(5);
+      return (data ?? []) as WebhookEventRow[];
+    },
+  });
+
+  const fire = async () => {
+    setFiring(true);
+    setLastFire(null);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "dupr-webhook-test-fire",
+        { body: { singles, doubles } },
+      );
+      if (error) throw error;
+      setLastFire(data);
+      toast({
+        title: vi ? "Đã bắn webhook" : "Webhook fired",
+        description: vi
+          ? "Receiver đã xử lý — refresh để xem rating cập nhật."
+          : "Receiver handled it — refresh to see the rating update.",
+      });
+      // Invalidate so the live rating + events list both refetch.
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["dupr-webhook-events"] }),
+        qc.invalidateQueries({ queryKey: ["dupr-webhook-profile"] }),
+        qc.invalidateQueries({ queryKey: ["dupr-connection"] }),
+      ]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setLastFire({ error: msg });
+      toast({ variant: "destructive", title: "Fire failed", description: msg });
+    } finally {
+      setFiring(false);
+    }
+  };
+
+  const subscribed = !!subQ.data?.webhook_subscribed_at;
+
+  return (
+    <Section
+      title="3. Webhook (RATING events)"
+      subtitle={
+        vi
+          ? "DUPR gọi POST /functions/v1/dupr-webhook khi rating thay đổi. SSO callback đăng ký subscription tự động; disconnect huỷ subscription."
+          : "DUPR calls POST /functions/v1/dupr-webhook on rating changes. SSO callback auto-subscribes; disconnect unsubscribes."
+      }
+      action={
+        <button
+          type="button"
+          className="tl-btn"
+          onClick={() => {
+            subQ.refetch();
+            profileQ.refetch();
+            eventsQ.refetch();
+          }}
+          disabled={subQ.isLoading || profileQ.isLoading || eventsQ.isLoading}
+        >
+          <RefreshCw
+            className={`h-3 w-3 ${subQ.isLoading || profileQ.isLoading || eventsQ.isLoading ? "animate-spin" : ""}`}
+          />
+        </button>
+      }
+    >
+      <div className="mb-3 flex flex-wrap gap-2">
+        <Pill ok={subscribed} label={subscribed ? "Subscribed (RATING)" : "Not subscribed"} />
+      </div>
+
+      <KV
+        k="Subscribed at"
+        v={
+          subQ.data?.webhook_subscribed_at
+            ? new Date(subQ.data.webhook_subscribed_at).toLocaleString()
+            : "—"
+        }
+      />
+      <KV k="Live singles" v={profileQ.data?.dupr_singles ?? "—"} />
+      <KV k="Live doubles" v={profileQ.data?.dupr_doubles ?? "—"} />
+      <KV
+        k="Synced at"
+        v={
+          profileQ.data?.dupr_synced_at
+            ? new Date(profileQ.data.dupr_synced_at).toLocaleString()
+            : "—"
+        }
+      />
+
+      {/* ─── Fire test event ────────────────────────────────────────────── */}
+      <div
+        className="mt-4 rounded border p-3"
+        style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)" }}
+      >
+        <div className="mb-2 text-sm font-medium" style={{ color: "var(--tl-fg)" }}>
+          {vi ? "Bắn webhook giả lập (chỉ ảnh hưởng tài khoản của bạn)" : "Fire a synthetic webhook (your account only)"}
+        </div>
+        <p className="mb-3 text-xs" style={{ color: "var(--tl-fg-3)" }}>
+          {vi
+            ? "Bắn một event RATING vào receiver của chính chúng ta để demo flow. Profile + history sẽ update ngay."
+            : "Fires a RATING event into our own receiver to demo the flow. Profile + history update inline."}
+        </p>
+        <div className="mb-2 flex flex-wrap gap-2">
+          <label className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
+            Singles
+            <input
+              type="number"
+              step={0.01}
+              value={singles}
+              onChange={(e) => setSingles(Number(e.target.value))}
+              className="ml-2 rounded border px-2 py-1 text-sm"
+              style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)", width: 80 }}
+            />
+          </label>
+          <label className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
+            Doubles
+            <input
+              type="number"
+              step={0.01}
+              value={doubles}
+              onChange={(e) => setDoubles(Number(e.target.value))}
+              className="ml-2 rounded border px-2 py-1 text-sm"
+              style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)", width: 80 }}
+            />
+          </label>
+        </div>
+        <button
+          type="button"
+          className="tl-btn primary"
+          onClick={fire}
+          disabled={firing || !subscribed}
+          title={subscribed ? undefined : (vi ? "Cần subscription trước" : "Subscribe first")}
+        >
+          {firing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+          {vi ? "Bắn webhook test" : "Fire test webhook"}
+        </button>
+
+        {lastFire != null && (
+          <div
+            className="mt-3 rounded border p-2 text-xs"
+            style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-2)" }}
+          >
+            <pre style={{ color: "var(--tl-fg)", whiteSpace: "pre-wrap" }}>
+              {JSON.stringify(lastFire, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Last 5 events ──────────────────────────────────────────────── */}
+      <div className="mt-4">
+        <div className="mb-2 text-sm font-medium" style={{ color: "var(--tl-fg)" }}>
+          {vi ? "5 event gần nhất" : "Last 5 events"}
+        </div>
+        {eventsQ.isLoading ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (eventsQ.data ?? []).length === 0 ? (
+          <p className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
+            {vi ? "Chưa có event nào." : "No events yet."}
+          </p>
+        ) : (
+          <table className="w-full text-xs">
+            <thead>
+              <tr style={{ color: "var(--tl-fg-3)" }}>
+                <th className="text-left font-normal pb-2">Received</th>
+                <th className="text-left font-normal pb-2">Topic</th>
+                <th className="text-left font-normal pb-2">Status</th>
+                <th className="text-left font-normal pb-2">Singles/Doubles</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(eventsQ.data ?? []).map((e) => {
+                const rating =
+                  (e.payload as { message?: { rating?: { singles?: unknown; doubles?: unknown } } })
+                    ?.message?.rating;
+                return (
+                  <tr key={e.id} style={{ borderTop: "1px solid var(--tl-border)" }}>
+                    <td className="py-2">{new Date(e.received_at).toLocaleString()}</td>
+                    <td className="py-2 font-mono">{e.topic}</td>
+                    <td className="py-2">
+                      <Pill ok={!e.processing_error && !!e.processed_at} label={e.processing_error ?? (e.processed_at ? "OK" : "Pending")} />
+                    </td>
+                    <td className="py-2 font-mono" style={{ color: "var(--tl-fg-3)" }}>
+                      {rating ? `${rating.singles ?? "—"} / ${rating.doubles ?? "—"}` : "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </Section>
+  );
+}
+
 function ClubsSection() {
   const { language } = useI18n();
   const vi = language === "vi";
@@ -263,10 +541,10 @@ function ClubsSection() {
 
   return (
     <Section
-      title="3. Clubs"
+      title="5a. Your DUPR clubs"
       subtitle={vi
-        ? "DIRECTOR/ORGANIZER được submit match thay mặt club."
-        : "DIRECTOR/ORGANIZER may submit matches on behalf of the club."}
+        ? "DIRECTOR/ORGANIZER được submit match thay mặt club. Đây là danh sách CLB DUPR của BẠN — bước tiếp theo (5b) là liên kết một CLB vào ThePickleHub Organization."
+        : "DIRECTOR/ORGANIZER may submit matches on behalf of the club. This is YOUR DUPR clubs list — the next step (5b) is to bind one of these clubs to your ThePickleHub Organization."}
       action={
         <button
           type="button"
@@ -371,6 +649,127 @@ function ClubsSection() {
   );
 }
 
+// ─── PR5 — Link DUPR Club to a ThePickleHub organization ────────────────────
+//
+// Lets the operator pick one of the user's owned/admined organizations and
+// link a DUPR club to it. Matches submitted afterwards by users of that org
+// will carry matchSource=CLUB automatically (see dupr-match-submit
+// resolveOrgClubForMatch).
+
+interface OrgRow {
+  id: string;
+  name: string;
+  slug: string;
+  dupr_club_id: string | null;
+}
+
+function OrgLinkSection() {
+  const { user } = useAuth();
+  const { language } = useI18n();
+  const vi = language === "vi";
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+
+  // List organizations the caller can admin. For UAT demo: any org the
+  // caller belongs to via profiles.organization_id OR (if admin role) all
+  // orgs. Mirrors user_can_admin_organization() server-side gate.
+  const orgsQ = useQuery({
+    queryKey: ["org-link-admin-orgs", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      // Get caller's own profile + role first.
+      const [{ data: profile }, { data: roles }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("organization_id")
+          .eq("id", user!.id)
+          .maybeSingle<{ organization_id: string | null }>(),
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user!.id),
+      ]);
+      const isAdmin = (roles ?? []).some(
+        (r: { role: string }) => r.role === "admin",
+      );
+
+      let query = supabase
+        .from("organizations")
+        .select("id, name, slug, dupr_club_id")
+        .order("name", { ascending: true });
+
+      // Admins see all; non-admins see only their own org.
+      if (!isAdmin && profile?.organization_id) {
+        query = query.eq("id", profile.organization_id);
+      } else if (!isAdmin) {
+        // Not admin + no organization_id → empty list.
+        return [] as OrgRow[];
+      }
+
+      const { data, error } = await query.limit(50);
+      if (error) throw error;
+      return (data ?? []) as OrgRow[];
+    },
+  });
+
+  // Auto-select first eligible org so the card shows up without an extra click.
+  useMemo(() => {
+    if (!selectedOrgId && orgsQ.data && orgsQ.data.length > 0) {
+      setSelectedOrgId(orgsQ.data[0].id);
+    }
+    return null;
+  }, [orgsQ.data, selectedOrgId]);
+
+  return (
+    <Section
+      title="5b. Link DUPR Club ↔ Organization"
+      subtitle={
+        vi
+          ? "Liên kết CLB DUPR với tổ chức ThePickleHub. Sau khi liên kết, các trận đấu trong tổ chức được nộp DUPR với matchSource=CLUB."
+          : "Bind a DUPR club to a ThePickleHub organization. Once linked, matches in that org are submitted to DUPR with matchSource=CLUB."
+      }
+    >
+      {orgsQ.isLoading ? (
+        <Loader2 className="h-3 w-3 animate-spin" />
+      ) : (orgsQ.data ?? []).length === 0 ? (
+        <p className="text-sm" style={{ color: "var(--tl-fg-3)" }}>
+          {vi
+            ? "Bạn không phải admin/owner của tổ chức nào."
+            : "You don't admin or own any organization."}
+        </p>
+      ) : (
+        <>
+          <label className="block text-xs" style={{ color: "var(--tl-fg-3)" }}>
+            {vi ? "Chọn tổ chức" : "Pick organization"}
+            <select
+              value={selectedOrgId ?? ""}
+              onChange={(e) => setSelectedOrgId(e.target.value || null)}
+              className="mt-1 w-full rounded border p-2 text-sm"
+              style={{
+                borderColor: "var(--tl-border)",
+                background: "var(--tl-bg)",
+                color: "var(--tl-fg)",
+              }}
+            >
+              {(orgsQ.data ?? []).map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                  {o.dupr_club_id ? `  ·  linked → ${o.dupr_club_id}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {selectedOrgId && (
+            <div className="mt-4">
+              <OrganizationDuprClubCard organizationId={selectedOrgId} />
+            </div>
+          )}
+        </>
+      )}
+    </Section>
+  );
+}
+
 function SubmitMatchSection() {
   const { language } = useI18n();
   const vi = language === "vi";
@@ -445,10 +844,10 @@ function SubmitMatchSection() {
 
   return (
     <Section
-      title="4. Submit match"
+      title="4a. Submit match (create / update / delete)"
       subtitle={vi
-        ? "Test gửi match lên DUPR. Cần role creator/admin + tất cả player có BASIC_L1."
-        : "Test pushing a match to DUPR. Requires creator/admin role + every player has BASIC_L1."}
+        ? "Test gửi match lên DUPR. Cần role creator/admin + tất cả player có BASIC_L1. Update + Delete xem ở section 4b bên dưới."
+        : "Test pushing a match to DUPR. Requires creator/admin role + every player has BASIC_L1. Update + Delete shown in section 4b below."}
     >
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <label className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
@@ -667,7 +1066,7 @@ function SubmissionsSection() {
 
   return (
     <Section
-      title="5. Submitted matches"
+      title="4b. Submitted matches (lifecycle table)"
       subtitle={vi
         ? "20 match gần nhất anh đã push lên DUPR. Xoá ở đây gọi DELETE /match/v1.0/delete."
         : "20 most recent matches you've pushed to DUPR. Delete here calls DELETE /match/v1.0/delete."}
@@ -784,9 +1183,11 @@ export default function DuprDashboard() {
 
         <ConnectionSection />
         <EntitlementsSection />
-        <ClubsSection />
+        <WebhookSection />
         <SubmitMatchSection />
         <SubmissionsSection />
+        <ClubsSection />
+        <OrgLinkSection />
       </div>
     </TheLineLayout>
   );
