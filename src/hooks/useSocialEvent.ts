@@ -14,6 +14,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Registration slot persisted on social_events.slots (JSONB array).
+ * Same shape as the wizard's SlotConfig minus the React-only id helper.
+ * Kept here (vs. importing from components/) so non-organizer consumers
+ * (SocialEventDetail, RegistrationModal) don't reach into the wizard
+ * folder.
+ */
+export interface SocialEventSlot {
+  id: string;
+  label: string;
+  kind: "skill" | "duration" | "general";
+  capacity: number;
+  court_count: number | null;
+  skill_level: string | null;
+  min_play_months: number | null;
+  notes: string | null;
+}
+
 export interface SocialEventRow {
   id: string;
   slug: string;
@@ -41,6 +59,12 @@ export interface SocialEventRow {
   zalo_group_url: string | null;
   status: "draft" | "published" | "cancelled" | "completed";
   visibility: "public" | "club_only";
+  /**
+   * Optional registration slots. Empty array = legacy event (no slot
+   * gating); the player picks a slot at registration time when this is
+   * non-empty.
+   */
+  slots: SocialEventSlot[];
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -64,6 +88,7 @@ export function useSocialEvent(slug: string | undefined) {
            court_count, max_players, level_min, level_max,
            price_vnd, allow_guests, cancellation_hours,
            requires_prepayment, prepayment_deadline_hours, zalo_group_url,
+           slots,
            status, visibility, created_by, created_at, updated_at,
            club:clubs!social_events_club_id_fkey ( id, slug, name, logo_url )`,
         )
@@ -87,8 +112,19 @@ export function useSocialEvent(slug: string | undefined) {
         .eq("event_id", (data as { id: string }).id)
         .neq("status", "cancelled");
 
+      // Normalize slots: DB stores JSONB; queries return `unknown[]`.
+      // Defensive: clamp to array + filter rows missing a stable id so
+      // the UI never renders a broken slot card.
+      const rawSlots = (data as unknown as { slots: unknown }).slots;
+      const slots: SocialEventSlot[] = Array.isArray(rawSlots)
+        ? (rawSlots as SocialEventSlot[]).filter(
+            (s) => s && typeof s.id === "string" && s.id.length > 0,
+          )
+        : [];
+
       return {
         ...(data as unknown as SocialEventRow),
+        slots,
         club: ((data as unknown as { club: SocialEventWithClub["club"] }).club) ?? null,
         registered_count: count ?? 0,
       };

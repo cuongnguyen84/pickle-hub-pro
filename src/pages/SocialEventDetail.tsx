@@ -628,6 +628,7 @@ export default function SocialEventDetail() {
           requiresPrepayment={data.requires_prepayment}
           prepaymentDeadlineHours={data.prepayment_deadline_hours}
           zaloGroupUrl={data.zalo_group_url}
+          slots={data.slots}
           defaultPhone={(profile as { phone?: string | null } | null)?.phone ?? null}
           defaultDisplayName={profile?.display_name ?? null}
           onSuccess={() => {

@@ -33,6 +33,7 @@ import {
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   isValidVietnamPhone,
   maskPhone,
@@ -41,6 +42,7 @@ import {
 import { formatPriceVnd, interp } from "@/lib/social-events/format";
 import { QRPaymentStep, type PaymentOrder } from "@/components/payment/QRPaymentStep";
 import { saveMyRegistration } from "@/lib/social-events/myRegistration";
+import type { SocialEventSlot } from "@/hooks/useSocialEvent";
 
 const RESEND_COOLDOWN_SEC = 60;
 
@@ -56,6 +58,12 @@ interface Props {
   requiresPrepayment?: boolean;
   prepaymentDeadlineHours?: number;
   zaloGroupUrl: string | null;
+  /**
+   * Registration slots configured by the organizer. Empty array → no
+   * slot picker (legacy gate on max_players only). Non-empty → player
+   * MUST pick a slot before sending the OTP.
+   */
+  slots?: SocialEventSlot[];
   /** Prefill phone from authed profile when available. */
   defaultPhone?: string | null;
   /** Prefill display name from authed profile when available. */
@@ -91,6 +99,12 @@ function translateErrorCode(
       return reg.alreadyRegistered;
     case "event_full":
       return reg.eventFull;
+    case "slot_required":
+      return reg.slotRequired;
+    case "slot_not_found":
+      return reg.slotInvalid;
+    case "slot_full":
+      return reg.slotFull;
     case "event_not_published":
     case "event_not_public":
     case "event_not_found":
@@ -123,19 +137,55 @@ export function RegistrationModal({
   requiresPrepayment = false,
   prepaymentDeadlineHours,
   zaloGroupUrl,
+  slots,
   defaultPhone,
   defaultDisplayName,
   onSuccess,
 }: Props) {
   const { t, language } = useI18n();
   const reg = t.socialEvents.register;
+  const slotList = useMemo<SocialEventSlot[]>(
+    () => (Array.isArray(slots) ? slots : []),
+    [slots],
+  );
+  const hasSlots = slotList.length > 0;
 
   const [step, setStep] = useState<Step>("phone");
   const [phoneInput, setPhoneInput] = useState(defaultPhone ?? "");
   const [normalizedPhone, setNormalizedPhone] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState(defaultDisplayName ?? "");
   const [selfRatedLevel, setSelfRatedLevel] = useState<string>("");
+  const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   const [otp, setOtp] = useState("");
+
+  // Per-slot active registration counts. Used to grey out + disable a
+  // slot that's already at capacity, and to render "X/Y chỗ còn lại"
+  // under each radio. Re-fetches whenever the modal opens so the player
+  // sees up-to-date numbers (someone else may have grabbed the slot
+  // between page-load and clicking Register).
+  const { data: slotCounts } = useQuery<Record<string, number>>({
+    queryKey: ["event-slot-counts", eventId, open],
+    queryFn: async () => {
+      if (!hasSlots) return {};
+      const { data, error } = await supabase.rpc("get_event_slot_counts", {
+        p_event_id: eventId,
+      });
+      if (error) {
+        console.error("get_event_slot_counts failed", error);
+        return {};
+      }
+      const map: Record<string, number> = {};
+      for (const row of (data ?? []) as Array<{
+        slot_id: string;
+        registered_count: number;
+      }>) {
+        if (row?.slot_id) map[row.slot_id] = row.registered_count ?? 0;
+      }
+      return map;
+    },
+    enabled: hasSlots && open,
+    staleTime: 15_000,
+  });
   const [submitting, setSubmitting] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [success, setSuccess] = useState<VerifyResponse | null>(null);
@@ -168,6 +218,7 @@ export function RegistrationModal({
       setContactSaving(false);
       setContactSaved(false);
       setOtpChannel(null);
+      setSelectedSlotId("");
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -261,6 +312,27 @@ export function RegistrationModal({
       toast({ title: reg.nameRequired, variant: "destructive" });
       return;
     }
+    // When the organizer configured slots, the player MUST pick one.
+    // Otherwise phone-otp-verify would fall back to the legacy
+    // max_players cap and ignore the per-slot bucketing the organizer
+    // set up. Capacity full → block here so the player can pick another
+    // slot before paying for an OTP.
+    if (hasSlots) {
+      if (!selectedSlotId) {
+        toast({ title: reg.slotRequired, variant: "destructive" });
+        return;
+      }
+      const slot = slotList.find((s) => s.id === selectedSlotId);
+      if (!slot) {
+        toast({ title: reg.slotInvalid, variant: "destructive" });
+        return;
+      }
+      const taken = slotCounts?.[slot.id] ?? 0;
+      if (taken >= slot.capacity) {
+        toast({ title: reg.slotFull, variant: "destructive" });
+        return;
+      }
+    }
     const ok = await callSendOtp();
     if (ok) setStep("otp");
   }
@@ -285,6 +357,10 @@ export function RegistrationModal({
           code: otp,
           display_name: displayName.trim(),
           self_rated_level: levelNum,
+          // Only forward when set — older events without slots stay
+          // backwards compatible (server treats missing/empty as "no
+          // slot" and falls back to max_players gate).
+          slot_id: hasSlots && selectedSlotId ? selectedSlotId : undefined,
         },
       });
       if (error) {
@@ -458,10 +534,105 @@ export function RegistrationModal({
                 <option value="5.0">5.0+</option>
               </select>
             </div>
+
+            {/* Slot picker — only shown when the organizer configured
+                slots on the event. Player must pick one before we'll
+                even send the OTP (handled in handleSendOtp). */}
+            {hasSlots && (
+              <div className="space-y-2">
+                <Label>{reg.slotPickerLabel} *</Label>
+                <p className="text-xs text-muted-foreground">
+                  {reg.slotPickerHint}
+                </p>
+                <div className="space-y-1.5">
+                  {slotList.map((slot) => {
+                    const taken = slotCounts?.[slot.id] ?? 0;
+                    const remaining = Math.max(0, slot.capacity - taken);
+                    const full = remaining === 0;
+                    const checked = selectedSlotId === slot.id;
+                    const meta: string[] = [];
+                    if (slot.kind === "skill" && slot.skill_level) {
+                      meta.push(
+                        `${reg.slotMetaSkill}: ${slot.skill_level}`,
+                      );
+                    }
+                    if (slot.kind === "duration" && slot.min_play_months != null) {
+                      meta.push(
+                        slot.min_play_months === 0
+                          ? reg.slotMetaDurationNewbie
+                          : interp(reg.slotMetaDurationMonths, {
+                              n: slot.min_play_months,
+                            }),
+                      );
+                    }
+                    if (slot.court_count) {
+                      meta.push(
+                        interp(reg.slotMetaCourts, { n: slot.court_count }),
+                      );
+                    }
+                    return (
+                      <label
+                        key={slot.id}
+                        className={`flex cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors ${
+                          checked
+                            ? "border-primary bg-primary/5"
+                            : full
+                              ? "border-border bg-muted/30 opacity-60"
+                              : "border-border hover:bg-muted/40"
+                        }`}
+                        style={{ cursor: full ? "not-allowed" : "pointer" }}
+                      >
+                        <input
+                          type="radio"
+                          name="ev-slot"
+                          className="mt-1"
+                          checked={checked}
+                          disabled={full}
+                          onChange={() => setSelectedSlotId(slot.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">{slot.label}</div>
+                          {meta.length > 0 && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              {meta.join(" · ")}
+                            </div>
+                          )}
+                          {slot.notes && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              {slot.notes}
+                            </div>
+                          )}
+                          <div className="mt-1 text-xs font-mono">
+                            {full ? (
+                              <span className="text-destructive">
+                                {reg.slotFullBadge}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {interp(reg.slotRemainingBadge, {
+                                  remaining,
+                                  capacity: slot.capacity,
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <Button
               type="submit"
               className="w-full"
-              disabled={submitting || !phoneValid || displayName.trim().length < 1}
+              disabled={
+                submitting ||
+                !phoneValid ||
+                displayName.trim().length < 1 ||
+                (hasSlots && !selectedSlotId)
+              }
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {reg.sendOtp}

@@ -33,9 +33,12 @@ import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 import { useNoindex } from "@/hooks/useNoindex";
 import {
   validateField,
+  validateSlots,
   type FormErrors,
   type FormState,
+  type SlotConfig,
 } from "@/components/social/create-event/types";
+import { SlotManager } from "@/components/social/create-event/SlotManager";
 
 const TZ_OFFSET_MS = 7 * 60 * 60 * 1000; // Asia/Ho_Chi_Minh, no DST
 
@@ -85,7 +88,7 @@ export default function EditSocialEvent() {
           `id, slug, title_vi, title_en, description_vi, description_en,
            start_at, end_at, location_text, court_count, max_players,
            price_vnd, zalo_group_url, visibility, status, club_id,
-           requires_prepayment, prepayment_deadline_hours`,
+           requires_prepayment, prepayment_deadline_hours, slots`,
         )
         .eq("slug", event_slug)
         .maybeSingle();
@@ -139,7 +142,14 @@ export default function EditSocialEvent() {
       visibility: "public" | "club_only";
       requires_prepayment?: boolean;
       prepayment_deadline_hours?: number;
+      slots?: unknown;
     };
+    const rawSlots = e.slots;
+    const slots: SlotConfig[] = Array.isArray(rawSlots)
+      ? (rawSlots as SlotConfig[]).filter(
+          (s) => s && typeof s.id === "string" && s.id.length > 0,
+        )
+      : [];
     setEventId(e.id);
     setEventStartIso(e.start_at);
     setActiveRegs(bundle.regCount);
@@ -165,6 +175,7 @@ export default function EditSocialEvent() {
       // false / 12 via the column DEFAULTs.
       requires_prepayment: e.requires_prepayment ?? false,
       prepayment_deadline_hours: e.prepayment_deadline_hours ?? 12,
+      slots,
     });
   }, [bundle]);
 
@@ -196,10 +207,16 @@ export default function EditSocialEvent() {
     return errs;
   }, [form, t, activeRegs, edit]);
 
+  const slotValidation = useMemo(() => {
+    if (!form) return null;
+    return validateSlots(form.slots, form.max_players, t);
+  }, [form, t]);
+
   const allValid = useMemo(() => {
     if (!form) return false;
+    if (slotValidation && !slotValidation.valid) return false;
     return Object.values(errors).every((e) => !e);
-  }, [form, errors]);
+  }, [form, errors, slotValidation]);
 
   const eventStarted = useMemo(() => {
     if (!eventStartIso) return false;
@@ -222,6 +239,23 @@ export default function EditSocialEvent() {
     try {
       const startIso = localToIso(form.start_date, form.start_time);
       const endIso = localToIso(form.start_date, form.end_time);
+      const cleanSlots = form.slots.map((s) => ({
+        id: s.id,
+        label: s.label.trim(),
+        kind: s.kind,
+        capacity: Number(s.capacity) || 0,
+        court_count: s.court_count ?? null,
+        skill_level:
+          s.kind === "skill" ? (s.skill_level?.trim() || null) : null,
+        min_play_months:
+          s.kind === "duration"
+            ? s.min_play_months == null
+              ? null
+              : Number(s.min_play_months)
+            : null,
+        notes: s.notes && s.notes.trim().length > 0 ? s.notes.trim() : null,
+      }));
+
       const patch = {
         title_vi: form.title.trim(),
         description_vi: form.description.trim() || null,
@@ -238,6 +272,7 @@ export default function EditSocialEvent() {
         // doesn't leave a stale requirement attached.
         requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
         prepayment_deadline_hours: form.prepayment_deadline_hours,
+        slots: cleanSlots,
       };
       const { error: upErr } = await supabase
         .from("social_events")
@@ -571,6 +606,25 @@ export default function EditSocialEvent() {
                 </Button>
               </div>
             </div>
+
+            {/* Registration groups (optional). Editing slots on a live
+                event is allowed; the SlotManager will block lowering a
+                slot's capacity below its current count via validateSlots
+                only at the total-cap level. Per-slot lowering is out of
+                scope here — the organizer can recreate slots if needed. */}
+            <fieldset
+              disabled={readOnly}
+              className="space-y-2 border-t border-border pt-5"
+            >
+              <SlotManager
+                slots={form.slots}
+                maxPlayers={form.max_players}
+                onChange={(next) => {
+                  setForm((prev) => (prev ? { ...prev, slots: next } : prev));
+                  setTouched((p) => ({ ...p, max_players: true }));
+                }}
+              />
+            </fieldset>
 
             {/* Payment section */}
             <div className="space-y-2 border-t border-border pt-5">
