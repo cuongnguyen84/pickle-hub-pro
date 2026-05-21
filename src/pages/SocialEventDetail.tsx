@@ -79,6 +79,10 @@ export default function SocialEventDetail() {
   const isMobile = useIsMobile();
   const [modalOpen, setModalOpen] = useState(false);
   const [proxyModalOpen, setProxyModalOpen] = useState(false);
+  // PR proxy/manual — bump after a successful self-register so the
+  // banner re-reads localStorage and swaps the green CTA for
+  // "Xem đăng ký" + "+ Đăng ký hộ bạn bè" without a manual reload.
+  const [myStoredVersion, setMyStoredVersion] = useState(0);
 
   const { data, isLoading, refetch } = useSocialEvent(slug);
   const { data: registrations, refetch: refetchRegistrations } =
@@ -94,7 +98,10 @@ export default function SocialEventDetail() {
   const myStored = useMemo(() => {
     if (!data?.id) return null;
     return readMyRegistration(data.id);
-  }, [data?.id]);
+    // myStoredVersion intentionally in the deps so an external bump
+    // (e.g. RegistrationModal onSuccess) re-reads localStorage.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.id, myStoredVersion]);
 
   const { data: myStatus } = useQuery<{ cancelled_at: string | null } | null>({
     queryKey: ["my-registration-status", myStored?.magic_token ?? null],
@@ -681,6 +688,11 @@ export default function SocialEventDetail() {
             // without a manual page reload.
             refetch();
             refetchRegistrations();
+            // PR proxy/manual — bump localStorage version so the banner
+            // swaps to "Bạn đã đăng ký" + "+ Đăng ký hộ" the moment the
+            // modal closes (RegistrationModal writes the token to
+            // localStorage at verify time).
+            setMyStoredVersion((v) => v + 1);
           }}
         />
 
@@ -694,6 +706,8 @@ export default function SocialEventDetail() {
             eventId={data.id}
             eventTitle={eventTitle}
             priceVnd={data.price_vnd}
+            requiresPrepayment={data.requires_prepayment}
+            prepaymentDeadlineHours={data.prepayment_deadline_hours}
             bankInfo={bankInfo ?? null}
             proxyMagicToken={myStored.magic_token}
             onSuccess={() => {

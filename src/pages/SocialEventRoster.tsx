@@ -180,6 +180,40 @@ export default function SocialEventRoster() {
   const [notesRow, setNotesRow] = useState<EventRegistrationRow | null>(null);
   const [notesValue, setNotesValue] = useState("");
   const [manualOpen, setManualOpen] = useState(false);
+
+  // PR proxy/manual — look up display_name of the proxy / organizer
+  // who created each non-self registration so the cell can render
+  // "bạn của <A>" / "BTC <organizer>" next to the friend's name.
+  const registeredByIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const r of registrations ?? []) {
+      if (r.registered_by_profile_id) ids.add(r.registered_by_profile_id);
+    }
+    return Array.from(ids);
+  }, [registrations]);
+
+  const { data: registeredByProfiles } = useQuery<Record<string, string>>({
+    queryKey: ["registered-by-profiles", registeredByIds.join(",")],
+    queryFn: async () => {
+      if (registeredByIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", registeredByIds);
+      if (error) {
+        console.error("registered-by-profiles fetch error", error);
+        return {};
+      }
+      const map: Record<string, string> = {};
+      for (const row of data ?? []) {
+        map[(row as { id: string }).id] = (row as { display_name: string | null }).display_name ?? "";
+      }
+      return map;
+    },
+    enabled: registeredByIds.length > 0,
+    staleTime: 60_000,
+  });
+
   const stats = useMemo(() => {
     const list = registrations ?? [];
     // PR52: rename "Đã thanh toán" → "Player đã claim". With PR51 the
@@ -415,15 +449,30 @@ export default function SocialEventRoster() {
                       {/* PR feat/proxy-and-manual-registration — origin
                           badge for both proxy and manual rows. Visible
                           only on this organizer dashboard (public roster
-                          only shows the proxy badge). */}
+                          only shows the proxy badge). Includes the
+                          proxy/organizer's display_name when known. */}
                       {row.registration_source === "proxy" && (
                         <span className="tl-format-badge" style={{ borderColor: "var(--tl-border)", color: "var(--tl-fg-3)" }}>
-                          {t.socialEvents.proxyRegister.proxyBadgeLabel}
+                          {(() => {
+                            const proxyName = row.registered_by_profile_id
+                              ? registeredByProfiles?.[row.registered_by_profile_id]
+                              : null;
+                            return proxyName
+                              ? `${t.socialEvents.proxyRegister.proxyBadgeLabel} · ${language === "vi" ? "bạn của" : "friend of"} ${proxyName}`
+                              : t.socialEvents.proxyRegister.proxyBadgeLabel;
+                          })()}
                         </span>
                       )}
                       {row.registration_source === "manual" && (
                         <span className="tl-format-badge" style={{ borderColor: "var(--tl-border)", color: "var(--tl-fg-3)" }}>
-                          {t.socialEvents.proxyRegister.manualBadgeLabel}
+                          {(() => {
+                            const orgName = row.registered_by_profile_id
+                              ? registeredByProfiles?.[row.registered_by_profile_id]
+                              : null;
+                            return orgName
+                              ? `${t.socialEvents.proxyRegister.manualBadgeLabel} · ${orgName}`
+                              : t.socialEvents.proxyRegister.manualBadgeLabel;
+                          })()}
                         </span>
                       )}
                     </div>

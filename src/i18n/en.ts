@@ -1844,6 +1844,8 @@ export const en: Translations = {
       manualConfirmCta: "Add to roster",
       paymentWarningProxy:
         "Your friend transfers themselves, or you transfer on their behalf. The payment code appears after submission.",
+      prepaymentSkipWarning:
+        "You registered {name}. This event requires prepayment — the slot will be auto-cancelled in {hours} hours unless the transfer is completed.",
       successHeading: "Added {name} to the event",
       shareWarning:
         "Please forward this link to {name} so they can manage their registration or pay (if the event has a fee):",

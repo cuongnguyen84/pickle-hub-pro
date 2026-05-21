@@ -112,10 +112,17 @@ Deno.serve(async (req) => {
   const mode = (body.mode === "proxy" || body.mode === "manual") ? body.mode as Mode : null;
   if (!mode) return err("invalid_mode", 400, "invalid_mode");
 
-  const guestPhone = normalizeVietnamPhone(
-    typeof body.guest_phone === "string" ? body.guest_phone : "",
-  );
-  if (!guestPhone) return err("invalid_phone", 400, "invalid_phone");
+  // Phone is OPTIONAL. When provided we normalize + validate. When the
+  // organizer/proxy doesn't have the player's phone yet, we just create
+  // a phone-less ghost profile + registration. The
+  // event_registrations_identity_present CHECK is satisfied by
+  // profile_id IS NOT NULL alone.
+  const rawPhone = typeof body.guest_phone === "string" ? body.guest_phone.trim() : "";
+  let guestPhone: string | null = null;
+  if (rawPhone.length > 0) {
+    guestPhone = normalizeVietnamPhone(rawPhone);
+    if (!guestPhone) return err("invalid_phone", 400, "invalid_phone");
+  }
 
   const guestName =
     typeof body.guest_name === "string" ? body.guest_name.trim() : "";
@@ -268,21 +275,26 @@ Deno.serve(async (req) => {
   }
 
   // ─── Check existing registration for this phone in this event ────────────
-  const { data: existingReg, error: existingErr } = await supabase
-    .from("event_registrations")
-    .select("id, status, cancelled_at")
-    .eq("event_id", eventId)
-    .eq("phone", guestPhone)
-    .order("registered_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (existingErr) {
-    logEvent({ step: "lookup_existing", error: existingErr.message });
-    return err("lookup_failed", 500, "lookup_failed");
-  }
-
-  if (existingReg && existingReg.cancelled_at == null) {
-    return err("already_registered", 409, "already_registered");
+  // Skipped when no phone supplied — phone-less proxy/manual rows are
+  // intentionally treated as net-new players each time (cannot dedupe).
+  let existingReg: { id: string; status: string; cancelled_at: string | null } | null = null;
+  if (guestPhone) {
+    const { data: row, error: existingErr } = await supabase
+      .from("event_registrations")
+      .select("id, status, cancelled_at")
+      .eq("event_id", eventId)
+      .eq("phone", guestPhone)
+      .order("registered_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existingErr) {
+      logEvent({ step: "lookup_existing", error: existingErr.message });
+      return err("lookup_failed", 500, "lookup_failed");
+    }
+    existingReg = row as typeof existingReg;
+    if (existingReg && existingReg.cancelled_at == null) {
+      return err("already_registered", 409, "already_registered");
+    }
   }
 
   // ─── Capacity check ───────────────────────────────────────────────────────
@@ -299,17 +311,23 @@ Deno.serve(async (req) => {
     return err("event_full", 409, "event_full");
   }
 
-  // ─── Find or create ghost profile for the guest phone ────────────────────
+  // ─── Find or create ghost profile for the guest ──────────────────────────
+  // If phone is supplied we de-dupe via phone (reuse existing ghost).
+  // Otherwise we always mint a fresh phone-less ghost.
   let guestProfileId: string;
   {
-    const { data: existingProfile, error: profErr } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("phone", guestPhone)
-      .maybeSingle();
-    if (profErr) {
-      logEvent({ step: "lookup_profile", error: profErr.message });
-      return err("lookup_failed", 500, "lookup_failed");
+    let existingProfile: { id: string } | null = null;
+    if (guestPhone) {
+      const { data: row, error: profErr } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("phone", guestPhone)
+        .maybeSingle();
+      if (profErr) {
+        logEvent({ step: "lookup_profile", error: profErr.message });
+        return err("lookup_failed", 500, "lookup_failed");
+      }
+      existingProfile = row as typeof existingProfile;
     }
     if (existingProfile) {
       guestProfileId = existingProfile.id as string;
@@ -451,21 +469,24 @@ Deno.serve(async (req) => {
   }
 
   // ─── Telemetry log (otp_send_logs with channel='manual') ──────────────────
-  // Best-effort — non-fatal.
-  await supabase
-    .from("otp_send_logs")
-    .insert({
-      phone_e164: guestPhone,
-      event_id: eventId,
-      channel: "dev",   // schema CHECK accepts only zalo/sms/dev — repurpose
-                       // 'dev' here for proxy/manual so we stay schema-safe
-                       // without a separate migration.
-      success: true,
-      error_code: `proxy_or_manual:${mode}`,
-    })
-    .then(({ error }) => {
-      if (error) logEvent({ step: "log_send", error: error.message });
-    });
+  // Best-effort — non-fatal. Skipped when no phone (otp_send_logs has
+  // a phone format CHECK; we don't want to NULL-violate it).
+  if (guestPhone) {
+    await supabase
+      .from("otp_send_logs")
+      .insert({
+        phone_e164: guestPhone,
+        event_id: eventId,
+        channel: "dev",   // schema CHECK accepts only zalo/sms/dev — repurpose
+                         // 'dev' here for proxy/manual so we stay schema-safe
+                         // without a separate migration.
+        success: true,
+        error_code: `proxy_or_manual:${mode}`,
+      })
+      .then(({ error }) => {
+        if (error) logEvent({ step: "log_send", error: error.message });
+      });
+  }
 
   // ─── Payment order (paid event) ───────────────────────────────────────────
   let referenceCode: string | null = null;

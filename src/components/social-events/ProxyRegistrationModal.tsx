@@ -31,10 +31,6 @@ import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import {
-  isValidVietnamPhone,
-  normalizeVietnamPhone,
-} from "@/lib/phone";
-import {
   addRegistrationDirect,
   type AddRegistrationDirectResult,
 } from "@/lib/social-events/addRegistrationDirect";
@@ -50,6 +46,11 @@ interface Props {
   eventId: string;
   eventTitle: string;
   priceVnd: number;
+  /** PR67 — when true + priceVnd > 0, the QR step prepends an amber
+   *  "auto-cancel after N hours" warning and the skip-button text shifts
+   *  from "Sẽ thanh toán tại sân" to "Tôi sẽ thanh toán sau". */
+  requiresPrepayment?: boolean;
+  prepaymentDeadlineHours?: number;
   /** Bank info to render in the success state (only relevant when paid). */
   bankInfo?: BankInfoForCopy | null;
   /** Proxy registrant's magic_token, read from localStorage. */
@@ -91,6 +92,8 @@ export function ProxyRegistrationModal({
   eventId,
   eventTitle,
   priceVnd,
+  requiresPrepayment = false,
+  prepaymentDeadlineHours,
   bankInfo,
   proxyMagicToken,
   onSuccess,
@@ -98,7 +101,6 @@ export function ProxyRegistrationModal({
   const { t } = useI18n();
   const proxy = t.socialEvents.proxyRegister;
 
-  const [phoneInput, setPhoneInput] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [selfLevel, setSelfLevel] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
@@ -107,30 +109,25 @@ export function ProxyRegistrationModal({
   // the player_claimed_paid flag so when the friend (B) marks paid right
   // here, A sees the green confirmation instead of the unpaid CTAs.
   const [paymentOrder, setPaymentOrder] = useState<PaymentOrder | null>(null);
+  // PR fix bug 3 — when the event requires prepayment and A clicks
+  // "Tôi sẽ thanh toán sau" inside QRPaymentStep, we swap the QR slot
+  // for an amber "slot will auto-cancel in N hours" notice instead of
+  // closing the modal entirely.
+  const [skippedPrepayment, setSkippedPrepayment] = useState(false);
 
   // Reset form on close.
   useEffect(() => {
     if (!open) {
-      setPhoneInput("");
       setDisplayName("");
       setSelfLevel("");
       setSubmitting(false);
       setResult(null);
       setPaymentOrder(null);
+      setSkippedPrepayment(false);
     }
   }, [open]);
 
-  const phoneValid = (() => {
-    const norm = normalizeVietnamPhone(phoneInput);
-    return norm != null && isValidVietnamPhone(norm);
-  })();
-
   async function handleSubmit() {
-    const norm = normalizeVietnamPhone(phoneInput);
-    if (!norm || !isValidVietnamPhone(norm)) {
-      toast({ title: t.socialEvents.register.phoneInvalid, variant: "destructive" });
-      return;
-    }
     if (displayName.trim().length < 1) {
       toast({ title: t.socialEvents.register.nameRequired, variant: "destructive" });
       return;
@@ -140,7 +137,9 @@ export function ProxyRegistrationModal({
       const levelNum = selfLevel === "" ? null : Number(selfLevel);
       const data = await addRegistrationDirect({
         eventId,
-        guestPhone: norm,
+        // Phone intentionally not collected — proxy flow keeps the
+        // friction floor at "just the name". Edge function accepts a
+        // missing phone and creates a phone-less ghost profile.
         guestName: displayName.trim(),
         guestSelfRating: Number.isFinite(levelNum as number) ? (levelNum as number) : null,
         mode: "proxy",
@@ -192,24 +191,49 @@ export function ProxyRegistrationModal({
             priceVnd={priceVnd}
             paymentSlot={
               paymentOrder && result.magic_token ? (
-                <QRPaymentStep
-                  order={paymentOrder}
-                  magicToken={result.magic_token}
-                  onClaimed={(next) => setPaymentOrder(next)}
-                  /* "Sẽ thanh toán tại sân" — đóng modal; A vẫn đã
-                     thấy link share ở trên rồi. */
-                  onSkip={() => onOpenChange(false)}
-                  zaloGroupUrl={null}
-                  onClose={() => onOpenChange(false)}
-                />
+                skippedPrepayment ? (
+                  /* A clicked "Tôi sẽ thanh toán sau" on a prepayment-
+                     required event. Show an amber notice so A knows
+                     the slot will auto-cancel if neither A nor B
+                     completes the transfer in time. */
+                  <div className="rounded-md border-2 border-amber-400/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                    <p>
+                      ⚠️ {proxy.prepaymentSkipWarning
+                        .replace("{name}", result.guest_name)
+                        .replace("{hours}", String(prepaymentDeadlineHours ?? 12))}
+                    </p>
+                  </div>
+                ) : (
+                  <QRPaymentStep
+                    order={paymentOrder}
+                    magicToken={result.magic_token}
+                    requiresPrepayment={requiresPrepayment}
+                    prepaymentDeadlineHours={prepaymentDeadlineHours}
+                    registeredAt={result.registered_at}
+                    onClaimed={(next) => setPaymentOrder(next)}
+                    /* "Sẽ thanh toán tại sân" (free flow) or
+                       "Tôi sẽ thanh toán sau" (prepayment flow).
+                       For prepayment events we surface a warning
+                       in-place; otherwise we just close. */
+                    onSkip={() => {
+                      if (requiresPrepayment) {
+                        setSkippedPrepayment(true);
+                      } else {
+                        onOpenChange(false);
+                      }
+                    }}
+                    zaloGroupUrl={null}
+                    onClose={() => onOpenChange(false)}
+                  />
+                )
               ) : undefined
             }
             onAddAnother={() => {
-              setPhoneInput("");
               setDisplayName("");
               setSelfLevel("");
               setResult(null);
               setPaymentOrder(null);
+              setSkippedPrepayment(false);
             }}
             onClose={() => onOpenChange(false)}
           />
@@ -226,21 +250,6 @@ export function ProxyRegistrationModal({
                 {proxy.guestSectionHeading}
               </p>
               <div className="space-y-2">
-                <Label htmlFor="proxy-phone">{proxy.guestPhoneLabel} *</Label>
-                <Input
-                  id="proxy-phone"
-                  type="tel"
-                  inputMode="tel"
-                  placeholder={t.socialEvents.register.phonePlaceholder}
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                  required
-                />
-                {phoneInput.length > 0 && !phoneValid && (
-                  <p className="text-sm text-destructive">{t.socialEvents.register.phoneInvalid}</p>
-                )}
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="proxy-name">{proxy.guestNameLabel} *</Label>
                 <Input
                   id="proxy-name"
@@ -250,6 +259,7 @@ export function ProxyRegistrationModal({
                   onChange={(e) => setDisplayName(e.target.value)}
                   maxLength={80}
                   required
+                  autoFocus
                 />
               </div>
               <div className="space-y-2">
@@ -291,7 +301,7 @@ export function ProxyRegistrationModal({
               <Button
                 type="submit"
                 className="flex-1"
-                disabled={submitting || !phoneValid || displayName.trim().length < 1}
+                disabled={submitting || displayName.trim().length < 1}
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {proxy.proxyConfirmCta}

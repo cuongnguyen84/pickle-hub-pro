@@ -34,10 +34,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
-import {
-  isValidVietnamPhone,
-  normalizeVietnamPhone,
-} from "@/lib/phone";
 import { supabase } from "@/integrations/supabase/client";
 import {
   addRegistrationDirect,
@@ -90,7 +86,6 @@ export function ManualAddRegistrationModal({
   const { t } = useI18n();
   const proxy = t.socialEvents.proxyRegister;
 
-  const [phoneInput, setPhoneInput] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [selfLevel, setSelfLevel] = useState<string>("");
   const [paymentChoice, setPaymentChoice] = useState<ManualPaymentInitialStatus>("unpaid");
@@ -100,7 +95,6 @@ export function ManualAddRegistrationModal({
 
   useEffect(() => {
     if (!open) {
-      setPhoneInput("");
       setDisplayName("");
       setSelfLevel("");
       setPaymentChoice("unpaid");
@@ -110,17 +104,7 @@ export function ManualAddRegistrationModal({
     }
   }, [open]);
 
-  const phoneValid = (() => {
-    const norm = normalizeVietnamPhone(phoneInput);
-    return norm != null && isValidVietnamPhone(norm);
-  })();
-
   async function handleSubmit() {
-    const norm = normalizeVietnamPhone(phoneInput);
-    if (!norm || !isValidVietnamPhone(norm)) {
-      toast({ title: t.socialEvents.register.phoneInvalid, variant: "destructive" });
-      return;
-    }
     if (displayName.trim().length < 1) {
       toast({ title: t.socialEvents.register.nameRequired, variant: "destructive" });
       return;
@@ -137,7 +121,10 @@ export function ManualAddRegistrationModal({
       const levelNum = selfLevel === "" ? null : Number(selfLevel);
       const data = await addRegistrationDirect({
         eventId,
-        guestPhone: norm,
+        // Phone intentionally not collected — organizer typically takes
+        // registrations via Zalo/phone without recording the number.
+        // Edge function accepts a missing phone and creates a phone-less
+        // ghost profile.
         guestName: displayName.trim(),
         guestSelfRating: Number.isFinite(levelNum as number) ? (levelNum as number) : null,
         mode: "manual",
@@ -202,20 +189,6 @@ export function ManualAddRegistrationModal({
                 {proxy.playerSectionHeading}
               </p>
               <div className="space-y-2">
-                <Label htmlFor="manual-phone">{proxy.guestPhoneLabel} *</Label>
-                <Input
-                  id="manual-phone"
-                  type="tel"
-                  inputMode="tel"
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                  required
-                />
-                {phoneInput.length > 0 && !phoneValid && (
-                  <p className="text-sm text-destructive">{t.socialEvents.register.phoneInvalid}</p>
-                )}
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="manual-name">{proxy.guestNameLabel} *</Label>
                 <Input
                   id="manual-name"
@@ -225,6 +198,7 @@ export function ManualAddRegistrationModal({
                   onChange={(e) => setDisplayName(e.target.value)}
                   maxLength={80}
                   required
+                  autoFocus
                 />
               </div>
               <div className="space-y-2">
@@ -313,7 +287,7 @@ export function ManualAddRegistrationModal({
               <Button
                 type="submit"
                 className="flex-1"
-                disabled={submitting || !phoneValid || displayName.trim().length < 1}
+                disabled={submitting || displayName.trim().length < 1}
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {proxy.manualConfirmCta}

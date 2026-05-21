@@ -29,7 +29,10 @@ export type ManualPaymentInitialStatus =
 
 export interface AddRegistrationDirectInput {
   eventId: string;
-  guestPhone: string;       // already E.164 (+84...)
+  /** E.164 phone (+84…). Optional — when omitted the edge function
+   *  creates a phone-less ghost profile. Useful for proxy/manual flows
+   *  where the caller only knows the friend's name. */
+  guestPhone?: string | null;
   guestName: string;
   guestSelfRating?: number | null;
   mode: DirectRegistrationMode;
@@ -74,10 +77,12 @@ export async function addRegistrationDirect(
 ): Promise<AddRegistrationDirectResult> {
   const body: Record<string, unknown> = {
     event_id: input.eventId,
-    guest_phone: input.guestPhone,
     guest_name: input.guestName,
     mode: input.mode,
   };
+  if (input.guestPhone && input.guestPhone.trim().length > 0) {
+    body.guest_phone = input.guestPhone;
+  }
   if (input.guestSelfRating != null && Number.isFinite(input.guestSelfRating)) {
     body.guest_self_rating = input.guestSelfRating;
   }

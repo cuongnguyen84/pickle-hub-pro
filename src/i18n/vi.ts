@@ -1841,6 +1841,8 @@ export interface Translations {
       manualConfirmCta: string;
       // Warning
       paymentWarningProxy: string;
+      // Skip warning on prepayment-required events (proxy success)
+      prepaymentSkipWarning: string;
       // Success share
       successHeading: string;          // "Đã thêm {name} vào sự kiện"
       shareWarning: string;            // "Vui lòng gửi link sau cho {name}…"
@@ -4423,6 +4425,8 @@ export const vi: Translations = {
       manualConfirmCta: "Thêm vào danh sách",
       paymentWarningProxy:
         "Người được đăng ký hộ tự chuyển khoản hoặc bạn chuyển hộ. Mã thanh toán sẽ hiển thị sau khi đăng ký xong.",
+      prepaymentSkipWarning:
+        "Bạn đã đăng ký giúp {name}. Đây là sự kiện bắt buộc thanh toán trước nên slot sẽ tự động bị huỷ sau {hours} giờ nếu không hoàn tất chuyển khoản.",
       successHeading: "Đã thêm {name} vào sự kiện",
       shareWarning:
         "Vui lòng gửi link sau cho {name} để họ tự quản lý đăng ký hoặc thanh toán (nếu event có phí):",
