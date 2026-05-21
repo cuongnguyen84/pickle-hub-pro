@@ -51,7 +51,7 @@ CREATE INDEX IF NOT EXISTS event_registrations_registered_by_idx
   WHERE registered_by_profile_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS event_registrations_source_recent_idx
-  ON public.event_registrations (registration_source, created_at DESC)
+  ON public.event_registrations (registration_source, registered_at DESC)
   WHERE registration_source <> 'self';
 
 COMMENT ON COLUMN public.event_registrations.registered_by_profile_id IS
