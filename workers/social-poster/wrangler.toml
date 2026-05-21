@@ -39,7 +39,7 @@ compatibility_flags = ["nodejs_compat"]
 SUPABASE_URL = "https://ajvlcamxemgbxduhiqrl.supabase.co"
 SITE_URL = "https://www.thepicklehub.net"
 FB_GRAPH_VERSION = "v20.0"
-FB_POST_MIN_GAP_MINUTES = "5"
+FB_POST_MIN_GAP_MINUTES = "15"
 GEMINI_MODEL = "gemini-flash-lite-latest"
 
 [observability]
