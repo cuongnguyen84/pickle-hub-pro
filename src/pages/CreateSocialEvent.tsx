@@ -229,28 +229,6 @@ export default function CreateSocialEvent() {
         notes: s.notes && s.notes.trim().length > 0 ? s.notes.trim() : null,
       }));
 
-      const eventPayload = {
-        club_id: clubData.club.id,
-        slug: finalSlug,
-        title_vi: form.title.trim(),
-        description_vi: form.description.trim() === "" ? null : form.description.trim(),
-        start_at: startIso,
-        end_at: endIso,
-        location_text: form.location_text.trim() === "" ? null : form.location_text.trim(),
-        court_count: form.court_count,
-        max_players: form.max_players,
-        price_vnd: form.price_vnd,
-        zalo_group_url:
-          form.zalo_group_url.trim() === "" ? null : form.zalo_group_url.trim(),
-        status: publish ? "published" : "draft",
-        visibility: form.visibility,
-        // PR67 — only meaningful for paid events. Default for free
-        // events is false / 12 (the column DEFAULT backstop), so passing
-        // it through unconditionally is safe.
-        requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
-        prepayment_deadline_hours: form.prepayment_deadline_hours,
-        slots: cleanSlots,
-      };
       const paymentPayload =
         form.price_vnd > 0
           ? {
@@ -259,26 +237,79 @@ export default function CreateSocialEvent() {
               bank_account_name: form.bank_account_name.trim(),
             }
           : null;
-      const { data: rows, error } = await supabase.rpc(
-        "create_social_event_with_payment",
-        {
-          p_event: eventPayload,
-          p_payment: paymentPayload,
-        },
-      );
-      if (error) {
-        if (error.message.toLowerCase().includes("social_events_slug")) {
-          toast({ title: create.errorSlugTaken, variant: "destructive" });
-          return;
+
+      // PR weekly-repeat — submit the base event first, then loop N
+      // weekly copies (offset start_at + end_at by 7 days each, append
+      // a -tuanN suffix to the slug). Each iteration calls the same
+      // atomic RPC so a failure mid-loop leaves the earlier copies in
+      // place; we surface a partial-failure toast rather than rollback.
+      const repeatCount = Math.max(0, Math.min(12, Number(form.repeat_weeks) || 0));
+      const startMs = new Date(startIso).getTime();
+      const endMs = new Date(endIso).getTime();
+
+      let firstSlug = finalSlug;
+      let createdCount = 0;
+      for (let i = 0; i <= repeatCount; i++) {
+        const offsetMs = i * 7 * 24 * 60 * 60 * 1000;
+        const iterStart = new Date(startMs + offsetMs).toISOString();
+        const iterEnd = new Date(endMs + offsetMs).toISOString();
+        const iterSlug = i === 0 ? finalSlug : `${finalSlug}-tuan${i + 1}`;
+
+        const eventPayload = {
+          club_id: clubData.club.id,
+          slug: iterSlug,
+          title_vi: form.title.trim(),
+          description_vi: form.description.trim() === "" ? null : form.description.trim(),
+          start_at: iterStart,
+          end_at: iterEnd,
+          location_text: form.location_text.trim() === "" ? null : form.location_text.trim(),
+          court_count: form.court_count,
+          max_players: form.max_players,
+          price_vnd: form.price_vnd,
+          zalo_group_url:
+            form.zalo_group_url.trim() === "" ? null : form.zalo_group_url.trim(),
+          status: publish ? "published" : "draft",
+          visibility: form.visibility,
+          requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
+          prepayment_deadline_hours: form.prepayment_deadline_hours,
+          slots: cleanSlots,
+        };
+
+        const { data: rows, error } = await supabase.rpc(
+          "create_social_event_with_payment",
+          { p_event: eventPayload, p_payment: paymentPayload },
+        );
+        if (error) {
+          if (error.message.toLowerCase().includes("social_events_slug")) {
+            toast({
+              title: createdCount === 0
+                ? create.errorSlugTaken
+                : `${create.errorSlugTaken} (${createdCount}/${repeatCount + 1})`,
+              variant: "destructive",
+            });
+            if (createdCount === 0) return;
+            break;
+          }
+          console.error("CreateSocialEvent RPC error", error);
+          toast({ title: t.common.error, description: error.message, variant: "destructive" });
+          if (createdCount === 0) return;
+          break;
         }
-        console.error("CreateSocialEvent RPC error", error);
-        toast({ title: t.common.error, description: error.message, variant: "destructive" });
-        return;
+        const row = Array.isArray(rows) && rows.length > 0
+          ? (rows[0] as { event_slug: string })
+          : null;
+        if (i === 0) firstSlug = row?.event_slug ?? iterSlug;
+        createdCount++;
       }
-      const row = Array.isArray(rows) && rows.length > 0 ? (rows[0] as { event_slug: string }) : null;
-      const newSlug = row?.event_slug ?? finalSlug;
-      toast({ title: publish ? create.successPublished : create.successDraft });
-      navigate(`/social/${newSlug}`);
+
+      if (repeatCount > 0) {
+        toast({
+          title: create.bulkCreatedToast.replace("{count}", String(createdCount)),
+        });
+      } else {
+        toast({ title: publish ? create.successPublished : create.successDraft });
+      }
+      navigate(`/social/${firstSlug}`);
     } finally {
       setSubmitting(false);
     }

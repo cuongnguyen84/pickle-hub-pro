@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useI18n } from "@/i18n";
-import { Home, Radio, Trophy, Wrench, Newspaper } from "lucide-react";
+import { Home, Radio, CalendarPlus, Wrench, Newspaper } from "lucide-react";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
 import { useLivestreams } from "@/hooks/useSupabaseData";
@@ -57,12 +57,17 @@ const BottomNav = () => {
   // Sprint 5 PR-A: replaced /forum slot with /feed. Forum still reachable
   // via the burger drawer; Feed is the entry point for the Bet #1 social
   // loop and should sit in the 5-slot mobile primary nav.
+  //
+  // PR proxy/manual follow-up: the "Đi đánh" (Social) slot replaces
+  // Tournaments — it's the main user funnel now (find a club / event,
+  // register, manage). Rendered with a green pill highlight so the
+  // primary CTA reads as the visual anchor of the bar.
   const navItems = [
     { path: "/", label: t.nav.home, icon: Home },
     { path: "/live", label: t.nav.live, icon: Radio, liveBadge: liveCount > 0 },
+    { path: "/social", label: t.nav.social, icon: CalendarPlus, highlight: true },
     { path: "/feed", label: t.nav.feed, icon: Newspaper },
     { path: "/tools", label: t.nav.tools, icon: Wrench },
-    { path: "/tournaments", label: t.nav.tournaments, icon: Trophy },
   ];
 
   const isIOSDevice = isIOS();
@@ -145,8 +150,35 @@ const BottomNav = () => {
                   }}
                 />
               )}
-              <span style={{ position: "relative", display: "inline-flex" }}>
-                <Icon size={20} strokeWidth={1.5} aria-hidden="true" />
+              <span
+                style={{
+                  position: "relative",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  // PR — "Đi đánh" highlight: solid green pill that
+                  // floats slightly above the rest of the bar so it
+                  // reads as the primary CTA. Other slots stay
+                  // icon-only / muted.
+                  ...(item.highlight
+                    ? {
+                        background: "var(--tl-green, #00b96b)",
+                        color: "#0c0d0f",
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        marginTop: -16,
+                        boxShadow:
+                          "0 4px 12px rgba(0, 185, 107, 0.35), 0 0 0 4px var(--tl-bg, #08090a)",
+                      }
+                    : {}),
+                }}
+              >
+                <Icon
+                  size={item.highlight ? 22 : 20}
+                  strokeWidth={item.highlight ? 2 : 1.5}
+                  aria-hidden="true"
+                />
                 {item.liveBadge && (
                   <span
                     aria-hidden="true"
@@ -169,11 +201,14 @@ const BottomNav = () => {
                   fontFamily:
                     '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
                   fontSize: 9,
-                  fontWeight: 500,
+                  fontWeight: item.highlight ? 700 : 500,
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
-                  marginTop: 6,
+                  marginTop: item.highlight ? 4 : 6,
                   whiteSpace: "nowrap",
+                  color: item.highlight
+                    ? "var(--tl-green, #00b96b)"
+                    : undefined,
                 }}
               >
                 {item.label}

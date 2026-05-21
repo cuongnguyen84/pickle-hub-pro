@@ -78,6 +78,15 @@ export function useClubEventsManage(clubId: string | undefined) {
           };
         }),
       );
+      // Sort cancelled rows to the bottom; within each bucket keep the
+       // newest start_at first (matches the SQL order). Organizer
+       // dashboard surfaces active events on top per UX request.
+      enriched.sort((a, b) => {
+        const aCancelled = a.status === "cancelled" ? 1 : 0;
+        const bCancelled = b.status === "cancelled" ? 1 : 0;
+        if (aCancelled !== bCancelled) return aCancelled - bCancelled;
+        return new Date(b.start_at).getTime() - new Date(a.start_at).getTime();
+      });
       return enriched;
     },
     enabled: Boolean(clubId),

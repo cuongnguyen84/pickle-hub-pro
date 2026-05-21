@@ -188,6 +188,8 @@ export interface Translations {
     tournaments: string;
     tools: string;
     feed: string;
+    /** Bottom-nav primary slot — replaces the tournaments tile. */
+    social: string;
     search: string;
     profile: string;
     viewProfile: string;
@@ -1976,6 +1978,13 @@ export interface Translations {
       paymentDeadlineHours: string;
       paymentDeadlineHint: string;
       errorPrepaymentDeadlineRange: string;
+      // Weekly-repeat
+      repeatWeeksLabel: string;
+      repeatWeeksUnit: string;
+      repeatWeeksHint: string;
+      repeatWeeksPreview: string;
+      errorRepeatWeeksRange: string;
+      bulkCreatedToast: string;
       // Slots — registration sub-buckets (skill / duration / general).
       slotsHeading: string;
       slotsSubheading: string;
@@ -2850,6 +2859,7 @@ export const vi: Translations = {
     tournaments: "Giải đấu",
     tools: "Công cụ",
     feed: "Bảng tin",
+    social: "Đi đánh",
     search: "Tìm kiếm",
     profile: "Tài khoản",
     viewProfile: "Xem hồ sơ",
@@ -4644,6 +4654,12 @@ export const vi: Translations = {
       paymentDeadlineHint:
         "Tính từ lúc player đăng ký. Nếu thời hạn vượt qua giờ bắt đầu event, đăng ký bị huỷ ngay.",
       errorPrepaymentDeadlineRange: "Thời hạn phải trong khoảng 1–168 giờ (tối đa 1 tuần).",
+      repeatWeeksLabel: "Lặp lại hàng tuần (tuỳ chọn)",
+      repeatWeeksUnit: "tuần liên tiếp sau",
+      repeatWeeksHint: "Nhập 0 để tạo 1 event duy nhất. Nhập 1 = tạo thêm 1 event vào tuần kế tiếp; nhập 4 = tạo thêm 4 event cách nhau 7 ngày. Tối đa 12.",
+      repeatWeeksPreview: "→ Sẽ tạo {count} event giống hệt, event cuối cùng vào {last}.",
+      errorRepeatWeeksRange: "Số tuần lặp phải từ 0 đến 12.",
+      bulkCreatedToast: "Đã tạo {count} event giống hệt.",
       // Slots
       slotsHeading: "Nhóm đăng ký (tuỳ chọn)",
       slotsSubheading:
