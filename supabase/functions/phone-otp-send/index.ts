@@ -263,16 +263,33 @@ Deno.serve(async (req) => {
   // PR61 — channel resolution. Try Zalo ZNS first (cheaper + brand
   // trust) and fall back to eSMS so users without the OA still
   // receive an OTP. force_channel='sms' skips Zalo entirely.
+  //
+  // PR65: ZALO_OA_ACCESS_TOKEN is now loaded from the `zalo_tokens`
+  // DB row (id=1, auto-refreshed every 23h by zalo-token-refresh
+  // edge function). The env var is no longer the source of truth.
   const templateId = Deno.env.get("ZALO_TEMPLATE_ID_OTP") ?? "";
-  const zaloConfigured = templateId.length > 0 && (Deno.env.get("ZALO_OA_ACCESS_TOKEN") ?? "").length > 0;
+
+  let zaloAccessToken = "";
+  if (templateId.length > 0 && forceChannel !== "sms") {
+    const { data: tokenRow } = await supabase
+      .from("zalo_tokens")
+      .select("access_token")
+      .eq("id", 1)
+      .maybeSingle();
+    zaloAccessToken = (tokenRow?.access_token as string | undefined) ?? "";
+  }
+
+  const zaloConfigured = templateId.length > 0 && zaloAccessToken.length > 0;
   const tryZalo = forceChannel !== "sms" && zaloConfigured;
 
   if (tryZalo) {
     const zaloResult = await sendZaloZns({
       phone_no_plus: phone.replace(/^\+/, ""),
       template_id: templateId,
-      template_data: { otp_code: code },
+      // Stock Zalo "Mẫu xác thực" template uses param name `otp`.
+      template_data: { otp: code },
       tracking_id: `${eventIdInput}:${phone}:${Date.now()}`,
+      access_token: zaloAccessToken,
     });
 
     if (zaloResult.ok) {
