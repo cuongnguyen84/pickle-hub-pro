@@ -214,10 +214,15 @@ export default function SocialEventRoster() {
 
   const stats = useMemo(() => {
     const list = registrations ?? [];
-    // PR52: rename "Đã thanh toán" → "Player đã claim". With PR51 the
-    // organizer-toggled payment_status field is essentially dead — only
-    // player_claimed_paid changes during a live event. Count the latter.
-    const claimed = (paymentOrders ?? []).filter((o) => o.player_claimed_paid).length;
+    // 2026-05-22 — count from registrations (organizer-confirmed paid)
+    // rather than from paymentOrders. Counting payment_orders directly
+    // included orphaned rows from cancelled registrations, so the
+    // counter could exceed the registered count after the organizer
+    // removed a test player. Trigger 20260522130000 keeps
+    // payment_orders.player_claimed_paid in sync with the registration
+    // when the organizer flips the row, so the two values agree for
+    // every non-cancelled row.
+    const claimed = list.filter((r) => r.payment_status === "paid").length;
     return {
       registered: list.length,
       claimed,
