@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, LayoutGrid, Link as LinkIcon } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, LayoutGrid, Link as LinkIcon, UserPlus } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations } from "@/hooks/useEventRegistrations";
 import { useMyMembership } from "@/hooks/useClubMembers";
 import { RegistrationModal } from "@/components/social-events/RegistrationModal";
+import { ProxyRegistrationModal } from "@/components/social-events/ProxyRegistrationModal";
 import { toast } from "@/hooks/use-toast";
 import {
   computeCountdown,
@@ -78,6 +79,11 @@ export default function SocialEventDetail() {
   const { profile } = useUserProfile();
   const isMobile = useIsMobile();
   const [modalOpen, setModalOpen] = useState(false);
+  // 2026-05-22 — proxy registration ("Đăng ký hộ bạn bè"). Surfaced
+  // below the "Xem đăng ký của bạn" CTA only when the viewer already
+  // has a non-cancelled registration AND the event is still open for
+  // new sign-ups.
+  const [proxyOpen, setProxyOpen] = useState(false);
 
   const { data, isLoading, refetch } = useSocialEvent(slug);
   const { data: registrations, refetch: refetchRegistrations } =
@@ -458,6 +464,27 @@ export default function SocialEventDetail() {
                 : t.socialEvents.playerRegistration.alreadyRegisteredBanner}
             </p>
           )}
+          {/* 2026-05-22 — proxy register CTA. Visible only when the
+              viewer already has an active registration AND the event
+              still has capacity / hasn't ended. The modal calls
+              add-registration-direct with mode='proxy' using the
+              viewer's magic_token from localStorage. */}
+          {myStored && !isCancelled && canRegister && (
+            <button
+              type="button"
+              className="tl-btn"
+              onClick={() => setProxyOpen(true)}
+              style={{
+                marginTop: 10,
+                width: "100%",
+                justifyContent: "center",
+                fontSize: 14,
+              }}
+            >
+              <UserPlus className="h-4 w-4" />
+              {t.socialEvents.proxyRegister.proxyRegisterCta} →
+            </button>
+          )}
           {/* PR59 — lost-link recovery CTA. Subtle, only relevant when
               we don't already know the viewer is registered. */}
           {!myStored && canRegister && (
@@ -627,6 +654,24 @@ export default function SocialEventDetail() {
               {t.socialEvents.detail.zaloGroup}
             </a>
           </Button>
+        )}
+
+        {myStored && !isCancelled && (
+          <ProxyRegistrationModal
+            open={proxyOpen}
+            onOpenChange={setProxyOpen}
+            eventId={data.id}
+            eventTitle={eventTitle}
+            priceVnd={data.price_vnd}
+            requiresPrepayment={data.requires_prepayment}
+            prepaymentDeadlineHours={data.prepayment_deadline_hours}
+            bankInfo={null}
+            proxyMagicToken={myStored.magic_token}
+            onSuccess={() => {
+              refetch();
+              refetchRegistrations();
+            }}
+          />
         )}
 
         <RegistrationModal
