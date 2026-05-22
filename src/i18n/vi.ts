@@ -2210,6 +2210,13 @@ export interface Translations {
       alreadyRegisteredCta: string;
       cancelledBanner: string;
       reregisterCta: string;
+      // PR65 — Zalo OA integration: post-success follow-OA CTA
+      followOaBanner: {
+        title: string;
+        body: string;
+        cta: string;
+        dismissAriaLabel: string;
+      };
       // PR67 — prepayment countdown banner
       unpaidRegistrationBannerTitle: string;
       unpaidRegistrationBannerDescription: string;
@@ -4890,6 +4897,14 @@ export const vi: Translations = {
       alreadyRegisteredCta: "Xem đăng ký của bạn",
       cancelledBanner: "Bạn đã huỷ đăng ký sự kiện này",
       reregisterCta: "Quản lý / Đăng ký lại",
+      // PR65 — Zalo OA integration
+      followOaBanner: {
+        title: "Theo dõi ThePickleHub trên Zalo",
+        body:
+          "Nhận lịch thi đấu, link livestream và kết quả giải gửi thẳng vào Zalo của bạn.",
+        cta: "Mở Zalo OA",
+        dismissAriaLabel: "Đóng",
+      },
       unpaidRegistrationBannerTitle: "Đăng ký chưa thanh toán",
       unpaidRegistrationBannerDescription:
         "Sự kiện này yêu cầu chuyển khoản trước. Hoàn tất chuyển khoản theo mã thanh toán bên dưới rồi bấm \"Đã thanh toán\" để xác nhận.",

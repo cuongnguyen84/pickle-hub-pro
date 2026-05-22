@@ -30,6 +30,7 @@ import {
   InputOTPSlot,
   InputOTPSeparator,
 } from "@/components/ui/input-otp";
+import { FollowOaBanner } from "@/components/social-events/FollowOaBanner";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -982,6 +983,11 @@ export function RegistrationModal({
               <p className="font-semibold">{reg.successTitle}</p>
               <p className="mt-1">{reg.successBody}</p>
             </div>
+
+            {/* PR65 — Zalo OA follow CTA. Inline (not modal) so it
+                doesn't block the player from reading payment / save-link
+                cards below. Dismiss persists per session in sessionStorage. */}
+            <FollowOaBanner registrationId={success.registration_id} />
 
             {priceVnd > 0 && (
               <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">
