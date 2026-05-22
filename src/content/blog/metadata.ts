@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-for-tennis-players-2026",
+    publishedDate: "2026-05-22",
+    updatedDate: "2026-05-22",
+    author: "Cuong Nguyen",
+    tags: ["pickleball for tennis players", "tennis to pickleball", "tennis vs pickleball", "beginner", "technique", "transition guide", "unlearn", "vietnam pickleball"],
+    ctaPath: "/blog/how-to-play-pickleball",
+    ctaLabel: { en: "Read: How to Play Pickleball — Complete Beginner Guide", vi: "Đọc tiếp: Hướng dẫn chơi Pickleball cho người mới bắt đầu" },
+    heroImage: {
+      src: "/images/blog/pickleball-for-tennis-players-2026-hero.webp",
+      alt: "Split-screen sports photo: left side a tennis player executing a deep baseline forehand on a clay court, right side the same player at the kitchen line on a pickleball court holding a paddle in a compact ready position, illustrating the transition from tennis to pickleball and the 5 habits tennis players need to unlearn"
+    },
+    titleEn: "Pickleball for Tennis Players: 5 Things to Unlearn (2026 Guide)",
+    titleVi: "Từ tennis chuyển sang pickleball: 5 thói quen cần \"quên\" (2026)",
+    metaTitleEn: "Pickleball for Tennis Players 2026 | 5 Habits to Unlearn",
+    metaTitleVi: "Tennis sang Pickleball 2026 | 5 thói quen phải sửa",
+    metaDescriptionEn: "Tennis players struggle with pickleball not because it's harder — they bring 5 ingrained habits that backfire. Here's what to unlearn and the 7-day fix.",
+    metaDescriptionVi: "Người chơi tennis chuyển sang pickleball không thua vì kỹ thuật yếu — họ mang theo 5 thói quen phản tác dụng. Đây là cách sửa và lịch tập 7 ngày.",
+  },
+  {
     slug: "dupr-rating-improvement-30-day-plan",
     publishedDate: "2026-05-20",
     updatedDate: "2026-05-20",
