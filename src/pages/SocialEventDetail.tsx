@@ -79,6 +79,12 @@ export default function SocialEventDetail() {
   const { profile } = useUserProfile();
   const isMobile = useIsMobile();
   const [modalOpen, setModalOpen] = useState(false);
+  // 2026-05-22 — bumping this counter forces the useMemo below to
+  // re-read localStorage. Callers (RegistrationModal onSuccess + the
+  // window 'focus' / 'visibilitychange' listeners below) increment it
+  // so newly-saved registrations show their 'Đăng ký hộ' CTA + 'Xem
+  // đăng ký của bạn' link without a full page reload.
+  const [storedVersion, setStoredVersion] = useState(0);
   // 2026-05-22 — proxy registration ("Đăng ký hộ bạn bè"). Surfaced
   // below the "Xem đăng ký của bạn" CTA only when the viewer already
   // has a non-cancelled registration AND the event is still open for
@@ -109,7 +115,8 @@ export default function SocialEventDetail() {
   const myStored = useMemo(() => {
     if (!data?.id) return null;
     return readMyRegistration(data.id);
-  }, [data?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- storedVersion is the explicit trigger
+  }, [data?.id, storedVersion]);
 
   const { data: myStatus } = useQuery<{ cancelled_at: string | null } | null>({
     queryKey: ["my-registration-status", myStored?.magic_token ?? null],
@@ -149,6 +156,18 @@ export default function SocialEventDetail() {
   //     Cloudflare prerender path instead. We still emit this so the
   //     page passes the Rich Results test when validated directly.
   useEffect(() => {
+    function bump() {
+      setStoredVersion((v) => v + 1);
+    }
+    window.addEventListener("focus", bump);
+    document.addEventListener("visibilitychange", bump);
+    return () => {
+      window.removeEventListener("focus", bump);
+      document.removeEventListener("visibilitychange", bump);
+    };
+  }, []);
+
+    useEffect(() => {
     if (!data) return;
     const script = document.createElement("script");
     script.type = "application/ld+json";
@@ -670,6 +689,10 @@ export default function SocialEventDetail() {
             onSuccess={() => {
               refetch();
               refetchRegistrations();
+              // Bump so the parent re-renders cards if the proxy
+              // batch also wrote a new entry for the registering
+              // user — defensive only, current backend doesn't.
+              setStoredVersion((v) => v + 1);
             }}
           />
         )}
@@ -695,6 +718,10 @@ export default function SocialEventDetail() {
             // without a manual page reload.
             refetch();
             refetchRegistrations();
+            // 2026-05-22 — bump storedVersion so myStored re-reads
+            // localStorage. Without this the 'Xem đăng ký của bạn' +
+            // 'Đăng ký hộ' CTAs don't appear until the user reloads.
+            setStoredVersion((v) => v + 1);
           }}
         />
       </div>
