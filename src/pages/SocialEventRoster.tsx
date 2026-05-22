@@ -66,7 +66,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { maskPhone } from "@/lib/phone";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
-import { profileIdToSlug } from "@/lib/badges/profileSlug";
 import { ManualAddRegistrationModal } from "@/components/social-events/ManualAddRegistrationModal";
 
 interface PaymentOrderRow {
@@ -435,17 +434,13 @@ export default function SocialEventRoster() {
                 <TableRow key={row.id}>
                   <TableCell>
                     <div style={{ fontWeight: 500, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      {row.profile_id ? (
-                        <Link
-                          to={`/u/${profileIdToSlug(row.profile_id)}`}
-                          className="hover:underline"
-                          title={roster.viewProfileHint}
-                        >
-                          {row.display_name}
-                        </Link>
-                      ) : (
-                        row.display_name
-                      )}
+                      {/* 2026-05-22 — clicking a player name used to
+                          deep-link to /u/<slug> (public profile) but that
+                          page currently crashes for some seed profiles
+                          ("Can't find variable: username"). The roster
+                          already shows every column the organizer needs
+                          inline, so we render the name as plain text. */}
+                      <span>{row.display_name}</span>
                       {/* PR feat/proxy-and-manual-registration — origin
                           badge for both proxy and manual rows. Visible
                           only on this organizer dashboard (public roster
