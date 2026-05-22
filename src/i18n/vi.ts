@@ -1922,6 +1922,15 @@ export interface Translations {
       allowGuestsHint: string;
       cancellationHours: string;
       zaloGroupUrl: string;
+      // PR68 — ball type + free perks
+      ballType: string;
+      ballTypePlaceholder: string;
+      ballTypeOther: string;
+      ballTypeCustomPlaceholder: string;
+      freePerks: string;
+      freePerksAdd: string;
+      freePerksRemove: string;
+      freePerksCustomPlaceholder: string;
       visibility: string;
       visibilityPublic: string;
       visibilityClubOnly: string;
@@ -4631,6 +4640,15 @@ export const vi: Translations = {
         "Bỏ chọn nếu chỉ thành viên CLB có tài khoản mới được đăng ký.",
       cancellationHours: "Số giờ hủy đăng ký được hoàn tiền",
       zaloGroupUrl: "Liên kết nhóm Zalo (tuỳ chọn)",
+      // PR68
+      ballType: "Loại bóng thi đấu",
+      ballTypePlaceholder: "Chọn loại bóng",
+      ballTypeOther: "Khác",
+      ballTypeCustomPlaceholder: "Nhập tên bóng…",
+      freePerks: "Bao gồm miễn phí",
+      freePerksAdd: "Thêm",
+      freePerksRemove: "Xoá",
+      freePerksCustomPlaceholder: "Thêm mục khác…",
       visibility: "Hiển thị",
       visibilityPublic: "Công khai — ai cũng xem được",
       visibilityClubOnly: "Chỉ trong CLB — không index search engine",

@@ -63,6 +63,18 @@ export interface FormState {
    */
   slots: SlotConfig[];
   /**
+   * PR68 — Official match-ball model. Free-form text persisted to
+   * social_events.ball_type. Wizard offers a quick-pick preset list plus
+   * a "Khác" option for arbitrary entries.
+   */
+  ball_type: string;
+  /**
+   * PR68 — Complimentary items included with the entry fee (water,
+   * fruit, towel…). Persisted to social_events.free_perks as a text[].
+   * Wizard combines preset toggle chips with a free-form "add custom".
+   */
+  free_perks: string[];
+  /**
    * Weekly-repeat count. 0 = no repeat (single event), N = create N
    * additional events 7, 14, …, 7N days after the base event with
    * identical fields. Capped at 12 weeks (one quarter) to keep slug
@@ -91,6 +103,8 @@ export const initialForm: FormState = {
   requires_prepayment: false,
   prepayment_deadline_hours: 12,
   slots: [],
+  ball_type: "",
+  free_perks: [],
   repeat_weeks: 0,
 };
 

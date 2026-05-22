@@ -57,6 +57,10 @@ export interface SocialEventRow {
   requires_prepayment: boolean;
   prepayment_deadline_hours: number;
   zalo_group_url: string | null;
+  /** PR68 — Official match-ball model (free text). e.g. "Franklin X-40". */
+  ball_type: string | null;
+  /** PR68 — Complimentary items included for free (water, fruit, towel…). */
+  free_perks: string[] | null;
   status: "draft" | "published" | "cancelled" | "completed";
   visibility: "public" | "club_only";
   /**
@@ -88,6 +92,7 @@ export function useSocialEvent(slug: string | undefined) {
            court_count, max_players, level_min, level_max,
            price_vnd, allow_guests, cancellation_hours,
            requires_prepayment, prepayment_deadline_hours, zalo_group_url,
+           ball_type, free_perks,
            slots,
            status, visibility, created_by, created_at, updated_at,
            club:clubs!social_events_club_id_fkey ( id, slug, name, logo_url )`,

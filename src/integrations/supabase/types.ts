@@ -4922,6 +4922,7 @@ export type Database = {
       social_events: {
         Row: {
           allow_guests: boolean
+          ball_type: string | null
           cancellation_hours: number
           club_id: string | null
           court_count: number
@@ -4930,6 +4931,7 @@ export type Database = {
           description_en: string | null
           description_vi: string | null
           end_at: string
+          free_perks: string[] | null
           id: string
           level_max: number | null
           level_min: number | null
@@ -4952,6 +4954,7 @@ export type Database = {
         }
         Insert: {
           allow_guests?: boolean
+          ball_type?: string | null
           cancellation_hours?: number
           club_id?: string | null
           court_count?: number
@@ -4960,6 +4963,7 @@ export type Database = {
           description_en?: string | null
           description_vi?: string | null
           end_at: string
+          free_perks?: string[] | null
           id?: string
           level_max?: number | null
           level_min?: number | null
@@ -4982,6 +4986,7 @@ export type Database = {
         }
         Update: {
           allow_guests?: boolean
+          ball_type?: string | null
           cancellation_hours?: number
           club_id?: string | null
           court_count?: number
@@ -4990,6 +4995,7 @@ export type Database = {
           description_en?: string | null
           description_vi?: string | null
           end_at?: string
+          free_perks?: string[] | null
           id?: string
           level_max?: number | null
           level_min?: number | null

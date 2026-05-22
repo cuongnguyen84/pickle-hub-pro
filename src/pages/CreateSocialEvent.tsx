@@ -268,6 +268,9 @@ export default function CreateSocialEvent() {
           price_vnd: form.price_vnd,
           zalo_group_url:
             form.zalo_group_url.trim() === "" ? null : form.zalo_group_url.trim(),
+          // PR68 — optional ball + free perks badges
+          ball_type: form.ball_type.trim() === "" ? null : form.ball_type.trim(),
+          free_perks: form.free_perks.length > 0 ? form.free_perks : null,
           status: publish ? "published" : "draft",
           visibility: form.visibility,
           requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,

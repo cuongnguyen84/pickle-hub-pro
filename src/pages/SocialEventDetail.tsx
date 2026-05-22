@@ -370,6 +370,20 @@ export default function SocialEventDetail() {
               {t.socialEvents.detail.level} {levelRange}
             </Badge>
           )}
+          {/* PR68 — Ball type badge. Only render when the organizer set it. */}
+          {data.ball_type && (
+            <Badge variant="secondary" className="text-sm">
+              <span className="mr-1" aria-hidden="true">🎾</span>
+              {data.ball_type}
+            </Badge>
+          )}
+          {/* PR68 — Free-perks badge. Joins the array with a middle dot. */}
+          {data.free_perks && data.free_perks.length > 0 && (
+            <Badge variant="secondary" className="text-sm">
+              <span className="mr-1" aria-hidden="true">🎁</span>
+              {data.free_perks.join(" · ")}
+            </Badge>
+          )}
         </div>
 
         {/* Above-the-fold CTA card */}
