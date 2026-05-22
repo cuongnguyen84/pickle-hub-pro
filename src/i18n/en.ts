@@ -2185,6 +2185,14 @@ export const en: Translations = {
       alreadyRegisteredCta: "View your registration",
       cancelledBanner: "You cancelled your registration for this event",
       reregisterCta: "Manage / re-register",
+      // PR65 — Zalo OA integration
+      followOaBanner: {
+        title: "Follow ThePickleHub on Zalo",
+        body:
+          "Get tournament schedules, livestream links and match recaps delivered straight to your Zalo.",
+        cta: "Open Zalo OA",
+        dismissAriaLabel: "Dismiss",
+      },
       unpaidRegistrationBannerTitle: "Registration unpaid",
       unpaidRegistrationBannerDescription:
         "This event requires prepayment. Complete the bank transfer with the reference code below, then tap \"Paid\" to confirm.",
