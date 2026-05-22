@@ -22,8 +22,6 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
@@ -66,10 +64,10 @@ import { useNoindex } from "@/hooks/useNoindex";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { maskPhone, normalizeVietnamPhone } from "@/lib/phone";
+import { maskPhone } from "@/lib/phone";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
-// profileIdToSlug import removed 2026-05-22 — roster no longer links
-// to /u/<slug> (see player-name TableCell comment).
+import { profileIdToSlug } from "@/lib/badges/profileSlug";
+import { ManualAddRegistrationModal } from "@/components/social-events/ManualAddRegistrationModal";
 
 interface PaymentOrderRow {
   id: string;
@@ -182,9 +180,39 @@ export default function SocialEventRoster() {
   const [notesRow, setNotesRow] = useState<EventRegistrationRow | null>(null);
   const [notesValue, setNotesValue] = useState("");
   const [manualOpen, setManualOpen] = useState(false);
-  const [manualName, setManualName] = useState("");
-  const [manualPhone, setManualPhone] = useState("");
-  const [manualLevel, setManualLevel] = useState("");
+
+  // PR proxy/manual — look up display_name of the proxy / organizer
+  // who created each non-self registration so the cell can render
+  // "bạn của <A>" / "BTC <organizer>" next to the friend's name.
+  const registeredByIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const r of registrations ?? []) {
+      if (r.registered_by_profile_id) ids.add(r.registered_by_profile_id);
+    }
+    return Array.from(ids);
+  }, [registrations]);
+
+  const { data: registeredByProfiles } = useQuery<Record<string, string>>({
+    queryKey: ["registered-by-profiles", registeredByIds.join(",")],
+    queryFn: async () => {
+      if (registeredByIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", registeredByIds);
+      if (error) {
+        console.error("registered-by-profiles fetch error", error);
+        return {};
+      }
+      const map: Record<string, string> = {};
+      for (const row of data ?? []) {
+        map[(row as { id: string }).id] = (row as { display_name: string | null }).display_name ?? "";
+      }
+      return map;
+    },
+    enabled: registeredByIds.length > 0,
+    staleTime: 60_000,
+  });
 
   const stats = useMemo(() => {
     const list = registrations ?? [];
@@ -277,39 +305,16 @@ export default function SocialEventRoster() {
     setNotesValue("");
   }
 
-  async function manualAdd() {
-    if (!event) return;
-    if (manualName.trim().length < 1) {
-      toast({ title: roster.colName + " *", variant: "destructive" });
-      return;
-    }
-    const phoneNorm = manualPhone.trim() === "" ? null : normalizeVietnamPhone(manualPhone);
-    if (manualPhone.trim() !== "" && !phoneNorm) {
-      toast({ title: t.socialEvents.register.phoneInvalid, variant: "destructive" });
-      return;
-    }
-    const levelNum = manualLevel.trim() === "" ? null : Number(manualLevel);
-    // Use the add_walk_in_registration RPC instead of a direct INSERT so
-    // the new row always carries a profile_id. A direct insert leaves
-    // profile_id NULL, which then propagates as NULL player FKs when the
-    // organizer saves a matchmaking schedule (PR47 follow-up fix).
-    const { error } = await supabase.rpc("add_walk_in_registration", {
-      p_event_id: event.id,
-      p_display_name: manualName.trim(),
-      p_phone: phoneNorm,
-      p_self_rated_level: levelNum,
-    });
-    if (error) {
-      toast({ title: t.common.error, description: error.message, variant: "destructive" });
-      return;
-    }
-    setManualOpen(false);
-    setManualName("");
-    setManualPhone("");
-    setManualLevel("");
-    refetch();
-    toast({ title: roster.updatedToast });
-  }
+  // PR proxy/manual — manualAdd was previously a thin wrapper around the
+  // add_walk_in_registration RPC. It now runs through the
+  // add-registration-direct edge function (mode='manual') via the new
+  // ManualAddRegistrationModal so the organizer also gets:
+  //   - optional payment-status setting (unpaid/claimed/waived)
+  //   - internal notes
+  //   - a /dang-ky/<token> link + Zalo/FB share buttons in the success
+  //     state, so the BTC can hand off the link immediately.
+  // The legacy local state (manualName/manualPhone/manualLevel) lives
+  // inside the modal now.
 
   function downloadCsv() {
     const csv = buildCsv(registrations ?? []);
@@ -429,18 +434,57 @@ export default function SocialEventRoster() {
               {(registrations ?? []).map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>
-                    {/* 2026-05-22 — clicking a player name used to deep-link
-                        to /u/<slug> (public profile) but that page currently
-                        crashes for some seed profiles ("Can't find variable:
-                        username"). Per product, the roster already shows
-                        every piece of info the organizer needs inline, so
-                        we render the name as plain text. Re-enable the
-                        link once PlayerProfile is hardened against profiles
-                        without a username field. */}
-                    <div style={{ fontWeight: 500 }}>{row.display_name}</div>
+                    <div style={{ fontWeight: 500, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      {row.profile_id ? (
+                        <Link
+                          to={`/u/${profileIdToSlug(row.profile_id)}`}
+                          className="hover:underline"
+                          title={roster.viewProfileHint}
+                        >
+                          {row.display_name}
+                        </Link>
+                      ) : (
+                        row.display_name
+                      )}
+                      {/* PR feat/proxy-and-manual-registration — origin
+                          badge for both proxy and manual rows. Visible
+                          only on this organizer dashboard (public roster
+                          only shows the proxy badge). Includes the
+                          proxy/organizer's display_name when known. */}
+                      {row.registration_source === "proxy" && (
+                        <span className="tl-format-badge" style={{ borderColor: "var(--tl-border)", color: "var(--tl-fg-3)" }}>
+                          {(() => {
+                            const proxyName = row.registered_by_profile_id
+                              ? registeredByProfiles?.[row.registered_by_profile_id]
+                              : null;
+                            return proxyName
+                              ? `${t.socialEvents.proxyRegister.proxyBadgeLabel} · ${language === "vi" ? "bạn của" : "friend of"} ${proxyName}`
+                              : t.socialEvents.proxyRegister.proxyBadgeLabel;
+                          })()}
+                        </span>
+                      )}
+                      {row.registration_source === "manual" && (
+                        <span className="tl-format-badge" style={{ borderColor: "var(--tl-border)", color: "var(--tl-fg-3)" }}>
+                          {(() => {
+                            const orgName = row.registered_by_profile_id
+                              ? registeredByProfiles?.[row.registered_by_profile_id]
+                              : null;
+                            return orgName
+                              ? `${t.socialEvents.proxyRegister.manualBadgeLabel} · ${orgName}`
+                              : t.socialEvents.proxyRegister.manualBadgeLabel;
+                          })()}
+                        </span>
+                      )}
+                    </div>
                     {row.notes && (
                       <div style={{ fontSize: 12, color: "var(--tl-fg-3)" }}>
                         <StickyNote className="inline h-3 w-3" /> {row.notes}
+                      </div>
+                    )}
+                    {/* Internal notes — organizer-only field. */}
+                    {row.internal_notes && (
+                      <div style={{ fontSize: 12, color: "var(--tl-fg-3)", marginTop: 2 }}>
+                        <StickyNote className="inline h-3 w-3" /> <span className="italic">{row.internal_notes}</span>
                       </div>
                     )}
                   </TableCell>
@@ -675,46 +719,22 @@ export default function SocialEventRoster() {
           </DialogContent>
         </Dialog>
 
-        {/* Manual add dialog */}
-        <Dialog open={manualOpen} onOpenChange={setManualOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{roster.addManualTitle}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="m-name">{roster.colName}*</Label>
-                <Input id="m-name" value={manualName} onChange={(e) => setManualName(e.target.value)} maxLength={80} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="m-phone">{roster.colPhone}</Label>
-                <Input
-                  id="m-phone"
-                  type="tel"
-                  value={manualPhone}
-                  onChange={(e) => setManualPhone(e.target.value)}
-                  placeholder="0901 234 567"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="m-level">{roster.colLevel}</Label>
-                <Input
-                  id="m-level"
-                  inputMode="decimal"
-                  value={manualLevel}
-                  onChange={(e) => setManualLevel(e.target.value)}
-                  placeholder="3.5"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setManualOpen(false)}>
-                {t.common.cancel}
-              </Button>
-              <Button onClick={manualAdd}>{roster.addManualSubmit}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Manual add modal — PR proxy/manual.
+            Replaces the old simple Dialog with the richer modal that
+            supports payment status, internal notes, and returns a
+            shareable /dang-ky/<token> link in the success state. */}
+        <ManualAddRegistrationModal
+          open={manualOpen}
+          onOpenChange={setManualOpen}
+          eventId={event.id}
+          eventTitle={eventTitle}
+          priceVnd={event.price_vnd ?? 0}
+          onSuccess={() => {
+            refetch();
+            queryClient.invalidateQueries({ queryKey: ["club-events-manage"] });
+            queryClient.invalidateQueries({ queryKey: ["payment-orders-event", event.id] });
+          }}
+        />
       </div>
     </TheLineLayout>
   );
