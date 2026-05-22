@@ -23,6 +23,7 @@ import { formatEventDateRange } from "@/lib/social-events/format";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 import { useNoindex } from "@/hooks/useNoindex";
 import { ClubManagers } from "@/components/social-events/ClubManagers";
+import { ClubMembers } from "@/components/social-events/ClubMembers";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function ClubManage() {
@@ -202,6 +203,15 @@ export default function ClubManage() {
               creatorAvatarUrl={creatorProfile?.avatar_url ?? null}
               canMutate={canMutateManagers}
             />
+          </Card>
+        )}
+
+        {/* Members section — visible to all organizers (creator + manager
+            + admin). All mutations (invite / approve / remove) are gated
+            server-side via is_club_organizer. */}
+        {clubData && (
+          <Card className="mb-6 p-5">
+            <ClubMembers clubId={clubData.club.id} />
           </Card>
         )}
 

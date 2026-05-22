@@ -68,11 +68,18 @@ interface Props {
   defaultPhone?: string | null;
   /** Prefill display name from authed profile when available. */
   defaultDisplayName?: string | null;
+  /**
+   * 2026-05-22 — club membership skip-OTP path. When TRUE, the modal
+   * opens straight into the slot picker (if any) + a single confirm
+   * button, then calls the `register_event_as_member` RPC instead of
+   * sending an OTP. Payment + slot logic are unchanged downstream.
+   */
+  memberSkipOtp?: boolean;
   /** Called when the user successfully registers (parent re-fetches counts). */
   onSuccess?: () => void;
 }
 
-type Step = "phone" | "otp" | "payment" | "success";
+type Step = "phone" | "otp" | "member" | "payment" | "success";
 
 interface VerifyResponse {
   ok: true;
@@ -105,6 +112,8 @@ function translateErrorCode(
       return reg.slotInvalid;
     case "slot_full":
       return reg.slotFull;
+    case "not_a_member":
+      return reg.notAMember;
     case "event_not_published":
     case "event_not_public":
     case "event_not_found":
@@ -140,6 +149,7 @@ export function RegistrationModal({
   slots,
   defaultPhone,
   defaultDisplayName,
+  memberSkipOtp = false,
   onSuccess,
 }: Props) {
   const { t, language } = useI18n();
@@ -150,7 +160,7 @@ export function RegistrationModal({
   );
   const hasSlots = slotList.length > 0;
 
-  const [step, setStep] = useState<Step>("phone");
+  const [step, setStep] = useState<Step>(memberSkipOtp ? "member" : "phone");
   const [phoneInput, setPhoneInput] = useState(defaultPhone ?? "");
   const [normalizedPhone, setNormalizedPhone] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState(defaultDisplayName ?? "");
@@ -207,7 +217,7 @@ export function RegistrationModal({
   // Reset state whenever the modal closes so the next open starts clean.
   useEffect(() => {
     if (!open) {
-      setStep("phone");
+      setStep(memberSkipOtp ? "member" : "phone");
       setOtp("");
       setSuccess(null);
       setDevOtp(null);
@@ -224,7 +234,7 @@ export function RegistrationModal({
         intervalRef.current = null;
       }
     }
-  }, [open]);
+  }, [open, memberSkipOtp]);
 
   // Resend cooldown ticker.
   useEffect(() => {
@@ -459,9 +469,129 @@ export function RegistrationModal({
     }
   }
 
+  /**
+   * Member-path registration (skip OTP). Called from the "member" step
+   * when the viewer is an active club member or an organizer of the
+   * event's club. Hits the register_event_as_member RPC which validates
+   * membership + capacity + slot server-side. Payment + success branch
+   * are identical to handleVerify so QRPaymentStep + the save-link card
+   * keep working without changes.
+   */
+  async function handleMemberRegister() {
+    if (hasSlots && !selectedSlotId) {
+      toast({ title: reg.slotRequired, variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { data: rows, error } = await supabase.rpc(
+        "register_event_as_member",
+        {
+          p_event_id: eventId,
+          p_slot_id: hasSlots && selectedSlotId ? selectedSlotId : null,
+        },
+      );
+      if (error) {
+        const code = (error as { message?: string }).message ?? "";
+        const known = code.match(/^[a-z_]+$/i) ? code : "";
+        toast({
+          title: translateErrorCode(known, t),
+          variant: "destructive",
+        });
+        return;
+      }
+      const row =
+        Array.isArray(rows) && rows.length > 0
+          ? (rows[0] as {
+              registration_id: string;
+              profile_id: string;
+              magic_token: string;
+              registered_at: string;
+            })
+          : null;
+      if (!row) {
+        toast({ title: reg.networkError, variant: "destructive" });
+        return;
+      }
+      const stored: VerifyResponse = {
+        ok: true,
+        registration_id: row.registration_id,
+        profile_id: row.profile_id,
+        magic_token: row.magic_token,
+        registered_at: row.registered_at,
+      };
+      saveMyRegistration(eventId, {
+        magic_token: stored.magic_token,
+        registration_id: stored.registration_id,
+        display_name: defaultDisplayName ?? null,
+        registered_at: stored.registered_at,
+      });
+      setSuccess(stored);
+      onSuccess?.();
+
+      // Payment branch — same as OTP path. Free events go straight to
+      // the success screen. Paid events ask create-payment-order for
+      // an order + bank config; payment_not_enabled fallback shows the
+      // pay-at-venue success message.
+      if (priceVnd > 0) {
+        const orderResp = await supabase.functions.invoke<{
+          ok?: true;
+          code?: string;
+          order_id?: string;
+          reference_code?: string;
+          amount_vnd?: number;
+          player_claimed_paid?: boolean;
+          player_claimed_at?: string | null;
+          bank?: { code: string; account_number: string; account_name: string };
+        }>("create-payment-order", {
+          body: {
+            registration_id: stored.registration_id,
+            magic_token: stored.magic_token,
+          },
+        });
+        const payload = orderResp.data;
+        if (
+          orderResp.error ||
+          !payload?.ok ||
+          payload.code === "payment_not_enabled" ||
+          !payload.order_id ||
+          !payload.bank
+        ) {
+          setStep("success");
+          return;
+        }
+        setPaymentOrder({
+          order_id: payload.order_id,
+          reference_code: payload.reference_code ?? "",
+          amount_vnd: payload.amount_vnd ?? priceVnd,
+          player_claimed_paid: payload.player_claimed_paid ?? false,
+          player_claimed_at: payload.player_claimed_at ?? null,
+          bank: payload.bank,
+        });
+        saveMyRegistration(eventId, {
+          magic_token: stored.magic_token,
+          registration_id: stored.registration_id,
+          reference_code: payload.reference_code ?? null,
+          display_name: defaultDisplayName ?? null,
+          registered_at: stored.registered_at,
+        });
+        setStep("payment");
+        return;
+      }
+
+      setStep("success");
+    } catch (e) {
+      console.error("register_event_as_member failed", e);
+      toast({ title: reg.networkError, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const stepHeader = (() => {
     if (step === "phone") return reg.stepPhone;
     if (step === "otp") return reg.stepCode;
+    if (step === "member") return reg.stepMember;
     if (step === "payment") return reg.stepPayment;
     return reg.stepDone;
   })();
@@ -479,6 +609,102 @@ export function RegistrationModal({
             {eventTitle} — {stepHeader}
           </DialogDescription>
         </DialogHeader>
+
+        {step === "member" && (
+          /* Member skip-OTP path. Shown when the viewer is an active
+             club member (or organizer) registering for one of their
+             club's events. The flow collapses 3 steps (phone → OTP →
+             ...) into a single confirm — slot pick (if any) + button. */
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!submitting) handleMemberRegister();
+            }}
+            className="space-y-4"
+          >
+            <div className="rounded-md border border-emerald-400/50 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+              {reg.memberHint}
+            </div>
+
+            {hasSlots && (
+              <div className="space-y-2">
+                <Label>{reg.slotPickerLabel} *</Label>
+                <p className="text-xs text-muted-foreground">{reg.slotPickerHint}</p>
+                <div className="space-y-1.5">
+                  {slotList.map((slot) => {
+                    const taken = slotCounts?.[slot.id] ?? 0;
+                    const remaining = Math.max(0, slot.capacity - taken);
+                    const full = remaining === 0;
+                    const checked = selectedSlotId === slot.id;
+                    const meta: string[] = [];
+                    if (slot.kind === "skill" && slot.skill_level) {
+                      meta.push(`${reg.slotMetaSkill}: ${slot.skill_level}`);
+                    }
+                    if (slot.kind === "duration" && slot.min_play_months != null) {
+                      meta.push(
+                        slot.min_play_months === 0
+                          ? reg.slotMetaDurationNewbie
+                          : interp(reg.slotMetaDurationMonths, { n: slot.min_play_months }),
+                      );
+                    }
+                    if (slot.court_count) {
+                      meta.push(interp(reg.slotMetaCourts, { n: slot.court_count }));
+                    }
+                    return (
+                      <label
+                        key={slot.id}
+                        className={`flex cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors ${
+                          checked
+                            ? "border-primary bg-primary/5"
+                            : full
+                              ? "border-border bg-muted/30 opacity-60"
+                              : "border-border hover:bg-muted/40"
+                        }`}
+                        style={{ cursor: full ? "not-allowed" : "pointer" }}
+                      >
+                        <input
+                          type="radio"
+                          name="ev-slot-member"
+                          className="mt-1"
+                          checked={checked}
+                          disabled={full}
+                          onChange={() => setSelectedSlotId(slot.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">{slot.label}</div>
+                          {meta.length > 0 && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">{meta.join(" · ")}</div>
+                          )}
+                          {slot.notes && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">{slot.notes}</div>
+                          )}
+                          <div className="mt-1 text-xs font-mono">
+                            {full ? (
+                              <span className="text-destructive">{reg.slotFullBadge}</span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {interp(reg.slotRemainingBadge, { remaining, capacity: slot.capacity })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={submitting || (hasSlots && !selectedSlotId)}
+            >
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting ? reg.submitting : reg.memberRegisterCta}
+            </Button>
+          </form>
+        )}
 
         {step === "phone" && (
           <form

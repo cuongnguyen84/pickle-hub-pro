@@ -6,7 +6,7 @@
 // ============================================================================
 
 import { Link, useParams } from "react-router-dom";
-import { AlertTriangle, Loader2, MapPin, Calendar, Users, ListChecks } from "lucide-react";
+import { AlertTriangle, Loader2, MapPin, Calendar, Users, ListChecks, UserPlus, Clock, BadgeCheck, LogOut } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,6 +16,11 @@ import { useClub, type ClubEventRow } from "@/hooks/useClub";
 import { formatEventDateRange, interp } from "@/lib/social-events/format";
 import { EntityNotFound } from "@/components/EntityNotFound";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
+import { useMyMembership } from "@/hooks/useClubMembers";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
+import { useNavigate } from "react-router-dom";
 
 function EventCard({
   event,
@@ -79,6 +84,8 @@ function EventCard({
 export default function ClubLanding() {
   const { slug } = useParams<{ slug: string }>();
   const { t, language } = useI18n();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { data, isLoading } = useClub(slug);
   // PR63 — same gate used by /clb/:slug/quan-ly so an admin or the
   // CLB creator sees a Manage entry on each event card. Anonymous
@@ -86,6 +93,48 @@ export default function ClubLanding() {
   const permission = useClubOwnership(slug);
   const isOrganizer = permission.state === "allowed";
   const manageLabel = t.socialEvents.club.manageEventCta;
+
+  // 2026-05-22 — membership status drives the join button rendered in
+  // the page header. We gate on club archive: archived clubs hide the
+  // join button entirely (read-only mode).
+  const { status: membershipStatus, requestJoin, leaveClub } = useMyMembership(
+    data?.club.id,
+  );
+  const m = t.socialEvents.members;
+
+  async function handleRequestJoin() {
+    if (!user) {
+      navigate(
+        buildLoginRedirect(window.location.pathname + window.location.search),
+      );
+      return;
+    }
+    try {
+      await requestJoin.mutateAsync();
+      toast({ title: m.joinPending });
+    } catch (err) {
+      const code = (err as { code?: string })?.code ?? "";
+      const msg =
+        code === "already_member"
+          ? m.errAlreadyMember
+          : code === "already_creator"
+            ? m.errAlreadyCreator
+            : code === "already_manager"
+              ? m.errAlreadyManager
+              : t.socialEvents.managers.errNotAuthorized;
+      toast({ title: msg, variant: "destructive" });
+    }
+  }
+
+  async function handleLeave() {
+    if (!window.confirm(m.leaveConfirm)) return;
+    try {
+      await leaveClub.mutateAsync();
+      toast({ title: m.leaveSuccess });
+    } catch {
+      toast({ title: m.removeError, variant: "destructive" });
+    }
+  }
 
   if (isLoading) {
     return (
@@ -162,6 +211,72 @@ export default function ClubLanding() {
                   {interp(t.socialEvents.club.eventsLabel, { n: totalEvents })}
                 </Badge>
               </div>
+
+              {/* Join / membership status pill. Hidden when the club is
+                  archived (read-only mode). Anonymous viewers see a
+                  "Request to join" CTA that bounces through login. */}
+              {!club.archived_at && (
+                <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {membershipStatus === "anonymous" && (
+                    <Button onClick={handleRequestJoin} size="sm" variant="default">
+                      <UserPlus className="h-4 w-4 mr-1" /> {m.joinCta}
+                    </Button>
+                  )}
+                  {membershipStatus === "none" && (
+                    <Button
+                      onClick={handleRequestJoin}
+                      size="sm"
+                      variant="default"
+                      disabled={requestJoin.isPending}
+                    >
+                      {requestJoin.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <UserPlus className="h-4 w-4 mr-1" />
+                      )}
+                      {m.joinCta}
+                    </Button>
+                  )}
+                  {membershipStatus === "pending" && (
+                    <Badge variant="outline" className="px-3 py-1">
+                      <Clock className="h-3.5 w-3.5 mr-1" /> {m.joinPending}
+                    </Badge>
+                  )}
+                  {membershipStatus === "active" && (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className="px-3 py-1"
+                        style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
+                      >
+                        <BadgeCheck className="h-3.5 w-3.5 mr-1" /> {m.joinedBadge}
+                      </Badge>
+                      <Button
+                        onClick={handleLeave}
+                        size="sm"
+                        variant="ghost"
+                        disabled={leaveClub.isPending}
+                      >
+                        {leaveClub.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                        ) : (
+                          <LogOut className="h-3.5 w-3.5 mr-1" />
+                        )}
+                        {m.leaveCta}
+                      </Button>
+                    </>
+                  )}
+                  {(membershipStatus === "creator" || membershipStatus === "manager") && (
+                    <Badge
+                      variant="outline"
+                      className="px-3 py-1"
+                      style={{ borderColor: "var(--tl-green)", color: "var(--tl-green)" }}
+                    >
+                      <BadgeCheck className="h-3.5 w-3.5 mr-1" /> {m.joinedBadge}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </header>

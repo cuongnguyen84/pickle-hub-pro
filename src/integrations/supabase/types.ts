@@ -612,6 +612,97 @@ export type Database = {
           },
         ]
       }
+      club_members: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          approved_at: string | null
+          club_id: string
+          profile_id: string
+          status: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          approved_at?: string | null
+          club_id: string
+          profile_id: string
+          status?: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          approved_at?: string | null
+          club_id?: string
+          profile_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_members_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "club_members_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "club_listing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "club_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "club_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubs: {
         Row: {
           archived_at: string | null
@@ -1459,12 +1550,15 @@ export type Database = {
           display_name: string
           event_id: string
           id: string
+          internal_notes: string | null
           notes: string | null
           paid_at: string | null
           payment_status: string
           phone: string | null
           profile_id: string | null
           registered_at: string
+          registered_by_profile_id: string | null
+          registration_source: string
           self_rated_level: number | null
           slot_id: string | null
           status: string
@@ -1475,12 +1569,15 @@ export type Database = {
           display_name: string
           event_id: string
           id?: string
+          internal_notes?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_status?: string
           phone?: string | null
           profile_id?: string | null
           registered_at?: string
+          registered_by_profile_id?: string | null
+          registration_source?: string
           self_rated_level?: number | null
           slot_id?: string | null
           status?: string
@@ -1491,12 +1588,15 @@ export type Database = {
           display_name?: string
           event_id?: string
           id?: string
+          internal_notes?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_status?: string
           phone?: string | null
           profile_id?: string | null
           registered_at?: string
+          registered_by_profile_id?: string | null
+          registration_source?: string
           self_rated_level?: number | null
           slot_id?: string | null
           status?: string
@@ -1526,6 +1626,27 @@ export type Database = {
           {
             foreignKeyName: "event_registrations_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_registered_by_profile_id_fkey"
+            columns: ["registered_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "event_registrations_registered_by_profile_id_fkey"
+            columns: ["registered_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_registered_by_profile_id_fkey"
+            columns: ["registered_by_profile_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -6213,6 +6334,23 @@ export type Database = {
         }
         Returns: string
       }
+      approve_club_member: {
+        Args: { p_club_id: string; p_profile_id: string }
+        Returns: {
+          added_at: string
+          added_by: string | null
+          approved_at: string | null
+          club_id: string
+          profile_id: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "club_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       award_player_event_badges: {
         Args: { p_event_id: string; p_profile_id: string }
         Returns: undefined
@@ -6286,6 +6424,14 @@ export type Database = {
       }
       compute_player_win_streak: {
         Args: { p_player_id: string }
+        Returns: number
+      }
+      count_manual_registrations_recent: {
+        Args: { p_hours?: number; p_organizer_profile_id: string }
+        Returns: number
+      }
+      count_proxy_registrations_recent: {
+        Args: { p_hours?: number; p_proxy_profile_id: string }
         Returns: number
       }
       count_user_tournaments: { Args: { _user_id: string }; Returns: number }
@@ -6739,7 +6885,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      invite_club_member: {
+        Args: { p_club_id: string; p_profile_id: string }
+        Returns: {
+          added_at: string
+          added_by: string | null
+          approved_at: string | null
+          club_id: string
+          profile_id: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "club_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_admin: { Args: never; Returns: boolean }
+      is_club_member: {
+        Args: { p_club_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_club_organizer: {
         Args: { p_club_id: string; p_user_id: string }
         Returns: boolean
@@ -6799,6 +6966,20 @@ export type Database = {
           profile_id: string
         }[]
       }
+      list_club_members: {
+        Args: { p_club_id: string }
+        Returns: {
+          added_at: string
+          added_by: string
+          approved_at: string
+          avatar_url: string
+          display_name: string
+          email: string
+          phone: string
+          profile_id: string
+          status: string
+        }[]
+      }
       log_audit_event: {
         Args: {
           _actor_type?: string
@@ -6819,7 +7000,24 @@ export type Database = {
           id: string
         }[]
       }
+      my_club_membership_status: {
+        Args: { p_club_id: string }
+        Returns: string
+      }
+      register_event_as_member: {
+        Args: { p_event_id: string; p_slot_id?: string }
+        Returns: {
+          magic_token: string
+          profile_id: string
+          registered_at: string
+          registration_id: string
+        }[]
+      }
       remove_club_manager: {
+        Args: { p_club_id: string; p_profile_id: string }
+        Returns: number
+      }
+      remove_club_member: {
         Args: { p_club_id: string; p_profile_id: string }
         Returns: number
       }
@@ -6827,6 +7025,7 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: Json
       }
+      request_to_join_club: { Args: { p_club_id: string }; Returns: string }
       respond_pair_request: {
         Args: { _accept: boolean; _request_id: string }
         Returns: Json
@@ -6891,6 +7090,10 @@ export type Database = {
         Returns: boolean
       }
       user_club_count: { Args: { p_user_id: string }; Returns: number }
+      verify_event_organizer: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "viewer" | "creator" | "admin" | "moderator"
@@ -7125,5 +7328,5 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.100.1 (currently installed v)
+A new version of Supabase CLI is available: v2.101.0 (currently installed v)
 We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli

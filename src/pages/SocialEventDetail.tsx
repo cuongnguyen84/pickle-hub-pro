@@ -27,8 +27,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations } from "@/hooks/useEventRegistrations";
+import { useMyMembership } from "@/hooks/useClubMembers";
 import { RegistrationModal } from "@/components/social-events/RegistrationModal";
-import { ProxyRegistrationModal } from "@/components/social-events/ProxyRegistrationModal";
 import { toast } from "@/hooks/use-toast";
 import {
   computeCountdown,
@@ -78,15 +78,20 @@ export default function SocialEventDetail() {
   const { profile } = useUserProfile();
   const isMobile = useIsMobile();
   const [modalOpen, setModalOpen] = useState(false);
-  const [proxyModalOpen, setProxyModalOpen] = useState(false);
-  // PR proxy/manual — bump after a successful self-register so the
-  // banner re-reads localStorage and swaps the green CTA for
-  // "Xem đăng ký" + "+ Đăng ký hộ bạn bè" without a manual reload.
-  const [myStoredVersion, setMyStoredVersion] = useState(0);
 
   const { data, isLoading, refetch } = useSocialEvent(slug);
   const { data: registrations, refetch: refetchRegistrations } =
     useEventRegistrations(data?.id);
+
+  // 2026-05-22 — when the event belongs to a CLB and the viewer is an
+  // active member (or organizer of that CLB), open the modal directly
+  // into the "member" step which skips OTP. Anonymous viewers + non-
+  // members still see the phone flow.
+  const { status: membershipStatus } = useMyMembership(data?.club_id ?? undefined);
+  const memberSkipOtp =
+    membershipStatus === "active" ||
+    membershipStatus === "creator" ||
+    membershipStatus === "manager";
 
   // PR58 — check localStorage for an existing registration on this
   // event. The /dang-ky/:token page is the player's only way back to
@@ -98,10 +103,7 @@ export default function SocialEventDetail() {
   const myStored = useMemo(() => {
     if (!data?.id) return null;
     return readMyRegistration(data.id);
-    // myStoredVersion intentionally in the deps so an external bump
-    // (e.g. RegistrationModal onSuccess) re-reads localStorage.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.id, myStoredVersion]);
+  }, [data?.id]);
 
   const { data: myStatus } = useQuery<{ cancelled_at: string | null } | null>({
     queryKey: ["my-registration-status", myStored?.magic_token ?? null],
@@ -115,36 +117,6 @@ export default function SocialEventDetail() {
     },
     enabled: Boolean(myStored?.magic_token),
     staleTime: 30_000,
-  });
-
-  // PR proxy/manual — pre-fetch the event's bank info so the proxy success
-  // card can render a "copy transfer info" button without an extra round
-  // trip after the player is added. event_payment_config has a SELECT
-  // policy that lets any authed/anon viewer of a public event read it
-  // (matches the existing /dang-ky/:token RPC pattern). Disabled for
-  // free events.
-  const { data: bankInfo } = useQuery<{
-    code: string;
-    account_number: string;
-    account_name: string;
-  } | null>({
-    queryKey: ["event-bank-info", data?.id],
-    queryFn: async () => {
-      if (!data?.id || data.price_vnd <= 0) return null;
-      const { data: cfg, error } = await supabase
-        .from("event_payment_config")
-        .select("bank_code, bank_account_number, bank_account_name, enabled")
-        .eq("event_id", data.id)
-        .maybeSingle();
-      if (error || !cfg || cfg.enabled !== true) return null;
-      return {
-        code: cfg.bank_code as string,
-        account_number: cfg.bank_account_number as string,
-        account_name: cfg.bank_account_name as string,
-      };
-    },
-    enabled: Boolean(data?.id && data.price_vnd > 0 && myStored?.magic_token),
-    staleTime: 60_000,
   });
   const isCancelled = myStatus?.cancelled_at != null;
 
@@ -425,36 +397,19 @@ export default function SocialEventDetail() {
               still need a way back so we also point at /dang-ky/:token
               (PlayerRegistration handles the reactivate flow). */}
           {myStored && !isCancelled ? (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              <a
-                className="tl-btn green"
-                href={`/dang-ky/${myStored.magic_token}`}
-                style={{
-                  flex: "1 1 200px",
-                  justifyContent: "center",
-                  fontSize: 15,
-                  padding: "14px 22px",
-                  textDecoration: "none",
-                }}
-              >
-                {t.socialEvents.playerRegistration.alreadyRegisteredCta} →
-              </a>
-              {canRegister && (
-                <button
-                  type="button"
-                  className="tl-btn"
-                  style={{
-                    flex: "1 1 200px",
-                    justifyContent: "center",
-                    fontSize: 15,
-                    padding: "14px 22px",
-                  }}
-                  onClick={() => setProxyModalOpen(true)}
-                >
-                  + {t.socialEvents.proxyRegister.proxyRegisterCta} →
-                </button>
-              )}
-            </div>
+            <a
+              className="tl-btn green"
+              href={`/dang-ky/${myStored.magic_token}`}
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                fontSize: 15,
+                padding: "14px 22px",
+                textDecoration: "none",
+              }}
+            >
+              {t.socialEvents.playerRegistration.alreadyRegisteredCta} →
+            </a>
           ) : myStored && isCancelled ? (
             <a
               className="tl-btn"
@@ -656,29 +611,7 @@ export default function SocialEventDetail() {
                     justifyContent: "space-between",
                   }}
                 >
-                  <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <span>{i + 1}. {maskName(r.display_name)}</span>
-                    {/* PR feat/proxy-and-manual-registration — subtle
-                        "đăng ký hộ" pill next to proxy rows. The
-                        "BTC thêm" badge is intentionally NOT shown to
-                        public viewers and only renders on the organizer
-                        dashboard (SocialEventRoster). */}
-                    {r.registration_source === "proxy" && (
-                      <span
-                        style={{
-                          fontSize: 10,
-                          letterSpacing: "0.04em",
-                          textTransform: "uppercase",
-                          padding: "1px 6px",
-                          borderRadius: 4,
-                          border: "1px solid var(--tl-border)",
-                          color: "var(--tl-fg-3)",
-                        }}
-                      >
-                        {t.socialEvents.proxyRegister.proxyBadgeLabel}
-                      </span>
-                    )}
-                  </span>
+                  <span>{i + 1}. {maskName(r.display_name)}</span>
                   {r.self_rated_level != null && (
                     <span style={{ color: "var(--tl-fg-3)", fontSize: 12 }}>{r.self_rated_level.toFixed(1)}</span>
                   )}
@@ -707,6 +640,7 @@ export default function SocialEventDetail() {
           prepaymentDeadlineHours={data.prepayment_deadline_hours}
           zaloGroupUrl={data.zalo_group_url}
           slots={data.slots}
+          memberSkipOtp={memberSkipOtp}
           defaultPhone={(profile as { phone?: string | null } | null)?.phone ?? null}
           defaultDisplayName={profile?.display_name ?? null}
           onSuccess={() => {
@@ -716,34 +650,8 @@ export default function SocialEventDetail() {
             // without a manual page reload.
             refetch();
             refetchRegistrations();
-            // PR proxy/manual — bump localStorage version so the banner
-            // swaps to "Bạn đã đăng ký" + "+ Đăng ký hộ" the moment the
-            // modal closes (RegistrationModal writes the token to
-            // localStorage at verify time).
-            setMyStoredVersion((v) => v + 1);
           }}
         />
-
-        {/* PR: feat/proxy-and-manual-registration — proxy modal mounts
-            only when we know the viewer is registered. The proxy_magic_token
-            is the viewer's own token from localStorage. */}
-        {myStored?.magic_token && !isCancelled && (
-          <ProxyRegistrationModal
-            open={proxyModalOpen}
-            onOpenChange={setProxyModalOpen}
-            eventId={data.id}
-            eventTitle={eventTitle}
-            priceVnd={data.price_vnd}
-            requiresPrepayment={data.requires_prepayment}
-            prepaymentDeadlineHours={data.prepayment_deadline_hours}
-            bankInfo={bankInfo ?? null}
-            proxyMagicToken={myStored.magic_token}
-            onSuccess={() => {
-              refetch();
-              refetchRegistrations();
-            }}
-          />
-        )}
       </div>
     </TheLineLayout>
   );
