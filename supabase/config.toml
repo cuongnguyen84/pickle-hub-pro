@@ -328,3 +328,6 @@ verify_jwt = false
 
 [functions.add-registration-direct]
 verify_jwt = false
+
+[functions.send-event-registration-email]
+verify_jwt = false
