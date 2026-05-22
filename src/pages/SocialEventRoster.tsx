@@ -64,7 +64,6 @@ import { useNoindex } from "@/hooks/useNoindex";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { maskPhone } from "@/lib/phone";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 import { ManualAddRegistrationModal } from "@/components/social-events/ManualAddRegistrationModal";
 
@@ -484,7 +483,7 @@ export default function SocialEventRoster() {
                     )}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
-                    {row.phone ? maskPhone(row.phone) : "—"}
+                    {row.phone ? row.phone : "—"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {row.self_rated_level != null ? row.self_rated_level.toFixed(1) : "—"}
