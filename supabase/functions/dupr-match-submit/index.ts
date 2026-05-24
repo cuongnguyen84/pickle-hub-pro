@@ -518,9 +518,19 @@ async function handleUpdate(
     }
   }
 
+  // DUPR /match/v1.0/update requires `matchId` as int64, NOT `matchCode` text.
+  // matchCode is the same numeric value as matchId, just stored as string —
+  // confirmed via swagger ExternalUpdateMatchRequest + empirical test
+  // (2026-05-22). Cast to integer here.
+  const matchIdInt = Number.parseInt(existing.match_code, 10);
+  if (!Number.isFinite(matchIdInt)) {
+    return err("invalid_match_code", 500, "invalid_match_code", {
+      stored: existing.match_code,
+    });
+  }
   const partnerBody: Record<string, unknown> = {
     identifier,
-    matchCode: existing.match_code,
+    matchId: matchIdInt,
     location: p.location ?? "",
     matchDate: p.match_date ?? existing.match_date,
     format: p.format ?? existing.match_format,
