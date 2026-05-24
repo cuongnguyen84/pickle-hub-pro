@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "best-pickleball-paddles-beginners-2026",
+    publishedDate: "2026-05-24",
+    updatedDate: "2026-05-24",
+    author: "Cuong Nguyen",
+    tags: ["best pickleball paddles", "beginner paddle", "paddle buying guide", "pickleball equipment", "joola", "selkirk", "gamma", "pickleball vietnam", "asia"],
+    ctaPath: "/blog/how-to-play-pickleball",
+    ctaLabel: { en: "Next: How to Play Pickleball — Complete Beginner Guide", vi: "Tiếp theo: Hướng dẫn chơi Pickleball cho người mới" },
+    heroImage: {
+      src: "/images/blog/best-pickleball-paddles-beginners-2026-hero.webp",
+      alt: "Top-down product photo of seven beginner pickleball paddles arranged in a fan layout on a neutral wood background, showing paddle face colors ranging from white to black with varied grip wraps, sports equipment catalog style for the 2026 best pickleball paddles for beginners buyer guide"
+    },
+    titleEn: "Best Pickleball Paddles for Beginners 2026: 7 Top Picks (Asia Buyer's Guide)",
+    titleVi: "Vợt Pickleball Tốt Nhất Cho Người Mới 2026: 7 Lựa Chọn (Hướng Dẫn Mua Tại VN)",
+    metaTitleEn: "Best Pickleball Paddles for Beginners 2026 | 7 Top Picks",
+    metaTitleVi: "Vợt Pickleball Tốt Nhất Cho Người Mới 2026 (7 Lựa Chọn)",
+    metaDescriptionEn: "Picking your first pickleball paddle without overspending. 7 beginner-friendly paddles for 2026 with weight, face, grip specs — plus what to avoid in VN.",
+    metaDescriptionVi: "Chọn vợt pickleball đầu tiên không bị \"cháy túi\". 7 mẫu vợt cho người mới 2026 — phân tích trọng lượng, mặt vợt, cán + lỗi cần tránh khi mua tại VN.",
+  },
+  {
     slug: "pickleball-for-tennis-players-2026",
     publishedDate: "2026-05-22",
     updatedDate: "2026-05-22",
