@@ -313,6 +313,28 @@ verify_jwt = false
 [functions.dupr-org-unlink-club]
 verify_jwt = false
 
+# ─── DUPR RaaS (PR7 — DUPR+ event eligibility gating) ──────────────────────
+# Per DUPR User Gating doc: partner must check PREMIUM_L1 (+ optionally
+# VERIFIED_L1) before allowing user to register for Premium events. This
+# function takes a list of `required` entitlements and returns allowed +
+# missing for the calling user. Used by /dupr Section 6 demo and by any
+# real registration flow that needs gating.
+
+[functions.dupr-event-eligibility]
+verify_jwt = false
+
 # ─── Match proposals (PR6 — player-initiated match flow) ───────────────────
 [functions.match-proposal]
+verify_jwt = false
+
+# ─── Social Events MVP — proxy + manual registration ───────────────────────
+# add-registration-direct accepts two flows:
+#   - mode='proxy'   → authorized by proxy_magic_token (already-registered
+#                       player adding a friend)
+#   - mode='manual'  → authorized by organizer's supabase JWT
+#                       (verified internally via getAuthUser + verify_event_organizer)
+# verify_jwt=false at the gateway so the proxy flow (no JWT) can pass; the
+# function performs its own authorization inside.
+
+[functions.add-registration-direct]
 verify_jwt = false

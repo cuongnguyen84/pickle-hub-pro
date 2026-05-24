@@ -1019,6 +1019,18 @@ interface SubmissionRow {
   deleted_at: string | null;
 }
 
+interface SubmissionRowFull extends SubmissionRow {
+  raw_request: Record<string, unknown> | null;
+}
+
+interface EditDialogState {
+  row: SubmissionRowFull;
+  g1a: number;
+  g1b: number;
+  g2a: number | "";
+  g2b: number | "";
+}
+
 function SubmissionsSection() {
   const { user } = useAuth();
   const { language } = useI18n();
@@ -1026,6 +1038,9 @@ function SubmissionsSection() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editState, setEditState] = useState<EditDialogState | null>(null);
+  const [editBusy, setEditBusy] = useState(false);
+  const [editResp, setEditResp] = useState<unknown>(null);
 
   const q = useQuery({
     queryKey: ["dupr-submissions", user?.id],
@@ -1033,14 +1048,75 @@ function SubmissionsSection() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dupr_match_submissions")
-        .select("identifier, match_code, match_format, match_date, club_id, submitted_at, deleted_at")
+        .select("identifier, match_code, match_format, match_date, club_id, submitted_at, deleted_at, raw_request")
         .eq("submitted_by", user!.id)
         .order("submitted_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []) as SubmissionRow[];
+      return (data ?? []) as SubmissionRowFull[];
     },
   });
+
+  const openEdit = (row: SubmissionRowFull) => {
+    setEditResp(null);
+    const req = row.raw_request ?? {};
+    const teamA = (req as { teamA?: { game1?: number; game2?: number } }).teamA ?? {};
+    const teamB = (req as { teamB?: { game1?: number; game2?: number } }).teamB ?? {};
+    setEditState({
+      row,
+      g1a: teamA.game1 ?? 11,
+      g1b: teamB.game1 ?? 7,
+      g2a: teamA.game2 ?? "",
+      g2b: teamB.game2 ?? "",
+    });
+  };
+
+  const submitUpdate = async () => {
+    if (!editState) return;
+    setEditBusy(true);
+    setEditResp(null);
+    try {
+      const parts = editState.row.identifier.split(":");
+      const src = parts[1];
+      const internalId = parts.slice(2).join(":");
+      const req = editState.row.raw_request ?? {};
+      const teamA = (req as { teamA?: { player1?: string; player2?: string } }).teamA ?? {};
+      const teamB = (req as { teamB?: { player1?: string; player2?: string } }).teamB ?? {};
+      const body: Record<string, unknown> = {
+        action: "update",
+        internal_source: src,
+        internal_match_id: internalId,
+        match_date: editState.row.match_date,
+        format: editState.row.match_format,
+        team_a: {
+          player1: teamA.player1,
+          ...(teamA.player2 ? { player2: teamA.player2 } : {}),
+          game1: editState.g1a,
+          ...(editState.g2a !== "" ? { game2: Number(editState.g2a) } : {}),
+        },
+        team_b: {
+          player1: teamB.player1,
+          ...(teamB.player2 ? { player2: teamB.player2 } : {}),
+          game1: editState.g1b,
+          ...(editState.g2b !== "" ? { game2: Number(editState.g2b) } : {}),
+        },
+      };
+      const { data, error } = await supabase.functions.invoke("dupr-match-submit", { body });
+      if (error) throw error;
+      setEditResp(data);
+      toast({
+        title: vi ? "Đã update" : "Updated",
+        description: `matchCode ${editState.row.match_code}`,
+      });
+      qc.invalidateQueries({ queryKey: ["dupr-submissions"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setEditResp({ error: msg });
+      toast({ variant: "destructive", title: vi ? "Update lỗi" : "Update failed", description: msg });
+    } finally {
+      setEditBusy(false);
+    }
+  };
 
   const handleDelete = async (row: SubmissionRow) => {
     if (!confirm(vi ? `Xoá match ${row.match_code}?` : `Delete match ${row.match_code}?`)) return;
@@ -1110,14 +1186,25 @@ function SubmissionsSection() {
                 </td>
                 <td className="py-2 text-right">
                   {!row.deleted_at && (
-                    <button
-                      type="button"
-                      className="tl-btn"
-                      onClick={() => handleDelete(row)}
-                      disabled={busyId === row.identifier}
-                    >
-                      {busyId === row.identifier ? <Loader2 className="h-3 w-3 animate-spin" /> : (vi ? "Xoá" : "Delete")}
-                    </button>
+                    <span className="inline-flex gap-1">
+                      <button
+                        type="button"
+                        className="tl-btn"
+                        onClick={() => openEdit(row)}
+                        disabled={busyId === row.identifier || editBusy}
+                        title={vi ? "Sửa tỷ số + push update lên DUPR" : "Edit score + push update to DUPR"}
+                      >
+                        {vi ? "Update" : "Update"}
+                      </button>
+                      <button
+                        type="button"
+                        className="tl-btn"
+                        onClick={() => handleDelete(row)}
+                        disabled={busyId === row.identifier}
+                      >
+                        {busyId === row.identifier ? <Loader2 className="h-3 w-3 animate-spin" /> : (vi ? "Xoá" : "Delete")}
+                      </button>
+                    </span>
                   )}
                 </td>
               </tr>
@@ -1125,6 +1212,308 @@ function SubmissionsSection() {
           </tbody>
         </table>
       )}
+
+      {/* ─── Edit modal ───────────────────────────────────────────────── */}
+      {editState && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => !editBusy && setEditState(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg border p-4"
+            style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg-2)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-semibold" style={{ color: "var(--tl-fg)" }}>
+                {vi ? "Update score (push DUPR)" : "Update score (push to DUPR)"}
+              </h3>
+              <button type="button" onClick={() => !editBusy && setEditState(null)} disabled={editBusy}
+                      className="text-sm" style={{ color: "var(--tl-fg-3)" }}>
+                ✕
+              </button>
+            </div>
+
+            <p className="mb-3 text-xs" style={{ color: "var(--tl-fg-3)" }}>
+              matchCode <code className="font-mono">{editState.row.match_code}</code>
+              {" · "}{editState.row.match_format}
+              {" · "}{editState.row.match_date}
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <fieldset className="rounded border p-3" style={{ borderColor: "var(--tl-border)" }}>
+                <legend className="px-1 text-xs" style={{ color: "var(--tl-fg-3)" }}>Team A score</legend>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
+                    Game 1
+                    <input type="number" value={editState.g1a}
+                           onChange={(e) => setEditState({ ...editState, g1a: Number(e.target.value) })}
+                           className="mt-1 w-full rounded border p-2 text-sm"
+                           style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }} />
+                  </label>
+                  <label className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
+                    Game 2 (opt)
+                    <input type="number" value={editState.g2a}
+                           onChange={(e) => setEditState({ ...editState, g2a: e.target.value === "" ? "" : Number(e.target.value) })}
+                           className="mt-1 w-full rounded border p-2 text-sm"
+                           style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }} />
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset className="rounded border p-3" style={{ borderColor: "var(--tl-border)" }}>
+                <legend className="px-1 text-xs" style={{ color: "var(--tl-fg-3)" }}>Team B score</legend>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
+                    Game 1
+                    <input type="number" value={editState.g1b}
+                           onChange={(e) => setEditState({ ...editState, g1b: Number(e.target.value) })}
+                           className="mt-1 w-full rounded border p-2 text-sm"
+                           style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }} />
+                  </label>
+                  <label className="text-xs" style={{ color: "var(--tl-fg-3)" }}>
+                    Game 2 (opt)
+                    <input type="number" value={editState.g2b}
+                           onChange={(e) => setEditState({ ...editState, g2b: e.target.value === "" ? "" : Number(e.target.value) })}
+                           className="mt-1 w-full rounded border p-2 text-sm"
+                           style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }} />
+                  </label>
+                </div>
+              </fieldset>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="tl-btn" onClick={() => !editBusy && setEditState(null)} disabled={editBusy}>
+                {vi ? "Huỷ" : "Cancel"}
+              </button>
+              <button type="button" className="tl-btn primary" onClick={submitUpdate} disabled={editBusy}>
+                {editBusy
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : (vi ? "Update lên DUPR" : "Update to DUPR")}
+              </button>
+            </div>
+
+            {editResp != null && (
+              <div className="mt-3 rounded border p-2 text-xs"
+                   style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)" }}>
+                <pre style={{ color: "var(--tl-fg)", whiteSpace: "pre-wrap" }}>
+                  {JSON.stringify(editResp, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+// ─── PR7 — DUPR+ event eligibility gating (PREMIUM_L1 + VERIFIED_L1) ───────
+//
+// Per DUPR RaaS User Gating doc:
+//   > It is a requirement for partner platforms to provide the option for
+//   > Premium Events. When creating or managing events, your system must
+//   > check for the PREMIUM_L1 entitlement. If designated as a Premium event
+//   > (e.g., DUPR+ only), users without the PREMIUM_L1 tag must be prevented
+//   > from registering or participating.
+//
+// 3 mock event cards demonstrate gating at 3 tier levels:
+//   1. BASIC_L1 only           — any DUPR-connected user with baseline tier
+//   2. PREMIUM_L1              — DUPR+ paid subscription required
+//   3. PREMIUM_L1 + VERIFIED_L1 — DUPR+ AND ID-verified (highest tier)
+//
+// Each card calls `dupr-event-eligibility` edge function which reads the
+// caller's entitlement cache and returns allowed + missing list. UI shows
+// ✅ Eligible (green) or ❌ Blocked + missing tags. Re-check button per card.
+
+interface EventGatingResult {
+  allowed: boolean;
+  user_entitlements: string[];
+  required: string[];
+  missing: string[];
+  cache_present?: boolean;
+  cache_fresh?: boolean;
+}
+
+interface MockEvent {
+  id: string;
+  name_en: string;
+  name_vi: string;
+  description_en: string;
+  description_vi: string;
+  required: string[];
+}
+
+const MOCK_EVENTS: MockEvent[] = [
+  {
+    id: "ev-basic-rec",
+    name_en: "Casual Recreational Match",
+    name_vi: "Trận giao lưu thường",
+    description_en: "Open to any DUPR-connected player. Baseline tier.",
+    description_vi: "Mở cho mọi user đã kết nối DUPR. Tier cơ bản.",
+    required: ["BASIC_L1"],
+  },
+  {
+    id: "ev-premium",
+    name_en: "DUPR+ Premier Tournament",
+    name_vi: "Giải DUPR+ Premier",
+    description_en: "Premium DUPR+ event. Requires PREMIUM_L1 subscription.",
+    description_vi: "Sự kiện DUPR+ premium. Yêu cầu subscription PREMIUM_L1.",
+    required: ["PREMIUM_L1"],
+  },
+  {
+    id: "ev-premium-verified",
+    name_en: "Pro DUPR+ Verified Cup",
+    name_vi: "Pro DUPR+ Verified Cup",
+    description_en: "Highest tier — requires PREMIUM_L1 AND ID-verified VERIFIED_L1.",
+    description_vi: "Tier cao nhất — yêu cầu cả PREMIUM_L1 lẫn VERIFIED_L1 (đã xác thực ID).",
+    required: ["PREMIUM_L1", "VERIFIED_L1"],
+  },
+];
+
+function DuprPlusGatingSection() {
+  const { language } = useI18n();
+  const vi = language === "vi";
+  const [results, setResults] = useState<Record<string, EventGatingResult | { error: string } | null>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const tryRegister = async (ev: MockEvent) => {
+    setBusy(ev.id);
+    setResults((r) => ({ ...r, [ev.id]: null }));
+    try {
+      const { data, error } = await supabase.functions.invoke<EventGatingResult>(
+        "dupr-event-eligibility",
+        {
+          body: {
+            event_id: ev.id,
+            required: ev.required,
+            resource: "tournaments",
+          },
+        },
+      );
+      if (error) {
+        const ctx = (error as { context?: { status?: number; body?: unknown } }).context;
+        setResults((r) => ({
+          ...r,
+          [ev.id]: { error: `${error.message ?? "fail"} (status ${ctx?.status ?? "?"})` },
+        }));
+        return;
+      }
+      setResults((r) => ({ ...r, [ev.id]: data ?? null }));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setResults((r) => ({ ...r, [ev.id]: { error: msg } }));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Section
+      title="6. DUPR+ Event Gating (PREMIUM_L1 + VERIFIED_L1)"
+      subtitle={
+        vi
+          ? "Per DUPR spec: Premium Events bắt buộc check PREMIUM_L1; Pro DUPR+ events bắt buộc cả VERIFIED_L1. Backend `dupr-event-eligibility` enforce, UI chỉ hiển thị result — block không cho register nếu thiếu entitlement."
+          : "Per DUPR spec: Premium Events must check PREMIUM_L1; Pro DUPR+ events must also require VERIFIED_L1. Backend `dupr-event-eligibility` enforces; UI displays result — registration is blocked if entitlement missing."
+      }
+    >
+      <div className="space-y-3">
+        {MOCK_EVENTS.map((ev) => {
+          const result = results[ev.id];
+          const isAllowed = result && "allowed" in result && result.allowed === true;
+          const isBlocked = result && "allowed" in result && result.allowed === false;
+          const hasError = result && "error" in result;
+          return (
+            <div
+              key={ev.id}
+              className="rounded border p-3"
+              style={{
+                borderColor: isAllowed
+                  ? "rgba(34,197,94,0.4)"
+                  : isBlocked
+                    ? "rgba(239,68,68,0.4)"
+                    : "var(--tl-border)",
+                background: "var(--tl-bg)",
+              }}
+            >
+              <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <div className="text-sm font-medium" style={{ color: "var(--tl-fg)" }}>
+                    {vi ? ev.name_vi : ev.name_en}
+                  </div>
+                  <div className="mt-0.5 text-xs" style={{ color: "var(--tl-fg-3)" }}>
+                    {vi ? ev.description_vi : ev.description_en}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {ev.required.map((r) => (
+                    <span
+                      key={r}
+                      className="rounded-full border px-2 py-0.5 text-[10px] font-mono"
+                      style={{ borderColor: "var(--tl-border)", color: "var(--tl-fg-3)" }}
+                    >
+                      {r}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  className="tl-btn"
+                  onClick={() => tryRegister(ev)}
+                  disabled={busy === ev.id}
+                >
+                  {busy === ev.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    vi ? "Thử đăng ký" : "Try register"
+                  )}
+                </button>
+                {result && (
+                  <div className="flex items-center gap-2 text-xs">
+                    {hasError && (
+                      <span style={{ color: "rgb(239,68,68)" }}>
+                        {(result as { error: string }).error}
+                      </span>
+                    )}
+                    {isAllowed && (
+                      <Pill ok={true} label={vi ? "ELIGIBLE — register thành công" : "ELIGIBLE — register allowed"} />
+                    )}
+                    {isBlocked && (
+                      <>
+                        <Pill ok={false} label={vi ? "BLOCKED" : "BLOCKED"} />
+                        <span style={{ color: "var(--tl-fg-3)" }}>
+                          {vi ? "thiếu" : "missing"}{" "}
+                          <span className="font-mono" style={{ color: "rgb(239,68,68)" }}>
+                            {(result as EventGatingResult).missing.join(", ")}
+                          </span>
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {result && "user_entitlements" in result && (
+                <div className="mt-2 text-[10px]" style={{ color: "var(--tl-fg-3)" }}>
+                  {vi ? "Entitlements user hiện có" : "Your current entitlements"}:{" "}
+                  <span className="font-mono">
+                    [{(result as EventGatingResult).user_entitlements.join(", ") || "—"}]
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="mt-4 text-xs" style={{ color: "var(--tl-fg-3)" }}>
+        {vi
+          ? "Edge function `dupr-event-eligibility` đọc entitlement cache của user (24h TTL từ POST /subscription/active), so với required list, trả allowed + missing. Cùng pattern cho mọi event-related action: register, submit match cho event, claim prize, v.v."
+          : "Edge function `dupr-event-eligibility` reads the user's 24h-cached entitlements (from POST /subscription/active) and compares against the required list, returning allowed + missing. Same pattern applies to any event-bound action: register, submit match for the event, claim prize, etc."}
+      </p>
     </Section>
   );
 }
@@ -1188,6 +1577,7 @@ export default function DuprDashboard() {
         <SubmissionsSection />
         <ClubsSection />
         <OrgLinkSection />
+        <DuprPlusGatingSection />
       </div>
     </TheLineLayout>
   );
