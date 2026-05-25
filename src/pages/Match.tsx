@@ -395,11 +395,15 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
 
 function ProposalCard({
   row,
+  players,
   showActions,
+  hint,
   onAction,
 }: {
   row: ProposalRow;
+  players: Map<string, ProfileMini>;
   showActions: ("verify" | "dispute" | "approve" | "reject")[];
+  hint?: string | null;
   onAction: (action: string, reason?: string) => void;
 }) {
   const { language } = useI18n();
@@ -423,9 +427,19 @@ function ProposalCard({
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>
-        <div>Team A: {row.team_a_player_ids.length} players</div>
-        <div>Team B: {row.team_b_player_ids.length} players</div>
-        <div>Score: <span style={{ color: "var(--tl-fg)" }}>{fmtScore(row.team_a_scores, row.team_b_scores)}</span></div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--tl-fg-3)", fontFamily: "'Geist Mono', monospace" }}>
+            {vi ? "Đội A" : "Team A"}
+          </div>
+          <div style={{ color: "var(--tl-fg)" }}>{rosterLabel(row.team_a_player_ids, players)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--tl-fg-3)", fontFamily: "'Geist Mono', monospace" }}>
+            {vi ? "Đội B" : "Team B"}
+          </div>
+          <div style={{ color: "var(--tl-fg)" }}>{rosterLabel(row.team_b_player_ids, players)}</div>
+        </div>
+        <div className="col-span-2">Score: <span style={{ color: "var(--tl-fg)" }}>{fmtScore(row.team_a_scores, row.team_b_scores)}</span></div>
         {row.dupr_match_code && (
           <div>matchCode: <span className="font-mono">{row.dupr_match_code}</span></div>
         )}
@@ -435,6 +449,12 @@ function ProposalCard({
           </div>
         )}
       </div>
+
+      {hint && (
+        <p className="mt-3 text-xs" style={{ color: "var(--tl-fg-3)", fontFamily: "'Geist Mono', monospace", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+          {hint}
+        </p>
+      )}
 
       {showActions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -478,9 +498,21 @@ function ProposalCard({
   );
 }
 
+interface VerificationLite {
+  proposal_id: string;
+  player_user_id: string;
+  verified_at: string | null;
+  disputed_at: string | null;
+}
+
+type EnrichedProposal = ProposalRow & {
+  _verifications?: VerificationLite[];
+  _players: Map<string, ProfileMini>;
+};
+
 function useProposals(filter: "pending" | "queue" | "history") {
   const { user } = useAuth();
-  return useQuery({
+  return useQuery<EnrichedProposal[]>({
     queryKey: ["match-proposals", filter, user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -497,9 +529,55 @@ function useProposals(filter: "pending" | "queue" | "history") {
       }
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as ProposalRow[];
+      const rows = (data ?? []) as ProposalRow[];
+
+      // Batch fetch profiles for every player referenced in the visible
+      // proposals, so the card can render names instead of "2 players".
+      const allPlayerIds = Array.from(
+        new Set(rows.flatMap((r) => [...r.team_a_player_ids, ...r.team_b_player_ids])),
+      );
+      const profilesMap = new Map<string, ProfileMini>();
+      if (allPlayerIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, display_name, email")
+          .in("id", allPlayerIds);
+        for (const p of (profs ?? []) as ProfileMini[]) profilesMap.set(p.id, p);
+      }
+
+      // Fetch verifications for the pending tab so we can hide
+      // verify/dispute buttons for players who've already responded
+      // (notably the creator who self-verifies at insert time).
+      const verifMap = new Map<string, VerificationLite[]>();
+      if (filter === "pending" && rows.length > 0) {
+        const { data: verifs } = await supabase
+          .from("match_proposal_verifications")
+          .select("proposal_id, player_user_id, verified_at, disputed_at")
+          .in("proposal_id", rows.map((r) => r.id));
+        for (const v of (verifs ?? []) as VerificationLite[]) {
+          const arr = verifMap.get(v.proposal_id) ?? [];
+          arr.push(v);
+          verifMap.set(v.proposal_id, arr);
+        }
+      }
+
+      return rows.map((r) => ({
+        ...r,
+        _verifications: verifMap.get(r.id) ?? [],
+        _players: profilesMap,
+      }));
     },
   });
+}
+
+/** Render player names for a roster, falling back to email/short-id. */
+function rosterLabel(ids: string[], players: Map<string, ProfileMini>): string {
+  return ids
+    .map((id) => {
+      const p = players.get(id);
+      return p?.display_name?.trim() || p?.email || id.slice(0, 8);
+    })
+    .join(" + ");
 }
 
 function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
@@ -509,6 +587,30 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
   const { toast } = useToast();
   const q = useProposals(filter);
   const qc = useQueryClient();
+  const clubsQ = useDuprClubs();
+
+  // For the queue tab, find out whether the current user can actually
+  // approve. PARTNER matches (club_id IS NULL) need user_roles ∈
+  // ('admin', 'creator'); CLUB matches need DIRECTOR/ORGANIZER on the
+  // specific club_id. Without this, every viewer-level player sees
+  // the buttons and hits 403 when clicking.
+  const roleQ = useQuery({
+    queryKey: ["user-roles", user?.id],
+    enabled: !!user?.id && filter === "queue",
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id);
+      return new Set<string>((data ?? []).map((r: { role: string }) => r.role));
+    },
+  });
+  const myRoles = roleQ.data ?? new Set<string>();
+  const isPlatformApprover = myRoles.has("admin") || myRoles.has("creator");
+  const adminClubIds = new Set(
+    (clubsQ.submitterClubs ?? []).map((c) => c.club_id),
+  );
 
   const callAction = async (proposalId: string, action: string, reason?: string) => {
     const { data, error } = await supabase.functions.invoke("match-proposal", {
@@ -559,18 +661,34 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
         const isPlayer = userId
           ? row.team_a_player_ids.includes(userId) || row.team_b_player_ids.includes(userId)
           : false;
+        const verifs = ((row as ProposalRow & { _verifications?: VerificationLite[] })._verifications) ?? [];
+        const myResponse = userId ? verifs.find((v) => v.player_user_id === userId) : undefined;
+        const alreadyResponded = !!myResponse;
         const actions: ("verify" | "dispute" | "approve" | "reject")[] = [];
-        if (filter === "pending" && isPlayer) {
+        if (filter === "pending" && isPlayer && !alreadyResponded) {
           actions.push("verify", "dispute");
         }
         if (filter === "queue") {
-          actions.push("approve", "reject");
+          const canApprove = row.club_id != null
+            ? adminClubIds.has(row.club_id)
+            : isPlatformApprover;
+          if (canApprove) {
+            actions.push("approve", "reject");
+          }
         }
         return (
           <ProposalCard
             key={row.id}
             row={row}
+            players={row._players ?? new Map()}
             showActions={actions}
+            hint={
+              filter === "pending" && alreadyResponded
+                ? myResponse?.verified_at
+                  ? (vi ? "Anh đã xác nhận — chờ đối thủ" : "You already confirmed — waiting for opponent")
+                  : (vi ? "Anh đã tranh chấp — chờ admin xử lý" : "You already disputed — pending admin")
+                : null
+            }
             onAction={(action, reason) => callAction(row.id, action, reason)}
           />
         );
@@ -582,7 +700,8 @@ function ListTab({ filter }: { filter: "pending" | "queue" | "history" }) {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; vi: string; en: string }[] = [
-  { id: "create", vi: "Tạo match", en: "Create" },
+  // 'create' lives at /match/new now — kept out of the tab strip so the
+  // surface is queue/history only and not a duplicate entry point.
   { id: "pending", vi: "Đợi confirm", en: "Pending" },
   { id: "queue", vi: "Đợi approve", en: "Queue" },
   { id: "history", vi: "Lịch sử", en: "History" },
@@ -593,7 +712,15 @@ export default function MatchPage() {
   const { language } = useI18n();
   const vi = language === "vi";
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>("create");
+  // Honor ?tab= from /match/new redirect; default is pending so users
+  // who arrive without a query see the queue they care about first.
+  const initialTab = ((): Tab => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab");
+    if (t === "pending" || t === "queue" || t === "history" || t === "create") return t;
+    return "pending";
+  })();
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   if (loading) {
     return <TheLineLayout><div className="p-6"><Loader2 className="h-5 w-5 animate-spin" /></div></TheLineLayout>;
@@ -611,15 +738,24 @@ export default function MatchPage() {
   return (
     <TheLineLayout>
       <div className="mx-auto max-w-3xl px-4 py-6">
-        <header className="mb-4">
-          <h1 className="text-2xl font-semibold" style={{ color: "var(--tl-fg)" }}>
-            {vi ? "Match" : "Match"}
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--tl-fg-3)" }}>
-            {vi
-              ? "Tạo match — đối phương xác nhận tỉ số — club admin gửi lên DUPR."
-              : "Players record matches, opponents confirm, club admins push to DUPR."}
-          </p>
+        <header className="mb-4 flex items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold" style={{ color: "var(--tl-fg)" }}>
+              {vi ? "Match" : "Match"}
+            </h1>
+            <p className="mt-1 text-sm" style={{ color: "var(--tl-fg-3)" }}>
+              {vi
+                ? "Đợi xác nhận từ đối thủ, club admin duyệt và đẩy lên DUPR."
+                : "Opponents confirm, club admins approve and push to DUPR."}
+            </p>
+          </div>
+          <a
+            href="/match/new"
+            className="tl-btn primary"
+            style={{ whiteSpace: "nowrap" }}
+          >
+            + {vi ? "Log trận mới" : "Log match"}
+          </a>
         </header>
 
         <div className="mb-4 flex gap-2 border-b" style={{ borderColor: "var(--tl-border)" }}>

@@ -21,18 +21,20 @@ interface IconConf {
 // (follow, match_kudo, match_comment, comment_reply, comment_mention)
 // alongside Sprint 2 hand-emitted types (match_confirm_needed, etc.).
 const SOCIAL_ICON: Record<string, IconConf> = {
-  match_confirm_needed: { Icon: Bell,          className: "text-yellow-600 dark:text-yellow-400" },
-  match_verified:        { Icon: CheckCircle2, className: "text-blue-600 dark:text-blue-400" },
-  match_disputed:        { Icon: AlertTriangle,className: "text-destructive" },
-  match_expired:         { Icon: Trophy,       className: "text-muted-foreground" },
-  kudos_received:        { Icon: Heart,        className: "text-pink-600 dark:text-pink-400" },
-  comment_received:      { Icon: MessageCircle,className: "text-social-primary" },
+  match_confirm_needed:  { Icon: Bell,          className: "text-yellow-600 dark:text-yellow-400" },
+  match_approval_needed: { Icon: Bell,          className: "text-yellow-600 dark:text-yellow-400" },
+  match_submitted:       { Icon: Trophy,        className: "text-social-primary" },
+  match_verified:        { Icon: CheckCircle2,  className: "text-blue-600 dark:text-blue-400" },
+  match_disputed:        { Icon: AlertTriangle, className: "text-destructive" },
+  match_expired:         { Icon: Trophy,        className: "text-muted-foreground" },
+  kudos_received:        { Icon: Heart,         className: "text-pink-600 dark:text-pink-400" },
+  comment_received:      { Icon: MessageCircle, className: "text-social-primary" },
   // Sprint 5 PR-C trigger-emitted (matches notification-formatters Sprint5NotificationType)
-  follow:                { Icon: UserPlus,     className: "text-social-primary" },
-  match_kudo:            { Icon: Heart,        className: "text-pink-600 dark:text-pink-400" },
-  match_comment:         { Icon: MessageCircle,className: "text-social-primary" },
-  comment_reply:         { Icon: Reply,        className: "text-social-primary" },
-  comment_mention:       { Icon: AtSign,       className: "text-social-primary" },
+  follow:                { Icon: UserPlus,      className: "text-social-primary" },
+  match_kudo:            { Icon: Heart,         className: "text-pink-600 dark:text-pink-400" },
+  match_comment:         { Icon: MessageCircle, className: "text-social-primary" },
+  comment_reply:         { Icon: Reply,         className: "text-social-primary" },
+  comment_mention:       { Icon: AtSign,        className: "text-social-primary" },
 };
 
 // Source 'legacy' — livestream / forum types

@@ -175,6 +175,28 @@ async function handleCreate(
     verified_at: new Date().toISOString(),
   });
 
+  // Notify the other players in the match (creator already auto-verified
+  // above, so we exclude them). One social_notifications row each.
+  const others = [...teamA, ...teamB].filter((id) => id !== callerId);
+  if (others.length > 0) {
+    const uniq = Array.from(new Set(others));
+    const scoreLine = scoresA.map((s, i) => `${s}-${scoresB[i]}`).join(", ");
+    await supabase.from("social_notifications").insert(
+      uniq.map((uid) => ({
+        user_id: uid,
+        type: "match_confirm_needed",
+        title: "Có trận đấu mới cần anh xác nhận tỉ số",
+        body: `${format} ${matchDate} — ${scoreLine}`,
+        link_url: `/match?tab=pending&just=${proposal.id}`,
+        payload: {
+          proposal_id: proposal.id,
+          title_en: "New match needs your confirmation",
+          body_en: `${format} match on ${matchDate} — ${scoreLine}`,
+        },
+      })),
+    );
+  }
+
   return jsonResponse({ proposal_id: proposal.id, status: proposal.status });
 }
 
@@ -234,9 +256,58 @@ async function handleVerifyOrDispute(
   // Re-read status (trigger may have flipped it).
   const { data: updated } = await supabase
     .from("match_proposals")
-    .select("status")
+    .select("status, club_id, format, match_date, team_a_scores, team_b_scores")
     .eq("id", proposalId)
-    .maybeSingle<{ status: string }>();
+    .maybeSingle<{
+      status: string;
+      club_id: number | null;
+      format: string;
+      match_date: string;
+      team_a_scores: number[];
+      team_b_scores: number[];
+    }>();
+
+  if (mode === "verify" && updated?.status === "verified") {
+    // Resolve approvers inline so we don't lean on a helper function
+    // (Deno edge runtime previously failed to boot when these were
+    // refactored into typed helpers — keeping the path inline).
+    let approverIds: string[] = [];
+    if (updated.club_id != null) {
+      const { data: clubRows } = await supabase
+        .from("dupr_user_clubs")
+        .select("user_id")
+        .eq("club_id", updated.club_id)
+        .in("role", ["DIRECTOR", "ORGANIZER"])
+        .gt("expires_at", new Date().toISOString());
+      approverIds = (clubRows ?? []).map((r) => (r as { user_id: string }).user_id);
+    } else {
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "creator"]);
+      approverIds = Array.from(
+        new Set((roleRows ?? []).map((r) => (r as { user_id: string }).user_id)),
+      );
+    }
+    if (approverIds.length > 0) {
+      const scoreLine = updated.team_a_scores.map((s, i) => `${s}-${updated.team_b_scores[i]}`).join(", ");
+      await supabase.from("social_notifications").insert(
+        approverIds.map((uid) => ({
+          user_id: uid,
+          type: "match_approval_needed",
+          title: "Trận đấu sẵn sàng duyệt + gửi DUPR",
+          body: `${updated.format} ${updated.match_date} — ${scoreLine}`,
+          link_url: `/match?tab=queue&just=${proposalId}`,
+          payload: {
+            proposal_id: proposalId,
+            club_id: updated.club_id,
+            title_en: "Match ready for approval + DUPR submission",
+            body_en: `${updated.format} on ${updated.match_date} — ${scoreLine}`,
+          },
+        })),
+      );
+    }
+  }
 
   return jsonResponse({ proposal_id: proposalId, status: updated?.status, action: mode });
 }
@@ -290,27 +361,56 @@ async function handleApprove(
     }
   }
 
-  // Resolve each player's dupr_id from dupr_user_tokens.
+  // Resolve each player's dupr_id from dupr_user_tokens. DUPR Partner
+  // API /match/v1.0/create requires every player slot to be a real
+  // DUPR ID string — guest objects {firstName,lastName} are rejected
+  // ("Cannot deserialize value of type java.lang.String from Object").
+  // The USER::INVITE permission that would let us pre-mint a DUPR ID
+  // for unconnected players is gated by DUPR and returns 403 for our
+  // partner key. So: enforce all-SSO here, and return the human-readable
+  // names of the missing players so the approver can nudge them.
   const allPlayers = [...proposal.team_a_player_ids, ...proposal.team_b_player_ids];
-  const { data: tokens } = await supabase
-    .from("dupr_user_tokens")
-    .select("user_id, dupr_id, revoked_at")
-    .in("user_id", allPlayers);
+  const [{ data: tokens }, { data: profiles }] = await Promise.all([
+    supabase
+      .from("dupr_user_tokens")
+      .select("user_id, dupr_id, revoked_at")
+      .in("user_id", allPlayers),
+    supabase
+      .from("profiles")
+      .select("id, display_name, email")
+      .in("id", allPlayers),
+  ]);
   const mapped = new Map<string, string>();
-  const missing: string[] = [];
-  for (const userId of allPlayers) {
-    const t = (tokens ?? []).find(
-      (r: { user_id: string; dupr_id: string; revoked_at: string | null }) =>
-        r.user_id === userId && !r.revoked_at,
-    );
-    if (!t) missing.push(userId);
-    else mapped.set(userId, t.dupr_id);
+  for (const t of (tokens ?? []) as { user_id: string; dupr_id: string; revoked_at: string | null }[]) {
+    if (!t.revoked_at && !mapped.has(t.user_id)) mapped.set(t.user_id, t.dupr_id);
   }
-  if (missing.length > 0) {
-    return err("players_not_sso_connected", 412, "players_not_sso_connected", { missing });
+  const profileMap = new Map<string, { display_name: string | null; email: string | null }>();
+  for (const p of (profiles ?? []) as { id: string; display_name: string | null; email: string | null }[]) {
+    profileMap.set(p.id, { display_name: p.display_name, email: p.email });
   }
 
-  // Build team payloads. Match games come from scores array.
+  const missing = allPlayers.filter((id) => !mapped.has(id));
+  if (missing.length > 0) {
+    const missingDetails = missing.map((id) => {
+      const p = profileMap.get(id);
+      return {
+        user_id: id,
+        display_name: p?.display_name ?? null,
+        email: p?.email ?? null,
+      };
+    });
+    const names = missingDetails
+      .map((m) => m.display_name ?? m.email ?? m.user_id.slice(0, 8))
+      .join(", ");
+    return err("players_not_sso_connected", 412, "players_not_sso_connected", {
+      missing: missingDetails,
+      hint: `Player(s) chưa connect DUPR: ${names}. Yêu cầu họ vào /dupr SSO link trước khi approve.`,
+      hint_en: `Player(s) without DUPR SSO: ${names}. Ask them to link at /dupr before approving.`,
+    });
+  }
+
+  // Build team payloads. All players are guaranteed to have a DUPR ID
+  // by the missing-check above. Match games come from scores array.
   const buildTeam = (playerIds: string[], scores: number[]) => {
     const team: Record<string, unknown> = { player1: mapped.get(playerIds[0]) };
     if (playerIds[1]) team.player2 = mapped.get(playerIds[1]);
@@ -381,12 +481,20 @@ async function handleApprove(
     },
     body: JSON.stringify(partnerBody),
   });
-  const partnerJson = await partnerRes.json().catch(() => null);
+  const partnerRaw = await partnerRes.text();
+  let partnerJson: { status?: string; result?: { matchCode?: string; hashedMatchCode?: string }; message?: string } | null = null;
+  try { partnerJson = JSON.parse(partnerRaw); } catch { /* keep raw */ }
 
   if (!partnerRes.ok || partnerJson?.status !== "SUCCESS" || !partnerJson?.result?.matchCode) {
+    console.error("dupr_create_failed", {
+      status: partnerRes.status,
+      partnerRaw,
+      sentBody: partnerBody,
+    });
     return err("dupr_create_failed", 502, "dupr_create_failed", {
       status: partnerRes.status,
-      body: partnerJson,
+      body: partnerJson ?? partnerRaw,
+      hint: partnerJson?.message ?? null,
     });
   }
 
@@ -421,6 +529,31 @@ async function handleApprove(
       approved_at: new Date().toISOString(),
     })
     .eq("id", proposalId);
+
+  // Notify every player (except the approver themselves) that the
+  // match has been pushed to DUPR.
+  const playerIds = [
+    ...proposal.team_a_player_ids,
+    ...proposal.team_b_player_ids,
+  ].filter((id) => id !== callerId);
+  if (playerIds.length > 0) {
+    const scoreLine = proposal.team_a_scores.map((s, i) => `${s}-${proposal.team_b_scores[i]}`).join(", ");
+    await supabase.from("social_notifications").insert(
+      Array.from(new Set(playerIds)).map((uid) => ({
+        user_id: uid,
+        type: "match_submitted",
+        title: "Trận đấu đã được duyệt và gửi lên DUPR",
+        body: `${proposal.format} ${proposal.match_date} — ${scoreLine}. Rating sẽ cập nhật trong vài phút.`,
+        link_url: `/match?tab=history&just=${proposalId}`,
+        payload: {
+          proposal_id: proposalId,
+          match_code: matchCode,
+          title_en: "Match approved and pushed to DUPR",
+          body_en: `${proposal.format} on ${proposal.match_date} — ${scoreLine}. Rating updates in a few minutes.`,
+        },
+      })),
+    );
+  }
 
   return jsonResponse({
     proposal_id: proposalId,
