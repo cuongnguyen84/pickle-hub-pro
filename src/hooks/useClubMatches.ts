@@ -15,6 +15,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type MatchFormat = "singles" | "doubles" | "mixed";
 
+export type ClubPlayerRole = "creator" | "manager" | "member";
+
+export interface ClubEligiblePlayer {
+  profile_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  dupr_id: string | null;
+  role: ClubPlayerRole;
+}
+
 export interface ClubMatchPlayer {
   profile_id: string;
   display_name: string | null;
@@ -62,6 +72,29 @@ function toMutationError(error: unknown): MutationError {
     return { code: msg, message: msg };
   }
   return { code: "unknown", message: "Unknown error" };
+}
+
+/**
+ * Fetch the union of creator + managers + active members for a CLB.
+ * Used by the log-match player picker so any organizer / member can be
+ * tagged in a match. Public-readable (RPC is SECURITY DEFINER + anon grant).
+ */
+export function useClubEligiblePlayers(clubId: string | undefined) {
+  const { data: players = [], isLoading, refetch } = useQuery<ClubEligiblePlayer[]>({
+    queryKey: ["club-eligible-players", clubId],
+    queryFn: async () => {
+      if (!clubId) return [];
+      const { data, error } = await supabase.rpc("list_club_eligible_players", {
+        p_club_id: clubId,
+      });
+      if (error) return [];
+      return (data ?? []) as ClubEligiblePlayer[];
+    },
+    enabled: Boolean(clubId),
+    staleTime: 30_000,
+  });
+
+  return { players, isLoading, refetch };
 }
 
 /**

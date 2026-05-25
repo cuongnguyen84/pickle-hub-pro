@@ -25,9 +25,10 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
-import { useClubMembers } from "@/hooks/useClubMembers";
 import {
+  useClubEligiblePlayers,
   useLogClubMatch,
+  type ClubPlayerRole,
   type MatchFormat,
 } from "@/hooks/useClubMatches";
 
@@ -41,6 +42,22 @@ interface Props {
 interface PickerOption {
   id: string;
   label: string;
+  role: ClubPlayerRole;
+}
+
+function roleSuffix(role: ClubPlayerRole, lang: "vi" | "en"): string {
+  if (lang === "vi") {
+    return role === "creator"
+      ? " · Người tạo"
+      : role === "manager"
+        ? " · Quản lý"
+        : "";
+  }
+  return role === "creator"
+    ? " · Creator"
+    : role === "manager"
+      ? " · Manager"
+      : "";
 }
 
 const MAX_GAMES = 5;
@@ -110,20 +127,21 @@ const scoreCellStyle: CSSProperties = {
 };
 
 export function LogMatchDialog({ clubId, open, onOpenChange, onSuccess }: Props) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const m = t.socialEvents.matches;
 
-  // Member roster — only active rows are eligible to be tagged in a match.
-  const { members, isLoading: membersLoading } = useClubMembers(clubId);
+  // Eligible roster = creator + managers + active members. The log_club_match
+  // RPC accepts any of these via is_club_organizer / is_club_member checks,
+  // so the picker must surface them all (not just the club_members rows).
+  const { players, isLoading: membersLoading } = useClubEligiblePlayers(clubId);
   const memberOptions = useMemo<PickerOption[]>(
     () =>
-      members
-        .filter((row) => row.status === "active")
-        .map((row) => ({
-          id: row.profile_id,
-          label: row.display_name?.trim() || row.email || row.phone || "—",
-        })),
-    [members],
+      players.map((row) => ({
+        id: row.profile_id,
+        label: (row.display_name?.trim() || "—") + roleSuffix(row.role, language),
+        role: row.role,
+      })),
+    [players, language],
   );
 
   // Form state.
