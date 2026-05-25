@@ -152,6 +152,35 @@ export function useLogClubMatch(clubId: string | undefined) {
 }
 
 /**
+ * Organizer-only mutation: mark a match as submitted to DUPR with the
+ * matchCode pasted from the DUPR dashboard. Currently used for the
+ * manual override path while the DUPR Partner RAAS API is still pending;
+ * once granted, the dupr-match-submit edge function will call this RPC
+ * internally so the audit trail stays identical.
+ */
+export function useMarkMatchSubmittedToDupr(clubId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    boolean,
+    MutationError,
+    { matchId: string; duprMatchId: string }
+  >({
+    mutationFn: async ({ matchId, duprMatchId }) => {
+      const { data, error } = await supabase.rpc("mark_match_submitted_to_dupr", {
+        p_match_id: matchId,
+        p_dupr_match_id: duprMatchId,
+      });
+      if (error) throw toMutationError(error);
+      return Boolean(data);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["club-matches", clubId] });
+    },
+  });
+}
+
+/**
  * Organizer-only mutation: flip ready_for_dupr on/off. Refuses if the
  * match has already been submitted to DUPR (server-side check).
  */

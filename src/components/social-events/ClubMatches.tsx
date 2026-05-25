@@ -27,6 +27,7 @@ import {
   type ClubMatchRow,
 } from "@/hooks/useClubMatches";
 import { LogMatchDialog } from "./LogMatchDialog";
+import { SubmitDuprDialog } from "./SubmitDuprDialog";
 
 interface Props {
   clubId: string;
@@ -168,6 +169,7 @@ function MatchCard({
   const { t } = useI18n();
   const m = t.socialEvents.matches;
   const markReady = useMarkMatchReadyForDupr(clubId);
+  const [submitOpen, setSubmitOpen] = useState(false);
 
   const teamALabel = match.team_a_players
     .map((p) => p.display_name ?? "—")
@@ -340,7 +342,7 @@ function MatchCard({
         </p>
       )}
 
-      {/* Organizer footer row: DUPR toggle / submitted info */}
+      {/* Organizer footer row: DUPR toggle / submit button / submitted info */}
       {(isOrganizer || match.submitted_to_dupr) && (
         <div
           style={{
@@ -373,33 +375,60 @@ function MatchCard({
           )}
 
           {isOrganizer && !match.submitted_to_dupr && (
-            <label
+            <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                fontSize: 12,
-                color: "var(--tl-fg-2)",
+                gap: 12,
+                flexWrap: "wrap",
               }}
             >
-              <span>{m.readyToggle}</span>
-              <input
-                type="checkbox"
-                checked={match.ready_for_dupr}
-                disabled={markReady.isPending}
-                onChange={(e) => void handleToggleReady(e.target.checked)}
+              <label
                 style={{
-                  width: 16,
-                  height: 16,
-                  accentColor: "var(--tl-green)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
                   cursor: "pointer",
+                  fontSize: 12,
+                  color: "var(--tl-fg-2)",
                 }}
-              />
-            </label>
+              >
+                <span>{m.readyToggle}</span>
+                <input
+                  type="checkbox"
+                  checked={match.ready_for_dupr}
+                  disabled={markReady.isPending}
+                  onChange={(e) => void handleToggleReady(e.target.checked)}
+                  style={{
+                    width: 16,
+                    height: 16,
+                    accentColor: "var(--tl-green)",
+                    cursor: "pointer",
+                  }}
+                />
+              </label>
+              {match.ready_for_dupr && (
+                <button
+                  type="button"
+                  onClick={() => setSubmitOpen(true)}
+                  className="tl-btn green"
+                  style={{ padding: "6px 14px", fontSize: 12 }}
+                >
+                  <UploadCloud style={{ width: 12, height: 12 }} />
+                  {m.submit.openCta}
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
+
+      <SubmitDuprDialog
+        match={match}
+        clubId={clubId}
+        open={submitOpen}
+        onOpenChange={setSubmitOpen}
+      />
     </article>
   );
 }
