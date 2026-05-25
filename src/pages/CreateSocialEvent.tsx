@@ -37,6 +37,7 @@ import { Step1Info } from "@/components/social/create-event/Step1Info";
 import { Step2Payment } from "@/components/social/create-event/Step2Payment";
 import {
   initialForm,
+  validateSlots,
   validateStep1,
   validateStep2,
   type FormState,
@@ -346,6 +347,60 @@ export default function CreateSocialEvent() {
   const step1Disabled = !step1Result.valid;
   const submitDisabled = submitting || !step1Result.valid || !step2Result.valid || slugTaken;
 
+  // 2026-05-22 — surface a human-readable list of what's still missing
+  // so the organizer knows WHY the green button is greyed out. Without
+  // this hint, the user keeps clicking and nothing happens (silent
+  // validation only flagged invalid fields with inline red text, which
+  // is easy to miss on a long form).
+  const slotResult = validateSlots(form.slots, form.max_players, t);
+  const missingFields = useMemo<string[]>(() => {
+    const list: string[] = [];
+    const fieldLabel: Partial<Record<keyof FormState, string>> = {
+      title:           create.eventName,
+      start_date:      create.startDate,
+      start_time:      create.startTime,
+      end_time:        create.endTime,
+      location_text:   create.location,
+      court_count:     create.courtCount,
+      max_players:     create.maxPlayers,
+      zalo_group_url:  create.zaloGroupUrl,
+      price_vnd:       create.priceAmount,
+      bank_code:       create.bankLabel,
+      bank_account_number: create.accountNumberLabel,
+      bank_account_name:   create.accountNameLabel,
+      prepayment_deadline_hours: create.paymentDeadlineHours,
+    };
+    const showStep2 = step === 2;
+    const errors = showStep2
+      ? { ...step1Result.errors, ...step2Result.errors }
+      : step1Result.errors;
+    for (const [key, msg] of Object.entries(errors)) {
+      if (!msg) continue;
+      const label = fieldLabel[key as keyof FormState] ?? key;
+      list.push(`${label}: ${msg}`);
+    }
+    if (slotResult.totalError) list.push(slotResult.totalError);
+    for (const [slotId, slotErr] of Object.entries(slotResult.errors)) {
+      if (!slotErr) continue;
+      const slotIdx = form.slots.findIndex((s) => s.id === slotId);
+      const slotLabel = (form.slots[slotIdx]?.label?.trim() || `${language === "vi" ? "Nhóm" : "Group"} ${slotIdx + 1}`);
+      for (const msg of Object.values(slotErr)) {
+        if (msg) list.push(`${slotLabel}: ${msg}`);
+      }
+    }
+    if (slugTaken) list.push(create.errorSlugTaken);
+    return list;
+  }, [
+    step,
+    step1Result.errors,
+    step2Result.errors,
+    slotResult,
+    form.slots,
+    slugTaken,
+    create,
+    language,
+  ]);
+
   return (
     <TheLineLayout title={create.pageTitle} active="events" noindex>
       <div className="tl-shell" style={{ paddingBottom: 80, maxWidth: 760, margin: "0 auto" }}>
@@ -383,9 +438,30 @@ export default function CreateSocialEvent() {
               />
             )}
 
+            {/* 2026-05-22 — missing-fields panel. Renders when the
+                current step's submit button would be disabled by a
+                validation error. Helps the organizer spot what to
+                fix without scrolling the long form. */}
+            {((step === 1 && step1Disabled) ||
+              (step === 2 && submitDisabled && !submitting)) &&
+              missingFields.length > 0 && (
+                <div className="mt-6 rounded-md border-2 border-amber-400/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                  <p className="font-semibold">
+                    {language === "vi"
+                      ? "⚠️ Vui lòng kiểm tra các mục sau:"
+                      : "⚠️ Please review the following:"}
+                  </p>
+                  <ul className="mt-1.5 list-disc pl-5 space-y-0.5">
+                    {missingFields.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
             {/* Footer button bar. Sticky-ish via mt-8; full-width on
                 mobile, right-aligned on sm+. */}
-            <div className="mt-8 flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+            <div className="mt-4 flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-end">
               {/* Footer buttons. TheLine vibrant-green pill for the
                   primary CTA (Next on step 1, Publish on step 2). Back
                   + Save-draft are neutral inline / outline pills so the
