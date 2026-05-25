@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Loader2, Plus, Users, BadgeCheck, CheckCircle2, ExternalLink, Sparkles, ClipboardList, Settings, Pencil } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
@@ -14,12 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
+import { useAuth } from "@/hooks/useAuth";
 import { useClub } from "@/hooks/useClub";
 import { useClubEventsManage } from "@/hooks/useClubEventsManage";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { formatEventDateRange } from "@/lib/social-events/format";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
 import { useNoindex } from "@/hooks/useNoindex";
+import { ClubManagers } from "@/components/social-events/ClubManagers";
+import { ClubMembers } from "@/components/social-events/ClubMembers";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ClubManage() {
   // PR72 (SEO Phase 2A I-7): organizer dashboard — private surface.
@@ -27,9 +32,55 @@ export default function ClubManage() {
 
   const { slug } = useParams<{ slug: string }>();
   const { t, language } = useI18n();
+  const { user } = useAuth();
   const permission = useClubOwnership(slug);
   const { data: clubData } = useClub(slug);
   const { data: events, isLoading } = useClubEventsManage(clubData?.club.id);
+
+  // Fetch the creator's display name + avatar for the ClubManagers card.
+  // The clubs row only carries created_by (UUID); we hit profiles
+  // separately here so we don't bloat the shared useClub hook.
+  const { data: creatorProfile } = useQuery<{
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null>({
+    queryKey: ["club-creator-profile", clubData?.club.created_by],
+    queryFn: async () => {
+      const creatorId = clubData?.club.created_by;
+      if (!creatorId) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", creatorId)
+        .maybeSingle();
+      if (error || !data) return null;
+      return data as { display_name: string | null; avatar_url: string | null };
+    },
+    enabled: Boolean(clubData?.club.created_by),
+    staleTime: 5 * 60_000,
+  });
+
+  // Roles drive the canMutate gate (admin can also add managers).
+  const { data: roles } = useQuery<string[]>({
+    queryKey: ["user-roles", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      return ((data ?? []) as { role: string }[]).map((r) => r.role);
+    },
+    enabled: Boolean(user?.id),
+    staleTime: 5 * 60_000,
+  });
+
+  const isCreator =
+    Boolean(user?.id) && Boolean(clubData) && clubData!.club.created_by === user!.id;
+  const isAdmin = Boolean(roles?.includes("admin"));
+  // Per product decision (2026-05-21): only the creator + admins can add
+  // or remove managers. Manager viewers see a read-only list.
+  const canMutateManagers = isCreator || isAdmin;
 
   const manage = t.socialEvents.manage;
 
@@ -139,6 +190,30 @@ export default function ClubManage() {
             </Link>
           </div>
         </header>
+
+        {/* Managers section — visible to all organizers, mutation gated to
+            creator + admin. Hidden until the club row loaded so we can
+            seed it with the creator id + name. */}
+        {clubData && (
+          <Card className="mb-6 p-5">
+            <ClubManagers
+              clubId={clubData.club.id}
+              creatorId={clubData.club.created_by}
+              creatorName={creatorProfile?.display_name ?? null}
+              creatorAvatarUrl={creatorProfile?.avatar_url ?? null}
+              canMutate={canMutateManagers}
+            />
+          </Card>
+        )}
+
+        {/* Members section — visible to all organizers (creator + manager
+            + admin). All mutations (invite / approve / remove) are gated
+            server-side via is_club_organizer. */}
+        {clubData && (
+          <Card className="mb-6 p-5">
+            <ClubMembers clubId={clubData.club.id} />
+          </Card>
+        )}
 
         {isLoading && (
           <div style={{ padding: 60, textAlign: "center" }}>
