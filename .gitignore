@@ -26,8 +26,11 @@ dist-ssr
 # Local Cowork session artifacts
 .claude/worktrees/
 .claude/settings.local.json
+.claude/secrets.local.*
+.claude/scheduled_tasks.lock
 .claude/gh-token
 .claude/gh-token*
+.claude/openai*
 
 # Personal SEO/growth planning notes (not part of the codebase)
 growth-tasks/

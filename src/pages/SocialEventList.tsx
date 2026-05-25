@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { Link } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users, Banknote } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Banknote, LayoutGrid } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
@@ -61,6 +61,7 @@ function EventCard({ event, lang }: { event: UpcomingEventRow; lang: "vi" | "en"
           <span><MapPin className="inline h-3.5 w-3.5" style={{ marginRight: 4 }} />{event.location_text}</span>
         )}
         <span><Users className="inline h-3.5 w-3.5" style={{ marginRight: 4 }} />{event.registered_count}/{event.max_players}{remaining > 0 && remaining <= 4 ? ` · ${lang === "vi" ? "còn ít chỗ" : "few spots"}` : ""}</span>
+        <span><LayoutGrid className="inline h-3.5 w-3.5" style={{ marginRight: 4 }} />{event.court_count} {lang === "vi" ? `sân${event.court_count > 1 ? "" : ""}` : `court${event.court_count > 1 ? "s" : ""}`}</span>
         <span><Banknote className="inline h-3.5 w-3.5" style={{ marginRight: 4 }} />{priceLabel}</span>
       </div>
     </Link>

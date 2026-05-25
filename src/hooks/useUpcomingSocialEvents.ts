@@ -19,6 +19,7 @@ export interface UpcomingEventRow {
   end_at: string;
   location_text: string | null;
   max_players: number;
+  court_count: number;
   price_vnd: number;
   registered_count: number;
   club: { id: string; slug: string; name: string; logo_url: string | null } | null;
@@ -33,7 +34,7 @@ export function useUpcomingSocialEvents(limit = 30) {
         .from("social_events")
         .select(
           `id, slug, title_vi, title_en, description_vi,
-           start_at, end_at, location_text, max_players, price_vnd,
+           start_at, end_at, location_text, max_players, court_count, price_vnd,
            club:clubs!social_events_club_id_fkey ( id, slug, name, logo_url )`,
         )
         .eq("status", "published")

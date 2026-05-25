@@ -1797,6 +1797,10 @@ export interface Translations {
       otpResend: string;
       otpResendIn: string;
       otpResendViaSms: string;
+      // PR69 — abuse defense error messages
+      errCaptcha: string;
+      errCaptchaIp: string;
+      errBudget: string;
       otpInvalid: string;
       otpExpired: string;
       tooManyAttempts: string;
@@ -1922,6 +1926,15 @@ export interface Translations {
       allowGuestsHint: string;
       cancellationHours: string;
       zaloGroupUrl: string;
+      // PR68 — ball type + free perks
+      ballType: string;
+      ballTypePlaceholder: string;
+      ballTypeOther: string;
+      ballTypeCustomPlaceholder: string;
+      freePerks: string;
+      freePerksAdd: string;
+      freePerksRemove: string;
+      freePerksCustomPlaceholder: string;
       visibility: string;
       visibilityPublic: string;
       visibilityClubOnly: string;
@@ -2210,6 +2223,13 @@ export interface Translations {
       alreadyRegisteredCta: string;
       cancelledBanner: string;
       reregisterCta: string;
+      // PR65 — Zalo OA integration: post-success follow-OA CTA
+      followOaBanner: {
+        title: string;
+        body: string;
+        cta: string;
+        dismissAriaLabel: string;
+      };
       // PR67 — prepayment countdown banner
       unpaidRegistrationBannerTitle: string;
       unpaidRegistrationBannerDescription: string;
@@ -4582,6 +4602,13 @@ export const vi: Translations = {
       otpResend: "Gửi lại mã",
       otpResendIn: "Gửi lại sau {seconds}s",
       otpResendViaSms: "Không nhận được Zalo? Gửi lại qua SMS →",
+      // PR69
+      errCaptcha:
+        "Xác minh trình duyệt thất bại. Vui lòng tải lại trang và thử lại.",
+      errCaptchaIp:
+        "Bạn đã gửi quá nhiều mã trong thời gian ngắn. Vui lòng chờ 15 phút rồi thử lại.",
+      errBudget:
+        "Hệ thống đang tạm dừng gửi tin tự động. Vui lòng liên hệ ban tổ chức.",
       otpInvalid: "Mã OTP không đúng",
       otpExpired: "Mã OTP đã hết hạn — vui lòng yêu cầu mã mới",
       tooManyAttempts: "Sai mã quá nhiều lần — vui lòng yêu cầu mã mới",
@@ -4706,6 +4733,15 @@ export const vi: Translations = {
         "Bỏ chọn nếu chỉ thành viên CLB có tài khoản mới được đăng ký.",
       cancellationHours: "Số giờ hủy đăng ký được hoàn tiền",
       zaloGroupUrl: "Liên kết nhóm Zalo (tuỳ chọn)",
+      // PR68
+      ballType: "Loại bóng thi đấu",
+      ballTypePlaceholder: "Chọn loại bóng",
+      ballTypeOther: "Khác",
+      ballTypeCustomPlaceholder: "Nhập tên bóng…",
+      freePerks: "Bao gồm miễn phí",
+      freePerksAdd: "Thêm",
+      freePerksRemove: "Xoá",
+      freePerksCustomPlaceholder: "Thêm mục khác…",
       visibility: "Hiển thị",
       visibilityPublic: "Công khai — ai cũng xem được",
       visibilityClubOnly: "Chỉ trong CLB — không index search engine",
@@ -4965,6 +5001,14 @@ export const vi: Translations = {
       alreadyRegisteredCta: "Xem đăng ký của bạn",
       cancelledBanner: "Bạn đã huỷ đăng ký sự kiện này",
       reregisterCta: "Quản lý / Đăng ký lại",
+      // PR65 — Zalo OA integration
+      followOaBanner: {
+        title: "Theo dõi ThePickleHub trên Zalo",
+        body:
+          "Nhận lịch thi đấu, link livestream và kết quả giải gửi thẳng vào Zalo của bạn.",
+        cta: "Mở Zalo OA",
+        dismissAriaLabel: "Đóng",
+      },
       unpaidRegistrationBannerTitle: "Đăng ký chưa thanh toán",
       unpaidRegistrationBannerDescription:
         "Sự kiện này yêu cầu chuyển khoản trước. Hoàn tất chuyển khoản theo mã thanh toán bên dưới rồi bấm \"Đã thanh toán\" để xác nhận.",

@@ -1802,6 +1802,13 @@ export const en: Translations = {
       otpResend: "Resend code",
       otpResendIn: "Resend in {seconds}s",
       otpResendViaSms: "Didn't get Zalo? Resend via SMS →",
+      // PR69
+      errCaptcha:
+        "Browser verification failed. Please reload the page and try again.",
+      errCaptchaIp:
+        "Too many code requests in a short time. Please wait 15 minutes and try again.",
+      errBudget:
+        "Automated message sending is paused. Please contact the organizer.",
       otpInvalid: "Incorrect OTP",
       otpExpired: "OTP expired — please request a new one",
       tooManyAttempts: "Too many wrong attempts — please request a new code",
@@ -1926,6 +1933,15 @@ export const en: Translations = {
         "Uncheck if only signed-in club members can register.",
       cancellationHours: "Cancellation hours (refund window)",
       zaloGroupUrl: "Zalo group URL (optional)",
+      // PR68
+      ballType: "Match ball",
+      ballTypePlaceholder: "Select a ball",
+      ballTypeOther: "Other",
+      ballTypeCustomPlaceholder: "Enter ball name…",
+      freePerks: "Included for free",
+      freePerksAdd: "Add",
+      freePerksRemove: "Remove",
+      freePerksCustomPlaceholder: "Add another item…",
       visibility: "Visibility",
       visibilityPublic: "Public — anyone can view",
       visibilityClubOnly: "Club only — search engines won't index",
@@ -2185,6 +2201,14 @@ export const en: Translations = {
       alreadyRegisteredCta: "View your registration",
       cancelledBanner: "You cancelled your registration for this event",
       reregisterCta: "Manage / re-register",
+      // PR65 — Zalo OA integration
+      followOaBanner: {
+        title: "Follow ThePickleHub on Zalo",
+        body:
+          "Get tournament schedules, livestream links and match recaps delivered straight to your Zalo.",
+        cta: "Open Zalo OA",
+        dismissAriaLabel: "Dismiss",
+      },
       unpaidRegistrationBannerTitle: "Registration unpaid",
       unpaidRegistrationBannerDescription:
         "This event requires prepayment. Complete the bank transfer with the reference code below, then tap \"Paid\" to confirm.",

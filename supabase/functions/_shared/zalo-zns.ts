@@ -4,8 +4,10 @@
 // Wraps the POST /message/template endpoint. Two callers: phone-otp-send
 // (PR61, OTP delivery) and request-recovery-link (PR59, recovery link).
 //
-// Each caller passes its own template_id + template_data. Required env:
-//   ZALO_OA_ACCESS_TOKEN  — OA access_token (refresh manually for now)
+// Each caller passes its own template_id + template_data and may pass
+// `access_token` explicitly (PR65: phone-otp-send loads from the
+// `zalo_tokens` DB row which is auto-refreshed every 23h). If no
+// access_token arg is given, falls back to ZALO_OA_ACCESS_TOKEN env.
 //
 // Returns a discriminated union so the caller can decide whether to log
 // + fall back. Never throws.
@@ -30,10 +32,18 @@ interface SendArgs {
   template_id: string;
   template_data: Record<string, string | number>;
   tracking_id?: string;
+  /**
+   * Optional OA access_token override. PR65: callers (phone-otp-send)
+   * now load the token from the `zalo_tokens` DB row (auto-refreshed
+   * every 23h by `zalo-token-refresh` edge function). If not provided,
+   * falls back to ZALO_OA_ACCESS_TOKEN env var so older callers (e.g.
+   * request-recovery-link) keep working until they migrate.
+   */
+  access_token?: string;
 }
 
 export async function sendZaloZns(args: SendArgs): Promise<ZaloResult> {
-  const accessToken = Deno.env.get("ZALO_OA_ACCESS_TOKEN") ?? "";
+  const accessToken = args.access_token ?? Deno.env.get("ZALO_OA_ACCESS_TOKEN") ?? "";
   if (!accessToken || !args.template_id) {
     return { ok: false, reason: "not_configured" };
   }

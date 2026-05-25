@@ -10,6 +10,63 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "best-pickleball-paddles-beginners-2026",
+    publishedDate: "2026-05-24",
+    updatedDate: "2026-05-24",
+    author: "Cuong Nguyen",
+    tags: ["best pickleball paddles", "beginner paddle", "paddle buying guide", "pickleball equipment", "joola", "selkirk", "gamma", "pickleball vietnam", "asia"],
+    ctaPath: "/blog/how-to-play-pickleball",
+    ctaLabel: { en: "Next: How to Play Pickleball — Complete Beginner Guide", vi: "Tiếp theo: Hướng dẫn chơi Pickleball cho người mới" },
+    heroImage: {
+      src: "/images/blog/best-pickleball-paddles-beginners-2026-hero.webp",
+      alt: "Top-down product photo of seven beginner pickleball paddles arranged in a fan layout on a neutral wood background, showing paddle face colors ranging from white to black with varied grip wraps, sports equipment catalog style for the 2026 best pickleball paddles for beginners buyer guide"
+    },
+    titleEn: "Best Pickleball Paddles for Beginners 2026: 7 Top Picks (Asia Buyer's Guide)",
+    titleVi: "Vợt Pickleball Tốt Nhất Cho Người Mới 2026: 7 Lựa Chọn (Hướng Dẫn Mua Tại VN)",
+    metaTitleEn: "Best Pickleball Paddles for Beginners 2026 | 7 Top Picks",
+    metaTitleVi: "Vợt Pickleball Tốt Nhất Cho Người Mới 2026 (7 Lựa Chọn)",
+    metaDescriptionEn: "Picking your first pickleball paddle without overspending. 7 beginner-friendly paddles for 2026 with weight, face, grip specs — plus what to avoid in VN.",
+    metaDescriptionVi: "Chọn vợt pickleball đầu tiên không bị \"cháy túi\". 7 mẫu vợt cho người mới 2026 — phân tích trọng lượng, mặt vợt, cán + lỗi cần tránh khi mua tại VN.",
+  },
+  {
+    slug: "pickleball-for-tennis-players-2026",
+    publishedDate: "2026-05-22",
+    updatedDate: "2026-05-22",
+    author: "Cuong Nguyen",
+    tags: ["pickleball for tennis players", "tennis to pickleball", "tennis vs pickleball", "beginner", "technique", "transition guide", "unlearn", "vietnam pickleball"],
+    ctaPath: "/blog/how-to-play-pickleball",
+    ctaLabel: { en: "Read: How to Play Pickleball — Complete Beginner Guide", vi: "Đọc tiếp: Hướng dẫn chơi Pickleball cho người mới bắt đầu" },
+    heroImage: {
+      src: "/images/blog/pickleball-for-tennis-players-2026-hero.webp",
+      alt: "Split-screen sports photo: left side a tennis player executing a deep baseline forehand on a clay court, right side the same player at the kitchen line on a pickleball court holding a paddle in a compact ready position, illustrating the transition from tennis to pickleball and the 5 habits tennis players need to unlearn"
+    },
+    titleEn: "Pickleball for Tennis Players: 5 Things to Unlearn (2026 Guide)",
+    titleVi: "Từ tennis chuyển sang pickleball: 5 thói quen cần \"quên\" (2026)",
+    metaTitleEn: "Pickleball for Tennis Players 2026 | 5 Habits to Unlearn",
+    metaTitleVi: "Tennis sang Pickleball 2026 | 5 thói quen phải sửa",
+    metaDescriptionEn: "Tennis players struggle with pickleball not because it's harder — they bring 5 ingrained habits that backfire. Here's what to unlearn and the 7-day fix.",
+    metaDescriptionVi: "Người chơi tennis chuyển sang pickleball không thua vì kỹ thuật yếu — họ mang theo 5 thói quen phản tác dụng. Đây là cách sửa và lịch tập 7 ngày.",
+  },
+  {
+    slug: "dupr-rating-improvement-30-day-plan",
+    publishedDate: "2026-05-20",
+    updatedDate: "2026-05-20",
+    author: "Cuong Nguyen",
+    tags: ["dupr", "dupr rating", "pickleball rating", "training plan", "improvement", "30 day plan", "dupr algorithm", "performance vs expectation", "vietnam pickleball"],
+    ctaPath: "/blog/dupr-algorithm-explained-performance-vs-expectation",
+    ctaLabel: { en: "Read Part 2: How the DUPR Algorithm Actually Works", vi: "Đọc Phần 2: Thuật toán DUPR — thắng mất điểm, thua tăng điểm" },
+    heroImage: {
+      src: "/images/blog/dupr-rating-improvement-30-day-plan-hero.webp",
+      alt: "A vertical bar chart showing a DUPR (Dynamic Universal Pickleball Rating) climbing from 3.50 to 4.20 across 30 days, beside a pickleball paddle and DUPR logo, illustrating a realistic week-by-week training plan to improve a pickleball rating."
+    },
+    titleEn: "How to Improve Your DUPR Rating: A Realistic 30-Day Plan",
+    titleVi: "Tăng điểm DUPR trong 30 ngày: kế hoạch thực tế (không hứa nhanh)",
+    metaTitleEn: "Improve DUPR Rating in 30 Days | Realistic Training Plan 2026",
+    metaTitleVi: "Tăng DUPR 30 ngày | Kế hoạch luyện tập thực tế 2026",
+    metaDescriptionEn: "A 30-day plan to raise your DUPR rating: how DUPR's algorithm rewards consistent play, the 4 rules from Part 2, and a week-by-week training schedule.",
+    metaDescriptionVi: "Kế hoạch 30 ngày tăng điểm DUPR thực tế: hiểu thuật toán DUPR, 4 quy tắc từ Phần 2, lịch luyện tập theo tuần, 3 sai lầm cần tránh.",
+  },
+  {
     slug: "professional-pickleball-tours-guide-2026",
     publishedDate: "2026-05-18",
     updatedDate: "2026-05-18",

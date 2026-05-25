@@ -40,12 +40,22 @@ const OTP_TTL_MS = 5 * 60 * 1000;
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const RATE_MAX_PER_WINDOW = 3;
 
+// PR69 — abuse defense constants
+const IP_RATE_MAX = 5;        // max successful OTPs / IP / RATE_WINDOW_MS
+const ZBS_DEFAULT_BUDGET = 50000;  // VND/day if env unset
+const ZBS_COST_PER_SEND = 400;     // VND per successful Zalo send (SDT pricing)
+const TURNSTILE_VERIFY_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
 interface SendBody {
   phone?: unknown;
   event_id?: unknown;
   /** PR61 — let the client force the SMS fallback when the user
    *  doesn't follow the Zalo OA. Optional; default = "auto". */
   force_channel?: unknown;
+  /** PR69 — Cloudflare Turnstile token (invisible CAPTCHA). Required
+   *  in production to block bot scripts from burning Zalo ZBS credit. */
+  turnstile_token?: unknown;
 }
 
 type Channel = "zalo" | "sms" | "dev";
@@ -58,6 +68,8 @@ async function logSendAttempt(
     channel: Channel;
     success: boolean;
     error_code?: string;
+    /** PR69 — caller IP for per-IP rate limiting. Stored as inet. */
+    ip_address?: string | null;
   },
 ): Promise<void> {
   try {
@@ -67,9 +79,57 @@ async function logSendAttempt(
       channel: args.channel,
       success: args.success,
       error_code: args.error_code ?? null,
+      ip_address: args.ip_address ?? null,
     });
   } catch {
     // telemetry failure must never block the user
+  }
+}
+
+// ─── PR69 helpers ──────────────────────────────────────────────────────────
+/** Extract caller IP from Cloudflare / proxy headers. Returns null when
+ *  no usable IP is present (e.g. server-to-server calls). */
+function extractIp(req: Request): string | null {
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf;
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    // x-forwarded-for is a comma-separated list; the client IP is the first.
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return req.headers.get("x-real-ip");
+}
+
+/** Verify a Turnstile token with Cloudflare. Returns { ok, errorCodes }.
+ *  Network failures count as `ok: false` so a Cloudflare outage doesn't
+ *  let bots through. */
+async function verifyTurnstile(
+  token: string,
+  secret: string,
+  ip: string | null,
+): Promise<{ ok: boolean; errorCodes?: string[] }> {
+  if (!token || !secret) {
+    return { ok: false, errorCodes: ["missing_token_or_secret"] };
+  }
+  try {
+    const form = new URLSearchParams({ secret, response: token });
+    if (ip) form.append("remoteip", ip);
+    const res = await fetch(TURNSTILE_VERIFY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+    });
+    const body = (await res.json()) as {
+      success?: boolean;
+      "error-codes"?: string[];
+    };
+    return {
+      ok: body.success === true,
+      errorCodes: body["error-codes"],
+    };
+  } catch (e) {
+    return { ok: false, errorCodes: ["network_error:" + String(e).slice(0, 80)] };
   }
 }
 
@@ -188,8 +248,89 @@ Deno.serve(async (req) => {
     return err("event_full", 409, "event_full");
   }
 
-  // ─── Rate limit ─────────────────────────────────────────────────────────
+  // ─── PR69 — abuse defense (run BEFORE charging-side checks) ────────────
+  const ip = extractIp(req);
+  const _defenseEnv = (Deno.env.get("ENVIRONMENT") ?? "production").toLowerCase();
+  const isDev = _defenseEnv === "development" || _defenseEnv === "dev" || _defenseEnv === "local";
+
+  // a) Turnstile verify — REQUIRED in production. In dev mode we skip so
+  //    local cURL testing doesn't break.
+  if (!isDev) {
+    const turnstileToken =
+      typeof body.turnstile_token === "string" ? body.turnstile_token : "";
+    const turnstileSecret = Deno.env.get("TURNSTILE_SECRET") ?? "";
+    if (!turnstileSecret) {
+      logEvent({ step: "turnstile_secret_missing" });
+      return err("captcha_misconfigured", 500, "captcha_misconfigured");
+    }
+    const ts = await verifyTurnstile(turnstileToken, turnstileSecret, ip);
+    if (!ts.ok) {
+      logEvent({
+        step: "turnstile_failed",
+        ip,
+        phone,
+        error_codes: ts.errorCodes,
+      });
+      // Don't log to otp_send_logs — no Zalo credit spent, just a bot attempt.
+      return err("captcha_failed", 403, "captcha_failed");
+    }
+  }
+
   const windowStart = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
+
+  // b) IP rate limit — max IP_RATE_MAX successful OTPs / IP / window.
+  //    Only counts success=true so failed/rejected sends don't punish the IP.
+  if (ip) {
+    const { count: ipCount, error: ipErr } = await supabase
+      .from("otp_send_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("ip_address", ip)
+      .eq("success", true)
+      .gte("sent_at", windowStart);
+    if (ipErr) {
+      logEvent({ error: ipErr.message, step: "ip_rate_check" });
+      // Fail-open on lookup error — better UX than blocking everyone if the
+      // query plan regresses; abuse case still caught by Turnstile + budget cap.
+    } else if ((ipCount ?? 0) >= IP_RATE_MAX) {
+      logEvent({ step: "ip_rate_exceeded", ip, count: ipCount });
+      return err("too_many_otps_ip", 429, "too_many_otps_ip");
+    }
+  }
+
+  // c) Daily ZBS budget kill-switch — caps the worst-case daily spend
+  //    when Turnstile + IP limits are somehow bypassed (e.g. residential
+  //    botnet sharing valid Turnstile tokens).
+  if (!isDev) {
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+    const { count: todayCount, error: budgetErr } = await supabase
+      .from("otp_send_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("channel", "zalo")
+      .eq("success", true)
+      .gte("sent_at", todayStart.toISOString());
+    if (budgetErr) {
+      logEvent({ error: budgetErr.message, step: "budget_check" });
+      // Fail-open — abuse already caught by Turnstile + IP
+    } else {
+      const budget = parseInt(
+        Deno.env.get("ZBS_DAILY_BUDGET_VND") ?? String(ZBS_DEFAULT_BUDGET),
+        10,
+      );
+      const todayCost = (todayCount ?? 0) * ZBS_COST_PER_SEND;
+      if (todayCost >= budget) {
+        logEvent({
+          step: "budget_exceeded",
+          today_count: todayCount,
+          today_cost: todayCost,
+          budget,
+        });
+        return err("daily_budget_exceeded", 503, "daily_budget_exceeded");
+      }
+    }
+  }
+
+  // ─── Per-phone rate limit (existing) ────────────────────────────────────
   const { count: recentCount, error: rlErr } = await supabase
     .from("otp_codes")
     .select("id", { count: "exact", head: true })
@@ -245,7 +386,8 @@ Deno.serve(async (req) => {
       event_id: eventIdInput,
       channel: "dev",
       success: true,
-    });
+    ip_address: ip,
+      });
     return jsonResponse({
       ok: true,
       expires_at: expiresAt,
@@ -263,16 +405,33 @@ Deno.serve(async (req) => {
   // PR61 — channel resolution. Try Zalo ZNS first (cheaper + brand
   // trust) and fall back to eSMS so users without the OA still
   // receive an OTP. force_channel='sms' skips Zalo entirely.
+  //
+  // PR65: ZALO_OA_ACCESS_TOKEN is now loaded from the `zalo_tokens`
+  // DB row (id=1, auto-refreshed every 23h by zalo-token-refresh
+  // edge function). The env var is no longer the source of truth.
   const templateId = Deno.env.get("ZALO_TEMPLATE_ID_OTP") ?? "";
-  const zaloConfigured = templateId.length > 0 && (Deno.env.get("ZALO_OA_ACCESS_TOKEN") ?? "").length > 0;
+
+  let zaloAccessToken = "";
+  if (templateId.length > 0 && forceChannel !== "sms") {
+    const { data: tokenRow } = await supabase
+      .from("zalo_tokens")
+      .select("access_token")
+      .eq("id", 1)
+      .maybeSingle();
+    zaloAccessToken = (tokenRow?.access_token as string | undefined) ?? "";
+  }
+
+  const zaloConfigured = templateId.length > 0 && zaloAccessToken.length > 0;
   const tryZalo = forceChannel !== "sms" && zaloConfigured;
 
   if (tryZalo) {
     const zaloResult = await sendZaloZns({
       phone_no_plus: phone.replace(/^\+/, ""),
       template_id: templateId,
-      template_data: { otp_code: code },
+      // Stock Zalo "Mẫu xác thực" template uses param name `otp`.
+      template_data: { otp: code },
       tracking_id: `${eventIdInput}:${phone}:${Date.now()}`,
+      access_token: zaloAccessToken,
     });
 
     if (zaloResult.ok) {
@@ -287,6 +446,7 @@ Deno.serve(async (req) => {
         event_id: eventIdInput,
         channel: "zalo",
         success: true,
+      ip_address: ip,
       });
       return jsonResponse({ ok: true, expires_at: expiresAt, channel: "zalo" });
     }
@@ -305,7 +465,8 @@ Deno.serve(async (req) => {
       channel: "zalo",
       success: false,
       error_code: zaloResult.reason,
-    });
+    ip_address: ip,
+      });
 
     if (forceChannel === "zalo") {
       // Explicit zalo-only request — don't silently fall back.
@@ -329,7 +490,8 @@ Deno.serve(async (req) => {
       channel: "sms",
       success: false,
       error_code: smsResult.codeResult ?? smsResult.errorMessage,
-    });
+    ip_address: ip,
+      });
     return err("sms_send_failed", 502, "sms_send_failed");
   }
 
@@ -344,6 +506,7 @@ Deno.serve(async (req) => {
     event_id: eventIdInput,
     channel: "sms",
     success: true,
-  });
+  ip_address: ip,
+      });
   return jsonResponse({ ok: true, expires_at: expiresAt, channel: "sms" });
 });

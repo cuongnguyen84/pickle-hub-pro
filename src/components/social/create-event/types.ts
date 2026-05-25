@@ -9,6 +9,28 @@
 
 import type { Translations } from "@/i18n/vi";
 
+/**
+ * One registration slot (optional event sub-bucket). Organizer can add 0..N.
+ * - "skill"    → có skill_level ("2.5", "3.0", "newbie", ...)
+ * - "duration" → có min_play_months (6 = "đã chơi tối thiểu 6 tháng")
+ * - "general"  → free-text, không gắn metadata
+ *
+ * `id` được tự sinh client-side và phải unique trong cùng event. `capacity`
+ * mặc định = court_count * 4 nhưng organizer có thể override.
+ */
+export type SlotKind = "skill" | "duration" | "general";
+
+export interface SlotConfig {
+  id: string;
+  label: string;
+  kind: SlotKind;
+  capacity: number;
+  court_count?: number | null;
+  skill_level?: string | null;
+  min_play_months?: number | null;
+  notes?: string | null;
+}
+
 export interface FormState {
   /** Stored in social_events.title_vi; title_en is left null on insert. */
   title: string;
@@ -34,6 +56,31 @@ export interface FormState {
   /** PR67 — prepayment toggle + deadline window (hours). */
   requires_prepayment: boolean;
   prepayment_deadline_hours: number;
+  /**
+   * Optional registration slots. Empty array = no slots; player gates only
+   * on max_players. When non-empty, sum(capacity) must ≤ max_players and
+   * the player must pick exactly one slot at registration time.
+   */
+  slots: SlotConfig[];
+  /**
+   * PR68 — Official match-ball model. Free-form text persisted to
+   * social_events.ball_type. Wizard offers a quick-pick preset list plus
+   * a "Khác" option for arbitrary entries.
+   */
+  ball_type: string;
+  /**
+   * PR68 — Complimentary items included with the entry fee (water,
+   * fruit, towel…). Persisted to social_events.free_perks as a text[].
+   * Wizard combines preset toggle chips with a free-form "add custom".
+   */
+  free_perks: string[];
+  /**
+   * Weekly-repeat count. 0 = no repeat (single event), N = create N
+   * additional events 7, 14, …, 7N days after the base event with
+   * identical fields. Capped at 12 weeks (one quarter) to keep slug
+   * collisions + DB load manageable.
+   */
+  repeat_weeks: number;
 }
 
 export type FormErrors = Partial<Record<keyof FormState, string | null>>;
@@ -55,7 +102,125 @@ export const initialForm: FormState = {
   bank_account_name: "",
   requires_prepayment: false,
   prepayment_deadline_hours: 12,
+  slots: [],
+  ball_type: "",
+  free_perks: [],
+  repeat_weeks: 0,
 };
+
+/**
+ * Generate a stable but unique slot id (16-hex). Lives in the client so
+ * organizers can rearrange slots before submit without colliding.
+ */
+export function newSlotId(): string {
+  const r = new Uint8Array(8);
+  crypto.getRandomValues(r);
+  return Array.from(r, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Build an empty slot with sensible defaults for the requested kind.
+ * `court_count = 1`, `capacity = 4` is a safe seed (4 chỗ / sân).
+ */
+export function makeEmptySlot(kind: SlotKind): SlotConfig {
+  return {
+    id: newSlotId(),
+    label: "",
+    kind,
+    capacity: 4,
+    court_count: kind === "skill" ? 1 : null,
+    skill_level: kind === "skill" ? "" : null,
+    min_play_months: kind === "duration" ? 6 : null,
+    notes: null,
+  };
+}
+
+/**
+ * Validate a single slot. Returns a per-field map (label/capacity/etc.)
+ * with error strings keyed by slot id + field, or null when slot is OK.
+ * Used by the Step1Info slot manager to surface inline errors.
+ */
+export interface SlotErrors {
+  label?: string | null;
+  capacity?: string | null;
+  skill_level?: string | null;
+  min_play_months?: string | null;
+}
+
+const MAX_SLOTS = 12;
+const MAX_SLOT_CAPACITY = 200;
+const MAX_PLAY_MONTHS = 360;
+
+export function validateSlot(slot: SlotConfig, t: Translations): SlotErrors {
+  const create = t.socialEvents.create;
+  const errs: SlotErrors = {};
+  const label = (slot.label ?? "").trim();
+  if (label.length < 2) {
+    errs.label = create.errorSlotLabelMin;
+  } else if (label.length > 80) {
+    errs.label = create.errorSlotLabelMax;
+  }
+  if (!Number.isInteger(slot.capacity) || slot.capacity < 1) {
+    errs.capacity = create.errorSlotCapacityMin;
+  } else if (slot.capacity > MAX_SLOT_CAPACITY) {
+    errs.capacity = create.errorSlotCapacityMax;
+  }
+  if (slot.kind === "skill") {
+    const lvl = (slot.skill_level ?? "").trim();
+    if (lvl.length === 0) errs.skill_level = create.errorSlotSkillRequired;
+  }
+  if (slot.kind === "duration") {
+    const m = slot.min_play_months;
+    if (m == null || !Number.isInteger(m) || m < 0 || m > MAX_PLAY_MONTHS) {
+      errs.min_play_months = create.errorSlotDurationRange;
+    }
+  }
+  return errs;
+}
+
+export function validateSlots(
+  slots: SlotConfig[],
+  maxPlayers: number,
+  t: Translations,
+): { errors: Record<string, SlotErrors>; totalError: string | null; valid: boolean } {
+  const create = t.socialEvents.create;
+  const errors: Record<string, SlotErrors> = {};
+  let valid = true;
+
+  if (slots.length > MAX_SLOTS) {
+    return {
+      errors,
+      totalError: create.errorSlotTooMany,
+      valid: false,
+    };
+  }
+
+  const seenIds = new Set<string>();
+  for (const slot of slots) {
+    if (seenIds.has(slot.id)) {
+      // Id collision shouldn't happen via the UI but guard anyway.
+      errors[slot.id] = { label: create.errorSlotDuplicateId };
+      valid = false;
+      continue;
+    }
+    seenIds.add(slot.id);
+    const slotErr = validateSlot(slot, t);
+    errors[slot.id] = slotErr;
+    if (Object.values(slotErr).some((v) => v)) valid = false;
+  }
+
+  let totalError: string | null = null;
+  if (slots.length > 0) {
+    const totalCap = slots.reduce((acc, s) => acc + (Number(s.capacity) || 0), 0);
+    if (totalCap > maxPlayers) {
+      totalError = create.errorSlotsExceedMaxPlayers
+        .replace("{total}", String(totalCap))
+        .replace("{max}", String(maxPlayers));
+      valid = false;
+    }
+  }
+  return { errors, totalError, valid };
+}
 
 /**
  * Uppercase + strip Vietnamese diacritics so the account name matches
@@ -203,6 +368,13 @@ export function validateField(
       }
       return null;
     }
+    case "repeat_weeks": {
+      const n = Number(value);
+      if (!Number.isInteger(n) || n < 0 || n > 12) {
+        return create.errorRepeatWeeksRange;
+      }
+      return null;
+    }
   }
 }
 
@@ -217,6 +389,7 @@ const STEP1_FIELDS: ReadonlyArray<keyof FormState> = [
   "max_players",
   "zalo_group_url",
   "visibility",
+  "repeat_weeks",
 ];
 
 const STEP2_FIELDS: ReadonlyArray<keyof FormState> = [
@@ -240,6 +413,10 @@ export function validateStep1(form: FormState, t: Translations): { errors: FormE
     errors[f] = e;
     if (e) valid = false;
   }
+  // Slots roll up into Step-1's valid flag so the "Next" button stays
+  // gated until the slot config is consistent.
+  const slotResult = validateSlots(form.slots, form.max_players, t);
+  if (!slotResult.valid) valid = false;
   return { errors, valid };
 }
 

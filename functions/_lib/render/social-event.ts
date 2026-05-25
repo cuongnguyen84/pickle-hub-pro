@@ -14,6 +14,7 @@ import {
   escapeHtml,
   buildTitle,
   breadcrumb,
+  type Lang,
 } from "../utils";
 import { pickMetaDescription } from "../seo-helpers";
 import { render404 } from "./index";
@@ -30,6 +31,7 @@ interface SocialEventRow {
   location_text: string | null;
   location_lat: number | null;
   location_lng: number | null;
+  court_count: number;
   max_players: number;
   price_vnd: number;
   status: "draft" | "published" | "cancelled" | "completed";
@@ -84,13 +86,14 @@ export async function renderSocialEvent(
   supabase: SupabaseClient,
   slug: string,
   siteUrl: string,
+  lang: Lang = "vi",
 ): Promise<Response> {
   const { data, error } = await supabase
     .from("social_events")
     .select(
       `id, slug, title_vi, title_en, description_vi, description_en,
        start_at, end_at, location_text, location_lat, location_lng,
-       max_players, price_vnd, status, visibility,
+       court_count, max_players, price_vnd, status, visibility,
        club:clubs!social_events_club_id_fkey ( slug, name )`,
     )
     .eq("slug", slug)
@@ -105,10 +108,14 @@ export async function renderSocialEvent(
   if (!data) return render404(`/social/${slug}`, siteUrl);
 
   const ev = data as unknown as SocialEventRow;
+  // 2026-05-20 — Bilingual canonical pattern (mirrors /feed). The EN canonical
+  // is /social/{slug}; the VI canonical is /vi/social/{slug}. Cross-emitted
+  // hreflang lets Google connect the two locales instead of collapsing them.
   const titleVi = ev.title_vi;
-  // PR69 — canonical is /social/{slug}; the legacy /su-kien/{slug}
-  // path 301s server-side via _redirects and the SPA Navigate alias.
-  const url = `${siteUrl}/social/${ev.slug}`;
+  const titleEn = ev.title_en && ev.title_en.trim().length > 0 ? ev.title_en : ev.title_vi;
+  const enUrl = `${siteUrl}/social/${ev.slug}`;
+  const viUrl = `${siteUrl}/vi/social/${ev.slug}`;
+  const url = lang === "vi" ? viUrl : enUrl;
 
   // Registered count for offers.availability ("InStock" / "SoldOut").
   let registeredCount = 0;
@@ -127,41 +134,59 @@ export async function renderSocialEvent(
   const startTime = fmtTimeVN(ev.start_at);
   const endTime = fmtTimeVN(ev.end_at);
   const venueLabel = ev.location_text ?? "";
-  const rawTitle = `${titleVi} — ${dateStr}${venueLabel ? ` · ${venueLabel}` : ""}`;
+  const displayTitle = lang === "vi" ? titleVi : titleEn;
+  const rawTitle = `${displayTitle} — ${dateStr}${venueLabel ? ` · ${venueLabel}` : ""}`;
   const title = buildTitle(rawTitle, " | ThePickleHub");
 
-  // Description: club + date + capacity + price short sentence in Vietnamese.
-  const priceLabel = ev.price_vnd > 0 ? `${ev.price_vnd.toLocaleString("vi-VN")}₫` : "Miễn phí";
-  const hostLabel = ev.club ? `${ev.club.name} tổ chức` : "Sự kiện pickleball";
-  const fallbackDesc =
-    `${hostLabel} ngày ${dateStr} ${startTime ? `lúc ${startTime}` : ""}` +
+  // Description: club + date + capacity + price short sentence per locale.
+  const priceLabel =
+    ev.price_vnd > 0
+      ? `${ev.price_vnd.toLocaleString("vi-VN")}₫`
+      : lang === "vi"
+        ? "Miễn phí"
+        : "Free";
+  const hostLabelVi = ev.club ? `${ev.club.name} tổ chức` : "Sự kiện pickleball";
+  const hostLabelEn = ev.club ? `Hosted by ${ev.club.name}` : "Pickleball community event";
+  const fallbackDescVi =
+    `${hostLabelVi} ngày ${dateStr} ${startTime ? `lúc ${startTime}` : ""}` +
     `${venueLabel ? ` tại ${venueLabel}` : ""}.` +
     ` Tối đa ${ev.max_players} người · ${priceLabel}.` +
     ` Đăng ký bằng số điện thoại trên ThePickleHub.`;
+  const fallbackDescEn =
+    `${hostLabelEn} on ${dateStr}${startTime ? ` at ${startTime}` : ""}` +
+    `${venueLabel ? ` · ${venueLabel}` : ""}.` +
+    ` Up to ${ev.max_players} players · ${priceLabel}.` +
+    ` Register by phone number on ThePickleHub.`;
   // PR73 Phase 2C (audit I-3) — pickMetaDescription returns the
   // event-specific date/venue/capacity/price fallback when the organizer
   // hasn't written a description. The previous wiring used
   // buildMetaDescription's generic-platform fallback which made the
   // `|| fallbackDesc` branch dead code (same Codex P2 issue as PR #19).
-  const description = pickMetaDescription(ev.description_vi, fallbackDesc);
+  const description =
+    lang === "vi"
+      ? pickMetaDescription(ev.description_vi, fallbackDescVi)
+      : pickMetaDescription(ev.description_en ?? ev.description_vi, fallbackDescEn);
 
   // PR73 Phase 2D (audit I-13) — breadcrumb label = actual club name
   // (e.g. "175 Định Công") instead of the generic literal "Sự kiện CLB"
   // that previously pointed at the same club page. When there is no
-  // club we fall back to the generic "Sự kiện" hub link.
+  // club we fall back to the generic "Sự kiện" / "Events" hub link.
+  const homeLabel = lang === "vi" ? "Trang chủ" : "Home";
+  const homeHref = lang === "vi" ? `${siteUrl}/vi` : siteUrl;
+  const eventsLabel = lang === "vi" ? "Sự kiện" : "Events";
   const clubCrumb = ev.club
     ? { label: ev.club.name, href: `${siteUrl}/clb/${ev.club.slug}` }
-    : { label: "Sự kiện", href: `${siteUrl}/social` };
+    : { label: eventsLabel, href: `${siteUrl}/social` };
   const bc = breadcrumb([
-    { label: "Trang chủ", href: siteUrl },
+    { label: homeLabel, href: homeHref },
     clubCrumb,
-    { label: titleVi },
+    { label: displayTitle },
   ]);
 
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
-    name: titleVi,
+    name: displayTitle,
     description,
     url,
     sport: "Pickleball",
@@ -208,16 +233,30 @@ export async function renderSocialEvent(
     },
   };
 
+  const lbl = lang === "vi"
+    ? { time: "Thời gian", venue: "Địa điểm", courts: "Số sân", max: "Số người tối đa", fee: "Phí" }
+    : { time: "When", venue: "Where", courts: "Courts", max: "Max players", fee: "Fee" };
+  const courtsLabel =
+    lang === "vi"
+      ? `${ev.court_count} sân`
+      : `${ev.court_count} court${ev.court_count > 1 ? "s" : ""}`;
+  const descBody = lang === "vi"
+    ? (ev.description_vi ?? "")
+    : (ev.description_en && ev.description_en.trim().length > 0
+        ? ev.description_en
+        : (ev.description_vi ?? ""));
+
   const bodyParts: string[] = [bc];
-  bodyParts.push(`<h1>${escapeHtml(titleVi)}</h1>`);
-  bodyParts.push(`<p><strong>Thời gian:</strong> ${escapeHtml(dateStr)} · ${escapeHtml(startTime)} – ${escapeHtml(endTime)}</p>`);
+  bodyParts.push(`<h1>${escapeHtml(displayTitle)}</h1>`);
+  bodyParts.push(`<p><strong>${lbl.time}:</strong> ${escapeHtml(dateStr)} · ${escapeHtml(startTime)} – ${escapeHtml(endTime)}</p>`);
   if (ev.location_text) {
-    bodyParts.push(`<p><strong>Địa điểm:</strong> ${escapeHtml(ev.location_text)}</p>`);
+    bodyParts.push(`<p><strong>${lbl.venue}:</strong> ${escapeHtml(ev.location_text)}</p>`);
   }
-  bodyParts.push(`<p><strong>Số người tối đa:</strong> ${ev.max_players}</p>`);
-  bodyParts.push(`<p><strong>Phí:</strong> ${escapeHtml(priceLabel)}</p>`);
-  if (ev.description_vi) {
-    bodyParts.push(`<p>${escapeHtml(ev.description_vi).replace(/\n/g, "<br>")}</p>`);
+  bodyParts.push(`<p><strong>${lbl.courts}:</strong> ${escapeHtml(courtsLabel)}</p>`);
+  bodyParts.push(`<p><strong>${lbl.max}:</strong> ${ev.max_players}</p>`);
+  bodyParts.push(`<p><strong>${lbl.fee}:</strong> ${escapeHtml(priceLabel)}</p>`);
+  if (descBody) {
+    bodyParts.push(`<p>${escapeHtml(descBody).replace(/\n/g, "<br>")}</p>`);
   }
 
   return htmlResponse(
@@ -233,19 +272,24 @@ export async function renderSocialEvent(
       image: `${siteUrl}/og/social/${encodeURIComponent(ev.slug)}.png`,
       jsonLd,
       bodyContent: bodyParts.join("\n"),
-      lang: "vi",
-      // PR73 Phase 2D (audit I-5) — single-canonical event URL serves
-      // both languages (SPA toggles via i18n context). Emit reciprocal
-      // hreflang so Google connects this page across vi/en searches
-      // even though the URL is identical. Matches /nguoi-choi/* and
-      // /feed conventions.
-      // PR (2026-05-18 Ahrefs Site Audit fix) — same as social-list:
-      // single-canonical /clb/{slug} can't emit en+vi hreflang to the
-      // same URL (Ahrefs / Google flag as conflicting). Omit instead.
+      lang,
+      // 2026-05-20 — Bilingual canonical for social event detail.
+      // Mirrors the /feed pattern: each locale gets its own canonical
+      // URL (/social/{slug} for EN, /vi/social/{slug} for VI) and the
+      // cross-emitted hreflang links pair them. Previous single-
+      // canonical design (PR73 Phase 2D) was rolled back here because
+      // the SPA only forced VI inside /vi/* routes, so non-VN visitors
+      // landing on /social/{slug} saw English UI without any
+      // discoverable VI URL.
+      alternates: [
+        { hreflang: "en", href: enUrl },
+        { hreflang: "vi", href: viUrl },
+        { hreflang: "x-default", href: enUrl },
+      ],
       // PR73 Phase 2D (audit I-11) — bodyContent already opens with a
-      // clean `<h1>${titleVi}</h1>`, so skip buildHtml's auto h1 (which
-      // would have emitted the decorated full page-title as a second
-      // h1, the duplicate flagged by Ahrefs).
+      // clean `<h1>${displayTitle}</h1>`, so skip buildHtml's auto h1
+      // (which would have emitted the decorated full page-title as a
+      // second h1, the duplicate flagged by Ahrefs).
       omitAutoHeader: true,
     }),
   );
