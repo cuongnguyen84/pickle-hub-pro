@@ -522,10 +522,27 @@ async function handleUpdate(
   // matchCode is the same numeric value as matchId, just stored as string —
   // confirmed via swagger ExternalUpdateMatchRequest + empirical test
   // (2026-05-22). Cast to integer here.
-  const matchIdInt = Number.parseInt(existing.match_code, 10);
-  if (!Number.isFinite(matchIdInt)) {
+  //
+  // Codex P2 fix (2026-05-25): use strict digit validation + check
+  // Number.MAX_SAFE_INTEGER. parseInt silently truncates "12abc" to 12,
+  // and JS number precision drops past 2^53-1 — both could target the
+  // wrong DUPR match silently. Reject both cases explicitly.
+  if (!/^[0-9]+$/.test(existing.match_code)) {
     return err("invalid_match_code", 500, "invalid_match_code", {
       stored: existing.match_code,
+      reason: "non_digit_characters",
+    });
+  }
+  const matchIdInt = Number(existing.match_code);
+  if (
+    !Number.isFinite(matchIdInt) ||
+    matchIdInt > Number.MAX_SAFE_INTEGER ||
+    String(matchIdInt) !== existing.match_code
+  ) {
+    return err("invalid_match_code", 500, "invalid_match_code", {
+      stored: existing.match_code,
+      reason: "precision_loss_or_overflow",
+      max_safe: Number.MAX_SAFE_INTEGER,
     });
   }
   const partnerBody: Record<string, unknown> = {
