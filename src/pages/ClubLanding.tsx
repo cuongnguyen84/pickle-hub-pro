@@ -17,6 +17,7 @@ import { formatEventDateRange, interp } from "@/lib/social-events/format";
 import { EntityNotFound } from "@/components/EntityNotFound";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { useMyMembership } from "@/hooks/useClubMembers";
+import { ClubMatches } from "@/components/social-events/ClubMatches";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
@@ -286,6 +287,11 @@ export default function ClubLanding() {
             <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{club.description}</p>
           </Card>
         )}
+
+        {/* Club matches — public list + organizer log/queue UI.
+            Lives between description and events because match results are
+            the highest-signal recent activity for any club. */}
+        <ClubMatches clubId={club.id} isOrganizer={isOrganizer} />
 
         <section style={{ marginBottom: 32 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>

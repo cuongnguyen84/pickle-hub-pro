@@ -2391,6 +2391,81 @@ export interface Translations {
       errAlreadyCreator: string;
       errAlreadyManager: string;
     };
+    matches: {
+      sectionTitle: string;
+      noMatches: string;
+      logCta: string;
+      logDialogTitle: string;
+      logDialogDesc: string;
+      format: string;
+      formatSingles: string;
+      formatDoubles: string;
+      formatMixed: string;
+      playedAt: string;
+      teamA: string;
+      teamB: string;
+      selectPlayer: string;
+      noActiveMembers: string;
+      scores: string;
+      game: string;
+      addGame: string;
+      notesOptional: string;
+      notesPlaceholder: string;
+      logSubmit: string;
+      logSuccess: string;
+      logError: string;
+      viewDetail: string;
+      submittedBadge: string;
+      readyBadge: string;
+      draftBadge: string;
+      readyToggle: string;
+      readyOn: string;
+      readyOff: string;
+      readyHint: string;
+      draftHint: string;
+      readyQueueHint: string;
+      toggleError: string;
+      errMissingPlayers: string;
+      errDuplicatePlayer: string;
+      errIncompleteScore: string;
+      errInvalidScore: string;
+      errPlayerNotInClub: string;
+      errAlreadySubmitted: string;
+      submit: {
+        openCta: string;
+        eyebrow: string;
+        dialogTitle: string;
+        dialogDesc: string;
+        validationHeading: string;
+        checkAllPlayersHaveDupr: string;
+        checkMissingDuprDetail: string;
+        checkScoresValid: string;
+        checkScoresInvalidDetail: string;
+        checkWinnerDetermined: string;
+        winnerTeamA: string;
+        winnerTeamB: string;
+        winnerNone: string;
+        gameSingular: string;
+        gamePlural: string;
+        fixBeforeSubmit: string;
+        payloadHeading: string;
+        copyPayload: string;
+        copied: string;
+        copyError: string;
+        payloadHint: string;
+        manualHeading: string;
+        manualDesc: string;
+        matchCodeLabel: string;
+        sendViaApi: string;
+        pendingApiTooltip: string;
+        manualSubmitCta: string;
+        manualSubmitSuccess: string;
+        manualSubmitError: string;
+        errMatchCodeRequired: string;
+        errMatchCodeTooLong: string;
+        errAlreadySubmitted: string;
+      };
+    };
     roster: {
       pageTitle: string;
       registeredCount: string;
@@ -5175,6 +5250,86 @@ export const vi: Translations = {
       errAlreadyPending: "Yêu cầu của bạn đang chờ duyệt.",
       errAlreadyCreator: "Bạn là người tạo CLB này.",
       errAlreadyManager: "Bạn là quản lý CLB này.",
+    },
+    matches: {
+      sectionTitle: "Trận đấu CLB",
+      noMatches: "Chưa có trận đấu nào được ghi nhận.",
+      logCta: "Ghi trận",
+      logDialogTitle: "Ghi nhận trận đấu",
+      logDialogDesc:
+        "Chọn người chơi từ danh sách thành viên CLB, nhập tỷ số từng game. Trận đấu sẽ chờ duyệt trước khi gửi DUPR.",
+      format: "Thể thức",
+      formatSingles: "Đơn",
+      formatDoubles: "Đôi",
+      formatMixed: "Đôi nam-nữ",
+      playedAt: "Thời gian thi đấu",
+      teamA: "Đội A",
+      teamB: "Đội B",
+      selectPlayer: "Chọn người chơi…",
+      noActiveMembers: "Chưa có thành viên đã duyệt. Mời/duyệt thành viên trước khi log trận.",
+      scores: "Tỷ số",
+      game: "Ván",
+      addGame: "Thêm ván",
+      notesOptional: "Ghi chú (tuỳ chọn)",
+      notesPlaceholder: "Sân, thời tiết, sự cố, v.v.",
+      logSubmit: "Lưu trận đấu",
+      logSuccess: "Đã ghi nhận trận đấu.",
+      logError: "Không thể ghi nhận — vui lòng thử lại.",
+      viewDetail: "Chi tiết →",
+      submittedBadge: "Đã gửi DUPR",
+      readyBadge: "Sẵn sàng gửi",
+      draftBadge: "Nháp",
+      readyToggle: "Sẵn sàng gửi DUPR",
+      readyOn: "Đã đánh dấu sẵn sàng gửi.",
+      readyOff: "Đã huỷ trạng thái sẵn sàng.",
+      readyHint: "Trận đấu sẽ được gửi DUPR khi pipeline mở.",
+      draftHint: "Trận đấu đang ở chế độ nháp — chưa nằm trong hàng đợi DUPR.",
+      readyQueueHint: "{n} trận đang chờ gửi DUPR.",
+      toggleError: "Không thể cập nhật trạng thái — vui lòng thử lại.",
+      errMissingPlayers: "Vui lòng chọn đủ người chơi cho cả 2 đội.",
+      errDuplicatePlayer: "Một người chơi không thể xuất hiện ở cả 2 đội.",
+      errIncompleteScore: "Vui lòng nhập đủ tỷ số cho mỗi ván.",
+      errInvalidScore: "Tỷ số không hợp lệ.",
+      errPlayerNotInClub: "Người chơi không phải thành viên CLB.",
+      errAlreadySubmitted: "Trận đấu đã gửi DUPR — không thể thay đổi.",
+      submit: {
+        openCta: "Gửi DUPR",
+        eyebrow: "GỬI DUPR",
+        dialogTitle: "Gửi trận đến DUPR",
+        dialogDesc:
+          "Kiểm tra điều kiện rồi gửi qua API DUPR (đang chờ cấp quyền RAAS) hoặc submit thủ công trên DUPR dashboard rồi paste matchCode vào đây.",
+        validationHeading: "Kiểm tra điều kiện",
+        checkAllPlayersHaveDupr: "Tất cả người chơi đã link DUPR",
+        checkMissingDuprDetail: "Chưa link: {names}",
+        checkScoresValid: "Tỷ số hợp lệ",
+        checkScoresInvalidDetail: "Tỷ số không hợp lệ",
+        checkWinnerDetermined: "Đã xác định đội thắng",
+        winnerTeamA: "Đội A thắng",
+        winnerTeamB: "Đội B thắng",
+        winnerNone: "Hoà — không thể gửi DUPR",
+        gameSingular: "ván",
+        gamePlural: "ván",
+        fixBeforeSubmit:
+          "Cần xử lý các mục chưa đạt phía trên trước khi gửi DUPR. Người chơi chưa link DUPR cần đăng nhập DUPR account qua trang Onboarding hoặc trang profile.",
+        payloadHeading: "Payload sẽ gửi DUPR",
+        copyPayload: "Copy",
+        copied: "Đã copy.",
+        copyError: "Không copy được — vui lòng thử lại.",
+        payloadHint:
+          "Trong khi chờ API DUPR cấp quyền, anh có thể copy payload này, submit thủ công trên dupr.com → nhận matchCode → paste vào phần dưới.",
+        manualHeading: "Submit thủ công",
+        manualDesc:
+          "Nếu đã submit qua DUPR dashboard và có matchCode (vd 10 chữ số), paste vào đây để đánh dấu trận đã gửi + lưu audit trail. Trận sẽ hiện badge 'Đã gửi DUPR'.",
+        matchCodeLabel: "DUPR matchCode",
+        sendViaApi: "Gửi qua API DUPR",
+        pendingApiTooltip: "DUPR RAAS API chưa cấp quyền — sẽ enable khi sẵn sàng.",
+        manualSubmitCta: "Đánh dấu đã gửi",
+        manualSubmitSuccess: "Đã lưu matchCode + đánh dấu trận đã gửi.",
+        manualSubmitError: "Không thể lưu — vui lòng thử lại.",
+        errMatchCodeRequired: "Vui lòng nhập DUPR matchCode.",
+        errMatchCodeTooLong: "matchCode quá dài (tối đa 64 ký tự).",
+        errAlreadySubmitted: "Trận đã được đánh dấu gửi trước đó.",
+      },
     },
     roster: {
       pageTitle: "Danh sách đăng ký",
