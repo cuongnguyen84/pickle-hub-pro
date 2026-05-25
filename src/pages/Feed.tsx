@@ -16,6 +16,7 @@ import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
+import { FeedConnectCard } from "@/components/dupr/FeedConnectCard";
 
 /**
  * /feed — social discovery surface. Two tabs:
@@ -58,10 +59,17 @@ const Feed = () => {
     () => followingFeed.data?.pages.flat() ?? [],
     [followingFeed.data],
   );
-  const timelineItems: FeedTimelineItem[] = useMemo(
-    () => timelineFeed.data?.pages.flat() ?? [],
-    [timelineFeed.data],
-  );
+  const timelineItems: FeedTimelineItem[] = useMemo(() => {
+    const all = timelineFeed.data?.pages.flat() ?? [];
+    // Blog posts are file-shipped per locale (VI in vi_blog_posts, EN in
+    // src/content/blog/metadata.ts) — same article appears once per lang.
+    // Hide the off-locale copy so EN viewers don't see the VI version
+    // stacked above the EN version (and vice-versa). Matches and videos
+    // stay unfiltered: they're locale-agnostic activity.
+    return all.filter(
+      (item) => item.type !== "blog" || item.lang === language,
+    );
+  }, [timelineFeed.data, language]);
 
   const itemCount =
     tab === "following" ? followingMatches.length : timelineItems.length;
@@ -132,6 +140,11 @@ const Feed = () => {
 
         {/* Anonymous nudge */}
         {!isAuthenticated && <FeedSignInNudge language={language} />}
+
+        {/* Connect DUPR — visible only for authed users not yet linked.
+            FeedConnectCard internally guards on useDuprConnection, so this
+            renders nothing for connected users. */}
+        <FeedConnectCard />
 
         {/* Tabs */}
         <FeedTabs

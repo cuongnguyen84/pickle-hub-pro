@@ -159,6 +159,30 @@ Deno.serve(async (req) => {
   const now = new Date().toISOString();
   const profileUrl = `https://mydupr.com/dupr/players/${duprId}`;
 
+  // ─── 3b. Conflict check: 1 DUPR account → 1 ThePickleHub user ─────────
+  // profiles.dupr_id is UNIQUE. If another active SSO link already owns
+  // this duprId, the profile UPDATE below would 23505 with a generic
+  // 500. Detect ahead of time and return a typed 409 so the SPA can
+  // show the right copy.
+  const { data: ownerRow } = await supabase
+    .from("dupr_user_tokens")
+    .select("user_id")
+    .eq("dupr_id", duprId)
+    .is("revoked_at", null)
+    .neq("user_id", user.id)
+    .maybeSingle<{ user_id: string }>();
+  if (ownerRow) {
+    return err(
+      "dupr_id_already_linked",
+      409,
+      "dupr_id_already_linked",
+      {
+        dupr_id: duprId,
+        hint: "This DUPR account is linked to another ThePickleHub account. Sign in there or contact support.",
+      },
+    );
+  }
+
   // ─── 4. Persist user tokens ─────────────────────────────────────────────
   // TODO(prod): encrypt access_token + refresh_token before INSERT.
   const { error: tokenError } = await supabase
