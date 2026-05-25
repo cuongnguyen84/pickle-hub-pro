@@ -13,8 +13,8 @@ interface RequireAuthProps {
 
 const RequireAuth = ({ children, requiredRole }: RequireAuthProps) => {
   const { user, loading } = useAuth();
-  const { isAdmin, loading: adminLoading } = useAdminAuth();
-  const { isCreator, loading: creatorLoading } = useCreatorAuth();
+  const { isAdmin, isLoading: adminLoading } = useAdminAuth();
+  const { isCreator, isLoading: creatorLoading } = useCreatorAuth();
   const location = useLocation();
 
   const roleLoading =
