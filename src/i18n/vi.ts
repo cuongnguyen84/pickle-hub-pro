@@ -188,6 +188,8 @@ export interface Translations {
     tournaments: string;
     tools: string;
     feed: string;
+    /** Bottom-nav primary slot — replaces the tournaments tile. */
+    social: string;
     search: string;
     profile: string;
     viewProfile: string;
@@ -1776,6 +1778,9 @@ export interface Translations {
       stepCode: string;
       stepPayment: string;
       stepDone: string;
+      stepMember: string;
+      memberHint: string;
+      memberRegisterCta: string;
       phoneLabel: string;
       phonePlaceholder: string;
       phoneInvalid: string;
@@ -1810,6 +1815,73 @@ export interface Translations {
       paymentInstructions: string;
       openZalo: string;
       backToEvent: string;
+      // Slot picker — only rendered when the organizer configured slots.
+      slotPickerLabel: string;
+      slotPickerHint: string;
+      slotMetaSkill: string;
+      slotMetaDurationMonths: string;
+      slotMetaDurationNewbie: string;
+      slotMetaCourts: string;
+      slotRemainingBadge: string;
+      slotFullBadge: string;
+      slotRequired: string;
+      slotInvalid: string;
+      slotFull: string;
+      notAMember: string;
+    };
+    // Proxy + Manual registration (PR: feat/proxy-and-manual-registration)
+    proxyRegister: {
+      // Entry buttons
+      proxyRegisterCta: string;
+      manualAddCta: string;
+      // Modal headings
+      modalHeading: string;
+      modalSubheading: string;
+      manualModalHeading: string;
+      manualModalSubheading: string;
+      // Section headings
+      guestSectionHeading: string;
+      playerSectionHeading: string;
+      // Form labels
+      guestPhoneLabel: string;
+      guestNameLabel: string;
+      guestLevelLabel: string;
+      guestLevelHint: string;
+      paymentStatusLabel: string;
+      paymentStatusUnpaid: string;
+      paymentStatusClaimedPaid: string;
+      paymentStatusWaived: string;
+      internalNotesLabel: string;
+      internalNotesHint: string;
+      internalNotesPlaceholder: string;
+      // CTAs
+      proxyConfirmCta: string;
+      manualConfirmCta: string;
+      // Warning
+      paymentWarningProxy: string;
+      // Skip warning on prepayment-required events (proxy success)
+      prepaymentSkipWarning: string;
+      // Success share
+      successHeading: string;          // "Đã thêm {name} vào sự kiện"
+      shareWarning: string;            // "Vui lòng gửi link sau cho {name}…"
+      shareLinkHeading: string;        // "Link quản lý đăng ký của {name}"
+      copyLinkLabel: string;
+      copyLinkSuccess: string;
+      shareZaloLabel: string;
+      shareFacebookLabel: string;
+      copyPaymentInfoLabel: string;
+      copyPaymentInfoSuccess: string;
+      addAnotherCta: string;
+      closeCta: string;
+      // Errors
+      errorAlreadyRegistered: string;
+      errorEventFull: string;
+      errorRateLimitProxy: string;
+      errorRateLimitManual: string;
+      errorUnauthorized: string;
+      // Roster badges (PR adds badges next to names for proxy/manual rows)
+      proxyBadgeLabel: string;
+      manualBadgeLabel: string;
     };
     club: {
       upcomingHeading: string;
@@ -1910,6 +1982,53 @@ export interface Translations {
       paymentDeadlineHours: string;
       paymentDeadlineHint: string;
       errorPrepaymentDeadlineRange: string;
+      // Weekly-repeat
+      repeatWeeksLabel: string;
+      repeatWeeksUnit: string;
+      repeatWeeksHint: string;
+      repeatWeeksPreview: string;
+      errorRepeatWeeksRange: string;
+      bulkCreatedToast: string;
+      // Slots — registration sub-buckets (skill / duration / general).
+      slotsHeading: string;
+      slotsSubheading: string;
+      slotsEmptyHint: string;
+      slotsTotalCapacity: string;
+      slotAddSkill: string;
+      slotAddDuration: string;
+      slotAddGeneral: string;
+      slotKindSkill: string;
+      slotKindDuration: string;
+      slotKindGeneral: string;
+      slotLabel: string;
+      slotLabelPlaceholderSkill: string;
+      slotLabelPlaceholderDuration: string;
+      slotLabelPlaceholderGeneral: string;
+      slotCapacity: string;
+      slotSkillLevel: string;
+      slotSkillChoose: string;
+      slotSkillNewbie: string;
+      slotCourtCount: string;
+      slotMinPlayMonths: string;
+      slotDurationChoose: string;
+      slotDurationLT3: string;
+      slotDuration3: string;
+      slotDuration6: string;
+      slotDuration12: string;
+      slotDuration24: string;
+      slotDuration36: string;
+      slotNotes: string;
+      slotNotesPlaceholder: string;
+      slotRemoveAria: string;
+      errorSlotLabelMin: string;
+      errorSlotLabelMax: string;
+      errorSlotCapacityMin: string;
+      errorSlotCapacityMax: string;
+      errorSlotSkillRequired: string;
+      errorSlotDurationRange: string;
+      errorSlotsExceedMaxPlayers: string;
+      errorSlotTooMany: string;
+      errorSlotDuplicateId: string;
     };
     manage: {
       pageTitle: string;
@@ -2192,6 +2311,106 @@ export interface Translations {
       archiving: string;
       archiveSuccessTitle: string;
       archiveSuccessBody: string;
+    };
+    managers: {
+      heading: string;
+      subheading: string;
+      creatorBadge: string;
+      managerBadge: string;
+      addCta: string;
+      searchLabel: string;
+      searchPlaceholder: string;
+      searchButton: string;
+      searching: string;
+      searchEmpty: string;
+      searchInvalid: string;
+      addConfirm: string;
+      addSuccess: string;
+      addError: string;
+      removeAria: string;
+      removeConfirm: string;
+      removeSuccess: string;
+      removeError: string;
+      addedBy: string;
+      empty: string;
+      ownerOnly: string;
+      errAlreadyManager: string;
+      errAlreadyCreator: string;
+      errProfileNotFound: string;
+      errNotAuthorized: string;
+    };
+    members: {
+      heading: string;
+      subheading: string;
+      memberBadge: string;
+      pendingBadge: string;
+      pendingHeading: string;
+      pendingEmpty: string;
+      activeHeading: string;
+      empty: string;
+      inviteCta: string;
+      approveCta: string;
+      rejectCta: string;
+      removeAria: string;
+      removeConfirm: string;
+      removeSuccess: string;
+      removeError: string;
+      inviteSuccess: string;
+      inviteError: string;
+      approveSuccess: string;
+      approveError: string;
+      joinCta: string;
+      joinPending: string;
+      joinedBadge: string;
+      leaveCta: string;
+      leaveConfirm: string;
+      leaveSuccess: string;
+      anonymousHint: string;
+      errAlreadyMember: string;
+      errAlreadyPending: string;
+      errAlreadyCreator: string;
+      errAlreadyManager: string;
+    };
+    matches: {
+      sectionTitle: string;
+      noMatches: string;
+      logCta: string;
+      logDialogTitle: string;
+      logDialogDesc: string;
+      format: string;
+      formatSingles: string;
+      formatDoubles: string;
+      formatMixed: string;
+      playedAt: string;
+      teamA: string;
+      teamB: string;
+      selectPlayer: string;
+      noActiveMembers: string;
+      scores: string;
+      game: string;
+      addGame: string;
+      notesOptional: string;
+      notesPlaceholder: string;
+      logSubmit: string;
+      logSuccess: string;
+      logError: string;
+      viewDetail: string;
+      submittedBadge: string;
+      readyBadge: string;
+      draftBadge: string;
+      readyToggle: string;
+      readyOn: string;
+      readyOff: string;
+      readyHint: string;
+      draftHint: string;
+      readyQueueHint: string;
+      toggleError: string;
+      errMissingPlayers: string;
+      errDuplicatePlayer: string;
+      errIncompleteScore: string;
+      errInvalidScore: string;
+      errPlayerNotInClub: string;
+      errAlreadySubmitted: string;
     };
     roster: {
       pageTitle: string;
@@ -2717,6 +2936,7 @@ export const vi: Translations = {
     tournaments: "Giải đấu",
     tools: "Công cụ",
     feed: "Bảng tin",
+    social: "Social",
     search: "Tìm kiếm",
     profile: "Tài khoản",
     viewProfile: "Xem hồ sơ",
@@ -4307,6 +4527,9 @@ export const vi: Translations = {
       stepCode: "Nhập mã OTP",
       stepPayment: "Thanh toán",
       stepDone: "Hoàn tất",
+      stepMember: "Xác nhận đăng ký",
+      memberHint: "Bạn là thành viên CLB — không cần nhập OTP. Chỉ cần xác nhận và đăng ký.",
+      memberRegisterCta: "Xác nhận đăng ký →",
       phoneLabel: "Số điện thoại",
       phonePlaceholder: "0901 234 567",
       phoneInvalid: "Số điện thoại không hợp lệ",
@@ -4344,6 +4567,68 @@ export const vi: Translations = {
       paymentInstructions: "Hướng dẫn thanh toán",
       openZalo: "Mở nhóm Zalo",
       backToEvent: "Quay lại sự kiện",
+      // Slot picker
+      slotPickerLabel: "Chọn nhóm chơi",
+      slotPickerHint:
+        "BTC chia event thành nhiều nhóm theo trình độ hoặc thời gian chơi. Vui lòng chọn nhóm phù hợp với bạn.",
+      slotMetaSkill: "Trình độ",
+      slotMetaDurationMonths: "Đã chơi tối thiểu {n} tháng",
+      slotMetaDurationNewbie: "Người mới bắt đầu",
+      slotMetaCourts: "{n} sân",
+      slotRemainingBadge: "Còn {remaining}/{capacity} chỗ",
+      slotFullBadge: "Đã đầy",
+      slotRequired: "Vui lòng chọn 1 nhóm chơi để tiếp tục",
+      slotInvalid: "Nhóm chơi không hợp lệ — vui lòng tải lại trang",
+      slotFull: "Nhóm này đã đầy — vui lòng chọn nhóm khác",
+      notAMember: "Bạn chưa phải là thành viên CLB. Hãy yêu cầu tham gia CLB trước khi đăng ký.",
+    },
+    proxyRegister: {
+      proxyRegisterCta: "Đăng ký hộ bạn bè",
+      manualAddCta: "Thêm người thủ công",
+      modalHeading: "Đăng ký hộ bạn bè",
+      modalSubheading: "Đăng ký giúp người chơi khác tham gia event này.",
+      manualModalHeading: "Thêm người chơi vào sự kiện",
+      manualModalSubheading:
+        "Sử dụng khi bạn nhận đăng ký qua Zalo, gọi điện hoặc kênh ngoài web.",
+      guestSectionHeading: "Thông tin người được đăng ký",
+      playerSectionHeading: "Thông tin người chơi",
+      guestPhoneLabel: "Số điện thoại",
+      guestNameLabel: "Tên hiển thị",
+      guestLevelLabel: "Trình độ (tuỳ chọn)",
+      guestLevelHint: "Tự đánh giá level pickleball",
+      paymentStatusLabel: "Trạng thái thanh toán",
+      paymentStatusUnpaid:
+        "Chưa thanh toán — hiển thị link để gửi player tự chuyển khoản",
+      paymentStatusClaimedPaid: "Đã thanh toán tại sân / chuyển khoản",
+      paymentStatusWaived: "Miễn phí (bỏ qua)",
+      internalNotesLabel: "Ghi chú nội bộ (tuỳ chọn)",
+      internalNotesHint: "Chỉ BTC xem được",
+      internalNotesPlaceholder: "VD: VIP, bạn của BTC",
+      proxyConfirmCta: "Xác nhận đăng ký hộ",
+      manualConfirmCta: "Thêm vào danh sách",
+      paymentWarningProxy:
+        "Người được đăng ký hộ tự chuyển khoản hoặc bạn chuyển hộ. Mã thanh toán sẽ hiển thị sau khi đăng ký xong.",
+      prepaymentSkipWarning:
+        "Bạn đã đăng ký giúp {name}. Đây là sự kiện bắt buộc thanh toán trước nên slot sẽ tự động bị huỷ sau {hours} giờ nếu không hoàn tất chuyển khoản.",
+      successHeading: "Đã thêm {name} vào sự kiện",
+      shareWarning:
+        "Vui lòng gửi link sau cho {name} để họ tự quản lý đăng ký hoặc thanh toán (nếu event có phí):",
+      shareLinkHeading: "Link quản lý đăng ký của {name}",
+      copyLinkLabel: "Sao chép link",
+      copyLinkSuccess: "Đã sao chép link",
+      shareZaloLabel: "Chia sẻ Zalo",
+      shareFacebookLabel: "Chia sẻ Facebook",
+      copyPaymentInfoLabel: "Sao chép thông tin chuyển khoản",
+      copyPaymentInfoSuccess: "Đã sao chép thông tin chuyển khoản",
+      addAnotherCta: "+ Thêm người khác",
+      closeCta: "Đóng",
+      errorAlreadyRegistered: "SĐT này đã đăng ký event",
+      errorEventFull: "Sự kiện đã đầy",
+      errorRateLimitProxy: "Bạn đã đăng ký hộ tối đa 5 người/24h",
+      errorRateLimitManual: "Đã đạt giới hạn 50 lượt thêm/24h",
+      errorUnauthorized: "Bạn không có quyền thêm người vào sự kiện này",
+      proxyBadgeLabel: "đăng ký hộ",
+      manualBadgeLabel: "BTC thêm",
     },
     club: {
       upcomingHeading: "Sự kiện sắp diễn ra",
@@ -4450,6 +4735,55 @@ export const vi: Translations = {
       paymentDeadlineHint:
         "Tính từ lúc player đăng ký. Nếu thời hạn vượt qua giờ bắt đầu event, đăng ký bị huỷ ngay.",
       errorPrepaymentDeadlineRange: "Thời hạn phải trong khoảng 1–168 giờ (tối đa 1 tuần).",
+      repeatWeeksLabel: "Lặp lại hàng tuần (tuỳ chọn)",
+      repeatWeeksUnit: "tuần liên tiếp sau",
+      repeatWeeksHint: "Nhập 0 để tạo 1 event duy nhất. Nhập 1 = tạo thêm 1 event vào tuần kế tiếp; nhập 4 = tạo thêm 4 event cách nhau 7 ngày. Tối đa 12.",
+      repeatWeeksPreview: "→ Sẽ tạo {count} event giống hệt, event cuối cùng vào {last}.",
+      errorRepeatWeeksRange: "Số tuần lặp phải từ 0 đến 12.",
+      bulkCreatedToast: "Đã tạo {count} event giống hệt.",
+      // Slots
+      slotsHeading: "Nhóm đăng ký (tuỳ chọn)",
+      slotsSubheading:
+        "Chia event thành nhiều nhóm theo trình độ hoặc thời gian chơi. Player sẽ chọn 1 nhóm khi đăng ký.",
+      slotsEmptyHint:
+        "Chưa có nhóm — player đăng ký vào pool chung (giới hạn ở số người tối đa bên trên).",
+      slotsTotalCapacity: "Tổng chỗ trong nhóm: {total}/{max}",
+      slotAddSkill: "Thêm nhóm theo trình độ",
+      slotAddDuration: "Thêm nhóm theo thời gian chơi",
+      slotAddGeneral: "Thêm nhóm khác",
+      slotKindSkill: "Trình độ",
+      slotKindDuration: "Thời gian chơi",
+      slotKindGeneral: "Khác",
+      slotLabel: "Tên nhóm",
+      slotLabelPlaceholderSkill: "VD: Sân 1-2: Trình độ 2.5",
+      slotLabelPlaceholderDuration: "VD: Người mới chơi 6 tháng+",
+      slotLabelPlaceholderGeneral: "VD: Sân nâng cao",
+      slotCapacity: "Số chỗ",
+      slotSkillLevel: "Trình độ",
+      slotSkillChoose: "Chọn trình độ",
+      slotSkillNewbie: "Newbie (mới chơi)",
+      slotCourtCount: "Số sân (tuỳ chọn)",
+      slotMinPlayMonths: "Thời gian chơi tối thiểu",
+      slotDurationChoose: "Chọn thời gian",
+      slotDurationLT3: "Người mới (dưới 3 tháng)",
+      slotDuration3: "Đã chơi 3 tháng+",
+      slotDuration6: "Đã chơi 6 tháng+",
+      slotDuration12: "Đã chơi 1 năm+",
+      slotDuration24: "Đã chơi 2 năm+",
+      slotDuration36: "Đã chơi 3 năm+",
+      slotNotes: "Ghi chú (tuỳ chọn)",
+      slotNotesPlaceholder: "VD: Đem giày sân cứng, đi giờ A",
+      slotRemoveAria: "Xoá nhóm",
+      errorSlotLabelMin: "Tên nhóm cần ít nhất 2 ký tự",
+      errorSlotLabelMax: "Tên nhóm tối đa 80 ký tự",
+      errorSlotCapacityMin: "Số chỗ trong nhóm tối thiểu 1",
+      errorSlotCapacityMax: "Số chỗ trong nhóm tối đa 200",
+      errorSlotSkillRequired: "Vui lòng chọn trình độ cho nhóm",
+      errorSlotDurationRange: "Vui lòng chọn thời gian chơi cho nhóm",
+      errorSlotsExceedMaxPlayers:
+        "Tổng số chỗ trong các nhóm ({total}) đang vượt số người tối đa ({max}). Giảm bớt hoặc tăng số người tối đa.",
+      errorSlotTooMany: "Tối đa 12 nhóm cho 1 event",
+      errorSlotDuplicateId: "Nhóm bị trùng id — vui lòng xoá và tạo lại",
     },
     manage: {
       pageTitle: "Quản lý sự kiện",
@@ -4777,6 +5111,109 @@ export const vi: Translations = {
       archiving: "Đang lưu trữ…",
       archiveSuccessTitle: "Đã lưu trữ CLB",
       archiveSuccessBody: "CLB đã được ẩn khỏi danh sách công khai.",
+    },
+    managers: {
+      heading: "Người quản lý CLB",
+      subheading:
+        "Người tạo CLB có thể thêm tối đa nhiều người quản lý. Người quản lý có toàn quyền tạo / sửa / huỷ sự kiện, sửa thông tin CLB, nhưng KHÔNG thể xoá hay archive CLB.",
+      creatorBadge: "Người tạo",
+      managerBadge: "Quản lý",
+      addCta: "Thêm người quản lý",
+      searchLabel: "Tìm theo email hoặc số điện thoại",
+      searchPlaceholder: "vd: ten@email.com hoặc +84901234567",
+      searchButton: "Tìm",
+      searching: "Đang tìm…",
+      searchEmpty: "Không tìm thấy người dùng có email/SĐT này. Họ cần đăng ký tài khoản ThePickleHub trước.",
+      searchInvalid: "Vui lòng nhập email hoặc số điện thoại (≥4 ký tự).",
+      addConfirm: "Thêm {name} làm người quản lý?",
+      addSuccess: "Đã thêm {name} làm người quản lý.",
+      addError: "Không thể thêm người quản lý — vui lòng thử lại.",
+      removeAria: "Xoá người quản lý",
+      removeConfirm: "Xoá quyền quản lý của {name}?",
+      removeSuccess: "Đã xoá {name} khỏi danh sách quản lý.",
+      removeError: "Không thể xoá — vui lòng thử lại.",
+      addedBy: "Thêm vào {date}",
+      empty: "Chưa có người quản lý nào.",
+      ownerOnly: "Chỉ người tạo CLB có thể thêm/xoá quản lý.",
+      errAlreadyManager: "Người này đã là quản lý CLB.",
+      errAlreadyCreator: "Người này là người tạo CLB rồi — không cần thêm.",
+      errProfileNotFound: "Không tìm thấy hồ sơ này.",
+      errNotAuthorized: "Bạn không có quyền thực hiện hành động này.",
+    },
+    members: {
+      heading: "Thành viên CLB",
+      subheading:
+        "Thành viên CLB được mời trực tiếp hoặc tự yêu cầu tham gia. Thành viên đã duyệt sẽ KHÔNG cần nhập OTP khi đăng ký sự kiện.",
+      memberBadge: "Thành viên",
+      pendingBadge: "Chờ duyệt",
+      pendingHeading: "Yêu cầu tham gia ({n})",
+      pendingEmpty: "Không có yêu cầu mới.",
+      activeHeading: "Đã tham gia",
+      empty: "Chưa có thành viên nào.",
+      inviteCta: "Mời tham gia",
+      approveCta: "Duyệt",
+      rejectCta: "Từ chối",
+      removeAria: "Xoá thành viên",
+      removeConfirm: "Xoá {name} khỏi CLB?",
+      removeSuccess: "Đã xoá {name} khỏi danh sách thành viên.",
+      removeError: "Không thể xoá thành viên — vui lòng thử lại.",
+      inviteSuccess: "Đã mời {name} làm thành viên.",
+      inviteError: "Không thể mời thành viên — vui lòng thử lại.",
+      approveSuccess: "Đã duyệt {name}.",
+      approveError: "Không thể duyệt — vui lòng thử lại.",
+      joinCta: "Yêu cầu tham gia CLB",
+      joinPending: "Đang chờ duyệt",
+      joinedBadge: "Bạn là thành viên CLB",
+      leaveCta: "Rời khỏi CLB",
+      leaveConfirm: "Bạn chắc chắn muốn rời CLB này?",
+      leaveSuccess: "Bạn đã rời khỏi CLB.",
+      anonymousHint: "Đăng nhập để yêu cầu tham gia CLB.",
+      errAlreadyMember: "Bạn đã là thành viên CLB.",
+      errAlreadyPending: "Yêu cầu của bạn đang chờ duyệt.",
+      errAlreadyCreator: "Bạn là người tạo CLB này.",
+      errAlreadyManager: "Bạn là quản lý CLB này.",
+    },
+    matches: {
+      sectionTitle: "Trận đấu CLB",
+      noMatches: "Chưa có trận đấu nào được ghi nhận.",
+      logCta: "Ghi trận",
+      logDialogTitle: "Ghi nhận trận đấu",
+      logDialogDesc:
+        "Chọn người chơi từ danh sách thành viên CLB, nhập tỷ số từng game. Trận đấu sẽ chờ duyệt trước khi gửi DUPR.",
+      format: "Thể thức",
+      formatSingles: "Đơn",
+      formatDoubles: "Đôi",
+      formatMixed: "Đôi nam-nữ",
+      playedAt: "Thời gian thi đấu",
+      teamA: "Đội A",
+      teamB: "Đội B",
+      selectPlayer: "Chọn người chơi…",
+      noActiveMembers: "Chưa có thành viên đã duyệt. Mời/duyệt thành viên trước khi log trận.",
+      scores: "Tỷ số",
+      game: "Ván",
+      addGame: "Thêm ván",
+      notesOptional: "Ghi chú (tuỳ chọn)",
+      notesPlaceholder: "Sân, thời tiết, sự cố, v.v.",
+      logSubmit: "Lưu trận đấu",
+      logSuccess: "Đã ghi nhận trận đấu.",
+      logError: "Không thể ghi nhận — vui lòng thử lại.",
+      viewDetail: "Chi tiết →",
+      submittedBadge: "Đã gửi DUPR",
+      readyBadge: "Sẵn sàng gửi",
+      draftBadge: "Nháp",
+      readyToggle: "Sẵn sàng gửi DUPR",
+      readyOn: "Đã đánh dấu sẵn sàng gửi.",
+      readyOff: "Đã huỷ trạng thái sẵn sàng.",
+      readyHint: "Trận đấu sẽ được gửi DUPR khi pipeline mở.",
+      draftHint: "Trận đấu đang ở chế độ nháp — chưa nằm trong hàng đợi DUPR.",
+      readyQueueHint: "{n} trận đang chờ gửi DUPR.",
+      toggleError: "Không thể cập nhật trạng thái — vui lòng thử lại.",
+      errMissingPlayers: "Vui lòng chọn đủ người chơi cho cả 2 đội.",
+      errDuplicatePlayer: "Một người chơi không thể xuất hiện ở cả 2 đội.",
+      errIncompleteScore: "Vui lòng nhập đủ tỷ số cho mỗi ván.",
+      errInvalidScore: "Tỷ số không hợp lệ.",
+      errPlayerNotInClub: "Người chơi không phải thành viên CLB.",
+      errAlreadySubmitted: "Trận đấu đã gửi DUPR — không thể thay đổi.",
     },
     roster: {
       pageTitle: "Danh sách đăng ký",
