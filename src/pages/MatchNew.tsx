@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDuprClubs } from "@/hooks/useDuprClubs";
 import { useRecentOpponents } from "@/hooks/useRecentOpponents";
+import { useDuprUserSearch } from "@/hooks/useDuprUserSearch";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
 
 type Step = 1 | 2 | 3;
@@ -458,25 +459,13 @@ function SlotRow(props: {
   const [q, setQ] = useState("");
   const { vi } = props;
 
-  const search = useQuery({
-    queryKey: ["match-new-search-row", props.slot, q],
-    enabled: q.trim().length >= 2,
-    queryFn: async () => {
-      const term = q.trim();
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, display_name, email, username")
-        .or(
-          `display_name.ilike.%${term}%,email.ilike.%${term}%,username.ilike.%${term}%`,
-        )
-        .limit(8);
-      return (data ?? []) as Array<{
-        id: string;
-        display_name: string | null;
-        email: string;
-        username: string | null;
-      }>;
-    },
+  // DUPR + internal merged search (replaces inline ILIKE on profiles).
+  // Hook debounces 350ms internally, hits dupr-user-search edge function
+  // which calls DUPR Partner /user/v1.0/search + merges with local
+  // profiles, sorted: both > internal > dupr-only.
+  const search = useDuprUserSearch(q, {
+    excludeUserIds: Array.from(props.excludeIds),
+    limit: 10,
   });
 
   // Picked state — render as selected row + small remove
@@ -544,8 +533,10 @@ function SlotRow(props: {
   }
 
   // Open — inline search + suggestions
+  // When user types ≥2 chars → show DUPR+internal merged hits from edge fn.
+  // When idle → show recent opponents from local DB.
   const candidates = q.trim().length >= 2
-    ? (search.data ?? []).filter((p) => !props.excludeIds.has(p.id))
+    ? (search.data?.hits ?? []).filter((h) => !h.user_id || !props.excludeIds.has(h.user_id))
     : props.recents.filter((p) => !props.excludeIds.has(p.player_id)).slice(0, 6);
 
   return (
@@ -620,18 +611,36 @@ function SlotRow(props: {
             : (vi ? "Chưa có trận nào gần đây — gõ tên để tìm." : "No recent matches — search by name.")}
         </div>
       ) : (
-        candidates.map((p) => {
-          const id = ("id" in p ? p.id : p.player_id) as string;
+        candidates.map((p, idx) => {
+          // Three shapes possible:
+          //   - RecentOpponent (idle): { player_id, display_name, email, username }
+          //   - DuprSearchHit (search): { user_id, dupr_id, full_name, email, username, source, singles_rating, doubles_rating }
+          const isHit = "full_name" in p;
+          const id = isHit ? (p.user_id ?? "") : ("player_id" in p ? p.player_id : "");
+          const display = isHit ? p.full_name : (p.display_name ?? p.email);
+          const email = "email" in p ? p.email : null;
+          const username = "username" in p ? p.username : null;
+          const dupr_id = isHit ? p.dupr_id : null;
+          const singles = isHit ? p.singles_rating : null;
+          const doubles = isHit ? p.doubles_rating : null;
+          const sourceTag = isHit ? p.source : null;
+          // DUPR-only hit (no ThePickleHub account) — can't be picked as
+          // opponent because match-proposal needs internal user_id. Show
+          // disabled with helper text.
+          const disabled = isHit && !p.user_id;
           return (
             <button
-              key={id}
+              key={id || `dupr-${dupr_id || idx}`}
               type="button"
+              disabled={disabled}
+              title={disabled ? (vi ? "User chưa kết nối ThePickleHub" : "User hasn't joined ThePickleHub yet") : undefined}
               onClick={() => {
+                if (disabled || !id) return;
                 props.onPick({
                   player_id: id,
-                  display_name: p.display_name,
-                  email: p.email,
-                  username: p.username,
+                  display_name: display,
+                  email: email ?? "",
+                  username,
                 });
                 setOpen(false);
                 setQ("");
@@ -651,16 +660,32 @@ function SlotRow(props: {
                 textAlign: "left",
               }}
             >
-              <Avatar name={p.display_name ?? p.email} />
+              <Avatar name={display} />
               <div>
-                <div style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 18, color: "var(--tl-fg)", lineHeight: 1.1 }}>
-                  {p.display_name ?? p.email}
+                <div style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 18, color: disabled ? "var(--tl-fg-3)" : "var(--tl-fg)", lineHeight: 1.1 }}>
+                  {display}
+                  {dupr_id && (
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "var(--tl-fg-3)", marginLeft: 8, fontStyle: "normal", letterSpacing: "0.06em" }}>
+                      {dupr_id}
+                    </span>
+                  )}
                 </div>
-                <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--tl-fg-3)", marginTop: 3 }}>
-                  {p.username ? `@${p.username}` : p.email}{q.trim().length >= 2 ? "" : " · gần đây"}
+                <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--tl-fg-3)", marginTop: 3, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <span>{username ? `@${username}` : (email ?? "—")}</span>
+                  {(singles != null || doubles != null) && (
+                    <span style={{ color: "var(--tl-green)" }}>
+                      DUPR {singles != null ? singles.toFixed(2) : "—"} / {doubles != null ? doubles.toFixed(2) : "—"}
+                    </span>
+                  )}
+                  {sourceTag === "dupr" && (
+                    <span style={{ color: "rgb(239,68,68)" }}>
+                      {vi ? "Chưa có ThePickleHub" : "Not on ThePickleHub"}
+                    </span>
+                  )}
+                  {!isHit && q.trim().length < 2 && <span>· {vi ? "gần đây" : "recent"}</span>}
                 </div>
               </div>
-              <Plus className="h-4 w-4" style={{ color: "var(--tl-fg-2)" }} />
+              <Plus className="h-4 w-4" style={{ color: disabled ? "var(--tl-border)" : "var(--tl-fg-2)" }} />
             </button>
           );
         })
