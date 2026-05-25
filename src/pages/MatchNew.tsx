@@ -91,6 +91,24 @@ export default function MatchNew() {
 
   const submit = async () => {
     if (!user || !teamB1) return;
+
+    // Codex P1 fix: doubles needs partners on BOTH sides. If the wizard
+    // ever lets the user pick teamA2 without teamB2 (or vice-versa), the
+    // payload becomes singles-format + 2-player team, which the backend
+    // rejects with `singles_needs_one_player_per_side`. Block early with
+    // a clear toast instead of silently failing at submit.
+    const wantsDoubles = !!(teamA2 || teamB2);
+    if (wantsDoubles && (!teamA2 || !teamB2)) {
+      toast({
+        variant: "destructive",
+        title: vi ? "Thiếu partner" : "Missing partner",
+        description: vi
+          ? "Doubles cần partner ở cả 2 đội. Chọn partner cho đội còn lại, hoặc xoá partner để chuyển về singles."
+          : "Doubles needs a partner on both sides. Pick a partner for the other team, or remove the partner to fall back to singles.",
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const team_a_player_ids = teamA2 ? [user.id, teamA2.player_id] : [user.id];
