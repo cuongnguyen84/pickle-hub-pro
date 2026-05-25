@@ -102,18 +102,9 @@ export function TurnstileWidget({ onVerify, onError }: Props) {
         if (widgetIdRef.current) return;
         widgetIdRef.current = window.turnstile.render(ref.current, {
           sitekey: siteKey,
-          callback: (token) => {
-            console.log("[Turnstile] callback fired, token len=" + token.length);
-            onVerifyRef.current(token);
-          },
-          "error-callback": () => {
-            console.log("[Turnstile] error-callback fired");
-            onErrorRef.current?.();
-          },
-          "expired-callback": () => {
-            console.log("[Turnstile] expired-callback fired");
-            onErrorRef.current?.();
-          },
+          callback: (token) => onVerifyRef.current(token),
+          "error-callback": () => onErrorRef.current?.(),
+          "expired-callback": () => onErrorRef.current?.(),
           theme: "auto",
         });
       })
