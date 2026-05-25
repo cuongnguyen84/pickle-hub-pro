@@ -39,6 +39,7 @@ const Account = lazy(() => import("./pages/Account"));
 const DuprDashboard = lazy(() => import("./pages/DuprDashboard"));
 const MatchSubmitPage = lazy(() => import("./pages/Match"));
 const MyTournaments = lazy(() => import("./pages/MyTournaments"));
+const MatchNewPage = lazy(() => import("./pages/MatchNew"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Search = lazy(() => import("./pages/Search"));
 const OrganizationDetail = lazy(() => import("./pages/OrganizationDetail"));
@@ -486,6 +487,7 @@ const App = () => (
                     <Route path="/dupr" element={<RequireAuth><DuprDashboard /></RequireAuth>} />
                     <Route path="/match" element={<RequireAuth><MatchSubmitPage /></RequireAuth>} />
                     <Route path="/account/my-tournaments" element={<RequireAuth><MyTournaments /></RequireAuth>} />
+                    <Route path="/match/new" element={<RequireAuth><MatchNewPage /></RequireAuth>} />
                     {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />
                     {/* Bet #1: match permalink (Vietnamese canonical /tran-dau/:slug) */}

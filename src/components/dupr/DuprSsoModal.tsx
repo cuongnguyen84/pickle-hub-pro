@@ -85,7 +85,20 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         });
 
         if (invokeError) {
-          throw new Error(invokeError.message ?? "callback_failed");
+          // supabase-js v2 wraps non-2xx responses as FunctionsHttpError
+          // with the upstream Response on error.context. The default
+          // .message is the useless "Edge Function returned a non-2xx
+          // status code" — pull the actual server-side reason instead.
+          const ctx = (invokeError as { context?: Response }).context;
+          let detail = invokeError.message ?? "callback_failed";
+          if (ctx) {
+            try {
+              const body = await ctx.clone().json();
+              detail = body.error ?? body.code ?? detail;
+              if (body.details?.hint) detail = `${detail} — ${body.details.hint}`;
+            } catch { /* keep default */ }
+          }
+          throw new Error(detail);
         }
         if (data && "error" in data) {
           throw new Error(data.error);

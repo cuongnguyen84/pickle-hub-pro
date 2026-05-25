@@ -39,6 +39,7 @@ function hashStr(input: string): number {
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
+import { FeedConnectCard } from "@/components/dupr/FeedConnectCard";
 
 /**
  * /feed — social discovery surface. Two tabs:
@@ -274,6 +275,11 @@ const Feed = () => {
 
         {/* Anonymous nudge */}
         {!isAuthenticated && <FeedSignInNudge language={language} />}
+
+        {/* Connect DUPR — visible only for authed users not yet linked.
+            FeedConnectCard internally guards on useDuprConnection, so this
+            renders nothing for connected users. */}
+        <FeedConnectCard />
 
         {/* Tabs */}
         <FeedTabs
