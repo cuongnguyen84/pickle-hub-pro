@@ -103,9 +103,10 @@ export function FeedMlpMatchCard({
       ? `Trận MLP: ${team_a.name} ${team_a.matchup_wins} - ${team_b.matchup_wins} ${team_b.name}`
       : `MLP matchup: ${team_a.name} ${team_a.matchup_wins} - ${team_b.matchup_wins} ${team_b.name}`;
 
+  const detailHref = `/tran-dau/${match.slug}`;
+
   return (
-    <Link
-      to={`/tran-dau/${match.slug}`}
+    <div
       role="article"
       aria-label={ariaLabel}
       className="tl-feed-card"
@@ -115,9 +116,7 @@ export function FeedMlpMatchCard({
         gap: 18,
         padding: "32px 0",
         borderBottom: "1px solid var(--tl-border)",
-        textDecoration: "none",
         color: "inherit",
-        cursor: "pointer",
         position: "relative",
         opacity: 0,
         transform: "translateY(8px)",
@@ -195,14 +194,20 @@ export function FeedMlpMatchCard({
         </div>
       )}
 
-      {/* Two-team scoreboard with logos */}
-      <div
+      {/* Two-team scoreboard with logos — wrapped in Link so click here
+          navigates to detail page. Expand button below is outside the Link
+          so it doesn't trigger navigation. */}
+      <Link
+        to={detailHref}
         style={{
           display: "grid",
           gridTemplateColumns: "1fr auto 1fr",
           alignItems: "center",
           gap: 24,
           padding: "8px 0",
+          textDecoration: "none",
+          color: "inherit",
+          cursor: "pointer",
         }}
       >
         <TeamSide team={team_a} isWinner={winnerIsA} align="left" />
@@ -219,7 +224,7 @@ export function FeedMlpMatchCard({
           VS
         </div>
         <TeamSide team={team_b} isWinner={!winnerIsA} align="right" />
-      </div>
+      </Link>
 
       {/* GAME DETAILS toggle button */}
       <button
@@ -229,6 +234,7 @@ export function FeedMlpMatchCard({
           e.stopPropagation();
           setExpanded((v) => !v);
         }}
+        onMouseDown={(e) => e.stopPropagation()}
         aria-expanded={expanded}
         aria-controls={`mlp-games-${match.match_id}`}
         style={{
@@ -330,7 +336,7 @@ export function FeedMlpMatchCard({
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
