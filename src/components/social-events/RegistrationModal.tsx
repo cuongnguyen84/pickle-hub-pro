@@ -225,7 +225,27 @@ export function RegistrationModal({
   // production. Reset when the user goes back to the phone step or
   // changes their phone, so a stale token can't be replayed.
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // PR69 v3 — 20s timeout fallback. If Cloudflare Turnstile doesn't fire
+  // its callback (browser fingerprint flagged, network slow, etc.) we
+  // surface a "Tải lại CAPTCHA" button so the player isn't stuck.
+  const [turnstileTimedOut, setTurnstileTimedOut] = useState(false);
+  // Bump turnstileKey to force the TurnstileWidget to remount + re-render
+  // a fresh challenge. Used by the reload button.
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const intervalRef = useRef<number | null>(null);
+
+  // PR69 v3 — Turnstile callback timeout watchdog. Start a 20s timer when
+  // the modal opens on step "phone" without a token; if no token arrives,
+  // surface the "Tải lại CAPTCHA" button. Reset when token arrives or
+  // turnstileKey bumps (manual reload).
+  useEffect(() => {
+    if (!open || step !== "phone" || turnstileToken) {
+      setTurnstileTimedOut(false);
+      return;
+    }
+    const id = window.setTimeout(() => setTurnstileTimedOut(true), 20000);
+    return () => window.clearTimeout(id);
+  }, [open, step, turnstileToken, turnstileKey]);
 
   // Reset state whenever the modal closes so the next open starts clean.
   useEffect(() => {
@@ -242,6 +262,8 @@ export function RegistrationModal({
       setContactSaved(false);
       setOtpChannel(null);
       setTurnstileToken(null);
+      setTurnstileTimedOut(false);
+      setTurnstileKey(0);
       setSelectedSlotId("");
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
@@ -882,23 +904,33 @@ export function RegistrationModal({
                 each successful OTP send. */}
             <div className="flex justify-center">
               <TurnstileWidget
-                onVerify={(token) => {
-                  console.log("[OTP] CAPTCHA verified, token len=" + token.length);
-                  setTurnstileToken(token);
-                }}
-                onError={() => {
-                  console.log("[OTP] CAPTCHA error");
-                  setTurnstileToken(null);
-                }}
+                key={turnstileKey}
+                onVerify={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
               />
             </div>
-            {/* Hard-coded text (no i18n) to rule out missing translation as
-                a source of runtime errors. Status disappears when token set. */}
-            <p className="text-center text-xs text-muted-foreground">
-              {turnstileToken
-                ? "Xác minh thành công"
-                : "Đang xác minh trình duyệt (vài giây)…"}
-            </p>
+            {!turnstileToken && (
+              <div className="space-y-1.5 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {turnstileTimedOut
+                    ? "Xác minh trình duyệt quá lâu. Hãy thử tải lại CAPTCHA."
+                    : "Đang xác minh trình duyệt (vài giây)…"}
+                </p>
+                {turnstileTimedOut && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setTurnstileTimedOut(false);
+                      setTurnstileKey((k) => k + 1);
+                    }}
+                  >
+                    Tải lại CAPTCHA
+                  </Button>
+                )}
+              </div>
+            )}
 
             <Button
               type="submit"
