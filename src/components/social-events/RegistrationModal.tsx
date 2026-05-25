@@ -31,6 +31,7 @@ import {
   InputOTPSeparator,
 } from "@/components/ui/input-otp";
 import { FollowOaBanner } from "@/components/social-events/FollowOaBanner";
+import { TurnstileWidget } from "@/components/registration/TurnstileWidget";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,6 +122,13 @@ function translateErrorCode(
     case "guests_not_allowed":
     case "event_started_or_ended":
       return reg.eventNotOpen;
+    case "too_many_otps_ip":
+      return reg.errCaptchaIp;
+    case "captcha_failed":
+    case "captcha_misconfigured":
+      return reg.errCaptcha;
+    case "daily_budget_exceeded":
+      return reg.errBudget;
     case "too_many_otps":
       return reg.tooManyOtps;
     case "otp_mismatch":
@@ -213,6 +221,10 @@ export function RegistrationModal({
   // 'dev'). Surfaces in the OTP-waiting hint + lets the user force the
   // SMS fallback when Zalo doesn't reach them.
   const [otpChannel, setOtpChannel] = useState<"zalo" | "sms" | "dev" | null>(null);
+  // PR69 — Cloudflare Turnstile token. Required by phone-otp-send in
+  // production. Reset when the user goes back to the phone step or
+  // changes their phone, so a stale token can't be replayed.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
 
   // Reset state whenever the modal closes so the next open starts clean.
@@ -229,6 +241,7 @@ export function RegistrationModal({
       setContactSaving(false);
       setContactSaved(false);
       setOtpChannel(null);
+      setTurnstileToken(null);
       setSelectedSlotId("");
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
@@ -277,6 +290,9 @@ export function RegistrationModal({
           phone: norm,
           event_id: eventId,
           ...(opts?.forceChannel ? { force_channel: opts.forceChannel } : {}),
+          // PR69 — Cloudflare Turnstile token. Server rejects with
+          // 'captcha_failed' when missing/invalid in production.
+          turnstile_token: turnstileToken ?? undefined,
         },
       });
       // supabase.functions.invoke wraps non-2xx into `error`. We re-read
@@ -307,6 +323,9 @@ export function RegistrationModal({
       setDevOtp(data?.dev_mode_code ?? null);
       setOtpChannel(data?.channel ?? null);
       setResendIn(RESEND_COOLDOWN_SEC);
+      // PR69 — Turnstile tokens are single-use. Force a re-challenge
+      // so a subsequent "resend OTP" click gets a fresh token.
+      setTurnstileToken(null);
       return true;
     } catch (e) {
       console.error("phone-otp-send failed", e);
@@ -723,7 +742,12 @@ export function RegistrationModal({
                 inputMode="tel"
                 placeholder={reg.phonePlaceholder}
                 value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
+                onChange={(e) => {
+                  setPhoneInput(e.target.value);
+                  // PR69 — invalidate captcha token if phone changes,
+                  // forcing a fresh challenge.
+                  if (turnstileToken) setTurnstileToken(null);
+                }}
                 autoComplete="tel"
                 required
               />
@@ -851,6 +875,18 @@ export function RegistrationModal({
               </div>
             )}
 
+            {/* PR69 — Cloudflare Turnstile invisible CAPTCHA. The widget
+                renders silently in managed mode and only shows a challenge
+                when Cloudflare's heuristics flag the request. Token is
+                short-lived + single-use; we reset on phone change + after
+                each successful OTP send. */}
+            <div className="flex justify-center">
+              <TurnstileWidget
+                onVerify={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+              />
+            </div>
+
             <Button
               type="submit"
               className="w-full"
@@ -858,7 +894,8 @@ export function RegistrationModal({
                 submitting ||
                 !phoneValid ||
                 displayName.trim().length < 1 ||
-                (hasSlots && !selectedSlotId)
+                (hasSlots && !selectedSlotId) ||
+                !turnstileToken
               }
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

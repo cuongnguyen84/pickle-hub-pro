@@ -1797,6 +1797,10 @@ export interface Translations {
       otpResend: string;
       otpResendIn: string;
       otpResendViaSms: string;
+      // PR69 — abuse defense error messages
+      errCaptcha: string;
+      errCaptchaIp: string;
+      errBudget: string;
       otpInvalid: string;
       otpExpired: string;
       tooManyAttempts: string;
@@ -4523,6 +4527,13 @@ export const vi: Translations = {
       otpResend: "Gửi lại mã",
       otpResendIn: "Gửi lại sau {seconds}s",
       otpResendViaSms: "Không nhận được Zalo? Gửi lại qua SMS →",
+      // PR69
+      errCaptcha:
+        "Xác minh trình duyệt thất bại. Vui lòng tải lại trang và thử lại.",
+      errCaptchaIp:
+        "Bạn đã gửi quá nhiều mã trong thời gian ngắn. Vui lòng chờ 15 phút rồi thử lại.",
+      errBudget:
+        "Hệ thống đang tạm dừng gửi tin tự động. Vui lòng liên hệ ban tổ chức.",
       otpInvalid: "Mã OTP không đúng",
       otpExpired: "Mã OTP đã hết hạn — vui lòng yêu cầu mã mới",
       tooManyAttempts: "Sai mã quá nhiều lần — vui lòng yêu cầu mã mới",

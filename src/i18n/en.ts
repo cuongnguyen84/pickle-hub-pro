@@ -1802,6 +1802,13 @@ export const en: Translations = {
       otpResend: "Resend code",
       otpResendIn: "Resend in {seconds}s",
       otpResendViaSms: "Didn't get Zalo? Resend via SMS →",
+      // PR69
+      errCaptcha:
+        "Browser verification failed. Please reload the page and try again.",
+      errCaptchaIp:
+        "Too many code requests in a short time. Please wait 15 minutes and try again.",
+      errBudget:
+        "Automated message sending is paused. Please contact the organizer.",
       otpInvalid: "Incorrect OTP",
       otpExpired: "OTP expired — please request a new one",
       tooManyAttempts: "Too many wrong attempts — please request a new code",
