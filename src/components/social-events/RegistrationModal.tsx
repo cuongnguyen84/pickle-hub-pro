@@ -882,10 +882,19 @@ export function RegistrationModal({
                 each successful OTP send. */}
             <div className="flex justify-center">
               <TurnstileWidget
-                onVerify={(token) => setTurnstileToken(token)}
-                onError={() => setTurnstileToken(null)}
+                onVerify={(token) => {
+                  console.log("[OTP] onVerify received token len=" + token.length);
+                  setTurnstileToken(token);
+                }}
+                onError={() => {
+                  console.log("[OTP] onError fired");
+                  setTurnstileToken(null);
+                }}
               />
             </div>
+            <p className="text-center text-xs text-muted-foreground">
+              CAPTCHA: {turnstileToken ? `✓ verified (${turnstileToken.length} chars)` : "⏳ chua xong"}
+            </p>
 
             <Button
               type="submit"
