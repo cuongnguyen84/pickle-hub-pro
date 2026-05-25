@@ -1,35 +1,28 @@
 // ============================================================================
 // LogMatchDialog — organizer-only form to log a club match.
 // ----------------------------------------------------------------------------
-// Used inside ClubLanding via ClubMatches section. Calls log_club_match RPC
-// (migration 20260525120000) which atomically inserts a `matches` row +
-// `match_participants` rows.
+// Restyled in the TheLine vocabulary (Login.tsx is the canonical reference):
+//   - Instrument Serif italic for the title
+//   - Geist Mono uppercase eyebrow labels
+//   - Inputs are transparent with a 1px bottom border, no rounded corners
+//   - Section dividers are 1px lines, no shadcn Cards
+//   - tl-btn / tl-btn.primary for the action row
 //
-// Player picker is constrained to the active member roster of the club
-// (passed in via props) so we never accidentally tag a non-member.
+// Functionality is unchanged: calls log_club_match RPC (migration
+// 20260525120000) which atomically inserts a `matches` row + per-team
+// `match_participants` rows. Player picker is constrained to the active
+// member roster of the club so we never tag a non-member.
 // ============================================================================
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { Loader2, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { useClubMembers } from "@/hooks/useClubMembers";
@@ -48,7 +41,6 @@ interface Props {
 interface PickerOption {
   id: string;
   label: string;
-  duprId: string | null;
 }
 
 const MAX_GAMES = 5;
@@ -59,6 +51,63 @@ function todayLocalDatetimeString(): string {
   const tzOffset = now.getTimezoneOffset() * 60_000;
   return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
 }
+
+// ─── Shared TheLine inline style primitives ───────────────────────────────
+
+const labelStyle: CSSProperties = {
+  display: "block",
+  fontFamily: "'Geist Mono', monospace",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "var(--tl-fg-3)",
+  marginBottom: 8,
+};
+
+const fieldStyle: CSSProperties = {
+  width: "100%",
+  background: "transparent",
+  border: "none",
+  borderBottom: "1px solid var(--tl-border)",
+  borderRadius: 0,
+  padding: "10px 0",
+  fontSize: 15,
+  fontFamily: "inherit",
+  color: "var(--tl-fg)",
+  outline: "none",
+  appearance: "none",
+  WebkitAppearance: "none",
+};
+
+const sectionStyle: CSSProperties = {
+  padding: "20px 0",
+  borderTop: "1px solid var(--tl-border)",
+};
+
+const sectionHeadStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 12,
+};
+
+const sectionLabelStyle: CSSProperties = {
+  ...labelStyle,
+  marginBottom: 0,
+};
+
+const scoreCellStyle: CSSProperties = {
+  width: 56,
+  textAlign: "center",
+  fontFamily: "'Geist Mono', monospace",
+  fontSize: 16,
+  background: "transparent",
+  border: "1px solid var(--tl-border)",
+  borderRadius: 6,
+  padding: "8px 4px",
+  color: "var(--tl-fg)",
+  outline: "none",
+};
 
 export function LogMatchDialog({ clubId, open, onOpenChange, onSuccess }: Props) {
   const { t } = useI18n();
@@ -73,7 +122,6 @@ export function LogMatchDialog({ clubId, open, onOpenChange, onSuccess }: Props)
         .map((row) => ({
           id: row.profile_id,
           label: row.display_name?.trim() || row.email || row.phone || "—",
-          duprId: null,
         })),
     [members],
   );
@@ -153,11 +201,9 @@ export function LogMatchDialog({ clubId, open, onOpenChange, onSuccess }: Props)
     if (teamA.slice(0, teamSize).some((id) => !id)) return m.errMissingPlayers;
     if (teamB.slice(0, teamSize).some((id) => !id)) return m.errMissingPlayers;
 
-    // Reject duplicate players across teams.
     const all = [...teamA.slice(0, teamSize), ...teamB.slice(0, teamSize)];
     if (new Set(all).size !== all.length) return m.errDuplicatePlayer;
 
-    // Every game needs both scores.
     for (const game of scores) {
       if (game.a === "" || game.b === "") return m.errIncompleteScore;
       const a = Number(game.a);
@@ -205,155 +251,246 @@ export function LogMatchDialog({ clubId, open, onOpenChange, onSuccess }: Props)
     }
   }
 
+  function renderPlayerPicker(team: "a" | "b", index: number): JSX.Element {
+    const value = (team === "a" ? teamA : teamB)[index] ?? "";
+    return (
+      <select
+        key={`${team}-${index}`}
+        value={value}
+        onChange={(e) => setPlayer(team, index, e.target.value)}
+        style={fieldStyle}
+        aria-label={`${team === "a" ? m.teamA : m.teamB} ${index + 1}`}
+      >
+        <option value="">{m.selectPlayer}</option>
+        {memberOptions.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent
+        className="max-w-lg max-h-[92vh] overflow-y-auto p-0 border-0"
+        style={{
+          background: "var(--tl-bg)",
+          color: "var(--tl-fg)",
+          borderRadius: 14,
+        }}
+      >
+        <VisuallyHidden>
           <DialogTitle>{m.logDialogTitle}</DialogTitle>
           <DialogDescription>{m.logDialogDesc}</DialogDescription>
-        </DialogHeader>
+        </VisuallyHidden>
 
-        <div className="space-y-4 py-2">
+        <div style={{ padding: "28px 26px 22px" }}>
+          {/* Eyebrow + serif title — matches Login.tsx hero treatment */}
+          <div className="tl-eyebrow" style={{ marginBottom: 10 }}>
+            <span className="pip" />
+            <span>{m.logCta.toUpperCase()}</span>
+          </div>
+          <h2
+            style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: 30,
+              lineHeight: 1.1,
+              letterSpacing: "-0.015em",
+              margin: "0 0 8px",
+              color: "var(--tl-fg)",
+            }}
+          >
+            {m.logDialogTitle}.
+          </h2>
+          <p
+            style={{
+              fontSize: 14,
+              color: "var(--tl-fg-3)",
+              margin: 0,
+              lineHeight: 1.5,
+            }}
+          >
+            {m.logDialogDesc}
+          </p>
+        </div>
+
+        <div style={{ padding: "0 26px" }}>
           {/* Format + datetime */}
-          <div className="grid grid-cols-2 gap-3">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 18,
+              paddingBottom: 4,
+            }}
+          >
             <div>
-              <Label>{m.format}</Label>
-              <Select
+              <label htmlFor="lm-format" style={labelStyle}>
+                {m.format}
+              </label>
+              <select
+                id="lm-format"
                 value={format}
-                onValueChange={(v) => handleFormatChange(v as MatchFormat)}
+                onChange={(e) => handleFormatChange(e.target.value as MatchFormat)}
+                style={fieldStyle}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="singles">{m.formatSingles}</SelectItem>
-                  <SelectItem value="doubles">{m.formatDoubles}</SelectItem>
-                  <SelectItem value="mixed">{m.formatMixed}</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="singles">{m.formatSingles}</option>
+                <option value="doubles">{m.formatDoubles}</option>
+                <option value="mixed">{m.formatMixed}</option>
+              </select>
             </div>
             <div>
-              <Label htmlFor="played-at">{m.playedAt}</Label>
-              <Input
-                id="played-at"
+              <label htmlFor="lm-played-at" style={labelStyle}>
+                {m.playedAt}
+              </label>
+              <input
+                id="lm-played-at"
                 type="datetime-local"
                 value={playedAt}
                 onChange={(e) => setPlayedAt(e.target.value)}
+                style={fieldStyle}
               />
             </div>
           </div>
 
           {/* Teams */}
-          {membersLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : memberOptions.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">
-              {m.noActiveMembers}
-            </p>
-          ) : (
-            <>
-              <div>
-                <Label className="mb-1 block">{m.teamA}</Label>
-                <div className="space-y-2">
-                  {Array.from({ length: teamSize }).map((_, i) => (
-                    <Select
-                      key={`a-${i}`}
-                      value={teamA[i] ?? ""}
-                      onValueChange={(v) => setPlayer("a", i, v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={m.selectPlayer} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {memberOptions.map((opt) => (
-                          <SelectItem key={opt.id} value={opt.id}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ))}
+          <div style={sectionStyle}>
+            {membersLoading ? (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  padding: "12px 0",
+                }}
+              >
+                <Loader2
+                  className="h-5 w-5 animate-spin"
+                  style={{ color: "var(--tl-fg-3)" }}
+                />
+              </div>
+            ) : memberOptions.length === 0 ? (
+              <p
+                style={{
+                  fontFamily: "'Instrument Serif', serif",
+                  fontStyle: "italic",
+                  fontSize: 15,
+                  color: "var(--tl-fg-3)",
+                  margin: 0,
+                }}
+              >
+                {m.noActiveMembers}
+              </p>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 18,
+                }}
+              >
+                <div>
+                  <div style={labelStyle}>{m.teamA}</div>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {Array.from({ length: teamSize }).map((_, i) =>
+                      renderPlayerPicker("a", i),
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div style={labelStyle}>{m.teamB}</div>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {Array.from({ length: teamSize }).map((_, i) =>
+                      renderPlayerPicker("b", i),
+                    )}
+                  </div>
                 </div>
               </div>
-
-              <div>
-                <Label className="mb-1 block">{m.teamB}</Label>
-                <div className="space-y-2">
-                  {Array.from({ length: teamSize }).map((_, i) => (
-                    <Select
-                      key={`b-${i}`}
-                      value={teamB[i] ?? ""}
-                      onValueChange={(v) => setPlayer("b", i, v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={m.selectPlayer} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {memberOptions.map((opt) => (
-                          <SelectItem key={opt.id} value={opt.id}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+            )}
+          </div>
 
           {/* Scores */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label>{m.scores}</Label>
-              <Button
+          <div style={sectionStyle}>
+            <div style={sectionHeadStyle}>
+              <span style={sectionLabelStyle}>{m.scores}</span>
+              <button
                 type="button"
-                size="sm"
-                variant="outline"
                 onClick={addGame}
                 disabled={scores.length >= MAX_GAMES}
-                className="h-7 px-2"
+                className="tl-btn"
+                style={{
+                  padding: "6px 12px",
+                  fontSize: 12,
+                  opacity: scores.length >= MAX_GAMES ? 0.4 : 1,
+                }}
               >
-                <Plus className="h-3.5 w-3.5 mr-1" /> {m.addGame}
-              </Button>
+                <Plus className="h-3 w-3" /> {m.addGame}
+              </button>
             </div>
-            <div className="space-y-2">
+
+            <div style={{ display: "grid", gap: 10 }}>
               {scores.map((g, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground w-12 shrink-0">
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "'Geist Mono', monospace",
+                      fontSize: 11,
+                      color: "var(--tl-fg-4)",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      width: 52,
+                      flexShrink: 0,
+                    }}
+                  >
                     {m.game} {i + 1}
                   </span>
-                  <Input
+                  <input
                     type="number"
                     min={0}
                     max={50}
                     value={g.a}
                     onChange={(e) => updateScore(i, "a", e.target.value)}
                     placeholder="A"
-                    className="w-16"
+                    style={scoreCellStyle}
                   />
-                  <span className="text-muted-foreground">–</span>
-                  <Input
+                  <span style={{ color: "var(--tl-fg-4)", fontSize: 16 }}>—</span>
+                  <input
                     type="number"
                     min={0}
                     max={50}
                     value={g.b}
                     onChange={(e) => updateScore(i, "b", e.target.value)}
                     placeholder="B"
-                    className="w-16"
+                    style={scoreCellStyle}
                   />
                   {scores.length > 1 && (
-                    <Button
+                    <button
                       type="button"
-                      size="icon"
-                      variant="ghost"
                       onClick={() => removeGame(i)}
-                      className="h-7 w-7"
+                      aria-label="Remove game"
+                      style={{
+                        marginLeft: "auto",
+                        background: "transparent",
+                        border: "none",
+                        color: "var(--tl-fg-4)",
+                        cursor: "pointer",
+                        padding: 4,
+                        display: "inline-flex",
+                        alignItems: "center",
+                      }}
                     >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
+                      <X className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
               ))}
@@ -361,33 +498,60 @@ export function LogMatchDialog({ clubId, open, onOpenChange, onSuccess }: Props)
           </div>
 
           {/* Notes */}
-          <div>
-            <Label htmlFor="notes">{m.notesOptional}</Label>
-            <Textarea
-              id="notes"
+          <div style={sectionStyle}>
+            <label htmlFor="lm-notes" style={labelStyle}>
+              {m.notesOptional}
+            </label>
+            <textarea
+              id="lm-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder={m.notesPlaceholder}
               rows={2}
               maxLength={500}
+              style={{
+                ...fieldStyle,
+                resize: "vertical",
+                minHeight: 60,
+              }}
             />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        {/* Action row — also separated by a top border to keep rhythm */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+            padding: "16px 26px 24px",
+            borderTop: "1px solid var(--tl-border)",
+            marginTop: 4,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="tl-btn"
+          >
             {t.common.cancel}
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={handleSubmit}
             disabled={logMatch.isPending || memberOptions.length === 0}
+            className="tl-btn green"
+            style={{
+              opacity:
+                logMatch.isPending || memberOptions.length === 0 ? 0.6 : 1,
+            }}
           >
             {logMatch.isPending && (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             )}
             {m.logSubmit}
-          </Button>
-        </DialogFooter>
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );
