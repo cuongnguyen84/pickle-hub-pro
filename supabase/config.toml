@@ -313,6 +313,15 @@ verify_jwt = false
 [functions.dupr-org-unlink-club]
 verify_jwt = false
 
+# ─── DUPR RaaS (PR7 — DUPR+ event eligibility gating) ──────────────────────
+# Per DUPR User Gating doc: partner must check PREMIUM_L1 (+ optionally
+# VERIFIED_L1) before allowing user to register for Premium events. This
+# function takes a list of `required` entitlements and returns allowed +
+# missing for the calling user. Used by /dupr Section 6 demo and by any
+# real registration flow that needs gating.
+
+[functions.dupr-event-eligibility]
+verify_jwt = false
 # ─── Match proposals (PR6 — player-initiated match flow) ───────────────────
 [functions.match-proposal]
 verify_jwt = false
