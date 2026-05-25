@@ -36,10 +36,10 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const WatchVideo = lazy(() => import("./pages/WatchVideo"));
 const WatchLive = lazy(() => import("./pages/WatchLive"));
 const Account = lazy(() => import("./pages/Account"));
-const DuprDashboard = lazy(() => import("./pages/DuprDashboard"));
+const DuprConnect = lazy(() => import("./pages/DuprConnect"));
+const AdminDuprDashboard = lazy(() => import("./pages/admin/AdminDuprDashboard"));
 const MatchSubmitPage = lazy(() => import("./pages/Match"));
 const MyTournaments = lazy(() => import("./pages/MyTournaments"));
-const MatchNewPage = lazy(() => import("./pages/MatchNew"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Search = lazy(() => import("./pages/Search"));
 const OrganizationDetail = lazy(() => import("./pages/OrganizationDetail"));
@@ -484,10 +484,10 @@ const App = () => (
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/auth/reset-password" element={<ResetPassword />} />
                     <Route path="/account" element={<Account />} />
-                    <Route path="/dupr" element={<RequireAuth><DuprDashboard /></RequireAuth>} />
+                    <Route path="/dupr" element={<RequireAuth><DuprConnect /></RequireAuth>} />
+                    <Route path="/admin/dupr" element={<RequireAuth requiredRole="admin"><AdminDuprDashboard /></RequireAuth>} />
                     <Route path="/match" element={<RequireAuth><MatchSubmitPage /></RequireAuth>} />
                     <Route path="/account/my-tournaments" element={<RequireAuth><MyTournaments /></RequireAuth>} />
-                    <Route path="/match/new" element={<RequireAuth><MatchNewPage /></RequireAuth>} />
                     {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />
                     {/* Bet #1: match permalink (Vietnamese canonical /tran-dau/:slug) */}

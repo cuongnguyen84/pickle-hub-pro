@@ -11,6 +11,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { UnifiedNotificationBell } from "@/components/social/notifications";
 import { ConnectDuprBanner } from "@/components/dupr/ConnectDuprBanner";
+import { HeaderDuprBadge } from "@/components/dupr/HeaderDuprBadge";
 import { supabase } from "@/integrations/supabase/client";
 import "@/styles/the-line.css";
 
@@ -607,6 +608,9 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
 
           {user ? (
             <>
+              {/* DUPR header widget — Connect button or rating pill */}
+              <HeaderDuprBadge />
+
               {/* Unified notification bell — legacy + social merged (Sprint 2 Phase 3B.2 unify) */}
               <UnifiedNotificationBell className="tl-icon-btn" />
 

@@ -322,6 +322,15 @@ verify_jwt = false
 
 [functions.dupr-event-eligibility]
 verify_jwt = false
+
+# ─── DUPR RaaS (PR8 — unified opponent search) ─────────────────────────────
+# Wraps DUPR Partner /user/v1.0/search (consented users only per DUPR
+# consent model) + internal profiles ILIKE on display_name/email/username/
+# dupr_id, merging by dupr_id. Used by /match/new opponent picker.
+
+[functions.dupr-user-search]
+verify_jwt = false
+
 # ─── Match proposals (PR6 — player-initiated match flow) ───────────────────
 [functions.match-proposal]
 verify_jwt = false
@@ -336,7 +345,4 @@ verify_jwt = false
 # function performs its own authorization inside.
 
 [functions.add-registration-direct]
-verify_jwt = false
-
-[functions.send-event-registration-email]
 verify_jwt = false
