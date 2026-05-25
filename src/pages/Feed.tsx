@@ -13,6 +13,7 @@ import { useFeedNews, type FeedNewsItem } from "@/hooks/social/useFeedNews";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
+import { FeedMlpMatchCard } from "@/components/social/feed/FeedMlpMatchCard";
 import { FeedBlogCard } from "@/components/social/feed/FeedBlogCard";
 import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
 import { FeedNewsCard } from "@/components/social/feed/FeedNewsCard";
@@ -318,14 +319,23 @@ const Feed = () => {
           ) : (
             <>
               {tab === "following"
-                ? followingMatches.map((match, i) => (
-                    <FeedMatchCard
-                      key={match.match_id}
-                      match={match}
-                      language={language}
-                      staggerIndex={i}
-                    />
-                  ))
+                ? followingMatches.map((match, i) =>
+                    match.source_provider === "mlp" ? (
+                      <FeedMlpMatchCard
+                        key={match.match_id}
+                        match={match}
+                        language={language}
+                        staggerIndex={i}
+                      />
+                    ) : (
+                      <FeedMatchCard
+                        key={match.match_id}
+                        match={match}
+                        language={language}
+                        staggerIndex={i}
+                      />
+                    )
+                  )
                 : timelineItems.map((item, i) => (
                     <div
                       key={`${item.type}:${item.cursor_id}`}
@@ -403,6 +413,15 @@ function TimelineRow({
     );
   }
   if (item.type === "match") {
+    if (item.source_provider === "mlp") {
+      return (
+        <FeedMlpMatchCard
+          match={item}
+          language={language}
+          staggerIndex={staggerIndex}
+        />
+      );
+    }
     return (
       <FeedMatchCard
         match={item}

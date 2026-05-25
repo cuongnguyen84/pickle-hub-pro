@@ -88,6 +88,7 @@ interface RpcRow {
   tournament_name: string | null;
   tournament_event: string | null;
   round_name: string | null;
+  notes: string | null;
   // blog/video shared
   title: string | null;
   excerpt: string | null;
@@ -213,6 +214,7 @@ function normalizeRow(row: RpcRow): FeedTimelineItem | null {
       tournament_name: row.tournament_name,
       tournament_event: row.tournament_event,
       round_name: row.round_name,
+      notes: row.notes,
     };
   }
   if (row.item_type === "blog") {

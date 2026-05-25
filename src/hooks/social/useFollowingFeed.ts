@@ -44,6 +44,8 @@ export interface FeedMatch {
   tournament_event: string | null;
   /** Round label — e.g. "R32", "QF", "F". Null otherwise. */
   round_name: string | null;
+  /** Free-form notes JSON. MLP matchups encode team logos + per-game lineups here. */
+  notes: string | null;
 }
 
 interface RpcRow {
@@ -66,6 +68,7 @@ interface RpcRow {
   tournament_name: string | null;
   tournament_event: string | null;
   round_name: string | null;
+  notes: string | null;
 }
 
 const PAGE_SIZE = 20;
@@ -128,5 +131,6 @@ function normalizeRow(row: RpcRow): FeedMatch {
     tournament_name: row.tournament_name,
     tournament_event: row.tournament_event,
     round_name: row.round_name,
+    notes: row.notes,
   };
 }
