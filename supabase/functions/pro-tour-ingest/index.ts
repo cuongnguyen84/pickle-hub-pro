@@ -211,12 +211,37 @@ async function reconcilePlayers(
   let players_matched = 0;
 
   for (const p of players) {
-    const hit = existingByExt.get(p.external_id);
+    let hit = existingByExt.get(p.external_id);
     if (hit) {
       out.set(p.external_id, hit);
       players_matched += 1;
       continue;
     }
+
+    // Codex P1 fix on PR #171: when a previous build used a different
+    // external_id convention for the SAME logical player (e.g. legacy
+    // 'mlp-columbus-sliders' vs current 'columbus-sliders'), the strict
+    // (source_provider, external_id) lookup misses and a fresh INSERT
+    // collides on the username UNIQUE constraint. Try the legacy
+    // convention before inserting — match by what the username WOULD be.
+    const computedUsername = p.external_id.startsWith(`${source_provider}-`)
+      ? p.external_id
+      : `${source_provider}-${p.external_id}`;
+    const { data: byUsername } = await supabase
+      .from("profiles")
+      .select("id, external_id")
+      .eq("source_provider", source_provider)
+      .eq("username", computedUsername)
+      .maybeSingle();
+    if (byUsername) {
+      const matchedId = byUsername.id as string;
+      out.set(p.external_id, matchedId);
+      // Cache so subsequent passes in the same ingest can reuse.
+      existingByExt.set(p.external_id, matchedId);
+      players_matched += 1;
+      continue;
+    }
+    void hit; // (referenced; lint-quiet)
     // Insert ghost. is_ghost=true so the profile doesn't appear in
     // suggested-follows / search by default; ingestion logs surface
     // creation count so admins can review.

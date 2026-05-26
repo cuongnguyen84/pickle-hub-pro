@@ -32,15 +32,45 @@ function installChunkErrorRecovery(): void {
     );
   };
 
+  // In-memory backup flag for environments that block sessionStorage
+  // (sandboxed iframes, opaque origins, strict-privacy WebViews). Survives
+  // for the lifetime of THIS JS execution — i.e. one reload cycle.
+  // Combined with the sessionStorage flag this means: even if storage is
+  // blocked, the second chunk error in the same tab is a no-op (no loop).
+  let reloadAttemptedInProcess = false;
+
   const recover = (): void => {
-    // Avoid reload loops: if we've already attempted a reload this
-    // session and it didn't fix the problem, fall through to the normal
-    // error UI rather than spinning forever.
+    if (reloadAttemptedInProcess) return;
+    reloadAttemptedInProcess = true;
+
+    // Codex P1 fix on PR #175: if sessionStorage access throws (sandboxed
+    // origins, embedded WebViews, strict privacy mode) we previously
+    // fell through to reload anyway → every chunk error after the reload
+    // triggers another reload → infinite loop. Now we only reload when
+    // the storage flag was successfully set OR was already set in a
+    // prior reload (so we know storage works and we already tried once).
+    let storageWorks = false;
+    let alreadyReloaded = false;
     try {
-      if (sessionStorage.getItem(RELOAD_FLAG) === "1") return;
+      alreadyReloaded = sessionStorage.getItem(RELOAD_FLAG) === "1";
       sessionStorage.setItem(RELOAD_FLAG, "1");
+      storageWorks = sessionStorage.getItem(RELOAD_FLAG) === "1";
     } catch {
-      // sessionStorage unavailable — best-effort reload anyway.
+      storageWorks = false;
+    }
+
+    if (alreadyReloaded) {
+      // Already tried once and the chunk error is still hitting us.
+      // Stop here so the user sees the normal error UI instead of a
+      // reload loop. They can manually hard-reload to retry.
+      return;
+    }
+    if (!storageWorks) {
+      // Storage is blocked — we can't persist the flag across reloads,
+      // so a reload would just loop. Skip the auto-recovery and let
+      // the error UI surface. The in-process flag still prevents
+      // multiple reloads inside this same JS execution.
+      return;
     }
     window.location.reload();
   };

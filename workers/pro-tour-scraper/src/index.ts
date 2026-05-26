@@ -538,18 +538,26 @@ interface WatchlistRow {
 }
 
 async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
-  // Match active rows where next_scrape_at is in the past OR is NULL.
-  // Codex P1 fix on PR #160: the original `next_scrape_at=lte.<now>` filter
-  // silently excluded freshly-inserted rows (the admin UI doesn't set
-  // next_scrape_at on INSERT), so newly added tournaments were never
-  // picked up by cron until an admin manually scraped them. The PostgREST
-  // `or=(...)` syntax treats NULL as "never scraped, so due now".
+  // Match active rows where:
+  //   (a) next_scrape_at is in the past, OR
+  //   (b) next_scrape_at IS NULL AND scrape_frequency is daily/weekly.
+  //
+  // Why (b) is gated by frequency (Codex P1 fix on PR #166): the original
+  // PR #160 fix `or=(next_scrape_at.is.null, lte)` swept in MANUAL and
+  // ON_EVENT_END rows too. nextScrapeAt() intentionally NULLs their
+  // next_scrape_at after a run so cron leaves them alone until an admin
+  // re-triggers. Without the frequency gate, those rows became eligible
+  // every 6h tick and got auto-scraped repeatedly.
+  //
+  // PostgREST syntax: nested `and(...)` inside `or(...)`:
+  //   or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),
+  //       next_scrape_at.lte.<now>)
   const nowIso = new Date().toISOString();
   const url =
     `${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist` +
     `?select=id,tournament_url,scrape_frequency` +
     `&status=eq.active` +
-    `&or=(next_scrape_at.is.null,next_scrape_at.lte.${nowIso})`;
+    `&or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),next_scrape_at.lte.${nowIso})`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
