@@ -308,6 +308,38 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
 
   const apiUrl = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/browser-rendering/content`;
 
+  // MLP event pages paginate the Schedule & Scores section by Vietnam-local
+  // day (GMT+7). The default render only hydrates the current day's ~10
+  // matchups. To capture EVERY completed day, we ask Browser Rendering to
+  // (1) scroll the SCHEDULE & SCORES heading into view so the React island
+  // mounts, (2) click "SEE ALL" if present, then (3) click the previous-day
+  // arrow N times to walk back through the season. Each click waits a
+  // beat so the React state mutation flushes new matchups into the DOM.
+  // The final captured HTML contains the union of all hydrated days.
+  //
+  // For PPA bracket pages this actions array is harmless: the selectors
+  // don't match anything on that DOM, so each action either no-ops or
+  // throws a non-fatal error that the REST endpoint ignores (best-effort
+  // semantics per Cloudflare docs on the `actions` field). The PPA
+  // single-shot path still captures Final + SF as before.
+  const isMlpEvent = /majorleaguepickleball\.co\/events-/i.test(url);
+  const MLP_DAY_NAV_CLICKS = 6; // ~1 week back; safe upper bound for any
+                                // current MLP regular-season event window.
+  const actions = isMlpEvent
+    ? [
+        { wait: { milliseconds: 1500 } },
+        { keyboard: { type: "End" as const } }, // scroll to bottom to ensure schedule section mounts
+        { wait: { milliseconds: 800 } },
+        // Click the prev-day arrow repeatedly so React hydrates earlier
+        // days. The arrow renders as a <button> with literal text "<".
+        // Each click expands the in-DOM article.sec set for that day.
+        ...Array.from({ length: MLP_DAY_NAV_CLICKS }).flatMap(() => [
+          { click: { selector: "button:has-text(\"<\")" } },
+          { wait: { milliseconds: 1200 } },
+        ]),
+      ]
+    : undefined;
+
   // Body shape per Cloudflare API docs (2026-05):
   //   url             — the bracket page to render
   //   gotoOptions     — Puppeteer page.goto() options. waitUntil:
@@ -318,7 +350,10 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
   //                     never settle.
   //   waitForTimeout  — extra dwell after navigation so any deferred
   //                     RSC chunk hydration finishes streaming.
-  const requestBody = {
+  //   actions         — optional per-step instructions. Best-effort:
+  //                     a failing action is non-fatal and the render
+  //                     proceeds. We pass click+wait for MLP pagination.
+  const requestBody: Record<string, unknown> = {
     url,
     gotoOptions: {
       waitUntil: "domcontentloaded" as const,
@@ -326,6 +361,7 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
     },
     waitForTimeout: RSC_SETTLE_TIMEOUT_MS,
   };
+  if (actions) requestBody.actions = actions;
 
   // AbortController guards against the upstream fetch hanging beyond
   // our outer ceiling — independent of CF's own internal timeouts.
