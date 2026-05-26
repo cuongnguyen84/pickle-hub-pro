@@ -15,6 +15,11 @@ import { useDuprConnection } from "@/hooks/useDuprConnection";
  *
  * Renders nothing for anonymous visitors — the home page already has
  * its own marketing hero for them.
+ *
+ * 2026-05-26 mobile fix: rebuilt the 2-column layout with Tailwind
+ * responsive utilities so on narrow screens the CTA stacks BELOW the
+ * headline (full-width, centered) instead of fighting for horizontal
+ * space. Title clamp lowered (28px min) and chips wrap cleanly.
  */
 export function HomeLogMatchCTA() {
   const { language } = useI18n();
@@ -37,14 +42,7 @@ export function HomeLogMatchCTA() {
       }}
     >
       <div
-        className="tl-shell"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr auto",
-          alignItems: "end",
-          gap: 32,
-          padding: "48px 0",
-        }}
+        className="tl-shell grid grid-cols-1 md:grid-cols-[1fr_auto] items-stretch md:items-end gap-6 md:gap-8 px-4 md:px-0 py-8 md:py-12"
       >
         {/* Headline + explainer */}
         <div>
@@ -78,10 +76,13 @@ export function HomeLogMatchCTA() {
             style={{
               fontFamily: "'Instrument Serif', serif",
               fontStyle: "italic",
-              fontSize: "clamp(40px, 6vw, 72px)",
-              lineHeight: 0.95,
+              // Mobile-friendly clamp: down to 28px so 3-word headline
+              // doesn't break into ugly wrapping like "Vừa thi đấu /
+              // xong? / Log trận / đấu." on narrow viewports.
+              fontSize: "clamp(28px, 8vw, 72px)",
+              lineHeight: 1.0,
               letterSpacing: "-0.025em",
-              margin: "0 0 18px",
+              margin: "0 0 14px",
               color: "var(--tl-fg)",
             }}
           >
@@ -106,7 +107,7 @@ export function HomeLogMatchCTA() {
             style={{
               margin: 0,
               maxWidth: "56ch",
-              fontSize: 16,
+              fontSize: 15,
               lineHeight: 1.55,
               color: "var(--tl-fg-2)",
             }}
@@ -116,10 +117,12 @@ export function HomeLogMatchCTA() {
               : "Enter the score, your opponent confirms, the club admin approves — the match is pushed to DUPR for official rating. Takes 15 seconds."}
           </p>
 
-          {/* Flow chips */}
+          {/* Flow chips — hidden on mobile to save vertical space.
+              The 4-step flow with arrows takes ~3 lines on mobile and
+              repeats info already in the explainer paragraph above. */}
           <div
+            className="hidden md:flex"
             style={{
-              display: "flex",
               gap: 8,
               marginTop: 20,
               flexWrap: "wrap",
@@ -140,19 +143,14 @@ export function HomeLogMatchCTA() {
           </div>
         </div>
 
-        {/* CTA — connected vs not-yet */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            gap: 14,
-            minWidth: 260,
-          }}
-        >
+        {/* CTA — connected vs not-yet.
+            Mobile: full-width, items align to start (left).
+            Desktop ≥768px: fixed 260px column, items align to end (right). */}
+        <div className="flex flex-col items-stretch md:items-end gap-3 md:gap-3.5 w-full md:min-w-[260px]">
           {connected ? (
             <>
               <span
+                className="self-start md:self-end"
                 style={{
                   fontFamily: "'Geist Mono', monospace",
                   fontSize: 10,
@@ -180,11 +178,11 @@ export function HomeLogMatchCTA() {
               </span>
               <Link
                 to="/match/new"
-                className="tl-btn primary"
+                className="tl-btn primary w-full md:w-auto"
                 style={{
-                  padding: "20px 40px",
+                  padding: "16px 32px",
                   fontSize: 13,
-                  minWidth: 260,
+                  minWidth: 0,
                   textAlign: "center",
                   justifyContent: "center",
                   letterSpacing: "0.16em",
@@ -194,6 +192,7 @@ export function HomeLogMatchCTA() {
               </Link>
               <Link
                 to="/match"
+                className="self-start md:self-end"
                 style={{
                   fontFamily: "'Geist Mono', monospace",
                   fontSize: 10,
@@ -211,6 +210,7 @@ export function HomeLogMatchCTA() {
           ) : (
             <>
               <span
+                className="self-start md:self-end"
                 style={{
                   fontFamily: "'Geist Mono', monospace",
                   fontSize: 10,
@@ -235,11 +235,11 @@ export function HomeLogMatchCTA() {
               </span>
               <Link
                 to="/dupr"
-                className="tl-btn primary"
+                className="tl-btn primary w-full md:w-auto"
                 style={{
-                  padding: "20px 40px",
+                  padding: "16px 32px",
                   fontSize: 13,
-                  minWidth: 260,
+                  minWidth: 0,
                   textAlign: "center",
                   justifyContent: "center",
                   letterSpacing: "0.16em",
@@ -248,14 +248,14 @@ export function HomeLogMatchCTA() {
                 {vi ? "Kết nối DUPR — 30s" : "Connect DUPR — 30s"}
               </Link>
               <span
+                className="self-start md:self-end md:text-right"
                 style={{
                   fontFamily: "'Geist Mono', monospace",
                   fontSize: 10,
                   textTransform: "uppercase",
                   letterSpacing: "0.14em",
                   color: "var(--tl-fg-3)",
-                  maxWidth: 260,
-                  textAlign: "right",
+                  maxWidth: "32ch",
                   lineHeight: 1.55,
                 }}
               >
