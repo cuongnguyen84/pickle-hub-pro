@@ -75,12 +75,21 @@ const statusChipBase: CSSProperties = {
   border: "1px solid var(--tl-border)",
 };
 
+type MatchStatusKind =
+  | "submitted"
+  | "ready"
+  | "draft"
+  | "pending_confirm"
+  | "confirmed";
+
 function StatusChip({
   status,
   m,
+  lang,
 }: {
-  status: "submitted" | "ready" | "draft";
+  status: MatchStatusKind;
   m: ReturnType<typeof useI18n>["t"]["socialEvents"]["matches"];
+  lang: "vi" | "en";
 }) {
   if (status === "submitted") {
     return (
@@ -93,6 +102,39 @@ function StatusChip({
       >
         <CheckCircle2 style={{ width: 11, height: 11 }} />
         {m.submittedBadge}
+      </span>
+    );
+  }
+  if (status === "pending_confirm") {
+    // Member-logged match waiting on opposing team. Amber dashed border
+    // signals an action is needed before this row can ship.
+    return (
+      <span
+        style={{
+          ...statusChipBase,
+          color: "var(--tl-amber, #f59e0b)",
+          borderColor: "var(--tl-amber, #f59e0b)",
+          borderStyle: "dashed",
+        }}
+      >
+        <Clock style={{ width: 11, height: 11 }} />
+        {lang === "vi" ? "Chờ đối thủ xác nhận" : "Waiting for opponent"}
+      </span>
+    );
+  }
+  if (status === "confirmed") {
+    // Opponent has signed off — now waiting on an admin/organizer to
+    // perform the actual DUPR submit (per DUPR spec).
+    return (
+      <span
+        style={{
+          ...statusChipBase,
+          color: "var(--tl-gold)",
+          borderColor: "var(--tl-gold)",
+        }}
+      >
+        <CheckCircle2 style={{ width: 11, height: 11 }} />
+        {lang === "vi" ? "Đối thủ đã xác nhận" : "Confirmed by opponent"}
       </span>
     );
   }
@@ -178,11 +220,19 @@ function MatchCard({
     .map((p) => p.display_name ?? "—")
     .join(" + ");
 
-  const status: "submitted" | "ready" | "draft" = match.submitted_to_dupr
+  // Status derivation — priority: submitted > pending_confirm > confirmed >
+  // ready > draft. The confirmation_status column gates the new flow;
+  // ready_for_dupr remains the "draft → ready" admin toggle for
+  // auto_confirmed_admin rows.
+  const status: MatchStatusKind = match.submitted_to_dupr
     ? "submitted"
-    : match.ready_for_dupr
-      ? "ready"
-      : "draft";
+    : match.confirmation_status === "pending_opponent_confirm"
+      ? "pending_confirm"
+      : match.confirmation_status === "confirmed"
+        ? "confirmed"
+        : match.ready_for_dupr
+          ? "ready"
+          : "draft";
 
   async function handleToggleReady(next: boolean): Promise<void> {
     try {
@@ -223,7 +273,7 @@ function MatchCard({
           <span style={{ ...statusChipBase, color: "var(--tl-fg-3)" }}>
             {formatLabel}
           </span>
-          <StatusChip status={status} m={m} />
+          <StatusChip status={status} m={m} lang={lang} />
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <div style={{ ...monoLabelStyle, marginBottom: 2 }}>
@@ -363,6 +413,28 @@ function MatchCard({
                 {match.dupr_match_id}
               </span>
             </div>
+          ) : match.confirmation_status === "pending_opponent_confirm" ? (
+            <div
+              style={{
+                ...monoLabelStyle,
+                color: "var(--tl-amber, #f59e0b)",
+              }}
+            >
+              {lang === "vi"
+                ? "Đang chờ đối thủ xác nhận tỉ số"
+                : "Waiting for opponent to confirm the score"}
+            </div>
+          ) : match.confirmation_status === "confirmed" ? (
+            <div
+              style={{
+                ...monoLabelStyle,
+                color: "var(--tl-gold)",
+              }}
+            >
+              {lang === "vi"
+                ? "Đối thủ đã xác nhận — sẵn sàng gửi DUPR"
+                : "Confirmed by opponent — ready to submit"}
+            </div>
           ) : (
             <div
               style={{
@@ -383,31 +455,23 @@ function MatchCard({
                 flexWrap: "wrap",
               }}
             >
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  cursor: "pointer",
-                  fontSize: 12,
-                  color: "var(--tl-fg-2)",
-                }}
-              >
-                <span>{m.readyToggle}</span>
-                <input
-                  type="checkbox"
-                  checked={match.ready_for_dupr}
-                  disabled={markReady.isPending}
-                  onChange={(e) => void handleToggleReady(e.target.checked)}
+              {match.confirmation_status === "pending_opponent_confirm" ? (
+                // Member-logged row: admin can't progress until opponent
+                // confirms. Show explainer in lieu of the toggle.
+                <span
                   style={{
-                    width: 16,
-                    height: 16,
-                    accentColor: "var(--tl-green)",
-                    cursor: "pointer",
+                    fontSize: 12,
+                    color: "var(--tl-fg-3)",
+                    fontStyle: "italic",
                   }}
-                />
-              </label>
-              {match.ready_for_dupr && (
+                >
+                  {lang === "vi"
+                    ? "Đợi đối thủ xác nhận trước"
+                    : "Awaiting opponent confirmation"}
+                </span>
+              ) : match.confirmation_status === "confirmed" ? (
+                // Opponent confirmed — admin/organizer goes straight to
+                // submit. No ready toggle (row is already ready).
                 <button
                   type="button"
                   onClick={() => setSubmitOpen(true)}
@@ -417,6 +481,46 @@ function MatchCard({
                   <UploadCloud style={{ width: 12, height: 12 }} />
                   {m.submit.openCta}
                 </button>
+              ) : (
+                // auto_confirmed_admin path — existing draft → ready
+                // toggle, then submit.
+                <>
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      cursor: "pointer",
+                      fontSize: 12,
+                      color: "var(--tl-fg-2)",
+                    }}
+                  >
+                    <span>{m.readyToggle}</span>
+                    <input
+                      type="checkbox"
+                      checked={match.ready_for_dupr}
+                      disabled={markReady.isPending}
+                      onChange={(e) => void handleToggleReady(e.target.checked)}
+                      style={{
+                        width: 16,
+                        height: 16,
+                        accentColor: "var(--tl-green)",
+                        cursor: "pointer",
+                      }}
+                    />
+                  </label>
+                  {match.ready_for_dupr && (
+                    <button
+                      type="button"
+                      onClick={() => setSubmitOpen(true)}
+                      className="tl-btn green"
+                      style={{ padding: "6px 14px", fontSize: 12 }}
+                    >
+                      <UploadCloud style={{ width: 12, height: 12 }} />
+                      {m.submit.openCta}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}
