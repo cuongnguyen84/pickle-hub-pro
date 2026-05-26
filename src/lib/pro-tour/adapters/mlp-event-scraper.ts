@@ -333,7 +333,10 @@ const MONTH_NAMES: Record<string, number> = {
   July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
 };
 
-function parseDateLine(line: string): { played_at: string | null; court: string | null } {
+function parseDateLine(
+  line: string,
+  fallbackYear: number,
+): { played_at: string | null; court: string | null } {
   const dateMatch = line.match(DATE_LINE_RE);
   if (!dateMatch) {
     return { played_at: null, court: extractCourt(line) };
@@ -358,9 +361,25 @@ function parseDateLine(line: string): { played_at: string | null; court: string 
   // Normalize "+7" → "+07:00"
   const offsetHours = parseInt(offset, 10);
   const offsetStr = `${offsetHours >= 0 ? "+" : "-"}${String(Math.abs(offsetHours)).padStart(2, "0")}:00`;
-  const year = new Date().getUTCFullYear();
-  const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00${offsetStr}`;
+  const iso = `${fallbackYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00${offsetStr}`;
   return { played_at: iso, court: extractCourt(line) };
+}
+
+/**
+ * Pull the event year out of the URL path (e.g. .../events-2026/foo/
+ * → 2026). Falls back to the current UTC year when the URL doesn't
+ * follow the expected shape — better than guessing past the season.
+ * Codex P2 fix on PR #160: parser was hard-coded to the current year,
+ * so when a historical event got re-scraped after Jan 1 the matches
+ * would land in the wrong year.
+ */
+function eventYearFromUrl(sourceUrl: string): number {
+  const m = sourceUrl.match(/\/events-(\d{4})\//);
+  if (m) {
+    const y = parseInt(m[1], 10);
+    if (y >= 2020 && y <= 2100) return y;
+  }
+  return new Date().getUTCFullYear();
 }
 
 function extractCourt(line: string): string | null {
@@ -377,6 +396,7 @@ export function parseMlpEventHtml(
   sourceUrl: string,
 ): TournamentScrapeResult {
   const { tournament_name, tournament_event } = extractHeader(html);
+  const eventYear = eventYearFromUrl(sourceUrl);
   const matches: ScrapedMatch[] = [];
   const playerMap = new Map<string, ScrapedPlayer>();
   const teamMap = new Map<string, ScrapedPlayer>();
@@ -398,7 +418,7 @@ export function parseMlpEventHtml(
 
     // Date + court — from the article's header text.
     const headerText = stripHtml(articleHtml.split(/<div\b[^>]*\bsec__match-details/i)[0] ?? "");
-    const dateInfo = parseDateLine(headerText);
+    const dateInfo = parseDateLine(headerText, eventYear);
 
     // Dedupe key: same matchup rendered under multiple day filters in
     // the captured HTML produces identical (date, team-A, team-B).

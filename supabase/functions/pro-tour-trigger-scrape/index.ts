@@ -180,34 +180,104 @@ Deno.serve(async (req) => {
 
   const signature = await hmacSha256Hex(workerBody, scraperSecret);
 
-  // Fire-and-forget the Worker call via EdgeRuntime.waitUntil so this
-  // handler returns to the admin UI in <1s while the Worker keeps
-  // running in the background (MLP multi-day path is 30-90s).
+  // Race the Worker call against a short window so we can synchronously
+  // surface fast failures (401 bad signature, 422 unsupported URL,
+  // immediate 5xx) to the admin UI as actual errors — instead of always
+  // pretending everything's queued and only revealing the truth via the
+  // Logs tab (Codex P1 fix on PR #163).
   //
-  // Belt-and-braces: even if waitUntil isn't honored by this runtime
-  // and the Worker call gets cancelled, the pre-log row inserted above
-  // means the admin Logs tab still shows the attempt. The 'running'
-  // row will simply sit there until the next manual scrape or until the
-  // cleanup job (Sprint 7+) marks orphan running rows as 'failed'. The
-  // admin can then re-trigger.
-  const scrapePromise: Promise<void> = (async () => {
+  // Resolution:
+  //   - If the Worker responds within FAST_FAIL_MS, forward its real
+  //     status + body to the admin UI verbatim. Successful long scrapes
+  //     never fit in this window so they fall through to the queued
+  //     path naturally.
+  //   - If the window elapses, hand the still-pending promise to
+  //     EdgeRuntime.waitUntil so the Worker keeps running, and return
+  //     the 202 queued response. The Worker (on success) or this
+  //     function's failure handler (if the Worker eventually fails)
+  //     updates the pre-log row so the Logs tab reflects the real
+  //     outcome later.
+  const FAST_FAIL_MS = 4_000;
+
+  // Capture worker fetch promise so we can both race it AND keep it
+  // alive on the queued path.
+  const workerFetchPromise = fetch(`${scraperUrl}/scrape`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Scraper-Signature": signature,
+    },
+    body: workerBody,
+  });
+
+  // A second promise that just settles when the window elapses, used as
+  // the race timeout sentinel.
+  const fastFailTimeout = new Promise<"timeout">((resolve) =>
+    setTimeout(() => resolve("timeout"), FAST_FAIL_MS),
+  );
+
+  let fastResult: Response | "timeout";
+  try {
+    fastResult = await Promise.race([workerFetchPromise, fastFailTimeout]);
+  } catch (err) {
+    // fetch threw before timeout — surface the error synchronously.
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[pro-tour-trigger-scrape] Worker fetch threw fast: ${msg}`);
+    if (preLogId && serviceKey) {
+      await markLogFailed(
+        supabaseUrl,
+        serviceKey,
+        preLogId,
+        `Trigger function fetch error: ${msg}`,
+      ).catch((e) => console.error(`markLogFailed: ${e}`));
+    }
+    return jsonResponse(
+      { ok: false, error: `Worker fetch failed: ${msg}`, log_id: preLogId },
+      502,
+    );
+  }
+
+  if (fastResult !== "timeout") {
+    // Worker responded within FAST_FAIL_MS. Forward verbatim so the
+    // admin UI sees real status + body (matches the pre-fire-and-forget
+    // behavior the reviewer asked for).
+    const txt = await fastResult.text();
+    let workerJson: WorkerResponse;
     try {
-      const res = await fetch(`${scraperUrl}/scrape`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Scraper-Signature": signature,
-        },
-        body: workerBody,
-      });
+      workerJson = JSON.parse(txt) as WorkerResponse;
+    } catch {
+      workerJson = {
+        ok: false,
+        error: `Worker returned non-JSON: ${txt.slice(0, 500)}`,
+      };
+    }
+    if (!fastResult.ok || workerJson.ok === false) {
+      // Mark log failed so the Logs tab matches the toast.
+      if (preLogId && serviceKey) {
+        await markLogFailed(
+          supabaseUrl,
+          serviceKey,
+          preLogId,
+          workerJson.error ?? `Worker HTTP ${fastResult.status}: ${txt.slice(0, 1000)}`,
+        ).catch((e) => console.error(`markLogFailed: ${e}`));
+      }
+    }
+    return jsonResponse(
+      { ...workerJson, log_id: preLogId },
+      fastResult.status,
+    );
+  }
+
+  // Timed out waiting for fast response → assume slow success path is
+  // in progress. Detach the still-pending fetch via waitUntil so the
+  // Worker keeps running, and return queued.
+  const tailPromise: Promise<void> = workerFetchPromise
+    .then(async (res) => {
       const txt = await res.text();
       if (!res.ok) {
         console.error(
-          `[pro-tour-trigger-scrape] Worker non-2xx (${res.status}): ${txt.slice(0, 500)}`,
+          `[pro-tour-trigger-scrape] Worker non-2xx after timeout (${res.status}): ${txt.slice(0, 500)}`,
         );
-        // Worker didn't reach the ingest path → it can't mark the log
-        // failed itself. Update it here so the admin Logs tab doesn't
-        // stay stuck on 'running' forever.
         if (preLogId && serviceKey) {
           await markLogFailed(
             supabaseUrl,
@@ -217,31 +287,27 @@ Deno.serve(async (req) => {
           ).catch((e) => console.error(`markLogFailed: ${e}`));
         }
       }
-    } catch (err) {
+    })
+    .catch(async (err) => {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[pro-tour-trigger-scrape] Worker fetch threw: ${msg}`);
+      console.error(`[pro-tour-trigger-scrape] Worker fetch threw after timeout: ${msg}`);
       if (preLogId && serviceKey) {
         await markLogFailed(
           supabaseUrl,
           serviceKey,
           preLogId,
-          `Trigger function fetch error: ${msg}`,
+          `Trigger function fetch error after queue: ${msg}`,
         ).catch((e) => console.error(`markLogFailed: ${e}`));
       }
-    }
-  })();
+    });
 
   const runtime = (globalThis as {
     EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
   }).EdgeRuntime;
   if (runtime?.waitUntil) {
-    runtime.waitUntil(scrapePromise);
+    runtime.waitUntil(tailPromise);
   } else {
-    // Fallback: no waitUntil. Don't strand the promise — at least keep
-    // it alive long enough for the response to flush, then let Deno
-    // tear down. This loses long Worker calls but is the safest
-    // fallback for environments that don't expose waitUntil.
-    void scrapePromise;
+    void tailPromise;
   }
 
   return jsonResponse(

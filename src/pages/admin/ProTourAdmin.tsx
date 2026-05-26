@@ -174,6 +174,21 @@ async function triggerScrapeViaEdge(args: {
     },
   );
   if (error) {
+    // supabase-js wraps non-2xx responses in FunctionsHttpError with a
+    // generic message; extract the real Worker error from the body when
+    // present so the admin toast shows something actionable (e.g.
+    // "Worker HTTP 401: Unauthorized") instead of just "non-2xx status".
+    const ctx = (error as { context?: Response }).context;
+    if (ctx) {
+      try {
+        const body = await ctx.clone().json() as Partial<TriggerResponse>;
+        if (body && typeof body.error === "string") {
+          return { ok: false, error: body.error };
+        }
+      } catch {
+        // body not JSON — fall through to generic message
+      }
+    }
     return { ok: false, error: error.message };
   }
   return data ?? { ok: false, error: "Empty response" };

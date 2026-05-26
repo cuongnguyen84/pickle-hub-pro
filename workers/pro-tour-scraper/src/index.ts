@@ -439,11 +439,18 @@ interface WatchlistRow {
 }
 
 async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
+  // Match active rows where next_scrape_at is in the past OR is NULL.
+  // Codex P1 fix on PR #160: the original `next_scrape_at=lte.<now>` filter
+  // silently excluded freshly-inserted rows (the admin UI doesn't set
+  // next_scrape_at on INSERT), so newly added tournaments were never
+  // picked up by cron until an admin manually scraped them. The PostgREST
+  // `or=(...)` syntax treats NULL as "never scraped, so due now".
+  const nowIso = new Date().toISOString();
   const url =
     `${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist` +
     `?select=id,tournament_url,scrape_frequency` +
     `&status=eq.active` +
-    `&next_scrape_at=lte.${new Date().toISOString()}`;
+    `&or=(next_scrape_at.is.null,next_scrape_at.lte.${nowIso})`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
