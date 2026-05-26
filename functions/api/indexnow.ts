@@ -42,6 +42,10 @@ const STATIC_URLS = [
 
 // Blog slugs (EN) — keep in sync with src/content/blog/metadata.ts and functions/sitemap.xml.ts
 const BLOG_SLUGS = [
+  "pickleball-vs-padel-vs-paddle-tennis",
+  "best-pickleball-paddles-beginners-2026",
+  "pickleball-for-tennis-players-2026",
+  "dupr-rating-improvement-30-day-plan",
   "professional-pickleball-tours-guide-2026",
   "tama-shimabukuro-ppa-atlanta-final-15-year-old",
   "what-is-dupr-pickleball-rating-system",

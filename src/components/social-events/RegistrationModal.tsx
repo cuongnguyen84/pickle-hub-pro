@@ -30,9 +30,12 @@ import {
   InputOTPSlot,
   InputOTPSeparator,
 } from "@/components/ui/input-otp";
+import { FollowOaBanner } from "@/components/social-events/FollowOaBanner";
+import { TurnstileWidget } from "@/components/registration/TurnstileWidget";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   isValidVietnamPhone,
   maskPhone,
@@ -41,6 +44,7 @@ import {
 import { formatPriceVnd, interp } from "@/lib/social-events/format";
 import { QRPaymentStep, type PaymentOrder } from "@/components/payment/QRPaymentStep";
 import { saveMyRegistration } from "@/lib/social-events/myRegistration";
+import type { SocialEventSlot } from "@/hooks/useSocialEvent";
 
 const RESEND_COOLDOWN_SEC = 60;
 
@@ -56,15 +60,28 @@ interface Props {
   requiresPrepayment?: boolean;
   prepaymentDeadlineHours?: number;
   zaloGroupUrl: string | null;
+  /**
+   * Registration slots configured by the organizer. Empty array → no
+   * slot picker (legacy gate on max_players only). Non-empty → player
+   * MUST pick a slot before sending the OTP.
+   */
+  slots?: SocialEventSlot[];
   /** Prefill phone from authed profile when available. */
   defaultPhone?: string | null;
   /** Prefill display name from authed profile when available. */
   defaultDisplayName?: string | null;
+  /**
+   * 2026-05-22 — club membership skip-OTP path. When TRUE, the modal
+   * opens straight into the slot picker (if any) + a single confirm
+   * button, then calls the `register_event_as_member` RPC instead of
+   * sending an OTP. Payment + slot logic are unchanged downstream.
+   */
+  memberSkipOtp?: boolean;
   /** Called when the user successfully registers (parent re-fetches counts). */
   onSuccess?: () => void;
 }
 
-type Step = "phone" | "otp" | "payment" | "success";
+type Step = "phone" | "otp" | "member" | "payment" | "success";
 
 interface VerifyResponse {
   ok: true;
@@ -79,6 +96,44 @@ interface VerifyResponse {
  * to a bilingual user-facing message via the i18n catalog. Falls back to a
  * generic "network error" line when the code is unknown.
  */
+/**
+ * Extract a snake_case error code from a supabase-js FunctionsHttpError.
+ * Tries (in order): the JSON body's `code` field via context.text(),
+ * the error.message string (which sometimes carries 'captcha_failed' or
+ * '...non-2xx status code' depending on the supabase-js version), and
+ * finally a regex over the whole serialized error. Returns undefined
+ * when nothing matches.
+ */
+async function extractFunctionErrorCode(
+  err: unknown,
+): Promise<string | undefined> {
+  if (!err || typeof err !== "object") return undefined;
+  // 1. Read the JSON body from error.context (the original Response).
+  const ctx = (err as { context?: Response }).context;
+  if (ctx && typeof ctx.text === "function") {
+    try {
+      const txt = await ctx.text();
+      if (txt) {
+        try {
+          const parsed = JSON.parse(txt);
+          if (parsed && typeof parsed.code === "string") return parsed.code;
+        } catch {
+          // not JSON
+        }
+      }
+    } catch {
+      // Response body already consumed — fall through.
+    }
+  }
+  // 2. Look for a known code token in error.message.
+  const msg = (err as { message?: unknown }).message;
+  if (typeof msg === "string") {
+    const m = msg.match(/[a-z][a-z0-9_]{3,}/i);
+    if (m) return m[0];
+  }
+  return undefined;
+}
+
 function translateErrorCode(
   code: string | undefined,
   t: ReturnType<typeof useI18n>["t"],
@@ -91,12 +146,27 @@ function translateErrorCode(
       return reg.alreadyRegistered;
     case "event_full":
       return reg.eventFull;
+    case "slot_required":
+      return reg.slotRequired;
+    case "slot_not_found":
+      return reg.slotInvalid;
+    case "slot_full":
+      return reg.slotFull;
+    case "not_a_member":
+      return reg.notAMember;
     case "event_not_published":
     case "event_not_public":
     case "event_not_found":
     case "guests_not_allowed":
     case "event_started_or_ended":
       return reg.eventNotOpen;
+    case "too_many_otps_ip":
+      return reg.errCaptchaIp;
+    case "captcha_failed":
+    case "captcha_misconfigured":
+      return reg.errCaptcha;
+    case "daily_budget_exceeded":
+      return reg.errBudget;
     case "too_many_otps":
       return reg.tooManyOtps;
     case "otp_mismatch":
@@ -123,19 +193,56 @@ export function RegistrationModal({
   requiresPrepayment = false,
   prepaymentDeadlineHours,
   zaloGroupUrl,
+  slots,
   defaultPhone,
   defaultDisplayName,
+  memberSkipOtp = false,
   onSuccess,
 }: Props) {
   const { t, language } = useI18n();
   const reg = t.socialEvents.register;
+  const slotList = useMemo<SocialEventSlot[]>(
+    () => (Array.isArray(slots) ? slots : []),
+    [slots],
+  );
+  const hasSlots = slotList.length > 0;
 
-  const [step, setStep] = useState<Step>("phone");
+  const [step, setStep] = useState<Step>(memberSkipOtp ? "member" : "phone");
   const [phoneInput, setPhoneInput] = useState(defaultPhone ?? "");
   const [normalizedPhone, setNormalizedPhone] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState(defaultDisplayName ?? "");
   const [selfRatedLevel, setSelfRatedLevel] = useState<string>("");
+  const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   const [otp, setOtp] = useState("");
+
+  // Per-slot active registration counts. Used to grey out + disable a
+  // slot that's already at capacity, and to render "X/Y chỗ còn lại"
+  // under each radio. Re-fetches whenever the modal opens so the player
+  // sees up-to-date numbers (someone else may have grabbed the slot
+  // between page-load and clicking Register).
+  const { data: slotCounts } = useQuery<Record<string, number>>({
+    queryKey: ["event-slot-counts", eventId, open],
+    queryFn: async () => {
+      if (!hasSlots) return {};
+      const { data, error } = await supabase.rpc("get_event_slot_counts", {
+        p_event_id: eventId,
+      });
+      if (error) {
+        console.error("get_event_slot_counts failed", error);
+        return {};
+      }
+      const map: Record<string, number> = {};
+      for (const row of (data ?? []) as Array<{
+        slot_id: string;
+        registered_count: number;
+      }>) {
+        if (row?.slot_id) map[row.slot_id] = row.registered_count ?? 0;
+      }
+      return map;
+    },
+    enabled: hasSlots && open,
+    staleTime: 15_000,
+  });
   const [submitting, setSubmitting] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [success, setSuccess] = useState<VerifyResponse | null>(null);
@@ -152,12 +259,36 @@ export function RegistrationModal({
   // 'dev'). Surfaces in the OTP-waiting hint + lets the user force the
   // SMS fallback when Zalo doesn't reach them.
   const [otpChannel, setOtpChannel] = useState<"zalo" | "sms" | "dev" | null>(null);
+  // PR69 — Cloudflare Turnstile token. Required by phone-otp-send in
+  // production. Reset when the user goes back to the phone step or
+  // changes their phone, so a stale token can't be replayed.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // PR69 v3 — 20s timeout fallback. If Cloudflare Turnstile doesn't fire
+  // its callback (browser fingerprint flagged, network slow, etc.) we
+  // surface a "Tải lại CAPTCHA" button so the player isn't stuck.
+  const [turnstileTimedOut, setTurnstileTimedOut] = useState(false);
+  // Bump turnstileKey to force the TurnstileWidget to remount + re-render
+  // a fresh challenge. Used by the reload button.
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const intervalRef = useRef<number | null>(null);
+
+  // PR69 v3 — Turnstile callback timeout watchdog. Start a 20s timer when
+  // the modal opens on step "phone" without a token; if no token arrives,
+  // surface the "Tải lại CAPTCHA" button. Reset when token arrives or
+  // turnstileKey bumps (manual reload).
+  useEffect(() => {
+    if (!open || step !== "phone" || turnstileToken) {
+      setTurnstileTimedOut(false);
+      return;
+    }
+    const id = window.setTimeout(() => setTurnstileTimedOut(true), 20000);
+    return () => window.clearTimeout(id);
+  }, [open, step, turnstileToken, turnstileKey]);
 
   // Reset state whenever the modal closes so the next open starts clean.
   useEffect(() => {
     if (!open) {
-      setStep("phone");
+      setStep(memberSkipOtp ? "member" : "phone");
       setOtp("");
       setSuccess(null);
       setDevOtp(null);
@@ -168,12 +299,16 @@ export function RegistrationModal({
       setContactSaving(false);
       setContactSaved(false);
       setOtpChannel(null);
+      setTurnstileToken(null);
+      setTurnstileTimedOut(false);
+      setTurnstileKey(0);
+      setSelectedSlotId("");
       if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     }
-  }, [open]);
+  }, [open, memberSkipOtp]);
 
   // Resend cooldown ticker.
   useEffect(() => {
@@ -215,23 +350,16 @@ export function RegistrationModal({
           phone: norm,
           event_id: eventId,
           ...(opts?.forceChannel ? { force_channel: opts.forceChannel } : {}),
+          // PR69 — Cloudflare Turnstile token. Server rejects with
+          // 'captcha_failed' when missing/invalid in production.
+          turnstile_token: turnstileToken ?? undefined,
         },
       });
       // supabase.functions.invoke wraps non-2xx into `error`. We re-read
       // the response body to surface the structured `code` field.
       if (error) {
-        // Try to extract the JSON body from the FunctionsHttpError.
-        const ctx = (error as { context?: Response }).context;
-        let bodyCode: string | undefined;
-        if (ctx) {
-          try {
-            const txt = await ctx.text();
-            const parsed = JSON.parse(txt);
-            bodyCode = parsed?.code;
-          } catch {
-            // not JSON, fall through
-          }
-        }
+        const bodyCode = await extractFunctionErrorCode(error);
+        console.error("phone-otp-send error", { error, bodyCode });
         toast({
           title: translateErrorCode(bodyCode, t),
           variant: "destructive",
@@ -245,6 +373,9 @@ export function RegistrationModal({
       setDevOtp(data?.dev_mode_code ?? null);
       setOtpChannel(data?.channel ?? null);
       setResendIn(RESEND_COOLDOWN_SEC);
+      // PR69 — Turnstile tokens are single-use. Force a re-challenge
+      // so a subsequent "resend OTP" click gets a fresh token.
+      setTurnstileToken(null);
       return true;
     } catch (e) {
       console.error("phone-otp-send failed", e);
@@ -260,6 +391,27 @@ export function RegistrationModal({
     if (trimmedName.length < 1) {
       toast({ title: reg.nameRequired, variant: "destructive" });
       return;
+    }
+    // When the organizer configured slots, the player MUST pick one.
+    // Otherwise phone-otp-verify would fall back to the legacy
+    // max_players cap and ignore the per-slot bucketing the organizer
+    // set up. Capacity full → block here so the player can pick another
+    // slot before paying for an OTP.
+    if (hasSlots) {
+      if (!selectedSlotId) {
+        toast({ title: reg.slotRequired, variant: "destructive" });
+        return;
+      }
+      const slot = slotList.find((s) => s.id === selectedSlotId);
+      if (!slot) {
+        toast({ title: reg.slotInvalid, variant: "destructive" });
+        return;
+      }
+      const taken = slotCounts?.[slot.id] ?? 0;
+      if (taken >= slot.capacity) {
+        toast({ title: reg.slotFull, variant: "destructive" });
+        return;
+      }
     }
     const ok = await callSendOtp();
     if (ok) setStep("otp");
@@ -285,20 +437,15 @@ export function RegistrationModal({
           code: otp,
           display_name: displayName.trim(),
           self_rated_level: levelNum,
+          // Only forward when set — older events without slots stay
+          // backwards compatible (server treats missing/empty as "no
+          // slot" and falls back to max_players gate).
+          slot_id: hasSlots && selectedSlotId ? selectedSlotId : undefined,
         },
       });
       if (error) {
-        const ctx = (error as { context?: Response }).context;
-        let bodyCode: string | undefined;
-        if (ctx) {
-          try {
-            const txt = await ctx.text();
-            const parsed = JSON.parse(txt);
-            bodyCode = parsed?.code;
-          } catch {
-            // not JSON
-          }
-        }
+        const bodyCode = await extractFunctionErrorCode(error);
+        console.error("phone-otp-verify error", { error, bodyCode });
         toast({
           title: translateErrorCode(bodyCode, t),
           variant: "destructive",
@@ -383,9 +530,136 @@ export function RegistrationModal({
     }
   }
 
+  /**
+   * Member-path registration (skip OTP). Called from the "member" step
+   * when the viewer is an active club member or an organizer of the
+   * event's club. Hits the register_event_as_member RPC which validates
+   * membership + capacity + slot server-side. Payment + success branch
+   * are identical to handleVerify so QRPaymentStep + the save-link card
+   * keep working without changes.
+   */
+  async function handleMemberRegister() {
+    if (hasSlots && !selectedSlotId) {
+      toast({ title: reg.slotRequired, variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { data: rows, error } = await supabase.rpc(
+        "register_event_as_member",
+        {
+          p_event_id: eventId,
+          p_slot_id: hasSlots && selectedSlotId ? selectedSlotId : null,
+        },
+      );
+      if (error) {
+        // PG RAISE EXCEPTION arrives as { message: 'event_started_or_ended',
+        // code: '22023', details: '', hint: '' } in supabase-js. But
+        // sometimes the message carries extra context (\nCONTEXT: ...).
+        // Extract the leading snake_case token instead of requiring the
+        // whole message to be snake_case, so error_codes like
+        // 'event_started_or_ended' still translate correctly.
+        const raw = (error as { message?: string }).message ?? "";
+        const known = raw.match(/^[a-z][a-z0-9_]*/)?.[0] ?? "";
+        console.error("register_event_as_member error", { raw, known });
+        toast({
+          title: translateErrorCode(known, t),
+          variant: "destructive",
+        });
+        return;
+      }
+      const row =
+        Array.isArray(rows) && rows.length > 0
+          ? (rows[0] as {
+              registration_id: string;
+              profile_id: string;
+              magic_token: string;
+              registered_at: string;
+            })
+          : null;
+      if (!row) {
+        toast({ title: reg.networkError, variant: "destructive" });
+        return;
+      }
+      const stored: VerifyResponse = {
+        ok: true,
+        registration_id: row.registration_id,
+        profile_id: row.profile_id,
+        magic_token: row.magic_token,
+        registered_at: row.registered_at,
+      };
+      saveMyRegistration(eventId, {
+        magic_token: stored.magic_token,
+        registration_id: stored.registration_id,
+        display_name: defaultDisplayName ?? null,
+        registered_at: stored.registered_at,
+      });
+      setSuccess(stored);
+      onSuccess?.();
+
+      // Payment branch — same as OTP path. Free events go straight to
+      // the success screen. Paid events ask create-payment-order for
+      // an order + bank config; payment_not_enabled fallback shows the
+      // pay-at-venue success message.
+      if (priceVnd > 0) {
+        const orderResp = await supabase.functions.invoke<{
+          ok?: true;
+          code?: string;
+          order_id?: string;
+          reference_code?: string;
+          amount_vnd?: number;
+          player_claimed_paid?: boolean;
+          player_claimed_at?: string | null;
+          bank?: { code: string; account_number: string; account_name: string };
+        }>("create-payment-order", {
+          body: {
+            registration_id: stored.registration_id,
+            magic_token: stored.magic_token,
+          },
+        });
+        const payload = orderResp.data;
+        if (
+          orderResp.error ||
+          !payload?.ok ||
+          payload.code === "payment_not_enabled" ||
+          !payload.order_id ||
+          !payload.bank
+        ) {
+          setStep("success");
+          return;
+        }
+        setPaymentOrder({
+          order_id: payload.order_id,
+          reference_code: payload.reference_code ?? "",
+          amount_vnd: payload.amount_vnd ?? priceVnd,
+          player_claimed_paid: payload.player_claimed_paid ?? false,
+          player_claimed_at: payload.player_claimed_at ?? null,
+          bank: payload.bank,
+        });
+        saveMyRegistration(eventId, {
+          magic_token: stored.magic_token,
+          registration_id: stored.registration_id,
+          reference_code: payload.reference_code ?? null,
+          display_name: defaultDisplayName ?? null,
+          registered_at: stored.registered_at,
+        });
+        setStep("payment");
+        return;
+      }
+
+      setStep("success");
+    } catch (e) {
+      console.error("register_event_as_member failed", e);
+      toast({ title: reg.networkError, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const stepHeader = (() => {
     if (step === "phone") return reg.stepPhone;
     if (step === "otp") return reg.stepCode;
+    if (step === "member") return reg.stepMember;
     if (step === "payment") return reg.stepPayment;
     return reg.stepDone;
   })();
@@ -404,6 +678,102 @@ export function RegistrationModal({
           </DialogDescription>
         </DialogHeader>
 
+        {step === "member" && (
+          /* Member skip-OTP path. Shown when the viewer is an active
+             club member (or organizer) registering for one of their
+             club's events. The flow collapses 3 steps (phone → OTP →
+             ...) into a single confirm — slot pick (if any) + button. */
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!submitting) handleMemberRegister();
+            }}
+            className="space-y-4"
+          >
+            <div className="rounded-md border border-emerald-400/50 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+              {reg.memberHint}
+            </div>
+
+            {hasSlots && (
+              <div className="space-y-2">
+                <Label>{reg.slotPickerLabel} *</Label>
+                <p className="text-xs text-muted-foreground">{reg.slotPickerHint}</p>
+                <div className="space-y-1.5">
+                  {slotList.map((slot) => {
+                    const taken = slotCounts?.[slot.id] ?? 0;
+                    const remaining = Math.max(0, slot.capacity - taken);
+                    const full = remaining === 0;
+                    const checked = selectedSlotId === slot.id;
+                    const meta: string[] = [];
+                    if (slot.kind === "skill" && slot.skill_level) {
+                      meta.push(`${reg.slotMetaSkill}: ${slot.skill_level}`);
+                    }
+                    if (slot.kind === "duration" && slot.min_play_months != null) {
+                      meta.push(
+                        slot.min_play_months === 0
+                          ? reg.slotMetaDurationNewbie
+                          : interp(reg.slotMetaDurationMonths, { n: slot.min_play_months }),
+                      );
+                    }
+                    if (slot.court_count) {
+                      meta.push(interp(reg.slotMetaCourts, { n: slot.court_count }));
+                    }
+                    return (
+                      <label
+                        key={slot.id}
+                        className={`flex cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors ${
+                          checked
+                            ? "border-primary bg-primary/5"
+                            : full
+                              ? "border-border bg-muted/30 opacity-60"
+                              : "border-border hover:bg-muted/40"
+                        }`}
+                        style={{ cursor: full ? "not-allowed" : "pointer" }}
+                      >
+                        <input
+                          type="radio"
+                          name="ev-slot-member"
+                          className="mt-1"
+                          checked={checked}
+                          disabled={full}
+                          onChange={() => setSelectedSlotId(slot.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">{slot.label}</div>
+                          {meta.length > 0 && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">{meta.join(" · ")}</div>
+                          )}
+                          {slot.notes && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">{slot.notes}</div>
+                          )}
+                          <div className="mt-1 text-xs font-mono">
+                            {full ? (
+                              <span className="text-destructive">{reg.slotFullBadge}</span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {interp(reg.slotRemainingBadge, { remaining, capacity: slot.capacity })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={submitting || (hasSlots && !selectedSlotId)}
+            >
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting ? reg.submitting : reg.memberRegisterCta}
+            </Button>
+          </form>
+        )}
+
         {step === "phone" && (
           <form
             onSubmit={(e) => {
@@ -420,7 +790,12 @@ export function RegistrationModal({
                 inputMode="tel"
                 placeholder={reg.phonePlaceholder}
                 value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
+                onChange={(e) => {
+                  setPhoneInput(e.target.value);
+                  // PR69 — invalidate captcha token if phone changes,
+                  // forcing a fresh challenge.
+                  if (turnstileToken) setTurnstileToken(null);
+                }}
                 autoComplete="tel"
                 required
               />
@@ -458,10 +833,141 @@ export function RegistrationModal({
                 <option value="5.0">5.0+</option>
               </select>
             </div>
+
+            {/* Slot picker — only shown when the organizer configured
+                slots on the event. Player must pick one before we'll
+                even send the OTP (handled in handleSendOtp). */}
+            {hasSlots && (
+              <div className="space-y-2">
+                <Label>{reg.slotPickerLabel} *</Label>
+                <p className="text-xs text-muted-foreground">
+                  {reg.slotPickerHint}
+                </p>
+                <div className="space-y-1.5">
+                  {slotList.map((slot) => {
+                    const taken = slotCounts?.[slot.id] ?? 0;
+                    const remaining = Math.max(0, slot.capacity - taken);
+                    const full = remaining === 0;
+                    const checked = selectedSlotId === slot.id;
+                    const meta: string[] = [];
+                    if (slot.kind === "skill" && slot.skill_level) {
+                      meta.push(
+                        `${reg.slotMetaSkill}: ${slot.skill_level}`,
+                      );
+                    }
+                    if (slot.kind === "duration" && slot.min_play_months != null) {
+                      meta.push(
+                        slot.min_play_months === 0
+                          ? reg.slotMetaDurationNewbie
+                          : interp(reg.slotMetaDurationMonths, {
+                              n: slot.min_play_months,
+                            }),
+                      );
+                    }
+                    if (slot.court_count) {
+                      meta.push(
+                        interp(reg.slotMetaCourts, { n: slot.court_count }),
+                      );
+                    }
+                    return (
+                      <label
+                        key={slot.id}
+                        className={`flex cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors ${
+                          checked
+                            ? "border-primary bg-primary/5"
+                            : full
+                              ? "border-border bg-muted/30 opacity-60"
+                              : "border-border hover:bg-muted/40"
+                        }`}
+                        style={{ cursor: full ? "not-allowed" : "pointer" }}
+                      >
+                        <input
+                          type="radio"
+                          name="ev-slot"
+                          className="mt-1"
+                          checked={checked}
+                          disabled={full}
+                          onChange={() => setSelectedSlotId(slot.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">{slot.label}</div>
+                          {meta.length > 0 && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              {meta.join(" · ")}
+                            </div>
+                          )}
+                          {slot.notes && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              {slot.notes}
+                            </div>
+                          )}
+                          <div className="mt-1 text-xs font-mono">
+                            {full ? (
+                              <span className="text-destructive">
+                                {reg.slotFullBadge}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {interp(reg.slotRemainingBadge, {
+                                  remaining,
+                                  capacity: slot.capacity,
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* PR69 — Cloudflare Turnstile invisible CAPTCHA. The widget
+                renders silently in managed mode and only shows a challenge
+                when Cloudflare's heuristics flag the request. Token is
+                short-lived + single-use; we reset on phone change + after
+                each successful OTP send. */}
+            <div className="flex justify-center">
+              <TurnstileWidget
+                key={turnstileKey}
+                onVerify={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+              />
+            </div>
+            {!turnstileToken && (
+              <div className="space-y-1.5 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {turnstileTimedOut
+                    ? "Xác minh trình duyệt quá lâu. Hãy thử tải lại CAPTCHA."
+                    : "Đang xác minh trình duyệt (vài giây)…"}
+                </p>
+                {turnstileTimedOut && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setTurnstileTimedOut(false);
+                      setTurnstileKey((k) => k + 1);
+                    }}
+                  >
+                    Tải lại CAPTCHA
+                  </Button>
+                )}
+              </div>
+            )}
+
             <Button
               type="submit"
               className="w-full"
-              disabled={submitting || !phoneValid || displayName.trim().length < 1}
+              disabled={
+                submitting ||
+                !phoneValid ||
+                displayName.trim().length < 1 ||
+                (hasSlots && !selectedSlotId) ||
+                !turnstileToken
+              }
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {reg.sendOtp}
@@ -585,6 +1091,11 @@ export function RegistrationModal({
               <p className="font-semibold">{reg.successTitle}</p>
               <p className="mt-1">{reg.successBody}</p>
             </div>
+
+            {/* PR65 — Zalo OA follow CTA. Inline (not modal) so it
+                doesn't block the player from reading payment / save-link
+                cards below. Dismiss persists per session in sessionStorage. */}
+            <FollowOaBanner registrationId={success.registration_id} />
 
             {priceVnd > 0 && (
               <div className="rounded-md border bg-muted/40 px-4 py-3 text-sm">

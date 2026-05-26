@@ -37,6 +37,7 @@ import { Step1Info } from "@/components/social/create-event/Step1Info";
 import { Step2Payment } from "@/components/social/create-event/Step2Payment";
 import {
   initialForm,
+  validateSlots,
   validateStep1,
   validateStep2,
   type FormState,
@@ -209,27 +210,26 @@ export default function CreateSocialEvent() {
       // PR51 atomic submit. The RPC writes social_events + (when paid)
       // event_payment_config inside one PL/pgSQL transaction so a
       // partial failure can't strand a paid event without bank config.
-      const eventPayload = {
-        club_id: clubData.club.id,
-        slug: finalSlug,
-        title_vi: form.title.trim(),
-        description_vi: form.description.trim() === "" ? null : form.description.trim(),
-        start_at: startIso,
-        end_at: endIso,
-        location_text: form.location_text.trim() === "" ? null : form.location_text.trim(),
-        court_count: form.court_count,
-        max_players: form.max_players,
-        price_vnd: form.price_vnd,
-        zalo_group_url:
-          form.zalo_group_url.trim() === "" ? null : form.zalo_group_url.trim(),
-        status: publish ? "published" : "draft",
-        visibility: form.visibility,
-        // PR67 — only meaningful for paid events. Default for free
-        // events is false / 12 (the column DEFAULT backstop), so passing
-        // it through unconditionally is safe.
-        requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
-        prepayment_deadline_hours: form.prepayment_deadline_hours,
-      };
+      // Slots are persisted as JSONB. Trim/normalise the per-slot shape
+      // before submit so the DB stores tidy values + the edge function
+      // can lookup by id without surprises.
+      const cleanSlots = form.slots.map((s) => ({
+        id: s.id,
+        label: s.label.trim(),
+        kind: s.kind,
+        capacity: Number(s.capacity) || 0,
+        court_count: s.court_count ?? null,
+        skill_level:
+          s.kind === "skill" ? (s.skill_level?.trim() || null) : null,
+        min_play_months:
+          s.kind === "duration"
+            ? s.min_play_months == null
+              ? null
+              : Number(s.min_play_months)
+            : null,
+        notes: s.notes && s.notes.trim().length > 0 ? s.notes.trim() : null,
+      }));
+
       const paymentPayload =
         form.price_vnd > 0
           ? {
@@ -238,26 +238,82 @@ export default function CreateSocialEvent() {
               bank_account_name: form.bank_account_name.trim(),
             }
           : null;
-      const { data: rows, error } = await supabase.rpc(
-        "create_social_event_with_payment",
-        {
-          p_event: eventPayload,
-          p_payment: paymentPayload,
-        },
-      );
-      if (error) {
-        if (error.message.toLowerCase().includes("social_events_slug")) {
-          toast({ title: create.errorSlugTaken, variant: "destructive" });
-          return;
+
+      // PR weekly-repeat — submit the base event first, then loop N
+      // weekly copies (offset start_at + end_at by 7 days each, append
+      // a -tuanN suffix to the slug). Each iteration calls the same
+      // atomic RPC so a failure mid-loop leaves the earlier copies in
+      // place; we surface a partial-failure toast rather than rollback.
+      const repeatCount = Math.max(0, Math.min(12, Number(form.repeat_weeks) || 0));
+      const startMs = new Date(startIso).getTime();
+      const endMs = new Date(endIso).getTime();
+
+      let firstSlug = finalSlug;
+      let createdCount = 0;
+      for (let i = 0; i <= repeatCount; i++) {
+        const offsetMs = i * 7 * 24 * 60 * 60 * 1000;
+        const iterStart = new Date(startMs + offsetMs).toISOString();
+        const iterEnd = new Date(endMs + offsetMs).toISOString();
+        const iterSlug = i === 0 ? finalSlug : `${finalSlug}-tuan${i + 1}`;
+
+        const eventPayload = {
+          club_id: clubData.club.id,
+          slug: iterSlug,
+          title_vi: form.title.trim(),
+          description_vi: form.description.trim() === "" ? null : form.description.trim(),
+          start_at: iterStart,
+          end_at: iterEnd,
+          location_text: form.location_text.trim() === "" ? null : form.location_text.trim(),
+          court_count: form.court_count,
+          max_players: form.max_players,
+          price_vnd: form.price_vnd,
+          zalo_group_url:
+            form.zalo_group_url.trim() === "" ? null : form.zalo_group_url.trim(),
+          // PR68 — optional ball + free perks badges
+          ball_type: form.ball_type.trim() === "" ? null : form.ball_type.trim(),
+          free_perks: form.free_perks.length > 0 ? form.free_perks : null,
+          status: publish ? "published" : "draft",
+          visibility: form.visibility,
+          requires_prepayment: form.price_vnd > 0 ? form.requires_prepayment : false,
+          prepayment_deadline_hours: form.prepayment_deadline_hours,
+          slots: cleanSlots,
+        };
+
+        const { data: rows, error } = await supabase.rpc(
+          "create_social_event_with_payment",
+          { p_event: eventPayload, p_payment: paymentPayload },
+        );
+        if (error) {
+          if (error.message.toLowerCase().includes("social_events_slug")) {
+            toast({
+              title: createdCount === 0
+                ? create.errorSlugTaken
+                : `${create.errorSlugTaken} (${createdCount}/${repeatCount + 1})`,
+              variant: "destructive",
+            });
+            if (createdCount === 0) return;
+            break;
+          }
+          console.error("CreateSocialEvent RPC error", error);
+          toast({ title: t.common.error, description: error.message, variant: "destructive" });
+          if (createdCount === 0) return;
+          break;
         }
-        console.error("CreateSocialEvent RPC error", error);
-        toast({ title: t.common.error, description: error.message, variant: "destructive" });
-        return;
+        const row = Array.isArray(rows) && rows.length > 0
+          ? (rows[0] as { event_slug: string })
+          : null;
+        if (i === 0) firstSlug = row?.event_slug ?? iterSlug;
+        createdCount++;
       }
-      const row = Array.isArray(rows) && rows.length > 0 ? (rows[0] as { event_slug: string }) : null;
-      const newSlug = row?.event_slug ?? finalSlug;
-      toast({ title: publish ? create.successPublished : create.successDraft });
-      navigate(`/social/${newSlug}`);
+
+      if (repeatCount > 0) {
+        toast({
+          title: create.bulkCreatedToast.replace("{count}", String(createdCount)),
+        });
+      } else {
+        toast({ title: publish ? create.successPublished : create.successDraft });
+      }
+      navigate(`/social/${firstSlug}`);
     } finally {
       setSubmitting(false);
     }
@@ -290,6 +346,60 @@ export default function CreateSocialEvent() {
 
   const step1Disabled = !step1Result.valid;
   const submitDisabled = submitting || !step1Result.valid || !step2Result.valid || slugTaken;
+
+  // 2026-05-22 — surface a human-readable list of what's still missing
+  // so the organizer knows WHY the green button is greyed out. Without
+  // this hint, the user keeps clicking and nothing happens (silent
+  // validation only flagged invalid fields with inline red text, which
+  // is easy to miss on a long form).
+  const slotResult = validateSlots(form.slots, form.max_players, t);
+  const missingFields = useMemo<string[]>(() => {
+    const list: string[] = [];
+    const fieldLabel: Partial<Record<keyof FormState, string>> = {
+      title:           create.eventName,
+      start_date:      create.startDate,
+      start_time:      create.startTime,
+      end_time:        create.endTime,
+      location_text:   create.location,
+      court_count:     create.courtCount,
+      max_players:     create.maxPlayers,
+      zalo_group_url:  create.zaloGroupUrl,
+      price_vnd:       create.priceAmount,
+      bank_code:       create.bankLabel,
+      bank_account_number: create.accountNumberLabel,
+      bank_account_name:   create.accountNameLabel,
+      prepayment_deadline_hours: create.paymentDeadlineHours,
+    };
+    const showStep2 = step === 2;
+    const errors = showStep2
+      ? { ...step1Result.errors, ...step2Result.errors }
+      : step1Result.errors;
+    for (const [key, msg] of Object.entries(errors)) {
+      if (!msg) continue;
+      const label = fieldLabel[key as keyof FormState] ?? key;
+      list.push(`${label}: ${msg}`);
+    }
+    if (slotResult.totalError) list.push(slotResult.totalError);
+    for (const [slotId, slotErr] of Object.entries(slotResult.errors)) {
+      if (!slotErr) continue;
+      const slotIdx = form.slots.findIndex((s) => s.id === slotId);
+      const slotLabel = (form.slots[slotIdx]?.label?.trim() || `${language === "vi" ? "Nhóm" : "Group"} ${slotIdx + 1}`);
+      for (const msg of Object.values(slotErr)) {
+        if (msg) list.push(`${slotLabel}: ${msg}`);
+      }
+    }
+    if (slugTaken) list.push(create.errorSlugTaken);
+    return list;
+  }, [
+    step,
+    step1Result.errors,
+    step2Result.errors,
+    slotResult,
+    form.slots,
+    slugTaken,
+    create,
+    language,
+  ]);
 
   return (
     <TheLineLayout title={create.pageTitle} active="events" noindex>
@@ -328,9 +438,30 @@ export default function CreateSocialEvent() {
               />
             )}
 
+            {/* 2026-05-22 — missing-fields panel. Renders when the
+                current step's submit button would be disabled by a
+                validation error. Helps the organizer spot what to
+                fix without scrolling the long form. */}
+            {((step === 1 && step1Disabled) ||
+              (step === 2 && submitDisabled && !submitting)) &&
+              missingFields.length > 0 && (
+                <div className="mt-6 rounded-md border-2 border-amber-400/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                  <p className="font-semibold">
+                    {language === "vi"
+                      ? "⚠️ Vui lòng kiểm tra các mục sau:"
+                      : "⚠️ Please review the following:"}
+                  </p>
+                  <ul className="mt-1.5 list-disc pl-5 space-y-0.5">
+                    {missingFields.map((msg, i) => (
+                      <li key={i}>{msg}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
             {/* Footer button bar. Sticky-ish via mt-8; full-width on
                 mobile, right-aligned on sm+. */}
-            <div className="mt-8 flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+            <div className="mt-4 flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-end">
               {/* Footer buttons. TheLine vibrant-green pill for the
                   primary CTA (Next on step 1, Publish on step 2). Back
                   + Save-draft are neutral inline / outline pills so the

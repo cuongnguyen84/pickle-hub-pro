@@ -13,6 +13,7 @@ import { useFeedNews, type FeedNewsItem } from "@/hooks/social/useFeedNews";
 import { useFeedTab } from "@/hooks/social/useFeedTab";
 import { useFeedViewedTracking } from "@/hooks/social/useFeedViewedTracking";
 import { FeedMatchCard } from "@/components/social/feed/FeedMatchCard";
+import { FeedMlpMatchCard } from "@/components/social/feed/FeedMlpMatchCard";
 import { FeedBlogCard } from "@/components/social/feed/FeedBlogCard";
 import { FeedVideoCard } from "@/components/social/feed/FeedVideoCard";
 import { FeedNewsCard } from "@/components/social/feed/FeedNewsCard";
@@ -318,14 +319,27 @@ const Feed = () => {
           ) : (
             <>
               {tab === "following"
-                ? followingMatches.map((match, i) => (
-                    <FeedMatchCard
-                      key={match.match_id}
-                      match={match}
-                      language={language}
-                      staggerIndex={i}
-                    />
-                  ))
+                ? followingMatches.map((match, i) =>
+                    // Codex P1 fix: FeedMlpMatchCard returns null when notes
+                    // can't be parsed, which silently drops the row. Fall back
+                    // to the generic card so the match still renders. Also
+                    // guard against the Following RPC not yet returning notes.
+                    match.source_provider === "mlp" && match.notes ? (
+                      <FeedMlpMatchCard
+                        key={match.match_id}
+                        match={match}
+                        language={language}
+                        staggerIndex={i}
+                      />
+                    ) : (
+                      <FeedMatchCard
+                        key={match.match_id}
+                        match={match}
+                        language={language}
+                        staggerIndex={i}
+                      />
+                    )
+                  )
                 : timelineItems.map((item, i) => (
                     <div
                       key={`${item.type}:${item.cursor_id}`}
@@ -403,6 +417,18 @@ function TimelineRow({
     );
   }
   if (item.type === "match") {
+    // Codex P1 fix: only route to MLP card when notes are present + parseable.
+    // FeedMlpMatchCard returns null on invalid notes, which would silently
+    // drop the row from the feed. Guard at the dispatch site instead.
+    if (item.source_provider === "mlp" && item.notes) {
+      return (
+        <FeedMlpMatchCard
+          match={item}
+          language={language}
+          staggerIndex={staggerIndex}
+        />
+      );
+    }
     return (
       <FeedMatchCard
         match={item}

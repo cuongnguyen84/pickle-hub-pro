@@ -6,9 +6,11 @@
  * of the sitemap once start_at < now - 30 days to keep the file size
  * bounded.
  *
- * Hreflang: single canonical URL serves both VI and EN (SPA toggles via
- * useI18n context), so en/vi/x-default all point at the same /social/*
- * or /clb/* path. Matches the convention from sitemap-players.xml.
+ * Hreflang: as of 2026-05-20, /social/{slug} now ships split EN/VI
+ * canonicals (/social/{slug} EN, /vi/social/{slug} VI) so the
+ * hreflang block here mirrors that split. /clb/{slug} remains single-
+ * canonical (no VI mirror route yet) and keeps its all-pointing-to-same
+ * pattern from PR (2026-05-18 Ahrefs Site Audit fix).
  */
 
 import { createSupabaseClient } from "./_lib/supabase";
@@ -75,19 +77,31 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const eventEntries = ((eventsRes.data ?? []) as EventRow[])
       .filter((e) => e.slug && URL_SAFE_SLUG_RE.test(e.slug))
-      .map((e) => {
-        const loc = `${siteUrl}/social/${e.slug}`;
-        return buildUrlEntry({
-          loc,
-          lastmod: toLastmod(e.updated_at, TODAY),
-          changefreq: "daily",
-          priority: "0.8",
-          hreflang: [
-            { lang: "en", href: loc },
-            { lang: "vi", href: loc },
-            { lang: "x-default", href: loc },
-          ],
-        });
+      .flatMap((e) => {
+        const enLoc = `${siteUrl}/social/${e.slug}`;
+        const viLoc = `${siteUrl}/vi/social/${e.slug}`;
+        const lastmod = toLastmod(e.updated_at, TODAY);
+        const hreflang = [
+          { lang: "en", href: enLoc },
+          { lang: "vi", href: viLoc },
+          { lang: "x-default", href: enLoc },
+        ];
+        return [
+          buildUrlEntry({
+            loc: enLoc,
+            lastmod,
+            changefreq: "daily",
+            priority: "0.8",
+            hreflang,
+          }),
+          buildUrlEntry({
+            loc: viLoc,
+            lastmod,
+            changefreq: "daily",
+            priority: "0.8",
+            hreflang,
+          }),
+        ];
       });
 
     const clubEntries = ((clubsRes.data ?? []) as ClubRow[])

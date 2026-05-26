@@ -26,7 +26,12 @@ const Login = () => {
   const { user, loading: authLoading, signIn, signUp } = useAuth();
   // Sprint 3 Phase 3A: post-auth redirect respects onboarding state.
   const { profile, isLoading: profileLoading } = useUserProfile();
-  const [isLogin, setIsLogin] = useState(true);
+  // 2026-05-20 — read ?mode=signup from URL so the new mobile-header
+  // "Đăng ký" pill lands directly on the signup tab instead of forcing
+  // the user to flip the toggle. Default remains login.
+  const [isLogin, setIsLogin] = useState(
+    () => searchParams.get("mode") !== "signup",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

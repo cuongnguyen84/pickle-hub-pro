@@ -16,6 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { LiveBroadcastHero } from "@/components/home/LiveBroadcastHero";
+import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
 import { useTickerData } from "@/hooks/useTickerData";
 
 /**
@@ -497,6 +498,12 @@ const Index = () => {
       </section>
         );
       })()}
+
+      {/* Log Match call-to-action — primary action for authed users.
+          Component guards internally on useAuth + useDuprConnection, so
+          it renders nothing for anonymous visitors and adapts copy
+          based on whether DUPR is connected yet. */}
+      <HomeLogMatchCTA />
 
       {/* Live pulse strip — chips that tell what's happening RIGHT NOW.
           Live count chip pulses red when active; data signals follow. */}

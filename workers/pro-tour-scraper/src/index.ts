@@ -51,7 +51,23 @@ import {
   parseTournamentHtml,
   PRO_TOUR_HOST_PATTERN,
 } from "@/lib/pro-tour/adapters/rsc-scraper";
+import {
+  parseMlpEventHtml,
+  parseMlpFromBracketsPools,
+  extractBracketsIframeUrl,
+  extractPoolIds,
+  bracketsPoolUrl,
+  extractTournamentName,
+  MLP_EVENT_HOST_PATTERN,
+} from "@/lib/pro-tour/adapters/mlp-event-scraper";
 import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
+
+/** Combined URL acceptance regex — admin UI / /scrape gatekeeper.
+ *  Each adapter's own pattern stays the source of truth for that
+ *  adapter's dispatch; this union is just for the up-front URL check. */
+function isSupportedTournamentUrl(url: string): boolean {
+  return PRO_TOUR_HOST_PATTERN.test(url) || MLP_EVENT_HOST_PATTERN.test(url);
+}
 
 // ─── Browser Rendering REST API budgets ───────────────────────────────────
 //
@@ -70,7 +86,9 @@ import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
 // upstream fetch if it hangs.
 const PAGE_GOTO_TIMEOUT_MS = 60_000;
 const RSC_SETTLE_TIMEOUT_MS = 5_000;
-const RENDER_FETCH_TIMEOUT_MS = 90_000;
+// MLP path needs: 60s goto cap + 25s dwell + addScriptTag scroll/click time.
+// Pad the outer fetch ceiling so we don't abort mid-wait.
+const RENDER_FETCH_TIMEOUT_MS = 130_000;
 
 interface Env {
   /** Legacy Browser Rendering binding from the puppeteer-based
@@ -93,6 +111,11 @@ interface ScrapeRequestBody {
   triggered_by: "manual" | "scheduled";
   user_id?: string;
   watchlist_id?: string;
+  /** Optional pre-created pro_tour_ingestion_logs row id. When supplied,
+   *  Worker resolves to this row (instead of inserting a new log) and
+   *  also writes a 'failed' update directly on render failure so the
+   *  admin Logs tab always shows the outcome. */
+  log_id?: string;
 }
 
 interface ScrapeResult {
@@ -125,9 +148,14 @@ export default {
       return jsonResponse({ ok: false, error: "Invalid JSON" }, 400);
     }
 
-    if (!PRO_TOUR_HOST_PATTERN.test(body.tournament_url)) {
+    if (!isSupportedTournamentUrl(body.tournament_url)) {
       return jsonResponse(
-        { ok: false, error: "URL not supported by rsc_scraper adapter" },
+        {
+          ok: false,
+          error:
+            "URL not supported. Accepted: brackets.pickleballtournaments.com (PPA / APP) " +
+            "or majorleaguepickleball.co/events-<year>/<slug>/ (MLP).",
+        },
         422,
       );
     }
@@ -183,14 +211,57 @@ async function runScrape(
   const startMs = Date.now();
   let parsed: TournamentScrapeResult;
   try {
-    const html = await renderWithBrowserRendering(env, body.tournament_url);
-    parsed = parseTournamentHtml(html, body.tournament_url);
+    if (MLP_EVENT_HOST_PATTERN.test(body.tournament_url)) {
+      // MLP path: scrape data straight from the underlying brackets API
+      // (the iframe source of truth) — no Browser Rendering needed
+      // because brackets.pickleballteamleagues.com serves complete RSC
+      // chunks with team metadata + matchup scores + player lineups on
+      // a raw GET. Earlier Browser Rendering attempts failed because the
+      // MLP page's React island couldn't be coerced to mount in CF's
+      // headless context. See file header comment on mlp-event-scraper.ts.
+      parsed = await scrapeMlpViaBrackets(body.tournament_url);
+    } else {
+      const html = await renderWithBrowserRendering(env, body.tournament_url);
+      parsed = parseTournamentHtml(html, body.tournament_url);
+    }
+
+    // Generic empty-result safeguard: if the parser returns zero matches,
+    // surface it as a failed log so the admin doesn't see a confusing
+    // "success / 0 trận". Matches the previous MLP diagnostic but is now
+    // adapter-agnostic since MLP path doesn't go through Browser
+    // Rendering and the only failure modes left are network/parse.
+    if (parsed.matches.length === 0 && body.log_id) {
+      const msg =
+        `Scrape returned 0 matchups for ${body.tournament_url}. ` +
+        `Most likely cause: source page structure changed or the underlying ` +
+        `bracket API returned an empty payload. Re-run later or check the ` +
+        `tournament URL in a browser.`;
+      await markLogFailed(env, body.log_id, msg, Date.now() - startMs).catch(
+        (e) => console.error(`[runScrape] empty-result markLogFailed: ${e}`),
+      );
+      return {
+        ok: false,
+        matches_extracted: 0,
+        players_extracted: 0,
+        error: msg,
+      };
+    }
   } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    // When the trigger function pre-created a log row, update it directly
+    // so the admin Logs tab shows the failure. Without this, render
+    // failures left the row stuck on 'running' indefinitely because the
+    // ingest function is only called on the success path.
+    if (body.log_id) {
+      await markLogFailed(env, body.log_id, errMsg, Date.now() - startMs).catch(
+        (e) => console.error(`[runScrape] markLogFailed: ${e}`),
+      );
+    }
     return {
       ok: false,
       matches_extracted: 0,
       players_extracted: 0,
-      error: err instanceof Error ? err.message : String(err),
+      error: errMsg,
     };
   }
 
@@ -209,15 +280,22 @@ async function runScrape(
       triggered_by_user_id: body.user_id ?? null,
       watchlist_id: body.watchlist_id ?? null,
       duration_ms: Date.now() - startMs,
+      log_id: body.log_id ?? null,
     }),
   });
 
   if (!ingestRes.ok) {
+    const errMsg = `Ingest failed: ${ingestRes.status} ${await ingestRes.text()}`;
+    if (body.log_id) {
+      await markLogFailed(env, body.log_id, errMsg, Date.now() - startMs).catch(
+        (e) => console.error(`[runScrape] markLogFailed: ${e}`),
+      );
+    }
     return {
       ok: false,
       matches_extracted: parsed.matches.length,
       players_extracted: parsed.players.length,
-      error: `Ingest failed: ${ingestRes.status} ${await ingestRes.text()}`,
+      error: errMsg,
     };
   }
 
@@ -231,6 +309,68 @@ async function runScrape(
     matches_extracted: parsed.matches.length,
     players_extracted: parsed.players.length,
   };
+}
+
+/* ─── MLP brackets-direct fetcher (no Browser Rendering) ─────────────── */
+
+/**
+ * Orchestrate the MLP scrape by:
+ *   1. Raw-fetching the MLP event page to discover the brackets iframe URL.
+ *   2. Raw-fetching the brackets overview to extract pool IDs.
+ *   3. Raw-fetching each pool URL and handing the HTML to the parser.
+ *
+ * All fetches are plain HTTP GET — no Browser Rendering because the
+ * brackets app is a Next.js SSR app that ships the full matchup payload
+ * in the initial HTML (RSC chunks). This is ~3-5s end-to-end vs ~30s for
+ * the Browser-Rendering MLP attempt that kept timing out on lazy mount.
+ */
+async function scrapeMlpViaBrackets(
+  mlpEventUrl: string,
+): Promise<TournamentScrapeResult> {
+  const ua =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+    "(KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+
+  const mlpRes = await fetch(mlpEventUrl, { headers: { "User-Agent": ua } });
+  if (!mlpRes.ok) {
+    throw new Error(`MLP page fetch failed: HTTP ${mlpRes.status}`);
+  }
+  const mlpHtml = await mlpRes.text();
+
+  const overviewUrl = extractBracketsIframeUrl(mlpHtml);
+  if (!overviewUrl) {
+    throw new Error(
+      "MLP scrape: brackets iframe not found in event page HTML",
+    );
+  }
+
+  const tournamentName = extractTournamentName(mlpHtml);
+
+  const overviewRes = await fetch(overviewUrl, { headers: { "User-Agent": ua } });
+  if (!overviewRes.ok) {
+    throw new Error(`Brackets overview fetch failed: HTTP ${overviewRes.status}`);
+  }
+  const overviewHtml = await overviewRes.text();
+
+  const poolIds = extractPoolIds(overviewHtml);
+  if (poolIds.length === 0) {
+    throw new Error("MLP scrape: no pool IDs found in brackets overview");
+  }
+
+  const poolHtmls: string[] = [];
+  for (const poolId of poolIds) {
+    const url = bracketsPoolUrl(overviewUrl, poolId);
+    const r = await fetch(url, { headers: { "User-Agent": ua } });
+    if (!r.ok) {
+      // One pool failing shouldn't kill the whole scrape; skip + continue
+      // so the other pool's matchups still ingest.
+      console.error(`Pool fetch failed (${url}): HTTP ${r.status}`);
+      continue;
+    }
+    poolHtmls.push(await r.text());
+  }
+
+  return parseMlpFromBracketsPools(poolHtmls, mlpEventUrl, tournamentName);
 }
 
 /* ─── Browser Rendering REST API ─────────────────────────────────────── */
@@ -287,17 +427,34 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
 
   const apiUrl = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/browser-rendering/content`;
 
+  // Browser Rendering REST /content endpoint does NOT accept an `actions`
+  // field (verified 2026-05: returns 400 "unrecognized_keys ['actions']").
+  // That means we can't drive the MLP day-navigation arrows server-side.
+  //
+  // MLP day-coverage strategy for MVP:
+  //   The MLP event page's React island defaults to the current GMT+7
+  //   day on each load. The cron Worker runs every 6h, so over a
+  //   regular-season week the default day rotates through each
+  //   tournament day and the per-day matchups get ingested incrementally.
+  //   Admins can also manually click "Scrape now" to force an early
+  //   capture of the current day. Earlier (already-archived) days that
+  //   the page no longer defaults to require either:
+  //     a) Switching to a different Cloudflare endpoint that supports
+  //        page interactions (e.g. the Browser Rendering puppeteer
+  //        Workers binding — has its own timeout issues, see file
+  //        header comment), or
+  //     b) MLP exposing a date query param on the URL (not currently).
+  //   Tracking (a)/(b) as a Sprint 8 follow-up.
+  //
   // Body shape per Cloudflare API docs (2026-05):
-  //   url             — the bracket page to render
-  //   gotoOptions     — Puppeteer page.goto() options. waitUntil:
-  //                     "domcontentloaded" (instead of networkidle*)
-  //                     because the RSC chunks land in the page string
-  //                     during DOM construction — waiting for full
-  //                     network idle blocks on tracking pixels that
-  //                     never settle.
-  //   waitForTimeout  — extra dwell after navigation so any deferred
-  //                     RSC chunk hydration finishes streaming.
-  const requestBody = {
+  //   url             — the page to render
+  //   gotoOptions     — Puppeteer page.goto() options
+  //   waitForTimeout  — dwell time after navigation for client-side
+  //                     hydration to flush into the DOM
+  // MLP path no longer goes through Browser Rendering (raw fetch suffices —
+  // see scrapeMlpViaBrackets). This call is now PPA-only, so the request
+  // body keeps the original lean shape.
+  const requestBody: Record<string, unknown> = {
     url,
     gotoOptions: {
       waitUntil: "domcontentloaded" as const,
@@ -305,6 +462,10 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
     },
     waitForTimeout: RSC_SETTLE_TIMEOUT_MS,
   };
+  // (Historical: PR #168-#169 added MLP-specific viewport + addScriptTag
+  // here. Removed when we discovered the MLP schedule lives in an iframe
+  // and switched to direct brackets-API scraping — see scrapeMlpViaBrackets
+  // and mlp-event-scraper.ts header for the post-mortem.)
 
   // AbortController guards against the upstream fetch hanging beyond
   // our outer ceiling — independent of CF's own internal timeouts.
@@ -377,11 +538,26 @@ interface WatchlistRow {
 }
 
 async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
+  // Match active rows where:
+  //   (a) next_scrape_at is in the past, OR
+  //   (b) next_scrape_at IS NULL AND scrape_frequency is daily/weekly.
+  //
+  // Why (b) is gated by frequency (Codex P1 fix on PR #166): the original
+  // PR #160 fix `or=(next_scrape_at.is.null, lte)` swept in MANUAL and
+  // ON_EVENT_END rows too. nextScrapeAt() intentionally NULLs their
+  // next_scrape_at after a run so cron leaves them alone until an admin
+  // re-triggers. Without the frequency gate, those rows became eligible
+  // every 6h tick and got auto-scraped repeatedly.
+  //
+  // PostgREST syntax: nested `and(...)` inside `or(...)`:
+  //   or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),
+  //       next_scrape_at.lte.<now>)
+  const nowIso = new Date().toISOString();
   const url =
     `${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist` +
     `?select=id,tournament_url,scrape_frequency` +
     `&status=eq.active` +
-    `&next_scrape_at=lte.${new Date().toISOString()}`;
+    `&or=(and(next_scrape_at.is.null,scrape_frequency.in.(daily,weekly)),next_scrape_at.lte.${nowIso})`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -423,6 +599,43 @@ async function updateWatchlistAfterScrape(
       next_scrape_at: next,
     }),
   });
+}
+
+/**
+ * Update an existing pro_tour_ingestion_logs row to status='failed'.
+ * Called from runScrape when render or ingest fails AND the trigger
+ * function pre-created a log row. Without this, render failures would
+ * leave the row stuck on 'running' indefinitely.
+ */
+async function markLogFailed(
+  env: Env,
+  logId: string,
+  errorMessage: string,
+  durationMs: number,
+): Promise<void> {
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/pro_tour_ingestion_logs?id=eq.${logId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        status: "failed",
+        error_message: errorMessage.slice(0, 4000),
+        duration_ms: durationMs,
+        completed_at: new Date().toISOString(),
+      }),
+    },
+  );
+  if (!res.ok) {
+    console.error(
+      `markLogFailed PATCH ${logId} failed: ${res.status} ${(await res.text()).slice(0, 300)}`,
+    );
+  }
 }
 
 /* ─── Helpers ───────────────────────────────────────────────────────── */

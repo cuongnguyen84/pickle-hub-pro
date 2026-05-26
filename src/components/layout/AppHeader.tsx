@@ -74,6 +74,32 @@ const AppHeader = () => {
             <span className="hidden sm:inline">{t.common.appName}</span>
           </Link>
 
+          {/* 2026-05-20 — Mobile-only login + signup pills for anonymous users.
+              Previously the only way for a signed-out mobile visitor to reach
+              the auth page was via the hamburger menu, which made signup
+              friction high (homepage screenshot showed zero visible CTA).
+              Sits between the logo and the right-side actions so it's
+              obvious without crowding the toggles. Desktop already has a
+              login button further right, so we hide these on md+. */}
+          {!user && (
+            <div className="flex md:hidden items-center gap-1.5 ml-2">
+              <Link
+                to={getLoginUrl(location.pathname + location.search)}
+                className="px-3 py-1.5 rounded-full text-xs font-medium border border-border-subtle text-foreground-secondary hover:text-foreground hover:bg-muted transition-colors duration-200"
+                aria-label={t.nav.login}
+              >
+                {t.nav.login}
+              </Link>
+              <Link
+                to={getLoginUrl(location.pathname + location.search, { mode: "signup" })}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200"
+                aria-label={t.nav.signup}
+              >
+                {t.nav.signup}
+              </Link>
+            </div>
+          )}
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {

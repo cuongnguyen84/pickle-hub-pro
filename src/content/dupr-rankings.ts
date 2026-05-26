@@ -1,5 +1,5 @@
 /**
- * DUPR rankings snapshot — parsed from www.dupr.com on 2026-05-18.
+ * DUPR rankings snapshot — parsed from www.dupr.com on 2026-05-25.
  *
  * Source pages:
  *   - https://www.dupr.com/rankings (Open + Junior)
@@ -104,7 +104,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rank": 12,
         "name": "Nicolas Acevedo",
         "age": 26,
-        "rating": 6.619
+        "rating": 6.62
       },
       {
         "rank": 13,
@@ -260,33 +260,33 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 13,
-        "name": "Mariechristine Salvas",
-        "age": 38,
-        "rating": 6.076
-      },
-      {
-        "rank": 14,
         "name": "Megan Fudge",
         "age": 38,
         "rating": 6.064
       },
       {
-        "rank": 15,
+        "rank": 14,
         "name": "Vivian Glozman",
         "age": 26,
         "rating": 6.056
       },
       {
-        "rank": 16,
+        "rank": 15,
         "name": "Roos Van Reek",
         "age": 25,
         "rating": 6.042
       },
       {
-        "rank": 17,
+        "rank": 16,
         "name": "Kate Fahey",
         "age": 29,
         "rating": 6.038
+      },
+      {
+        "rank": 17,
+        "name": "Mariechristine Salvas",
+        "age": 38,
+        "rating": 6.009
       },
       {
         "rank": 18,
@@ -418,15 +418,15 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 14,
-        "name": "Tama Shimabukuro",
-        "age": 15,
-        "rating": 6.319
-      },
-      {
-        "rank": 15,
         "name": "JW Johnson",
         "age": 24,
         "rating": 6.31
+      },
+      {
+        "rank": 15,
+        "name": "Tama Shimabukuro",
+        "age": 15,
+        "rating": 6.295
       },
       {
         "rank": 16,
@@ -529,7 +529,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       {
         "rank": 7,
         "name": "Seone Mendez",
-        "age": 26,
+        "age": 27,
         "rating": 5.875
       },
       {
@@ -576,21 +576,21 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 15,
-        "name": "Chao Yi Wang",
-        "age": 24,
-        "rating": 5.7
-      },
-      {
-        "rank": 16,
         "name": "Mary Brascia",
         "age": 26,
         "rating": 5.684
       },
       {
-        "rank": 17,
+        "rank": 16,
         "name": "Andie Dikosavljevic",
         "age": 30,
         "rating": 5.676
+      },
+      {
+        "rank": 17,
+        "name": "Chao Yi Wang",
+        "age": 24,
+        "rating": 5.669
       },
       {
         "rank": 18,
@@ -618,27 +618,27 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 22,
-        "name": "Yufei Long",
-        "age": 27,
-        "rating": 5.638
-      },
-      {
-        "rank": 23,
         "name": "Isabella Dunlap",
         "age": 26,
         "rating": 5.636
       },
       {
-        "rank": 24,
+        "rank": 23,
         "name": "Jorja Johnson",
         "age": 19,
         "rating": 5.62
       },
       {
-        "rank": 25,
+        "rank": 24,
         "name": "Kao Pei Chuan",
         "age": 31,
-        "rating": 5.619
+        "rating": 5.615
+      },
+      {
+        "rank": 25,
+        "name": "Yu-Chieh Hsieh",
+        "age": 32,
+        "rating": 5.57
       }
     ]
   },
@@ -654,7 +654,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rank": 2,
         "name": "Tama Shimabukuro",
         "age": 15,
-        "rating": 6.106
+        "rating": 6.094
       },
       {
         "rank": 3,
@@ -678,13 +678,13 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rank": 6,
         "name": "Jace Morris",
         "age": 17,
-        "rating": 5.868
+        "rating": 5.837
       },
       {
         "rank": 7,
         "name": "Mateusz Matysik",
         "age": 18,
-        "rating": 5.752
+        "rating": 5.766
       },
       {
         "rank": 8,
@@ -694,63 +694,63 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 9,
-        "name": "Mauro Garcia Sanchez",
-        "age": 18,
-        "rating": 5.694
+        "name": "Arwid Dahlin",
+        "age": 17,
+        "rating": 5.695
       },
       {
         "rank": 10,
+        "name": "Mauro Garcia Sanchez",
+        "age": 18,
+        "rating": 5.689
+      },
+      {
+        "rank": 11,
+        "name": "Karthik Ganesh",
+        "age": 18,
+        "rating": 5.657
+      },
+      {
+        "rank": 12,
         "name": "Parth Mody",
         "age": 17,
         "rating": 5.648
       },
       {
-        "rank": 11,
+        "rank": 13,
         "name": "Andre Mercado",
         "age": 16,
         "rating": 5.633
       },
       {
-        "rank": 12,
+        "rank": 14,
         "name": "George Rangelov",
         "age": 18,
         "rating": 5.623
       },
       {
-        "rank": 13,
-        "name": "Karthik Ganesh",
-        "age": 18,
-        "rating": 5.607
-      },
-      {
-        "rank": 14,
+        "rank": 15,
         "name": "Jace Howard",
         "age": 17,
         "rating": 5.597
       },
       {
-        "rank": 15,
+        "rank": 16,
         "name": "Dale Kim",
         "age": 18,
         "rating": 5.581
       },
       {
-        "rank": 16,
+        "rank": 17,
         "name": "Braden Jacobson",
         "age": 16,
         "rating": 5.566
       },
       {
-        "rank": 17,
+        "rank": 18,
         "name": "Aj Marrero",
         "age": 17,
         "rating": 5.556
-      },
-      {
-        "rank": 18,
-        "name": "Arwid Dahlin",
-        "age": 17,
-        "rating": 5.555
       },
       {
         "rank": 19,
@@ -780,7 +780,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rank": 23,
         "name": "Ethan Bakalinsky",
         "age": 15,
-        "rating": 5.529
+        "rating": 5.526
       },
       {
         "rank": 24,
@@ -805,7 +805,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       {
         "rank": 2,
         "name": "Cailyn Campbell",
-        "age": 15,
+        "age": 16,
         "rating": 5.583
       },
       {
@@ -854,7 +854,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rank": 10,
         "name": "Valerie Simon",
         "age": 18,
-        "rating": 5.251
+        "rating": 5.304
       },
       {
         "rank": 11,
@@ -870,45 +870,45 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 13,
-        "name": "Sophia Tran Phuong Anh",
-        "age": 18,
-        "rating": 5.179
+        "name": "Kei Sawaki",
+        "age": 15,
+        "rating": 5.174
       },
       {
         "rank": 14,
-        "name": "Kei Sawaki",
-        "age": 15,
-        "rating": 5.165
-      },
-      {
-        "rank": 15,
         "name": "Mary McGowan",
         "age": 17,
         "rating": 5.16
       },
       {
-        "rank": 16,
+        "rank": 15,
         "name": "Jade Rau",
         "age": 16,
         "rating": 5.158
       },
       {
-        "rank": 17,
+        "rank": 16,
         "name": "Kelly Goodnow",
         "age": 14,
         "rating": 5.154
       },
       {
-        "rank": 18,
+        "rank": 17,
         "name": "Kayla Williams",
         "age": 15,
         "rating": 5.154
       },
       {
-        "rank": 19,
+        "rank": 18,
         "name": "Jayda Maldonado",
         "age": 16,
-        "rating": 5.118
+        "rating": 5.141
+      },
+      {
+        "rank": 19,
+        "name": "Sophia Tran Phuong Anh",
+        "age": 18,
+        "rating": 5.138
       },
       {
         "rank": 20,
@@ -918,27 +918,27 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 21,
+        "name": "Victoria A Simon",
+        "age": 16,
+        "rating": 5.071
+      },
+      {
+        "rank": 22,
         "name": "Naomi Amalsadiwala",
         "age": 16,
         "rating": 5.06
       },
       {
-        "rank": 22,
+        "rank": 23,
         "name": "Ella Cosma",
         "age": 17,
         "rating": 5.033
       },
       {
-        "rank": 23,
+        "rank": 24,
         "name": "Agnimitra Bhavatosh Bhattacharya",
         "age": 18,
-        "rating": 5.02
-      },
-      {
-        "rank": 24,
-        "name": "Victoria A Simon",
-        "age": 16,
-        "rating": 5.004
+        "rating": 5.021
       },
       {
         "rank": 25,
@@ -958,7 +958,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rank": 2,
         "name": "Tama Shimabukuro",
         "age": 15,
-        "rating": 6.319
+        "rating": 6.295
       },
       {
         "rank": 3,
@@ -982,7 +982,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
         "rank": 6,
         "name": "Jace Morris",
         "age": 17,
-        "rating": 5.802
+        "rating": 5.783
       },
       {
         "rank": 7,
@@ -1022,39 +1022,39 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 13,
+        "name": "Mateusz Matysik",
+        "age": 18,
+        "rating": 5.502
+      },
+      {
+        "rank": 14,
+        "name": "Mauro Garcia Sanchez",
+        "age": 18,
+        "rating": 5.5
+      },
+      {
+        "rank": 15,
         "name": "Braden Jacobson",
         "age": 16,
         "rating": 5.494
       },
       {
-        "rank": 14,
-        "name": "Mateusz Matysik",
-        "age": 18,
-        "rating": 5.48
-      },
-      {
-        "rank": 15,
-        "name": "Mauro Garcia Sanchez",
-        "age": 18,
-        "rating": 5.419
-      },
-      {
         "rank": 16,
+        "name": "Wil Shaffer",
+        "age": 17,
+        "rating": 5.433
+      },
+      {
+        "rank": 17,
         "name": "Daniel Phillips",
         "age": 16,
         "rating": 5.391
       },
       {
-        "rank": 17,
+        "rank": 18,
         "name": "Le Xuan Duc",
         "age": 18,
         "rating": 5.363
-      },
-      {
-        "rank": 18,
-        "name": "Wil Shaffer",
-        "age": 17,
-        "rating": 5.361
       },
       {
         "rank": 19,
@@ -1064,21 +1064,21 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 20,
+        "name": "Hector Sanchez Vidal",
+        "age": 17,
+        "rating": 5.345
+      },
+      {
+        "rank": 21,
         "name": "Mackonner Dy",
         "age": 16,
         "rating": 5.33
       },
       {
-        "rank": 21,
+        "rank": 22,
         "name": "Arjun Singh",
         "age": 16,
         "rating": 5.328
-      },
-      {
-        "rank": 22,
-        "name": "Hector Sanchez Vidal",
-        "age": 17,
-        "rating": 5.3
       },
       {
         "rank": 23,
@@ -1088,15 +1088,15 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 24,
-        "name": "Purvansh Patel",
-        "age": 16,
-        "rating": 5.263
+        "name": "Arwid Dahlin",
+        "age": 17,
+        "rating": 5.276
       },
       {
         "rank": 25,
-        "name": "Jace Howard",
-        "age": 17,
-        "rating": 5.242
+        "name": "Purvansh Patel",
+        "age": 16,
+        "rating": 5.263
       }
     ],
     "womens-singles": [
@@ -1109,7 +1109,7 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       {
         "rank": 2,
         "name": "Cailyn Campbell",
-        "age": 15,
+        "age": 16,
         "rating": 5.481
       },
       {
@@ -1126,45 +1126,45 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 5,
+        "name": "Kei Sawaki",
+        "age": 15,
+        "rating": 5.138
+      },
+      {
+        "rank": 6,
         "name": "Emma Nelson",
         "age": 15,
         "rating": 5.128
       },
       {
-        "rank": 6,
+        "rank": 7,
         "name": "Jade Rau",
         "age": 16,
         "rating": 5.013
       },
       {
-        "rank": 7,
-        "name": "Valerie Simon",
-        "age": 18,
-        "rating": 4.941
-      },
-      {
         "rank": 8,
-        "name": "Adelie Osher",
-        "age": 17,
-        "rating": 4.94
+        "name": "Lynn Lim",
+        "age": 16,
+        "rating": 4.97
       },
       {
         "rank": 9,
         "name": "Sophia Tran Phuong Anh",
         "age": 18,
-        "rating": 4.92
+        "rating": 4.954
       },
       {
         "rank": 10,
-        "name": "Lynn Lim",
-        "age": 16,
-        "rating": 4.919
+        "name": "Valerie Simon",
+        "age": 18,
+        "rating": 4.941
       },
       {
         "rank": 11,
-        "name": "Kei Sawaki",
-        "age": 15,
-        "rating": 4.917
+        "name": "Adelie Osher",
+        "age": 17,
+        "rating": 4.94
       },
       {
         "rank": 12,
@@ -1210,21 +1210,21 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 19,
-        "name": "Aria Henare",
-        "age": 16,
-        "rating": 4.685
-      },
-      {
-        "rank": 20,
         "name": "Jing Robinson",
         "age": 14,
         "rating": 4.666
       },
       {
-        "rank": 21,
+        "rank": 20,
         "name": "Veera Selanne",
         "age": 18,
         "rating": 4.637
+      },
+      {
+        "rank": 21,
+        "name": "Aria Henare",
+        "age": 16,
+        "rating": 4.629
       },
       {
         "rank": 22,
@@ -1234,21 +1234,21 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
       },
       {
         "rank": 23,
+        "name": "Aleisha Horridge",
+        "age": 18,
+        "rating": 4.591
+      },
+      {
+        "rank": 24,
         "name": "Eliana Ling",
         "age": 17,
         "rating": 4.546
       },
       {
-        "rank": 24,
+        "rank": 25,
         "name": "Diane Huynh",
         "age": 14,
         "rating": 4.522
-      },
-      {
-        "rank": 25,
-        "name": "Natalia Simson",
-        "age": 13,
-        "rating": 4.517
       }
     ]
   },
@@ -4244,4 +4244,4 @@ export const DUPR_FORMATS: { key: DuprFormat; labelEn: string; labelVi: string }
   { key: "womens-doubles", labelEn: "Women's Doubles", labelVi: "Đôi nữ" },
 ];
 
-export const DUPR_LAST_UPDATED = "2026-05-18";
+export const DUPR_LAST_UPDATED = "2026-05-25";

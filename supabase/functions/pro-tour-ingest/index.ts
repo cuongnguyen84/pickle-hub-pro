@@ -39,6 +39,11 @@ interface IngestRequestBody {
   triggered_by_user_id: string | null;
   watchlist_id: string | null;
   duration_ms: number;
+  /** Optional pre-created log row id (from pro-tour-trigger-scrape).
+   *  When supplied, ingest UPDATES this row instead of inserting a new
+   *  one — so the admin Logs tab shows a single row that starts
+   *  'running' and flips to 'success'/'failed' on completion. */
+  log_id?: string | null;
 }
 
 interface IngestResponse {
@@ -97,29 +102,35 @@ Deno.serve(async (req) => {
   const supabase = createClient(url, serviceKey);
   const startMs = Date.now();
 
-  // Open the log row in 'running' state so the admin UI sees the
-  // attempt mid-flight (esp. for scheduled batches that touch many
-  // tournaments). Final status flips below.
-  const { data: logRow, error: logErr } = await supabase
-    .from("pro_tour_ingestion_logs")
-    .insert({
-      source_provider: body.scrape_result.source_provider,
-      source_url: body.scrape_result.source_url,
-      triggered_by: body.triggered_by,
-      triggered_by_user_id: body.triggered_by_user_id,
-      watchlist_id: body.watchlist_id,
-      status: "running",
-    })
-    .select("id")
-    .single();
+  // If trigger function pre-created a log row (manual scrapes), reuse it
+  // so the admin UI sees a single row that flips from 'running' to
+  // 'success'/'failed'. Scheduled scrapes have no pre-row, so we insert
+  // here as before.
+  let log_id: string;
+  if (body.log_id) {
+    log_id = body.log_id;
+  } else {
+    const { data: logRow, error: logErr } = await supabase
+      .from("pro_tour_ingestion_logs")
+      .insert({
+        source_provider: body.scrape_result.source_provider,
+        source_url: body.scrape_result.source_url,
+        triggered_by: body.triggered_by,
+        triggered_by_user_id: body.triggered_by_user_id,
+        watchlist_id: body.watchlist_id,
+        status: "running",
+      })
+      .select("id")
+      .single();
 
-  if (logErr || !logRow) {
-    return jsonResponse(
-      { error: `Failed to open log: ${logErr?.message ?? "unknown"}` },
-      500,
-    );
+    if (logErr || !logRow) {
+      return jsonResponse(
+        { error: `Failed to open log: ${logErr?.message ?? "unknown"}` },
+        500,
+      );
+    }
+    log_id = logRow.id as string;
   }
-  const log_id = logRow.id as string;
 
   try {
     const { players_created, players_matched, externalIdToProfileId } =
@@ -200,12 +211,37 @@ async function reconcilePlayers(
   let players_matched = 0;
 
   for (const p of players) {
-    const hit = existingByExt.get(p.external_id);
+    let hit = existingByExt.get(p.external_id);
     if (hit) {
       out.set(p.external_id, hit);
       players_matched += 1;
       continue;
     }
+
+    // Codex P1 fix on PR #171: when a previous build used a different
+    // external_id convention for the SAME logical player (e.g. legacy
+    // 'mlp-columbus-sliders' vs current 'columbus-sliders'), the strict
+    // (source_provider, external_id) lookup misses and a fresh INSERT
+    // collides on the username UNIQUE constraint. Try the legacy
+    // convention before inserting — match by what the username WOULD be.
+    const computedUsername = p.external_id.startsWith(`${source_provider}-`)
+      ? p.external_id
+      : `${source_provider}-${p.external_id}`;
+    const { data: byUsername } = await supabase
+      .from("profiles")
+      .select("id, external_id")
+      .eq("source_provider", source_provider)
+      .eq("username", computedUsername)
+      .maybeSingle();
+    if (byUsername) {
+      const matchedId = byUsername.id as string;
+      out.set(p.external_id, matchedId);
+      // Cache so subsequent passes in the same ingest can reuse.
+      existingByExt.set(p.external_id, matchedId);
+      players_matched += 1;
+      continue;
+    }
+    void hit; // (referenced; lint-quiet)
     // Insert ghost. is_ghost=true so the profile doesn't appear in
     // suggested-follows / search by default; ingestion logs surface
     // creation count so admins can review.
@@ -225,7 +261,14 @@ async function reconcilePlayers(
         // idempotent (the partial unique on source_provider+external_id
         // catches the actual dedupe).
         email: `ghost+${source_provider}+${p.external_id}@thepicklehub.net`,
-        username: `ppa-${p.external_id}`,
+        // Username prefix follows the source provider so the @handle in the
+        // UI reads correctly across sources (mlp-, app-, ppa-). MLP team
+        // ghost profiles already include the "mlp-" prefix in their
+        // external_id (see mlp-event-scraper.ts), so detect that to avoid
+        // double-prefixing.
+        username: p.external_id.startsWith(`${source_provider}-`)
+          ? p.external_id
+          : `${source_provider}-${p.external_id}`,
         display_name: p.display_name,
         avatar_url: p.avatar_url,
         country_code: p.country_code,
@@ -346,9 +389,15 @@ async function insertMatchWithParticipants(
       source_url: match.source_url,
       external_match_id: match.external_match_id,
       tournament_name: scrape.tournament_name,
-      tournament_event: scrape.tournament_event,
+      // Adapters can override the per-match event label (e.g. MLP day-4
+      // playoff vs group play) without changing the scrape-level event.
+      tournament_event: match.tournament_event_override ?? scrape.tournament_event,
       round_name: match.round_name,
-      court_number: match.court,
+      court_number: match.court_number ?? match.court,
+      // Adapter-supplied notes JSON (MLP encodes team logos + per-game
+      // lineups here for FeedMlpMatchCard). Null/undefined for sources
+      // that don't need extra metadata.
+      notes: match.notes ?? null,
     })
     .select("id")
     .single();
