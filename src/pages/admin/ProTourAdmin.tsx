@@ -194,8 +194,8 @@ function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
         ok: false,
         error:
           language === "vi"
-            ? "URL không hợp lệ — phải khớp pattern brackets.pickleballtournaments.com/tournaments/.../events/.../elimination/..."
-            : "URL invalid — must match brackets.pickleballtournaments.com/tournaments/.../events/.../elimination/...",
+            ? "URL không hợp lệ. Chấp nhận:\n• brackets.pickleballtournaments.com/tournaments/<slug>/events/<id>/elimination/<id>\n• majorleaguepickleball.co/events-<năm>/<slug>/"
+            : "URL invalid. Accepted formats:\n• brackets.pickleballtournaments.com/tournaments/<slug>/events/<id>/elimination/<id>\n• majorleaguepickleball.co/events-<year>/<slug>/",
       });
       return;
     }
@@ -231,7 +231,11 @@ function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
         <Input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://brackets.pickleballtournaments.com/tournaments/.../events/.../elimination/..."
+          placeholder={
+            language === "vi"
+              ? "https://brackets.pickleballtournaments.com/... hoặc https://majorleaguepickleball.co/events-2026/..."
+              : "https://brackets.pickleballtournaments.com/... or https://majorleaguepickleball.co/events-2026/..."
+          }
           disabled={submitting}
         />
       </div>
@@ -371,11 +375,11 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
 
   const submit = async () => {
     setFormError(null);
-    if (!PRO_TOUR_HOST_PATTERN.test(form.tournament_url)) {
+    if (!isSupportedTournamentUrl(form.tournament_url)) {
       setFormError(
         language === "vi"
-          ? "URL không hợp lệ — phải khớp pattern PPA/APP/MLP bracket."
-          : "URL invalid — must match the PPA/APP/MLP bracket pattern.",
+          ? "URL không hợp lệ. Chấp nhận:\n• brackets.pickleballtournaments.com/tournaments/<slug>/events/<id>/elimination/<id>\n• majorleaguepickleball.co/events-<năm>/<slug>/"
+          : "URL invalid. Accepted formats:\n• brackets.pickleballtournaments.com/tournaments/<slug>/events/<id>/elimination/<id>\n• majorleaguepickleball.co/events-<year>/<slug>/",
       );
       return;
     }
@@ -517,9 +521,40 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-3 py-2">
+                {/* URL field first — primary input; users instinctively
+                    paste the URL first. Display name follows as a
+                    nice-to-have label (auto-derived from the scrape if
+                    left blank). Order swap fixes the user confusion
+                    where the URL kept ending up in the Display name
+                    box because that was the first input. */}
+                <div>
+                  <Label htmlFor="turl">
+                    {language === "vi" ? "URL giải đấu" : "Tournament URL"}
+                  </Label>
+                  <Textarea
+                    id="turl"
+                    rows={3}
+                    value={form.tournament_url}
+                    onChange={(e) =>
+                      setForm({ ...form, tournament_url: e.target.value })
+                    }
+                    placeholder={
+                      language === "vi"
+                        ? "Dán URL bracket PPA/APP, hoặc trang sự kiện MLP:\n• https://brackets.pickleballtournaments.com/tournaments/<slug>/events/.../elimination/...\n• https://majorleaguepickleball.co/events-2026/<event-slug>/"
+                        : "Paste a PPA/APP bracket URL, or an MLP event URL:\n• https://brackets.pickleballtournaments.com/tournaments/<slug>/events/.../elimination/...\n• https://majorleaguepickleball.co/events-2026/<event-slug>/"
+                    }
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {language === "vi"
+                      ? "Hỗ trợ: PPA Tour, APP Tour (brackets.pickleballtournaments.com) và MLP (majorleaguepickleball.co)."
+                      : "Supported: PPA Tour, APP Tour (brackets.pickleballtournaments.com) and MLP (majorleaguepickleball.co)."}
+                  </p>
+                </div>
                 <div>
                   <Label htmlFor="tname">
-                    {language === "vi" ? "Tên hiển thị" : "Display name"}
+                    {language === "vi"
+                      ? "Tên hiển thị (tuỳ chọn)"
+                      : "Display name (optional)"}
                   </Label>
                   <Input
                     id="tname"
@@ -527,21 +562,11 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
                     onChange={(e) =>
                       setForm({ ...form, tournament_name: e.target.value })
                     }
-                    placeholder="PPA Tour: 2026 PPA Finals"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="turl">
-                    {language === "vi" ? "URL bracket" : "Bracket URL"}
-                  </Label>
-                  <Textarea
-                    id="turl"
-                    rows={2}
-                    value={form.tournament_url}
-                    onChange={(e) =>
-                      setForm({ ...form, tournament_url: e.target.value })
+                    placeholder={
+                      language === "vi"
+                        ? "VD: MLP Dallas 2026 — bỏ trống để tự lấy từ trang"
+                        : "e.g. MLP Dallas 2026 — leave blank to auto-derive"
                     }
-                    placeholder="https://brackets.pickleballtournaments.com/tournaments/.../events/.../elimination/..."
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
