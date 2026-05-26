@@ -324,7 +324,11 @@ function extractMatchupsFromPool(poolHtml: string): ParsedMlpMatchup[] {
     const winner =
       teamOneScore > teamTwoScore ? "a" : teamTwoScore > teamOneScore ? "b" : null;
 
-    const games = parseGameSlices(currentGames);
+    // IMPORTANT: the wrapper slice itself contains the WD game's data
+    // (teamOnePlayerOneName + teamOneGameOneScore + playerGroupTitle:
+    // "Womens"). The remaining 4 game slices are MD, MXD1, MXD2, DB.
+    // Treat the wrapper as game[0] (WD) by prepending its slice.
+    const games = parseGameSlices([slice, ...currentGames]);
 
     // Skip empty matchups (no games + no scores).
     if (games.length === 0 && teamOneScore === 0 && teamTwoScore === 0) {
