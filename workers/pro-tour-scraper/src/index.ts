@@ -403,18 +403,32 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
     },
     // Settle window. MLP gets a longer dwell so any deferred article.sec
     // mount lands in the captured DOM.
-    waitForTimeout: isMlp ? 15_000 : RSC_SETTLE_TIMEOUT_MS,
+    waitForTimeout: isMlp ? 20_000 : RSC_SETTLE_TIMEOUT_MS,
   };
-  // Best-effort selector wait — Browser Rendering REST accepts
-  // `waitForSelector` for content readiness gating. We use a generous
-  // 18s ceiling so a slow React mount doesn't fail the render, then
-  // capture whatever DOM is present after waitForTimeout above. If the
-  // selector never matches (e.g. page structure changed), the capture
-  // still happens and the diagnostic emptiness check fires.
   if (isMlp) {
-    requestBody.waitForSelector = {
-      selector: "article.sec, .sec__match-details-table, .event-matches__matches",
-      timeout: 18_000,
+    // MLP's Schedule & Scores section is lazy-mounted via an intersection
+    // observer — the React island only fires when the section scrolls
+    // into view. Cloudflare Browser Rendering's default viewport is
+    // 1280×720, so the section sits below the fold and the observer
+    // never triggers. Result: capture returns the pre-mount DOM with
+    // zero article.sec containers (the original PR #167 bug).
+    //
+    // Fix: render in a 1920×8000 viewport so the entire page is in view
+    // from page load, which fires the observer immediately. waitForTimeout
+    // then gives the schedule XHR time to land and React to commit the
+    // matchup rows.
+    //
+    // We previously tried waitForSelector('article.sec, ...') here but
+    // CF Browser Rendering returns 422 when the selector doesn't appear
+    // within the ceiling — making render fail entirely instead of
+    // capturing what's available. Dropped in favour of the diagnostic
+    // emptiness check below: if articles still aren't there after the
+    // dwell, we surface a clear "render-incomplete" message instead of
+    // a hard render failure.
+    requestBody.viewport = {
+      width: 1920,
+      height: 8000,
+      deviceScaleFactor: 1,
     };
   }
 
