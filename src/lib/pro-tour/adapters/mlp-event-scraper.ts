@@ -173,31 +173,17 @@ const PLAYER_GROUP_TO_LABEL: Record<string, string> = {
   Dreambreaker: "DB",
 };
 
-function parseMatchesArray(slice: string): MlpMatchupGameLineup[] {
-  // Inside `\"matches\":[...]` find each match block. Match blocks start
-  // with `\"matchUuid\":\"<uuid>\"` — use that as the segmentation marker
-  // (cheaper than balanced-paren parsing on escaped JSON).
+/**
+ * Extract per-game lineups from an array of game-record slices.
+ * Each slice is one game (WD/MD/MXD1/MXD2/DB) — the brackets payload
+ * emits these as separate top-level wrappers, NOT as nested matches[]
+ * entries. See header comment on extractMatchupsFromPool for the
+ * flattened structure.
+ */
+function parseGameSlices(gameSlices: string[]): MlpMatchupGameLineup[] {
   const games: MlpMatchupGameLineup[] = [];
-  const matchesIdx = slice.indexOf('\\"matches\\":[');
-  if (matchesIdx < 0) return games;
 
-  // Bound the matches window so per-match parsing doesn't bleed into the
-  // next matchup. The pool payload puts another `\"teamOneUuid\"` shortly
-  // after the matches array closes.
-  const tail = slice.slice(matchesIdx);
-  const nextMatchupIdx = tail.indexOf('\\"teamOneUuid\\":', 1);
-  const matchesWindow = nextMatchupIdx > 0 ? tail.slice(0, nextMatchupIdx) : tail;
-
-  const matchMarkers: number[] = [];
-  const matchRe = /\\"matchUuid\\":\\"([a-f0-9-]+)\\"/g;
-  let mm: RegExpExecArray | null;
-  while ((mm = matchRe.exec(matchesWindow)) !== null) {
-    matchMarkers.push(mm.index);
-  }
-  matchMarkers.push(matchesWindow.length);
-
-  for (let i = 0; i < matchMarkers.length - 1; i++) {
-    const block = matchesWindow.slice(matchMarkers[i], matchMarkers[i + 1]);
+  for (const block of gameSlices) {
 
     // Determine game label from playerGroupTitle (Womens/Mens/Mixed) +
     // formatTitle (Doubles/Singles). The brackets payload doesn't
@@ -269,38 +255,57 @@ function parseMatchesArray(slice: string): MlpMatchupGameLineup[] {
   return games;
 }
 
+/**
+ * Walk the pool HTML and group flat brackets-API slices into team-level
+ * matchups.
+ *
+ * Discovered layout of the brackets payload (RSC chunks):
+ *   The poolRounds[].matchups[] array DOES NOT emit one entry per
+ *   team-level matchup. It emits ONE entry per game-format slot. A
+ *   single COL-vs-NJ matchup shows up as 6 consecutive `teamOneUuid`
+ *   markers in the HTML:
+ *     1. Matchup WRAPPER (has teamOneTitle + teamTwoTitle, matchup
+ *        scores, plannedStartDate). No playerGroupTitle.
+ *     2-6. Game records (WD, MD, MXD1, MXD2, DB). teamOneTitle = null,
+ *        but each has playerGroupTitle ("Womens" | "Mens" | "Mixed" |
+ *        "Coed"), formatTitle, teamOnePlayerOneName, etc.
+ *
+ * Strategy: walk all markers, treat each slice with non-null
+ * teamOneTitle as the start of a new matchup, collect subsequent
+ * slices (those with null title) as that matchup's game records, stop
+ * when the next title-having slice arrives.
+ */
 function extractMatchupsFromPool(poolHtml: string): ParsedMlpMatchup[] {
   const results: ParsedMlpMatchup[] = [];
-  // Find every `\"teamOneUuid\":\"<uuid>\"` marker; each marks the start
-  // of one matchup record.
   const markerRe = /\\"teamOneUuid\\":\\"([a-f0-9-]+)\\"/g;
   const markers: Array<{ idx: number; uuid: string }> = [];
   let mm: RegExpExecArray | null;
   while ((mm = markerRe.exec(poolHtml)) !== null) {
     markers.push({ idx: mm.index, uuid: mm[1] });
   }
-  // Append a sentinel so the last matchup gets bounded.
   markers.push({ idx: poolHtml.length, uuid: "" });
 
+  // Pre-split slices.
+  const slices: string[] = [];
   for (let i = 0; i < markers.length - 1; i++) {
-    const start = markers[i].idx;
-    // Slice covers everything up to the next matchup marker. A
-    // complete MLP matchup record runs ~9-12 KB (team metadata + 5
-    // inner game blocks at ~1.5 KB each), so the previous 8 KB cap
-    // truncated the matches[] array after the WD game on most
-    // matchups — the per-card "Chi tiết các game" expand panel only
-    // showed 1 of 5 games. Use the natural next-marker boundary
-    // instead (sentinel handles the final matchup).
-    const end = markers[i + 1].idx;
-    const slice = poolHtml.slice(start, end);
+    slices.push(poolHtml.slice(markers[i].idx, markers[i + 1].idx));
+  }
 
-    const teamTwoUuid = extractStringField(slice, "teamTwoUuid");
-    if (!teamTwoUuid) continue; // BYE matchup
+  // Walk slices grouping consecutive null-title game slices under the
+  // preceding title-having matchup wrapper.
+  let currentWrapper: { slice: string } | null = null;
+  let currentGames: string[] = [];
 
+  const flush = () => {
+    if (!currentWrapper) return;
+    const slice = currentWrapper.slice;
     const teamOneTitle = extractStringField(slice, "teamOneTitle");
     const teamTwoTitle = extractStringField(slice, "teamTwoTitle");
-    if (!teamOneTitle || !teamTwoTitle) continue;
-
+    if (!teamOneTitle || !teamTwoTitle) {
+      currentWrapper = null;
+      currentGames = [];
+      return;
+    }
     const teamOneAbbr = extractStringField(slice, "teamOneAbbreviation");
     const teamTwoAbbr = extractStringField(slice, "teamTwoAbbreviation");
     const teamOneLogo = extractTeamLogo(slice, "teamOne");
@@ -309,38 +314,56 @@ function extractMatchupsFromPool(poolHtml: string): ParsedMlpMatchup[] {
     const teamTwoScore = extractIntField(slice, "teamTwoScore") ?? 0;
     const plannedStart = extractStringField(slice, "plannedStartDate");
     const venue = extractStringField(slice, "venue");
-
+    const teamTwoUuid = extractStringField(slice, "teamTwoUuid");
+    if (!teamTwoUuid) {
+      // BYE matchup — no opponent.
+      currentWrapper = null;
+      currentGames = [];
+      return;
+    }
     const winner =
       teamOneScore > teamTwoScore ? "a" : teamTwoScore > teamOneScore ? "b" : null;
 
-    const games = parseMatchesArray(slice);
+    const games = parseGameSlices(currentGames);
 
-    // Skip matchups with no completed games (avoids returning placeholder
-    // "future matchup" rows that have no data yet).
+    // Skip empty matchups (no games + no scores).
     if (games.length === 0 && teamOneScore === 0 && teamTwoScore === 0) {
-      continue;
+      currentWrapper = null;
+      currentGames = [];
+      return;
     }
 
+    // Extract the wrapper's teamOneUuid directly from the slice (every
+    // marker slice begins with `\"teamOneUuid\":\"<uuid>\"`).
+    const t1uMatch = slice.match(/\\"teamOneUuid\\":\\"([a-f0-9-]+)\\"/);
+    const teamOneUuid = t1uMatch ? t1uMatch[1] : "unknown";
     results.push({
-      team_a: {
-        name: teamOneTitle,
-        logo: teamOneLogo,
-        abbr: teamOneAbbr,
-        matchup_wins: teamOneScore,
-      },
-      team_b: {
-        name: teamTwoTitle,
-        logo: teamTwoLogo,
-        abbr: teamTwoAbbr,
-        matchup_wins: teamTwoScore,
-      },
+      team_a: { name: teamOneTitle, logo: teamOneLogo, abbr: teamOneAbbr, matchup_wins: teamOneScore },
+      team_b: { name: teamTwoTitle, logo: teamTwoLogo, abbr: teamTwoAbbr, matchup_wins: teamTwoScore },
       winner,
       planned_start: plannedStart,
       venue,
       games,
-      external_id: markers[i].uuid + "-vs-" + teamTwoUuid,
+      external_id: `${teamOneUuid}-vs-${teamTwoUuid}`,
     });
+    currentWrapper = null;
+    currentGames = [];
+  };
+
+  for (const s of slices) {
+    const hasTitle = /\\"teamOneTitle\\":\\"[^"\\]+\\"/.test(s);
+    if (hasTitle) {
+      // Close out previous matchup, start a new one.
+      flush();
+      currentWrapper = { slice: s };
+    } else if (currentWrapper) {
+      // Continuation: this is a game record belonging to the open matchup.
+      currentGames.push(s);
+    }
+    // Slices with no title AND no open wrapper are ignored (unrelated chunks).
   }
+  // Flush trailing matchup.
+  flush();
 
   return results;
 }

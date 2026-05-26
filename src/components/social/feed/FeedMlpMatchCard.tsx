@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import {
@@ -84,6 +84,23 @@ export function FeedMlpMatchCard({
 }: FeedMlpMatchCardProps) {
   const notes = parseNotes(match.notes);
   const [expanded, setExpanded] = useState(false);
+  // Track the scoreboard area so we can scroll it back into view when the
+  // user expands the games panel — without this the layout shift from
+  // mounting the 5-row games table pushes the card off the top of the
+  // viewport and the user loses context.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!expanded || !rootRef.current) return;
+    const rect = rootRef.current.getBoundingClientRect();
+    // Only scroll if the card's top has been pushed above the viewport.
+    if (rect.top < 0) {
+      rootRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest",
+      });
+    }
+  }, [expanded]);
 
   if (!notes) {
     // Codex P1 fix: callers (Feed.tsx) guard `match.notes` truthiness before
@@ -115,6 +132,7 @@ export function FeedMlpMatchCard({
 
   return (
     <div
+      ref={rootRef}
       role="article"
       aria-label={ariaLabel}
       // Codex P2 fix: previous commit changed root from <Link> to <div> to
