@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
@@ -118,8 +119,23 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
   }, [open, onSuccess, onError]);
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
+  // ─── ROOT-CAUSE FIX ────────────────────────────────────────────────
+  // .tl-nav (TheLineLayout sticky header) has `backdrop-filter: blur(...)`.
+  // Per CSS spec, any ancestor with backdrop-filter / filter / transform
+  // creates a containing block for `position: fixed` descendants — so
+  // when DuprSsoModal was mounted as a descendant of HeaderDuprBadge
+  // (inside .tl-nav), `position: fixed; inset: 0` no longer escaped to
+  // the viewport. It anchored to the ~60px-tall nav bar, leaving the
+  // iframe with 0 visible height. Same component, same CSS — only the
+  // mount location changed (header vs body).
+  //
+  // Portaling to document.body sidesteps every parent-scoped containing
+  // block: the modal becomes a direct child of <body>, so `position:
+  // fixed` always anchors to the viewport regardless of where the
+  // <DuprSsoModal> JSX was rendered from.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -251,7 +267,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
-
