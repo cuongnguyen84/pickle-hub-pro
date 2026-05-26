@@ -144,11 +144,10 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
           borderRadius: 12,
           width: "min(560px, calc(100vw - 16px))",
           minHeight: 640,
-          height: "calc(100vh - 16px)",
-          maxHeight: "min(960px, calc(100vh - 16px))",
+          maxHeight: "calc(100vh - 16px)",
           flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
+          display: "grid",
+          gridTemplateRows: "auto 1fr",
           position: "relative",
           overflow: "hidden",
           boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
@@ -205,7 +204,9 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
               ref={iframeRef}
               src={iframeSrc}
               title="DUPR SSO"
-              style={{ width: "100%", flex: 1, border: "none", minHeight: 400, display: "block" }}
+              width="100%"
+              height="100%"
+              style={{ width: "100%", height: "100%", border: "none", display: "block", minHeight: 500 }}
               allow="clipboard-write"
               scrolling="auto"
             />
