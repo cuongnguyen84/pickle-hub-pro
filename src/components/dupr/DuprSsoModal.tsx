@@ -143,6 +143,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
           background: "#fff",
           borderRadius: 12,
           width: "min(560px, calc(100vw - 16px))",
+          height: "calc(100vh - 16px)",
           minHeight: 640,
           maxHeight: "calc(100vh - 16px)",
           flexShrink: 0,
