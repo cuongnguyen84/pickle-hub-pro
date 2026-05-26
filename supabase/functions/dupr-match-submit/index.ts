@@ -38,6 +38,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { corsHeaders, getAuthUser, jsonResponse } from "../_shared/auth.ts";
 import { partnerFetch, getDuprEnv } from "../_shared/dupr-client.ts";
+import { userFetch } from "../_shared/dupr-user-client.ts";
 
 type Action = "create" | "update" | "delete";
 
@@ -247,6 +248,104 @@ async function resolveOrgClubForMatch(
   return { club_id: clubIdNum, club_name: org.dupr_club_name };
 }
 
+/**
+ * Lazy-fetch and cache a user's DUPR entitlements when the local cache
+ * is empty or stale. This bridges the gap between SSO connect (which
+ * doesn't currently populate the cache) and the on-demand client-side
+ * fetch (which only runs when the user visits an entitlement-aware
+ * page).
+ *
+ * Without this fallback, every player who connected via the header
+ * widget or /dupr page would fail the BASIC_L1 gate forever — their
+ * cache row never gets written until they happen to land on a page
+ * that calls `useDuprEntitlements`.
+ *
+ * Returns true if BASIC_L1 on tournaments is granted after the fetch.
+ * Returns false on any failure (token missing/revoked, DUPR API error,
+ * upstream says no entitlement) — caller treats false as missing.
+ */
+async function lazyFetchAndCacheEntitlement(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  entitlement: string,
+  resource: string,
+): Promise<boolean> {
+  // 1. Get the user's DUPR access token.
+  const { data: tokenRow } = await supabase
+    .from("dupr_user_tokens")
+    .select("access_token, revoked_at")
+    .eq("user_id", userId)
+    .maybeSingle<{ access_token: string; revoked_at: string | null }>();
+
+  if (!tokenRow || tokenRow.revoked_at) return false;
+
+  // 2. Call DUPR /subscription/active using the user's token.
+  let duprBody: {
+    subscriptions?: Array<{
+      status?: string;
+      displayName?: string;
+      entitlements?: Record<string, string[]>;
+    }>;
+  };
+  try {
+    const res = await userFetch(
+      tokenRow.access_token,
+      "/subscription/active",
+      { method: "POST", body: "{}" },
+    );
+    if (!res.ok) {
+      console.warn(
+        `lazyFetchEntitlement: subscription/active ${res.status} for user ${userId}`,
+      );
+      return false;
+    }
+    duprBody = await res.json();
+  } catch (e) {
+    console.warn(
+      `lazyFetchEntitlement: fetch failed for user ${userId}:`,
+      e instanceof Error ? e.message : String(e),
+    );
+    return false;
+  }
+
+  // 3. Merge entitlements across active subscriptions.
+  const merged: Record<string, Set<string>> = {};
+  let displayName: string | null = null;
+  let status: string | null = null;
+  for (const sub of duprBody.subscriptions ?? []) {
+    if (sub.displayName && !displayName) displayName = sub.displayName;
+    if (sub.status && !status) status = sub.status;
+    for (const [res, list] of Object.entries(sub.entitlements ?? {})) {
+      if (!merged[res]) merged[res] = new Set<string>();
+      for (const e of list) merged[res].add(e);
+    }
+  }
+  const entitlements: Record<string, string[]> = {};
+  for (const [res, set] of Object.entries(merged)) {
+    entitlements[res] = Array.from(set).sort();
+  }
+
+  // 4. Upsert the cache for next time.
+  const now = new Date();
+  const expires = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  await supabase
+    .from("dupr_user_entitlements")
+    .upsert(
+      {
+        user_id: userId,
+        display_name: displayName,
+        status,
+        entitlements,
+        fetched_at: now.toISOString(),
+        expires_at: expires.toISOString(),
+      },
+      { onConflict: "user_id" },
+    );
+
+  // 5. Return whether the desired entitlement is present.
+  return (entitlements[resource] ?? []).includes(entitlement);
+}
+
 async function ensureAllPlayersBasic(
   supabase: ReturnType<typeof createClient>,
   duprIds: string[],
@@ -269,17 +368,45 @@ async function ensureAllPlayersBasic(
   for (const duprId of duprIds) {
     const userId = mapped.get(duprId);
     if (!userId) {
-      // Unconnected player — DUPR rules say only BASIC_L1-eligible
-      // players can be added; we treat unconnected as missing.
+      // Truly unconnected player — they have a DUPR ID but never
+      // completed SSO with ThePickleHub.
       missing.push(duprId);
       continue;
     }
-    const { data, error } = await supabase.rpc("dupr_user_has_entitlement_for", {
-      p_user_id: userId,
-      p_entitlement: "BASIC_L1",
-      p_resource: "tournaments",
-    });
-    if (error || !data) {
+
+    // First check the cache.
+    const { data: cacheHit, error: rpcError } = await supabase.rpc(
+      "dupr_user_has_entitlement_for",
+      {
+        p_user_id: userId,
+        p_entitlement: "BASIC_L1",
+        p_resource: "tournaments",
+      },
+    );
+
+    if (rpcError) {
+      // RPC permission denied — should not happen after migration
+      // 20260524010000_dupr_grant_service_role, but log anyway.
+      console.error(
+        `ensureAllPlayersBasic: RPC error for ${userId}:`,
+        rpcError.message,
+      );
+      missing.push(duprId);
+      continue;
+    }
+
+    if (cacheHit) continue; // cache hit + has entitlement → ok
+
+    // Cache miss (or expired) — lazy-fetch from DUPR. The user already
+    // consented during SSO; if /subscription/active returns BASIC_L1
+    // we accept them and warm the cache for next time.
+    const lazyOk = await lazyFetchAndCacheEntitlement(
+      supabase,
+      userId,
+      "BASIC_L1",
+      "tournaments",
+    );
+    if (!lazyOk) {
       missing.push(duprId);
     }
   }
