@@ -581,7 +581,7 @@ function SlotRow(props: {
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder={vi ? "Tìm theo tên · email · @handle" : "Search by name · email · @handle"}
+          placeholder={vi ? "Tìm theo tên · email · @handle · DUPR ID" : "Search by name · email · @handle · DUPR ID"}
           style={{
             flex: 1,
             background: "transparent",
@@ -607,7 +607,7 @@ function SlotRow(props: {
       ) : candidates.length === 0 ? (
         <div style={{ padding: "8px 0", color: "var(--tl-fg-3)", fontSize: 13 }}>
           {q.trim().length >= 2
-            ? (vi ? "Không tìm thấy." : "No matches.")
+            ? (vi ? "Không thấy. (Chỉ tìm được user đã ở ThePickleHub hoặc đã consent DUPR — pool DUPR còn nhỏ)" : "No matches. (Searches ThePickleHub users + DUPR consented users — DUPR pool is still small)")
             : (vi ? "Chưa có trận nào gần đây — gõ tên để tìm." : "No recent matches — search by name.")}
         </div>
       ) : (
