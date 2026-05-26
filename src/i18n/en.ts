@@ -1782,7 +1782,7 @@ export const en: Translations = {
       stepPayment: "Payment",
       stepDone: "Done",
       stepMember: "Confirm registration",
-      memberHint: "You're a club member — no OTP needed. Just confirm to register.",
+      memberHint: "You're signed in — no OTP needed. Just confirm to register.",
       memberRegisterCta: "Confirm registration →",
       phoneLabel: "Phone number",
       phonePlaceholder: "0901 234 567",

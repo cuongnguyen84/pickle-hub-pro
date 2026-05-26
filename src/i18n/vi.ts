@@ -4582,7 +4582,7 @@ export const vi: Translations = {
       stepPayment: "Thanh toán",
       stepDone: "Hoàn tất",
       stepMember: "Xác nhận đăng ký",
-      memberHint: "Bạn là thành viên CLB — không cần nhập OTP. Chỉ cần xác nhận và đăng ký.",
+      memberHint: "Bạn đã đăng nhập — không cần nhập OTP. Chỉ cần xác nhận và đăng ký.",
       memberRegisterCta: "Xác nhận đăng ký →",
       phoneLabel: "Số điện thoại",
       phonePlaceholder: "0901 234 567",

@@ -27,7 +27,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations } from "@/hooks/useEventRegistrations";
-import { useMyMembership } from "@/hooks/useClubMembers";
 import { RegistrationModal } from "@/components/social-events/RegistrationModal";
 import { ProxyRegistrationModal } from "@/components/social-events/ProxyRegistrationModal";
 import { toast } from "@/hooks/use-toast";
@@ -95,15 +94,11 @@ export default function SocialEventDetail() {
   const { data: registrations, refetch: refetchRegistrations } =
     useEventRegistrations(data?.id);
 
-  // 2026-05-22 — when the event belongs to a CLB and the viewer is an
-  // active member (or organizer of that CLB), open the modal directly
-  // into the "member" step which skips OTP. Anonymous viewers + non-
-  // members still see the phone flow.
-  const { status: membershipStatus } = useMyMembership(data?.club_id ?? undefined);
-  const memberSkipOtp =
-    membershipStatus === "active" ||
-    membershipStatus === "creator" ||
-    membershipStatus === "manager";
+  // 2026-05-22 (v2) — any authenticated user skips OTP. Sign-up already
+  // verified identity so a second OTP at registration was friction.
+  // Membership status is no longer needed on this page (the join/leave
+  // CTA lives on ClubLanding) so the useMyMembership import was dropped.
+  const memberSkipOtp = Boolean(user);
 
   // PR58 — check localStorage for an existing registration on this
   // event. The /dang-ky/:token page is the player's only way back to
