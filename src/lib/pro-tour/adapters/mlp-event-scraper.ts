@@ -381,6 +381,12 @@ export function parseMlpEventHtml(
   const playerMap = new Map<string, ScrapedPlayer>();
   const teamMap = new Map<string, ScrapedPlayer>();
 
+  // The Worker now drives the MLP page through several day filters
+  // (click prev arrow repeatedly) so the same article.sec can appear
+  // multiple times across the captured HTML. We dedupe on the natural
+  // matchup key: (date, time, team-A name, team-B name).
+  const seenMatchupKeys = new Set<string>();
+
   let articleIdx = 0;
   for (const article of html.matchAll(ARTICLE_SEC_RE)) {
     const articleHtml = article[0];
@@ -393,6 +399,15 @@ export function parseMlpEventHtml(
     // Date + court — from the article's header text.
     const headerText = stripHtml(articleHtml.split(/<div\b[^>]*\bsec__match-details/i)[0] ?? "");
     const dateInfo = parseDateLine(headerText);
+
+    // Dedupe key: same matchup rendered under multiple day filters in
+    // the captured HTML produces identical (date, team-A, team-B).
+    const dedupeKey = `${dateInfo.played_at ?? "no-date"}|${lite.team_a_summary.name}|${lite.team_b_summary.name}`;
+    if (seenMatchupKeys.has(dedupeKey)) {
+      articleIdx += 1;
+      continue;
+    }
+    seenMatchupKeys.add(dedupeKey);
 
     // Register team ghost profiles (one per side).
     const teamASlug = `mlp-${slugifyTeamName(lite.team_a_summary.name)}`;
