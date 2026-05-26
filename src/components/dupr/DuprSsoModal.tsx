@@ -202,11 +202,10 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         {clientKeyEncoded && (
           <>
             <iframe
-              key={open ? "dupr-sso-iframe-open" : "dupr-sso-iframe-closed"}
               ref={iframeRef}
               src={iframeSrc}
               title="DUPR SSO"
-              style={{ width: "100%", flex: 1, border: "none", minHeight: 0, display: "block" }}
+              style={{ width: "100%", flex: 1, border: "none", minHeight: 400, display: "block" }}
               allow="clipboard-write"
               scrolling="auto"
             />
