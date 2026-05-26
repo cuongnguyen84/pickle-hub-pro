@@ -81,7 +81,9 @@ function isSupportedTournamentUrl(url: string): boolean {
 // upstream fetch if it hangs.
 const PAGE_GOTO_TIMEOUT_MS = 60_000;
 const RSC_SETTLE_TIMEOUT_MS = 5_000;
-const RENDER_FETCH_TIMEOUT_MS = 90_000;
+// MLP needs ~30-45s total: 60s goto + 18s selector wait + 15s settle ≈ caps
+// at ~93s upstream — pad the outer fetch ceiling so we don't abort mid-wait.
+const RENDER_FETCH_TIMEOUT_MS = 120_000;
 
 interface Env {
   /** Legacy Browser Rendering binding from the puppeteer-based
@@ -211,6 +213,38 @@ async function runScrape(
     parsed = MLP_EVENT_HOST_PATTERN.test(body.tournament_url)
       ? parseMlpEventHtml(html, body.tournament_url)
       : parseTournamentHtml(html, body.tournament_url);
+
+    // Diagnostic for the MLP "0 matches" case: when the React island
+    // didn't mount before capture, the captured HTML has no
+    // `<article class="sec">` containers. Report this to the admin via
+    // the log's error_message field so they don't see a confusing
+    // "success / 0 trận" with no other signal. Idempotent: matches are
+    // still imported when present.
+    if (
+      MLP_EVENT_HOST_PATTERN.test(body.tournament_url) &&
+      parsed.matches.length === 0 &&
+      body.log_id
+    ) {
+      const articleHits = (html.match(/<article\b[^>]*\bsec\b/gi) ?? []).length;
+      const teamLogoHits = (html.match(/alt="[^"]*Team Logo"/gi) ?? []).length;
+      const hasLoading = /loading\.\.\./i.test(html);
+      const msg =
+        `MLP parser found 0 matchups. HTML length: ${html.length}, ` +
+        `<article.sec> hits: ${articleHits}, team logos: ${teamLogoHits}, ` +
+        `loading-state: ${hasLoading}. ` +
+        (articleHits === 0
+          ? "React island likely did not mount before capture — try bumping waitForTimeout."
+          : "Articles present but parser didn't extract them — regex/structure mismatch.");
+      await markLogFailed(env, body.log_id, msg, Date.now() - startMs).catch(
+        (e) => console.error(`[runScrape] empty-match markLogFailed: ${e}`),
+      );
+      return {
+        ok: false,
+        matches_extracted: 0,
+        players_extracted: 0,
+        error: msg,
+      };
+    }
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     // When the trigger function pre-created a log row, update it directly
@@ -354,19 +388,35 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
   //   gotoOptions     — Puppeteer page.goto() options
   //   waitForTimeout  — dwell time after navigation for client-side
   //                     hydration to flush into the DOM
+  const isMlp = /majorleaguepickleball\.co/i.test(url);
   const requestBody: Record<string, unknown> = {
     url,
     gotoOptions: {
-      waitUntil: "domcontentloaded" as const,
+      // MLP page's React island fetches matchup data after main load
+      // finishes, so for MLP we wait for the network to settle —
+      // `networkidle2` allows the React-Query loader to fire, then
+      // ≤2 in-flight requests indicates the schedule is ready. PPA RSC
+      // keeps `domcontentloaded` because its RSC chunks land during
+      // DOM construction.
+      waitUntil: isMlp ? ("networkidle2" as const) : ("domcontentloaded" as const),
       timeout: PAGE_GOTO_TIMEOUT_MS,
     },
-    // MLP needs a longer settle window so the React island has time to
-    // mount + fetch + render the article.sec containers for the default
-    // day. PPA RSC needs less because the chunks land during construction.
-    waitForTimeout: /majorleaguepickleball\.co/i.test(url)
-      ? 10_000
-      : RSC_SETTLE_TIMEOUT_MS,
+    // Settle window. MLP gets a longer dwell so any deferred article.sec
+    // mount lands in the captured DOM.
+    waitForTimeout: isMlp ? 15_000 : RSC_SETTLE_TIMEOUT_MS,
   };
+  // Best-effort selector wait — Browser Rendering REST accepts
+  // `waitForSelector` for content readiness gating. We use a generous
+  // 18s ceiling so a slow React mount doesn't fail the render, then
+  // capture whatever DOM is present after waitForTimeout above. If the
+  // selector never matches (e.g. page structure changed), the capture
+  // still happens and the diagnostic emptiness check fires.
+  if (isMlp) {
+    requestBody.waitForSelector = {
+      selector: "article.sec, .sec__match-details-table, .event-matches__matches",
+      timeout: 18_000,
+    };
+  }
 
   // AbortController guards against the upstream fetch hanging beyond
   // our outer ceiling — independent of CF's own internal timeouts.
