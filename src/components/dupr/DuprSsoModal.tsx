@@ -140,9 +140,9 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         style={{
           background: "#fff",
           borderRadius: 12,
-          width: "100%",
-          maxWidth: 560,
-          height: "min(900px, calc(100vh - 24px))",
+          width: "min(560px, calc(100vw - 16px))",
+          height: "calc(100vh - 16px)",
+          maxHeight: 960,
           display: "flex",
           flexDirection: "column",
           position: "relative",
