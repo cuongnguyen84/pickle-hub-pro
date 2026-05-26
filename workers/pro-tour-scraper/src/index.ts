@@ -330,60 +330,43 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
 
   const apiUrl = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/browser-rendering/content`;
 
-  // MLP event pages paginate the Schedule & Scores section by Vietnam-local
-  // day (GMT+7). The default render only hydrates the current day's ~10
-  // matchups. To capture EVERY completed day, we ask Browser Rendering to
-  // (1) scroll the SCHEDULE & SCORES heading into view so the React island
-  // mounts, (2) click "SEE ALL" if present, then (3) click the previous-day
-  // arrow N times to walk back through the season. Each click waits a
-  // beat so the React state mutation flushes new matchups into the DOM.
-  // The final captured HTML contains the union of all hydrated days.
+  // Browser Rendering REST /content endpoint does NOT accept an `actions`
+  // field (verified 2026-05: returns 400 "unrecognized_keys ['actions']").
+  // That means we can't drive the MLP day-navigation arrows server-side.
   //
-  // For PPA bracket pages this actions array is harmless: the selectors
-  // don't match anything on that DOM, so each action either no-ops or
-  // throws a non-fatal error that the REST endpoint ignores (best-effort
-  // semantics per Cloudflare docs on the `actions` field). The PPA
-  // single-shot path still captures Final + SF as before.
-  const isMlpEvent = /majorleaguepickleball\.co\/events-/i.test(url);
-  const MLP_DAY_NAV_CLICKS = 6; // ~1 week back; safe upper bound for any
-                                // current MLP regular-season event window.
-  const actions = isMlpEvent
-    ? [
-        { wait: { milliseconds: 1500 } },
-        { keyboard: { type: "End" as const } }, // scroll to bottom to ensure schedule section mounts
-        { wait: { milliseconds: 800 } },
-        // Click the prev-day arrow repeatedly so React hydrates earlier
-        // days. The arrow renders as a <button> with literal text "<".
-        // Each click expands the in-DOM article.sec set for that day.
-        ...Array.from({ length: MLP_DAY_NAV_CLICKS }).flatMap(() => [
-          { click: { selector: "button:has-text(\"<\")" } },
-          { wait: { milliseconds: 1200 } },
-        ]),
-      ]
-    : undefined;
-
+  // MLP day-coverage strategy for MVP:
+  //   The MLP event page's React island defaults to the current GMT+7
+  //   day on each load. The cron Worker runs every 6h, so over a
+  //   regular-season week the default day rotates through each
+  //   tournament day and the per-day matchups get ingested incrementally.
+  //   Admins can also manually click "Scrape now" to force an early
+  //   capture of the current day. Earlier (already-archived) days that
+  //   the page no longer defaults to require either:
+  //     a) Switching to a different Cloudflare endpoint that supports
+  //        page interactions (e.g. the Browser Rendering puppeteer
+  //        Workers binding — has its own timeout issues, see file
+  //        header comment), or
+  //     b) MLP exposing a date query param on the URL (not currently).
+  //   Tracking (a)/(b) as a Sprint 8 follow-up.
+  //
   // Body shape per Cloudflare API docs (2026-05):
-  //   url             — the bracket page to render
-  //   gotoOptions     — Puppeteer page.goto() options. waitUntil:
-  //                     "domcontentloaded" (instead of networkidle*)
-  //                     because the RSC chunks land in the page string
-  //                     during DOM construction — waiting for full
-  //                     network idle blocks on tracking pixels that
-  //                     never settle.
-  //   waitForTimeout  — extra dwell after navigation so any deferred
-  //                     RSC chunk hydration finishes streaming.
-  //   actions         — optional per-step instructions. Best-effort:
-  //                     a failing action is non-fatal and the render
-  //                     proceeds. We pass click+wait for MLP pagination.
+  //   url             — the page to render
+  //   gotoOptions     — Puppeteer page.goto() options
+  //   waitForTimeout  — dwell time after navigation for client-side
+  //                     hydration to flush into the DOM
   const requestBody: Record<string, unknown> = {
     url,
     gotoOptions: {
       waitUntil: "domcontentloaded" as const,
       timeout: PAGE_GOTO_TIMEOUT_MS,
     },
-    waitForTimeout: RSC_SETTLE_TIMEOUT_MS,
+    // MLP needs a longer settle window so the React island has time to
+    // mount + fetch + render the article.sec containers for the default
+    // day. PPA RSC needs less because the chunks land during construction.
+    waitForTimeout: /majorleaguepickleball\.co/i.test(url)
+      ? 10_000
+      : RSC_SETTLE_TIMEOUT_MS,
   };
-  if (actions) requestBody.actions = actions;
 
   // AbortController guards against the upstream fetch hanging beyond
   // our outer ceiling — independent of CF's own internal timeouts.
