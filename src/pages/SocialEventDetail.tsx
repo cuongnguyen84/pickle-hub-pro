@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, Link as LinkIcon } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Banknote, AlertTriangle, Share2, Facebook, LayoutGrid, Link as LinkIcon } from "lucide-react";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,7 +27,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useSocialEvent } from "@/hooks/useSocialEvent";
 import { useEventRegistrations } from "@/hooks/useEventRegistrations";
+import { useMyMembership } from "@/hooks/useClubMembers";
 import { RegistrationModal } from "@/components/social-events/RegistrationModal";
+import { EventDuprLinkCard } from "@/components/social-events/EventDuprLinkCard";
+import { EventMatchesCard } from "@/components/social-events/EventMatchesCard";
 import { toast } from "@/hooks/use-toast";
 import {
   computeCountdown,
@@ -82,6 +85,16 @@ export default function SocialEventDetail() {
   const { data: registrations, refetch: refetchRegistrations } =
     useEventRegistrations(data?.id);
 
+  // 2026-05-22 — when the event belongs to a CLB and the viewer is an
+  // active member (or organizer of that CLB), open the modal directly
+  // into the "member" step which skips OTP. Anonymous viewers + non-
+  // members still see the phone flow.
+  const { status: membershipStatus } = useMyMembership(data?.club_id ?? undefined);
+  const memberSkipOtp =
+    membershipStatus === "active" ||
+    membershipStatus === "creator" ||
+    membershipStatus === "manager";
+
   // PR58 — check localStorage for an existing registration on this
   // event. The /dang-ky/:token page is the player's only way back to
   // their registration (no SMS yet), so when we know they registered
@@ -127,6 +140,32 @@ export default function SocialEventDetail() {
     if (!data) return null;
     return computeCountdown(data.start_at, data.end_at, language);
   }, [data, language]);
+
+  // PR 20260526 — opportunistic ghost merge. Khi user đăng nhập + profile
+  // đã có phone, thử gọi merge_my_ghost_by_phone để absorb ghost profile
+  // cùng số điện thoại (do phone-otp-verify tạo ra trước đó). RPC này
+  // idempotent — trả NULL nếu không có ghost match. Chỉ chạy 1 lần / session
+  // / phone qua sessionStorage flag để tránh round-trip thừa.
+  useEffect(() => {
+    const phone = (profile as { phone?: string | null } | null)?.phone ?? null;
+    if (!user?.id || !phone) return;
+    if (typeof window === "undefined") return;
+    const flagKey = `picklehub:ghost-merge:${user.id}:${phone}`;
+    if (window.sessionStorage.getItem(flagKey)) return;
+    void supabase
+      .rpc("merge_my_ghost_by_phone", { p_phone: phone })
+      .then(({ error }) => {
+        if (error) {
+          console.warn("merge_my_ghost_by_phone failed", error);
+          return;
+        }
+        try {
+          window.sessionStorage.setItem(flagKey, "1");
+        } catch {
+          // Ignore quota / privacy mode errors.
+        }
+      });
+  }, [user?.id, profile]);
 
   // ─── JSON-LD injection for browser-side SEO. Bot traffic uses the
   //     Cloudflare prerender path instead. We still emit this so the
@@ -315,6 +354,13 @@ export default function SocialEventDetail() {
             })}
           </Badge>
           <Badge variant="secondary" className="text-sm">
+            <LayoutGrid className="mr-1 h-3.5 w-3.5" />
+            {data.court_count}{" "}
+            {language === "vi"
+              ? "sân"
+              : `court${data.court_count > 1 ? "s" : ""}`}
+          </Badge>
+          <Badge variant="secondary" className="text-sm">
             <Banknote className="mr-1 h-3.5 w-3.5" />
             {data.price_vnd > 0
               ? interp(t.socialEvents.detail.priceVnd, {
@@ -331,7 +377,16 @@ export default function SocialEventDetail() {
 
         {/* Above-the-fold CTA card */}
         <Card className="p-5 mb-6">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 12,
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
             <div>
               <div style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
                 {countdown?.state === "started"
@@ -342,6 +397,17 @@ export default function SocialEventDetail() {
               </div>
               <div style={{ fontSize: 22, fontWeight: 600 }}>
                 {countdown?.state === "upcoming" ? countdown.text : "—"}
+              </div>
+            </div>
+            {/* 2026-05-20 — surface court_count next to spots-left so
+                players know capacity vs. court ratio at a glance
+                (e.g. 80 players / 10 courts = 8 per court). */}
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
+                {language === "vi" ? "Số sân" : "Courts"}
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 600 }}>
+                {data.court_count}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -517,6 +583,32 @@ export default function SocialEventDetail() {
           </div>
         </Card>
 
+        {/* PR 20260526 — DUPR liên kết + lịch sử trận đấu. Card chỉ hiển
+            thị khi viewer có thể tương tác (đã đăng ký qua phone OTP /
+            membership / là organizer). Anonymous viewers không thấy
+            section này để tránh nhiễu. */}
+        {(myStored || isOrganizer || (user?.id && (registrations ?? []).some((r) => r.profile_id === user.id))) && !isCancelled && (
+          <>
+            <EventDuprLinkCard
+              eventId={data.id}
+              magicToken={myStored?.magic_token ?? null}
+              authedProfileId={user?.id ?? null}
+            />
+            <EventMatchesCard
+              eventId={data.id}
+              canLog={
+                isOrganizer ||
+                Boolean(
+                  user?.id &&
+                  (registrations ?? []).some((r) => r.profile_id === user.id),
+                )
+              }
+              isOrganizer={isOrganizer}
+              selfProfileId={user?.id ?? null}
+            />
+          </>
+        )}
+
         {description && (
           <Card className="p-5 mb-6">
             <div>{renderDescription(description)}</div>
@@ -601,6 +693,8 @@ export default function SocialEventDetail() {
           requiresPrepayment={data.requires_prepayment}
           prepaymentDeadlineHours={data.prepayment_deadline_hours}
           zaloGroupUrl={data.zalo_group_url}
+          slots={data.slots}
+          memberSkipOtp={memberSkipOtp}
           defaultPhone={(profile as { phone?: string | null } | null)?.phone ?? null}
           defaultDisplayName={profile?.display_name ?? null}
           onSuccess={() => {

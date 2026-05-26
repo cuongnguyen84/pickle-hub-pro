@@ -1797,6 +1797,10 @@ export interface Translations {
       otpResend: string;
       otpResendIn: string;
       otpResendViaSms: string;
+      // PR69 — abuse defense error messages
+      errCaptcha: string;
+      errCaptchaIp: string;
+      errBudget: string;
       otpInvalid: string;
       otpExpired: string;
       tooManyAttempts: string;
@@ -1922,6 +1926,15 @@ export interface Translations {
       allowGuestsHint: string;
       cancellationHours: string;
       zaloGroupUrl: string;
+      // PR68 — ball type + free perks
+      ballType: string;
+      ballTypePlaceholder: string;
+      ballTypeOther: string;
+      ballTypeCustomPlaceholder: string;
+      freePerks: string;
+      freePerksAdd: string;
+      freePerksRemove: string;
+      freePerksCustomPlaceholder: string;
       visibility: string;
       visibilityPublic: string;
       visibilityClubOnly: string;
@@ -2210,6 +2223,13 @@ export interface Translations {
       alreadyRegisteredCta: string;
       cancelledBanner: string;
       reregisterCta: string;
+      // PR65 — Zalo OA integration: post-success follow-OA CTA
+      followOaBanner: {
+        title: string;
+        body: string;
+        cta: string;
+        dismissAriaLabel: string;
+      };
       // PR67 — prepayment countdown banner
       unpaidRegistrationBannerTitle: string;
       unpaidRegistrationBannerDescription: string;
@@ -2411,6 +2431,40 @@ export interface Translations {
       errInvalidScore: string;
       errPlayerNotInClub: string;
       errAlreadySubmitted: string;
+      submit: {
+        openCta: string;
+        eyebrow: string;
+        dialogTitle: string;
+        dialogDesc: string;
+        validationHeading: string;
+        checkAllPlayersHaveDupr: string;
+        checkMissingDuprDetail: string;
+        checkScoresValid: string;
+        checkScoresInvalidDetail: string;
+        checkWinnerDetermined: string;
+        winnerTeamA: string;
+        winnerTeamB: string;
+        winnerNone: string;
+        gameSingular: string;
+        gamePlural: string;
+        fixBeforeSubmit: string;
+        payloadHeading: string;
+        copyPayload: string;
+        copied: string;
+        copyError: string;
+        payloadHint: string;
+        manualHeading: string;
+        manualDesc: string;
+        matchCodeLabel: string;
+        sendViaApi: string;
+        pendingApiTooltip: string;
+        manualSubmitCta: string;
+        manualSubmitSuccess: string;
+        manualSubmitError: string;
+        errMatchCodeRequired: string;
+        errMatchCodeTooLong: string;
+        errAlreadySubmitted: string;
+      };
     };
     roster: {
       pageTitle: string;
@@ -2598,6 +2652,62 @@ export interface Translations {
         win_streak_3: { title: string; description: string };
         win_streak_5: { title: string; description: string };
         night_owl: { title: string; description: string };
+      };
+    };
+    // PR26052026 — DUPR link + match log trong context social event
+    eventDupr: {
+      linkHeading: string;
+      linkBody: string;
+      duprIdLabel: string;
+      duprIdPlaceholder: string;
+      linkCta: string;
+      saveEditCta: string;
+      editCta: string;
+      unlinkCta: string;
+      linkedAsLabel: string;
+      linkSuccess: string;
+      unlinkSuccess: string;
+      linkError: string;
+      formatError: string;
+      notRegistered: string;
+      privacyHint: string;
+      matches: {
+        heading: string;
+        empty: string;
+        emptyCanLog: string;
+        logCta: string;
+        draftBadge: string;
+        readyBadge: string;
+        submittedBadge: string;
+        sendToDuprCta: string;
+        markReadyCta: string;
+        unmarkReadyCta: string;
+      };
+      log: {
+        dialogTitle: string;
+        dialogDesc: string;
+        formatLabel: string;
+        formatSingles: string;
+        formatDoubles: string;
+        formatMixed: string;
+        playedAtLabel: string;
+        teamALabel: string;
+        teamBLabel: string;
+        selectPlayerPlaceholder: string;
+        scoresLabel: string;
+        gameLabel: string;
+        addGameCta: string;
+        notesLabel: string;
+        notesPlaceholder: string;
+        submitCta: string;
+        submitting: string;
+        success: string;
+        error: string;
+        errSelectPlayer: string;
+        errPlayerNotInEvent: string;
+        errDuplicatePlayer: string;
+        errInvalidScore: string;
+        errNotAuthorized: string;
       };
     };
   };
@@ -4548,6 +4658,13 @@ export const vi: Translations = {
       otpResend: "Gửi lại mã",
       otpResendIn: "Gửi lại sau {seconds}s",
       otpResendViaSms: "Không nhận được Zalo? Gửi lại qua SMS →",
+      // PR69
+      errCaptcha:
+        "Xác minh trình duyệt thất bại. Vui lòng tải lại trang và thử lại.",
+      errCaptchaIp:
+        "Bạn đã gửi quá nhiều mã trong thời gian ngắn. Vui lòng chờ 15 phút rồi thử lại.",
+      errBudget:
+        "Hệ thống đang tạm dừng gửi tin tự động. Vui lòng liên hệ ban tổ chức.",
       otpInvalid: "Mã OTP không đúng",
       otpExpired: "Mã OTP đã hết hạn — vui lòng yêu cầu mã mới",
       tooManyAttempts: "Sai mã quá nhiều lần — vui lòng yêu cầu mã mới",
@@ -4672,6 +4789,15 @@ export const vi: Translations = {
         "Bỏ chọn nếu chỉ thành viên CLB có tài khoản mới được đăng ký.",
       cancellationHours: "Số giờ hủy đăng ký được hoàn tiền",
       zaloGroupUrl: "Liên kết nhóm Zalo (tuỳ chọn)",
+      // PR68
+      ballType: "Loại bóng thi đấu",
+      ballTypePlaceholder: "Chọn loại bóng",
+      ballTypeOther: "Khác",
+      ballTypeCustomPlaceholder: "Nhập tên bóng…",
+      freePerks: "Bao gồm miễn phí",
+      freePerksAdd: "Thêm",
+      freePerksRemove: "Xoá",
+      freePerksCustomPlaceholder: "Thêm mục khác…",
       visibility: "Hiển thị",
       visibilityPublic: "Công khai — ai cũng xem được",
       visibilityClubOnly: "Chỉ trong CLB — không index search engine",
@@ -4931,6 +5057,14 @@ export const vi: Translations = {
       alreadyRegisteredCta: "Xem đăng ký của bạn",
       cancelledBanner: "Bạn đã huỷ đăng ký sự kiện này",
       reregisterCta: "Quản lý / Đăng ký lại",
+      // PR65 — Zalo OA integration
+      followOaBanner: {
+        title: "Theo dõi ThePickleHub trên Zalo",
+        body:
+          "Nhận lịch thi đấu, link livestream và kết quả giải gửi thẳng vào Zalo của bạn.",
+        cta: "Mở Zalo OA",
+        dismissAriaLabel: "Đóng",
+      },
       unpaidRegistrationBannerTitle: "Đăng ký chưa thanh toán",
       unpaidRegistrationBannerDescription:
         "Sự kiện này yêu cầu chuyển khoản trước. Hoàn tất chuyển khoản theo mã thanh toán bên dưới rồi bấm \"Đã thanh toán\" để xác nhận.",
@@ -5214,6 +5348,44 @@ export const vi: Translations = {
       errInvalidScore: "Tỷ số không hợp lệ.",
       errPlayerNotInClub: "Người chơi không phải thành viên CLB.",
       errAlreadySubmitted: "Trận đấu đã gửi DUPR — không thể thay đổi.",
+      submit: {
+        openCta: "Gửi DUPR",
+        eyebrow: "GỬI DUPR",
+        dialogTitle: "Gửi trận đến DUPR",
+        dialogDesc:
+          "Kiểm tra điều kiện rồi gửi qua API DUPR (đang chờ cấp quyền RAAS) hoặc submit thủ công trên DUPR dashboard rồi paste matchCode vào đây.",
+        validationHeading: "Kiểm tra điều kiện",
+        checkAllPlayersHaveDupr: "Tất cả người chơi đã link DUPR",
+        checkMissingDuprDetail: "Chưa link: {names}",
+        checkScoresValid: "Tỷ số hợp lệ",
+        checkScoresInvalidDetail: "Tỷ số không hợp lệ",
+        checkWinnerDetermined: "Đã xác định đội thắng",
+        winnerTeamA: "Đội A thắng",
+        winnerTeamB: "Đội B thắng",
+        winnerNone: "Hoà — không thể gửi DUPR",
+        gameSingular: "ván",
+        gamePlural: "ván",
+        fixBeforeSubmit:
+          "Cần xử lý các mục chưa đạt phía trên trước khi gửi DUPR. Người chơi chưa link DUPR cần đăng nhập DUPR account qua trang Onboarding hoặc trang profile.",
+        payloadHeading: "Payload sẽ gửi DUPR",
+        copyPayload: "Copy",
+        copied: "Đã copy.",
+        copyError: "Không copy được — vui lòng thử lại.",
+        payloadHint:
+          "Trong khi chờ API DUPR cấp quyền, anh có thể copy payload này, submit thủ công trên dupr.com → nhận matchCode → paste vào phần dưới.",
+        manualHeading: "Submit thủ công",
+        manualDesc:
+          "Nếu đã submit qua DUPR dashboard và có matchCode (vd 10 chữ số), paste vào đây để đánh dấu trận đã gửi + lưu audit trail. Trận sẽ hiện badge 'Đã gửi DUPR'.",
+        matchCodeLabel: "DUPR matchCode",
+        sendViaApi: "Gửi qua API DUPR",
+        pendingApiTooltip: "DUPR RAAS API chưa cấp quyền — sẽ enable khi sẵn sàng.",
+        manualSubmitCta: "Đánh dấu đã gửi",
+        manualSubmitSuccess: "Đã lưu matchCode + đánh dấu trận đã gửi.",
+        manualSubmitError: "Không thể lưu — vui lòng thử lại.",
+        errMatchCodeRequired: "Vui lòng nhập DUPR matchCode.",
+        errMatchCodeTooLong: "matchCode quá dài (tối đa 64 ký tự).",
+        errAlreadySubmitted: "Trận đã được đánh dấu gửi trước đó.",
+      },
     },
     roster: {
       pageTitle: "Danh sách đăng ký",
@@ -5402,6 +5574,61 @@ export const vi: Translations = {
         win_streak_3:  { title: "Streak 3",          description: "Thắng 3 trận liên tiếp." },
         win_streak_5:  { title: "Streak 5",          description: "Thắng 5 trận liên tiếp." },
         night_owl:     { title: "Cú đêm",            description: "Đăng ký event diễn ra sau 21:00." },
+      },
+    },
+    eventDupr: {
+      linkHeading: "Liên kết DUPR",
+      linkBody: "Liên kết DUPR ID của bạn vào lần đăng ký này. Khi BTC ghi nhận trận đấu, kết quả sẽ được gửi lên DUPR và tự động cập nhật điểm cho bạn.",
+      duprIdLabel: "DUPR ID",
+      duprIdPlaceholder: "vd: 5271241",
+      linkCta: "Liên kết",
+      saveEditCta: "Lưu thay đổi",
+      editCta: "Sửa",
+      unlinkCta: "Bỏ liên kết",
+      linkedAsLabel: "Đã liên kết",
+      linkSuccess: "Đã liên kết DUPR ID.",
+      unlinkSuccess: "Đã bỏ liên kết DUPR ID.",
+      linkError: "Không thể liên kết — vui lòng thử lại.",
+      formatError: "DUPR ID không hợp lệ. Chấp nhận chữ + số + dấu - / _ (2-32 ký tự).",
+      notRegistered: "Bạn cần đăng ký event trước khi liên kết DUPR.",
+      privacyHint: "DUPR ID chỉ hiển thị cho BTC và bạn. Dùng để gửi kết quả trận đấu lên DUPR.",
+      matches: {
+        heading: "Lịch sử trận đấu",
+        empty: "Chưa có trận nào được ghi nhận.",
+        emptyCanLog: "Chưa có trận nào. Ấn “Ghi nhận trận” để log trận đầu tiên.",
+        logCta: "Ghi nhận trận",
+        draftBadge: "Nháp",
+        readyBadge: "Sẵn sàng gửi",
+        submittedBadge: "Đã gửi DUPR",
+        sendToDuprCta: "Gửi DUPR",
+        markReadyCta: "Đánh dấu sẵn sàng",
+        unmarkReadyCta: "Hủy sẵn sàng",
+      },
+      log: {
+        dialogTitle: "Ghi nhận trận đấu",
+        dialogDesc: "Chọn người chơi từ danh sách đã đăng ký event, nhập tỷ số từng ván. Trận đấu sẽ chờ BTC gửi DUPR.",
+        formatLabel: "Thể thức",
+        formatSingles: "Đơn",
+        formatDoubles: "Đôi",
+        formatMixed: "Đôi nam-nữ",
+        playedAtLabel: "Thời gian thi đấu",
+        teamALabel: "Đội A",
+        teamBLabel: "Đội B",
+        selectPlayerPlaceholder: "Chọn người chơi…",
+        scoresLabel: "Tỷ số",
+        gameLabel: "Ván",
+        addGameCta: "Thêm ván",
+        notesLabel: "Ghi chú (tùy chọn)",
+        notesPlaceholder: "Sân số, thời tiết, sự cố…",
+        submitCta: "Lưu trận đấu",
+        submitting: "Đang lưu…",
+        success: "Đã ghi nhận trận đấu.",
+        error: "Không thể ghi nhận — vui lòng thử lại.",
+        errSelectPlayer: "Vui lòng chọn đủ người chơi cho cả 2 đội.",
+        errPlayerNotInEvent: "Người chơi chưa đăng ký event này.",
+        errDuplicatePlayer: "Một người không thể xuất hiện ở cả 2 đội.",
+        errInvalidScore: "Tỷ số không hợp lệ — nhập số nguyên không âm cho mọi ván.",
+        errNotAuthorized: "Bạn không có quyền ghi nhận trận này.",
       },
     },
   },
