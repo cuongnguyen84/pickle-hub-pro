@@ -128,33 +128,27 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.7)",
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
         zIndex: 1000,
-        padding: 8,
-        overflowY: "auto",
-        WebkitOverflowScrolling: "touch",
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         style={{
+          position: "absolute",
+          top: 8,
+          left: "50%",
+          transform: "translateX(-50%)",
           background: "#fff",
           borderRadius: 12,
           width: "min(560px, calc(100vw - 16px))",
-          height: "calc(100vh - 16px)",
-          minHeight: 640,
-          maxHeight: "calc(100vh - 16px)",
-          flexShrink: 0,
-          display: "grid",
-          gridTemplateRows: "auto 1fr",
-          position: "relative",
+          bottom: 8,
+          display: "flex",
+          flexDirection: "column",
           overflow: "hidden",
           boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
         }}
       >
-        {/* Header bar — no overlap with iframe content */}
+        {/* Header bar */}
         <div
           style={{
             display: "flex",
@@ -163,7 +157,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
             padding: "12px 16px",
             borderBottom: "1px solid #e5e7eb",
             background: "#fafafa",
-            flexShrink: 0,
+            flex: "0 0 auto",
           }}
         >
           <div style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>
@@ -184,8 +178,6 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
               color: "#6b7280",
               borderRadius: 4,
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           >
             <X size={20} />
           </button>
@@ -200,14 +192,19 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         )}
 
         {clientKeyEncoded && (
-          <>
+          <div style={{ position: "relative", flex: "1 1 auto", minHeight: 0 }}>
             <iframe
               ref={iframeRef}
               src={iframeSrc}
               title="DUPR SSO"
-              width="100%"
-              height="100%"
-              style={{ width: "100%", height: "100%", border: "none", display: "block", minHeight: 500 }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                border: "none",
+                display: "block",
+              }}
               allow="clipboard-write"
               scrolling="auto"
             />
@@ -225,7 +222,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
                 }}
               >
                 <Loader2 size={28} className="animate-spin" />
-                <span style={{ fontSize: 14, color: "var(--tl-fg-2)" }}>
+                <span style={{ fontSize: 14, color: "#6b7280" }}>
                   {language === "vi"
                     ? "Đang kết nối với DUPR..."
                     : "Connecting to DUPR..."}
@@ -236,18 +233,25 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
               <div
                 role="alert"
                 style={{
-                  padding: "12px 16px",
-                  background: "var(--tl-red, #ef4444)",
-                  color: "#fff",
+                  position: "absolute",
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  padding: 12,
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  borderRadius: 8,
+                  color: "#b91c1c",
                   fontSize: 13,
                 }}
               >
                 {error}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
   );
 }
+
