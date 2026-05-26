@@ -91,15 +91,34 @@ export function FeedMlpMatchCard({
   const rootRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!expanded || !rootRef.current) return;
-    const rect = rootRef.current.getBoundingClientRect();
-    // Only scroll if the card's top has been pushed above the viewport.
-    if (rect.top < 0) {
-      rootRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-        inline: "nearest",
+    // Wait for the games-table layout to commit, then check whether the
+    // card top got pushed above the fold. The first useEffect tick runs
+    // BEFORE the new DOM nodes are painted, so getBoundingClientRect()
+    // there returns the pre-expand position — which is always at/below
+    // the original click point and never trips the rect.top < 0 guard.
+    // Use a double rAF so we measure after paint, then issue the scroll.
+    const node = rootRef.current;
+    let cancelled = false;
+    requestAnimationFrame(() => {
+      if (cancelled) return;
+      requestAnimationFrame(() => {
+        if (cancelled || !node.isConnected) return;
+        const rect = node.getBoundingClientRect();
+        // Card top is above the fold OR the bottom is below — scroll the
+        // top into view so the user sees the matchup header + the games
+        // table below it.
+        if (rect.top < 0 || rect.top > window.innerHeight - 120) {
+          node.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+            inline: "nearest",
+          });
+        }
       });
-    }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [expanded]);
 
   if (!notes) {
