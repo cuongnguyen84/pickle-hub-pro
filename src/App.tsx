@@ -38,6 +38,7 @@ const WatchLive = lazy(() => import("./pages/WatchLive"));
 const Account = lazy(() => import("./pages/Account"));
 const DuprConnect = lazy(() => import("./pages/DuprConnect"));
 const MatchNewPage = lazy(() => import("./pages/MatchNew"));
+const MatchConfirm = lazy(() => import("./pages/MatchConfirm"));
 const AdminDuprDashboard = lazy(() => import("./pages/admin/AdminDuprDashboard"));
 const MatchSubmitPage = lazy(() => import("./pages/Match"));
 const MyTournaments = lazy(() => import("./pages/MyTournaments"));
@@ -489,6 +490,7 @@ const App = () => (
                     <Route path="/admin/dupr" element={<RequireAuth requiredRole="admin"><AdminDuprDashboard /></RequireAuth>} />
                     <Route path="/match" element={<RequireAuth><MatchSubmitPage /></RequireAuth>} />
                     <Route path="/match/new" element={<RequireAuth><MatchNewPage /></RequireAuth>} />
+                    <Route path="/match/confirm" element={<RequireAuth><MatchConfirm /></RequireAuth>} />
                     <Route path="/account/my-tournaments" element={<RequireAuth><MyTournaments /></RequireAuth>} />
                     {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />
