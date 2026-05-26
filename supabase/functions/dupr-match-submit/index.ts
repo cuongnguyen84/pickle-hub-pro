@@ -153,20 +153,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
-  // ─── 2. Role gate — admin or creator only ──────────────────────────────
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id);
-  const allowedRoles = new Set(["admin", "creator"]);
-  const hasAllowedRole = (roles ?? []).some((r: { role: string }) =>
-    allowedRoles.has(r.role)
-  );
-  if (!hasAllowedRole) {
-    return err("forbidden", 403, "role_required");
-  }
-
-  // ─── 3. Parse + validate payload ───────────────────────────────────────
+  // ─── 2. Parse payload (moved up so role gate can inspect context) ──────
   let body: Payload;
   try {
     body = (await req.json()) as Payload;
@@ -176,6 +163,50 @@ Deno.serve(async (req) => {
 
   if (!body || typeof body !== "object" || !("action" in body)) {
     return err("missing_action", 400, "missing_action");
+  }
+
+  // ─── 3. Role gate ───────────────────────────────────────────────────────
+  // Primary path: caller has admin/creator role (DUPR's "TD-only" rule).
+  // Phase 2 bypass: when a regular member logged a club match and the
+  // opposing team has just confirmed it via confirm_club_match RPC, the
+  // confirming opponent (auth.uid() === matches.confirmed_by) is allowed
+  // to push the confirmed match to DUPR. This is the auto-submit step
+  // that fires immediately after they click "Confirm" in the UI.
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+  const allowedRoles = new Set(["admin", "creator"]);
+  const hasAllowedRole = (roles ?? []).some((r: { role: string }) =>
+    allowedRoles.has(r.role)
+  );
+
+  let bypassRoleGate = false;
+  if (
+    !hasAllowedRole &&
+    body.action === "create" &&
+    body.internal_source === "club_match"
+  ) {
+    // Look up the match — does the caller match confirmed_by AND is the
+    // status 'confirmed'? Without these we reject (defense in depth: the
+    // RPC already verifies caller-in-required-from, but we never trust
+    // a single check).
+    const { data: matchRow } = await supabase
+      .from("matches")
+      .select("confirmation_status, confirmed_by")
+      .eq("id", body.internal_match_id)
+      .maybeSingle<{ confirmation_status: string; confirmed_by: string | null }>();
+
+    if (
+      matchRow?.confirmation_status === "confirmed" &&
+      matchRow.confirmed_by === user.id
+    ) {
+      bypassRoleGate = true;
+    }
+  }
+
+  if (!hasAllowedRole && !bypassRoleGate) {
+    return err("forbidden", 403, "role_required");
   }
 
   const env = getDuprEnv();
