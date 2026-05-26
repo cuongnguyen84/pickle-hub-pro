@@ -39,6 +39,11 @@ interface IngestRequestBody {
   triggered_by_user_id: string | null;
   watchlist_id: string | null;
   duration_ms: number;
+  /** Optional pre-created log row id (from pro-tour-trigger-scrape).
+   *  When supplied, ingest UPDATES this row instead of inserting a new
+   *  one — so the admin Logs tab shows a single row that starts
+   *  'running' and flips to 'success'/'failed' on completion. */
+  log_id?: string | null;
 }
 
 interface IngestResponse {
@@ -97,29 +102,35 @@ Deno.serve(async (req) => {
   const supabase = createClient(url, serviceKey);
   const startMs = Date.now();
 
-  // Open the log row in 'running' state so the admin UI sees the
-  // attempt mid-flight (esp. for scheduled batches that touch many
-  // tournaments). Final status flips below.
-  const { data: logRow, error: logErr } = await supabase
-    .from("pro_tour_ingestion_logs")
-    .insert({
-      source_provider: body.scrape_result.source_provider,
-      source_url: body.scrape_result.source_url,
-      triggered_by: body.triggered_by,
-      triggered_by_user_id: body.triggered_by_user_id,
-      watchlist_id: body.watchlist_id,
-      status: "running",
-    })
-    .select("id")
-    .single();
+  // If trigger function pre-created a log row (manual scrapes), reuse it
+  // so the admin UI sees a single row that flips from 'running' to
+  // 'success'/'failed'. Scheduled scrapes have no pre-row, so we insert
+  // here as before.
+  let log_id: string;
+  if (body.log_id) {
+    log_id = body.log_id;
+  } else {
+    const { data: logRow, error: logErr } = await supabase
+      .from("pro_tour_ingestion_logs")
+      .insert({
+        source_provider: body.scrape_result.source_provider,
+        source_url: body.scrape_result.source_url,
+        triggered_by: body.triggered_by,
+        triggered_by_user_id: body.triggered_by_user_id,
+        watchlist_id: body.watchlist_id,
+        status: "running",
+      })
+      .select("id")
+      .single();
 
-  if (logErr || !logRow) {
-    return jsonResponse(
-      { error: `Failed to open log: ${logErr?.message ?? "unknown"}` },
-      500,
-    );
+    if (logErr || !logRow) {
+      return jsonResponse(
+        { error: `Failed to open log: ${logErr?.message ?? "unknown"}` },
+        500,
+      );
+    }
+    log_id = logRow.id as string;
   }
-  const log_id = logRow.id as string;
 
   try {
     const { players_created, players_matched, externalIdToProfileId } =

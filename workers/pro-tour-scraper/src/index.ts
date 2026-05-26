@@ -104,6 +104,11 @@ interface ScrapeRequestBody {
   triggered_by: "manual" | "scheduled";
   user_id?: string;
   watchlist_id?: string;
+  /** Optional pre-created pro_tour_ingestion_logs row id. When supplied,
+   *  Worker resolves to this row (instead of inserting a new log) and
+   *  also writes a 'failed' update directly on render failure so the
+   *  admin Logs tab always shows the outcome. */
+  log_id?: string;
 }
 
 interface ScrapeResult {
@@ -207,11 +212,21 @@ async function runScrape(
       ? parseMlpEventHtml(html, body.tournament_url)
       : parseTournamentHtml(html, body.tournament_url);
   } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    // When the trigger function pre-created a log row, update it directly
+    // so the admin Logs tab shows the failure. Without this, render
+    // failures left the row stuck on 'running' indefinitely because the
+    // ingest function is only called on the success path.
+    if (body.log_id) {
+      await markLogFailed(env, body.log_id, errMsg, Date.now() - startMs).catch(
+        (e) => console.error(`[runScrape] markLogFailed: ${e}`),
+      );
+    }
     return {
       ok: false,
       matches_extracted: 0,
       players_extracted: 0,
-      error: err instanceof Error ? err.message : String(err),
+      error: errMsg,
     };
   }
 
@@ -230,15 +245,22 @@ async function runScrape(
       triggered_by_user_id: body.user_id ?? null,
       watchlist_id: body.watchlist_id ?? null,
       duration_ms: Date.now() - startMs,
+      log_id: body.log_id ?? null,
     }),
   });
 
   if (!ingestRes.ok) {
+    const errMsg = `Ingest failed: ${ingestRes.status} ${await ingestRes.text()}`;
+    if (body.log_id) {
+      await markLogFailed(env, body.log_id, errMsg, Date.now() - startMs).catch(
+        (e) => console.error(`[runScrape] markLogFailed: ${e}`),
+      );
+    }
     return {
       ok: false,
       matches_extracted: parsed.matches.length,
       players_extracted: parsed.players.length,
-      error: `Ingest failed: ${ingestRes.status} ${await ingestRes.text()}`,
+      error: errMsg,
     };
   }
 
@@ -480,6 +502,43 @@ async function updateWatchlistAfterScrape(
       next_scrape_at: next,
     }),
   });
+}
+
+/**
+ * Update an existing pro_tour_ingestion_logs row to status='failed'.
+ * Called from runScrape when render or ingest fails AND the trigger
+ * function pre-created a log row. Without this, render failures would
+ * leave the row stuck on 'running' indefinitely.
+ */
+async function markLogFailed(
+  env: Env,
+  logId: string,
+  errorMessage: string,
+  durationMs: number,
+): Promise<void> {
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/pro_tour_ingestion_logs?id=eq.${logId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        status: "failed",
+        error_message: errorMessage.slice(0, 4000),
+        duration_ms: durationMs,
+        completed_at: new Date().toISOString(),
+      }),
+    },
+  );
+  if (!res.ok) {
+    console.error(
+      `markLogFailed PATCH ${logId} failed: ${res.status} ${(await res.text()).slice(0, 300)}`,
+    );
+  }
 }
 
 /* ─── Helpers ───────────────────────────────────────────────────────── */

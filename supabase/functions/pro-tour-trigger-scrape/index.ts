@@ -123,67 +123,167 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "tournament_url required" }, 400);
   }
 
+  // Insert a "running" log row UP FRONT so the admin Logs tab shows the
+  // scrape attempt immediately, regardless of whether the Worker call
+  // succeeds, fails, or never reports back. The Worker (via the ingest
+  // function on success, or directly on render failure) updates this row
+  // when it finishes. If the row stays "running" beyond ~3 minutes it
+  // means the Worker didn't report back and the admin can dig into the
+  // Worker tail.
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  let preLogId: string | null = null;
+  if (serviceKey) {
+    try {
+      const insRes = await fetch(`${supabaseUrl}/rest/v1/pro_tour_ingestion_logs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify({
+          source_provider: /majorleaguepickleball\.co/i.test(payload.tournament_url)
+            ? "mlp"
+            : "ppa_tour",
+          source_url: payload.tournament_url,
+          triggered_by: "manual",
+          triggered_by_user_id: user.id,
+          watchlist_id: payload.watchlist_id ?? null,
+          status: "running",
+        }),
+      });
+      if (insRes.ok) {
+        const inserted = (await insRes.json()) as Array<{ id: string }>;
+        preLogId = inserted[0]?.id ?? null;
+      } else {
+        console.error(
+          `[pro-tour-trigger-scrape] Pre-log insert failed (${insRes.status}): ${(await insRes.text()).slice(0, 300)}`,
+        );
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[pro-tour-trigger-scrape] Pre-log insert threw: ${msg}`);
+    }
+  }
+
   // Compose the body the Worker expects + sign it. Worker contract is
-  // documented in workers/pro-tour-scraper/README.md (the curl example).
-  // Note `triggered_by` is hard-coded to 'manual' here — the cron path
-  // hits the Worker directly with `triggered_by: 'scheduled'`, never
-  // through this function.
+  // documented in workers/pro-tour-scraper/README.md. Pass the pre-log id
+  // so the Worker can UPDATE that row instead of inserting a fresh one.
   const workerBody = JSON.stringify({
     tournament_url: payload.tournament_url,
     triggered_by: "manual" as const,
     user_id: user.id,
     watchlist_id: payload.watchlist_id ?? null,
+    log_id: preLogId,
   });
 
   const signature = await hmacSha256Hex(workerBody, scraperSecret);
 
-  // Fire-and-forget the Worker call. The MLP multi-day path (click prev
-  // arrow 6x with 1.2s wait each) drives Worker wall-clock to 30-90s,
-  // which exceeds the browser's tolerance on the Edge Functions
-  // round-trip and surfaces as "Failed to send a request to the Edge
-  // Function" (TypeError "Failed to fetch") in the admin UI even though
-  // the Worker eventually completes successfully. Detaching the await
-  // here returns to the admin UI in <1s and the Worker's own
-  // pro_tour_ingestion_logs writes appear in the Logs tab once the
-  // scrape finishes.
+  // Fire-and-forget the Worker call via EdgeRuntime.waitUntil so this
+  // handler returns to the admin UI in <1s while the Worker keeps
+  // running in the background (MLP multi-day path is 30-90s).
   //
-  // The Worker call is kept alive by EdgeRuntime.waitUntil so it
-  // continues after this handler returns. If the runtime doesn't
-  // expose waitUntil (older Deno versions), the promise still runs
-  // because Deno keeps the connection open until the response is
-  // sent; we just lose the explicit "stay alive after response" hint.
-  const scrapePromise = fetch(`${scraperUrl}/scrape`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Scraper-Signature": signature,
-    },
-    body: workerBody,
-  }).catch((err) => {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[pro-tour-trigger-scrape] Worker fetch error: ${msg}`);
-  });
+  // Belt-and-braces: even if waitUntil isn't honored by this runtime
+  // and the Worker call gets cancelled, the pre-log row inserted above
+  // means the admin Logs tab still shows the attempt. The 'running'
+  // row will simply sit there until the next manual scrape or until the
+  // cleanup job (Sprint 7+) marks orphan running rows as 'failed'. The
+  // admin can then re-trigger.
+  const scrapePromise: Promise<void> = (async () => {
+    try {
+      const res = await fetch(`${scraperUrl}/scrape`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Scraper-Signature": signature,
+        },
+        body: workerBody,
+      });
+      const txt = await res.text();
+      if (!res.ok) {
+        console.error(
+          `[pro-tour-trigger-scrape] Worker non-2xx (${res.status}): ${txt.slice(0, 500)}`,
+        );
+        // Worker didn't reach the ingest path → it can't mark the log
+        // failed itself. Update it here so the admin Logs tab doesn't
+        // stay stuck on 'running' forever.
+        if (preLogId && serviceKey) {
+          await markLogFailed(
+            supabaseUrl,
+            serviceKey,
+            preLogId,
+            `Worker HTTP ${res.status}: ${txt.slice(0, 1000)}`,
+          ).catch((e) => console.error(`markLogFailed: ${e}`));
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[pro-tour-trigger-scrape] Worker fetch threw: ${msg}`);
+      if (preLogId && serviceKey) {
+        await markLogFailed(
+          supabaseUrl,
+          serviceKey,
+          preLogId,
+          `Trigger function fetch error: ${msg}`,
+        ).catch((e) => console.error(`markLogFailed: ${e}`));
+      }
+    }
+  })();
 
-  const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } })
-    .EdgeRuntime;
+  const runtime = (globalThis as {
+    EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
+  }).EdgeRuntime;
   if (runtime?.waitUntil) {
     runtime.waitUntil(scrapePromise);
+  } else {
+    // Fallback: no waitUntil. Don't strand the promise — at least keep
+    // it alive long enough for the response to flush, then let Deno
+    // tear down. This loses long Worker calls but is the safest
+    // fallback for environments that don't expose waitUntil.
+    void scrapePromise;
   }
 
-  // Return immediately with a "queued" shape the admin UI understands.
-  // matches_extracted/players_extracted are populated by the cron-style
-  // refresh on the Logs tab once the Worker finishes (15-90s typical).
   return jsonResponse(
     {
       ok: true,
       queued: true,
+      log_id: preLogId,
       matches_extracted: 0,
       players_extracted: 0,
-      note: "Scrape queued in the Worker. Refresh the Logs tab in 30-90s to see the result.",
+      note:
+        "Scrape queued. Logs tab now shows a 'running' row that updates to success/failed on completion (30-90s).",
     },
     202,
   );
 });
+
+/**
+ * PATCH the pre-created log row to status='failed'. Used by the trigger
+ * function as a safety net when the Worker fetch itself fails or
+ * returns non-2xx without reaching the ingest path that owns logs.
+ */
+async function markLogFailed(
+  supabaseUrl: string,
+  serviceKey: string,
+  logId: string,
+  errorMessage: string,
+): Promise<void> {
+  await fetch(`${supabaseUrl}/rest/v1/pro_tour_ingestion_logs?id=eq.${logId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({
+      status: "failed",
+      error_message: errorMessage.slice(0, 4000),
+      completed_at: new Date().toISOString(),
+    }),
+  });
+}
 
 /**
  * HMAC-SHA256 over `body` using `secret`, returned as lowercase hex.
