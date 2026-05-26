@@ -37,6 +37,13 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  /**
+   * Phase 2: when the caller is NOT a creator/manager, log_club_match
+   * RPC creates a `pending_opponent_confirm` row instead of auto-
+   * confirming. We use this prop to tailor the success toast so members
+   * know the next step (opponent confirms → auto-submit to DUPR).
+   */
+  isOrganizer?: boolean;
 }
 
 interface PickerOption {
@@ -126,7 +133,13 @@ const scoreCellStyle: CSSProperties = {
   outline: "none",
 };
 
-export function LogMatchDialog({ clubId, open, onOpenChange, onSuccess }: Props) {
+export function LogMatchDialog({
+  clubId,
+  open,
+  onOpenChange,
+  onSuccess,
+  isOrganizer = false,
+}: Props) {
   const { t, language } = useI18n();
   const m = t.socialEvents.matches;
 
@@ -249,14 +262,36 @@ export function LogMatchDialog({ clubId, open, onOpenChange, onSuccess }: Props)
         teamBPlayers: teamB.slice(0, teamSize),
         notes: notes.trim() || undefined,
       });
-      toast({ title: m.logSuccess });
+      // P2: tailor toast to caller role. Members create rows that need
+      // opponent sign-off; organizers auto-confirm and head straight to
+      // the DUPR-ready queue.
+      const lang = language;
+      if (isOrganizer) {
+        toast({ title: m.logSuccess });
+      } else {
+        toast({
+          title:
+            lang === "vi"
+              ? "Đã ghi trận — đang chờ đối thủ xác nhận"
+              : "Match logged — waiting for opponent confirmation",
+          description:
+            lang === "vi"
+              ? "Khi đối thủ bấm xác nhận, trận sẽ tự động gửi lên DUPR."
+              : "When your opponent confirms, the match auto-submits to DUPR.",
+        });
+      }
       resetForm();
       onOpenChange(false);
       onSuccess?.();
     } catch (e) {
       const code = (e as { code?: string })?.code ?? "";
+      const lang = language;
       const msg =
-        code === "player_not_in_club"
+        code === "caller_must_be_in_team_a"
+          ? lang === "vi"
+            ? "Anh phải có mặt trong team A (team của anh) để log trận."
+            : "You must be in team A (your own team) to log this match."
+          : code === "player_not_in_club"
           ? m.errPlayerNotInClub
           : code === "duplicate_player"
             ? m.errDuplicatePlayer
