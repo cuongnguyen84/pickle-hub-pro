@@ -132,7 +132,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
-        padding: 16,
+        padding: 12,
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -141,8 +141,8 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
           background: "#fff",
           borderRadius: 12,
           width: "100%",
-          maxWidth: 520,
-          height: "min(780px, calc(100vh - 32px))",
+          maxWidth: 560,
+          height: "min(900px, calc(100vh - 24px))",
           display: "flex",
           flexDirection: "column",
           position: "relative",
@@ -198,11 +198,13 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         {clientKeyEncoded && (
           <>
             <iframe
+              key={open ? "dupr-sso-iframe-open" : "dupr-sso-iframe-closed"}
               ref={iframeRef}
               src={iframeSrc}
               title="DUPR SSO"
               style={{ width: "100%", flex: 1, border: "none", minHeight: 0, display: "block" }}
               allow="clipboard-write"
+              scrolling="auto"
             />
             {submitting && (
               <div
