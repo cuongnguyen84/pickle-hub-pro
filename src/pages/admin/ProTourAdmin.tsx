@@ -59,10 +59,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 // Single source of truth for the URL shape — same regex the Worker
-// uses to gatekeep /scrape. Future bracket hosts (APP / MLP / new PPA
-// URL convention) only need the change in the adapter, never duplicated
-// in the admin UI.
+// uses to gatekeep /scrape. Each adapter exports its own host pattern;
+// the admin UI accepts a URL if ANY adapter matches it.
 import { PRO_TOUR_HOST_PATTERN } from "@/lib/pro-tour/adapters/rsc-scraper";
+import { MLP_EVENT_HOST_PATTERN } from "@/lib/pro-tour/adapters/mlp-event-scraper";
+
+/** Combined acceptance check — keeps the admin UI agnostic of which
+ *  adapter handles which host (the Worker dispatches on the same union). */
+const isSupportedTournamentUrl = (url: string): boolean =>
+  PRO_TOUR_HOST_PATTERN.test(url) || MLP_EVENT_HOST_PATTERN.test(url);
 
 /**
  * /admin/pro-tour — Sprint 6 admin surface for the pro tour ingestion
@@ -184,7 +189,7 @@ function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
 
   const submit = async () => {
     setResult(null);
-    if (!PRO_TOUR_HOST_PATTERN.test(url)) {
+    if (!isSupportedTournamentUrl(url)) {
       setResult({
         ok: false,
         error:
@@ -392,13 +397,9 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
           title: language === "vi" ? "Đã cập nhật" : "Updated",
         });
       } else {
-        // Stamp next_scrape_at on create so the every-6h worker cron
-        // picks the row up on its next tick. Without this the row sits
-        // at NULL and the cron filter (`next_scrape_at <= NOW()`)
-        // skips it indefinitely.
         const { error } = await supabase
           .from("pro_tour_watchlist")
-          .insert({ ...payload, next_scrape_at: new Date().toISOString() });
+          .insert(payload);
         if (error) throw error;
         toast({
           title: language === "vi" ? "Đã thêm vào watchlist" : "Added to watchlist",

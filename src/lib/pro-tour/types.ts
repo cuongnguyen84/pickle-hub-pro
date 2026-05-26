@@ -20,7 +20,7 @@ export type SourceProvider =
   | "other";
 
 export interface ProTourAdapter<Env = unknown> {
-  readonly name: "rsc_scraper" | "pickleball_api" | "manual_csv";
+  readonly name: "rsc_scraper" | "mlp_event_scraper" | "pickleball_api" | "manual_csv";
   /** True when the adapter recognises the URL. Used by the dispatch
    *  router in the Worker so multiple adapters can coexist. */
   validateUrl(url: string): boolean;
@@ -65,6 +65,17 @@ export interface ScrapedMatch {
    *  when available, else scheduled. */
   played_at: string | null;
   source_url: string;
+  /** Free-form metadata serialized as JSON. MLP team-matchup adapter
+   *  encodes per-game lineups + team logos here; the FeedMlpMatchCard
+   *  decodes it client-side. Other adapters typically leave this null. */
+  notes?: string | null;
+  /** Court info as text. Optional override of the parser's `court` field
+   *  for sources whose court labels need extra normalization. */
+  court_number?: string | null;
+  /** Tournament-level override for individual matches that need a
+   *  different event label than the scrape result's top-level
+   *  tournament_event (e.g. group play vs playoff). Optional. */
+  tournament_event_override?: string | null;
 }
 
 export interface ScrapedTeam {

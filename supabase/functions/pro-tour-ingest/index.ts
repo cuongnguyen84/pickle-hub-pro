@@ -225,7 +225,14 @@ async function reconcilePlayers(
         // idempotent (the partial unique on source_provider+external_id
         // catches the actual dedupe).
         email: `ghost+${source_provider}+${p.external_id}@thepicklehub.net`,
-        username: `ppa-${p.external_id}`,
+        // Username prefix follows the source provider so the @handle in the
+        // UI reads correctly across sources (mlp-, app-, ppa-). MLP team
+        // ghost profiles already include the "mlp-" prefix in their
+        // external_id (see mlp-event-scraper.ts), so detect that to avoid
+        // double-prefixing.
+        username: p.external_id.startsWith(`${source_provider}-`)
+          ? p.external_id
+          : `${source_provider}-${p.external_id}`,
         display_name: p.display_name,
         avatar_url: p.avatar_url,
         country_code: p.country_code,
@@ -346,9 +353,15 @@ async function insertMatchWithParticipants(
       source_url: match.source_url,
       external_match_id: match.external_match_id,
       tournament_name: scrape.tournament_name,
-      tournament_event: scrape.tournament_event,
+      // Adapters can override the per-match event label (e.g. MLP day-4
+      // playoff vs group play) without changing the scrape-level event.
+      tournament_event: match.tournament_event_override ?? scrape.tournament_event,
       round_name: match.round_name,
-      court_number: match.court,
+      court_number: match.court_number ?? match.court,
+      // Adapter-supplied notes JSON (MLP encodes team logos + per-game
+      // lineups here for FeedMlpMatchCard). Null/undefined for sources
+      // that don't need extra metadata.
+      notes: match.notes ?? null,
     })
     .select("id")
     .single();
