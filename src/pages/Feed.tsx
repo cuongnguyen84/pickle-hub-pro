@@ -39,7 +39,6 @@ function hashStr(input: string): number {
 import { FeedTabs } from "@/components/social/feed/FeedTabs";
 import { FeedEmptyState } from "@/components/social/feed/FeedEmptyState";
 import { FeedSignInNudge } from "@/components/social/feed/FeedSignInNudge";
-import { FeedConnectCard } from "@/components/dupr/FeedConnectCard";
 
 /**
  * /feed — social discovery surface. Two tabs:
@@ -276,11 +275,6 @@ const Feed = () => {
         {/* Anonymous nudge */}
         {!isAuthenticated && <FeedSignInNudge language={language} />}
 
-        {/* Connect DUPR — visible only for authed users not yet linked.
-            FeedConnectCard internally guards on useDuprConnection, so this
-            renders nothing for connected users. */}
-        <FeedConnectCard />
-
         {/* Tabs */}
         <FeedTabs
           activeTab={tab}
@@ -326,7 +320,11 @@ const Feed = () => {
             <>
               {tab === "following"
                 ? followingMatches.map((match, i) =>
-                    match.source_provider === "mlp" ? (
+                    // Codex P1 fix: FeedMlpMatchCard returns null when notes
+                    // can't be parsed, which silently drops the row. Fall back
+                    // to the generic card so the match still renders. Also
+                    // guard against the Following RPC not yet returning notes.
+                    match.source_provider === "mlp" && match.notes ? (
                       <FeedMlpMatchCard
                         key={match.match_id}
                         match={match}
@@ -419,7 +417,10 @@ function TimelineRow({
     );
   }
   if (item.type === "match") {
-    if (item.source_provider === "mlp") {
+    // Codex P1 fix: only route to MLP card when notes are present + parseable.
+    // FeedMlpMatchCard returns null on invalid notes, which would silently
+    // drop the row from the feed. Guard at the dispatch site instead.
+    if (item.source_provider === "mlp" && item.notes) {
       return (
         <FeedMlpMatchCard
           match={item}

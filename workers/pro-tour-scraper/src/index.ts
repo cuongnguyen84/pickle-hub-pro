@@ -51,7 +51,18 @@ import {
   parseTournamentHtml,
   PRO_TOUR_HOST_PATTERN,
 } from "@/lib/pro-tour/adapters/rsc-scraper";
+import {
+  parseMlpEventHtml,
+  MLP_EVENT_HOST_PATTERN,
+} from "@/lib/pro-tour/adapters/mlp-event-scraper";
 import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
+
+/** Combined URL acceptance regex — admin UI / /scrape gatekeeper.
+ *  Each adapter's own pattern stays the source of truth for that
+ *  adapter's dispatch; this union is just for the up-front URL check. */
+function isSupportedTournamentUrl(url: string): boolean {
+  return PRO_TOUR_HOST_PATTERN.test(url) || MLP_EVENT_HOST_PATTERN.test(url);
+}
 
 // ─── Browser Rendering REST API budgets ───────────────────────────────────
 //
@@ -125,9 +136,14 @@ export default {
       return jsonResponse({ ok: false, error: "Invalid JSON" }, 400);
     }
 
-    if (!PRO_TOUR_HOST_PATTERN.test(body.tournament_url)) {
+    if (!isSupportedTournamentUrl(body.tournament_url)) {
       return jsonResponse(
-        { ok: false, error: "URL not supported by rsc_scraper adapter" },
+        {
+          ok: false,
+          error:
+            "URL not supported. Accepted: brackets.pickleballtournaments.com (PPA / APP) " +
+            "or majorleaguepickleball.co/events-<year>/<slug>/ (MLP).",
+        },
         422,
       );
     }
@@ -184,7 +200,12 @@ async function runScrape(
   let parsed: TournamentScrapeResult;
   try {
     const html = await renderWithBrowserRendering(env, body.tournament_url);
-    parsed = parseTournamentHtml(html, body.tournament_url);
+    // Dispatch on URL host: MLP event pages use a different DOM structure
+    // (WordPress + React island) than the Next.js RSC brackets, so the
+    // parser pair is selected up-front rather than via runtime sniffing.
+    parsed = MLP_EVENT_HOST_PATTERN.test(body.tournament_url)
+      ? parseMlpEventHtml(html, body.tournament_url)
+      : parseTournamentHtml(html, body.tournament_url);
   } catch (err) {
     return {
       ok: false,
@@ -377,16 +398,11 @@ interface WatchlistRow {
 }
 
 async function fetchDueWatchlistRows(env: Env): Promise<WatchlistRow[]> {
-  // PostgREST `lte` evaluates NULL as not-comparable, so rows that have
-  // never been scraped (next_scrape_at IS NULL — typical for fresh
-  // watchlist entries before any manual trigger) would never be picked
-  // up by the cron. `or=(...)` makes NULL count as "due now".
-  const now = new Date().toISOString();
   const url =
     `${env.SUPABASE_URL}/rest/v1/pro_tour_watchlist` +
     `?select=id,tournament_url,scrape_frequency` +
     `&status=eq.active` +
-    `&or=(next_scrape_at.is.null,next_scrape_at.lte.${now})`;
+    `&next_scrape_at=lte.${new Date().toISOString()}`;
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_SERVICE_ROLE_KEY,

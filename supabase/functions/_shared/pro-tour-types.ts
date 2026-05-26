@@ -34,6 +34,15 @@ export interface ScrapedMatch {
   court: string | null;
   played_at: string | null;
   source_url: string;
+  /** Adapter-supplied notes JSON. MLP encodes team logos + per-game
+   *  lineups here. Null when adapter doesn't supply extras. */
+  notes?: string | null;
+  /** Override for court_number when the adapter produces a normalized
+   *  label distinct from `court`. Optional. */
+  court_number?: string | null;
+  /** Per-match override of the scrape-level tournament_event (e.g. MLP
+   *  group-play vs playoff). Optional. */
+  tournament_event_override?: string | null;
 }
 
 export interface ScrapedTeam {

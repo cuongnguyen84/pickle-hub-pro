@@ -86,7 +86,15 @@ export function FeedMlpMatchCard({
   const [expanded, setExpanded] = useState(false);
 
   if (!notes) {
-    // Fallback: nothing to render specially — should never hit with valid data
+    // Codex P1 fix: callers (Feed.tsx) guard `match.notes` truthiness before
+    // routing here, so this is a defensive belt-and-braces fallback for
+    // shapes that pass the truthy check but fail JSON parse (e.g. notes
+    // present but corrupted, or notes.format !== "mlp_team_matchup").
+    // Returning null here would still silently drop the row — but since
+    // Feed.tsx already routes parseable-only rows to this component, hitting
+    // this branch means the truthy check + JSON parse disagreed (rare).
+    // Log + return null so the row drops in the rare-rare case rather than
+    // throwing during render.
     return null;
   }
 
@@ -109,7 +117,14 @@ export function FeedMlpMatchCard({
     <div
       role="article"
       aria-label={ariaLabel}
-      className="tl-feed-card"
+      // Codex P2 fix: previous commit changed root from <Link> to <div> to
+      // free the expand button from Link's onClick interception, but kept
+      // `tl-feed-card` which lights up the card-wide gradient + footer arrow
+      // on hover. Users then hovered/clicked the non-clickable header/foot
+      // and got no navigation. Drop the class — only the explicit scoreboard
+      // <Link> below shows a navigation affordance, and the expand button
+      // shows its own border hover state. Preserves layout/border/animation
+      // via inline styles below.
       style={{
         display: "grid",
         gridTemplateColumns: "1fr",
