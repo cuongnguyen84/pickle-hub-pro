@@ -204,10 +204,16 @@ function ManualTriggerTab({ language }: { language: "vi" | "en" }) {
       const json = await triggerScrapeViaEdge({ tournament_url: url });
       setResult(json);
       if (json.ok) {
+        const queued = (json as { queued?: boolean }).queued === true;
         toast({
-          title: language === "vi" ? "Bắt đầu scrape" : "Scrape started",
-          description:
-            language === "vi"
+          title: queued
+            ? language === "vi" ? "Đã đưa vào queue" : "Scrape queued"
+            : language === "vi" ? "Bắt đầu scrape" : "Scrape started",
+          description: queued
+            ? language === "vi"
+              ? "Worker đang chạy. Mở tab Logs trong 30-90 giây để xem kết quả."
+              : "Worker is running. Check the Logs tab in 30-90 seconds."
+            : language === "vi"
               ? `Log ID: ${json.log_id} — ${json.matches_extracted} trận, ${json.players_extracted} người chơi`
               : `Log ID: ${json.log_id} — ${json.matches_extracted} matches, ${json.players_extracted} players`,
         });
@@ -460,18 +466,41 @@ function WatchlistTab({ language }: { language: "vi" | "en" }) {
         watchlist_id: row.id,
       });
       if (res.ok) {
+        // Edge function returns 202 + { queued: true } for the MLP
+        // multi-day path (the Worker now runs 30-90s and we can no
+        // longer wait synchronously without timing the browser out).
+        // Distinguish "queued" from "complete" so the toast tells the
+        // admin to check the Logs tab in a moment.
+        const queued = (res as { queued?: boolean }).queued === true;
         toast({
-          title: language === "vi" ? "Scrape xong" : "Scrape complete",
-          description:
-            language === "vi"
+          title: queued
+            ? language === "vi"
+              ? "Đã đưa vào queue"
+              : "Scrape queued"
+            : language === "vi"
+              ? "Scrape xong"
+              : "Scrape complete",
+          description: queued
+            ? language === "vi"
+              ? "Worker đang chạy. Mở tab Logs trong 30-90 giây để xem kết quả."
+              : "Worker is running. Check the Logs tab in 30-90 seconds."
+            : language === "vi"
               ? `${res.matches_extracted ?? 0} trận, ${res.players_extracted ?? 0} người chơi`
               : `${res.matches_extracted ?? 0} matches, ${res.players_extracted ?? 0} players`,
         });
-        // refresh both watchlist (last_scraped_at) and logs
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] }),
-          queryClient.invalidateQueries({ queryKey: ["pro-tour-logs"] }),
-        ]);
+        // Schedule a delayed refresh so the Logs tab catches the Worker's
+        // log row once it lands (typical 30-90s).
+        if (queued) {
+          setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: ["pro-tour-logs"] });
+            void queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] });
+          }, 30_000);
+        } else {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["pro-tour-watchlist"] }),
+            queryClient.invalidateQueries({ queryKey: ["pro-tour-logs"] }),
+          ]);
+        }
       } else {
         toast({
           title: language === "vi" ? "Scrape lỗi" : "Scrape failed",
