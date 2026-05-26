@@ -484,17 +484,18 @@ export function ClubMatches({ clubId, isOrganizer }: Props) {
           </h2>
         </div>
 
-        {isOrganizer && (
-          <button
-            type="button"
-            onClick={() => setLogOpen(true)}
-            className="tl-btn green"
-            style={{ flexShrink: 0 }}
-          >
-            <Plus className="h-4 w-4" />
-            {m.logCta}
-          </button>
-        )}
+        {/* P2: members can also log matches — they go through the
+            opponent-confirmation flow before reaching DUPR. Organizers
+            still auto-confirm. log_club_match RPC enforces club-membership. */}
+        <button
+          type="button"
+          onClick={() => setLogOpen(true)}
+          className="tl-btn green"
+          style={{ flexShrink: 0 }}
+        >
+          <Plus className="h-4 w-4" />
+          {m.logCta}
+        </button>
       </header>
 
       {isLoading ? (
@@ -534,6 +535,7 @@ export function ClubMatches({ clubId, isOrganizer }: Props) {
         clubId={clubId}
         open={logOpen}
         onOpenChange={setLogOpen}
+        isOrganizer={isOrganizer}
       />
     </section>
   );
