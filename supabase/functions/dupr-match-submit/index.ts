@@ -195,6 +195,13 @@ Deno.serve(async (req) => {
 });
 
 // ─── matches-row mirror helpers (PR4 wiring) ─────────────────────────────
+//
+// 2026-05-26: also handle "club_match" source — the club_match_log
+// migration (20260525120000) writes into the SAME `matches` table, so
+// when an admin pushes a club match to DUPR we must mirror the
+// matchCode + sync state onto that row too. Otherwise the UI badge
+// stays "READY — NOT YET IN THE DUPR QUEUE" forever even though DUPR
+// has acknowledged the submission.
 async function mirrorMatchesRowOnSubmit(
   supabase: ReturnType<typeof createClient>,
   internal_source: string,
@@ -208,10 +215,18 @@ async function mirrorMatchesRowOnSubmit(
     dupr_sync_attempted_at: string;
   },
 ) {
-  if (internal_source !== "match") return;
+  if (internal_source !== "match" && internal_source !== "club_match") return;
+  const fullPatch: Record<string, unknown> = { ...patch };
+  // Club matches also have legacy `submitted_to_dupr` boolean + plain
+  // `dupr_match_id` text columns from the original mark-submitted RPC
+  // flow. Set them in sync with dupr_sync_status="submitted" so the
+  // list_club_matches RPC + UI badges agree.
+  if (internal_source === "club_match" && patch.dupr_sync_status === "submitted") {
+    fullPatch.submitted_to_dupr = true;
+  }
   const { error } = await supabase
     .from("matches")
-    .update(patch)
+    .update(fullPatch)
     .eq("id", internal_match_id);
   if (error) {
     console.warn(
