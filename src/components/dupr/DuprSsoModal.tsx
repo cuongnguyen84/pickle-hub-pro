@@ -129,10 +129,12 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         inset: 0,
         background: "rgba(0,0,0,0.7)",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
         zIndex: 1000,
-        padding: 12,
+        padding: 8,
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -141,8 +143,10 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
           background: "#fff",
           borderRadius: 12,
           width: "min(560px, calc(100vw - 16px))",
+          minHeight: 640,
           height: "calc(100vh - 16px)",
-          maxHeight: 960,
+          maxHeight: "min(960px, calc(100vh - 16px))",
+          flexShrink: 0,
           display: "flex",
           flexDirection: "column",
           position: "relative",
