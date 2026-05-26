@@ -534,8 +534,15 @@ export function RegistrationModal({
         },
       );
       if (error) {
-        const code = (error as { message?: string }).message ?? "";
-        const known = code.match(/^[a-z_]+$/i) ? code : "";
+        // PG RAISE EXCEPTION arrives as { message: 'event_started_or_ended',
+        // code: '22023', details: '', hint: '' } in supabase-js. But
+        // sometimes the message carries extra context (\nCONTEXT: ...).
+        // Extract the leading snake_case token instead of requiring the
+        // whole message to be snake_case, so error_codes like
+        // 'event_started_or_ended' still translate correctly.
+        const raw = (error as { message?: string }).message ?? "";
+        const known = raw.match(/^[a-z][a-z0-9_]*/)?.[0] ?? "";
+        console.error("register_event_as_member error", { raw, known });
         toast({
           title: translateErrorCode(known, t),
           variant: "destructive",
