@@ -137,44 +137,52 @@ Deno.serve(async (req) => {
 
   const signature = await hmacSha256Hex(workerBody, scraperSecret);
 
-  let workerRes: Response;
-  try {
-    workerRes = await fetch(`${scraperUrl}/scrape`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Scraper-Signature": signature,
-      },
-      body: workerBody,
-    });
-  } catch (err) {
-    // Network-level failure (DNS, connection refused, etc.). Surface
-    // the underlying message so admins can tell apart a Worker config
-    // problem (404 from CF for the Worker URL) from a real outage.
+  // Fire-and-forget the Worker call. The MLP multi-day path (click prev
+  // arrow 6x with 1.2s wait each) drives Worker wall-clock to 30-90s,
+  // which exceeds the browser's tolerance on the Edge Functions
+  // round-trip and surfaces as "Failed to send a request to the Edge
+  // Function" (TypeError "Failed to fetch") in the admin UI even though
+  // the Worker eventually completes successfully. Detaching the await
+  // here returns to the admin UI in <1s and the Worker's own
+  // pro_tour_ingestion_logs writes appear in the Logs tab once the
+  // scrape finishes.
+  //
+  // The Worker call is kept alive by EdgeRuntime.waitUntil so it
+  // continues after this handler returns. If the runtime doesn't
+  // expose waitUntil (older Deno versions), the promise still runs
+  // because Deno keeps the connection open until the response is
+  // sent; we just lose the explicit "stay alive after response" hint.
+  const scrapePromise = fetch(`${scraperUrl}/scrape`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Scraper-Signature": signature,
+    },
+    body: workerBody,
+  }).catch((err) => {
     const msg = err instanceof Error ? err.message : String(err);
-    return jsonResponse(
-      { error: `Worker fetch failed: ${msg}` },
-      502,
-    );
+    console.error(`[pro-tour-trigger-scrape] Worker fetch error: ${msg}`);
+  });
+
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } })
+    .EdgeRuntime;
+  if (runtime?.waitUntil) {
+    runtime.waitUntil(scrapePromise);
   }
 
-  // Forward the Worker's response shape verbatim — the admin UI knows
-  // how to render { ok, log_id, matches_extracted, players_extracted }
-  // or { ok: false, error }. Status code mirrors the Worker's so the
-  // UI's response-status handling stays consistent with calling the
-  // Worker directly.
-  let workerJson: WorkerResponse;
-  try {
-    workerJson = (await workerRes.json()) as WorkerResponse;
-  } catch {
-    const text = await workerRes.text();
-    return jsonResponse(
-      { error: `Worker returned non-JSON: ${text.slice(0, 500)}` },
-      502,
-    );
-  }
-
-  return jsonResponse(workerJson, workerRes.status);
+  // Return immediately with a "queued" shape the admin UI understands.
+  // matches_extracted/players_extracted are populated by the cron-style
+  // refresh on the Logs tab once the Worker finishes (15-90s typical).
+  return jsonResponse(
+    {
+      ok: true,
+      queued: true,
+      matches_extracted: 0,
+      players_extracted: 0,
+      note: "Scrape queued in the Worker. Refresh the Logs tab in 30-90s to see the result.",
+    },
+    202,
+  );
 });
 
 /**
