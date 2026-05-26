@@ -360,8 +360,14 @@ export function parseMlpFromBracketsPools(
       if (seenExtIds.has(m.external_id)) continue;
       seenExtIds.add(m.external_id);
 
-      const teamASlug = `mlp-${slugify(m.team_a.name)}`;
-      const teamBSlug = `mlp-${slugify(m.team_b.name)}`;
+      // external_id is the slug-only form ("columbus-sliders"). The
+      // ingest function adds the `mlp-` prefix when composing the
+      // username, so we don't double-prefix here. This also matches the
+      // pre-existing team ghost profiles seeded manually before the
+      // adapter shipped (which used slug-only external_ids), avoiding a
+      // username UNIQUE conflict on first ingest after the manual seed.
+      const teamASlug = slugify(m.team_a.name);
+      const teamBSlug = slugify(m.team_b.name);
 
       if (!teamMap.has(teamASlug)) {
         teamMap.set(teamASlug, {
@@ -383,13 +389,14 @@ export function parseMlpFromBracketsPools(
       }
 
       // Build per-player ghost profiles for future use (per-player cards).
+      // Slug-only external_id (same convention as teams above).
       for (const g of m.games) {
         for (const p of [...g.players_a, ...g.players_b]) {
-          const slug = `mlp-${slugify(p)}`;
+          const slug = slugify(p);
           if (!playerMap.has(slug)) {
             playerMap.set(slug, {
               external_id: slug,
-              external_url: `https://majorleaguepickleball.co/player/${slugify(p)}/`,
+              external_url: `https://majorleaguepickleball.co/player/${slug}/`,
               display_name: p,
               avatar_url: null,
               country_code: null,
