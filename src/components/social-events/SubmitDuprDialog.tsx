@@ -1,27 +1,31 @@
 // ============================================================================
-// SubmitDuprDialog — organizer-only modal to push a match to DUPR.
+// SubmitDuprDialog — 1-click admin direct-submit to DUPR.
 // ----------------------------------------------------------------------------
-// Two-path design while DUPR Partner RAAS API access is still pending:
+// REWRITTEN 2026-05-26 — prior version exposed raw JSON payload + manual
+// matchCode input because DUPR Partner API wasn't live. Now that we have
+// prod credentials and dupr-match-submit edge function works, the dialog
+// is collapsed to:
 //
-//   1. **Validation panel** — pre-flight checks (every player has a DUPR
-//      ID, scores look valid, format compatible). Shows pass/fail per
-//      item so the organizer knows exactly what's missing.
+//   1. Pre-flight checks — every player has DUPR ID, scores valid, winner
+//      determined. Same logic as before but more compact.
+//   2. ONE primary action — "Gửi lên DUPR" calls the edge function and
+//      shows the returned matchCode on success.
 //
-//   2. **Payload preview** — JSON the future edge function will POST to
-//      DUPR. Copy-paste-friendly so the organizer can submit via the
-//      DUPR dashboard manually while we wait for the API.
+// No more JSON, no more matchCode input. Admin/creator only path —
+// member self-submit with opponent-confirm lives in a separate flow
+// (Phase 2 — not yet built).
+// ============================================================================
 //
-//   3. **Two actions:**
-//      - "Đợi API DUPR" — disabled stub; will be wired to the real edge
-//        function `dupr-match-submit` once RAAS is granted.
-//      - "Tôi đã submit thủ công" — paste matchCode → calls
-//        mark_match_submitted_to_dupr RPC → marks the row submitted.
-//
-// Restyled in TheLine vocabulary to match LogMatchDialog.
+// Note on i18n: this dialog uses inline vi/en strings instead of the
+// translations dict because the old t.socialEvents.matches.submit keys
+// (payloadHeading, manualSubmitCta, sendViaApi, etc.) describe a UX that
+// no longer exists. Keeping the old keys around as dead translations
+// makes the dict confusing for future contributors — better to inline
+// here and prune the dict when convenient.
 // ============================================================================
 
 import { useMemo, useState, type CSSProperties } from "react";
-import { CheckCircle2, Copy, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, XCircle, Send } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,10 +35,9 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
-import {
-  useMarkMatchSubmittedToDupr,
-  type ClubMatchRow,
-} from "@/hooks/useClubMatches";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import type { ClubMatchRow } from "@/hooks/useClubMatches";
 
 interface Props {
   match: ClubMatchRow;
@@ -43,7 +46,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-// ─── Shared TheLine inline style primitives ───────────────────────────────
+// ─── Style primitives ────────────────────────────────────────────────────
 
 const labelStyle: CSSProperties = {
   fontFamily: "'Geist Mono', monospace",
@@ -56,33 +59,6 @@ const labelStyle: CSSProperties = {
 const sectionStyle: CSSProperties = {
   padding: "18px 0",
   borderTop: "1px solid var(--tl-border)",
-};
-
-const codeBlockStyle: CSSProperties = {
-  background: "var(--tl-surface)",
-  border: "1px solid var(--tl-border)",
-  borderRadius: 8,
-  padding: 14,
-  fontFamily: "'Geist Mono', monospace",
-  fontSize: 12,
-  lineHeight: 1.55,
-  color: "var(--tl-fg-2)",
-  whiteSpace: "pre",
-  overflow: "auto",
-  maxHeight: 240,
-};
-
-const inputStyle: CSSProperties = {
-  width: "100%",
-  background: "transparent",
-  border: "none",
-  borderBottom: "1px solid var(--tl-border)",
-  borderRadius: 0,
-  padding: "10px 0",
-  fontSize: 15,
-  fontFamily: "'Geist Mono', monospace",
-  color: "var(--tl-fg)",
-  outline: "none",
 };
 
 interface CheckRow {
@@ -148,12 +124,15 @@ function CheckList({ rows }: { rows: CheckRow[] }) {
 }
 
 export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
-  const { t } = useI18n();
-  const m = t.socialEvents.matches.submit;
-  const markSubmitted = useMarkMatchSubmittedToDupr(clubId);
-  const [duprCode, setDuprCode] = useState("");
+  const { language } = useI18n();
+  const vi = language === "vi";
+  const qc = useQueryClient();
 
-  // ─── Build validation rows ──────────────────────────────────────────────
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successCode, setSuccessCode] = useState<string | null>(null);
+
+  // ─── Pre-flight validation ──────────────────────────────────────────────
   const checks = useMemo<CheckRow[]>(() => {
     const allPlayers = [...match.team_a_players, ...match.team_b_players];
     const missingDupr = allPlayers.filter((p) => !p.dupr_id);
@@ -168,106 +147,129 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
 
     return [
       {
-        label: m.checkAllPlayersHaveDupr,
+        label: vi
+          ? "Mọi người chơi đều có DUPR ID"
+          : "All players have a DUPR ID",
         passed: missingDupr.length === 0,
         detail:
           missingDupr.length === 0
             ? `${allPlayers.length}/${allPlayers.length}`
-            : m.checkMissingDuprDetail.replace(
-                "{names}",
-                missingDupr.map((p) => p.display_name ?? "—").join(", "),
-              ),
+            : (vi ? "Thiếu DUPR: " : "Missing DUPR: ") +
+              missingDupr.map((p) => p.display_name ?? "—").join(", "),
       },
       {
-        label: m.checkScoresValid,
+        label: vi ? "Tỉ số hợp lệ" : "Scores look valid",
         passed: scoresOk,
         detail: scoresOk
-          ? `${totalGames} ${totalGames === 1 ? m.gameSingular : m.gamePlural}`
-          : m.checkScoresInvalidDetail,
+          ? `${totalGames} ${totalGames === 1 ? (vi ? "ván" : "game") : (vi ? "ván" : "games")}`
+          : (vi ? "Tỉ số chưa đúng format" : "Score format invalid"),
       },
       {
-        label: m.checkWinnerDetermined,
+        label: vi ? "Đã xác định team thắng" : "Winning team determined",
         passed: match.winning_team !== null,
         detail:
           match.winning_team === "a"
-            ? m.winnerTeamA
+            ? (vi ? "Team A thắng" : "Team A wins")
             : match.winning_team === "b"
-              ? m.winnerTeamB
-              : m.winnerNone,
+              ? (vi ? "Team B thắng" : "Team B wins")
+              : (vi ? "Chưa xác định" : "Not set"),
       },
     ];
-  }, [match, m]);
+  }, [match, vi]);
 
   const allChecksPassed = checks.every((c) => c.passed);
 
-  // ─── Build DUPR API payload preview ─────────────────────────────────────
-  const payload = useMemo(() => {
-    const formatDupr =
-      match.format === "singles" ? "SINGLES" : "DOUBLES";
-    const games = match.team_a_score.length;
-    function buildTeam(players: typeof match.team_a_players, scores: number[]) {
-      const out: Record<string, unknown> = {
-        player1: players[0]?.dupr_id ?? "<MISSING>",
-      };
-      if (players.length > 1) out.player2 = players[1]?.dupr_id ?? "<MISSING>";
-      for (let i = 0; i < games; i++) {
-        out[`game${i + 1}`] = scores[i];
-      }
-      return out;
-    }
-    return {
-      identifier: `tph:club:${match.id}`,
-      matchDate: match.played_at.slice(0, 10),
-      location: "ThePickleHub CLB",
-      format: formatDupr,
-      matchType: "SIDEOUT",
-      event: "ThePickleHub CLB match",
-      bracket: "",
-      teamA: buildTeam(match.team_a_players, match.team_a_score),
-      teamB: buildTeam(match.team_b_players, match.team_b_score),
-    };
-  }, [match]);
+  // ─── Action handler ──────────────────────────────────────────────────────
+  async function handleSubmit() {
+    if (!allChecksPassed) return;
+    setSubmitting(true);
+    setError(null);
 
-  const payloadJson = JSON.stringify(payload, null, 2);
-
-  async function copyPayload() {
     try {
-      await navigator.clipboard.writeText(payloadJson);
-      toast({ title: m.copied });
-    } catch {
-      toast({ title: m.copyError, variant: "destructive" });
+      const totalGames = match.team_a_score.length;
+      const buildTeam = (players: typeof match.team_a_players, scores: number[]) => {
+        const out: Record<string, unknown> = { player1: players[0]?.dupr_id };
+        if (players.length > 1) out.player2 = players[1]?.dupr_id;
+        for (let i = 0; i < totalGames; i++) out[`game${i + 1}`] = scores[i];
+        return out;
+      };
+
+      const { data, error: invokeError } = await supabase.functions.invoke<{
+        result?: { matchCode?: string };
+        error?: string;
+        code?: string;
+        message?: string;
+      }>("dupr-match-submit", {
+        body: {
+          action: "create",
+          internal_source: "club_match",
+          internal_match_id: match.id,
+          match_date: match.played_at.slice(0, 10),
+          location: "ThePickleHub CLB",
+          format: match.format === "singles" ? "SINGLES" : "DOUBLES",
+          match_type: "SIDEOUT",
+          event: "ThePickleHub CLB match",
+          bracket: "",
+          team_a: buildTeam(match.team_a_players, match.team_a_score),
+          team_b: buildTeam(match.team_b_players, match.team_b_score),
+        },
+      });
+
+      if (invokeError) {
+        // Surface the real server-side reason — supabase-js wraps non-2xx
+        // as FunctionsHttpError with the body on context.
+        const ctx = (invokeError as { context?: Response }).context;
+        let detail = invokeError.message ?? "submit_failed";
+        if (ctx) {
+          try {
+            const body = await ctx.clone().json();
+            detail = body.error ?? body.message ?? body.code ?? detail;
+          } catch {
+            /* keep default */
+          }
+        }
+        throw new Error(detail);
+      }
+
+      const matchCode = data?.result?.matchCode;
+      if (!matchCode) {
+        throw new Error(data?.error ?? data?.message ?? "no_match_code");
+      }
+
+      setSuccessCode(matchCode);
+      toast({
+        title: vi ? "Đã gửi lên DUPR" : "Submitted to DUPR",
+        description: `matchCode: ${matchCode}`,
+      });
+
+      // Refresh the matches list so the row flips to "Sent to DUPR".
+      void qc.invalidateQueries({ queryKey: ["club-matches", clubId] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "submit_failed";
+      setError(msg);
+      toast({
+        title: vi ? "Gửi thất bại" : "Submit failed",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  async function handleManualSubmit() {
-    const code = duprCode.trim();
-    if (code.length < 1) {
-      toast({ title: m.errMatchCodeRequired, variant: "destructive" });
-      return;
-    }
-    try {
-      await markSubmitted.mutateAsync({ matchId: match.id, duprMatchId: code });
-      toast({ title: m.manualSubmitSuccess });
-      setDuprCode("");
+  function handleClose() {
+    // Reset state when closing.
+    if (!submitting) {
+      setError(null);
+      setSuccessCode(null);
       onOpenChange(false);
-    } catch (e) {
-      const errCode = (e as { code?: string })?.code ?? "";
-      const msg =
-        errCode === "already_submitted"
-          ? m.errAlreadySubmitted
-          : errCode === "not_authorized"
-            ? t.socialEvents.managers.errNotAuthorized
-            : errCode === "dupr_match_id_too_long"
-              ? m.errMatchCodeTooLong
-              : m.manualSubmitError;
-      toast({ title: msg, variant: "destructive" });
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : handleClose())}>
       <DialogContent
-        className="max-w-xl max-h-[92vh] overflow-y-auto p-0 border-0"
+        className="max-w-md p-0 border-0"
         style={{
           background: "var(--tl-bg)",
           color: "var(--tl-fg)",
@@ -275,28 +277,32 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
         }}
       >
         <VisuallyHidden>
-          <DialogTitle>{m.dialogTitle}</DialogTitle>
-          <DialogDescription>{m.dialogDesc}</DialogDescription>
+          <DialogTitle>{vi ? "Gửi trận lên DUPR" : "Submit match to DUPR"}</DialogTitle>
+          <DialogDescription>
+            {vi
+              ? "Kiểm tra điều kiện rồi gửi trận đấu lên DUPR để chấm rating chính thức."
+              : "Validate the match then push it to DUPR for official rating."}
+          </DialogDescription>
         </VisuallyHidden>
 
-        <div style={{ padding: "28px 26px 22px" }}>
+        {/* ─── Header ─── */}
+        <div style={{ padding: "26px 24px 18px" }}>
           <div className="tl-eyebrow" style={{ marginBottom: 10 }}>
             <span className="pip" />
-            <span>{m.eyebrow}</span>
+            <span>{vi ? "Gửi lên DUPR" : "Submit to DUPR"}</span>
           </div>
           <h2
             style={{
               fontFamily: "'Instrument Serif', serif",
               fontStyle: "italic",
               fontWeight: 400,
-              fontSize: 30,
-              lineHeight: 1.1,
+              fontSize: 28,
+              lineHeight: 1.15,
               letterSpacing: "-0.015em",
-              margin: "0 0 8px",
-              color: "var(--tl-fg)",
+              margin: "0 0 6px",
             }}
           >
-            {m.dialogTitle}.
+            {vi ? "Trận này sẵn sàng?" : "Ready to submit?"}
           </h2>
           <p
             style={{
@@ -306,149 +312,158 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
               lineHeight: 1.5,
             }}
           >
-            {m.dialogDesc}
+            {vi
+              ? "Trận đấu sẽ được gửi thẳng lên DUPR để chấm rating chính thức. Mất vài giây."
+              : "The match goes straight to DUPR for official rating. Takes a few seconds."}
           </p>
         </div>
 
-        <div style={{ padding: "0 26px" }}>
-          {/* ─── Validation ─── */}
-          <div style={{ ...sectionStyle, paddingTop: 0, borderTop: "none" }}>
-            <div style={{ ...labelStyle, marginBottom: 12 }}>
-              {m.validationHeading}
-            </div>
-            <CheckList rows={checks} />
-            {!allChecksPassed && (
-              <p
-                style={{
-                  marginTop: 14,
-                  padding: "12px 14px",
-                  background: "var(--tl-surface)",
-                  borderLeft: "2px solid var(--tl-live)",
-                  fontSize: 13,
-                  color: "var(--tl-fg-2)",
-                  lineHeight: 1.5,
-                }}
-              >
-                {m.fixBeforeSubmit}
-              </p>
-            )}
-          </div>
-
-          {/* ─── Payload preview ─── */}
-          <div style={sectionStyle}>
+        {/* ─── Body ─── */}
+        <div style={{ padding: "0 24px" }}>
+          {/* Success state */}
+          {successCode ? (
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 12,
+                padding: "20px 0 4px",
+                textAlign: "center",
               }}
             >
-              <span style={labelStyle}>{m.payloadHeading}</span>
-              <button
-                type="button"
-                onClick={copyPayload}
-                className="tl-btn"
-                style={{ padding: "5px 11px", fontSize: 12 }}
+              <CheckCircle2
+                style={{
+                  width: 40,
+                  height: 40,
+                  color: "var(--tl-green)",
+                  margin: "0 auto 12px",
+                }}
+              />
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>
+                {vi ? "Đã gửi lên DUPR" : "Sent to DUPR"}
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Geist Mono', monospace",
+                  fontSize: 13,
+                  color: "var(--tl-fg-2)",
+                  marginBottom: 4,
+                }}
               >
-                <Copy style={{ width: 12, height: 12 }} />
-                {m.copyPayload}
-              </button>
+                matchCode: {successCode}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--tl-fg-3)", lineHeight: 1.5 }}>
+                {vi
+                  ? "DUPR sẽ cập nhật rating của người chơi trong vài giờ tới."
+                  : "DUPR will update player ratings within a few hours."}
+              </div>
             </div>
-            <pre style={codeBlockStyle}>{payloadJson}</pre>
-            <p
-              style={{
-                marginTop: 10,
-                fontSize: 12,
-                color: "var(--tl-fg-3)",
-                lineHeight: 1.5,
-              }}
-            >
-              {m.payloadHint}
-            </p>
-          </div>
+          ) : (
+            <>
+              {/* Validation panel */}
+              <div style={{ ...sectionStyle, paddingTop: 0, borderTop: "none" }}>
+                <div style={{ ...labelStyle, marginBottom: 12 }}>
+                  {vi ? "Kiểm tra trước khi gửi" : "Pre-flight checks"}
+                </div>
+                <CheckList rows={checks} />
+                {!allChecksPassed && (
+                  <p
+                    style={{
+                      marginTop: 14,
+                      padding: "12px 14px",
+                      background: "var(--tl-surface)",
+                      borderLeft: "2px solid var(--tl-live)",
+                      fontSize: 13,
+                      color: "var(--tl-fg-2)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {vi
+                      ? "Sửa các mục đỏ trên trước khi gửi. Nếu thiếu DUPR ID, người chơi cần kết nối DUPR trước."
+                      : "Fix the items marked red before submitting. If a DUPR ID is missing, that player must connect DUPR first."}
+                  </p>
+                )}
+              </div>
 
-          {/* ─── Manual override ─── */}
-          <div style={sectionStyle}>
-            <div style={{ ...labelStyle, marginBottom: 12 }}>
-              {m.manualHeading}
-            </div>
-            <p
-              style={{
-                fontSize: 13,
-                color: "var(--tl-fg-3)",
-                marginBottom: 16,
-                lineHeight: 1.6,
-              }}
-            >
-              {m.manualDesc}
-            </p>
-            <label
-              htmlFor="dupr-code"
-              style={{ ...labelStyle, display: "block", marginBottom: 6 }}
-            >
-              {m.matchCodeLabel}
-            </label>
-            <input
-              id="dupr-code"
-              type="text"
-              value={duprCode}
-              onChange={(e) => setDuprCode(e.target.value)}
-              placeholder="e.g. 5271241957"
-              maxLength={64}
-              style={inputStyle}
-              autoComplete="off"
-            />
-          </div>
+              {/* Error message */}
+              {error && (
+                <div
+                  role="alert"
+                  style={{
+                    marginTop: 8,
+                    padding: "12px 14px",
+                    background: "rgba(239,68,68,0.08)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    color: "var(--tl-live, #ef4444)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <strong>{vi ? "Gửi thất bại:" : "Submit failed:"}</strong>{" "}
+                  {error}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* ─── Action row ─── */}
         <div
           style={{
             display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             gap: 10,
-            padding: "16px 26px 24px",
-            borderTop: "1px solid var(--tl-border)",
+            padding: "16px 24px 22px",
+            borderTop: successCode ? "none" : "1px solid var(--tl-border)",
             marginTop: 4,
           }}
         >
-          <button
-            type="button"
-            disabled
-            className="tl-btn"
-            title={m.pendingApiTooltip}
-            style={{ opacity: 0.4, cursor: "not-allowed" }}
-          >
-            {m.sendViaApi}
-          </button>
-          <div style={{ display: "flex", gap: 10 }}>
+          {successCode ? (
             <button
               type="button"
-              onClick={() => onOpenChange(false)}
-              className="tl-btn"
+              onClick={handleClose}
+              className="tl-btn primary"
+              style={{ minWidth: 100 }}
             >
-              {t.common.cancel}
+              {vi ? "Xong" : "Done"}
             </button>
-            <button
-              type="button"
-              onClick={handleManualSubmit}
-              disabled={markSubmitted.isPending || duprCode.trim().length < 1}
-              className="tl-btn green"
-              style={{
-                opacity:
-                  markSubmitted.isPending || duprCode.trim().length < 1
-                    ? 0.6
-                    : 1,
-              }}
-            >
-              {markSubmitted.isPending && (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              )}
-              {m.manualSubmitCta}
-            </button>
-          </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="tl-btn"
+                disabled={submitting}
+              >
+                {vi ? "Huỷ" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!allChecksPassed || submitting}
+                className="tl-btn primary"
+                style={{
+                  opacity: !allChecksPassed || submitting ? 0.5 : 1,
+                  cursor:
+                    !allChecksPassed || submitting ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send style={{ width: 14, height: 14 }} />
+                )}
+                {submitting
+                  ? vi
+                    ? "Đang gửi..."
+                    : "Sending..."
+                  : vi
+                    ? "Gửi lên DUPR"
+                    : "Submit to DUPR"}
+              </button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
