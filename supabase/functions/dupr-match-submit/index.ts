@@ -6,15 +6,11 @@
 //   - POST   {action:"update", ...payload}  → /match/v1.0/update
 //   - POST   {action:"delete", internal_source, internal_match_id} → /match/v1.0/delete
 //
-// Gating rules (per DUPR spec, plus our three-tier authorization model):
+// Gating rules (per DUPR spec, plus our two-tier authorization model):
 //   (A) Global admin (user_roles.admin) — can submit any match.
 //   (B) Club organizer — club creator (clubs.created_by) or active
 //       club_manager of matches.club_id, scoped to that club's rows.
 //       Encoded by the is_club_organizer(p_club_id, p_user_id) helper.
-//   (C) Confirmed opponent (Phase 2) — after confirm_club_match RPC
-//       sets confirmation_status='confirmed' and confirmed_by=caller,
-//       that opponent may push that specific match to DUPR. This is
-//       the auto-submit step from /match/confirm.
 //   Plus DUPR's own rules:
 //   - Every player in the match must have BASIC_L1 entitlement on
 //     `tournaments` (verified via dupr_user_has_entitlement helper,
@@ -22,9 +18,17 @@
 //   - If matchSource=CLUB, clubId required + caller must be
 //     DIRECTOR/ORGANIZER of that club via dupr_user_clubs cache.
 //
-// NOTE 2026-05-26: the `creator` user_role NO LONGER counts as a
-// global submit pass. It remains a livestream-creator marker only.
-// CLB-level club roles drive DUPR submit perms instead.
+// NOTE 2026-05-26 — strict DUPR compliance:
+//   - `creator` user_role NO LONGER counts as a global submit pass.
+//     It remains a livestream-creator marker only.
+//   - The Phase 2 "confirmed opponent" bypass was REMOVED. DUPR spec
+//     (https://dupr.gitbook.io/dupr-raas/integration-requirements/
+//     match-upload-and-management) explicitly forbids "normal users"
+//     from submitting: "Only tournament directors, admins, or
+//     designated match owners may submit results." Opponent confirms
+//     still flip the row's confirmation_status to 'confirmed' as a
+//     data-integrity check, but the actual DUPR push must be done by
+//     an admin or club organizer.
 //
 // Per-match identifier convention: `tph:<source>:<internal_id>`. Stored
 // in dupr_match_submissions so we can map back to matchCode for
@@ -177,26 +181,20 @@ Deno.serve(async (req) => {
     return err("missing_action", 400, "missing_action");
   }
 
-  // ─── 3. Role gate (three-tier model) ────────────────────────────────────
+  // ─── 3. Role gate (two-tier, DUPR-spec compliant) ───────────────────────
   //
   // (A) Global admin — user_roles.admin can submit any match.
-  //     The `creator` user_role no longer counts as a global pass; it
-  //     stayed too coarse (one creator could push matches from CLBs they
-  //     have nothing to do with). Creator now means livestream-creator
-  //     only — match submission has its own narrower gates below.
   //
   // (B) Club organizer — when internal_source is a `matches` row that
   //     belongs to a CLB (matches.club_id IS NOT NULL), the caller is
   //     allowed if they are the club creator OR an active club_manager.
-  //     This is verified via the is_club_organizer(club_uuid, user_uuid)
-  //     helper which encapsulates the SQL.
+  //     Verified via is_club_organizer(club_uuid, user_uuid).
   //
-  // (C) Confirmed opponent (Phase 2 bypass) — when a regular CLB member
-  //     logs a match and the opposing team has just confirmed it via
-  //     confirm_club_match RPC, the confirming opponent (auth.uid() ===
-  //     matches.confirmed_by) can push the confirmed match to DUPR.
-  //     This is the auto-submit step that fires immediately after they
-  //     click "Confirm" in the UI.
+  // The Phase 2 "confirmed opponent" path was REMOVED on 2026-05-26 to
+  // comply with DUPR's "TD/admin/match-owner only" rule. The opponent's
+  // confirm still flips matches.confirmation_status to 'confirmed' as a
+  // data-integrity gate; an admin/organizer then performs the actual
+  // DUPR submit via the regular dialog.
   const { data: roles } = await supabase
     .from("user_roles")
     .select("role")
@@ -206,48 +204,27 @@ Deno.serve(async (req) => {
   );
 
   let isClubOrganizer = false;
-  let isConfirmedOpponent = false;
 
   if (
     !isGlobalAdmin &&
     (body.internal_source === "match" || body.internal_source === "club_match")
   ) {
-    // Fetch the match row once — both org-check + opponent-check read it.
     const { data: matchRow } = await supabase
       .from("matches")
-      .select("club_id, confirmation_status, confirmed_by")
+      .select("club_id")
       .eq("id", body.internal_match_id)
-      .maybeSingle<{
-        club_id: string | null;
-        confirmation_status: string | null;
-        confirmed_by: string | null;
-      }>();
+      .maybeSingle<{ club_id: string | null }>();
 
-    if (matchRow) {
-      // (B) Club organizer check.
-      if (matchRow.club_id) {
-        const { data: orgOk } = await supabase.rpc("is_club_organizer", {
-          p_club_id: matchRow.club_id,
-          p_user_id: user.id,
-        });
-        if (orgOk === true) isClubOrganizer = true;
-      }
-
-      // (C) Confirmed opponent check — restricted to create action +
-      // club_match source (per Phase 2 design).
-      if (
-        !isClubOrganizer &&
-        body.action === "create" &&
-        body.internal_source === "club_match" &&
-        matchRow.confirmation_status === "confirmed" &&
-        matchRow.confirmed_by === user.id
-      ) {
-        isConfirmedOpponent = true;
-      }
+    if (matchRow?.club_id) {
+      const { data: orgOk } = await supabase.rpc("is_club_organizer", {
+        p_club_id: matchRow.club_id,
+        p_user_id: user.id,
+      });
+      if (orgOk === true) isClubOrganizer = true;
     }
   }
 
-  if (!isGlobalAdmin && !isClubOrganizer && !isConfirmedOpponent) {
+  if (!isGlobalAdmin && !isClubOrganizer) {
     return err("forbidden", 403, "role_required");
   }
 
