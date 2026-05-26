@@ -12,12 +12,11 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Loader2, Send } from "lucide-react";
+import { CheckCircle2, Loader2, Check } from "lucide-react";
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import {
   useMyPendingConfirmations,
   useConfirmClubMatch,
@@ -79,8 +78,8 @@ export default function MatchConfirm() {
           </h1>
           <p style={{ color: "var(--tl-fg-3)" }}>
             {vi
-              ? "Đối thủ vừa nhập tỉ số. Kiểm tra rồi bấm xác nhận — trận sẽ được gửi lên DUPR ngay."
-              : "Your opponent logged the score. Review it, then confirm — the match goes straight to DUPR."}
+              ? "Đối thủ vừa nhập tỉ số. Kiểm tra rồi bấm xác nhận — sau đó quản trị CLB sẽ gửi trận lên DUPR."
+              : "Your opponent logged the score. Review it, then confirm — your CLB admin then submits to DUPR."}
           </p>
         </header>
 
@@ -133,8 +132,7 @@ function PendingMatchCard({
   const vi = language === "vi";
 
   const confirm = useConfirmClubMatch();
-  const [stage, setStage] = useState<"idle" | "confirming" | "submitting" | "done">("idle");
-  const [matchCode, setMatchCode] = useState<string | null>(null);
+  const [stage, setStage] = useState<"idle" | "confirming" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
 
   async function handleConfirm() {
@@ -142,61 +140,18 @@ function PendingMatchCard({
     setStage("confirming");
 
     try {
+      // Strict DUPR compliance (2026-05-26): opponent confirm only flips
+      // status to 'confirmed' + ready_for_dupr=true. The actual DUPR push
+      // is performed by an admin or club organizer afterwards — DUPR spec
+      // forbids "normal users" from submitting matches.
       await confirm.mutateAsync({ matchId: row.id });
 
-      setStage("submitting");
-
-      const totalGames = row.team_a_score.length;
-      const buildTeam = (players: ClubMatchPlayer[], scores: number[]) => {
-        const out: Record<string, unknown> = { player1: players[0]?.dupr_id };
-        if (players.length > 1) out.player2 = players[1]?.dupr_id;
-        for (let i = 0; i < totalGames; i++) out[`game${i + 1}`] = scores[i];
-        return out;
-      };
-
-      const { data, error: invokeError } = await supabase.functions.invoke<{
-        created?: boolean;
-        match_code?: string;
-        error?: string;
-        message?: string;
-      }>("dupr-match-submit", {
-        body: {
-          action: "create",
-          internal_source: "club_match",
-          internal_match_id: row.id,
-          match_date: row.played_at.slice(0, 10),
-          location: "ThePickleHub CLB",
-          format: row.format === "singles" ? "SINGLES" : "DOUBLES",
-          match_type: "SIDEOUT",
-          event: "ThePickleHub CLB match",
-          bracket: "",
-          team_a: buildTeam(row.team_a_players, row.team_a_score),
-          team_b: buildTeam(row.team_b_players, row.team_b_score),
-        },
-      });
-
-      if (invokeError) {
-        const ctx = (invokeError as { context?: Response }).context;
-        let detail = invokeError.message ?? "submit_failed";
-        if (ctx) {
-          try {
-            const body = await ctx.clone().json();
-            detail = body.error ?? body.message ?? detail;
-          } catch {
-            /* keep */
-          }
-        }
-        throw new Error(detail);
-      }
-
-      const code = data?.match_code;
-      if (!code) throw new Error(data?.error ?? "no_match_code");
-
-      setMatchCode(code);
       setStage("done");
       toast({
-        title: vi ? "Đã xác nhận + gửi DUPR" : "Confirmed + submitted",
-        description: `matchCode: ${code}`,
+        title: vi ? "Đã xác nhận trận đấu" : "Match confirmed",
+        description: vi
+          ? "Quản trị CLB sẽ duyệt và gửi lên DUPR."
+          : "Your CLB admin will review and submit to DUPR.",
       });
       onDone();
     } catch (e) {
@@ -272,16 +227,24 @@ function PendingMatchCard({
         </p>
       )}
 
-      {stage === "done" && matchCode ? (
+      {stage === "done" ? (
         <div
-          className="flex items-center gap-2 text-sm"
-          style={{ color: "var(--tl-green)" }}
+          className="flex items-start gap-2 text-sm"
+          style={{ color: "var(--tl-green)", lineHeight: 1.5 }}
         >
-          <CheckCircle2 style={{ width: 16, height: 16 }} />
-          <span>
-            {vi ? "Đã gửi DUPR" : "Submitted to DUPR"} ·{" "}
-            <span style={{ fontFamily: "'Geist Mono', monospace" }}>{matchCode}</span>
-          </span>
+          <CheckCircle2
+            style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontWeight: 600 }}>
+              {vi ? "Đã xác nhận trận đấu" : "Match confirmed"}
+            </div>
+            <div style={{ color: "var(--tl-fg-3)", marginTop: 2 }}>
+              {vi
+                ? "Quản trị CLB sẽ duyệt và gửi lên DUPR sớm."
+                : "Your CLB admin will review and submit it to DUPR shortly."}
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -318,15 +281,10 @@ function PendingMatchCard({
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {vi ? "Đang xác nhận..." : "Confirming..."}
                 </>
-              ) : stage === "submitting" ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {vi ? "Đang gửi DUPR..." : "Submitting..."}
-                </>
               ) : (
                 <>
-                  <Send style={{ width: 14, height: 14 }} />
-                  {vi ? "Xác nhận + gửi DUPR" : "Confirm + send to DUPR"}
+                  <Check style={{ width: 14, height: 14 }} />
+                  {vi ? "Xác nhận tỉ số" : "Confirm score"}
                 </>
               )}
             </button>
