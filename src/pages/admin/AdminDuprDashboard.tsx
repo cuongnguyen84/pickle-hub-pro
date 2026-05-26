@@ -1552,6 +1552,79 @@ interface SearchResp {
   internal_total: number;
 }
 
+function DuprIdLookupRow({ vi }: { vi: boolean }) {
+  const [duprId, setDuprId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [resp, setResp] = useState<unknown>(null);
+
+  const lookup = async () => {
+    const id = duprId.trim().toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(id)) {
+      setResp({ error: "DUPR ID phải là 6 ký tự alphanumeric" });
+      return;
+    }
+    setBusy(true);
+    setResp(null);
+    try {
+      // Mint partner token via existing edge fn (admin via service-role secret)
+      // but we can't expose service-role to the SPA. Instead, hit the search
+      // edge function with the duprId as query — it will check internal first
+      // and try DUPR (likely 0 due to consent).
+      const { data, error } = await supabase.functions.invoke<{ hits: unknown[]; dupr_total: number; internal_total: number }>(
+        "dupr-user-search",
+        { body: { query: id, limit: 5 } },
+      );
+      if (error) {
+        setResp({ error: error.message ?? "lookup_failed" });
+      } else {
+        setResp(data ?? { hits: [] });
+      }
+    } catch (e) {
+      setResp({ error: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div className="flex gap-2 mb-2">
+        <input
+          type="text"
+          value={duprId}
+          onChange={(e) => setDuprId(e.target.value.toUpperCase())}
+          onKeyDown={(e) => { if (e.key === "Enter") lookup(); }}
+          placeholder="ABC123"
+          maxLength={6}
+          className="rounded border p-2 text-sm font-mono"
+          style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)", width: 120 }}
+        />
+        <button
+          type="button"
+          className="tl-btn"
+          onClick={lookup}
+          disabled={busy || duprId.trim().length !== 6}
+        >
+          {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : (vi ? "Lookup" : "Lookup")}
+        </button>
+      </div>
+      {resp && (
+        <div className="rounded border p-2 text-xs"
+             style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)" }}>
+          <pre style={{ color: "var(--tl-fg)", whiteSpace: "pre-wrap", margin: 0 }}>
+            {JSON.stringify(resp, null, 2)}
+          </pre>
+        </div>
+      )}
+      <p style={{ marginTop: 8, fontSize: 11, color: "var(--tl-fg-3)" }}>
+        {vi
+          ? "Lưu ý: DUPR API không cho phép lookup arbitrary duprId — chỉ user đã consent (= đã SSO via ThePickleHub) mới trả data. Test này chủ yếu để verify consent state."
+          : "Note: DUPR API does not allow looking up arbitrary duprIds — only consented users (= SSO'd via ThePickleHub) return data. This test is mainly for verifying consent state."}
+      </p>
+    </div>
+  );
+}
+
 function UserSearchTestSection() {
   const { language } = useI18n();
   const vi = language === "vi";
@@ -1586,8 +1659,8 @@ function UserSearchTestSection() {
       title="8. User search (DUPR + internal)"
       subtitle={
         vi
-          ? "Test dupr-user-search edge function. Merge results từ DUPR Partner API (chỉ users consented) + profiles table local. Dùng để debug visibility / consent issues."
-          : "Test dupr-user-search edge function. Merges results from DUPR Partner API (consented users only) + local profiles table. Useful for debugging visibility / consent issues."
+          ? "Tìm trên DUPR (chỉ users đã consent + chỉ search theo TÊN — DUPR API không support email / DUPR ID) + DB nội bộ (search được mọi field). Edge function `dupr-user-search` merge cả 2."
+          : "Searches DUPR (consented users + by full name ONLY — DUPR API does not support email / DUPR ID search) + internal DB (any field). Edge function `dupr-user-search` merges both."
       }
     >
       <div className="flex gap-2 mb-3">
@@ -1596,7 +1669,7 @@ function UserSearchTestSection() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") run(); }}
-          placeholder={vi ? "Nhập tên, email, hoặc DUPR ID" : "Type name, email, or DUPR ID"}
+          placeholder={vi ? "Tên người (DUPR chỉ search full name) hoặc email / username (chỉ internal DB)" : "Person name (DUPR full-name only) or email / username (internal DB only)"}
           className="flex-1 rounded border p-2 text-sm"
           style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }}
         />
@@ -1609,6 +1682,16 @@ function UserSearchTestSection() {
           {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : (vi ? "Tìm" : "Search")}
         </button>
       </div>
+
+      {/* Direct DUPR ID lookup — uses GET /user/v1.0/{id} on partner API.
+          Same consent restriction applies (only consented users return data),
+          but bypasses the full-text name search if anh đã biết exact DUPR ID. */}
+      <details style={{ marginBottom: 12 }}>
+        <summary style={{ cursor: "pointer", fontSize: 11, color: "var(--tl-fg-3)", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+          {vi ? "Lookup theo DUPR ID (GET /user/{id})" : "Lookup by DUPR ID (GET /user/{id})"}
+        </summary>
+        <DuprIdLookupRow vi={vi} />
+      </details>
 
       {resp && "error" in resp && (
         <div className="rounded border p-3 text-sm"

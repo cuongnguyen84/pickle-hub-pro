@@ -134,41 +134,61 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
         zIndex: 1000,
         padding: 16,
       }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         style={{
-          background: "var(--tl-bg, #fff)",
-          borderRadius: 8,
+          background: "#fff",
+          borderRadius: 12,
           width: "100%",
-          maxWidth: 480,
-          maxHeight: "min(720px, calc(100vh - 32px))",
+          maxWidth: 520,
+          height: "min(780px, calc(100vh - 32px))",
           display: "flex",
           flexDirection: "column",
           position: "relative",
           overflow: "hidden",
+          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
         }}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={language === "vi" ? "Đóng" : "Close"}
+        {/* Header bar — no overlap with iframe content */}
+        <div
           style={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: 8,
-            color: "var(--tl-fg, #000)",
-            zIndex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 16px",
+            borderBottom: "1px solid #e5e7eb",
+            background: "#fafafa",
+            flexShrink: 0,
           }}
         >
-          <X size={20} />
-        </button>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>
+            {language === "vi" ? "Kết nối DUPR" : "Connect DUPR"}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={language === "vi" ? "Đóng" : "Close"}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 4,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#6b7280",
+              borderRadius: 4,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <X size={20} />
+          </button>
+        </div>
 
         {!clientKeyEncoded && (
-          <div style={{ padding: 32, textAlign: "center", color: "var(--tl-red, #ef4444)" }}>
+          <div style={{ padding: 32, textAlign: "center", color: "#ef4444" }}>
             {language === "vi"
               ? "Thiếu cấu hình VITE_DUPR_CLIENT_KEY."
               : "Missing VITE_DUPR_CLIENT_KEY environment variable."}
@@ -181,7 +201,7 @@ export function DuprSsoModal({ open, onClose, onSuccess, onError }: Props) {
               ref={iframeRef}
               src={iframeSrc}
               title="DUPR SSO"
-              style={{ width: "100%", flex: 1, border: "none", minHeight: 560 }}
+              style={{ width: "100%", flex: 1, border: "none", minHeight: 0, display: "block" }}
               allow="clipboard-write"
             />
             {submitting && (
