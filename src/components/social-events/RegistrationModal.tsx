@@ -96,6 +96,44 @@ interface VerifyResponse {
  * to a bilingual user-facing message via the i18n catalog. Falls back to a
  * generic "network error" line when the code is unknown.
  */
+/**
+ * Extract a snake_case error code from a supabase-js FunctionsHttpError.
+ * Tries (in order): the JSON body's `code` field via context.text(),
+ * the error.message string (which sometimes carries 'captcha_failed' or
+ * '...non-2xx status code' depending on the supabase-js version), and
+ * finally a regex over the whole serialized error. Returns undefined
+ * when nothing matches.
+ */
+async function extractFunctionErrorCode(
+  err: unknown,
+): Promise<string | undefined> {
+  if (!err || typeof err !== "object") return undefined;
+  // 1. Read the JSON body from error.context (the original Response).
+  const ctx = (err as { context?: Response }).context;
+  if (ctx && typeof ctx.text === "function") {
+    try {
+      const txt = await ctx.text();
+      if (txt) {
+        try {
+          const parsed = JSON.parse(txt);
+          if (parsed && typeof parsed.code === "string") return parsed.code;
+        } catch {
+          // not JSON
+        }
+      }
+    } catch {
+      // Response body already consumed — fall through.
+    }
+  }
+  // 2. Look for a known code token in error.message.
+  const msg = (err as { message?: unknown }).message;
+  if (typeof msg === "string") {
+    const m = msg.match(/[a-z][a-z0-9_]{3,}/i);
+    if (m) return m[0];
+  }
+  return undefined;
+}
+
 function translateErrorCode(
   code: string | undefined,
   t: ReturnType<typeof useI18n>["t"],
@@ -320,18 +358,8 @@ export function RegistrationModal({
       // supabase.functions.invoke wraps non-2xx into `error`. We re-read
       // the response body to surface the structured `code` field.
       if (error) {
-        // Try to extract the JSON body from the FunctionsHttpError.
-        const ctx = (error as { context?: Response }).context;
-        let bodyCode: string | undefined;
-        if (ctx) {
-          try {
-            const txt = await ctx.text();
-            const parsed = JSON.parse(txt);
-            bodyCode = parsed?.code;
-          } catch {
-            // not JSON, fall through
-          }
-        }
+        const bodyCode = await extractFunctionErrorCode(error);
+        console.error("phone-otp-send error", { error, bodyCode });
         toast({
           title: translateErrorCode(bodyCode, t),
           variant: "destructive",
@@ -416,17 +444,8 @@ export function RegistrationModal({
         },
       });
       if (error) {
-        const ctx = (error as { context?: Response }).context;
-        let bodyCode: string | undefined;
-        if (ctx) {
-          try {
-            const txt = await ctx.text();
-            const parsed = JSON.parse(txt);
-            bodyCode = parsed?.code;
-          } catch {
-            // not JSON
-          }
-        }
+        const bodyCode = await extractFunctionErrorCode(error);
+        console.error("phone-otp-verify error", { error, bodyCode });
         toast({
           title: translateErrorCode(bodyCode, t),
           variant: "destructive",
