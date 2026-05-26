@@ -212,7 +212,12 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
       };
 
       const { data, error: invokeError } = await supabase.functions.invoke<{
-        result?: { matchCode?: string };
+        // Edge function returns flat snake_case on success.
+        created?: boolean;
+        match_code?: string;
+        hashed_match_code?: string | null;
+        identifier?: string;
+        // Error shape.
         error?: string;
         code?: string;
         message?: string;
@@ -259,7 +264,7 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
         throw new Error(detail);
       }
 
-      const matchCode = data?.result?.matchCode;
+      const matchCode = data?.match_code;
       if (!matchCode) {
         throw new Error(data?.error ?? data?.message ?? "no_match_code");
       }
