@@ -24,6 +24,7 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "pickleball-vs-padel-vs-paddle-tennis",
   "best-pickleball-paddles-beginners-2026",
   "pickleball-for-tennis-players-2026",
   "professional-pickleball-tours-guide-2026",

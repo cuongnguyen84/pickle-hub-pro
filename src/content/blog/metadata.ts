@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-vs-padel-vs-paddle-tennis",
+    publishedDate: "2026-05-26",
+    updatedDate: "2026-05-26",
+    author: "Cuong Nguyen",
+    tags: ["pickleball vs padel", "pickleball vs paddle tennis", "padel vs pickleball", "racquet sports comparison", "padel vietnam", "paddle tennis explained", "pickleball court dimensions", "pickleball beginners"],
+    ctaPath: "/blog/pickleball-for-tennis-players-2026",
+    ctaLabel: { en: "Next: Pickleball for Tennis Players 2026 — 5 Habits to Unlearn", vi: "Tiếp theo: Pickleball cho người chơi tennis 2026 — 5 thói quen cần bỏ" },
+    heroImage: {
+      src: "/images/blog/pickleball-vs-padel-vs-paddle-tennis-hero.webp",
+      alt: "Three top-down court diagrams side by side at the same visual scale, showing pickleball court (44 by 20 feet, kitchen marked), padel court (20 by 10 meters with glass walls in light blue), and paddle tennis POP court (50 by 20 feet, no walls), each labeled with sport name and dimensions in a clean illustrative diagram style on a white background for the 2026 racquet sports comparison guide"
+    },
+    titleEn: "Pickleball vs Padel vs Paddle Tennis: Complete Guide 2026",
+    titleVi: "Pickleball vs Padel vs Paddle Tennis: So Sánh Đầy Đủ 2026",
+    metaTitleEn: "Pickleball vs Padel vs Paddle Tennis: Complete Guide 2026",
+    metaTitleVi: "Pickleball vs Padel vs Paddle Tennis: So Sánh 2026",
+    metaDescriptionEn: "Pickleball vs padel vs paddle tennis: full 2026 comparison of court size, rules, scoring, equipment, where each sport is popular, what to try first.",
+    metaDescriptionVi: "Pickleball, padel hay paddle tennis khác nhau thế nào? So sánh 2026 đầy đủ: sân, luật, dụng cụ, nơi phổ biến tại VN/Á — và môn nào nên thử trước.",
+  },
+  {
     slug: "best-pickleball-paddles-beginners-2026",
     publishedDate: "2026-05-24",
     updatedDate: "2026-05-24",
