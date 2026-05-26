@@ -81,9 +81,9 @@ function isSupportedTournamentUrl(url: string): boolean {
 // upstream fetch if it hangs.
 const PAGE_GOTO_TIMEOUT_MS = 60_000;
 const RSC_SETTLE_TIMEOUT_MS = 5_000;
-// MLP needs ~30-45s total: 60s goto + 18s selector wait + 15s settle ≈ caps
-// at ~93s upstream — pad the outer fetch ceiling so we don't abort mid-wait.
-const RENDER_FETCH_TIMEOUT_MS = 120_000;
+// MLP path needs: 60s goto cap + 25s dwell + addScriptTag scroll/click time.
+// Pad the outer fetch ceiling so we don't abort mid-wait.
+const RENDER_FETCH_TIMEOUT_MS = 130_000;
 
 interface Env {
   /** Legacy Browser Rendering binding from the puppeteer-based
@@ -407,29 +407,59 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
   };
   if (isMlp) {
     // MLP's Schedule & Scores section is lazy-mounted via an intersection
-    // observer — the React island only fires when the section scrolls
-    // into view. Cloudflare Browser Rendering's default viewport is
-    // 1280×720, so the section sits below the fold and the observer
-    // never triggers. Result: capture returns the pre-mount DOM with
-    // zero article.sec containers (the original PR #167 bug).
+    // observer + a deferred React-Query fetch — the React island only
+    // fires when the section scrolls into view. PR #168 set a tall
+    // viewport (1920×8000), but in practice CF Browser Rendering's
+    // initial scroll position is still at the top of the page and the
+    // observer needs the actual scroll event to trigger. Test on
+    // 2026-05-26 with HTML length 339KB and 0 article.sec hits confirmed
+    // the section stayed in "Loading..." state.
     //
-    // Fix: render in a 1920×8000 viewport so the entire page is in view
-    // from page load, which fires the observer immediately. waitForTimeout
-    // then gives the schedule XHR time to land and React to commit the
-    // matchup rows.
+    // Fix: keep the tall viewport AND inject a script that:
+    //   1. Scrolls progressively down the page (kicks the intersection
+    //      observer and any IntersectionObserver-backed lazy components).
+    //   2. Clicks the "SEE ALL" button when it appears — the SEE ALL
+    //      view expands all matchups into the main DOM in one shot,
+    //      which is what our parser is tuned for.
     //
-    // We previously tried waitForSelector('article.sec, ...') here but
-    // CF Browser Rendering returns 422 when the selector doesn't appear
-    // within the ceiling — making render fail entirely instead of
-    // capturing what's available. Dropped in favour of the diagnostic
-    // emptiness check below: if articles still aren't there after the
-    // dwell, we surface a clear "render-incomplete" message instead of
-    // a hard render failure.
+    // waitForTimeout below gives the injected script ~25s of wall clock
+    // to find + click the button and let React commit the matchup rows.
     requestBody.viewport = {
       width: 1920,
       height: 8000,
       deviceScaleFactor: 1,
     };
+    requestBody.addScriptTag = [
+      {
+        content: `
+          (function(){
+            // Step 1 — wake the intersection observer by scrolling down.
+            let y = 0;
+            const scrollInterval = setInterval(() => {
+              y += 500;
+              window.scrollTo(0, y);
+              if (y > document.body.scrollHeight) clearInterval(scrollInterval);
+            }, 200);
+
+            // Step 2 — poll for the SEE ALL button and click it.
+            const seeAllInterval = setInterval(() => {
+              const btn = Array.from(document.querySelectorAll('button, a')).find(
+                el => el.textContent && el.textContent.trim().toUpperCase() === 'SEE ALL'
+              );
+              if (btn) {
+                btn.click();
+                clearInterval(seeAllInterval);
+              }
+            }, 500);
+            // Stop polling after 10s — gives React time to commit.
+            setTimeout(() => clearInterval(seeAllInterval), 10000);
+          })();
+        `,
+      },
+    ];
+    // Longer dwell so the injected script has time to scroll + click +
+    // React commits the matchup rows.
+    requestBody.waitForTimeout = 25_000;
   }
 
   // AbortController guards against the upstream fetch hanging beyond
