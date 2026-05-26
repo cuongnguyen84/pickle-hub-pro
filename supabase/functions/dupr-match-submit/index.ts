@@ -6,13 +6,25 @@
 //   - POST   {action:"update", ...payload}  → /match/v1.0/update
 //   - POST   {action:"delete", internal_source, internal_match_id} → /match/v1.0/delete
 //
-// Gating rules (per DUPR spec):
-//   - Only `admin` or `creator` user_roles may submit. Normal users
-//     forbidden (matches DUPR's "tournament directors, admins only" rule).
+// Gating rules (per DUPR spec, plus our three-tier authorization model):
+//   (A) Global admin (user_roles.admin) — can submit any match.
+//   (B) Club organizer — club creator (clubs.created_by) or active
+//       club_manager of matches.club_id, scoped to that club's rows.
+//       Encoded by the is_club_organizer(p_club_id, p_user_id) helper.
+//   (C) Confirmed opponent (Phase 2) — after confirm_club_match RPC
+//       sets confirmation_status='confirmed' and confirmed_by=caller,
+//       that opponent may push that specific match to DUPR. This is
+//       the auto-submit step from /match/confirm.
+//   Plus DUPR's own rules:
 //   - Every player in the match must have BASIC_L1 entitlement on
-//     `tournaments` (verified via dupr_user_has_entitlement helper).
+//     `tournaments` (verified via dupr_user_has_entitlement helper,
+//     with lazy-fetch fallback).
 //   - If matchSource=CLUB, clubId required + caller must be
 //     DIRECTOR/ORGANIZER of that club via dupr_user_clubs cache.
+//
+// NOTE 2026-05-26: the `creator` user_role NO LONGER counts as a
+// global submit pass. It remains a livestream-creator marker only.
+// CLB-level club roles drive DUPR submit perms instead.
 //
 // Per-match identifier convention: `tph:<source>:<internal_id>`. Stored
 // in dupr_match_submissions so we can map back to matchCode for
@@ -165,47 +177,77 @@ Deno.serve(async (req) => {
     return err("missing_action", 400, "missing_action");
   }
 
-  // ─── 3. Role gate ───────────────────────────────────────────────────────
-  // Primary path: caller has admin/creator role (DUPR's "TD-only" rule).
-  // Phase 2 bypass: when a regular member logged a club match and the
-  // opposing team has just confirmed it via confirm_club_match RPC, the
-  // confirming opponent (auth.uid() === matches.confirmed_by) is allowed
-  // to push the confirmed match to DUPR. This is the auto-submit step
-  // that fires immediately after they click "Confirm" in the UI.
+  // ─── 3. Role gate (three-tier model) ────────────────────────────────────
+  //
+  // (A) Global admin — user_roles.admin can submit any match.
+  //     The `creator` user_role no longer counts as a global pass; it
+  //     stayed too coarse (one creator could push matches from CLBs they
+  //     have nothing to do with). Creator now means livestream-creator
+  //     only — match submission has its own narrower gates below.
+  //
+  // (B) Club organizer — when internal_source is a `matches` row that
+  //     belongs to a CLB (matches.club_id IS NOT NULL), the caller is
+  //     allowed if they are the club creator OR an active club_manager.
+  //     This is verified via the is_club_organizer(club_uuid, user_uuid)
+  //     helper which encapsulates the SQL.
+  //
+  // (C) Confirmed opponent (Phase 2 bypass) — when a regular CLB member
+  //     logs a match and the opposing team has just confirmed it via
+  //     confirm_club_match RPC, the confirming opponent (auth.uid() ===
+  //     matches.confirmed_by) can push the confirmed match to DUPR.
+  //     This is the auto-submit step that fires immediately after they
+  //     click "Confirm" in the UI.
   const { data: roles } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", user.id);
-  const allowedRoles = new Set(["admin", "creator"]);
-  const hasAllowedRole = (roles ?? []).some((r: { role: string }) =>
-    allowedRoles.has(r.role)
+  const isGlobalAdmin = (roles ?? []).some(
+    (r: { role: string }) => r.role === "admin",
   );
 
-  let bypassRoleGate = false;
+  let isClubOrganizer = false;
+  let isConfirmedOpponent = false;
+
   if (
-    !hasAllowedRole &&
-    body.action === "create" &&
-    body.internal_source === "club_match"
+    !isGlobalAdmin &&
+    (body.internal_source === "match" || body.internal_source === "club_match")
   ) {
-    // Look up the match — does the caller match confirmed_by AND is the
-    // status 'confirmed'? Without these we reject (defense in depth: the
-    // RPC already verifies caller-in-required-from, but we never trust
-    // a single check).
+    // Fetch the match row once — both org-check + opponent-check read it.
     const { data: matchRow } = await supabase
       .from("matches")
-      .select("confirmation_status, confirmed_by")
+      .select("club_id, confirmation_status, confirmed_by")
       .eq("id", body.internal_match_id)
-      .maybeSingle<{ confirmation_status: string; confirmed_by: string | null }>();
+      .maybeSingle<{
+        club_id: string | null;
+        confirmation_status: string | null;
+        confirmed_by: string | null;
+      }>();
 
-    if (
-      matchRow?.confirmation_status === "confirmed" &&
-      matchRow.confirmed_by === user.id
-    ) {
-      bypassRoleGate = true;
+    if (matchRow) {
+      // (B) Club organizer check.
+      if (matchRow.club_id) {
+        const { data: orgOk } = await supabase.rpc("is_club_organizer", {
+          p_club_id: matchRow.club_id,
+          p_user_id: user.id,
+        });
+        if (orgOk === true) isClubOrganizer = true;
+      }
+
+      // (C) Confirmed opponent check — restricted to create action +
+      // club_match source (per Phase 2 design).
+      if (
+        !isClubOrganizer &&
+        body.action === "create" &&
+        body.internal_source === "club_match" &&
+        matchRow.confirmation_status === "confirmed" &&
+        matchRow.confirmed_by === user.id
+      ) {
+        isConfirmedOpponent = true;
+      }
     }
   }
 
-  if (!hasAllowedRole && !bypassRoleGate) {
+  if (!isGlobalAdmin && !isClubOrganizer && !isConfirmedOpponent) {
     return err("forbidden", 403, "role_required");
   }
 
