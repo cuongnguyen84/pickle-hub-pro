@@ -271,8 +271,8 @@ function parseMatchesArray(slice: string): MlpMatchupGameLineup[] {
 
 function extractMatchupsFromPool(poolHtml: string): ParsedMlpMatchup[] {
   const results: ParsedMlpMatchup[] = [];
-  // Find every `\"teamOneUuid\":\"<uuid>\"` marker and slice ahead 5KB
-  // (one matchup record fits comfortably under 4KB on the MLP page).
+  // Find every `\"teamOneUuid\":\"<uuid>\"` marker; each marks the start
+  // of one matchup record.
   const markerRe = /\\"teamOneUuid\\":\\"([a-f0-9-]+)\\"/g;
   const markers: Array<{ idx: number; uuid: string }> = [];
   let mm: RegExpExecArray | null;
@@ -284,7 +284,14 @@ function extractMatchupsFromPool(poolHtml: string): ParsedMlpMatchup[] {
 
   for (let i = 0; i < markers.length - 1; i++) {
     const start = markers[i].idx;
-    const end = Math.min(markers[i + 1].idx, start + 8000);
+    // Slice covers everything up to the next matchup marker. A
+    // complete MLP matchup record runs ~9-12 KB (team metadata + 5
+    // inner game blocks at ~1.5 KB each), so the previous 8 KB cap
+    // truncated the matches[] array after the WD game on most
+    // matchups — the per-card "Chi tiết các game" expand panel only
+    // showed 1 of 5 games. Use the natural next-marker boundary
+    // instead (sentinel handles the final matchup).
+    const end = markers[i + 1].idx;
     const slice = poolHtml.slice(start, end);
 
     const teamTwoUuid = extractStringField(slice, "teamTwoUuid");
