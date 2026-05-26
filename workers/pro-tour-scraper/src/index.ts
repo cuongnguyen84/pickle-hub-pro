@@ -53,6 +53,11 @@ import {
 } from "@/lib/pro-tour/adapters/rsc-scraper";
 import {
   parseMlpEventHtml,
+  parseMlpFromBracketsPools,
+  extractBracketsIframeUrl,
+  extractPoolIds,
+  bracketsPoolUrl,
+  extractTournamentName,
   MLP_EVENT_HOST_PATTERN,
 } from "@/lib/pro-tour/adapters/mlp-event-scraper";
 import type { TournamentScrapeResult } from "@/lib/pro-tour/types";
@@ -206,37 +211,33 @@ async function runScrape(
   const startMs = Date.now();
   let parsed: TournamentScrapeResult;
   try {
-    const html = await renderWithBrowserRendering(env, body.tournament_url);
-    // Dispatch on URL host: MLP event pages use a different DOM structure
-    // (WordPress + React island) than the Next.js RSC brackets, so the
-    // parser pair is selected up-front rather than via runtime sniffing.
-    parsed = MLP_EVENT_HOST_PATTERN.test(body.tournament_url)
-      ? parseMlpEventHtml(html, body.tournament_url)
-      : parseTournamentHtml(html, body.tournament_url);
+    if (MLP_EVENT_HOST_PATTERN.test(body.tournament_url)) {
+      // MLP path: scrape data straight from the underlying brackets API
+      // (the iframe source of truth) — no Browser Rendering needed
+      // because brackets.pickleballteamleagues.com serves complete RSC
+      // chunks with team metadata + matchup scores + player lineups on
+      // a raw GET. Earlier Browser Rendering attempts failed because the
+      // MLP page's React island couldn't be coerced to mount in CF's
+      // headless context. See file header comment on mlp-event-scraper.ts.
+      parsed = await scrapeMlpViaBrackets(body.tournament_url);
+    } else {
+      const html = await renderWithBrowserRendering(env, body.tournament_url);
+      parsed = parseTournamentHtml(html, body.tournament_url);
+    }
 
-    // Diagnostic for the MLP "0 matches" case: when the React island
-    // didn't mount before capture, the captured HTML has no
-    // `<article class="sec">` containers. Report this to the admin via
-    // the log's error_message field so they don't see a confusing
-    // "success / 0 trận" with no other signal. Idempotent: matches are
-    // still imported when present.
-    if (
-      MLP_EVENT_HOST_PATTERN.test(body.tournament_url) &&
-      parsed.matches.length === 0 &&
-      body.log_id
-    ) {
-      const articleHits = (html.match(/<article\b[^>]*\bsec\b/gi) ?? []).length;
-      const teamLogoHits = (html.match(/alt="[^"]*Team Logo"/gi) ?? []).length;
-      const hasLoading = /loading\.\.\./i.test(html);
+    // Generic empty-result safeguard: if the parser returns zero matches,
+    // surface it as a failed log so the admin doesn't see a confusing
+    // "success / 0 trận". Matches the previous MLP diagnostic but is now
+    // adapter-agnostic since MLP path doesn't go through Browser
+    // Rendering and the only failure modes left are network/parse.
+    if (parsed.matches.length === 0 && body.log_id) {
       const msg =
-        `MLP parser found 0 matchups. HTML length: ${html.length}, ` +
-        `<article.sec> hits: ${articleHits}, team logos: ${teamLogoHits}, ` +
-        `loading-state: ${hasLoading}. ` +
-        (articleHits === 0
-          ? "React island likely did not mount before capture — try bumping waitForTimeout."
-          : "Articles present but parser didn't extract them — regex/structure mismatch.");
+        `Scrape returned 0 matchups for ${body.tournament_url}. ` +
+        `Most likely cause: source page structure changed or the underlying ` +
+        `bracket API returned an empty payload. Re-run later or check the ` +
+        `tournament URL in a browser.`;
       await markLogFailed(env, body.log_id, msg, Date.now() - startMs).catch(
-        (e) => console.error(`[runScrape] empty-match markLogFailed: ${e}`),
+        (e) => console.error(`[runScrape] empty-result markLogFailed: ${e}`),
       );
       return {
         ok: false,
@@ -308,6 +309,68 @@ async function runScrape(
     matches_extracted: parsed.matches.length,
     players_extracted: parsed.players.length,
   };
+}
+
+/* ─── MLP brackets-direct fetcher (no Browser Rendering) ─────────────── */
+
+/**
+ * Orchestrate the MLP scrape by:
+ *   1. Raw-fetching the MLP event page to discover the brackets iframe URL.
+ *   2. Raw-fetching the brackets overview to extract pool IDs.
+ *   3. Raw-fetching each pool URL and handing the HTML to the parser.
+ *
+ * All fetches are plain HTTP GET — no Browser Rendering because the
+ * brackets app is a Next.js SSR app that ships the full matchup payload
+ * in the initial HTML (RSC chunks). This is ~3-5s end-to-end vs ~30s for
+ * the Browser-Rendering MLP attempt that kept timing out on lazy mount.
+ */
+async function scrapeMlpViaBrackets(
+  mlpEventUrl: string,
+): Promise<TournamentScrapeResult> {
+  const ua =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+    "(KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+
+  const mlpRes = await fetch(mlpEventUrl, { headers: { "User-Agent": ua } });
+  if (!mlpRes.ok) {
+    throw new Error(`MLP page fetch failed: HTTP ${mlpRes.status}`);
+  }
+  const mlpHtml = await mlpRes.text();
+
+  const overviewUrl = extractBracketsIframeUrl(mlpHtml);
+  if (!overviewUrl) {
+    throw new Error(
+      "MLP scrape: brackets iframe not found in event page HTML",
+    );
+  }
+
+  const tournamentName = extractTournamentName(mlpHtml);
+
+  const overviewRes = await fetch(overviewUrl, { headers: { "User-Agent": ua } });
+  if (!overviewRes.ok) {
+    throw new Error(`Brackets overview fetch failed: HTTP ${overviewRes.status}`);
+  }
+  const overviewHtml = await overviewRes.text();
+
+  const poolIds = extractPoolIds(overviewHtml);
+  if (poolIds.length === 0) {
+    throw new Error("MLP scrape: no pool IDs found in brackets overview");
+  }
+
+  const poolHtmls: string[] = [];
+  for (const poolId of poolIds) {
+    const url = bracketsPoolUrl(overviewUrl, poolId);
+    const r = await fetch(url, { headers: { "User-Agent": ua } });
+    if (!r.ok) {
+      // One pool failing shouldn't kill the whole scrape; skip + continue
+      // so the other pool's matchups still ingest.
+      console.error(`Pool fetch failed (${url}): HTTP ${r.status}`);
+      continue;
+    }
+    poolHtmls.push(await r.text());
+  }
+
+  return parseMlpFromBracketsPools(poolHtmls, mlpEventUrl, tournamentName);
 }
 
 /* ─── Browser Rendering REST API ─────────────────────────────────────── */
@@ -388,79 +451,21 @@ async function renderWithBrowserRendering(env: Env, url: string): Promise<string
   //   gotoOptions     — Puppeteer page.goto() options
   //   waitForTimeout  — dwell time after navigation for client-side
   //                     hydration to flush into the DOM
-  const isMlp = /majorleaguepickleball\.co/i.test(url);
+  // MLP path no longer goes through Browser Rendering (raw fetch suffices —
+  // see scrapeMlpViaBrackets). This call is now PPA-only, so the request
+  // body keeps the original lean shape.
   const requestBody: Record<string, unknown> = {
     url,
     gotoOptions: {
-      // MLP page's React island fetches matchup data after main load
-      // finishes, so for MLP we wait for the network to settle —
-      // `networkidle2` allows the React-Query loader to fire, then
-      // ≤2 in-flight requests indicates the schedule is ready. PPA RSC
-      // keeps `domcontentloaded` because its RSC chunks land during
-      // DOM construction.
-      waitUntil: isMlp ? ("networkidle2" as const) : ("domcontentloaded" as const),
+      waitUntil: "domcontentloaded" as const,
       timeout: PAGE_GOTO_TIMEOUT_MS,
     },
-    // Settle window. MLP gets a longer dwell so any deferred article.sec
-    // mount lands in the captured DOM.
-    waitForTimeout: isMlp ? 20_000 : RSC_SETTLE_TIMEOUT_MS,
+    waitForTimeout: RSC_SETTLE_TIMEOUT_MS,
   };
-  if (isMlp) {
-    // MLP's Schedule & Scores section is lazy-mounted via an intersection
-    // observer + a deferred React-Query fetch — the React island only
-    // fires when the section scrolls into view. PR #168 set a tall
-    // viewport (1920×8000), but in practice CF Browser Rendering's
-    // initial scroll position is still at the top of the page and the
-    // observer needs the actual scroll event to trigger. Test on
-    // 2026-05-26 with HTML length 339KB and 0 article.sec hits confirmed
-    // the section stayed in "Loading..." state.
-    //
-    // Fix: keep the tall viewport AND inject a script that:
-    //   1. Scrolls progressively down the page (kicks the intersection
-    //      observer and any IntersectionObserver-backed lazy components).
-    //   2. Clicks the "SEE ALL" button when it appears — the SEE ALL
-    //      view expands all matchups into the main DOM in one shot,
-    //      which is what our parser is tuned for.
-    //
-    // waitForTimeout below gives the injected script ~25s of wall clock
-    // to find + click the button and let React commit the matchup rows.
-    requestBody.viewport = {
-      width: 1920,
-      height: 8000,
-      deviceScaleFactor: 1,
-    };
-    requestBody.addScriptTag = [
-      {
-        content: `
-          (function(){
-            // Step 1 — wake the intersection observer by scrolling down.
-            let y = 0;
-            const scrollInterval = setInterval(() => {
-              y += 500;
-              window.scrollTo(0, y);
-              if (y > document.body.scrollHeight) clearInterval(scrollInterval);
-            }, 200);
-
-            // Step 2 — poll for the SEE ALL button and click it.
-            const seeAllInterval = setInterval(() => {
-              const btn = Array.from(document.querySelectorAll('button, a')).find(
-                el => el.textContent && el.textContent.trim().toUpperCase() === 'SEE ALL'
-              );
-              if (btn) {
-                btn.click();
-                clearInterval(seeAllInterval);
-              }
-            }, 500);
-            // Stop polling after 10s — gives React time to commit.
-            setTimeout(() => clearInterval(seeAllInterval), 10000);
-          })();
-        `,
-      },
-    ];
-    // Longer dwell so the injected script has time to scroll + click +
-    // React commits the matchup rows.
-    requestBody.waitForTimeout = 25_000;
-  }
+  // (Historical: PR #168-#169 added MLP-specific viewport + addScriptTag
+  // here. Removed when we discovered the MLP schedule lives in an iframe
+  // and switched to direct brackets-API scraping — see scrapeMlpViaBrackets
+  // and mlp-event-scraper.ts header for the post-mortem.)
 
   // AbortController guards against the upstream fetch hanging beyond
   // our outer ceiling — independent of CF's own internal timeouts.
