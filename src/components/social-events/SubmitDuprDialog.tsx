@@ -130,7 +130,19 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [missingBasicL1, setMissingBasicL1] = useState<string[] | null>(null);
   const [successCode, setSuccessCode] = useState<string | null>(null);
+
+  // Map a list of DUPR IDs back to display names for friendlier errors.
+  const allPlayers = useMemo(
+    () => [...match.team_a_players, ...match.team_b_players],
+    [match],
+  );
+  const namesForDuprIds = (ids: string[]): string[] =>
+    ids.map((id) => {
+      const p = allPlayers.find((x) => x.dupr_id === id);
+      return p?.display_name ?? id;
+    });
 
   // ─── Pre-flight validation ──────────────────────────────────────────────
   const checks = useMemo<CheckRow[]>(() => {
@@ -184,6 +196,11 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
     if (!allChecksPassed) return;
     setSubmitting(true);
     setError(null);
+    setMissingBasicL1(null);
+
+    // Hoisted out of try/catch so we can populate it from the response
+    // body and read it in the catch path for state setting.
+    let detectedMissing: string[] | null = null;
 
     try {
       const totalGames = match.team_a_score.length;
@@ -199,6 +216,7 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
         error?: string;
         code?: string;
         message?: string;
+        details?: { missing?: string[] };
       }>("dupr-match-submit", {
         body: {
           action: "create",
@@ -224,6 +242,16 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
           try {
             const body = await ctx.clone().json();
             detail = body.error ?? body.message ?? body.code ?? detail;
+            // dupr-match-submit returns { error: 'players_missing_basic_l1',
+            // details: { missing: [duprId, ...] } } on 412 — surface the
+            // affected players by name so the admin knows exactly who
+            // needs to connect DUPR.
+            if (
+              body.error === "players_missing_basic_l1" &&
+              Array.isArray(body.details?.missing)
+            ) {
+              detectedMissing = body.details.missing as string[];
+            }
           } catch {
             /* keep default */
           }
@@ -247,6 +275,12 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "submit_failed";
       setError(msg);
+      // If the failure was the BASIC_L1 gate, lift the affected player
+      // list into state so the UI can render a friendlier panel below
+      // the error banner.
+      if (detectedMissing && detectedMissing.length > 0) {
+        setMissingBasicL1(detectedMissing);
+      }
       toast({
         title: vi ? "Gửi thất bại" : "Submit failed",
         description: msg,
@@ -261,6 +295,7 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
     // Reset state when closing.
     if (!submitting) {
       setError(null);
+      setMissingBasicL1(null);
       setSuccessCode(null);
       onOpenChange(false);
     }
@@ -388,17 +423,78 @@ export function SubmitDuprDialog({ match, clubId, open, onOpenChange }: Props) {
                   role="alert"
                   style={{
                     marginTop: 8,
-                    padding: "12px 14px",
+                    padding: "14px 16px",
                     background: "rgba(239,68,68,0.08)",
                     border: "1px solid rgba(239,68,68,0.3)",
                     borderRadius: 8,
                     fontSize: 13,
                     color: "var(--tl-live, #ef4444)",
-                    lineHeight: 1.5,
+                    lineHeight: 1.55,
                   }}
                 >
-                  <strong>{vi ? "Gửi thất bại:" : "Submit failed:"}</strong>{" "}
-                  {error}
+                  {/* Special case: BASIC_L1 entitlement missing — give
+                      admin a clear explanation + the exact players who
+                      need to act. */}
+                  {missingBasicL1 && missingBasicL1.length > 0 ? (
+                    <>
+                      <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                        {vi
+                          ? "Người chơi chưa cấp quyền DUPR cho ThePickleHub"
+                          : "Players haven't granted DUPR permission to ThePickleHub"}
+                      </div>
+                      <ul
+                        style={{
+                          listStyle: "disc",
+                          paddingLeft: 20,
+                          margin: "0 0 10px",
+                          color: "var(--tl-fg)",
+                        }}
+                      >
+                        {namesForDuprIds(missingBasicL1).map((name, i) => (
+                          <li key={i} style={{ marginBottom: 2 }}>
+                            <span style={{ fontWeight: 500 }}>{name}</span>
+                            <span
+                              style={{
+                                marginLeft: 8,
+                                fontFamily: "'Geist Mono', monospace",
+                                fontSize: 11,
+                                color: "var(--tl-fg-3)",
+                              }}
+                            >
+                              {missingBasicL1[i]}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <div style={{ color: "var(--tl-fg-2)", fontSize: 12.5 }}>
+                        {vi ? (
+                          <>
+                            DUPR yêu cầu mỗi người chơi tự kết nối DUPR qua
+                            ThePickleHub (entitlement <code>BASIC_L1</code>)
+                            trước khi mình submit trận. Báo họ vào{" "}
+                            <strong>thepicklehub.net/dupr</strong> → bấm{" "}
+                            <strong>"Kết nối DUPR"</strong> rồi đồng ý cấp quyền.
+                            Sau đó quay lại bấm submit.
+                          </>
+                        ) : (
+                          <>
+                            DUPR requires each player to connect via
+                            ThePickleHub (the <code>BASIC_L1</code>{" "}
+                            entitlement) before we can submit on their
+                            behalf. Ask them to visit{" "}
+                            <strong>thepicklehub.net/dupr</strong> → click{" "}
+                            <strong>"Connect DUPR"</strong> and approve the
+                            permission. Then come back and submit again.
+                          </>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <strong>{vi ? "Gửi thất bại:" : "Submit failed:"}</strong>{" "}
+                      {error}
+                    </>
+                  )}
                 </div>
               )}
             </>
