@@ -1,13 +1,10 @@
 // ============================================================================
-// useClubMatches / useLogClubMatch / useMarkMatchReadyForDupr
+// useClubMatches / useLogClubMatch / useMarkMatchReadyForDupr +
+// useConfirmClubMatch / useMyPendingConfirmations (Phase 2)
 // ----------------------------------------------------------------------------
-// Wraps the RPCs added in migration 20260525120000_club_match_log.sql:
-//   - list_club_matches             (public read)
-//   - log_club_match                (organizer-only insert)
-//   - mark_match_ready_for_dupr     (organizer-only toggle)
-//
-// Player picker pulls from useClubMembers (active rows only) so this hook
-// intentionally does NOT fetch members itself — caller wires them in.
+// Wraps the RPCs from:
+//   - migration 20260525120000_club_match_log.sql
+//   - migration 20260526120000_club_match_confirmation.sql (Phase 2)
 // ============================================================================
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,6 +13,12 @@ import { supabase } from "@/integrations/supabase/client";
 export type MatchFormat = "singles" | "doubles" | "mixed";
 
 export type ClubPlayerRole = "creator" | "manager" | "member";
+
+export type MatchConfirmationStatus =
+  | "auto_confirmed_admin"
+  | "pending_opponent_confirm"
+  | "confirmed"
+  | "disputed";
 
 export interface ClubEligiblePlayer {
   profile_id: string;
@@ -45,6 +48,11 @@ export interface ClubMatchRow {
   submitted_to_dupr: boolean;
   dupr_match_id: string | null;
   notes: string | null;
+  // ─── Phase 2 ─────────────────────────────────────────────────────────
+  confirmation_status: MatchConfirmationStatus;
+  confirmation_required_from: string[];
+  confirmed_at: string | null;
+  // ─────────────────────────────────────────────────────────────────────
   team_a_players: ClubMatchPlayer[];
   team_b_players: ClubMatchPlayer[];
 }
@@ -76,8 +84,6 @@ function toMutationError(error: unknown): MutationError {
 
 /**
  * Fetch the union of creator + managers + active members for a CLB.
- * Used by the log-match player picker so any organizer / member can be
- * tagged in a match. Public-readable (RPC is SECURITY DEFINER + anon grant).
  */
 export function useClubEligiblePlayers(clubId: string | undefined) {
   const { data: players = [], isLoading, refetch } = useQuery<ClubEligiblePlayer[]>({
@@ -99,7 +105,6 @@ export function useClubEligiblePlayers(clubId: string | undefined) {
 
 /**
  * Fetch matches logged against a CLB plus per-team player rosters.
- * Public-readable (RPC is SECURITY DEFINER with anon EXECUTE grant).
  */
 export function useClubMatches(clubId: string | undefined, limit = 50) {
   const { data: matches = [], isLoading, refetch } = useQuery<ClubMatchRow[]>({
@@ -121,8 +126,9 @@ export function useClubMatches(clubId: string | undefined, limit = 50) {
 }
 
 /**
- * Organizer-only mutation: atomic insert of a match + participants.
- * Returns the new match UUID.
+ * Atomic insert of a match + participants. Role-aware (Phase 2):
+ *   - Organizer/manager → auto_confirmed_admin, ready_for_dupr=true
+ *   - Regular member    → pending_opponent_confirm, requires team-B sign-off
  */
 export function useLogClubMatch(clubId: string | undefined) {
   const queryClient = useQueryClient();
@@ -147,16 +153,16 @@ export function useLogClubMatch(clubId: string | undefined) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["club-matches", clubId] });
+      void queryClient.invalidateQueries({ queryKey: ["my-pending-confirmations"] });
     },
   });
 }
 
 /**
- * Organizer-only mutation: mark a match as submitted to DUPR with the
- * matchCode pasted from the DUPR dashboard. Currently used for the
- * manual override path while the DUPR Partner RAAS API is still pending;
- * once granted, the dupr-match-submit edge function will call this RPC
- * internally so the audit trail stays identical.
+ * Mark a club match as submitted with a manual matchCode. Legacy path —
+ * retained for admin manual override only. New flows go through the
+ * dupr-match-submit edge function which writes match_code + submitted_to_dupr
+ * directly via mirrorMatchesRowOnSubmit.
  */
 export function useMarkMatchSubmittedToDupr(clubId: string | undefined) {
   const queryClient = useQueryClient();
@@ -181,8 +187,7 @@ export function useMarkMatchSubmittedToDupr(clubId: string | undefined) {
 }
 
 /**
- * Organizer-only mutation: flip ready_for_dupr on/off. Refuses if the
- * match has already been submitted to DUPR (server-side check).
+ * Organizer-only mutation: flip ready_for_dupr on/off.
  */
 export function useMarkMatchReadyForDupr(clubId: string | undefined) {
   const queryClient = useQueryClient();
@@ -202,6 +207,69 @@ export function useMarkMatchReadyForDupr(clubId: string | undefined) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["club-matches", clubId] });
+    },
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Phase 2 — opponent confirmation
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface PendingConfirmationRow {
+  id: string;
+  slug: string;
+  club_id: string | null;
+  club_slug: string | null;
+  club_name: string | null;
+  played_at: string;
+  format: MatchFormat;
+  team_a_score: number[];
+  team_b_score: number[];
+  winning_team: "a" | "b" | null;
+  recorded_by: string;
+  recorded_by_name: string | null;
+  notes: string | null;
+  team_a_players: ClubMatchPlayer[];
+  team_b_players: ClubMatchPlayer[];
+}
+
+/**
+ * Returns matches awaiting the calling user's confirmation. Drives the
+ * /match/confirm page + the unread badge in the header.
+ */
+export function useMyPendingConfirmations() {
+  const { data = [], isLoading, refetch } = useQuery<PendingConfirmationRow[]>({
+    queryKey: ["my-pending-confirmations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_my_pending_confirmations");
+      if (error) return [];
+      return (data ?? []) as PendingConfirmationRow[];
+    },
+    staleTime: 30_000,
+  });
+
+  return { rows: data, isLoading, refetch };
+}
+
+/**
+ * Opposing-team player confirms a match. After the RPC succeeds the caller
+ * should immediately invoke dupr-match-submit (handled inside the UI flow
+ * — keeps the hook scope-narrow).
+ */
+export function useConfirmClubMatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation<string, MutationError, { matchId: string }>({
+    mutationFn: async ({ matchId }) => {
+      const { data, error } = await supabase.rpc("confirm_club_match", {
+        p_match_id: matchId,
+      });
+      if (error) throw toMutationError(error);
+      return String(data);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["my-pending-confirmations"] });
+      void queryClient.invalidateQueries({ queryKey: ["club-matches"] });
     },
   });
 }
