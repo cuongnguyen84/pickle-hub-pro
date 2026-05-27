@@ -1767,7 +1767,7 @@ export default function AdminDuprDashboard() {
 
   if (loading) {
     return (
-      <TheLineLayout>
+      <TheLineLayout title="DUPR Admin Dashboard — ThePickleHub" description="DUPR Partner API operator tooling: connection state, webhook events, manual sync." noindex>
         <div className="mx-auto max-w-3xl p-6">
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
@@ -1777,7 +1777,7 @@ export default function AdminDuprDashboard() {
 
   if (!user) {
     return (
-      <TheLineLayout>
+      <TheLineLayout title="DUPR Admin Dashboard — ThePickleHub" description="DUPR Partner API operator tooling: connection state, webhook events, manual sync." noindex>
         <div className="mx-auto max-w-3xl p-6">
           <h1 className="mb-3 text-2xl font-semibold">{vi ? "Cần đăng nhập" : "Sign in required"}</h1>
           <p style={{ color: "var(--tl-fg-3)" }}>
@@ -1791,7 +1791,7 @@ export default function AdminDuprDashboard() {
   }
 
   return (
-    <TheLineLayout>
+    <TheLineLayout title="DUPR Admin Dashboard — ThePickleHub" description="DUPR Partner API operator tooling: connection state, webhook events, manual sync." noindex>
       <div className="mx-auto max-w-3xl px-4 py-6">
         <header className="mb-6">
           <h1 className="text-2xl font-semibold" style={{ color: "var(--tl-fg)" }}>
