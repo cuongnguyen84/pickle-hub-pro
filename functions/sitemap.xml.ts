@@ -35,14 +35,13 @@ const SEGMENT_PATHS = [
   "/sitemap-tournaments.xml",
   "/sitemap-matches.xml",
   "/sitemap-events.xml",
-  // PR (2026-05-18 Ahrefs Site Audit Round 2 fix) — removed.
-  // sitemap-players emitted /nguoi-choi/{username} URLs that were
-  // legitimately orphan in Ahrefs (no internal link from any page).
-  // Round 1 already filtered incomplete-onboarding profiles, but the
-  // remaining 14 active profiles still flagged as orphan because there
-  // is no /nguoi-choi/ directory page providing inlinks. Re-enable
-  // when Sprint 3 ships the directory listing page.
-  // "/sitemap-players.xml",
+  // Sprint A4 (2026-05-27) — re-enabled. The orphan issue from May 2026
+  // is now solved by the Vietnam leaderboard at /rankings + the
+  // PlayersNearRating widget on each PlayerProfile, both shipped in
+  // Sprint A. Every public profile now has multiple in-app inlinks.
+  // Sitemap also now filters is_public_profile=true (Sprint A4 update
+  // in sitemap-players.xml.ts) so only opt-in profiles get crawled.
+  "/sitemap-players.xml",
   // PR (2026-05-18 Ahrefs Site Audit fix Round 1) — /sitemap-venues.xml
   // emitted /san/{slug} URLs but no `renderVenue` SSR handler exists
   // (Sprint 5 page). Re-enable once /san/{slug} ships SSR.

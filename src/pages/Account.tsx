@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DeleteAccountDialog } from "@/components/account/DeleteAccountDialog";
+import { PublicProfileToggle } from "@/components/account/PublicProfileToggle";
 import { 
   LogOut, 
   Palette, 
@@ -319,6 +320,11 @@ const Account = () => {
                 <LogOut className="w-4 h-4 mr-2" />
                 {t.nav.logout}
               </Button>
+
+              {/* Sprint A3 — Public-profile opt-in */}
+              <div className="pt-4 border-t border-border">
+                <PublicProfileToggle />
+              </div>
 
               {/* Delete Account - Apple Guideline 5.1.1 */}
               <div className="pt-4 border-t border-border">

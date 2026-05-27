@@ -1408,10 +1408,14 @@ export async function renderProfile(
       `id, username, display_name, avatar_url, bio,
        city, country, skill_level,
        dupr_singles, dupr_doubles,
-       is_ghost, onboarding_completed_at, created_at`,
+       is_ghost, is_public_profile, onboarding_completed_at, created_at`,
     )
     .or(orFilter)
     .eq("is_ghost", false)
+    // Sprint A2 — bots only see public-opt-in profiles. Authed users
+    // viewing their own profile bypass via client-side hook
+    // (usePlayerProfile) instead.
+    .eq("is_public_profile", true)
     .not("onboarding_completed_at", "is", null)
     .limit(1)
     .maybeSingle();

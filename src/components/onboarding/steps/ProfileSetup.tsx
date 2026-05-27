@@ -1,5 +1,5 @@
-import { useState, useEffect, Dispatch } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo, Dispatch } from "react";
+import { Loader2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,13 @@ import {
   slugifyDisplayName,
 } from "@/lib/social/username-generator";
 import type { OnboardingState } from "../OnboardingWizard";
+
+// Sprint A5 — username validation rules. Mirror the URL_SAFE_USERNAME_RE
+// from functions/_lib/sitemap-helpers.ts so anything that passes here will
+// also pass the sitemap-players generator. Lowercase letters, digits,
+// hyphens; cannot start/end with a hyphen; 3–32 chars.
+const USERNAME_RE = /^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])?$/;
+const USERNAME_DEBOUNCE_MS = 350;
 
 interface Props {
   state: OnboardingState;
@@ -67,18 +74,99 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
   const SKILL_LEVELS = language === "vi" ? SKILL_LEVELS_VI : SKILL_LEVELS_EN;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [usernamePreview, setUsernamePreview] = useState<string>("");
 
+  // Sprint A5 — user-pick username instead of auto-generate. Starts with
+  // a suggestion derived from display_name; user can edit before saving.
+  // Real-time availability check (debounced) hits username_is_available
+  // RPC (migration 20260528040000).
+  const [username, setUsername] = useState<string>(state.profile.username ?? "");
+  const [userEditedUsername, setUserEditedUsername] = useState(false);
+  const [availability, setAvailability] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid"
+  >("idle");
+
+  // Auto-suggest from display_name unless user has typed their own.
   useEffect(() => {
-    const slug = slugifyDisplayName(state.profile.display_name);
-    setUsernamePreview(slug || "");
-  }, [state.profile.display_name]);
+    if (userEditedUsername) return;
+    const suggested = slugifyDisplayName(state.profile.display_name) || "";
+    setUsername(suggested);
+  }, [state.profile.display_name, userEditedUsername]);
+
+  // Debounced availability check.
+  useEffect(() => {
+    if (!username) {
+      setAvailability("idle");
+      return;
+    }
+    if (!USERNAME_RE.test(username)) {
+      setAvailability("invalid");
+      return;
+    }
+    setAvailability("checking");
+    const handle = setTimeout(async () => {
+      try {
+        const { data, error: rpcError } = await supabase.rpc(
+          "username_is_available",
+          { p_candidate: username },
+        );
+        if (rpcError) throw rpcError;
+        // Self-bypass: user re-onboarding their own row should see their
+        // current username as "available".
+        if (data === false) {
+          const { data: ownRow } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("username", username)
+            .eq("id", userId)
+            .maybeSingle();
+          setAvailability(ownRow ? "available" : "taken");
+        } else {
+          setAvailability("available");
+        }
+      } catch {
+        setAvailability("idle");
+      }
+    }, USERNAME_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [username, userId]);
+
+  const availabilityLabel = useMemo(() => {
+    if (!username) return "";
+    switch (availability) {
+      case "checking":
+        return language === "vi" ? "Đang kiểm tra…" : "Checking…";
+      case "available":
+        return language === "vi" ? "Còn trống" : "Available";
+      case "taken":
+        return language === "vi" ? "Đã có người dùng" : "Already taken";
+      case "invalid":
+        return language === "vi"
+          ? "Chỉ chữ thường, số, dấu gạch ngang (3–32 ký tự)"
+          : "Lowercase letters, digits, hyphens only (3–32 chars)";
+      default:
+        return "";
+    }
+  }, [availability, username, language]);
 
   const handleDisplayNameChange = (value: string) => {
     dispatch({
       type: "SET_PROFILE",
       payload: { display_name: value },
     });
+  };
+
+  const handleUsernameChange = (raw: string) => {
+    // Normalize as the user types — keep it permissive (don't strip while
+    // they're mid-type) but lowercase and trim leading whitespace.
+    const next = raw.toLowerCase().replace(/\s+/g, "-");
+    setUsername(next);
+    setUserEditedUsername(true);
+  };
+
+  const handleSuggestFromDisplayName = () => {
+    const suggested = slugifyDisplayName(state.profile.display_name) || "";
+    setUsername(suggested);
+    setUserEditedUsername(false);
   };
 
   const handleSkillSelect = (
@@ -118,32 +206,72 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
       return;
     }
 
+    // Sprint A5 — validate the user-picked username before submit.
+    const candidate = username.trim();
+    if (!USERNAME_RE.test(candidate)) {
+      setError(
+        language === "vi"
+          ? "Username chỉ gồm chữ thường, số, dấu gạch ngang (3–32 ký tự)"
+          : "Username must be lowercase letters, digits, or hyphens (3–32 chars)",
+      );
+      return;
+    }
+    if (availability === "taken") {
+      setError(
+        language === "vi"
+          ? "Username này đã có người dùng — chọn username khác"
+          : "That username is taken — pick a different one",
+      );
+      return;
+    }
+    if (availability === "invalid") {
+      setError(
+        language === "vi"
+          ? "Username không hợp lệ"
+          : "Username is invalid",
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const username = await generateUsername(displayName, {
-        isAvailable: async (candidate) => {
-          // Exclude self so re-onboarding the same user doesn't treat
-          // their existing profile row as a collision and append a -XXXX
-          // suffix. Pattern observed Sprint 3-4: user "Phạm Quang"
-          // onboards → username "pham-quang"; reset state + re-onboard
-          // → without this neq, isAvailable returned false (their own
-          // row matched) → suffix "-obhx" appended unnecessarily.
-          const { data, error: lookupError } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("username", candidate)
-            .neq("id", userId)
-            .maybeSingle();
-          if (lookupError) throw lookupError;
-          return data === null;
-        },
-      });
+      // Final atomic check: try the candidate; on collision (race condition
+      // between the debounced check and submit), fall back to the legacy
+      // generateUsername helper which appends a suffix.
+      let finalUsername = candidate;
+      const { data: collision } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", candidate)
+        .neq("id", userId)
+        .maybeSingle();
+      if (collision) {
+        // Race lost — auto-append suffix and notify the user.
+        finalUsername = await generateUsername(displayName, {
+          isAvailable: async (cand) => {
+            const { data, error: lookupError } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("username", cand)
+              .neq("id", userId)
+              .maybeSingle();
+            if (lookupError) throw lookupError;
+            return data === null;
+          },
+        });
+        toast({
+          title:
+            language === "vi"
+              ? `Username "${candidate}" vừa bị người khác chọn — dùng "${finalUsername}"`
+              : `"${candidate}" was just taken — using "${finalUsername}"`,
+        });
+      }
 
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
           display_name: displayName,
-          username,
+          username: finalUsername,
           skill_level: state.profile.skill_level,
           onboarding_step: 1,
         })
@@ -153,7 +281,7 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
 
       dispatch({
         type: "SET_PROFILE",
-        payload: { display_name: displayName, username },
+        payload: { display_name: displayName, username: finalUsername },
       });
       dispatch({ type: "GO_NEXT" });
     } catch (err) {
@@ -223,20 +351,99 @@ export function ProfileSetup({ state, dispatch, userId }: Props) {
             autoFocus
             style={inputStyle}
           />
-          {usernamePreview && (
-            <p
+        </div>
+
+        {/* Sprint A5 — user-pick username */}
+        <div style={{ marginBottom: 28 }}>
+          <label htmlFor="username" style={labelStyle}>
+            {language === "vi" ? "Username (URL hồ sơ)" : "Username (profile URL)"}{" "}
+            <span style={{ color: "var(--tl-green)" }}>*</span>
+          </label>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 0 }}>
+            <span
               style={{
                 fontFamily: "'Instrument Serif', serif",
                 fontStyle: "italic",
-                fontSize: 14,
+                fontSize: 16,
                 color: "var(--tl-fg-3)",
-                marginTop: 8,
+                whiteSpace: "nowrap",
               }}
             >
               thepicklehub.net/nguoi-choi/
-              <span style={{ color: "var(--tl-fg-2)" }}>{usernamePreview}</span>
-            </p>
-          )}
+            </span>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => handleUsernameChange(e.target.value)}
+              placeholder="nguyen-hoang-nam"
+              required
+              minLength={3}
+              maxLength={32}
+              disabled={submitting}
+              autoComplete="off"
+              spellCheck={false}
+              style={{
+                ...inputStyle,
+                flex: 1,
+                fontSize: 16,
+                paddingLeft: 4,
+              }}
+              aria-describedby="username-availability"
+              aria-invalid={availability === "taken" || availability === "invalid"}
+            />
+          </div>
+          <div
+            id="username-availability"
+            role="status"
+            aria-live="polite"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginTop: 8,
+              fontFamily: "'Geist Mono', monospace",
+              fontSize: 11,
+              letterSpacing: "0.04em",
+              color:
+                availability === "available"
+                  ? "var(--tl-green)"
+                  : availability === "taken" || availability === "invalid"
+                    ? "var(--tl-red, #ef4444)"
+                    : "var(--tl-fg-3)",
+              minHeight: 18,
+            }}
+          >
+            {availability === "checking" && (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            )}
+            {availability === "available" && <Check className="h-3 w-3" />}
+            {(availability === "taken" || availability === "invalid") && (
+              <X className="h-3 w-3" />
+            )}
+            <span>{availabilityLabel}</span>
+            {userEditedUsername && state.profile.display_name && (
+              <button
+                type="button"
+                onClick={handleSuggestFromDisplayName}
+                style={{
+                  marginLeft: "auto",
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--tl-fg-3)",
+                  fontFamily: "'Geist Mono', monospace",
+                  fontSize: 10,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  padding: 0,
+                }}
+              >
+                {language === "vi" ? "Gợi ý từ tên" : "Suggest from name"}
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={{ marginBottom: 28 }}>

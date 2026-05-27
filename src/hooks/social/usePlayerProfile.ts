@@ -23,6 +23,7 @@ export type PlayerProfile = Pick<
   | "is_pro"
   | "is_verified"
   | "is_ghost"
+  | "is_public_profile"
   | "created_at"
 >;
 
@@ -50,10 +51,17 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
       const orFilter = isHexSlug
         ? `username.eq.${usernameOrSlug},profile_slug.like.${usernameOrSlug}%`
         : `username.eq.${usernameOrSlug}`;
+
+      // Sprint A2 — opt-in gate. /nguoi-choi/:username shows the row only
+      // if is_public_profile=true OR the viewer is the owner. Owner bypass
+      // lets a user preview their own profile before flipping the toggle.
+      const { data: authData } = await supabase.auth.getUser();
+      const ownUserId = authData.user?.id ?? null;
+
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "id, username, display_name, avatar_url, bio, city, country, skill_level, favorite_venue_id, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at, is_pro, is_verified, is_ghost, created_at",
+          "id, username, display_name, avatar_url, bio, city, country, skill_level, favorite_venue_id, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at, is_pro, is_verified, is_ghost, is_public_profile, created_at",
         )
         .or(orFilter)
         .limit(1)
@@ -62,6 +70,8 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
       // Ghost rows (placeholder profiles created via PlayerSelector for
       // non-app teammates) are not user-facing.
       if (!data || data.is_ghost) return null;
+      // Sprint A2 — gate non-owners on the opt-in flag.
+      if (!data.is_public_profile && data.id !== ownUserId) return null;
       return data as PlayerProfile;
     },
     enabled: !!usernameOrSlug,
