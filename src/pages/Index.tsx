@@ -393,6 +393,39 @@ const Index = () => {
         );
       })()}
 
+      {/* ── DUPR × ThePickleHub partnership strip ──
+          A horizontal certificate-style band that sits between the news
+          ticker and the hero eyebrow. Lives in the Calibrated Quiet design
+          system (cream paper, hairline rules, single green accent).
+          Clickable through to /dupr. Image scales responsively at container
+          width — wide aspect (2400×360 ≈ 6.7:1) reads cleanly on desktop,
+          quiet but legible at mobile breakpoints. */}
+      {(() => {
+        const alt =
+          language === "vi"
+            ? "ThePickleHub × DUPR — Đối tác chính thức"
+            : "ThePickleHub × DUPR — Official Partner";
+        return (
+          <div className="tl-shell" style={{ marginTop: 8, marginBottom: 8 }}>
+            <Link
+              to="/dupr"
+              aria-label={alt}
+              className="tl-dupr-strip block w-full overflow-hidden rounded-md transition-opacity hover:opacity-95"
+            >
+              <img
+                src="/images/partnerships/dupr-strip.png"
+                alt={alt}
+                width={2400}
+                height={360}
+                loading="eager"
+                fetchPriority="high"
+                className="block h-auto w-full"
+              />
+            </Link>
+          </div>
+        );
+      })()}
+
       {/* Hero */}
       {(() => {
         const heroBg =
