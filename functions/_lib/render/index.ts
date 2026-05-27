@@ -901,9 +901,6 @@ const BLOG_POST_META: Record<string, {
   datePublished?: string;
   image?: string;
 }> = {
-  "pickleball-vs-padel-vs-paddle-tennis": { title: "Pickleball vs Padel vs Paddle Tennis: Complete Guide 2026", description: "Pickleball vs padel vs paddle tennis: full 2026 comparison of court size, rules, scoring, equipment, where each sport is popular, what to try first.", datePublished: "2026-05-26", image: "/images/blog/pickleball-vs-padel-vs-paddle-tennis-hero.webp" },
-  "best-pickleball-paddles-beginners-2026": { title: "Best Pickleball Paddles for Beginners 2026 | 7 Top Picks", description: "Picking your first pickleball paddle without overspending. 7 beginner-friendly paddles for 2026 with weight, face, grip specs — plus what to avoid in VN.", datePublished: "2026-05-24", image: "/images/blog/best-pickleball-paddles-beginners-2026-hero.webp" },
-  "pickleball-for-tennis-players-2026": { title: "Pickleball for Tennis Players 2026 | 5 Habits to Unlearn", description: "Tennis players struggle with pickleball not because it's harder — they bring 5 ingrained habits that backfire. Here's what to unlearn and the 7-day fix.", datePublished: "2026-05-22", image: "/images/blog/pickleball-for-tennis-players-2026-hero.webp" },
   "dupr-rating-improvement-30-day-plan": { title: "Improve DUPR Rating in 30 Days | Realistic Training Plan 2026", description: "A 30-day plan to raise your DUPR rating: how DUPR's algorithm rewards consistent play, the 4 rules from Part 2, and a week-by-week training schedule.", datePublished: "2026-05-20", image: "/images/blog/dupr-rating-improvement-30-day-plan-hero.webp" },
   "professional-pickleball-tours-guide-2026": { title: "Pro Pickleball Tours 2026 | PPA vs MLP vs APP vs PPA Asia Compared", description: "2026 guide to pro pickleball tours: PPA Tour, MLP, PPA Tour Asia, APP — schedules, prize money, formats, top players, how to watch from Asia.", datePublished: "2026-05-18", image: "/images/blog/professional-pickleball-tours-guide-2026-hero.webp" },
   "dupr-algorithm-explained-performance-vs-expectation": { title: "DUPR Algorithm Explained 2025: Why You Lose Points After Winning | Part 2 of 3", description: "DUPR's July 2025 algorithm: why winning can lose points and losing can gain them. Match weights, exclusion rules, reliability score. Part 2 of 3.", datePublished: "2026-05-14", image: "/images/blog/dupr-algorithm-performance-vs-expectation-hero.webp" },
@@ -1132,19 +1129,104 @@ export function renderLivestreamList(siteUrl: string, rawPath: string, lang: Lan
 // for bots (8 broken-link reports tracing to homepage `/` linking to
 // `/rankings`). Routes exist in React (App.tsx line 572) but middleware
 // had no SSR handler. Same fix as /live below.
-export function renderRankings(siteUrl: string, rawPath: string, lang: Lang): Response {
-  const title = lang === "vi"
+//
+// Sprint A10 (2026-05-27) — when no scope query param OR scope=vietnam,
+// fetch top-25 from public.dupr_leaderboard_vietnam RPC and embed as a
+// bot-readable <ol> + ItemList JSON-LD. Bots and Googlebot get real
+// content + structured data; SPA hydrates and replaces with React table
+// (same visual). Default scope is now "vietnam" matching the React
+// page's initial state.
+export async function renderRankings(
+  supabase: SupabaseClient,
+  siteUrl: string,
+  rawPath: string,
+  lang: Lang,
+): Promise<Response> {
+  const titleVn = lang === "vi"
     ? "Bảng xếp hạng DUPR Pickleball Việt Nam | ThePickleHub"
-    : "Pickleball DUPR Rankings — Vietnam | ThePickleHub";
-  const description = lang === "vi"
-    ? "Bảng xếp hạng DUPR mới nhất cho VĐV pickleball Việt Nam — đơn nam, đôi nam, đôi nữ, đôi hỗn hợp. Theo dõi top player Việt Nam và Đông Nam Á."
-    : "Latest DUPR rankings for Vietnamese pickleball players — men's singles, doubles, mixed doubles. Track top players from Vietnam and Southeast Asia.";
+    : "Vietnam DUPR Pickleball Rankings | ThePickleHub";
+  const descriptionVn = lang === "vi"
+    ? "Bảng xếp hạng DUPR cho VĐV pickleball Việt Nam đã kết nối DUPR — cập nhật theo thời gian thực qua webhook DUPR. Top 100 đôi và đơn."
+    : "Live DUPR leaderboard for Vietnamese pickleball players linked to DUPR — updated in real time via DUPR webhook. Top 100 doubles and singles.";
+
+  // Fetch live data. RPC is SECURITY DEFINER + whitelist columns so any
+  // SSR-side client (anon or service) can call safely. We pass through
+  // any error silently and fall back to the meta-only shell — same
+  // behavior as the legacy renderRankings.
+  const { data, error } = await supabase.rpc("dupr_leaderboard_vietnam", {
+    p_format: "doubles",
+    p_limit: 25,
+  });
+
+  if (error) {
+    console.error("renderRankings: vietnam RPC error", { error });
+  }
+
+  type Row = {
+    rank: number;
+    user_id: string;
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    city: string | null;
+    dupr_rating: number;
+  };
+  const rows: Row[] = Array.isArray(data) ? (data as Row[]) : [];
+
+  // Render an <ol> with player links so Googlebot can crawl into
+  // /nguoi-choi/:username and pick up the leaderboard as internal linking.
+  const heading = lang === "vi"
+    ? "Top 25 đôi nam/nữ — Việt Nam"
+    : "Top 25 Doubles — Vietnam";
+  const subhead = lang === "vi"
+    ? "Đọc trực tiếp từ profile VĐV đã kết nối DUPR và bật chế độ công khai."
+    : "Live from profiles of players linked to DUPR with public visibility on.";
+  const empty = lang === "vi"
+    ? "Chưa có VĐV Việt Nam nào kết nối DUPR công khai."
+    : "No Vietnamese players have connected DUPR publicly yet.";
+
+  const listItems = rows.length === 0
+    ? `<p>${empty}</p>`
+    : `<ol>${rows
+        .map((r) => {
+          const name = escapeHtml(r.display_name ?? r.username);
+          const cityFragment = r.city ? ` — ${escapeHtml(r.city)}` : "";
+          return `<li><a href="${siteUrl}/nguoi-choi/${encodeURIComponent(r.username)}">${name}</a>${cityFragment} — DUPR ${r.dupr_rating.toFixed(3)}</li>`;
+        })
+        .join("")}</ol>`;
+
+  // schema.org ItemList — helps Google understand this is a ranked list.
+  // Each item is a ListItem pointing to the player's public profile page.
+  // Skip when empty so we don't ship an empty itemListElement array.
+  const itemListJsonLd = rows.length === 0 ? "" : `<script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: heading,
+    numberOfItems: rows.length,
+    itemListOrder: "https://schema.org/ItemListOrderDescending",
+    itemListElement: rows.map((r) => ({
+      "@type": "ListItem",
+      position: r.rank,
+      url: `${siteUrl}/nguoi-choi/${encodeURIComponent(r.username)}`,
+      name: r.display_name ?? r.username,
+    })),
+  })}</script>`;
+
   return htmlResponse(buildHtml({
-    title,
-    description,
+    title: titleVn,
+    description: descriptionVn,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     lang,
+    bodyContent: `
+      <header>
+        <h1>${escapeHtml(heading)}</h1>
+        <p>${escapeHtml(subhead)}</p>
+      </header>
+      ${listItems}
+      <p><a href="${siteUrl}${lang === "vi" ? "/vi/rankings" : "/rankings"}?scope=open">${lang === "vi" ? "Xem thêm: bảng xếp hạng toàn cầu & châu lục" : "See more: global & continental rankings"}</a></p>
+      ${itemListJsonLd}
+    `,
   }));
 }
 

@@ -461,7 +461,11 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // internal link from homepage `/` + 8 other source pages.
   if (path === "/live" || path === "/vi/live") return renderLivestreamList(siteUrl, rawPath, lang);
   // /rankings DUPR table — React Route at App.tsx line 572 with /vi alias.
-  if (path === "/rankings" || path === "/vi/rankings") return renderRankings(siteUrl, rawPath, lang);
+  // Sprint A10 (2026-05-27) — renderRankings is now async and reads
+  // dupr_leaderboard_vietnam RPC for bot-crawlable Vietnam top-25 +
+  // ItemList JSON-LD. Static global/continental scopes remain in the
+  // SPA only (low SEO priority).
+  if (path === "/rankings" || path === "/vi/rankings") return await renderRankings(supabase, siteUrl, rawPath, lang);
 
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
