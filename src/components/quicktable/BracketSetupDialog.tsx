@@ -10,15 +10,20 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Trash2, Plus, ArrowRight, Shuffle, Users, Wand2, Hand, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { ManualGroupAssignment } from './ManualGroupAssignment';
+import { fetchDuprSeeds, rankBySeed, seedCoverage } from '@/lib/dupr/seedFromDupr';
+import { SeedExplainerCard } from '@/components/dupr/SeedExplainerCard';
 
 interface PlayerInput {
   id: string;
   name: string;
   team: string;
   seed: string;
+  /** Sprint B2.2 — profile id for DUPR auto-seed lookup. */
+  userId?: string | null;
 }
 
 interface BracketSetupDialogProps {
@@ -30,6 +35,8 @@ interface BracketSetupDialogProps {
     name: string;
     team: string | null;
     skill: number | null;
+    /** Sprint B2.2 — required for Auto-seed by DUPR lookup. */
+    user_id?: string | null;
   }[];
 }
 
@@ -111,8 +118,52 @@ export function BracketSetupDialog({
       name: p.name,
       team: p.team || '',
       seed: '',
+      userId: p.user_id ?? null,
     })),
   );
+
+  // Sprint B2.2 — Auto-seed by DUPR
+  const [autoSeedByDupr, setAutoSeedByDupr] = useState(false);
+  const [seedingByDupr, setSeedingByDupr] = useState(false);
+  const [seedCoverageInfo, setSeedCoverageInfo] = useState<{
+    total: number;
+    withDupr: number;
+    stale: number;
+  } | null>(null);
+
+  const handleAutoSeedByDupr = async () => {
+    setSeedingByDupr(true);
+    try {
+      const userIds = players.map(p => p.userId).filter((id): id is string => !!id);
+      const ratings = await fetchDuprSeeds(userIds, table.is_doubles ? 'doubles' : 'singles');
+      const ranked = rankBySeed(
+        players.map(p => ({ id: p.userId ?? null, name: p.name })),
+        ratings,
+      );
+      // Map ranked back to PlayerInput preserving original team field, set seed string
+      setPlayers(prev =>
+        ranked.map((r, idx) => {
+          const original = prev.find(p => (p.userId ?? null) === r.id && p.name === r.name) ?? prev[idx];
+          return {
+            ...original,
+            seed: String(r.seed),
+          };
+        }),
+      );
+      const coverage = seedCoverage(ranked);
+      setSeedCoverageInfo({
+        total: coverage.total,
+        withDupr: coverage.withDupr,
+        stale: coverage.stale,
+      });
+      setAutoSeedByDupr(true);
+    } catch (e) {
+      toast.error(language === 'vi' ? 'Lỗi auto-seed DUPR' : 'DUPR auto-seed failed');
+      console.error('Auto-seed DUPR error', e);
+    } finally {
+      setSeedingByDupr(false);
+    }
+  };
 
   // Bilingual labels — inline ternary, scoped to BTC bracket-setup chrome
   const txt = {
@@ -385,6 +436,52 @@ export function BracketSetupDialog({
         </DialogHeader>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '8px 0' }}>
+          {/* Sprint B2.2 — Auto-seed by DUPR control */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 12,
+              padding: 12,
+              borderRadius: 'var(--tl-radius-lg)',
+              border: '1px solid var(--tl-border)',
+              background: 'var(--tl-bg-elev)',
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <Sparkles className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--tl-fg)' }}>
+                  {language === 'vi' ? 'Auto-seed theo DUPR' : 'Auto-seed by DUPR'}
+                </span>
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--tl-fg-3)', margin: 0, lineHeight: 1.5 }}>
+                {language === 'vi'
+                  ? `Tự đánh số seed dựa trên DUPR ${table.is_doubles ? 'đôi' : 'đơn'}. VĐV chưa connect DUPR seed cuối.`
+                  : `Number seeds by ${table.is_doubles ? 'doubles' : 'singles'} DUPR. Players without DUPR seed last.`}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="tl-btn green"
+              onClick={handleAutoSeedByDupr}
+              disabled={seedingByDupr || players.length === 0}
+              style={{ padding: '6px 10px', fontSize: 12, flexShrink: 0 }}
+            >
+              {seedingByDupr ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {language === 'vi' ? 'Auto-seed' : 'Auto-seed'}
+            </button>
+          </div>
+
+          {seedCoverageInfo && (
+            <SeedExplainerCard
+              total={seedCoverageInfo.total}
+              withDupr={seedCoverageInfo.withDupr}
+              stale={seedCoverageInfo.stale}
+            />
+          )}
+
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <h3 style={{ ...sectionTitle, fontSize: 16 }}>{txt.playerListTitle}</h3>
             <button

@@ -961,6 +961,7 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
             name: reg.display_name,
             team: reg.team,
             skill: reg.btc_override_skill || reg.skill_level || null,
+            user_id: reg.user_id ?? null,
           }))}
         />
       )}
