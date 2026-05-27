@@ -413,7 +413,7 @@ const Index = () => {
               className="tl-dupr-strip block w-full overflow-hidden rounded-md transition-opacity hover:opacity-95"
             >
               <img
-                src="/images/partnerships/dupr-strip.png"
+                src="/images/partnerships/dupr-strip.png?v=4"
                 alt={alt}
                 width={2400}
                 height={360}
