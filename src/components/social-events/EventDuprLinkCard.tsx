@@ -1,93 +1,45 @@
 // ============================================================================
-// EventDuprLinkCard — registered-player UI to link DUPR id vào registration.
+// EventDuprLinkCard — registered-player DUPR connection card.
 // ----------------------------------------------------------------------------
-// Visible khi viewer là registered player của social event:
-//   - Guest path: có `magicToken` (đọc từ localStorage qua readMyRegistration).
-//   - Authenticated path: có `authedProfileId` từ useAuth().
+// Authenticated users connect DUPR qua SSO (DuprConnectButton →
+// DuprSsoModal → dupr-sso-callback edge function). Connection lưu trên
+// profiles.dupr_id + profiles.dupr_connected_via='sso'.
 //
-// Card hiển thị:
-//   - Trạng thái "Chưa liên kết" → input nhập DUPR id + nút "Liên kết".
-//   - Trạng thái "Đã liên kết: <dupr_id>" → button "Bỏ liên kết" / "Sửa".
+// list_social_event_matches RPC tự động fallback profiles.dupr_id khi
+// event_registrations.dupr_id NULL, nên không cần copy thủ công vào
+// registration. Card này chỉ làm 2 việc:
+//   1. Hiển thị trạng thái kết nối hiện tại (đã connect → DUPR ID + rating).
+//   2. Nút "Kết nối DUPR" mở SSO modal khi chưa connect.
 //
-// DUPR id chấp nhận chữ + số + dash + underscore (format constraint trùng
-// với CHECK trên DB). Gọi RPC link_event_dupr_id_by_token (guest) hoặc
-// link_event_dupr_id_authed (authed) qua useLinkEventDuprId.
+// Guest path (magic_token, không auth): hiển thị hint "Đăng nhập để kết
+// nối DUPR" — guest không thể SSO vì SSO callback đòi auth.uid().
 // ============================================================================
 
-import { useEffect, useState } from "react";
-import { Loader2, Trophy, Check, X, Pencil } from "lucide-react";
+import { Trophy, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
-import {
-  useLinkEventDuprId,
-  useMyEventDuprId,
-} from "@/hooks/useSocialEventMatches";
-
-const DUPR_ID_PATTERN = /^[A-Za-z0-9_-]{2,32}$/;
+import { useDuprConnection } from "@/hooks/useDuprConnection";
+import { DuprConnectButton } from "@/components/dupr/DuprConnectButton";
 
 interface Props {
   eventId: string;
-  /** Magic token from localStorage (guest path). When provided, takes priority. */
+  /** Magic token from localStorage (guest path). */
   magicToken?: string | null;
-  /** auth.uid() — used when magicToken is absent (authenticated user path). */
+  /** auth.uid() — when set, the SSO path is enabled. */
   authedProfileId?: string | null;
 }
 
-export function EventDuprLinkCard({ eventId, magicToken, authedProfileId }: Props) {
-  const { t } = useI18n();
+function formatRating(value: number | null): string | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  return value.toFixed(2);
+}
+
+export function EventDuprLinkCard({ magicToken, authedProfileId }: Props) {
+  const { t, language } = useI18n();
   const copy = t.socialEvents.eventDupr;
 
-  const { data, isLoading, refetch } = useMyEventDuprId({
-    eventId,
-    magicToken,
-    authedProfileId,
-  });
-
-  const linkMutation = useLinkEventDuprId(eventId);
-
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState("");
-
-  useEffect(() => {
-    if (!editing) {
-      setValue(data?.dupr_id ?? "");
-    }
-  }, [data?.dupr_id, editing]);
-
-  const currentDuprId = data?.dupr_id ?? null;
-  const hasLink = currentDuprId != null && currentDuprId.length > 0;
-
-  async function handleSubmit(nextValue: string | null) {
-    const clean = nextValue?.trim() ?? null;
-    if (clean !== null && clean.length > 0 && !DUPR_ID_PATTERN.test(clean)) {
-      toast({ title: copy.formatError, variant: "destructive" });
-      return;
-    }
-    try {
-      await linkMutation.mutateAsync({
-        duprId: clean && clean.length > 0 ? clean : null,
-        magicToken: magicToken ?? null,
-      });
-      toast({
-        title: clean ? copy.linkSuccess : copy.unlinkSuccess,
-      });
-      setEditing(false);
-      refetch();
-    } catch (error) {
-      const errCode = (error as { code?: string })?.code ?? "";
-      const msg =
-        errCode === "registration_not_found"
-          ? copy.notRegistered
-          : errCode.includes("dupr_id_invalid")
-            ? copy.formatError
-            : copy.linkError;
-      toast({ title: msg, variant: "destructive" });
-    }
-  }
+  const { data: conn, isLoading } = useDuprConnection();
+  const isGuest = !authedProfileId && Boolean(magicToken);
 
   return (
     <Card className="p-5 mb-6">
@@ -101,103 +53,108 @@ export function EventDuprLinkCard({ eventId, magicToken, authedProfileId }: Prop
         {copy.linkBody}
       </p>
 
-      {isLoading ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--tl-fg-3)" }}>
-          <Loader2 className="h-4 w-4 animate-spin" />
+      {isGuest ? (
+        <div
+          style={{
+            padding: "12px 14px",
+            borderRadius: 8,
+            background: "var(--tl-surface, rgba(0,0,0,0.03))",
+            border: "1px solid var(--tl-border)",
+            fontSize: 13,
+            color: "var(--tl-fg-2)",
+            lineHeight: 1.5,
+          }}
+        >
+          {language === "vi"
+            ? "Vui lòng đăng nhập tài khoản ThePickleHub để kết nối DUPR. Đăng ký SĐT của anh sẽ tự động được liên kết với tài khoản sau khi đăng nhập."
+            : "Sign in to your ThePickleHub account to connect DUPR. Your phone registration will be linked to the account automatically after sign-in."}
+        </div>
+      ) : isLoading ? (
+        <div style={{ fontSize: 13, color: "var(--tl-fg-3)" }}>
           {t.common.loading}
         </div>
-      ) : hasLink && !editing ? (
+      ) : conn?.ssoConnected ? (
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: 12,
-            padding: "10px 12px",
+            padding: "12px 14px",
             borderRadius: 8,
             background: "rgba(22, 163, 74, 0.08)",
             border: "1px solid rgba(22, 163, 74, 0.3)",
             flexWrap: "wrap",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <Check className="h-4 w-4" style={{ color: "rgb(22, 163, 74)" }} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 12, color: "var(--tl-fg-3)" }}>
-                {copy.linkedAsLabel}
+                {copy.linkedAsLabel} (SSO)
               </div>
-              <code style={{ fontSize: 14, fontFamily: "'Geist Mono', monospace", wordBreak: "break-all" }}>
-                {currentDuprId}
+              <code
+                style={{
+                  fontSize: 14,
+                  fontFamily: "'Geist Mono', monospace",
+                  wordBreak: "break-all",
+                }}
+              >
+                {conn.duprId}
               </code>
+              {(formatRating(conn.singles) || formatRating(conn.doubles)) && (
+                <div
+                  style={{
+                    marginTop: 4,
+                    fontSize: 12,
+                    color: "var(--tl-fg-3)",
+                    fontFamily: "'Geist Mono', monospace",
+                  }}
+                >
+                  {formatRating(conn.singles) && (
+                    <span>S {formatRating(conn.singles)}</span>
+                  )}
+                  {formatRating(conn.singles) && formatRating(conn.doubles) && " · "}
+                  {formatRating(conn.doubles) && (
+                    <span>D {formatRating(conn.doubles)}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => setEditing(true)}
-              disabled={linkMutation.isPending}
+          {conn.duprProfileUrl && (
+            <a
+              href={conn.duprProfileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tl-btn"
+              style={{ fontSize: 12, padding: "5px 11px" }}
             >
-              <Pencil className="mr-1 h-3.5 w-3.5" /> {copy.editCta}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => handleSubmit(null)}
-              disabled={linkMutation.isPending}
-            >
-              <X className="mr-1 h-3.5 w-3.5" /> {copy.unlinkCta}
-            </Button>
-          </div>
+              {language === "vi" ? "Xem DUPR ↗" : "View DUPR ↗"}
+            </a>
+          )}
         </div>
       ) : (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!linkMutation.isPending) handleSubmit(value);
-          }}
-          style={{ display: "flex", gap: 8, alignItems: "end", flexWrap: "wrap" }}
-        >
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <Label htmlFor="event-dupr-id" style={{ fontSize: 12 }}>
-              {copy.duprIdLabel}
-            </Label>
-            <Input
-              id="event-dupr-id"
-              type="text"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder={copy.duprIdPlaceholder}
-              autoComplete="off"
-              maxLength={32}
-              disabled={linkMutation.isPending}
-            />
-          </div>
-          <Button
-            type="submit"
-            disabled={linkMutation.isPending || value.trim().length < 2}
-          >
-            {linkMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            {hasLink ? copy.saveEditCta : copy.linkCta}
-          </Button>
-          {editing && hasLink && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setEditing(false);
-                setValue(currentDuprId ?? "");
+        <div>
+          <DuprConnectButton
+            label={language === "vi" ? "Kết nối DUPR" : "Connect DUPR"}
+            variant="primary"
+          />
+          {conn?.needsReconnect && (
+            <p
+              style={{
+                marginTop: 10,
+                fontSize: 12,
+                color: "var(--tl-orange, #d97706)",
+                lineHeight: 1.5,
               }}
-              disabled={linkMutation.isPending}
             >
-              {t.common.cancel}
-            </Button>
+              {language === "vi"
+                ? "Anh đã có DUPR rating trên ThePickleHub trước đây. Kết nối lại để cập nhật chính thức từ DUPR."
+                : "You had a DUPR rating on ThePickleHub previously. Reconnect to sync the official rating from DUPR."}
+            </p>
           )}
-        </form>
+        </div>
       )}
 
       <p
