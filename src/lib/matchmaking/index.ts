@@ -31,6 +31,10 @@ export interface MMRound {
   round: number;
   matches: MMMatch[];
   sittingOut: MMPlayer[];
+  /** Sprint C3 — combined-DUPR fairness for the round (0..1). Only set
+   *  when preferBalanced=true on GenerateOptions AND all matched players
+   *  have non-null level. UI uses this to render RoundFairnessCard. */
+  fairness?: number;
 }
 
 export interface MMSchedule {
@@ -39,6 +43,13 @@ export interface MMSchedule {
   playerCount: number;
   /** Format the schedule was generated from (for the UI heading). */
   format: "mexicano" | "round_robin";
+  /** Sprint C3 — true when balanced pairing was actually applied. False
+   *  when caller asked for it but coverage was too low (caller can show
+   *  a banner explaining the fallback). */
+  balancedPairingApplied?: boolean;
+  /** Sprint C3 — fraction of players with a non-null `level`. Drives the
+   *  "X/Y have DUPR" banner. */
+  duprCoverage?: number;
 }
 
 export type Format = "mexicano" | "round_robin";
@@ -49,6 +60,11 @@ interface GenerateOptions {
   courtCount: number;
   /** Optional deterministic seed (default Date.now()). */
   seed?: number;
+  /** Sprint C3 — when true AND ≥75% of players have a non-null level,
+   *  pairing tries to minimize |sumA - sumB| in addition to avoiding
+   *  partner repeats. Falls through to legacy random pairing on low
+   *  coverage. Default false. */
+  preferBalanced?: boolean;
 }
 
 // ─── PRNG (mulberry32) ───────────────────────────────────────────────────────
@@ -94,9 +110,13 @@ function pairAvoidingRepeats(
   seeded: MMPlayer[],
   prevPartners: Set<string>,
   rand: () => number,
-): { teams: [MMPlayer, MMPlayer][]; repeats: number } {
+  options?: { preferBalanced?: boolean },
+): { teams: [MMPlayer, MMPlayer][]; repeats: number; totalDiff: number } {
   const teams: [MMPlayer, MMPlayer][] = [];
   let repeats = 0;
+  let totalDiff = 0;
+  const preferBalanced = !!options?.preferBalanced;
+
   // Walk in groups of 4: zigzag pair = (0,3) and (1,2).
   for (let i = 0; i < seeded.length; i += 4) {
     const group = seeded.slice(i, i + 4);
@@ -115,24 +135,40 @@ function pairAvoidingRepeats(
         [group[2], group[3]],
       ],
     ];
-    // Try each pairing in shuffled order, pick the first that introduces
-    // zero repeats; otherwise accept the lowest-repeat option.
+    // Try each pairing in shuffled order. Score = repeats * BIG + diff
+    // (when preferBalanced) so we always pick the lowest-repeat option
+    // first, breaking ties on combined-DUPR balance. Otherwise legacy
+    // behavior (repeats only).
     const shuffled = shuffle(candidates, rand);
-    let best: { pair: Array<[MMPlayer, MMPlayer]>; r: number } | null = null;
+    let best: {
+      pair: Array<[MMPlayer, MMPlayer]>;
+      r: number;
+      diff: number;
+      score: number;
+    } | null = null;
     for (const opt of shuffled) {
       const r = opt.reduce((acc, [p1, p2]) => {
         const k = partnerKey(p1.id, p2.id);
         return acc + (prevPartners.has(k) ? 1 : 0);
       }, 0);
-      if (best == null || r < best.r) best = { pair: opt, r };
-      if (r === 0) break;
+      const sumA = (opt[0][0].level ?? 0) + (opt[0][1].level ?? 0);
+      const sumB = (opt[1][0].level ?? 0) + (opt[1][1].level ?? 0);
+      const diff = Math.abs(sumA - sumB);
+      // BIG = 100 ensures repeats always dominate score, but diff
+      // breaks ties when two options have equal repeat count.
+      const score = preferBalanced ? r * 100 + diff : r;
+      if (best == null || score < best.score) {
+        best = { pair: opt, r, diff, score };
+      }
+      if (!preferBalanced && r === 0) break;
     }
     if (!best) continue;
     teams.push(best.pair[0]);
     teams.push(best.pair[1]);
     repeats += best.r;
+    totalDiff += best.diff;
   }
-  return { teams, repeats };
+  return { teams, repeats, totalDiff };
 }
 
 function partnerKey(a: string, b: string): string {
@@ -145,6 +181,14 @@ export function generateMexicano(opts: GenerateOptions): MMSchedule {
   if (players.length < 4) {
     return { rounds: [], playerCount: players.length, format: "mexicano" };
   }
+
+  // Sprint C3 — coverage gate for balanced pairing. We want ≥75% of
+  // players to have a real DUPR/level value before we let it influence
+  // pairing; otherwise we'd just be pretending nulls = 0 and skewing.
+  const withLevel = players.filter((p) => p.level != null).length;
+  const duprCoverage = players.length > 0 ? withLevel / players.length : 0;
+  const useBalanced = !!opts.preferBalanced && duprCoverage >= 0.75;
+
   // Seed Round 1 by descending level (nulls last).
   const seeded = players.slice().sort((a, b) => {
     const la = a.level ?? -Infinity;
@@ -161,14 +205,25 @@ export function generateMexicano(opts: GenerateOptions): MMSchedule {
     // For round 2+ shuffle so the zigzag pattern produces fresh partners
     // (we don't have points to re-seed by).
     const roster = r === 1 ? seeded : shuffle(seeded, rng);
-    let best: { teams: [MMPlayer, MMPlayer][]; repeats: number } | null = null;
+    let best: { teams: [MMPlayer, MMPlayer][]; repeats: number; totalDiff: number } | null = null;
     // Try a few permutations to minimize repeats.
     const attempts = r === 1 ? 1 : 30;
     for (let i = 0; i < attempts; i++) {
       const trial = i === 0 ? roster : shuffle(roster, rng);
-      const candidate = pairAvoidingRepeats(trial, partnerHistory, rng);
+      const candidate = pairAvoidingRepeats(trial, partnerHistory, rng, {
+        preferBalanced: useBalanced,
+      });
       if (best == null || candidate.repeats < best.repeats) best = candidate;
-      if (best.repeats === 0) break;
+      else if (
+        useBalanced &&
+        best != null &&
+        candidate.repeats === best.repeats &&
+        candidate.totalDiff < best.totalDiff
+      ) {
+        // Tie on repeats — break by balance.
+        best = candidate;
+      }
+      if (!useBalanced && best.repeats === 0) break;
     }
     if (!best) {
       out.push({ round: r, matches: [], sittingOut: [] });
@@ -205,9 +260,27 @@ export function generateMexicano(opts: GenerateOptions): MMSchedule {
       m.teamB[1].id,
     ]));
     const sittingOut = roster.filter((p) => !usedIds.has(p.id));
-    out.push({ round: r, matches, sittingOut });
+
+    // Sprint C3 — compute per-round fairness when balanced pairing applied.
+    let fairness: number | undefined = undefined;
+    if (useBalanced && matches.length > 0) {
+      const diffs = matches.map((m) => {
+        const sumA = (m.teamA[0].level ?? 0) + (m.teamA[1].level ?? 0);
+        const sumB = (m.teamB[0].level ?? 0) + (m.teamB[1].level ?? 0);
+        return Math.abs(sumA - sumB);
+      });
+      const avgDiff = diffs.reduce((s, d) => s + d, 0) / diffs.length;
+      fairness = Math.max(0, 1 - avgDiff / 2);
+    }
+    out.push({ round: r, matches, sittingOut, fairness });
   }
-  return { rounds: out, playerCount: players.length, format: "mexicano" };
+  return {
+    rounds: out,
+    playerCount: players.length,
+    format: "mexicano",
+    balancedPairingApplied: useBalanced,
+    duprCoverage,
+  };
 }
 
 // ─── Round Robin ────────────────────────────────────────────────────────────
