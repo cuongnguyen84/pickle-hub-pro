@@ -446,7 +446,11 @@ export function RegistrationForm({
           </div>
         </div>
 
-        {/* Skill Level — DUPR-ready field group */}
+        {/* Skill Level — DUPR-ready field group.
+            Sprint B1.4 fix (2026-05-27) — hidden when rating_source='dupr'.
+            User's rating already auto-fetched + verified by
+            <DuprEligibilityCheck> above; the radio picker is redundant. */}
+        {ratingSource !== 'dupr' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Label style={fieldLabel}>
             {t.quickTable.registration.skillLevel}
@@ -726,6 +730,7 @@ export function RegistrationForm({
             </div>
           )}
         </div>
+        )}
 
         {/* Disclaimer */}
         <div

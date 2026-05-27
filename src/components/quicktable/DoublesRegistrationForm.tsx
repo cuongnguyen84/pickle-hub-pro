@@ -995,7 +995,12 @@ export function DoublesRegistrationForm({
           </div>
         </div>
 
-        {/* Skill Level — DUPR-ready group */}
+        {/* Skill Level — DUPR-ready group.
+            Sprint B1.4 fix (2026-05-27) — when the table is `dupr`-required,
+            the user's rating has already been auto-fetched + verified by
+            <DuprEligibilityCheck> above, so this picker is redundant and
+            confusing. Hide it. Either + Self still render it. */}
+        {ratingSource !== 'dupr' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Label style={fieldLabel}>
             {t.quickTable.registration.skillLevel}
@@ -1184,6 +1189,7 @@ export function DoublesRegistrationForm({
             </div>
           )}
         </div>
+        )}
 
         {/* After-register note */}
         <div
