@@ -171,32 +171,16 @@ export function LiveBroadcastHero({ featured, language, tournamentName, isLoadin
   }
 
   if (!featured) {
-    // No featured live broadcast → surface the DUPR partnership card in the
-    // hero slot instead of an empty "no broadcast" placeholder. The card
-    // links through to /dupr for users who want to connect their account.
-    // Position-wise this keeps the hero balanced on desktop (right column
-    // companion to the editorial title) and stacks full-width on mobile.
-    const partnerAlt =
-      language === "vi"
-        ? "ThePickleHub × DUPR — Đối tác chính thức"
-        : "ThePickleHub × DUPR — Official Partner";
     return (
-      <Link
-        to="/dupr"
-        aria-label={partnerAlt}
-        className="tl-live-hero tl-dupr-partner-card group block overflow-hidden rounded-md ml-auto w-[58%] max-w-[260px] md:w-full md:max-w-none md:ml-0"
-        style={{ padding: 0, background: "transparent", border: "none" }}
-      >
-        <img
-          src="/images/partnerships/dupr-card.png"
-          alt={partnerAlt}
-          width={1200}
-          height={1200}
-          loading="eager"
-          fetchPriority="high"
-          className="block h-auto w-full transition-transform duration-500 ease-out group-hover:scale-[1.015]"
-        />
-      </Link>
+      <div className="tl-live-hero empty">
+        <div className="tl-lh-empty-mark" aria-hidden="true">◌</div>
+        <div className="tl-lh-empty-label">
+          {language === "vi" ? "Không có trận đang phát sóng" : "No broadcast right now"}
+        </div>
+        <Link to="/tournaments" className="tl-lh-empty-cta">
+          {language === "vi" ? "Xem lịch giải →" : "See schedule →"}
+        </Link>
+      </div>
     );
   }
 
