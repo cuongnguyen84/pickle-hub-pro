@@ -16,7 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
+import { useDuprRatingHistory } from "@/hooks/social/useDuprRatingHistory";
 import { DuprSsoModal, type DuprSsoResult } from "@/components/dupr/DuprSsoModal";
+import { DuprRatingChart } from "@/components/social/player/DuprRatingChart";
 
 export default function DuprConnect() {
   const { user, loading: authLoading } = useAuth();
@@ -27,6 +29,11 @@ export default function DuprConnect() {
   const vi = language === "vi";
 
   const { data: conn, isLoading, refetch } = useDuprConnection();
+  // 30-day rating history for the connected user. Hook is cheap (RLS
+  // public-read on dupr_rating_history) and returns [] until profile id
+  // resolves, so it's safe to call unconditionally.
+  const { data: history = [], isLoading: historyLoading } =
+    useDuprRatingHistory(user?.id, 30);
   const [ssoOpen, setSsoOpen] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
 
@@ -206,6 +213,17 @@ export default function DuprConnect() {
                 {vi ? "Đăng ký miễn phí" : "Sign up free"} <ExternalLink className="inline h-3 w-3" />
               </a>
             </p>
+          </div>
+        )}
+
+        {/* Rating history chart — only shown when SSO-connected and we
+            have at least 2 snapshots. The chart component handles its
+            own loading + empty-state messaging via the section eyebrow,
+            so we can mount it unconditionally as long as the user is
+            connected. */}
+        {conn?.ssoConnected && (
+          <div className="mt-6">
+            <DuprRatingChart history={history} loading={historyLoading} />
           </div>
         )}
 
