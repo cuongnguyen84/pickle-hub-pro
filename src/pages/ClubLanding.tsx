@@ -293,7 +293,7 @@ export default function ClubLanding() {
             list_club_members RPC. Non-members see a teaser card that
             invites them to join (server-side gate as of migration
             20260527110000_club_members_gate_roster.sql). */}
-        <ClubRoster clubId={club.id} membershipStatus={membershipStatus} />
+        <ClubRoster clubId={club.id} creatorId={club.created_by} membershipStatus={membershipStatus} />
 
         {/* Club matches — public list + organizer log/queue UI.
             Lives between description and events because match results are
