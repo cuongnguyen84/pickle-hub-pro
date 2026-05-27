@@ -59,6 +59,7 @@ AS $$
       AND p.username IS NOT NULL
       AND (
         p.country_code = 'VN'
+        OR p.country = 'VN'
         OR p.country ILIKE '%viet%'
         OR (p.country_code IS NULL AND p.country IS NULL)
       )
