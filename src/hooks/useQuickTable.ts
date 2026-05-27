@@ -45,6 +45,8 @@ export interface QuickTable {
   min_skill_level: number | null;
   max_skill_level: number | null;
   skill_rating_system: string | null;
+  // Sprint B1.1 — opt-in DUPR enforcement (added 2026-05-27).
+  rating_source: "self" | "dupr" | "either";
   auto_approve_registrations: boolean;
   registration_message: string | null;
   courts: string[] | null;
@@ -139,6 +141,9 @@ export function useQuickTable() {
       auto_approve_registrations?: boolean;
       registration_message?: string;
       is_doubles?: boolean;
+      // Sprint B1.3 — DUPR enforcement fields applied via post-RPC UPDATE
+      // so the RPC signature (and its plpgsql body) doesn't need to change.
+      rating_source?: "self" | "dupr" | "either";
     }
   ): Promise<QuickTable | null> => {
     if (!user) {
@@ -186,7 +191,35 @@ export function useQuickTable() {
         throw new Error(result.error || 'Unknown error');
       }
 
-      return result.table as QuickTable;
+      // Sprint B1.3 — apply DUPR fields via UPDATE since the RPC doesn't
+      // know about them. Skipped when caller is at defaults (avoids an
+      // extra round-trip for tables that don't use DUPR enforcement).
+      const createdTable = result.table as QuickTable;
+      const wantsDupr =
+        registrationOptions?.rating_source && registrationOptions.rating_source !== 'self';
+      const hasMin = registrationOptions?.min_skill_level != null;
+      const hasMax = registrationOptions?.max_skill_level != null;
+      if (wantsDupr || hasMin || hasMax) {
+        const { error: updateErr } = await supabase
+          .from('quick_tables')
+          .update({
+            rating_source: registrationOptions?.rating_source ?? 'self',
+            min_skill_level: registrationOptions?.min_skill_level ?? null,
+            max_skill_level: registrationOptions?.max_skill_level ?? null,
+          })
+          .eq('id', createdTable.id);
+        if (updateErr) {
+          // Non-fatal — table already exists. Surface error but return table.
+          console.warn('createTable: DUPR fields update failed', updateErr);
+          toast.error('Lưu cài đặt DUPR thất bại — vui lòng chỉnh trong settings');
+        } else {
+          // Mirror values into returned object so caller sees the truth.
+          createdTable.rating_source = registrationOptions?.rating_source ?? 'self';
+          createdTable.min_skill_level = registrationOptions?.min_skill_level ?? null;
+          createdTable.max_skill_level = registrationOptions?.max_skill_level ?? null;
+        }
+      }
+      return createdTable;
     } catch {
       toast.error(tStandalone('toast.table.createTable.error'));
       return null;

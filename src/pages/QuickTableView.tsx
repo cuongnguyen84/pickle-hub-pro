@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import RefereeManagement from '@/components/quicktable/RefereeManagement';
 import QuickTableMatchRow from '@/components/quicktable/QuickTableMatchRow';
 import RegistrationForm from '@/components/quicktable/RegistrationForm';
+import { DuprRequirementBanner } from '@/components/quicktable/DuprRequirementBanner';
 import RegistrationManager from '@/components/quicktable/RegistrationManager';
 import RegisteredPlayersList from '@/components/quicktable/RegisteredPlayersList';
 import EditCourtsDialog from '@/components/quicktable/EditCourtsDialog';
@@ -742,6 +743,12 @@ const QuickTableView = () => {
                 )
               ) : (
                 <div className="space-y-4">
+                  {/* Sprint B1.5 — public-facing DUPR requirement banner */}
+                  <DuprRequirementBanner
+                    ratingSource={table.rating_source}
+                    minDupr={table.min_skill_level}
+                    maxDupr={table.max_skill_level}
+                  />
                   {table.is_doubles ? (
                     <DoublesRegistrationForm
                       tableId={table.id}
@@ -762,6 +769,10 @@ const QuickTableView = () => {
                       registrationMessage={table.registration_message}
                       existingRegistration={userRegistration}
                       onRegistrationComplete={loadData}
+                      ratingSource={table.rating_source}
+                      minDupr={table.min_skill_level}
+                      maxDupr={table.max_skill_level}
+                      isDoubles={table.is_doubles}
                     />
                   )}
                   <RegisteredPlayersList tableId={table.id} isDoubles={table.is_doubles} />

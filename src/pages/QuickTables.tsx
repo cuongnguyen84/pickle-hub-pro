@@ -17,6 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Users, Trophy, Zap, Check, ArrowRight, LogIn, Calendar, Eye, Shield, ClipboardList, ChevronDown, Layers } from "lucide-react";
+import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -94,6 +96,11 @@ const QuickTables = () => {
   const [isDoubles, setIsDoubles] = useState(true); // Default to doubles
   const [defaultSets, setDefaultSets] = useState<number>(1);
 
+  // Sprint B1.2 — DUPR enforcement settings
+  const [ratingSource, setRatingSource] = useState<"self" | "dupr" | "either">("self");
+  const [minDuprInput, setMinDuprInput] = useState<string>("");
+  const [maxDuprInput, setMaxDuprInput] = useState<string>("");
+
   // User's tables
   const [userTables, setUserTables] = useState<QuickTable[]>([]);
   const [tablesLoading, setTablesLoading] = useState(true);
@@ -164,12 +171,36 @@ const QuickTables = () => {
     const finalFormat = format || selectedFormat;
     if (!finalFormat) return;
 
+    // Sprint B1.3 — parse min/max DUPR if rating_source is dupr/either.
+    // Empty inputs → undefined (no constraint).
+    const parsedMin = ratingSource !== "self" && minDuprInput.trim()
+      ? Number.parseFloat(minDuprInput)
+      : undefined;
+    const parsedMax = ratingSource !== "self" && maxDuprInput.trim()
+      ? Number.parseFloat(maxDuprInput)
+      : undefined;
+    if (parsedMin != null && (Number.isNaN(parsedMin) || parsedMin < 2 || parsedMin > 8)) {
+      toast.error("Min DUPR phải trong khoảng 2.0–8.0");
+      return;
+    }
+    if (parsedMax != null && (Number.isNaN(parsedMax) || parsedMax < 2 || parsedMax > 8)) {
+      toast.error("Max DUPR phải trong khoảng 2.0–8.0");
+      return;
+    }
+    if (parsedMin != null && parsedMax != null && parsedMin > parsedMax) {
+      toast.error("Min DUPR phải ≤ Max DUPR");
+      return;
+    }
+
     const registrationOptions = requiresRegistration ? {
       requires_registration: true,
-      requires_skill_level: requiresSkillLevel,
+      requires_skill_level: requiresSkillLevel || ratingSource !== "self",
       auto_approve_registrations: autoApprove,
       registration_message: registrationMessage || undefined,
       is_doubles: isDoubles,
+      rating_source: ratingSource,
+      min_skill_level: parsedMin,
+      max_skill_level: parsedMax,
     } : { is_doubles: isDoubles };
 
     const table = await createTable(
@@ -518,6 +549,100 @@ const QuickTables = () => {
                           </p>
                         </div>
                       </div>
+
+                      {/* Sprint B1.2 — Rating source picker + DUPR min/max */}
+                      {requiresSkillLevel && (
+                        <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                          <Label className="text-sm font-medium">
+                            {language === "vi" ? "Nguồn rating" : "Rating source"}
+                          </Label>
+                          <RadioGroup
+                            value={ratingSource}
+                            onValueChange={(v) => setRatingSource(v as "self" | "dupr" | "either")}
+                            className="space-y-2"
+                          >
+                            <div className="flex items-start gap-2">
+                              <RadioGroupItem value="self" id="rs-self" className="mt-0.5" />
+                              <div className="flex-1">
+                                <Label htmlFor="rs-self" className="cursor-pointer text-sm">
+                                  {language === "vi" ? "Tự kê khai" : "Self-reported"}
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  {language === "vi"
+                                    ? "Người chơi nhập rating tự do (như cũ)"
+                                    : "Player types their own rating (current default)"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <RadioGroupItem value="dupr" id="rs-dupr" className="mt-0.5" />
+                              <div className="flex-1">
+                                <Label htmlFor="rs-dupr" className="cursor-pointer text-sm">
+                                  {language === "vi" ? "Bắt buộc DUPR" : "DUPR required"}
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  {language === "vi"
+                                    ? "Người chơi phải kết nối DUPR — rating tự fill từ profile"
+                                    : "Player must connect DUPR — rating auto-filled from profile"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <RadioGroupItem value="either" id="rs-either" className="mt-0.5" />
+                              <div className="flex-1">
+                                <Label htmlFor="rs-either" className="cursor-pointer text-sm">
+                                  {language === "vi" ? "Cả hai (ưu tiên DUPR)" : "Either (DUPR preferred)"}
+                                </Label>
+                                <p className="text-xs text-muted-foreground">
+                                  {language === "vi"
+                                    ? "Auto-fill nếu user đã DUPR, nếu chưa thì tự kê khai"
+                                    : "Auto-fill if user has DUPR, otherwise self-report"}
+                                </p>
+                              </div>
+                            </div>
+                          </RadioGroup>
+
+                          {ratingSource !== "self" && (
+                            <div className="space-y-2 pt-2 border-t border-border">
+                              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                                {language === "vi" ? "Giới hạn DUPR (tùy chọn)" : "DUPR range (optional)"}
+                              </Label>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.1"
+                                  min="2"
+                                  max="8"
+                                  value={minDuprInput}
+                                  onChange={(e) => setMinDuprInput(e.target.value)}
+                                  placeholder={language === "vi" ? "Tối thiểu" : "Min"}
+                                  className="h-9"
+                                  aria-label={language === "vi" ? "DUPR tối thiểu" : "Min DUPR"}
+                                />
+                                <span className="text-muted-foreground">–</span>
+                                <Input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.1"
+                                  min="2"
+                                  max="8"
+                                  value={maxDuprInput}
+                                  onChange={(e) => setMaxDuprInput(e.target.value)}
+                                  placeholder={language === "vi" ? "Tối đa" : "Max"}
+                                  className="h-9"
+                                  aria-label={language === "vi" ? "DUPR tối đa" : "Max DUPR"}
+                                />
+                              </div>
+                              <p className="text-[11px] text-muted-foreground">
+                                {language === "vi"
+                                  ? "Để trống = không giới hạn. VD: 3.0 – 4.5 chỉ nhận VĐV trong khoảng này."
+                                  : "Leave empty for no limit. e.g., 3.0 – 4.5 only accepts players in this range."}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <Collapsible open={showAdvancedSettings} onOpenChange={setShowAdvancedSettings}>
                         <CollapsibleTrigger asChild>

@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRegistration, type RegistrationFormData, type Registration, type SkillRatingSystem } from '@/hooks/useRegistration';
+import { useDuprConnection } from '@/hooks/useDuprConnection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn, Loader2 } from 'lucide-react';
+import { UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn, Loader2, Plug, ShieldAlert } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation, useI18n } from '@/i18n';
+import { DuprChip } from '@/components/dupr/DuprChip';
 
 interface RegistrationFormProps {
   tableId: string;
@@ -15,6 +17,13 @@ interface RegistrationFormProps {
   registrationMessage?: string | null;
   existingRegistration?: Registration | null;
   onRegistrationComplete?: () => void;
+  // Sprint B1.4 — DUPR enforcement (table-level settings)
+  ratingSource?: 'self' | 'dupr' | 'either';
+  minDupr?: number | null;
+  maxDupr?: number | null;
+  isDoubles?: boolean;
+  /** Used when ratingSource='dupr' and user hasn't SSO'd yet — opens SSO. */
+  onConnectDupr?: () => void;
 }
 
 // W2.1b — design tokens shared across both registration forms. Pulled
@@ -131,23 +140,58 @@ export function RegistrationForm({
   registrationMessage,
   existingRegistration,
   onRegistrationComplete,
+  ratingSource = 'self',
+  minDupr = null,
+  maxDupr = null,
+  isDoubles = true,
+  onConnectDupr,
 }: RegistrationFormProps) {
   const { user } = useAuth();
   const t = useTranslation();
   const { language } = useI18n();
   const { submitRegistration, cancelRegistration, loading } = useRegistration();
+  const { data: duprConn, isLoading: duprLoading } = useDuprConnection();
   const navigate = useNavigate();
   const location = useLocation();
+  const vi = language === 'vi';
+
+  // Sprint B1.4 — DUPR enforcement helpers
+  const enforceDupr = ratingSource === 'dupr';
+  const allowDupr = ratingSource === 'dupr' || ratingSource === 'either';
+  const userDupr = isDoubles ? duprConn?.doubles ?? null : duprConn?.singles ?? null;
+  const hasSsoDupr = !!duprConn?.ssoConnected && userDupr != null;
 
   const [displayName, setDisplayName] = useState(existingRegistration?.display_name || '');
   const [team, setTeam] = useState(existingRegistration?.team || '');
   const [ratingSystem, setRatingSystem] = useState<SkillRatingSystem>(
-    existingRegistration?.rating_system || 'none',
+    existingRegistration?.rating_system || (allowDupr && hasSsoDupr ? 'dupr' : 'none'),
   );
   const [skillLevel, setSkillLevel] = useState(existingRegistration?.skill_level?.toString() || '');
   const [skillSystemName, setSkillSystemName] = useState(existingRegistration?.skill_system_name || '');
   const [skillDescription, setSkillDescription] = useState(existingRegistration?.skill_description || '');
   const [profileLink, setProfileLink] = useState(existingRegistration?.profile_link || '');
+
+  // Sprint B1.4a — auto-fill from DUPR profile when allowed + user has SSO.
+  useEffect(() => {
+    if (!allowDupr || !hasSsoDupr || existingRegistration) return;
+    setRatingSystem('dupr');
+    setSkillLevel(userDupr!.toFixed(2));
+  }, [allowDupr, hasSsoDupr, userDupr, existingRegistration]);
+
+  // Sprint B1.4b — range gate check
+  const parsedRating = skillLevel ? Number.parseFloat(skillLevel) : null;
+  const outOfRange =
+    parsedRating != null &&
+    ((minDupr != null && parsedRating < minDupr) ||
+      (maxDupr != null && parsedRating > maxDupr));
+  const rangeLabel =
+    minDupr != null && maxDupr != null
+      ? `${minDupr.toFixed(1)}–${maxDupr.toFixed(1)}`
+      : minDupr != null
+        ? `≥ ${minDupr.toFixed(1)}`
+        : maxDupr != null
+          ? `≤ ${maxDupr.toFixed(1)}`
+          : null;
 
   const handleLoginClick = () => {
     const returnUrl = location.pathname + location.search;
@@ -269,6 +313,43 @@ export function RegistrationForm({
     );
   }
 
+  // ─── Sprint B1.4 — DUPR-required gate (block when no SSO) ──────────────
+  if (enforceDupr && !duprLoading && !hasSsoDupr) {
+    return (
+      <div style={{ ...surfaceCard, padding: '36px 28px', textAlign: 'center' }}>
+        <ShieldAlert
+          className="w-10 h-10"
+          style={{ color: 'var(--tl-green)', margin: '0 auto 12px' }}
+        />
+        <h3 style={{ ...sectionTitle, marginBottom: 6 }}>
+          {vi ? 'Cần kết nối DUPR' : 'DUPR connection required'}
+        </h3>
+        <p style={{ fontSize: 14, color: 'var(--tl-fg-2)', marginBottom: 18, lineHeight: 1.5 }}>
+          {vi
+            ? `Giải "${tableName}" yêu cầu xác thực rating qua DUPR${
+                rangeLabel ? ` (giới hạn ${rangeLabel})` : ''
+              }.`
+            : `"${tableName}" requires DUPR-verified rating${
+                rangeLabel ? ` (range ${rangeLabel})` : ''
+              }.`}
+        </p>
+        <button
+          type="button"
+          className="tl-btn green"
+          onClick={onConnectDupr}
+        >
+          <Plug className="w-4 h-4" />
+          {vi ? 'Kết nối DUPR' : 'Connect DUPR'}
+        </button>
+        <p style={{ fontSize: 12, color: 'var(--tl-fg-3)', marginTop: 14, lineHeight: 1.5 }}>
+          {vi
+            ? 'Sau khi kết nối, rating của bạn sẽ tự fill và bạn có thể đăng ký ngay.'
+            : 'After connecting, your rating auto-fills and you can register instantly.'}
+        </p>
+      </div>
+    );
+  }
+
   // ─── State 5: New registration form ────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,6 +357,16 @@ export function RegistrationForm({
     if (!displayName.trim()) return;
     if (ratingSystem === 'other' && !skillSystemName.trim()) return;
     if (requiresSkillLevel && ratingSystem === 'none' && !skillDescription.trim()) return;
+
+    // Sprint B1.4b — range validation
+    if (outOfRange) {
+      // Submit blocked by disabled state too, but defend in depth.
+      return;
+    }
+    // Block self-report when source is dupr-only.
+    if (enforceDupr && ratingSystem !== 'dupr') {
+      return;
+    }
 
     const formData: RegistrationFormData = {
       display_name: displayName,
@@ -479,6 +570,7 @@ export function RegistrationForm({
                 <Label htmlFor="skillLevel" style={fieldLabel}>
                   {duprScoreLabel}
                 </Label>
+                {/* Sprint B1.4a — auto-filled + disabled when SSO available */}
                 <Input
                   id="skillLevel"
                   name="skillLevel"
@@ -489,7 +581,64 @@ export function RegistrationForm({
                   value={skillLevel}
                   onChange={(e) => setSkillLevel(e.target.value)}
                   placeholder="3.50"
+                  disabled={allowDupr && hasSsoDupr}
+                  readOnly={allowDupr && hasSsoDupr}
                 />
+                {allowDupr && hasSsoDupr && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: 12,
+                      color: 'var(--tl-fg-3)',
+                      marginTop: 4,
+                    }}
+                  >
+                    <DuprChip
+                      doubles={isDoubles ? userDupr : null}
+                      singles={isDoubles ? null : userDupr}
+                      format={isDoubles ? 'doubles' : 'singles'}
+                    />
+                    <span>
+                      {vi
+                        ? 'Tự fill từ profile DUPR của bạn'
+                        : 'Auto-filled from your DUPR profile'}
+                    </span>
+                  </div>
+                )}
+                {/* Sprint B1.4b — range warning */}
+                {outOfRange && rangeLabel && (
+                  <div
+                    role="alert"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 'var(--tl-radius)',
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      color: 'var(--tl-live)',
+                      fontSize: 12,
+                      marginTop: 6,
+                    }}
+                  >
+                    <AlertCircle className="w-4 h-4" style={{ flexShrink: 0, marginTop: 1 }} />
+                    <span>
+                      {vi
+                        ? `Rating ${parsedRating} ngoài giới hạn của giải (yêu cầu ${rangeLabel}). Bạn không thể đăng ký giải này.`
+                        : `Rating ${parsedRating} is outside the tournament's range (requires ${rangeLabel}). You can't register for this event.`}
+                    </span>
+                  </div>
+                )}
+                {rangeLabel && !outOfRange && (
+                  <p style={{ fontSize: 11, color: 'var(--tl-fg-3)', marginTop: 4 }}>
+                    {vi
+                      ? `Giải này yêu cầu DUPR ${rangeLabel}`
+                      : `This tournament requires DUPR ${rangeLabel}`}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -623,11 +772,11 @@ export function RegistrationForm({
           </p>
         </div>
 
-        {/* Submit */}
+        {/* Submit — Sprint B1.4b disables when out of range or self-report blocked */}
         <button
           type="submit"
           className="tl-btn green"
-          disabled={loading}
+          disabled={loading || outOfRange || (enforceDupr && ratingSystem !== 'dupr')}
           style={{ width: '100%', justifyContent: 'center', padding: '12px 18px' }}
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
