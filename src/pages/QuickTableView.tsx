@@ -760,6 +760,10 @@ const QuickTableView = () => {
                       allTeams={allTeams}
                       tableStatus={table.status}
                       onRegistrationComplete={loadData}
+                      ratingSource={table.rating_source}
+                      minDupr={table.min_skill_level}
+                      maxDupr={table.max_skill_level}
+                      isDoubles={table.is_doubles}
                     />
                   ) : (
                     <RegistrationForm

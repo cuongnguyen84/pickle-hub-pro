@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamRegistration, type Team, type TeamFormData } from '@/hooks/useTeamRegistration';
 import { usePairRequest, type PairRequest } from '@/hooks/usePairRequest';
+import { useDuprConnection } from '@/hooks/useDuprConnection';
 import type { SkillRatingSystem } from '@/hooks/useRegistration';
+import { DuprEligibilityCheck } from '@/components/dupr/DuprEligibilityCheck';
+import { DuprChip } from '@/components/dupr/DuprChip';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +28,12 @@ interface DoublesRegistrationFormProps {
   allTeams?: Team[];
   tableStatus?: string;
   onRegistrationComplete?: () => void;
+  // Sprint B1.4 — DUPR enforcement (table-level)
+  ratingSource?: 'self' | 'dupr' | 'either';
+  minDupr?: number | null;
+  maxDupr?: number | null;
+  isDoubles?: boolean;
+  onConnectDupr?: () => void;
 }
 
 // ─── Shared tokens (mirror RegistrationForm.tsx) ─────────────────────────
@@ -193,11 +202,17 @@ export function DoublesRegistrationForm({
   allTeams = [],
   tableStatus = 'setup',
   onRegistrationComplete,
+  ratingSource = 'self',
+  minDupr = null,
+  maxDupr = null,
+  isDoubles = true,
+  onConnectDupr,
 }: DoublesRegistrationFormProps) {
   const { user } = useAuth();
   const t = useTranslation();
   const { language } = useI18n();
   const { createTeam, removePartner, loading: teamLoading } = useTeamRegistration();
+  const { data: duprConn } = useDuprConnection();
   const {
     getIncomingRequests,
     getOutgoingRequests,
@@ -209,10 +224,23 @@ export function DoublesRegistrationForm({
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Sprint B1.4 — DUPR enforcement helpers
+  const allowDupr = ratingSource === 'dupr' || ratingSource === 'either';
+  const enforceDupr = ratingSource === 'dupr';
+  const userDupr = isDoubles ? duprConn?.doubles ?? null : duprConn?.singles ?? null;
+  const hasSsoDupr = !!duprConn?.ssoConnected && userDupr != null;
+  const userOutOfRange =
+    userDupr != null &&
+    ((minDupr != null && userDupr < minDupr) || (maxDupr != null && userDupr > maxDupr));
+
   const [displayName, setDisplayName] = useState('');
   const [team, setTeam] = useState('');
-  const [ratingSystem, setRatingSystem] = useState<SkillRatingSystem>('none');
-  const [skillLevel, setSkillLevel] = useState('');
+  const [ratingSystem, setRatingSystem] = useState<SkillRatingSystem>(
+    allowDupr && hasSsoDupr ? 'dupr' : 'none',
+  );
+  const [skillLevel, setSkillLevel] = useState(
+    allowDupr && hasSsoDupr ? userDupr!.toFixed(2) : '',
+  );
   const [skillDescription, setSkillDescription] = useState('');
   const [profileLink, setProfileLink] = useState('');
   const [otherSystemName, setOtherSystemName] = useState('');
@@ -847,6 +875,24 @@ export function DoublesRegistrationForm({
       return;
     }
 
+    // Sprint B1.4 fix — enforce DUPR gates on doubles too
+    if (enforceDupr && !hasSsoDupr) {
+      toast.error(
+        language === 'vi'
+          ? 'Cần kết nối DUPR để đăng ký giải này'
+          : 'You must connect DUPR to register for this tournament',
+      );
+      return;
+    }
+    if (userOutOfRange) {
+      toast.error(
+        language === 'vi'
+          ? `DUPR của bạn (${userDupr!.toFixed(2)}) ngoài giới hạn của giải`
+          : `Your DUPR (${userDupr!.toFixed(2)}) is outside the tournament range`,
+      );
+      return;
+    }
+
     const formData: TeamFormData = {
       display_name: displayName,
       team: team || undefined,
@@ -908,6 +954,15 @@ export function DoublesRegistrationForm({
             {registrationMessage}
           </StatusBanner>
         )}
+
+        {/* Sprint B1.4 fix — DUPR eligibility check (auto detect + verdict) */}
+        <DuprEligibilityCheck
+          ratingSource={ratingSource}
+          isDoubles={isDoubles}
+          minDupr={minDupr}
+          maxDupr={maxDupr}
+          onConnectDupr={onConnectDupr}
+        />
 
         {/* Basic Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1148,11 +1203,11 @@ export function DoublesRegistrationForm({
           </p>
         </div>
 
-        {/* Submit */}
+        {/* Submit — Sprint B1.4 fix disables when DUPR rules block submit */}
         <button
           type="submit"
           className="tl-btn green"
-          disabled={loading}
+          disabled={loading || userOutOfRange || (enforceDupr && !hasSsoDupr)}
           style={{ width: '100%', justifyContent: 'center', padding: '12px 18px' }}
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}

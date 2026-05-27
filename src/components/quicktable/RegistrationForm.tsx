@@ -5,10 +5,11 @@ import { useDuprConnection } from '@/hooks/useDuprConnection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn, Loader2, Plug, ShieldAlert } from 'lucide-react';
+import { UserPlus, CheckCircle2, Clock, XCircle, AlertCircle, LogIn, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation, useI18n } from '@/i18n';
 import { DuprChip } from '@/components/dupr/DuprChip';
+import { DuprEligibilityCheck } from '@/components/dupr/DuprEligibilityCheck';
 
 interface RegistrationFormProps {
   tableId: string;
@@ -313,43 +314,6 @@ export function RegistrationForm({
     );
   }
 
-  // ─── Sprint B1.4 — DUPR-required gate (block when no SSO) ──────────────
-  if (enforceDupr && !duprLoading && !hasSsoDupr) {
-    return (
-      <div style={{ ...surfaceCard, padding: '36px 28px', textAlign: 'center' }}>
-        <ShieldAlert
-          className="w-10 h-10"
-          style={{ color: 'var(--tl-green)', margin: '0 auto 12px' }}
-        />
-        <h3 style={{ ...sectionTitle, marginBottom: 6 }}>
-          {vi ? 'Cần kết nối DUPR' : 'DUPR connection required'}
-        </h3>
-        <p style={{ fontSize: 14, color: 'var(--tl-fg-2)', marginBottom: 18, lineHeight: 1.5 }}>
-          {vi
-            ? `Giải "${tableName}" yêu cầu xác thực rating qua DUPR${
-                rangeLabel ? ` (giới hạn ${rangeLabel})` : ''
-              }.`
-            : `"${tableName}" requires DUPR-verified rating${
-                rangeLabel ? ` (range ${rangeLabel})` : ''
-              }.`}
-        </p>
-        <button
-          type="button"
-          className="tl-btn green"
-          onClick={onConnectDupr}
-        >
-          <Plug className="w-4 h-4" />
-          {vi ? 'Kết nối DUPR' : 'Connect DUPR'}
-        </button>
-        <p style={{ fontSize: 12, color: 'var(--tl-fg-3)', marginTop: 14, lineHeight: 1.5 }}>
-          {vi
-            ? 'Sau khi kết nối, rating của bạn sẽ tự fill và bạn có thể đăng ký ngay.'
-            : 'After connecting, your rating auto-fills and you can register instantly.'}
-        </p>
-      </div>
-    );
-  }
-
   // ─── State 5: New registration form ────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -441,6 +405,15 @@ export function RegistrationForm({
             </p>
           </div>
         )}
+
+        {/* Sprint B1.4 fix — DUPR eligibility check (auto detect + verdict) */}
+        <DuprEligibilityCheck
+          ratingSource={ratingSource}
+          isDoubles={isDoubles}
+          minDupr={minDupr}
+          maxDupr={maxDupr}
+          onConnectDupr={onConnectDupr}
+        />
 
         {/* Basic Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
