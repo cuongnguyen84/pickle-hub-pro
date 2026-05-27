@@ -57,9 +57,19 @@ export default function DuprConnect() {
     }
   };
 
+  // SEO copy — same string used for browser tab, social cards, and the
+  // <title>. The page is behind RequireAuth so we mark it noindex; the
+  // title still drives the tab label + social preview when shared.
+  const seoTitle = vi
+    ? "Kết nối DUPR — ThePickleHub"
+    : "Connect DUPR — ThePickleHub";
+  const seoDesc = vi
+    ? "Kết nối tài khoản DUPR của anh với ThePickleHub để rating tự cập nhật và trận đấu được ghi nhận chính thức."
+    : "Connect your DUPR account with ThePickleHub so your rating syncs automatically and matches count officially.";
+
   if (authLoading) {
     return (
-      <TheLineLayout>
+      <TheLineLayout title={seoTitle} description={seoDesc} noindex>
         <div className="mx-auto max-w-2xl p-12 text-center">
           <Loader2 className="mx-auto h-6 w-6 animate-spin" />
         </div>
@@ -69,7 +79,7 @@ export default function DuprConnect() {
 
   if (!user) {
     return (
-      <TheLineLayout>
+      <TheLineLayout title={seoTitle} description={seoDesc} noindex>
         <div className="mx-auto max-w-2xl px-4 py-12">
           <h1 className="text-2xl font-semibold mb-3">
             {vi ? "Cần đăng nhập" : "Sign in required"}
@@ -85,7 +95,7 @@ export default function DuprConnect() {
   }
 
   return (
-    <TheLineLayout>
+    <TheLineLayout title={seoTitle} description={seoDesc} noindex>
       <div className="mx-auto max-w-2xl px-4 py-8">
         <header className="mb-6">
           <h1
