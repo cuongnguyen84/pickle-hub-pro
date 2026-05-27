@@ -406,7 +406,7 @@ const Index = () => {
             ? "ThePickleHub × DUPR — Đối tác chính thức"
             : "ThePickleHub × DUPR — Official Partner";
         return (
-          <div className="tl-shell" style={{ marginTop: 0, marginBottom: 0 }}>
+          <div className="tl-shell" style={{ marginTop: 0, marginBottom: -28 }}>
             <Link
               to="/dupr"
               aria-label={alt}
