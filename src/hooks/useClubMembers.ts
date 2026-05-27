@@ -9,14 +9,31 @@
 //   - approve_club_member    (organizer flips pending → active)
 //   - remove_club_member     (organizer or self, rejects or removes)
 //
+// PR 20260527 — list_club_members RPC now returns 4 DUPR columns
+// (migration 20260527130000); UI renders connection badge per member.
+//
+// PR 20260527 (mobile UX) — useClubMembers wires 3 refetch triggers so
+// the organizer dashboard updates without manual refresh:
+//   1. Supabase realtime channel listening to INSERT/UPDATE/DELETE on
+//      club_members filtered by club_id.
+//   2. document.visibilitychange (web) — refetch when tab regains focus.
+//   3. Capacitor App appStateChange (iOS/Android native) — refetch when
+//      WebView app resumes from background.
+// `refetchOnWindowFocus: true` is set per-query to override the global
+// `false` default (App.tsx defaultOptions).
+//
 // The shape mirrors useClubManagers so the UI components stay consistent.
 // ============================================================================
 
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { isNativeApp } from "@/lib/capacitor-utils";
 
 export type ClubMemberStatus = "pending" | "active";
+
+export type DuprConnectionMethod = "manual" | "sso" | "pending_reconnect";
 
 export interface ClubMember {
   profile_id: string;
@@ -28,6 +45,16 @@ export interface ClubMember {
   added_at: string;
   added_by: string | null;
   approved_at: string | null;
+  /** DUPR id from profiles.dupr_id (PR 20260527). NULL when not connected. */
+  dupr_id: string | null;
+  /** Singles rating, NULL when no recent DUPR sync. */
+  dupr_singles: number | null;
+  /** Doubles rating. */
+  dupr_doubles: number | null;
+  /** Connection method tracked by useDuprConnection — 'sso' is the
+   *  official one, 'manual' is legacy, 'pending_reconnect' means user
+   *  had manual rating before SSO and hasn't reconnected. */
+  dupr_connected_via: DuprConnectionMethod | null;
 }
 
 export type MyMembershipStatus =
@@ -70,13 +97,74 @@ export function useClubMembers(clubId: string | undefined) {
       return (data ?? []) as ClubMember[];
     },
     enabled: Boolean(clubId),
-    staleTime: 30_000,
+    staleTime: 15_000, // 15s; realtime + visibility will cover gaps
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
-  function invalidate() {
+  function invalidate(): void {
     void queryClient.invalidateQueries({ queryKey: ["club-members", clubId] });
     void queryClient.invalidateQueries({ queryKey: ["my-club-membership", clubId] });
   }
+
+  // ─── Realtime + foreground refetch (PR 20260527) ───────────────────────
+  useEffect(() => {
+    if (!clubId) return;
+
+    // 1. Supabase Realtime — subscribe to club_members changes for this club.
+    const channel = supabase
+      .channel(`club-members-${clubId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "club_members",
+          filter: `club_id=eq.${clubId}`,
+        },
+        () => {
+          invalidate();
+        },
+      )
+      .subscribe();
+
+    // 2. Document visibilitychange — refetch when web tab regains focus.
+    const onVis = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        void refetch();
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVis);
+    }
+
+    // 3. Capacitor App appStateChange — refetch when native WebView resumes.
+    let nativeListenerCleanup: (() => void) | null = null;
+    if (isNativeApp()) {
+      void (async () => {
+        try {
+          const { App } = await import("@capacitor/app");
+          const handle = await App.addListener("appStateChange", ({ isActive }) => {
+            if (isActive) void refetch();
+          });
+          nativeListenerCleanup = () => {
+            void handle.remove();
+          };
+        } catch {
+          // Plugin not available — ignore.
+        }
+      })();
+    }
+
+    return () => {
+      void supabase.removeChannel(channel);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVis);
+      }
+      nativeListenerCleanup?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubId]);
 
   const inviteMember = useMutation<ClubMember, MutationError, { profileId: string }>({
     mutationFn: async ({ profileId }) => {

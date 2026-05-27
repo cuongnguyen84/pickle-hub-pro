@@ -59,6 +59,57 @@ function displayLabel(profile: ProfileSearchResult | ClubMember): string {
   return "—";
 }
 
+/**
+ * PR 20260527 — render a small inline badge showing DUPR connection
+ * state for one member. Uses the 4 columns added to list_club_members
+ * RPC in migration 20260527130000.
+ */
+function DuprStatusBadge({
+  member,
+  vi,
+}: {
+  member: Pick<ClubMember, "dupr_id" | "dupr_singles" | "dupr_doubles" | "dupr_connected_via">;
+  vi: boolean;
+}) {
+  if (!member.dupr_id) {
+    return (
+      <span
+        className="tl-format-badge"
+        style={{ color: "var(--tl-fg-3)", borderColor: "var(--tl-border)" }}
+      >
+        {vi ? "Chưa kết nối DUPR" : "DUPR not connected"}
+      </span>
+    );
+  }
+  const pending = member.dupr_connected_via === "pending_reconnect";
+  const rating: string[] = [];
+  if (member.dupr_singles != null && Number.isFinite(member.dupr_singles)) {
+    rating.push(`S ${Number(member.dupr_singles).toFixed(2)}`);
+  }
+  if (member.dupr_doubles != null && Number.isFinite(member.dupr_doubles)) {
+    rating.push(`D ${Number(member.dupr_doubles).toFixed(2)}`);
+  }
+  const label = pending
+    ? vi
+      ? "DUPR — cần kết nối lại"
+      : "DUPR — reconnect needed"
+    : `DUPR ${member.dupr_id}${rating.length ? " · " + rating.join(" · ") : ""}`;
+  const color = pending ? "hsl(38 92% 50%)" : "rgb(22, 163, 74)";
+  return (
+    <span
+      className="tl-format-badge"
+      style={{
+        color,
+        borderColor: color,
+        fontFamily: "'Geist Mono', monospace",
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+
 function translateMutationError(
   err: MutationError | ManagerError | null,
   t: ReturnType<typeof useI18n>["t"],
@@ -214,8 +265,9 @@ export function ClubMembers({ clubId }: Props) {
                   <div className="text-xs text-muted-foreground truncate">
                     {row.email || row.phone || ""}
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">
-                    {dateFmt.format(new Date(row.added_at))}
+                  <div className="text-[11px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5">
+                    <DuprStatusBadge member={row} vi={language === "vi"} />
+                    <span>{dateFmt.format(new Date(row.added_at))}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -282,9 +334,10 @@ export function ClubMembers({ clubId }: Props) {
                   <div className="text-xs text-muted-foreground truncate">
                     {row.email || row.phone || ""}
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">
-                    <span className="tl-format-badge mr-2">{m.memberBadge}</span>
-                    {dateFmt.format(new Date(row.added_at))}
+                  <div className="text-[11px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5">
+                    <span className="tl-format-badge">{m.memberBadge}</span>
+                    <DuprStatusBadge member={row} vi={language === "vi"} />
+                    <span>{dateFmt.format(new Date(row.added_at))}</span>
                   </div>
                 </div>
                 <button
