@@ -10,6 +10,7 @@ import { lazy, Suspense, Component, ReactNode } from "react";
 import { useDeepLinkHandler } from "@/hooks/useDeepLinkHandler";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import BottomNav from "@/components/layout/BottomNav";
+import ChatFAB from "@/components/layout/ChatFAB";
 import AppHeader from "@/components/layout/AppHeader";
 
 import { ViLanguageWrapper } from "@/components/layout/ViLanguageWrapper";
@@ -467,6 +468,7 @@ const App = () => (
               <PageTracker />
               
               <BottomNav />
+              <ChatFAB />
               <ChunkErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
