@@ -18,6 +18,7 @@ import { EntityNotFound } from "@/components/EntityNotFound";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { useMyMembership } from "@/hooks/useClubMembers";
 import { ClubMatches } from "@/components/social-events/ClubMatches";
+import { ClubRoster } from "@/components/social-events/ClubRoster";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { buildLoginRedirect } from "@/lib/auth/safeRedirect";
@@ -287,6 +288,12 @@ export default function ClubLanding() {
             <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{club.description}</p>
           </Card>
         )}
+
+        {/* Member roster — visible to active members + organizers via the
+            list_club_members RPC. Non-members see a teaser card that
+            invites them to join (server-side gate as of migration
+            20260527110000_club_members_gate_roster.sql). */}
+        <ClubRoster clubId={club.id} membershipStatus={membershipStatus} />
 
         {/* Club matches — public list + organizer log/queue UI.
             Lives between description and events because match results are
