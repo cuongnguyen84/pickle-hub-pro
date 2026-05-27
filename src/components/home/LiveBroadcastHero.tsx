@@ -184,7 +184,7 @@ export function LiveBroadcastHero({ featured, language, tournamentName, isLoadin
       <Link
         to="/dupr"
         aria-label={partnerAlt}
-        className="tl-live-hero tl-dupr-partner-card group block overflow-hidden rounded-md"
+        className="tl-live-hero tl-dupr-partner-card group block overflow-hidden rounded-md ml-auto w-[58%] max-w-[260px] md:w-full md:max-w-none md:ml-0"
         style={{ padding: 0, background: "transparent", border: "none" }}
       >
         <img
