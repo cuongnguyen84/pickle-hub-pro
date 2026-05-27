@@ -41,13 +41,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .eq("is_ghost", false)
       .eq("country", "VN")
       .not("username", "is", null)
-      // PR (2026-05-18 Ahrefs Site Audit fix) — align with renderProfile
-      // filter (functions/_lib/render/index.ts:1198). SSR rejects profiles
-      // without onboarding_completed_at = NOT NULL with render404, but the
-      // sitemap was emitting them anyway. Ahrefs Site Audit 18/5 flagged
-      // 4 test profiles (lyhoangnam-test, nguyenvana-test, vothanh-test,
-      // dinhmai-test) as 404s coming from this sitemap.
       .not("onboarding_completed_at", "is", null)
+      // Sprint A4 (2026-05-27) — only opt-in public profiles. Renamed
+      // renderPlayer (functions/_lib/render/index.ts:1325) now filters
+      // is_public_profile = true → sitemap must match or risk emitting
+      // 404 URLs again. Until users opt-out themselves, this matches the
+      // 24 profiles backfilled true by migration 20260528030000.
+      .eq("is_public_profile", true)
       .order("created_at", { ascending: false })
       .limit(5000);
 

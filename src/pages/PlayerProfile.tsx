@@ -12,6 +12,7 @@ import { PlayerHeroCard } from "@/components/social/player/PlayerHeroCard";
 import { PlayerStats } from "@/components/social/player/PlayerStats";
 import { DuprRatingChart } from "@/components/social/player/DuprRatingChart";
 import { MatchHistoryTabs } from "@/components/social/player/MatchHistoryTabs";
+import { PlayersNearRating } from "@/components/social/PlayersNearRating";
 
 const JSONLD_ID = "player-profile-jsonld";
 
@@ -149,6 +150,16 @@ const PlayerProfile = () => {
           history={historyQuery.data ?? []}
           loading={historyQuery.isLoading}
         />
+        {/* Sprint A12 — "Players near my rating" appears between chart and
+            match history. Hidden automatically when profile has no DUPR. */}
+        <div style={{ marginTop: 24 }}>
+          <PlayersNearRating
+            targetRating={profile.dupr_doubles}
+            excludeUserId={profile.id}
+            window={0.3}
+            limit={8}
+          />
+        </div>
         <MatchHistoryTabs
           playerId={profile.id}
           followersCount={statsQuery.data?.followers_count ?? 0}
