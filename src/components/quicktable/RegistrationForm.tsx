@@ -165,7 +165,7 @@ export function RegistrationForm({
   const [displayName, setDisplayName] = useState(existingRegistration?.display_name || '');
   const [team, setTeam] = useState(existingRegistration?.team || '');
   const [ratingSystem, setRatingSystem] = useState<SkillRatingSystem>(
-    existingRegistration?.rating_system || (allowDupr && hasSsoDupr ? 'dupr' : 'none'),
+    existingRegistration?.rating_system || (allowDupr && hasSsoDupr ? 'DUPR' : 'none'),
   );
   const [skillLevel, setSkillLevel] = useState(existingRegistration?.skill_level?.toString() || '');
   const [skillSystemName, setSkillSystemName] = useState(existingRegistration?.skill_system_name || '');
@@ -175,7 +175,7 @@ export function RegistrationForm({
   // Sprint B1.4a — auto-fill from DUPR profile when allowed + user has SSO.
   useEffect(() => {
     if (!allowDupr || !hasSsoDupr || existingRegistration) return;
-    setRatingSystem('dupr');
+    setRatingSystem('DUPR');
     setSkillLevel(userDupr!.toFixed(2));
   }, [allowDupr, hasSsoDupr, userDupr, existingRegistration]);
 
@@ -328,7 +328,7 @@ export function RegistrationForm({
       return;
     }
     // Block self-report when source is dupr-only.
-    if (enforceDupr && ratingSystem !== 'dupr') {
+    if (enforceDupr && ratingSystem !== 'DUPR') {
       return;
     }
 
@@ -754,7 +754,7 @@ export function RegistrationForm({
         <button
           type="submit"
           className="tl-btn green"
-          disabled={loading || outOfRange || (enforceDupr && ratingSystem !== 'dupr')}
+          disabled={loading || outOfRange || (enforceDupr && ratingSystem !== 'DUPR')}
           style={{ width: '100%', justifyContent: 'center', padding: '12px 18px' }}
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}

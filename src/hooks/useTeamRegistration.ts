@@ -184,8 +184,22 @@ export function useTeamRegistration() {
       toast.success(tStandalone('toast.teamRegistration.createTeam.success'));
       return data as Team;
     } catch (error) {
+      // Sprint B fix (2026-05-27) — surface the actual DB / RLS / check
+      // failure to the user instead of the generic "Failed to register".
+      // Most common causes flagged today: invalid enum value (eg lowercase
+      // 'dupr' vs uppercase 'DUPR' in skill_rating_system), missing
+      // is_doubles flag mismatch, or RLS rejection on quick_table_teams.
       console.error('Error creating team:', error);
-      toast.error(tStandalone('toast.teamRegistration.createTeam.error'));
+      const err = error as { code?: string; message?: string; details?: string; hint?: string };
+      const friendly =
+        err?.code === '22P02'
+          ? 'Giá trị rating system không hợp lệ. Vui lòng tải lại trang và thử lại.'
+          : err?.code === '23514'
+            ? 'Dữ liệu vi phạm ràng buộc của bảng đấu. Kiểm tra DUPR rating + tên hiển thị.'
+            : err?.code === '42501'
+              ? 'Bạn không có quyền đăng ký giải này (RLS). Liên hệ BTC.'
+              : err?.message || tStandalone('toast.teamRegistration.createTeam.error');
+      toast.error(`${tStandalone('toast.teamRegistration.createTeam.error')}: ${friendly}`);
       return null;
     } finally {
       setLoading(false);

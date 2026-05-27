@@ -236,7 +236,7 @@ export function DoublesRegistrationForm({
   const [displayName, setDisplayName] = useState('');
   const [team, setTeam] = useState('');
   const [ratingSystem, setRatingSystem] = useState<SkillRatingSystem>(
-    allowDupr && hasSsoDupr ? 'dupr' : 'none',
+    allowDupr && hasSsoDupr ? 'DUPR' : 'none',
   );
   const [skillLevel, setSkillLevel] = useState(
     allowDupr && hasSsoDupr ? userDupr!.toFixed(2) : '',
