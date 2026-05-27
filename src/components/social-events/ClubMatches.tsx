@@ -316,6 +316,12 @@ function MatchCard({
             display: "flex",
             alignItems: "center",
             gap: 6,
+            // minWidth:0 lets the grid 1fr track shrink below its content's
+            // natural min-width; overflowWrap allows long player names or
+            // emails (e.g. "tuyen.noithattvt@gmail.com") to break inside
+            // the narrow mobile column instead of pushing the card past
+            // the viewport edge.
+            minWidth: 0,
           }}
         >
           {match.winning_team === "a" && (
@@ -323,7 +329,9 @@ function MatchCard({
               style={{ width: 14, height: 14, color: "var(--tl-gold)", flexShrink: 0 }}
             />
           )}
-          <span>{teamALabel}</span>
+          <span style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
+            {teamALabel}
+          </span>
         </div>
 
         <div style={{ display: "grid", gap: 6 }}>
@@ -366,9 +374,12 @@ function MatchCard({
             alignItems: "center",
             justifyContent: "flex-end",
             gap: 6,
+            minWidth: 0,
           }}
         >
-          <span>{teamBLabel}</span>
+          <span style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
+            {teamBLabel}
+          </span>
           {match.winning_team === "b" && (
             <Trophy
               style={{ width: 14, height: 14, color: "var(--tl-gold)", flexShrink: 0 }}
