@@ -209,7 +209,7 @@ export function breadcrumb(crumbs: { label: string; href?: string }[]): string {
 // ─── Bot UA detection ──────────────────────────────────────
 
 export const BOT_UA =
-  /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|telegrambot|applebot|discordbot|pinterestbot|redditbot|slackbot|slurp|gptbot|claudebot|perplexitybot|bytespider|petalbot|seznambot|ahrefsbot|ahrefssiteaudit|semrushbot|mj12bot|dotbot|screaming frog|sitebulb|rogerbot|dataforseobot|serpstatbot|moz\.com|cocoabot|google-inspectiontool|google-read-aloud|google-site-verification|google-structureddatatestingtool|mediapartners-google|adsbot-google|google-pagerenderer|chrome-lighthouse|google-extended|googleother|google-cloudvertexbot|validator\.schema\.org|schemamarkupvalidator/i;
+  /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|facebot|twitterbot|linkedinbot|whatsapp|telegrambot|applebot|discordbot|pinterestbot|redditbot|slackbot|slurp|gptbot|claudebot|perplexitybot|bytespider|petalbot|seznambot|ahrefsbot|ahrefssiteaudit|semrushbot|mj12bot|dotbot|screaming frog|sitebulb|rogerbot|dataforseobot|serpstatbot|moz\.com|cocoabot|google-inspectiontool|google-read-aloud|google-site-verification|google-structureddatatestingtool|mediapartners-google|adsbot-google|google-pagerenderer|chrome-lighthouse|google-extended|googleother|google-cloudvertexbot|validator\.schema\.org|schemamarkupvalidator|seonaut|crawlobserver|seobserver/i;
 
 // ─── Related content links ─────────────────────────────────
 

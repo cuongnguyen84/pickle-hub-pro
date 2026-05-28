@@ -64,6 +64,20 @@ Allow: /vi/tools/doubles-elimination$
 Allow: /vi/tools/quick-tables$
 Allow: /vi/tools/team-match$
 
+# SEO audit 2026-05-28 — public landing pages for each tool. These are
+# the "Create a new bracket/table" entry points (SSR'd by renderToolNewPage)
+# and are listed in sitemap-static. The longer Allow path beats the
+# parent Disallow under Google's longest-match rule, so user-generated
+# sessions like /tools/flex-tournament/<uuid> remain blocked.
+Allow: /tools/flex-tournament/new$
+Allow: /tools/doubles-elimination/new$
+Allow: /tools/quick-tables/new$
+Allow: /tools/team-match/new$
+Allow: /vi/tools/flex-tournament/new$
+Allow: /vi/tools/doubles-elimination/new$
+Allow: /vi/tools/quick-tables/new$
+Allow: /vi/tools/team-match/new$
+
 # PR72 (SEO Phase 2A I-7+I-14) — social-event private surfaces.
 # Magic-link pages carry a UUID bearer token in the URL — must never
 # be indexed. Same for organizer dashboards + create flows + per-event
