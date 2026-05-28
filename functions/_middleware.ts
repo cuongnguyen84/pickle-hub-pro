@@ -196,6 +196,26 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
+  // ─── 1c. SEO audit batch 4 — /livestream → /live (plus /vi mirror)
+  //       /livestream is a legacy alias kept for backlink equity; the
+  //       canonical live-listing path is /live. public/_redirects has
+  //       the 301 rule but it only fires for non-bot traffic because
+  //       the middleware short-circuits to SSR before CF consults
+  //       _redirects. Without this branch, bots got the SSR shell at
+  //       200 with the same title + meta description as /live and the
+  //       crawler flagged 'Duplicated title' / 'Duplicated meta
+  //       description' / 'Pages missing the hreflang' on both /livestream
+  //       and /vi/livestream. Same fix shape as the /u/* rule above.
+  const livestreamMatch = url.pathname.match(/^\/(vi\/)?livestream(\/.*)?$/);
+  if (livestreamMatch) {
+    const viPrefix = livestreamMatch[1] || "";
+    const tail = livestreamMatch[2] || "";
+    return Response.redirect(
+      `https://${url.hostname}/${viPrefix}live${tail}${url.search}`,
+      301,
+    );
+  }
+
   // ─── 2. Static asset bypass (before bot detection) ───
   const pathname = url.pathname;
   const STATIC_PREFIXES = ["/og-images/", "/assets/", "/images/", "/fonts/", "/icons/", "/static/"];

@@ -85,10 +85,41 @@ function getFooterHtml(lang: Lang, siteUrl: string): string {
 </footer>`;
 }
 
+// SEO audit 2026-05-28 (batch 4) — bots flag titles longer than 60
+// chars and meta descriptions longer than 160 chars as "Long title /
+// Long meta description" because Google + Bing truncate them in SERP.
+// Vietnamese titles in particular run long because Vietnamese
+// content carries more orthographic words per concept than English
+// (e.g. "PPA cong bo giai dau PPA Spain, danh dau buoc tien moi tai
+// thi truong chau Au" — 96 chars). truncateForSeo() cuts at the
+// last whitespace before the limit so SERP previews don't slice
+// mid-word, and only acts if the source is over budget — short
+// titles pass through untouched.
+const SEO_TITLE_MAX = 60;
+const SEO_DESCRIPTION_MAX = 160;
+
+function truncateForSeo(text: string, limit: number): string {
+  if (!text || text.length <= limit) return text;
+  // Reserve 1 char for the ellipsis.
+  const cutoff = limit - 1;
+  const sliced = text.slice(0, cutoff);
+  // Prefer breaking at whitespace so we don't cut mid-word. Fall
+  // back to a hard cut at the limit minus 1 when no whitespace
+  // exists in the prefix (long unbroken slugs, URL-like titles).
+  const lastSpace = sliced.lastIndexOf(" ");
+  // Keep at least ~60% of the budget worth of text before any
+  // whitespace cutoff to avoid the case where a single early word
+  // would leave a stub like "PPA…". 0.6 chosen empirically against
+  // production Vietnamese news titles.
+  const minKept = Math.floor(cutoff * 0.6);
+  const base = lastSpace >= minKept ? sliced.slice(0, lastSpace) : sliced;
+  return base.replace(/[\s.,;:\-—–]+$/, "") + "\u2026";
+}
+
 export function buildHtml(opts: BuildHtmlOptions): string {
   const {
-    title,
-    description,
+    title: rawTitle,
+    description: rawDescription,
     url,
     siteUrl,
     image = DEFAULT_OG_IMAGE,
@@ -100,6 +131,12 @@ export function buildHtml(opts: BuildHtmlOptions): string {
     alternates,
     omitAutoHeader = false,
   } = opts;
+
+  // SEO audit batch 4 — clamp the user-visible title + description to
+  // the recommended SERP previews. We keep the original (rawTitle /
+  // rawDescription) for JSON-LD where the limits do not apply.
+  const title = truncateForSeo(rawTitle, SEO_TITLE_MAX);
+  const description = truncateForSeo(rawDescription, SEO_DESCRIPTION_MAX);
 
   const jsonLdScript = jsonLd
     ? `<script type="application/ld+json">${escapeJsonLd(JSON.stringify(jsonLd))}</script>`
