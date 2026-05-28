@@ -129,6 +129,7 @@ export function BracketSetupDialog({
     total: number;
     withDupr: number;
     stale: number;
+    approx: number;
   } | null>(null);
 
   const handleAutoSeedByDupr = async () => {
@@ -155,6 +156,7 @@ export function BracketSetupDialog({
         total: coverage.total,
         withDupr: coverage.withDupr,
         stale: coverage.stale,
+        approx: coverage.approx,
       });
       setAutoSeedByDupr(true);
     } catch (e) {
@@ -479,6 +481,8 @@ export function BracketSetupDialog({
               total={seedCoverageInfo.total}
               withDupr={seedCoverageInfo.withDupr}
               stale={seedCoverageInfo.stale}
+              approx={seedCoverageInfo.approx}
+              format={table.is_doubles ? "doubles" : "singles"}
             />
           )}
 

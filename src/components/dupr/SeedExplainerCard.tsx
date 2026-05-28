@@ -13,20 +13,37 @@ interface SeedExplainerCardProps {
   total: number;
   withDupr: number;
   stale: number;
+  /** Sprint B2 follow-up — number of players whose rating came from
+   *  the fallback bucket (doubles when format=singles). */
+  approx?: number;
+  /** Which format the bracket is — drives copy clarity. */
+  format?: "singles" | "doubles";
 }
 
-export function SeedExplainerCard({ total, withDupr, stale }: SeedExplainerCardProps) {
+export function SeedExplainerCard({
+  total,
+  withDupr,
+  stale,
+  approx = 0,
+  format = "doubles",
+}: SeedExplainerCardProps) {
   const { language } = useI18n();
   const vi = language === "vi";
 
   if (total === 0) return null;
 
   const withoutDupr = total - withDupr;
+  const direct = withDupr - approx;
   const coveragePct = Math.round((withDupr / total) * 100);
   const stalePct = withDupr === 0 ? 0 : Math.round((stale / withDupr) * 100);
 
   const lowCoverage = coveragePct < 50;
   const highStale = stalePct > 30 && stale > 0;
+  const hasApprox = approx > 0;
+
+  const formatLabel = vi
+    ? format === "singles" ? "đơn" : "đôi"
+    : format;
 
   return (
     <div
@@ -43,16 +60,39 @@ export function SeedExplainerCard({ total, withDupr, stale }: SeedExplainerCardP
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <Sparkles className="w-4 h-4" style={{ color: "var(--tl-green)" }} />
         <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--tl-green)" }}>
-          {vi ? "Đã seed theo DUPR" : "Seeded by DUPR"}
+          {vi ? `Đã seed theo DUPR ${formatLabel}` : `Seeded by DUPR ${formatLabel}`}
         </span>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 10 }}>
-        <Stat label={vi ? "Có DUPR" : "With DUPR"} value={`${withDupr}/${total}`} accent="green" />
-        <Stat label={vi ? "Không DUPR" : "No DUPR"} value={String(withoutDupr)} />
-        <Stat label={vi ? "Stale >30d" : "Stale >30d"} value={String(stale)} accent={highStale ? "warn" : undefined} />
+        <Stat
+          label={vi ? `DUPR ${formatLabel} chính xác` : `Exact ${formatLabel}`}
+          value={`${direct}/${total}`}
+          accent="green"
+        />
+        <Stat
+          label={vi ? "Ước tính" : "Approx"}
+          value={String(approx)}
+          accent={hasApprox ? "info" : undefined}
+        />
+        <Stat
+          label={vi ? "Không DUPR" : "No DUPR"}
+          value={String(withoutDupr)}
+          accent={withoutDupr > 0 ? "warn" : undefined}
+        />
       </div>
 
+      {hasApprox && format === "singles" && (
+        <Banner
+          icon={<Info className="w-4 h-4" />}
+          tone="info"
+          text={
+            vi
+              ? `${approx} VĐV chưa có DUPR đơn — em dùng DUPR đôi để ước tính (hiển thị Δ "ước tính" cạnh seed).`
+              : `${approx} player(s) have no singles DUPR — using doubles DUPR as an approximation.`
+          }
+        />
+      )}
       {lowCoverage && (
         <Banner
           icon={<Info className="w-4 h-4" />}
@@ -75,6 +115,13 @@ export function SeedExplainerCard({ total, withDupr, stale }: SeedExplainerCardP
           }
         />
       )}
+      {stale === 0 && !lowCoverage && !hasApprox && (
+        <p style={{ fontSize: 12, color: "var(--tl-fg-3)", margin: 0, lineHeight: 1.5 }}>
+          {vi
+            ? `Tất cả ${total} VĐV đều có DUPR ${formatLabel}. Seed chính xác, sẵn sàng tạo bảng.`
+            : `All ${total} players have ${formatLabel} DUPR. Seeds are accurate, ready to create groups.`}
+        </p>
+      )}
     </div>
   );
 }
@@ -86,10 +133,16 @@ function Stat({
 }: {
   label: string;
   value: string;
-  accent?: "green" | "warn";
+  accent?: "green" | "warn" | "info";
 }) {
   const color =
-    accent === "green" ? "var(--tl-green)" : accent === "warn" ? "var(--tl-live)" : "var(--tl-fg)";
+    accent === "green"
+      ? "var(--tl-green)"
+      : accent === "warn"
+        ? "var(--tl-live)"
+        : accent === "info"
+          ? "rgb(96,165,250)"
+          : "var(--tl-fg)";
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{ fontSize: 18, fontFamily: "'Geist Mono', monospace", fontVariantNumeric: "tabular-nums", color }}>

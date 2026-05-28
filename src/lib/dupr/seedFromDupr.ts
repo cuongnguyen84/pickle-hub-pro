@@ -31,6 +31,10 @@ export interface RankedPlayer extends SeedablePlayer {
   dupr: number | null;
   /** When dupr_synced_at is older than STALE_DAYS days. */
   isStale: boolean;
+  /** True when the rating came from the fallback bucket (doubles when
+   *  format=singles and the player has no singles rating). UI labels
+   *  this as "ước tính" so organizers know it's not direct. */
+  isApprox?: boolean;
 }
 
 const STALE_DAYS = 30;
@@ -39,24 +43,42 @@ const STALE_MS = STALE_DAYS * 24 * 60 * 60 * 1000;
 /**
  * Fetch DUPR ratings for a batch of user ids in one round-trip.
  * Returns a Map keyed by user_id; missing rows return null.
+ *
+ * Singles-fallback policy (Sprint B2 follow-up 2026-05-27):
+ *   When format='singles' and a player has no dupr_singles, we fall
+ *   back to their dupr_doubles. Reason: in VN the vast majority of
+ *   DUPR-rated players have only competed in doubles events, so
+ *   strict singles-only seeding would mark them as "no DUPR" and seed
+ *   them alphabetically — confusing for organizers who can see those
+ *   players have a public DUPR. The `isApprox` flag lets UI surface
+ *   "(approx from doubles)" when that happens.
+ *   Doubles tables stay strict — no fallback to singles.
  */
 export async function fetchDuprSeeds(
   userIds: ReadonlyArray<string>,
   format: SeedFormat,
-): Promise<Map<string, { rating: number | null; syncedAt: string | null }>> {
+): Promise<Map<string, { rating: number | null; syncedAt: string | null; isApprox?: boolean }>> {
   if (userIds.length === 0) return new Map();
-  const column = format === "singles" ? "dupr_singles" : "dupr_doubles";
   const { data, error } = await supabase
     .from("profiles")
-    .select(`id, ${column}, dupr_synced_at`)
+    .select("id, dupr_singles, dupr_doubles, dupr_synced_at")
     .in("id", [...userIds]);
   if (error) throw error;
-  const out = new Map<string, { rating: number | null; syncedAt: string | null }>();
-  for (const row of (data ?? []) as Array<Record<string, unknown>>) {
-    const id = row.id as string;
-    const rating = (row[column] as number | null) ?? null;
-    const syncedAt = (row.dupr_synced_at as string | null) ?? null;
-    out.set(id, { rating, syncedAt });
+  const out = new Map<
+    string,
+    { rating: number | null; syncedAt: string | null; isApprox?: boolean }
+  >();
+  for (const row of (data ?? []) as Array<{
+    id: string;
+    dupr_singles: number | null;
+    dupr_doubles: number | null;
+    dupr_synced_at: string | null;
+  }>) {
+    const primary = format === "singles" ? row.dupr_singles : row.dupr_doubles;
+    const fallback = format === "singles" ? row.dupr_doubles : null;
+    const rating = primary ?? fallback ?? null;
+    const isApprox = primary == null && fallback != null;
+    out.set(row.id, { rating, syncedAt: row.dupr_synced_at, isApprox });
   }
   return out;
 }
@@ -74,7 +96,7 @@ export async function fetchDuprSeeds(
  */
 export function rankBySeed(
   players: ReadonlyArray<SeedablePlayer>,
-  ratings: Map<string, { rating: number | null; syncedAt: string | null }>,
+  ratings: Map<string, { rating: number | null; syncedAt: string | null; isApprox?: boolean }>,
 ): RankedPlayer[] {
   const enriched = players.map((p) => {
     const row = p.id ? ratings.get(p.id) : undefined;
@@ -83,6 +105,7 @@ export function rankBySeed(
     return {
       ...p,
       dupr: rating,
+      isApprox: row?.isApprox ?? false,
       isStale:
         syncedAt != null && Date.now() - new Date(syncedAt).getTime() > STALE_MS,
     };
@@ -117,20 +140,24 @@ export function seedCoverage(ranked: ReadonlyArray<RankedPlayer>): {
   withDupr: number;
   withoutDupr: number;
   stale: number;
+  approx: number;
   coveragePct: number;
 } {
   const total = ranked.length;
   let withDupr = 0;
   let stale = 0;
+  let approx = 0;
   for (const p of ranked) {
     if (p.dupr != null) withDupr++;
     if (p.isStale) stale++;
+    if (p.isApprox) approx++;
   }
   return {
     total,
     withDupr,
     withoutDupr: total - withDupr,
     stale,
+    approx,
     coveragePct: total > 0 ? withDupr / total : 0,
   };
 }
