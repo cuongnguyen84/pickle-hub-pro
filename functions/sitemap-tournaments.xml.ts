@@ -29,9 +29,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     const supabase = createSupabaseClient(context.env);
+    // SEO-1.4 (2026-05-28) — only emit indexable tournaments. Production
+    // statuses are 'ongoing' + 'ended' today; defensive whitelist excludes
+    // any future 'cancelled' / 'archived' / 'draft' so they never reach
+    // the sitemap.
     const { data: tournaments, error } = await supabase
       .from("tournaments")
-      .select("slug, updated_at")
+      .select("slug, updated_at, status")
+      .in("status", ["ongoing", "ended", "upcoming"])
       .order("start_date", { ascending: false })
       .limit(5000);
 

@@ -24,10 +24,6 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
-  "pickleball-vs-padel-vs-paddle-tennis",
-  "best-pickleball-paddles-beginners-2026",
-  "pickleball-for-tennis-players-2026",
-  "professional-pickleball-tours-guide-2026",
   "dupr-rating-improvement-30-day-plan",
   "dupr-algorithm-explained-performance-vs-expectation",
   "dupr-vietnam-partnership-ta-pickleball-thepicklehub",
@@ -102,8 +98,23 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     { loc: "/tools/team-match", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: enOnly("/tools/team-match") },
     { loc: "/blog", changefreq: "weekly", priority: "0.7", lastmod: TODAY, hreflang: bilingual("/blog", "/vi/blog") },
     { loc: "/vi/blog", changefreq: "weekly", priority: "0.8", lastmod: TODAY, hreflang: bilingual("/blog", "/vi/blog") },
-    { loc: "/privacy", changefreq: "monthly", priority: "0.3" },
-    { loc: "/terms", changefreq: "monthly", priority: "0.3" },
+    // SEO-1.1 (2026-05-28) — Sprint A Vietnam DUPR leaderboard SSR
+    // shipped a month ago but the URL was never added to the sitemap.
+    // Adding now so Google + Bing can discover the unique Vietnam-scope
+    // ranking content surfaced by dupr_leaderboard_vietnam RPC.
+    { loc: "/rankings", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/rankings", "/vi/rankings") },
+    { loc: "/vi/rankings", changefreq: "daily", priority: "0.9", lastmod: TODAY, hreflang: bilingual("/rankings", "/vi/rankings") },
+    // SEO-1.1 — bracket / tournament tool public landing pages. Each has
+    // a dedicated SSR handler (renderToolNewPage) but were never added
+    // to the sitemap.
+    { loc: "/tools/quick-tables/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/quick-tables/new") },
+    { loc: "/tools/doubles-elimination/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/doubles-elimination/new") },
+    { loc: "/tools/flex-tournament/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/flex-tournament/new") },
+    { loc: "/tools/team-match/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/team-match/new") },
+    { loc: "/privacy", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/privacy", "/vi/privacy") },
+    { loc: "/vi/privacy", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/privacy", "/vi/privacy") },
+    { loc: "/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
+    { loc: "/vi/terms", changefreq: "monthly", priority: "0.3", lastmod: TODAY, hreflang: bilingual("/terms", "/vi/terms") },
     { loc: "/rss.xml", changefreq: "hourly", priority: "0.3" },
   ];
 

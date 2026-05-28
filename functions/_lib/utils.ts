@@ -98,6 +98,30 @@ export function normalizeImageUrl(url: string): string {
 }
 
 /**
+ * SEO-1.2 (2026-05-28) — Build a bilingual hreflang triplet.
+ *
+ * Returns the `<link rel="alternate">` block to pass as `extraMeta`
+ * to buildHtml() on any handler whose URL has both EN + VI variants
+ * in the sitemap. Without these tags the sitemap's `xhtml:link`
+ * declarations are one-sided and Google flags them as "no return tag".
+ *
+ * For single-canonical pages (same URL serves both locales), pass the
+ * same URL for both enUrl + viUrl — Google docs allow this pattern.
+ */
+export function bilingualHreflang(
+  enUrl: string,
+  viUrl: string,
+  xDefaultUrl?: string,
+): string {
+  const xDefault = xDefaultUrl ?? enUrl;
+  return [
+    `<link rel="alternate" hreflang="en" href="${enUrl}"/>`,
+    `<link rel="alternate" hreflang="vi" href="${viUrl}"/>`,
+    `<link rel="alternate" hreflang="x-default" href="${xDefault}"/>`,
+  ].join("\n");
+}
+
+/**
  * Get absolute image URL.
  */
 export function absImage(url: string | null | undefined, siteUrl: string): string {

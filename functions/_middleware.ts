@@ -13,7 +13,7 @@ import {
   renderHome, renderHomeVi,
   renderLive, renderVideo,
   renderTournamentDetail, renderTournaments,
-  renderVideos, renderNews, renderNewsPost, renderViNewsPost, renderForum, renderForumPost,
+  renderVideos, renderNews, renderNewsPost, renderViNewsPost, renderForum, renderForumPost, renderForumCategory,
   renderMatch,
   renderProfile,
   renderFeed,
@@ -408,6 +408,14 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // Forum post
   match = path.match(/^\/forum\/post\/([^/]+)$/);
   if (match) return await renderForumPost(supabase, match[1], siteUrl);
+
+  // SEO-1.3 (2026-05-28) — forum category hub. Previously fell through
+  // to render404 even though the SPA route exists. Pattern excludes
+  // /forum/post/* (matched above) and /forum/new (caught by NOINDEX_PATTERNS).
+  match = path.match(/^\/(?:vi\/)?forum\/([^/]+)$/);
+  if (match && match[1] !== "post" && match[1] !== "new") {
+    return await renderForumCategory(supabase, match[1], siteUrl, lang);
+  }
 
   // Organization
   match = path.match(/^\/org\/([^/]+)$/);

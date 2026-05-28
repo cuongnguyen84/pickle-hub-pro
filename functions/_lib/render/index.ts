@@ -16,6 +16,7 @@ import {
   relatedBlogLinks,
   relatedToolLinks,
   detectLang,
+  bilingualHreflang,
   type Lang,
   DEFAULT_OG_IMAGE,
 } from "../utils";
@@ -307,7 +308,10 @@ export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: 
     siteUrl,
     image: absImage(ls.thumbnail_url, siteUrl),
     type: videoUrl ? "video.other" : "website",
-    extraMeta: `${robotsMeta}\n${ogVideoMeta}`,
+    // SEO-1.2 (2026-05-28) — add reciprocal hreflang for the /live/:id
+    // route. Single-canonical (same URL serves both locales via SPA
+    // toggle) — pattern documented in renderProfile.
+    extraMeta: `${robotsMeta}\n${ogVideoMeta}\n${bilingualHreflang(pageUrl, pageUrl)}`,
     jsonLd: { "@context": "https://schema.org", "@graph": [videoObjectSchema, sportsEventSchema] },
     bodyContent: `${bc}
 <dl>
@@ -370,6 +374,8 @@ export async function renderVideo(supabase: SupabaseClient, id: string, siteUrl:
     siteUrl,
     image: absImage(v.thumbnail_url, siteUrl),
     type: videoUrl ? "video.other" : "website",
+    // SEO-1.2 — single-canonical hreflang triplet
+    extraMeta: bilingualHreflang(`${siteUrl}/watch/${id}`, `${siteUrl}/watch/${id}`),
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "VideoObject",
@@ -410,6 +416,13 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
     description: desc,
     url: `${siteUrl}/tournament/${t.slug}`,
     siteUrl,
+    // SEO-1.2 (2026-05-28) — emit reciprocal hreflang for the EN+VI
+    // pair declared in sitemap-tournaments.xml. Without this Google
+    // flags the sitemap signal as "no return tag".
+    extraMeta: bilingualHreflang(
+      `${siteUrl}/tournament/${t.slug}`,
+      `${siteUrl}/vi/tournament/${t.slug}`,
+    ),
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "SportsEvent",
@@ -613,6 +626,84 @@ export async function renderForum(supabase: SupabaseClient, siteUrl: string, raw
   }));
 }
 
+// SEO-1.3 (2026-05-28) — bots used to hit /forum/:categorySlug and
+// fall through to render404. Now we render a real category page with
+// the latest 20 posts so bots can index the category hub and crawl
+// into individual /forum/post/:id threads. Single-canonical: same URL
+// serves both locales (SPA toggles via i18n context).
+export async function renderForumCategory(
+  supabase: SupabaseClient,
+  categorySlug: string,
+  siteUrl: string,
+  lang: Lang = "en",
+): Promise<Response> {
+  const { data: cat } = await supabase
+    .from("forum_categories")
+    .select("id, name, name_en, slug, description")
+    .eq("slug", categorySlug)
+    .single();
+
+  if (!cat) return render404(`/forum/${categorySlug}`, siteUrl);
+
+  const catName = lang === "en" && cat.name_en ? cat.name_en : cat.name;
+  const title = buildTitle(catName, " | Pickleball Forum | ThePickleHub");
+  const desc = buildMetaDescription(cat.description, {
+    type: "forum-post",
+    title: catName,
+  });
+
+  const { data: posts } = await supabase
+    .from("forum_posts")
+    .select("id, title, created_at")
+    .eq("category_id", cat.id)
+    .eq("is_hidden", false)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const pageUrl = `${siteUrl}/forum/${categorySlug}`;
+  const items = (posts || [])
+    .map(
+      (p: { id: string; title: string }) =>
+        `<li><a href="${siteUrl}/forum/post/${escapeHtml(p.id)}">${escapeHtml(p.title)}</a></li>`,
+    )
+    .join("");
+
+  const bc = breadcrumb([
+    { label: lang === "en" ? "Home" : "Trang chủ", href: siteUrl },
+    { label: lang === "en" ? "Forum" : "Diễn đàn", href: `${siteUrl}/forum` },
+    { label: catName },
+  ]);
+
+  return htmlResponse(buildHtml({
+    title,
+    description: desc,
+    url: pageUrl,
+    siteUrl,
+    extraMeta: bilingualHreflang(pageUrl, pageUrl),
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: catName,
+      numberOfItems: posts?.length ?? 0,
+      itemListOrder: "https://schema.org/ItemListOrderDescending",
+      itemListElement: (posts || []).map(
+        (p: { id: string; title: string }, idx: number) => ({
+          "@type": "ListItem",
+          position: idx + 1,
+          url: `${siteUrl}/forum/post/${p.id}`,
+          name: p.title,
+        }),
+      ),
+    },
+    bodyContent: `${bc}<h2>${escapeHtml(catName)}</h2>${
+      items
+        ? `<ul>${items}</ul>`
+        : `<p>${lang === "en" ? "No posts in this category yet." : "Chưa có bài viết trong chuyên mục này."}</p>`
+    }`,
+    lang,
+  }));
+}
+
 export async function renderForumPost(supabase: SupabaseClient, postId: string, siteUrl: string): Promise<Response> {
   const { data: post } = await supabase.from("forum_posts").select("id, title, content").eq("id", postId).eq("is_hidden", false).single();
 
@@ -633,6 +724,8 @@ export async function renderForumPost(supabase: SupabaseClient, postId: string, 
     description: desc,
     url: `${siteUrl}/forum/post/${postId}`,
     siteUrl,
+    // SEO-1.2 — single-canonical hreflang triplet
+    extraMeta: bilingualHreflang(`${siteUrl}/forum/post/${postId}`, `${siteUrl}/forum/post/${postId}`),
     jsonLd: { "@context": "https://schema.org", "@type": "DiscussionForumPosting", headline: title, text: desc, url: `${siteUrl}/forum/post/${postId}` },
     bodyContent: `${bc}<section><h2>Xem thêm</h2><ul><li><a href="${siteUrl}/forum">Quay lại diễn đàn</a></li><li><a href="${siteUrl}/blog">Đọc blog pickleball</a></li></ul></section>`,
   }));
@@ -654,6 +747,11 @@ export async function renderOrgDetail(supabase: SupabaseClient, slug: string, si
     url: `${siteUrl}/org/${org.slug}`,
     siteUrl,
     image: absImage(org.logo_url, siteUrl),
+    // SEO-1.2 — emit hreflang for /org/:slug + /vi/org/:slug mirror
+    extraMeta: bilingualHreflang(
+      `${siteUrl}/org/${org.slug}`,
+      `${siteUrl}/vi/org/${org.slug}`,
+    ),
     jsonLd: { "@context": "https://schema.org", "@type": "Organization", name: org.name, url: `${siteUrl}/org/${org.slug}`, ...(org.logo_url ? { logo: absImage(org.logo_url, siteUrl) } : {}) },
   }));
 }
@@ -1017,6 +1115,8 @@ export function renderBlog(siteUrl: string): Response {
     description: "Read the latest pickleball articles: tournament tips, software reviews, strategy guides and community stories on ThePickleHub.",
     url: `${siteUrl}/blog`,
     siteUrl,
+    // SEO-1.2 — emit hreflang to /vi/blog (Vietnamese index)
+    extraMeta: bilingualHreflang(`${siteUrl}/blog`, `${siteUrl}/vi/blog`),
     bodyContent: `<h2>Blog Posts</h2><ul>${blogLinks}</ul>`,
   }));
 }
