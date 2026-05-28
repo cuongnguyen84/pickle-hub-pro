@@ -412,15 +412,25 @@ const Index = () => {
               aria-label={alt}
               className="tl-dupr-strip block w-full overflow-hidden rounded-md transition-opacity hover:opacity-95"
             >
-              <img
-                src="/images/partnerships/dupr-strip.png?v=4"
-                alt={alt}
-                width={2400}
-                height={360}
-                loading="eager"
-                fetchPriority="high"
-                className="block h-auto w-full"
-              />
+              {/* Responsive art-direction: a wide/thin 8:1 band on desktop
+                  (≥768px) so the strip never eats more than ~160px of
+                  vertical space, and a taller 4:1 band on mobile where
+                  the text needs the extra height to stay legible. */}
+              <picture>
+                <source
+                  media="(min-width: 768px)"
+                  srcSet="/images/partnerships/dupr-strip-wide.png?v=5"
+                />
+                <img
+                  src="/images/partnerships/dupr-strip.png?v=5"
+                  alt={alt}
+                  width={2400}
+                  height={600}
+                  loading="eager"
+                  fetchPriority="high"
+                  className="block h-auto w-full"
+                />
+              </picture>
             </Link>
           </div>
         );
