@@ -60,7 +60,15 @@ export function DuprEligibilityCheck({
     );
   }
 
-  const rating = isDoubles ? conn?.doubles ?? null : conn?.singles ?? null;
+  // Sprint B fix (2026-05-27 v2) — singles fallback. If table is singles
+  // and the player has no dupr_singles, fall back to dupr_doubles + mark
+  // as approximation. Matches the seedFromDupr logic: most VN players
+  // only have doubles ratings (singles tournaments rare). Doubles tables
+  // stay strict — no fallback to singles.
+  const primary = isDoubles ? conn?.doubles ?? null : conn?.singles ?? null;
+  const fallback = isDoubles ? null : conn?.doubles ?? null;
+  const rating = primary ?? fallback ?? null;
+  const isApprox = primary == null && fallback != null;
   const hasSso = !!conn?.ssoConnected && rating != null;
 
   const rangeLabel =
@@ -170,6 +178,13 @@ export function DuprEligibilityCheck({
     );
   }
 
+  // Sprint B fix — show DUPR doubles in chip when fallback applied
+  // (otherwise the chip would say "DUPR singles 3.57" while the rating
+  // actually came from doubles).
+  const chipDoubles = isApprox || isDoubles ? rating : null;
+  const chipSingles = !isApprox && !isDoubles ? rating : null;
+  const chipFormat: "doubles" | "singles" = isApprox || isDoubles ? "doubles" : "singles";
+
   return (
     <Frame tone="success">
       <CheckCircle2
@@ -177,24 +192,40 @@ export function DuprEligibilityCheck({
         style={{ color: "var(--tl-green)", flexShrink: 0 }}
       />
       <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
           <span style={{ fontWeight: 600, color: "var(--tl-green)" }}>
             {vi ? "Bạn đủ điều kiện tham dự" : "You're eligible"}
           </span>
-          <DuprChip
-            doubles={isDoubles ? rating : null}
-            singles={isDoubles ? null : rating}
-            format={isDoubles ? "doubles" : "singles"}
-          />
+          <DuprChip doubles={chipDoubles} singles={chipSingles} format={chipFormat} />
+          {isApprox && (
+            <span
+              style={{
+                fontSize: 10,
+                fontFamily: "'Geist Mono', monospace",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "rgb(96,165,250)",
+                padding: "2px 6px",
+                border: "1px solid rgba(96,165,250,0.4)",
+                borderRadius: 4,
+              }}
+            >
+              {vi ? "Ước tính" : "Approx"}
+            </span>
+          )}
         </div>
         <div style={{ fontSize: 13, color: "var(--tl-fg-2)", lineHeight: 1.5 }}>
-          {vi
-            ? rangeLabel
-              ? `DUPR ${rating!.toFixed(2)} nằm trong khoảng ${rangeLabel}. Rating sẽ tự fill khi đăng ký.`
-              : `DUPR ${rating!.toFixed(2)} đã xác thực. Rating sẽ tự fill khi đăng ký.`
-            : rangeLabel
-              ? `DUPR ${rating!.toFixed(2)} is within ${rangeLabel}. Rating auto-fills on registration.`
-              : `DUPR ${rating!.toFixed(2)} verified. Rating auto-fills on registration.`}
+          {isApprox
+            ? vi
+              ? `Em dùng DUPR đôi ${rating!.toFixed(2)} làm ước tính (bạn chưa có DUPR đơn).${rangeLabel ? ` Nằm trong khoảng ${rangeLabel}.` : ""} Rating sẽ tự fill khi đăng ký.`
+              : `Using doubles DUPR ${rating!.toFixed(2)} as an approximation (no singles rating yet).${rangeLabel ? ` Within ${rangeLabel}.` : ""} Rating auto-fills on registration.`
+            : vi
+              ? rangeLabel
+                ? `DUPR ${rating!.toFixed(2)} nằm trong khoảng ${rangeLabel}. Rating sẽ tự fill khi đăng ký.`
+                : `DUPR ${rating!.toFixed(2)} đã xác thực. Rating sẽ tự fill khi đăng ký.`
+              : rangeLabel
+                ? `DUPR ${rating!.toFixed(2)} is within ${rangeLabel}. Rating auto-fills on registration.`
+                : `DUPR ${rating!.toFixed(2)} verified. Rating auto-fills on registration.`}
         </div>
       </div>
     </Frame>

@@ -225,9 +225,12 @@ export function DoublesRegistrationForm({
   const location = useLocation();
 
   // Sprint B1.4 — DUPR enforcement helpers
+  // Sprint B fix v2 — singles fallback (see DuprEligibilityCheck for context).
   const allowDupr = ratingSource === 'dupr' || ratingSource === 'either';
   const enforceDupr = ratingSource === 'dupr';
-  const userDupr = isDoubles ? duprConn?.doubles ?? null : duprConn?.singles ?? null;
+  const duprPrimary = isDoubles ? duprConn?.doubles ?? null : duprConn?.singles ?? null;
+  const duprFallback = isDoubles ? null : duprConn?.doubles ?? null;
+  const userDupr = duprPrimary ?? duprFallback ?? null;
   const hasSsoDupr = !!duprConn?.ssoConnected && userDupr != null;
   const userOutOfRange =
     userDupr != null &&
