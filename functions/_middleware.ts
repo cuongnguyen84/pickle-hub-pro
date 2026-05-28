@@ -146,6 +146,19 @@ function applySecurityHeaders(headers: Headers): void {
   }
 }
 
+// SEO audit 2026-05-28 (batch 6) — Response.redirect() ships a fresh
+// Response with only a `location` header. Crawlers that crawl the
+// redirect itself (SEOnaut does — it reports "Missing HSTS",
+// "Incorrect media type", and "Slow Time to First Byte" on the 301
+// hop, not on the destination) consequently flagged every middleware
+// redirect added by batch 4/5. Build the redirect manually so we can
+// attach HSTS + the rest of SECURITY_HEADERS.
+function secureRedirect(location: string, status: 301 | 302 = 301): Response {
+  const headers = new Headers({ Location: location });
+  applySecurityHeaders(headers);
+  return new Response(null, { status, headers });
+}
+
 // PR73 Phase 2B — per-path KV cache TTL override. Hub list pages
 // (/social + /clubs) need a shorter window than the default 6h because a
 // freshly-published event/club should appear in the bot view within
@@ -175,10 +188,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   // ─── 1. Apex → www redirect ───────────────────────────
   if (url.hostname === "thepicklehub.net") {
-    return Response.redirect(
-      `https://www.thepicklehub.net${url.pathname}${url.search}`,
-      301,
-    );
+    return secureRedirect(`https://www.thepicklehub.net${url.pathname}${url.search}`, 301);
   }
 
   // ─── 1b. PR79 Phase 2F (audit I-8) — /u/* + /vi/u/* → /nguoi-choi/* 301.
@@ -190,10 +200,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       canonical profile URL.
   const uMatch = url.pathname.match(/^\/(?:vi\/)?u\/([^/?#]+)$/);
   if (uMatch) {
-    return Response.redirect(
-      `https://${url.hostname}/nguoi-choi/${uMatch[1]}${url.search}`,
-      301,
-    );
+    return secureRedirect(`https://${url.hostname}/nguoi-choi/${uMatch[1]}${url.search}`, 301);
   }
 
   // ─── 1d. SEO audit batch 5 — collapse /vi/org/* + /vi/tournament/*
@@ -209,12 +216,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   //       VI rendering path the safer signal is a permanent redirect
   //       to the EN canonical — readers stay on one URL per entity
   //       and SEOnaut sees one indexable surface per organization.
-  const viOrgMatch = url.pathname.match(/^\/vi\/(org|tournament)\/([^/?#]+)$/);
+  const viOrgMatch = url.pathname.match(/^\/vi\/(org|tournament|watch)\/([^/?#]+)$/);
   if (viOrgMatch) {
-    return Response.redirect(
-      `https://${url.hostname}/${viOrgMatch[1]}/${viOrgMatch[2]}${url.search}`,
-      301,
-    );
+    return secureRedirect(`https://${url.hostname}/${viOrgMatch[1]}/${viOrgMatch[2]}${url.search}`, 301);
   }
 
   // ─── 1c. SEO audit batch 4 — /livestream → /live (plus /vi mirror)
@@ -231,10 +235,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (livestreamMatch) {
     const viPrefix = livestreamMatch[1] || "";
     const tail = livestreamMatch[2] || "";
-    return Response.redirect(
-      `https://${url.hostname}/${viPrefix}live${tail}${url.search}`,
-      301,
-    );
+    return secureRedirect(`https://${url.hostname}/${viPrefix}live${tail}${url.search}`, 301);
   }
 
   // ─── 2. Static asset bypass (before bot detection) ───
@@ -323,7 +324,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // truncateForSeo() in functions/_lib/html.ts needs the cache to
   // drop stale entries or bots keep seeing the long copy until the
   // 6h TTL rolls over.
-  const cacheKey = `pr:v10:${url.pathname}`;
+  // 2026-05-28 (batch 6) — bumped v10→v11 to invalidate cached HTML
+  // that still emits bilingualHreflang(X, X) on /watch /live /forum/post
+  // /tran-dau. The byte-aware truncation in batch 5 also still needs
+  // to settle in on routes whose v10 cache slot was already filled
+  // immediately after the v9→v10 bump.
+  const cacheKey = `pr:v11:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

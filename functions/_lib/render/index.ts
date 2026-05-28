@@ -16,7 +16,7 @@ import {
   relatedBlogLinks,
   relatedToolLinks,
   detectLang,
-  bilingualHreflang,
+  bilingualHreflang, singleCanonicalHreflang,
   buildBreadcrumbJsonLd,
   type Lang,
   DEFAULT_OG_IMAGE,
@@ -313,7 +313,7 @@ export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: 
     // SEO-1.2 (2026-05-28) — add reciprocal hreflang for the /live/:id
     // route. Single-canonical (same URL serves both locales via SPA
     // toggle) — pattern documented in renderProfile.
-    extraMeta: `${robotsMeta}\n${ogVideoMeta}\n${bilingualHreflang(pageUrl, pageUrl)}`,
+    extraMeta: `${robotsMeta}\n${ogVideoMeta}\n${singleCanonicalHreflang(pageUrl, "vi")}`,
     jsonLd: { "@context": "https://schema.org", "@graph": [videoObjectSchema, sportsEventSchema] },
     bodyContent: `${bc}
 <dl>
@@ -378,7 +378,7 @@ export async function renderVideo(supabase: SupabaseClient, id: string, siteUrl:
     lang: "vi",
     image: absImage(v.thumbnail_url, siteUrl),
     type: videoUrl ? "video.other" : "website",
-    extraMeta: bilingualHreflang(`${siteUrl}/watch/${id}`, `${siteUrl}/watch/${id}`),
+    extraMeta: singleCanonicalHreflang(`${siteUrl}/watch/${id}`, "vi"),
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
@@ -774,7 +774,7 @@ export async function renderForumCategory(
     description: desc,
     url: pageUrl,
     siteUrl,
-    extraMeta: bilingualHreflang(pageUrl, pageUrl),
+    extraMeta: singleCanonicalHreflang(pageUrl, "vi"),
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
@@ -827,7 +827,7 @@ export async function renderForumPost(supabase: SupabaseClient, postId: string, 
     siteUrl,
     lang: "vi",
     // SEO-1.2 — single-canonical hreflang triplet
-    extraMeta: bilingualHreflang(`${siteUrl}/forum/post/${postId}`, `${siteUrl}/forum/post/${postId}`),
+    extraMeta: singleCanonicalHreflang(`${siteUrl}/forum/post/${postId}`, "vi"),
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [

@@ -151,6 +151,35 @@ export function bilingualHreflang(
 }
 
 /**
+ * SEO audit 2026-05-28 (batch 6) — single-canonical hreflang.
+ *
+ * Some routes (/live/:id, /watch/:id, /forum/post/:id) ship a single
+ * page that the entire bilingual audience reads, with Vietnamese body
+ * copy because ~95% of the audience is Vietnamese. There is no
+ * distinct EN translation, only one canonical URL per resource.
+ *
+ * bilingualHreflang() emits both en + vi pointing to the same URL,
+ * which trips SEOnaut's NewHreflangMismatchingLang reporter — the
+ * self-referencing hreflang must match the page's html lang attribute.
+ * When the page declares lang="vi" but the en hreflang URL equals the
+ * page URL, SEOnaut sees "the self-reference lang is en but the page
+ * is vi" and flags it. Same code path also triggers SEOnaut's
+ * "Multiple languages reference" reporter on the same set.
+ *
+ * singleCanonicalHreflang() advertises only the actual content
+ * language plus x-default, which matches the page's stated lang and
+ * avoids the conflict — and is the pattern Google recommends for
+ * single-canonical pages (see "Methods for indicating your alternate
+ * page" in Search Central docs).
+ */
+export function singleCanonicalHreflang(url: string, lang: "en" | "vi"): string {
+  return [
+    `<link rel="alternate" hreflang="${lang}" href="${url}"/>`,
+    `<link rel="alternate" hreflang="x-default" href="${url}"/>`,
+  ].join("\n");
+}
+
+/**
  * Get absolute image URL.
  */
 export function absImage(url: string | null | undefined, siteUrl: string): string {
