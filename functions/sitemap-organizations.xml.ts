@@ -33,7 +33,6 @@ interface Env {
 
 interface OrgRow {
   slug: string | null;
-  updated_at: string | null;
   created_at: string | null;
 }
 
@@ -43,9 +42,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     const supabase = createSupabaseClient(context.env);
+    // Note: organizations table has no `updated_at`; created_at only.
     const { data, error } = await supabase
       .from("organizations")
-      .select("slug, updated_at, created_at")
+      .select("slug, created_at")
       .not("slug", "is", null)
       .order("created_at", { ascending: false })
       .limit(5000);
@@ -57,7 +57,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const entries = ((data ?? []) as OrgRow[])
       .filter((o) => o.slug && URL_SAFE_SLUG_RE.test(o.slug))
       .map((o) => {
-        const lastmod = toLastmod(o.updated_at || o.created_at, TODAY);
+        const lastmod = toLastmod(o.created_at, TODAY);
         const enUrl = `${siteUrl}/org/${o.slug}`;
         const viUrl = `${siteUrl}/vi/org/${o.slug}`;
         return buildUrlEntry({

@@ -29,8 +29,8 @@ interface Env {
 
 interface VideoRow {
   id: string;
-  updated_at: string | null;
   published_at: string | null;
+  created_at: string | null;
 }
 
 export const onRequest: PagesFunction<Env> = async (context) => {
@@ -39,9 +39,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     const supabase = createSupabaseClient(context.env);
+    // Note: videos table has no `updated_at` column — only `created_at`
+    // and `published_at`. Fall back to created_at when published_at null.
     const { data, error } = await supabase
       .from("videos")
-      .select("id, updated_at, published_at")
+      .select("id, published_at, created_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(5000);
@@ -51,7 +53,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const entries = ((data ?? []) as VideoRow[]).map((v) => {
-      const lastmod = toLastmod(v.updated_at || v.published_at, TODAY);
+      const lastmod = toLastmod(v.published_at || v.created_at, TODAY);
       const url = `${siteUrl}/watch/${v.id}`;
       return buildUrlEntry({
         loc: url,
