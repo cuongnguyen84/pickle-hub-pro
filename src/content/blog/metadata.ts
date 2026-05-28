@@ -10,63 +10,6 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
-    slug: "pickleball-vs-padel-vs-paddle-tennis",
-    publishedDate: "2026-05-26",
-    updatedDate: "2026-05-26",
-    author: "Cuong Nguyen",
-    tags: ["pickleball vs padel", "pickleball vs paddle tennis", "padel vs pickleball", "racquet sports comparison", "padel vietnam", "paddle tennis explained", "pickleball court dimensions", "pickleball beginners"],
-    ctaPath: "/blog/pickleball-for-tennis-players-2026",
-    ctaLabel: { en: "Next: Pickleball for Tennis Players 2026 — 5 Habits to Unlearn", vi: "Tiếp theo: Pickleball cho người chơi tennis 2026 — 5 thói quen cần bỏ" },
-    heroImage: {
-      src: "/images/blog/pickleball-vs-padel-vs-paddle-tennis-hero.webp",
-      alt: "Three top-down court diagrams side by side at the same visual scale, showing pickleball court (44 by 20 feet, kitchen marked), padel court (20 by 10 meters with glass walls in light blue), and paddle tennis POP court (50 by 20 feet, no walls), each labeled with sport name and dimensions in a clean illustrative diagram style on a white background for the 2026 racquet sports comparison guide"
-    },
-    titleEn: "Pickleball vs Padel vs Paddle Tennis: Complete Guide 2026",
-    titleVi: "Pickleball vs Padel vs Paddle Tennis: So Sánh Đầy Đủ 2026",
-    metaTitleEn: "Pickleball vs Padel vs Paddle Tennis: Complete Guide 2026",
-    metaTitleVi: "Pickleball vs Padel vs Paddle Tennis: So Sánh 2026",
-    metaDescriptionEn: "Pickleball vs padel vs paddle tennis: full 2026 comparison of court size, rules, scoring, equipment, where each sport is popular, what to try first.",
-    metaDescriptionVi: "Pickleball, padel hay paddle tennis khác nhau thế nào? So sánh 2026 đầy đủ: sân, luật, dụng cụ, nơi phổ biến tại VN/Á — và môn nào nên thử trước.",
-  },
-  {
-    slug: "best-pickleball-paddles-beginners-2026",
-    publishedDate: "2026-05-24",
-    updatedDate: "2026-05-24",
-    author: "Cuong Nguyen",
-    tags: ["best pickleball paddles", "beginner paddle", "paddle buying guide", "pickleball equipment", "joola", "selkirk", "gamma", "pickleball vietnam", "asia"],
-    ctaPath: "/blog/how-to-play-pickleball",
-    ctaLabel: { en: "Next: How to Play Pickleball — Complete Beginner Guide", vi: "Tiếp theo: Hướng dẫn chơi Pickleball cho người mới" },
-    heroImage: {
-      src: "/images/blog/best-pickleball-paddles-beginners-2026-hero.webp",
-      alt: "Top-down product photo of seven beginner pickleball paddles arranged in a fan layout on a neutral wood background, showing paddle face colors ranging from white to black with varied grip wraps, sports equipment catalog style for the 2026 best pickleball paddles for beginners buyer guide"
-    },
-    titleEn: "Best Pickleball Paddles for Beginners 2026: 7 Top Picks (Asia Buyer's Guide)",
-    titleVi: "Vợt Pickleball Tốt Nhất Cho Người Mới 2026: 7 Lựa Chọn (Hướng Dẫn Mua Tại VN)",
-    metaTitleEn: "Best Pickleball Paddles for Beginners 2026 | 7 Top Picks",
-    metaTitleVi: "Vợt Pickleball Tốt Nhất Cho Người Mới 2026 (7 Lựa Chọn)",
-    metaDescriptionEn: "Picking your first pickleball paddle without overspending. 7 beginner-friendly paddles for 2026 with weight, face, grip specs — plus what to avoid in VN.",
-    metaDescriptionVi: "Chọn vợt pickleball đầu tiên không bị \"cháy túi\". 7 mẫu vợt cho người mới 2026 — phân tích trọng lượng, mặt vợt, cán + lỗi cần tránh khi mua tại VN.",
-  },
-  {
-    slug: "pickleball-for-tennis-players-2026",
-    publishedDate: "2026-05-22",
-    updatedDate: "2026-05-22",
-    author: "Cuong Nguyen",
-    tags: ["pickleball for tennis players", "tennis to pickleball", "tennis vs pickleball", "beginner", "technique", "transition guide", "unlearn", "vietnam pickleball"],
-    ctaPath: "/blog/how-to-play-pickleball",
-    ctaLabel: { en: "Read: How to Play Pickleball — Complete Beginner Guide", vi: "Đọc tiếp: Hướng dẫn chơi Pickleball cho người mới bắt đầu" },
-    heroImage: {
-      src: "/images/blog/pickleball-for-tennis-players-2026-hero.webp",
-      alt: "Split-screen sports photo: left side a tennis player executing a deep baseline forehand on a clay court, right side the same player at the kitchen line on a pickleball court holding a paddle in a compact ready position, illustrating the transition from tennis to pickleball and the 5 habits tennis players need to unlearn"
-    },
-    titleEn: "Pickleball for Tennis Players: 5 Things to Unlearn (2026 Guide)",
-    titleVi: "Từ tennis chuyển sang pickleball: 5 thói quen cần \"quên\" (2026)",
-    metaTitleEn: "Pickleball for Tennis Players 2026 | 5 Habits to Unlearn",
-    metaTitleVi: "Tennis sang Pickleball 2026 | 5 thói quen phải sửa",
-    metaDescriptionEn: "Tennis players struggle with pickleball not because it's harder — they bring 5 ingrained habits that backfire. Here's what to unlearn and the 7-day fix.",
-    metaDescriptionVi: "Người chơi tennis chuyển sang pickleball không thua vì kỹ thuật yếu — họ mang theo 5 thói quen phản tác dụng. Đây là cách sửa và lịch tập 7 ngày.",
-  },
-  {
     slug: "dupr-rating-improvement-30-day-plan",
     publishedDate: "2026-05-20",
     updatedDate: "2026-05-20",
