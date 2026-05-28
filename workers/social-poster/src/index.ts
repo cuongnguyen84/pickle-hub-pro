@@ -341,14 +341,16 @@ async function fetchNewsItemById(env: Env, id: string): Promise<NewsItem> {
 }
 
 async function pickNextNewsItem(env: Env): Promise<NewsItem> {
-  // Eligible VI rows that DON'T have a 'posted' row in fb_post_log yet.
-  // PostgREST doesn't do anti-joins, so we use NOT IN via a separate query.
-  const postedUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
-  postedUrl.searchParams.set('select', 'news_item_id');
-  postedUrl.searchParams.set('status', 'eq.posted');
-  const postedRes = await fetch(postedUrl.toString(), { headers: supabaseRestHeaders(env) });
+  // Eligible VI rows that DON'T already have a terminal fb_post_log row.
+  // 'posted' = done, 'skipped' = intentionally not posting (e.g. backlog the
+  // admin chose to drop). PostgREST has no anti-join, so we fetch the
+  // excluded ids separately.
+  const doneUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
+  doneUrl.searchParams.set('select', 'news_item_id');
+  doneUrl.searchParams.set('status', 'in.(posted,skipped)');
+  const postedRes = await fetch(doneUrl.toString(), { headers: supabaseRestHeaders(env) });
   if (!postedRes.ok) {
-    throw new Error(`pickNext posted query failed: ${postedRes.status} ${await postedRes.text()}`);
+    throw new Error(`pickNext done query failed: ${postedRes.status} ${await postedRes.text()}`);
   }
   const postedRows = (await postedRes.json()) as Array<{ news_item_id: string }>;
   const postedIds = postedRows.map((r) => r.news_item_id);
@@ -457,6 +459,12 @@ async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult
   if (existing.status === 'posted') {
     return { claimed: false, row: existing, conflict: 'posted' };
   }
+  // 'skipped' is a terminal state — admin chose not to post this item
+  // (e.g. dropped backlog). Never re-claim it. Treat like 'posted' for the
+  // caller (won't post, won't error).
+  if (existing.status === 'skipped') {
+    return { claimed: false, row: existing, conflict: 'posted' };
+  }
 
   // A genuinely in-progress pending row (claimed < STALE_PENDING_MS ago) must
   // be left alone so we don't double-post. But a STALE pending row was
@@ -472,9 +480,10 @@ async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult
     // status so concurrent invocations can't both win.
   }
 
-  // Step 3 — existing row is failed/skipped OR stale-pending: take ownership.
-  // PATCH is filtered on (id, status) so two concurrent retries can't both win.
-  const claimableStatuses = existing.status === 'pending' ? 'pending' : 'failed,skipped';
+  // Step 3 — existing row is 'failed' OR stale-pending: take ownership for
+  // retry. ('skipped' is handled above as terminal.) PATCH is filtered on
+  // (id, status) so two concurrent retries can't both win.
+  const claimableStatuses = existing.status === 'pending' ? 'pending' : 'failed';
   const retryUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
   retryUrl.searchParams.set('id', `eq.${existing.id}`);
   retryUrl.searchParams.set('status', `in.(${claimableStatuses})`);
