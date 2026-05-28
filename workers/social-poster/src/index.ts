@@ -69,7 +69,12 @@ interface FbPostLogRow {
   status: 'pending' | 'posted' | 'failed' | 'skipped';
   attempt_count: number;
   posted_at: string | null;
+  updated_at: string | null;
 }
+
+// A 'pending' row older than this is considered orphaned (the Worker that
+// claimed it crashed/timed out before finalizing) and may be re-claimed.
+const STALE_PENDING_MS = 10 * 60 * 1000;
 
 interface SupabaseWebhookPayload {
   type: 'INSERT' | 'UPDATE' | 'DELETE';
@@ -215,25 +220,28 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
 
   const attemptCount = claim.row?.attempt_count ?? 1;
 
-  // 5. Generate caption with Gemini
-  const caption = await generateCaption(env, item);
-
-  // 6. Build Graph API payload
-  const link = buildNewsLink(env, item);
-  const fbPayload = buildFbPayload(item, caption, link);
-
-  // 7. Post to FB
-  let fbResult: { id?: string; post_id?: string; error?: unknown } | null = null;
-  let fbError: string | null = null;
+  // 5-7. Caption + post. CRITICAL: everything from here on must be wrapped so
+  // a thrown error (e.g. Gemini/social-caption failure) ALWAYS finalizes the
+  // claimed row to 'failed'. Otherwise the row stays 'pending' forever and
+  // blocks the catchup queue (pickNextNewsItem keeps re-picking it, claim
+  // keeps reporting in_progress → deadlock). This was the root cause of the
+  // 2026-05-28 outage where posting stopped for ~2 days.
+  let caption = '';
   try {
-    fbResult = await postToFacebook(env, fbPayload);
-  } catch (err) {
-    fbError = err instanceof Error ? err.message : String(err);
-  }
+    // 5. Generate caption via social-caption Edge Function (Gemini proxy)
+    caption = await generateCaption(env, item);
 
-  // 8. Finalize log row
-  const postedId = fbResult?.post_id ?? fbResult?.id ?? null;
-  if (postedId && !fbError) {
+    // 6. Build Graph API payload
+    const link = buildNewsLink(env, item);
+    const fbPayload = buildFbPayload(item, caption, link);
+
+    // 7. Post to FB
+    const fbResult = await postToFacebook(env, fbPayload);
+    const postedId = fbResult?.post_id ?? fbResult?.id ?? null;
+    if (!postedId) {
+      throw new Error(`Graph API returned no post id: ${JSON.stringify(fbResult)}`);
+    }
+
     const permalink = `https://www.facebook.com/${env.FB_PAGE_ID}/posts/${
       postedId.split('_')[1] ?? postedId
     }`;
@@ -248,16 +256,19 @@ async function processNewsItem(env: Env, item: NewsItem, dryRun: boolean): Promi
       posted_at: new Date().toISOString(),
     });
     return json({ posted: true, news_item_id: item.id, fb_post_id: postedId, permalink });
-  } else {
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    // Finalize to 'failed' so the row is no longer pending. The catchup cron
+    // will retry it later (claimFbPostLog re-claims failed rows), and stale
+    // pending recovery covers the case where this update itself fails.
     await upsertFbPostLog(env, {
       news_item_id: item.id,
       caption,
       status: 'failed',
       attempt_count: attemptCount,
-      error_message: fbError ?? 'Unknown error',
-      raw_response: fbResult,
+      error_message: errMsg.slice(0, 500),
     });
-    return json({ posted: false, news_item_id: item.id, error: fbError }, 500);
+    return json({ posted: false, news_item_id: item.id, error: errMsg }, 500);
   }
 }
 
@@ -364,7 +375,7 @@ async function fetchFbPostLogByNewsItem(
   newsItemId: string,
 ): Promise<FbPostLogRow | null> {
   const url = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
-  url.searchParams.set('select', 'id,news_item_id,status,attempt_count,posted_at');
+  url.searchParams.set('select', 'id,news_item_id,status,attempt_count,posted_at,updated_at');
   url.searchParams.set('news_item_id', `eq.${newsItemId}`);
   url.searchParams.set('limit', '1');
   const res = await fetch(url.toString(), { headers: supabaseRestHeaders(env) });
@@ -446,15 +457,32 @@ async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult
   if (existing.status === 'posted') {
     return { claimed: false, row: existing, conflict: 'posted' };
   }
+
+  // A genuinely in-progress pending row (claimed < STALE_PENDING_MS ago) must
+  // be left alone so we don't double-post. But a STALE pending row was
+  // orphaned by a crashed/timed-out invocation and must be re-claimable —
+  // otherwise one stuck row deadlocks the whole catchup queue forever.
   if (existing.status === 'pending') {
-    return { claimed: false, row: existing, conflict: 'pending' };
+    const updatedMs = existing.updated_at ? new Date(existing.updated_at).getTime() : 0;
+    const isStale = Date.now() - updatedMs > STALE_PENDING_MS;
+    if (!isStale) {
+      return { claimed: false, row: existing, conflict: 'pending' };
+    }
+    // fall through to the retry-claim below, which is gated on the current
+    // status so concurrent invocations can't both win.
   }
 
-  // Step 3 — existing row is failed/skipped: try to take ownership for retry.
+  // Step 3 — existing row is failed/skipped OR stale-pending: take ownership.
   // PATCH is filtered on (id, status) so two concurrent retries can't both win.
+  const claimableStatuses = existing.status === 'pending' ? 'pending' : 'failed,skipped';
   const retryUrl = new URL(`${env.SUPABASE_URL}/rest/v1/fb_post_log`);
   retryUrl.searchParams.set('id', `eq.${existing.id}`);
-  retryUrl.searchParams.set('status', `in.(failed,skipped)`);
+  retryUrl.searchParams.set('status', `in.(${claimableStatuses})`);
+  // For stale-pending, also require updated_at to still be old — guards
+  // against a fresh invocation that updated the row between our read and PATCH.
+  if (existing.status === 'pending' && existing.updated_at) {
+    retryUrl.searchParams.set('updated_at', `eq.${existing.updated_at}`);
+  }
   const retryRes = await fetch(retryUrl.toString(), {
     method: 'PATCH',
     headers: {
@@ -473,7 +501,7 @@ async function claimFbPostLog(env: Env, newsItemId: string): Promise<ClaimResult
   }
   const retried = (await retryRes.json()) as FbPostLogRow[];
   if (retried.length === 0) {
-    // Another invocation grabbed the retry first.
+    // Another invocation grabbed the retry/recovery first.
     return { claimed: false, row: existing, conflict: 'pending' };
   }
   return { claimed: true, row: retried[0], conflict: null };
