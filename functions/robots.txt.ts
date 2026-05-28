@@ -71,11 +71,9 @@ Allow: /vi/tools/team-match$
 # sessions like /tools/flex-tournament/<uuid> remain blocked.
 Allow: /tools/flex-tournament/new$
 Allow: /tools/doubles-elimination/new$
-Allow: /tools/quick-tables/new$
 Allow: /tools/team-match/new$
 Allow: /vi/tools/flex-tournament/new$
 Allow: /vi/tools/doubles-elimination/new$
-Allow: /vi/tools/quick-tables/new$
 Allow: /vi/tools/team-match/new$
 
 # PR72 (SEO Phase 2A I-7+I-14) — social-event private surfaces.

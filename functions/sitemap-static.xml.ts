@@ -107,7 +107,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // SEO-1.1 — bracket / tournament tool public landing pages. Each has
     // a dedicated SSR handler (renderToolNewPage) but were never added
     // to the sitemap.
-    { loc: "/tools/quick-tables/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/quick-tables/new") },
     { loc: "/tools/doubles-elimination/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/doubles-elimination/new") },
     { loc: "/tools/flex-tournament/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/flex-tournament/new") },
     { loc: "/tools/team-match/new", changefreq: "weekly", priority: "0.6", lastmod: TODAY, hreflang: enOnly("/tools/team-match/new") },

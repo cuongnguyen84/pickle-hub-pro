@@ -204,7 +204,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Lịch PPA Tour Asia 2026 là bằng chứng rõ nhất rằng châu Á là thị trường tăng trưởng pickleball kế tiếp",
-              path: "/vi/blog/cac-giai-pickleball-pro-asia-2026",
+              path: "/vi/blog/ppa-tour-asia-2026-lich-thi-dau-tien-thuong",
             },
           ],
         },
