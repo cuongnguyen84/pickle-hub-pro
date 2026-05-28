@@ -114,6 +114,38 @@ function shouldNoindex(pathname: string): boolean {
   return NOINDEX_PATTERNS.some((re) => re.test(pathname));
 }
 
+// SEO audit 2026-05-28 (batch 2) — bot path constructs each Response
+// in code, which bypasses public/_headers entirely. Without this helper
+// Googlebot/SEOnaut/etc. were getting prerendered HTML with no
+// security headers attached (SEOnaut crawl reported 462 'Missing CSP',
+// 464 'Missing HSTS', 462 'Missing X-Content-Type-Options' across all
+// SSR'd routes). The values mirror public/_headers exactly so the
+// bot view and the user view advertise the same policy.
+const SECURITY_HEADERS: Record<string, string> = {
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "SAMEORIGIN",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Content-Security-Policy":
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' data: https://fonts.gstatic.com; " +
+    "img-src 'self' data: blob: https:; " +
+    "media-src 'self' data: blob: https:; " +
+    "connect-src 'self' https: wss:; " +
+    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com; " +
+    "worker-src 'self' blob:; " +
+    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com; " +
+    "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
+};
+
+function applySecurityHeaders(headers: Headers): void {
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+    if (!headers.has(k)) headers.set(k, v);
+  }
+}
+
 // PR73 Phase 2B — per-path KV cache TTL override. Hub list pages
 // (/social + /clubs) need a shorter window than the default 6h because a
 // freshly-published event/club should appear in the bot view within
@@ -216,6 +248,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const headers = new Headers(shell.headers);
     headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
     headers.set("X-Prerender-Cache", "BYPASS");
+    applySecurityHeaders(headers);
     return new Response(shell.body, {
       status: shell.status,
       headers,
@@ -249,14 +282,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     try {
       const cached = await env.PRERENDER_CACHE.get(cacheKey);
       if (cached) {
-        return new Response(cached, {
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "no-store",
-            "X-Prerender-Cache": "HIT",
-            Vary: "User-Agent",
-          },
+        const cacheHeaders = new Headers({
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+          "X-Prerender-Cache": "HIT",
+          Vary: "User-Agent",
         });
+        applySecurityHeaders(cacheHeaders);
+        return new Response(cached, { headers: cacheHeaders });
       }
     } catch {
       // KV read failed, continue to render
@@ -287,6 +320,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const headers = new Headers(response.headers);
     headers.set("X-Prerender-Cache", "MISS");
+    applySecurityHeaders(headers);
 
     return new Response(response.body, {
       status: response.status,
