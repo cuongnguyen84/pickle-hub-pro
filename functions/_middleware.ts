@@ -196,6 +196,27 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
+  // ─── 1d. SEO audit batch 5 — collapse /vi/org/* + /vi/tournament/*
+  //       to the EN canonical. renderOrgDetail() and
+  //       renderTournamentDetail() always emit url:/org/<slug> and
+  //       url:/tournament/<slug> as the canonical regardless of the
+  //       requesting path, so /vi/org/<slug> was always advertising
+  //       the EN URL as canonical while its own hreflang pointed back
+  //       at /vi/org/<slug>. SEOnaut flagged this as 'Hreflang to non
+  //       canonical' (6 org + 2 tournament URLs) and 'Mismatching
+  //       language' (the served HTML carries the EN copy, not a
+  //       Vietnamese rendering). Until those handlers grow a real
+  //       VI rendering path the safer signal is a permanent redirect
+  //       to the EN canonical — readers stay on one URL per entity
+  //       and SEOnaut sees one indexable surface per organization.
+  const viOrgMatch = url.pathname.match(/^\/vi\/(org|tournament)\/([^/?#]+)$/);
+  if (viOrgMatch) {
+    return Response.redirect(
+      `https://${url.hostname}/${viOrgMatch[1]}/${viOrgMatch[2]}${url.search}`,
+      301,
+    );
+  }
+
   // ─── 1c. SEO audit batch 4 — /livestream → /live (plus /vi mirror)
   //       /livestream is a legacy alias kept for backlink equity; the
   //       canonical live-listing path is /live. public/_redirects has
@@ -295,7 +316,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // HTML for: locale-aware list-page meta (Tournaments/Videos/News/
   // Forum/Live), hreflang triplets added to 6 detail handlers, ItemList
   // JSON-LD on list pages, BreadcrumbList @graph on detail handlers.
-  const cacheKey = `pr:v9:${url.pathname}`;
+  // 2026-05-28 (batch 5) — bumped v9→v10 to invalidate cached HTML
+  // that still carries the long pre-truncation titles + meta
+  // descriptions. SEOnaut measures len() in UTF-8 bytes (Vietnamese
+  // diacritics encode to 2-3 bytes each) so the byte-aware
+  // truncateForSeo() in functions/_lib/html.ts needs the cache to
+  // drop stale entries or bots keep seeing the long copy until the
+  // 6h TTL rolls over.
+  const cacheKey = `pr:v10:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

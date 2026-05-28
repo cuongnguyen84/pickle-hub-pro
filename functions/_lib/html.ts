@@ -85,33 +85,52 @@ function getFooterHtml(lang: Lang, siteUrl: string): string {
 </footer>`;
 }
 
-// SEO audit 2026-05-28 (batch 4) — bots flag titles longer than 60
-// chars and meta descriptions longer than 160 chars as "Long title /
-// Long meta description" because Google + Bing truncate them in SERP.
-// Vietnamese titles in particular run long because Vietnamese
-// content carries more orthographic words per concept than English
-// (e.g. "PPA cong bo giai dau PPA Spain, danh dau buoc tien moi tai
-// thi truong chau Au" — 96 chars). truncateForSeo() cuts at the
-// last whitespace before the limit so SERP previews don't slice
-// mid-word, and only acts if the source is over budget — short
-// titles pass through untouched.
-const SEO_TITLE_MAX = 60;
-const SEO_DESCRIPTION_MAX = 160;
+// SEO audit 2026-05-28 (batch 5) — SEOnaut uses Go's len() on the
+// title/description string, which counts UTF-8 BYTES not Unicode code
+// points. A Vietnamese diacritic glyph encodes to 2-3 bytes (ố, ấ, ệ,
+// đ) so a 59-character VI title is ~82 bytes and trips the "> 60"
+// threshold even though it would be fine if measured in chars. Batch
+// 4 truncated by char count which was a no-op for the VI news fleet.
+// truncateForSeo() now budgets in bytes, walks the source char by
+// char accumulating UTF-8 byte length, then cuts at the last
+// whitespace within the budget. Ellipsis "\u2026" itself is 3 bytes,
+// reserved up front.
+const SEO_TITLE_MAX_BYTES = 60;
+const SEO_DESCRIPTION_MAX_BYTES = 160;
+const ELLIPSIS_BYTES = 3; // "\u2026" in UTF-8
 
-function truncateForSeo(text: string, limit: number): string {
-  if (!text || text.length <= limit) return text;
-  // Reserve 1 char for the ellipsis.
-  const cutoff = limit - 1;
-  const sliced = text.slice(0, cutoff);
-  // Prefer breaking at whitespace so we don't cut mid-word. Fall
-  // back to a hard cut at the limit minus 1 when no whitespace
-  // exists in the prefix (long unbroken slugs, URL-like titles).
+const TEXT_ENCODER = new TextEncoder();
+
+function utf8ByteLength(s: string): number {
+  return TEXT_ENCODER.encode(s).length;
+}
+
+function truncateForSeo(text: string, byteLimit: number): string {
+  if (!text) return text;
+  if (utf8ByteLength(text) <= byteLimit) return text;
+
+  // Walk the source one Unicode code point at a time, summing the
+  // UTF-8 byte cost. Use Array.from() to iterate full code points so
+  // surrogate-pair emoji or rare CJK glyphs aren't sliced in half.
+  const target = byteLimit - ELLIPSIS_BYTES;
+  const chars = Array.from(text);
+  let bytes = 0;
+  let charIndex = 0;
+  for (let i = 0; i < chars.length; i++) {
+    const cost = utf8ByteLength(chars[i]);
+    if (bytes + cost > target) break;
+    bytes += cost;
+    charIndex = i + 1;
+  }
+  const sliced = chars.slice(0, charIndex).join("");
+
+  // Prefer breaking at the last whitespace within the budget so SERP
+  // previews don't slice mid-word. minKept guards against the case
+  // where a single early word would leave a useless stub like "PPA…"
+  // — for empirical Vietnamese news titles 0.6 of the prefix is the
+  // sweet spot.
   const lastSpace = sliced.lastIndexOf(" ");
-  // Keep at least ~60% of the budget worth of text before any
-  // whitespace cutoff to avoid the case where a single early word
-  // would leave a stub like "PPA…". 0.6 chosen empirically against
-  // production Vietnamese news titles.
-  const minKept = Math.floor(cutoff * 0.6);
+  const minKept = Math.floor(sliced.length * 0.6);
   const base = lastSpace >= minKept ? sliced.slice(0, lastSpace) : sliced;
   return base.replace(/[\s.,;:\-—–]+$/, "") + "\u2026";
 }
@@ -135,8 +154,8 @@ export function buildHtml(opts: BuildHtmlOptions): string {
   // SEO audit batch 4 — clamp the user-visible title + description to
   // the recommended SERP previews. We keep the original (rawTitle /
   // rawDescription) for JSON-LD where the limits do not apply.
-  const title = truncateForSeo(rawTitle, SEO_TITLE_MAX);
-  const description = truncateForSeo(rawDescription, SEO_DESCRIPTION_MAX);
+  const title = truncateForSeo(rawTitle, SEO_TITLE_MAX_BYTES);
+  const description = truncateForSeo(rawDescription, SEO_DESCRIPTION_MAX_BYTES);
 
   const jsonLdScript = jsonLd
     ? `<script type="application/ld+json">${escapeJsonLd(JSON.stringify(jsonLd))}</script>`

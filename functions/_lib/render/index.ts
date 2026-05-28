@@ -307,6 +307,7 @@ export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: 
     description: desc,
     url: pageUrl,
     siteUrl,
+    lang: "vi",
     image: absImage(ls.thumbnail_url, siteUrl),
     type: videoUrl ? "video.other" : "website",
     // SEO-1.2 (2026-05-28) — add reciprocal hreflang for the /live/:id
@@ -374,6 +375,7 @@ export async function renderVideo(supabase: SupabaseClient, id: string, siteUrl:
     description: desc,
     url: `${siteUrl}/watch/${id}`,
     siteUrl,
+    lang: "vi",
     image: absImage(v.thumbnail_url, siteUrl),
     type: videoUrl ? "video.other" : "website",
     extraMeta: bilingualHreflang(`${siteUrl}/watch/${id}`, `${siteUrl}/watch/${id}`),
@@ -823,6 +825,7 @@ export async function renderForumPost(supabase: SupabaseClient, postId: string, 
     description: desc,
     url: `${siteUrl}/forum/post/${postId}`,
     siteUrl,
+    lang: "vi",
     // SEO-1.2 — single-canonical hreflang triplet
     extraMeta: bilingualHreflang(`${siteUrl}/forum/post/${postId}`, `${siteUrl}/forum/post/${postId}`),
     jsonLd: {
