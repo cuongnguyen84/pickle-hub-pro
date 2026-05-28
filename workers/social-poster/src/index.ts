@@ -8,7 +8,10 @@
  *   POST /            Supabase DB Webhook payload (table=news_items, INSERT/UPDATE)
  *   POST /run         Manual trigger; body { news_item_id?: string, dry_run?: boolean }
  *
- * Auth: All POSTs require header X-Auth-Secret = $SCRAPER_AUTH_SECRET.
+ * Auth: All POSTs require header X-Auth-Secret = $SOCIAL_POSTER_SECRET.
+ * NOTE: this is a DEDICATED secret, separate from the news-translate
+ * pipeline's SCRAPER_AUTH_SECRET. Do not merge them — sharing one secret
+ * across both pipelines caused the 2026-05-28 drift outage.
  * For Supabase DB Webhooks, configure a custom header with that name+value
  * in the Webhook settings UI.
  *
@@ -40,7 +43,7 @@ export interface Env {
   GEMINI_MODEL: string;
   // secrets
   SUPABASE_SERVICE_ROLE_KEY: string;
-  SCRAPER_AUTH_SECRET: string;
+  SOCIAL_POSTER_SECRET: string;
   FB_PAGE_ID: string;
   FB_PAGE_ACCESS_TOKEN: string;
   GEMINI_API_KEY: string;
@@ -107,7 +110,7 @@ export default {
 
     // Auth — all POST endpoints share the same secret.
     const provided = req.headers.get('X-Auth-Secret') ?? '';
-    if (provided !== env.SCRAPER_AUTH_SECRET || !env.SCRAPER_AUTH_SECRET) {
+    if (provided !== env.SOCIAL_POSTER_SECRET || !env.SOCIAL_POSTER_SECRET) {
       return json({ error: 'Unauthorized' }, 401);
     }
 
@@ -556,7 +559,7 @@ async function generateCaption(env: Env, item: NewsItem): Promise<string> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Auth-Secret': env.SCRAPER_AUTH_SECRET,
+      'X-Auth-Secret': env.SOCIAL_POSTER_SECRET,
     },
     body: JSON.stringify({
       title: item.title,

@@ -8,11 +8,11 @@
 // by the existing news-translate function).
 //
 // verify_jwt = false in supabase/config.toml; auth is via shared
-// SCRAPER_AUTH_SECRET header to match the Worker.
+// SOCIAL_POSTER_SECRET header to match the Worker.
 //
 // Request:
 //   POST /functions/v1/social-caption
-//   Header: X-Auth-Secret: $SCRAPER_AUTH_SECRET
+//   Header: X-Auth-Secret: $SOCIAL_POSTER_SECRET
 //   Body: {
 //     title: string,
 //     summary: string | null,
@@ -27,7 +27,7 @@
 
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-lite-latest";
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
-const SCRAPER_AUTH_SECRET = Deno.env.get("SCRAPER_AUTH_SECRET") ?? "";
+const SOCIAL_POSTER_SECRET = Deno.env.get("SOCIAL_POSTER_SECRET") ?? "";
 
 interface RequestBody {
   title: string;
@@ -108,7 +108,7 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const provided = req.headers.get("x-auth-secret") ?? "";
-  if (!SCRAPER_AUTH_SECRET || provided !== SCRAPER_AUTH_SECRET) {
+  if (!SOCIAL_POSTER_SECRET || provided !== SOCIAL_POSTER_SECRET) {
     return json({ error: "Unauthorized" }, 401);
   }
 
