@@ -429,8 +429,12 @@ export function RegistrationManager({ tableId, shareId, table, onPendingCountCha
         </div>
       </div>
 
-      {/* Ready-to-bracket banner */}
-      {approvedRegistrations.length >= 6 && (
+      {/* Ready-to-bracket banner.
+          Sprint B2 follow-up (2026-05-27) — hide once the table moves
+          past setup (group_stage / playoff / completed). The "Chia bảng"
+          button was still showing after bracket creation, letting the
+          organizer trigger a duplicate generation. */}
+      {approvedRegistrations.length >= 6 && table?.status === 'setup' && (
         <div
           style={{
             ...surfaceCard,
