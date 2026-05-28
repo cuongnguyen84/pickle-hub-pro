@@ -329,7 +329,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // /tran-dau. The byte-aware truncation in batch 5 also still needs
   // to settle in on routes whose v10 cache slot was already filled
   // immediately after the v9→v10 bump.
-  const cacheKey = `pr:v11:${url.pathname}`;
+  // 2026-05-28 (batch 7) — bumped v11→v12 to invalidate cached HTML
+  // carrying the old /livestream + /vi/(watch|live|tournament|org) body
+  // links and the renderTournamentDetail / renderOrgDetail
+  // bilingualHreflang output. New singleCanonicalHreflang versions
+  // need the cache to drop, otherwise bots get the v11 entries until
+  // the natural 6h TTL elapses.
+  const cacheKey = `pr:v12:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {

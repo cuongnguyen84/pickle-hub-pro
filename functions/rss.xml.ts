@@ -191,11 +191,20 @@ ${itemsXml}
   </channel>
 </rss>`;
 
+  // SEO audit 2026-05-28 (batch 7) — RSS XML lives outside the
+  // _middleware.ts SSR path and so doesn't pick up the HSTS / CSP /
+  // X-Content-Type-Options that applySecurityHeaders() attaches there.
+  // SEOnaut crawled /rss.xml and flagged 'Missing HSTS' + 'Incorrect
+  // media type' on the same response. Same headers as the rest of
+  // the site so the surface advertises a consistent policy.
   return new Response(rss, {
     status: 200,
     headers: {
       "Content-Type": "application/rss+xml; charset=utf-8",
       "Cache-Control": "public, max-age=3600, s-maxage=3600",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
     },
   });
 };

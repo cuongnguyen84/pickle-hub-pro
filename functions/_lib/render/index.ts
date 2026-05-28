@@ -137,8 +137,8 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
     supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(6),
   ]);
 
-  const liveItems = (liveRes.data || []).map((l: any) => `<li><a href="${siteUrl}/vi/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
-  const videoItems = (videoRes.data || []).map((v: any) => `<li><a href="${siteUrl}/vi/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
+  const liveItems = (liveRes.data || []).map((l: any) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
+  const videoItems = (videoRes.data || []).map((v: any) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
   const blogItems = (blogRes.data || []).map((b: any) => `<li><a href="${siteUrl}/vi/blog/${b.slug}"><h3>${escapeHtml(b.title)}</h3><p>${escapeHtml(b.excerpt || "")}</p></a></li>`).join("");
 
   const blogSection = blogItems ? `<h2>Bài viết mới nhất</h2><ul>${blogItems}</ul><p><a href="${siteUrl}/vi/blog">Xem tất cả bài viết</a></p>` : "";
@@ -293,7 +293,7 @@ export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: 
 
   const bc = breadcrumb([
     { label: "Trang chủ", href: siteUrl },
-    { label: "Livestream", href: `${siteUrl}/livestream` },
+    { label: "Livestream", href: `${siteUrl}/live` },
     { label: ls.title },
   ]);
 
@@ -326,7 +326,7 @@ ${ls.description ? `<p>${escapeHtml(ls.description)}</p>` : ""}
 <p>Xem trực tiếp ${escapeHtml(ls.title)} trên ThePickleHub.</p>
 <nav><h2>Xem thêm</h2><ul>
 ${orgSlug ? `<li><a href="${siteUrl}/org/${escapeHtml(orgSlug)}">${escapeHtml(orgName)} - Tất cả livestream</a></li>` : ""}
-<li><a href="${siteUrl}/livestream">Tất cả livestream pickleball</a></li>
+<li><a href="${siteUrl}/live">Tất cả livestream pickleball</a></li>
 <li><a href="${siteUrl}/videos">Video pickleball</a></li>
 <li><a href="${siteUrl}/tournaments">Giải đấu pickleball</a></li>
 </ul></nav>`,
@@ -394,7 +394,7 @@ export async function renderVideo(supabase: SupabaseClient, id: string, siteUrl:
         buildBreadcrumbJsonLd(crumbs),
       ],
     },
-    bodyContent: `${bc}<section><h2>Xem thêm</h2><ul><li><a href="${siteUrl}/videos">Xem thêm video pickleball</a></li><li><a href="${siteUrl}/livestream">Xem livestream trực tiếp</a></li></ul></section>`,
+    bodyContent: `${bc}<section><h2>Xem thêm</h2><ul><li><a href="${siteUrl}/videos">Xem thêm video pickleball</a></li><li><a href="${siteUrl}/live">Xem livestream trực tiếp</a></li></ul></section>`,
   }));
 }
 
@@ -425,10 +425,7 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
     description: desc,
     url: `${siteUrl}/tournament/${t.slug}`,
     siteUrl,
-    extraMeta: bilingualHreflang(
-      `${siteUrl}/tournament/${t.slug}`,
-      `${siteUrl}/vi/tournament/${t.slug}`,
-    ),
+    extraMeta: singleCanonicalHreflang(`${siteUrl}/tournament/${t.slug}`, "en"),
     // SEO-3.1 — @graph pattern combines SportsEvent + BreadcrumbList
     jsonLd: {
       "@context": "https://schema.org",
@@ -855,10 +852,7 @@ export async function renderOrgDetail(supabase: SupabaseClient, slug: string, si
     url: `${siteUrl}/org/${org.slug}`,
     siteUrl,
     image: absImage(org.logo_url, siteUrl),
-    extraMeta: bilingualHreflang(
-      `${siteUrl}/org/${org.slug}`,
-      `${siteUrl}/vi/org/${org.slug}`,
-    ),
+    extraMeta: singleCanonicalHreflang(`${siteUrl}/org/${org.slug}`, "en"),
     jsonLd: {
       "@context": "https://schema.org",
       "@graph": [
@@ -2137,7 +2131,7 @@ ${rows.length > 0 ? `<ol>${items}</ol>` : `<p>${empty}</p>`}
 </section>
 <nav><h2>${lang === "vi" ? "Khám phá" : "Discover"}</h2><ul>
 <li><a href="${siteUrl}/tournaments">${lang === "vi" ? "Giải đấu pickleball" : "Tournaments"}</a></li>
-<li><a href="${siteUrl}/livestream">Livestream</a></li>
+<li><a href="${siteUrl}/live">Livestream</a></li>
 <li><a href="${siteUrl}/blog">${lang === "vi" ? "Blog" : "Blog"}</a></li>
 </ul></nav>`;
 
