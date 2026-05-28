@@ -238,7 +238,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // either path.
   // 2026-05-20 — bumped v7→v8 to invalidate cached social list + detail
   // HTML after surfacing court_count on /social and /social/{slug}.
-  const cacheKey = `pr:v8:${url.pathname}`;
+  // 2026-05-28 — Sprint SEO-1/2/3/4 bumped v8→v9 to invalidate cached
+  // HTML for: locale-aware list-page meta (Tournaments/Videos/News/
+  // Forum/Live), hreflang triplets added to 6 detail handlers, ItemList
+  // JSON-LD on list pages, BreadcrumbList @graph on detail handlers.
+  const cacheKey = `pr:v9:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
