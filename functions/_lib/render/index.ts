@@ -17,6 +17,7 @@ import {
   relatedToolLinks,
   detectLang,
   bilingualHreflang,
+  buildBreadcrumbJsonLd,
   type Lang,
   DEFAULT_OG_IMAGE,
 } from "../utils";
@@ -361,11 +362,12 @@ export async function renderVideo(supabase: SupabaseClient, id: string, siteUrl:
     durationIso = "PT" + (h > 0 ? `${h}H` : "") + (m > 0 ? `${m}M` : "") + `${s}S`;
   }
 
-  const bc = breadcrumb([
+  const crumbs = [
     { label: "Trang chủ", href: siteUrl },
     { label: "Video", href: `${siteUrl}/videos` },
     { label: v.title },
-  ]);
+  ];
+  const bc = breadcrumb(crumbs);
 
   return htmlResponse(buildHtml({
     title,
@@ -374,17 +376,21 @@ export async function renderVideo(supabase: SupabaseClient, id: string, siteUrl:
     siteUrl,
     image: absImage(v.thumbnail_url, siteUrl),
     type: videoUrl ? "video.other" : "website",
-    // SEO-1.2 — single-canonical hreflang triplet
     extraMeta: bilingualHreflang(`${siteUrl}/watch/${id}`, `${siteUrl}/watch/${id}`),
     jsonLd: {
       "@context": "https://schema.org",
-      "@type": "VideoObject",
-      name: v.title,
-      description: desc,
-      thumbnailUrl: absImage(v.thumbnail_url, siteUrl),
-      uploadDate: v.published_at || v.created_at,
-      ...(videoUrl ? { contentUrl: videoUrl } : {}),
-      ...(durationIso ? { duration: durationIso } : {}),
+      "@graph": [
+        {
+          "@type": "VideoObject",
+          name: v.title,
+          description: desc,
+          thumbnailUrl: absImage(v.thumbnail_url, siteUrl),
+          uploadDate: v.published_at || v.created_at,
+          ...(videoUrl ? { contentUrl: videoUrl } : {}),
+          ...(durationIso ? { duration: durationIso } : {}),
+        },
+        buildBreadcrumbJsonLd(crumbs),
+      ],
     },
     bodyContent: `${bc}<section><h2>Xem thêm</h2><ul><li><a href="${siteUrl}/videos">Xem thêm video pickleball</a></li><li><a href="${siteUrl}/livestream">Xem livestream trực tiếp</a></li></ul></section>`,
   }));
@@ -405,52 +411,89 @@ export async function renderTournamentDetail(supabase: SupabaseClient, slug: str
   const title = buildTitle(t.name, " | Pickleball Tournament");
   const desc = buildMetaDescription(t.description, { type: "default", title: t.name });
 
-  const bc = breadcrumb([
+  const crumbs = [
     { label: "Trang chủ", href: siteUrl },
     { label: "Giải đấu", href: `${siteUrl}/tournaments` },
     { label: t.name },
-  ]);
+  ];
+  const bc = breadcrumb(crumbs);
 
   return htmlResponse(buildHtml({
     title,
     description: desc,
     url: `${siteUrl}/tournament/${t.slug}`,
     siteUrl,
-    // SEO-1.2 (2026-05-28) — emit reciprocal hreflang for the EN+VI
-    // pair declared in sitemap-tournaments.xml. Without this Google
-    // flags the sitemap signal as "no return tag".
     extraMeta: bilingualHreflang(
       `${siteUrl}/tournament/${t.slug}`,
       `${siteUrl}/vi/tournament/${t.slug}`,
     ),
+    // SEO-3.1 — @graph pattern combines SportsEvent + BreadcrumbList
     jsonLd: {
       "@context": "https://schema.org",
-      "@type": "SportsEvent",
-      name: t.name,
-      description: desc,
-      url: `${siteUrl}/tournament/${t.slug}`,
-      sport: "Pickleball",
-      eventStatus: "https://schema.org/EventScheduled",
-      eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
-      location: { "@type": "VirtualLocation", url: `${siteUrl}/tournament/${t.slug}` },
-      organizer: { "@type": "Organization", name: "ThePickleHub", url: siteUrl },
-      ...(t.start_date ? { startDate: t.start_date } : {}),
-      ...(t.end_date ? { endDate: t.end_date } : {}),
+      "@graph": [
+        {
+          "@type": "SportsEvent",
+          name: t.name,
+          description: desc,
+          url: `${siteUrl}/tournament/${t.slug}`,
+          sport: "Pickleball",
+          eventStatus: "https://schema.org/EventScheduled",
+          eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
+          location: { "@type": "VirtualLocation", url: `${siteUrl}/tournament/${t.slug}` },
+          organizer: { "@type": "Organization", name: "ThePickleHub", url: siteUrl },
+          ...(t.start_date ? { startDate: t.start_date } : {}),
+          ...(t.end_date ? { endDate: t.end_date } : {}),
+        },
+        buildBreadcrumbJsonLd(crumbs),
+      ],
     },
     bodyContent: `${bc}<p>${statusText}</p>`,
   }));
 }
 
+// SEO-2.2 (2026-05-28) — small helper to build the ItemList JSON-LD
+// embedded by every list page. Items keep DESC order semantics (newest
+// first matches our query order) — Schema.org: ItemListOrderDescending.
+function buildListJsonLd(name: string, items: Array<{ url: string; name: string }>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    numberOfItems: items.length,
+    itemListOrder: "https://schema.org/ItemListOrderDescending",
+    itemListElement: items.map((it, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      url: it.url,
+      name: it.name,
+    })),
+  };
+}
+
 export async function renderTournaments(supabase: SupabaseClient, siteUrl: string, rawPath = "/tournaments", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: tournaments } = await supabase.from("tournaments").select("id, name, slug, status").in("status", ["ongoing", "upcoming"]).order("start_date", { ascending: false }).limit(20);
   const items = (tournaments || []).map((t: any) => `<li><a href="${siteUrl}/tournament/${t.slug}">${escapeHtml(t.name)}</a></li>`).join("");
+  const listItems = (tournaments || []).map((t: any) => ({
+    url: `${siteUrl}/tournament/${t.slug}`,
+    name: t.name,
+  }));
+
+  // SEO-2.1 (2026-05-28) — locale-aware meta so EN canonical doesn't ship VN copy.
+  const title = lang === "en"
+    ? "Pickleball Tournaments in Vietnam & Asia | ThePickleHub"
+    : "Giải đấu Pickleball | ThePickleHub";
+  const description = lang === "en"
+    ? "Live and upcoming pickleball tournaments in Vietnam and Asia. Live brackets, schedules, registration, and full results from PPA Tour Asia and local events."
+    : "Danh sách các giải đấu pickleball đang diễn ra và sắp tới tại Việt Nam. Xem lịch thi đấu, bảng đấu, kết quả trực tiếp và đăng ký tham gia giải pickleball.";
 
   return htmlResponse(buildHtml({
-    title: "Giải đấu Pickleball | ThePickleHub",
-    description: "Danh sách các giải đấu pickleball đang diễn ra và sắp tới tại Việt Nam. Xem lịch thi đấu, bảng đấu, kết quả trực tiếp và đăng ký tham gia giải pickleball.",
+    title,
+    description,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
-    bodyContent: items ? `<h2>Giải đấu</h2><ul>${items}</ul>` : "",
+    extraMeta: bilingualHreflang(`${siteUrl}/tournaments`, `${siteUrl}/vi/tournaments`),
+    jsonLd: buildListJsonLd(title, listItems),
+    bodyContent: items ? `<h2>${lang === "en" ? "Tournaments" : "Giải đấu"}</h2><ul>${items}</ul>` : "",
     lang,
   }));
 }
@@ -460,27 +503,63 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
 export async function renderVideos(supabase: SupabaseClient, siteUrl: string, rawPath = "/videos", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: videos } = await supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(20);
   const items = (videos || []).map((v: any) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
+  const listItems = (videos || []).map((v: any) => ({
+    url: `${siteUrl}/watch/${v.id}`,
+    name: v.title,
+  }));
+
+  const title = lang === "en"
+    ? "Pickleball Videos & Match Replays | ThePickleHub"
+    : "Video Pickleball | ThePickleHub";
+  const description = lang === "en"
+    ? "Pickleball video library: tournament highlights, full match replays, technique tutorials, and strategy guides from PPA Tour Asia and Vietnamese events."
+    : "Xem video pickleball chất lượng cao: highlight giải đấu, replay trận đấu, hướng dẫn kỹ thuật và chiến thuật chơi pickleball trên ThePickleHub.";
 
   return htmlResponse(buildHtml({
-    title: "Video Pickleball | ThePickleHub",
-    description: "Xem video pickleball chất lượng cao: highlight giải đấu, replay trận đấu, hướng dẫn kỹ thuật và chiến thuật chơi pickleball trên ThePickleHub.",
+    title,
+    description,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
-    bodyContent: items ? `<h2>Video</h2><ul>${items}</ul>` : "",
+    extraMeta: bilingualHreflang(`${siteUrl}/videos`, `${siteUrl}/vi/videos`),
+    jsonLd: buildListJsonLd(title, listItems),
+    bodyContent: items ? `<h2>${lang === "en" ? "Videos" : "Video"}</h2><ul>${items}</ul>` : "",
     lang,
   }));
 }
 
 export async function renderNews(supabase: SupabaseClient, siteUrl: string, rawPath = "/news", lang: "en" | "vi" = "en"): Promise<Response> {
-  const { data: news } = await supabase.from("news_items").select("id, title, summary").eq("status", "published").order("published_at", { ascending: false }).limit(20);
-  const items = (news || []).map((n: any) => `<li>${escapeHtml(n.title)}: ${escapeHtml(n.summary?.slice(0, 80) || "")}</li>`).join("");
+  const { data: news } = await supabase
+    .from("news_items")
+    .select("id, title, summary, slug, language")
+    .eq("status", "published")
+    .eq("language", lang)
+    .order("published_at", { ascending: false })
+    .limit(20);
+  const items = (news || []).map((n: any) =>
+    `<li><a href="${siteUrl}${lang === "en" ? "" : "/vi"}/news/${escapeHtml(n.slug)}">${escapeHtml(n.title)}</a>${
+      n.summary ? `: ${escapeHtml(n.summary.slice(0, 80))}` : ""
+    }</li>`,
+  ).join("");
+  const listItems = (news || []).map((n: any) => ({
+    url: `${siteUrl}${lang === "en" ? "" : "/vi"}/news/${n.slug}`,
+    name: n.title,
+  }));
+
+  const title = lang === "en"
+    ? "Pickleball News — Vietnam & Asia | ThePickleHub"
+    : "Tin tức Pickleball | ThePickleHub";
+  const description = lang === "en"
+    ? "Latest pickleball news from Vietnam, PPA Tour Asia, MLP, the Pickleball World Cup, and the regional pro circuit — curated by ThePickleHub."
+    : "Tin pickleball mới nhất Việt Nam và thế giới: PPA Tour Asia, World Cup, sự kiện cộng đồng, phân tích chuyên sâu — ThePickleHub.";
 
   return htmlResponse(buildHtml({
-    title: "Tin tức Pickleball | ThePickleHub",
-    description: "Tin pickleball mới nhất Việt Nam và thế giới: PPA Tour Asia, World Cup, sự kiện cộng đồng, phân tích chuyên sâu — ThePickleHub.",
+    title,
+    description,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
-    bodyContent: items ? `<h2>Tin tức</h2><ul>${items}</ul>` : "",
+    extraMeta: bilingualHreflang(`${siteUrl}/news`, `${siteUrl}/vi/news`),
+    jsonLd: buildListJsonLd(title, listItems),
+    bodyContent: items ? `<h2>${lang === "en" ? "News" : "Tin tức"}</h2><ul>${items}</ul>` : "",
     lang,
   }));
 }
@@ -615,13 +694,26 @@ export async function renderViNewsPost(supabase: SupabaseClient, slug: string, s
 export async function renderForum(supabase: SupabaseClient, siteUrl: string, rawPath = "/forum", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: posts } = await supabase.from("forum_posts").select("id, title").eq("is_hidden", false).order("created_at", { ascending: false }).limit(20);
   const items = (posts || []).map((p: any) => `<li><a href="${siteUrl}/forum/post/${p.id}">${escapeHtml(p.title)}</a></li>`).join("");
+  const listItems = (posts || []).map((p: any) => ({
+    url: `${siteUrl}/forum/post/${p.id}`,
+    name: p.title,
+  }));
+
+  const title = lang === "en"
+    ? "Pickleball Forum — Vietnam Community | ThePickleHub"
+    : "Diễn đàn Pickleball | ThePickleHub";
+  const description = lang === "en"
+    ? "The largest Vietnam pickleball forum: technique discussions, gear reviews, finding courts, and connecting with players. Join the ThePickleHub community."
+    : "Diễn đàn pickleball Việt Nam lớn nhất - thảo luận kỹ thuật, review thiết bị, tìm sân chơi, kết nối VĐV. Tham gia cộng đồng pickleball ThePickleHub.";
 
   return htmlResponse(buildHtml({
-    title: "Diễn đàn Pickleball | ThePickleHub",
-    description: "Diễn đàn pickleball Việt Nam lớn nhất - thảo luận kỹ thuật, review thiết bị, tìm sân chơi, kết nối VĐV. Tham gia cộng đồng pickleball ThePickleHub.",
+    title,
+    description,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
-    bodyContent: items ? `<h2>Bài viết mới</h2><ul>${items}</ul>` : "",
+    extraMeta: bilingualHreflang(`${siteUrl}/forum`, `${siteUrl}/vi/forum`),
+    jsonLd: buildListJsonLd(title, listItems),
+    bodyContent: items ? `<h2>${lang === "en" ? "Recent posts" : "Bài viết mới"}</h2><ul>${items}</ul>` : "",
     lang,
   }));
 }
@@ -668,11 +760,12 @@ export async function renderForumCategory(
     )
     .join("");
 
-  const bc = breadcrumb([
+  const crumbs = [
     { label: lang === "en" ? "Home" : "Trang chủ", href: siteUrl },
     { label: lang === "en" ? "Forum" : "Diễn đàn", href: `${siteUrl}/forum` },
     { label: catName },
-  ]);
+  ];
+  const bc = breadcrumb(crumbs);
 
   return htmlResponse(buildHtml({
     title,
@@ -682,18 +775,23 @@ export async function renderForumCategory(
     extraMeta: bilingualHreflang(pageUrl, pageUrl),
     jsonLd: {
       "@context": "https://schema.org",
-      "@type": "ItemList",
-      name: catName,
-      numberOfItems: posts?.length ?? 0,
-      itemListOrder: "https://schema.org/ItemListOrderDescending",
-      itemListElement: (posts || []).map(
-        (p: { id: string; title: string }, idx: number) => ({
-          "@type": "ListItem",
-          position: idx + 1,
-          url: `${siteUrl}/forum/post/${p.id}`,
-          name: p.title,
-        }),
-      ),
+      "@graph": [
+        {
+          "@type": "ItemList",
+          name: catName,
+          numberOfItems: posts?.length ?? 0,
+          itemListOrder: "https://schema.org/ItemListOrderDescending",
+          itemListElement: (posts || []).map(
+            (p: { id: string; title: string }, idx: number) => ({
+              "@type": "ListItem",
+              position: idx + 1,
+              url: `${siteUrl}/forum/post/${p.id}`,
+              name: p.title,
+            }),
+          ),
+        },
+        buildBreadcrumbJsonLd(crumbs),
+      ],
     },
     bodyContent: `${bc}<h2>${escapeHtml(catName)}</h2>${
       items
@@ -713,11 +811,12 @@ export async function renderForumPost(supabase: SupabaseClient, postId: string, 
   const desc = buildMetaDescription(rawDesc, { type: "forum-post", title: post.title });
   const title = buildTitle(post.title, "");
 
-  const bc = breadcrumb([
+  const crumbs = [
     { label: "Trang chủ", href: siteUrl },
     { label: "Diễn đàn", href: `${siteUrl}/forum` },
     { label: post.title.length > 40 ? post.title.slice(0, 40) + "\u2026" : post.title },
-  ]);
+  ];
+  const bc = breadcrumb(crumbs);
 
   return htmlResponse(buildHtml({
     title,
@@ -726,7 +825,13 @@ export async function renderForumPost(supabase: SupabaseClient, postId: string, 
     siteUrl,
     // SEO-1.2 — single-canonical hreflang triplet
     extraMeta: bilingualHreflang(`${siteUrl}/forum/post/${postId}`, `${siteUrl}/forum/post/${postId}`),
-    jsonLd: { "@context": "https://schema.org", "@type": "DiscussionForumPosting", headline: title, text: desc, url: `${siteUrl}/forum/post/${postId}` },
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@graph": [
+        { "@type": "DiscussionForumPosting", headline: title, text: desc, url: `${siteUrl}/forum/post/${postId}` },
+        buildBreadcrumbJsonLd(crumbs),
+      ],
+    },
     bodyContent: `${bc}<section><h2>Xem thêm</h2><ul><li><a href="${siteUrl}/forum">Quay lại diễn đàn</a></li><li><a href="${siteUrl}/blog">Đọc blog pickleball</a></li></ul></section>`,
   }));
 }
@@ -747,12 +852,20 @@ export async function renderOrgDetail(supabase: SupabaseClient, slug: string, si
     url: `${siteUrl}/org/${org.slug}`,
     siteUrl,
     image: absImage(org.logo_url, siteUrl),
-    // SEO-1.2 — emit hreflang for /org/:slug + /vi/org/:slug mirror
     extraMeta: bilingualHreflang(
       `${siteUrl}/org/${org.slug}`,
       `${siteUrl}/vi/org/${org.slug}`,
     ),
-    jsonLd: { "@context": "https://schema.org", "@type": "Organization", name: org.name, url: `${siteUrl}/org/${org.slug}`, ...(org.logo_url ? { logo: absImage(org.logo_url, siteUrl) } : {}) },
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@graph": [
+        { "@type": "Organization", name: org.name, url: `${siteUrl}/org/${org.slug}`, ...(org.logo_url ? { logo: absImage(org.logo_url, siteUrl) } : {}) },
+        buildBreadcrumbJsonLd([
+          { label: "Home", href: siteUrl },
+          { label: org.name },
+        ]),
+      ],
+    },
   }));
 }
 
@@ -1050,7 +1163,8 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     : `<link rel="alternate" hreflang="en" href="${enUrl}"/>\n<link rel="alternate" hreflang="x-default" href="${enUrl}"/>`;
 
   const title = buildTitle(meta.title, " | ThePickleHub");
-  const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Blog", href: `${siteUrl}/blog` }, { label: meta.title }]);
+  const crumbs = [{ label: "Home", href: siteUrl }, { label: "Blog", href: `${siteUrl}/blog` }, { label: meta.title }];
+  const bc = breadcrumb(crumbs);
 
   // PR79 Phase 2G (audit I-9 + I-10 + I-17) — bring the EN BlogPosting
   // schema to parity with the VI side (renderViBlogPost). Previously
@@ -1094,6 +1208,12 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     jsonLd.dateModified = meta.datePublished;
   }
 
+  // SEO-3.1 — wrap BlogPosting + BreadcrumbList in a single @graph
+  const blogGraph = {
+    "@context": "https://schema.org",
+    "@graph": [jsonLd, buildBreadcrumbJsonLd(crumbs)],
+  };
+
   return htmlResponse(buildHtml({
     title,
     description: meta.description,
@@ -1102,7 +1222,7 @@ export async function renderBlogPost(supabase: SupabaseClient, slug: string, sit
     image: blogImage,
     type: "article",
     extraMeta,
-    jsonLd,
+    jsonLd: blogGraph,
     bodyContent: `${bc}${relatedBlogLinks(slug, siteUrl)}`,
   }));
 }
@@ -1216,12 +1336,50 @@ export async function renderViBlogIndex(supabase: SupabaseClient, siteUrl: strin
 
 // ─── Static pages ─────────────────���───────────────────────
 
-export function renderLivestreamList(siteUrl: string, rawPath: string, lang: Lang): Response {
+// SEO-2.1 + SEO-2.2 (2026-05-28) — locale-aware copy + ItemList JSON-LD
+// + live/upcoming streams in the body so bots have something to crawl
+// beyond the noindex shell. Promoted to async; middleware updated to
+// `await renderLivestreamList(supabase, ...)`.
+export async function renderLivestreamList(
+  supabase: SupabaseClient,
+  siteUrl: string,
+  rawPath: string,
+  lang: Lang,
+): Promise<Response> {
+  const { data: streams } = await supabase
+    .from("public_livestreams")
+    .select("id, title, status")
+    .in("status", ["live", "scheduled"])
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const items = (streams ?? [])
+    .map((s: { id: string; title: string; status: string }) =>
+      `<li><a href="${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${escapeHtml(s.id)}">${escapeHtml(s.title)}</a> (${escapeHtml(s.status)})</li>`,
+    )
+    .join("");
+  const listItems = (streams ?? []).map((s: { id: string; title: string }) => ({
+    url: `${siteUrl}${lang === "vi" ? "/vi" : ""}/live/${s.id}`,
+    name: s.title,
+  }));
+
+  const title = lang === "en"
+    ? "Pickleball Live Streams | ThePickleHub"
+    : "Livestream Pickleball | ThePickleHub";
+  const description = lang === "en"
+    ? "Watch live pickleball streams from Vietnam and PPA Tour Asia free on ThePickleHub. Live tournaments and matches — no signup required."
+    : "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.";
+
   return htmlResponse(buildHtml({
-    title: "Livestream Pickleball | ThePickleHub",
-    description: "Xem livestream pickleball trực tiếp tại Việt Nam. Các giải đấu, trận đấu đang phát sóng trực tuyến miễn phí trên ThePickleHub. Không cần đăng ký.",
+    title,
+    description,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
+    extraMeta: bilingualHreflang(`${siteUrl}/live`, `${siteUrl}/vi/live`),
+    jsonLd: buildListJsonLd(title, listItems),
+    bodyContent: items
+      ? `<h2>${lang === "en" ? "Now streaming" : "Đang phát sóng"}</h2><ul>${items}</ul>`
+      : `<p>${lang === "en" ? "No live streams right now. Check back soon." : "Hiện chưa có livestream. Quay lại sau."}</p>`,
     lang,
   }));
 }

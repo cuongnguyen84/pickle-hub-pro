@@ -98,6 +98,35 @@ export function normalizeImageUrl(url: string): string {
 }
 
 /**
+ * SEO-3.1 (2026-05-28) — Build a BreadcrumbList JSON-LD node.
+ *
+ * Pass the same crumb array used by `breadcrumb()` (HTML helper). Returns
+ * a plain object you can drop into a `@graph` array alongside the page's
+ * primary schema (BlogPosting / SportsEvent / etc). When you have only
+ * the breadcrumb to emit, wrap with `{ "@context": "https://schema.org",
+ * ...buildBreadcrumbJsonLd(...) }` yourself.
+ *
+ * Schema.org spec: every item needs absolute URL except the last (current
+ * page) where url is optional but recommended.
+ */
+export function buildBreadcrumbJsonLd(
+  crumbs: Array<{ label: string; href?: string }>,
+): {
+  "@type": "BreadcrumbList";
+  itemListElement: Array<{ "@type": "ListItem"; position: number; name: string; item?: string }>;
+} {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: c.label,
+      ...(c.href ? { item: c.href } : {}),
+    })),
+  };
+}
+
+/**
  * SEO-1.2 (2026-05-28) — Build a bilingual hreflang triplet.
  *
  * Returns the `<link rel="alternate">` block to pass as `extraMeta`

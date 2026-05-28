@@ -461,13 +461,13 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   if (path === "/blog") return renderBlog(siteUrl);
 
   // Livestream listing
-  if (path === "/livestream") return renderLivestreamList(siteUrl, rawPath, lang);
+  if (path === "/livestream") return await renderLivestreamList(supabase, siteUrl, rawPath, lang);
   // PR (2026-05-18 Ahrefs Site Audit fix) — /live (+ /vi/live) is the
   // livestream landing page, distinct from /live/:id (single stream
   // handled at line ~312). React Route at App.tsx line 482. Without
   // this handler, bots got 404 and Ahrefs flagged it as a broken
   // internal link from homepage `/` + 8 other source pages.
-  if (path === "/live" || path === "/vi/live") return renderLivestreamList(siteUrl, rawPath, lang);
+  if (path === "/live" || path === "/vi/live") return await renderLivestreamList(supabase, siteUrl, rawPath, lang);
   // /rankings DUPR table — React Route at App.tsx line 572 with /vi alias.
   // Sprint A10 (2026-05-27) — renderRankings is now async and reads
   // dupr_leaderboard_vietnam RPC for bot-crawlable Vietnam top-25 +

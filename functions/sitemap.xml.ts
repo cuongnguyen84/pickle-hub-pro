@@ -42,6 +42,15 @@ const SEGMENT_PATHS = [
   // Sitemap also now filters is_public_profile=true (Sprint A4 update
   // in sitemap-players.xml.ts) so only opt-in profiles get crawled.
   "/sitemap-players.xml",
+  // SEO-4 (2026-05-28) — new segments. Routes had SSR handlers since
+  // earlier sprints but the sitemap-index didn't reference them, so
+  // bots had to discover via incidental links. videos/livestreams pages
+  // emit VideoObject + SportsEvent schemas; orgs emit Organization
+  // — high-value rich-result surfaces that benefit from explicit
+  // discovery.
+  "/sitemap-videos.xml",
+  "/sitemap-livestreams.xml",
+  "/sitemap-organizations.xml",
   // PR (2026-05-18 Ahrefs Site Audit fix Round 1) — /sitemap-venues.xml
   // emitted /san/{slug} URLs but no `renderVenue` SSR handler exists
   // (Sprint 5 page). Re-enable once /san/{slug} ships SSR.
