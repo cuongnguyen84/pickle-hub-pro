@@ -302,6 +302,36 @@ export async function renderLive(supabase: SupabaseClient, id: string, siteUrl: 
     ? new Date(ls.scheduled_start_at).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
     : "";
 
+  // SEO audit 2026-05-28 (batch 8) — Related livestreams + Latest news.
+  // Live detail SSR was ~143 words of body text, well below SEOnaut's
+  // little-content threshold and with no inbound internal links from
+  // other live pages → flagged on both. Fetch 5 sibling livestreams +
+  // 3 latest VI news items to render at the bottom, adding ~400 chars
+  // and 8 internal links per page.
+  const [relatedLiveRes, relatedNewsRes] = await Promise.all([
+    supabase.from("public_livestreams")
+      .select("id, title, status")
+      .neq("id", id)
+      .in("status", ["live", "scheduled", "ended"])
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("news_items")
+      .select("slug, title")
+      .eq("language", "vi")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(3),
+  ]);
+  const relatedLiveItems = ((relatedLiveRes.data || []) as Array<{ id: string; title: string; status: string }>)
+    .map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a></li>`)
+    .join("");
+  const relatedNewsItems = ((relatedNewsRes.data || []) as Array<{ slug: string; title: string }>)
+    .map((n) => `<li><a href="${siteUrl}/vi/news/${escapeHtml(n.slug)}">${escapeHtml(n.title)}</a></li>`)
+    .join("");
+  const liveRelatedHtml =
+    (relatedLiveItems ? `<section><h2>Livestream khác</h2><ul>${relatedLiveItems}</ul></section>` : "") +
+    (relatedNewsItems ? `<section><h2>Tin pickleball mới nhất</h2><ul>${relatedNewsItems}</ul></section>` : "");
+
   return htmlResponse(buildHtml({
     title,
     description: desc,
@@ -329,7 +359,7 @@ ${orgSlug ? `<li><a href="${siteUrl}/org/${escapeHtml(orgSlug)}">${escapeHtml(or
 <li><a href="${siteUrl}/live">Tất cả livestream pickleball</a></li>
 <li><a href="${siteUrl}/videos">Video pickleball</a></li>
 <li><a href="${siteUrl}/tournaments">Giải đấu pickleball</a></li>
-</ul></nav>`,
+</ul></nav>${liveRelatedHtml}`,
   }));
 }
 
@@ -668,6 +698,38 @@ async function renderNewsArticleByLang(
     ? `<p><a href="${escapeHtml(r.source_url)}" rel="noopener nofollow">${escapeHtml(readAtLabel)} →</a></p>`
     : "";
 
+  // SEO audit 2026-05-28 (batch 8) — Related news strip.
+  // News articles ship with only a title + 1-2 sentence summary (auto-
+  // translated by news-translate edge fn), which lands the page in
+  // SEOnaut's 'Pages with little content' (414 URLs) and 'Orphan pages'
+  // (281 URLs, ~100 on /vi/news alone) buckets. Fetching 6 sibling
+  // news items in the same language and rendering them as a linked
+  // list at the bottom of every news SSR addresses both reports in
+  // one place: each article now carries ~600 chars of extra body
+  // text and 7 internal links (6 related + 1 hub CTA), which means
+  // every news page is both substantial enough to clear the
+  // little-content threshold and inbound-linked from up to 6 other
+  // news pages.
+  const { data: relatedRows } = await supabase
+    .from("news_items")
+    .select("slug, title, published_at")
+    .eq("language", language)
+    .eq("status", "published")
+    .neq("slug", slug)
+    .order("published_at", { ascending: false })
+    .limit(6);
+  const related = (relatedRows || []) as Array<{ slug: string; title: string; published_at: string }>;
+  const newsHub = language === "vi" ? `${siteUrl}/vi/news` : `${siteUrl}/news`;
+  const newsBase = language === "vi" ? `${siteUrl}/vi/news/` : `${siteUrl}/news/`;
+  const relatedHeading = language === "vi" ? "Tin pickleball mới nhất" : "Latest pickleball news";
+  const moreLabel = language === "vi" ? "Xem tất cả tin pickleball" : "See all pickleball news";
+  const relatedItems = related
+    .map((n) => `<li><a href="${newsBase}${escapeHtml(n.slug)}">${escapeHtml(n.title)}</a></li>`)
+    .join("");
+  const relatedSection = relatedItems
+    ? `<aside><h2>${escapeHtml(relatedHeading)}</h2><ul>${relatedItems}</ul><p><a href="${newsHub}">${escapeHtml(moreLabel)} →</a></p></aside>`
+    : "";
+
   return htmlResponse(buildHtml({
     title,
     description,
@@ -678,7 +740,7 @@ async function renderNewsArticleByLang(
     extraMeta,
     jsonLd,
     lang: language,
-    bodyContent: `${bc}<article><h1>${escapeHtml(r.title)}</h1><p>${escapeHtml(r.summary)}</p>${sourceLink}</article>`,
+    bodyContent: `${bc}<article><h1>${escapeHtml(r.title)}</h1><p>${escapeHtml(r.summary)}</p>${sourceLink}</article>${relatedSection}`,
   }));
 }
 
@@ -1992,13 +2054,45 @@ export async function renderMatch(
     : "";
   const winnerLabel =
     winningTeam === "a" ? teamALabel : winningTeam === "b" ? teamBLabel : "";
+  // SEO audit 2026-05-28 (batch 8) — Related matches + Latest news.
+  // Match detail SSR was a thin score card (similar shape to the
+  // /live SSR), well below the little-content threshold and orphan-
+  // flagged. Fetch 6 sibling public matches + 3 latest VI news to
+  // pad the body + create internal links between matches.
+  const [relatedMatchRes, matchNewsRes] = await Promise.all([
+    supabase.from("matches")
+      .select("slug, tournament_name, tournament_event, played_at")
+      .eq("is_public", true)
+      .neq("slug", slug)
+      .order("played_at", { ascending: false })
+      .limit(6),
+    supabase.from("news_items")
+      .select("slug, title")
+      .eq("language", "vi")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(3),
+  ]);
+  const relatedMatchItems = ((relatedMatchRes.data || []) as Array<{ slug: string; tournament_name: string | null; tournament_event: string | null; played_at: string | null }>)
+    .map((mm) => {
+      const label = [mm.tournament_name, mm.tournament_event].filter(Boolean).join(" · ") || "Trận đấu pickleball";
+      return `<li><a href="${siteUrl}/tran-dau/${escapeHtml(mm.slug)}">${escapeHtml(label)}</a></li>`;
+    })
+    .join("");
+  const matchNewsItems = ((matchNewsRes.data || []) as Array<{ slug: string; title: string }>)
+    .map((n) => `<li><a href="${siteUrl}/vi/news/${escapeHtml(n.slug)}">${escapeHtml(n.title)}</a></li>`)
+    .join("");
+  const matchRelatedHtml =
+    (relatedMatchItems ? `<section><h2>Trận đấu gần đây</h2><ul>${relatedMatchItems}</ul></section>` : "") +
+    (matchNewsItems ? `<section><h2>Tin pickleball mới nhất</h2><ul>${matchNewsItems}</ul></section>` : "");
+
   const bodyContent = `${bc}
 <h2>${escapeHtml(`${teamALabel} vs ${teamBLabel}`)}</h2>
 ${tournamentLine}
 <p><strong>${escapeHtml(date)}</strong>${venueLabel ? ` · ${escapeHtml(venueLabel)}` : ""}${venueCity ? `, ${escapeHtml(venueCity)}` : ""}${courtNumber ? ` · ${escapeHtml(courtNumber)}` : ""}</p>
 <p>Hình thức: ${escapeHtml(fmtLabel)}</p>
 <p>Tỉ số: <strong>${escapeHtml(compactScore)}</strong></p>
-${winnerLabel ? `<p>Đội thắng: <strong>${escapeHtml(winnerLabel)}</strong></p>` : ""}`;
+${winnerLabel ? `<p>Đội thắng: <strong>${escapeHtml(winnerLabel)}</strong></p>` : ""}${matchRelatedHtml}`;
 
   // ogImage already declared above for the schema's `image` field.
   // Bug 6 fix on PR #40: twitter:image is emitted by buildHtml from

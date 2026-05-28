@@ -36,6 +36,11 @@
 /vi/blog/cach-xem-ppa-tour-truc-tiep                /blog/how-to-watch-ppa-tour-live-2026              301
 /vi/blog/ppa-tour-asia-2026                         /blog/ppa-tour-asia-2026-complete-guide            301
 /vi/blog/ppa-tour-asia-2026-complete-guide          /blog/ppa-tour-asia-2026-complete-guide            301
+# Batch 8 — 3 more VI slugs SEOnaut surfaced as 404; also mirrored in
+# functions/_middleware.ts VI_BLOG_REDIRECTS so bots see the 301.
+/vi/blog/cac-giai-pickleball-pro-asia-2026          /blog/professional-pickleball-tours-guide-2026     301
+/vi/blog/the-thuc-mlp-giai-thich                    /blog/mlp-format-explained                         301
+/vi/blog/huong-dan-day-du-ppa-tour-asia-2026        /blog/ppa-tour-asia-2026-complete-guide            301
 /vi/blog/the-thuc-mlp                               /blog/mlp-format-explained                         301
 
 # SPA fallback

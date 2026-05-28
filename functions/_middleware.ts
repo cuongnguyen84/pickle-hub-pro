@@ -238,6 +238,71 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return secureRedirect(`https://${url.hostname}/${viPrefix}live${tail}${url.search}`, 301);
   }
 
+  // ─── 1e. SEO audit batch 8 — /vi/blog/{slug} → /blog/{en-slug} 301.
+  //       public/_redirects has 13 of these mappings already, but the
+  //       middleware bot path bypasses _redirects so SEOnaut keeps
+  //       hitting the VI URLs and reporting 404. Same fix pattern as
+  //       the /livestream / /u/* / /vi/org redirects: mirror the
+  //       mapping in the middleware so bot + user paths agree.
+  //
+  //       Every slug here was surfaced by SEOnaut crawl 7 as a 404.
+  //       When a VI translation is eventually written it can be
+  //       removed from this map (the actual page at /vi/blog/{slug}
+  //       will take precedence).
+  const VI_BLOG_REDIRECTS: Record<string, string> = {
+    // Already in public/_redirects — mirrored here for bots.
+    "luat-pickleball": "pickleball-rules-complete-guide",
+    "luat-pickleball-2026": "pickleball-rules-complete-guide",
+    "luat-cham-diem-pickleball": "pickleball-scoring-rules-guide",
+    "cach-tao-bracket-pickleball": "how-to-create-pickleball-bracket",
+    "mau-bracket-pickleball": "pickleball-bracket-templates",
+    "tao-bracket-pickleball-mien-phi": "free-pickleball-bracket-generator",
+    "tao-vong-tron-pickleball": "pickleball-round-robin-generator-guide",
+    "cac-the-thuc-giai-pickleball": "pickleball-tournament-formats-explained",
+    "cach-to-chuc-giai-pickleball": "how-to-organize-pickleball-tournament",
+    "phan-mem-to-chuc-giai-pickleball-tot-nhat": "best-pickleball-tournament-software-2026",
+    "chien-thuat-pickleball-doi": "pickleball-doubles-strategy-guide",
+    "truc-tiep-pickleball": "pickleball-live-streaming-guide",
+    "cach-xem-ppa-tour-truc-tiep": "how-to-watch-ppa-tour-live-2026",
+    "ppa-tour-asia-2026": "ppa-tour-asia-2026-complete-guide",
+    // New batch 8 — VI slugs SEOnaut crawl 7 still flagged as 404.
+    "cac-giai-pickleball-pro-asia-2026": "professional-pickleball-tours-guide-2026",
+    "the-thuc-mlp-giai-thich": "mlp-format-explained",
+    "huong-dan-day-du-ppa-tour-asia-2026": "ppa-tour-asia-2026-complete-guide",
+  };
+  const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);
+  if (viBlogMatch && VI_BLOG_REDIRECTS[viBlogMatch[1]]) {
+    return secureRedirect(
+      `https://${url.hostname}/blog/${VI_BLOG_REDIRECTS[viBlogMatch[1]]}`,
+      301,
+    );
+  }
+
+  // ─── 1f. SEO audit batch 8 — /feed?tab=* → /feed canonical strip.
+  //       renderFeed() ignores the ?tab= query string and returns the
+  //       same HTML for /feed, /feed?tab=trending, /feed?tab=for-you.
+  //       SEOnaut crawls the query variant separately and flags it as
+  //       'Non-canonical in sitemap' + 'Missing hreflang self-reference'
+  //       because the rendered canonical / hreflang point to /feed
+  //       without the query. Drop the query on the redirect so both
+  //       crawler and sitemap see one canonical surface.
+  if (url.pathname === "/feed" && url.searchParams.has("tab")) {
+    return secureRedirect(`https://${url.hostname}/feed`, 301);
+  }
+  if (url.pathname === "/vi/feed" && url.searchParams.has("tab")) {
+    return secureRedirect(`https://${url.hostname}/vi/feed`, 301);
+  }
+
+  // ─── 1g. SEO audit batch 8 — /vi/ trailing slash collapses to /vi.
+  //       renderHomeVi() emits canonical=/vi (no trailing slash) and
+  //       sitemap-static lists /vi (no slash); SEOnaut found /vi/
+  //       linked from somewhere and flagged it as non-canonical and
+  //       missing self-reference. Trailing-slash normalize so both
+  //       resolve to one indexable surface.
+  if (url.pathname === "/vi/") {
+    return secureRedirect(`https://${url.hostname}/vi${url.search}`, 301);
+  }
+
   // ─── 2. Static asset bypass (before bot detection) ───
   const pathname = url.pathname;
   const STATIC_PREFIXES = ["/og-images/", "/assets/", "/images/", "/fonts/", "/icons/", "/static/"];
@@ -335,7 +400,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // bilingualHreflang output. New singleCanonicalHreflang versions
   // need the cache to drop, otherwise bots get the v11 entries until
   // the natural 6h TTL elapses.
-  const cacheKey = `pr:v12:${url.pathname}`;
+  // 2026-05-28 (batch 8) — bumped v12→v13 to invalidate cached news
+  // / live / match HTML that doesn't yet include the new Related
+  // sections. Without the bump, bots keep seeing the v12 cached
+  // shells until the 6h TTL elapses.
+  const cacheKey = `pr:v13:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
