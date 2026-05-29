@@ -37,7 +37,7 @@ function blankPlayer(): PlayerSlot {
 
 type Step = 'info' | 'format' | 'teams';
 
-const SUGGESTED_COUNTS = [32, 40, 48, 64, 80, 96, 128];
+const SUGGESTED_COUNTS = [40, 48, 64, 80, 96, 128];
 
 const surfaceCard: React.CSSProperties = {
   background: 'var(--tl-bg-elev)',
@@ -88,6 +88,90 @@ function collectLinkedUserIds(teams: TeamInput[], currentIndex: number): string[
   return ids;
 }
 
+// Sprint E.1 (2026-05-29) — segmented control for semifinals/finals format.
+// Three pills: [Same as early rounds · BO?] [BO3] [BO5]. The first pill
+// surfaces the inherited value live so the user sees the effective format
+// without toggling. Replaces the legacy checkbox+nested-radio combo.
+function SegmentedFormatSelector(props: {
+  kicker: string;
+  value: BestOfFormat | 'inherit';
+  onChange: (v: BestOfFormat | 'inherit') => void;
+  inheritFrom: BestOfFormat;
+  language: 'vi' | 'en';
+}) {
+  const { kicker, value, onChange, inheritFrom, language } = props;
+  const options: Array<{ key: BestOfFormat | 'inherit'; label: string; sub?: string }> = [
+    {
+      key: 'inherit',
+      label: language === 'vi' ? 'Như vòng ngoài' : 'Same as early',
+      sub: inheritFrom.toUpperCase(),
+    },
+    { key: 'bo3', label: 'BO3', sub: language === 'vi' ? 'Thắng 2/3' : 'Win 2/3' },
+    { key: 'bo5', label: 'BO5', sub: language === 'vi' ? 'Thắng 3/5' : 'Win 3/5' },
+  ];
+  return (
+    <section>
+      <div style={{ ...stepKickerStyle, marginBottom: 8 }}>
+        ◆ {kicker}
+      </div>
+      <div
+        role="radiogroup"
+        aria-label={kicker}
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 8,
+          padding: 6,
+          background: 'var(--tl-bg)',
+          border: '1px solid var(--tl-border)',
+          borderRadius: 'var(--tl-radius-lg)',
+        }}
+      >
+        {options.map((opt) => {
+          const selected = value === opt.key;
+          return (
+            <button
+              key={opt.key}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(opt.key)}
+              style={{
+                flex: opt.key === 'inherit' ? '1 1 200px' : '1 1 90px',
+                minHeight: 38,
+                padding: '8px 12px',
+                background: selected ? 'var(--tl-green)' : 'transparent',
+                color: selected ? 'var(--tl-bg)' : 'var(--tl-fg)',
+                border: '1px solid ' + (selected ? 'var(--tl-green)' : 'transparent'),
+                borderRadius: 'var(--tl-radius)',
+                cursor: 'pointer',
+                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                fontSize: 12.5,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'background 120ms ease',
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>{opt.label}</span>
+              {opt.sub && (
+                <span style={{
+                  opacity: 0.7,
+                  fontSize: 11,
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  · {opt.sub}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function calculateTournamentHints(teamCount: number): { r1Matches: number; byesToR4: number; isEven: boolean; t3: number; r4Target: number } {
   const N = teamCount;
   const r1Matches = Math.floor(N / 2);
@@ -119,16 +203,17 @@ export default function DoublesEliminationSetup() {
   const [step, setStep] = useState<Step>('info');
 
   const [name, setName] = useState('');
-  const [teamCount, setTeamCount] = useState(32);
+  const [teamCount, setTeamCount] = useState(40);
   const [courts, setCourts] = useState('');
   const [startTime, setStartTime] = useState('');
 
   const [earlyRoundsFormat, setEarlyRoundsFormat] = useState<BestOfFormat>('bo1');
-  const [semifinalsFormat, setSemifinalsFormat] = useState<BestOfFormat>('bo3');
-  const [finalsFormat, setFinalsFormat] = useState<BestOfFormat>('bo3');
+  // Sprint E.1 (2026-05-29) — collapse customSemifinals/customFinals booleans
+  // into a single 3-state variable: 'inherit' (mirror early rounds) | 'bo3' | 'bo5'.
+  // getEffective*() functions still return a real BestOfFormat for downstream RPCs.
+  const [semifinalsFormat, setSemifinalsFormat] = useState<BestOfFormat | 'inherit'>('inherit');
+  const [finalsFormat, setFinalsFormat] = useState<BestOfFormat | 'inherit'>('inherit');
   const [hasThirdPlace, setHasThirdPlace] = useState(false);
-  const [customSemifinals, setCustomSemifinals] = useState(false);
-  const [customFinals, setCustomFinals] = useState(false);
 
   // DUPR Phase 1 (2026-05-29). Tournament-level rating gates.
   const [ratingSource, setRatingSource] = useState<RatingSource>('self');
@@ -250,7 +335,7 @@ export default function DoublesEliminationSetup() {
   };
 
   const removeTeamSlot = (index: number) => {
-    if (teams.length <= 32) return;
+    if (teams.length <= 40) return;
     setTeams(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -284,7 +369,7 @@ export default function DoublesEliminationSetup() {
         toast({ title: t.doublesElimination.setup.nameRequired || "Please enter tournament name", variant: "destructive" });
         return;
       }
-      if (teamCount < 32) {
+      if (teamCount < 40) {
         toast({ title: t.doublesElimination.setup.minTeamsError, variant: "destructive" });
         return;
       }
@@ -301,13 +386,11 @@ export default function DoublesEliminationSetup() {
   };
 
   const getEffectiveSemifinalsFormat = (): BestOfFormat => {
-    if (customSemifinals) return semifinalsFormat;
-    return earlyRoundsFormat;
+    return semifinalsFormat === 'inherit' ? earlyRoundsFormat : semifinalsFormat;
   };
 
   const getEffectiveFinalsFormat = (): BestOfFormat => {
-    if (customFinals) return finalsFormat;
-    return earlyRoundsFormat;
+    return finalsFormat === 'inherit' ? earlyRoundsFormat : finalsFormat;
   };
 
   const handleCreate = async () => {
@@ -321,7 +404,7 @@ export default function DoublesEliminationSetup() {
       return false;
     });
 
-    if (filledTeams.length < 32) {
+    if (filledTeams.length < 40) {
       toast({
         title: t.doublesElimination.setup.need32Teams || "Need at least 32 teams",
         description: `${t.common.loading}: ${filledTeams.length}`,
@@ -624,7 +707,7 @@ export default function DoublesEliminationSetup() {
                         marginLeft: 4,
                       }}
                     >
-                      ({language === 'vi' ? 'tối thiểu 32' : 'min 32'})
+                      ({language === 'vi' ? 'tối thiểu 40' : 'min 40'})
                     </span>
                   </Label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
@@ -657,7 +740,7 @@ export default function DoublesEliminationSetup() {
                   </div>
                   <Input
                     type="number"
-                    min={32}
+                    min={40}
                     value={teamCount || ''}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -669,7 +752,7 @@ export default function DoublesEliminationSetup() {
                     }}
                     onBlur={(e) => {
                       const val = parseInt(e.target.value) || 0;
-                      if (val < 32) setTeamCount(32);
+                      if (val < 40) setTeamCount(40);
                     }}
                   />
 
@@ -747,8 +830,8 @@ export default function DoublesEliminationSetup() {
                     }}
                   >
                     {language === 'vi'
-                      ? 'Gợi ý: 32, 40, 48, 64, 80, 96, 128 đội để bracket cân đối'
-                      : 'Suggested: 32, 40, 48, 64, 80, 96, 128 teams for balanced bracket'}
+                      ? 'Gợi ý: 40, 48, 64, 80, 96, 128 đội để bracket cân đối'
+                      : 'Suggested: 40, 48, 64, 80, 96, 128 teams for balanced bracket'}
                   </p>
                 </div>
 
@@ -954,126 +1037,161 @@ export default function DoublesEliminationSetup() {
                 </p>
               </div>
 
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <Label>{t.doublesElimination.setup.earlyRoundsFormat}</Label>
-                  <RadioGroup
-                    value={earlyRoundsFormat}
-                    onValueChange={(v) => setEarlyRoundsFormat(v as BestOfFormat)}
-                    className="flex flex-wrap gap-4"
+              {/* Sprint E.1 (2026-05-29) — TheLine card layout. Same kicker +
+                  serif italic title + green-glow selected state as Step 1. */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+                {/* Early rounds — 3-card grid */}
+                <section>
+                  <div style={{ ...stepKickerStyle, marginBottom: 8 }}>
+                    ◆ {language === 'vi' ? 'Vòng ngoài (R1 – R2)' : 'Early rounds (R1 – R2)'}
+                  </div>
+                  <div
+                    role="radiogroup"
+                    aria-label={language === 'vi' ? 'Format vòng ngoài' : 'Early rounds format'}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                      gap: 12,
+                    }}
                   >
-                    {(['bo1', 'bo3', 'bo5'] as const).map((fmt) => (
-                      <div key={fmt} className="flex items-center space-x-2">
-                        <RadioGroupItem value={fmt} id={`early-${fmt}`} />
-                        <Label htmlFor={`early-${fmt}`} className="cursor-pointer">
-                          <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 600 }}>
+                    {(['bo1', 'bo3', 'bo5'] as const).map((fmt, idx) => {
+                      const selected = earlyRoundsFormat === fmt;
+                      const tagline = fmt === 'bo1'
+                        ? '1 game'
+                        : fmt === 'bo3'
+                          ? (language === 'vi' ? 'Thắng 2/3' : 'Win 2/3')
+                          : (language === 'vi' ? 'Thắng 3/5' : 'Win 3/5');
+                      return (
+                        <button
+                          key={fmt}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => setEarlyRoundsFormat(fmt)}
+                          style={{
+                            position: 'relative',
+                            padding: '14px 14px 12px',
+                            background: selected ? 'var(--tl-green-glow)' : 'var(--tl-bg)',
+                            border: selected ? '1px solid var(--tl-green)' : '1px solid var(--tl-border)',
+                            borderRadius: 'var(--tl-radius-lg)',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            transition: 'background 120ms ease, border-color 120ms ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 6,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontSize: 10.5,
+                              letterSpacing: '0.08em',
+                              color: selected ? 'var(--tl-green)' : 'var(--tl-fg-4)',
+                              fontVariantNumeric: 'tabular-nums',
+                            }}>
+                              ◆ {String(idx + 1).padStart(2, '0')}
+                            </span>
+                            {selected && (
+                              <span style={{
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontSize: 11,
+                                color: 'var(--tl-green)',
+                              }}>
+                                ✓
+                              </span>
+                            )}
+                          </div>
+                          <div style={{
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontWeight: 600,
+                            fontSize: 18,
+                            color: 'var(--tl-fg)',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}>
                             {fmt.toUpperCase()}
-                          </span>
-                          <span style={{ color: 'var(--tl-fg-3)', marginLeft: 6, fontSize: 12.5 }}>
-                            ({fmt === 'bo1' ? '1 game' : fmt === 'bo3' ? (language === 'vi' ? 'Thắng 2/3' : 'Win 2/3') : (language === 'vi' ? 'Thắng 3/5' : 'Win 3/5')})
-                          </span>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-
-                <div
-                  style={{
-                    paddingTop: 16,
-                    borderTop: '1px solid var(--tl-border)',
-                  }}
-                  className="space-y-3"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="customSemifinals"
-                      checked={customSemifinals}
-                      onCheckedChange={(checked) => setCustomSemifinals(checked as boolean)}
-                    />
-                    <Label htmlFor="customSemifinals" className="cursor-pointer">
-                      {language === 'vi' ? 'Bán kết (tùy chỉnh format khác vòng ngoài)' : 'Semifinals (custom format)'}
-                    </Label>
+                          </div>
+                          <div style={{ fontSize: 12.5, color: 'var(--tl-fg-3)' }}>
+                            {tagline}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                  {customSemifinals && (
-                    <RadioGroup
-                      value={semifinalsFormat}
-                      onValueChange={(v) => setSemifinalsFormat(v as BestOfFormat)}
-                      className="flex flex-wrap gap-4 pl-6"
-                    >
-                      {(['bo3', 'bo5'] as const).map((fmt) => (
-                        <div key={fmt} className="flex items-center space-x-2">
-                          <RadioGroupItem value={fmt} id={`semi-${fmt}`} />
-                          <Label htmlFor={`semi-${fmt}`} className="cursor-pointer">
-                            <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 600 }}>
-                              {fmt.toUpperCase()}
-                            </span>
-                            <span style={{ color: 'var(--tl-fg-3)', marginLeft: 6, fontSize: 12.5 }}>
-                              ({fmt === 'bo3' ? (language === 'vi' ? 'Thắng 2/3' : 'Win 2/3') : (language === 'vi' ? 'Thắng 3/5' : 'Win 3/5')})
-                            </span>
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  )}
-                </div>
+                </section>
 
-                <div
+                {/* Semifinals — 3-pill segmented selector */}
+                <SegmentedFormatSelector
+                  kicker={language === 'vi' ? 'Bán kết' : 'Semifinals'}
+                  value={semifinalsFormat}
+                  onChange={setSemifinalsFormat}
+                  inheritFrom={earlyRoundsFormat}
+                  language={language}
+                />
+
+                {/* Finals */}
+                <SegmentedFormatSelector
+                  kicker={language === 'vi' ? 'Chung kết' : 'Finals'}
+                  value={finalsFormat}
+                  onChange={setFinalsFormat}
+                  inheritFrom={earlyRoundsFormat}
+                  language={language}
+                />
+
+                {/* Third place — inline toggle pill */}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={hasThirdPlace}
+                  onClick={() => setHasThirdPlace(v => !v)}
                   style={{
-                    paddingTop: 16,
-                    borderTop: '1px solid var(--tl-border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    padding: '14px 16px',
+                    background: 'var(--tl-bg)',
+                    border: '1px solid var(--tl-border)',
+                    borderRadius: 'var(--tl-radius-lg)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
                   }}
-                  className="space-y-3"
                 >
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="customFinals"
-                      checked={customFinals}
-                      onCheckedChange={(checked) => setCustomFinals(checked as boolean)}
-                    />
-                    <Label htmlFor="customFinals" className="cursor-pointer">
-                      {language === 'vi' ? 'Chung kết (tùy chỉnh format khác vòng ngoài)' : 'Finals (custom format)'}
-                    </Label>
+                  <div>
+                    <div style={{
+                      fontFamily: 'Instrument Serif, serif',
+                      fontStyle: 'italic',
+                      fontSize: 18,
+                      color: 'var(--tl-fg)',
+                      lineHeight: 1.1,
+                    }}>
+                      {language === 'vi' ? 'Trận tranh hạng ba' : 'Third place match'}
+                    </div>
+                    <div style={{
+                      fontFamily: 'Geist Mono, ui-monospace, monospace',
+                      fontSize: 11,
+                      color: 'var(--tl-fg-3)',
+                      marginTop: 4,
+                      letterSpacing: '0.04em',
+                    }}>
+                      {language === 'vi' ? 'Tuỳ chọn' : 'Optional'}
+                    </div>
                   </div>
-                  {customFinals && (
-                    <RadioGroup
-                      value={finalsFormat}
-                      onValueChange={(v) => setFinalsFormat(v as BestOfFormat)}
-                      className="flex flex-wrap gap-4 pl-6"
-                    >
-                      {(['bo3', 'bo5'] as const).map((fmt) => (
-                        <div key={fmt} className="flex items-center space-x-2">
-                          <RadioGroupItem value={fmt} id={`finals-${fmt}`} />
-                          <Label htmlFor={`finals-${fmt}`} className="cursor-pointer">
-                            <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 600 }}>
-                              {fmt.toUpperCase()}
-                            </span>
-                            <span style={{ color: 'var(--tl-fg-3)', marginLeft: 6, fontSize: 12.5 }}>
-                              ({fmt === 'bo3' ? (language === 'vi' ? 'Thắng 2/3' : 'Win 2/3') : (language === 'vi' ? 'Thắng 3/5' : 'Win 3/5')})
-                            </span>
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  )}
-                </div>
-
-                <div
-                  style={{
-                    paddingTop: 16,
-                    borderTop: '1px solid var(--tl-border)',
-                  }}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id="thirdPlace"
-                    checked={hasThirdPlace}
-                    onCheckedChange={(checked) => setHasThirdPlace(checked as boolean)}
-                  />
-                  <Label htmlFor="thirdPlace" className="cursor-pointer">
-                    {t.doublesElimination.setup.thirdPlaceMatch}
-                  </Label>
-                </div>
+                  <span style={{
+                    fontFamily: 'Geist Mono, ui-monospace, monospace',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    background: hasThirdPlace ? 'var(--tl-green)' : 'transparent',
+                    color: hasThirdPlace ? 'var(--tl-bg)' : 'var(--tl-fg-3)',
+                    border: '1px solid ' + (hasThirdPlace ? 'var(--tl-green)' : 'var(--tl-border)'),
+                    minWidth: 56,
+                    textAlign: 'center',
+                  }}>
+                    {hasThirdPlace ? (language === 'vi' ? 'Bật' : 'On') : (language === 'vi' ? 'Tắt' : 'Off')}
+                  </span>
+                </button>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8 }}>
                   <button type="button" className="tl-btn" onClick={handleBack}>
@@ -1246,7 +1364,7 @@ export default function DoublesEliminationSetup() {
                         variant="ghost"
                         size="icon"
                         onClick={() => removeTeamSlot(index)}
-                        disabled={teams.length <= 32}
+                        disabled={teams.length <= 40}
                         className="text-foreground-muted hover:text-destructive"
                         style={{ marginTop: 2 }}
                       >
