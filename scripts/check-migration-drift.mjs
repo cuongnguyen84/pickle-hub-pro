@@ -8,11 +8,19 @@
 // diffs the applied version set against the timestamp prefixes of the local
 // migration files.
 //
+// IMPORTANT — advisory by default. ThePickleHub applies migrations by
+// running SQL directly via the Management API (see handoff doc §9), NOT via
+// `supabase db push`, so `supabase_migrations.schema_migrations` is NOT a
+// reliable record of what's applied — it under-reports and produces false
+// "unapplied" positives. Therefore this script only WARNS by default and
+// exits 0. Set DRIFT_STRICT=1 to make repo-ahead-of-DB a hard failure once
+// the schema_migrations ledger has been reconciled.
+//
 // Env:
 //   SUPABASE_ACCESS_TOKEN   (required) Management API PAT
 //   SUPABASE_PROJECT_REF    (default ajvlcamxemgbxduhiqrl)
+//   DRIFT_STRICT            (optional) "1" => exit 1 on repo-ahead drift
 //
-// Exit codes: 0 = in sync, 1 = drift / error.
 // Usage: node scripts/check-migration-drift.mjs
 // ============================================================================
 
@@ -84,20 +92,32 @@ async function appliedVersions() {
       process.exit(0);
     }
 
+    const strict = process.env.DRIFT_STRICT === "1";
+
     if (missingOnDb.length) {
       console.error(
-        `\n✖ ${missingOnDb.length} migration file(s) in repo NOT applied to prod:`,
+        `\n⚠ ${missingOnDb.length} migration file(s) in repo with no schema_migrations row on prod:`,
       );
-      for (const v of missingOnDb) console.error(`   - ${local.get(v)}`);
+      for (const v of missingOnDb.slice(0, 10)) console.error(`   - ${local.get(v)}`);
+      if (missingOnDb.length > 10)
+        console.error(`   … and ${missingOnDb.length - 10} more`);
+      console.error(
+        "\n  NOTE: likely applied via direct SQL (Management API), which does\n" +
+          "  not write schema_migrations. This is advisory unless DRIFT_STRICT=1.",
+      );
     }
     if (missingLocally.length) {
       console.error(
-        `\n⚠ ${missingLocally.length} migration(s) applied on prod with NO local file:`,
+        `\n⚠ ${missingLocally.length} migration row(s) on prod with NO local file (review).`,
       );
-      for (const v of missingLocally) console.error(`   - ${v}`);
     }
-    // Only the "repo ahead of DB" case is a hard failure (unapplied work).
-    process.exit(missingOnDb.length ? 1 : 0);
+
+    if (strict && missingOnDb.length) {
+      console.error("\n✖ DRIFT_STRICT=1 and repo is ahead of DB — failing.");
+      process.exit(1);
+    }
+    console.log("\n(advisory mode — not failing the build)");
+    process.exit(0);
   } catch (e) {
     console.error("✖ Drift check error:", e.message);
     process.exit(1);
