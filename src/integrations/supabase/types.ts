@@ -839,6 +839,10 @@ export type Database = {
           dest_loser: Json | null
           dest_winner: Json | null
           display_order: number
+          dupr_match_code: string | null
+          dupr_submit_error: string | null
+          dupr_submitted: boolean
+          dupr_submitted_at: string | null
           games: Json | null
           games_won_a: number | null
           games_won_b: number | null
@@ -868,6 +872,10 @@ export type Database = {
           dest_loser?: Json | null
           dest_winner?: Json | null
           display_order: number
+          dupr_match_code?: string | null
+          dupr_submit_error?: string | null
+          dupr_submitted?: boolean
+          dupr_submitted_at?: string | null
           games?: Json | null
           games_won_a?: number | null
           games_won_b?: number | null
@@ -897,6 +905,10 @@ export type Database = {
           dest_loser?: Json | null
           dest_winner?: Json | null
           display_order?: number
+          dupr_match_code?: string | null
+          dupr_submit_error?: string | null
+          dupr_submitted?: boolean
+          dupr_submitted_at?: string | null
           games?: Json | null
           games_won_a?: number | null
           games_won_b?: number | null
@@ -981,11 +993,15 @@ export type Database = {
       doubles_elimination_teams: {
         Row: {
           created_at: string | null
+          dupr_avg_rating: number | null
+          dupr_seed_source: string
           eliminated_at_round: number | null
           final_placement: number | null
           id: string
           player1_name: string
+          player1_user_id: string | null
           player2_name: string | null
+          player2_user_id: string | null
           point_diff: number | null
           seed: number | null
           status: string | null
@@ -996,11 +1012,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          dupr_avg_rating?: number | null
+          dupr_seed_source?: string
           eliminated_at_round?: number | null
           final_placement?: number | null
           id?: string
           player1_name: string
+          player1_user_id?: string | null
           player2_name?: string | null
+          player2_user_id?: string | null
           point_diff?: number | null
           seed?: number | null
           status?: string | null
@@ -1011,11 +1031,15 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          dupr_avg_rating?: number | null
+          dupr_seed_source?: string
           eliminated_at_round?: number | null
           final_placement?: number | null
           id?: string
           player1_name?: string
+          player1_user_id?: string | null
           player2_name?: string | null
+          player2_user_id?: string | null
           point_diff?: number | null
           seed?: number | null
           status?: string | null
@@ -1044,7 +1068,10 @@ export type Database = {
           finals_format: string | null
           has_third_place_match: boolean | null
           id: string
+          max_dupr_rating: number | null
+          min_dupr_rating: number | null
           name: string
+          rating_source: string
           semifinals_format: string | null
           share_id: string
           start_time: string | null
@@ -1061,7 +1088,10 @@ export type Database = {
           finals_format?: string | null
           has_third_place_match?: boolean | null
           id?: string
+          max_dupr_rating?: number | null
+          min_dupr_rating?: number | null
           name: string
+          rating_source?: string
           semifinals_format?: string | null
           share_id: string
           start_time?: string | null
@@ -1078,7 +1108,10 @@ export type Database = {
           finals_format?: string | null
           has_third_place_match?: boolean | null
           id?: string
+          max_dupr_rating?: number | null
+          min_dupr_rating?: number | null
           name?: string
+          rating_source?: string
           semifinals_format?: string | null
           share_id?: string
           start_time?: string | null
@@ -7334,5 +7367,3 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.101.0 (currently installed v)
-We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli

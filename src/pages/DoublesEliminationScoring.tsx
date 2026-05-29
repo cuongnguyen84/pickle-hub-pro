@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDoublesElimination } from "@/hooks/useDoublesElimination";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
+import { submitDoublesEliminationMatch } from "@/lib/dupr/submitDoublesEliminationMatch";
 import { Minus, Plus, RotateCcw, Check, Trophy } from "lucide-react";
 import {
   AlertDialog,
@@ -41,6 +42,9 @@ interface MatchData {
   games_won_a: number;
   games_won_b: number;
   status: string;
+  dupr_submitted?: boolean;
+  dupr_match_code?: string | null;
+  dupr_submit_error?: string | null;
 }
 
 interface TeamData {
@@ -49,6 +53,8 @@ interface TeamData {
   player1_name: string;
   player2_name: string | null;
   seed: number;
+  player1_user_id?: string | null;
+  player2_user_id?: string | null;
 }
 
 interface TournamentData {
@@ -56,6 +62,7 @@ interface TournamentData {
   name: string;
   share_id: string;
   creator_user_id: string;
+  rating_source?: 'self' | 'dupr' | 'either';
 }
 
 const surfaceCard: React.CSSProperties = {
@@ -349,6 +356,40 @@ export default function DoublesEliminationScoring() {
     setCurrentGameNumber(gameNum);
   };
 
+  const tryDuprSubmit = async () => {
+    if (!match || !teamA || !teamB || !tournament) return;
+    const ratingSource = tournament.rating_source ?? 'self';
+    if (ratingSource === 'self') return;
+    if (match.dupr_submitted) return;
+    const outcome = await submitDoublesEliminationMatch({
+      matchId: match.id,
+      games: match.games || [],
+      ratingSource,
+      tournamentName: tournament.name,
+      teamA: { id: teamA.id, player1_user_id: teamA.player1_user_id ?? null, player2_user_id: teamA.player2_user_id ?? null },
+      teamB: { id: teamB.id, player1_user_id: teamB.player1_user_id ?? null, player2_user_id: teamB.player2_user_id ?? null },
+      alreadySubmitted: !!match.dupr_submitted,
+    });
+    if (outcome.kind === 'ok') {
+      setMatch((prev) => prev ? { ...prev, dupr_submitted: true, dupr_match_code: outcome.matchCode } : prev);
+      toast({ title: language === 'vi' ? 'Đã gửi kết quả lên DUPR' : 'Submitted to DUPR' });
+    } else if (outcome.kind === 'error') {
+      setMatch((prev) => prev ? { ...prev, dupr_submit_error: outcome.message } : prev);
+      toast({
+        title: language === 'vi' ? 'Lỗi gửi DUPR' : 'DUPR submit error',
+        description: outcome.message,
+        variant: 'destructive',
+      });
+    } else if (outcome.reason === 'missing-dupr-id' || outcome.reason === 'missing-profile-link') {
+      toast({
+        title: language === 'vi' ? 'Bỏ qua DUPR — thiếu thông tin' : 'Skipped DUPR — incomplete data',
+        description: language === 'vi'
+          ? 'Trận thiếu user_id hoặc DUPR ID của ≥1 VĐV.'
+          : 'Match is missing user_id or DUPR ID for ≥1 player.',
+      });
+    }
+  };
+
   const handleSaveGame = async () => {
     if (!match || !canEdit) return;
     if (localScoreA === localScoreB) {
@@ -437,6 +478,7 @@ export default function DoublesEliminationScoring() {
       });
 
       toast({ title: tx.matchEnded });
+      await tryDuprSubmit();
     } else {
       await supabase
         .from('doubles_elimination_matches')
@@ -520,6 +562,9 @@ export default function DoublesEliminationScoring() {
     }
 
     toast({ title: tx.matchEnded });
+    // DUPR Phase 2 (2026-05-29). Attempt submit BEFORE navigation so any
+    // error toast is seen on the scoring page.
+    await tryDuprSubmit();
     navigate(`/tools/doubles-elimination/${tournament?.share_id}`);
     setShowEndDialog(false);
   };
@@ -1132,6 +1177,14 @@ export default function DoublesEliminationScoring() {
               <div style={{ fontSize: 13.5, color: 'var(--tl-fg-2)', marginTop: 6 }}>
                 {tx.won(match.winner_id === match.team_a_id ? teamA.team_name : teamB.team_name)}
               </div>
+              {/* DUPR Phase 2 (2026-05-29). Submit status badge — visible only after a submit attempt. */}
+              {(match.dupr_submitted || match.dupr_submit_error) && (
+                <div style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 'var(--tl-radius)', background: match.dupr_submitted ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.10)', border: '1px solid ' + (match.dupr_submitted ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.25)'), fontSize: 12, color: match.dupr_submitted ? 'var(--tl-green)' : 'var(--tl-live)', fontFamily: 'Geist Mono, ui-monospace, monospace' }}>
+                  {match.dupr_submitted
+                    ? (language === 'vi' ? 'DUPR ✓ ' + (match.dupr_match_code ?? '') : 'DUPR ✓ ' + (match.dupr_match_code ?? ''))
+                    : (language === 'vi' ? 'DUPR ✕ ' : 'DUPR ✕ ') + (match.dupr_submit_error ?? '')}
+                </div>
+              )}
             </div>
           )}
 
