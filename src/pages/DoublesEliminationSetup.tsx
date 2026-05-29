@@ -778,86 +778,155 @@ export default function DoublesEliminationSetup() {
                   </div>
                 </div>
 
-                {/* DUPR Phase 1 (2026-05-29). Tournament-level rating gate. */}
+                {/* DUPR Phase 1 (2026-05-29). Tournament-level rating gate.
+                    UI refactor v2 (2026-05-29) — TheLine card pattern: 3
+                    selectable cards instead of inline radios. Matches suggested-
+                    counts pill style + hint-card aesthetic of Step 1. */}
                 <div
                   style={{
-                    paddingTop: 16,
+                    paddingTop: 18,
                     borderTop: '1px solid var(--tl-border)',
                   }}
                   className="space-y-3"
                 >
-                  <Label>
-                    {language === 'vi' ? 'Hệ số trình độ' : 'Rating system'}
-                  </Label>
-                  <RadioGroup
-                    value={ratingSource}
-                    onValueChange={(v) => setRatingSource(v as RatingSource)}
-                    className="flex flex-wrap gap-4"
+                  <div>
+                    <div style={stepKickerStyle}>
+                      ◆ {language === 'vi' ? 'Hệ số trình độ' : 'Rating system'}
+                    </div>
+                    <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', margin: '6px 0 0', lineHeight: 1.5 }}>
+                      {language === 'vi'
+                        ? 'Cách lấy trình độ của VĐV. Chọn DUPR để bật auto-seed theo DUPR đôi của từng đội.'
+                        : 'How player ratings are sourced. Pick DUPR to enable auto-seed by team doubles DUPR.'}
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: 10,
+                    }}
                   >
-                    {(['self', 'either', 'dupr'] as const).map((rs) => (
-                      <div key={rs} className="flex items-center space-x-2">
-                        <RadioGroupItem value={rs} id={`rs-${rs}`} />
-                        <Label htmlFor={`rs-${rs}`} className="cursor-pointer">
-                          <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontWeight: 600 }}>
-                            {rs === 'self' ? (language === 'vi' ? 'Tự khai' : 'Self-report') : rs === 'either' ? (language === 'vi' ? 'Linh hoạt' : 'Either') : 'DUPR'}
-                          </span>
-                          <span style={{ color: 'var(--tl-fg-3)', marginLeft: 6, fontSize: 12.5 }}>
-                            ({rs === 'self'
-                              ? (language === 'vi' ? 'Không yêu cầu DUPR' : 'No DUPR required')
-                              : rs === 'either'
-                                ? (language === 'vi' ? 'Ưu tiên DUPR, vẫn cho gõ tay' : 'Prefer DUPR, allow manual')
-                                : (language === 'vi' ? 'Bắt buộc liên kết DUPR' : 'DUPR link required')})
-                          </span>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                    {(['self', 'either', 'dupr'] as const).map((rs) => {
+                      const selected = ratingSource === rs;
+                      const kicker = rs === 'self' ? '01' : rs === 'either' ? '02' : '03';
+                      const title = rs === 'self'
+                        ? (language === 'vi' ? 'Tự khai' : 'Self-report')
+                        : rs === 'either'
+                          ? (language === 'vi' ? 'Linh hoạt' : 'Either')
+                          : 'DUPR';
+                      const desc = rs === 'self'
+                        ? (language === 'vi' ? 'Không yêu cầu DUPR. VĐV tự kê khai trình độ.' : 'No DUPR required. Self-reported skill.')
+                        : rs === 'either'
+                          ? (language === 'vi' ? 'Ưu tiên DUPR. Vẫn cho gõ tay nếu thiếu.' : 'Prefer DUPR. Fall back to manual.')
+                          : (language === 'vi' ? 'Bắt buộc liên kết DUPR cho cả 2 VĐV.' : 'Require DUPR link for both players.');
+                      return (
+                        <button
+                          key={rs}
+                          type="button"
+                          onClick={() => setRatingSource(rs)}
+                          aria-pressed={selected}
+                          style={{
+                            textAlign: 'left',
+                            padding: '14px 14px 12px',
+                            borderRadius: 'var(--tl-radius-lg)',
+                            background: selected ? 'var(--tl-green-glow)' : 'var(--tl-bg)',
+                            border: selected ? '1px solid var(--tl-green)' : '1px solid var(--tl-border)',
+                            cursor: 'pointer',
+                            transition: 'background 120ms ease, border-color 120ms ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 6,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                            <span style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontSize: 10.5,
+                              letterSpacing: '0.08em',
+                              color: selected ? 'var(--tl-green)' : 'var(--tl-fg-4)',
+                            }}>
+                              ◆ {kicker}
+                            </span>
+                            {selected && (
+                              <span style={{
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontSize: 10,
+                                letterSpacing: '0.08em',
+                                color: 'var(--tl-green)',
+                                textTransform: 'uppercase',
+                              }}>
+                                ✓ {language === 'vi' ? 'Đã chọn' : 'Selected'}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{
+                            fontFamily: 'Instrument Serif, serif',
+                            fontStyle: 'italic',
+                            fontSize: 20,
+                            lineHeight: 1.1,
+                            color: 'var(--tl-fg)',
+                          }}>
+                            {title}
+                          </div>
+                          <div style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', lineHeight: 1.5 }}>
+                            {desc}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
 
                   {ratingSource !== 'self' && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 4 }}>
-                      <div className="space-y-2">
-                        <Label htmlFor="minDupr">
-                          {language === 'vi' ? 'DUPR tối thiểu' : 'Min DUPR'}
-                          <span style={{ color: 'var(--tl-fg-3)', fontSize: 11, marginLeft: 6 }}>
-                            ({language === 'vi' ? 'không bắt buộc' : 'optional'})
-                          </span>
-                        </Label>
-                        <Input
-                          id="minDupr"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="8"
-                          placeholder="3.00"
-                          value={minDuprRating}
-                          onChange={(e) => setMinDuprRating(e.target.value)}
-                        />
+                    <div
+                      style={{
+                        marginTop: 6,
+                        padding: 14,
+                        borderRadius: 'var(--tl-radius)',
+                        background: 'var(--tl-bg)',
+                        border: '1px solid var(--tl-border)',
+                      }}
+                    >
+                      <div style={{ ...stepKickerStyle, marginBottom: 10 }}>
+                        ◆ {language === 'vi' ? 'Khoảng DUPR cho phép' : 'DUPR range'}
+                        <span style={{ color: 'var(--tl-fg-4)', marginLeft: 8, textTransform: 'none', letterSpacing: 0 }}>
+                          ({language === 'vi' ? 'không bắt buộc' : 'optional'})
+                        </span>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="maxDupr">
-                          {language === 'vi' ? 'DUPR tối đa' : 'Max DUPR'}
-                          <span style={{ color: 'var(--tl-fg-3)', fontSize: 11, marginLeft: 6 }}>
-                            ({language === 'vi' ? 'không bắt buộc' : 'optional'})
-                          </span>
-                        </Label>
-                        <Input
-                          id="maxDupr"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="8"
-                          placeholder="4.50"
-                          value={maxDuprRating}
-                          onChange={(e) => setMaxDuprRating(e.target.value)}
-                        />
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div className="space-y-2">
+                          <Label htmlFor="minDupr" style={{ fontSize: 12 }}>
+                            {language === 'vi' ? 'Tối thiểu' : 'Min'}
+                          </Label>
+                          <Input
+                            id="minDupr"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="8"
+                            placeholder="3.00"
+                            value={minDuprRating}
+                            onChange={(e) => setMinDuprRating(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="maxDupr" style={{ fontSize: 12 }}>
+                            {language === 'vi' ? 'Tối đa' : 'Max'}
+                          </Label>
+                          <Input
+                            id="maxDupr"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="8"
+                            placeholder="4.50"
+                            value={maxDuprRating}
+                            onChange={(e) => setMaxDuprRating(e.target.value)}
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
-                  <p style={{ fontSize: 11.5, color: 'var(--tl-fg-3)', margin: '4px 0 0', lineHeight: 1.45 }}>
-                    {language === 'vi'
-                      ? 'Tip: Chọn DUPR nếu muốn tự seed bracket bằng DUPR đôi của 2 VĐV mỗi đội.'
-                      : 'Tip: Choose DUPR if you want to auto-seed the bracket using each team\'s doubles DUPR average.'}
-                  </p>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8 }}>
