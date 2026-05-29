@@ -6484,6 +6484,14 @@ export type Database = {
         }
         Returns: string
       }
+      cancel_doubles_elimination_team_registration: {
+        Args: { p_tournament_id: string }
+        Returns: Json
+      }
+      close_doubles_elimination_registration: {
+        Args: { p_tournament_id: string }
+        Returns: Json
+      }
       create_doubles_elimination_with_quota: {
         Args: {
           _court_count?: number
@@ -6495,6 +6503,14 @@ export type Database = {
           _share_id: string
           _start_time?: string
           _team_count: number
+        }
+        Returns: Json
+      }
+      register_team_for_doubles_elimination: {
+        Args: {
+          p_partner_user_id: string
+          p_team_name?: string
+          p_tournament_id: string
         }
         Returns: Json
       }
