@@ -235,5 +235,12 @@ export default defineConfig(({ mode }) => ({
     include: ["src/**/*.test.{ts,tsx}"],
     exclude: ["node_modules/**", "dist/**", "tests/**", "supabase/**"],
     environment: "node",
+    // Coverage is REPORT-ONLY (text-summary printed in CI). No thresholds
+    // yet — the codebase is partially tested and a hard % gate would red on
+    // pre-existing state. Add thresholds once a baseline target is agreed.
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary"],
+    },
   },
 }));

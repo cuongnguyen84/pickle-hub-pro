@@ -58,8 +58,8 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
-      - name: Unit tests (Vitest)
-        run: npm run test
+      - name: Unit tests (Vitest) + coverage summary
+        run: npm run test -- --coverage
 
       - name: Build
         env:
@@ -70,6 +70,9 @@ jobs:
           VITE_SUPABASE_PROJECT_ID: ajvlcamxemgbxduhiqrl
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: npm run build
+
+      - name: Bundle size report (advisory)
+        run: node scripts/check-bundle-size.mjs
 
       - name: Notify Telegram on failure
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'

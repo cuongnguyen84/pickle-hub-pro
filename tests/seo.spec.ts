@@ -105,3 +105,63 @@ test("robots.txt allows crawl + points to sitemap", async () => {
   expect(txt, "Sitemap directive present").toMatch(/Sitemap:\s+https?:\/\//i);
   await ctx.dispose();
 });
+
+// ── Phase 3D — sitemap index integrity + hreflang reciprocity ──────────────
+
+test("every child sitemap referenced by the index resolves to a valid urlset", async () => {
+  const ctx = await request.newContext({
+    extraHTTPHeaders: { "User-Agent": GOOGLEBOT_UA },
+  });
+
+  const idxRes = await ctx.get("/sitemap.xml");
+  expect(idxRes.status()).toBe(200);
+  const idxXml = await idxRes.text();
+  expect(idxXml, "root is a sitemapindex").toMatch(/<sitemapindex[^>]*>/);
+
+  // Pull the child sitemap URLs the index actually references (don't hardcode
+  // — players/venues are intentionally disabled per CLAUDE.md).
+  const childUrls = [...idxXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(
+    (m) => m[1],
+  );
+  expect(childUrls.length, "index references at least one child sitemap").toBeGreaterThan(0);
+
+  for (const url of childUrls) {
+    const res = await ctx.get(url);
+    expect(res.status(), `child sitemap ${url} status`).toBe(200);
+    const xml = await res.text();
+    expect(xml, `child sitemap ${url} is a urlset or sitemapindex`).toMatch(
+      /<(urlset|sitemapindex)[^>]*>/,
+    );
+  }
+  await ctx.dispose();
+});
+
+test("bilingual blog post has reciprocal en↔vi hreflang", async () => {
+  const ctx = await request.newContext({
+    extraHTTPHeaders: { "User-Agent": GOOGLEBOT_UA },
+  });
+
+  const enPath = "/blog/what-is-dupr-pickleball-rating-system";
+  const enRes = await ctx.get(enPath);
+  expect(enRes.status()).toBe(200);
+  const enHtml = await enRes.text();
+
+  // Extract the VI alternate the EN page advertises.
+  const viHref = enHtml.match(
+    /<link[^>]+hreflang=["']vi["'][^>]+href=["']([^"']+)["']/i,
+  )?.[1] ?? enHtml.match(
+    /<link[^>]+href=["']([^"']+)["'][^>]+hreflang=["']vi["']/i,
+  )?.[1];
+  expect(viHref, "EN page advertises a vi hreflang alternate").toBeTruthy();
+  expect(viHref!, "vi alternate points at a /vi/ path").toMatch(/\/vi\//);
+
+  // Fetch the VI twin and confirm it links back to an EN alternate.
+  const viRes = await ctx.get(viHref!);
+  expect(viRes.status(), `vi twin ${viHref} resolves`).toBe(200);
+  const viHtml = await viRes.text();
+  expect(viHtml, "vi page has en hreflang back-reference").toMatch(
+    /hreflang=["']en["']/i,
+  );
+  expect(viHtml, "vi page has x-default").toMatch(/hreflang=["']x-default["']/i);
+  await ctx.dispose();
+});
