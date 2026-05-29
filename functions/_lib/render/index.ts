@@ -953,14 +953,68 @@ export async function renderTeamMatch(supabase: SupabaseClient, id: string, site
 }
 
 export async function renderDoublesElimination(supabase: SupabaseClient, shareId: string, siteUrl: string): Promise<Response> {
-  const { data: de } = await supabase.from("doubles_elimination_tournaments").select("id, name, team_count, status, share_id").eq("share_id", shareId).single();
+  // DUPR Phase 3 (2026-05-29). Select DUPR fields so the bot sees the
+  // rating recommendation in meta + JSON-LD. Page is noindex (private
+  // tournament) so this is purely for richer link previews when an
+  // organizer shares the URL in chat/email.
+  const { data: de } = await supabase
+    .from("doubles_elimination_tournaments")
+    .select("id, name, team_count, status, share_id, rating_source, min_dupr_rating, max_dupr_rating")
+    .eq("share_id", shareId)
+    .single();
   if (!de) return render404(`/tools/doubles-elimination/${shareId}`, siteUrl);
 
+  // Optional DUPR range suffix for description + JSON-LD.
+  const ratingSource = (de as { rating_source?: string }).rating_source ?? "self";
+  const minDupr = (de as { min_dupr_rating?: number | null }).min_dupr_rating ?? null;
+  const maxDupr = (de as { max_dupr_rating?: number | null }).max_dupr_rating ?? null;
+  const hasRange = ratingSource !== "self" && (minDupr != null || maxDupr != null);
+  const rangeStr = hasRange
+    ? (minDupr != null && maxDupr != null
+        ? `${minDupr.toFixed(2)}–${maxDupr.toFixed(2)}`
+        : minDupr != null
+          ? `≥ ${minDupr.toFixed(2)}`
+          : `≤ ${maxDupr!.toFixed(2)}`)
+    : "";
+  const duprDescSuffix = hasRange ? ` Khuyến nghị DUPR ${rangeStr}.` : "";
+
   const title = buildTitle(de.name, " | Doubles Elimination");
-  const desc = `Giải đấu loại trực tiếp ${de.name} – ${de.team_count} đội. Xem bracket và kết quả trực tiếp trên ThePickleHub.`.slice(0, 160);
+  const desc = `Giải đấu loại trực tiếp ${de.name} – ${de.team_count} đội.${duprDescSuffix} Xem bracket và kết quả trực tiếp trên ThePickleHub.`.slice(0, 160);
   const bc = breadcrumb([{ label: "Trang chủ", href: siteUrl }, { label: "Công cụ", href: `${siteUrl}/tools` }, { label: "Doubles Elimination", href: `${siteUrl}/tools/doubles-elimination` }, { label: de.name }]);
 
-  return htmlResponse(buildHtml({ title, description: desc, url: `${siteUrl}/tools/doubles-elimination/${shareId}`, siteUrl, extraMeta: `<meta name="robots" content="noindex, follow"/>`, bodyContent: `${bc}${relatedToolLinks("doubles-elimination", siteUrl)}` }));
+  // SportsEvent JSON-LD — informational only (page stays noindex). Skill
+  // range surfaces as audience requirement when DUPR is enforced.
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    name: de.name,
+    description: desc,
+    url: `${siteUrl}/tools/doubles-elimination/${shareId}`,
+    eventStatus: de.status === "completed"
+      ? "https://schema.org/EventCompleted"
+      : de.status === "ongoing"
+        ? "https://schema.org/EventScheduled"
+        : "https://schema.org/EventScheduled",
+    sport: "Pickleball",
+  };
+  if (hasRange) {
+    jsonLd.audience = {
+      "@type": "PeopleAudience",
+      requiredMinAge: undefined,
+      suggestedMinAge: undefined,
+      audienceType: `DUPR ${rangeStr}`,
+    };
+  }
+
+  return htmlResponse(buildHtml({
+    title,
+    description: desc,
+    url: `${siteUrl}/tools/doubles-elimination/${shareId}`,
+    siteUrl,
+    extraMeta: `<meta name="robots" content="noindex, follow"/>`,
+    jsonLd,
+    bodyContent: `${bc}${relatedToolLinks("doubles-elimination", siteUrl)}`,
+  }));
 }
 
 export async function renderFlexTournament(supabase: SupabaseClient, shareId: string, siteUrl: string): Promise<Response> {

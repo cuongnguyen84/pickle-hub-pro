@@ -623,10 +623,21 @@ export function useDoublesElimination() {
             }
 
             if (updateField && loserId) {
-              await supabase
-                .from('doubles_elimination_matches')
-                .update({ [updateField]: loserId })
-                .eq('id', r2Match.id);
+              // DUPR Phase 1 cleanup (2026-05-29). Supabase generated types
+              // reject the dynamic-key form `{ [updateField]: loserId }`.
+              // Same fix as W1.3 in DoublesEliminationScoring.tsx:
+              // expand to explicit branches.
+              if (updateField === 'team_a_id') {
+                await supabase
+                  .from('doubles_elimination_matches')
+                  .update({ team_a_id: loserId })
+                  .eq('id', r2Match.id);
+              } else {
+                await supabase
+                  .from('doubles_elimination_matches')
+                  .update({ team_b_id: loserId })
+                  .eq('id', r2Match.id);
+              }
               break;
             }
           }

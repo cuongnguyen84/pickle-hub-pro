@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import DoublesEliminationBracket from "@/components/tournament/DoublesEliminationBracket";
+import { DuprRecommendationBanner } from "@/components/dupr/DuprRecommendationBanner";
 import { useI18n } from "@/i18n";
 
 const surfaceCard: React.CSSProperties = {
@@ -279,6 +280,13 @@ export default function DoublesEliminationView() {
           <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
             <em className="tl-serif">{tournament.name}</em>
           </h1>
+          {/* DUPR Phase 3 (2026-05-29). Soft recommendation banner — only renders
+              when organizer set rating_source != 'self' and has a range. */}
+          <DuprRecommendationBanner
+            ratingSource={tournament.rating_source}
+            minDupr={tournament.min_dupr_rating}
+            maxDupr={tournament.max_dupr_rating}
+          />
           <div
             style={{
               display: 'flex',
