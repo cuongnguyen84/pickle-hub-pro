@@ -57,10 +57,16 @@ describe("buildMatchDescription", () => {
     venueName: "",
   };
 
-  it("EN — winner verb 'defeat', score expansion, tournament + round + date", () => {
+  it("EN — winner verb 'defeat', set score, tournament + round + date", () => {
     const out = buildMatchDescription(ppaFinal, "en");
     expect(out).toContain("Anna Leigh Waters & Anna Bright defeat Parris Todd & Rachel Rohrabacher");
-    expect(out).toContain("3-0 (11-7, 11-6, 11-2)");
+    expect(out).toContain("3-0"); // set score is always present
+    // This pro-tour description exceeds 155ch, so the per-game parenthetical
+    // "(11-7, 11-6, 11-2)" is dropped (2026-05-18 Ahrefs ≤155ch fix —
+    // see trimToMax in match-seo.ts). The compact short-desc path below
+    // verifies the parenthetical is kept when the description fits.
+    expect(out.length).toBeLessThanOrEqual(155);
+    expect(out).not.toContain("(11-7");
     expect(out).toContain("PPA Tour 2026 PPA Finals");
     expect(out).toContain("Mixed Doubles Pro");
     expect(out).toContain("Final");
@@ -70,9 +76,29 @@ describe("buildMatchDescription", () => {
   it("VI — verb 'thắng', round 'Chung kết', date dd/mm/yyyy", () => {
     const out = buildMatchDescription(ppaFinal, "vi");
     expect(out).toContain("thắng");
-    expect(out).toContain("3-0 (11-7, 11-6, 11-2)");
+    expect(out).toContain("3-0");
+    expect(out).not.toContain("(11-7"); // trimmed for length (see EN test)
     expect(out).toContain("Chung kết");
     expect(out).toMatch(/ngày \d{2}\/\d{2}\/\d{4}\.$/);
+  });
+
+  it("short description keeps the per-game score parenthetical", () => {
+    // Community match with short labels + no tournament stays under 155ch,
+    // so the full "3-0 (11-7, 11-6, 11-2)" detail is retained.
+    const out = buildMatchDescription(
+      {
+        ...ppaFinal,
+        teamALabel: "An",
+        teamBLabel: "Bo",
+        tournamentName: null,
+        tournamentEvent: null,
+        roundCode: null,
+        venueName: "Q7",
+      },
+      "en",
+    );
+    expect(out).toContain("3-0 (11-7, 11-6, 11-2)");
+    expect(out.length).toBeLessThanOrEqual(155);
   });
 
   it("when team B won, leads body with B and reorders score perspective", () => {
@@ -86,7 +112,7 @@ describe("buildMatchDescription", () => {
       "en",
     );
     expect(out).toContain("Parris Todd & Rachel Rohrabacher defeat Anna Leigh Waters & Anna Bright");
-    expect(out).toContain("3-0 (11-7, 11-6, 11-2)");
+    expect(out).toContain("3-0"); // per-game parenthetical trimmed (long desc)
   });
 
   it("unresolved match (winning_team null) — neutral 'vs' sentence", () => {
@@ -162,10 +188,11 @@ describe("buildMatchSchema", () => {
     expect(winner.name).toBe("Anna Leigh Waters & Anna Bright");
   });
 
-  it("eventStatus is EventCompleted for past matches", () => {
-    expect(buildMatchSchema(final).eventStatus).toBe(
-      "https://schema.org/EventCompleted",
-    );
+  it("eventStatus is omitted for past matches (EventCompleted is invalid schema.org)", () => {
+    // 2026-05-18 Ahrefs fix: schema.org has no `EventCompleted` status, so
+    // past matches omit eventStatus entirely (Google treats absence as
+    // "scheduled then happened"). See match-seo.ts.
+    expect(buildMatchSchema(final).eventStatus).toBeUndefined();
   });
 
   it("eventStatus is EventScheduled for future matches", () => {
