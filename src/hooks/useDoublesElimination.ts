@@ -7,7 +7,7 @@ import { logMutationError } from './_mutationErrors';
 
 const HOOK = 'useDoublesElimination';
 
-export type TournamentStatus = 'setup' | 'ongoing' | 'completed';
+export type TournamentStatus = 'setup' | 'registration_open' | 'ongoing' | 'completed';
 export type MatchStatus = 'pending' | 'live' | 'completed';
 export type RoundType = 'winner_r1' | 'loser_r2' | 'merge_r3' | 'elimination' | 'quarterfinal' | 'semifinal' | 'third_place' | 'final';
 export type BracketType = 'winner' | 'loser' | 'merged' | 'single';
@@ -117,6 +117,10 @@ export function useDoublesElimination() {
       ratingSource?: RatingSource;
       minDuprRating?: number | null;
       maxDuprRating?: number | null;
+      // Sprint E.3 (2026-05-29). 'registration_open' makes the tournament
+      // skip the team-list step and accept self-registrations on the public
+      // share page until close_doubles_elimination_registration is called.
+      initialStatus?: TournamentStatus;
     }
   ): Promise<{ success: boolean; tournament?: Tournament; error?: string; count?: number; quota?: number }> => {
     if (!user) return { success: false, error: 'AUTH_REQUIRED' };
@@ -168,16 +172,20 @@ export function useDoublesElimination() {
       // create_doubles_elimination_with_quota RPC doesn't know about these
       // columns — we patch them after creation so the quota logic stays
       // untouched. Same pattern as Sprint B for quick_tables.
-      if (duprOptions && (duprOptions.ratingSource || duprOptions.minDuprRating != null || duprOptions.maxDuprRating != null)) {
+      const wantsDuprPatch = duprOptions && (duprOptions.ratingSource || duprOptions.minDuprRating != null || duprOptions.maxDuprRating != null);
+      const wantsStatusPatch = duprOptions?.initialStatus && duprOptions.initialStatus !== 'setup';
+      if (wantsDuprPatch || wantsStatusPatch) {
         type DuprPatch = {
           rating_source?: RatingSource;
           min_dupr_rating?: number | null;
           max_dupr_rating?: number | null;
+          status?: TournamentStatus;
         };
         const patch: DuprPatch = {};
-        if (duprOptions.ratingSource) patch.rating_source = duprOptions.ratingSource;
-        if (duprOptions.minDuprRating !== undefined) patch.min_dupr_rating = duprOptions.minDuprRating;
-        if (duprOptions.maxDuprRating !== undefined) patch.max_dupr_rating = duprOptions.maxDuprRating;
+        if (duprOptions?.ratingSource) patch.rating_source = duprOptions.ratingSource;
+        if (duprOptions?.minDuprRating !== undefined) patch.min_dupr_rating = duprOptions.minDuprRating;
+        if (duprOptions?.maxDuprRating !== undefined) patch.max_dupr_rating = duprOptions.maxDuprRating;
+        if (duprOptions?.initialStatus) patch.status = duprOptions.initialStatus;
         const tournamentRow = result.tournament as Tournament;
         const { error: updateErr } = await supabase
           .from('doubles_elimination_tournaments')
@@ -1071,11 +1079,65 @@ export function useDoublesElimination() {
     }
   }, [generatePlayoffBracket]);
 
+  // Sprint E.3 (2026-05-29) — open-registration RPC wrappers.
+  const registerTeam = useCallback(async (
+    tournamentId: string,
+    partnerUserId: string,
+    teamName?: string,
+  ): Promise<{ success: boolean; error?: string; teamId?: string; duprAvg?: number; count?: number; capacity?: number; extra?: Record<string, unknown> }> => {
+    const { data, error } = await supabase.rpc('register_team_for_doubles_elimination', {
+      p_tournament_id: tournamentId,
+      p_partner_user_id: partnerUserId,
+      p_team_name: teamName,
+    });
+    if (error) return { success: false, error: error.message };
+    const r = (data ?? {}) as Record<string, unknown>;
+    if (!r.success) {
+      return {
+        success: false,
+        error: typeof r.error === 'string' ? r.error : 'UNKNOWN',
+        extra: r,
+      };
+    }
+    return {
+      success: true,
+      teamId: typeof r.team_id === 'string' ? r.team_id : undefined,
+      duprAvg: typeof r.dupr_avg === 'number' ? r.dupr_avg : typeof r.dupr_avg === 'string' ? parseFloat(r.dupr_avg) : undefined,
+      count: typeof r.count === 'number' ? r.count : undefined,
+      capacity: typeof r.capacity === 'number' ? r.capacity : undefined,
+    };
+  }, []);
+
+  const cancelTeamRegistration = useCallback(async (tournamentId: string): Promise<{ success: boolean; error?: string; deleted?: number }> => {
+    const { data, error } = await supabase.rpc('cancel_doubles_elimination_team_registration', {
+      p_tournament_id: tournamentId,
+    });
+    if (error) return { success: false, error: error.message };
+    const r = (data ?? {}) as Record<string, unknown>;
+    return r.success
+      ? { success: true, deleted: typeof r.deleted === 'number' ? r.deleted : 0 }
+      : { success: false, error: typeof r.error === 'string' ? r.error : 'UNKNOWN' };
+  }, []);
+
+  const closeRegistration = useCallback(async (tournamentId: string): Promise<{ success: boolean; error?: string; count?: number }> => {
+    const { data, error } = await supabase.rpc('close_doubles_elimination_registration', {
+      p_tournament_id: tournamentId,
+    });
+    if (error) return { success: false, error: error.message };
+    const r = (data ?? {}) as Record<string, unknown>;
+    return r.success
+      ? { success: true, count: typeof r.count === 'number' ? r.count : undefined }
+      : { success: false, error: typeof r.error === 'string' ? r.error : 'UNKNOWN' };
+  }, []);
+
   return {
     loading,
     createTournament,
     addTeams,
     generateBracket,
+    registerTeam,
+    cancelTeamRegistration,
+    closeRegistration,
     getTournamentByShareId,
     getUserTournaments,
     updateMatchScore,

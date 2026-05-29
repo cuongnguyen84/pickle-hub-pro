@@ -229,9 +229,15 @@ export default function DoublesEliminationSetup() {
 
   const [teams, setTeams] = useState<TeamInput[]>([]);
 
-  const stepLabels = language === 'vi'
-    ? ['Thông tin', 'Format', 'Danh sách đội']
-    : ['Info', 'Format', 'Team List'];
+  // Sprint E.3 (2026-05-29). DUPR flow skips Step 3 — tournament is
+  // created immediately at status='registration_open' from Step 2.
+  const dynamicStepLabels = (() => {
+    if (ratingSource === 'dupr') {
+      return language === 'vi' ? ['Thông tin', 'Format'] : ['Info', 'Format'];
+    }
+    return language === 'vi' ? ['Thông tin', 'Format', 'Danh sách đội'] : ['Info', 'Format', 'Team List'];
+  });
+  const stepLabels = dynamicStepLabels();
 
   const initializeTeams = () => {
     const newTeams: TeamInput[] = [];
@@ -375,6 +381,12 @@ export default function DoublesEliminationSetup() {
       }
       setStep('format');
     } else if (step === 'format') {
+      // Sprint E.3 (2026-05-29). DUPR flow does not need a team list —
+      // self-registration starts immediately on the share page.
+      if (ratingSource === 'dupr') {
+        void handleCreateRegistrationOpen();
+        return;
+      }
       initializeTeams();
       setStep('teams');
     }
@@ -391,6 +403,63 @@ export default function DoublesEliminationSetup() {
 
   const getEffectiveFinalsFormat = (): BestOfFormat => {
     return finalsFormat === 'inherit' ? earlyRoundsFormat : finalsFormat;
+  };
+
+  // Sprint E.3 (2026-05-29). DUPR-only path: create the tournament at
+  // status='registration_open' with NO teams yet. The DUPR range
+  // validation is shared with the manual path so we keep one source of
+  // truth in handleCreate but skip the team list + bracket steps here.
+  const handleCreateRegistrationOpen = async () => {
+    // Validate DUPR range numerics (mirrors handleCreate validation).
+    const minNum = minDuprRating ? parseFloat(minDuprRating) : NaN;
+    const maxNum = maxDuprRating ? parseFloat(maxDuprRating) : NaN;
+    if (minDuprRating && (Number.isNaN(minNum) || minNum < 0 || minNum > 8)) {
+      toast({ title: language === 'vi' ? 'DUPR tối thiểu không hợp lệ' : 'Invalid min DUPR', variant: 'destructive' });
+      return;
+    }
+    if (maxDuprRating && (Number.isNaN(maxNum) || maxNum < 0 || maxNum > 8)) {
+      toast({ title: language === 'vi' ? 'DUPR tối đa không hợp lệ' : 'Invalid max DUPR', variant: 'destructive' });
+      return;
+    }
+    if (!Number.isNaN(minNum) && !Number.isNaN(maxNum) && minNum > maxNum) {
+      toast({ title: language === 'vi' ? 'DUPR tối thiểu lớn hơn tối đa' : 'Min DUPR exceeds max', variant: 'destructive' });
+      return;
+    }
+    const parsedCourts = parseCourtsInput(courts);
+    const result = await createTournament(
+      name,
+      teamCount,
+      hasThirdPlace,
+      earlyRoundsFormat,
+      getEffectiveFinalsFormat(),
+      parsedCourts,
+      startTime || undefined,
+      getEffectiveSemifinalsFormat(),
+      {
+        ratingSource: 'dupr',
+        minDuprRating: !Number.isNaN(minNum) ? minNum : null,
+        maxDuprRating: !Number.isNaN(maxNum) ? maxNum : null,
+        initialStatus: 'registration_open',
+      },
+    );
+    if (!result.success || !result.tournament) {
+      if (result.error === 'LIMIT_REACHED') {
+        toast({
+          title: t.quickTable.quota.limitReached,
+          description: t.quickTable.quota.limitReachedDesc,
+          variant: 'destructive',
+        });
+        return;
+      }
+      toast({
+        title: t.doublesElimination.setup.createError || 'Error creating tournament',
+        description: result.error,
+        variant: 'destructive',
+      });
+      return;
+    }
+    toast({ title: language === 'vi' ? 'Đã mở đăng ký' : 'Registration open' });
+    navigate(`/tools/doubles-elimination/${result.tournament.share_id}`);
   };
 
   const handleCreate = async () => {
@@ -1198,9 +1267,11 @@ export default function DoublesEliminationSetup() {
                     <ArrowLeft className="w-4 h-4" />
                     {t.quickTable.back}
                   </button>
-                  <button type="button" className="tl-btn green" onClick={handleNext}>
-                    {t.quickTable.continue}
-                    <ArrowRight className="w-4 h-4" />
+                  <button type="button" className="tl-btn green" onClick={handleNext} disabled={loading}>
+                    {ratingSource === 'dupr'
+                      ? (language === 'vi' ? 'Mở đăng ký' : 'Open registration')
+                      : t.quickTable.continue}
+                    {ratingSource === 'dupr' ? <Trophy className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                   </button>
                 </div>
               </div>

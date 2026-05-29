@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import DoublesEliminationBracket from "@/components/tournament/DoublesEliminationBracket";
 import { DuprRecommendationBanner } from "@/components/dupr/DuprRecommendationBanner";
+import { DoublesEliminationRegistrationSection } from "@/components/tournament/DoublesEliminationRegistrationSection";
 import { useI18n } from "@/i18n";
 
 const surfaceCard: React.CSSProperties = {
@@ -378,6 +379,18 @@ export default function DoublesEliminationView() {
         </header>
 
         <section style={{ marginTop: 32, marginBottom: 56 }}>
+          {tournament.status === 'registration_open' ? (
+            // Sprint E.3 (2026-05-29). DUPR open-registration mode: no bracket,
+            // no settings tab, just the registration UI. Once the organizer
+            // closes registration the status flips to 'ongoing' and the regular
+            // Tabs UI takes over.
+            <DoublesEliminationRegistrationSection
+              tournament={tournament}
+              teams={teams}
+              onRefresh={softReload}
+              onBracketReady={softReload}
+            />
+          ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="flex-wrap h-auto gap-1">
               <TabsTrigger value="preliminary">{t.doublesElimination.view.preliminary}</TabsTrigger>
@@ -573,6 +586,7 @@ export default function DoublesEliminationView() {
               </TabsContent>
             )}
           </Tabs>
+          )}
         </section>
       </div>
     </TheLineLayout>
