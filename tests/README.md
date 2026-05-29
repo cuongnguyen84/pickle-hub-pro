@@ -27,15 +27,49 @@ PLAYWRIGHT_BASE_URL=https://dupr-uat-review.pickle-hub-pro.pages.dev \
 - **Blog post not in SSR meta dict** — Googlebot UA fetch + meta tag check
 - **JS console errors in production** — any page that crashes silently
 
-## What it doesn't catch (yet)
+## Phase 2 — projects (each spec runs in exactly one project)
 
-- Auth-gated flows (DUPR modal interactive, log match, confirm). Defer
-  to Phase 1B with a seeded test user password.
-- Backend RPC contract drift. Defer to Phase 2 contract tests.
-- Visual diff regressions. Defer if needed; Phase 1 catches layout via
-  `boundingBox()` assertions, not pixel-diff.
+| Project | File | Default | Notes |
+|---|---|---|---|
+| `desktop-chromium` | `smoke.spec.ts` | always | Phase 1 |
+| `mobile-chromium` | `mobile.spec.ts` | always | Phase 1 |
+| `ssr-bot` | `seo.spec.ts` | always | Phase 1 |
+| `auth` | `auth.spec.ts` | **self-skips** w/o mint env | 2A — auth-gated, NON-mutating |
+| `contract` | `contract/edge-contracts.spec.ts` | **self-skips** w/o Supabase env | 2E — Zod shape vs `src/contracts/` |
+| `dupr-e2e` | `dupr-e2e.spec.ts` | **self-skips** unless `DUPR_E2E=1` | 2B — submits to DUPR UAT, then deletes |
+| `visual` | `visual.spec.ts` | **self-skips** unless `VISUAL=1` | 2C — pixel diff, baselines in repo |
+
+```bash
+npm run e2e:smoke            # Phase 1 only (read-only, prod-safe)
+npm run e2e:auth             # 2A — needs mint env (below)
+npm run e2e:contract         # 2E — needs SUPABASE_URL + anon
+npm run e2e:dupr             # 2B — sets DUPR_E2E=1, point at UAT preview
+npm run e2e:visual:update    # 2C — capture/refresh baselines, then commit
+npm run e2e:visual           # 2C — compare against committed baselines
+```
+
+### Env for 2A / 2B / 2E (set as GitHub Actions secrets)
+
+```
+SUPABASE_URL                https://ajvlcamxemgbxduhiqrl.supabase.co
+SUPABASE_SERVICE_ROLE_KEY   service_role JWT  (mints sessions via admin API)
+SUPABASE_ANON_KEY           anon/publishable key
+```
+
+Sessions are minted with `admin.generateLink(magiclink)` → `verifyOtp` (no
+password stored anywhere). Role→user map + overrides in `tests/helpers/auth.ts`.
+
+## Still not covered
+
+- Member-log → opponent-confirm UI leg: `log_club_match` / `confirm_club_match`
+  RPCs are **not in the current source tree** — add that leg to `dupr-e2e.spec.ts`
+  once they ship. 2B currently validates the admin/organizer → DUPR submit path.
 
 ## CI pipeline
 
-GitHub Actions `.github/workflows/playwright.yml` runs on every PR + push
-to main. Failure pings Telegram via the existing bot.
+- `.github/workflows/playwright.yml` — smoke on every PR + push to main.
+- `.github/workflows/lighthouse.yml` — 2D perf/a11y gate (PR + weekly cron).
+- `.github/workflows/deploy-guard.yml` — 2F: auto-deploys changed edge
+  functions + migration drift check on push to main.
+
+All failures ping Telegram via `@Tphaisupport_bot`.

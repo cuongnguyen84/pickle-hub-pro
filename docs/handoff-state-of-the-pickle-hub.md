@@ -175,21 +175,23 @@ PLAYWRIGHT_BASE_URL=https://feature-branch.pickle-hub-pro.pages.dev npm run e2e 
 
 ---
 
-## 6. Phase 2 — chưa làm, đề xuất gì tiếp
+## 6. Phase 2 — ĐÃ SHIP (29/5/2026)
 
-Theo thứ tự em đề xuất:
+Cả 6 sub-phase đã build. Mỗi spec chạy trong đúng 1 Playwright project; các phần mutating/visual tự skip khi thiếu env nên pipeline xanh hiện tại không bị phá.
 
-**2A. Auth-gated flow tests (3-4h)** — Login → DUPR Connect modal iframe loads → role gate check → member log + opponent confirm + admin submit flow. Cần test user password trong GitHub secret.
+**2A. Auth-gated flow tests** ✅ — `tests/auth.spec.ts` + `tests/helpers/{auth,supabase-admin}.ts`. Mint session qua admin `generateLink(magiclink)`→`verifyOtp` (KHÔNG lưu password). Cover: login state (không redirect /login), role gate (viewer bị đẩy khỏi /admin/dupr, admin vào được), HeaderDuprBadge, DUPR modal iframe `title="DUPR SSO"` (CSP), /match/confirm. NON-mutating. Skip nếu thiếu `SUPABASE_URL/SERVICE_ROLE/ANON`.
 
-**2F. Auto-deploy guard + migration drift check (2-3h)** — GitHub Action sau push main: `supabase functions deploy <changed>` tự động. Migration drift check via Management API query so với `supabase/migrations/*`.
+**2F. Auto-deploy guard + migration drift** ✅ — `.github/workflows/deploy-guard.yml` (push main → deploy edge fn đã đổi, honor config.toml `verify_jwt`) + `scripts/check-migration-drift.mjs` (so `supabase_migrations.schema_migrations` vs `supabase/migrations/*` qua Management API). Telegram alert on fail. `npm run drift` chạy local.
 
-**2B. DUPR submit end-to-end (1 ngày)** — Full member→confirm→admin→matchCode chain trên UAT test club.
+**2B. DUPR submit E2E** ✅ (gated `DUPR_E2E=1`) — `tests/dupr-e2e.spec.ts`. Admin submit singles (YGONMK vs XJYKO7) → assert matchCode numeric + Zod shape → delete cleanup. + viewer bị permission gate chặn (401/403). **Lưu ý:** leg member-log→opponent-confirm CHƯA cover vì RPC `log_club_match`/`confirm_club_match` KHÔNG có trong source tree hiện tại — thêm khi RPC ship.
 
-**2D. Lighthouse CI (2-3h)** — Performance + a11y regression.
+**2D. Lighthouse CI** ✅ — `.lighthouserc.json` + `.github/workflows/lighthouse.yml`. a11y/SEO/CLS = hard error; perf/LCP/TBT = warn. PR chạy trên preview, cron tuần trên prod.
 
-**2E. Contract tests cho edge functions (1 ngày)** — Zod schemas shared frontend ↔ edge fn.
+**2E. Contract tests** ✅ — `src/contracts/duprMatchSubmit.ts` (Zod, frontend + test import chung) + `tests/contract/edge-contracts.spec.ts` validate error envelope (snake_case `match_code`) của edge fn thật. Success-shape validate trong 2B.
 
-**2C. Visual regression (Percy/Chromatic, $100-150/mo, hoặc playwright-visual-comparisons free).**
+**2C. Visual regression** ✅ (free, gated `VISUAL=1`) — `tests/visual.spec.ts` dùng `toHaveScreenshot`, baseline in-repo, mask vùng động. `npm run e2e:visual:update` để chụp baseline lần đầu rồi commit.
+
+**Secrets cần set trong GitHub Actions:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `SUPABASE_ACCESS_TOKEN` (deploy-guard). `TELEGRAM_*` đã có.
 
 ---
 
