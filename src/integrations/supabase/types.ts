@@ -6506,6 +6506,15 @@ export type Database = {
         }
         Returns: Json
       }
+      organizer_add_team_to_doubles_elimination: {
+        Args: {
+          p_player1_user_id: string
+          p_player2_user_id: string
+          p_team_name?: string
+          p_tournament_id: string
+        }
+        Returns: Json
+      }
       organizer_remove_team_from_doubles_elimination: {
         Args: { p_team_id: string; p_tournament_id: string }
         Returns: Json

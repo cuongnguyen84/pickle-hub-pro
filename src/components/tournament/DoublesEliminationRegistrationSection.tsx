@@ -14,7 +14,7 @@
 // ============================================================================
 
 import { useState, useMemo, useEffect } from "react";
-import { Sparkles, Users, Loader2, UserCircle2, X, Trophy, Lock, ChevronRight, Trash2, ShieldCheck } from "lucide-react";
+import { Sparkles, Users, Loader2, UserCircle2, X, Trophy, Lock, ChevronRight, Trash2, ShieldCheck, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
@@ -87,7 +87,7 @@ export function DoublesEliminationRegistrationSection({
   const { toast } = useToast();
   const vi = language === "vi";
   const { data: conn, isLoading: connLoading } = useDuprConnection();
-  const { registerTeam, cancelTeamRegistration, organizerRemoveTeam, closeRegistration, generateBracket, loading } = useDoublesElimination();
+  const { registerTeam, cancelTeamRegistration, organizerAddTeam, organizerRemoveTeam, closeRegistration, generateBracket, loading } = useDoublesElimination();
 
   // Pick the row for the current user (either slot) so we can show cancel UI.
   const myTeam = useMemo(() => {
@@ -135,18 +135,46 @@ export function DoublesEliminationRegistrationSection({
 
       {/* Registration form OR locked notice */}
       {isOrganizer ? (
-        // Sprint E.4 (2026-05-29). BTC view — no DUPR connect prompt, no
-        // registration form. They manage the list (remove teams) + close.
-        <NoticeCard tone="info" vi={vi}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <ShieldCheck className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
-            <span>
-              {vi
-                ? 'Bạn là BTC — quản lý danh sách đội đăng ký bên dưới.'
-                : 'You are the organizer — manage the registered teams below.'}
-            </span>
-          </div>
-        </NoticeCard>
+        // Sprint E.4 + E.5 (2026-05-29). BTC view: notice + manual-add panel.
+        // No DUPR connect prompt, no self-registration form.
+        <>
+          <NoticeCard tone="info" vi={vi}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ShieldCheck className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+              <span>
+                {vi
+                  ? 'Bạn là BTC — quản lý danh sách đội đăng ký bên dưới.'
+                  : 'You are the organizer — manage the registered teams below.'}
+              </span>
+            </div>
+          </NoticeCard>
+          {!isFull && (
+            <OrganizerAddTeamPanel
+              tournament={tournament}
+              loading={loading}
+              excludeUserIds={collectAllRegisteredUserIds(teams)}
+              vi={vi}
+              onSubmit={async (p1, p2, teamName) => {
+                const res = await organizerAddTeam(tournament.id, p1, p2, teamName);
+                if (res.success) {
+                  toast({
+                    title: vi
+                      ? `Đã thêm đội · DUPR avg ${res.duprAvg?.toFixed(2) ?? '?'}`
+                      : `Team added · DUPR avg ${res.duprAvg?.toFixed(2) ?? '?'}`,
+                  });
+                  await onRefresh();
+                  return true;
+                }
+                toast({
+                  title: vi ? 'Thêm đội thất bại' : 'Add team failed',
+                  description: localizeError(res.error, vi),
+                  variant: 'destructive',
+                });
+                return false;
+              }}
+            />
+          )}
+        </>
       ) : !user ? (
         <NoticeCard tone="info" vi={vi}>
           {vi ? "Đăng nhập để đăng ký đội." : "Sign in to register a team."}
@@ -727,8 +755,262 @@ function localizeError(code: string | undefined, vi: boolean): string {
     NOT_OWNER: ["Không có quyền", "Not the owner"],
     NOT_REGISTRATION_OPEN: ["Giải không ở trạng thái mở đăng ký", "Tournament is not registration_open"],
     NOT_FULL: ["Chưa đủ đội", "Not full yet"],
+    INVALID_PLAYERS: ["Thiếu VĐV", "Players missing"],
+    SAME_PLAYER: ["Hai VĐV trùng nhau", "Same player twice"],
+    TEAM_NOT_FOUND: ["Không tìm thấy đội", "Team not found"],
   };
   const pair = map[code];
   if (!pair) return code;
   return vi ? pair[0] : pair[1];
+}
+
+
+// Sprint E.5 (2026-05-29) — inline manual-add form for BTC. Two
+// DuprUserSearch slots + optional team_name. Stays collapsed by default
+// to avoid stealing focus from the main 'registered teams' surface.
+function OrganizerAddTeamPanel({
+  tournament,
+  loading,
+  excludeUserIds,
+  vi,
+  onSubmit,
+}: {
+  tournament: Tournament;
+  loading: boolean;
+  excludeUserIds: string[];
+  vi: boolean;
+  onSubmit: (player1UserId: string, player2UserId: string, teamName?: string) => Promise<boolean>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [p1, setP1] = useState<DuprSearchHit | null>(null);
+  const [p2, setP2] = useState<DuprSearchHit | null>(null);
+  const [teamName, setTeamName] = useState("");
+  const exclude = useMemo(() => {
+    const ids = [...excludeUserIds];
+    if (p1?.user_id) ids.push(p1.user_id);
+    if (p2?.user_id) ids.push(p2.user_id);
+    return ids;
+  }, [excludeUserIds, p1, p2]);
+
+  const range = useMemo(() => {
+    if (tournament.min_dupr_rating != null && tournament.max_dupr_rating != null) {
+      return `${tournament.min_dupr_rating.toFixed(2)} – ${tournament.max_dupr_rating.toFixed(2)}`;
+    }
+    if (tournament.min_dupr_rating != null) return `≥ ${tournament.min_dupr_rating.toFixed(2)}`;
+    if (tournament.max_dupr_rating != null) return `≤ ${tournament.max_dupr_rating.toFixed(2)}`;
+    return null;
+  }, [tournament.min_dupr_rating, tournament.max_dupr_rating]);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="tl-btn"
+        onClick={() => setOpen(true)}
+        style={{ alignSelf: 'flex-start', padding: '8px 14px', fontSize: 13 }}
+      >
+        <Plus className="w-4 h-4" />
+        {vi ? 'Thêm thủ công VĐV' : 'Add team manually'}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        padding: 18,
+        background: 'var(--tl-bg-elev)',
+        border: '1px solid var(--tl-border)',
+        borderRadius: 'var(--tl-radius-lg)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, letterSpacing: '0.08em', color: 'var(--tl-green)', textTransform: 'uppercase' }}>
+            ◆ {vi ? 'BTC thêm đội' : 'Organizer add team'}
+          </div>
+          <h3 style={{ fontFamily: 'Instrument Serif, serif', fontStyle: 'italic', fontSize: 20, margin: '4px 0 0', color: 'var(--tl-fg)' }}>
+            {vi ? 'Tìm 2 VĐV đã có DUPR' : 'Find 2 players with DUPR'}
+          </h3>
+          {range && (
+            <p style={{ fontSize: 12.5, color: 'var(--tl-fg-3)', margin: '6px 0 0', lineHeight: 1.5 }}>
+              {vi ? 'Khoảng DUPR cho phép' : 'DUPR range'}: <strong style={{ color: 'var(--tl-fg)' }}>{range}</strong>
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setP1(null); setP2(null); setTeamName(''); }}
+          aria-label={vi ? 'Đóng' : 'Close'}
+          style={{ background: 'transparent', border: 0, cursor: 'pointer', color: 'var(--tl-fg-3)' }}
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <PlayerSearchSlot label={vi ? 'VĐV 1' : 'Player 1'} value={p1} onChange={setP1} excludeUserIds={exclude} vi={vi} />
+      <PlayerSearchSlot label={vi ? 'VĐV 2' : 'Player 2'} value={p2} onChange={setP2} excludeUserIds={exclude} vi={vi} />
+
+      <Input
+        placeholder={vi ? 'Tên đội (tuỳ chọn — auto từ 2 VĐV)' : 'Team name (optional — auto from players)'}
+        value={teamName}
+        onChange={e => setTeamName(e.target.value)}
+      />
+
+      <button
+        type="button"
+        className="tl-btn green"
+        disabled={!p1?.user_id || !p2?.user_id || loading}
+        onClick={async () => {
+          if (!p1?.user_id || !p2?.user_id) return;
+          const ok = await onSubmit(p1.user_id, p2.user_id, teamName.trim() || undefined);
+          if (ok) {
+            setP1(null); setP2(null); setTeamName('');
+            setOpen(false);
+          }
+        }}
+        style={{ justifyContent: 'center', padding: '10px 16px' }}
+      >
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+        {vi ? 'Thêm vào danh sách' : 'Add to list'}
+      </button>
+    </div>
+  );
+}
+
+// Sprint E.5 (2026-05-29) — single-slot player search with linked-card UX.
+// Lifted from RegistrationForm so we can reuse it twice in the organizer panel.
+function PlayerSearchSlot({
+  label,
+  value,
+  onChange,
+  excludeUserIds,
+  vi,
+}: {
+  label: string;
+  value: DuprSearchHit | null;
+  onChange: (next: DuprSearchHit | null) => void;
+  excludeUserIds: string[];
+  vi: boolean;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const { data, isFetching } = useDuprUserSearch(query, { excludeUserIds, limit: 8 });
+
+  if (value) {
+    return (
+      <div>
+        <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.08em', color: 'var(--tl-fg-3)', textTransform: 'uppercase', marginBottom: 4 }}>
+          {label}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 12px',
+            background: 'rgba(34,197,94,0.06)',
+            border: '1px solid rgba(34,197,94,0.3)',
+            borderRadius: 'var(--tl-radius)',
+            fontSize: 13.5,
+          }}
+        >
+          <UserCircle2 className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+          <span style={{ flex: 1 }}>{value.full_name}</span>
+          {value.doubles_rating != null && (
+            <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-green)' }}>
+              DUPR {value.doubles_rating.toFixed(2)}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => { onChange(null); setQuery(""); }}
+            aria-label={vi ? 'Bỏ chọn' : 'Unselect'}
+            style={{ background: 'transparent', border: 0, cursor: 'pointer', color: 'var(--tl-fg-3)' }}
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.08em', color: 'var(--tl-fg-3)', textTransform: 'uppercase', marginBottom: 4 }}>
+        {label}
+      </div>
+      <Input
+        placeholder={vi ? 'Tìm tên VĐV (≥ 2 ký tự)' : 'Search player name (≥ 2 chars)'}
+        value={query}
+        onChange={e => { setQuery(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+      />
+      {open && query.trim().length >= 2 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            zIndex: 30,
+            background: 'var(--tl-bg-elev)',
+            border: '1px solid var(--tl-border)',
+            borderRadius: 'var(--tl-radius)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+            padding: 8,
+            maxHeight: 260,
+            overflowY: 'auto',
+          }}
+        >
+          {isFetching && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--tl-fg-3)', fontSize: 12, padding: 6 }}>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> {vi ? 'Đang tìm…' : 'Searching…'}
+            </div>
+          )}
+          {!isFetching && (data?.hits ?? []).length === 0 && (
+            <div style={{ color: 'var(--tl-fg-3)', fontSize: 12, padding: 6 }}>
+              {vi ? 'Không thấy ai khớp.' : 'No matches.'}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {(data?.hits ?? []).map((hit, idx) => {
+              const canLink = hit.user_id != null;
+              return (
+                <button
+                  key={`${hit.user_id ?? hit.dupr_id ?? idx}`}
+                  type="button"
+                  disabled={!canLink}
+                  onClick={() => { onChange(hit); setOpen(false); setQuery(""); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 10px',
+                    border: '1px solid var(--tl-border)',
+                    borderRadius: 'var(--tl-radius)',
+                    background: canLink ? 'var(--tl-bg)' : 'var(--tl-surface)',
+                    cursor: canLink ? 'pointer' : 'not-allowed',
+                    opacity: canLink ? 1 : 0.55,
+                    textAlign: 'left',
+                  }}
+                >
+                  <UserCircle2 className="w-4 h-4" style={{ color: 'var(--tl-fg-3)', flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 13, color: 'var(--tl-fg)' }}>{hit.full_name}</span>
+                  {hit.doubles_rating != null && (
+                    <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-green)' }}>
+                      D {hit.doubles_rating.toFixed(2)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -1119,6 +1119,32 @@ export function useDoublesElimination() {
       : { success: false, error: typeof r.error === 'string' ? r.error : 'UNKNOWN' };
   }, []);
 
+  const organizerAddTeam = useCallback(async (
+    tournamentId: string,
+    player1UserId: string,
+    player2UserId: string,
+    teamName?: string,
+  ): Promise<{ success: boolean; error?: string; teamId?: string; duprAvg?: number; count?: number; capacity?: number }> => {
+    const { data, error } = await supabase.rpc('organizer_add_team_to_doubles_elimination', {
+      p_tournament_id: tournamentId,
+      p_player1_user_id: player1UserId,
+      p_player2_user_id: player2UserId,
+      p_team_name: teamName,
+    });
+    if (error) return { success: false, error: error.message };
+    const r = (data ?? {}) as Record<string, unknown>;
+    if (!r.success) {
+      return { success: false, error: typeof r.error === 'string' ? r.error : 'UNKNOWN' };
+    }
+    return {
+      success: true,
+      teamId: typeof r.team_id === 'string' ? r.team_id : undefined,
+      duprAvg: typeof r.dupr_avg === 'number' ? r.dupr_avg : typeof r.dupr_avg === 'string' ? parseFloat(r.dupr_avg) : undefined,
+      count: typeof r.count === 'number' ? r.count : undefined,
+      capacity: typeof r.capacity === 'number' ? r.capacity : undefined,
+    };
+  }, []);
+
   const organizerRemoveTeam = useCallback(async (tournamentId: string, teamId: string): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await supabase.rpc('organizer_remove_team_from_doubles_elimination', {
       p_tournament_id: tournamentId,
@@ -1149,6 +1175,7 @@ export function useDoublesElimination() {
     generateBracket,
     registerTeam,
     cancelTeamRegistration,
+    organizerAddTeam,
     organizerRemoveTeam,
     closeRegistration,
     getTournamentByShareId,
