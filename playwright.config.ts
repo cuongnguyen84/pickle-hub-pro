@@ -33,10 +33,11 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
-    extraHTTPHeaders: {
-      // Tag CI traffic so it's filterable in analytics / web logs.
-      "X-PlayWright-CI": "thepicklehub-phase1",
-    },
+    // Note: we used to set a custom `X-PlayWright-CI` header here to tag
+    // bot traffic, but it triggered CORS preflight failures on fonts.
+    // gstatic.com + Cloudflare beacon (those origins don't include
+    // X-PlayWright-CI in their Access-Control-Allow-Headers). The User-
+    // Agent suffix below is enough to filter CI traffic in GA4 / logs.
     userAgent:
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 ThePickleHub-Playwright-CI",
   },
