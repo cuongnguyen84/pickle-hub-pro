@@ -13,6 +13,8 @@ export type RoundType = 'winner_r1' | 'loser_r2' | 'merge_r3' | 'elimination' | 
 export type BracketType = 'winner' | 'loser' | 'merged' | 'single';
 export type BestOfFormat = 'bo1' | 'bo3' | 'bo5';
 
+export type RatingSource = 'self' | 'dupr' | 'either';
+
 export interface Tournament {
   id: string;
   name: string;
@@ -27,10 +29,16 @@ export interface Tournament {
   current_round: number;
   court_count: number;
   start_time: string | null;
+  // DUPR Phase 1 (2026-05-29). Lowercase enum — DO NOT mix with skill_rating_system.
+  rating_source: RatingSource;
+  min_dupr_rating: number | null;
+  max_dupr_rating: number | null;
   created_at: string;
   updated_at: string;
   creator_display_name?: string | null;
 }
+
+export type DuprSeedSource = 'exact' | 'approx' | 'none';
 
 export interface Team {
   id: string;
@@ -39,6 +47,11 @@ export interface Team {
   player1_name: string;
   player2_name: string | null;
   seed: number | null;
+  // DUPR Phase 1 (2026-05-29). Nullable so legacy text-only teams stay valid.
+  player1_user_id: string | null;
+  player2_user_id: string | null;
+  dupr_avg_rating: number | null;
+  dupr_seed_source: DuprSeedSource;
   total_points_for: number;
   total_points_against: number;
   point_diff: number;
@@ -97,7 +110,14 @@ export function useDoublesElimination() {
     finalsFormat: BestOfFormat,
     courts: number[] = [],
     startTime?: string,
-    semifinalsFormat?: BestOfFormat
+    semifinalsFormat?: BestOfFormat,
+    // DUPR Phase 1 (2026-05-29). Optional — when omitted tournament stays
+    // legacy text-only (rating_source='self' default).
+    duprOptions?: {
+      ratingSource?: RatingSource;
+      minDuprRating?: number | null;
+      maxDuprRating?: number | null;
+    }
   ): Promise<{ success: boolean; tournament?: Tournament; error?: string; count?: number; quota?: number }> => {
     if (!user) return { success: false, error: 'AUTH_REQUIRED' };
 
@@ -144,6 +164,33 @@ export function useDoublesElimination() {
         };
       }
 
+      // DUPR Phase 1 (2026-05-29). Post-RPC UPDATE for DUPR fields. The
+      // create_doubles_elimination_with_quota RPC doesn't know about these
+      // columns — we patch them after creation so the quota logic stays
+      // untouched. Same pattern as Sprint B for quick_tables.
+      if (duprOptions && (duprOptions.ratingSource || duprOptions.minDuprRating != null || duprOptions.maxDuprRating != null)) {
+        type DuprPatch = {
+          rating_source?: RatingSource;
+          min_dupr_rating?: number | null;
+          max_dupr_rating?: number | null;
+        };
+        const patch: DuprPatch = {};
+        if (duprOptions.ratingSource) patch.rating_source = duprOptions.ratingSource;
+        if (duprOptions.minDuprRating !== undefined) patch.min_dupr_rating = duprOptions.minDuprRating;
+        if (duprOptions.maxDuprRating !== undefined) patch.max_dupr_rating = duprOptions.maxDuprRating;
+        const tournamentRow = result.tournament as Tournament;
+        const { error: updateErr } = await supabase
+          .from('doubles_elimination_tournaments')
+          .update(patch)
+          .eq('id', tournamentRow.id);
+        if (updateErr) {
+          // Non-fatal: tournament is created, just DUPR config missing.
+          // Caller can detect via tournament.rating_source.
+          console.warn('[useDoublesElimination] dupr patch failed:', updateErr);
+        } else {
+          Object.assign(tournamentRow, patch);
+        }
+      }
       return { success: true, tournament: result.tournament as Tournament };
     } catch (error: unknown) {
       console.error('[useDoublesElimination] create:', error);
@@ -157,7 +204,17 @@ export function useDoublesElimination() {
 
   const addTeams = useCallback(async (
     tournamentId: string,
-    teams: Array<{ team_name: string; player1_name: string; player2_name?: string; seed?: number }>
+    teams: Array<{
+      team_name: string;
+      player1_name: string;
+      player2_name?: string;
+      seed?: number;
+      // DUPR Phase 1 (2026-05-29). All optional — legacy callers pass text only.
+      player1_user_id?: string | null;
+      player2_user_id?: string | null;
+      dupr_avg_rating?: number | null;
+      dupr_seed_source?: DuprSeedSource;
+    }>
   ): Promise<{ success: boolean; teams?: Team[]; error?: string }> => {
     setLoading(true);
     try {
@@ -166,7 +223,12 @@ export function useDoublesElimination() {
         team_name: t.team_name,
         player1_name: t.player1_name,
         player2_name: t.player2_name || null,
-        seed: t.seed || null
+        seed: t.seed || null,
+        // DUPR Phase 1 (2026-05-29). Pass through optional fields.
+        player1_user_id: t.player1_user_id ?? null,
+        player2_user_id: t.player2_user_id ?? null,
+        dupr_avg_rating: t.dupr_avg_rating ?? null,
+        dupr_seed_source: t.dupr_seed_source ?? 'none',
       }));
 
       const { data, error } = await supabase
@@ -187,7 +249,12 @@ export function useDoublesElimination() {
 
   const generateBracket = useCallback(async (
     tournamentId: string,
-    courtsInput?: number[]
+    courtsInput?: number[],
+    // DUPR Phase 1 (2026-05-29). 'manual' = use teams.seed column (ascending).
+    // 'dupr' = use teams.dupr_avg_rating descending (highest first), fallback
+    // alphabetical for teams without DUPR. 'random' (default) preserves
+    // legacy behavior.
+    seedingStrategy: 'manual' | 'random' | 'dupr' = 'random'
   ): Promise<{ success: boolean; matches?: Match[]; error?: string }> => {
     setLoading(true);
     try {
@@ -206,7 +273,33 @@ export function useDoublesElimination() {
 
       if (teamsError) throw teamsError;
 
-      const shuffledTeams = [...teamsData].sort(() => Math.random() - 0.5);
+      // DUPR Phase 1 (2026-05-29). Strategy-aware ordering of teams before
+      // bracket placement. 'shuffledTeams' kept as the variable name for
+      // minimal diff downstream — semantics now depend on seedingStrategy.
+      let shuffledTeams: typeof teamsData;
+      if (seedingStrategy === 'manual') {
+        // Use seed column ascending; teams without seed go last (alphabetical).
+        shuffledTeams = [...teamsData].sort((a, b) => {
+          const sa = a.seed ?? Number.MAX_SAFE_INTEGER;
+          const sb = b.seed ?? Number.MAX_SAFE_INTEGER;
+          if (sa !== sb) return sa - sb;
+          return (a.team_name || '').localeCompare(b.team_name || '', 'vi');
+        });
+      } else if (seedingStrategy === 'dupr') {
+        // DUPR-rated teams first by descending dupr_avg_rating; unrated last
+        // by alphabetical team_name. Matches src/lib/dupr/seedFromDupr.ts.
+        shuffledTeams = [...teamsData].sort((a, b) => {
+          const ra = a.dupr_avg_rating;
+          const rb = b.dupr_avg_rating;
+          if (ra != null && rb == null) return -1;
+          if (ra == null && rb != null) return 1;
+          if (ra != null && rb != null && ra !== rb) return rb - ra;
+          return (a.team_name || '').localeCompare(b.team_name || '', 'vi');
+        });
+      } else {
+        // 'random' — legacy default. Preserve prior behavior exactly.
+        shuffledTeams = [...teamsData].sort(() => Math.random() - 0.5);
+      }
       const N = shuffledTeams.length;
       const earlyFormat = (tournament.early_rounds_format || 'bo1') as BestOfFormat;
       const semifinalsFormat = (tournament.semifinals_format || 'bo3') as BestOfFormat;
