@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.1",
@@ -69,6 +71,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260411.1",
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
