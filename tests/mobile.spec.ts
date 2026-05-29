@@ -13,7 +13,7 @@ import { test, expect } from "@playwright/test";
 const MOBILE_ROUTES = ["/", "/dupr", "/match/new", "/rankings"];
 
 for (const route of MOBILE_ROUTES) {
-  test(`${route} has no horizontal scroll on mobile`, async ({ page, viewportSize }) => {
+  test(`${route} has no horizontal scroll on mobile`, async ({ page }) => {
     await page.goto(route);
     await page.waitForTimeout(500);
 
