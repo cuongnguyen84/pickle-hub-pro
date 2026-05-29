@@ -42,6 +42,7 @@ const STATIC_URLS = [
 
 // Blog slugs (EN) — keep in sync with src/content/blog/metadata.ts and functions/sitemap.xml.ts
 const BLOG_SLUGS = [
+  "dupr-thepicklehub-user-guide",
   "pickleball-court-dimensions-setup-guide",
   "vietnam-dupr-leaderboard-launch",
   "pickleball-vs-padel-vs-paddle-tennis",

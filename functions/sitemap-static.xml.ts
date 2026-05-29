@@ -24,6 +24,7 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "dupr-thepicklehub-user-guide",
   "pickleball-court-dimensions-setup-guide",
   "vietnam-dupr-leaderboard-launch",
   "pickleball-vs-padel-vs-paddle-tennis",

@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "dupr-thepicklehub-user-guide",
+    publishedDate: "2026-05-29",
+    updatedDate: "2026-05-29",
+    author: "Cuong Nguyen",
+    tags: ["dupr thepicklehub", "dupr integration", "dupr vietnam", "pickleball rating vietnam", "dupr connect", "log pickleball match", "dupr leaderboard vietnam", "pickleball thepicklehub"],
+    ctaPath: "/dupr",
+    ctaLabel: { en: "Connect Your DUPR Account Now", vi: "Kết Nối Tài Khoản DUPR Ngay" },
+    heroImage: {
+      src: "/images/blog/dupr-thepicklehub-user-guide-hero.webp",
+      alt: "A 16:9 editorial product hero showing the ThePickleHub.net dashboard on a laptop, featuring a green Connect DUPR header button, a DUPR rating pill displaying singles 4.27 and doubles 4.41, and a 30-day rating history line chart in the background, with subtle pickleball paddle and ball props and a faint Vietnam map outline, illustrating the 2026 DUPR integration user guide for ThePickleHub."
+    },
+    titleEn: "DUPR on ThePickleHub: Complete User Guide 2026 — Connect, Log Matches, Rankings",
+    titleVi: "Hướng Dẫn Dùng DUPR Trên ThePickleHub 2026 | Connect, Log Trận, Bảng Xếp Hạng",
+    metaTitleEn: "DUPR on ThePickleHub Guide 2026 | Connect + Log Matches",
+    metaTitleVi: "Dùng DUPR Trên ThePickleHub 2026 | Connect + Log Trận",
+    metaDescriptionEn: "Connect DUPR to ThePickleHub in one click, log matches with opponent confirmation, submit to DUPR, and track your rating on the Vietnam DUPR leaderboard.",
+    metaDescriptionVi: "Kết nối DUPR với ThePickleHub trong 1-click, log trận đấu có đối thủ xác nhận, admin submit lên DUPR — và theo dõi rating trên bảng xếp hạng DUPR Việt Nam.",
+  },
+  {
     slug: "pickleball-court-dimensions-setup-guide",
     publishedDate: "2026-05-29",
     updatedDate: "2026-05-29",
