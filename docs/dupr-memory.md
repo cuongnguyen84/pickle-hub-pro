@@ -1,6 +1,6 @@
 # DUPR Integration — Memory / Handoff Notes
 
-**Last updated:** 2026-05-28
+**Last updated:** 2026-05-29
 **Purpose:** Continuity file để bắt đầu conversation mới mà không mất context. Tổng hợp toàn bộ DUPR integration (Sprint A/B/C) + SEO sprints đã ship lên production.
 
 > Đọc file này + `CLAUDE.md` + `docs/dupr-integration-roadmap.md` + `docs/seo-audit-2026-05-28.md` là đủ context để tiếp tục.
@@ -14,6 +14,7 @@
 | **A** | Social: Vietnam Rankings + PlayerProfile gate + opt-in + onboarding username + PlayersNearRating + DuprChip | ✅ LIVE | merged |
 | **B** | Quick Tables: rating_source enum + DUPR enforcement + auto-seed bracket | ✅ LIVE | merged |
 | **C** | Mexicano DUPR-balanced pairing + RoundFairnessCard | ✅ LIVE | merged |
+| **D** | Doubles Elimination: rating_source + per-player profile link + auto-seed + dupr-match-submit on score + soft public banner + SSR | 🟡 PR open | feat/dupr-doubles-elimination |
 | **SEO 1-4** | sitemap gaps, hreflang, ItemList/BreadcrumbList JSON-LD, forum category SSR, 3 new sitemap segments | ✅ LIVE | merged |
 | Blog | Bilingual launch post (vietnam-dupr-leaderboard-launch) | ✅ LIVE | merged |
 
@@ -112,6 +113,106 @@ Sprint C UI chưa test live — cần social event ≥4 checked-in players. Fixt
 
 ---
 
+## 4b. Sprint D — Doubles Elimination DUPR (PR open 2026-05-29)
+
+**Branch:** `feat/dupr-doubles-elimination` (4 commits, ~1577 lines).
+**Preview:** https://feat-dupr-doubles-eliminatio.pickle-hub-pro.pages.dev
+**Status:** Verified live via SSR curl + 32-team fixture; merge to main pending Cuong review.
+
+### Council 4-voice review (2026-05-29) — important decisions
+
+Cuong explicitly requested council before code. Skeptic + Pragmatist + Critic + Architect all
+warned: DUPR SSO coverage in VN ≈ 0.7% (14/2090 profiles). 3/4 recommended Phase 1 only;
+Cuong overrode with "build it and they will come" — ship full Phase 1+2+3 to attract DUPR
+sign-ups. Guardrails applied from council outputs:
+
+- Lowercase enum `'self'/'dupr'/'either'` — INTENTIONALLY different from `skill_rating_system`
+  uppercase `'DUPR'` (Sprint B). Mixing caused 22P02 in Sprint B; comments in migration warn.
+- Dual-mode team input (text legacy + profile link) — organizer can still type names like
+  old workflow; member-search is opt-in per player slot.
+- Auto-seed button gated ≥50% teams linked. Below threshold = disabled + tooltip.
+- Banner SOFT language: "Khuyến nghị" / "Recommended", never "Yêu cầu". CTA links
+  `mydupr.com/signup` so 95% VN audience without DUPR aren't filtered out.
+- Submit DUPR is best-effort: failed POST does NOT block match completion. Toast surfaces
+  outcome; error truncated to 500 chars into matches.dupr_submit_error for transparency.
+
+### Migrations applied production
+
+- `20260529100000_doubles_elimination_dupr_phase_1.sql`
+    * tournaments: `rating_source TEXT CHECK ('self'|'dupr'|'either')` default `'self'`,
+      `min_dupr_rating NUMERIC(3,2)`, `max_dupr_rating NUMERIC(3,2)`, cross-field range check.
+    * teams: `player1_user_id` + `player2_user_id` (nullable, FK profiles ON DELETE SET NULL),
+      `dupr_avg_rating NUMERIC(3,2)`, `dupr_seed_source TEXT CHECK ('exact'|'approx'|'none')`.
+    * Partial indexes on player_user_ids.
+- `20260529110000_doubles_elimination_dupr_phase_2.sql`
+    * matches: `dupr_submitted BOOLEAN` default false, `dupr_match_code TEXT`,
+      `dupr_submitted_at TIMESTAMPTZ`, `dupr_submit_error TEXT`. Partial idx on submitted=true.
+
+### Files
+
+- `src/lib/dupr/seedDoublesTeams.ts` — `computeTeamDuprSeeds()` one round-trip fetch
+  profiles + per-team avg DUPR doubles (singles fallback per player → 'approx').
+  `teamSeedCoverage()` stats shape compatible with existing `<SeedExplainerCard>`.
+- `src/lib/dupr/submitDoublesEliminationMatch.ts` — idempotent submit helper. Calls
+  `dupr-match-submit` edge fn with `internal_source='doubles_elim_match'`. Mirrors
+  matchCode/submitted_at back onto `doubles_elimination_matches` row directly (edge fn
+  matches-table mirror only fires for `internal_source IN ('match','club_match')`).
+- `src/components/tournament/DoublesEliminationPlayerInput.tsx` — dual-mode per-slot input.
+  Text mode default; 🔍 button opens `useDuprUserSearch` dropdown; pick result → bind
+  profile id + green chip lock with DUPR badge + ✕ unlink button.
+- `src/components/dupr/DuprRecommendationBanner.tsx` — soft banner. Renders only when
+  `rating_source != 'self'` AND a min/max range exists. CTA to `mydupr.com/signup`.
+- `src/hooks/useDoublesElimination.ts` — exported `RatingSource` + `DuprSeedSource` literal
+  types. `createTournament` takes optional `duprOptions` (ratingSource, min/maxDuprRating);
+  post-RPC UPDATE pattern from Sprint B preserves quota RPC untouched. `addTeams` accepts
+  per-team profile ids + dupr_avg + seed_source. `generateBracket` adds `seedingStrategy:
+  'manual' | 'random' | 'dupr'`. Dynamic-key update bug at line 535 (pre-existing) cleaned
+  up while in the area.
+- `src/pages/DoublesEliminationSetup.tsx` — Step 1 rating-source selector as 3 TheLine cards
+  (kicker `◆ 01/02/03` + serif italic title + description, selected=green-glow). Sub-card
+  "◆ Khoảng DUPR cho phép" framed with own kicker. Step 3 team cards = optional team_name
+  + 2 PlayerInput slots + club + seed + computed avg/source line. Auto-seed button calls
+  `computeTeamDuprSeeds`, re-orders, mounts SeedExplainerCard. `handleCreate` picks
+  seeding strategy automatically (dupr if auto-seed ran, manual if any seed typed, else random).
+- `src/pages/DoublesEliminationScoring.tsx` — TeamData/TournamentData/MatchData extended
+  with DUPR mirror fields. `tryDuprSubmit()` invoked from BOTH `handleSaveGame` final-game
+  and `handleEndMatchDirectly` (before navigation). Three toast paths: submitted / error /
+  skipped. Status badge xanh/đỏ under match-ended trophy.
+- `src/pages/DoublesEliminationView.tsx` — `<DuprRecommendationBanner>` mounted right below
+  tournament name.
+- `functions/_lib/render/index.ts` (`renderDoublesElimination`) — select DUPR fields, append
+  `Khuyến nghị DUPR <range>.` to meta description, emit SportsEvent JSON-LD with
+  `audience.audienceType`. Page stays noindex.
+- `src/integrations/supabase/types.ts` — manual patch of new columns into Row/Insert/Update
+  for 3 tables. Full regen ripples 66 pre-existing dynamic-key errors elsewhere → out of
+  scope. Trailing `as const` restored after stripping stale CLI version notice trailer that
+  origin/main shipped.
+
+### Test fixture (live in DB)
+
+Shared URL: https://www.thepicklehub.net/tools/doubles-elimination/dupr-test-32
+- 32 teams: 16 DUPR-linked (random pair from 21 VN profiles with dupr_doubles + dupr_id)
+  + 16 legacy text-only. Seeded 1..32 by avg desc.
+- 16 R1 matches pre-generated (snake 1v32, 2v31, ...), 4 courts.
+- Owner: thecuong@gmail.com (UUID 5040f0f2-f564-401c-9737-4b030b6371d7).
+- `rating_source='dupr'`, min 3.00, max 4.50.
+- Cleanup: `DELETE FROM doubles_elimination_tournaments WHERE share_id='dupr-test-32';`
+
+### Risk notes for future conversations
+
+- 32-team minimum makes UI tests painful — keep this fixture or rebuild via the script
+  at `/tmp/build_fixture.py` shape (16 DUPR pairs + 16 legacy).
+- Edge function `dupr-match-submit` accepts arbitrary `internal_source`. New value
+  `'doubles_elim_match'` does NOT trigger matches-table mirror (that's for source IN
+  ('match','club_match')). The helper writes back to doubles_elimination_matches directly.
+- Auto-seed coverage threshold is 50% — if Cuong wants 30% or 70% in future, change in
+  `DoublesEliminationSetup.tsx` `canAutoSeed` calc.
+- Banner uses Sparkles icon + green-glow theme to match SeedExplainerCard family. If
+  redesigning DUPR visual identity, update all 3 in sync (DuprRecommendationBanner,
+  SeedExplainerCard, DoublesEliminationPlayerInput).
+
+---
+
 ## 5. SEO Sprints (đã ship) — xem docs/seo-audit-2026-05-28.md
 
 ### Helpers mới (reusable cho future handlers) — `functions/_lib/utils.ts`
@@ -187,6 +288,8 @@ Không có public Indexing API cho ranking/blog (chỉ JobPosting/BroadcastEvent
 ---
 
 ## 9. Outstanding / next ideas (chưa làm)
+- **Test Sprint D Doubles Elimination** live with the dupr-test-32 fixture (scoring
+  page submit DUPR end-to-end — needs ≥1 R1 match with 4 valid DUPR IDs).
 - **Test Sprint C Mexicano** live (cần social event fixtures)
 - **profiles.gender + birth_year** migration → enable mens/womens + age-bracket filter trên Vietnam leaderboard (hiện chỉ doubles/singles)
 - **dupr-friend-suggest** cron (social-graph-ranker) — chỉ build khi connected users > 5k
