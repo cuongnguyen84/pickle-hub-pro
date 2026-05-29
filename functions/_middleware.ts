@@ -404,7 +404,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // / live / match HTML that doesn't yet include the new Related
   // sections. Without the bump, bots keep seeing the v12 cached
   // shells until the 6h TTL elapses.
-  const cacheKey = `pr:v13:${url.pathname}`;
+  const cacheKey = `pr:v14:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
