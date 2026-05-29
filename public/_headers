@@ -1,0 +1,42 @@
+# Content-hashed static assets — immutable cache
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+# Favicon
+/favicon.ico
+  Cache-Control: public, max-age=86400
+
+# Sitemap and robots (served by Pages Functions, but headers apply if cached)
+/sitemap.xml
+  Cache-Control: public, max-age=300
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+# HTML pages — short cache, security headers
+/
+  Cache-Control: public, max-age=300, s-maxage=3600
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# All other pages inherit security headers + CSP including DUPR SSO iframe
+# allowance. DUPR SSO embeds dashboard.dupr.com (prod) or uat.dupr.gg
+# (UAT) — without these in frame-src, Chrome blocks the connect modal
+# with "This content is blocked. Contact the site owner to fix the issue."
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://dashboard.dupr.com https://uat.dupr.gg; worker-src 'self' blob:; child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://dashboard.dupr.com https://uat.dupr.gg; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'
