@@ -346,3 +346,11 @@ verify_jwt = false
 
 [functions.add-registration-direct]
 verify_jwt = false
+
+# ─── Client error tracker (solo-dev Sentry) ────────────────────────────────
+# Public endpoint that accepts:
+#   - JS errors fired by window.onerror in main.tsx
+#   - CSP violation reports posted by the browser via report-uri
+# No JWT — anonymous browsers + report-uri have no auth, by design.
+[functions.log-client-event]
+verify_jwt = false
