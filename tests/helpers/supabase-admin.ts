@@ -96,7 +96,11 @@ export async function mintSessionForEmail(
 
   const session = otpData.session;
   const storageKey = storageKeyForUrl(url);
-  // supabase-js v2 stores the raw session object as the localStorage value.
+  // @supabase/auth-js v2 stores the RAW session object as the localStorage
+  // value (verified against node_modules: GoTrueClient._isValidSession reads
+  // top-level access_token/refresh_token/expires_at and __loadSession uses it
+  // directly). Do NOT wrap it in a v1-style { currentSession, expiresAt }
+  // envelope — that format is rejected by v2 and the SPA boots anonymous.
   const storageValue = JSON.stringify(session);
 
   return { session, storageKey, storageValue };

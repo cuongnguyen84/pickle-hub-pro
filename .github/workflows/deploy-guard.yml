@@ -48,12 +48,23 @@ jobs:
       - name: Detect changed edge functions
         id: changed
         run: |
-          # Names of function directories touched by this push (exclude _shared).
-          FNS=$(git diff --name-only HEAD~1 HEAD -- 'supabase/functions/**' \
-            | sed -nE 's#^supabase/functions/([^/]+)/.*#\1#p' \
-            | grep -v '^_shared$' | sort -u | tr '\n' ' ')
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'supabase/functions/**')
+          echo "Changed paths:"; echo "$CHANGED"
+          if echo "$CHANGED" | grep -q '^supabase/functions/_shared/'; then
+            # Shared helpers changed — every consumer bundle may now be stale,
+            # so redeploy ALL functions (defends the exact drift this guards).
+            echo "→ _shared changed: redeploying ALL functions"
+            FNS=$(ls -d supabase/functions/*/ \
+              | sed 's#supabase/functions/##; s#/$##' \
+              | grep -v '^_shared$' | sort -u | tr '\n' ' ')
+          else
+            # Only the touched function directories (exclude _shared).
+            FNS=$(echo "$CHANGED" \
+              | sed -nE 's#^supabase/functions/([^/]+)/.*#\1#p' \
+              | grep -v '^_shared$' | sort -u | tr '\n' ' ')
+          fi
           echo "functions=$FNS" >> "$GITHUB_OUTPUT"
-          echo "Changed functions: ${FNS:-<none>}"
+          echo "To deploy: ${FNS:-<none>}"
 
       - name: Deploy changed edge functions
         if: steps.changed.outputs.functions != ''

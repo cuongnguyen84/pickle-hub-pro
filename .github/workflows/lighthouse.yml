@@ -42,19 +42,25 @@ jobs:
           SLUG=$(echo "$BRANCH" | tr '[:upper:]/' '[:lower:]-')
           PREVIEW="https://${SLUG}.pickle-hub-pro.pages.dev"
           # Wait for the preview to go green (max ~5 min).
+          READY=""
           for i in $(seq 1 10); do
             STATUS=$(curl -sI "$PREVIEW" -o /dev/null -w '%{http_code}')
-            [ "$STATUS" = "200" ] && break
+            if [ "$STATUS" = "200" ]; then READY=1; break; fi
             echo "[$i] preview $PREVIEW not ready ($STATUS) — sleeping 30s"; sleep 30
           done
-          # Rewrite the prod origin in the config to the preview origin.
-          node -e "
-            const fs=require('fs');
-            const c=JSON.parse(fs.readFileSync('.lighthouserc.json','utf8'));
-            c.ci.collect.url=c.ci.collect.url.map(u=>u.replace('https://www.thepicklehub.net','$PREVIEW'));
-            fs.writeFileSync('.lighthouserc.json',JSON.stringify(c,null,2));
-          "
-          echo 'Rewrote LHCI URLs to preview origin'
+          if [ -n "$READY" ]; then
+            # Rewrite the prod origin in the config to the preview origin.
+            node -e "
+              const fs=require('fs');
+              const c=JSON.parse(fs.readFileSync('.lighthouserc.json','utf8'));
+              c.ci.collect.url=c.ci.collect.url.map(u=>u.replace('https://www.thepicklehub.net','$PREVIEW'));
+              fs.writeFileSync('.lighthouserc.json',JSON.stringify(c,null,2));
+            "
+            echo "Using preview origin: $PREVIEW"
+          else
+            # Don't run Lighthouse against a 404 preview — fall back to prod.
+            echo "::warning::Preview never went green — running Lighthouse against production"
+          fi
 
       - name: Run Lighthouse CI
         run: lhci autorun
