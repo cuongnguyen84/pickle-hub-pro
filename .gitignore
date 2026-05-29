@@ -44,3 +44,8 @@ workers/**/.dev.vars
 
 # Bundle analysis output
 dist/stats.html
+
+# Playwright
+playwright-report/
+test-results/
+tests/.cache/
