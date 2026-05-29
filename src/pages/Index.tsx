@@ -407,6 +407,7 @@ const Index = () => {
             : "ThePickleHub × DUPR — Official Partner";
         return (
           <div className="tl-shell" style={{ marginTop: 0, marginBottom: -28 }}>
+            <div className="relative">
             <Link
               to="/dupr"
               aria-label={alt}
@@ -432,6 +433,25 @@ const Index = () => {
                 />
               </picture>
             </Link>
+            {/* Sibling overlay — "Hướng dẫn sử dụng" CTA. Lives in the same
+                relative wrapper as the banner Link so it doesn't nest <a>
+                inside <a> (invalid HTML). Positioned top-right on all
+                viewports so it sits in the certificate's quiet kicker
+                zone without colliding with the wordmark union. */}
+            <Link
+              to="/vi/blog/huong-dan-dung-dupr-tren-thepicklehub"
+              aria-label={language === "vi" ? "Hướng dẫn sử dụng DUPR" : "DUPR user guide"}
+              className="tl-dupr-guide-cta absolute right-3 top-3 md:right-5 md:top-5 inline-flex items-center gap-1.5 rounded-sm border border-[#1a1d22]/30 bg-[#ece7d8] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0e0f12] shadow-sm transition-colors hover:bg-[#0e0f12] hover:text-[#ece7d8] hover:border-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
+              style={{
+                fontFamily:
+                  '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                fontWeight: 500,
+              }}
+            >
+              {language === "vi" ? "Hướng dẫn" : "User guide"}
+              <span aria-hidden="true">→</span>
+            </Link>
+            </div>
           </div>
         );
       })()}
