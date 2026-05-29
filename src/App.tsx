@@ -41,6 +41,7 @@ const DuprConnect = lazy(() => import("./pages/DuprConnect"));
 const MatchNewPage = lazy(() => import("./pages/MatchNew"));
 const MatchConfirm = lazy(() => import("./pages/MatchConfirm"));
 const AdminDuprDashboard = lazy(() => import("./pages/admin/AdminDuprDashboard"));
+const AdminErrors = lazy(() => import("./pages/admin/AdminErrors"));
 const MatchSubmitPage = lazy(() => import("./pages/Match"));
 const MyTournaments = lazy(() => import("./pages/MyTournaments"));
 const Notifications = lazy(() => import("./pages/Notifications"));
@@ -490,6 +491,7 @@ const App = () => (
                     <Route path="/account" element={<Account />} />
                     <Route path="/dupr" element={<RequireAuth><DuprConnect /></RequireAuth>} />
                     <Route path="/admin/dupr" element={<RequireAuth requiredRole="admin"><AdminDuprDashboard /></RequireAuth>} />
+                    <Route path="/admin/errors" element={<RequireAuth requiredRole="admin"><AdminErrors /></RequireAuth>} />
                     <Route path="/match" element={<RequireAuth><MatchSubmitPage /></RequireAuth>} />
                     <Route path="/match/new" element={<RequireAuth><MatchNewPage /></RequireAuth>} />
                     <Route path="/match/confirm" element={<RequireAuth><MatchConfirm /></RequireAuth>} />
