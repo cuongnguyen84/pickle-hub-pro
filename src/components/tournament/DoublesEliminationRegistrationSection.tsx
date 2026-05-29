@@ -13,16 +13,61 @@
 //      once at capacity.
 // ============================================================================
 
-import { useState, useMemo } from "react";
-import { Sparkles, Users, Loader2, UserCircle2, X, Trophy, Lock, ChevronRight } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Sparkles, Users, Loader2, UserCircle2, X, Trophy, Lock, ChevronRight, Trash2, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
 import { useDuprUserSearch, type DuprSearchHit } from "@/hooks/useDuprUserSearch";
 import { useDoublesElimination, type Tournament, type Team } from "@/hooks/useDoublesElimination";
 import { DuprConnectButton } from "@/components/dupr/DuprConnectButton";
+import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
+
+// Sprint E.4 (2026-05-29). Map of profile id -> dupr_doubles (with singles
+// fallback) used to render per-player DUPR in the registered teams list.
+type PerPlayerDupr = Map<string, { rating: number | null; isApprox: boolean }>;
+
+function usePlayerDuprRatings(teams: Team[]): PerPlayerDupr {
+  const [map, setMap] = useState<PerPlayerDupr>(new Map());
+  // Stable key derived from sorted user ids — refetch only when the set changes.
+  const userIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of teams) {
+      if (t.player1_user_id) set.add(t.player1_user_id);
+      if (t.player2_user_id) set.add(t.player2_user_id);
+    }
+    return Array.from(set).sort();
+  }, [teams]);
+  const key = userIds.join(',');
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (userIds.length === 0) {
+        if (!cancelled) setMap(new Map());
+        return;
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, dupr_singles, dupr_doubles')
+        .in('id', userIds);
+      if (cancelled) return;
+      const next: PerPlayerDupr = new Map();
+      for (const row of (data ?? []) as Array<{ id: string; dupr_singles: number | null; dupr_doubles: number | null }>) {
+        const primary = row.dupr_doubles;
+        const fallback = row.dupr_singles;
+        const rating = primary ?? fallback ?? null;
+        const isApprox = primary == null && fallback != null;
+        next.set(row.id, { rating, isApprox });
+      }
+      setMap(next);
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return map;
+}
 
 interface Props {
   tournament: Tournament;
@@ -42,7 +87,7 @@ export function DoublesEliminationRegistrationSection({
   const { toast } = useToast();
   const vi = language === "vi";
   const { data: conn, isLoading: connLoading } = useDuprConnection();
-  const { registerTeam, cancelTeamRegistration, closeRegistration, generateBracket, loading } = useDoublesElimination();
+  const { registerTeam, cancelTeamRegistration, organizerRemoveTeam, closeRegistration, generateBracket, loading } = useDoublesElimination();
 
   // Pick the row for the current user (either slot) so we can show cancel UI.
   const myTeam = useMemo(() => {
@@ -53,6 +98,29 @@ export function DoublesEliminationRegistrationSection({
   const isOrganizer = !!user && user.id === tournament.creator_user_id;
   const isFull = teams.length >= tournament.team_count;
   const capacityPct = Math.round((teams.length / tournament.team_count) * 100);
+  const playerDupr = usePlayerDuprRatings(teams);
+
+  // Sprint E.4 (2026-05-29). Organizer-specific delete handler — bound here
+  // so RegisteredTeamsList stays a pure presenter component.
+  const handleOrganizerRemove = async (team: Team) => {
+    const ok = window.confirm(
+      vi
+        ? `Xóa đội "${team.team_name}"? Hành động không thể hoàn tác.`
+        : `Remove team "${team.team_name}"? This cannot be undone.`,
+    );
+    if (!ok) return;
+    const res = await organizerRemoveTeam(tournament.id, team.id);
+    if (res.success) {
+      toast({ title: vi ? 'Đã xoá đội' : 'Team removed' });
+      await onRefresh();
+    } else {
+      toast({
+        title: vi ? 'Không xoá được' : 'Remove failed',
+        description: localizeError(res.error, vi),
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
@@ -66,7 +134,20 @@ export function DoublesEliminationRegistrationSection({
       />
 
       {/* Registration form OR locked notice */}
-      {!user ? (
+      {isOrganizer ? (
+        // Sprint E.4 (2026-05-29). BTC view — no DUPR connect prompt, no
+        // registration form. They manage the list (remove teams) + close.
+        <NoticeCard tone="info" vi={vi}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <ShieldCheck className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+            <span>
+              {vi
+                ? 'Bạn là BTC — quản lý danh sách đội đăng ký bên dưới.'
+                : 'You are the organizer — manage the registered teams below.'}
+            </span>
+          </div>
+        </NoticeCard>
+      ) : !user ? (
         <NoticeCard tone="info" vi={vi}>
           {vi ? "Đăng nhập để đăng ký đội." : "Sign in to register a team."}
         </NoticeCard>
@@ -172,7 +253,14 @@ export function DoublesEliminationRegistrationSection({
       )}
 
       {/* Registered teams list */}
-      <RegisteredTeamsList teams={teams} myUserId={user?.id ?? null} vi={vi} />
+      <RegisteredTeamsList
+        teams={teams}
+        myUserId={user?.id ?? null}
+        vi={vi}
+        playerDupr={playerDupr}
+        isOrganizer={isOrganizer}
+        onOrganizerRemove={handleOrganizerRemove}
+      />
     </div>
   );
 }
@@ -497,10 +585,16 @@ function RegisteredTeamsList({
   teams,
   myUserId,
   vi,
+  playerDupr,
+  isOrganizer,
+  onOrganizerRemove,
 }: {
   teams: Team[];
   myUserId: string | null;
   vi: boolean;
+  playerDupr: PerPlayerDupr;
+  isOrganizer: boolean;
+  onOrganizerRemove: (team: Team) => void | Promise<void>;
 }) {
   if (teams.length === 0) {
     return (
@@ -527,6 +621,8 @@ function RegisteredTeamsList({
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {teams.map(team => {
           const mine = !!myUserId && (team.player1_user_id === myUserId || team.player2_user_id === myUserId);
+          const p1 = team.player1_user_id ? playerDupr.get(team.player1_user_id) : undefined;
+          const p2 = team.player2_user_id ? playerDupr.get(team.player2_user_id) : undefined;
           return (
             <div
               key={team.id}
@@ -535,27 +631,73 @@ function RegisteredTeamsList({
                 gridTemplateColumns: "1fr auto",
                 gap: 12,
                 alignItems: "center",
-                padding: "8px 12px",
+                padding: "10px 12px",
                 background: mine ? "rgba(34,197,94,0.06)" : "var(--tl-bg)",
                 border: `1px solid ${mine ? "rgba(34,197,94,0.3)" : "var(--tl-border)"}`,
                 borderRadius: "var(--tl-radius)",
                 fontSize: 13.5,
               }}
             >
-              <span style={{ color: "var(--tl-fg)" }}>{team.team_name}</span>
-              {team.dupr_avg_rating != null && (
-                <span style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11, color: "var(--tl-green)", fontVariantNumeric: "tabular-nums" }}>
-                  DUPR {team.dupr_avg_rating.toFixed(2)}
-                  {team.dupr_seed_source === "approx" && (
-                    <span style={{ color: "rgb(96,165,250)", marginLeft: 4 }}>·{vi ? "ước tính" : "approx"}</span>
-                  )}
-                </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 8px", alignItems: "baseline" }}>
+                  <PlayerName name={team.player1_name} dupr={p1?.rating ?? null} isApprox={p1?.isApprox ?? false} />
+                  <span style={{ color: "var(--tl-fg-4)", fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11 }}>/</span>
+                  <PlayerName name={team.player2_name ?? "—"} dupr={p2?.rating ?? null} isApprox={p2?.isApprox ?? false} />
+                </div>
+                {team.dupr_avg_rating != null && (
+                  <div style={{ fontFamily: "Geist Mono, ui-monospace, monospace", fontSize: 11, color: "var(--tl-fg-3)", fontVariantNumeric: "tabular-nums" }}>
+                    avg <span style={{ color: "var(--tl-green)" }}>{team.dupr_avg_rating.toFixed(2)}</span>
+                    {team.dupr_seed_source === "approx" && (
+                      <span style={{ color: "rgb(96,165,250)", marginLeft: 4 }}>·{vi ? "ước tính" : "approx"}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              {isOrganizer && (
+                <button
+                  type="button"
+                  className="tl-btn"
+                  onClick={() => onOrganizerRemove(team)}
+                  aria-label={vi ? "Xoá đội" : "Remove team"}
+                  title={vi ? "Xoá đội (BTC)" : "Remove team (organizer)"}
+                  style={{ padding: "6px 10px", fontSize: 12, color: "var(--tl-live)", borderColor: "rgba(239,68,68,0.3)" }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               )}
             </div>
           );
         })}
       </div>
     </div>
+  );
+}
+
+// Sprint E.4 (2026-05-29) — inline player display: name + DUPR pill.
+function PlayerName({ name, dupr, isApprox }: { name: string; dupr: number | null; isApprox: boolean }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      <span style={{ color: "var(--tl-fg)" }}>{name}</span>
+      {dupr != null ? (
+        <span style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 10.5,
+          color: "var(--tl-green)",
+          fontVariantNumeric: "tabular-nums",
+          padding: "1px 6px",
+          borderRadius: 4,
+          background: "rgba(34,197,94,0.10)",
+        }}>
+          {dupr.toFixed(2)}{isApprox ? '*' : ''}
+        </span>
+      ) : (
+        <span style={{
+          fontFamily: "Geist Mono, ui-monospace, monospace",
+          fontSize: 10.5,
+          color: "var(--tl-fg-4)",
+        }}>—</span>
+      )}
+    </span>
   );
 }
 

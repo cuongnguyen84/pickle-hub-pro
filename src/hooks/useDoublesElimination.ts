@@ -1119,6 +1119,18 @@ export function useDoublesElimination() {
       : { success: false, error: typeof r.error === 'string' ? r.error : 'UNKNOWN' };
   }, []);
 
+  const organizerRemoveTeam = useCallback(async (tournamentId: string, teamId: string): Promise<{ success: boolean; error?: string }> => {
+    const { data, error } = await supabase.rpc('organizer_remove_team_from_doubles_elimination', {
+      p_tournament_id: tournamentId,
+      p_team_id: teamId,
+    });
+    if (error) return { success: false, error: error.message };
+    const r = (data ?? {}) as Record<string, unknown>;
+    return r.success
+      ? { success: true }
+      : { success: false, error: typeof r.error === 'string' ? r.error : 'UNKNOWN' };
+  }, []);
+
   const closeRegistration = useCallback(async (tournamentId: string): Promise<{ success: boolean; error?: string; count?: number }> => {
     const { data, error } = await supabase.rpc('close_doubles_elimination_registration', {
       p_tournament_id: tournamentId,
@@ -1137,6 +1149,7 @@ export function useDoublesElimination() {
     generateBracket,
     registerTeam,
     cancelTeamRegistration,
+    organizerRemoveTeam,
     closeRegistration,
     getTournamentByShareId,
     getUserTournaments,
