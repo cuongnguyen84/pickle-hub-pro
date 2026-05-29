@@ -444,3 +444,71 @@ Cuong muốn dùng skills từ github.com/affaan-m/ECC (246 skills, cloned /tmp/
 - `product-lens`, `api-design`, `make-interfaces-feel-better`, `database-migrations`, `frontend-a11y`, `social-graph-ranker`, `security-review`, `architecture-decision-records`
 
 Khi ra quyết định lớn → convene council hoặc consult relevant skill trước khi code.
+
+---
+
+## 4d. Sprint F — Team Match (MLP) DUPR (branch `feat/dupr-mlp-team-match`, 2026-05-29)
+
+**Preview:** https://feat-dupr-mlp-team-match.pickle-hub-pro.pages.dev
+**Status:** Built + tsc clean + vite bundle OK + CF preview deploy success. NOT merged to main (await Cuong UI test). Mirrors Sprint D doubles-elimination pattern.
+
+### ⚠️ DUPR_ENV = prod (verified 2026-05-29)
+`dupr-partner-token` returns `environment:"prod"` and mints a token → the deployed
+edge functions point at **PRODUCTION DUPR** (prod.mydupr.com / api.dupr.gg), NOT uat.
+`secrets.local.md` DUPR section (uat keys) is stale. Consequence: scoring a
+`rating_source!='self'` team-match whose game lineup is fully DUPR-linked submits a
+**real production match** affecting real players' ratings. The 3 `testuser*` accounts are
+NOT prod-connected (absent from dupr_user_tokens), so they can't be used for a sandbox push.
+
+### Migration applied production
+- `20260529150000_team_match_dupr_phase_1.sql`
+    * team_match_tournaments: `rating_source TEXT CHECK ('self'|'dupr'|'either') DEFAULT 'self'`
+      (LOWERCASE — not skill_rating_system uppercase 'DUPR'), `min_dupr_rating NUMERIC(3,2)`,
+      `max_dupr_rating NUMERIC(3,2)`, cross-field range check.
+    * team_match_games: `dupr_submitted BOOLEAN DEFAULT false`, `dupr_match_code TEXT`,
+      `dupr_submitted_at TIMESTAMPTZ`, `dupr_submit_error TEXT`. Partial idx on submitted.
+
+### Files
+- `src/lib/dupr/submitTeamMatchGame.ts` — per-game submit helper. Each team_match_games row
+  = one DUPR match. WD/MD/MX→DOUBLES, WS/MS→SINGLES; rally21→RALLY, sideout11→SIDEOUT.
+  Resolves lineup roster ids → team_match_roster.user_id → profiles.dupr_id.
+  internal_source='team_match_game' (does NOT trigger matches-table mirror — writes back to
+  team_match_games row directly). Idempotent (skips dupr_submitted=true) + soft-fail (errors
+  into dupr_submit_error, never blocks scoring). Reads `match_code ?? matchCode` (the edge fn
+  returns snake_case `match_code`; submitDoublesEliminationMatch's `data.matchCode` read is a
+  latent bug that records null code on success — fixed here by reading both keys).
+- `src/pages/TeamMatchSetup.tsx` — Step 1 rating-source 3-card selector (self/dupr/either)
+  + optional DUPR range sub-card. Wired into createTournament input.
+- `src/hooks/useTeamMatch.ts` — CreateTournamentInput + TeamMatchTournament gain rating_source
+  /min/max. Post-RPC UPDATE sets DUPR config (quota RPC create_team_match_with_quota untouched).
+- `src/components/teamMatch/TeamRosterManager.tsx` — optional DUPR member-search in add-member
+  form (binds roster.user_id via useDuprUserSearch). addRosterMember already accepted user_id.
+- `src/components/teamMatch/TeamMatchScoringSheet.tsx` — best-effort submitTeamMatchGame on
+  handleSaveGame (after updateMatchResult, when game decided + ratingSource!='self'); 3 toast
+  paths; per-game DUPR badge (✓ submitted / ✕ error / ⋯ pending). New props tournamentName +
+  ratingSource. Added useToast + useQueryClient.
+- `src/pages/TeamMatchView.tsx` — DuprRecommendationBanner below the <h1>; passes name +
+  ratingSource to scoring sheet.
+- `src/hooks/useTeamMatchMatches.ts` — TeamMatchGame type gains 4 dupr_* fields.
+- `src/integrations/supabase/types.ts` — manual patch (Row/Insert/Update) for both tables.
+
+### Submit gate (same as Sprint D)
+Edge fn `dupr-match-submit` only lets a GLOBAL ADMIN submit source `team_match_game` (the
+club-organizer path is scoped to 'match'/'club_match'). So in practice only thecuong (admin)
+pushes successfully; non-admin organizers get a captured 403 in dupr_submit_error. All players
+in the game still need BASIC_L1 entitlement (lazy-fetched via their SSO token).
+
+### Test fixture (SAFE — no auto-push)
+Shared URL: /tools/team-match/dupr-mlp-test  (rating_source='dupr', 3.00–4.50)
+- 2 teams (Alpha/Bravo), 1 tie, 2 games: MD (doubles) + MS (singles).
+- Only CM10 (thecuong's own profile) is DUPR-linked; Henry/Giang/Tran Son intentionally
+  UNLINKED so every game returns skip "missing-profile-link" → NO production push fires.
+  Lets the UI (badge, banner, scoring) be tested safely. To verify a real push, relink real
+  prod-connected players in the roster (affects real ratings — Cuong's call).
+- Cleanup: `DELETE FROM team_match_tournaments WHERE share_id='dupr-mlp-test';`
+
+### Not in Sprint F (deferred)
+- DUPR auto-seed of TEAMS (team avg) — MLP seeding stayed manual/by-team.
+- DUPR range ENFORCEMENT at roster add (range is recommendation-only, like Sprint D banner).
+- DreamBreaker special handling — uses its own game_type for format like any other game.
+- A uat sandbox for safe push testing (blocked by DUPR_ENV=prod + no prod-connected testusers).
