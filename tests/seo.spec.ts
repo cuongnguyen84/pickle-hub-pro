@@ -27,7 +27,9 @@ const SSR_ROUTES = [
   {
     path: "/rankings",
     expectedTitlePart: /(ranking|xếp hạng)/i,
-    expectsHreflang: true,
+    // Rankings page is currently EN-only; no /vi/rankings twin shipped
+    // yet. Flip to true once the VI variant + hreflang tags exist.
+    expectsHreflang: false,
   },
   {
     path: "/news",
