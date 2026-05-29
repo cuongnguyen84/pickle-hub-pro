@@ -24,6 +24,12 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "pickleball-court-dimensions-setup-guide",
+  "vietnam-dupr-leaderboard-launch",
+  "pickleball-vs-padel-vs-paddle-tennis",
+  "best-pickleball-paddles-beginners-2026",
+  "pickleball-for-tennis-players-2026",
+  "professional-pickleball-tours-guide-2026",
   "dupr-rating-improvement-30-day-plan",
   "dupr-algorithm-explained-performance-vs-expectation",
   "dupr-vietnam-partnership-ta-pickleball-thepicklehub",

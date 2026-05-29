@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-court-dimensions-setup-guide",
+    publishedDate: "2026-05-29",
+    updatedDate: "2026-05-29",
+    author: "Cuong Nguyen",
+    tags: ["pickleball court dimensions", "pickleball court size", "pickleball kitchen size", "pickleball net height", "convert tennis court to pickleball", "mark a pickleball court", "pickleball court vietnam", "pickleball setup"],
+    ctaPath: "/blog/how-to-play-pickleball",
+    ctaLabel: { en: "Next: How to Play Pickleball — 7-Day Beginner Plan", vi: "Tiếp theo: Hướng dẫn chơi Pickleball — lộ trình 7 ngày cho người mới" },
+    heroImage: {
+      src: "/images/blog/pickleball-court-dimensions-setup-guide-hero.webp",
+      alt: "Top-down diagrammatic illustration of a regulation pickleball court with measurements labeled in both feet and meters — 44 feet by 20 feet playing area, 7-foot non-volley kitchen on each side of the net, 22-foot service area depth, and 36-inch net height — color-coded zones on a clean technical-drawing background for the 2026 court dimensions and setup guide."
+    },
+    titleEn: "Pickleball Court Dimensions & Setup Guide 2026 | Sizes + Diagram",
+    titleVi: "Kích Thước Sân Pickleball Tiêu Chuẩn 2026 | Sơ Đồ + Cách Vẽ Sân",
+    metaTitleEn: "Pickleball Court Dimensions & Setup Guide 2026 | Sizes + Diagram",
+    metaTitleVi: "Kích Thước Sân Pickleball Tiêu Chuẩn 2026 | Sơ Đồ + Cách Vẽ Sân",
+    metaDescriptionEn: "Official pickleball court dimensions: 44×20 ft playing area, 7 ft kitchen, net height, total space needed. Plus how to mark a court and convert a tennis court.",
+    metaDescriptionVi: "Kích thước sân pickleball chuẩn: sân đấu 13,41×6,1 m, khu bếp 2,13 m, chiều cao lưới, diện tích tổng cần thiết. Kèm cách kẻ sân và tận dụng sân tennis.",
+  },
+  {
     slug: "vietnam-dupr-leaderboard-launch",
     publishedDate: "2026-05-27",
     updatedDate: "2026-05-27",

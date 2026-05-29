@@ -42,6 +42,8 @@ const STATIC_URLS = [
 
 // Blog slugs (EN) — keep in sync with src/content/blog/metadata.ts and functions/sitemap.xml.ts
 const BLOG_SLUGS = [
+  "pickleball-court-dimensions-setup-guide",
+  "vietnam-dupr-leaderboard-launch",
   "pickleball-vs-padel-vs-paddle-tennis",
   "best-pickleball-paddles-beginners-2026",
   "pickleball-for-tennis-players-2026",
