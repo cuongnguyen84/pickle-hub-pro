@@ -1,6 +1,6 @@
 # DUPR Integration — Memory / Handoff Notes
 
-**Last updated:** 2026-05-29
+**Last updated:** 2026-05-29 (Sprint E shipped)
 **Purpose:** Continuity file để bắt đầu conversation mới mà không mất context. Tổng hợp toàn bộ DUPR integration (Sprint A/B/C) + SEO sprints đã ship lên production.
 
 > Đọc file này + `CLAUDE.md` + `docs/dupr-integration-roadmap.md` + `docs/seo-audit-2026-05-28.md` là đủ context để tiếp tục.
@@ -14,7 +14,8 @@
 | **A** | Social: Vietnam Rankings + PlayerProfile gate + opt-in + onboarding username + PlayersNearRating + DuprChip | ✅ LIVE | merged |
 | **B** | Quick Tables: rating_source enum + DUPR enforcement + auto-seed bracket | ✅ LIVE | merged |
 | **C** | Mexicano DUPR-balanced pairing + RoundFairnessCard | ✅ LIVE | merged |
-| **D** | Doubles Elimination: rating_source + per-player profile link + auto-seed + dupr-match-submit on score + soft public banner + SSR | 🟡 PR open | feat/dupr-doubles-elimination |
+| **D** | Doubles Elimination: rating_source + per-player profile link + auto-seed + dupr-match-submit on score + soft public banner + SSR | ✅ LIVE | merged |
+| **E** | Doubles Elimination workflow rework: Step 2 TheLine card refactor + min 40 + skip Step 3 for DUPR + open self-registration (status='registration_open' + 5 RPCs) + per-player DUPR in list + BTC remove team + BTC manual add team | ✅ LIVE | merged |
 | **SEO 1-4** | sitemap gaps, hreflang, ItemList/BreadcrumbList JSON-LD, forum category SSR, 3 new sitemap segments | ✅ LIVE | merged |
 | Blog | Bilingual launch post (vietnam-dupr-leaderboard-launch) | ✅ LIVE | merged |
 
@@ -213,6 +214,141 @@ Shared URL: https://www.thepicklehub.net/tools/doubles-elimination/dupr-test-32
 
 ---
 
+## 4c. Sprint E — Doubles Elimination self-registration (shipped 2026-05-29)
+
+**5 commits on `main`:** `4202f85` E.1 → `26a8022` E.2 → `db3fb28` E.3 → `ccad2eb` E.4 → `8aadd40` E.5.
+
+Cuong overrode the product-lens REFINE verdict (0.7% DUPR coverage warning) with "build it
+and they will come" — full open-registration flow shipped to production. Council outputs
+honored anyway via the soft-language banner, dual-mode preservation for non-DUPR flows,
+and best-effort error handling on every RPC.
+
+### What changed end-to-end
+
+**Setup wizard** (`src/pages/DoublesEliminationSetup.tsx`):
+- Min team count 32 → 40 across UI + i18n strings. DB CHECK constraint `team_count >= 40`
+  added with `NOT VALID` (legacy 32-team tournaments stay valid; new INSERTs enforce 40).
+- Step 2 fully refactored to TheLine pattern (per the make-interfaces-feel-better ECC
+  skill blueprint):
+    * Early rounds = 3-card grid (BO1 / BO3 / BO5) with mono kicker `◆ 01/02/03`, mono
+      title 18px, sub-tagline, green-glow selected state, `role='radio'` + `aria-checked`.
+    * Semifinals + Finals = new `<SegmentedFormatSelector>` component: 3-pill segmented
+      control `[Same as early · BOx] [BO3] [BO5]`. The 'inherit' option surfaces the live
+      derived format as a sub-label so the user sees the effective value without toggling.
+    * Third place match = inline switch-style toggle pill (Bật / Tắt), `role='switch'`.
+- State model collapsed `customSemifinals` + `customFinals` booleans → single
+  `'inherit' | BestOfFormat` union per slot.
+- When `rating_source === 'dupr'` Step 3 is SKIPPED entirely: step indicator drops to 2
+  pills, Step 2 Continue button morphs to **"Mở đăng ký" + Trophy icon**, and
+  `handleCreateRegistrationOpen()` creates the tournament at `status='registration_open'`
+  (no teams, no bracket) then navigates to the share page. For `'self'` / `'either'` the
+  manual team-list flow is unchanged.
+
+**Schema** (`20260529120000_doubles_elimination_open_registration.sql` +
+`20260529130000_doubles_elim_organizer_remove_team.sql` +
+`20260529140000_doubles_elim_organizer_add_team.sql`):
+- `tournaments.status` CHECK expanded to add `'registration_open'` between `setup` and
+  `ongoing`. Default still `'setup'` so the manual flow is untouched.
+- Two partial UNIQUE indexes on `teams(tournament_id, player1_user_id)` and
+  `teams(tournament_id, player2_user_id)` WHERE NOT NULL — a profile cannot occupy two
+  slots in the same tournament. Legacy text-only teams stay unaffected (player_user_ids
+  are NULL there).
+- Helper SECURITY DEFINER function `dupr_doubles_with_fallback(profile_id) → (rating, is_approx)`
+  mirrors the seedFromDupr.ts singles-fallback policy so the RPCs share one definition.
+
+**RPCs** (all SECURITY DEFINER, GRANT EXECUTE TO authenticated):
+- `register_team_for_doubles_elimination(tournament_id, partner_user_id, team_name DEFAULT NULL)`
+  — `auth.uid()` = player1. Validates status, capacity, dedupe (both players), DUPR
+  presence + range. Computes dupr_avg + seed_source. Returns `{success, team_id, dupr_avg,
+  seed_source, count, capacity}` or `{success: false, error: '<CODE>'}`.
+- `cancel_doubles_elimination_team_registration(tournament_id)` — caller deletes their
+  own team row (matches either player slot). Only valid during `registration_open`.
+- `organizer_remove_team_from_doubles_elimination(tournament_id, team_id)` — creator-only,
+  during `registration_open`. Drops the team row regardless of who's on it. Distinct
+  from cancel above which is self-service.
+- `organizer_add_team_to_doubles_elimination(tournament_id, p1_user_id, p2_user_id, team_name DEFAULT NULL)`
+  — creator-only. Same dedupe + DUPR + range gates as `register_team_*` but pairs two
+  arbitrary players (offline sign-up, BTC vouches for ghost partner, etc.).
+- `close_doubles_elimination_registration(tournament_id)` — creator-only. Requires
+  `count == capacity`. Assigns seeds 1..N by `dupr_avg_rating DESC NULLS LAST, team_name`
+  (mirrors the auto-seed UI order). Flips status to `ongoing`. Frontend still calls
+  `generateBracket(strategy='manual')` after this RPC so R1 matches read consistent seeds.
+
+**Error codes returned + localized** (12 + 3 added in E.5):
+`AUTH_REQUIRED, INVALID_PARTNER, INVALID_PLAYERS, SAME_PLAYER, TOURNAMENT_NOT_FOUND,
+REGISTRATION_CLOSED, NOT_DUPR_TOURNAMENT, TOURNAMENT_FULL, ALREADY_REGISTERED,
+MISSING_DUPR, OUT_OF_RANGE, NOT_OWNER, NOT_REGISTRATION_OPEN, NOT_FULL, TEAM_NOT_FOUND`.
+
+**Frontend hook** (`src/hooks/useDoublesElimination.ts`):
+- `TournamentStatus` extended with `'registration_open'`.
+- `createTournament`'s `duprOptions` gains optional `initialStatus`; post-RPC UPDATE
+  pattern same as existing DUPR field patches.
+- 5 new RPC wrappers returned from the hook: `registerTeam`, `cancelTeamRegistration`,
+  `organizerAddTeam`, `organizerRemoveTeam`, `closeRegistration`. All decode the
+  `{success, error, ...}` JSON envelope and surface a flat result.
+
+**Registration UI** (`src/components/tournament/DoublesEliminationRegistrationSection.tsx`,
+~770 lines):
+- Mounted on `DoublesEliminationView` when `tournament.status === 'registration_open'`
+  via a status-aware section that swaps the regular bracket Tabs.
+- `ProgressCard` — registered / capacity + progress bar, full-state copy.
+- Conditional center surface (top to bottom checks):
+    1. `isOrganizer` → info notice ("Bạn là BTC — quản lý danh sách bên dưới") +
+       `<OrganizerAddTeamPanel>` collapsed button → expand to inline form with two
+       `<PlayerSearchSlot>` components + optional team_name + Add button.
+    2. not signed in → "Sign in to register".
+    3. signed in but `!conn?.ssoConnected` → warn card with `<DuprConnectButton>`.
+    4. user has a team → `<MyRegistrationCard>` with Cancel button.
+    5. tournament full → "Waiting for organizer" notice.
+    6. otherwise → `<RegistrationForm>` (DuprUserSearch dropdown + team_name).
+- `RegisteredTeamsList` shows per-player DUPR pills via `usePlayerDuprRatings(teams)` hook
+  (one round-trip fetch of profiles keyed on sorted user_id set). Format:
+  `CM10 [3.57] / Henry Le [3.42]` with `avg 3.50` second line; `*` suffix on per-player
+  pill when rating came from singles fallback. Organizer sees a `Trash2` delete button
+  per row that calls `organizerRemoveTeam` after window.confirm.
+- Organizer-only "Đóng đăng ký + tạo bracket" button rendered once at capacity; calls
+  `closeRegistration` then `generateBracket(strategy='manual')`.
+- `localizeError(code, vi)` maps all 15 error codes to VI/EN strings.
+
+**types.ts** — manual patches for status string union + 5 new RPCs. Full regen still
+out of scope because Supabase typegen ripples 66 pre-existing dynamic-key errors.
+
+### What's NOT in Sprint E (intentional next-conversation work)
+
+- Waitlist when capacity reached but more teams want in.
+- Partner-invite flow (player1 invites player2 to a team; player2 confirms before the
+  team row is created — current RPC binds both immediately).
+- Registration deadline / auto-close at a fixed timestamp.
+- Notifications when a slot opens (cancel) — push to anyone on a waitlist.
+- Payment gate at registration (DUPR-gated paid events).
+- Bracket re-seed after manual remove + manual add (currently seeds are only computed
+  at `close_doubles_elimination_registration`; if BTC removes + adds mid-flow before
+  closing, the next close call still recomputes correctly).
+- Profile gender + birth_year migration to enable mens/womens + age-bracket filter
+  (carries from Sprint D outstanding ideas — no progress in E).
+- DUPR delta preview on scoring (still deferred from Sprint D outstanding).
+
+### Known caveats / things to remember in next conversation
+
+- Migration uses `NOT VALID` for the `team_count >= 40` check. If a future migration
+  ever wants to validate it (e.g. once all legacy <40 tournaments are archived), run
+  `ALTER TABLE … VALIDATE CONSTRAINT …`. Until then ALL existing rows that are <40 keep
+  working as `ongoing`/`completed`; only NEW inserts are blocked.
+- `Tournament.rating_source` is lowercase `'self' | 'dupr' | 'either'`. The
+  `skill_rating_system` enum is uppercase `'DUPR'`. Mixing them caused Sprint B's 22P02.
+  Comments in migration warn about it.
+- The 2 existing 32-team tournaments (`dupr-test-32` was deleted; legacy
+  `Giải Pickleball Xuân 2026` share_id `jezbma37` remains) are unaffected by the floor
+  change.
+- `OrganizerAddTeamPanel` and `RegistrationForm` use a shared `<PlayerSearchSlot>`
+  pattern but each has its own state. Don't accidentally lift state above when adding
+  features like waitlist (it would couple BTC operations to viewer state).
+- `usePlayerDuprRatings` invalidates only on the set of user_ids changing (stable key).
+  If profile DUPR updates while the page is open the list won't refresh until softReload
+  runs (cancel/add team, the realtime channels don't poll profiles).
+
+---
+
 ## 5. SEO Sprints (đã ship) — xem docs/seo-audit-2026-05-28.md
 
 ### Helpers mới (reusable cho future handlers) — `functions/_lib/utils.ts`
@@ -288,8 +424,10 @@ Không có public Indexing API cho ranking/blog (chỉ JobPosting/BroadcastEvent
 ---
 
 ## 9. Outstanding / next ideas (chưa làm)
-- **Test Sprint D Doubles Elimination** live with the dupr-test-32 fixture (scoring
-  page submit DUPR end-to-end — needs ≥1 R1 match with 4 valid DUPR IDs).
+- **Sprint E follow-ups**: waitlist, partner-invite confirmation, registration deadline
+  auto-close cron, notifications on slot opens, paid registration.
+- **Test Sprint D Doubles Elimination** live with a fresh fixture (scoring page submit
+  DUPR end-to-end — needs ≥1 R1 match with 4 valid DUPR IDs).
 - **Test Sprint C Mexicano** live (cần social event fixtures)
 - **profiles.gender + birth_year** migration → enable mens/womens + age-bracket filter trên Vietnam leaderboard (hiện chỉ doubles/singles)
 - **dupr-friend-suggest** cron (social-graph-ranker) — chỉ build khi connected users > 5k
