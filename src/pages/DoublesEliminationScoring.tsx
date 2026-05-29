@@ -520,6 +520,9 @@ export default function DoublesEliminationScoring() {
     }
 
     toast({ title: tx.matchEnded });
+    // DUPR Phase 2 (2026-05-29). Attempt submit BEFORE navigation so any
+    // error toast is seen on the scoring page.
+    await tryDuprSubmit();
     navigate(`/tools/doubles-elimination/${tournament?.share_id}`);
     setShowEndDialog(false);
   };
@@ -1132,6 +1135,14 @@ export default function DoublesEliminationScoring() {
               <div style={{ fontSize: 13.5, color: 'var(--tl-fg-2)', marginTop: 6 }}>
                 {tx.won(match.winner_id === match.team_a_id ? teamA.team_name : teamB.team_name)}
               </div>
+              {/* DUPR Phase 2 (2026-05-29). Submit status badge — visible only after a submit attempt. */}
+              {(match.dupr_submitted || match.dupr_submit_error) && (
+                <div style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 'var(--tl-radius)', background: match.dupr_submitted ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.10)', border: '1px solid ' + (match.dupr_submitted ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.25)'), fontSize: 12, color: match.dupr_submitted ? 'var(--tl-green)' : 'var(--tl-live)', fontFamily: 'Geist Mono, ui-monospace, monospace' }}>
+                  {match.dupr_submitted
+                    ? (language === 'vi' ? 'DUPR ✓ ' + (match.dupr_match_code ?? '') : 'DUPR ✓ ' + (match.dupr_match_code ?? ''))
+                    : (language === 'vi' ? 'DUPR ✕ ' : 'DUPR ✕ ') + (match.dupr_submit_error ?? '')}
+                </div>
+              )}
             </div>
           )}
 

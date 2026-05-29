@@ -839,6 +839,10 @@ export type Database = {
           dest_loser: Json | null
           dest_winner: Json | null
           display_order: number
+          dupr_match_code: string | null
+          dupr_submit_error: string | null
+          dupr_submitted: boolean
+          dupr_submitted_at: string | null
           games: Json | null
           games_won_a: number | null
           games_won_b: number | null
@@ -868,6 +872,10 @@ export type Database = {
           dest_loser?: Json | null
           dest_winner?: Json | null
           display_order: number
+          dupr_match_code?: string | null
+          dupr_submit_error?: string | null
+          dupr_submitted?: boolean
+          dupr_submitted_at?: string | null
           games?: Json | null
           games_won_a?: number | null
           games_won_b?: number | null
@@ -897,6 +905,10 @@ export type Database = {
           dest_loser?: Json | null
           dest_winner?: Json | null
           display_order?: number
+          dupr_match_code?: string | null
+          dupr_submit_error?: string | null
+          dupr_submitted?: boolean
+          dupr_submitted_at?: string | null
           games?: Json | null
           games_won_a?: number | null
           games_won_b?: number | null
