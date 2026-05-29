@@ -354,3 +354,10 @@ verify_jwt = false
 # No JWT — anonymous browsers + report-uri have no auth, by design.
 [functions.log-client-event]
 verify_jwt = false
+
+# Telegram alert dispatcher — scanned every ~10 min by an external cron
+# (Cloudflare Worker or supabase scheduled function). Sends MarkdownV2
+# messages to TELEGRAM_CHAT_ID when an error fingerprint exceeds
+# threshold within the window.
+[functions.errors-telegram-alert]
+verify_jwt = false
