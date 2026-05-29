@@ -246,7 +246,7 @@ export const EndedLivestreamSEO = ({
             {/* All livestreams link */}
             <li>
               <Link
-                to="/livestream"
+                to="/live"
                 className="text-foreground-secondary hover:text-primary hover:underline"
               >
                 {language === "vi" ? "← Xem tất cả livestream" : "← View all livestreams"}

@@ -278,20 +278,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // ─── 1f. SEO audit batch 8 — /feed?tab=* → /feed canonical strip.
-  //       renderFeed() ignores the ?tab= query string and returns the
-  //       same HTML for /feed, /feed?tab=trending, /feed?tab=for-you.
-  //       SEOnaut crawls the query variant separately and flags it as
-  //       'Non-canonical in sitemap' + 'Missing hreflang self-reference'
-  //       because the rendered canonical / hreflang point to /feed
-  //       without the query. Drop the query on the redirect so both
-  //       crawler and sitemap see one canonical surface.
-  if (url.pathname === "/feed" && url.searchParams.has("tab")) {
-    return secureRedirect(`https://${url.hostname}/feed`, 301);
-  }
-  if (url.pathname === "/vi/feed" && url.searchParams.has("tab")) {
-    return secureRedirect(`https://${url.hostname}/vi/feed`, 301);
-  }
+  // ─── 1f. (batch 9 follow-up) /feed?tab=* redirect REMOVED.
+  //       Batch 8 redirected /feed?tab=trending → /feed to silence
+  //       SEOnaut's 'Non-canonical in sitemap' (2 URLs). After the
+  //       Ahrefs auto-crawl revealed the redirect was breaking SPA
+  //       deep-linking for tab state (useFeedTab.ts uses
+  //       useSearchParams to read ?tab= on cold load), we removed
+  //       it. The canonical that renderFeed() emits is /feed without
+  //       the query, which is enough for Google — the SEOnaut
+  //       warning was a false positive on a feature that's expected
+  //       to deep-link.
 
   // ─── 1g. SEO audit batch 8 — /vi/ trailing slash collapses to /vi.
   //       renderHomeVi() emits canonical=/vi (no trailing slash) and

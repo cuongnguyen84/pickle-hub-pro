@@ -93,7 +93,7 @@ export function ClubCard({
 
       {creatorSlug && creatorDisplayName && (
         <Link
-          to={`/u/${creatorSlug}`}
+          to={`/nguoi-choi/${creatorSlug}`}
           className="text-xs text-muted-foreground hover:text-foreground hover:underline"
           style={{ textDecoration: "none" }}
         >

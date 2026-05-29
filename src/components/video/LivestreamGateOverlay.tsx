@@ -8,7 +8,7 @@ interface LivestreamGateOverlayProps {
 
 export function LivestreamGateOverlay({ livestreamId }: LivestreamGateOverlayProps) {
   const { t } = useI18n();
-  const redirectPath = `/livestream/${livestreamId}`;
+  const redirectPath = `/live/${livestreamId}`;
 
   return (
     <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-5 bg-black/80 backdrop-blur-md">

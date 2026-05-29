@@ -151,32 +151,31 @@ export function bilingualHreflang(
 }
 
 /**
- * SEO audit 2026-05-28 (batch 6) — single-canonical hreflang.
+ * Single-canonical hreflang — intentionally empty.
  *
- * Some routes (/live/:id, /watch/:id, /forum/post/:id) ship a single
- * page that the entire bilingual audience reads, with Vietnamese body
- * copy because ~95% of the audience is Vietnamese. There is no
- * distinct EN translation, only one canonical URL per resource.
+ * Iteration history:
  *
- * bilingualHreflang() emits both en + vi pointing to the same URL,
- * which trips SEOnaut's NewHreflangMismatchingLang reporter — the
- * self-referencing hreflang must match the page's html lang attribute.
- * When the page declares lang="vi" but the en hreflang URL equals the
- * page URL, SEOnaut sees "the self-reference lang is en but the page
- * is vi" and flags it. Same code path also triggers SEOnaut's
- * "Multiple languages reference" reporter on the same set.
+ *   Batch 6 (2026-05-28): emitted `vi` + `x-default` both pointing at
+ *   the same URL so the self-reference matched the page's html lang
+ *   attribute. Cleared SEOnaut's NewHreflangMismatchingLang and
+ *   NewMultipleLanguageReference flags.
  *
- * singleCanonicalHreflang() advertises only the actual content
- * language plus x-default, which matches the page's stated lang and
- * avoids the conflict — and is the pattern Google recommends for
- * single-canonical pages (see "Methods for indicating your alternate
- * page" in Search Central docs).
+ *   Batch 9 (2026-05-28, after Ahrefs auto-crawl): Ahrefs flagged
+ *   'Missing reciprocal hreflang (no return-tag)' and 'Page referenced
+ *   for more than one language in hreflang' on the same routes — a
+ *   self-only hreflang declares a translation that doesn't exist.
+ *   Google's docs make this explicit (Search Central, "Localized
+ *   versions of your pages"): if only one URL is indexed across all
+ *   locales, omit hreflang entirely. Returning "" satisfies SEOnaut
+ *   AND Ahrefs AND Google for /live/:id, /watch/:id, /forum/post/:id,
+ *   /tran-dau/:slug, /tournament/:slug, /org/:slug — all single-
+ *   canonical pages with one URL serving both locales via SPA toggle.
+ *
+ * The signature is kept stable so callers don't have to change; the
+ * function just now returns empty.
  */
-export function singleCanonicalHreflang(url: string, lang: "en" | "vi"): string {
-  return [
-    `<link rel="alternate" hreflang="${lang}" href="${url}"/>`,
-    `<link rel="alternate" hreflang="x-default" href="${url}"/>`,
-  ].join("\n");
+export function singleCanonicalHreflang(_url: string, _lang: "en" | "vi"): string {
+  return "";
 }
 
 /**

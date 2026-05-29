@@ -437,7 +437,7 @@ function StandingsTable({ standings, names, myProfileId, limit = 8 }: StandingsT
               <td style={{ padding: "8px 6px", fontFamily: "Geist Mono", color: "var(--tl-fg-3)" }}>{i + 1}</td>
               <td style={{ padding: "8px 6px" }}>
                 <Link
-                  to={`/u/${profileIdToSlug(r.player_id)}`}
+                  to={`/nguoi-choi/${profileIdToSlug(r.player_id)}`}
                   className="hover:underline"
                 >
                   {names[r.player_id] ?? "?"}

@@ -138,7 +138,7 @@ const post: BlogPost = {
             { text: "Free Pickleball Scoring Tool (Quick Tables)", path: "/tools/quick-tables" },
             { text: "How to Organize a Pickleball Tournament", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Pickleball Scoring Rules Explained", path: "/blog/pickleball-scoring-rules-guide" },
-            { text: "Luật Pickleball cơ bản (Vietnamese)", path: "/vi/blog/luat-pickleball-co-ban" }
+            { text: "Luật Pickleball cơ bản (Vietnamese)", path: "/blog/pickleball-rules-complete-guide" }
           ]
         }
       ],
@@ -160,7 +160,7 @@ const post: BlogPost = {
           heading: "Vì sao cần thêm một hướng dẫn Luật Pickleball nữa?",
           content: "Pickleball bùng nổ khắp châu Á. Riêng Việt Nam đã tăng từ vài nghìn người chơi năm 2023 lên hơn 500.000 vào đầu 2026. PPA Tour Asia đã tổ chức giải chuyên nghiệp tại Hà Nội, Bangkok, Singapore, Manila. Nhưng hầu hết rulebook tiếng Anh viết cho người Mỹ, và những tình huống gây tranh cãi ở giải châu Á — đặc biệt quanh luật kitchen và cơ chế giao bóng — cần giải thích rõ ràng hơn. Bài này tổng hợp luật 2026, kết thúc bằng 5 tình huống tranh cãi nhất ở PPA Tour Asia và cách xử lý đúng luật.",
           internalLinks: [
-            { text: "Luật Pickleball cơ bản (chi tiết tiếng Việt)", path: "/vi/blog/luat-pickleball-co-ban" }
+            { text: "Luật Pickleball cơ bản (chi tiết tiếng Việt)", path: "/blog/pickleball-rules-complete-guide" }
           ]
         },
         {
@@ -280,7 +280,7 @@ const post: BlogPost = {
             { text: "Công cụ chấm điểm Pickleball miễn phí (Quick Tables)", path: "/tools/quick-tables" },
             { text: "Hướng dẫn tổ chức giải Pickleball (tiếng Anh)", path: "/blog/how-to-organize-pickleball-tournament" },
             { text: "Luật tính điểm Pickleball (tiếng Anh)", path: "/blog/pickleball-scoring-rules-guide" },
-            { text: "Luật Pickleball cơ bản (tiếng Việt)", path: "/vi/blog/luat-pickleball-co-ban" }
+            { text: "Luật Pickleball cơ bản (tiếng Việt)", path: "/blog/pickleball-rules-complete-guide" }
           ]
         }
       ],

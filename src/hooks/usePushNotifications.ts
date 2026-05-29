@@ -80,12 +80,12 @@ export const usePushNotifications = () => {
     switch (entityType) {
       case 'organization':
         if (relatedId) {
-          navigate(`/livestream/${relatedId}`);
+          navigate(`/live/${relatedId}`);
         }
         break;
       case 'tournament':
         if (relatedId) {
-          navigate(`/livestream/${relatedId}`);
+          navigate(`/live/${relatedId}`);
         }
         break;
       default:

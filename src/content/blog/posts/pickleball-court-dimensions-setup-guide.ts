@@ -199,7 +199,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Số trên là spec; bài luật pickleball 2026 đầy đủ phân tích các lỗi, luật giao bóng, và các tình huống kitchen quyết định phần lớn trận đấu",
-              path: "/vi/blog/luat-pickleball-day-du",
+              path: "/blog/pickleball-rules-complete-guide",
             },
           ],
         },
@@ -210,7 +210,7 @@ const post: BlogPost = {
           internalLinks: [
             {
               text: "Nếu luật kitchen là khái niệm khó nội hoá nhất, bài luật pickleball đầy đủ đi qua từng tình huống lỗi kitchen kèm ví dụ",
-              path: "/vi/blog/luat-pickleball-day-du",
+              path: "/blog/pickleball-rules-complete-guide",
             },
           ],
         },

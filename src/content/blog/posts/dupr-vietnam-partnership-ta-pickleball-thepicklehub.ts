@@ -124,7 +124,7 @@ const post: BlogPost = {
           heading: "Người chơi Việt Nam có gì thay đổi (hôm nay)?",
           content: "Hôm nay chưa có gì thay đổi. Chưa có rollout. Chưa cần đăng ký. Chưa có tool mới để tải. Mục tiêu của giai đoạn 1 là thống nhất giá trị và mối quan hệ làm việc. Mục tiêu của bài viết này là để cộng đồng pickleball Việt Nam biết rằng cuộc trò chuyện đang diễn ra. Chi tiết giai đoạn 2 — tính năng nào ra mắt, khi nào, người chơi đăng ký thế nào — sẽ được công bố tại thời điểm giai đoạn đó được ký.",
           internalLinks: [
-            { text: "PPA Tour Asia 2026 — tour khu vực và cách người chơi Việt Nam đã kết nối với hệ thống pickleball toàn cầu", path: "/vi/blog/ppa-tour-asia-2026-complete-guide" }
+            { text: "PPA Tour Asia 2026 — tour khu vực và cách người chơi Việt Nam đã kết nối với hệ thống pickleball toàn cầu", path: "/vi/blog/ppa-tour-asia-2026-lich-thi-dau-tien-thuong" }
           ]
         },
         {
