@@ -233,17 +233,7 @@ export default defineConfig(({ mode }) => ({
   // (which use @playwright/test, not vitest) aren't wrongly collected.
   test: {
     include: ["src/**/*.test.{ts,tsx}"],
-    exclude: [
-      "node_modules/**",
-      "dist/**",
-      "tests/**",
-      "supabase/**",
-      // TODO(quality-gate): pre-existing rot on main, NOT introduced by the
-      // CI work — buildMatchDescription's score format + buildMatchSchema's
-      // eventStatus drifted away from these assertions. Re-enable once
-      // functions/_lib/render/match-seo.ts and this test are reconciled.
-      "src/lib/social/__tests__/match-seo.test.ts",
-    ],
+    exclude: ["node_modules/**", "dist/**", "tests/**", "supabase/**"],
     environment: "node",
   },
 }));
