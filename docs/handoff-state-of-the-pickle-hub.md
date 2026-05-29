@@ -191,7 +191,48 @@ Cả 6 sub-phase đã build. Mỗi spec chạy trong đúng 1 Playwright project
 
 **2C. Visual regression** ✅ (free, gated `VISUAL=1`) — `tests/visual.spec.ts` dùng `toHaveScreenshot`, baseline in-repo, mask vùng động. `npm run e2e:visual:update` để chụp baseline lần đầu rồi commit.
 
-**Secrets cần set trong GitHub Actions:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `SUPABASE_ACCESS_TOKEN` (deploy-guard). `TELEGRAM_*` đã có.
+**Secrets cần set trong GitHub Actions:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `SUPABASE_ACCESS_TOKEN` (deploy-guard). `TELEGRAM_*` đã có. **Đã set xong cả 4** (PyNaCl sealed-box qua GitHub API, 29/5/2026).
+
+---
+
+## 6b. Phase 3 — ĐÃ SHIP (29/5/2026)
+
+Quality gate nền + mở rộng coverage. Tất cả CI-safe: phần chưa có baseline (coverage, npm audit, bundle) là *report-only/advisory*; phần chắc pass (sitemap/hreflang, blog sync) là hard gate. Đã merge main qua PR #179, #180, #181.
+
+**3A. Static + unit quality gate** ✅ — `.github/workflows/quality.yml`: mỗi PR/push chạy `lint` (CHỈ file đổi) → `tsc --noEmit` → **Vitest (26 suite)** → `build` → coverage summary → bundle-size report. Telegram alert khi fail trên main.
+
+**3B. Blog 4-file sync guard** ✅ — `src/content/blog/__tests__/blog-sync.test.ts`: mọi slug trong `blogMetadata` PHẢI có `posts/<slug>.ts` + entry `BLOG_POST_META` (chặn bot-404 trap). Leg `vi_blog_posts` ở DB không check tĩnh được.
+
+**3C. Vitest mở rộng + coverage** ✅ — `src/lib/dupr/__tests__/seedFromDupr.test.ts` (rankBySeed/seedCoverage, mock supabase client). Coverage `@vitest/coverage-v8` *report-only* (text-summary, chưa đặt threshold). **Baseline 29/5: 86.92% statements.** Dep thêm qua `npm install --package-lock-only` (lockfile khớp, npm ci không vỡ).
+
+**3D. Sitemap + hreflang reciprocity** ✅ — `tests/seo.spec.ts` (chạy trong project `ssr-bot`): fetch `/sitemap.xml` động → mọi child sitemap 200 + urlset hợp lệ; blog song ngữ có hreflang en↔vi đối xứng + x-default. Verify prod → pass.
+
+**3E. Security** ✅ — `.github/workflows/security.yml`: `npm audit --audit-level=high` (advisory, vì vuln tồn đọng) + CodeQL JS/TS (kết quả ở Security tab). PR + push main + cron tuần.
+
+**3F. Bundle-size budget** ✅ — `scripts/check-bundle-size.mjs`: in bảng gzip JS sau build, advisory (chặn chỉ khi `BUNDLE_STRICT=1`, default `BUNDLE_BUDGET_KB=1800`). **Baseline 29/5: 1718.5 KB gz** (chunk nặng nhất `vendor-video` ~297KB, lazy-load).
+
+**Follow-up dời lại (không gấp):**
+- `match-seo.test.ts` đã được un-quarantine + sửa assertion lỗi thời (PR #180) — score parenthetical bị trim >155ch, eventStatus omit cho trận quá khứ. KHÔNG còn test nào bị quarantine.
+- Nợ lint ~267 lỗi (đa số `no-explicit-any`) — đóng băng, gate chỉ soi file đổi. Dọn dần rồi siết `npm run lint` toàn repo.
+- Bật `BUNDLE_STRICT=1` + `coverage.thresholds` khi muốn khóa regression.
+
+### Lệnh CI local (Phase 2+3)
+
+```bash
+npm run test                  # Vitest (26 suite, scope src/)
+npm run test -- --coverage    # + coverage summary
+npm run e2e:smoke             # Playwright Phase 1 (read-only, prod-safe)
+npm run e2e:auth              # 2A (cần mint env)
+npm run e2e:contract          # 2E
+npm run e2e:dupr              # 2B (DUPR_E2E=1, trỏ UAT)
+npm run e2e:visual:update     # 2C chụp baseline → commit
+npm run drift                 # 2F migration drift (advisory)
+node scripts/check-bundle-size.mjs   # 3F (sau npm run build)
+```
+
+### Workflows đang active (8)
+
+`quality.yml` · `playwright.yml` · `lighthouse.yml` · `security.yml` · `deploy-guard.yml` · `dupr-refresh.yml` · (legacy) `dupr-refresh`. Mọi fail trên main → Telegram `@Tphaisupport_bot`.
 
 ---
 
@@ -225,6 +266,21 @@ Edge functions trả flat snake_case (`data.match_code`, `data.hashed_match_code
 
 ### CSS containing block trap
 `backdrop-filter` (như `.tl-nav` có `blur(14px)`) tạo containing block cho `position: fixed` descendants. Modal qua React Portal vào `document.body` để escape.
+
+### Thêm dependency PHẢI update lockfile
+CI dùng `npm ci` (Cloudflare build + quality gate). Thêm dep vào `package.json` mà không update `package-lock.json` → `npm ci` fail toàn bộ. Dùng `npm install <pkg> --save-dev --package-lock-only` (cập nhật lockfile, không cần tải về). Bài học từ vụ `@lhci/cli` làm đỏ cả build lẫn CI.
+
+### Vitest chỉ scan `src/`
+`vite.config.ts` → `test.include = ["src/**/*.test.{ts,tsx}"]`, exclude `tests/` (Playwright). Unit test MỚI đặt trong `src/**` với đuôi `.test.ts`. ĐỪNG đặt `.spec.ts` trong `src/` (vitest sẽ nuốt) và đừng để vitest chạm `tests/` (Playwright `@playwright/test`).
+
+### Lint gate chỉ soi file đổi
+`quality.yml` lint diff `.ts/.tsx` thay đổi trong PR/push, KHÔNG lint toàn repo (nợ ~267 lỗi cũ). Code mới phải sạch lint; nợ cũ grandfather. Siết `npm run lint` toàn repo sau khi dọn nợ.
+
+### Migration drift = advisory
+`scripts/check-migration-drift.mjs` so với `schema_migrations`, nhưng dự án apply SQL trực tiếp (Management API) nên bảng đó under-report → ~83 false positive. Script exit 0 by default; `deploy-guard.yml` để `continue-on-error`. Bật `DRIFT_STRICT=1` chỉ sau khi reconcile ledger.
+
+### Lighthouse đo SPA, không phải prerender
+Lighthouse fetch bằng UA browser → nhận SPA chưa hydrate (seo ~0.66), KHÔNG phải bản prerender Googlebot thấy. Ngưỡng trong `.lighthouserc.json` calibrate theo baseline đó (seo≥0.6, CLS warn). Đừng nhầm điểm Lighthouse SEO với SEO thật.
 
 ---
 
@@ -299,6 +355,49 @@ curl -s -X POST -H "Authorization: Bearer $ANON" -H "Content-Type: application/j
 curl -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" \
   "https://www.thepicklehub.net/<path>" | grep -E "<title>|hreflang"
 ```
+
+---
+
+## 9b. CI/CD roadmap — gắn CI vào feature tiếp theo
+
+### A. Checklist CI khi ship từng loại feature
+
+Khi thêm feature mới, bám đúng "người gác" tương ứng để không vỡ pipeline / không lọt regression:
+
+| Loại feature | CI cần làm |
+|---|---|
+| **Edge function mới** | deploy-guard tự deploy khi push main. Thêm contract test Zod (kiểu 2E) trong `src/contracts/` + `tests/contract/`. Set `verify_jwt` đúng trong `config.toml`. |
+| **Migration mới** | Apply qua Management API (xem §9). drift check là advisory — không chặn. |
+| **Blog post mới** | `blog-sync.test.ts` tự bắt thiếu `posts/` hoặc `BLOG_POST_META`. NHỚ leg thứ 4 `vi_blog_posts` (DB, chưa auto-check) + request indexing. |
+| **Page/route mới** | Thêm path vào `ROUTES` trong `smoke.spec.ts`. Auth-gated → thêm vào `auth.spec.ts`. Song ngữ → thêm hreflang assertion vào `seo.spec.ts`. |
+| **Logic thuần mới (src/lib, functions/_lib)** | Thêm `*.test.ts` trong `src/**` — quality gate tự chạy + tính coverage. |
+| **DUPR mutation flow** | Mở rộng `dupr-e2e.spec.ts` (gated). Thêm/giữ contract schema khớp edge fn. |
+| **Dependency mới** | LUÔN `npm install <pkg> --package-lock-only` để lockfile khớp (xem gotcha §7). |
+
+### B. Phase 4 — CI/CD candidates (đề xuất, theo ưu tiên)
+
+**4A. Branch protection trên `main`** ⭐ — hiện merge KHÔNG bị chặn bởi CI (em merge được vì không có protection). Bật required status checks (`quality`, `playwright`) + require PR → ngăn merge code đỏ. Effort ~15 phút, impact cao nhất.
+
+**4B. Member-log → opponent-confirm E2E** ⭐ — leg còn thiếu của 2B. Làm khi RPC `log_club_match`/`confirm_club_match` ship: member A log → B confirm → admin submit, trên UAT, có cleanup.
+
+**4C. Khóa regression baseline** — bật `coverage.thresholds` (~85% statements) + `BUNDLE_STRICT=1` (budget ~1850KB). Giờ là report-only; flip on khi muốn chặn tụt.
+
+**4D. Dependabot / Renovate** — tự động PR cập nhật dep + chạy qua quality+security gate. Giảm nợ audit dần.
+
+**4E. Visual baseline** — chụp `npm run e2e:visual:update` + commit snapshots → bật 2C thành gate thật (hiện gated `VISUAL=1`).
+
+**4F. Mobile (Capacitor) build check** — CI job `npx cap sync` + build iOS/Android shell để bắt vỡ native trước khi release store.
+
+**4G. Lint debt cleanup** — dọn ~267 `no-explicit-any` theo module, rồi siết `quality.yml` sang `npm run lint` toàn repo.
+
+**4H. DUPR partner API canary (cron)** — chạy `dupr-e2e` theo lịch trên UAT để bắt DUPR đổi API trước khi user gặp.
+
+### C. CD (deploy) cải thiện
+
+- **Telegram báo deploy thành công** trên main (giờ chỉ báo khi FAIL).
+- **Auto IndexNow + GSC ping** sau khi blog deploy xong (giờ thủ công — xem checklist `CLAUDE.md`).
+- **Auto-deploy edge fn** đã có (deploy-guard); cân nhắc thêm smoke test hậu-deploy gọi thẳng edge fn vừa deploy.
+- **Rollback**: legacy `.legacy.tsx` 14 ngày là thủ công — có thể script hoá revert nhanh.
 
 ---
 
