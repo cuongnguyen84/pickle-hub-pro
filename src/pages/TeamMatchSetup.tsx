@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, LogIn } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Info, Users, Gamepad2, Zap, Trophy, LogIn, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamMatch, CreateTournamentInput } from '@/hooks/useTeamMatch';
 import { GameTemplateEditor, GameTemplateItem, getDefaultTemplates } from '@/components/teamMatch/GameTemplateEditor';
@@ -130,6 +130,11 @@ export default function TeamMatchSetup() {
 
   const [hasDreambreaker, setHasDreambreaker] = useState(false);
 
+  // Team Match DUPR Phase 1
+  const [ratingSource, setRatingSource] = useState<'self' | 'dupr' | 'either'>('self');
+  const [minDupr, setMinDupr] = useState<string>('');
+  const [maxDupr, setMaxDupr] = useState<string>('');
+
   const [format, setFormat] = useState<'round_robin' | 'single_elimination' | 'rr_playoff'>('round_robin');
   const [playoffTeamCount, setPlayoffTeamCount] = useState(4);
   const [hasThirdPlaceMatch, setHasThirdPlaceMatch] = useState(false);
@@ -182,6 +187,9 @@ export default function TeamMatchSetup() {
       has_dreambreaker: effectiveDreambreaker,
       require_min_games_per_player: requireMinGames,
       has_third_place_match: format === 'single_elimination' ? hasThirdPlaceMatch : false,
+      rating_source: ratingSource,
+      min_dupr_rating: ratingSource !== 'self' && minDupr.trim() !== '' ? Number(minDupr) : null,
+      max_dupr_rating: ratingSource !== 'self' && maxDupr.trim() !== '' ? Number(maxDupr) : null,
       game_templates: templates.map(tpl => ({
         order_index: tpl.order_index,
         game_type: tpl.game_type,
@@ -507,6 +515,149 @@ export default function TeamMatchSetup() {
                     checked={requireMinGames}
                     onCheckedChange={setRequireMinGames}
                   />
+                </div>
+
+                {/* Team Match DUPR Phase 1 — rating source selector */}
+                <div className="space-y-3">
+                  <Label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Sparkles className="w-4 h-4" style={{ color: 'var(--tl-green)' }} />
+                    {language === 'vi' ? 'Nguồn trình độ / DUPR' : 'Rating source / DUPR'}
+                  </Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {([
+                      {
+                        v: 'self' as const,
+                        kicker: '01',
+                        title: language === 'vi' ? 'Tự khai' : 'Self-report',
+                        desc: language === 'vi' ? 'Không dùng DUPR.' : 'No DUPR.',
+                      },
+                      {
+                        v: 'dupr' as const,
+                        kicker: '02',
+                        title: language === 'vi' ? 'Dùng DUPR' : 'Use DUPR',
+                        desc: language === 'vi'
+                          ? 'Tự động đẩy kết quả từng ván lên DUPR.'
+                          : 'Auto-submit each game to DUPR.',
+                      },
+                      {
+                        v: 'either' as const,
+                        kicker: '03',
+                        title: language === 'vi' ? 'Ưu tiên DUPR' : 'Prefer DUPR',
+                        desc: language === 'vi'
+                          ? 'Ưu tiên DUPR, vẫn cho tự khai.'
+                          : 'Prefer DUPR, allow self-report.',
+                      },
+                    ]).map((opt) => {
+                      const selected = ratingSource === opt.v;
+                      return (
+                        <button
+                          key={opt.v}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => setRatingSource(opt.v)}
+                          style={{
+                            textAlign: 'left',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 6,
+                            padding: 14,
+                            borderRadius: 'var(--tl-radius)',
+                            border: `2px solid ${selected ? 'var(--tl-green)' : 'var(--tl-border)'}`,
+                            background: selected ? 'var(--tl-green-glow)' : 'var(--tl-bg)',
+                            cursor: 'pointer',
+                            transition: 'border-color 0.15s, background 0.15s',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'Geist Mono, ui-monospace, monospace',
+                              fontSize: 10.5,
+                              letterSpacing: '0.06em',
+                              color: selected ? 'var(--tl-green)' : 'var(--tl-fg-4)',
+                            }}
+                          >
+                            ◆ {opt.kicker}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: 'Instrument Serif, serif',
+                              fontStyle: 'italic',
+                              fontSize: 18,
+                              color: 'var(--tl-fg)',
+                            }}
+                          >
+                            {opt.title}
+                          </span>
+                          <span style={{ fontSize: 12, color: 'var(--tl-fg-3)', lineHeight: 1.4 }}>
+                            {opt.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {ratingSource !== 'self' && (
+                    <div
+                      style={{
+                        ...surfaceCard,
+                        padding: 16,
+                        background: 'var(--tl-green-glow)',
+                        borderColor: 'var(--tl-green)',
+                      }}
+                    >
+                      <div style={{ marginBottom: 10 }}>
+                        <span
+                          style={{
+                            fontFamily: 'Geist Mono, ui-monospace, monospace',
+                            fontSize: 10.5,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: 'var(--tl-green)',
+                          }}
+                        >
+                          ◆ {language === 'vi' ? 'Khoảng DUPR khuyến nghị (tùy chọn)' : 'Recommended DUPR range (optional)'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label htmlFor="minDupr" style={{ fontSize: 12 }}>
+                            {language === 'vi' ? 'Tối thiểu' : 'Min'}
+                          </Label>
+                          <Input
+                            id="minDupr"
+                            type="number"
+                            step="0.01"
+                            min={2}
+                            max={8}
+                            placeholder="3.00"
+                            value={minDupr}
+                            onChange={(e) => setMinDupr(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="maxDupr" style={{ fontSize: 12 }}>
+                            {language === 'vi' ? 'Tối đa' : 'Max'}
+                          </Label>
+                          <Input
+                            id="maxDupr"
+                            type="number"
+                            step="0.01"
+                            min={2}
+                            max={8}
+                            placeholder="4.50"
+                            value={maxDupr}
+                            onChange={(e) => setMaxDupr(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 12, color: 'var(--tl-fg-3)', margin: '10px 0 0', lineHeight: 1.45 }}>
+                        {language === 'vi'
+                          ? 'Liên kết VĐV với tài khoản DUPR ở phần roster để hệ thống tự đẩy kết quả từng ván lên DUPR khi chấm điểm.'
+                          : 'Link players to DUPR accounts in the roster so each scored game is auto-submitted to DUPR.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

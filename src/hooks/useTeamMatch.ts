@@ -26,6 +26,10 @@ export interface TeamMatchTournament {
   updated_at: string;
   group_count: number | null;
   top_per_group: number | null;
+  // Team Match DUPR Phase 1
+  rating_source?: 'self' | 'dupr' | 'either';
+  min_dupr_rating?: number | null;
+  max_dupr_rating?: number | null;
   // Joined from profiles
   creator_display_name?: string;
 }
@@ -52,6 +56,10 @@ export interface CreateTournamentInput {
   require_min_games_per_player: boolean;
   has_third_place_match?: boolean;
   bracket_pairing_type?: 'random' | 'manual';
+  // Team Match DUPR Phase 1
+  rating_source?: 'self' | 'dupr' | 'either';
+  min_dupr_rating?: number | null;
+  max_dupr_rating?: number | null;
   game_templates: Omit<GameTemplate, 'id' | 'tournament_id'>[];
 }
 
@@ -183,6 +191,27 @@ export function useTeamMatch() {
       }
 
       const tournament = result.tournament as TeamMatchTournament;
+
+      // Team Match DUPR Phase 1 — post-RPC UPDATE (the quota RPC is left
+      // untouched, mirroring Sprint B/D). Only writes when organizer opted
+      // into DUPR; 'self' tournaments skip the round-trip entirely.
+      if (input.rating_source && input.rating_source !== 'self') {
+        const { error: duprErr } = await supabase
+          .from('team_match_tournaments')
+          .update({
+            rating_source: input.rating_source,
+            min_dupr_rating: input.min_dupr_rating ?? null,
+            max_dupr_rating: input.max_dupr_rating ?? null,
+          })
+          .eq('id', tournament.id);
+        if (duprErr) {
+          console.error('[useTeamMatch] dupr config update:', duprErr);
+        } else {
+          tournament.rating_source = input.rating_source;
+          tournament.min_dupr_rating = input.min_dupr_rating ?? null;
+          tournament.max_dupr_rating = input.max_dupr_rating ?? null;
+        }
+      }
 
       // Create game templates
       if (input.game_templates.length > 0) {

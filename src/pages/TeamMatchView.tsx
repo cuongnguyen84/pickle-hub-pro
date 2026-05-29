@@ -19,6 +19,7 @@ import { useTeamMatchMatches, useTeamMatchMatchManagement, TeamMatchMatch } from
 import { useTeamMatchStandings } from '@/hooks/useTeamMatchStandings';
 import { useTeamMatchGroups, useTeamMatchGroupManagement } from '@/hooks/useTeamMatchGroups';
 import { useAuth } from '@/hooks/useAuth';
+import { DuprRecommendationBanner } from '@/components/dupr/DuprRecommendationBanner';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -449,6 +450,11 @@ export default function TeamMatchView() {
           <h1 style={{ fontSize: 'clamp(28px, 4vw, 56px)' }}>
             <em className="tl-serif">{tournament.name}</em>
           </h1>
+          <DuprRecommendationBanner
+            ratingSource={tournament.rating_source}
+            minDupr={tournament.min_dupr_rating ?? null}
+            maxDupr={tournament.max_dupr_rating ?? null}
+          />
           <div
             style={{
               display: 'flex',
@@ -739,6 +745,8 @@ export default function TeamMatchView() {
           onOpenChange={(open) => !open && setScoringMatch(null)}
           match={scoringMatch}
           tournamentId={tournament.id}
+          tournamentName={tournament.name}
+          ratingSource={tournament.rating_source}
         />
 
         {(userTeam || isOwner) && lineupMatch && (

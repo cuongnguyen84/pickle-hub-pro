@@ -30,12 +30,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Plus, Trash2, Crown, Copy, Loader2, UserPlus, Check } from 'lucide-react';
+import { Users, Plus, Trash2, Crown, Copy, Loader2, UserPlus, Check, Search, X, Sparkles } from 'lucide-react';
 import { useTeamMatchTeam, useTeamMatchTeamManagement } from '@/hooks/useTeamMatchTeams';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/i18n';
+import { useDuprUserSearch, type DuprSearchHit } from '@/hooks/useDuprUserSearch';
 
 // ─── W2.4d shared tokens ─────────────────────────────────────────────────
 const surfaceCard: React.CSSProperties = {
@@ -112,10 +113,16 @@ export function TeamRosterManager({
   const { roster, isLoading } = useTeamMatchTeam(teamId);
   const { addRosterMember, isAddingMember, removeRosterMember } = useTeamMatchTeamManagement();
   const [showAddForm, setShowAddForm] = useState(false);
+  // Team Match DUPR Phase 1 — optional link to a ThePickleHub member (binds
+  // roster.user_id so games this player appears in can be submitted to DUPR).
+  const [memberSearchOpen, setMemberSearchOpen] = useState(false);
+  const [memberQuery, setMemberQuery] = useState('');
+  const [linkedUser, setLinkedUser] = useState<{ user_id: string; name: string; dupr: number | null } | null>(null);
   const [selectedPreviousMembers, setSelectedPreviousMembers] = useState<Set<string>>(new Set());
   const [isAddingFromPrevious, setIsAddingFromPrevious] = useState(false);
   const { language, t } = useI18n();
   const c = t.teamMatchComponents;
+  const { data: memberHits, isFetching: isSearchingMembers } = useDuprUserSearch(memberQuery, { limit: 8 });
 
   const txt = {
     listTitle: language === 'vi' ? 'Danh sách thành viên' : 'Member list',
@@ -233,8 +240,12 @@ export function TeamRosterManager({
         player_name: values.player_name,
         gender: values.gender,
         skill_level: values.skill_level,
+        user_id: linkedUser?.user_id,
       });
       form.reset();
+      setLinkedUser(null);
+      setMemberSearchOpen(false);
+      setMemberQuery('');
       setShowAddForm(false);
     } catch (error) {
       // Error handled in hook
@@ -618,6 +629,145 @@ export function TeamRosterManager({
                     onSubmit={form.handleSubmit(handleAddMember)}
                     style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
                   >
+                    {/* Team Match DUPR Phase 1 — optional DUPR member link */}
+                    <div style={{ position: 'relative' }}>
+                      <FormLabel style={{ ...fieldLabel, display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--tl-green)' }} />
+                        {language === 'vi' ? 'Liên kết DUPR (tùy chọn)' : 'Link DUPR (optional)'}
+                      </FormLabel>
+                      {linkedUser ? (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            marginTop: 6,
+                            padding: '6px 10px',
+                            background: 'var(--tl-green-glow)',
+                            border: '1px solid var(--tl-green)',
+                            borderRadius: 'var(--tl-radius)',
+                            fontSize: 13,
+                          }}
+                        >
+                          <Check className="h-4 w-4" style={{ color: 'var(--tl-green)', flexShrink: 0 }} />
+                          <span style={{ flex: 1, color: 'var(--tl-fg)' }}>{linkedUser.name}</span>
+                          {linkedUser.dupr != null && (
+                            <span
+                              style={{
+                                fontFamily: 'Geist Mono, ui-monospace, monospace',
+                                fontSize: 11,
+                                color: 'var(--tl-green)',
+                                fontVariantNumeric: 'tabular-nums',
+                                padding: '2px 6px',
+                                background: 'rgba(34,197,94,0.12)',
+                                borderRadius: 4,
+                              }}
+                            >
+                              DUPR {linkedUser.dupr.toFixed(2)}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            aria-label={language === 'vi' ? 'Bỏ liên kết' : 'Unlink'}
+                            onClick={() => {
+                              setLinkedUser(null);
+                              setMemberQuery('');
+                            }}
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--tl-fg-3)', display: 'flex', padding: 2 }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 6 }}>
+                            <Input
+                              placeholder={language === 'vi' ? 'Tìm member ThePickleHub…' : 'Search ThePickleHub member…'}
+                              value={memberQuery}
+                              onChange={(e) => { setMemberQuery(e.target.value); setMemberSearchOpen(true); }}
+                              onFocus={() => setMemberSearchOpen(true)}
+                              style={{ flex: 1 }}
+                            />
+                            <Search className="h-4 w-4" style={{ color: 'var(--tl-fg-3)', flexShrink: 0 }} />
+                          </div>
+                          {memberSearchOpen && memberQuery.trim().length >= 2 && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                top: 'calc(100% + 4px)',
+                                left: 0,
+                                right: 0,
+                                zIndex: 30,
+                                background: 'var(--tl-bg-elev)',
+                                border: '1px solid var(--tl-border)',
+                                borderRadius: 'var(--tl-radius)',
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                                padding: 6,
+                                maxHeight: 220,
+                                overflowY: 'auto',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 4,
+                              }}
+                            >
+                              {isSearchingMembers && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--tl-fg-3)', fontSize: 12, padding: 6 }}>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  {language === 'vi' ? 'Đang tìm…' : 'Searching…'}
+                                </div>
+                              )}
+                              {!isSearchingMembers && (memberHits?.hits ?? []).length === 0 && (
+                                <div style={{ color: 'var(--tl-fg-3)', fontSize: 12, padding: 6 }}>
+                                  {language === 'vi' ? 'Không tìm thấy member.' : 'No members found.'}
+                                </div>
+                              )}
+                              {(memberHits?.hits ?? []).map((hit: DuprSearchHit, idx: number) => {
+                                const canLink = hit.user_id != null;
+                                return (
+                                  <button
+                                    key={`${hit.user_id ?? hit.dupr_id ?? idx}`}
+                                    type="button"
+                                    disabled={!canLink}
+                                    onClick={() => {
+                                      if (!hit.user_id) return;
+                                      setLinkedUser({ user_id: hit.user_id, name: hit.full_name, dupr: hit.doubles_rating });
+                                      form.setValue('player_name', hit.full_name, { shouldValidate: true });
+                                      setMemberSearchOpen(false);
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 8,
+                                      padding: '8px 10px',
+                                      border: '1px solid var(--tl-border)',
+                                      borderRadius: 'var(--tl-radius)',
+                                      background: canLink ? 'var(--tl-bg)' : 'var(--tl-surface)',
+                                      cursor: canLink ? 'pointer' : 'not-allowed',
+                                      opacity: canLink ? 1 : 0.55,
+                                      textAlign: 'left',
+                                    }}
+                                    title={!canLink ? (language === 'vi' ? 'Member chưa có tài khoản — không thể liên kết.' : 'No account — cannot link.') : undefined}
+                                  >
+                                    <span style={{ flex: 1, fontSize: 13, color: 'var(--tl-fg)' }}>{hit.full_name}</span>
+                                    {hit.doubles_rating != null && (
+                                      <span style={{ fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 11, color: 'var(--tl-green)', fontVariantNumeric: 'tabular-nums' }}>
+                                        D {hit.doubles_rating.toFixed(2)}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <p style={{ fontSize: 11.5, color: 'var(--tl-fg-3)', margin: '6px 0 0', lineHeight: 1.4 }}>
+                            {language === 'vi'
+                              ? 'Liên kết để kết quả ván đẩy lên DUPR. Bỏ qua nếu nhập tay.'
+                              : 'Link so games push to DUPR. Skip to type manually.'}
+                          </p>
+                        </>
+                      )}
+                    </div>
+
                     <FormField
                       control={form.control}
                       name="player_name"
@@ -697,6 +847,9 @@ export function TeamRosterManager({
                         className="tl-btn"
                         onClick={() => {
                           form.reset();
+                          setLinkedUser(null);
+                          setMemberSearchOpen(false);
+                          setMemberQuery('');
                           setShowAddForm(false);
                         }}
                         style={{ flex: 1, justifyContent: 'center' }}

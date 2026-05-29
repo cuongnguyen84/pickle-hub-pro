@@ -48,6 +48,11 @@ export interface TeamMatchGame {
   status: string;
   created_at: string;
   updated_at: string;
+  // Team Match DUPR Phase 1
+  dupr_submitted?: boolean | null;
+  dupr_match_code?: string | null;
+  dupr_submitted_at?: string | null;
+  dupr_submit_error?: string | null;
 }
 
 // Hook for fetching matches of a tournament

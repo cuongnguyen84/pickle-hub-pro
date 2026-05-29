@@ -5272,6 +5272,10 @@ export type Database = {
       team_match_games: {
         Row: {
           created_at: string | null
+          dupr_match_code: string | null
+          dupr_submit_error: string | null
+          dupr_submitted: boolean
+          dupr_submitted_at: string | null
           display_name: string | null
           game_type: Database["public"]["Enums"]["team_game_type"]
           id: string
@@ -5290,6 +5294,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          dupr_match_code?: string | null
+          dupr_submit_error?: string | null
+          dupr_submitted?: boolean
+          dupr_submitted_at?: string | null
           display_name?: string | null
           game_type: Database["public"]["Enums"]["team_game_type"]
           id?: string
@@ -5308,6 +5316,10 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          dupr_match_code?: string | null
+          dupr_submit_error?: string | null
+          dupr_submitted?: boolean
+          dupr_submitted_at?: string | null
           display_name?: string | null
           game_type?: Database["public"]["Enums"]["team_game_type"]
           id?: string
@@ -5642,6 +5654,9 @@ export type Database = {
         Row: {
           bracket_pairing_type: string | null
           created_at: string | null
+          max_dupr_rating: number | null
+          min_dupr_rating: number | null
+          rating_source: string
           created_by: string | null
           dreambreaker_game_type:
             | Database["public"]["Enums"]["team_game_type"]
@@ -5668,6 +5683,9 @@ export type Database = {
         Insert: {
           bracket_pairing_type?: string | null
           created_at?: string | null
+          max_dupr_rating?: number | null
+          min_dupr_rating?: number | null
+          rating_source?: string
           created_by?: string | null
           dreambreaker_game_type?:
             | Database["public"]["Enums"]["team_game_type"]
@@ -5694,6 +5712,9 @@ export type Database = {
         Update: {
           bracket_pairing_type?: string | null
           created_at?: string | null
+          max_dupr_rating?: number | null
+          min_dupr_rating?: number | null
+          rating_source?: string
           created_by?: string | null
           dreambreaker_game_type?:
             | Database["public"]["Enums"]["team_game_type"]

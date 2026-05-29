@@ -8,9 +8,11 @@ import {
 import { Loader2, Trophy, RotateCcw, Check, Plus, Minus, Radio } from 'lucide-react';
 import { useTeamMatchMatch, useTeamMatchMatchManagement, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchMatchRealtime } from '@/hooks/useTeamMatchRealtime';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useI18n } from '@/i18n';
+import { useToast } from '@/hooks/use-toast';
+import { submitTeamMatchGame } from '@/lib/dupr/submitTeamMatchGame';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +29,9 @@ interface TeamMatchScoringSheetProps {
   onOpenChange: (open: boolean) => void;
   match: TeamMatchMatch | null;
   tournamentId: string;
+  /** Team Match DUPR Phase 1 — needed to auto-submit games to DUPR. */
+  tournamentName?: string;
+  ratingSource?: 'self' | 'dupr' | 'either';
 }
 
 // ─── W2.4c shared tokens ─────────────────────────────────────────────────
@@ -82,10 +87,14 @@ export function TeamMatchScoringSheet({
   onOpenChange,
   match,
   tournamentId,
+  tournamentName,
+  ratingSource = 'self',
 }: TeamMatchScoringSheetProps) {
   const { games, isLoading } = useTeamMatchMatch(match?.id);
   const { updateGameScore, updateMatchResult, isUpdatingScore, isUpdatingResult } = useTeamMatchMatchManagement();
   const { language } = useI18n();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Subscribe to realtime updates for this match
   useTeamMatchMatchRealtime(match?.id);
@@ -262,6 +271,50 @@ export function TeamMatchScoringSheet({
         winnerId,
         tournamentId,
       });
+
+      // Team Match DUPR Phase 1 — best-effort submit this game to DUPR.
+      // Soft-fail: errors are captured into team_match_games.dupr_submit_error
+      // by the helper and never block scoring. Only fires when the organizer
+      // opted into DUPR and the game has a winner.
+      if (
+        ratingSource !== 'self' &&
+        localScoreA !== localScoreB &&
+        !currentGame.dupr_submitted
+      ) {
+        try {
+          const outcome = await submitTeamMatchGame({
+            gameId: currentGame.id,
+            gameType: currentGame.game_type,
+            scoringType: currentGame.scoring_type,
+            scoreA: localScoreA,
+            scoreB: localScoreB,
+            lineupRosterIdsA: currentGame.lineup_team_a ?? [],
+            lineupRosterIdsB: currentGame.lineup_team_b ?? [],
+            ratingSource,
+            tournamentName: tournamentName ?? 'ThePickleHub Team Match',
+            bracketLabel: currentGame.display_name || GAME_TYPE_LABELS[currentGame.game_type] || 'MLP Team Match',
+            alreadySubmitted: !!currentGame.dupr_submitted,
+          });
+          if (outcome.kind === 'ok') {
+            toast({
+              title: language === 'vi' ? 'Đã đẩy lên DUPR' : 'Submitted to DUPR',
+              description: outcome.matchCode
+                ? (language === 'vi' ? `Mã trận: ${outcome.matchCode}` : `Match code: ${outcome.matchCode}`)
+                : undefined,
+            });
+          } else if (outcome.kind === 'error') {
+            toast({
+              title: language === 'vi' ? 'Không đẩy được lên DUPR' : 'DUPR submit failed',
+              description: outcome.message.slice(0, 160),
+              variant: 'destructive',
+            });
+          }
+          // kind === 'skipped' → silent (e.g. players not linked to DUPR)
+          queryClient.invalidateQueries({ queryKey: ['team-match-games', match.id] });
+        } catch (duprErr) {
+          console.warn('[TeamMatchScoringSheet] DUPR submit:', duprErr);
+        }
+      }
 
       // Move to next game if not the last one and current game completed
       if (localScoreA !== localScoreB && selectedGameIndex < games.length - 1) {
@@ -746,15 +799,44 @@ export function TeamMatchScoringSheet({
                         }}
                       >
                         <span style={fieldLabel}>{txt.gameShort} {index + 1}</span>
-                        <span
-                          style={{
-                            ...statusPillBase,
-                            background: 'var(--tl-surface)',
-                            color: 'var(--tl-fg-2)',
-                          }}
-                        >
-                          {GAME_TYPE_LABELS[game.game_type] || game.game_type}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {ratingSource !== 'self' && (() => {
+                            const decided = game.score_a !== game.score_b && (game.score_a > 0 || game.score_b > 0);
+                            if (game.dupr_submitted) {
+                              return (
+                                <span style={{ ...statusPillBase, background: 'var(--tl-green-glow)', color: 'var(--tl-green)' }}
+                                  title={game.dupr_match_code ? `DUPR ${game.dupr_match_code}` : 'DUPR'}>
+                                  DUPR ✓
+                                </span>
+                              );
+                            }
+                            if (game.dupr_submit_error) {
+                              return (
+                                <span style={{ ...statusPillBase, background: 'rgba(255,65,54,0.10)', color: 'var(--tl-live)' }}
+                                  title={game.dupr_submit_error}>
+                                  DUPR ✕
+                                </span>
+                              );
+                            }
+                            if (decided) {
+                              return (
+                                <span style={{ ...statusPillBase, background: 'var(--tl-surface)', color: 'var(--tl-fg-3)' }}>
+                                  DUPR ⋯
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                          <span
+                            style={{
+                              ...statusPillBase,
+                              background: 'var(--tl-surface)',
+                              color: 'var(--tl-fg-2)',
+                            }}
+                          >
+                            {GAME_TYPE_LABELS[game.game_type] || game.game_type}
+                          </span>
+                        </div>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
