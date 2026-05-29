@@ -42,9 +42,11 @@ export default defineConfig({
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 ThePickleHub-Playwright-CI",
   },
   projects: [
+    // ── Phase 1 (read-only, always-on) ────────────────────────────────────
     {
       name: "desktop-chromium",
       use: { ...devices["Desktop Chrome"] },
+      testMatch: /smoke\.spec\.ts/,
     },
     {
       name: "mobile-chromium",
@@ -57,6 +59,34 @@ export default defineConfig({
       // requires a "browser" — we still spawn Chromium per project.
       use: { ...devices["Desktop Chrome"] },
       testMatch: /seo\.spec\.ts/,
+    },
+
+    // ── Phase 2A — auth-gated flows (self-skips without mint env) ──────────
+    {
+      name: "auth",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /auth\.spec\.ts/,
+    },
+
+    // ── Phase 2E — edge function contract tests (request-only) ─────────────
+    {
+      name: "contract",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /contract\/edge-contracts\.spec\.ts/,
+    },
+
+    // ── Phase 2B — DUPR submit E2E (self-skips unless DUPR_E2E=1) ──────────
+    {
+      name: "dupr-e2e",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /dupr-e2e\.spec\.ts/,
+    },
+
+    // ── Phase 2C — visual regression (self-skips unless VISUAL=1) ──────────
+    {
+      name: "visual",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /visual\.spec\.ts/,
     },
   ],
 });

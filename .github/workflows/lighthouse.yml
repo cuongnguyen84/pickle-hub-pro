@@ -1,0 +1,80 @@
+name: Lighthouse CI
+
+# Performance + accessibility regression gate. Runs against the deployed
+# target (PR preview when available, else production). Config + thresholds
+# live in .lighthouserc.json. accessibility / seo / CLS are hard "error"
+# gates; performance / LCP / TBT are "warn" so a noisy network run doesn't
+# block a merge.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Weekly drift check against production, Mondays 02:00 UTC.
+    - cron: "0 2 * * 1"
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install LHCI
+        run: npm install -g @lhci/cli@0.14.x
+
+      # For PRs from non-fork branches, point Lighthouse at the Cloudflare
+      # preview deploy instead of prod so we measure the proposed build.
+      - name: Override collect URLs for PR preview
+        if: github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          SLUG=$(echo "$BRANCH" | tr '[:upper:]/' '[:lower:]-')
+          PREVIEW="https://${SLUG}.pickle-hub-pro.pages.dev"
+          # Wait for the preview to go green (max ~5 min).
+          READY=""
+          for i in $(seq 1 10); do
+            STATUS=$(curl -sI "$PREVIEW" -o /dev/null -w '%{http_code}')
+            if [ "$STATUS" = "200" ]; then READY=1; break; fi
+            echo "[$i] preview $PREVIEW not ready ($STATUS) — sleeping 30s"; sleep 30
+          done
+          if [ -n "$READY" ]; then
+            # Rewrite the prod origin in the config to the preview origin.
+            node -e "
+              const fs=require('fs');
+              const c=JSON.parse(fs.readFileSync('.lighthouserc.json','utf8'));
+              c.ci.collect.url=c.ci.collect.url.map(u=>u.replace('https://www.thepicklehub.net','$PREVIEW'));
+              fs.writeFileSync('.lighthouserc.json',JSON.stringify(c,null,2));
+            "
+            echo "Using preview origin: $PREVIEW"
+          else
+            # Don't run Lighthouse against a 404 preview — fall back to prod.
+            echo "::warning::Preview never went green — running Lighthouse against production"
+          fi
+
+      - name: Run Lighthouse CI
+        run: lhci autorun
+
+      - name: Notify Telegram on failure
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping alert"; exit 0
+          fi
+          MSG="⚡ *Lighthouse CI FAILED*%0A%0A*Run:* https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" -d "text=${MSG}" \
+            -d "parse_mode=Markdown" -d "disable_web_page_preview=true" > /dev/null
