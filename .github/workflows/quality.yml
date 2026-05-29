@@ -1,0 +1,89 @@
+name: Quality gate
+
+# Phase 3A — the static + unit safety net that was missing: lint, typecheck,
+# the 25 existing Vitest suites (previously only run locally), and a build.
+# Runs on every PR + push to main. A broken build/lint/test now reds the PR
+# instead of slipping through to Cloudflare (build) or nobody (lint/unit).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need history to diff changed files for lint
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Lint (changed files only)
+        # The repo carries ~267 pre-existing lint errors (mostly no-explicit-any)
+        # that are out of scope to fix here. Linting the whole tree would keep
+        # the gate permanently red, so we lint ONLY the .ts/.tsx files changed
+        # in this PR/push — new + edited code must be clean, legacy debt is
+        # grandfathered. Tighten to `npm run lint` once the backlog is cleared.
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="$(git rev-parse HEAD~1 2>/dev/null || echo '')"
+          fi
+          if [ -z "$BASE_SHA" ]; then
+            echo "No base ref — skipping changed-file lint"; exit 0
+          fi
+          FILES=$(git diff --name-only --diff-filter=ACMR "$BASE_SHA" HEAD -- '*.ts' '*.tsx' | tr '\n' ' ')
+          if [ -z "$FILES" ]; then
+            echo "No TS/TSX changes — skipping lint"; exit 0
+          fi
+          echo "Linting changed files: $FILES"
+          npx eslint $FILES
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit tests (Vitest)
+        run: npm run test
+
+      - name: Build
+        env:
+          # Public, build-time values. Anon/publishable key is not a secret in
+          # the security sense (it ships in the client bundle) but we read it
+          # from the existing secret to keep one source of truth.
+          VITE_SUPABASE_URL: https://ajvlcamxemgbxduhiqrl.supabase.co
+          VITE_SUPABASE_PROJECT_ID: ajvlcamxemgbxduhiqrl
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Notify Telegram on failure
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping alert"; exit 0
+          fi
+          MSG="🧪 *Quality gate FAILED on main*%0A%0A"
+          MSG="$MSG*Commit:* \`${GITHUB_SHA:0:7}\`%0A"
+          MSG="$MSG*Run:* https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}%0A"
+          MSG="$MSG_lint / typecheck / unit tests / build broke._"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" -d "text=${MSG}" \
+            -d "parse_mode=Markdown" -d "disable_web_page_preview=true" > /dev/null

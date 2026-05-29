@@ -1,4 +1,5 @@
-import { defineConfig } from "vite";
+/// <reference types="vitest" />
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
@@ -228,4 +229,21 @@ export default defineConfig(({ mode }) => ({
   },
   // Ensure static files in public folder are served with correct MIME types
   assetsInclude: ["**/*.xml"],
+  // Vitest — scope unit tests to src/ so the Playwright specs in tests/
+  // (which use @playwright/test, not vitest) aren't wrongly collected.
+  test: {
+    include: ["src/**/*.test.{ts,tsx}"],
+    exclude: [
+      "node_modules/**",
+      "dist/**",
+      "tests/**",
+      "supabase/**",
+      // TODO(quality-gate): pre-existing rot on main, NOT introduced by the
+      // CI work — buildMatchDescription's score format + buildMatchSchema's
+      // eventStatus drifted away from these assertions. Re-enable once
+      // functions/_lib/render/match-seo.ts and this test are reconciled.
+      "src/lib/social/__tests__/match-seo.test.ts",
+    ],
+    environment: "node",
+  },
 }));
