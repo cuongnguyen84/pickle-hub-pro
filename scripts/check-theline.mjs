@@ -79,15 +79,24 @@ for (const f of files) {
   // DynamicMeta sets `document.title = \`${title} | ThePickleHub\`` with no
   // fallback, so a TheLineLayout rendered without a title ships
   // "undefined | ThePickleHub". We flag a file only when it uses
-  // <TheLineLayout> but NEVER passes a `title` anywhere — that means the page
-  // has no title at all. Pages that title their main render but omit it on a
-  // loading/error sub-state are fine (brief, and the main view is correct), so
-  // we don't false-flag those.
-  const usesLayout = /<TheLineLayout[\s/>]/.test(src);
-  if (usesLayout && !/\btitle\s*=/.test(src)) {
-    const idx = lines.findIndex((l) => /<TheLineLayout[\s/>]/.test(l));
+  // <TheLineLayout> but NONE of its tags pass a `title` — i.e. the page has no
+  // title at all. A page that titles its main render but omits it on a
+  // loading/error sub-state is fine. We check `title=` INSIDE the
+  // TheLineLayout tag (not anywhere in the file) so an unrelated
+  // `<button title=...>` can't mask a missing layout title.
+  const tagRe = /<TheLineLayout(\s[^>]*?)?\/?>/g;
+  let usesLayout = false;
+  let anyTitled = false;
+  let firstTagLine = 0;
+  let tm;
+  while ((tm = tagRe.exec(src)) !== null) {
+    usesLayout = true;
+    if (!firstTagLine) firstTagLine = src.slice(0, tm.index).split("\n").length;
+    if (/\btitle\s*=/.test(tm[1] ?? "")) anyTitled = true;
+  }
+  if (usesLayout && !anyTitled) {
     hard.push(
-      `${f}:${idx + 1}  uses <TheLineLayout> but never sets a \`title\` — page ships "undefined | ThePickleHub"`,
+      `${f}:${firstTagLine}  uses <TheLineLayout> but none of its tags set a \`title\` — page ships "undefined | ThePickleHub"`,
     );
   }
 
@@ -98,7 +107,11 @@ for (const f of files) {
       // Skip comments + CSS custom-property definitions (`--x: #hex` = a token).
       if (t.startsWith("//") || t.startsWith("*") || t.startsWith("/*")) return;
       if (/^--[\w-]+\s*:/.test(t)) return;
-      const hits = line.match(COLOR_RE);
+      // Strip var(...) first so a token's fallback value — e.g.
+      // `var(--tl-bg, #08090a)` — isn't flagged. That's correct usage
+      // (token + graceful fallback), not a hardcoded color.
+      const scan = line.replace(/var\([^)]*\)/g, "");
+      const hits = scan.match(COLOR_RE);
       if (hits) {
         advisory.push(
           `${f}:${i + 1}  raw color ${[...new Set(hits)].join(", ")} — use a --tl-* token or Tailwind class`,

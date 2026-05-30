@@ -30,11 +30,20 @@ test.describe("visual regression", () => {
     fullPage: true,
   };
 
+  // Public, anonymous-renderable pages (auth-gated routes redirect to /login
+  // and aren't stable to snapshot). Add to this list as new public surfaces
+  // ship; re-run the "Visual baseline (capture)" workflow after.
   const PAGES = [
     { name: "home", path: "/" },
     { name: "rankings", path: "/rankings" },
     { name: "blog-index", path: "/blog" },
     { name: "tournaments", path: "/tournaments" },
+    { name: "live", path: "/live" },
+    { name: "clubs", path: "/clubs" },
+    { name: "news", path: "/news" },
+    { name: "tools", path: "/tools" },
+    { name: "feed", path: "/feed" },
+    { name: "home-vi", path: "/vi" },
   ];
 
   for (const p of PAGES) {

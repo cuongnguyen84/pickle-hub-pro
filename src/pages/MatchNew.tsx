@@ -169,11 +169,11 @@ export default function MatchNew() {
 
   // ─── Guards ─────────────────────────────────────────────────────────
   if (authLoading) {
-    return <TheLineLayout><div style={{ padding: 48 }}><Loader2 className="h-5 w-5 animate-spin" /></div></TheLineLayout>;
+    return <TheLineLayout title={vi ? "Trận đấu mới" : "New Match"}><div style={{ padding: 48 }}><Loader2 className="h-5 w-5 animate-spin" /></div></TheLineLayout>;
   }
   if (!user) {
     return (
-      <TheLineLayout>
+      <TheLineLayout title={vi ? "Trận đấu mới" : "New Match"}>
         <div style={{ padding: 48 }}>
           <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic" }}>
             {vi ? "Cần đăng nhập" : "Sign in required"}
@@ -184,7 +184,7 @@ export default function MatchNew() {
   }
   if (!conn?.ssoConnected) {
     return (
-      <TheLineLayout>
+      <TheLineLayout title={vi ? "Trận đấu mới" : "New Match"}>
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "48px 20px" }}>
           <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 40, lineHeight: 1, margin: "0 0 16px" }}>
             {vi ? "Kết nối DUPR trước" : "Connect DUPR first"}
@@ -203,7 +203,7 @@ export default function MatchNew() {
   }
 
   return (
-    <TheLineLayout>
+    <TheLineLayout title={vi ? "Trận đấu mới" : "New Match"}>
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 20px 80px" }}>
         <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           {step > 1 ? (
@@ -581,7 +581,7 @@ function SlotRow(props: {
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder={vi ? "Tìm theo tên · email · @handle · DUPR ID" : "Search by name · email · @handle · DUPR ID"}
+          placeholder={vi ? "Tìm theo tên · email · @handle" : "Search by name · email · @handle"}
           style={{
             flex: 1,
             background: "transparent",
@@ -607,7 +607,7 @@ function SlotRow(props: {
       ) : candidates.length === 0 ? (
         <div style={{ padding: "8px 0", color: "var(--tl-fg-3)", fontSize: 13 }}>
           {q.trim().length >= 2
-            ? (vi ? "Không thấy. (Chỉ tìm được user đã ở ThePickleHub hoặc đã consent DUPR — pool DUPR còn nhỏ)" : "No matches. (Searches ThePickleHub users + DUPR consented users — DUPR pool is still small)")
+            ? (vi ? "Không tìm thấy." : "No matches.")
             : (vi ? "Chưa có trận nào gần đây — gõ tên để tìm." : "No recent matches — search by name.")}
         </div>
       ) : (
