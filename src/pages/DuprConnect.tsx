@@ -16,7 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
+import { useDuprRatingHistory } from "@/hooks/social/useDuprRatingHistory";
 import { DuprSsoModal, type DuprSsoResult } from "@/components/dupr/DuprSsoModal";
+import { DuprRatingChart } from "@/components/social/player/DuprRatingChart";
 
 export default function DuprConnect() {
   const { user, loading: authLoading } = useAuth();
@@ -27,6 +29,11 @@ export default function DuprConnect() {
   const vi = language === "vi";
 
   const { data: conn, isLoading, refetch } = useDuprConnection();
+  // 30-day rating history for the connected user. Hook returns [] until
+  // profile id resolves, so safe to call unconditionally. RLS on
+  // dupr_rating_history is public-read.
+  const { data: history = [], isLoading: historyLoading } =
+    useDuprRatingHistory(user?.id, 30);
   const [ssoOpen, setSsoOpen] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
 
@@ -206,6 +213,16 @@ export default function DuprConnect() {
                 {vi ? "Đăng ký miễn phí" : "Sign up free"} <ExternalLink className="inline h-3 w-3" />
               </a>
             </p>
+          </div>
+        )}
+
+        {/* Rating history chart — shown when SSO-connected.
+            Re-added 2026-05-30 after PR #196 (SEO title fix) accidentally
+            branched from older state and dropped this mount.
+            DuprRatingChart handles its own empty/loading state. */}
+        {conn?.ssoConnected && (
+          <div className="mt-6">
+            <DuprRatingChart history={history} loading={historyLoading} />
           </div>
         )}
 
