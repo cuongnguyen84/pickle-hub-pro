@@ -230,9 +230,19 @@ npm run drift                 # 2F migration drift (advisory)
 node scripts/check-bundle-size.mjs   # 3F (sau npm run build)
 ```
 
-### Workflows đang active (8)
+### Workflows đang active
 
-`quality.yml` · `playwright.yml` · `lighthouse.yml` · `security.yml` · `deploy-guard.yml` · `dupr-refresh.yml` · (legacy) `dupr-refresh`. Mọi fail trên main → Telegram `@Tphaisupport_bot`.
+`quality.yml` (lint + tsc + vitest + build + coverage + bundle + **TheLine conformance**) · `playwright.yml` · `lighthouse.yml` · `security.yml` (npm audit + CodeQL) · `deploy-guard.yml` · `dupr-canary.yml` (cron tuần) · `visual.yml` (advisory, skip tới khi có baseline) · `visual-baseline.yml` (bấm tay chụp baseline) · `dupr-refresh.yml`. Branch protection main require `quality` + `smoke`. Mọi fail trên main → Telegram `@Tphaisupport_bot`.
+
+### TheLine layout conformance
+
+`scripts/check-theline.mjs` (trong quality gate, chỉ file đổi):
+- **HARD** — `<TheLineLayout>` thiếu `title` → đỏ PR (chặn `<title>undefined</title>`).
+- **advisory** — màu thô (`#hex`/`rgb()`/`hsl(số)` ngoài token `--tl-*`); page mới trong `src/pages` không wrap `TheLineLayout`. Chỉ in cảnh báo. `THELINE_STRICT=1` để siết advisory thành hard sau.
+
+Design system: `src/styles/the-line.css` (token `--tl-*` + class `.tl-*`), khung `src/components/layout/TheLineLayout.tsx`.
+
+**Visual regression (2C) — cần bấm 1 lần để bật:** Actions → "Visual baseline (capture)" → Run workflow → chụp + commit `tests/visual.spec.ts-snapshots/`. Sau đó `visual.yml` tự so mỗi PR (advisory, không chặn).
 
 ---
 
