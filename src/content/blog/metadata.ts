@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-dink-technique-mastery",
+    publishedDate: "2026-06-01",
+    updatedDate: "2026-06-01",
+    author: "Cuong Nguyen",
+    tags: ["how to dink pickleball", "pickleball dink technique", "pickleball dink", "cross court dink", "topspin dink", "pickleball kitchen game", "pickleball soft game", "dink drills"],
+    ctaPath: "/blog/pickleball-doubles-strategy-guide",
+    ctaLabel: { en: "Next: Pickleball Doubles Strategy — Positioning & Shot Selection", vi: "Tiếp theo: Chiến thuật Pickleball đôi — vị trí & chọn cú đánh" },
+    heroImage: {
+      src: "/images/blog/pickleball-dink-technique-mastery-hero.webp",
+      alt: "Close-up action shot of a pickleball player at the kitchen line executing a soft dink shot with an open paddle face, the ball captured mid-air just clearing the net, a blurred opponent in the background, illustrating proper dink technique for the 2026 mastery guide."
+    },
+    titleEn: "How to Dink in Pickleball: Technique Mastery Guide 2026",
+    titleVi: "Kỹ Thuật Dink Pickleball: Hướng Dẫn Cơ Bản Đến Nâng Cao 2026",
+    metaTitleEn: "How to Dink in Pickleball: Technique Mastery Guide 2026",
+    metaTitleVi: "Kỹ Thuật Dink Pickleball 2026 | Cơ Bản Đến Nâng Cao",
+    metaDescriptionEn: "Master the pickleball dink: grip, paddle face, contact point, cross-court vs straight, topspin dink, the 5 most common mistakes, and 4 drills to practice.",
+    metaDescriptionVi: "Làm chủ cú dink pickleball: cầm vợt, mặt vợt, điểm chạm, dink chéo sân vs thẳng, dink topspin, 5 lỗi phổ biến và 4 bài tập luyện.",
+  },
+  {
     slug: "dupr-thepicklehub-user-guide",
     publishedDate: "2026-05-29",
     updatedDate: "2026-05-29",
