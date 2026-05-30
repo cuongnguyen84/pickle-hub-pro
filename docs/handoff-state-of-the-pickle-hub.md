@@ -374,23 +374,21 @@ Khi thêm feature mới, bám đúng "người gác" tương ứng để không 
 | **DUPR mutation flow** | Mở rộng `dupr-e2e.spec.ts` (gated). Thêm/giữ contract schema khớp edge fn. |
 | **Dependency mới** | LUÔN `npm install <pkg> --package-lock-only` để lockfile khớp (xem gotcha §7). |
 
-### B. Phase 4 — CI/CD candidates (đề xuất, theo ưu tiên)
+### B. Phase 4 — ĐÃ SHIP một phần (29/5/2026, PR #182)
 
-**4A. Branch protection trên `main`** ⭐ — hiện merge KHÔNG bị chặn bởi CI (em merge được vì không có protection). Bật required status checks (`quality`, `playwright`) + require PR → ngăn merge code đỏ. Effort ~15 phút, impact cao nhất.
+**4A. Branch protection trên `main`** ✅ — required status checks `quality` + `smoke` (Playwright), `strict=false` (solo-friendly), `enforce_admins=false` (admin bypass khẩn cấp). PR phải có 2 check đó xanh mới merge được. Set qua GitHub API.
 
-**4B. Member-log → opponent-confirm E2E** ⭐ — leg còn thiếu của 2B. Làm khi RPC `log_club_match`/`confirm_club_match` ship: member A log → B confirm → admin submit, trên UAT, có cleanup.
+**4C. Khóa regression baseline** ✅ — `coverage.thresholds.statements=83` (baseline 86.9) trong vite.config + `BUNDLE_STRICT=1` budget 1850KB (baseline 1718.5) trong quality.yml. Tụt coverage / phình bundle = đỏ.
 
-**4C. Khóa regression baseline** — bật `coverage.thresholds` (~85% statements) + `BUNDLE_STRICT=1` (budget ~1850KB). Giờ là report-only; flip on khi muốn chặn tụt.
+**4D. Dependabot** ✅ — `.github/dependabot.yml`: npm (weekly, grouped minor/patch) + github-actions. PR tự chạy qua quality+security gate.
 
-**4D. Dependabot / Renovate** — tự động PR cập nhật dep + chạy qua quality+security gate. Giảm nợ audit dần.
+**4H. DUPR partner API canary** ✅ — `.github/workflows/dupr-canary.yml` cron tuần chạy DUPR submit chain trên UAT (submit→matchCode→delete) → bắt DUPR đổi API trước user. Telegram alert.
 
-**4E. Visual baseline** — chụp `npm run e2e:visual:update` + commit snapshots → bật 2C thành gate thật (hiện gated `VISUAL=1`).
-
-**4F. Mobile (Capacitor) build check** — CI job `npx cap sync` + build iOS/Android shell để bắt vỡ native trước khi release store.
-
-**4G. Lint debt cleanup** — dọn ~267 `no-explicit-any` theo module, rồi siết `quality.yml` sang `npm run lint` toàn repo.
-
-**4H. DUPR partner API canary (cron)** — chạy `dupr-e2e` theo lịch trên UAT để bắt DUPR đổi API trước khi user gặp.
+**Defer (lý do):**
+- **4B. Member-log → opponent-confirm E2E** — leg còn thiếu của 2B. RPC `log_club_match`/`confirm_club_match` CHƯA có trong source tree; làm khi ship.
+- **4E. Visual baseline** — cần chụp screenshot bằng browser (sandbox không chạy được) + live-data dễ flaky → giữ opt-in `VISUAL=1`. Chụp local rồi commit khi muốn bật.
+- **4F. Mobile (Capacitor) build check** — cần toolchain native + signing (macOS runner). Setup riêng.
+- **4G. Lint debt cleanup** — dọn ~267 `no-explicit-any` theo module rồi siết `npm run lint` toàn repo. Việc thủ công lớn, làm dần.
 
 ### C. CD (deploy) cải thiện
 
