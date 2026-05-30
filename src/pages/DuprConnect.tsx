@@ -16,9 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
-import { useDuprRatingHistory } from "@/hooks/social/useDuprRatingHistory";
 import { DuprSsoModal, type DuprSsoResult } from "@/components/dupr/DuprSsoModal";
-import { DuprRatingChart } from "@/components/social/player/DuprRatingChart";
 
 export default function DuprConnect() {
   const { user, loading: authLoading } = useAuth();
@@ -29,11 +27,6 @@ export default function DuprConnect() {
   const vi = language === "vi";
 
   const { data: conn, isLoading, refetch } = useDuprConnection();
-  // 30-day rating history for the connected user. Hook is cheap (RLS
-  // public-read on dupr_rating_history) and returns [] until profile id
-  // resolves, so it's safe to call unconditionally.
-  const { data: history = [], isLoading: historyLoading } =
-    useDuprRatingHistory(user?.id, 30);
   const [ssoOpen, setSsoOpen] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
 
@@ -57,19 +50,9 @@ export default function DuprConnect() {
     }
   };
 
-  // SEO copy — same string used for browser tab, social cards, and the
-  // <title>. The page is behind RequireAuth so we mark it noindex; the
-  // title still drives the tab label + social preview when shared.
-  const seoTitle = vi
-    ? "Kết nối DUPR — ThePickleHub"
-    : "Connect DUPR — ThePickleHub";
-  const seoDesc = vi
-    ? "Kết nối tài khoản DUPR của anh với ThePickleHub để rating tự cập nhật và trận đấu được ghi nhận chính thức."
-    : "Connect your DUPR account with ThePickleHub so your rating syncs automatically and matches count officially.";
-
   if (authLoading) {
     return (
-      <TheLineLayout title={seoTitle} description={seoDesc} noindex>
+      <TheLineLayout title={vi ? "Kết nối DUPR" : "Connect DUPR"}>
         <div className="mx-auto max-w-2xl p-12 text-center">
           <Loader2 className="mx-auto h-6 w-6 animate-spin" />
         </div>
@@ -79,7 +62,7 @@ export default function DuprConnect() {
 
   if (!user) {
     return (
-      <TheLineLayout title={seoTitle} description={seoDesc} noindex>
+      <TheLineLayout title={vi ? "Kết nối DUPR" : "Connect DUPR"}>
         <div className="mx-auto max-w-2xl px-4 py-12">
           <h1 className="text-2xl font-semibold mb-3">
             {vi ? "Cần đăng nhập" : "Sign in required"}
@@ -95,7 +78,7 @@ export default function DuprConnect() {
   }
 
   return (
-    <TheLineLayout title={seoTitle} description={seoDesc} noindex>
+    <TheLineLayout title={vi ? "Kết nối DUPR" : "Connect DUPR"}>
       <div className="mx-auto max-w-2xl px-4 py-8">
         <header className="mb-6">
           <h1
@@ -223,17 +206,6 @@ export default function DuprConnect() {
                 {vi ? "Đăng ký miễn phí" : "Sign up free"} <ExternalLink className="inline h-3 w-3" />
               </a>
             </p>
-          </div>
-        )}
-
-        {/* Rating history chart — only shown when SSO-connected and we
-            have at least 2 snapshots. The chart component handles its
-            own loading + empty-state messaging via the section eyebrow,
-            so we can mount it unconditionally as long as the user is
-            connected. */}
-        {conn?.ssoConnected && (
-          <div className="mt-6">
-            <DuprRatingChart history={history} loading={historyLoading} />
           </div>
         )}
 
