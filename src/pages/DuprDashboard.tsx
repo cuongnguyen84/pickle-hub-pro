@@ -1,15 +1,4 @@
 // ============================================================================
-// /admin/dupr — DUPR RaaS operator dashboard (admin only)
-//
-// Moved from /dupr to /admin/dupr on 2026-05-25 — the user-facing /dupr
-// now shows only basic Connection state via src/pages/DuprConnect.tsx.
-// This page keeps the full operator-grade suite for debugging + DUPR
-// review.
-//
-// Added "Search test" section (#8) for the user-search edge function
-// (calls DUPR partner /user/v1.0/search + merges internal profiles).
-// ============================================================================
-//
 // /dupr — DUPR RaaS integration dashboard (5-video demo target)
 // ----------------------------------------------------------------------------
 // One-stop page showing every backend touchpoint of the DUPR partnership.
@@ -1529,147 +1518,9 @@ function DuprPlusGatingSection() {
   );
 }
 
-// ─── PR8 — Admin user search test (DUPR + internal merged) ────────────────
-//
-// Wraps the dupr-user-search edge function so anh can paste any name /
-// email / dupr_id and see what the picker would suggest. Useful for
-// debugging consent visibility on DUPR side.
-
-interface SearchHit {
-  source: "dupr" | "internal" | "both";
-  dupr_id: string | null;
-  full_name: string;
-  singles_rating: number | null;
-  doubles_rating: number | null;
-  user_id: string | null;
-  email?: string | null;
-  username?: string | null;
-}
-
-interface SearchResp {
-  hits: SearchHit[];
-  dupr_total: number;
-  internal_total: number;
-}
-
-function UserSearchTestSection() {
-  const { language } = useI18n();
-  const vi = language === "vi";
-  const [query, setQuery] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [resp, setResp] = useState<SearchResp | { error: string } | null>(null);
-
-  const run = async () => {
-    if (query.trim().length < 2) return;
-    setBusy(true);
-    setResp(null);
-    try {
-      const { data, error } = await supabase.functions.invoke<SearchResp>(
-        "dupr-user-search",
-        { body: { query: query.trim(), limit: 15 } },
-      );
-      if (error) {
-        const msg = error.message ?? "search_failed";
-        setResp({ error: msg });
-      } else {
-        setResp(data ?? null);
-      }
-    } catch (e) {
-      setResp({ error: e instanceof Error ? e.message : String(e) });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Section
-      title="8. User search (DUPR + internal)"
-      subtitle={
-        vi
-          ? "Test dupr-user-search edge function. Merge results từ DUPR Partner API (chỉ users consented) + profiles table local. Dùng để debug visibility / consent issues."
-          : "Test dupr-user-search edge function. Merges results from DUPR Partner API (consented users only) + local profiles table. Useful for debugging visibility / consent issues."
-      }
-    >
-      <div className="flex gap-2 mb-3">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") run(); }}
-          placeholder={vi ? "Nhập tên, email, hoặc DUPR ID" : "Type name, email, or DUPR ID"}
-          className="flex-1 rounded border p-2 text-sm"
-          style={{ borderColor: "var(--tl-border)", background: "var(--tl-bg)", color: "var(--tl-fg)" }}
-        />
-        <button
-          type="button"
-          className="tl-btn primary"
-          onClick={run}
-          disabled={busy || query.trim().length < 2}
-        >
-          {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : (vi ? "Tìm" : "Search")}
-        </button>
-      </div>
-
-      {resp && "error" in resp && (
-        <div className="rounded border p-3 text-sm"
-             style={{ borderColor: "rgba(239,68,68,0.4)", color: "rgb(239,68,68)" }}>
-          {resp.error}
-        </div>
-      )}
-
-      {resp && "hits" in resp && (
-        <>
-          <div className="mb-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>
-            DUPR total: <span className="font-mono">{resp.dupr_total}</span>
-            {" · "}
-            Internal total: <span className="font-mono">{resp.internal_total}</span>
-            {" · "}
-            Showing: <span className="font-mono">{resp.hits.length}</span>
-          </div>
-          {resp.hits.length === 0 ? (
-            <p className="text-sm" style={{ color: "var(--tl-fg-3)" }}>
-              {vi ? "Không có kết quả." : "No results."}
-            </p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ color: "var(--tl-fg-3)" }}>
-                  <th className="text-left font-normal pb-2">Source</th>
-                  <th className="text-left font-normal pb-2">Name</th>
-                  <th className="text-left font-normal pb-2">DUPR ID</th>
-                  <th className="text-left font-normal pb-2">Singles / Doubles</th>
-                  <th className="text-left font-normal pb-2">Email</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resp.hits.map((h, idx) => (
-                  <tr key={`${h.dupr_id ?? h.user_id ?? idx}`} style={{ borderTop: "1px solid var(--tl-border)" }}>
-                    <td className="py-2">
-                      <Pill
-                        ok={h.source === "both" || h.source === "internal"}
-                        label={h.source.toUpperCase()}
-                      />
-                    </td>
-                    <td className="py-2">{h.full_name}</td>
-                    <td className="py-2 font-mono" style={{ color: "var(--tl-fg-3)" }}>{h.dupr_id ?? "—"}</td>
-                    <td className="py-2 font-mono">
-                      {(h.singles_rating ?? "—") + " / " + (h.doubles_rating ?? "—")}
-                    </td>
-                    <td className="py-2 text-xs" style={{ color: "var(--tl-fg-3)" }}>{h.email ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </>
-      )}
-    </Section>
-  );
-}
-
 // ─── Page ───────────────────────────────────────────────────────────────────
 
-export default function AdminDuprDashboard() {
+export default function DuprDashboard() {
   const { user, loading } = useAuth();
   const { language } = useI18n();
   const vi = language === "vi";
@@ -1684,7 +1535,7 @@ export default function AdminDuprDashboard() {
 
   if (loading) {
     return (
-      <TheLineLayout title={vi ? "Quản trị DUPR" : "DUPR Admin"}>
+      <TheLineLayout title={vi ? "Bảng điều khiển DUPR" : "DUPR Dashboard"}>
         <div className="mx-auto max-w-3xl p-6">
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
@@ -1694,7 +1545,7 @@ export default function AdminDuprDashboard() {
 
   if (!user) {
     return (
-      <TheLineLayout title={vi ? "Quản trị DUPR" : "DUPR Admin"}>
+      <TheLineLayout title={vi ? "Bảng điều khiển DUPR" : "DUPR Dashboard"}>
         <div className="mx-auto max-w-3xl p-6">
           <h1 className="mb-3 text-2xl font-semibold">{vi ? "Cần đăng nhập" : "Sign in required"}</h1>
           <p style={{ color: "var(--tl-fg-3)" }}>
@@ -1708,7 +1559,7 @@ export default function AdminDuprDashboard() {
   }
 
   return (
-    <TheLineLayout title={vi ? "Quản trị DUPR" : "DUPR Admin"}>
+    <TheLineLayout title={vi ? "Bảng điều khiển DUPR" : "DUPR Dashboard"}>
       <div className="mx-auto max-w-3xl px-4 py-6">
         <header className="mb-6">
           <h1 className="text-2xl font-semibold" style={{ color: "var(--tl-fg)" }}>
@@ -1727,7 +1578,6 @@ export default function AdminDuprDashboard() {
         <ClubsSection />
         <OrgLinkSection />
         <DuprPlusGatingSection />
-        <UserSearchTestSection />
       </div>
     </TheLineLayout>
   );
