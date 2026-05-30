@@ -1,0 +1,74 @@
+name: Visual regression
+
+# Phase TheLine — advisory pixel-diff of key pages against committed baselines.
+# ADVISORY (continue-on-error): a diff is reported + artifacts uploaded, but
+# never blocks merge — live data (scores, news) makes hard-gating flaky.
+# Self-skips until baselines exist (run the "Visual baseline (capture)"
+# workflow once to seed them).
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for committed baselines
+        id: gate
+        run: |
+          if ls tests/visual.spec.ts-snapshots/*.png >/dev/null 2>&1; then
+            echo "have=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No committed baselines — run the 'Visual baseline (capture)' workflow first. Skipping."
+            echo "have=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.have == '1'
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install deps
+        if: steps.gate.outputs.have == '1'
+        run: npm ci
+      - name: Install Playwright browser
+        if: steps.gate.outputs.have == '1'
+        run: npx playwright install --with-deps chromium
+
+      - name: Point at PR preview if available
+        if: steps.gate.outputs.have == '1' && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          SLUG=$(echo "$BRANCH" | tr '[:upper:]/' '[:lower:]-')
+          PREVIEW="https://${SLUG}.pickle-hub-pro.pages.dev"
+          for i in $(seq 1 10); do
+            STATUS=$(curl -sI "$PREVIEW" -o /dev/null -w '%{http_code}')
+            [ "$STATUS" = "200" ] && { echo "PLAYWRIGHT_BASE_URL=$PREVIEW" >> "$GITHUB_ENV"; break; }
+            echo "[$i] preview not ready ($STATUS) — sleeping 30s"; sleep 30
+          done
+
+      - name: Visual diff (advisory)
+        if: steps.gate.outputs.have == '1'
+        continue-on-error: true
+        env:
+          VISUAL: "1"
+        run: npx playwright test --project=visual
+
+      - name: Upload diff artifacts
+        if: steps.gate.outputs.have == '1' && failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
