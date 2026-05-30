@@ -34,6 +34,24 @@ jobs:
         run: npm ci
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
+      - name: Verify required secrets are present
+        # Without these, the dupr-e2e spec self-skips and Playwright exits 0 —
+        # a green canary that tested nothing. Fail loudly instead (Codex PR #182).
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          missing=""
+          for name in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY SUPABASE_ANON_KEY; do
+            eval "val=\${$name}"
+            [ -z "$val" ] && missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Canary cannot run — missing secret(s):$missing"
+            exit 1
+          fi
+          echo "All required secrets present."
       - name: Run DUPR submit canary
         env:
           DUPR_E2E: "1"

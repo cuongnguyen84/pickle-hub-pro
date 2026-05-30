@@ -108,6 +108,23 @@ test("robots.txt allows crawl + points to sitemap", async () => {
 
 // ── Phase 3D — sitemap index integrity + hreflang reciprocity ──────────────
 
+// Sitemap <loc> values + hreflang hrefs are absolute canonical URLs
+// (https://www.thepicklehub.net/...). On a PR run PLAYWRIGHT_BASE_URL points
+// at the Cloudflare preview, so we must re-home those absolute URLs onto the
+// configured base origin — otherwise the follow-up fetches verify production
+// instead of the preview under test (Codex review, PR #181).
+const BASE_ORIGIN =
+  process.env.PLAYWRIGHT_BASE_URL ?? "https://www.thepicklehub.net";
+
+function onBaseOrigin(absUrl: string): string {
+  try {
+    const u = new URL(absUrl);
+    return new URL(u.pathname + u.search, BASE_ORIGIN).toString();
+  } catch {
+    return absUrl; // already relative or unparseable — leave as-is
+  }
+}
+
 test("every child sitemap referenced by the index resolves to a valid urlset", async () => {
   const ctx = await request.newContext({
     extraHTTPHeaders: { "User-Agent": GOOGLEBOT_UA },
@@ -126,10 +143,11 @@ test("every child sitemap referenced by the index resolves to a valid urlset", a
   expect(childUrls.length, "index references at least one child sitemap").toBeGreaterThan(0);
 
   for (const url of childUrls) {
-    const res = await ctx.get(url);
-    expect(res.status(), `child sitemap ${url} status`).toBe(200);
+    const target = onBaseOrigin(url);
+    const res = await ctx.get(target);
+    expect(res.status(), `child sitemap ${target} status`).toBe(200);
     const xml = await res.text();
-    expect(xml, `child sitemap ${url} is a urlset or sitemapindex`).toMatch(
+    expect(xml, `child sitemap ${target} is a urlset or sitemapindex`).toMatch(
       /<(urlset|sitemapindex)[^>]*>/,
     );
   }
@@ -155,9 +173,11 @@ test("bilingual blog post has reciprocal en↔vi hreflang", async () => {
   expect(viHref, "EN page advertises a vi hreflang alternate").toBeTruthy();
   expect(viHref!, "vi alternate points at a /vi/ path").toMatch(/\/vi\//);
 
-  // Fetch the VI twin and confirm it links back to an EN alternate.
-  const viRes = await ctx.get(viHref!);
-  expect(viRes.status(), `vi twin ${viHref} resolves`).toBe(200);
+  // Fetch the VI twin (re-homed onto the base origin) and confirm it links
+  // back to an EN alternate.
+  const viTarget = onBaseOrigin(viHref!);
+  const viRes = await ctx.get(viTarget);
+  expect(viRes.status(), `vi twin ${viTarget} resolves`).toBe(200);
   const viHtml = await viRes.text();
   expect(viHtml, "vi page has en hreflang back-reference").toMatch(
     /hreflang=["']en["']/i,
