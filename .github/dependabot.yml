@@ -1,0 +1,31 @@
+# Phase 4D — automated dependency + action updates.
+# PRs land against main and run through the quality + security gates before
+# they can merge, so updates are validated automatically. Minor/patch bumps
+# are grouped into a single PR to cut noise; majors come as individual PRs.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"

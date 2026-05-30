@@ -71,7 +71,13 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: npm run build
 
-      - name: Bundle size report (advisory)
+      - name: Bundle size budget
+        # Enforced gate: total gzipped JS must stay under budget. Baseline
+        # 1718.5 KB (2026-05-29); budget set ~130 KB above to catch
+        # regressions without tripping on normal build noise.
+        env:
+          BUNDLE_STRICT: "1"
+          BUNDLE_BUDGET_KB: "1850"
         run: node scripts/check-bundle-size.mjs
 
       - name: Notify Telegram on failure
