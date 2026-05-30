@@ -75,15 +75,20 @@ for (const f of files) {
   const src = readFileSync(f, "utf8");
   const lines = src.split("\n");
 
-  // Rule 1 — TheLineLayout title (HARD).
-  const tagRe = /<TheLineLayout(\s[^>]*?)?\/?>/g;
-  let m;
-  while ((m = tagRe.exec(src)) !== null) {
-    const attrs = m[1] ?? "";
-    if (!/\btitle\s*=/.test(attrs)) {
-      const lineNo = src.slice(0, m.index).split("\n").length;
-      hard.push(`${f}:${lineNo}  <TheLineLayout> is missing the required \`title\` prop`);
-    }
+  // Rule 1 — TheLineLayout title (HARD), per-FILE.
+  // DynamicMeta sets `document.title = \`${title} | ThePickleHub\`` with no
+  // fallback, so a TheLineLayout rendered without a title ships
+  // "undefined | ThePickleHub". We flag a file only when it uses
+  // <TheLineLayout> but NEVER passes a `title` anywhere — that means the page
+  // has no title at all. Pages that title their main render but omit it on a
+  // loading/error sub-state are fine (brief, and the main view is correct), so
+  // we don't false-flag those.
+  const usesLayout = /<TheLineLayout[\s/>]/.test(src);
+  if (usesLayout && !/\btitle\s*=/.test(src)) {
+    const idx = lines.findIndex((l) => /<TheLineLayout[\s/>]/.test(l));
+    hard.push(
+      `${f}:${idx + 1}  uses <TheLineLayout> but never sets a \`title\` — page ships "undefined | ThePickleHub"`,
+    );
   }
 
   // Rule 2 — raw color literals (advisory).

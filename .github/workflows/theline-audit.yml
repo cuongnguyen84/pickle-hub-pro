@@ -1,0 +1,27 @@
+name: TheLine audit (full)
+
+# Per-PR the quality gate only checks CHANGED files. This job periodically
+# scans the ENTIRE src/ tree for TheLine conformance so legacy drift stays
+# visible — a full-codebase snapshot, not a merge gate. Report-only (never
+# fails); findings land in the job Summary.
+
+on:
+  schedule:
+    - cron: "0 5 * * 1" # weekly, Mondays 05:00 UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Full-tree TheLine scan (advisory)
+        run: |
+          FILES=$(find src \( -name '*.tsx' -o -name '*.css' \) | tr '\n' ' ')
+          # Report-only: the script exits 1 on hard violations, but this is an
+          # audit not a gate, so we never fail the workflow.
+          node scripts/check-theline.mjs $FILES || true
