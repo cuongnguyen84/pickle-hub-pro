@@ -1,0 +1,59 @@
+name: DUPR canary
+
+# Phase 4H — weekly canary that exercises the real DUPR submit chain on the
+# UAT partner environment (admin submit → matchCode → delete cleanup, plus the
+# viewer permission-gate check). Catches DUPR partner-API breakage BEFORE a
+# user hits it. Uses the gated dupr-e2e spec (DUPR_E2E=1).
+#
+# NOTE: this submits a throwaway match to DUPR UAT via the prod Supabase edge
+# function (DUPR_ENV=uat) and deletes it again. Minimal, self-cleaning churn.
+#
+# Required secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY,
+# TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID.
+
+on:
+  schedule:
+    - cron: "0 4 * * 1" # weekly, Mondays 04:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: dupr-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install deps
+        run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Run DUPR submit canary
+        env:
+          DUPR_E2E: "1"
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npx playwright test --project=dupr-e2e
+
+      - name: Notify Telegram on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram secrets missing — skipping alert"; exit 0
+          fi
+          MSG="🟡 *DUPR canary FAILED*%0A%0A"
+          MSG="$MSG_The DUPR submit chain (UAT) broke — check the partner API._%0A"
+          MSG="$MSG*Run:* https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" -d "text=${MSG}" \
+            -d "parse_mode=Markdown" -d "disable_web_page_preview=true" > /dev/null
