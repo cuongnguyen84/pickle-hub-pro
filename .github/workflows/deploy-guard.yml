@@ -35,7 +35,7 @@ jobs:
         with:
           fetch-depth: 2 # need HEAD~1 to diff the push
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
 
