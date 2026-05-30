@@ -1,0 +1,51 @@
+name: Visual baseline (capture)
+
+# Manual one-button capture of the TheLine visual-regression baselines.
+# Run this once (and again after an intentional design change) to seed/refresh
+# the committed snapshot PNGs that the "Visual regression" PR job diffs against.
+#
+# Captures with Playwright's --update-snapshots and commits the result back to
+# the branch it ran on.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "URL to capture baselines from"
+        default: "https://www.thepicklehub.net"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install deps
+        run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Capture baselines
+        env:
+          VISUAL: "1"
+          PLAYWRIGHT_BASE_URL: ${{ inputs.base_url }}
+        run: npx playwright test --project=visual --update-snapshots
+      - name: Commit baselines
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tests/visual.spec.ts-snapshots 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No baseline changes to commit."
+            exit 0
+          fi
+          git commit -m "test(visual): update TheLine baselines [skip ci]"
+          git push
+          echo "Baselines committed. The Visual regression PR job is now active."
