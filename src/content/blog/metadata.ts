@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-third-shot-drop-vs-drive",
+    publishedDate: "2026-06-01",
+    updatedDate: "2026-06-01",
+    author: "Cuong Nguyen",
+    tags: ["third shot drop pickleball", "third shot drive vs drop", "pickleball third shot", "third shot drop technique", "pickleball drive", "pickleball drop shot", "pickleball doubles strategy", "get to the kitchen"],
+    ctaPath: "/blog/pickleball-dink-technique-mastery",
+    ctaLabel: { en: "Next: Pickleball Dink Technique — Master the Soft Game", vi: "Tiếp theo: Kỹ thuật Dink Pickleball — làm chủ soft game" },
+    heroImage: {
+      src: "/images/blog/pickleball-third-shot-drop-vs-drive-hero.webp",
+      alt: "Side-by-side comparison of a pickleball player executing a third shot drop with a soft high arc landing in the kitchen versus the same player hitting a flat, fast third shot drive, illustrating the two third-shot options for the 2026 strategy guide."
+    },
+    titleEn: "Third Shot Drop vs Drive in Pickleball: Which to Hit & When (2026)",
+    titleVi: "Cú Thứ 3 Pickleball: Drop vs Drive — Đánh Cú Nào & Khi Nào (2026)",
+    metaTitleEn: "Third Shot Drop vs Drive Pickleball 2026 | Which & When",
+    metaTitleVi: "Cú Thứ 3 Pickleball: Drop vs Drive 2026 | Cú Nào & Khi Nào",
+    metaDescriptionEn: "Third shot drop vs drive in pickleball: what each shot does, the mechanics, when to drop, when to drive, the hybrid drive-and-drop, common mistakes, and drills.",
+    metaDescriptionVi: "Cú thứ 3 pickleball drop vs drive: mỗi cú làm gì, cơ học, khi nào drop, khi nào drive, combo drive-and-drop, lỗi phổ biến và bài tập.",
+  },
+  {
     slug: "pickleball-dink-technique-mastery",
     publishedDate: "2026-06-01",
     updatedDate: "2026-06-01",
