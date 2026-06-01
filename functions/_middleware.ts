@@ -269,6 +269,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     "cac-giai-pickleball-pro-asia-2026": "professional-pickleball-tours-guide-2026",
     "the-thuc-mlp-giai-thich": "mlp-format-explained",
     "huong-dan-day-du-ppa-tour-asia-2026": "ppa-tour-asia-2026-complete-guide",
+    // Batch 9 (2026-06-01 site-audit fix) — two slugs live in
+    // public/_redirects but were missing from this bot mirror, so
+    // Googlebot hit renderViBlogPost -> 404 instead of the 301 users
+    // get. Both confirmed 404 on production via curl -A Googlebot.
+    "the-thuc-mlp": "mlp-format-explained",
+    "ppa-tour-asia-2026-complete-guide": "ppa-tour-asia-2026-complete-guide",
   };
   const viBlogMatch = url.pathname.match(/^\/vi\/blog\/([^/?#]+)$/);
   if (viBlogMatch && VI_BLOG_REDIRECTS[viBlogMatch[1]]) {
