@@ -54,7 +54,7 @@ const SEGMENT_PATHS = [
   // PR (2026-05-18 Ahrefs Site Audit fix Round 1) — /sitemap-venues.xml
   // emitted /san/{slug} URLs but no `renderVenue` SSR handler exists
   // (Sprint 5 page). Re-enable once /san/{slug} ships SSR.
-  // "/sitemap-venues.xml",
+  "/sitemap-venues.xml",
 ];
 
 export const onRequest: PagesFunction<Env> = (context) => {

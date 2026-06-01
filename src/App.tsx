@@ -117,6 +117,10 @@ const SocialEventLive = lazy(() => import("./pages/SocialEventLive"));
 // Social Events MVP — PR55 (self-service club creation + discovery)
 const ClubsList = lazy(() => import("./pages/ClubsList"));
 const CreateClub = lazy(() => import("./pages/CreateClub"));
+// Court finder ("Tìm sân") — venue directory
+const VenuesList = lazy(() => import("./pages/VenuesList"));
+const VenueDetail = lazy(() => import("./pages/VenueDetail"));
+const VenueSubmit = lazy(() => import("./pages/VenueSubmit"));
 // Social Events MVP — PR57 (club management polish)
 const EditClub = lazy(() => import("./pages/EditClub"));
 // Social Events MVP — PR58 (pre-launch must-haves)
@@ -565,6 +569,12 @@ const App = () => (
                     <Route path="/clubs" element={<ClubsList />} />
                     <Route path="/vi/clubs" element={<ViLanguageWrapper><ClubsList /></ViLanguageWrapper>} />
                     <Route path="/clubs/new" element={<CreateClub />} />
+                    <Route path="/san" element={<VenuesList />} />
+                    <Route path="/vi/san" element={<ViLanguageWrapper><VenuesList /></ViLanguageWrapper>} />
+                    <Route path="/san/them" element={<VenueSubmit />} />
+                    <Route path="/vi/san/them" element={<ViLanguageWrapper><VenueSubmit /></ViLanguageWrapper>} />
+                    <Route path="/san/:slug" element={<VenueDetail />} />
+                    <Route path="/vi/san/:slug" element={<ViLanguageWrapper><VenueDetail /></ViLanguageWrapper>} />
                     {/* Social Events MVP PR57 — organizer club settings */}
                     <Route path="/clb/:slug/quan-ly/cai-dat" element={<EditClub />} />
                     {/* Social Events MVP PR58 — player-facing registration page + organizer event edit */}

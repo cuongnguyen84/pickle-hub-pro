@@ -21,6 +21,7 @@ import {
   renderClub,
   renderSocialList,
   renderClubList,
+  renderVenuesList, renderVenueDetail,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage, renderToolNewPage,
@@ -63,6 +64,7 @@ const NOINDEX_PATTERNS: RegExp[] = [
   /^\/(?:vi\/)?(?:social|su-kien)\/[^/]+\/(?:danh-sach|xep-cap|live)(?:\/|$)/,
   // Create flows
   /^\/(?:vi\/)?clubs\/new(?:\/|$)/,
+  /^\/(?:vi\/)?san\/them(?:\/|$)/,
   // Auth + account
   /^\/login(?:\/|$)/,
   /^\/vi\/login(?:\/|$)/,
@@ -169,7 +171,7 @@ const DEFAULT_TTL_SECONDS = 21600; // 6 hours
 
 function pathCacheTtl(pathname: string): number {
   const stripped = pathname.replace(/^\/vi(?=\/|$)/, "") || "/";
-  if (stripped === "/social" || stripped === "/clubs") {
+  if (stripped === "/social" || stripped === "/clubs" || stripped === "/san") {
     return HUB_LIST_TTL_SECONDS;
   }
   return DEFAULT_TTL_SECONDS;
@@ -400,7 +402,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // / live / match HTML that doesn't yet include the new Related
   // sections. Without the bump, bots keep seeing the v12 cached
   // shells until the 6h TTL elapses.
-  const cacheKey = `pr:v14:${url.pathname}`;
+  const cacheKey = `pr:v15:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -510,6 +512,10 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // so a freshly-published event/club is discoverable within minutes.
   if (path === "/social") return await renderSocialList(supabase, siteUrl, lang);
   if (path === "/clubs") return await renderClubList(supabase, siteUrl, lang);
+
+  if (path === "/san") return await renderVenuesList(supabase, siteUrl, lang);
+  match = path.match(/^\/san\/([^/]+)$/);
+  if (match && match[1] !== "them") return await renderVenueDetail(supabase, match[1], siteUrl, lang);
 
   // Social event detail (Social Events MVP Sprint 1 PR2). Public landing
   // with SportsEvent JSON-LD + Offer (availability). Bots see the
