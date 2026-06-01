@@ -33,7 +33,7 @@ import "@/styles/the-line.css";
  * - Children render INSIDE the chrome
  * ------------------------------------------------------------------------- */
 
-type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social";
+type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social" | "venues";
 
 export interface TheLineLayoutProps {
   title: string;
@@ -79,6 +79,7 @@ const NAV_ITEMS: NavItem[] = [
     labelVi: "Social",
     key: "social",
     children: [
+      { label: "Courts", labelVi: "Sân", to: "/san", key: "venues" },
       { label: "Tickets", labelVi: "Xé vé", to: "/social", key: "events" },
       { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
     ],
@@ -124,6 +125,8 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
     "/vi",
     "/clubs",
     "/vi/clubs",
+    "/san",
+    "/vi/san",
     "/social",
     "/vi/social",
     "/live",
@@ -168,7 +171,7 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   // Whitelist the first path segment to keep the toggle safe — flip i18n
   // state only, stay on the same URL.
   const VI_ENABLED_FIRST_SEGMENTS = new Set<string>([
-    "", "blog", "news", "forum", "feed", "clubs",
+    "", "blog", "news", "forum", "feed", "clubs", "san",
     "tournaments", "tournament", "videos", "watch",
     "rankings", "live", "livestream", "social", "su-kien",
     "u", "org", "account", "notifications", "thong-bao",

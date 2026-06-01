@@ -1840,6 +1840,10 @@ function renderTimelineRowHtml(
 // this file from sprawling further.
 export { renderSocialEvent, renderClub } from "./social-event";
 
+// ─── Court finder ("Tìm sân") ─────────────────────────────
+// /san list + /san/:slug detail prerender. Implementation in ./venues.ts.
+export { renderVenuesList, renderVenueDetail } from "./venues";
+
 // PR73 Phase 2B (audit I-1 + I-2): hub list pages for /social + /clubs.
 // Previously fell through to renderDefault → bot saw generic "ThePickleHub
 // - Pickleball Community" with no upcoming-event content or schema.

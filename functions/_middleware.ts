@@ -21,6 +21,7 @@ import {
   renderClub,
   renderSocialList,
   renderClubList,
+  renderVenuesList, renderVenueDetail,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage, renderToolNewPage,
@@ -63,6 +64,7 @@ const NOINDEX_PATTERNS: RegExp[] = [
   /^\/(?:vi\/)?(?:social|su-kien)\/[^/]+\/(?:danh-sach|xep-cap|live)(?:\/|$)/,
   // Create flows
   /^\/(?:vi\/)?clubs\/new(?:\/|$)/,
+  /^\/(?:vi\/)?san\/them(?:\/|$)/,
   // Auth + account
   /^\/login(?:\/|$)/,
   /^\/vi\/login(?:\/|$)/,
@@ -124,7 +126,7 @@ const DEFAULT_TTL_SECONDS = 21600; // 6 hours
 
 function pathCacheTtl(pathname: string): number {
   const stripped = pathname.replace(/^\/vi(?=\/|$)/, "") || "/";
-  if (stripped === "/social" || stripped === "/clubs") {
+  if (stripped === "/social" || stripped === "/clubs" || stripped === "/san") {
     return HUB_LIST_TTL_SECONDS;
   }
   return DEFAULT_TTL_SECONDS;
@@ -238,7 +240,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // either path.
   // 2026-05-20 — bumped v7→v8 to invalidate cached social list + detail
   // HTML after surfacing court_count on /social and /social/{slug}.
-  const cacheKey = `pr:v8:${url.pathname}`;
+  // 2026-06-01 — bumped v8→v9 to invalidate cache after adding the /san
+  // (court finder) list + detail prerender targets.
+  const cacheKey = `pr:v9:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
@@ -347,6 +351,13 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // so a freshly-published event/club is discoverable within minutes.
   if (path === "/social") return await renderSocialList(supabase, siteUrl, lang);
   if (path === "/clubs") return await renderClubList(supabase, siteUrl, lang);
+
+  // Court finder ("Tìm sân"). /san list + /san/:slug detail. /san/them is a
+  // create flow caught by the noindex shortcut above, so it never reaches
+  // here; the `!== "them"` guard is belt-and-suspenders.
+  if (path === "/san") return await renderVenuesList(supabase, siteUrl, lang);
+  match = path.match(/^\/san\/([^/]+)$/);
+  if (match && match[1] !== "them") return await renderVenueDetail(supabase, match[1], siteUrl, lang);
 
   // Social event detail (Social Events MVP Sprint 1 PR2). Public landing
   // with SportsEvent JSON-LD + Offer (availability). Bots see the
