@@ -55,9 +55,14 @@ function locationLine(v: { district: string | null; city: string | null }): stri
 }
 
 function fullAddress(v: VenueDetailRow): string {
-  return [v.address, v.district, v.city, v.country]
-    .filter((p) => p && String(p).trim().length > 0)
-    .join(", ");
+  const parts: string[] = [];
+  for (const raw of [v.address, v.district, v.city, v.country]) {
+    const t = raw ? String(raw).trim() : "";
+    if (!t) continue;
+    if (parts.some((x) => x.toLowerCase().includes(t.toLowerCase()))) continue;
+    parts.push(t);
+  }
+  return parts.join(", ");
 }
 
 // ── /san — list ────────────────────────────────────────────────────────────

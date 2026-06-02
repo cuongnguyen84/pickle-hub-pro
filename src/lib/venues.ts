@@ -86,9 +86,17 @@ export function venueLocationLine(
 export function venueFullAddress(
   v: Pick<Venue, "address" | "district" | "city" | "country">,
 ): string {
-  return [v.address, v.district, v.city, v.country]
-    .filter((p): p is string => Boolean(p && p.trim().length > 0))
-    .join(", ");
+  const parts: string[] = [];
+  for (const raw of [v.address, v.district, v.city, v.country]) {
+    const t = raw ? raw.trim() : "";
+    if (!t) continue;
+    const lower = t.toLowerCase();
+    // Skip a part already contained in an earlier one (e.g. address ends
+    // with the district -> avoid "Quận 1, Quận 1").
+    if (parts.some((x) => x.toLowerCase().includes(lower))) continue;
+    parts.push(t);
+  }
+  return parts.join(", ");
 }
 
 /**
