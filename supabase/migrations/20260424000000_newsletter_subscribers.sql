@@ -29,6 +29,7 @@ alter table public.newsletter_subscribers enable row level security;
 
 -- Only service_role (edge function) can insert. Frontend cannot write
 -- directly — it must go through the rate-limited edge function.
+drop policy if exists "service role insert" on public.newsletter_subscribers;
 create policy "service role insert" on public.newsletter_subscribers
   for insert
   to service_role
@@ -38,6 +39,7 @@ create policy "service role insert" on public.newsletter_subscribers
 -- Admins read via service_role or a dedicated admin dashboard RPC.
 
 -- Allow service_role to update (for confirmed_at, unsubscribed_at)
+drop policy if exists "service role update" on public.newsletter_subscribers;
 create policy "service role update" on public.newsletter_subscribers
   for update
   to service_role
