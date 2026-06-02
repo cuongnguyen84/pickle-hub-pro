@@ -260,11 +260,16 @@ export async function renderVenueDetail(
   const homeLabel = lang === "vi" ? "Trang chủ" : "Home";
   const homeHref = lang === "vi" ? `${siteUrl}/vi` : siteUrl;
   const courtsLabel = lang === "vi" ? "Tìm sân" : "Courts";
-  const bc = breadcrumb([
+  const citySlug = v.city ? CITY_SLUG_BY_NAME[v.city] : undefined;
+  const bcCrumbs: { label: string; href?: string }[] = [
     { label: homeLabel, href: homeHref },
     { label: courtsLabel, href: `${siteUrl}/san` },
-    { label: name },
-  ]);
+  ];
+  if (citySlug && v.city) {
+    bcCrumbs.push({ label: v.city, href: `${siteUrl}/san/khu-vuc/${citySlug}` });
+  }
+  bcCrumbs.push({ label: name });
+  const bc = breadcrumb(bcCrumbs);
 
   const lbl =
     lang === "vi"
@@ -282,6 +287,49 @@ export async function renderVenueDetail(
   if (v.phone) parts.push(`<p><strong>${lbl.phone}:</strong> ${escapeHtml(v.phone)}</p>`);
   if (v.website)
     parts.push(`<p><a href="${escapeHtml(v.website)}" rel="nofollow noopener">Website</a></p>`);
+
+  // Unique intro (after H1) + internal links to other courts in the same
+  // city — reduces thin content and interlinks the directory.
+  const typeWord =
+    v.is_indoor == null ? "" : lang === "vi" ? (v.is_indoor ? "trong nhà" : "ngoài trời") : v.is_indoor ? "indoor" : "outdoor";
+  const courtsWord =
+    v.num_courts && v.num_courts > 0
+      ? lang === "vi"
+        ? `${v.num_courts} sân`
+        : `${v.num_courts} court${v.num_courts > 1 ? "s" : ""}`
+      : "";
+  const intro =
+    lang === "vi"
+      ? `${name} là sân pickleball${typeWord ? ` ${typeWord}` : ""}${addr ? ` tại ${addr}` : ""}${courtsWord ? ` với ${courtsWord}` : ""}${v.surface_type ? `, mặt sân ${v.surface_type}` : ""}. Xem địa chỉ, bản đồ, chỉ đường và các sân pickleball khác${v.city ? ` tại ${v.city}` : ""} bên dưới.`
+      : `${name} is a pickleball court${addr ? ` at ${addr}` : ""}${courtsWord ? ` with ${courtsWord}` : ""}${typeWord ? ` (${typeWord})` : ""}${v.surface_type ? `, ${v.surface_type} surface` : ""}. See the address, map, directions and other pickleball courts${v.city ? ` in ${v.city}` : ""} below.`;
+  parts.splice(2, 0, `<p>${escapeHtml(intro)}</p>`);
+
+  if (v.city) {
+    try {
+      const { data: nb } = await supabase
+        .from("venues")
+        .select("slug, name, name_vi, district")
+        .eq("city", v.city)
+        .neq("slug", v.slug)
+        .order("is_verified", { ascending: false })
+        .order("num_courts", { ascending: false })
+        .limit(8);
+      const nearby = (nb ?? []) as { slug: string; name: string; name_vi: string | null; district: string | null }[];
+      if (nearby.length > 0) {
+        const heading = lang === "vi" ? `Sân pickleball khác tại ${v.city}` : `Other pickleball courts in ${v.city}`;
+        const items = nearby
+          .map((n) => `<li><a href="${siteUrl}/san/${escapeHtml(n.slug)}">${escapeHtml(displayName(n, lang))}</a>${n.district ? ` — ${escapeHtml(n.district)}` : ""}</li>`)
+          .join("");
+        parts.push(`<h2>${escapeHtml(heading)}</h2><ul>${items}</ul>`);
+      }
+    } catch {
+      // non-fatal
+    }
+    if (citySlug) {
+      const allLabel = lang === "vi" ? `Xem tất cả sân pickleball tại ${v.city}` : `See all pickleball courts in ${v.city}`;
+      parts.push(`<p><a href="${siteUrl}/san/khu-vuc/${citySlug}">${escapeHtml(allLabel)} →</a></p>`);
+    }
+  }
 
   return htmlResponse(
     buildHtml({
@@ -389,6 +437,10 @@ const VENUE_CITY_NAME: Record<string, string> = {
   "vinh-chau": "Vĩnh Châu",
   "yen-my": "Yên Mỹ",
 };
+
+const CITY_SLUG_BY_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(VENUE_CITY_NAME).map(([sl, nm]) => [nm, sl]),
+);
 
 export async function renderVenuesCity(
   supabase: SupabaseClient,

@@ -282,3 +282,10 @@ const VENUE_CITY_NAME_BY_SLUG: Record<string, string> = Object.fromEntries(
 export function cityNameFromSlug(slug: string): string | null {
   return VENUE_CITY_NAME_BY_SLUG[slug] ?? null;
 }
+const VENUE_CITY_SLUG_BY_NAME: Record<string, string> = Object.fromEntries(
+  VENUE_CITIES.map((c) => [c.name, c.slug]),
+);
+/** Resolve a display city name to its /san/khu-vuc/:city slug. */
+export function citySlugFromName(name: string | null | undefined): string | null {
+  return name ? VENUE_CITY_SLUG_BY_NAME[name] ?? null : null;
+}

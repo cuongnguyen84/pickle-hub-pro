@@ -26,6 +26,7 @@ import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/i18n";
 import { toast } from "@/hooks/use-toast";
+import { VenueCard } from "@/components/venues/VenueCard";
 import {
   type Venue,
   VENUE_DETAIL_COLUMNS,
@@ -36,6 +37,9 @@ import {
   courtsLabel,
   indoorLabel,
   surfaceLabel,
+  citySlugFromName,
+  VENUE_LIST_COLUMNS,
+  type VenueListItem,
 } from "@/lib/venues";
 
 const DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
@@ -68,6 +72,24 @@ export default function VenueDetail() {
       }
       return (data as Venue | null) ?? null;
     },
+    staleTime: 60_000,
+  });
+
+  const { data: nearby } = useQuery<VenueListItem[]>({
+    queryKey: ["venue-nearby", venue?.city ?? null, slug],
+    queryFn: async () => {
+      if (!venue?.city || !slug) return [];
+      const { data } = await supabase
+        .from("venues")
+        .select(VENUE_LIST_COLUMNS)
+        .eq("city", venue.city)
+        .neq("slug", slug)
+        .order("is_verified", { ascending: false })
+        .order("num_courts", { ascending: false })
+        .limit(8);
+      return (data as VenueListItem[]) ?? [];
+    },
+    enabled: Boolean(venue?.city && slug),
     staleTime: 60_000,
   });
 
@@ -118,6 +140,19 @@ export default function VenueDetail() {
   const osmUrl = venueOsmEmbedUrl(venue);
   const directionsUrl = venueDirectionsUrl(venue);
   const surface = surfaceLabel(venue.surface_type, language);
+  const citySlug = citySlugFromName(venue.city);
+  const typeWord =
+    venue.is_indoor == null ? "" : language === "vi" ? (venue.is_indoor ? "trong nhà" : "ngoài trời") : venue.is_indoor ? "indoor" : "outdoor";
+  const courtsWord =
+    venue.num_courts && venue.num_courts > 0
+      ? language === "vi"
+        ? `${venue.num_courts} sân`
+        : `${venue.num_courts} court${venue.num_courts > 1 ? "s" : ""}`
+      : "";
+  const intro =
+    language === "vi"
+      ? `${name} là sân pickleball${typeWord ? ` ${typeWord}` : ""}${fullAddress ? ` tại ${fullAddress}` : ""}${courtsWord ? ` với ${courtsWord}` : ""}${surface ? `, mặt sân ${surface}` : ""}. Xem địa chỉ, bản đồ, chỉ đường và các sân pickleball khác${venue.city ? ` tại ${venue.city}` : ""} bên dưới.`
+      : `${name} is a pickleball court${fullAddress ? ` at ${fullAddress}` : ""}${courtsWord ? ` with ${courtsWord}` : ""}${typeWord ? ` (${typeWord})` : ""}${surface ? `, ${surface} surface` : ""}. See the address, map, directions and other pickleball courts${venue.city ? ` in ${venue.city}` : ""} below.`;
 
   const metaDesc =
     (language === "vi"
@@ -152,6 +187,14 @@ export default function VenueDetail() {
             {language === "vi" ? "Tìm sân" : "Courts"}
           </Link>
           {" / "}
+          {citySlug && venue.city && (
+            <>
+              <Link to={`/san/khu-vuc/${citySlug}`} className="hover:underline">
+                {venue.city}
+              </Link>
+              {" / "}
+            </>
+          )}
           <span>{name}</span>
         </p>
 
@@ -184,6 +227,8 @@ export default function VenueDetail() {
             </p>
           )}
         </header>
+
+        <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{intro}</p>
 
         {/* Feature chips */}
         <div className="mb-6 flex flex-wrap gap-2">
@@ -267,6 +312,28 @@ export default function VenueDetail() {
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* Other courts in the same city — internal links */}
+        {nearby && nearby.length > 0 && (
+          <section className="mt-10 border-t border-border pt-6">
+            <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              {language === "vi" ? `Sân pickleball khác tại ${venue.city}` : `Other pickleball courts in ${venue.city}`}
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {nearby.map((n) => (
+                <VenueCard key={n.id} venue={n} language={language} />
+              ))}
+            </div>
+            {citySlug && (
+              <Link
+                to={`/san/khu-vuc/${citySlug}`}
+                className="mt-4 inline-block text-sm text-primary hover:underline"
+              >
+                {language === "vi" ? `Xem tất cả sân pickleball tại ${venue.city}` : `See all pickleball courts in ${venue.city}`} →
+              </Link>
+            )}
           </section>
         )}
 
