@@ -136,9 +136,9 @@ const SECURITY_HEADERS: Record<string, string> = {
     "img-src 'self' data: blob: https:; " +
     "media-src 'self' data: blob: https:; " +
     "connect-src 'self' https: wss:; " +
-    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com; " +
+    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://www.openstreetmap.org; " +
     "worker-src 'self' blob:; " +
-    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com; " +
+    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://www.openstreetmap.org; " +
     "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
 };
 
