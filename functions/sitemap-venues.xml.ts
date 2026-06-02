@@ -41,14 +41,19 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const entries = (venues || [])
       .filter((v: { slug: string; updated_at: string | null }) => v.slug && URL_SAFE_SLUG_RE.test(v.slug))
-      .map((v: { slug: string; updated_at: string | null }) => {
+      .flatMap((v: { slug: string; updated_at: string | null }) => {
         const lastmod = toLastmod(v.updated_at, TODAY);
-        return buildUrlEntry({
-          loc: `${siteUrl}/san/${v.slug}`,
-          lastmod,
-          changefreq: "monthly",
-          priority: "0.5",
-        });
+        const enLoc = `${siteUrl}/san/${v.slug}`;
+        const viLoc = `${siteUrl}/vi/san/${v.slug}`;
+        const hreflang = [
+          { lang: "en", href: enLoc },
+          { lang: "vi", href: viLoc },
+          { lang: "x-default", href: enLoc },
+        ];
+        return [
+          buildUrlEntry({ loc: enLoc, lastmod, changefreq: "monthly", priority: "0.5", hreflang }),
+          buildUrlEntry({ loc: viLoc, lastmod, changefreq: "monthly", priority: "0.5", hreflang }),
+        ];
       });
 
     // City hub pages (/san/khu-vuc/:city) — landing pages per city.
@@ -137,14 +142,19 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       "vinh-chau",
       "yen-my",
     ];
-    const cityEntries = CITY_SLUGS.map((sl) =>
-      buildUrlEntry({
-        loc: `${siteUrl}/san/khu-vuc/${sl}`,
-        lastmod: TODAY,
-        changefreq: "weekly",
-        priority: "0.6",
-      }),
-    );
+    const cityEntries = CITY_SLUGS.flatMap((sl) => {
+      const enLoc = `${siteUrl}/san/khu-vuc/${sl}`;
+      const viLoc = `${siteUrl}/vi/san/khu-vuc/${sl}`;
+      const hreflang = [
+        { lang: "en", href: enLoc },
+        { lang: "vi", href: viLoc },
+        { lang: "x-default", href: enLoc },
+      ];
+      return [
+        buildUrlEntry({ loc: enLoc, lastmod: TODAY, changefreq: "weekly", priority: "0.6", hreflang }),
+        buildUrlEntry({ loc: viLoc, lastmod: TODAY, changefreq: "weekly", priority: "0.6", hreflang }),
+      ];
+    });
 
     return new Response(wrapUrlset([...entries, ...cityEntries]), { status: 200, headers: SITEMAP_CACHE_HEADERS });
   } catch (err) {
