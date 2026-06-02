@@ -40,10 +40,9 @@ jobs:
           node-version: 20
 
       - name: Install Supabase CLI
-        run: |
-          curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz \
-            | tar -xz -C /usr/local/bin supabase
-          supabase --version
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Detect changed edge functions
         id: changed
