@@ -100,6 +100,14 @@ export function useClubMembers(clubId: string | undefined) {
     staleTime: 15_000, // 15s; realtime + visibility will cover gaps
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    // Force a fresh roster every time ClubManage mounts — e.g. when the
+    // organizer taps a "Yêu cầu join CLB" notification in the bell. The
+    // global default is refetchOnMount:false, and Supabase Realtime does
+    // NOT replay the pending row that was inserted BEFORE the page mounted,
+    // so without this the dashboard shows a stale cached list until a hard
+    // web reload / iOS force-quit. "always" guarantees the pending request
+    // appears the moment you land on the page from the notification.
+    refetchOnMount: "always",
   });
 
   function invalidate(): void {
