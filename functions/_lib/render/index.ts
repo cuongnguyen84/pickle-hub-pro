@@ -46,9 +46,9 @@ export async function renderHome(supabase: SupabaseClient, siteUrl: string): Pro
     supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(3),
   ]);
 
-  const liveItems = (liveRes.data || []).map((l: any) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
-  const videoItems = (videoRes.data || []).map((v: any) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
-  const viBlogItems = (viBlogRes.data || []).map((b: any) => `<li><a href="${siteUrl}/vi/blog/${b.slug}" hreflang="vi">${escapeHtml(b.title)}</a></li>`).join("");
+  const liveItems = (liveRes.data || []).map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
+  const videoItems = (videoRes.data || []).map((v) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
+  const viBlogItems = (viBlogRes.data || []).map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}" hreflang="vi">${escapeHtml(b.title)}</a></li>`).join("");
 
   const viBlogSection = viBlogItems
     ? `<h2>Pickleball in Vietnam</h2><p>Vietnamese pickleball content from our local team:</p><ul>${viBlogItems}</ul><p><a href="${siteUrl}/vi" hreflang="vi">Visit Vietnamese site</a></p>`
@@ -137,9 +137,9 @@ export async function renderHomeVi(supabase: SupabaseClient, siteUrl: string): P
     supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(6),
   ]);
 
-  const liveItems = (liveRes.data || []).map((l: any) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
-  const videoItems = (videoRes.data || []).map((v: any) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
-  const blogItems = (blogRes.data || []).map((b: any) => `<li><a href="${siteUrl}/vi/blog/${b.slug}"><h3>${escapeHtml(b.title)}</h3><p>${escapeHtml(b.excerpt || "")}</p></a></li>`).join("");
+  const liveItems = (liveRes.data || []).map((l) => `<li><a href="${siteUrl}/live/${l.id}">${escapeHtml(l.title)}</a> (${l.status})</li>`).join("");
+  const videoItems = (videoRes.data || []).map((v) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
+  const blogItems = (blogRes.data || []).map((b) => `<li><a href="${siteUrl}/vi/blog/${b.slug}"><h3>${escapeHtml(b.title)}</h3><p>${escapeHtml(b.excerpt || "")}</p></a></li>`).join("");
 
   const blogSection = blogItems ? `<h2>Bài viết mới nhất</h2><ul>${blogItems}</ul><p><a href="${siteUrl}/vi/blog">Xem tất cả bài viết</a></p>` : "";
 
@@ -501,8 +501,8 @@ function buildListJsonLd(name: string, items: Array<{ url: string; name: string 
 
 export async function renderTournaments(supabase: SupabaseClient, siteUrl: string, rawPath = "/tournaments", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: tournaments } = await supabase.from("tournaments").select("id, name, slug, status").in("status", ["ongoing", "upcoming"]).order("start_date", { ascending: false }).limit(20);
-  const items = (tournaments || []).map((t: any) => `<li><a href="${siteUrl}/tournament/${t.slug}">${escapeHtml(t.name)}</a></li>`).join("");
-  const listItems = (tournaments || []).map((t: any) => ({
+  const items = (tournaments || []).map((t) => `<li><a href="${siteUrl}/tournament/${t.slug}">${escapeHtml(t.name)}</a></li>`).join("");
+  const listItems = (tournaments || []).map((t) => ({
     url: `${siteUrl}/tournament/${t.slug}`,
     name: t.name,
   }));
@@ -531,8 +531,8 @@ export async function renderTournaments(supabase: SupabaseClient, siteUrl: strin
 
 export async function renderVideos(supabase: SupabaseClient, siteUrl: string, rawPath = "/videos", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: videos } = await supabase.from("videos").select("id, title").eq("status", "published").order("published_at", { ascending: false }).limit(20);
-  const items = (videos || []).map((v: any) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
-  const listItems = (videos || []).map((v: any) => ({
+  const items = (videos || []).map((v) => `<li><a href="${siteUrl}/watch/${v.id}">${escapeHtml(v.title)}</a></li>`).join("");
+  const listItems = (videos || []).map((v) => ({
     url: `${siteUrl}/watch/${v.id}`,
     name: v.title,
   }));
@@ -564,12 +564,12 @@ export async function renderNews(supabase: SupabaseClient, siteUrl: string, rawP
     .eq("language", lang)
     .order("published_at", { ascending: false })
     .limit(20);
-  const items = (news || []).map((n: any) =>
+  const items = (news || []).map((n) =>
     `<li><a href="${siteUrl}${lang === "en" ? "" : "/vi"}/news/${escapeHtml(n.slug)}">${escapeHtml(n.title)}</a>${
       n.summary ? `: ${escapeHtml(n.summary.slice(0, 80))}` : ""
     }</li>`,
   ).join("");
-  const listItems = (news || []).map((n: any) => ({
+  const listItems = (news || []).map((n) => ({
     url: `${siteUrl}${lang === "en" ? "" : "/vi"}/news/${n.slug}`,
     name: n.title,
   }));
@@ -618,6 +618,7 @@ async function renderNewsArticleByLang(
     .maybeSingle();
 
   if (!row) return render404(canonicalPath, siteUrl);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const r = row as any;
 
   let siblingSlug: string | null = null;
@@ -754,8 +755,8 @@ export async function renderViNewsPost(supabase: SupabaseClient, slug: string, s
 
 export async function renderForum(supabase: SupabaseClient, siteUrl: string, rawPath = "/forum", lang: "en" | "vi" = "en"): Promise<Response> {
   const { data: posts } = await supabase.from("forum_posts").select("id, title").eq("is_hidden", false).order("created_at", { ascending: false }).limit(20);
-  const items = (posts || []).map((p: any) => `<li><a href="${siteUrl}/forum/post/${p.id}">${escapeHtml(p.title)}</a></li>`).join("");
-  const listItems = (posts || []).map((p: any) => ({
+  const items = (posts || []).map((p) => `<li><a href="${siteUrl}/forum/post/${p.id}">${escapeHtml(p.title)}</a></li>`).join("");
+  const listItems = (posts || []).map((p) => ({
     url: `${siteUrl}/forum/post/${p.id}`,
     name: p.title,
   }));
@@ -1385,6 +1386,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
 
   if (!post) return render404(`/vi/blog/${slug}`, siteUrl);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = post as any;
   const url = `${siteUrl}/vi/blog/${slug}`;
 
@@ -1411,7 +1413,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
     const faqSchema = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity: p.faq_items.map((item: any) => ({
+      mainEntity: p.faq_items.map((item: { question: string; answer: string }) => ({
         "@type": "Question",
         name: item.question,
         acceptedAnswer: { "@type": "Answer", text: item.answer },
@@ -1442,7 +1444,7 @@ export async function renderViBlogPost(supabase: SupabaseClient, slug: string, s
 
 export async function renderViBlogIndex(supabase: SupabaseClient, siteUrl: string): Promise<Response> {
   const { data: posts } = await supabase.from("vi_blog_posts").select("slug, title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(20);
-  const items = ((posts || []) as any[]).map((p) => `<li><a href="${siteUrl}/vi/blog/${p.slug}">${escapeHtml(p.title)}</a><p>${escapeHtml(p.excerpt || "")}</p></li>`).join("");
+  const items = (posts || []).map((p) => `<li><a href="${siteUrl}/vi/blog/${p.slug}">${escapeHtml(p.title)}</a><p>${escapeHtml(p.excerpt || "")}</p></li>`).join("");
 
   return htmlResponse(buildHtml({
     title: "Blog Pickleball Việt Nam | ThePickleHub",
