@@ -276,7 +276,7 @@ class ChunkErrorBoundary extends Component<
     // fires before this timer and the counter is preserved so MAX_RELOADS holds.
     // Only reset when no chunk error has fired for 5s = stale cache resolved.
     this.resetTimer = setTimeout(() => {
-      try { sessionStorage.removeItem("chunk-reload-count"); } catch {}
+      try { sessionStorage.removeItem("chunk-reload-count"); } catch { /* ignore */ }
     }, 5000);
   }
   componentWillUnmount() {
@@ -312,15 +312,15 @@ class ChunkErrorBoundary extends Component<
     const KEY = "chunk-reload-count";
     const MAX_RELOADS = 3;
     let count = 0;
-    try { count = Number(sessionStorage.getItem(KEY) || "0"); } catch {}
+    try { count = Number(sessionStorage.getItem(KEY) || "0"); } catch { /* ignore */ }
 
     if (count >= MAX_RELOADS) {
-      try { sessionStorage.removeItem(KEY); } catch {}
+      try { sessionStorage.removeItem(KEY); } catch { /* ignore */ }
       this.setState({ giveUp: true });
       return;
     }
 
-    try { sessionStorage.setItem(KEY, String(count + 1)); } catch {}
+    try { sessionStorage.setItem(KEY, String(count + 1)); } catch { /* ignore */ }
     window.location.reload();
   }
   render() {
@@ -339,7 +339,7 @@ class ChunkErrorBoundary extends Component<
                 </div>
                 <button
                   onClick={() => {
-                    try { sessionStorage.clear(); } catch {}
+                    try { sessionStorage.clear(); } catch { /* ignore */ }
                     window.location.href =
                       window.location.pathname + "?_cb=" + Date.now();
                   }}
