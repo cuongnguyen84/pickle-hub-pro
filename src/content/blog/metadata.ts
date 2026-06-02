@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-doubles-stacking-strategy",
+    publishedDate: "2026-06-03",
+    updatedDate: "2026-06-03",
+    author: "Cuong Nguyen",
+    tags: ["pickleball stacking", "pickleball stacking strategy", "stacking in pickleball explained", "pickleball stacking serve", "pickleball stacking return", "lefty righty pickleball", "pickleball doubles strategy", "pickleball positioning"],
+    ctaPath: "/blog/pickleball-third-shot-drop-vs-drive",
+    ctaLabel: { en: "Next: Third Shot Drop vs Drive — Win the Point After You Stack", vi: "Tiếp theo: Cú thứ 3 Drop vs Drive — thắng điểm sau khi stack" },
+    heroImage: {
+      src: "/images/blog/pickleball-doubles-stacking-strategy-hero.webp",
+      alt: "Top-down diagram of a pickleball doubles court showing a stacking formation: two teammates positioned on the same side before the serve, with arrows indicating their rotation to preferred sides once the ball is in play, color-coded to show each partner's path."
+    },
+    titleEn: "Pickleball Stacking Strategy: A Complete Doubles Guide (2026)",
+    titleVi: "Chiến Thuật Stacking Pickleball: Hướng Dẫn Đánh Đôi Đầy Đủ (2026)",
+    metaTitleEn: "Pickleball Stacking Strategy 2026 | How & When to Stack",
+    metaTitleVi: "Chiến Thuật Stacking Pickleball 2026 | Stack Thế Nào & Khi Nào",
+    metaDescriptionEn: "Pickleball stacking explained: what it is, how to stack on the serve and return, the lefty-righty stack, hand signals, full vs half stack, mistakes, and drills.",
+    metaDescriptionVi: "Stacking pickleball là gì: cách stack khi giao và khi trả bóng, stack thuận-nghịch tay, tín hiệu tay, full stack vs half stack, lỗi phổ biến và bài tập.",
+  },
+  {
     slug: "pickleball-third-shot-drop-vs-drive",
     publishedDate: "2026-06-01",
     updatedDate: "2026-06-01",

@@ -24,6 +24,7 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "pickleball-doubles-stacking-strategy",
   "pickleball-third-shot-drop-vs-drive",
   "pickleball-dink-technique-mastery",
   "dupr-thepicklehub-user-guide",
