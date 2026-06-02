@@ -121,6 +121,7 @@ const CreateClub = lazy(() => import("./pages/CreateClub"));
 const VenuesList = lazy(() => import("./pages/VenuesList"));
 const VenueDetail = lazy(() => import("./pages/VenueDetail"));
 const VenueSubmit = lazy(() => import("./pages/VenueSubmit"));
+const VenuesCity = lazy(() => import("./pages/VenuesCity"));
 // Social Events MVP — PR57 (club management polish)
 const EditClub = lazy(() => import("./pages/EditClub"));
 // Social Events MVP — PR58 (pre-launch must-haves)
@@ -574,6 +575,8 @@ const App = () => (
                     <Route path="/vi/san" element={<ViLanguageWrapper><VenuesList /></ViLanguageWrapper>} />
                     <Route path="/san/them" element={<VenueSubmit />} />
                     <Route path="/vi/san/them" element={<ViLanguageWrapper><VenueSubmit /></ViLanguageWrapper>} />
+                    <Route path="/san/khu-vuc/:city" element={<VenuesCity />} />
+                    <Route path="/vi/san/khu-vuc/:city" element={<ViLanguageWrapper><VenuesCity /></ViLanguageWrapper>} />
                     <Route path="/san/:slug" element={<VenueDetail />} />
                     <Route path="/vi/san/:slug" element={<ViLanguageWrapper><VenueDetail /></ViLanguageWrapper>} />
                     {/* Social Events MVP PR57 — organizer club settings */}

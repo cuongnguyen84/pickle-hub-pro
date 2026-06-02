@@ -21,7 +21,7 @@ import {
   renderClub,
   renderSocialList,
   renderClubList,
-  renderVenuesList, renderVenueDetail,
+  renderVenuesList, renderVenueDetail, renderVenuesCity,
   renderOrgDetail,
   renderQuickTable, renderTeamMatch, renderDoublesElimination, renderFlexTournament,
   renderTools, renderToolPage, renderToolNewPage,
@@ -514,6 +514,8 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   if (path === "/clubs") return await renderClubList(supabase, siteUrl, lang);
 
   if (path === "/san") return await renderVenuesList(supabase, siteUrl, lang);
+  match = path.match(/^\/san\/khu-vuc\/([^/]+)$/);
+  if (match) return await renderVenuesCity(supabase, match[1], siteUrl, lang);
   match = path.match(/^\/san\/([^/]+)$/);
   if (match && match[1] !== "them") return await renderVenueDetail(supabase, match[1], siteUrl, lang);
 

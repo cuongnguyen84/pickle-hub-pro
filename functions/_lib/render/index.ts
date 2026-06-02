@@ -2338,7 +2338,7 @@ function renderTimelineRowHtml(
 // the other handlers. Implementation lives in ./social-event.ts to keep
 // this file from sprawling further.
 export { renderSocialEvent, renderClub } from "./social-event";
-export { renderVenuesList, renderVenueDetail } from "./venues";
+export { renderVenuesList, renderVenueDetail, renderVenuesCity } from "./venues";
 
 // PR73 Phase 2B (audit I-1 + I-2): hub list pages for /social + /clubs.
 // Previously fell through to renderDefault → bot saw generic "ThePickleHub

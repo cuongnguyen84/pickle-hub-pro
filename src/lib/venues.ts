@@ -180,3 +180,105 @@ export function slugifyVenue(name: string, city: string): string {
   if (!citySlug || base.endsWith(citySlug)) return base.slice(0, 80);
   return `${base}-${citySlug}`.slice(0, 80);
 }
+
+
+// ── City directory (court-finder hubs /san/khu-vuc/:city) ───────────────────
+export interface VenueCity {
+  slug: string;
+  name: string;
+}
+/** Cities with ≥1 venue, ordered by court count desc. Used by the /san hub
+ *  links and the /san/khu-vuc/:city landing pages. Regenerate from
+ *  public.venues when the directory grows. */
+export const VENUE_CITIES: VenueCity[] = [
+  { slug: "tp-hcm", name: "TP.HCM" },
+  { slug: "ha-noi", name: "Hà Nội" },
+  { slug: "da-nang", name: "Đà Nẵng" },
+  { slug: "bac-ninh", name: "Bắc Ninh" },
+  { slug: "ha-long", name: "Hạ Long" },
+  { slug: "vinh", name: "Vinh" },
+  { slug: "nam-dinh", name: "Nam Định" },
+  { slug: "thanh-hoa", name: "Thanh Hóa" },
+  { slug: "binh-duong", name: "Bình Dương" },
+  { slug: "can-tho", name: "Cần Thơ" },
+  { slug: "pleiku", name: "Pleiku" },
+  { slug: "vung-tau", name: "Vũng Tàu" },
+  { slug: "bac-giang", name: "Bắc Giang" },
+  { slug: "bao-loc", name: "Bảo Lộc" },
+  { slug: "cao-bang", name: "Cao Bằng" },
+  { slug: "lang-son", name: "Lạng Sơn" },
+  { slug: "buon-ma-thuot", name: "Buôn Ma Thuột" },
+  { slug: "dong-hoi", name: "Đồng Hới" },
+  { slug: "ha-tinh", name: "Hà Tĩnh" },
+  { slug: "hai-duong", name: "Hải Dương" },
+  { slug: "hai-phong", name: "Hải Phòng" },
+  { slug: "nha-trang", name: "Nha Trang" },
+  { slug: "quy-nhon", name: "Quy Nhơn" },
+  { slug: "tay-ninh", name: "Tây Ninh" },
+  { slug: "vinh-yen", name: "Vĩnh Yên" },
+  { slug: "bien-hoa", name: "Biên Hòa" },
+  { slug: "cao-lanh", name: "Cao Lãnh" },
+  { slug: "da-lat", name: "Đà Lạt" },
+  { slug: "hue", name: "Huế" },
+  { slug: "lao-cai", name: "Lào Cai" },
+  { slug: "long-xuyen", name: "Long Xuyên" },
+  { slug: "ninh-binh", name: "Ninh Bình" },
+  { slug: "phan-rang", name: "Phan Rang" },
+  { slug: "quang-ngai", name: "Quảng Ngãi" },
+  { slug: "son-la", name: "Sơn La" },
+  { slug: "thai-nguyen", name: "Thái Nguyên" },
+  { slug: "tuy-hoa", name: "Tuy Hòa" },
+  { slug: "ca-mau", name: "Cà Mau" },
+  { slug: "dien-bien-phu", name: "Điện Biên Phủ" },
+  { slug: "dong-ha", name: "Đông Hà" },
+  { slug: "phu-quoc", name: "Phú Quốc" },
+  { slug: "rach-gia", name: "Rạch Giá" },
+  { slug: "viet-tri", name: "Việt Trì" },
+  { slug: "vinh-long", name: "Vĩnh Long" },
+  { slug: "ben-tre", name: "Bến Tre" },
+  { slug: "chau-doc", name: "Châu Đốc" },
+  { slug: "dong-xoai", name: "Đồng Xoài" },
+  { slug: "ha-giang", name: "Hà Giang" },
+  { slug: "hoi-an", name: "Hội An" },
+  { slug: "my-hao", name: "Mỹ Hào" },
+  { slug: "phan-thiet", name: "Phan Thiết" },
+  { slug: "sam-son", name: "Sầm Sơn" },
+  { slug: "thai-binh", name: "Thái Bình" },
+  { slug: "tra-vinh", name: "Trà Vinh" },
+  { slug: "tuyen-quang", name: "Tuyên Quang" },
+  { slug: "uong-bi", name: "Uông Bí" },
+  { slug: "yen-bai", name: "Yên Bái" },
+  { slug: "cam-pha", name: "Cẩm Phả" },
+  { slug: "hoa-binh", name: "Hòa Bình" },
+  { slug: "hung-ha", name: "Hưng Hà" },
+  { slug: "moc-chau", name: "Mộc Châu" },
+  { slug: "my-tho", name: "Mỹ Tho" },
+  { slug: "phu-ly", name: "Phủ Lý" },
+  { slug: "sa-dec", name: "Sa Đéc" },
+  { slug: "soc-trang", name: "Sóc Trăng" },
+  { slug: "van-giang", name: "Văn Giang" },
+  { slug: "van-lam", name: "Văn Lâm" },
+  { slug: "chau-hung", name: "Châu Hưng" },
+  { slug: "chi-linh", name: "Chí Linh" },
+  { slug: "gia-nghia", name: "Gia Nghĩa" },
+  { slug: "kon-tum", name: "Kon Tum" },
+  { slug: "mai-chau", name: "Mai Châu" },
+  { slug: "phu-yen", name: "Phù Yên" },
+  { slug: "phuc-yen", name: "Phúc Yên" },
+  { slug: "quynh-phu", name: "Quỳnh Phụ" },
+  { slug: "sa-pa", name: "Sa Pa" },
+  { slug: "tam-ky", name: "Tam Kỳ" },
+  { slug: "tan-an", name: "Tân An" },
+  { slug: "thanh-son", name: "Thanh Sơn" },
+  { slug: "tran-yen", name: "Trấn Yên" },
+  { slug: "vi-xuyen", name: "Vị Xuyên" },
+  { slug: "vinh-chau", name: "Vĩnh Châu" },
+  { slug: "yen-my", name: "Yên Mỹ" },
+];
+const VENUE_CITY_NAME_BY_SLUG: Record<string, string> = Object.fromEntries(
+  VENUE_CITIES.map((c) => [c.slug, c.name]),
+);
+/** Resolve a /san/khu-vuc/:city slug back to its display city name. */
+export function cityNameFromSlug(slug: string): string | null {
+  return VENUE_CITY_NAME_BY_SLUG[slug] ?? null;
+}

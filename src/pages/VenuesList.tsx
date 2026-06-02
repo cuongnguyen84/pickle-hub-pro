@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { VenueCard } from "@/components/venues/VenueCard";
-import { type VenueListItem, VENUE_LIST_COLUMNS } from "@/lib/venues";
+import { type VenueListItem, VENUE_LIST_COLUMNS, VENUE_CITIES } from "@/lib/venues";
 
 const PAGE_SIZE = 60;
 
@@ -214,6 +214,23 @@ export default function VenuesList() {
             )}
           </div>
         )}
+        <section className="mt-12 border-t border-border pt-6">
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            {language === "vi" ? "Tìm sân theo khu vực" : "Browse courts by city"}
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {VENUE_CITIES.map((c) => (
+              <Link
+                key={c.slug}
+                to={`/san/khu-vuc/${c.slug}`}
+                className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                style={{ textDecoration: "none" }}
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
     </TheLineLayout>
   );
