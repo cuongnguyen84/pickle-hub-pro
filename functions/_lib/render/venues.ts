@@ -66,7 +66,9 @@ export async function renderVenuesList(
   siteUrl: string,
   lang: Lang,
 ): Promise<Response> {
-  const canonical = `${siteUrl}/san`;
+  const enUrl = `${siteUrl}/san`;
+  const viUrl = `${siteUrl}/vi/san`;
+  const canonical = lang === "vi" ? viUrl : enUrl;
 
   let rows: VenueListRow[] = [];
   try {
@@ -157,7 +159,9 @@ export async function renderVenuesList(
       ? `<nav aria-label="breadcrumb"><ol><li><a href="${siteUrl}/vi">Trang chủ</a></li> &gt; <li>Tìm sân</li></ol></nav>`
       : `<nav aria-label="breadcrumb"><ol><li><a href="${siteUrl}/">Home</a></li> &gt; <li>Courts</li></ol></nav>`;
 
+  const hubH1 = lang === "vi" ? "Tìm sân Pickleball Việt Nam" : "Find pickleball courts in Vietnam";
   const bodyContent = `${breadcrumbHtml}
+<h1>${escapeHtml(hubH1)}</h1>
 <section>
 <h2>${escapeHtml(lang === "vi" ? "Sân pickleball nổi bật" : "Featured courts")}</h2>
 ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
@@ -175,6 +179,12 @@ ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
       type: "website",
       jsonLd: itemListJsonLd,
       bodyContent,
+      alternates: [
+        { hreflang: "en", href: enUrl },
+        { hreflang: "vi", href: viUrl },
+        { hreflang: "x-default", href: enUrl },
+      ],
+      omitAutoHeader: true,
     }),
   );
 }
@@ -200,7 +210,9 @@ export async function renderVenueDetail(
   if (!data) return render404(`/san/${slug}`, siteUrl);
 
   const v = data as unknown as VenueDetailRow;
-  const url = `${siteUrl}/san/${v.slug}`;
+  const enUrl = `${siteUrl}/san/${v.slug}`;
+  const viUrl = `${siteUrl}/vi/san/${v.slug}`;
+  const url = lang === "vi" ? viUrl : enUrl;
   const name = displayName(v, lang);
   const addr = fullAddress(v);
 
@@ -280,6 +292,11 @@ export async function renderVenueDetail(
       jsonLd,
       bodyContent: parts.join("\n"),
       lang,
+      alternates: [
+        { hreflang: "en", href: enUrl },
+        { hreflang: "vi", href: viUrl },
+        { hreflang: "x-default", href: enUrl },
+      ],
       omitAutoHeader: true,
     }),
   );
@@ -381,7 +398,9 @@ export async function renderVenuesCity(
 ): Promise<Response> {
   const cityName = VENUE_CITY_NAME[citySlug];
   if (!cityName) return render404(`/san/khu-vuc/${citySlug}`, siteUrl);
-  const canonical = `${siteUrl}/san/khu-vuc/${citySlug}`;
+  const enUrl = `${siteUrl}/san/khu-vuc/${citySlug}`;
+  const viUrl = `${siteUrl}/vi/san/khu-vuc/${citySlug}`;
+  const canonical = lang === "vi" ? viUrl : enUrl;
 
   let rows: VenueListRow[] = [];
   try {
@@ -469,6 +488,11 @@ export async function renderVenuesCity(
       type: "website",
       jsonLd: itemListJsonLd,
       bodyContent,
+      alternates: [
+        { hreflang: "en", href: enUrl },
+        { hreflang: "vi", href: viUrl },
+        { hreflang: "x-default", href: enUrl },
+      ],
       omitAutoHeader: true,
     }),
   );
