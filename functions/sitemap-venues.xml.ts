@@ -40,8 +40,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     const entries = (venues || [])
-      .filter((v: any) => v.slug && URL_SAFE_SLUG_RE.test(v.slug))
-      .map((v: any) => {
+      .filter((v: { slug: string; updated_at: string | null }) => v.slug && URL_SAFE_SLUG_RE.test(v.slug))
+      .map((v: { slug: string; updated_at: string | null }) => {
         const lastmod = toLastmod(v.updated_at, TODAY);
         return buildUrlEntry({
           loc: `${siteUrl}/san/${v.slug}`,
@@ -51,7 +51,102 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         });
       });
 
-    return new Response(wrapUrlset(entries), { status: 200, headers: SITEMAP_CACHE_HEADERS });
+    // City hub pages (/san/khu-vuc/:city) — landing pages per city.
+    const CITY_SLUGS: string[] = [
+      "tp-hcm",
+      "ha-noi",
+      "da-nang",
+      "bac-ninh",
+      "ha-long",
+      "vinh",
+      "nam-dinh",
+      "thanh-hoa",
+      "binh-duong",
+      "can-tho",
+      "pleiku",
+      "vung-tau",
+      "bac-giang",
+      "bao-loc",
+      "cao-bang",
+      "lang-son",
+      "buon-ma-thuot",
+      "dong-hoi",
+      "ha-tinh",
+      "hai-duong",
+      "hai-phong",
+      "nha-trang",
+      "quy-nhon",
+      "tay-ninh",
+      "vinh-yen",
+      "bien-hoa",
+      "cao-lanh",
+      "da-lat",
+      "hue",
+      "lao-cai",
+      "long-xuyen",
+      "ninh-binh",
+      "phan-rang",
+      "quang-ngai",
+      "son-la",
+      "thai-nguyen",
+      "tuy-hoa",
+      "ca-mau",
+      "dien-bien-phu",
+      "dong-ha",
+      "phu-quoc",
+      "rach-gia",
+      "viet-tri",
+      "vinh-long",
+      "ben-tre",
+      "chau-doc",
+      "dong-xoai",
+      "ha-giang",
+      "hoi-an",
+      "my-hao",
+      "phan-thiet",
+      "sam-son",
+      "thai-binh",
+      "tra-vinh",
+      "tuyen-quang",
+      "uong-bi",
+      "yen-bai",
+      "cam-pha",
+      "hoa-binh",
+      "hung-ha",
+      "moc-chau",
+      "my-tho",
+      "phu-ly",
+      "sa-dec",
+      "soc-trang",
+      "van-giang",
+      "van-lam",
+      "chau-hung",
+      "chi-linh",
+      "gia-nghia",
+      "kon-tum",
+      "mai-chau",
+      "phu-yen",
+      "phuc-yen",
+      "quynh-phu",
+      "sa-pa",
+      "tam-ky",
+      "tan-an",
+      "thanh-son",
+      "tran-yen",
+      "vi-xuyen",
+      "vinh-chau",
+      "yen-my",
+    ];
+    const cityEntries = CITY_SLUGS.map((sl) =>
+      buildUrlEntry({
+        loc: `${siteUrl}/san/khu-vuc/${sl}`,
+        lastmod: TODAY,
+        changefreq: "weekly",
+        priority: "0.6",
+      }),
+    );
+
+    return new Response(wrapUrlset([...entries, ...cityEntries]), { status: 200, headers: SITEMAP_CACHE_HEADERS });
   } catch (err) {
     console.error("sitemap-venues: fatal:", err);
     return new Response(wrapUrlset([]), { status: 503, headers: SITEMAP_CACHE_HEADERS });
