@@ -176,9 +176,25 @@ export function useMatchConfirm(slug: string | undefined) {
   return useMutation({
     mutationFn: (input: ConfirmInput) =>
       callConfirmAction({ match_id: input.match_id, action: "confirm" }),
-    onSuccess: () => {
-      toast({ title: "Đã xác nhận trận đấu" });
+    onSuccess: (data) => {
+      // The match-confirm response carries the best-effort DUPR auto-submit
+      // outcome — surface the matchCode when it pushed successfully.
+      const submit = (
+        data as { dupr_submit?: { ok?: boolean; match_code?: string } }
+      )?.dupr_submit;
+      toast({
+        title: "Đã xác nhận trận đấu",
+        description:
+          submit?.ok && submit.match_code
+            ? `Đã gửi lên DUPR · matchCode ${submit.match_code}`
+            : undefined,
+      });
       if (slug) qc.invalidateQueries({ queryKey: ["match", slug] });
+      // A CLB-logged match also lives in the club list + the opponent's
+      // pending-confirmations queue — refresh both so they leave the
+      // "Chờ đối thủ xác nhận" state immediately.
+      qc.invalidateQueries({ queryKey: ["club-matches"] });
+      qc.invalidateQueries({ queryKey: ["my-pending-confirmations"] });
     },
     onError: (err) => {
       toast({

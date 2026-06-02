@@ -11,6 +11,25 @@
 // participant confirmation is sufficient.
 //
 // Disputes flag the match for moderation and notify the recorder.
+//
+// ----------------------------------------------------------------------------
+// 2026-06-02 — UNIFY the two confirmation state machines + auto-submit DUPR
+// ----------------------------------------------------------------------------
+// The `matches` table carries TWO parallel confirmation fields:
+//   - verification_status   (pending → verified)        — THIS function
+//   - confirmation_status   (pending_opponent_confirm → confirmed)
+//                                                       — confirm_club_match RPC
+// A CLB match logged by a regular member sets BOTH. Previously, confirming
+// through this (social) surface only advanced verification_status, leaving
+// the CLB list — which reads confirmation_status via list_club_matches —
+// stuck on "Chờ đối thủ xác nhận" forever. We now flip BOTH here so every
+// confirmation surface agrees.
+//
+// Per product decision (2026-06-02): when an opponent confirms, the match
+// is auto-submitted to DUPR for ALL users (not just admins/organizers).
+// dupr-match-submit carries a matching "confirmed-participant" bypass. The
+// submit is best-effort — a failure never fails the confirm itself; the row
+// is left ready_for_dupr=true so an admin can retry.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
@@ -36,8 +55,14 @@ interface MatchRow {
   format: string;
   recorded_by: string;
   verification_status: string;
+  confirmation_status: string | null;
   played_at: string;
   venue_name_override: string | null;
+  club_id: string | null;
+  team_a_score: number[] | null;
+  team_b_score: number[] | null;
+  submitted_to_dupr: boolean | null;
+  dupr_match_id: string | null;
 }
 
 const UUID_RE =
@@ -48,6 +73,147 @@ function err(error: string, status: number, code?: string, details?: unknown) {
     { error, ...(code ? { code } : {}), ...(details ? { details } : {}) },
     status,
   );
+}
+
+// ─── DUPR auto-submit (best-effort) ─────────────────────────────────────────
+// Build the DUPR create payload from the matches row + participants and push
+// it through the dupr-match-submit edge function, forwarding the confirming
+// user's bearer so the "confirmed-participant" bypass authorizes them.
+//
+// Never throws. Returns a small status object that we surface in the confirm
+// response so the client can toast accordingly. Silently skips (attempted
+// false) when the match is already on DUPR, scores are malformed, or a
+// player has no DUPR ID — in those cases ready_for_dupr stays true for a
+// later admin submit.
+interface DuprAutoSubmitResult {
+  attempted: boolean;
+  ok?: boolean;
+  match_code?: string;
+  reason?: string;
+}
+
+interface DuprParticipant {
+  team: "a" | "b";
+  position: number | null;
+  dupr_id: string | null;
+}
+
+async function autoSubmitToDupr(
+  supabase: ReturnType<typeof createClient>,
+  authHeader: string | null,
+  match: MatchRow,
+): Promise<DuprAutoSubmitResult> {
+  try {
+    if (!authHeader) return { attempted: false, reason: "no_auth_header" };
+    if (match.submitted_to_dupr || match.dupr_match_id) {
+      return { attempted: false, reason: "already_submitted" };
+    }
+
+    const aScores = match.team_a_score ?? [];
+    const bScores = match.team_b_score ?? [];
+    if (
+      aScores.length < 1 ||
+      aScores.length > 5 ||
+      aScores.length !== bScores.length
+    ) {
+      return { attempted: false, reason: "invalid_scores" };
+    }
+
+    // Participants + each player's DUPR id, ordered for stable player1/player2.
+    const { data: rows, error: pErr } = await supabase
+      .from("match_participants")
+      .select(
+        "team, position, profile:profiles!match_participants_player_id_fkey ( dupr_id )",
+      )
+      .eq("match_id", match.id)
+      .order("team", { ascending: true })
+      .order("position", { ascending: true });
+    if (pErr) return { attempted: false, reason: "participants_fetch_failed" };
+
+    const parts: DuprParticipant[] = (rows ?? []).map((r) => {
+      const rec = r as Record<string, unknown>;
+      const profile = (rec.profile ?? {}) as { dupr_id?: string | null };
+      return {
+        team: rec.team as "a" | "b",
+        position: (rec.position as number) ?? null,
+        dupr_id: profile.dupr_id ?? null,
+      };
+    });
+
+    const teamA = parts
+      .filter((p) => p.team === "a")
+      .sort((x, y) => (x.position ?? 0) - (y.position ?? 0));
+    const teamB = parts
+      .filter((p) => p.team === "b")
+      .sort((x, y) => (x.position ?? 0) - (y.position ?? 0));
+
+    if (teamA.length === 0 || teamB.length === 0) {
+      return { attempted: false, reason: "missing_team" };
+    }
+    if ([...teamA, ...teamB].some((p) => !p.dupr_id)) {
+      // A player has not connected DUPR — leave ready_for_dupr=true so an
+      // admin can submit later once everyone connects.
+      return { attempted: false, reason: "players_missing_dupr_id" };
+    }
+
+    const buildTeam = (players: DuprParticipant[], scores: number[]) => {
+      const out: Record<string, unknown> = { player1: players[0].dupr_id };
+      if (players.length > 1) out.player2 = players[1].dupr_id;
+      scores.forEach((s, i) => {
+        out[`game${i + 1}`] = s;
+      });
+      return out;
+    };
+
+    // Club-logged matches mirror submitted_to_dupr back onto the row when
+    // source === "club_match"; pure social matches use "match".
+    const source = match.club_id ? "club_match" : "match";
+    const fmt = match.format === "singles" ? "SINGLES" : "DOUBLES";
+
+    const payload = {
+      action: "create",
+      internal_source: source,
+      internal_match_id: match.id,
+      match_date: String(match.played_at).slice(0, 10),
+      location: match.club_id ? "ThePickleHub CLB" : "ThePickleHub",
+      format: fmt,
+      match_type: "SIDEOUT",
+      event: match.club_id ? "ThePickleHub CLB match" : "ThePickleHub match",
+      bracket: "",
+      team_a: buildTeam(teamA, aScores),
+      team_b: buildTeam(teamB, bScores),
+    };
+
+    const url = `${Deno.env.get("SUPABASE_URL") ?? ""}/functions/v1/dupr-match-submit`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+        apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      },
+      body: JSON.stringify(payload),
+    });
+    const respBody = (await res.json().catch(() => ({}))) as {
+      match_code?: string;
+      error?: string;
+      code?: string;
+    };
+    if (!res.ok) {
+      return {
+        attempted: true,
+        ok: false,
+        reason: respBody.error ?? respBody.code ?? `dupr_http_${res.status}`,
+      };
+    }
+    return { attempted: true, ok: true, match_code: respBody.match_code };
+  } catch (e) {
+    return {
+      attempted: true,
+      ok: false,
+      reason: e instanceof Error ? e.message : "dupr_submit_threw",
+    };
+  }
 }
 
 Deno.serve(async (req) => {
@@ -107,7 +273,7 @@ Deno.serve(async (req) => {
   const { data: match, error: matchErr } = await supabase
     .from("matches")
     .select(
-      "id, slug, format, recorded_by, verification_status, played_at, venue_name_override",
+      "id, slug, format, recorded_by, verification_status, confirmation_status, played_at, venue_name_override, club_id, team_a_score, team_b_score, submitted_to_dupr, dupr_match_id",
     )
     .eq("id", body.match_id)
     .maybeSingle<MatchRow>();
@@ -185,6 +351,7 @@ Deno.serve(async (req) => {
       .from("matches")
       .update({
         verification_status: "disputed",
+        confirmation_status: "disputed",
         updated_at: new Date().toISOString(),
       })
       .eq("id", match.id);
@@ -292,16 +459,34 @@ Deno.serve(async (req) => {
       ).length;
 
   let newStatus: "pending" | "verified" = "pending";
+  let duprSubmit: DuprAutoSubmitResult = {
+    attempted: false,
+    reason: "not_verified",
+  };
 
   if (opponentTeamConfirmed >= 1) {
     newStatus = "verified";
+    const nowIso = new Date().toISOString();
+
+    // Build the matches patch. ALWAYS advance verification_status. For CLB
+    // member-logged rows (confirmation_status='pending_opponent_confirm'),
+    // ALSO advance the CLB confirmation machine + flip ready_for_dupr so the
+    // CLB list / pending queue agree and the row is shippable to DUPR.
+    const matchPatch: Record<string, unknown> = {
+      verification_status: "verified",
+      verified_at: nowIso,
+      updated_at: nowIso,
+    };
+    if (match.confirmation_status === "pending_opponent_confirm") {
+      matchPatch.confirmation_status = "confirmed";
+      matchPatch.confirmed_by = user.id;
+      matchPatch.confirmed_at = nowIso;
+      matchPatch.ready_for_dupr = true;
+    }
+
     const { error: matchUpdErr } = await supabase
       .from("matches")
-      .update({
-        verification_status: "verified",
-        verified_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .update(matchPatch)
       .eq("id", match.id);
     if (matchUpdErr) {
       console.error(
@@ -314,6 +499,26 @@ Deno.serve(async (req) => {
       );
       // Don't fail the request — confirmation succeeded, status update can retry
     } else {
+      // ─── Auto-submit to DUPR (best-effort, per 2026-06-02 decision) ─────
+      // Runs AFTER the row reads verification_status='verified' so the
+      // dupr-match-submit "confirmed-participant" bypass authorizes the
+      // confirming opponent. Failures are non-fatal.
+      duprSubmit = await autoSubmitToDupr(
+        supabase,
+        req.headers.get("Authorization"),
+        match,
+      );
+      if (duprSubmit.attempted && !duprSubmit.ok) {
+        console.warn(
+          JSON.stringify({
+            function: "match-confirm",
+            match_id: match.id,
+            step: "auto_submit_dupr",
+            reason: duprSubmit.reason,
+          }),
+        );
+      }
+
       // Notify all OTHER participants that match is now verified
       const targets = updated.filter((p) => p.player_id !== user.id);
       if (targets.length > 0) {
@@ -354,5 +559,6 @@ Deno.serve(async (req) => {
     user_confirmed: true,
     creator_team_confirmed_count: creatorTeamConfirmed,
     opponent_team_confirmed_count: opponentTeamConfirmed,
+    dupr_submit: duprSubmit,
   });
 });

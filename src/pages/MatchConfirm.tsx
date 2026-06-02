@@ -17,12 +17,84 @@ import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useMyPendingConfirmations,
   useConfirmClubMatch,
   type PendingConfirmationRow,
   type ClubMatchPlayer,
 } from "@/hooks/useClubMatches";
+
+// ─── DUPR auto-submit after opponent confirm (best-effort) ─────────────────
+// Per product decision (2026-06-02): confirming a match pushes it to DUPR
+// for ALL users. dupr-match-submit authorizes the confirming participant via
+// its "confirmed-participant" bypass. Skips quietly when a player has no DUPR
+// ID or scores are malformed (leaves the row ready_for_dupr for an admin).
+async function submitConfirmedMatchToDupr(
+  row: PendingConfirmationRow,
+): Promise<{ ok: boolean; matchCode?: string; skipped?: boolean; reason?: string }> {
+  const allPlayers = [...row.team_a_players, ...row.team_b_players];
+  const aScores = row.team_a_score ?? [];
+  const bScores = row.team_b_score ?? [];
+  if (
+    allPlayers.length === 0 ||
+    allPlayers.some((p) => !p.dupr_id) ||
+    aScores.length < 1 ||
+    aScores.length !== bScores.length
+  ) {
+    return { ok: false, skipped: true, reason: "preflight" };
+  }
+
+  const totalGames = aScores.length;
+  const buildTeam = (players: ClubMatchPlayer[], scores: number[]) => {
+    const out: Record<string, unknown> = { player1: players[0]?.dupr_id };
+    if (players.length > 1) out.player2 = players[1]?.dupr_id;
+    for (let i = 0; i < totalGames; i++) out[`game${i + 1}`] = scores[i];
+    return out;
+  };
+
+  try {
+    const { data, error } = await supabase.functions.invoke<{
+      match_code?: string;
+      error?: string;
+      message?: string;
+    }>("dupr-match-submit", {
+      body: {
+        action: "create",
+        internal_source: "club_match",
+        internal_match_id: row.id,
+        match_date: row.played_at.slice(0, 10),
+        location: "ThePickleHub CLB",
+        format: row.format === "singles" ? "SINGLES" : "DOUBLES",
+        match_type: "SIDEOUT",
+        event: "ThePickleHub CLB match",
+        bracket: "",
+        team_a: buildTeam(row.team_a_players, aScores),
+        team_b: buildTeam(row.team_b_players, bScores),
+      },
+    });
+
+    if (error) {
+      const ctx = (error as { context?: Response }).context;
+      let detail = error.message ?? "submit_failed";
+      if (ctx) {
+        try {
+          const b = await ctx.clone().json();
+          detail = b.error ?? b.message ?? b.code ?? detail;
+        } catch {
+          /* keep default */
+        }
+      }
+      return { ok: false, reason: detail };
+    }
+    if (!data?.match_code) {
+      return { ok: false, reason: data?.error ?? data?.message ?? "no_match_code" };
+    }
+    return { ok: true, matchCode: data.match_code };
+  } catch (e) {
+    return { ok: false, reason: e instanceof Error ? e.message : "submit_failed" };
+  }
+}
 
 export default function MatchConfirm() {
   const { user, loading: authLoading } = useAuth();
@@ -78,8 +150,8 @@ export default function MatchConfirm() {
           </h1>
           <p style={{ color: "var(--tl-fg-3)" }}>
             {vi
-              ? "Đối thủ vừa nhập tỉ số. Kiểm tra rồi bấm xác nhận — sau đó quản trị CLB sẽ gửi trận lên DUPR."
-              : "Your opponent logged the score. Review it, then confirm — your CLB admin then submits to DUPR."}
+              ? "Đối thủ vừa nhập tỉ số. Kiểm tra rồi bấm xác nhận — trận sẽ được gửi lên DUPR ngay."
+              : "Your opponent logged the score. Review it, then confirm — the match is sent to DUPR right away."}
           </p>
         </header>
 
@@ -140,18 +212,33 @@ function PendingMatchCard({
     setStage("confirming");
 
     try {
-      // Strict DUPR compliance (2026-05-26): opponent confirm only flips
-      // status to 'confirmed' + ready_for_dupr=true. The actual DUPR push
-      // is performed by an admin or club organizer afterwards — DUPR spec
-      // forbids "normal users" from submitting matches.
+      // 1. Flip confirmation_status → 'confirmed' + ready_for_dupr=true.
       await confirm.mutateAsync({ matchId: row.id });
+
+      // 2. Auto-submit to DUPR. Product decision (2026-06-02): opponent
+      //    confirm pushes the match to DUPR for ALL users (supersedes the
+      //    2026-05-26 admin-only deferral). Best-effort — a failure here must
+      //    not undo the confirm, so we only adjust the toast copy.
+      const submitResult = await submitConfirmedMatchToDupr(row);
+      let duprNote: string;
+      if (submitResult.ok && submitResult.matchCode) {
+        duprNote = vi
+          ? `Đã gửi lên DUPR · matchCode ${submitResult.matchCode}`
+          : `Submitted to DUPR · matchCode ${submitResult.matchCode}`;
+      } else if (submitResult.skipped) {
+        duprNote = vi
+          ? "Quản trị CLB sẽ gửi lên DUPR (thiếu DUPR ID / tỉ số)."
+          : "Your CLB admin will submit to DUPR (missing DUPR ID / score).";
+      } else {
+        duprNote = vi
+          ? `Gửi DUPR chưa xong: ${submitResult.reason ?? "lỗi"} — admin sẽ thử lại.`
+          : `DUPR submit pending: ${submitResult.reason ?? "error"} — admin can retry.`;
+      }
 
       setStage("done");
       toast({
         title: vi ? "Đã xác nhận trận đấu" : "Match confirmed",
-        description: vi
-          ? "Quản trị CLB sẽ duyệt và gửi lên DUPR."
-          : "Your CLB admin will review and submit to DUPR.",
+        description: duprNote,
       });
       onDone();
     } catch (e) {
@@ -241,8 +328,8 @@ function PendingMatchCard({
             </div>
             <div style={{ color: "var(--tl-fg-3)", marginTop: 2 }}>
               {vi
-                ? "Quản trị CLB sẽ duyệt và gửi lên DUPR sớm."
-                : "Your CLB admin will review and submit it to DUPR shortly."}
+                ? "Trận đã được xác nhận và đồng bộ lên DUPR."
+                : "Match confirmed and synced to DUPR."}
             </div>
           </div>
         </div>

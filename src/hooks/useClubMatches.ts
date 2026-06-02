@@ -7,8 +7,10 @@
 //   - migration 20260526120000_club_match_confirmation.sql (Phase 2)
 // ============================================================================
 
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { uniqueChannelSuffix } from "@/lib/uniqueChannelId";
 
 export type MatchFormat = "singles" | "doubles" | "mixed";
 
@@ -107,6 +109,7 @@ export function useClubEligiblePlayers(clubId: string | undefined) {
  * Fetch matches logged against a CLB plus per-team player rosters.
  */
 export function useClubMatches(clubId: string | undefined, limit = 50) {
+  const queryClient = useQueryClient();
   const { data: matches = [], isLoading, refetch } = useQuery<ClubMatchRow[]>({
     queryKey: ["club-matches", clubId, limit],
     queryFn: async () => {
@@ -121,6 +124,47 @@ export function useClubMatches(clubId: string | undefined, limit = 50) {
     enabled: Boolean(clubId),
     staleTime: 30_000,
   });
+
+  // ─── Realtime: live-update the list when a match in this club changes ────
+  // Without this, an opponent confirming a score (matches UPDATE →
+  // confirmation_status='confirmed' / submitted_to_dupr=true) or a newly
+  // logged match (INSERT) only appears after a web reload or an iOS Capacitor
+  // force-quit. Mirrors the club_members realtime fix (migration
+  // 20260602000000); public.matches is added to supabase_realtime in
+  // migration 20260602010000. The `is_public=true` SELECT policy authorizes
+  // the subscription and the club_id=eq filter matches the new-row image on
+  // INSERT/UPDATE.
+  useEffect(() => {
+    if (!clubId) return;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(`club-matches:${clubId}:${uniqueChannelSuffix()}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "matches",
+            filter: `club_id=eq.${clubId}`,
+          },
+          () => {
+            void queryClient.invalidateQueries({
+              queryKey: ["club-matches", clubId],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["my-pending-confirmations"],
+            });
+          },
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[ClubMatches] Realtime setup failed:", err);
+    }
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [clubId, queryClient]);
 
   return { matches, isLoading, refetch };
 }

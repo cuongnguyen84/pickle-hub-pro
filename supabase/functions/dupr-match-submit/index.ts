@@ -205,15 +205,34 @@ Deno.serve(async (req) => {
 
   let isClubOrganizer = false;
 
+  // (C) Confirmed-match participant — RE-ADDED 2026-06-02 per product
+  //     decision. Once a match is opponent-confirmed
+  //     (verification_status='verified' OR confirmation_status='confirmed'),
+  //     ANY participant may push it to DUPR. This re-enables the
+  //     auto-submit-on-confirm flow for ALL users — match-confirm calls this
+  //     endpoint forwarding the confirming opponent's bearer right after it
+  //     flips the row to verified.
+  //
+  //     NOTE: this intentionally relaxes DUPR's "TD/admin/match-owner only"
+  //     guidance (the 2026-05-26 removal). The product owner accepted this
+  //     trade-off on 2026-06-02. The confirmed-state requirement is the
+  //     data-integrity guard: unconfirmed matches still cannot be submitted
+  //     by a non-admin/non-organizer.
+  let isConfirmedParticipant = false;
+
   if (
     !isGlobalAdmin &&
     (body.internal_source === "match" || body.internal_source === "club_match")
   ) {
     const { data: matchRow } = await supabase
       .from("matches")
-      .select("club_id")
+      .select("club_id, verification_status, confirmation_status")
       .eq("id", body.internal_match_id)
-      .maybeSingle<{ club_id: string | null }>();
+      .maybeSingle<{
+        club_id: string | null;
+        verification_status: string | null;
+        confirmation_status: string | null;
+      }>();
 
     if (matchRow?.club_id) {
       const { data: orgOk } = await supabase.rpc("is_club_organizer", {
@@ -222,9 +241,23 @@ Deno.serve(async (req) => {
       });
       if (orgOk === true) isClubOrganizer = true;
     }
+
+    if (
+      !isClubOrganizer &&
+      (matchRow?.verification_status === "verified" ||
+        matchRow?.confirmation_status === "confirmed")
+    ) {
+      const { data: part } = await supabase
+        .from("match_participants")
+        .select("player_id")
+        .eq("match_id", body.internal_match_id)
+        .eq("player_id", user.id)
+        .maybeSingle<{ player_id: string }>();
+      if (part) isConfirmedParticipant = true;
+    }
   }
 
-  if (!isGlobalAdmin && !isClubOrganizer) {
+  if (!isGlobalAdmin && !isClubOrganizer && !isConfirmedParticipant) {
     return err("forbidden", 403, "role_required");
   }
 
