@@ -23,6 +23,7 @@ import {
   BarChart2,
   Zap,
   Newspaper,
+  Gavel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +43,7 @@ const navItems = [
   { path: "/admin/tournaments", icon: Trophy, labelKey: "tournaments" as const },
   { path: "/admin/pro-tour", icon: Zap, labelKey: "proTour" as const },
   { path: "/admin/moderation", icon: Shield, labelKey: "moderation" as const },
+  { path: "/admin/disputes", icon: Gavel, labelKey: "disputes" as const },
   { path: "/admin/reports", icon: Flag, labelKey: "reports" as const },
   { path: "/admin/news", icon: Newspaper, labelKey: "news" as const },
   { path: "/admin/api-keys", icon: Key, labelKey: "apiKeys" as const },
@@ -131,6 +133,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       // i18n bundle when a localized variant becomes necessary.
       proTour: "Pro Tour",
       moderation: t.admin.moderation.title,
+      disputes: "Tranh chấp",
       reports: "Báo cáo",
       apiKeys: "API Keys",
       viewers: t.admin.viewers.title,

@@ -18,6 +18,7 @@ import { EntityNotFound } from "@/components/EntityNotFound";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { useMyMembership } from "@/hooks/useClubMembers";
 import { ClubMatches } from "@/components/social-events/ClubMatches";
+import { ClubDisputeResolver } from "@/components/social-events/ClubDisputeResolver";
 import { ClubRoster } from "@/components/social-events/ClubRoster";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -298,6 +299,9 @@ export default function ClubLanding() {
         {/* Club matches — public list + organizer log/queue UI.
             Lives between description and events because match results are
             the highest-signal recent activity for any club. */}
+        {/* Organizer dispute review queue (hidden when nothing to resolve). */}
+        <ClubDisputeResolver clubId={club.id} isOrganizer={isOrganizer} />
+
         <ClubMatches clubId={club.id} isOrganizer={isOrganizer} />
 
         <section style={{ marginBottom: 32 }}>
