@@ -147,6 +147,11 @@ export async function renderVenuesList(
 
   const emptyMsg = lang === "vi" ? "Chưa có sân nào." : "No courts yet.";
 
+  const cityHeading = lang === "vi" ? "Sân pickleball theo tỉnh/thành" : "Pickleball courts by city";
+  const cityLinks = Object.entries(VENUE_CITY_NAME)
+    .map(([sl, nm]) => `<li><a href="${siteUrl}/san/khu-vuc/${sl}">${escapeHtml(nm)}</a></li>`)
+    .join("");
+
   const breadcrumbHtml =
     lang === "vi"
       ? `<nav aria-label="breadcrumb"><ol><li><a href="${siteUrl}/vi">Trang chủ</a></li> &gt; <li>Tìm sân</li></ol></nav>`
@@ -157,6 +162,7 @@ export async function renderVenuesList(
 <h2>${escapeHtml(lang === "vi" ? "Sân pickleball nổi bật" : "Featured courts")}</h2>
 ${rows.length > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`}
 </section>
+<nav><h2>${escapeHtml(cityHeading)}</h2><ul>${cityLinks}</ul></nav>
 <nav><h2>${escapeHtml(headingMore)}</h2><ul>${moreLinks}</ul></nav>`;
 
   return htmlResponse(
