@@ -402,7 +402,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // / live / match HTML that doesn't yet include the new Related
   // sections. Without the bump, bots keep seeing the v12 cached
   // shells until the 6h TTL elapses.
-  const cacheKey = `pr:v15:${url.pathname}`;
+  // 2026-06-02 — bumped v15→v16 to invalidate cached /san HTML after SSR
+  // output changes: split EN/VI canonical + hreflang, clean hub H1, enriched
+  // detail pages (intro + "other courts in city" links) and address dedup.
+  const cacheKey = `pr:v16:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
