@@ -122,6 +122,9 @@ const VenuesList = lazy(() => import("./pages/VenuesList"));
 const VenueDetail = lazy(() => import("./pages/VenueDetail"));
 const VenueSubmit = lazy(() => import("./pages/VenueSubmit"));
 const VenuesCity = lazy(() => import("./pages/VenuesCity"));
+// Find players ("Tìm bạn chơi") + in-app messaging
+const FindPlayers = lazy(() => import("./pages/FindPlayers"));
+const Messages = lazy(() => import("./pages/Messages"));
 // Social Events MVP — PR57 (club management polish)
 const EditClub = lazy(() => import("./pages/EditClub"));
 // Social Events MVP — PR58 (pre-launch must-haves)
@@ -577,6 +580,11 @@ const App = () => (
                     <Route path="/vi/san/them" element={<ViLanguageWrapper><VenueSubmit /></ViLanguageWrapper>} />
                     <Route path="/san/khu-vuc/:city" element={<VenuesCity />} />
                     <Route path="/vi/san/khu-vuc/:city" element={<ViLanguageWrapper><VenuesCity /></ViLanguageWrapper>} />
+                    {/* Find players + in-app messaging (auth-gated, noindex) */}
+                    <Route path="/tim-ban-choi" element={<FindPlayers />} />
+                    <Route path="/vi/tim-ban-choi" element={<ViLanguageWrapper><FindPlayers /></ViLanguageWrapper>} />
+                    <Route path="/tin-nhan" element={<Messages />} />
+                    <Route path="/vi/tin-nhan" element={<ViLanguageWrapper><Messages /></ViLanguageWrapper>} />
                     <Route path="/san/:slug" element={<VenueDetail />} />
                     <Route path="/vi/san/:slug" element={<ViLanguageWrapper><VenueDetail /></ViLanguageWrapper>} />
                     {/* Social Events MVP PR57 — organizer club settings */}
