@@ -33,7 +33,7 @@ import "@/styles/the-line.css";
  * - Children render INSIDE the chrome
  * ------------------------------------------------------------------------- */
 
-type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social" | "venues";
+type Active = "live" | "tournaments" | "lab" | "rankings" | "feed" | "stories" | "stats" | "home" | "events" | "clubs" | "social" | "venues" | "players";
 
 export interface TheLineLayoutProps {
   title: string;
@@ -80,6 +80,7 @@ const NAV_ITEMS: NavItem[] = [
     key: "social",
     children: [
       { label: "Courts", labelVi: "Sân", to: "/san", key: "venues" },
+      { label: "Find players", labelVi: "Tìm bạn chơi", to: "/tim-ban-choi", key: "players" },
       { label: "Tickets", labelVi: "Xé vé", to: "/social", key: "events" },
       { label: "Clubs", labelVi: "CLB", to: "/clubs", key: "clubs" },
     ],

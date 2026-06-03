@@ -65,6 +65,8 @@ const NOINDEX_PATTERNS: RegExp[] = [
   // Create flows
   /^\/(?:vi\/)?clubs\/new(?:\/|$)/,
   /^\/(?:vi\/)?san\/them(?:\/|$)/,
+  /^\/(?:vi\/)?tim-ban-choi(?:\/|$)/,
+  /^\/(?:vi\/)?tin-nhan(?:\/|$)/,
   // Auth + account
   /^\/login(?:\/|$)/,
   /^\/vi\/login(?:\/|$)/,
