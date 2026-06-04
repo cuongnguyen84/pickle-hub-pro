@@ -30,11 +30,14 @@ export function BlockUserButton({ targetUserId, targetDisplayName, variant = "ic
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  // Don't show for own profile or unauthenticated
-  if (!user || user.id === targetUserId) return null;
+  // NOTE(rules-of-hooks): hooks must run on every render, so the
+  // own-profile / unauthenticated guard lives BELOW them (see early
+  // return before the JSX). Returning before useQuery/useMutation
+  // crashed the component (React #310) when auth resolved after mount.
+  const hidden = !user || user.id === targetUserId;
 
   const { data: isBlocked = false } = useQuery({
-    queryKey: ["blocked-user", user.id, targetUserId],
+    queryKey: ["blocked-user", user?.id, targetUserId],
     queryFn: async () => {
       const { data } = await supabase
         .from("blocked_users")
@@ -44,7 +47,7 @@ export function BlockUserButton({ targetUserId, targetDisplayName, variant = "ic
         .maybeSingle();
       return !!data;
     },
-    enabled: !!user,
+    enabled: !hidden,
   });
 
   const toggleBlock = useMutation({
@@ -75,6 +78,9 @@ export function BlockUserButton({ targetUserId, targetDisplayName, variant = "ic
       toast({ title: t.common.error, variant: "destructive" });
     },
   });
+
+  // Don't show for own profile or unauthenticated
+  if (hidden) return null;
 
   return (
     <>
