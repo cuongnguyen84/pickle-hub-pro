@@ -118,6 +118,62 @@ export default function CreateSocialEvent() {
     () => ({ ...step1Result.errors, ...step2Result.errors }),
     [step1Result.errors, step2Result.errors],
   );
+  // NOTE(rules-of-hooks): this memo must stay ABOVE the permission early
+  // returns below — calling it after a conditional return crashed the page
+  // (React #310) when useClubOwnership resolved loading -> allowed.
+  // 2026-05-22 — surface a human-readable list of what's still missing
+  // so the organizer knows WHY the green button is greyed out. Without
+  // this hint, the user keeps clicking and nothing happens (silent
+  // validation only flagged invalid fields with inline red text, which
+  // is easy to miss on a long form).
+  const slotResult = validateSlots(form.slots, form.max_players, t);
+  const missingFields = useMemo<string[]>(() => {
+    const list: string[] = [];
+    const fieldLabel: Partial<Record<keyof FormState, string>> = {
+      title:           create.eventName,
+      start_date:      create.startDate,
+      start_time:      create.startTime,
+      end_time:        create.endTime,
+      location_text:   create.location,
+      court_count:     create.courtCount,
+      max_players:     create.maxPlayers,
+      zalo_group_url:  create.zaloGroupUrl,
+      price_vnd:       create.priceAmount,
+      bank_code:       create.bankLabel,
+      bank_account_number: create.accountNumberLabel,
+      bank_account_name:   create.accountNameLabel,
+      prepayment_deadline_hours: create.paymentDeadlineHours,
+    };
+    const showStep2 = step === 2;
+    const errors = showStep2
+      ? { ...step1Result.errors, ...step2Result.errors }
+      : step1Result.errors;
+    for (const [key, msg] of Object.entries(errors)) {
+      if (!msg) continue;
+      const label = fieldLabel[key as keyof FormState] ?? key;
+      list.push(`${label}: ${msg}`);
+    }
+    if (slotResult.totalError) list.push(slotResult.totalError);
+    for (const [slotId, slotErr] of Object.entries(slotResult.errors)) {
+      if (!slotErr) continue;
+      const slotIdx = form.slots.findIndex((s) => s.id === slotId);
+      const slotLabel = (form.slots[slotIdx]?.label?.trim() || `${language === "vi" ? "Nhóm" : "Group"} ${slotIdx + 1}`);
+      for (const msg of Object.values(slotErr)) {
+        if (msg) list.push(`${slotLabel}: ${msg}`);
+      }
+    }
+    if (slugTaken) list.push(create.errorSlugTaken);
+    return list;
+  }, [
+    step,
+    step1Result.errors,
+    step2Result.errors,
+    slotResult,
+    form.slots,
+    slugTaken,
+    create,
+    language,
+  ]);
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -347,59 +403,6 @@ export default function CreateSocialEvent() {
   const step1Disabled = !step1Result.valid;
   const submitDisabled = submitting || !step1Result.valid || !step2Result.valid || slugTaken;
 
-  // 2026-05-22 — surface a human-readable list of what's still missing
-  // so the organizer knows WHY the green button is greyed out. Without
-  // this hint, the user keeps clicking and nothing happens (silent
-  // validation only flagged invalid fields with inline red text, which
-  // is easy to miss on a long form).
-  const slotResult = validateSlots(form.slots, form.max_players, t);
-  const missingFields = useMemo<string[]>(() => {
-    const list: string[] = [];
-    const fieldLabel: Partial<Record<keyof FormState, string>> = {
-      title:           create.eventName,
-      start_date:      create.startDate,
-      start_time:      create.startTime,
-      end_time:        create.endTime,
-      location_text:   create.location,
-      court_count:     create.courtCount,
-      max_players:     create.maxPlayers,
-      zalo_group_url:  create.zaloGroupUrl,
-      price_vnd:       create.priceAmount,
-      bank_code:       create.bankLabel,
-      bank_account_number: create.accountNumberLabel,
-      bank_account_name:   create.accountNameLabel,
-      prepayment_deadline_hours: create.paymentDeadlineHours,
-    };
-    const showStep2 = step === 2;
-    const errors = showStep2
-      ? { ...step1Result.errors, ...step2Result.errors }
-      : step1Result.errors;
-    for (const [key, msg] of Object.entries(errors)) {
-      if (!msg) continue;
-      const label = fieldLabel[key as keyof FormState] ?? key;
-      list.push(`${label}: ${msg}`);
-    }
-    if (slotResult.totalError) list.push(slotResult.totalError);
-    for (const [slotId, slotErr] of Object.entries(slotResult.errors)) {
-      if (!slotErr) continue;
-      const slotIdx = form.slots.findIndex((s) => s.id === slotId);
-      const slotLabel = (form.slots[slotIdx]?.label?.trim() || `${language === "vi" ? "Nhóm" : "Group"} ${slotIdx + 1}`);
-      for (const msg of Object.values(slotErr)) {
-        if (msg) list.push(`${slotLabel}: ${msg}`);
-      }
-    }
-    if (slugTaken) list.push(create.errorSlugTaken);
-    return list;
-  }, [
-    step,
-    step1Result.errors,
-    step2Result.errors,
-    slotResult,
-    form.slots,
-    slugTaken,
-    create,
-    language,
-  ]);
 
   return (
     <TheLineLayout title={create.pageTitle} active="events" noindex>
