@@ -10,6 +10,25 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-erne-shot-tutorial",
+    publishedDate: "2026-06-05",
+    updatedDate: "2026-06-05",
+    author: "Cuong Nguyen",
+    tags: ["pickleball erne", "erne shot pickleball", "how to hit an erne in pickleball", "jump erne", "erne rules pickleball", "pickleball advanced shots", "pickleball volley", "kitchen rules pickleball"],
+    ctaPath: "/blog/pickleball-doubles-stacking-strategy",
+    ctaLabel: { en: "Next: Pickleball Stacking Strategy — Control Sides to Create Erne Chances", vi: "Tiếp theo: Chiến thuật Stacking — kiểm soát bên sân để tạo cơ hội erne" },
+    heroImage: {
+      src: "/images/blog/pickleball-erne-shot-tutorial-hero.webp",
+      alt: "Dynamic side-angle action shot of a pickleball player leaping forward outside the kitchen line, mid-air, executing an erne volley right at the net while the opponent's dink floats toward the sideline."
+    },
+    titleEn: "The Erne in Pickleball: How to Hit It, Rules & Setup (2026)",
+    titleVi: "Cú Erne Trong Pickleball: Cách Thực Hiện, Luật & Cách Giăng Bẫy (2026)",
+    metaTitleEn: "Pickleball Erne Shot 2026 | How to Hit It & When",
+    metaTitleVi: "Cú Erne Pickleball 2026 | Cách Thực Hiện & Khi Nào",
+    metaDescriptionEn: "The pickleball erne explained: what it is, why it's legal, jump vs stationary erne, step-by-step technique, how to set it up, defense, mistakes, and drills.",
+    metaDescriptionVi: "Cú erne pickleball là gì: vì sao hợp lệ, erne bật nhảy vs đứng sẵn, kỹ thuật từng bước, cách giăng bẫy, phòng thủ, lỗi phổ biến và bài tập.",
+  },
+  {
     slug: "pickleball-doubles-stacking-strategy",
     publishedDate: "2026-06-03",
     updatedDate: "2026-06-03",
