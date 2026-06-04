@@ -1453,6 +1453,10 @@ export async function renderViBlogIndex(supabase: SupabaseClient, siteUrl: strin
     url: `${siteUrl}/vi/blog`,
     siteUrl,
     lang: "vi",
+    // SEO-1.2 — reciprocal hreflang back to EN /blog (mirror of renderBlog).
+    // Without this the VI index emitted zero hreflang while /blog already
+    // pointed here, so Google dropped the one-way signal.
+    extraMeta: bilingualHreflang(`${siteUrl}/blog`, `${siteUrl}/vi/blog`),
     bodyContent: items ? `<ul>${items}</ul>` : "",
   }));
 }

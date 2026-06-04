@@ -407,7 +407,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 2026-06-02 — bumped v15→v16 to invalidate cached /san HTML after SSR
   // output changes: split EN/VI canonical + hreflang, clean hub H1, enriched
   // detail pages (intro + "other courts in city" links) and address dedup.
-  const cacheKey = `pr:v16:${url.pathname}`;
+  // 2026-06-04 — bumped v16→v17 to invalidate cached /vi/blog HTML after
+  // adding reciprocal hreflang (renderViBlogIndex now mirrors renderBlog).
+  const cacheKey = `pr:v17:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
