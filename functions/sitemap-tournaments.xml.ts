@@ -23,6 +23,12 @@ interface Env {
   CANONICAL_HOST: string;
 }
 
+interface TournamentRow {
+  slug: string | null;
+  created_at: string | null;
+  status: string;
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const siteUrl = context.env.CANONICAL_HOST || SITE_URL_DEFAULT;
   const TODAY = today();
@@ -33,31 +39,39 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     // statuses are 'ongoing' + 'ended' today; defensive whitelist excludes
     // any future 'cancelled' / 'archived' / 'draft' so they never reach
     // the sitemap.
+    //
+    // AUTOFIX (2026-06-05) — `tournaments` has no `updated_at` column
+    // (only `created_at`), so the previous select failed with PostgREST
+    // 42703 and this sitemap silently served an EMPTY urlset with HTTP
+    // 200. Select `created_at` instead (same pattern as players/
+    // organizations) and surface query errors as 503 so the failure
+    // mode is visible to monitoring instead of silently de-listing
+    // every tournament page.
     const { data: tournaments, error } = await supabase
       .from("tournaments")
-      .select("slug, updated_at, status")
+      .select("slug, created_at, status")
       .in("status", ["ongoing", "ended", "upcoming"])
       .order("start_date", { ascending: false })
       .limit(5000);
 
     if (error) {
       console.error("sitemap-tournaments: query error:", error);
+      return new Response(wrapUrlset([]), { status: 503, headers: SITEMAP_CACHE_HEADERS });
     }
 
-    const entries = (tournaments || [])
-      .filter((t: any) => t.slug && URL_SAFE_SLUG_RE.test(t.slug))
-      .map((t: any) => {
-        const lastmod = toLastmod(t.updated_at, TODAY);
+    // NOTE — no <xhtml:link hreflang> block here on purpose: SEO audit
+    // batch 5 made tournament pages single-locale (/vi/tournament/* now
+    // 301s to the EN canonical), so advertising a vi alternate in the
+    // sitemap would point hreflang at a redirect.
+    const entries = ((tournaments || []) as TournamentRow[])
+      .filter((t) => t.slug && URL_SAFE_SLUG_RE.test(t.slug))
+      .map((t) => {
+        const lastmod = toLastmod(t.created_at, TODAY);
         return buildUrlEntry({
           loc: `${siteUrl}/tournament/${t.slug}`,
           lastmod,
           changefreq: "weekly",
           priority: "0.7",
-          hreflang: [
-            { lang: "en", href: `${siteUrl}/tournament/${t.slug}` },
-            { lang: "vi", href: `${siteUrl}/vi/tournament/${t.slug}` },
-            { lang: "x-default", href: `${siteUrl}/tournament/${t.slug}` },
-          ],
         });
       });
 
