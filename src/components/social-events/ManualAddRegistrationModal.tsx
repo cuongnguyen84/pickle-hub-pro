@@ -167,7 +167,6 @@ export function ManualAddRegistrationModal({
             priceVnd={priceVnd}
             showPaymentBlock={false}
             onAddAnother={() => {
-              setPhoneInput("");
               setDisplayName("");
               setSelfLevel("");
               setPaymentChoice("unpaid");
