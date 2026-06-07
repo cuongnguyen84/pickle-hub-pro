@@ -118,8 +118,8 @@ const PlayerProfile = () => {
           <h1 className="text-2xl font-semibold">{notFoundTitle}</h1>
           <p className="text-sm text-muted-foreground">
             {language === "vi"
-              ? `Username "${username}" chưa có ai dùng, hoặc hồ sơ đã bị ẩn.`
-              : `Username "${username}" isn't claimed yet, or the profile is hidden.`}
+              ? `Username "${slugFromUrl}" chưa có ai dùng, hoặc hồ sơ đã bị ẩn.`
+              : `Username "${slugFromUrl}" isn't claimed yet, or the profile is hidden.`}
           </p>
           <Button asChild variant="outline">
             <Link to="/">
