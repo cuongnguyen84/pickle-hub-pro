@@ -115,7 +115,16 @@ def main() -> int:
  * `dupr_rankings` table that the page reads from at runtime.
  */
 
-export type DuprFormat = "mens-singles" | "womens-singles" | "mens-doubles" | "womens-doubles";
+export type DuprFormat =
+  | "mens-singles"
+  | "womens-singles"
+  | "mens-doubles"
+  | "womens-doubles"
+  // Sprint A6 (2026-05-27) — vietnam scope formats (aggregated; profiles has
+  // no gender column yet so mens/womens cannot be split). Hidden from
+  // non-vietnam tabs via getAvailableFormats() below.
+  | "singles"
+  | "doubles";
 export type DuprScope =
   | "open"
   | "junior"
@@ -123,7 +132,11 @@ export type DuprScope =
   | "north-america"
   | "south-america"
   | "australia-oceania"
-  | "europe";
+  | "europe"
+  // Sprint A6 (2026-05-27) — national scope, currently Vietnam-only. Reads
+  // from public.profiles via dupr_leaderboard_vietnam() RPC at runtime
+  // rather than the static const below. UI branches on scope === "vietnam".
+  | "vietnam";
 
 export interface DuprPlayer {{
   rank: number;
@@ -136,7 +149,11 @@ export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> 
 
     footer = f'''
 
-export const DUPR_SCOPES: {{ key: DuprScope; labelEn: string; labelVi: string; group: "global" | "continent" }}[] = [
+export type DuprScopeGroup = "global" | "continent" | "national";
+
+export const DUPR_SCOPES: {{ key: DuprScope; labelEn: string; labelVi: string; group: DuprScopeGroup }}[] = [
+  // National scope first — most prominent for the ~95% Vietnamese userbase.
+  {{ key: "vietnam",           labelEn: "Vietnam",             labelVi: "Việt Nam",        group: "national" }},
   {{ key: "open",              labelEn: "Open",                labelVi: "Mở rộng",         group: "global" }},
   {{ key: "junior",            labelEn: "Junior",              labelVi: "Trẻ",             group: "global" }},
   {{ key: "asia",              labelEn: "Asia",                labelVi: "Châu Á",          group: "continent" }},
@@ -151,7 +168,22 @@ export const DUPR_FORMATS: {{ key: DuprFormat; labelEn: string; labelVi: string 
   {{ key: "womens-singles", labelEn: "Women's Singles", labelVi: "Đơn nữ" }},
   {{ key: "mens-doubles",   labelEn: "Men's Doubles",   labelVi: "Đôi nam" }},
   {{ key: "womens-doubles", labelEn: "Women's Doubles", labelVi: "Đôi nữ" }},
+  {{ key: "singles",        labelEn: "Singles",         labelVi: "Đơn" }},
+  {{ key: "doubles",        labelEn: "Doubles",         labelVi: "Đôi" }},
 ];
+
+// Sprint A6 — per-scope format availability. vietnam uses 2 aggregated
+// formats; all other scopes use the 4 gender-split formats.
+export function getAvailableFormats(scope: DuprScope): DuprFormat[] {{
+  if (scope === "vietnam") {{
+    return ["doubles", "singles"];
+  }}
+  return ["mens-singles", "womens-singles", "mens-doubles", "womens-doubles"];
+}}
+
+export function defaultFormatForScope(scope: DuprScope): DuprFormat {{
+  return scope === "vietnam" ? "doubles" : "mens-doubles";
+}}
 
 export const DUPR_LAST_UPDATED = "{today}";
 '''
