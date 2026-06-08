@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "vietnam-pickleball-federation-2026",
+    publishedDate: "2026-06-08",
+    updatedDate: "2026-06-08",
+    author: "Cuong Nguyen",
+    tags: ["vietnam pickleball federation", "lien doan pickleball viet nam", "vietnam pickleball governance", "pickleball national sports games 2026", "pickleball vietnam 2026", "da nang pickleball federation", "dupr vietnam"],
+    ctaPath: "/blog/professional-pickleball-tours-guide-2026",
+    ctaLabel: { en: "Next: Pro Pickleball Tours 2026 — PPA, MLP, APP & PPA Tour Asia Compared", vi: "Tiếp theo: Các giải Pickleball chuyên nghiệp 2026 — PPA, MLP, APP & PPA Tour Asia" },
+    titleEn: "Is There a Vietnam Pickleball Federation? 2026 Status & Roadmap",
+    titleVi: "Việt Nam Đã Có Liên Đoàn Pickleball Chưa? Hiện Trạng & Lộ Trình 2026",
+    metaTitleEn: "Vietnam Pickleball Federation 2026 | Status & Roadmap",
+    metaTitleVi: "Liên Đoàn Pickleball Việt Nam 2026 | Hiện Trạng & Lộ Trình",
+    metaDescriptionEn: "No national pickleball federation exists in Vietnam yet (mid-2026) — only an organizing committee approved Sept 2025. The full status: roadmap, city-level federations, and what 2026 changes.",
+    metaDescriptionVi: "Đến giữa 2026, Việt Nam chưa có liên đoàn pickleball quốc gia — mới có Ban vận động (9/2025). Tổng hợp hiện trạng: lộ trình, các liên đoàn cấp tỉnh/thành đã ra đời, và cột mốc 2026.",
+  },
+  {
     slug: "pickleball-erne-shot-tutorial",
     publishedDate: "2026-06-05",
     updatedDate: "2026-06-05",
