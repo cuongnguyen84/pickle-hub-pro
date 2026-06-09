@@ -1050,6 +1050,10 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
               </a>
             </div>
             <span>
+              <Link to={language === "vi" ? "/vi/advertise" : "/advertise"} style={{ color: "inherit", textDecoration: "none" }}>
+                {language === "vi" ? "Quảng cáo" : "Advertise"}
+              </Link>
+              {" · "}
               <Link to="/privacy" style={{ color: "inherit", textDecoration: "none" }}>
                 {language === "vi" ? "Quyền riêng tư" : "Privacy"}
               </Link>
