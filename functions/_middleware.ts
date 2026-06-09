@@ -409,7 +409,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // detail pages (intro + "other courts in city" links) and address dedup.
   // 2026-06-04 — bumped v16→v17 to invalidate cached /vi/blog HTML after
   // adding reciprocal hreflang (renderViBlogIndex now mirrors renderBlog).
-  const cacheKey = `pr:v17:${url.pathname}`;
+  // 2026-06-09 — bumped v17->v18 to invalidate cached /san/khu-vuc/* HTML
+  // after enriching thin city hubs (intro + other-cities nav + discover
+  // links) to clear Google soft-404 on 1-2 venue regions.
+  const cacheKey = `pr:v18:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
