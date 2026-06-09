@@ -58,14 +58,23 @@ export interface EnrichedReferee extends RefereeRowBase {
 }
 
 /** Outcome of an addReferee attempt — hook decides how to surface to user. */
-export type AddRefereeResult =
-  | { ok: true; displayName: string | null; userId: string }
-  | { ok: false; reason: 'not-found' | 'already-exists' | 'error'; error?: unknown };
+// NOTE: flat optional shape (not a discriminated union) because the project
+// runs with strict:false / strictNullChecks off, under which `if (r.ok)` does
+// NOT narrow a true|false discriminant (verified). Runtime objects are
+// unchanged; this only makes the failure-branch fields reachable on the type.
+export type AddRefereeResult = {
+  ok: boolean;
+  displayName?: string | null;
+  userId?: string;
+  reason?: 'not-found' | 'already-exists' | 'error';
+  error?: unknown;
+};
 
 /** Outcome of a removeReferee attempt. */
-export type RemoveRefereeResult =
-  | { ok: true }
-  | { ok: false; error: unknown };
+export type RemoveRefereeResult = {
+  ok: boolean;
+  error?: unknown;
+};
 
 // ─── Helpers ────────────────────────────────────────────────────────────
 
