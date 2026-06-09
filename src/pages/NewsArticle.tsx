@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useParams, Navigate, Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DynamicMeta,
@@ -256,6 +257,7 @@ const NewsArticle = ({ language }: Props) => {
             </figure>
           )}
 
+          <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
           <div
             className="tl-longform"
             style={{ fontSize: 18, lineHeight: 1.6, marginBottom: 32 }}

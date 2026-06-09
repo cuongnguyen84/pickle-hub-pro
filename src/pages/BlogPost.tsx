@@ -19,6 +19,7 @@ import { useTrackBlogView } from "@/hooks/useTrackBlogView";
 import { useBlogPostViewCount } from "@/hooks/useBlogPostViewCount";
 import { ViewCountBadge } from "@/components/blog/ViewCountBadge";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
+import { AdSlot } from "@/components/monetization/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -251,6 +252,7 @@ const BlogPost = () => {
             </figure>
           )}
 
+          <AdSlot slot="blogInArticle" minHeight={120} className="my-6" />
           <div className="tl-longform">
             {content.sections.map((section, idx) => (
               <section key={idx}>
