@@ -57,6 +57,8 @@ const MatchScoring = lazy(() => import("./pages/MatchScoring"));
 const JoinTeam = lazy(() => import("./pages/JoinTeam"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const Advertise = lazy(() => import("./pages/Advertise"));
+const AffiliateDisclosurePage = lazy(() => import("./pages/AffiliateDisclosure"));
 const TeamMatchList = lazy(() => import("./pages/TeamMatchList"));
 const TeamMatchSetup = lazy(() => import("./pages/TeamMatchSetup"));
 const TeamMatchView = lazy(() => import("./pages/TeamMatchView"));
@@ -700,6 +702,8 @@ const App = () => (
                     {/* Public pages */}
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />
+                    <Route path="/advertise" element={<Advertise />} />
+                    <Route path="/affiliate-disclosure" element={<AffiliateDisclosurePage />} />
 
                     {/* Vietnamese /vi/* routes — same components, ViLanguageWrapper sets lang */}
                     <Route path="/vi" element={<ViLanguageWrapper><Index /></ViLanguageWrapper>} />
@@ -738,6 +742,8 @@ const App = () => (
                     <Route path="/vi/search" element={<ViLanguageWrapper><Search /></ViLanguageWrapper>} />
                     <Route path="/vi/privacy" element={<ViLanguageWrapper><Privacy /></ViLanguageWrapper>} />
                     <Route path="/vi/terms" element={<ViLanguageWrapper><Terms /></ViLanguageWrapper>} />
+                    <Route path="/vi/advertise" element={<ViLanguageWrapper><Advertise /></ViLanguageWrapper>} />
+                    <Route path="/vi/affiliate-disclosure" element={<ViLanguageWrapper><AffiliateDisclosurePage /></ViLanguageWrapper>} />
                     <Route path="/vi/login" element={<ViLanguageWrapper><Login /></ViLanguageWrapper>} />
                     <Route path="/vi/account" element={<ViLanguageWrapper><Account /></ViLanguageWrapper>} />
                     <Route path="/vi/account/my-tournaments" element={<ViLanguageWrapper><RequireAuth><MyTournaments /></RequireAuth></ViLanguageWrapper>} />
