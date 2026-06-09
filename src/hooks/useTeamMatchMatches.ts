@@ -334,7 +334,7 @@ export function useTeamMatchMatchManagement() {
         
         const { error: advanceError } = await supabase
           .from('team_match_matches')
-          .update({ [updateField]: winnerId })
+          .update({ [updateField]: winnerId } as { team_a_id?: string; team_b_id?: string })
           .eq('id', match.next_match_id);
         
         if (advanceError) throw advanceError;
@@ -359,7 +359,7 @@ export function useTeamMatchMatchManagement() {
               
               await supabase
                 .from('team_match_matches')
-                .update({ [updateField]: loserId })
+                .update({ [updateField]: loserId } as { team_a_id?: string; team_b_id?: string })
                 .eq('id', thirdPlaceMatch.id);
 
               // Check if third-place match now has both teams
