@@ -2,10 +2,15 @@
  * /sitemap-videos.xml — SEO-4 (2026-05-28)
  *
  * Lists every published video so /watch/:id detail pages (renderVideo
- * with VideoObject schema) can be discovered. Single-canonical URLs
- * (the SPA toggles language via i18n context, same URL serves both
- * locales) — hreflang triplet points all three lang values at the
- * same href, matching the pattern in renderVideo.
+ * with VideoObject schema) can be discovered.
+ *
+ * Single-canonical surface — NO hreflang. The SPA toggles language via
+ * the i18n context so one /watch/:id URL serves both locales; renderVideo
+ * emits `singleCanonicalHreflang(..., "vi")` which is intentionally empty
+ * (functions/_lib/utils.ts, "Batch 9" — a self-only hreflang triplet is
+ * flagged by Ahrefs as "no return tag" / "referenced for more than one
+ * language"). The sitemap must mirror that and omit hreflang, matching
+ * the tournaments + matches segments.
  *
  * Limit 5000 — typical convention. Split into year-shards if we cross
  * 10k videos in the videos table.
@@ -60,11 +65,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         lastmod,
         changefreq: "monthly",
         priority: "0.6",
-        hreflang: [
-          { lang: "en", href: url },
-          { lang: "vi", href: url },
-          { lang: "x-default", href: url },
-        ],
       });
     });
 
