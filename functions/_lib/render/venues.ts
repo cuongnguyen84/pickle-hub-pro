@@ -530,10 +530,45 @@ export async function renderVenuesCity(
   const emptyMsg = lang === "vi" ? `Chưa có sân nào tại ${cityName}.` : `No courts in ${cityName} yet.`;
   const allLabel = lang === "vi" ? "Tất cả sân pickleball" : "All pickleball courts";
 
+  // Thin-content enrichment (anti soft-404): small cities (1-2 venues)
+  // rendered ~4.5KB hubs Google flagged as soft 404 (e.g.
+  // /san/khu-vuc/phuc-yen). Add a localized intro + crawlable internal
+  // nav to other city hubs + discover-more links so every hub carries
+  // real content and outbound links regardless of venue count.
+  const introHtml =
+    lang === "vi"
+      ? `<p>Khám phá ${n > 0 ? `${n} ` : ""}sân pickleball tại ${escapeHtml(cityName)} do cộng đồng ThePickleHub đóng góp — kèm địa chỉ, số sân, sân trong nhà/ngoài trời và chỉ đường. Danh sách được cập nhật liên tục khi có sân mới.</p>`
+      : `<p>Discover ${n > 0 ? `${n} ` : ""}community-contributed pickleball courts in ${escapeHtml(cityName)}, Vietnam — address, court count, indoor/outdoor and directions. The list grows as new courts are added.</p>`;
+
+  const FEATURED_CITY_SLUGS = [
+    "tp-hcm", "ha-noi", "da-nang", "hai-phong", "can-tho", "nha-trang",
+    "da-lat", "vung-tau", "hue", "bac-ninh", "quy-nhon", "buon-ma-thuot",
+    "pleiku", "nam-dinh", "thanh-hoa", "bien-hoa",
+  ];
+  const otherCitiesHtml = FEATURED_CITY_SLUGS
+    .filter((sl) => sl !== citySlug && VENUE_CITY_NAME[sl])
+    .slice(0, 12)
+    .map((sl) => {
+      const href = lang === "vi" ? `${siteUrl}/vi/san/khu-vuc/${sl}` : `${siteUrl}/san/khu-vuc/${sl}`;
+      return `<li><a href="${href}">${escapeHtml(VENUE_CITY_NAME[sl])}</a></li>`;
+    })
+    .join("");
+  const otherCitiesHeading =
+    lang === "vi" ? "Sân pickleball ở tỉnh thành khác" : "Pickleball courts in other cities";
+
+  const moreHeading = lang === "vi" ? "Khám phá thêm" : "Discover more";
+  const moreLinks = [
+    `<li><a href="${siteUrl}/san">${escapeHtml(allLabel)}</a></li>`,
+    `<li><a href="${siteUrl}/clubs">${lang === "vi" ? "Câu lạc bộ" : "Clubs"}</a></li>`,
+    `<li><a href="${siteUrl}/social">${lang === "vi" ? "Sự kiện cộng đồng" : "Community events"}</a></li>`,
+  ].join("");
+
   const bodyContent =
     `${bc}<h1>${escapeHtml(h1)}</h1>` +
+    introHtml +
     (n > 0 ? `<ul>${itemsHtml}</ul>` : `<p>${escapeHtml(emptyMsg)}</p>`) +
-    `<p><a href="${siteUrl}/san">${escapeHtml(allLabel)}</a></p>`;
+    `<nav><h2>${escapeHtml(otherCitiesHeading)}</h2><ul>${otherCitiesHtml}</ul></nav>` +
+    `<nav><h2>${escapeHtml(moreHeading)}</h2><ul>${moreLinks}</ul></nav>`;
 
   return htmlResponse(
     buildHtml({
