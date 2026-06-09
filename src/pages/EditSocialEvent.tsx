@@ -142,6 +142,8 @@ export default function EditSocialEvent() {
       visibility: "public" | "club_only";
       requires_prepayment?: boolean;
       prepayment_deadline_hours?: number;
+      ball_type?: string | null;
+      free_perks?: string[] | null;
       slots?: unknown;
     };
     const rawSlots = e.slots;
@@ -175,6 +177,11 @@ export default function EditSocialEvent() {
       // false / 12 via the column DEFAULTs.
       requires_prepayment: e.requires_prepayment ?? false,
       prepayment_deadline_hours: e.prepayment_deadline_hours ?? 12,
+      // ball_type + free_perks persist on social_events; repeat_weeks is a
+      // create-only recurrence count (not stored) → 0 = no repeat when editing.
+      ball_type: e.ball_type ?? "",
+      free_perks: e.free_perks ?? [],
+      repeat_weeks: 0,
       slots,
     });
   }, [bundle]);
