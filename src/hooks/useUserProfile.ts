@@ -10,6 +10,9 @@ interface UserProfile {
   avatar_url: string | null;
   organization_id: string | null;
   created_at: string;
+  // Onboarding progress (profiles table); used by the wizard resume logic.
+  onboarding_step?: number | null;
+  onboarding_completed_at?: string | null;
 }
 
 export function useUserProfile() {

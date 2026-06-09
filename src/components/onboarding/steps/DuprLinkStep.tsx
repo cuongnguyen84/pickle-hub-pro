@@ -5,14 +5,11 @@ import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { DuprConnectButton } from "@/components/dupr/DuprConnectButton";
 import type { DuprSsoResult } from "@/components/dupr/DuprSsoModal";
-import type { OnboardingState } from "../OnboardingWizard";
+import type { OnboardingState, OnboardingAction } from "../OnboardingWizard";
 
 interface Props {
   state: OnboardingState;
-  dispatch: Dispatch<{
-    type: "SET_DUPR" | "GO_NEXT" | "GO_PREV";
-    payload?: Partial<OnboardingState["dupr"]>;
-  }>;
+  dispatch: Dispatch<OnboardingAction>;
 }
 
 export function DuprLinkStep({ state: _state, dispatch }: Props) {

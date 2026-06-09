@@ -6,21 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSuggestedFollows } from "@/hooks/onboarding/useSuggestedFollows";
 import { FollowButton } from "@/components/social/FollowButton";
 import { buildFollowsBatchRows } from "../follows-batch";
-import type { OnboardingState } from "../OnboardingWizard";
+import type { OnboardingState, OnboardingAction } from "../OnboardingWizard";
 
 interface Props {
   state: OnboardingState;
-  dispatch: Dispatch<
-    | {
-        type: "SET_FOLLOWS" | "GO_PREV";
-        payload?: Partial<OnboardingState["follows"]>;
-      }
-    | {
-        type: "TOGGLE_FOLLOW";
-        followedId: string;
-        isFollowing: boolean;
-      }
-  >;
+  dispatch: Dispatch<OnboardingAction>;
   userId: string;
   onComplete: () => void;
 }
