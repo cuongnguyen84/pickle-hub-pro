@@ -164,12 +164,14 @@ export default function AdminNews() {
     mutationFn: async () => {
       const { error, count } = await supabase
         .from("news_items")
-        .update({
-          ai_translation_status: "pending",
-          ai_translation_error: null,
-        })
-        .eq("ai_translation_status", "failed")
-        .select("id", { count: "exact", head: true });
+        .update(
+          {
+            ai_translation_status: "pending",
+            ai_translation_error: null,
+          },
+          { count: "exact" },
+        )
+        .eq("ai_translation_status", "failed");
       if (error) throw error;
       return count ?? 0;
     },
