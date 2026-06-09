@@ -7238,57 +7238,36 @@ export type Database = {
           winning_team: string
         }[]
       }
-      get_following_feed:
-        | {
-            Args: {
-              p_cursor_played_at?: string
-              p_limit?: number
-              p_viewer_id: string
-            }
-            Returns: {
-              format: string
-              match_id: string
-              match_type: string
-              participants: Json
-              played_at: string
-              slug: string
-              team_a_score: number[]
-              team_b_score: number[]
-              venue_name: string
-              verification_status: string
-              winning_team: string
-            }[]
-          }
-        | {
-            Args: {
-              p_cursor_match_id?: string
-              p_cursor_played_at?: string
-              p_limit?: number
-              p_viewer_id: string
-            }
-            Returns: {
-              comment_count: number
-              format: string
-              kudos_count: number
-              match_id: string
-              match_type: string
-              notes: string
-              participants: Json
-              played_at: string
-              round_name: string
-              slug: string
-              source_provider: string
-              source_url: string
-              team_a_score: number[]
-              team_b_score: number[]
-              tournament_event: string
-              tournament_name: string
-              venue_name: string
-              verification_status: string
-              viewer_kudoed: boolean
-              winning_team: string
-            }[]
-          }
+      get_following_feed: {
+        Args: {
+          p_cursor_match_id?: string
+          p_cursor_played_at?: string
+          p_limit?: number
+          p_viewer_id: string
+        }
+        Returns: {
+          comment_count: number
+          format: string
+          kudos_count: number
+          match_id: string
+          match_type: string
+          notes: string
+          participants: Json
+          played_at: string
+          round_name: string
+          slug: string
+          source_provider: string
+          source_url: string
+          team_a_score: number[]
+          team_b_score: number[]
+          tournament_event: string
+          tournament_name: string
+          venue_name: string
+          verification_status: string
+          viewer_kudoed: boolean
+          winning_team: string
+        }[]
+      }
       get_homepage_stats: {
         Args: never
         Returns: {
@@ -7475,62 +7454,39 @@ export type Database = {
         Returns: string
       }
       get_tournament_from_team: { Args: { _team_id: string }; Returns: string }
-      get_trending_feed:
-        | {
-            Args: {
-              p_comments_weight?: number
-              p_cursor_match_id?: string
-              p_cursor_played_at?: string
-              p_kudos_weight?: number
-              p_limit?: number
-              p_pro_boost?: number
-              p_recency_decay_hours?: number
-              p_viewer_id?: string
-            }
-            Returns: {
-              comment_count: number
-              format: string
-              kudos_count: number
-              match_id: string
-              match_type: string
-              participants: Json
-              played_at: string
-              round_name: string
-              slug: string
-              source_provider: string
-              source_url: string
-              team_a_score: number[]
-              team_b_score: number[]
-              tournament_event: string
-              tournament_name: string
-              venue_name: string
-              verification_status: string
-              viewer_kudoed: boolean
-              winning_team: string
-            }[]
-          }
-        | {
-            Args: {
-              p_comments_weight?: number
-              p_cursor_played_at?: string
-              p_kudos_weight?: number
-              p_limit?: number
-              p_recency_decay_hours?: number
-            }
-            Returns: {
-              format: string
-              match_id: string
-              match_type: string
-              participants: Json
-              played_at: string
-              slug: string
-              team_a_score: number[]
-              team_b_score: number[]
-              venue_name: string
-              verification_status: string
-              winning_team: string
-            }[]
-          }
+      get_trending_feed: {
+        Args: {
+          p_comments_weight?: number
+          p_cursor_match_id?: string
+          p_cursor_played_at?: string
+          p_kudos_weight?: number
+          p_limit?: number
+          p_pro_boost?: number
+          p_recency_decay_hours?: number
+          p_viewer_id?: string
+        }
+        Returns: {
+          comment_count: number
+          format: string
+          kudos_count: number
+          match_id: string
+          match_type: string
+          participants: Json
+          played_at: string
+          round_name: string
+          slug: string
+          source_provider: string
+          source_url: string
+          team_a_score: number[]
+          team_b_score: number[]
+          tournament_event: string
+          tournament_name: string
+          venue_name: string
+          verification_status: string
+          viewer_kudoed: boolean
+          winning_team: string
+        }[]
+      }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_quick_table_count: {
         Args: { _user_id: string }

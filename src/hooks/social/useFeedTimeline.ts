@@ -124,7 +124,7 @@ export function useFeedTimeline() {
       if (error) throw error;
       const dbItems = ((data ?? []) as RpcRow[])
         .map(normalizeRow)
-        .filter((item): item is FeedTimelineItem => item != null);
+        .filter((item) => item != null);
 
       // Merge static EN blog metadata into the SAME score window the
       // server returned for this page. Codex P2 (PR #80 review) needed
@@ -291,5 +291,5 @@ function buildEnBlogItems(): FeedTimelineItem[] {
       };
       return item;
     })
-    .filter((item): item is FeedTimelineItem => item != null);
+    .filter((item) => item != null);
 }

@@ -44,8 +44,9 @@ export interface FeedMatch {
   tournament_event: string | null;
   /** Round label — e.g. "R32", "QF", "F". Null otherwise. */
   round_name: string | null;
-  /** Free-form notes JSON. MLP matchups encode team logos + per-game lineups here. */
-  notes: string | null;
+  /** Free-form notes JSON. MLP matchups encode team logos + per-game lineups here.
+   *  Optional: the trending feed RPC does not return notes (only the following feed does). */
+  notes?: string | null;
 }
 
 interface RpcRow {
