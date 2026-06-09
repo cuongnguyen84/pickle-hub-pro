@@ -125,7 +125,7 @@ export function useKudosMutation() {
       });
       if (error) throw error;
       // RPC returns jsonb {kudoed, count}; supabase-js gives us the parsed object.
-      const parsed = data as ToggleResponse | null;
+      const parsed = data as unknown as ToggleResponse | null;
       if (!parsed || typeof parsed.count !== "number") {
         throw new Error("Malformed RPC response");
       }

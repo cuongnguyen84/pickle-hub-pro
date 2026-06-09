@@ -44,7 +44,9 @@ export interface DuprPlayer {
   rating: number | null;
 }
 
-export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> = {
+// Partial: non-vietnam scopes only carry the 4 gendered formats; the vietnam
+// scope adds aggregated singles/doubles. getAvailableFormats() gates per scope.
+export const DUPR_RANKINGS: Partial<Record<DuprScope, Partial<Record<DuprFormat, DuprPlayer[]>>>> = {
   "open": {
     "mens-doubles": [
       {

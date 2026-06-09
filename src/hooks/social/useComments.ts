@@ -158,7 +158,7 @@ export function useAddCommentMutation() {
         p_parent_comment_id: parentCommentId ?? null,
       });
       if (error) throw error;
-      const parsed = data as AddResponse | null;
+      const parsed = data as unknown as AddResponse | null;
       if (!parsed?.comment_id) throw new Error("Malformed RPC response");
       return parsed;
     },
