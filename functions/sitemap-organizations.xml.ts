@@ -7,9 +7,14 @@
  * incidental links from livestreams / tournaments. Adding the segment
  * gives explicit discovery.
  *
- * Bilingual hreflang: /org/:slug + /vi/org/:slug both exist as React
- * routes (App.tsx), renderOrgDetail emits the reciprocal `<link>` since
- * Sprint SEO-1.2.
+ * Single-canonical surface — NO hreflang. /org/:slug serves both
+ * locales from one URL via the SPA i18n toggle; renderOrgDetail emits
+ * `singleCanonicalHreflang(..., "en")` which is intentionally empty
+ * (functions/_lib/utils.ts, "Batch 9"). The earlier /vi/org/:slug
+ * alternate was an orphan, non-canonical URL — _middleware.ts collapses
+ * /vi/org/* to /org/* and the page canonical points back to EN, so the
+ * sitemap must NOT advertise a `vi` href (Ahrefs/SEOnaut "Hreflang to
+ * non-canonical URL"). Matches the tournaments + matches segments.
  *
  * Limit 5000.
  */
@@ -58,18 +63,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       .filter((o) => o.slug && URL_SAFE_SLUG_RE.test(o.slug))
       .map((o) => {
         const lastmod = toLastmod(o.created_at, TODAY);
-        const enUrl = `${siteUrl}/org/${o.slug}`;
-        const viUrl = `${siteUrl}/vi/org/${o.slug}`;
+        const url = `${siteUrl}/org/${o.slug}`;
         return buildUrlEntry({
-          loc: enUrl,
+          loc: url,
           lastmod,
           changefreq: "weekly",
           priority: "0.6",
-          hreflang: [
-            { lang: "en", href: enUrl },
-            { lang: "vi", href: viUrl },
-            { lang: "x-default", href: enUrl },
-          ],
         });
       });
 

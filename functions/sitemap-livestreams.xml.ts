@@ -7,8 +7,12 @@
  * even after the broadcast ends because the page still serves the
  * recording + match metadata.
  *
- * Single-canonical (SPA toggles language). Excludes private/test
- * streams via the public_livestreams view (already filters).
+ * Single-canonical surface — NO hreflang. The SPA toggles language so
+ * one /live/:id URL serves both locales; renderLive emits
+ * `singleCanonicalHreflang(..., "vi")` which is intentionally empty
+ * (functions/_lib/utils.ts, "Batch 9"). The sitemap mirrors that and
+ * omits hreflang, matching the tournaments + matches segments.
+ * Excludes private/test streams via the public_livestreams view.
  */
 
 import { createSupabaseClient } from "./_lib/supabase";
@@ -63,11 +67,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         lastmod,
         changefreq,
         priority: s.status === "live" ? "0.9" : "0.6",
-        hreflang: [
-          { lang: "en", href: url },
-          { lang: "vi", href: url },
-          { lang: "x-default", href: url },
-        ],
       });
     });
 
