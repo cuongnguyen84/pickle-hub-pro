@@ -155,9 +155,20 @@ export const CreateGhostProfileModal = ({
         },
       });
 
+      // Ghost profiles have no auth user, but profiles.id, email and
+      // profile_slug are all NOT NULL with no default — generate them here.
+      // profile_slug uses the same formula as trg_profiles_set_profile_slug
+      // (which only fills it when NULL), so providing it satisfies the typed
+      // insert and the trigger leaves it untouched. Matches the existing
+      // ghost+<uuid>@guest.thepicklehub.net rows. Without id/email the insert
+      // hit a not-null violation (the regression that broke ghost creation).
+      const id = crypto.randomUUID();
       const { data, error } = await supabase
         .from("profiles")
         .insert({
+          id,
+          email: `ghost+${id}@guest.thepicklehub.net`,
+          profile_slug: id.replace(/-/g, "").slice(0, 12),
           username,
           display_name: values.display_name,
           phone: values.phone,
