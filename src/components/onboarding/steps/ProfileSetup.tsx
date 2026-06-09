@@ -7,7 +7,7 @@ import {
   generateUsername,
   slugifyDisplayName,
 } from "@/lib/social/username-generator";
-import type { OnboardingState } from "../OnboardingWizard";
+import type { OnboardingState, OnboardingAction } from "../OnboardingWizard";
 
 // Sprint A5 — username validation rules. Mirror the URL_SAFE_USERNAME_RE
 // from functions/_lib/sitemap-helpers.ts so anything that passes here will
@@ -18,10 +18,7 @@ const USERNAME_DEBOUNCE_MS = 350;
 
 interface Props {
   state: OnboardingState;
-  dispatch: Dispatch<{
-    type: "SET_PROFILE" | "GO_NEXT";
-    payload?: Partial<OnboardingState["profile"]>;
-  }>;
+  dispatch: Dispatch<OnboardingAction>;
   userId: string;
 }
 

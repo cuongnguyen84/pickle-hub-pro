@@ -4,14 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useVenueSearch } from "@/hooks/onboarding/useVenueSearch";
-import type { OnboardingState } from "../OnboardingWizard";
+import type { OnboardingState, OnboardingAction } from "../OnboardingWizard";
 
 interface Props {
   state: OnboardingState;
-  dispatch: Dispatch<{
-    type: "SET_VENUE" | "GO_NEXT" | "GO_PREV";
-    payload?: Partial<OnboardingState["venue"]>;
-  }>;
+  dispatch: Dispatch<OnboardingAction>;
   userId: string;
 }
 
