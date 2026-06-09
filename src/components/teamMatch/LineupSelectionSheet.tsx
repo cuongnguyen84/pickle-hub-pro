@@ -11,6 +11,7 @@ import { Loader2, Save, Users, AlertTriangle, Check, User, Zap } from 'lucide-re
 import { useTeamMatchMatch, TeamMatchMatch } from '@/hooks/useTeamMatchMatches';
 import { useTeamMatchTeam } from '@/hooks/useTeamMatchTeams';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '@/i18n';
@@ -268,7 +269,7 @@ export function LineupSelectionSheet({
           .from('team_match_games')
           .update({
             [lineupField]: selections[game.id] || [],
-          })
+          } as TablesUpdate<'team_match_games'>)
           .eq('id', game.id);
 
         if (error) throw error;
@@ -280,7 +281,7 @@ export function LineupSelectionSheet({
           .from('team_match_games')
           .update({
             [lineupField]: dreambreakerLineup,
-          })
+          } as TablesUpdate<'team_match_games'>)
           .eq('id', dreambreakerGame.id);
 
         if (error) throw error;
@@ -291,7 +292,7 @@ export function LineupSelectionSheet({
         .from('team_match_matches')
         .update({
           [submittedField]: true,
-        })
+        } as TablesUpdate<'team_match_matches'>)
         .eq('id', match.id);
 
       if (matchError) throw matchError;
