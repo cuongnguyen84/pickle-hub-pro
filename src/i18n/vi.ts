@@ -2853,6 +2853,73 @@ export interface Translations {
         permissionDenied: string;
       };
     };
+    table: {
+      createTable: {
+        authRequired: string;
+        nameRequired: string;
+        limitReached: string;
+        error: string;
+      };
+      addPlayers: {
+        permissionDenied: string;
+        error: string;
+      };
+      createGroups: {
+        permissionDenied: string;
+        error: string;
+      };
+      createGroupMatches: {
+        permissionDenied: string;
+        error: string;
+      };
+      updateMatchScore: {
+        permissionDenied: string;
+      };
+      updateTableStatus: {
+        permissionDenied: string;
+      };
+      movePlayer: {
+        permissionDenied: string;
+        error: string;
+      };
+      addPlayerToGroup: {
+        permissionDenied: string;
+        error: string;
+      };
+      removePlayer: {
+        permissionDenied: string;
+        error: string;
+      };
+      regenerateGroupMatches: {
+        permissionDenied: string;
+      };
+      updateCourtSettings: {
+        permissionDenied: string;
+      };
+      reassignCourtsAndTimes: {
+        permissionDenied: string;
+      };
+      deleteTable: {
+        success: string;
+        permissionDenied: string;
+        error: string;
+      };
+      updateCourtName: {
+        permissionDenied: string;
+      };
+    };
+    referee: {
+      add: {
+        success: string;
+        notFound: string;
+        duplicate: string;
+        error: string;
+      };
+      remove: {
+        success: string;
+        error: string;
+      };
+    };
   };
 }
 
