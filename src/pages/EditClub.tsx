@@ -24,6 +24,7 @@ import { useClub } from "@/hooks/useClub";
 import { useClubOwnership } from "@/hooks/useClubOwnership";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import {
   useClubLogoUpload,
   CLUB_LOGO_MAX_BYTES,
@@ -119,7 +120,7 @@ export default function EditClub() {
 
       const { error: updErr } = await supabase
         .from("clubs")
-        .update(patch)
+        .update(patch as TablesUpdate<'clubs'>)
         .eq("id", clubData.club.id);
       if (updErr) {
         console.error("EditClub update error", updErr);

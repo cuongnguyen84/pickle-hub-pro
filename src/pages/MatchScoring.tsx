@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/i18n';
 import { TheLineLayout } from '@/components/layout';
@@ -710,7 +711,7 @@ const MatchScoring = () => {
       const updateField = currentMatch.next_match_slot === 1 ? 'player1_id' : 'player2_id';
       await supabase
         .from('quick_table_matches')
-        .update({ [updateField]: winnerId })
+        .update({ [updateField]: winnerId } as TablesUpdate<'quick_table_matches'>)
         .eq('id', currentMatch.next_match_id);
     } else {
       const { data: currentRoundMatches } = await supabase
