@@ -88,7 +88,7 @@ export function useSocialEventMatches(
         p_limit: limit,
       });
       if (error) return [];
-      return (data ?? []) as SocialEventMatchRow[];
+      return (data ?? []) as unknown as SocialEventMatchRow[];
     },
     enabled: Boolean(eventId),
     staleTime: 30_000,

@@ -5,6 +5,7 @@ import { Crown, Trophy, Radio, Play, Pencil, Check, X, RefreshCw } from 'lucide-
 import { cn } from '@/lib/utils';
 import { Match, Team, useDoublesElimination } from '@/hooks/useDoublesElimination';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesUpdate } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/i18n';
 
@@ -929,7 +930,7 @@ async function propagateLoserToR2(
 
     await supabase
       .from('doubles_elimination_matches')
-      .update({ [updateField]: loserId })
+      .update({ [updateField]: loserId } as TablesUpdate<'doubles_elimination_matches'>)
       .eq('id', r2Match.id);
   }
 }
@@ -988,7 +989,7 @@ async function propagateWinnerToNextRound(
       const updateField = slot === 0 ? 'team_a_id' : 'team_b_id';
       await supabase
         .from('doubles_elimination_matches')
-        .update({ [updateField]: winnerId })
+        .update({ [updateField]: winnerId } as TablesUpdate<'doubles_elimination_matches'>)
         .eq('id', targetMatch.id);
       // Optimistic update for next round match
       onMatchUpdated?.(targetMatch.id, { [updateField]: winnerId });
@@ -1013,7 +1014,7 @@ async function propagateLoserToThirdPlace(
   if (!thirdPlaceMatch[slot]) {
     await supabase
       .from('doubles_elimination_matches')
-      .update({ [slot]: loserId })
+      .update({ [slot]: loserId } as TablesUpdate<'doubles_elimination_matches'>)
       .eq('id', thirdPlaceMatch.id);
     // Optimistic update
     onMatchUpdated?.(thirdPlaceMatch.id, { [slot]: loserId });

@@ -155,7 +155,7 @@ export default function AdminAnalytics() {
         p_end: endISO,
       });
       if (error) throw error;
-      return data as UserStats;
+      return data as unknown as UserStats;
     },
     refetchInterval: 30_000,
   });
@@ -169,7 +169,7 @@ export default function AdminAnalytics() {
         p_end: endISO,
       });
       if (error) throw error;
-      return data as ContentStats;
+      return data as unknown as ContentStats;
     },
     refetchInterval: 30_000,
   });
@@ -183,7 +183,7 @@ export default function AdminAnalytics() {
         p_end: endISO,
       });
       if (error) throw error;
-      return data as EngagementStats;
+      return data as unknown as EngagementStats;
     },
     refetchInterval: 30_000,
   });

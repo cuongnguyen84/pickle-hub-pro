@@ -27,18 +27,18 @@ const TARGET: Record<ScoringFormat, number> = {
 };
 
 /** Result with parsed metadata. `valid: false` carries a humanized reason. */
-export type ScoreValidationResult =
-  | {
-      valid: true;
-      games_played: number;
-      games_a: number;
-      games_b: number;
-      winner: Team;
-    }
-  | {
-      valid: false;
-      reason: string;
-    };
+// Flat optional shape (see AddRefereeResult note in referee-helpers.ts): under
+// strict:false the valid:true|false discriminant does not narrow, so both the
+// success and failure fields must be reachable on the type. Runtime values
+// returned by validateScore() are unchanged.
+export type ScoreValidationResult = {
+  valid: boolean;
+  games_played?: number;
+  games_a?: number;
+  games_b?: number;
+  winner?: Team;
+  reason?: string;
+};
 
 interface GameOutcome {
   a: number;

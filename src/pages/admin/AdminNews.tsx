@@ -109,7 +109,7 @@ function useRecentNews(statusFilter: string, languageFilter: string) {
         )
         .order("created_at", { ascending: false })
         .limit(50);
-      if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      if (statusFilter !== "all") q = q.eq("status", statusFilter as "scheduled" | "draft" | "published");
       if (languageFilter !== "all") q = q.eq("language", languageFilter);
       const { data, error } = await q;
       if (error) throw error;

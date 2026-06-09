@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 interface PostPair {
   lang: "en" | "vi";
@@ -17,7 +18,7 @@ export function useBlogPostViewCountsBatch(pairs: PostPair[]): ViewCountMap {
     queryKey: ["blog-view-counts-batch", pairs.map((p) => pairKey(p.lang, p.slug)).sort()],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_blog_post_view_counts_batch", {
-        p_pairs: pairs,
+        p_pairs: pairs as unknown as Json,
       });
       if (error) throw error;
 

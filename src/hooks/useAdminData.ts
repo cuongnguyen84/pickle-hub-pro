@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { logAuditEvent } from "@/hooks/useAuditLog";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
@@ -86,7 +87,7 @@ export function useAdminOrganizations(search?: string) {
 export function useCreateOrganization() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (org: Omit<Organization, "id" | "created_at">) => {
+    mutationFn: async (org: TablesInsert<"organizations">) => {
       const { data, error } = await supabase.from("organizations").insert(org).select().single();
       if (error) throw error;
       return data;
@@ -205,7 +206,7 @@ export function useAdminTournaments() {
 export function useCreateTournament() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (tournament: Omit<Tournament, "id" | "created_at">) => {
+    mutationFn: async (tournament: TablesInsert<"tournaments">) => {
       const { data, error } = await supabase.from("tournaments").insert(tournament).select().single();
       if (error) throw error;
       return data;

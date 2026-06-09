@@ -119,7 +119,7 @@ export function useClubMatches(clubId: string | undefined, limit = 50) {
         p_limit: limit,
       });
       if (error) return [];
-      return (data ?? []) as ClubMatchRow[];
+      return (data ?? []) as unknown as ClubMatchRow[];
     },
     enabled: Boolean(clubId),
     staleTime: 30_000,
@@ -287,7 +287,7 @@ export function useMyPendingConfirmations() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("list_my_pending_confirmations");
       if (error) return [];
-      return (data ?? []) as PendingConfirmationRow[];
+      return (data ?? []) as unknown as PendingConfirmationRow[];
     },
     staleTime: 30_000,
   });
