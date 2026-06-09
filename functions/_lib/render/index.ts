@@ -1226,6 +1226,7 @@ const BLOG_POST_META: Record<string, {
   datePublished?: string;
   image?: string;
 }> = {
+  "mlp-vs-ppa-2026-which-tour-to-watch": { title: "MLP vs PPA 2026: Which Pickleball Tour Should You Watch?", description: "MLP and PPA merged under the UPA in 2024 but keep different formats. A 2026 guide to which pro pickleball tour to watch — plus PPA Tour Asia's Vietnam stops.", datePublished: "2026-06-09" },
   "vietnam-pickleball-federation-2026": { title: "Is There a Vietnam Pickleball Federation? 2026 Status & Roadmap", description: "No national pickleball federation exists in Vietnam yet (mid-2026) — only an organizing committee approved Sept 2025. The full status: roadmap, city-level federations, and what 2026 changes.", datePublished: "2026-06-08" },
   "pickleball-erne-shot-tutorial": { title: "The Erne in Pickleball: How to Hit It, Rules & Setup (2026)", description: "The pickleball erne explained: what it is, why it's legal, jump vs stationary erne, step-by-step technique, how to set it up, defense, mistakes, and drills.", datePublished: "2026-06-05", image: "/images/blog/pickleball-erne-shot-tutorial-hero.webp" },
   "pickleball-doubles-stacking-strategy": { title: "Pickleball Stacking Strategy: A Complete Doubles Guide (2026)", description: "Pickleball stacking explained: what it is, how to stack on the serve and return, the lefty-righty stack, hand signals, full vs half stack, mistakes, and drills.", datePublished: "2026-06-03", image: "/images/blog/pickleball-doubles-stacking-strategy-hero.webp" },

@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "mlp-vs-ppa-2026-which-tour-to-watch",
+    publishedDate: "2026-06-09",
+    updatedDate: "2026-06-09",
+    author: "Cuong Nguyen",
+    tags: ["mlp vs ppa", "mlp vs ppa 2026", "which pickleball tour to watch", "major league pickleball", "ppa tour", "united pickleball association", "ppa tour asia", "pickleball vietnam"],
+    ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
+    ctaLabel: { en: "Next: PPA Tour Asia 2026 — Full Schedule & Vietnam Stops", vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ & các chặng tại Việt Nam" },
+    titleEn: "MLP vs PPA 2026: Which Pickleball Tour Should You Watch?",
+    titleVi: "MLP vs PPA 2026: Nên Xem Giải Pickleball Nào?",
+    metaTitleEn: "MLP vs PPA 2026 | Which Pickleball Tour to Watch",
+    metaTitleVi: "MLP vs PPA 2026 | Nên Xem Giải Pickleball Nào",
+    metaDescriptionEn: "MLP and PPA merged under the UPA in 2024 but keep different formats. A 2026 guide to which pro pickleball tour to watch — plus PPA Tour Asia's Vietnam stops.",
+    metaDescriptionVi: "MLP và PPA đã sáp nhập dưới UPA từ 2024 nhưng giữ 2 thể thức riêng. Hướng dẫn 2026 chọn giải pickleball nên xem — kèm các chặng PPA Tour Asia tại Việt Nam.",
+  },
+  {
     slug: "vietnam-pickleball-federation-2026",
     publishedDate: "2026-06-08",
     updatedDate: "2026-06-08",
