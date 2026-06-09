@@ -444,6 +444,64 @@ export type Database = {
           },
         ]
       }
+      client_errors: {
+        Row: {
+          details: Json | null
+          id: string
+          message: string | null
+          recorded_at: string
+          stack: string | null
+          type: string
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          details?: Json | null
+          id?: string
+          message?: string | null
+          recorded_at?: string
+          stack?: string | null
+          type: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          details?: Json | null
+          id?: string
+          message?: string | null
+          recorded_at?: string
+          stack?: string | null
+          type?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clips: {
         Row: {
           ai_highlights_json: Json | null
@@ -830,6 +888,71 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          last_read_at: string | null
+          profile_id: string
+        }
+        Insert: {
+          conversation_id: string
+          last_read_at?: string | null
+          profile_id: string
+        }
+        Update: {
+          conversation_id?: string
+          last_read_at?: string | null
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+        }
+        Relationships: []
+      }
       doubles_elimination_matches: {
         Row: {
           best_of: number | null
@@ -1049,6 +1172,48 @@ export type Database = {
           tournament_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "doubles_elimination_teams_player1_user_id_fkey"
+            columns: ["player1_user_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "doubles_elimination_teams_player1_user_id_fkey"
+            columns: ["player1_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doubles_elimination_teams_player1_user_id_fkey"
+            columns: ["player1_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doubles_elimination_teams_player2_user_id_fkey"
+            columns: ["player2_user_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "doubles_elimination_teams_player2_user_id_fkey"
+            columns: ["player2_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doubles_elimination_teams_player2_user_id_fkey"
+            columns: ["player2_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "doubles_elimination_teams_tournament_id_fkey"
             columns: ["tournament_id"]
@@ -1538,6 +1703,24 @@ export type Database = {
         }
         Relationships: []
       }
+      error_alert_dedup: {
+        Row: {
+          alert_count: number
+          fingerprint: string
+          last_alerted_at: string
+        }
+        Insert: {
+          alert_count?: number
+          fingerprint: string
+          last_alerted_at?: string
+        }
+        Update: {
+          alert_count?: number
+          fingerprint?: string
+          last_alerted_at?: string
+        }
+        Relationships: []
+      }
       event_payment_config: {
         Row: {
           bank_account_name: string
@@ -1581,7 +1764,9 @@ export type Database = {
           cancelled_at: string | null
           cancelled_reason: string | null
           display_name: string
+          dupr_id: string | null
           event_id: string
+          followed_oa_at: string | null
           id: string
           internal_notes: string | null
           notes: string | null
@@ -1600,7 +1785,9 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_reason?: string | null
           display_name: string
+          dupr_id?: string | null
           event_id: string
+          followed_oa_at?: string | null
           id?: string
           internal_notes?: string | null
           notes?: string | null
@@ -1619,7 +1806,9 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_reason?: string | null
           display_name?: string
+          dupr_id?: string | null
           event_id?: string
+          followed_oa_at?: string | null
           id?: string
           internal_notes?: string | null
           notes?: string | null
@@ -2935,6 +3124,11 @@ export type Database = {
       }
       matches: {
         Row: {
+          club_id: string | null
+          confirmation_required_from: string[]
+          confirmation_status: string
+          confirmed_at: string | null
+          confirmed_by: string | null
           court_number: string | null
           created_at: string | null
           created_meta: Json | null
@@ -2952,10 +3146,12 @@ export type Database = {
           match_type: string
           notes: string | null
           played_at: string
+          ready_for_dupr: boolean
           recorded_by: string
           round_name: string | null
           scoring_format: string | null
           slug: string
+          social_event_id: string | null
           source_provider: string
           source_url: string | null
           submitted_to_dupr: boolean | null
@@ -2974,6 +3170,11 @@ export type Database = {
           winning_team: string | null
         }
         Insert: {
+          club_id?: string | null
+          confirmation_required_from?: string[]
+          confirmation_status?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           court_number?: string | null
           created_at?: string | null
           created_meta?: Json | null
@@ -2991,10 +3192,12 @@ export type Database = {
           match_type: string
           notes?: string | null
           played_at: string
+          ready_for_dupr?: boolean
           recorded_by: string
           round_name?: string | null
           scoring_format?: string | null
           slug: string
+          social_event_id?: string | null
           source_provider?: string
           source_url?: string | null
           submitted_to_dupr?: boolean | null
@@ -3013,6 +3216,11 @@ export type Database = {
           winning_team?: string | null
         }
         Update: {
+          club_id?: string | null
+          confirmation_required_from?: string[]
+          confirmation_status?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           court_number?: string | null
           created_at?: string | null
           created_meta?: Json | null
@@ -3030,10 +3238,12 @@ export type Database = {
           match_type?: string
           notes?: string | null
           played_at?: string
+          ready_for_dupr?: boolean
           recorded_by?: string
           round_name?: string | null
           scoring_format?: string | null
           slug?: string
+          social_event_id?: string | null
           source_provider?: string
           source_url?: string | null
           submitted_to_dupr?: boolean | null
@@ -3052,6 +3262,48 @@ export type Database = {
           winning_team?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "matches_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "club_listing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "club_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "matches_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "matches_recorded_by_fkey"
             columns: ["recorded_by"]
@@ -3074,6 +3326,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "matches_social_event_id_fkey"
+            columns: ["social_event_id"]
+            isOneToOne: false
+            referencedRelation: "social_events"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "matches_tournament_id_fkey"
             columns: ["tournament_id"]
             isOneToOne: false
@@ -3085,6 +3344,59 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3461,6 +3773,7 @@ export type Database = {
           expires_at: string
           id: string
           phone: string
+          sent_via: string | null
           used_at: string | null
         }
         Insert: {
@@ -3471,6 +3784,7 @@ export type Database = {
           expires_at: string
           id?: string
           phone: string
+          sent_via?: string | null
           used_at?: string | null
         }
         Update: {
@@ -3481,6 +3795,7 @@ export type Database = {
           expires_at?: string
           id?: string
           phone?: string
+          sent_via?: string | null
           used_at?: string | null
         }
         Relationships: [
@@ -3499,6 +3814,7 @@ export type Database = {
           error_code: string | null
           event_id: string | null
           id: string
+          ip_address: unknown
           phone_e164: string
           sent_at: string
           success: boolean
@@ -3508,6 +3824,7 @@ export type Database = {
           error_code?: string | null
           event_id?: string | null
           id?: string
+          ip_address?: unknown
           phone_e164: string
           sent_at?: string
           success: boolean
@@ -3517,6 +3834,7 @@ export type Database = {
           error_code?: string | null
           event_id?: string | null
           id?: string
+          ip_address?: unknown
           phone_e164?: string
           sent_at?: string
           success?: boolean
@@ -3599,6 +3917,80 @@ export type Database = {
             columns: ["registration_id"]
             isOneToOne: true
             referencedRelation: "event_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      play_requests: {
+        Row: {
+          author_id: string
+          city: string | null
+          created_at: string
+          district: string | null
+          id: string
+          note: string
+          play_at: string | null
+          skill_max: number | null
+          skill_min: number | null
+          status: string
+          updated_at: string
+          venue_id: string | null
+        }
+        Insert: {
+          author_id: string
+          city?: string | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          note: string
+          play_at?: string | null
+          skill_max?: number | null
+          skill_min?: number | null
+          status?: string
+          updated_at?: string
+          venue_id?: string | null
+        }
+        Update: {
+          author_id?: string
+          city?: string | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          note?: string
+          play_at?: string | null
+          skill_max?: number | null
+          skill_min?: number | null
+          status?: string
+          updated_at?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "play_requests_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "player_stats"
+            referencedColumns: ["player_id"]
+          },
+          {
+            foreignKeyName: "play_requests_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "play_requests_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "play_requests_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
@@ -3830,7 +4222,11 @@ export type Database = {
           id: string
           is_ghost: boolean | null
           is_pro: boolean | null
+          is_public_profile: boolean
           is_verified: boolean | null
+          looking_for_game: boolean
+          looking_for_game_note: string | null
+          looking_for_game_until: string | null
           onboarding_completed_at: string | null
           onboarding_step: number | null
           organization_id: string | null
@@ -3873,7 +4269,11 @@ export type Database = {
           id: string
           is_ghost?: boolean | null
           is_pro?: boolean | null
+          is_public_profile?: boolean
           is_verified?: boolean | null
+          looking_for_game?: boolean
+          looking_for_game_note?: string | null
+          looking_for_game_until?: string | null
           onboarding_completed_at?: string | null
           onboarding_step?: number | null
           organization_id?: string | null
@@ -3916,7 +4316,11 @@ export type Database = {
           id?: string
           is_ghost?: boolean | null
           is_pro?: boolean | null
+          is_public_profile?: boolean
           is_verified?: boolean | null
+          looking_for_game?: boolean
+          looking_for_game_note?: string | null
+          looking_for_game_until?: string | null
           onboarding_completed_at?: string | null
           onboarding_step?: number | null
           organization_id?: string | null
@@ -4554,6 +4958,7 @@ export type Database = {
           name: string
           parent_tournament_id: string | null
           player_count: number
+          rating_source: string
           registration_message: string | null
           requires_registration: boolean | null
           requires_skill_level: boolean | null
@@ -4582,6 +4987,7 @@ export type Database = {
           name?: string
           parent_tournament_id?: string | null
           player_count: number
+          rating_source?: string
           registration_message?: string | null
           requires_registration?: boolean | null
           requires_skill_level?: boolean | null
@@ -4610,6 +5016,7 @@ export type Database = {
           name?: string
           parent_tournament_id?: string | null
           player_count?: number
+          rating_source?: string
           registration_message?: string | null
           requires_registration?: boolean | null
           requires_skill_level?: boolean | null
@@ -5273,6 +5680,10 @@ export type Database = {
         Row: {
           created_at: string | null
           display_name: string | null
+          dupr_match_code: string | null
+          dupr_submit_error: string | null
+          dupr_submitted: boolean
+          dupr_submitted_at: string | null
           game_type: Database["public"]["Enums"]["team_game_type"]
           id: string
           is_dreambreaker: boolean | null
@@ -5291,6 +5702,10 @@ export type Database = {
         Insert: {
           created_at?: string | null
           display_name?: string | null
+          dupr_match_code?: string | null
+          dupr_submit_error?: string | null
+          dupr_submitted?: boolean
+          dupr_submitted_at?: string | null
           game_type: Database["public"]["Enums"]["team_game_type"]
           id?: string
           is_dreambreaker?: boolean | null
@@ -5309,6 +5724,10 @@ export type Database = {
         Update: {
           created_at?: string | null
           display_name?: string | null
+          dupr_match_code?: string | null
+          dupr_submit_error?: string | null
+          dupr_submitted?: boolean
+          dupr_submitted_at?: string | null
           game_type?: Database["public"]["Enums"]["team_game_type"]
           id?: string
           is_dreambreaker?: boolean | null
@@ -5654,8 +6073,11 @@ export type Database = {
           has_dreambreaker: boolean | null
           has_third_place_match: boolean | null
           id: string
+          max_dupr_rating: number | null
+          min_dupr_rating: number | null
           name: string
           playoff_team_count: number | null
+          rating_source: string
           require_min_games_per_player: boolean | null
           require_registration: boolean | null
           share_id: string
@@ -5680,8 +6102,11 @@ export type Database = {
           has_dreambreaker?: boolean | null
           has_third_place_match?: boolean | null
           id?: string
+          max_dupr_rating?: number | null
+          min_dupr_rating?: number | null
           name: string
           playoff_team_count?: number | null
+          rating_source?: string
           require_min_games_per_player?: boolean | null
           require_registration?: boolean | null
           share_id?: string
@@ -5706,8 +6131,11 @@ export type Database = {
           has_dreambreaker?: boolean | null
           has_third_place_match?: boolean | null
           id?: string
+          max_dupr_rating?: number | null
+          min_dupr_rating?: number | null
           name?: string
           playoff_team_count?: number | null
+          rating_source?: string
           require_min_games_per_player?: boolean | null
           require_registration?: boolean | null
           share_id?: string
@@ -5719,6 +6147,48 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_commands: {
+        Row: {
+          chat_id: number
+          created_at: string
+          from_id: number | null
+          from_username: string | null
+          id: number
+          message_date: string | null
+          processed_at: string | null
+          result: string | null
+          status: string
+          text: string
+          update_id: number
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          from_id?: number | null
+          from_username?: string | null
+          id?: never
+          message_date?: string | null
+          processed_at?: string | null
+          result?: string | null
+          status?: string
+          text: string
+          update_id: number
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          from_id?: number | null
+          from_username?: string | null
+          id?: never
+          message_date?: string | null
+          processed_at?: string | null
+          result?: string | null
+          status?: string
+          text?: string
+          update_id?: number
+        }
+        Relationships: []
+      }
       tournaments: {
         Row: {
           created_at: string
@@ -5726,6 +6196,7 @@ export type Database = {
           end_date: string | null
           id: string
           name: string
+          organization_id: string | null
           slug: string
           start_date: string | null
           status: Database["public"]["Enums"]["tournament_status"]
@@ -5736,6 +6207,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           name: string
+          organization_id?: string | null
           slug: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["tournament_status"]
@@ -5746,11 +6218,20 @@ export type Database = {
           end_date?: string | null
           id?: string
           name?: string
+          organization_id?: string | null
           slug?: string
           start_date?: string | null
           status?: Database["public"]["Enums"]["tournament_status"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_badges: {
         Row: {
@@ -6125,6 +6606,39 @@ export type Database = {
           },
         ]
       }
+      zalo_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: number
+          last_refresh_at: string | null
+          last_refresh_error: string | null
+          refresh_token: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at: string
+          id?: number
+          last_refresh_at?: string | null
+          last_refresh_error?: string | null
+          refresh_token: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: number
+          last_refresh_at?: string | null
+          last_refresh_error?: string | null
+          refresh_token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       club_listing: {
@@ -6440,6 +6954,10 @@ export type Database = {
         Args: { p_tournament_id: string; p_user_id: string }
         Returns: boolean
       }
+      cancel_doubles_elimination_team_registration: {
+        Args: { p_tournament_id: string }
+        Returns: Json
+      }
       cancel_pair_request: { Args: { _request_id: string }; Returns: Json }
       cancel_social_event: {
         Args: { p_event_id: string; p_reason?: string }
@@ -6461,10 +6979,15 @@ export type Database = {
           title: string
         }[]
       }
+      close_doubles_elimination_registration: {
+        Args: { p_tournament_id: string }
+        Returns: Json
+      }
       compute_player_win_streak: {
         Args: { p_player_id: string }
         Returns: number
       }
+      confirm_club_match: { Args: { p_match_id: string }; Returns: string }
       count_manual_registrations_recent: {
         Args: { p_hours?: number; p_organizer_profile_id: string }
         Returns: number
@@ -6484,14 +7007,6 @@ export type Database = {
         }
         Returns: string
       }
-      cancel_doubles_elimination_team_registration: {
-        Args: { p_tournament_id: string }
-        Returns: Json
-      }
-      close_doubles_elimination_registration: {
-        Args: { p_tournament_id: string }
-        Returns: Json
-      }
       create_doubles_elimination_with_quota: {
         Args: {
           _court_count?: number
@@ -6503,27 +7018,6 @@ export type Database = {
           _share_id: string
           _start_time?: string
           _team_count: number
-        }
-        Returns: Json
-      }
-      organizer_add_team_to_doubles_elimination: {
-        Args: {
-          p_player1_user_id: string
-          p_player2_user_id: string
-          p_team_name?: string
-          p_tournament_id: string
-        }
-        Returns: Json
-      }
-      organizer_remove_team_from_doubles_elimination: {
-        Args: { p_team_id: string; p_tournament_id: string }
-        Returns: Json
-      }
-      register_team_for_doubles_elimination: {
-        Args: {
-          p_partner_user_id: string
-          p_team_name?: string
-          p_tournament_id: string
         }
         Returns: Json
       }
@@ -6574,6 +7068,56 @@ export type Database = {
       }
       delete_match_comment: { Args: { p_comment_id: string }; Returns: Json }
       delete_quick_table: { Args: { _table_id: string }; Returns: boolean }
+      dispatch_club_admin_push: {
+        Args: {
+          p_body: string
+          p_link_url: string
+          p_payload: Json
+          p_recipients: string[]
+          p_title: string
+          p_type: string
+        }
+        Returns: undefined
+      }
+      dupr_doubles_with_fallback: {
+        Args: { p_profile_id: string }
+        Returns: {
+          is_approx: boolean
+          rating: number
+        }[]
+      }
+      dupr_leaderboard_vietnam: {
+        Args: { p_format?: string; p_limit?: number }
+        Returns: {
+          avatar_url: string
+          city: string
+          display_name: string
+          dupr_rating: number
+          dupr_synced_at: string
+          rank: number
+          user_id: string
+          username: string
+        }[]
+      }
+      dupr_players_near_rating: {
+        Args: {
+          p_exclude_user_id?: string
+          p_limit?: number
+          p_target_rating: number
+          p_window?: number
+        }
+        Returns: {
+          avatar_url: string
+          city: string
+          display_name: string
+          dupr_doubles: number
+          dupr_singles: number
+          dupr_synced_at: string
+          rating_diff: number
+          user_id: string
+          username: string
+        }[]
+      }
       dupr_user_can_submit_club_matches: {
         Args: { p_club_id: number }
         Returns: boolean
@@ -6638,6 +7182,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_club_admin_ids: {
+        Args: { p_club_id: string; p_exclude?: string }
+        Returns: string[]
+      }
       get_content_stats: {
         Args: { p_end: string; p_start: string }
         Returns: Json
@@ -6670,8 +7218,8 @@ export type Database = {
           item_id: string
           item_type: string
           kudos_count: number
-          match_played_at: string
           match_type: string
+          notes: string
           participants: Json
           published_at: string
           round_name: string
@@ -6690,35 +7238,57 @@ export type Database = {
           winning_team: string
         }[]
       }
-      get_following_feed: {
-        Args: {
-          p_cursor_match_id?: string
-          p_cursor_played_at?: string
-          p_limit?: number
-          p_viewer_id: string
-        }
-        Returns: {
-          comment_count: number
-          format: string
-          kudos_count: number
-          match_id: string
-          match_type: string
-          participants: Json
-          played_at: string
-          round_name: string
-          slug: string
-          source_provider: string
-          source_url: string
-          team_a_score: number[]
-          team_b_score: number[]
-          tournament_event: string
-          tournament_name: string
-          venue_name: string
-          verification_status: string
-          viewer_kudoed: boolean
-          winning_team: string
-        }[]
-      }
+      get_following_feed:
+        | {
+            Args: {
+              p_cursor_played_at?: string
+              p_limit?: number
+              p_viewer_id: string
+            }
+            Returns: {
+              format: string
+              match_id: string
+              match_type: string
+              participants: Json
+              played_at: string
+              slug: string
+              team_a_score: number[]
+              team_b_score: number[]
+              venue_name: string
+              verification_status: string
+              winning_team: string
+            }[]
+          }
+        | {
+            Args: {
+              p_cursor_match_id?: string
+              p_cursor_played_at?: string
+              p_limit?: number
+              p_viewer_id: string
+            }
+            Returns: {
+              comment_count: number
+              format: string
+              kudos_count: number
+              match_id: string
+              match_type: string
+              notes: string
+              participants: Json
+              played_at: string
+              round_name: string
+              slug: string
+              source_provider: string
+              source_url: string
+              team_a_score: number[]
+              team_b_score: number[]
+              tournament_event: string
+              tournament_name: string
+              venue_name: string
+              verification_status: string
+              viewer_kudoed: boolean
+              winning_team: string
+            }[]
+          }
       get_homepage_stats: {
         Args: never
         Returns: {
@@ -6747,6 +7317,14 @@ export type Database = {
           username: string
         }[]
       }
+      get_my_event_dupr_by_token: {
+        Args: { p_magic_token: string }
+        Returns: {
+          dupr_id: string
+          event_id: string
+          registration_id: string
+        }[]
+      }
       get_new_users_daily: {
         Args: { p_end: string; p_start: string }
         Returns: {
@@ -6755,6 +7333,7 @@ export type Database = {
         }[]
       }
       get_online_now: { Args: never; Returns: number }
+      get_or_create_dm: { Args: { p_other: string }; Returns: string }
       get_org_analytics_summary: {
         Args: { _days?: number; _org_id: string }
         Returns: Json
@@ -6896,39 +7475,62 @@ export type Database = {
         Returns: string
       }
       get_tournament_from_team: { Args: { _team_id: string }; Returns: string }
-      get_trending_feed: {
-        Args: {
-          p_comments_weight?: number
-          p_cursor_match_id?: string
-          p_cursor_played_at?: string
-          p_kudos_weight?: number
-          p_limit?: number
-          p_pro_boost?: number
-          p_recency_decay_hours?: number
-          p_viewer_id?: string
-        }
-        Returns: {
-          comment_count: number
-          format: string
-          kudos_count: number
-          match_id: string
-          match_type: string
-          participants: Json
-          played_at: string
-          round_name: string
-          slug: string
-          source_provider: string
-          source_url: string
-          team_a_score: number[]
-          team_b_score: number[]
-          tournament_event: string
-          tournament_name: string
-          venue_name: string
-          verification_status: string
-          viewer_kudoed: boolean
-          winning_team: string
-        }[]
-      }
+      get_trending_feed:
+        | {
+            Args: {
+              p_comments_weight?: number
+              p_cursor_match_id?: string
+              p_cursor_played_at?: string
+              p_kudos_weight?: number
+              p_limit?: number
+              p_pro_boost?: number
+              p_recency_decay_hours?: number
+              p_viewer_id?: string
+            }
+            Returns: {
+              comment_count: number
+              format: string
+              kudos_count: number
+              match_id: string
+              match_type: string
+              participants: Json
+              played_at: string
+              round_name: string
+              slug: string
+              source_provider: string
+              source_url: string
+              team_a_score: number[]
+              team_b_score: number[]
+              tournament_event: string
+              tournament_name: string
+              venue_name: string
+              verification_status: string
+              viewer_kudoed: boolean
+              winning_team: string
+            }[]
+          }
+        | {
+            Args: {
+              p_comments_weight?: number
+              p_cursor_played_at?: string
+              p_kudos_weight?: number
+              p_limit?: number
+              p_recency_decay_hours?: number
+            }
+            Returns: {
+              format: string
+              match_id: string
+              match_type: string
+              participants: Json
+              played_at: string
+              slug: string
+              team_a_score: number[]
+              team_b_score: number[]
+              venue_name: string
+              verification_status: string
+              winning_team: string
+            }[]
+          }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_quick_table_count: {
         Args: { _user_id: string }
@@ -7004,12 +7606,17 @@ export type Database = {
         Args: { _post_id: string; _user_id: string }
         Returns: boolean
       }
+      is_my_conversation: { Args: { p_conv: string }; Returns: boolean }
       is_quick_table_creator: {
         Args: { _table_id: string; _user_id: string }
         Returns: boolean
       }
       is_quick_table_referee: {
         Args: { _table_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_social_event_organizer: {
+        Args: { p_event_id: string; p_uid: string }
         Returns: boolean
       }
       is_table_locked: { Args: { _table_id: string }; Returns: boolean }
@@ -7022,6 +7629,32 @@ export type Database = {
         Returns: boolean
       }
       is_user_creator: { Args: { _user_id: string }; Returns: boolean }
+      link_event_dupr_id_authed: {
+        Args: { p_dupr_id: string; p_event_id: string }
+        Returns: {
+          dupr_id: string
+          event_id: string
+          registration_id: string
+        }[]
+      }
+      link_event_dupr_id_by_token: {
+        Args: { p_dupr_id: string; p_magic_token: string }
+        Returns: {
+          dupr_id: string
+          event_id: string
+          registration_id: string
+        }[]
+      }
+      list_club_eligible_players: {
+        Args: { p_club_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          dupr_id: string
+          profile_id: string
+          role: string
+        }[]
+      }
       list_club_managers: {
         Args: { p_club_id: string }
         Returns: {
@@ -7034,6 +7667,27 @@ export type Database = {
           profile_id: string
         }[]
       }
+      list_club_matches: {
+        Args: { p_club_id: string; p_limit?: number }
+        Returns: {
+          confirmation_required_from: string[]
+          confirmation_status: string
+          confirmed_at: string
+          dupr_match_id: string
+          format: string
+          id: string
+          notes: string
+          played_at: string
+          ready_for_dupr: boolean
+          slug: string
+          submitted_to_dupr: boolean
+          team_a_players: Json
+          team_a_score: number[]
+          team_b_players: Json
+          team_b_score: number[]
+          winning_team: string
+        }[]
+      }
       list_club_members: {
         Args: { p_club_id: string }
         Returns: {
@@ -7042,10 +7696,73 @@ export type Database = {
           approved_at: string
           avatar_url: string
           display_name: string
+          dupr_connected_via: string
+          dupr_doubles: number
+          dupr_id: string
+          dupr_singles: number
           email: string
           phone: string
           profile_id: string
           status: string
+        }[]
+      }
+      list_my_pending_confirmations: {
+        Args: never
+        Returns: {
+          club_id: string
+          club_name: string
+          club_slug: string
+          format: string
+          id: string
+          notes: string
+          played_at: string
+          recorded_by: string
+          recorded_by_name: string
+          slug: string
+          team_a_players: Json
+          team_a_score: number[]
+          team_b_players: Json
+          team_b_score: number[]
+          winning_team: string
+        }[]
+      }
+      list_resolvable_disputes: {
+        Args: never
+        Returns: {
+          club_id: string
+          club_name: string
+          club_slug: string
+          dispute_reasons: Json
+          format: string
+          id: string
+          played_at: string
+          recorded_by: string
+          recorded_by_name: string
+          slug: string
+          team_a_players: Json
+          team_a_score: number[]
+          team_b_players: Json
+          team_b_score: number[]
+          winning_team: string
+        }[]
+      }
+      list_social_event_matches: {
+        Args: { p_event_id: string; p_limit?: number }
+        Returns: {
+          dupr_match_id: string
+          format: string
+          id: string
+          notes: string
+          played_at: string
+          ready_for_dupr: boolean
+          recorded_by: string
+          slug: string
+          submitted_to_dupr: boolean
+          team_a_players: Json
+          team_a_score: number[]
+          team_b_players: Json
+          team_b_score: number[]
+          winning_team: string
         }[]
       }
       log_audit_event: {
@@ -7060,6 +7777,36 @@ export type Database = {
         }
         Returns: string
       }
+      log_club_match: {
+        Args: {
+          p_club_id: string
+          p_court_number?: string
+          p_format: string
+          p_notes?: string
+          p_played_at: string
+          p_scoring_format?: string
+          p_team_a_players: string[]
+          p_team_a_score: number[]
+          p_team_b_players: string[]
+          p_team_b_score: number[]
+        }
+        Returns: string
+      }
+      log_social_event_match: {
+        Args: {
+          p_court_number?: string
+          p_event_id: string
+          p_format: string
+          p_notes?: string
+          p_played_at: string
+          p_scoring_format?: string
+          p_team_a_players: string[]
+          p_team_a_score: number[]
+          p_team_b_players: string[]
+          p_team_b_score: number[]
+        }
+        Returns: string
+      }
       lookup_user_by_email: {
         Args: { lookup_email: string }
         Returns: {
@@ -7068,9 +7815,49 @@ export type Database = {
           id: string
         }[]
       }
+      mark_conversation_read: { Args: { p_conv: string }; Returns: undefined }
+      mark_match_ready_for_dupr: {
+        Args: { p_match_id: string; p_ready: boolean }
+        Returns: boolean
+      }
+      mark_match_submitted_to_dupr: {
+        Args: { p_dupr_match_id: string; p_match_id: string }
+        Returns: boolean
+      }
+      merge_ghost_into_profile: {
+        Args: { p_phone: string; p_target_profile_id: string }
+        Returns: string
+      }
+      merge_my_ghost_by_phone: { Args: { p_phone: string }; Returns: string }
       my_club_membership_status: {
         Args: { p_club_id: string }
         Returns: string
+      }
+      my_conversations: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          last_at: string
+          last_body: string
+          other_avatar: string
+          other_id: string
+          other_name: string
+          other_username: string
+          unread_count: number
+        }[]
+      }
+      organizer_add_team_to_doubles_elimination: {
+        Args: {
+          p_player1_user_id: string
+          p_player2_user_id: string
+          p_team_name?: string
+          p_tournament_id: string
+        }
+        Returns: Json
+      }
+      organizer_remove_team_from_doubles_elimination: {
+        Args: { p_team_id: string; p_tournament_id: string }
+        Returns: Json
       }
       register_event_as_member: {
         Args: { p_event_id: string; p_slot_id?: string }
@@ -7080,6 +7867,14 @@ export type Database = {
           registered_at: string
           registration_id: string
         }[]
+      }
+      register_team_for_doubles_elimination: {
+        Args: {
+          p_partner_user_id: string
+          p_team_name?: string
+          p_tournament_id: string
+        }
+        Returns: Json
       }
       remove_club_manager: {
         Args: { p_club_id: string; p_profile_id: string }
@@ -7094,6 +7889,15 @@ export type Database = {
         Returns: Json
       }
       request_to_join_club: { Args: { p_club_id: string }; Returns: string }
+      resolve_match_dispute: {
+        Args: {
+          p_action: string
+          p_match_id: string
+          p_team_a_score?: number[]
+          p_team_b_score?: number[]
+        }
+        Returns: string
+      }
       respond_pair_request: {
         Args: { _accept: boolean; _request_id: string }
         Returns: Json
@@ -7120,6 +7924,10 @@ export type Database = {
           phone: string
           profile_id: string
         }[]
+      }
+      send_message: {
+        Args: { p_body: string; p_conv: string }
+        Returns: string
       }
       set_user_quota: {
         Args: { _new_quota: number; _user_id: string }
@@ -7158,6 +7966,7 @@ export type Database = {
         Returns: boolean
       }
       user_club_count: { Args: { p_user_id: string }; Returns: number }
+      username_is_available: { Args: { p_candidate: string }; Returns: boolean }
       verify_event_organizer: {
         Args: { p_event_id: string; p_user_id: string }
         Returns: boolean
