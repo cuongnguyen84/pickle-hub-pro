@@ -8,3 +8,7 @@ export * from "./slug";
 export * from "./device-meta";
 
 export { formatVietnameseTimeAgo } from "./time-ago";
+
+// Re-export the shared scoring type so consumers can import it from the
+// social barrel alongside the score-validation helpers that use it.
+export type { ScoringFormat } from "@/types/social";

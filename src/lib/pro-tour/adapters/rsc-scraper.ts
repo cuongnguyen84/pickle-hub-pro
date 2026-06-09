@@ -64,6 +64,8 @@ import type {
   ScrapedTeam,
 } from "../types";
 
+import type { Fetcher } from "@cloudflare/workers-types";
+
 interface ScraperEnv {
   /** Cloudflare Browser Rendering binding. Bound in
    *  workers/pro-tour-scraper/wrangler.toml as MYBROWSER. */
