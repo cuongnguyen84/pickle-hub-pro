@@ -186,11 +186,35 @@ async function runAlert(): Promise<RunReport> {
   };
 }
 
+// Constant-time string compare to avoid timing oracles on the shared secret.
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204 });
   if (req.method !== "POST" && req.method !== "GET") {
     return new Response("Method Not Allowed", { status: 405 });
   }
+
+  // Shared-secret gate. This endpoint has verify_jwt=false (cron carries no JWT),
+  // so without this anyone could trigger the scan + Telegram send. Enforced only
+  // when CRON_SECRET is configured — set the secret AND add the
+  // `x-cron-secret` header to the cron caller to activate. Backward compatible
+  // until then.
+  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
+  if (cronSecret) {
+    const provided = req.headers.get("x-cron-secret") ?? "";
+    if (!timingSafeEqual(provided, cronSecret)) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+  } else {
+    console.warn("[errors-telegram-alert] CRON_SECRET not set — endpoint is unauthenticated");
+  }
+
   const report = await runAlert();
   return new Response(JSON.stringify(report), {
     headers: { "Content-Type": "application/json" },

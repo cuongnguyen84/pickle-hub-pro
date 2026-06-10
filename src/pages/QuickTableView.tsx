@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { TheLineLayout } from '@/components/layout';
@@ -108,7 +108,7 @@ const QuickTableView = () => {
   const [showEditCourtsDialog, setShowEditCourtsDialog] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!shareId) return;
     const data = await getTableByShareId(shareId);
     if (data) {
@@ -170,9 +170,19 @@ const QuickTableView = () => {
       }
     }
     setLoading(false);
-  };
+  }, [shareId, user, t]);
 
-  useEffect(() => { loadData(); }, [shareId, user]);
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // Debounced reload for realtime bursts: during a live tournament many rows
+  // change in quick succession; without coalescing each one fired a full
+  // multi-query reload (query storm + UI jank). Trailing 500ms debounce.
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleReload = useCallback(() => {
+    if (reloadTimer.current) clearTimeout(reloadTimer.current);
+    reloadTimer.current = setTimeout(() => { loadData(); }, 500);
+  }, [loadData]);
+  useEffect(() => () => { if (reloadTimer.current) clearTimeout(reloadTimer.current); }, []);
 
   // Initialise group filter once groups land or when their list changes.
   useEffect(() => {
@@ -203,12 +213,12 @@ const QuickTableView = () => {
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'quick_table_matches', filter: `table_id=eq.${table.id}` },
-          (payload) => { console.log('[Realtime] Match update:', payload); loadData(); },
+          () => { scheduleReload(); },
         )
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'quick_table_players', filter: `table_id=eq.${table.id}` },
-          (payload) => { console.log('[Realtime] Player update:', payload); loadData(); },
+          () => { scheduleReload(); },
         )
         .subscribe();
     } catch (err) {
@@ -218,7 +228,7 @@ const QuickTableView = () => {
     return () => {
       if (channel) supabase.removeChannel(channel);
     };
-  }, [table?.id]);
+  }, [table?.id, scheduleReload]);
 
   useEffect(() => {
     if (table) {

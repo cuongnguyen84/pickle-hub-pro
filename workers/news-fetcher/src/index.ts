@@ -288,8 +288,42 @@ async function ingestItems(
 // Feed fetch + parse
 // ---------------------------------------------------------------------------
 
+// Reject non-https or private/loopback hosts before fetching a DB-supplied URL.
+// Sources are admin-curated (service_role read), so this is defense-in-depth
+// against an SSRF should a source row ever be tampered with.
+function isSafePublicFeedUrl(raw: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:") return false;
+  const host = u.hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host === "0.0.0.0" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    /^127\./.test(host) ||
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^169\.254\./.test(host) ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
+    host === "[::1]" ||
+    host.startsWith("[fd") ||
+    host.startsWith("[fe80")
+  ) {
+    return false;
+  }
+  return true;
+}
+
 async function fetchAndParse(source: NewsSource): Promise<ParsedItem[]> {
   if (!source.feed_url) throw new Error("source has no feed_url");
+  if (!isSafePublicFeedUrl(source.feed_url)) {
+    throw new Error(`unsafe feed_url rejected: ${source.feed_url}`);
+  }
 
   const res = await fetch(source.feed_url, {
     headers: {

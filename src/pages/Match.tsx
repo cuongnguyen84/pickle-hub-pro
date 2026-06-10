@@ -8,7 +8,7 @@
 //   - History: matches I'm a player in, with status
 // ============================================================================
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Loader2, RefreshCw, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { escapePostgrestSearch } from "@/lib/escapePostgrestSearch";
@@ -192,11 +192,12 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
   const [b2, setB2] = useState<ProfileMini | null>(null);
 
   // Auto-fill self into a1 once we know who 'self' is.
-  useMemo(() => {
+  // Must be an effect, not useMemo — setting state during render (in useMemo) is
+  // an anti-pattern that misbehaves under StrictMode / concurrent rendering.
+  useEffect(() => {
     if (!a1 && user?.id && user?.email) {
       setA1({ id: user.id, display_name: null, email: user.email });
     }
-    return null;
   }, [a1, user?.id, user?.email]);
 
   const [g1a, setG1a] = useState(11);

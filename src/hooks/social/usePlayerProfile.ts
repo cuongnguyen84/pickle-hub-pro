@@ -48,9 +48,6 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
     queryFn: async () => {
       if (!usernameOrSlug) return null;
       const isHexSlug = /^[0-9a-f]{8,12}$/i.test(usernameOrSlug);
-      const orFilter = isHexSlug
-        ? `username.eq.${usernameOrSlug},profile_slug.like.${usernameOrSlug}%`
-        : `username.eq.${usernameOrSlug}`;
 
       // Sprint A2 — opt-in gate. /nguoi-choi/:username shows the row only
       // if is_public_profile=true OR the viewer is the owner. Owner bypass
@@ -58,15 +55,32 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
       const { data: authData } = await supabase.auth.getUser();
       const ownUserId = authData.user?.id ?? null;
 
-      const { data, error } = await supabase
+      const SELECT_COLS =
+        "id, username, display_name, avatar_url, bio, city, country, skill_level, favorite_venue_id, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at, is_pro, is_verified, is_ghost, is_public_profile, created_at";
+
+      // Exact username always wins. Only fall back to a profile_slug prefix match
+      // (for /u/<hex> short links) when there is no exact-username hit — and make
+      // that fallback deterministic with an explicit order, so a username that
+      // happens to look like hex can never resolve to a different user's row.
+      let { data, error } = await supabase
         .from("profiles")
-        .select(
-          "id, username, display_name, avatar_url, bio, city, country, skill_level, favorite_venue_id, dupr_id, dupr_singles, dupr_doubles, dupr_synced_at, is_pro, is_verified, is_ghost, is_public_profile, created_at",
-        )
-        .or(orFilter)
+        .select(SELECT_COLS)
+        .eq("username", usernameOrSlug)
         .limit(1)
         .maybeSingle();
       if (error) throw error;
+
+      if (!data && isHexSlug) {
+        const fallback = await supabase
+          .from("profiles")
+          .select(SELECT_COLS)
+          .like("profile_slug", `${usernameOrSlug}%`)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (fallback.error) throw fallback.error;
+        data = fallback.data;
+      }
       // Ghost rows (placeholder profiles created via PlayerSelector for
       // non-app teammates) are not user-facing.
       if (!data || data.is_ghost) return null;

@@ -11,6 +11,11 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  // Strip noisy console.log/debug/info from production bundles (incl. realtime
+  // payload dumps). console.warn/error are kept for prod diagnostics.
+  esbuild: {
+    pure: mode === "production" ? ["console.log", "console.debug", "console.info"] : [],
+  },
   plugins: [
     react(),
     // Bundle analysis — opt-in via ANALYZE=1 to avoid slowing every prod build.
