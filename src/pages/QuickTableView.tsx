@@ -170,7 +170,7 @@ const QuickTableView = () => {
       }
     }
     setLoading(false);
-  }, [shareId, user, t]);
+  }, [shareId, user, t, getTableByShareId, getUserTeam, getPendingCount, getUserRegistration, createNextPlayoffRound]);
 
   useEffect(() => { loadData(); }, [loadData]);
 

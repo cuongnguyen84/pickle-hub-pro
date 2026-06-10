@@ -62,13 +62,14 @@ export function usePlayerProfile(usernameOrSlug: string | undefined) {
       // (for /u/<hex> short links) when there is no exact-username hit — and make
       // that fallback deterministic with an explicit order, so a username that
       // happens to look like hex can never resolve to a different user's row.
-      let { data, error } = await supabase
+      const exact = await supabase
         .from("profiles")
         .select(SELECT_COLS)
         .eq("username", usernameOrSlug)
         .limit(1)
         .maybeSingle();
-      if (error) throw error;
+      if (exact.error) throw exact.error;
+      let data = exact.data;
 
       if (!data && isHexSlug) {
         const fallback = await supabase

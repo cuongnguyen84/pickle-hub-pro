@@ -44,7 +44,7 @@ function fingerprint(message: string | null, stack: string | null): string {
 
 function escapeMarkdown(s: string): string {
   // Telegram MarkdownV2 reserved chars.
-  return s.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
+  return s.replace(/([_*[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
 }
 
 async function sendTelegram(text: string): Promise<boolean> {
