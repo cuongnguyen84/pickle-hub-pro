@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "./useDebounce";
+import { escapePostgrestSearch } from "@/lib/escapePostgrestSearch";
 import type { Venue } from "./types";
 
 /** Debounced (300ms) ILIKE search across name + name_vi + city. */
@@ -10,7 +11,7 @@ export function useSearchVenues(query: string) {
     queryKey: ["search-venues", debounced],
     enabled: debounced.length >= 2,
     queryFn: async () => {
-      const like = `%${debounced}%`;
+      const like = `%${escapePostgrestSearch(debounced)}%`;
       const { data, error } = await supabase
         .from("venues")
         .select(

@@ -103,13 +103,53 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify caller is authenticated
+    // Verify caller is authenticated AND authorized.
+    // SECURITY: this function uses the service_role client below to read push
+    // tokens for arbitrary user_ids and send FCM messages. A mere presence check
+    // on the header let any unauthenticated caller spoof pushes to every user.
+    // We now require either (a) an internal service-role bearer (used by
+    // mark-payment-claimed / auto-cancel-unpaid-registrations via
+    // supabase.functions.invoke with a service-role client), or (b) a valid user
+    // JWT belonging to an admin.
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Missing authorization" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const isInternalServiceCall = bearer === serviceRoleKey;
+
+    if (!isInternalServiceCall) {
+      // User-facing path: verify the JWT (ES256-safe via Auth API) and admin role.
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const supabaseUser = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${bearer}` } },
+      });
+
+      const { data: userData, error: userError } = await supabaseUser.auth.getUser();
+      if (userError || !userData?.user) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: roleData, error: roleError } = await supabaseUser
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (roleError || !roleData) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden - Admin access required" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Parse FCM service account

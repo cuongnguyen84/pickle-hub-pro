@@ -648,13 +648,16 @@ async function routeAndRender(pathname: string, env: Env, siteUrl: string): Prom
   // handled at line ~312). React Route at App.tsx line 482. Without
   // this handler, bots got 404 and Ahrefs flagged it as a broken
   // internal link from homepage `/` + 8 other source pages.
-  if (path === "/live" || path === "/vi/live") return await renderLivestreamList(supabase, siteUrl, rawPath, lang);
+  // NOTE: `path` has already had its /vi prefix stripped (stripLangPrefix), so it
+  // can never equal "/vi/live"; the "/live" branch (with lang==="vi") already
+  // serves the Vietnamese route. Redundant /vi/* clause removed 2026-06-10.
+  if (path === "/live") return await renderLivestreamList(supabase, siteUrl, rawPath, lang);
   // /rankings DUPR table — React Route at App.tsx line 572 with /vi alias.
   // Sprint A10 (2026-05-27) — renderRankings is now async and reads
   // dupr_leaderboard_vietnam RPC for bot-crawlable Vietnam top-25 +
   // ItemList JSON-LD. Static global/continental scopes remain in the
   // SPA only (low SEO priority).
-  if (path === "/rankings" || path === "/vi/rankings") return await renderRankings(supabase, siteUrl, rawPath, lang);
+  if (path === "/rankings") return await renderRankings(supabase, siteUrl, rawPath, lang);
 
   // Privacy / Terms
   if (path === "/privacy") return renderPrivacy(siteUrl, rawPath, lang);
