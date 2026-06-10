@@ -132,15 +132,18 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Content-Security-Policy":
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com; " +
+    // AdSense domains (pagead2/tpc googlesyndication, doubleclick, adtrafficquality)
+    // added 2026-06-10: the AdSense loader was being blocked by CSP — ads never
+    // loaded in production and every page logged a console CSP violation.
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://*.supabase.co https://www.gstatic.com https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "img-src 'self' data: blob: https:; " +
     "media-src 'self' data: blob: https:; " +
     "connect-src 'self' https: wss:; " +
-    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://www.openstreetmap.org; " +
+    "frame-src 'self' https://stream.mux.com https://www.youtube.com https://www.youtube-nocookie.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google; " +
     "worker-src 'self' blob:; " +
-    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://www.openstreetmap.org; " +
+    "child-src 'self' blob: https://stream.mux.com https://www.youtube.com https://www.openstreetmap.org https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; " +
     "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
 };
 
