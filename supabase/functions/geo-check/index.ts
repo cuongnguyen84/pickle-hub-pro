@@ -43,18 +43,30 @@ Deno.serve(async (req) => {
       ? countriesRow.value
       : ["US"];
 
-    // Get user's IP from headers
-    const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    // Get user's IP from headers.
+    // Prefer cf-connecting-ip (set by Cloudflare, not client-spoofable) over the
+    // client-controllable x-forwarded-for, so the geo-block cannot be trivially
+    // bypassed by forging XFF.
+    const rawIp =
       req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
-      "unknown";
+      "";
+
+    // Validate it's a real IPv4/IPv6 literal before interpolating into the lookup
+    // URL (prevents query/path injection into the ip-api request).
+    const isValidIp =
+      /^(\d{1,3}\.){3}\d{1,3}$/.test(rawIp) || /^[0-9a-fA-F:]+$/.test(rawIp);
+    const ip = isValidIp ? rawIp : "";
 
     let country = "unknown";
 
-    // Try ip-api.com (free, no key needed, 45 req/min)
+    // Try ip-api.com (free, no key needed, 45 req/min). Skip when IP unknown.
     try {
-      const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=countryCode`);
+      if (!ip) throw new Error("no valid client IP");
+      const geoRes = await fetch(
+        `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=countryCode`,
+      );
       if (geoRes.ok) {
         const geoData = await geoRes.json();
         country = geoData.countryCode || "unknown";

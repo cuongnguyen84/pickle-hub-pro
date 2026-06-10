@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { escapePostgrestSearch } from "@/lib/escapePostgrestSearch";
 
 type OrganizationWithLogo = Tables<"organizations"> & {
   display_logo?: string | null;
@@ -33,7 +34,7 @@ export function usePaginatedSearchVideos(query: string) {
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
       if (query) {
-        q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
+        q = q.or(`title.ilike.%${escapePostgrestSearch(query)}%,description.ilike.%${escapePostgrestSearch(query)}%`);
       }
 
       const { data, error } = await q;
@@ -62,7 +63,7 @@ export function usePaginatedSearchLivestreams(query: string) {
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
       if (query) {
-        q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
+        q = q.or(`title.ilike.%${escapePostgrestSearch(query)}%,description.ilike.%${escapePostgrestSearch(query)}%`);
       }
 
       const { data, error } = await q;
@@ -91,7 +92,7 @@ export function usePaginatedSearchTournaments(query: string) {
         .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
       if (query) {
-        q = q.or(`name.ilike.%${query}%,description.ilike.%${query}%`);
+        q = q.or(`name.ilike.%${escapePostgrestSearch(query)}%,description.ilike.%${escapePostgrestSearch(query)}%`);
       }
 
       const { data, error } = await q;

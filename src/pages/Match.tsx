@@ -11,6 +11,7 @@
 import { useMemo, useState } from "react";
 import { Loader2, RefreshCw, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { escapePostgrestSearch } from "@/lib/escapePostgrestSearch";
 import { TheLineLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
@@ -101,7 +102,7 @@ function PlayerSearch({
       const { data, error } = await supabase
         .from("profiles")
         .select("id, display_name, email")
-        .or(`display_name.ilike.%${q}%,email.ilike.%${q}%`)
+        .or(`display_name.ilike.%${escapePostgrestSearch(q)}%,email.ilike.%${escapePostgrestSearch(q)}%`)
         .limit(10);
       if (error) throw error;
       return (data ?? []).filter((p) => !excludeIds.includes((p as ProfileMini).id)) as ProfileMini[];

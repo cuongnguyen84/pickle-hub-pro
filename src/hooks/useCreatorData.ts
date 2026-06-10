@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { escapePostgrestSearch } from "@/lib/escapePostgrestSearch";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 // Stats for creator overview
@@ -111,7 +112,8 @@ export function useCreatorVideos(
         query = query.eq("status", filters.status as "draft" | "published" | "hidden");
       }
       if (filters.search) {
-        query = query.or(`title.ilike.%${filters.search}%,tags.cs.{${filters.search}}`);
+        const safe = escapePostgrestSearch(filters.search);
+        query = query.or(`title.ilike.%${safe}%,tags.cs.{${safe}}`);
       }
 
       const { data, error } = await query;

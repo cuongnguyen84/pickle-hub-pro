@@ -75,6 +75,12 @@ const BLOG_SLUGS = [
   "pickleball-world-cup-2026-da-nang",
   "tournament-organizer-hub",
   "how-to-play-pickleball",
+  // Added 2026-06-10: present in sitemap-static + BLOG_POST_META but were missing
+  // here, so they were never auto-pinged to Bing/Yandex via the GET-all path.
+  "dupr-algorithm-explained-performance-vs-expectation",
+  "dupr-vietnam-partnership-ta-pickleball-thepicklehub",
+  "pickleball-tour-wars-2023-explained",
+  "app-tour-vs-ppa-tour-contracts-2026",
 ];
 
 async function getViBlogSlugs(env: Env): Promise<string[]> {
@@ -165,7 +171,21 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
-      urlsToSubmit = body.urls;
+      // Only accept URLs on our own host. IndexNow rejects foreign hosts anyway
+      // (key-file ownership check), but filtering here avoids wasting submissions
+      // and closes the open-submission surface.
+      const allowedPrefix = `https://${HOST}/`;
+      urlsToSubmit = body.urls.filter(
+        (u) => typeof u === "string" && u.startsWith(allowedPrefix),
+      );
+      if (urlsToSubmit.length === 0) {
+        return new Response(
+          JSON.stringify({
+            error: `urls must be absolute and start with ${allowedPrefix}`,
+          }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
         status: 400,
