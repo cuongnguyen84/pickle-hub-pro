@@ -283,12 +283,16 @@ export function useQuickTable() {
       }))
     );
 
-    for (const update of updates) {
-      await supabase
-        .from('quick_table_players')
-        .update({ group_id: update.group_id })
-        .eq('id', update.id);
-    }
+    // Parallelise instead of awaiting each update serially (was N round-trips
+    // in sequence — slow for large tables).
+    await Promise.all(
+      updates.map((update) =>
+        supabase
+          .from('quick_table_players')
+          .update({ group_id: update.group_id })
+          .eq('id', update.id),
+      ),
+    );
   }, []);
 
   const isOwner = useCallback((table: QuickTable): boolean => {
@@ -447,19 +451,21 @@ export function useQuickTable() {
     qualified: QuickTablePlayer[],
     wildcards: QuickTablePlayer[]
   ): Promise<void> => {
-    for (const player of qualified) {
-      await supabase
-        .from('quick_table_players')
-        .update({ is_qualified: true, is_wildcard: false, playoff_seed: player.playoff_seed })
-        .eq('id', player.id);
-    }
-
-    for (let i = 0; i < wildcards.length; i++) {
-      await supabase
-        .from('quick_table_players')
-        .update({ is_qualified: true, is_wildcard: true, playoff_seed: 100 + i })
-        .eq('id', wildcards[i].id);
-    }
+    // Parallelise the per-player writes (were two serial N-round-trip loops).
+    await Promise.all([
+      ...qualified.map((player) =>
+        supabase
+          .from('quick_table_players')
+          .update({ is_qualified: true, is_wildcard: false, playoff_seed: player.playoff_seed })
+          .eq('id', player.id),
+      ),
+      ...wildcards.map((player, i) =>
+        supabase
+          .from('quick_table_players')
+          .update({ is_qualified: true, is_wildcard: true, playoff_seed: 100 + i })
+          .eq('id', player.id),
+      ),
+    ]);
   }, []);
 
   const isPlayoffRoundComplete = useCallback((matches: QuickTableMatch[], round: number): boolean => {

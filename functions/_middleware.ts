@@ -434,7 +434,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const response = await routeAndRender(url.pathname, env, siteUrl);
+    // Time-box the prerender. On a cache MISS this awaits a chain of Supabase
+    // queries (Tokyo region); if Supabase is slow/hung the bot would otherwise
+    // wait until Cloudflare's ~30s wall-clock kill and get a 5xx, burning crawl
+    // budget. Race against an 8s budget and fall through to next() (SPA shell)
+    // — a served shell is far better for the crawler than a hung 5xx.
+    const RENDER_BUDGET_MS = 8000;
+    const response = await Promise.race([
+      routeAndRender(url.pathname, env, siteUrl),
+      new Promise<Response>((_, reject) =>
+        setTimeout(() => reject(new Error("prerender-timeout")), RENDER_BUDGET_MS),
+      ),
+    ]);
 
     if (env.PRERENDER_CACHE && response.status === 200) {
       const html = await response.clone().text();
