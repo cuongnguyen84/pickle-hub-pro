@@ -20,6 +20,10 @@ const post: BlogPost = {
     en: "Next: PPA Tour Asia 2026 — Full Schedule, Prize Money & Vietnam Stops",
     vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ, tiền thưởng & các chặng Việt Nam",
   },
+  heroImage: {
+    src: "/images/blog/ppa-tour-asia-2026-recap-hero.webp",
+    alt: "PPA Tour Asia 2026 mid-season recap infographic — a map of Asia marking the 10 tour stops with Hanoi, Kuala Lumpur and Macao completed, Vietnam's two stops (Hanoi and Ho Chi Minh City) flagged, two Vietnamese champions in red, and the road to the $1.1M Hong Kong Slam in October",
+  },
   content: {
     en: {
       title: "PPA Tour Asia 2026: Mid-Season Recap & Results So Far",

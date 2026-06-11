@@ -19,6 +19,10 @@ const post: BlogPost = {
     en: "Next: Pro Pickleball Tours 2026 — PPA, MLP, APP & PPA Tour Asia Compared",
     vi: "Tiếp theo: Các giải Pickleball chuyên nghiệp 2026 — PPA, MLP, APP & PPA Tour Asia",
   },
+  heroImage: {
+    src: "/images/blog/vietnam-pickleball-federation-2026-hero.webp",
+    alt: "Vietnam Pickleball Federation 2026 status and roadmap infographic — a map of Vietnam with emerging city-level pickleball federations in Hanoi, Da Nang and Ho Chi Minh City, and a timeline from the September 2025 organizing committee through the 2026 National Sports Games toward a still-pending national federation",
+  },
   content: {
     en: {
       title: "Is There a Vietnam Pickleball Federation? 2026 Status & Roadmap",

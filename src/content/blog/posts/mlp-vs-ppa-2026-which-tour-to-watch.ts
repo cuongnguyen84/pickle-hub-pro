@@ -20,6 +20,10 @@ const post: BlogPost = {
     en: "Next: PPA Tour Asia 2026 — Full Schedule & Vietnam Stops",
     vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ & các chặng tại Việt Nam",
   },
+  heroImage: {
+    src: "/images/blog/mlp-vs-ppa-2026-which-tour-to-watch-hero.webp",
+    alt: "MLP vs PPA 2026 comparison graphic — the PPA Tour's individual knockout brackets versus Major League Pickleball's team-draft format, both under the United Pickleball Association (UPA), with PPA Tour Asia's Ho Chi Minh City Open in August highlighted for Vietnamese fans",
+  },
   content: {
     en: {
       title: "MLP vs PPA 2026: Which Pickleball Tour Should You Watch?",

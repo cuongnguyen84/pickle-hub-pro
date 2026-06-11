@@ -17,6 +17,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["ppa tour asia 2026", "ppa tour asia recap", "ly hoang nam pickleball", "truong vinh hien", "mb hanoi cup 2026", "ho chi minh city open 2026", "hong kong slam pickleball", "pickleball vietnam"],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
     ctaLabel: { en: "Next: PPA Tour Asia 2026 — Full Schedule, Prize Money & Vietnam Stops", vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ, tiền thưởng & các chặng Việt Nam" },
+    heroImage: {
+      src: "/images/blog/ppa-tour-asia-2026-recap-hero.webp",
+      alt: "PPA Tour Asia 2026 mid-season recap infographic — a map of Asia marking the 10 tour stops with Hanoi, Kuala Lumpur and Macao completed, Vietnam's two stops (Hanoi and Ho Chi Minh City) flagged, two Vietnamese champions in red, and the road to the $1.1M Hong Kong Slam in October",
+    },
     titleEn: "PPA Tour Asia 2026: Mid-Season Recap & Results So Far",
     titleVi: "PPA Tour Asia 2026: Tổng Kết Nửa Mùa & Kết Quả 3 Chặng",
     metaTitleEn: "PPA Tour Asia 2026 | Mid-Season Recap & Results",
@@ -32,6 +36,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["mlp vs ppa", "mlp vs ppa 2026", "which pickleball tour to watch", "major league pickleball", "ppa tour", "united pickleball association", "ppa tour asia", "pickleball vietnam"],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
     ctaLabel: { en: "Next: PPA Tour Asia 2026 — Full Schedule & Vietnam Stops", vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ & các chặng tại Việt Nam" },
+    heroImage: {
+      src: "/images/blog/mlp-vs-ppa-2026-which-tour-to-watch-hero.webp",
+      alt: "MLP vs PPA 2026 comparison graphic — the PPA Tour's individual knockout brackets versus Major League Pickleball's team-draft format, both under the United Pickleball Association (UPA), with PPA Tour Asia's Ho Chi Minh City Open in August highlighted for Vietnamese fans",
+    },
     titleEn: "MLP vs PPA 2026: Which Pickleball Tour Should You Watch?",
     titleVi: "MLP vs PPA 2026: Nên Xem Giải Pickleball Nào?",
     metaTitleEn: "MLP vs PPA 2026 | Which Pickleball Tour to Watch",
@@ -47,6 +55,10 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["vietnam pickleball federation", "lien doan pickleball viet nam", "vietnam pickleball governance", "pickleball national sports games 2026", "pickleball vietnam 2026", "da nang pickleball federation", "dupr vietnam"],
     ctaPath: "/blog/professional-pickleball-tours-guide-2026",
     ctaLabel: { en: "Next: Pro Pickleball Tours 2026 — PPA, MLP, APP & PPA Tour Asia Compared", vi: "Tiếp theo: Các giải Pickleball chuyên nghiệp 2026 — PPA, MLP, APP & PPA Tour Asia" },
+    heroImage: {
+      src: "/images/blog/vietnam-pickleball-federation-2026-hero.webp",
+      alt: "Vietnam Pickleball Federation 2026 status and roadmap infographic — a map of Vietnam with emerging city-level pickleball federations in Hanoi, Da Nang and Ho Chi Minh City, and a timeline from the September 2025 organizing committee through the 2026 National Sports Games toward a still-pending national federation",
+    },
     titleEn: "Is There a Vietnam Pickleball Federation? 2026 Status & Roadmap",
     titleVi: "Việt Nam Đã Có Liên Đoàn Pickleball Chưa? Hiện Trạng & Lộ Trình 2026",
     metaTitleEn: "Vietnam Pickleball Federation 2026 | Status & Roadmap",
