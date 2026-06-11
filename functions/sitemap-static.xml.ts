@@ -132,7 +132,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   ];
 
   // Build EN blog post entries with optional bilingual hreflang
-  let enToViSlug = new Map<string, string>();
+  const enToViSlug = new Map<string, string>();
   try {
     const supabase = createSupabaseClient(context.env);
     const { data: viPosts } = await supabase
