@@ -1226,6 +1226,7 @@ const BLOG_POST_META: Record<string, {
   datePublished?: string;
   image?: string;
 }> = {
+  "ppa-tour-asia-2026-recap": { title: "PPA Tour Asia 2026: Mid-Season Recap & Results So Far", description: "PPA Tour Asia 2026 recap: 3 of 10 stops done — Ly Hoang Nam's historic Hanoi title, Vietnam's Hien Truong winning in KL, Tama's Macao double, and the road to the $1.1M Hong Kong Slam.", datePublished: "2026-06-11" },
   "mlp-vs-ppa-2026-which-tour-to-watch": { title: "MLP vs PPA 2026: Which Pickleball Tour Should You Watch?", description: "MLP and PPA merged under the UPA in 2024 but keep different formats. A 2026 guide to which pro pickleball tour to watch — plus PPA Tour Asia's Vietnam stops.", datePublished: "2026-06-09" },
   "vietnam-pickleball-federation-2026": { title: "Is There a Vietnam Pickleball Federation? 2026 Status & Roadmap", description: "No national pickleball federation exists in Vietnam yet (mid-2026) — only an organizing committee approved Sept 2025. The full status: roadmap, city-level federations, and what 2026 changes.", datePublished: "2026-06-08" },
   "pickleball-erne-shot-tutorial": { title: "The Erne in Pickleball: How to Hit It, Rules & Setup (2026)", description: "The pickleball erne explained: what it is, why it's legal, jump vs stationary erne, step-by-step technique, how to set it up, defense, mistakes, and drills.", datePublished: "2026-06-05", image: "/images/blog/pickleball-erne-shot-tutorial-hero.webp" },

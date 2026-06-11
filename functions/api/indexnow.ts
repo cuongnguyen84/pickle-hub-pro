@@ -42,6 +42,7 @@ const STATIC_URLS = [
 
 // Blog slugs (EN) — keep in sync with src/content/blog/metadata.ts and functions/sitemap.xml.ts
 const BLOG_SLUGS = [
+  "ppa-tour-asia-2026-recap",
   "mlp-vs-ppa-2026-which-tour-to-watch",
   "vietnam-pickleball-federation-2026",
   "pickleball-erne-shot-tutorial",

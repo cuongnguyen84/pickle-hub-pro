@@ -24,6 +24,7 @@ interface Env {
 }
 
 const EN_BLOG_SLUGS = [
+  "ppa-tour-asia-2026-recap",
   "mlp-vs-ppa-2026-which-tour-to-watch",
   "vietnam-pickleball-federation-2026",
   "pickleball-erne-shot-tutorial",

@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "ppa-tour-asia-2026-recap",
+    publishedDate: "2026-06-11",
+    updatedDate: "2026-06-11",
+    author: "Cuong Nguyen",
+    tags: ["ppa tour asia 2026", "ppa tour asia recap", "ly hoang nam pickleball", "truong vinh hien", "mb hanoi cup 2026", "ho chi minh city open 2026", "hong kong slam pickleball", "pickleball vietnam"],
+    ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
+    ctaLabel: { en: "Next: PPA Tour Asia 2026 — Full Schedule, Prize Money & Vietnam Stops", vi: "Tiếp theo: PPA Tour Asia 2026 — Lịch đầy đủ, tiền thưởng & các chặng Việt Nam" },
+    titleEn: "PPA Tour Asia 2026: Mid-Season Recap & Results So Far",
+    titleVi: "PPA Tour Asia 2026: Tổng Kết Nửa Mùa & Kết Quả 3 Chặng",
+    metaTitleEn: "PPA Tour Asia 2026 | Mid-Season Recap & Results",
+    metaTitleVi: "PPA Tour Asia 2026 | Tổng Kết Nửa Mùa & Kết Quả",
+    metaDescriptionEn: "PPA Tour Asia 2026 recap: 3 of 10 stops done — Ly Hoang Nam's historic Hanoi title, Vietnam's Hien Truong winning in KL, Tama's Macao double, and the road to the $1.1M Hong Kong Slam.",
+    metaDescriptionVi: "Tổng kết PPA Tour Asia 2026: 3/10 chặng đã đá — Lý Hoàng Nam vô địch Hà Nội, Trương Vĩnh Hiển thắng ở Kuala Lumpur, Tama cú đúp ở Macao, và đường tới Hong Kong Slam $1.1 triệu.",
+  },
+  {
     slug: "mlp-vs-ppa-2026-which-tour-to-watch",
     publishedDate: "2026-06-09",
     updatedDate: "2026-06-09",
