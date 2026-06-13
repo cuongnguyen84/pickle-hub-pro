@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-tournament-budget-calculator-guide",
+    publishedDate: "2026-06-13",
+    updatedDate: "2026-06-13",
+    author: "Cuong Nguyen",
+    tags: ["pickleball tournament budget", "pickleball tournament cost", "how much does a pickleball tournament cost", "tournament budget template", "pickleball entry fee", "tournament organizer", "pickleball vietnam"],
+    ctaPath: "/tools",
+    ctaLabel: { en: "Create Free Tournament Brackets with Bracket Lab", vi: "Tạo bracket giải đấu miễn phí với Bracket Lab" },
+    titleEn: "Pickleball Tournament Budget: Full Cost Breakdown, Templates & Free Calculator (2026)",
+    titleVi: "Tổ Chức Giải Pickleball Tốn Bao Nhiêu? Dự Toán Chi Tiết + File Mẫu Miễn Phí (2026)",
+    metaTitleEn: "Pickleball Tournament Budget 2026 | Costs + Free Template",
+    metaTitleVi: "Dự Toán Ngân Sách Giải Pickleball 2026 | Chi Phí + File Mẫu",
+    metaDescriptionEn: "How much does it cost to run a pickleball tournament? Full 2026 cost breakdown in USD and VND, 3 ready budget templates, a break-even entry fee formula, and a free spreadsheet.",
+    metaDescriptionVi: "Tổ chức một giải pickleball tốn bao nhiêu tiền? Bảng chi phí 2026 chi tiết bằng VNĐ và USD, 3 mẫu ngân sách giải nhỏ/vừa/lớn, công thức tính lệ phí hòa vốn, kèm file Excel miễn phí.",
+  },
+  {
     slug: "ppa-tour-asia-2026-recap",
     publishedDate: "2026-06-11",
     updatedDate: "2026-06-11",
