@@ -309,7 +309,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // ─── 2. Static asset bypass (before bot detection) ───
   const pathname = url.pathname;
   const STATIC_PREFIXES = ["/og-images/", "/assets/", "/images/", "/fonts/", "/icons/", "/static/"];
-  const STATIC_EXT_RE = /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|json|pdf|mp4|webm|mp3|wav|zip|map)$/i;
+  const STATIC_EXT_RE = /\.(jpg|jpeg|png|webp|gif|svg|ico|avif|css|js|mjs|woff2?|ttf|otf|eot|xml|txt|json|pdf|xlsx|xls|csv|docx|doc|pptx|ppt|mp4|webm|mp3|wav|zip|map)$/i;
   const STATIC_EXACT = new Set(["/favicon.ico", "/robots.txt", "/manifest.json", "/_worker.js", "/_redirects", "/_headers"]);
   if (
     STATIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
