@@ -6988,6 +6988,7 @@ export type Database = {
         Returns: number
       }
       confirm_club_match: { Args: { p_match_id: string }; Returns: string }
+      get_match_invite: { Args: { p_code: string }; Returns: Json }
       count_manual_registrations_recent: {
         Args: { p_hours?: number; p_organizer_profile_id: string }
         Returns: number

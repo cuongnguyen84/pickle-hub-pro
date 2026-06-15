@@ -109,6 +109,18 @@ async function handleCreate(
   const teamB = (body.team_b_player_ids as string[]) ?? [];
   const scoresA = (body.team_a_scores as number[]) ?? [];
   const scoresB = (body.team_b_scores as number[]) ?? [];
+
+  // Phase A — invite-to-confirm: opponents who are NOT on ThePickleHub yet,
+  // supplied by display name. Each becomes a ghost placeholder slot + a
+  // shareable invite token the creator sends so they can sign up + confirm.
+  const cleanInvites = (raw: unknown): string[] =>
+    (Array.isArray(raw) ? raw : [])
+      .map((x) => (typeof x === "string" ? x : (x as { name?: unknown })?.name))
+      .map((n) => String(n ?? "").trim().slice(0, 80))
+      .filter((n) => n.length > 0);
+  const invitesA = cleanInvites(body.team_a_invites);
+  const invitesB = cleanInvites(body.team_b_invites);
+
   // club_id is optional — null/0 means matchSource=PARTNER (DUPR FAQ:
   // valid match sources are CLUB and PARTNER; clubId omitted for PARTNER).
   const clubIdRaw = body.club_id;
@@ -119,26 +131,76 @@ async function handleCreate(
   const matchDate = String(body.match_date ?? "");
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(matchDate)) return err("bad_match_date", 400, "bad_match_date");
-  if (format === "SINGLES" && (teamA.length !== 1 || teamB.length !== 1)) {
-    return err("singles_needs_one_player_per_side", 400, "bad_teams");
+
+  // Each side must total exactly `required` slots, counting real players +
+  // invited (ghost) opponents together.
+  const required = format === "DOUBLES" ? 2 : 1;
+  if (teamA.length + invitesA.length !== required) {
+    return err("bad_teams", 400, "bad_teams", { side: "A", required });
   }
-  if (format === "DOUBLES" && (teamA.length !== 2 || teamB.length !== 2)) {
-    return err("doubles_needs_two_players_per_side", 400, "bad_teams");
+  if (teamB.length + invitesB.length !== required) {
+    return err("bad_teams", 400, "bad_teams", { side: "B", required });
   }
   if (scoresA.length === 0 || scoresA.length !== scoresB.length) {
     return err("bad_scores", 400, "bad_scores");
   }
 
-  // Caller must be one of the players.
-  const allPlayers = [...teamA, ...teamB];
-  if (!allPlayers.includes(callerId)) {
+  // Caller must be one of the REAL players (an invite is never the caller).
+  const realPlayers = [...teamA, ...teamB];
+  if (!realPlayers.includes(callerId)) {
     return err("creator_must_be_a_player", 403, "creator_must_be_a_player");
   }
 
-  // No dupes.
-  if (new Set(allPlayers).size !== allPlayers.length) {
+  // No dupes among real players.
+  if (new Set(realPlayers).size !== realPlayers.length) {
     return err("duplicate_player", 400, "duplicate_player");
   }
+
+  // Create a ghost placeholder profile per invited opponent, tracking the
+  // side + name so we can mint an invitation token after the proposal lands.
+  const ghostSlots: { side: "A" | "B"; ghostId: string; name: string }[] = [];
+  const makeGhosts = async (names: string[], side: "A" | "B"): Promise<string[]> => {
+    const ids: string[] = [];
+    for (const name of names) {
+      // profiles.id + email are NOT NULL with no default; mirror the existing
+      // ghost convention (phone-otp-verify / add-registration-direct): generate
+      // the id and a synthetic unique guest email. profile_slug is filled by a
+      // BEFORE INSERT trigger.
+      const ghostId = crypto.randomUUID();
+      const { data: ghost, error: gErr } = await supabase
+        .from("profiles")
+        .insert({
+          id: ghostId,
+          email: `ghost+${ghostId}@guest.thepicklehub.net`,
+          display_name: name,
+          is_ghost: true,
+          source_provider: "community",
+        })
+        .select("id")
+        .single<{ id: string }>();
+      if (gErr || !ghost) throw new Error(gErr?.message ?? "ghost_create_failed");
+      ids.push(ghost.id);
+      ghostSlots.push({ side, ghostId: ghost.id, name });
+    }
+    return ids;
+  };
+
+  let ghostIdsA: string[] = [];
+  let ghostIdsB: string[] = [];
+  try {
+    ghostIdsA = await makeGhosts(invitesA, "A");
+    ghostIdsB = await makeGhosts(invitesB, "B");
+  } catch (e) {
+    return err(
+      "ghost_create_failed",
+      500,
+      "ghost_create_failed",
+      e instanceof Error ? e.message : undefined,
+    );
+  }
+
+  const finalTeamA = [...teamA, ...ghostIdsA];
+  const finalTeamB = [...teamB, ...ghostIdsB];
 
   const { data: proposal, error: insertError } = await supabase
     .from("match_proposals")
@@ -151,8 +213,8 @@ async function handleCreate(
       location: body.location ?? null,
       event: body.event ?? null,
       bracket: body.bracket ?? null,
-      team_a_player_ids: teamA,
-      team_b_player_ids: teamB,
+      team_a_player_ids: finalTeamA,
+      team_b_player_ids: finalTeamB,
       team_a_scores: scoresA,
       team_b_scores: scoresB,
     })
@@ -161,6 +223,34 @@ async function handleCreate(
 
   if (insertError || !proposal) {
     return err("create_failed", 500, "create_failed", insertError?.message);
+  }
+
+  // Mint a shareable invite token per ghost slot. The creator sends these
+  // (Zalo/Messenger/email) so each unregistered opponent can sign up + confirm.
+  const invites: { code: string; side: "A" | "B"; display_name: string }[] = [];
+  if (ghostSlots.length > 0) {
+    const { data: invRows, error: invErr } = await supabase
+      .from("match_proposal_invitations")
+      .insert(
+        ghostSlots.map((s) => ({
+          proposal_id: proposal.id,
+          ghost_profile_id: s.ghostId,
+          side: s.side,
+          invited_by: callerId,
+        })),
+      )
+      .select("invite_code, side, ghost_profile_id");
+    if (invErr) {
+      return err("invite_create_failed", 500, "invite_create_failed", invErr.message);
+    }
+    for (const r of (invRows ?? []) as {
+      invite_code: string;
+      side: "A" | "B";
+      ghost_profile_id: string;
+    }[]) {
+      const slot = ghostSlots.find((s) => s.ghostId === r.ghost_profile_id);
+      invites.push({ code: r.invite_code, side: r.side, display_name: slot?.name ?? "" });
+    }
   }
 
   // Auto-verify the creator (they entered the score; their confirmation
@@ -197,7 +287,7 @@ async function handleCreate(
     );
   }
 
-  return jsonResponse({ proposal_id: proposal.id, status: proposal.status });
+  return jsonResponse({ proposal_id: proposal.id, status: proposal.status, invites });
 }
 
 async function handleVerifyOrDispute(
