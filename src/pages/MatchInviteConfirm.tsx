@@ -17,12 +17,41 @@ import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import { useToast } from "@/hooks/use-toast";
 import { useNoindex } from "@/hooks/useNoindex";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useInvitePreview, useRedeemInvite, type InvitePlayerLite } from "@/hooks/useMatchInvite";
+import { RatingCard } from "@/components/profile/RatingCard";
 import {
   trackInviteOpened,
   trackMatchConfirmed,
   trackSignupFromInvite,
 } from "@/utils/invite-events";
+
+interface OwnProfileLite {
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  dupr_singles: number | null;
+  dupr_doubles: number | null;
+}
+
+/** The signed-in user's own card data — used to show their rating card post-confirm. */
+function useOwnProfileLite(userId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ["own-profile-lite", userId],
+    enabled: !!userId && enabled,
+    staleTime: 60_000,
+    queryFn: async (): Promise<OwnProfileLite | null> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("username, display_name, avatar_url, dupr_singles, dupr_doubles")
+        .eq("id", userId as string)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as OwnProfileLite) ?? null;
+    },
+  });
+}
 
 const INVITE_RETURN_KEY = "tph.match-invite.from";
 
@@ -43,6 +72,7 @@ export default function MatchInviteConfirm() {
   const { data: preview, isLoading, isError } = useInvitePreview(code);
   const redeem = useRedeemInvite();
   const [done, setDone] = useState<"confirm" | "dispute" | null>(null);
+  const ownProfile = useOwnProfileLite(user?.id, done === "confirm");
 
   // Fire invite_opened once the preview resolves.
   const previewFound = preview?.found === true;
@@ -154,18 +184,31 @@ export default function MatchInviteConfirm() {
           heading={vi ? "Trận đấu đã được xác nhận" : "Match confirmed"}
           body={
             vi
-              ? "Cảm ơn anh! Kết quả đã được ghi nhận. Kết nối DUPR để rating tự cập nhật sau mỗi trận."
-              : "Thanks! The result is recorded. Connect DUPR so your rating updates after each match."
+              ? "Cảm ơn anh! Kết quả đã được ghi nhận. Khoe thẻ rating hoặc kết nối DUPR để rating tự cập nhật."
+              : "Thanks! The result is recorded. Share your rating card or connect DUPR to keep it updated."
           }
         >
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button onClick={() => navigate("/dupr")} variant="default">
-              {vi ? "Kết nối DUPR" : "Connect DUPR"}
-            </Button>
-            <Button onClick={() => navigate("/match?tab=history")} variant="outline">
-              {vi ? "Xem trận đấu" : "View matches"}
-            </Button>
-          </div>
+          {ownProfile.data?.username ? (
+            <div className="mx-auto mt-6 max-w-sm text-left">
+              <RatingCard
+                username={ownProfile.data.username}
+                displayName={ownProfile.data.display_name ?? ownProfile.data.username}
+                avatarUrl={ownProfile.data.avatar_url}
+                duprSingles={ownProfile.data.dupr_singles}
+                duprDoubles={ownProfile.data.dupr_doubles}
+                isOwn
+              />
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <Button onClick={() => navigate("/dupr")} variant="default">
+                {vi ? "Kết nối DUPR" : "Connect DUPR"}
+              </Button>
+              <Button onClick={() => navigate("/match?tab=history")} variant="outline">
+                {vi ? "Xem trận đấu" : "View matches"}
+              </Button>
+            </div>
+          )}
         </InviteMessage>
       </TheLineLayout>
     );

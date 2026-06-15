@@ -1920,7 +1920,9 @@ ${bioLine}
       description,
       url,
       siteUrl,
-      image: p.avatar_url ? absImage(p.avatar_url, siteUrl) : undefined,
+      // Phase B — share the branded DUPR rating card (og-image-player) instead
+      // of the raw avatar, so a shared /nguoi-choi/ link previews as a card.
+      image: `${siteUrl}/og/player/${p.username}.png`,
       type: "profile",
       jsonLd,
       bodyContent,
