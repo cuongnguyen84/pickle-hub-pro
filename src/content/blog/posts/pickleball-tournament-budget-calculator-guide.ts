@@ -8,6 +8,10 @@ const post: BlogPost = {
   tags: ["pickleball tournament budget", "pickleball tournament cost", "how much does a pickleball tournament cost", "tournament budget template", "pickleball entry fee", "tournament organizer", "pickleball vietnam"],
   ctaPath: "/tools",
   ctaLabel: { en: "Create Free Tournament Brackets with Bracket Lab", vi: "Tạo bracket giải đấu miễn phí với Bracket Lab" },
+  heroImage: {
+    src: "/images/blog/pickleball-tournament-budget-calculator-guide-hero.webp",
+    alt: "Flat-lay of a pickleball tournament organizer's desk with a laptop showing a budget spreadsheet, calculator, notebook, paddle and pickleballs.",
+  },
   content: {
     en: {
       title: "Pickleball Tournament Budget: Full Cost Breakdown, Templates & Free Calculator (2026)",

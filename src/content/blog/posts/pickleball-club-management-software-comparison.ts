@@ -20,6 +20,10 @@ const post: BlogPost = {
     en: "Run Your Club's Tournaments Free",
     vi: "Tổ chức giải cho CLB miễn phí",
   },
+  heroImage: {
+    src: "/images/blog/pickleball-club-management-software-comparison-hero.webp",
+    alt: "Laptop and smartphone displaying a pickleball club management dashboard with a member list, court-booking calendar and payment-status badges, beside a paddle and ball on a minimalist desk.",
+  },
   content: {
     en: {
       title: "Best Pickleball Club Management Software in 2026 — Honest Comparison",
