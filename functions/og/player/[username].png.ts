@@ -19,7 +19,9 @@ interface Env {
 }
 
 const URL_SAFE_USERNAME = /^[a-zA-Z0-9_-]{1,64}$/;
-const CACHE_PREFIX = "og:player:v1:";
+// v2 — dark-luxury credential redesign (2026-06-15). Bump invalidates the
+// old flat-green cards cached under v1 without a manual KV purge.
+const CACHE_PREFIX = "og:player:v2:";
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 export const onRequest: PagesFunction<Env> = async (context) => {
