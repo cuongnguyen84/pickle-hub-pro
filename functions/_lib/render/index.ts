@@ -1931,7 +1931,13 @@ ${bioLine}
       siteUrl,
       // Phase B — share the branded DUPR rating card (og-image-player) instead
       // of the raw avatar, so a shared /nguoi-choi/ link previews as a card.
-      image: `${siteUrl}/og/player/${p.username}.png`,
+      // ?v=N is a cache-design version: the card PNG is served with an
+      // immutable 7-day edge cache, so when the card layout changes the
+      // bytes at a given URL can't refresh. Cloudflare keys its cache on the
+      // query string here, so bumping v mints a fresh edge entry (and makes
+      // Facebook/Zalo re-fetch) without needing a zone cache-purge token.
+      // Bump this when og-image-player's design changes. v2 = dark-luxury card.
+      image: `${siteUrl}/og/player/${p.username}.png?v=2`,
       type: "profile",
       jsonLd,
       bodyContent,
