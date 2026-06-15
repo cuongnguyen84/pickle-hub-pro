@@ -335,6 +335,12 @@ verify_jwt = false
 [functions.match-proposal]
 verify_jwt = false
 
+# ─── Match invite redeem (Phase A — invite-to-confirm growth loop) ─────────
+# Opponent (often a brand-new account) redeems a share-link token to confirm
+# a match proposal. JWT verified internally (ES256/HS256 workaround).
+[functions.match-invite-redeem]
+verify_jwt = false
+
 # ─── Social Events MVP — proxy + manual registration ───────────────────────
 # add-registration-direct accepts two flows:
 #   - mode='proxy'   → authorized by proxy_magic_token (already-registered

@@ -40,6 +40,7 @@ const Account = lazy(() => import("./pages/Account"));
 const DuprConnect = lazy(() => import("./pages/DuprConnect"));
 const MatchNewPage = lazy(() => import("./pages/MatchNew"));
 const MatchConfirm = lazy(() => import("./pages/MatchConfirm"));
+const MatchInviteConfirm = lazy(() => import("./pages/MatchInviteConfirm"));
 const AdminDuprDashboard = lazy(() => import("./pages/admin/AdminDuprDashboard"));
 const AdminErrors = lazy(() => import("./pages/admin/AdminErrors"));
 const MatchSubmitPage = lazy(() => import("./pages/Match"));
@@ -506,6 +507,8 @@ const App = () => (
                     <Route path="/match" element={<RequireAuth><MatchSubmitPage /></RequireAuth>} />
                     <Route path="/match/new" element={<RequireAuth><MatchNewPage /></RequireAuth>} />
                     <Route path="/match/confirm" element={<RequireAuth><MatchConfirm /></RequireAuth>} />
+                    {/* Phase A: public invite-to-confirm landing (token = bearer; no auth wrapper) */}
+                    <Route path="/match/confirm/:code" element={<MatchInviteConfirm />} />
                     <Route path="/account/my-tournaments" element={<RequireAuth><MyTournaments /></RequireAuth>} />
                     {/* Bet #1: match check-in (Vietnamese canonical /tran-dau/moi) */}
                     <Route path="/tran-dau/moi" element={<RequireAuth><MatchCheckIn /></RequireAuth>} />

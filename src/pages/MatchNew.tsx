@@ -19,6 +19,8 @@ import { useDuprClubs } from "@/hooks/useDuprClubs";
 import { useRecentOpponents } from "@/hooks/useRecentOpponents";
 import { useDuprUserSearch } from "@/hooks/useDuprUserSearch";
 import { useDuprConnection } from "@/hooks/useDuprConnection";
+import { getSiteUrl } from "@/lib/auth-config";
+import { trackInviteSent } from "@/utils/invite-events";
 
 type Step = 1 | 2 | 3;
 type Slot = "a2" | "b1" | "b2";
@@ -28,6 +30,14 @@ interface PickedPlayer {
   display_name: string | null;
   email: string;
   username: string | null;
+  /** Phase A: set when this slot is an unregistered opponent invited by name. */
+  invite_name?: string;
+}
+
+interface CreatedInvite {
+  code: string;
+  side: "A" | "B";
+  display_name: string;
 }
 
 const LAST_CLUB_KEY = "tph.match-new.last-club-id";
@@ -68,6 +78,9 @@ export default function MatchNew() {
     }
   });
   const [submitting, setSubmitting] = useState(false);
+  // Phase A: after a successful create that minted invite tokens, show the
+  // shareable links instead of bouncing straight to /match.
+  const [createdInvites, setCreatedInvites] = useState<CreatedInvite[] | null>(null);
 
   const isDoubles = !!(teamA2 && teamB2);
 
@@ -112,8 +125,22 @@ export default function MatchNew() {
 
     setSubmitting(true);
     try {
-      const team_a_player_ids = teamA2 ? [user.id, teamA2.player_id] : [user.id];
-      const team_b_player_ids = teamB2 ? [teamB1.player_id, teamB2.player_id] : [teamB1.player_id];
+      // Split each side into real registered players + invited (unregistered)
+      // opponents. Invites become ghost slots + share-link tokens server-side.
+      const teamARealIds: string[] = [user.id];
+      const teamAInvites: { name: string }[] = [];
+      if (teamA2) {
+        if (teamA2.invite_name) teamAInvites.push({ name: teamA2.invite_name });
+        else teamARealIds.push(teamA2.player_id);
+      }
+      const teamBRealIds: string[] = [];
+      const teamBInvites: { name: string }[] = [];
+      for (const p of [teamB1, teamB2]) {
+        if (!p) continue;
+        if (p.invite_name) teamBInvites.push({ name: p.invite_name });
+        else teamBRealIds.push(p.player_id);
+      }
+
       const team_a_scores = [g1a];
       const team_b_scores = [g1b];
       if (show2 && g2a !== "" && g2b !== "") {
@@ -130,8 +157,10 @@ export default function MatchNew() {
           format: isDoubles ? "DOUBLES" : "SINGLES",
           match_date: new Date().toISOString().slice(0, 10),
           club_id: clubId === "" ? null : Number(clubId),
-          team_a_player_ids,
-          team_b_player_ids,
+          team_a_player_ids: teamARealIds,
+          team_b_player_ids: teamBRealIds,
+          team_a_invites: teamAInvites,
+          team_b_invites: teamBInvites,
           team_a_scores,
           team_b_scores,
         },
@@ -150,11 +179,26 @@ export default function MatchNew() {
       if (clubId !== "") {
         try { localStorage.setItem(LAST_CLUB_KEY, String(clubId)); } catch { /* ignore */ }
       }
+      qc.invalidateQueries({ queryKey: ["match-proposals"] });
+
+      const invites = ((data ?? {}) as { invites?: CreatedInvite[] }).invites ?? [];
+      if (invites.length > 0) {
+        // Stay on the page and surface the shareable links so the recorder
+        // can send them via Zalo/Messenger right away (the growth loop).
+        setCreatedInvites(invites);
+        toast({
+          title: vi ? "Đã tạo trận" : "Match created",
+          description: vi
+            ? "Gửi link mời để đối thủ xác nhận."
+            : "Send the invite link so your opponent can confirm.",
+        });
+        return;
+      }
+
       toast({
         title: vi ? "Đã gửi" : "Sent",
         description: vi ? "Đối thủ sẽ nhận thông báo xác nhận." : "Your opponent has been notified.",
       });
-      qc.invalidateQueries({ queryKey: ["match-proposals"] });
       // Clean redirect to /match — the page itself defaults to the
       // "Đợi confirm" tab and has its own "+ Log trận mới" entry point.
       // Skip ?tab= / ?just= so the URL stays readable.
@@ -198,6 +242,18 @@ export default function MatchNew() {
             {vi ? "Mở Cài đặt DUPR →" : "Open DUPR settings →"}
           </button>
         </div>
+      </TheLineLayout>
+    );
+  }
+
+  if (createdInvites && createdInvites.length > 0) {
+    return (
+      <TheLineLayout title={vi ? "Mời xác nhận" : "Invite to confirm"}>
+        <InviteShareScreen
+          vi={vi}
+          invites={createdInvites}
+          onDone={() => navigate("/match")}
+        />
       </TheLineLayout>
     );
   }
@@ -690,6 +746,49 @@ function SlotRow(props: {
           );
         })
       )}
+
+      {q.trim().length >= 2 && (
+        <button
+          type="button"
+          onClick={() => {
+            const name = q.trim();
+            props.onPick({
+              player_id: "",
+              display_name: name,
+              email: "",
+              username: null,
+              invite_name: name,
+            });
+            setOpen(false);
+            setQ("");
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            width: "100%",
+            marginTop: 10,
+            padding: "12px 10px",
+            border: "1px dashed var(--tl-green-dim)",
+            background: "transparent",
+            color: "var(--tl-green)",
+            fontFamily: "'Geist Mono', monospace",
+            fontSize: 10.5,
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+            cursor: "pointer",
+            borderRadius: 2,
+            textAlign: "left",
+          }}
+        >
+          <Plus className="h-4 w-4" />
+          <span>
+            {vi
+              ? `Mời "${q.trim()}" — chưa có tài khoản`
+              : `Invite "${q.trim()}" — not on the app`}
+          </span>
+        </button>
+      )}
     </div>
   );
 }
@@ -938,6 +1037,108 @@ function SummaryRow({ k, v, big }: { k: string; v: string; big?: boolean }) {
     <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--tl-border)", alignItems: "baseline" }}>
       <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--tl-fg-3)" }}>{k}</div>
       <div style={{ fontFamily: big ? "'Instrument Serif', serif" : "'Bricolage Grotesque', system-ui, sans-serif", fontStyle: big ? "italic" : "normal", fontSize: big ? 26 : 14, lineHeight: big ? 1 : 1.5, color: "var(--tl-fg)" }}>{v}</div>
+    </div>
+  );
+}
+
+// ─── Invite share screen (Phase A growth loop) ─────────────────────────────
+// After logging a match against unregistered opponents, surface one shareable
+// confirm link per invite so the recorder can fire it off via Zalo/Messenger.
+function InviteShareScreen(props: {
+  vi: boolean;
+  invites: CreatedInvite[];
+  onDone: () => void;
+}) {
+  const { vi, invites } = props;
+  const { toast } = useToast();
+  const base = getSiteUrl();
+
+  const linkFor = (code: string) => `${base}/match/confirm/${code}`;
+
+  const onCopy = async (inv: CreatedInvite) => {
+    const url = linkFor(inv.code);
+    try {
+      await navigator.clipboard.writeText(url);
+      trackInviteSent({ proposalId: inv.code, channel: "copy", count: invites.length });
+      toast({ title: vi ? "Đã copy link" : "Link copied" });
+    } catch {
+      toast({ variant: "destructive", title: vi ? "Không copy được" : "Copy failed" });
+    }
+  };
+
+  const onShare = async (inv: CreatedInvite) => {
+    const url = linkFor(inv.code);
+    const text = vi
+      ? `Xác nhận tỉ số trận đấu của chúng ta trên ThePickleHub: ${url}`
+      : `Confirm our match score on ThePickleHub: ${url}`;
+    // Web Share API covers Zalo/Messenger natively on mobile (VN-first).
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "ThePickleHub", text, url });
+        trackInviteSent({ proposalId: inv.code, channel: "webshare", count: invites.length });
+      } catch {
+        /* user dismissed the share sheet — non-fatal */
+      }
+      return;
+    }
+    // Desktop fallback → copy.
+    await onCopy(inv);
+  };
+
+  const onFacebook = (inv: CreatedInvite) => {
+    const url = linkFor(inv.code);
+    trackInviteSent({ proposalId: inv.code, channel: "facebook", count: invites.length });
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 20px 80px" }}>
+      <h1 style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 34, lineHeight: 1.05, letterSpacing: "-0.02em", margin: "0 0 8px" }}>
+        {vi ? <>Trận đã được<br /><i>ghi lại.</i></> : <>Match<br /><i>logged.</i></>}
+      </h1>
+      <p style={{ color: "var(--tl-fg-2)", margin: "0 0 28px", lineHeight: 1.55 }}>
+        {vi
+          ? "Gửi link để đối thủ xác nhận tỉ số. Họ chưa cần tài khoản — đăng ký ngay khi mở link."
+          : "Send the link so your opponent can confirm. No account needed — they sign up when they open it."}
+      </p>
+
+      {invites.map((inv) => (
+        <div
+          key={inv.code}
+          style={{
+            border: "1px solid var(--tl-border)",
+            borderRadius: 4,
+            padding: 16,
+            marginBottom: 14,
+          }}
+        >
+          <div style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", fontSize: 20, color: "var(--tl-fg)", marginBottom: 4 }}>
+            {inv.display_name || (vi ? "Đối thủ" : "Opponent")}
+          </div>
+          <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: "var(--tl-fg-3)", wordBreak: "break-all", marginBottom: 14 }}>
+            {linkFor(inv.code)}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <button type="button" className="tl-btn primary" style={{ flex: "1 1 auto", padding: 12, fontSize: 11 }} onClick={() => onShare(inv)}>
+              {vi ? "Chia sẻ (Zalo/Messenger)" : "Share (Zalo/Messenger)"}
+            </button>
+            <button type="button" className="tl-btn" style={{ padding: 12, fontSize: 11 }} onClick={() => onCopy(inv)}>
+              {vi ? "Copy link" : "Copy link"}
+            </button>
+            <button type="button" className="tl-btn" style={{ padding: 12, fontSize: 11 }} onClick={() => onFacebook(inv)}>
+              Facebook
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <button type="button" className="tl-btn" style={{ width: "100%", padding: 16, fontSize: 11, marginTop: 12 }} onClick={props.onDone}>
+        {vi ? "Xong — về trang trận đấu" : "Done — go to matches"}
+      </button>
     </div>
   );
 }
