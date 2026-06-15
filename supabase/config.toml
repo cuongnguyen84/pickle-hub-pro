@@ -124,6 +124,10 @@ verify_jwt = false
 
 [functions.og-image-match]
 verify_jwt = false
+
+# Phase B — shareable player rating card OG image (public, no auth)
+[functions.og-image-player]
+verify_jwt = false
 # Public endpoint — Facebook/Twitter/LinkedIn/Slack scrapers must fetch the
 # 1200×630 PNG when a /tran-dau/{slug} URL is shared. CF Pages /og/match/*
 # proxies + caches in KV (7d TTL) — see functions/og/match/[slug].png.ts.

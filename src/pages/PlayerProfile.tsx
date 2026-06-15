@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TheLineLayout } from "@/components/layout/TheLineLayout";
 import { useI18n } from "@/i18n";
+import { useAuth } from "@/hooks/useAuth";
+import { RatingCard } from "@/components/profile/RatingCard";
 import { usePlayerProfile } from "@/hooks/social/usePlayerProfile";
 import { usePlayerStats } from "@/hooks/social/usePlayerStats";
 import { usePlayerMatchHistory } from "@/hooks/social/usePlayerMatchHistory";
@@ -18,6 +20,7 @@ const JSONLD_ID = "player-profile-jsonld";
 
 const PlayerProfile = () => {
   const { language } = useI18n();
+  const { user } = useAuth();
   const { username: slugFromUrl } = useParams<{ username: string }>();
   // PR79 Phase 2F follow-up — the URL param is a SLUG that can be
   // either the human-readable username OR the 8-/12-char hex
@@ -145,6 +148,17 @@ const PlayerProfile = () => {
           <span className="current">@{profile.username}</span>
         </nav>
         <PlayerHeroCard player={profile} stats={statsQuery.data} />
+        <div style={{ marginTop: 16 }}>
+          <RatingCard
+            username={profile.username}
+            displayName={profile.display_name ?? profile.username}
+            avatarUrl={profile.avatar_url}
+            duprSingles={profile.dupr_singles}
+            duprDoubles={profile.dupr_doubles}
+            history={historyQuery.data}
+            isOwn={user?.id === profile.id}
+          />
+        </div>
         <PlayerStats stats={statsQuery.data} loading={statsQuery.isLoading} />
         <DuprRatingChart
           history={historyQuery.data ?? []}
