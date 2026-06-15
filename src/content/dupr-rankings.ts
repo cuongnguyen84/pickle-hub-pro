@@ -1,5 +1,5 @@
 /**
- * DUPR rankings snapshot — parsed from www.dupr.com on 2026-06-08.
+ * DUPR rankings snapshot — parsed from www.dupr.com on 2026-06-15.
  *
  * Source pages:
  *   - https://www.dupr.com/rankings (Open + Junior)
@@ -44,9 +44,7 @@ export interface DuprPlayer {
   rating: number | null;
 }
 
-// Partial: non-vietnam scopes only carry the 4 gendered formats; the vietnam
-// scope adds aggregated singles/doubles. getAvailableFormats() gates per scope.
-export const DUPR_RANKINGS: Partial<Record<DuprScope, Partial<Record<DuprFormat, DuprPlayer[]>>>> = {
+export const DUPR_RANKINGS: Record<DuprScope, Record<DuprFormat, DuprPlayer[]>> = {
   "open": {
     "mens-doubles": [
       {
@@ -4278,4 +4276,4 @@ export function defaultFormatForScope(scope: DuprScope): DuprFormat {
   return scope === "vietnam" ? "doubles" : "mens-doubles";
 }
 
-export const DUPR_LAST_UPDATED = "2026-06-08";
+export const DUPR_LAST_UPDATED = "2026-06-15";
