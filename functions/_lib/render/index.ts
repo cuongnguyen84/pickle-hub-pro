@@ -1864,7 +1864,16 @@ export async function renderProfile(
   // Console flags as "alternate page with proper canonical tag"). Same
   // policy as renderMatch (Codex P1 on PR #40). Re-add when the SPA
   // actually ships split-canonical bilingual URLs.
-  const extraMeta = "";
+  //
+  // og:image:width/height/type — the player card (og-image-player) is
+  // generated on-demand by Satori (~1-2s on a cold KV cache), longer than
+  // Facebook's synchronous scrape window. Without explicit dimensions FB
+  // drops the image on first scrape ("og:image isn't available yet, it's
+  // processed asynchronously"). Declaring the fixed 1200×630 size lets FB
+  // render the card frame immediately and fetch the PNG async.
+  const extraMeta = `<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:type" content="image/png"/>`;
 
   // JSON-LD Person — server-side variant of the schema PlayerProfile.tsx
   // injects client-side. Fields aligned with usePlayerProfile() shape so
