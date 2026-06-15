@@ -162,9 +162,20 @@ async function handleCreate(
   const makeGhosts = async (names: string[], side: "A" | "B"): Promise<string[]> => {
     const ids: string[] = [];
     for (const name of names) {
+      // profiles.id + email are NOT NULL with no default; mirror the existing
+      // ghost convention (phone-otp-verify / add-registration-direct): generate
+      // the id and a synthetic unique guest email. profile_slug is filled by a
+      // BEFORE INSERT trigger.
+      const ghostId = crypto.randomUUID();
       const { data: ghost, error: gErr } = await supabase
         .from("profiles")
-        .insert({ display_name: name, is_ghost: true, source_provider: "community" })
+        .insert({
+          id: ghostId,
+          email: `ghost+${ghostId}@guest.thepicklehub.net`,
+          display_name: name,
+          is_ghost: true,
+          source_provider: "community",
+        })
         .select("id")
         .single<{ id: string }>();
       if (gErr || !ghost) throw new Error(gErr?.message ?? "ghost_create_failed");
