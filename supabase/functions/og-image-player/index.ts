@@ -38,7 +38,6 @@ const C = {
   faint: "rgba(244,247,245,0.10)",
   green: "#15E08A", // bright accent for dark bg
   greenDeep: "#00B86B",
-  down: "#FF6B6B",
 };
 
 const FONTS: Record<string, string> = {
