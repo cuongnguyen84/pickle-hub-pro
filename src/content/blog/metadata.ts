@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "pickleball-club-management-software-comparison",
+    publishedDate: "2026-06-15",
+    updatedDate: "2026-06-15",
+    author: "Cuong Nguyen",
+    tags: ["pickleball club management software", "best pickleball club app", "pickleball court booking software", "pickleball league management", "courtreserve", "playtomic", "pickleball club software", "pickleball vietnam"],
+    ctaPath: "/tools",
+    ctaLabel: { en: "Run Your Club's Tournaments Free", vi: "Tổ chức giải cho CLB miễn phí" },
+    titleEn: "Best Pickleball Club Management Software in 2026 — Honest Comparison",
+    titleVi: "Phần Mềm Quản Lý CLB Pickleball Tốt Nhất 2026 — So Sánh Thẳng Thắn",
+    metaTitleEn: "Best Pickleball Club Management Software 2026 | Compared",
+    metaTitleVi: "Phần Mềm Quản Lý CLB Pickleball 2026 | So Sánh Chi Tiết",
+    metaDescriptionEn: "Compare the best pickleball club management software in 2026 — CourtReserve, Playtomic, PlayByPoint, ClubSpark, Pickle Planner and more. Features, pricing, and a realistic low-cost stack for Vietnamese clubs.",
+    metaDescriptionVi: "So sánh phần mềm quản lý CLB pickleball tốt nhất 2026 — CourtReserve, Playtomic, PlayByPoint, ClubSpark, Pickle Planner. Tính năng, giá, và bộ công cụ miễn phí thực tế cho CLB Việt Nam.",
+  },
+  {
     slug: "pickleball-tournament-budget-calculator-guide",
     publishedDate: "2026-06-13",
     updatedDate: "2026-06-13",
