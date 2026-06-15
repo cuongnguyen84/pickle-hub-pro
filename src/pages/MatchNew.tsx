@@ -1051,7 +1051,10 @@ function InviteShareScreen(props: {
 }) {
   const { vi, invites } = props;
   const { toast } = useToast();
-  const base = getSiteUrl();
+  // Same-origin as wherever the match was just logged: on production this is
+  // the canonical domain; on a Cloudflare preview it's the preview URL — so the
+  // generated confirm link actually resolves in the environment under test.
+  const base = typeof window !== "undefined" ? window.location.origin : getSiteUrl();
 
   const linkFor = (code: string) => `${base}/match/confirm/${code}`;
 
