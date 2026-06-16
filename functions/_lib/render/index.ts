@@ -1604,12 +1604,21 @@ export async function renderRankings(
     })),
   })}</script>`;
 
+  // Reciprocal hreflang — /rankings (EN) and /vi/rankings (VI) are both real
+  // bilingual routes (src/App.tsx) that render translated copy via `lang`.
+  // renderRankings previously emitted zero hreflang, so Googlebot saw two
+  // language variants with no return-tag pairing (curl Googlebot showed
+  // hreflang en=0 vi=0 x-default=0). Each path stays self-canonical and the
+  // triplet points en→/rankings, vi→/vi/rankings, x-default→/rankings.
+  const rankingsHreflang = `<link rel="alternate" hreflang="en" href="${siteUrl}/rankings"/>\n<link rel="alternate" hreflang="vi" href="${siteUrl}/vi/rankings"/>\n<link rel="alternate" hreflang="x-default" href="${siteUrl}/rankings"/>`;
+
   return htmlResponse(buildHtml({
     title: titleVn,
     description: descriptionVn,
     url: `${siteUrl}${rawPath}`,
     siteUrl,
     lang,
+    extraMeta: rankingsHreflang,
     bodyContent: `
       <header>
         <h1>${escapeHtml(heading)}</h1>
