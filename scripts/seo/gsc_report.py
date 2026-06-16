@@ -42,11 +42,12 @@ except ImportError:
 
 SCOPE = "https://www.googleapis.com/auth/webmasters.readonly"
 SA_JSON = os.environ.get("GOOGLE_SA_JSON", ".claude/secrets.local.gsc-ga4-sa.json")
-# Default to the URL-prefix property. The service account is granted access
-# on the URL-prefix property only; the sc-domain property returns 403
-# ("User does not have sufficient permission"). Override via GSC_SITE once the
-# SA email is added to the Domain property in GSC > Settings > Users.
-SITE = os.environ.get("GSC_SITE", "https://www.thepicklehub.net/")
+# Default to the Domain property (covers www + non-www + all subdomains).
+# The service account (firebase-adminsdk-fbsvc@thepicklehub-dee20.iam
+# .gserviceaccount.com) was granted Full access on 2026-06-16, so sc-domain
+# no longer 403s. Override with GSC_SITE="https://www.thepicklehub.net/" to
+# query the URL-prefix property instead.
+SITE = os.environ.get("GSC_SITE", "sc-domain:thepicklehub.net")
 
 
 def token():
