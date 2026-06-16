@@ -415,7 +415,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // 2026-06-09 — bumped v17->v18 to invalidate cached /san/khu-vuc/* HTML
   // after enriching thin city hubs (intro + other-cities nav + discover
   // links) to clear Google soft-404 on 1-2 venue regions.
-  const cacheKey = `pr:v18:${url.pathname}`;
+  // 2026-06-16 — bumped v18->v19 to invalidate cached /rankings + /vi/rankings
+  // HTML after adding reciprocal hreflang en/vi/x-default (renderRankings
+  // previously emitted zero hreflang on both bilingual routes).
+  const cacheKey = `pr:v19:${url.pathname}`;
   const noCache = url.searchParams.get("nocache") === "1";
 
   if (!noCache && env.PRERENDER_CACHE) {
