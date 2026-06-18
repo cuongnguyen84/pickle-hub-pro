@@ -57,7 +57,8 @@ const post: BlogPost = {
           heading: "Why Da Nang? Why Vietnam?",
           content: "Vietnam's selection as host reflects the sport's extraordinary local trajectory. Pickleball exploded in the country after late 2023; equipment sales reportedly hit roughly US$20 million in the first half of 2025 (a 13× year-over-year jump), and DUPR reported 184% growth in Vietnamese players and competitive activity by year-end 2025. Da Nang's specific pitch rested on three pillars. First, the 2025 PPA Tour Asia – MB Vietnam Cup drew roughly 600 pros including Ben Johns and Tyson McGuffin. Second, a Guinness World Record crowd of 7,906 fans on October 4, 2025 (breaking the previous 5,522 mark) was named 'Game of the Year' at the Vietnam Pickleball Awards. Third, the city has established international-event infrastructure — the Da Nang International Marathon, IRONMAN Vietnam, and top-flight football exhibitions have all run smoothly here. After his March 2026 site inspection, Cabieses publicly remarked he was \"very surprised that Da Nang is such a beautiful place, very suitable for hosting the World Cup pickleball.\"",
           internalLinks: [
-            { text: "Read our complete PPA Tour Asia 2026 guide", path: "/blog/ppa-tour-asia-2026-complete-guide" }
+            { text: "Read our complete PPA Tour Asia 2026 guide", path: "/blog/ppa-tour-asia-2026-complete-guide" },
+            { text: "Pickleball courts in Da Nang — browse the local directory", path: "/san/khu-vuc/da-nang" }
           ]
         },
         {

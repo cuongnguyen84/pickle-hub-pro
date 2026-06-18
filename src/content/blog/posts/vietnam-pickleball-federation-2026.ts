@@ -77,6 +77,10 @@ const post: BlogPost = {
               text: "What DUPR is and why Vietnamese players use it",
               path: "/blog/what-is-dupr-pickleball-rating-system",
             },
+            {
+              text: "Find a pickleball court near you — our Vietnam court directory",
+              path: "/san",
+            },
           ],
         },
         {

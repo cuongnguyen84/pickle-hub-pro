@@ -107,7 +107,8 @@ const post: BlogPost = {
           internalLinks: [
             { text: "Tournament Organizer Hub — once you're ready to run your own event", path: "/blog/tournament-organizer-hub" },
             { text: "PPA Tour Asia 2026 — pro events to watch and learn from", path: "/blog/ppa-tour-asia-2026-complete-guide" },
-            { text: "Pickleball World Cup 2026 in Da Nang, Vietnam", path: "/blog/pickleball-world-cup-2026-da-nang" }
+            { text: "Pickleball World Cup 2026 in Da Nang, Vietnam", path: "/blog/pickleball-world-cup-2026-da-nang" },
+            { text: "Find pickleball courts near you — our Vietnam court directory by city", path: "/san" }
           ]
         }
       ],
