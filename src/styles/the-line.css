@@ -46,6 +46,11 @@
   --live:                4 100% 60%;
   --surface:             220 7% 8%;
   --surface-elevated:    225 8% 11%;
+  /* glass-card parity (index.css defines --glass-* for the default theme; override
+     here so .glass-card sits on The Line surfaces, not the teal originals). */
+  --glass-bg:            hsl(220 10% 3% / 0.55);
+  --glass-border:        hsl(42 23% 95% / 0.08);
+  --glass-hover:         hsl(42 23% 95% / 0.05);
   --foreground-secondary: 42 10% 75%;
   --foreground-muted:    42 5% 51%;
 
@@ -2531,6 +2536,10 @@
   --live:                4 70% 50%;
   --surface:             42 20% 95%;
   --surface-elevated:    42 22% 91%;
+  /* glass-card parity — light */
+  --glass-bg:            hsl(42 30% 99% / 0.6);
+  --glass-border:        hsl(220 10% 3% / 0.08);
+  --glass-hover:         hsl(220 10% 3% / 0.04);
   --foreground-secondary: 42 10% 30%;
   --foreground-muted:    42 6% 50%;
 }
