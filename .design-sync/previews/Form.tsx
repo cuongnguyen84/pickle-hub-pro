@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type ControllerRenderProps } from "react-hook-form";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage, Input, Button } from "vite_react_shadcn_ts";
 export const Registration = () => {
   const form = useForm({ defaultValues: { name: "Cuong Nguyen", dupr: "4.5" } });
@@ -7,7 +7,7 @@ export const Registration = () => {
     <div className="bg-background text-foreground" style={{ padding: 24, borderRadius: 12, maxWidth: 380 }}>
       <Form {...form}>
         <form style={{ display: "grid", gap: 16 }}>
-          <FormField name="name" control={form.control} render={({ field }: any) => (
+          <FormField name="name" control={form.control} render={({ field }: { field: ControllerRenderProps }) => (
             <FormItem>
               <FormLabel>Team name</FormLabel>
               <FormControl><Input {...field} /></FormControl>
@@ -15,7 +15,7 @@ export const Registration = () => {
               <FormMessage />
             </FormItem>
           )} />
-          <FormField name="dupr" control={form.control} render={({ field }: any) => (
+          <FormField name="dupr" control={form.control} render={({ field }: { field: ControllerRenderProps }) => (
             <FormItem>
               <FormLabel>DUPR rating</FormLabel>
               <FormControl><Input {...field} /></FormControl>
