@@ -31,6 +31,11 @@ import { useState, useEffect } from "react";
 import { getLoginUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
+// Load the The Line theme rules on admin pages. Without this import the
+// the-line.css chunk only ships with TheLineLayout, so pinning
+// data-theme="the-line" below would set the attribute with no matching rules
+// and admin would fall back to the default (teal) palette.
+import "@/styles/the-line.css";
 
 interface AdminLayoutProps {
   children: ReactNode;
