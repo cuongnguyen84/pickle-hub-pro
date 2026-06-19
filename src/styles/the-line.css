@@ -8,7 +8,12 @@
 
 /* @import removed — fonts now load from index.html non-blocking link */
 
-[data-theme="the-line"] {
+/* :root prefix raises specificity to (0,2,0) so these token overrides beat
+   index.css's `:root` block (0,1,0), which loads later in the bundle and would
+   otherwise win the tie — leaving shadcn --primary/--background on the default
+   teal palette even with data-theme="the-line" set. The light block below
+   ([data-theme][data-mode=light]) is already (0,2,0) and needs no change. */
+:root[data-theme="the-line"] {
   /* -------------------------------------------------------------------
    * Production token overrides — shadcn components (Button, Card, Badge,
    * Dialog, etc.) use these via `hsl(var(--xxx))`. Overriding them inside

@@ -31,6 +31,11 @@ import { useState, useEffect } from "react";
 import { getLoginUrl } from "@/lib/auth-config";
 import { cn } from "@/lib/utils";
 import { isIOS, isNativeApp, isAndroid } from "@/lib/capacitor-utils";
+// Load the The Line theme rules on admin pages. Without this import the
+// the-line.css chunk only ships with TheLineLayout, so pinning
+// data-theme="the-line" below would set the attribute with no matching rules
+// and admin would fall back to the default (teal) palette.
+import "@/styles/the-line.css";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -85,6 +90,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       navigate(getLoginUrl(location.pathname), { replace: true });
     }
   }, [isLoading, isAuthenticated, navigate, location.pathname]);
+
+  // Single-theme migration (P2): admin runs on The Line. Pinning data-theme on
+  // <html> remaps the shadcn base tokens (--background/--primary/--card/--border…
+  // are redefined under [data-theme="the-line"] in the-line.css), so every page,
+  // shadcn component, and portaled dialog inside AdminLayout recolors to The Line
+  // with no per-class changes. Mirrors TheLineLayout's pin + mode-restore and
+  // reuses the same "tl-theme-mode" preference. See docs/theline-migration-plan.md.
+  useEffect(() => {
+    const root = document.documentElement;
+    const prevTheme = root.getAttribute("data-theme");
+    const prevMode = root.getAttribute("data-mode");
+    root.setAttribute("data-theme", "the-line");
+    const stored = typeof window !== "undefined" ? localStorage.getItem("tl-theme-mode") : null;
+    if (stored === "light") root.setAttribute("data-mode", "light");
+    else root.removeAttribute("data-mode");
+    return () => {
+      if (prevTheme) root.setAttribute("data-theme", prevTheme);
+      else root.removeAttribute("data-theme");
+      if (prevMode) root.setAttribute("data-mode", prevMode);
+      else root.removeAttribute("data-mode");
+    };
+  }, []);
 
   if (isLoading) {
     return (
