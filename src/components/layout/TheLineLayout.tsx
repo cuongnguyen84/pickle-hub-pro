@@ -174,9 +174,14 @@ export const TheLineLayout = ({ title, description, noindex = false, active, chi
   const VI_ENABLED_FIRST_SEGMENTS = new Set<string>([
     "", "blog", "news", "forum", "feed", "clubs", "san",
     "tournaments", "tournament", "videos", "watch",
-    "rankings", "live", "livestream", "social", "su-kien",
+    "rankings", "live", "social", "su-kien",
     "u", "org", "account", "notifications", "thong-bao",
     "dang-ky", "khoi-phuc-dang-ky", "search",
+    // NOTE: "livestream" is intentionally NOT whitelisted. /livestream and
+    // /livestream/:id are legacy 301 redirects to /live and /live/:id (App.tsx)
+    // and have NO /vi/livestream* route. Prepending /vi here sent the toggle to
+    // /vi/livestream/:id → NotFound. Excluding it makes the toggle flip i18n
+    // state only and keep the URL, which then redirects to /live as intended.
     // 2026-05-19 codex P2 follow-up: App.tsx has /vi/tools + every
     // /vi/tools/<subroute> mirror, so the toggle should navigate
     // /tools ↔ /vi/tools instead of flipping i18n state only.
