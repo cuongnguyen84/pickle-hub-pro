@@ -19,7 +19,7 @@ Style with Tailwind classes that reference tokens, NOT raw colors. Stay on this 
 |---|---|
 | Page / surfaces | `bg-background` · `bg-card` · `bg-popover` · `bg-muted` · `bg-secondary` · `bg-accent` |
 | Text | `text-foreground` · `text-muted-foreground` · `text-card-foreground` |
-| Accent (teal) | `bg-primary` `text-primary-foreground` · `text-primary` |
+| Accent (optic-lime) | `bg-primary` `text-primary-foreground` · `text-primary` |
 | Danger / live | `bg-destructive` `text-destructive-foreground` · `text-destructive` |
 | Borders | `border` · `border-input` · `border-border` |
 | Radius | `rounded-md` · `rounded-lg` (from `--radius`) |
