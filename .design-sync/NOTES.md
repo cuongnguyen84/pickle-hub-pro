@@ -2,6 +2,25 @@
 
 This repo is the **app** (`vite_react_shadcn_ts`), not a packaged design-system library. The DS is the shadcn/ui set under `src/components/ui/`. Synced as the **package** shape in **synth-entry** mode (no built component-library `dist/` — the converter synthesizes an entry from `src/components/ui`).
 
+## Re-sync procedure (2026-06: theme is now The Line / optic-lime)
+
+Two gotchas learned re-syncing after the single-theme migration. Both bite silently.
+
+1. **Run from the PRIMARY repo working tree, NEVER a git worktree.** The converter
+   bounds `cssEntry`/`tsconfig` to the git root; from a worktree the git root
+   resolves to the main checkout, so worktree paths are rejected (`! cssEntry … not
+   found — skipped`) and the bundle falls back to an empty CSS-runtime stub → cards
+   render unstyled/default. Do the re-sync in `/Users/cm10/pickle-hub-pro` itself.
+2. **The DS must activate The Line tokens, or cards render the default `:root` palette.**
+   The Line tokens live under `:root[data-theme="the-line"]`, but DS preview cards have
+   no `data-theme` on their `<html>`, so those tokens never apply. Fix: build a custom
+   cssEntry = the compiled app CSS **plus an appended plain `:root { …The Line tokens… }`**
+   block (lime `--primary: 80 76% 62%`, dark `--background: 220 10% 3%`, `--tl-green:#b5e853`,
+   etc.), then point `cfg.cssEntry` at it. The appended `:root` wins (last in file) and the
+   cards render the live lime theme. (`theline-cssentry.css` is generated, not committed —
+   regenerate it from the current `dist/assets/index-*.css` each re-sync.) Verify a card's
+   computed `--primary` is `80 76% 62%` before uploading.
+
 ## Build gotchas (per-clone setup)
 
 - **Self-package symlink (required).** PKG_DIR defaults to `node_modules/<pkg>`, which doesn't exist for a repo syncing itself. Recreate before building: `ln -sfn .. node_modules/vite_react_shadcn_ts`. It's gitignored (under `node_modules`), so re-run on every fresh clone.
