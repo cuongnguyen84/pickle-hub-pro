@@ -7,10 +7,16 @@ const corsHeaders = {
 };
 
 interface PushPayload {
-  user_ids: string[];
+  // When target === "all", user_ids is ignored and the function broadcasts to
+  // every registered device. Computed server-side with the service-role client
+  // so RLS ("Users can view own push tokens") cannot silently truncate the
+  // recipient list (Bug #1: admin broadcast under-delivered to admin's own
+  // devices only). Khi target === "all", gửi cho TẤT CẢ thiết bị đã đăng ký.
+  user_ids?: string[];
   title: string;
   body: string;
   data?: Record<string, string>;
+  target?: "all" | "specific";
 }
 
 // --- FCM V1 Auth: Generate OAuth2 access token from service account ---
@@ -167,20 +173,30 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const payload: PushPayload = await req.json();
-    const { user_ids, title, body, data } = payload;
+    const { user_ids, title, body, data, target } = payload;
 
-    if (!user_ids?.length || !title) {
+    const broadcastAll = target === "all";
+
+    if (!title) {
       return new Response(
-        JSON.stringify({ error: "user_ids and title are required" }),
+        JSON.stringify({ error: "title is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (!broadcastAll && !user_ids?.length) {
+      return new Response(
+        JSON.stringify({ error: "user_ids is required unless target is 'all'" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get push tokens for the target users
-    const { data: tokens, error: tokenError } = await supabase
-      .from("push_tokens")
-      .select("token, platform")
-      .in("user_id", user_ids);
+    // Get push tokens. For target === "all" we read EVERY token via the
+    // service-role client (RLS bypassed); otherwise scope to the given user_ids.
+    let tokensQuery = supabase.from("push_tokens").select("token, platform");
+    if (!broadcastAll) {
+      tokensQuery = tokensQuery.in("user_id", user_ids!);
+    }
+    const { data: tokens, error: tokenError } = await tokensQuery;
 
     if (tokenError) {
       console.error("Error fetching tokens:", tokenError);

@@ -31,23 +31,24 @@ export default function AdminPushNotification() {
 
     setSending(true);
     try {
-      let targetUserIds: string[] = [];
+      // Body sent to the edge function. For "all", we DO NOT query push_tokens
+      // here: RLS ("Users can view own push tokens") would only return the
+      // admin's own token, silently under-delivering the broadcast (Bug #1).
+      // The function resolves the full recipient list server-side with the
+      // service-role client. Với "all", edge function tự lấy toàn bộ token.
+      let invokeBody: {
+        title: string;
+        body: string;
+        target?: "all";
+        user_ids?: string[];
+      };
 
       if (target === "all") {
-        // Get all unique user_ids from push_tokens
-        const { data: tokens, error } = await supabase
-          .from("push_tokens")
-          .select("user_id");
-
-        if (error) throw error;
-
-        targetUserIds = [...new Set(tokens?.map((t) => t.user_id) || [])];
-
-        if (targetUserIds.length === 0) {
-          toast.warning("Không có user nào đã đăng ký push token");
-          setSending(false);
-          return;
-        }
+        invokeBody = {
+          target: "all",
+          title: title.trim(),
+          body: body.trim(),
+        };
       } else {
         const emailList = userIds
           .split(/[,\n]/)
@@ -75,21 +76,23 @@ export default function AdminPushNotification() {
           return;
         }
 
-        targetUserIds = (profiles || []).map((p) => p.id);
+        const targetUserIds = (profiles || []).map((p) => p.id);
 
         if (targetUserIds.length === 0) {
           toast.error("Vui lòng nhập ít nhất 1 email");
           setSending(false);
           return;
         }
-      }
 
-      const { data, error } = await supabase.functions.invoke("send-push-notification", {
-        body: {
+        invokeBody = {
           user_ids: targetUserIds,
           title: title.trim(),
           body: body.trim(),
-        },
+        };
+      }
+
+      const { data, error } = await supabase.functions.invoke("send-push-notification", {
+        body: invokeBody,
       });
 
       if (error) throw error;
