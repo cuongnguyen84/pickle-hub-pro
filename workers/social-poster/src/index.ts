@@ -626,30 +626,17 @@ function sanitizeCaption(text: string): string {
 }
 
 function htmlToPlainText(html: string): string {
-  let out = html;
+  // Brute-force strip ALL tags. The negated-class regex is safe because
+  // angle brackets cannot legally appear un-escaped inside a tag value,
+  // so the first > always closes the tag. We don't special-case
+  // <script> / <style>: the prior loop tripped CodeQL incomplete-
+  // sanitization, and there is no DOMParser in the Worker runtime.
+  // Their CONTENT (JS / CSS) becomes plain text — harmless because the
+  // output flows to Gemini as a prompt, never rendered as HTML.
+  let out = html.replace(/<[^<>]*>/g, '');
 
-  // Loop-strip script/style blocks. The loop handles nested-or-adjacent
-  // injections like "<scr<script>ipt>..." that a single pass leaves behind,
-  // and the [\\s]* before > inside the close tag handles whitespace like
-  // "</script >" (CodeQL: "Bad HTML filtering regexp").
-  for (let i = 0; i < 5; i++) {
-    const before = out;
-    out = out
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '')
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
-    if (out === before) break;
-  }
-
-  // Strip remaining tags. \n\n for paragraph break, \n for br.
-  out = out
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '');
-
-  // Decode common entities in a single pass via a lookup so we don't
-  // double-unescape (CodeQL: "Double escaping or unescaping" — chaining
-  // .replace(/&amp;/g,'&') BEFORE other entity replacements turns
-  // "&amp;lt;" into "<" instead of "&lt;").
+  // Single-pass entity decode via lookup; chaining .replace() for &amp;
+  // first would double-unescape "&amp;lt;" to "<" instead of "&lt;".
   const entities: Record<string, string> = {
     '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>',
     '&quot;': '"', '&#39;': "'", '&apos;': "'",

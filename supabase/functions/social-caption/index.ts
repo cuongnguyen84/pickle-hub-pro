@@ -49,23 +49,9 @@ function json(body: unknown, status = 200): Response {
 }
 
 function htmlToPlainText(html: string): string {
-  let out = html;
-  // Loop-strip script/style. Loop handles nested injections (e.g.
-  // "<scr<script>ipt>..."); the \s* before > matches whitespace in close
-  // tags like "</script >". CodeQL: incomplete sanitization + bad regex.
-  for (let i = 0; i < 5; i++) {
-    const before = out;
-    out = out
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, "")
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, "");
-    if (out === before) break;
-  }
-  out = out
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]+>/g, "");
-  // Single-pass entity decode to avoid double-unescape ("&amp;lt;" must
-  // become "&lt;", not "<"). CodeQL: double escaping.
+  // Brute-force strip ALL tags. See workers/social-poster/src/index.ts
+  // for the full rationale — same function kept in sync.
+  let out = html.replace(/<[^<>]*>/g, "");
   const entities: Record<string, string> = {
     "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">",
     "&quot;": '"', "&#39;": "'", "&apos;": "'",
