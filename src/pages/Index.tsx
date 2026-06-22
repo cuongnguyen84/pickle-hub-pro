@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState, FormEvent, ReactNode } from "react";
+import { useEffect, useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
+import { useLiveStatusRealtime } from "@/hooks/useLiveStatusRealtime";
+import { LiveSection } from "@/components/home/LiveSection";
+import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 import { blogMetadata } from "@/content/blog";
@@ -97,6 +100,11 @@ const Index = () => {
 
   // VI published blog posts (Supabase) — only queried when on VI locale to save a request
   const { data: viBlogPosts = [] } = usePublishedViBlogPosts();
+
+  // Re-order the home feed in realtime when a stream goes live / ends.
+  // Invalidates the ["livestreams"] queries so hasLiveData flips without
+  // a reload, popping the LiveSection in/out of the priority cluster.
+  useLiveStatusRealtime();
 
   const queryClient = useQueryClient();
   const ptrState = usePullToRefresh(async () => {
@@ -618,90 +626,88 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Live courts — primary feature; keep the heading always visible as a
-          site-wide entry point. When no matches, show a single tight line of
-          fallback copy (not a verbose description) per Round 2 Issue 5. */}
-      <section className="tl-section">
-        <div className="tl-shell">
-          <div className="tl-sec-head">
-            <h2>
-              {language === "vi" ? (
-                <>
-                  Sân <em className="tl-serif">trực tiếp.</em>{" "}
-                  <span className="sans">{liveCount} trận</span>
-                </>
-              ) : (
-                <>
-                  Live <em className="tl-serif">courts.</em>{" "}
-                  <span className="sans">{liveCount} match{liveCount === 1 ? "" : "es"}</span>
-                </>
-              )}
-            </h2>
-            {liveStreams.length > 0 && (
-              <p>
-                {language === "vi"
-                  ? "Mọi trận đang sóng. Phóng viên có mặt tại sân. Một cú chạm là vào."
-                  : "Every match on air. Reporters at the court. One tap and you're in."}
-              </p>
-            )}
-          </div>
+      {/* ── Priority feed cluster (R3) — Live → Editorial → News ──
+          The home feed is treated as an ordered array of sections whose
+          order re-prioritises by live state. When any court is live the
+          LiveSection leads the cluster and pushes the editorial feature
+          down; otherwise the editorial feature leads, with the "Tin mới"
+          news feed directly beneath it. useLiveStatusRealtime keeps the
+          live query fresh so the cluster re-orders in realtime without a
+          reload. The old standalone "Live courts" grid + empty state was
+          retired here — the live block now renders only when something is
+          actually on air. */}
+      {(() => {
+        const editorialNode = stories.length > 0 ? (
+          <section className="tl-section">
+            <div className="tl-shell">
+              <div className="tl-sec-head">
+                <h2>
+                  {language === "vi" ? (
+                    <>
+                      Tuần này. <em className="tl-serif">N°{isoWeekNumber()}</em>
+                    </>
+                  ) : (
+                    <>
+                      This week. <em className="tl-serif">N°{isoWeekNumber()}</em>
+                    </>
+                  )}
+                </h2>
+                <p>
+                  {language === "vi"
+                    ? "Phóng sự dài kỳ — phóng viên, HLV, và những người có mặt khi câu chuyện diễn ra."
+                    : "Longform reporting — by reporters, coaches, and people who were there when the story happened."}
+                </p>
+              </div>
 
-          {liveLoading ? (
-            <div className="tl-match-grid">
-              {[0, 1, 2].map((n) => (
-                <div key={n} className="tl-match" style={{ opacity: 0.4 }}>
-                  <div className="tl-match-head">
-                    <span>{language === "vi" ? "Đang tải…" : "Loading…"}</span>
-                  </div>
-                  <div className="tl-match-title">&nbsp;</div>
-                  <div className="tl-match-foot"><span>&nbsp;</span></div>
-                </div>
-              ))}
-            </div>
-          ) : liveStreams.length === 0 ? (
-            <div className="tl-empty-card">
-              <div className="tl-empty-card-mark" aria-hidden="true">◌</div>
-              <div className="tl-empty-card-label">
-                {language === "vi"
-                  ? "Không có trận nào đang sóng"
-                  : "No match on air right now"}
+              <div className="tl-stories-grid">
+                {stories.map((story) => (
+                  <Link key={story.slug} to={story.href} className="tl-story">
+                    <div className="tl-story-img">
+                      {story.image ? (
+                        <img
+                          src={normalizeImageUrl(story.image)}
+                          alt={story.imageAlt}
+                          loading="lazy"
+                        />
+                      ) : null}
+                      {story.tag && <span className="tl-story-tag">{story.tag}</span>}
+                    </div>
+                    <div className="tl-story-body">
+                      <h3 className="tl-story-title">{story.title}</h3>
+                      {story.summary && <p className="tl-story-summary">{story.summary}</p>}
+                      <div className="tl-story-foot">
+                        <b>{story.author}</b>
+                        {story.date && (
+                          <>
+                            <span>·</span>
+                            <span>{formatDate(story.date).full}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
-              <div className="tl-empty-card-hint">
-                {language === "vi"
-                  ? "Quay lại vào ngày thi đấu — hoặc xem lịch sắp tới."
-                  : "Check back on match days — or browse what's coming up."}
-              </div>
-              <Link to="/live" className="tl-empty-card-cta">
-                {language === "vi" ? "Xem tất cả sân →" : "Browse all courts →"}
-              </Link>
-            </div>
-          ) : (
-            <div className="tl-match-grid">
-              {liveStreams.slice(0, 9).map((stream) => (
-                <Link key={stream.id} to={`/live/${stream.id}`} className="tl-match">
-                  <div className="tl-match-head">
-                    <span className="stat live">{language === "vi" ? "Trực tiếp" : "Live"}</span>
-                    <span className="ctx">
-                      {stream.started_at
-                        ? formatTime(stream.started_at)
-                        : (language === "vi" ? "Đang phát" : "On air")}
-                    </span>
-                  </div>
-                  <h3 className="tl-match-title">
-                    {stream.title ?? (language === "vi" ? "Trận chưa có tên" : "Untitled match")}
-                  </h3>
-                  <div className="tl-match-foot">
-                    <span className="org">
-                      {stream.organization?.name ?? (language === "vi" ? "Phát sóng" : "Broadcast")}
-                    </span>
-                    <span className="v">{language === "vi" ? "Xem →" : "Watch →"}</span>
-                  </div>
+
+              <div style={{ textAlign: "center", marginTop: 32 }}>
+                <Link to={language === "vi" ? "/vi/blog" : "/blog"} className="tl-btn">
+                  {language === "vi" ? "Xem tất cả bài viết →" : "See all stories →"}
                 </Link>
-              ))}
+              </div>
             </div>
-          )}
-        </div>
-      </section>
+          </section>
+        ) : null;
+
+        const cluster: Array<{ key: string; node: ReactNode }> = [
+          hasLiveData
+            ? { key: "live", node: <LiveSection liveStreams={liveStreams} language={language} /> }
+            : null,
+          editorialNode ? { key: "editorial", node: editorialNode } : null,
+          { key: "news", node: <HomeNewsFeed language={language} limit={4} /> },
+        ].filter((s): s is { key: string; node: ReactNode } => Boolean(s));
+
+        return cluster.map((s) => <Fragment key={s.key}>{s.node}</Fragment>);
+      })()}
 
       {/* Manifesto — moved up from end-of-page (Round 2 audit P0-A).
           Brand thesis arrives early, while user is still scrolling.
@@ -964,68 +970,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Stories (blog) — editorial image card grid, language-aware */}
-      {stories.length > 0 && (
-        <section className="tl-section">
-          <div className="tl-shell">
-            <div className="tl-sec-head">
-              <h2>
-                {language === "vi" ? (
-                  <>
-                    Tuần này. <em className="tl-serif">N°{isoWeekNumber()}</em>
-                  </>
-                ) : (
-                  <>
-                    This week. <em className="tl-serif">N°{isoWeekNumber()}</em>
-                  </>
-                )}
-              </h2>
-              <p>
-                {language === "vi"
-                  ? "Phóng sự dài kỳ — phóng viên, HLV, và những người có mặt khi câu chuyện diễn ra."
-                  : "Longform reporting — by reporters, coaches, and people who were there when the story happened."}
-              </p>
-            </div>
-
-            <div className="tl-stories-grid">
-              {stories.map((story) => (
-                <Link key={story.slug} to={story.href} className="tl-story">
-                  <div className="tl-story-img">
-                    {story.image ? (
-                      <img
-                        src={normalizeImageUrl(story.image)}
-                        alt={story.imageAlt}
-                        loading="lazy"
-                      />
-                    ) : null}
-                    {story.tag && <span className="tl-story-tag">{story.tag}</span>}
-                  </div>
-                  <div className="tl-story-body">
-                    <h3 className="tl-story-title">{story.title}</h3>
-                    {story.summary && <p className="tl-story-summary">{story.summary}</p>}
-                    <div className="tl-story-foot">
-                      <b>{story.author}</b>
-                      {story.date && (
-                        <>
-                          <span>·</span>
-                          <span>{formatDate(story.date).full}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div style={{ textAlign: "center", marginTop: 32 }}>
-              <Link to={language === "vi" ? "/vi/blog" : "/blog"} className="tl-btn">
-                {language === "vi" ? "Xem tất cả bài viết →" : "See all stories →"}
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Newsletter — editorial convention ("Daily Brief") */}
       <section className="tl-newsletter">
