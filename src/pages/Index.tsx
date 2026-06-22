@@ -404,24 +404,43 @@ const Index = () => {
                 />
               </picture>
             </Link>
-            {/* Sibling overlay — "Hướng dẫn sử dụng" CTA. Lives in the same
-                relative wrapper as the banner Link so it doesn't nest <a>
-                inside <a> (invalid HTML). Positioned top-right on all
-                viewports so it sits in the certificate's quiet kicker
-                zone without colliding with the wordmark union. */}
-            <Link
-              to="/vi/blog/huong-dan-dung-dupr-tren-thepicklehub"
-              aria-label={language === "vi" ? "Hướng dẫn sử dụng DUPR" : "DUPR user guide"}
-              className="tl-dupr-guide-cta absolute right-3 top-3 md:right-5 md:top-5 inline-flex items-center gap-1.5 rounded-sm border border-[#1a1d22]/30 bg-[#ece7d8] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0e0f12] shadow-sm transition-colors hover:bg-[#0e0f12] hover:text-[#ece7d8] hover:border-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
-              style={{
-                fontFamily:
-                  '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
-                fontWeight: 500,
-              }}
-            >
-              {language === "vi" ? "Hướng dẫn" : "User guide"}
-              <span aria-hidden="true">→</span>
-            </Link>
+            {/* Sibling overlays in the certificate's top-right kicker zone.
+                Two actions sit together so the partnership strip doubles as
+                an always-visible entry point to the DUPR log-match flow:
+                  · primary  → "Log trận" into /match/new
+                  · secondary → the DUPR user guide
+                Both live in the same relative wrapper as the banner Link so
+                they don't nest <a> inside <a> (invalid HTML). Colours are
+                fixed cream/ink hexes — not theme tokens — because the strip
+                art is a fixed-palette certificate regardless of dark theme. */}
+            <div className="absolute right-3 top-3 md:right-5 md:top-5 flex items-center gap-2">
+              <Link
+                to="/match/new"
+                aria-label={language === "vi" ? "Log trận đấu lên DUPR" : "Log a match to DUPR"}
+                className="tl-dupr-log-cta inline-flex items-center gap-1.5 rounded-sm border border-[#0e0f12] bg-[#0e0f12] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#ece7d8] shadow-sm transition-colors hover:bg-[#ece7d8] hover:text-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
+                style={{
+                  fontFamily:
+                    '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                  fontWeight: 600,
+                }}
+              >
+                <span aria-hidden="true">+</span>
+                {language === "vi" ? "Log trận" : "Log match"}
+              </Link>
+              <Link
+                to="/vi/blog/huong-dan-dung-dupr-tren-thepicklehub"
+                aria-label={language === "vi" ? "Hướng dẫn sử dụng DUPR" : "DUPR user guide"}
+                className="tl-dupr-guide-cta inline-flex items-center gap-1.5 rounded-sm border border-[#1a1d22]/30 bg-[#ece7d8] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0e0f12] shadow-sm transition-colors hover:bg-[#0e0f12] hover:text-[#ece7d8] hover:border-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
+                style={{
+                  fontFamily:
+                    '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                  fontWeight: 500,
+                }}
+              >
+                {language === "vi" ? "Hướng dẫn" : "User guide"}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
             </div>
           </div>
         );
