@@ -4,9 +4,11 @@
 // Cloudflare Pages bot-prerender for /san and /san/:slug. Mirrors the
 // renderClubList / renderClub pattern: service-role Supabase read, build
 // ItemList (list) / SportsActivityLocation (detail) JSON-LD, hand off to
-// buildHtml. Single canonical per URL (the SPA toggles UI language), so
-// hreflang is omitted to avoid the "one page for multiple languages" signal
-// Ahrefs flags — same decision as renderClubList / renderClub.
+// buildHtml. Each URL has its own self-referencing canonical (EN -> /san/...,
+// VI -> /vi/san/...) plus reciprocal hreflang en/vi/x-default, matching the
+// pairs emitted by sitemap-venues.xml. This is the site-wide reciprocal-
+// hreflang direction (see /rankings); the en/vi routes are treated as
+// distinct localized canonicals, not one page flagged for multiple languages.
 // ============================================================================
 
 import type { SupabaseClient } from "../supabase";
