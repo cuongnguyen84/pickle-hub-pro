@@ -211,7 +211,7 @@ async function reconcilePlayers(
   let players_matched = 0;
 
   for (const p of players) {
-    let hit = existingByExt.get(p.external_id);
+    const hit = existingByExt.get(p.external_id);
     if (hit) {
       out.set(p.external_id, hit);
       players_matched += 1;
