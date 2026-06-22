@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
+import { useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
@@ -92,7 +92,6 @@ const Index = () => {
   const { language } = useI18n();
   const { data: liveStreams = [] } = useLivestreams("live");
   const { data: scheduledStreams = [] } = useLivestreams("scheduled");
-  const { data: endedStreams = [] } = useLivestreams("ended");
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
@@ -112,29 +111,6 @@ const Index = () => {
     // maintaining a per-page key allowlist.
     await queryClient.invalidateQueries();
   });
-
-  // Pause hero bg drift + ambient glow when the hero scrolls off-screen.
-  // Effects keep ticking otherwise and burn battery on long sessions.
-  // Toggles a data-offscreen attribute on .tl-hero; CSS pauses the
-  // relevant animations when present.
-  useEffect(() => {
-    const el = document.querySelector<HTMLElement>(".tl-hero");
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.removeAttribute("data-offscreen");
-          } else {
-            entry.target.setAttribute("data-offscreen", "true");
-          }
-        }
-      },
-      { rootMargin: "200px 0px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   // Featured stories — 6 most recent, language-aware:
   //   EN: blogMetadata (static content with heroImage)
@@ -190,18 +166,6 @@ const Index = () => {
   // { mode, items } so the JSX below can colour the head label by mode
   // (red for live, gold for matches, muted for blog).
   const ticker = useTickerData(language);
-
-  // Featured cascade: live first, then upcoming, then a recent replay
-  // (≤7 days old) so the homepage stays alive between events instead of
-  // showing the empty-state mark whenever nothing is on right now.
-  const recentReplay = useMemo(() => {
-    return endedStreams.find((s) => {
-      if (!s.ended_at) return false;
-      const age = Date.now() - new Date(s.ended_at).getTime();
-      return age >= 0 && age < 7 * 24 * 60 * 60 * 1000;
-    }) ?? null;
-  }, [endedStreams]);
-  const featured = liveStreams[0] ?? scheduledStreams[0] ?? recentReplay ?? null;
 
   const upcomingTournaments = useMemo(() => {
     const now = Date.now();
@@ -460,108 +424,6 @@ const Index = () => {
             </Link>
             </div>
           </div>
-        );
-      })()}
-
-      {/* Hero */}
-      {(() => {
-        const heroBg =
-          featured?.thumbnail_url
-          ?? (featured?.mux_playback_id
-              ? `https://image.mux.com/${featured.mux_playback_id}/thumbnail.jpg?width=1280&height=720&fit_mode=smartcrop`
-              : null);
-        return (
-      <section
-        className={`tl-hero${heroBg ? " tl-hero--has-bg" : ""}`}
-        style={heroBg ? ({ "--hero-bg-image": `url("${heroBg}")` } as React.CSSProperties) : undefined}
-      >
-        <div className="tl-shell">
-          <div className="tl-hero-grid">
-            <div>
-              {/* Broadcast eyebrow — only when there's something on the
-                  schedule: live now, or upcoming streams. With nothing
-                  scheduled the row was just noise ("0 sắp diễn ra"), so we
-                  drop it entirely rather than show an empty count. */}
-              {(hasLiveData || upcomingCount > 0) && (
-                <div className="tl-eyebrow tl-up tl-d1">
-                  <span className="pip" aria-hidden="true" />
-                  <span>
-                    {language === "vi"
-                      ? (hasLiveData
-                          ? `Trực tiếp · ${liveCount} trận`
-                          : "Phát sóng · 24h tới")
-                      : (hasLiveData
-                          ? `Live · ${liveCount} match${liveCount === 1 ? "" : "es"}`
-                          : "Broadcast · Next 24h")}
-                  </span>
-                  {upcomingCount > 0 && (
-                    <>
-                      <span className="sep">/</span>
-                      <span>
-                        {language === "vi"
-                          ? `${upcomingCount} sắp diễn ra`
-                          : `${upcomingCount} scheduled`}
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
-
-              <h1 className="tl-hero-title tl-up tl-d2">
-                {language === "vi" ? (
-                  hasLiveData ? (
-                    <>
-                      Mọi sân, <br />
-                      <span className="dim">mọi bracket,</span> <br />
-                      một màn hình.
-                    </>
-                  ) : (
-                    <>
-                      Pickleball, <br />
-                      đưa tin <span className="dim">đúng cách</span> <br />
-                      <span className="dim">một môn thể thao xứng đáng.</span>
-                    </>
-                  )
-                ) : (
-                  hasLiveData ? (
-                    <>
-                      Every court, <br />
-                      <span className="dim">every bracket,</span> <br />
-                      one screen.
-                    </>
-                  ) : (
-                    <>
-                      Pickleball, <br />
-                      covered <span className="dim">the way</span> <br />
-                      serious sport <span className="dim">should be.</span>
-                    </>
-                  )
-                )}
-              </h1>
-
-              <p className="tl-hero-lede tl-up tl-d3">
-                {language === "vi"
-                  ? "Phóng viên tại sân. Tỷ số live thời gian thực. Một tài khoản — mọi giải."
-                  : "Reporters at the court. Live scores that tick. One subscription, every tour."}
-              </p>
-
-              <div className="tl-hero-ctas tl-up tl-d4">
-                <Link to="/live" className="tl-btn green">
-                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  {language === "vi"
-                    ? (hasLiveData ? `Xem trực tiếp · ${liveCount} sân` : "Khám phá phát sóng")
-                    : (hasLiveData ? `Watch live · ${liveCount} court${liveCount === 1 ? "" : "s"}` : "Browse broadcasts")}
-                </Link>
-                <Link to="/tournaments" className="tl-btn">
-                  {language === "vi" ? "Xem lịch giải →" : "See schedule →"}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
         );
       })()}
 
