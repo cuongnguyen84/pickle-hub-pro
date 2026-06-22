@@ -49,20 +49,29 @@ function json(body: unknown, status = 200): Response {
 }
 
 function htmlToPlainText(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
+  let out = html;
+  // Loop-strip script/style. Loop handles nested injections (e.g.
+  // "<scr<script>ipt>..."); the \s* before > matches whitespace in close
+  // tags like "</script >". CodeQL: incomplete sanitization + bad regex.
+  for (let i = 0; i < 5; i++) {
+    const before = out;
+    out = out
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, "")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, "");
+    if (out === before) break;
+  }
+  out = out
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+    .replace(/<[^>]+>/g, "");
+  // Single-pass entity decode to avoid double-unescape ("&amp;lt;" must
+  // become "&lt;", not "<"). CodeQL: double escaping.
+  const entities: Record<string, string> = {
+    "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">",
+    "&quot;": '"', "&#39;": "'", "&apos;": "'",
+  };
+  out = out.replace(/&(?:nbsp|amp|lt|gt|quot|apos|#39);/g, (m) => entities[m] ?? m);
+  return out.replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function buildPrompt(item: RequestBody): string {
