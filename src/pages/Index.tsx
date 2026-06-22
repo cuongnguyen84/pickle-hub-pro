@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState, FormEvent, ReactNode } from "react";
+import { useMemo, useState, Fragment, FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import { useLivestreams, useTournaments, useVideos } from "@/hooks/useSupabaseData";
+import { useLiveStatusRealtime } from "@/hooks/useLiveStatusRealtime";
+import { LiveSection } from "@/components/home/LiveSection";
+import { HomeNewsFeed } from "@/components/home/HomeNewsFeed";
 import { useHomepageStats } from "@/hooks/useHomepageStats";
 import { useNewsletterSubscribe } from "@/hooks/useNewsletterSubscribe";
 import { blogMetadata } from "@/content/blog";
@@ -15,7 +18,6 @@ import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
-import { LiveBroadcastHero } from "@/components/home/LiveBroadcastHero";
 import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
 import { useTickerData } from "@/hooks/useTickerData";
 
@@ -88,15 +90,19 @@ const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"
 
 const Index = () => {
   const { language } = useI18n();
-  const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
-  const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
-  const { data: endedStreams = [] } = useLivestreams("ended");
+  const { data: liveStreams = [] } = useLivestreams("live");
+  const { data: scheduledStreams = [] } = useLivestreams("scheduled");
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
   const { data: homeStats } = useHomepageStats();
 
   // VI published blog posts (Supabase) — only queried when on VI locale to save a request
   const { data: viBlogPosts = [] } = usePublishedViBlogPosts();
+
+  // Re-order the home feed in realtime when a stream goes live / ends.
+  // Invalidates the ["livestreams"] queries so hasLiveData flips without
+  // a reload, popping the LiveSection in/out of the priority cluster.
+  useLiveStatusRealtime();
 
   const queryClient = useQueryClient();
   const ptrState = usePullToRefresh(async () => {
@@ -105,29 +111,6 @@ const Index = () => {
     // maintaining a per-page key allowlist.
     await queryClient.invalidateQueries();
   });
-
-  // Pause hero bg drift + ambient glow when the hero scrolls off-screen.
-  // Effects keep ticking otherwise and burn battery on long sessions.
-  // Toggles a data-offscreen attribute on .tl-hero; CSS pauses the
-  // relevant animations when present.
-  useEffect(() => {
-    const el = document.querySelector<HTMLElement>(".tl-hero");
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.removeAttribute("data-offscreen");
-          } else {
-            entry.target.setAttribute("data-offscreen", "true");
-          }
-        }
-      },
-      { rootMargin: "200px 0px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   // Featured stories — 6 most recent, language-aware:
   //   EN: blogMetadata (static content with heroImage)
@@ -183,18 +166,6 @@ const Index = () => {
   // { mode, items } so the JSX below can colour the head label by mode
   // (red for live, gold for matches, muted for blog).
   const ticker = useTickerData(language);
-
-  // Featured cascade: live first, then upcoming, then a recent replay
-  // (≤7 days old) so the homepage stays alive between events instead of
-  // showing the empty-state mark whenever nothing is on right now.
-  const recentReplay = useMemo(() => {
-    return endedStreams.find((s) => {
-      if (!s.ended_at) return false;
-      const age = Date.now() - new Date(s.ended_at).getTime();
-      return age >= 0 && age < 7 * 24 * 60 * 60 * 1000;
-    }) ?? null;
-  }, [endedStreams]);
-  const featured = liveStreams[0] ?? scheduledStreams[0] ?? recentReplay ?? null;
 
   const upcomingTournaments = useMemo(() => {
     const now = Date.now();
@@ -433,133 +404,131 @@ const Index = () => {
                 />
               </picture>
             </Link>
-            {/* Sibling overlay — "Hướng dẫn sử dụng" CTA. Lives in the same
-                relative wrapper as the banner Link so it doesn't nest <a>
-                inside <a> (invalid HTML). Positioned top-right on all
-                viewports so it sits in the certificate's quiet kicker
-                zone without colliding with the wordmark union. */}
-            <Link
-              to="/vi/blog/huong-dan-dung-dupr-tren-thepicklehub"
-              aria-label={language === "vi" ? "Hướng dẫn sử dụng DUPR" : "DUPR user guide"}
-              className="tl-dupr-guide-cta absolute right-3 top-3 md:right-5 md:top-5 inline-flex items-center gap-1.5 rounded-sm border border-[#1a1d22]/30 bg-[#ece7d8] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0e0f12] shadow-sm transition-colors hover:bg-[#0e0f12] hover:text-[#ece7d8] hover:border-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
-              style={{
-                fontFamily:
-                  '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
-                fontWeight: 500,
-              }}
-            >
-              {language === "vi" ? "Hướng dẫn" : "User guide"}
-              <span aria-hidden="true">→</span>
-            </Link>
+            {/* Sibling overlays in the certificate's top-right kicker zone.
+                Two actions sit together so the partnership strip doubles as
+                an always-visible entry point to the DUPR log-match flow:
+                  · primary  → "Log trận" into /match/new
+                  · secondary → the DUPR user guide
+                Both live in the same relative wrapper as the banner Link so
+                they don't nest <a> inside <a> (invalid HTML). Colours are
+                fixed cream/ink hexes — not theme tokens — because the strip
+                art is a fixed-palette certificate regardless of dark theme. */}
+            <div className="absolute right-3 top-3 md:right-5 md:top-5 flex items-center gap-2">
+              <Link
+                to="/match/new"
+                aria-label={language === "vi" ? "Log trận đấu lên DUPR" : "Log a match to DUPR"}
+                className="tl-dupr-log-cta inline-flex items-center gap-1.5 rounded-sm border border-[#0e0f12] bg-[#0e0f12] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#ece7d8] shadow-sm transition-colors hover:bg-[#ece7d8] hover:text-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
+                style={{
+                  fontFamily:
+                    '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                  fontWeight: 600,
+                }}
+              >
+                <span aria-hidden="true">+</span>
+                {language === "vi" ? "Log trận" : "Log match"}
+              </Link>
+              <Link
+                to="/vi/blog/huong-dan-dung-dupr-tren-thepicklehub"
+                aria-label={language === "vi" ? "Hướng dẫn sử dụng DUPR" : "DUPR user guide"}
+                className="tl-dupr-guide-cta inline-flex items-center gap-1.5 rounded-sm border border-[#1a1d22]/30 bg-[#ece7d8] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-[#0e0f12] shadow-sm transition-colors hover:bg-[#0e0f12] hover:text-[#ece7d8] hover:border-[#0e0f12] md:px-3.5 md:py-1.5 md:text-xs"
+                style={{
+                  fontFamily:
+                    '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+                  fontWeight: 500,
+                }}
+              >
+                {language === "vi" ? "Hướng dẫn" : "User guide"}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
             </div>
           </div>
         );
       })()}
 
-      {/* Hero */}
+      {/* ── Priority feed cluster (R3) — Live → Editorial → News ──
+          The home feed is treated as an ordered array of sections whose
+          order re-prioritises by live state. When any court is live the
+          LiveSection leads the cluster and pushes the editorial feature
+          down; otherwise the editorial feature leads, with the "Tin mới"
+          news feed directly beneath it. useLiveStatusRealtime keeps the
+          live query fresh so the cluster re-orders in realtime without a
+          reload. The old standalone "Live courts" grid + empty state was
+          retired here — the live block now renders only when something is
+          actually on air. */}
       {(() => {
-        const heroBg =
-          featured?.thumbnail_url
-          ?? (featured?.mux_playback_id
-              ? `https://image.mux.com/${featured.mux_playback_id}/thumbnail.jpg?width=1280&height=720&fit_mode=smartcrop`
-              : null);
-        return (
-      <section
-        className={`tl-hero${heroBg ? " tl-hero--has-bg" : ""}`}
-        style={heroBg ? ({ "--hero-bg-image": `url("${heroBg}")` } as React.CSSProperties) : undefined}
-      >
-        <div className="tl-shell">
-          <div className={`tl-hero-grid${featured ? " tl-hero-grid--featured" : ""}`}>
-            <div>
-              <div className="tl-eyebrow tl-up tl-d1">
-                <span className="pip" aria-hidden="true" />
-                <span>
-                  {language === "vi"
-                    ? (hasLiveData
-                        ? `Trực tiếp · ${liveCount} trận`
-                        : "Phát sóng · 24h tới")
-                    : (hasLiveData
-                        ? `Live · ${liveCount} match${liveCount === 1 ? "" : "es"}`
-                        : "Broadcast · Next 24h")}
-                </span>
-                <span className="sep">/</span>
-                <span>
-                  {language === "vi"
-                    ? `${upcomingCount} sắp diễn ra`
-                    : `${upcomingCount} scheduled`}
-                </span>
-              </div>
-
-              <h1 className="tl-hero-title tl-up tl-d2">
-                {language === "vi" ? (
-                  hasLiveData ? (
+        const editorialNode = stories.length > 0 ? (
+          <section className="tl-section">
+            <div className="tl-shell">
+              <div className="tl-sec-head">
+                <h2>
+                  {language === "vi" ? (
                     <>
-                      Mọi sân, <br />
-                      <span className="dim">mọi bracket,</span> <br />
-                      một màn hình.
+                      Tuần này. <em className="tl-serif">N°{isoWeekNumber()}</em>
                     </>
                   ) : (
                     <>
-                      Pickleball, <br />
-                      đưa tin <span className="dim">đúng cách</span> <br />
-                      <span className="dim">một môn thể thao xứng đáng.</span>
+                      This week. <em className="tl-serif">N°{isoWeekNumber()}</em>
                     </>
-                  )
-                ) : (
-                  hasLiveData ? (
-                    <>
-                      Every court, <br />
-                      <span className="dim">every bracket,</span> <br />
-                      one screen.
-                    </>
-                  ) : (
-                    <>
-                      Pickleball, <br />
-                      covered <span className="dim">the way</span> <br />
-                      serious sport <span className="dim">should be.</span>
-                    </>
-                  )
-                )}
-              </h1>
-
-              <p className="tl-hero-lede tl-up tl-d3">
-                {language === "vi"
-                  ? "Phóng viên tại sân. Tỷ số live thời gian thực. Một tài khoản — mọi giải."
-                  : "Reporters at the court. Live scores that tick. One subscription, every tour."}
-              </p>
-
-              <div className="tl-hero-ctas tl-up tl-d4">
-                <Link to="/live" className="tl-btn green">
-                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
+                  )}
+                </h2>
+                <p>
                   {language === "vi"
-                    ? (hasLiveData ? `Xem trực tiếp · ${liveCount} sân` : "Khám phá phát sóng")
-                    : (hasLiveData ? `Watch live · ${liveCount} court${liveCount === 1 ? "" : "s"}` : "Browse broadcasts")}
-                </Link>
-                <Link to="/tournaments" className="tl-btn">
-                  {language === "vi" ? "Xem lịch giải →" : "See schedule →"}
+                    ? "Phóng sự dài kỳ — phóng viên, HLV, và những người có mặt khi câu chuyện diễn ra."
+                    : "Longform reporting — by reporters, coaches, and people who were there when the story happened."}
+                </p>
+              </div>
+
+              {/* Only the 2 most recent on the home feed — the rest live
+                  behind the "see all stories" button below. */}
+              <div className="tl-stories-grid">
+                {stories.slice(0, 2).map((story) => (
+                  <Link key={story.slug} to={story.href} className="tl-story">
+                    <div className="tl-story-img">
+                      {story.image ? (
+                        <img
+                          src={normalizeImageUrl(story.image)}
+                          alt={story.imageAlt}
+                          loading="lazy"
+                        />
+                      ) : null}
+                      {story.tag && <span className="tl-story-tag">{story.tag}</span>}
+                    </div>
+                    <div className="tl-story-body">
+                      <h3 className="tl-story-title">{story.title}</h3>
+                      {story.summary && <p className="tl-story-summary">{story.summary}</p>}
+                      <div className="tl-story-foot">
+                        <b>{story.author}</b>
+                        {story.date && (
+                          <>
+                            <span>·</span>
+                            <span>{formatDate(story.date).full}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              <div style={{ textAlign: "center", marginTop: 32 }}>
+                <Link to={language === "vi" ? "/vi/blog" : "/blog"} className="tl-btn">
+                  {language === "vi" ? "Xem tất cả bài viết →" : "See all stories →"}
                 </Link>
               </div>
             </div>
+          </section>
+        ) : null;
 
-            {/* Featured live broadcast — bold dark inverted card */}
-            <div className="tl-up tl-d3">
-              <LiveBroadcastHero
-                featured={featured}
-                language={language}
-                tournamentName={
-                  featured?.tournament_id
-                    ? allTournaments.find((tn) => tn.id === featured.tournament_id)?.name ?? null
-                    : null
-                }
-                isLoading={liveLoading || scheduledLoading}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-        );
+        const cluster: Array<{ key: string; node: ReactNode }> = [
+          hasLiveData
+            ? { key: "live", node: <LiveSection liveStreams={liveStreams} language={language} /> }
+            : null,
+          editorialNode ? { key: "editorial", node: editorialNode } : null,
+          { key: "news", node: <HomeNewsFeed language={language} limit={4} /> },
+        ].filter((s): s is { key: string; node: ReactNode } => Boolean(s));
+
+        return cluster.map((s) => <Fragment key={s.key}>{s.node}</Fragment>);
       })()}
 
       {/* Log Match call-to-action — primary action for authed users.
@@ -615,91 +584,6 @@ const Index = () => {
             <span className="tl-pulse-value">{PPA_ASIA_STOPS}</span>
             <span className="tl-pulse-label">PPA ASIA · 2026</span>
           </div>
-        </div>
-      </section>
-
-      {/* Live courts — primary feature; keep the heading always visible as a
-          site-wide entry point. When no matches, show a single tight line of
-          fallback copy (not a verbose description) per Round 2 Issue 5. */}
-      <section className="tl-section">
-        <div className="tl-shell">
-          <div className="tl-sec-head">
-            <h2>
-              {language === "vi" ? (
-                <>
-                  Sân <em className="tl-serif">trực tiếp.</em>{" "}
-                  <span className="sans">{liveCount} trận</span>
-                </>
-              ) : (
-                <>
-                  Live <em className="tl-serif">courts.</em>{" "}
-                  <span className="sans">{liveCount} match{liveCount === 1 ? "" : "es"}</span>
-                </>
-              )}
-            </h2>
-            {liveStreams.length > 0 && (
-              <p>
-                {language === "vi"
-                  ? "Mọi trận đang sóng. Phóng viên có mặt tại sân. Một cú chạm là vào."
-                  : "Every match on air. Reporters at the court. One tap and you're in."}
-              </p>
-            )}
-          </div>
-
-          {liveLoading ? (
-            <div className="tl-match-grid">
-              {[0, 1, 2].map((n) => (
-                <div key={n} className="tl-match" style={{ opacity: 0.4 }}>
-                  <div className="tl-match-head">
-                    <span>{language === "vi" ? "Đang tải…" : "Loading…"}</span>
-                  </div>
-                  <div className="tl-match-title">&nbsp;</div>
-                  <div className="tl-match-foot"><span>&nbsp;</span></div>
-                </div>
-              ))}
-            </div>
-          ) : liveStreams.length === 0 ? (
-            <div className="tl-empty-card">
-              <div className="tl-empty-card-mark" aria-hidden="true">◌</div>
-              <div className="tl-empty-card-label">
-                {language === "vi"
-                  ? "Không có trận nào đang sóng"
-                  : "No match on air right now"}
-              </div>
-              <div className="tl-empty-card-hint">
-                {language === "vi"
-                  ? "Quay lại vào ngày thi đấu — hoặc xem lịch sắp tới."
-                  : "Check back on match days — or browse what's coming up."}
-              </div>
-              <Link to="/live" className="tl-empty-card-cta">
-                {language === "vi" ? "Xem tất cả sân →" : "Browse all courts →"}
-              </Link>
-            </div>
-          ) : (
-            <div className="tl-match-grid">
-              {liveStreams.slice(0, 9).map((stream) => (
-                <Link key={stream.id} to={`/live/${stream.id}`} className="tl-match">
-                  <div className="tl-match-head">
-                    <span className="stat live">{language === "vi" ? "Trực tiếp" : "Live"}</span>
-                    <span className="ctx">
-                      {stream.started_at
-                        ? formatTime(stream.started_at)
-                        : (language === "vi" ? "Đang phát" : "On air")}
-                    </span>
-                  </div>
-                  <h3 className="tl-match-title">
-                    {stream.title ?? (language === "vi" ? "Trận chưa có tên" : "Untitled match")}
-                  </h3>
-                  <div className="tl-match-foot">
-                    <span className="org">
-                      {stream.organization?.name ?? (language === "vi" ? "Phát sóng" : "Broadcast")}
-                    </span>
-                    <span className="v">{language === "vi" ? "Xem →" : "Watch →"}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
@@ -964,68 +848,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Stories (blog) — editorial image card grid, language-aware */}
-      {stories.length > 0 && (
-        <section className="tl-section">
-          <div className="tl-shell">
-            <div className="tl-sec-head">
-              <h2>
-                {language === "vi" ? (
-                  <>
-                    Tuần này. <em className="tl-serif">N°{isoWeekNumber()}</em>
-                  </>
-                ) : (
-                  <>
-                    This week. <em className="tl-serif">N°{isoWeekNumber()}</em>
-                  </>
-                )}
-              </h2>
-              <p>
-                {language === "vi"
-                  ? "Phóng sự dài kỳ — phóng viên, HLV, và những người có mặt khi câu chuyện diễn ra."
-                  : "Longform reporting — by reporters, coaches, and people who were there when the story happened."}
-              </p>
-            </div>
-
-            <div className="tl-stories-grid">
-              {stories.map((story) => (
-                <Link key={story.slug} to={story.href} className="tl-story">
-                  <div className="tl-story-img">
-                    {story.image ? (
-                      <img
-                        src={normalizeImageUrl(story.image)}
-                        alt={story.imageAlt}
-                        loading="lazy"
-                      />
-                    ) : null}
-                    {story.tag && <span className="tl-story-tag">{story.tag}</span>}
-                  </div>
-                  <div className="tl-story-body">
-                    <h3 className="tl-story-title">{story.title}</h3>
-                    {story.summary && <p className="tl-story-summary">{story.summary}</p>}
-                    <div className="tl-story-foot">
-                      <b>{story.author}</b>
-                      {story.date && (
-                        <>
-                          <span>·</span>
-                          <span>{formatDate(story.date).full}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div style={{ textAlign: "center", marginTop: 32 }}>
-              <Link to={language === "vi" ? "/vi/blog" : "/blog"} className="tl-btn">
-                {language === "vi" ? "Xem tất cả bài viết →" : "See all stories →"}
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Newsletter — editorial convention ("Daily Brief") */}
       <section className="tl-newsletter">
