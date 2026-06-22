@@ -49,9 +49,16 @@ function json(body: unknown, status = 200): Response {
 }
 
 function htmlToPlainText(html: string): string {
-  // Brute-force strip ALL tags. See workers/social-poster/src/index.ts
-  // for the full rationale — same function kept in sync.
-  let out = html.replace(/<[^<>]*>/g, "");
+  // Same as workers/social-poster — kept in sync.
+  let out = html;
+  let prev: string;
+  let i = 0;
+  do {
+    prev = out;
+    out = out.replace(/<[^<>]*>/g, "");
+    i++;
+  } while (out !== prev && i < 10);
+  out = out.replace(/[<>]/g, "");
   const entities: Record<string, string> = {
     "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">",
     "&quot;": '"', "&#39;": "'", "&apos;": "'",

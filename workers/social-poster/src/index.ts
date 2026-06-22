@@ -125,9 +125,11 @@ export default {
       }
       return json({ error: 'Not found' }, 404);
     } catch (err) {
+      // Log full detail server-side (wrangler tail), generic message to
+      // client (CodeQL: avoid leaking error path info to callers).
       const message = err instanceof Error ? err.message : String(err);
       console.error('social-poster fatal:', message);
-      return json({ error: message }, 500);
+      return json({ error: 'Internal server error' }, 500);
     }
   },
 };
@@ -626,17 +628,22 @@ function sanitizeCaption(text: string): string {
 }
 
 function htmlToPlainText(html: string): string {
-  // Brute-force strip ALL tags. The negated-class regex is safe because
-  // angle brackets cannot legally appear un-escaped inside a tag value,
-  // so the first > always closes the tag. We don't special-case
-  // <script> / <style>: the prior loop tripped CodeQL incomplete-
-  // sanitization, and there is no DOMParser in the Worker runtime.
-  // Their CONTENT (JS / CSS) becomes plain text — harmless because the
-  // output flows to Gemini as a prompt, never rendered as HTML.
-  let out = html.replace(/<[^<>]*>/g, '');
+  // Iteratively strip tags until no more change (max 10 iters), then
+  // remove any leftover stray < or > so the result can never contain a
+  // partial tag fragment. Output flows to Gemini as a prompt, not
+  // rendered as HTML — stripping stray brackets is fine.
+  let out = html;
+  let prev: string;
+  let i = 0;
+  do {
+    prev = out;
+    out = out.replace(/<[^<>]*>/g, '');
+    i++;
+  } while (out !== prev && i < 10);
+  out = out.replace(/[<>]/g, '');
 
-  // Single-pass entity decode via lookup; chaining .replace() for &amp;
-  // first would double-unescape "&amp;lt;" to "<" instead of "&lt;".
+  // Single-pass entity decode; chained .replace() of &amp; first would
+  // double-unescape "&amp;lt;" to "<" instead of "&lt;".
   const entities: Record<string, string> = {
     '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>',
     '&quot;': '"', '&#39;': "'", '&apos;': "'",
