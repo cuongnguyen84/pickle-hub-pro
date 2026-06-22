@@ -479,8 +479,10 @@ const Index = () => {
                 </p>
               </div>
 
+              {/* Only the 2 most recent on the home feed — the rest live
+                  behind the "see all stories" button below. */}
               <div className="tl-stories-grid">
-                {stories.map((story) => (
+                {stories.slice(0, 2).map((story) => (
                   <Link key={story.slug} to={story.href} className="tl-story">
                     <div className="tl-story-img">
                       {story.image ? (
