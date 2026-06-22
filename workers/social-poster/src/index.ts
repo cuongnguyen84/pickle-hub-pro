@@ -626,20 +626,37 @@ function sanitizeCaption(text: string): string {
 }
 
 function htmlToPlainText(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
+  let out = html;
+
+  // Loop-strip script/style blocks. The loop handles nested-or-adjacent
+  // injections like "<scr<script>ipt>..." that a single pass leaves behind,
+  // and the [\\s]* before > inside the close tag handles whitespace like
+  // "</script >" (CodeQL: "Bad HTML filtering regexp").
+  for (let i = 0; i < 5; i++) {
+    const before = out;
+    out = out
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
+    if (out === before) break;
+  }
+
+  // Strip remaining tags. \n\n for paragraph break, \n for br.
+  out = out
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+    .replace(/<[^>]+>/g, '');
+
+  // Decode common entities in a single pass via a lookup so we don't
+  // double-unescape (CodeQL: "Double escaping or unescaping" — chaining
+  // .replace(/&amp;/g,'&') BEFORE other entity replacements turns
+  // "&amp;lt;" into "<" instead of "&lt;").
+  const entities: Record<string, string> = {
+    '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>',
+    '&quot;': '"', '&#39;': "'", '&apos;': "'",
+  };
+  out = out.replace(/&(?:nbsp|amp|lt|gt|quot|apos|#39);/g, (m) => entities[m] ?? m);
+
+  return out.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 // ---------------------------------------------------------------------------

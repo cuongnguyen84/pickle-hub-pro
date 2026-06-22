@@ -82,7 +82,8 @@ export default {
       const anySynced = results.some((r) => r.action === 'synced');
       return json({ checked: results.length, synced: anySynced, results });
     } catch (err) {
-      const msg = err instanceof Error ? err.message + '\n' + err.stack : String(err);
+      // Don't expose stack traces in the response — info leak per CodeQL.
+      const msg = err instanceof Error ? err.message : String(err);
       console.error('FATAL', msg);
       return json({ error: 'fatal', detail: msg.slice(0, 800) }, 500);
     }
