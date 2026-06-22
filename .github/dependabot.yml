@@ -2,13 +2,17 @@
 # PRs land against main and run through the quality + security gates before
 # they can merge, so updates are validated automatically. Minor/patch bumps
 # are grouped into a single PR to cut noise; majors come as individual PRs.
+#
+# Scheduled version bumps run MONTHLY to keep PR volume low. Security fixes are
+# NOT gated by this schedule — GitHub's Dependabot security updates open PRs as
+# soon as a vulnerable dependency is detected, independent of this interval
+# (toggle in repo Settings > Code security > Dependabot security updates).
 version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
     open-pull-requests-limit: 5
     groups:
       minor-and-patch:
@@ -23,8 +27,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
     labels:
       - "ci"
     commit-message:
