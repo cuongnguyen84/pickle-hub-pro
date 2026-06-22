@@ -6,13 +6,13 @@
  *   /sitemap-blog.xml        — EN + VI blog posts (with hreflang)
  *   /sitemap-tournaments.xml — public tournaments
  *   /sitemap-matches.xml     — verified + pending matches < 365d
- *   /sitemap-players.xml     — non-ghost VN profiles (page lands Sprint 3)
- *   /sitemap-venues.xml      — venues (page lands Sprint 5)
+ *   /sitemap-players.xml     — non-ghost VN profiles (PlayerProfile SSR live)
+ *   /sitemap-venues.xml      — venues + city hubs (renderVenueDetail SSR live)
  *
- * Players + venues URLs are emitted intentionally even though their detail
- * pages aren't built yet — Google discovers the URL pattern early so the
- * indexing pipeline is warm by the time the pages ship. Until then the
- * SPA serves a 404, which is the correct signal for crawlers.
+ * Both player and venue detail pages now ship bot-prerender SSR
+ * (renderPlayerProfile / renderVenueDetail), so every emitted URL resolves
+ * to a real 200 with schema — no longer the early "warm the pipeline before
+ * the page exists" placeholder this index started as.
  */
 
 import {
@@ -51,9 +51,11 @@ const SEGMENT_PATHS = [
   "/sitemap-videos.xml",
   "/sitemap-livestreams.xml",
   "/sitemap-organizations.xml",
-  // PR (2026-05-18 Ahrefs Site Audit fix Round 1) — /sitemap-venues.xml
-  // emitted /san/{slug} URLs but no `renderVenue` SSR handler exists
-  // (Sprint 5 page). Re-enable once /san/{slug} ships SSR.
+  // /sitemap-venues.xml — emits /san/{slug} venue detail + /san/khu-vuc/{city}
+  // hub URLs. Was held out in the 2026-05-18 Ahrefs Site Audit fix (Round 1)
+  // because no SSR handler existed; re-enabled 2026-06 now that
+  // renderVenueDetail + renderVenuesCity ship bot-prerender (functions/_lib/
+  // render/venues.ts), so every URL resolves to a real 200.
   "/sitemap-venues.xml",
 ];
 
