@@ -310,30 +310,70 @@ async function reconcileMatches(
 ): Promise<number> {
   if (scrape.matches.length === 0) return 0;
 
-  // Bulk-check which matches already exist so we skip them cleanly.
+  // Bulk-fetch existing rows WITH winning_team so we can distinguish:
+  //   - new match (no row yet) → INSERT
+  //   - pending match in DB (row exists, winning_team IS NULL) → UPDATE
+  //     score + winner when the bracket has resolved. Bug 2026-06-22:
+  //     finals scraped before the tournament started landed with empty
+  //     scores, and "ingest again" after the match finished was a no-op
+  //     because the dedupe-by-external_id SKIPPED them. Same pattern
+  //     also hit MLP Group Play — 17 stuck pending rows were resolved
+  //     by the same patch.
+  //   - already-resolved match → leave alone.
   const externalIds = scrape.matches.map((m) => m.external_match_id);
   const { data: existing, error } = await supabase
     .from("matches")
-    .select("external_match_id")
+    .select("id, external_match_id, winning_team")
     .eq("source_provider", scrape.source_provider)
     .in("external_match_id", externalIds);
   if (error) throw new Error(`Match lookup: ${error.message}`);
 
-  const existingSet = new Set(
-    (existing ?? []).map((r) => r.external_match_id as string),
+  const existingMap = new Map<string, { id: string; winning_team: string | null }>(
+    (existing ?? []).map((r) => [
+      r.external_match_id as string,
+      { id: r.id as string, winning_team: r.winning_team as string | null },
+    ]),
   );
 
   let imported = 0;
   for (const match of scrape.matches) {
-    if (existingSet.has(match.external_match_id)) continue;
+    const prior = existingMap.get(match.external_match_id);
+    if (prior && prior.winning_team !== null) {
+      // Already resolved — don't clobber.
+      continue;
+    }
 
-    const inserted = await insertMatchWithParticipants(
-      supabase,
-      scrape,
-      match,
-      externalIdToProfileId,
-    );
-    if (inserted) imported += 1;
+    const newWinner =
+      match.winner_team === "one" ? "a" : match.winner_team === "two" ? "b" : null;
+
+    if (prior && prior.winning_team === null && newWinner !== null) {
+      // Pending row in DB, bracket now has a winner — UPDATE.
+      const { error: upErr } = await supabase
+        .from("matches")
+        .update({
+          team_a_score: match.scores_team_one,
+          team_b_score: match.scores_team_two,
+          winning_team: newWinner,
+          verification_status: "verified",
+          verified_at: new Date().toISOString(),
+          played_at: match.played_at ?? new Date().toISOString(),
+        })
+        .eq("id", prior.id);
+      if (upErr) throw new Error(`Match update ${match.external_match_id}: ${upErr.message}`);
+      imported += 1;
+      continue;
+    }
+
+    if (!prior) {
+      const inserted = await insertMatchWithParticipants(
+        supabase,
+        scrape,
+        match,
+        externalIdToProfileId,
+      );
+      if (inserted) imported += 1;
+    }
+    // else: prior exists but no winner in either DB or scrape → leave pending.
   }
   return imported;
 }
