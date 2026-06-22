@@ -478,24 +478,34 @@ const Index = () => {
         <div className="tl-shell">
           <div className="tl-hero-grid">
             <div>
-              <div className="tl-eyebrow tl-up tl-d1">
-                <span className="pip" aria-hidden="true" />
-                <span>
-                  {language === "vi"
-                    ? (hasLiveData
-                        ? `Trực tiếp · ${liveCount} trận`
-                        : "Phát sóng · 24h tới")
-                    : (hasLiveData
-                        ? `Live · ${liveCount} match${liveCount === 1 ? "" : "es"}`
-                        : "Broadcast · Next 24h")}
-                </span>
-                <span className="sep">/</span>
-                <span>
-                  {language === "vi"
-                    ? `${upcomingCount} sắp diễn ra`
-                    : `${upcomingCount} scheduled`}
-                </span>
-              </div>
+              {/* Broadcast eyebrow — only when there's something on the
+                  schedule: live now, or upcoming streams. With nothing
+                  scheduled the row was just noise ("0 sắp diễn ra"), so we
+                  drop it entirely rather than show an empty count. */}
+              {(hasLiveData || upcomingCount > 0) && (
+                <div className="tl-eyebrow tl-up tl-d1">
+                  <span className="pip" aria-hidden="true" />
+                  <span>
+                    {language === "vi"
+                      ? (hasLiveData
+                          ? `Trực tiếp · ${liveCount} trận`
+                          : "Phát sóng · 24h tới")
+                      : (hasLiveData
+                          ? `Live · ${liveCount} match${liveCount === 1 ? "" : "es"}`
+                          : "Broadcast · Next 24h")}
+                  </span>
+                  {upcomingCount > 0 && (
+                    <>
+                      <span className="sep">/</span>
+                      <span>
+                        {language === "vi"
+                          ? `${upcomingCount} sắp diễn ra`
+                          : `${upcomingCount} scheduled`}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
 
               <h1 className="tl-hero-title tl-up tl-d2">
                 {language === "vi" ? (
