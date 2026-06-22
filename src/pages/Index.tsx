@@ -18,7 +18,6 @@ import { VideoThumbnail } from "@/components/video/VideoThumbnail";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
-import { LiveBroadcastHero } from "@/components/home/LiveBroadcastHero";
 import { HomeLogMatchCTA } from "@/components/home/HomeLogMatchCTA";
 import { useTickerData } from "@/hooks/useTickerData";
 
@@ -91,8 +90,8 @@ const formatRelative = (iso: string | null | undefined, lang: "en" | "vi" = "en"
 
 const Index = () => {
   const { language } = useI18n();
-  const { data: liveStreams = [], isLoading: liveLoading } = useLivestreams("live");
-  const { data: scheduledStreams = [], isLoading: scheduledLoading } = useLivestreams("scheduled");
+  const { data: liveStreams = [] } = useLivestreams("live");
+  const { data: scheduledStreams = [] } = useLivestreams("scheduled");
   const { data: endedStreams = [] } = useLivestreams("ended");
   const { data: allTournaments = [] } = useTournaments();
   const { data: videos = [] } = useVideos({ limit: 6 });
@@ -477,7 +476,7 @@ const Index = () => {
         style={heroBg ? ({ "--hero-bg-image": `url("${heroBg}")` } as React.CSSProperties) : undefined}
       >
         <div className="tl-shell">
-          <div className={`tl-hero-grid${featured ? " tl-hero-grid--featured" : ""}`}>
+          <div className="tl-hero-grid">
             <div>
               <div className="tl-eyebrow tl-up tl-d1">
                 <span className="pip" aria-hidden="true" />
@@ -550,81 +549,11 @@ const Index = () => {
                 </Link>
               </div>
             </div>
-
-            {/* Featured live broadcast — bold dark inverted card */}
-            <div className="tl-up tl-d3">
-              <LiveBroadcastHero
-                featured={featured}
-                language={language}
-                tournamentName={
-                  featured?.tournament_id
-                    ? allTournaments.find((tn) => tn.id === featured.tournament_id)?.name ?? null
-                    : null
-                }
-                isLoading={liveLoading || scheduledLoading}
-              />
-            </div>
           </div>
         </div>
       </section>
         );
       })()}
-
-      {/* Log Match call-to-action — primary action for authed users.
-          Component guards internally on useAuth + useDuprConnection, so
-          it renders nothing for anonymous visitors and adapts copy
-          based on whether DUPR is connected yet. */}
-      <HomeLogMatchCTA />
-
-      {/* Live pulse strip — chips that tell what's happening RIGHT NOW.
-          Live count chip pulses red when active; data signals follow. */}
-      <section className="tl-shell">
-        <div className="tl-pulse-strip" role="list">
-          {liveCount > 0 && (
-            <Link to="/live" className="tl-pulse-chip is-live" role="listitem">
-              <span className="tl-pulse-dot" aria-hidden="true" />
-              <span className="tl-pulse-value">{liveCount}</span>
-              <span className="tl-pulse-label">
-                {language === "vi"
-                  ? (liveCount === 1 ? "TRẬN ĐANG LIVE" : "TRẬN ĐANG LIVE")
-                  : (liveCount === 1 ? "LIVE NOW" : "LIVE NOW")}
-              </span>
-            </Link>
-          )}
-          {upcomingCount > 0 && (
-            <Link to="/live" className="tl-pulse-chip" role="listitem">
-              <span className="tl-pulse-ico" aria-hidden="true">◷</span>
-              <span className="tl-pulse-value">{upcomingCount}</span>
-              <span className="tl-pulse-label">
-                {language === "vi" ? "SẮP TỚI" : "UPCOMING"}
-              </span>
-            </Link>
-          )}
-          <Link to="/tournaments" className="tl-pulse-chip" role="listitem">
-            <span className="tl-pulse-ico" aria-hidden="true">◇</span>
-            <span className="tl-pulse-value">
-              {homeStats ? homeStats.total_tournaments.toLocaleString("en-US") : "—"}
-            </span>
-            <span className="tl-pulse-label">
-              {language === "vi" ? "GIẢI ĐẤU" : "TOURNAMENTS"}
-            </span>
-          </Link>
-          <div className="tl-pulse-chip" role="listitem">
-            <span className="tl-pulse-ico" aria-hidden="true">◉</span>
-            <span className="tl-pulse-value">
-              {homeStats ? homeStats.total_users.toLocaleString("en-US") : "—"}
-            </span>
-            <span className="tl-pulse-label">
-              {language === "vi" ? "NGƯỜI CHƠI" : "PLAYERS"}
-            </span>
-          </div>
-          <div className="tl-pulse-chip tl-pulse-chip--secondary" role="listitem">
-            <span className="tl-pulse-ico" aria-hidden="true">◎</span>
-            <span className="tl-pulse-value">{PPA_ASIA_STOPS}</span>
-            <span className="tl-pulse-label">PPA ASIA · 2026</span>
-          </div>
-        </div>
-      </section>
 
       {/* ── Priority feed cluster (R3) — Live → Editorial → News ──
           The home feed is treated as an ordered array of sections whose
@@ -708,6 +637,62 @@ const Index = () => {
 
         return cluster.map((s) => <Fragment key={s.key}>{s.node}</Fragment>);
       })()}
+
+      {/* Log Match call-to-action — primary action for authed users.
+          Component guards internally on useAuth + useDuprConnection, so
+          it renders nothing for anonymous visitors and adapts copy
+          based on whether DUPR is connected yet. */}
+      <HomeLogMatchCTA />
+
+      {/* Live pulse strip — chips that tell what's happening RIGHT NOW.
+          Live count chip pulses red when active; data signals follow. */}
+      <section className="tl-shell">
+        <div className="tl-pulse-strip" role="list">
+          {liveCount > 0 && (
+            <Link to="/live" className="tl-pulse-chip is-live" role="listitem">
+              <span className="tl-pulse-dot" aria-hidden="true" />
+              <span className="tl-pulse-value">{liveCount}</span>
+              <span className="tl-pulse-label">
+                {language === "vi"
+                  ? (liveCount === 1 ? "TRẬN ĐANG LIVE" : "TRẬN ĐANG LIVE")
+                  : (liveCount === 1 ? "LIVE NOW" : "LIVE NOW")}
+              </span>
+            </Link>
+          )}
+          {upcomingCount > 0 && (
+            <Link to="/live" className="tl-pulse-chip" role="listitem">
+              <span className="tl-pulse-ico" aria-hidden="true">◷</span>
+              <span className="tl-pulse-value">{upcomingCount}</span>
+              <span className="tl-pulse-label">
+                {language === "vi" ? "SẮP TỚI" : "UPCOMING"}
+              </span>
+            </Link>
+          )}
+          <Link to="/tournaments" className="tl-pulse-chip" role="listitem">
+            <span className="tl-pulse-ico" aria-hidden="true">◇</span>
+            <span className="tl-pulse-value">
+              {homeStats ? homeStats.total_tournaments.toLocaleString("en-US") : "—"}
+            </span>
+            <span className="tl-pulse-label">
+              {language === "vi" ? "GIẢI ĐẤU" : "TOURNAMENTS"}
+            </span>
+          </Link>
+          <div className="tl-pulse-chip" role="listitem">
+            <span className="tl-pulse-ico" aria-hidden="true">◉</span>
+            <span className="tl-pulse-value">
+              {homeStats ? homeStats.total_users.toLocaleString("en-US") : "—"}
+            </span>
+            <span className="tl-pulse-label">
+              {language === "vi" ? "NGƯỜI CHƠI" : "PLAYERS"}
+            </span>
+          </div>
+          <div className="tl-pulse-chip tl-pulse-chip--secondary" role="listitem">
+            <span className="tl-pulse-ico" aria-hidden="true">◎</span>
+            <span className="tl-pulse-value">{PPA_ASIA_STOPS}</span>
+            <span className="tl-pulse-label">PPA ASIA · 2026</span>
+          </div>
+        </div>
+      </section>
 
       {/* Manifesto — moved up from end-of-page (Round 2 audit P0-A).
           Brand thesis arrives early, while user is still scrolling.
