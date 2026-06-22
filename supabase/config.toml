@@ -47,6 +47,9 @@ verify_jwt = false
 
 [functions.news-translate]
 verify_jwt = false
+[functions.social-caption]
+verify_jwt = false
+
 
 [functions.og-live]
 verify_jwt = false

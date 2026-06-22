@@ -1,0 +1,33 @@
+-- ============================================================================
+-- social-poster: switch from realtime trigger to cron-only posting
+-- ============================================================================
+--
+-- Why: the realtime trigger tg_news_items_social_poster_fire fired once per
+-- VI row INSERT. When news-translate finishes a batch of 6 translations in
+-- the same second, 6 triggers fired ~simultaneously. All 6 Worker
+-- invocations read the same "last posted_at" (old) in checkRateLimit, so all
+-- 6 passed the rate-limit gate, claimed pending rows, and raced to post —
+-- producing either a burst of 6 posts (spam) or, when Gemini throttled some
+-- of the concurrent calls, rows stuck in 'pending' that deadlocked the
+-- catchup queue (root cause of the 2026-05-28 ~2-day outage).
+--
+-- Fix: drop the realtime trigger. Posting is now driven ONLY by the
+-- social-poster-catchup-15min cron (job 8), which fires the Worker /run
+-- endpoint once every 15 min. The Worker picks exactly one eligible row per
+-- invocation → fully serialized, no race, no burst. Max latency from
+-- translation to FB post is ~15 min, which is acceptable for this content.
+--
+-- The Worker code was also hardened in the same change:
+--   - caption+post wrapped in try/catch so a Gemini/Graph failure finalizes
+--     the row to 'failed' instead of leaving it 'pending' forever
+--   - claimFbPostLog now re-claims stale 'pending' rows (>10 min) so a single
+--     crashed invocation can never permanently block the queue again
+-- ============================================================================
+
+DROP TRIGGER IF EXISTS news_items_social_poster_fire ON public.news_items;
+
+-- Keep the trigger function around (harmless, unused) in case we want to
+-- re-enable realtime posting later with proper concurrency control. To
+-- re-enable: CREATE TRIGGER news_items_social_poster_fire AFTER INSERT OR
+-- UPDATE ON public.news_items FOR EACH ROW EXECUTE FUNCTION
+-- public.tg_news_items_social_poster_fire();
