@@ -84,18 +84,23 @@ struct ScoreCells: View {
         }
     }
 
+    /// Uniform per-game cell width so the two team rows line up column-for-column
+    /// regardless of 1- vs 2-digit scores. Wide enough for two monospaced digits.
+    private var cellWidth: CGFloat { fontSize * 1.5 }
+
     var body: some View {
-        HStack(spacing: max(6, fontSize * 0.36)) {
+        HStack(spacing: 0) {
             ForEach(Array(scores.enumerated()), id: \.offset) { index, value in
                 if index > 0 {
-                    Rectangle().fill(TLColor.border).frame(width: 1, height: fontSize * 0.82)
+                    Rectangle().fill(TLColor.border).frame(width: 1, height: fontSize * 0.78)
                 }
                 Text("\(value)")
                     .font(TLFont.mono(fontSize, .semibold))
                     .monospacedDigit()
                     .foregroundStyle(isWinner ? TLColor.accentText : TLColor.fg3)
                     .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
+                    .minimumScaleFactor(0.6)
+                    .frame(width: cellWidth)
             }
         }
     }
