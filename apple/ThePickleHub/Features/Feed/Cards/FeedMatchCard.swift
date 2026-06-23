@@ -117,16 +117,7 @@ struct FeedMatchCard: View {
     }
 
     private func scoreboard(_ scores: [Int], isWinner: Bool) -> some View {
-        HStack(spacing: 12) {
-            ForEach(Array(scores.enumerated()), id: \.offset) { index, value in
-                if index > 0 {
-                    Rectangle().fill(TLColor.border).frame(width: 1, height: 26)
-                }
-                Text("\(value)")
-                    .font(TLFont.mono(30, .semibold))
-                    .foregroundStyle(isWinner ? TLColor.accentText : TLColor.fg3)
-            }
-        }
+        ScoreCells(scores: scores, isWinner: isWinner, base: 30)
     }
 
     // MARK: Footer
