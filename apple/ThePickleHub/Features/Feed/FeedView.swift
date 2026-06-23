@@ -85,36 +85,43 @@ struct FeedView: View {
     }
 }
 
-/// Dispatches a `FeedItem` to its card and makes the whole card tap-to-open.
+/// Dispatches a `FeedItem` to its card. Match / blog / news push a native
+/// detail screen; video still opens the web player in Safari (native player is
+/// Phase 6).
 private struct FeedTimelineRow: View {
     let item: FeedItem
-    let onOpen: (URL) -> Void
+    let onOpenWeb: (URL) -> Void
 
     var body: some View {
-        Button {
-            if let url { onOpen(url) }
-        } label: {
-            card
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var url: URL? {
         switch item.kind {
-        case .match(let match): return match.slug.map { WebRoutes.match(slug: $0) }
-        case .blog(let blog): return WebRoutes.blog(slug: blog.slug)
-        case .video(let video): return WebRoutes.video(id: video.videoID)
-        case .news(let news): return WebRoutes.news(slug: news.slug, language: news.language)
-        }
-    }
-
-    @ViewBuilder
-    private var card: some View {
-        switch item.kind {
-        case .match(let match): FeedMatchCard(match: match, publishedAt: item.publishedAt)
-        case .blog(let blog): FeedBlogCard(blog: blog, publishedAt: item.publishedAt)
-        case .video(let video): FeedVideoCard(video: video, publishedAt: item.publishedAt)
-        case .news(let news): FeedNewsCard(news: news, publishedAt: item.publishedAt)
+        case .match(let match):
+            NavigationLink {
+                MatchDetailView(match: match, publishedAt: item.publishedAt)
+            } label: {
+                FeedMatchCard(match: match, publishedAt: item.publishedAt)
+            }
+            .buttonStyle(.plain)
+        case .blog(let blog):
+            NavigationLink {
+                BlogDetailView(blog: blog, publishedAt: item.publishedAt)
+            } label: {
+                FeedBlogCard(blog: blog, publishedAt: item.publishedAt)
+            }
+            .buttonStyle(.plain)
+        case .news(let news):
+            NavigationLink {
+                NewsDetailView(news: news, publishedAt: item.publishedAt)
+            } label: {
+                FeedNewsCard(news: news, publishedAt: item.publishedAt)
+            }
+            .buttonStyle(.plain)
+        case .video(let video):
+            Button {
+                onOpenWeb(WebRoutes.video(id: video.videoID))
+            } label: {
+                FeedVideoCard(video: video, publishedAt: item.publishedAt)
+            }
+            .buttonStyle(.plain)
         }
     }
 }
