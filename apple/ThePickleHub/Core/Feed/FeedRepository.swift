@@ -33,4 +33,23 @@ struct FeedRepository {
             .value
         return rows.compactMap(FeedItem.init(row:))
     }
+
+    /// Recent published news for the viewer's language, scored client-side and
+    /// merged into the timeline by the view model. Mirrors `useFeedNews.ts`:
+    /// status=published, last 30 days, newest first, capped at 30.
+    func news(language: String = "vi") async throws -> [FeedItem] {
+        let windowStart = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-30 * 24 * 60 * 60))
+        let rows: [FeedNewsRow] = try await client
+            .from("news_items")
+            .select("id, title, summary, source, source_url, image_url, language, slug, published_at, ai_translated")
+            .eq("status", value: "published")
+            .eq("language", value: language)
+            .gte("published_at", value: windowStart)
+            .order("published_at", ascending: false)
+            .limit(30)
+            .execute()
+            .value
+        let now = Date()
+        return rows.compactMap { FeedItem(news: $0, now: now) }
+    }
 }

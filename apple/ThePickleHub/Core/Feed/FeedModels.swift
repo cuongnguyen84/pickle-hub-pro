@@ -129,6 +129,38 @@ struct FeedVideo: Equatable {
     let isShort: Bool
 }
 
+struct FeedNews: Equatable {
+    let slug: String
+    let title: String
+    let summary: String
+    let imageURL: String?
+    let source: String?
+    let language: String   // "vi" | "en"
+    let aiTranslated: Bool
+}
+
+/// A `news_items` row. News is not part of `get_feed_timeline`; it is queried
+/// separately and merged into the stream by score, mirroring the web Trending
+/// feed (`src/hooks/social/useFeedNews.ts`).
+struct FeedNewsRow: Decodable {
+    let id: UUID
+    let title: String
+    let summary: String
+    let source: String?
+    let imageURL: String?
+    let language: String
+    let slug: String?
+    let publishedAt: String
+    let aiTranslated: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, summary, source, language, slug
+        case imageURL = "image_url"
+        case publishedAt = "published_at"
+        case aiTranslated = "ai_translated"
+    }
+}
+
 /// Keyset pagination cursor `(score DESC, item_id DESC)`.
 struct FeedCursor: Equatable {
     let score: Double
@@ -146,6 +178,7 @@ struct FeedItem: Identifiable, Equatable {
         case match(FeedMatch)
         case blog(FeedBlog)
         case video(FeedVideo)
+        case news(FeedNews)
     }
 
     var cursor: FeedCursor { FeedCursor(score: score, itemID: id) }
@@ -199,6 +232,26 @@ struct FeedItem: Identifiable, Equatable {
         default:
             return nil
         }
+    }
+
+    /// Builds a news entry, computing the client-side score
+    /// `recency_decay + 1.2` exactly as `useFeedNews.ts` does, so news
+    /// interleaves with the RPC stream on the same scale.
+    init?(news row: FeedNewsRow, now: Date) {
+        guard let slug = row.slug?.nonEmpty else { return nil }
+        let date = FeedDate.parse(row.publishedAt)
+        let ageHours = max(0, now.timeIntervalSince(date ?? now) / 3600)
+        let score = exp(-ageHours / 48.0) + 1.2
+        let news = FeedNews(
+            slug: slug,
+            title: row.title,
+            summary: row.summary,
+            imageURL: row.imageURL,
+            source: row.source,
+            language: row.language,
+            aiTranslated: row.aiTranslated
+        )
+        self.init(id: row.id, publishedAt: date, score: score, kind: .news(news))
     }
 
     private init(id: UUID, publishedAt: Date?, score: Double, kind: Kind) {

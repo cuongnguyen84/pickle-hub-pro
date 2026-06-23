@@ -104,6 +104,7 @@ private struct FeedTimelineRow: View {
         case .match(let match): return match.slug.map { WebRoutes.match(slug: $0) }
         case .blog(let blog): return WebRoutes.blog(slug: blog.slug)
         case .video(let video): return WebRoutes.video(id: video.videoID)
+        case .news(let news): return WebRoutes.news(slug: news.slug, language: news.language)
         }
     }
 
@@ -113,6 +114,7 @@ private struct FeedTimelineRow: View {
         case .match(let match): FeedMatchCard(match: match, publishedAt: item.publishedAt)
         case .blog(let blog): FeedBlogCard(blog: blog, publishedAt: item.publishedAt)
         case .video(let video): FeedVideoCard(video: video, publishedAt: item.publishedAt)
+        case .news(let news): FeedNewsCard(news: news, publishedAt: item.publishedAt)
         }
     }
 }
