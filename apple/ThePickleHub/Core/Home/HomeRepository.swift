@@ -6,6 +6,19 @@ import Supabase
 struct HomeRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
+    /// Full body of a single published VI blog post, for the native reader.
+    func post(slug: String) async throws -> BlogPostDetail? {
+        let rows: [BlogPostDetail] = try await client
+            .from("vi_blog_posts")
+            .select("title, content_html, cover_image_url, category, published_at")
+            .eq("slug", value: slug)
+            .eq("status", value: "published")
+            .limit(1)
+            .execute()
+            .value
+        return rows.first
+    }
+
     /// "Tuần này" feature stories — newest published VI blog posts.
     func featuredPosts(limit: Int = 6) async throws -> [BlogPostSummary] {
         try await client

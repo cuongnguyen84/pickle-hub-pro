@@ -66,26 +66,6 @@ struct ArticleDetailView: View {
     }
 }
 
-struct BlogDetailView: View {
-    let blog: FeedBlog
-    let publishedAt: Date?
-
-    var body: some View {
-        ArticleDetailView(
-            imageURL: blog.coverImageURL,
-            eyebrow: .init(
-                kicker: "BÀI VIẾT",
-                meta: [FeedDate.relative(publishedAt), blog.category?.nonEmpty]
-                    .compactMap { $0 }.filter { !$0.isEmpty }
-            ),
-            title: blog.title,
-            bodyText: blog.excerpt,
-            readURL: WebRoutes.blog(slug: blog.slug),
-            readLabel: "Đọc bài đầy đủ"
-        )
-    }
-}
-
 struct NewsDetailView: View {
     let news: FeedNews
     let publishedAt: Date?

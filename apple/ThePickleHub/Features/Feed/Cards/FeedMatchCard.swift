@@ -7,10 +7,13 @@ struct FeedMatchCard: View {
     let match: FeedMatch
     let publishedAt: Date?
 
+    @State private var expanded = false
+
     private var teams: (teamA: [FeedParticipant], teamB: [FeedParticipant]) {
         FeedFormat.groupTeams(match.participants)
     }
     private var winnerIsA: Bool { match.winningTeam == "a" }
+    private var gameCount: Int { max(match.teamAScore.count, match.teamBScore.count) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -37,9 +40,85 @@ struct FeedMatchCard: View {
                 teamRow(players: teams.teamB, scores: match.teamBScore, isWinner: !winnerIsA)
             }
 
+            if gameCount > 0 {
+                detailToggle
+                if expanded { gameBreakdown }
+            }
+
             footer
         }
         .feedCard()
+    }
+
+    // MARK: Per-game detail (inline dropdown)
+
+    private var detailToggle: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+        } label: {
+            HStack(spacing: 4) {
+                Text(expanded ? "Ẩn chi tiết" : "Chi tiết từng ván")
+                Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 9, weight: .bold))
+            }
+            .font(TLFont.mono(10, .semibold)).tracking(0.6).textCase(.uppercase)
+            .foregroundStyle(TLColor.accentText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var gameBreakdown: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .top, spacing: 12) {
+                Text(teamNames(teams.teamA))
+                    .foregroundStyle(winnerIsA ? TLColor.accentText : TLColor.fg2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(teamNames(teams.teamB))
+                    .foregroundStyle(winnerIsA ? TLColor.fg2 : TLColor.accentText)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .multilineTextAlignment(.trailing)
+            }
+            .font(TLFont.mono(10, .semibold))
+            .padding(.vertical, 9)
+            Rectangle().fill(TLColor.border).frame(height: 1)
+
+            ForEach(0..<gameCount, id: \.self) { index in
+                let a = score(match.teamAScore, index)
+                let b = score(match.teamBScore, index)
+                HStack {
+                    Text("Ván \(index + 1)")
+                        .font(TLFont.mono(11, .medium))
+                        .foregroundStyle(TLColor.fg3)
+                    Spacer()
+                    HStack(spacing: 10) {
+                        Text("\(a)")
+                            .foregroundStyle(a >= b ? TLColor.accentText : TLColor.fg3)
+                        Text("–").foregroundStyle(TLColor.fg4)
+                        Text("\(b)")
+                            .foregroundStyle(b > a ? TLColor.accentText : TLColor.fg3)
+                    }
+                    .font(TLFont.mono(14, .semibold))
+                    .monospacedDigit()
+                }
+                .padding(.vertical, 8)
+                if index < gameCount - 1 {
+                    Rectangle().fill(TLColor.border).frame(height: 1)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 2)
+        .background(TLColor.bg, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+    }
+
+    private func score(_ scores: [Int], _ index: Int) -> Int {
+        index < scores.count ? scores[index] : 0
+    }
+
+    private func teamNames(_ players: [FeedParticipant]) -> String {
+        players.isEmpty ? "—" : players.map(\.resolvedName).joined(separator: " / ")
     }
 
     // MARK: Status

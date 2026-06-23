@@ -77,7 +77,9 @@ struct HomeView: View {
                     partnerButton("Log trận", systemImage: "plus", filled: true)
                 }
                 .buttonStyle(.plain)
-                Button { openURL = IdentifiedURL(url: WebRoutes.base.appending(path: "vi/blog")) } label: {
+                NavigationLink {
+                    BlogListView()
+                } label: {
                     partnerButton("Hướng dẫn", systemImage: "arrow.right", filled: false)
                 }
                 .buttonStyle(.plain)

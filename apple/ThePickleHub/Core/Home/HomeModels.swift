@@ -22,6 +22,22 @@ struct BlogPostSummary: Decodable, Identifiable, Equatable {
     }
 }
 
+/// Full body of a VI blog post for the native reader.
+struct BlogPostDetail: Decodable, Equatable {
+    let title: String
+    let contentHtml: String
+    let coverImageURL: String?
+    let category: String?
+    let publishedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case title, category
+        case contentHtml = "content_html"
+        case coverImageURL = "cover_image_url"
+        case publishedAt = "published_at"
+    }
+}
+
 /// Headline numbers from the `get_homepage_stats` RPC.
 struct HomeStats: Decodable, Equatable {
     let totalTournaments: Int

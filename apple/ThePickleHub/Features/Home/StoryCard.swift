@@ -60,7 +60,7 @@ struct StoryLink: View {
 
     var body: some View {
         NavigationLink {
-            BlogDetailView(blog: post.asFeedBlog, publishedAt: FeedDate.parse(post.publishedAt ?? ""))
+            BlogReaderView(slug: post.slug, title: post.title)
         } label: {
             StoryCard(post: post)
         }

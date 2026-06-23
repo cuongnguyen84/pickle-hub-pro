@@ -95,15 +95,11 @@ private struct FeedTimelineRow: View {
     var body: some View {
         switch item.kind {
         case .match(let match):
-            NavigationLink {
-                MatchDetailView(match: match, publishedAt: item.publishedAt)
-            } label: {
-                FeedMatchCard(match: match, publishedAt: item.publishedAt)
-            }
-            .buttonStyle(.plain)
+            // Match details expand inline via the card's own dropdown.
+            FeedMatchCard(match: match, publishedAt: item.publishedAt)
         case .blog(let blog):
             NavigationLink {
-                BlogDetailView(blog: blog, publishedAt: item.publishedAt)
+                BlogReaderView(slug: blog.slug, title: blog.title)
             } label: {
                 FeedBlogCard(blog: blog, publishedAt: item.publishedAt)
             }
