@@ -28,7 +28,7 @@ struct AppTabView: View {
                 .tag(Tab.feed)
                 .tabItem { Label("Bảng tin", systemImage: "newspaper.fill") }
 
-            PlaceholderTab(title: "Công cụ", phase: "Phase 4", systemImage: "wrench.adjustable.fill")
+            ToolsView()
                 .tag(Tab.tools)
                 .tabItem { Label("Công cụ", systemImage: "wrench.adjustable.fill") }
         }

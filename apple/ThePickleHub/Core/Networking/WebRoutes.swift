@@ -19,6 +19,13 @@ enum WebRoutes {
     static func live(id: UUID) -> URL { base.appending(path: "live/\(id.uuidString.lowercased())") }
     static func social(slug: String) -> URL { base.appending(path: "vi/social/\(slug)") }
 
+    // Bracket Lab (Tools) — created/scored on the web.
+    static let toolsQuickTables = base.appending(path: "tools/quick-tables")
+    static let toolsDoublesElimination = base.appending(path: "tools/doubles-elimination")
+    static let toolsFlexTournament = base.appending(path: "tools/flex-tournament")
+    static let toolsTeamMatch = base.appending(path: "tools/team-match")
+    static func quickTable(shareID: String) -> URL { base.appending(path: "tools/quick-tables/\(shareID)") }
+
     /// Resolves an image path that may be relative (e.g. blog covers like
     /// "/images/blog/x.webp") against the site origin; absolute URLs pass through.
     static func asset(_ string: String) -> URL? {
