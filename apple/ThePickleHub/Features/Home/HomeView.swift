@@ -9,33 +9,42 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 34) {
-                partnerCard
-
-                if !model.posts.isEmpty {
-                    HomeFeatureSection(posts: model.posts)
-                }
-                if !model.news.isEmpty {
-                    HomeNewsSection(items: model.news)
-                }
-                if let stats = model.stats {
-                    statsRow(stats)
+            VStack(spacing: 0) {
+                if !model.tickers.isEmpty {
+                    HomeTicker(items: model.tickers)
                 }
 
-                manifesto
+                VStack(alignment: .leading, spacing: 34) {
+                    partnerCard
 
-                HomeUpcomingSection(tournaments: model.upcoming)
+                    if !model.posts.isEmpty {
+                        HomeFeatureSection(posts: model.posts)
+                    }
+                    if !model.live.isEmpty {
+                        HomeLiveSection(streams: model.live) { openURL = IdentifiedURL(url: $0) }
+                    }
+                    if !model.news.isEmpty {
+                        HomeNewsSection(items: model.news)
+                    }
+                    if let stats = model.stats {
+                        statsRow(stats)
+                    }
 
-                if !model.videos.isEmpty {
-                    HomeVideosSection(videos: model.videos) { openURL = IdentifiedURL(url: $0) }
+                    manifesto
+
+                    HomeUpcomingSection(tournaments: model.upcoming)
+
+                    if !model.videos.isEmpty {
+                        HomeVideosSection(videos: model.videos) { openURL = IdentifiedURL(url: $0) }
+                    }
+
+                    pullQuote
+                    HomeNewsletter()
                 }
-
-                pullQuote
-                HomeNewsletter()
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 36)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 36)
         }
         .background(TLColor.bg)
         .task { await model.load() }

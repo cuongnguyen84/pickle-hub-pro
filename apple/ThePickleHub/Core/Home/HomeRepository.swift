@@ -38,5 +38,16 @@ struct HomeRepository {
             .execute()
             .value
     }
+
+    /// Currently-live broadcasts for the homepage live section.
+    func liveStreams() async throws -> [LivestreamSummary] {
+        try await client
+            .from("public_livestreams")
+            .select("id, title, thumbnail_url, mux_playback_id, scheduled_start_at, organization:organizations(name)")
+            .eq("status", value: "live")
+            .order("scheduled_start_at", ascending: true)
+            .execute()
+            .value
+    }
 }
 

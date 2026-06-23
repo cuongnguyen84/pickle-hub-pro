@@ -11,6 +11,8 @@ final class HomeViewModel {
     private(set) var stats: HomeStats?
     private(set) var videos: [VideoSummary] = []
     private(set) var upcoming: [Tournament] = []
+    private(set) var live: [LivestreamSummary] = []
+    private(set) var tickers: [TickerItem] = []
     private(set) var loaded = false
 
     private let home = HomeRepository()
@@ -24,12 +26,16 @@ final class HomeViewModel {
         async let statsTask = try? home.stats()
         async let videosTask = try? home.highlightVideos()
         async let tournamentsTask = try? tournaments.list()
+        async let liveTask = try? home.liveStreams()
+        async let feedTask = try? feed.page(cursor: nil)
 
         posts = await postsTask ?? []
         news = Array((await newsTask ?? []).prefix(4))
         stats = await statsTask ?? nil
         videos = await videosTask ?? []
         upcoming = upcomingFrom(await tournamentsTask ?? [])
+        live = await liveTask ?? []
+        tickers = Array((await feedTask ?? []).compactMap(TickerItem.from).prefix(8))
         loaded = true
     }
 
