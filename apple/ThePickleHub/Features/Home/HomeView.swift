@@ -73,7 +73,9 @@ struct HomeView: View {
                 .font(TLFont.mono(9)).tracking(0.6).foregroundStyle(TLColor.fg4)
 
             HStack(spacing: 8) {
-                Button { openURL = IdentifiedURL(url: WebRoutes.base.appending(path: "match")) } label: {
+                NavigationLink {
+                    MatchLogView()
+                } label: {
                     partnerButton("Log trận", systemImage: "plus", filled: true)
                 }
                 .buttonStyle(.plain)
