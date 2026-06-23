@@ -9,7 +9,7 @@ struct HomeNewsSection: View {
             HomeSectionHeader(title: "Tin mới.")
 
             VStack(spacing: 0) {
-                ForEach(items) { item in
+                ForEach(items.prefix(3)) { item in
                     if case .news(let news) = item.kind {
                         NavigationLink {
                             NewsDetailView(news: news, publishedAt: item.publishedAt)
@@ -22,6 +22,13 @@ struct HomeNewsSection: View {
                     }
                 }
             }
+
+            NavigationLink {
+                NewsListView()
+            } label: {
+                HomeSeeMore(label: "Xem thêm tin tức")
+            }
+            .buttonStyle(.plain)
         }
     }
 }
