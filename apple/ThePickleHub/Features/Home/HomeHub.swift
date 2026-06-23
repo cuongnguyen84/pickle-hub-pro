@@ -7,10 +7,21 @@ struct HomeHub: View {
         ScrollView {
             VStack(spacing: 12) {
                 NavigationLink {
+                    TournamentsView()
+                } label: {
+                    HubCard(
+                        icon: "trophy.circle.fill",
+                        title: "Giải đấu",
+                        subtitle: "Theo dõi các giải pro & cộng đồng"
+                    )
+                }
+                .buttonStyle(.plain)
+
+                NavigationLink {
                     RankingsView()
                 } label: {
                     HubCard(
-                        icon: "trophy.fill",
+                        icon: "chart.bar.fill",
                         title: "Bảng xếp hạng",
                         subtitle: "DUPR Việt Nam · Đôi & Đơn"
                     )

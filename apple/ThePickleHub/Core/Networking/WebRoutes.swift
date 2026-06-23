@@ -15,6 +15,7 @@ enum WebRoutes {
     static func news(slug: String, language: String) -> URL {
         base.appending(path: language == "en" ? "news/\(slug)" : "vi/news/\(slug)")
     }
+    static func tournament(slug: String) -> URL { base.appending(path: "vi/tournament/\(slug)") }
 }
 
 /// In-app browser. `SFSafariViewController` keeps the session cookie jar and
