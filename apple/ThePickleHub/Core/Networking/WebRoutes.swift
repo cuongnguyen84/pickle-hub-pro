@@ -16,6 +16,15 @@ enum WebRoutes {
         base.appending(path: language == "en" ? "news/\(slug)" : "vi/news/\(slug)")
     }
     static func tournament(slug: String) -> URL { base.appending(path: "vi/tournament/\(slug)") }
+
+    /// Resolves an image path that may be relative (e.g. blog covers like
+    /// "/images/blog/x.webp") against the site origin; absolute URLs pass through.
+    static func asset(_ string: String) -> URL? {
+        if string.hasPrefix("http://") || string.hasPrefix("https://") {
+            return URL(string: string)
+        }
+        return URL(string: string, relativeTo: base)
+    }
 }
 
 /// In-app browser. `SFSafariViewController` keeps the session cookie jar and

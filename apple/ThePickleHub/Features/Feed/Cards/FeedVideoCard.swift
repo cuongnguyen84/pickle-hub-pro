@@ -42,7 +42,7 @@ struct FeedVideoCard: View {
                 .foregroundStyle(.white.opacity(0.92))
                 .shadow(color: .black.opacity(0.4), radius: 8)
         )
-        if let urlString = video.thumbnailURL, let url = URL(string: urlString) {
+        if let urlString = video.thumbnailURL, let url = WebRoutes.asset(urlString) {
             if video.isShort {
                 HStack {
                     Spacer()

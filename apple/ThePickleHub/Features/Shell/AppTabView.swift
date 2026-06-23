@@ -41,11 +41,32 @@ struct AppTabView: View {
         UserDefaults.standard.string(forKey: "startTab").flatMap(Tab.init) ?? .home
     }
 
+    @State private var homePath = NavigationPath()
+
     private var homeTab: some View {
-        NavigationStack {
-            HomeHub()
+        NavigationStack(path: $homePath) {
+            HomeView()
                 .navigationTitle("ThePickleHub")
+                .navigationDestination(for: HomeRoute.self) { route in
+                    switch route {
+                    case .tournaments: TournamentsView()
+                    case .rankings: RankingsView()
+                    }
+                }
                 .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Menu {
+                            Button { homePath.append(HomeRoute.tournaments) } label: {
+                                Label("Giải đấu", systemImage: "trophy")
+                            }
+                            Button { homePath.append(HomeRoute.rankings) } label: {
+                                Label("Bảng xếp hạng", systemImage: "chart.bar")
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal")
+                                .foregroundStyle(TLColor.fg)
+                        }
+                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         NavigationLink {
                             ProfileView()

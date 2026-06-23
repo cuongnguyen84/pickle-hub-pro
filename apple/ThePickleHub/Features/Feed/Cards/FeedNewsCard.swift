@@ -22,7 +22,7 @@ struct FeedNewsCard: View {
                 }
             }
 
-            if let urlString = news.imageURL, let url = URL(string: urlString) {
+            if let urlString = news.imageURL, let url = WebRoutes.asset(urlString) {
                 FeedThumbnail(url: url, aspect: 16.0 / 9.0)
             }
 

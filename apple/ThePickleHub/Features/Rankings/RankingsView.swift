@@ -140,7 +140,7 @@ private struct RankingRowView: View {
 
     private var avatar: some View {
         Group {
-            if let urlString = row.avatarURL, let url = URL(string: urlString) {
+            if let urlString = row.avatarURL, let url = WebRoutes.asset(urlString) {
                 AsyncImage(url: url) { image in
                     image.resizable().scaledToFill()
                 } placeholder: {

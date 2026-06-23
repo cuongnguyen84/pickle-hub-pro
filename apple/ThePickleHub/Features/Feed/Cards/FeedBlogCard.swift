@@ -18,7 +18,7 @@ struct FeedBlogCard: View {
                 EyebrowText.accent("BÀI VIẾT")
             }
 
-            if let urlString = blog.coverImageURL, let url = URL(string: urlString) {
+            if let urlString = blog.coverImageURL, let url = WebRoutes.asset(urlString) {
                 FeedThumbnail(url: url, aspect: 16.0 / 9.0)
             }
 
