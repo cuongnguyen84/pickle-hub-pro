@@ -54,6 +54,7 @@ struct FeedRow: Decodable {
     let tournamentName: String?
     let tournamentEvent: String?
     let roundName: String?
+    let notes: String?
 
     // blog / video
     let title: String?
@@ -82,6 +83,7 @@ struct FeedRow: Decodable {
         case tournamentName = "tournament_name"
         case tournamentEvent = "tournament_event"
         case roundName = "round_name"
+        case notes
         case title
         case excerpt
         case coverImageURL = "cover_image_url"
@@ -108,8 +110,65 @@ struct FeedMatch: Equatable {
     let tournamentName: String?
     let tournamentEvent: String?
     let roundName: String?
+    let notes: String?
 
     var isTournament: Bool { sourceProvider != "community" }
+
+    /// Decodes the MLP team-matchup payload carried in `notes` (JSON). Returns
+    /// nil for non-MLP matches — those have constant per-game lineups (= the
+    /// team participants), so the generic score breakdown applies instead.
+    /// Mirrors `parseNotes()` in web `FeedMlpMatchCard.tsx`.
+    var mlpNotes: MlpMatchupNotes? {
+        guard let notes, let data = notes.data(using: .utf8),
+              let parsed = try? JSONDecoder().decode(MlpMatchupNotes.self, from: data),
+              parsed.format == "mlp_team_matchup" else { return nil }
+        return parsed
+    }
+}
+
+/// MLP matchup payload encoded in `matches.notes`. Each "Ván" (game) is played
+/// by a DIFFERENT pairing (WD / MD / MXD1 / MXD2 / DB), so the lineups live here
+/// rather than in the flat `participants` array. Schema mirrors the web
+/// `MlpMatchupNotes` interface.
+struct MlpMatchupNotes: Decodable, Equatable {
+    let format: String
+    let teamA: Team
+    let teamB: Team
+    let games: [Game]
+
+    struct Team: Decodable, Equatable {
+        let name: String
+        let logo: String?
+        let matchupWins: Int
+
+        enum CodingKeys: String, CodingKey {
+            case name, logo
+            case matchupWins = "matchup_wins"
+        }
+    }
+
+    struct Game: Decodable, Equatable {
+        let label: String
+        let scoreA: Int
+        let scoreB: Int
+        let playersA: [String]
+        let playersB: [String]
+        let winner: String?    // "a" | "b" | null
+
+        enum CodingKeys: String, CodingKey {
+            case label, winner
+            case scoreA = "score_a"
+            case scoreB = "score_b"
+            case playersA = "players_a"
+            case playersB = "players_b"
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case format, games
+        case teamA = "team_a"
+        case teamB = "team_b"
+    }
 }
 
 struct FeedBlog: Equatable {
@@ -202,7 +261,8 @@ struct FeedItem: Identifiable, Equatable {
                 sourceProvider: row.sourceProvider ?? "community",
                 tournamentName: row.tournamentName,
                 tournamentEvent: row.tournamentEvent,
-                roundName: row.roundName
+                roundName: row.roundName,
+                notes: row.notes
             )
             self.init(id: row.itemID, publishedAt: date, score: row.score, kind: .match(match))
 

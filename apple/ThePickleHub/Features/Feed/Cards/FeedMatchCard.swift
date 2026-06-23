@@ -40,7 +40,10 @@ struct FeedMatchCard: View {
                 teamRow(players: teams.teamB, scores: match.teamBScore, isWinner: !winnerIsA)
             }
 
-            if gameCount > 0 {
+            if let mlp = match.mlpNotes {
+                detailToggle
+                if expanded { mlpBreakdown(mlp) }
+            } else if gameCount > 0 {
                 detailToggle
                 if expanded { gameBreakdown }
             }
@@ -111,6 +114,74 @@ struct FeedMatchCard: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 2)
         .background(TLColor.bg, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+    }
+
+    // MARK: MLP per-game breakdown (different lineup each game)
+
+    /// Vietnamese long labels for MLP game slots, mirroring web GAME_LABEL_LONG.
+    private static let mlpGameLabels: [String: String] = [
+        "WD": "Đôi nữ",
+        "MD": "Đôi nam",
+        "MXD1": "Đôi nam nữ 1",
+        "MXD2": "Đôi nam nữ 2",
+        "DB": "Dreambreaker",
+    ]
+
+    private func mlpBreakdown(_ mlp: MlpMatchupNotes) -> some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .top, spacing: 12) {
+                Text(mlp.teamA.name)
+                    .foregroundStyle(winnerIsA ? TLColor.accentText : TLColor.fg2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(mlp.teamB.name)
+                    .foregroundStyle(winnerIsA ? TLColor.fg2 : TLColor.accentText)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .multilineTextAlignment(.trailing)
+            }
+            .font(TLFont.mono(10, .semibold))
+            .padding(.vertical, 9)
+            Rectangle().fill(TLColor.border).frame(height: 1)
+
+            ForEach(Array(mlp.games.enumerated()), id: \.offset) { index, game in
+                mlpGameRow(game)
+                if index < mlp.games.count - 1 {
+                    Rectangle().fill(TLColor.border).frame(height: 1)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 2)
+        .background(TLColor.bg, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+    }
+
+    private func mlpGameRow(_ game: MlpMatchupNotes.Game) -> some View {
+        let aWon = game.winner == "a"
+        let bWon = game.winner == "b"
+        let label = Self.mlpGameLabels[game.label] ?? game.label
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("\(game.label) · \(label)")
+                .font(TLFont.mono(9, .medium)).tracking(0.6).textCase(.uppercase)
+                .foregroundStyle(TLColor.fg4)
+
+            mlpSide(players: game.playersA, score: game.scoreA, isWinner: aWon)
+            mlpSide(players: game.playersB, score: game.scoreB, isWinner: bWon)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 9)
+    }
+
+    private func mlpSide(players: [String], score: Int, isWinner: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text(players.isEmpty ? "—" : players.joined(separator: " / "))
+                .font(TLFont.serif(15))
+                .foregroundStyle(isWinner ? TLColor.fg : TLColor.fg2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .lineLimit(2)
+            Text("\(score)")
+                .font(TLFont.mono(14, .semibold))
+                .monospacedDigit()
+                .foregroundStyle(isWinner ? TLColor.accentText : TLColor.fg3)
+        }
     }
 
     private func score(_ scores: [Int], _ index: Int) -> Int {
