@@ -1,20 +1,93 @@
 import Foundation
 import Supabase
 
-/// Reads recent public Bracket Lab tables for the Tools hub. Brackets are
-/// created and scored on the web, so this is read-only.
+/// Reads the current user's Bracket Lab tournaments for the Tools hub. Brackets
+/// are created/scored on the web for now, so this is read-only + enrichment.
 struct ToolsRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
-    /// Recent public quick tables, newest first (any status).
-    func recentTables(limit: Int = 12) async throws -> [QuickTableSummary] {
-        try await client
+    private static let iso: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private static func parseDate(_ s: String?) -> Date? {
+        guard let s else { return nil }
+        return iso.date(from: s) ?? ISO8601DateFormatter().date(from: s)
+    }
+
+    /// Quick tables created by the signed-in user, newest first, enriched with a
+    /// registration/roster count so cards can show progress + status. Returns []
+    /// when signed out.
+    func myTournaments(limit: Int = 20) async throws -> [MyTournament] {
+        guard let uid = try? await client.auth.session.user.id.uuidString.lowercased() else { return [] }
+        let rows: [QuickTableRow] = try await client
             .from("quick_tables")
-            .select("id, share_id, name, is_doubles, player_count, status")
-            .eq("is_public", value: true)
+            .select("id, share_id, name, is_doubles, player_count, status, requires_registration, start_time, created_at")
+            .eq("creator_user_id", value: uid)
             .order("created_at", ascending: false)
             .limit(limit)
             .execute()
             .value
+
+        // Enrich each row with its registration/roster count in parallel.
+        return try await withThrowingTaskGroup(of: MyTournament.self) { group in
+            for row in rows {
+                group.addTask { try await enrich(row) }
+            }
+            var result: [MyTournament] = []
+            for try await item in group { result.append(item) }
+            // Preserve newest-first order (task group completes out of order).
+            return result.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+        }
+    }
+
+    private func enrich(_ row: QuickTableRow) async throws -> MyTournament {
+        let requiresReg = row.requiresRegistration ?? false
+        let capacity = row.playerCount ?? 0
+        let registered = (try? await count(row: row, requiresReg: requiresReg)) ?? 0
+        let state = Self.state(status: row.status, requiresReg: requiresReg,
+                               registered: registered, capacity: capacity)
+        return MyTournament(
+            id: row.id,
+            shareID: row.shareID,
+            name: row.name ?? "",
+            isDoubles: row.isDoubles ?? true,
+            capacity: capacity,
+            registered: registered,
+            state: state,
+            createdAt: Self.parseDate(row.createdAt)
+        )
+    }
+
+    /// Registration count for registration-mode tables; actual roster size otherwise.
+    private func count(row: QuickTableRow, requiresReg: Bool) async throws -> Int {
+        if requiresReg {
+            let response = try await client
+                .from("quick_table_registrations")
+                .select("id", head: true, count: .exact)
+                .eq("table_id", value: row.id)
+                .neq("status", value: "rejected")
+                .execute()
+            return response.count ?? 0
+        } else {
+            let response = try await client
+                .from("quick_table_players")
+                .select("id", head: true, count: .exact)
+                .eq("table_id", value: row.id)
+                .execute()
+            return response.count ?? 0
+        }
+    }
+
+    private static func state(status: String?, requiresReg: Bool, registered: Int, capacity: Int) -> TournamentState {
+        switch status {
+        case "completed": return .completed
+        case "group_stage", "playoff": return .ongoing
+        default: // setup
+            guard requiresReg else { return .draft }
+            if capacity > 0 && registered >= capacity { return .full }
+            return .open
+        }
     }
 }
