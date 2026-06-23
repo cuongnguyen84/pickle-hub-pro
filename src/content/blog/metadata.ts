@@ -10,6 +10,21 @@ import type { BlogPostMetadata } from "./types";
  */
 export const blogMetadata: BlogPostMetadata[] = [
   {
+    slug: "ppa-beijing-open-2026-recap",
+    publishedDate: "2026-06-23",
+    updatedDate: "2026-06-23",
+    author: "Cuong Nguyen",
+    tags: ["ppa beijing open 2026", "beijing open pickleball", "truong vinh hien", "do minh quan", "ppa tour asia 2026", "ly hoang nam pickleball", "pickleball vietnam", "vietnamese pickleball champions"],
+    ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
+    ctaLabel: { en: "Next Vietnam stop: Ho Chi Minh City Open, Aug 6–9 — full schedule & prize money", vi: "Chặng Việt Nam tiếp theo: Ho Chi Minh City Open 6–9/8 — lịch & tiền thưởng" },
+    titleEn: "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold",
+    titleVi: "PPA Beijing Open 2026: Vinh Hiển & Minh Quân vô địch đôi nam",
+    metaTitleEn: "PPA Beijing Open 2026 Recap | Vietnam Wins Men's Doubles",
+    metaTitleVi: "PPA Beijing Open 2026 | Vinh Hiển, Minh Quân vô địch đôi nam",
+    metaDescriptionEn: "Truong Vinh Hien and Do Minh Quan won men's doubles gold at the PPA Asia 500 Beijing Open 2026, beating Miyoshi/Stirling 11-9, 11-7. Full results, the road to the final, Vinh Hien's singles bronze, and the Ly Hoang Nam withdrawal.",
+    metaDescriptionVi: "Trương Vinh Hiển và Đỗ Minh Quân vô địch đôi nam PPA Asia 500 Beijing Open 2026, thắng Miyoshi/Stirling 11-9, 11-7. Kết quả đầy đủ, đường tới chung kết, HCĐ đơn nam của Vinh Hiển và vụ Lý Hoàng Nam rút lui.",
+  },
+  {
     slug: "pickleball-club-management-software-comparison",
     publishedDate: "2026-06-15",
     updatedDate: "2026-06-15",

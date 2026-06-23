@@ -1096,6 +1096,7 @@ export function renderTools(siteUrl: string, rawPath = "/tools", lang: "en" | "v
 }
 
 const TOOL_PAGE_META: Record<string, { title: string; description: string }> = {
+  "ppa-beijing-open-2026-recap": { title: "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold", description: "Truong Vinh Hien and Do Minh Quan won men's doubles gold at the PPA Asia 500 Beijing Open 2026, beating Miyoshi/Stirling 11-9, 11-7. Full results, the road to the final, Vinh Hien's singles bronze, and the Ly Hoang Nam withdrawal.", datePublished: "2026-06-23", image: "" },
   "quick-tables": {
     title: "Quick Tables – Round Robin & Single Elimination | ThePickleHub",
     description: "Free round-robin & single elimination bracket generator. Auto-scheduling, real-time scoring, shareable links. No signup — ThePickleHub.",
