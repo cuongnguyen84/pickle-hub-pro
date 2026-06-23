@@ -1,0 +1,13 @@
+# XcodeGen output — regenerate with `xcodegen generate`
+*.xcodeproj/
+
+# Secrets (anon key is publishable, but follow repo convention of not committing keys)
+Config/Secrets.xcconfig
+
+# Build artifacts
+build/
+.build/
+DerivedData/
+**/xcuserdata/
+*.xcuserstate
+.swiftpm/
