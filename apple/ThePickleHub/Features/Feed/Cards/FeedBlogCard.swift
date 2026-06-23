@@ -23,14 +23,16 @@ struct FeedBlogCard: View {
             }
 
             Text(blog.title)
-                .font(.system(.title2, design: .serif).italic())
+                .font(TLFont.serif(27))
                 .foregroundStyle(TLColor.fg)
+                .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let excerpt = blog.excerpt?.nonEmpty {
                 Text(excerpt)
-                    .font(.subheadline)
+                    .font(TLFont.sans(15))
                     .foregroundStyle(TLColor.fg2)
+                    .lineSpacing(3)
                     .lineLimit(3)
             }
         }

@@ -33,8 +33,8 @@ struct TLPrimaryButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
         }
-        .background(TLColor.green, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
-        .foregroundStyle(TLColor.bg)
+        .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+        .foregroundStyle(TLColor.accentInk)
         .disabled(isLoading)
     }
 }
@@ -74,7 +74,7 @@ struct ProbeRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: result.ok ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                .foregroundStyle(result.ok ? TLColor.green : TLColor.live)
+                .foregroundStyle(result.ok ? TLColor.accentText : TLColor.live)
             VStack(alignment: .leading, spacing: 2) {
                 Text(result.label).foregroundStyle(TLColor.fg).font(.subheadline.weight(.medium))
                 Text(result.detail).foregroundStyle(TLColor.fg3).font(.caption).textSelection(.enabled)

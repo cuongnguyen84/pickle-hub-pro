@@ -11,8 +11,9 @@ struct FeedEyebrow<Content: View>: View {
         HStack(spacing: 6) {
             content
         }
-        .font(.caption2.weight(.bold))
-        .tracking(1.2)
+        .font(TLFont.mono(11, .semibold))
+        .textCase(.uppercase)
+        .tracking(0.6)
         .lineLimit(1)
     }
 }
@@ -30,7 +31,7 @@ enum EyebrowText {
         Text(string).foregroundStyle(TLColor.fg3)
     }
     static func accent(_ string: String) -> some View {
-        Text(string).foregroundStyle(TLColor.green)
+        Text(string).foregroundStyle(TLColor.accentText)
     }
 }
 

@@ -1,6 +1,8 @@
 import SwiftUI
 
-/// The Line theme tokens (dark), ported from `src/styles/the-line.css`.
+/// The Line theme tokens (dark), ported from `src/styles/the-line.css` +
+/// the shipped **Variant B** retune (`mockups/taste-landing-b.html`): the accent
+/// is optic-lime, not emerald, and uses a dual fill/text system.
 /// Single source of truth for color in the native app.
 enum TLColor {
     static let bg        = Color(hex: 0x08090A) // --tl-bg
@@ -12,13 +14,21 @@ enum TLColor {
 
     static let fg        = Color(hex: 0xF5F3EE) // --tl-fg
     static let fg2       = Color(hex: 0xC7C3BB) // --tl-fg-2
-    static let fg3       = Color(hex: 0x86837D) // --tl-fg-3
-    static let fg4       = Color(hex: 0x54514C) // --tl-fg-4
+    static let fg3        = Color(hex: 0x8C897F) // --tl-fg-3
+    static let fg4        = Color(hex: 0x54514C) // --tl-fg-4
 
-    static let green     = Color(hex: 0x00B96B) // --tl-green
-    static let greenDim  = Color(hex: 0x047E48) // --tl-green-dim
-    static let live      = Color(hex: 0xFF4136) // --tl-live
-    static let gold      = Color(hex: 0xE9B649) // --tl-gold
+    // Variant B accent — optic-lime. Dual system:
+    //  • accent     — fills (buttons, score chips, glow)
+    //  • accentInk  — text/icons sitting ON an accent fill (near-black)
+    //  • accentText — accent-coloured text on the dark bg (brighter, legible)
+    //  • accentDim  — muted accent for gradients / secondary marks
+    static let accent     = Color(hex: 0xB5E853) // --tl-accent
+    static let accentInk  = Color(hex: 0x0B1402) // --tl-accent-ink
+    static let accentText = Color(hex: 0xBDEE5C) // --tl-accent-text
+    static let accentDim  = Color(hex: 0x9CCC3F) // --tl-accent-dim
+
+    static let live      = Color(hex: 0xFF5147) // --tl-live
+    static let gold      = Color(hex: 0xEAB64B) // --tl-gold
 }
 
 enum TLRadius {

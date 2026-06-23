@@ -56,5 +56,19 @@
 			</array>
 		</dict>
 	</array>
+	<!-- The Line typeface system, mirroring the web (Geist / Geist Mono /
+	     Instrument Serif). OFL-licensed; bundled under Resources/Fonts. -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>Geist-Regular.ttf</string>
+		<string>Geist-Medium.ttf</string>
+		<string>Geist-SemiBold.ttf</string>
+		<string>Geist-Bold.ttf</string>
+		<string>GeistMono-Medium.ttf</string>
+		<string>GeistMono-SemiBold.ttf</string>
+		<string>GeistMono-Bold.ttf</string>
+		<string>InstrumentSerif-Regular.ttf</string>
+		<string>InstrumentSerif-Italic.ttf</string>
+	</array>
 </dict>
 </plist>

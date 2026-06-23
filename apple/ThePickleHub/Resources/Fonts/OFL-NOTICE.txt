@@ -1,0 +1,12 @@
+Bundled fonts — SIL Open Font License 1.1
+==========================================
+
+These typefaces mirror the thepicklehub.net web stack and are redistributed
+under the SIL Open Font License, Version 1.1 (https://openfontlicense.org).
+
+- Geist, Geist Mono — © Vercel. https://github.com/vercel/geist-font
+- Instrument Serif — © Rodrigo Fuenzalida & Jordi Pinyol.
+  https://github.com/google/fonts/tree/main/ofl/instrumentserif
+
+The full OFL text accompanies each upstream project. No modifications were made
+to the font files.

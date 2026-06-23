@@ -35,7 +35,7 @@ struct LoginView: View {
                 .foregroundStyle(TLColor.fg)
             Text("Native iOS · Phase 1")
                 .font(.subheadline)
-                .foregroundStyle(TLColor.green)
+                .foregroundStyle(TLColor.accentText)
         }
     }
 
@@ -84,7 +84,7 @@ struct LoginView: View {
         } label: {
             Text("Đăng nhập bằng số điện thoại")
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(TLColor.green)
+                .foregroundStyle(TLColor.accentText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
         }

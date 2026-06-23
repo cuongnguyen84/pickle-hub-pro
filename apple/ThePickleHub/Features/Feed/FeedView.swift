@@ -38,7 +38,7 @@ struct FeedView: View {
                         .task { await model.loadMoreIfNeeded(currentItem: item) }
                 }
                 if model.isLoadingMore {
-                    ProgressView().tint(TLColor.green).padding(.vertical, 16)
+                    ProgressView().tint(TLColor.accentText).padding(.vertical, 16)
                 }
                 if model.reachedEnd, !model.items.isEmpty {
                     Text("· Hết bảng tin ·")
@@ -53,7 +53,7 @@ struct FeedView: View {
 
     private var loadingState: some View {
         VStack(spacing: 14) {
-            ProgressView().tint(TLColor.green)
+            ProgressView().tint(TLColor.accentText)
             Text("Đang tải bảng tin…")
                 .font(.footnote)
                 .foregroundStyle(TLColor.fg3)
@@ -76,7 +76,7 @@ struct FeedView: View {
                 .multilineTextAlignment(.center)
                 .textSelection(.enabled)
             Button("Thử lại") { Task { await model.refresh() } }
-                .foregroundStyle(TLColor.green)
+                .foregroundStyle(TLColor.accentText)
                 .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)

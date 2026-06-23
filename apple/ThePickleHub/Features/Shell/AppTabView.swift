@@ -32,7 +32,7 @@ struct AppTabView: View {
                 .tag(Tab.tools)
                 .tabItem { Label("Công cụ", systemImage: "wrench.adjustable.fill") }
         }
-        .tint(TLColor.green)
+        .tint(TLColor.accent)
     }
 
     /// Initial tab, overridable via the `-startTab <tab>` launch argument
@@ -51,7 +51,7 @@ struct AppTabView: View {
                             ProfileView()
                         } label: {
                             Image(systemName: "person.crop.circle")
-                                .foregroundStyle(TLColor.green)
+                                .foregroundStyle(TLColor.accentText)
                         }
                     }
                 }
@@ -75,7 +75,7 @@ struct PlaceholderTab: View {
                 Text("\(phase) · sắp ra mắt")
                     .font(.footnote.weight(.medium))
                     .tracking(1)
-                    .foregroundStyle(TLColor.green)
+                    .foregroundStyle(TLColor.accentText)
             }
         }
     }

@@ -28,7 +28,7 @@ struct RatingCardView: View {
         .clipShape(RoundedRectangle(cornerRadius: TLRadius.xl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: TLRadius.xl, style: .continuous)
-                .strokeBorder(TLColor.green.opacity(0.15), lineWidth: 1)
+                .strokeBorder(TLColor.accent.opacity(0.15), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.4), radius: 18, y: 10)
     }
@@ -41,14 +41,14 @@ struct RatingCardView: View {
 
             // green glow, bottom-right
             Circle()
-                .fill(TLColor.green.opacity(0.25))
+                .fill(TLColor.accent.opacity(0.25))
                 .frame(width: 288, height: 288)
                 .blur(radius: 60)
                 .offset(x: 150, y: 150)
 
             // top accent rule
             LinearGradient(
-                colors: [Color(hex: 0x34D399), Color(hex: 0x059669)],
+                colors: [TLColor.accent, TLColor.accentDim],
                 startPoint: .leading, endPoint: .trailing
             )
             .frame(width: 176, height: 6)
@@ -67,14 +67,14 @@ struct RatingCardView: View {
     private var brandRow: some View {
         HStack {
             HStack(spacing: 8) {
-                Circle().fill(Color(hex: 0x34D399)).frame(width: 10, height: 10)
+                Circle().fill(TLColor.accent).frame(width: 10, height: 10)
                 Text("ThePickleHub").font(.subheadline.weight(.bold)).foregroundStyle(TLColor.fg)
             }
             Spacer()
             Text("DUPR")
                 .font(.caption2.weight(.bold))
                 .tracking(3)
-                .foregroundStyle(Color(hex: 0x34D399))
+                .foregroundStyle(TLColor.accentText)
         }
     }
 
@@ -88,7 +88,7 @@ struct RatingCardView: View {
                     .lineLimit(1)
                 Text("@\(profile.resolvedUsername)")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color(hex: 0xA1A1AA))
+                    .foregroundStyle(TLColor.fg3)
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
@@ -107,35 +107,35 @@ struct RatingCardView: View {
             } else {
                 Text(String(profile.resolvedDisplayName.prefix(1)).uppercased())
                     .font(.title3.weight(.black))
-                    .foregroundStyle(Color(hex: 0x34D399))
+                    .foregroundStyle(TLColor.accentText)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(hex: 0x18181B))
             }
         }
         .frame(width: 48, height: 48)
         .clipShape(Circle())
-        .overlay(Circle().strokeBorder(Color(hex: 0x34D399), lineWidth: 2))
+        .overlay(Circle().strokeBorder(TLColor.accent, lineWidth: 2))
     }
 
     @ViewBuilder
     private var heroBlock: some View {
         if profile.isUnrated {
             VStack(alignment: .trailing, spacing: 2) {
-                Text("DUPR").font(.caption2.weight(.bold)).tracking(2).foregroundStyle(Color(hex: 0x34D399))
+                Text("DUPR").font(.caption2.weight(.bold)).tracking(2).foregroundStyle(TLColor.accentText)
                 Text("Chưa xếp hạng").font(.title2.weight(.black)).foregroundStyle(TLColor.fg)
             }
         } else {
             VStack(alignment: .trailing, spacing: 2) {
-                Text(heroLabel).font(.caption2.weight(.bold)).tracking(2).foregroundStyle(Color(hex: 0x34D399))
+                Text(heroLabel).font(TLFont.mono(10, .semibold)).tracking(2).foregroundStyle(TLColor.accentText)
                 Text(heroValue)
-                    .font(.system(size: 60, weight: .black, design: .monospaced))
+                    .font(TLFont.mono(58, .bold))
                     .foregroundStyle(TLColor.fg)
                     .monospacedDigit()
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                 HStack(spacing: 4) {
-                    Text(secLabel).font(.subheadline.weight(.semibold)).tracking(1.5).foregroundStyle(Color(hex: 0xA1A1AA))
-                    Text(secValue).font(.subheadline.weight(.semibold)).foregroundStyle(Color(hex: 0xE4E4E7))
+                    Text(secLabel).font(TLFont.mono(12, .medium)).tracking(1).foregroundStyle(TLColor.fg3)
+                    Text(secValue).font(TLFont.mono(12, .semibold)).foregroundStyle(TLColor.fg2)
                 }
             }
         }
@@ -173,8 +173,8 @@ struct RatingCardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 11)
-        .foregroundStyle(filled ? TLColor.bg : TLColor.fg)
-        .background(filled ? TLColor.green : TLColor.surface2, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+        .foregroundStyle(filled ? TLColor.accentInk : TLColor.fg)
+        .background(filled ? TLColor.accent : TLColor.surface2, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous)
                 .strokeBorder(filled ? .clear : TLColor.border, lineWidth: 1)

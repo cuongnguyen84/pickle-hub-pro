@@ -34,7 +34,7 @@ struct ProfileView: View {
             VStack(spacing: 20) {
                 switch model.phase {
                 case .loading:
-                    ProgressView().tint(TLColor.green).padding(.top, 60)
+                    ProgressView().tint(TLColor.accentText).padding(.top, 60)
 
                 case .loaded(let profile):
                     RatingCardView(profile: profile, isOwn: true)
@@ -48,7 +48,7 @@ struct ProfileView: View {
                                 .font(.headline)
                             Text(message).font(.caption).foregroundStyle(TLColor.fg3).textSelection(.enabled)
                             Button("Thử lại") { Task { await model.load() } }
-                                .foregroundStyle(TLColor.green)
+                                .foregroundStyle(TLColor.accentText)
                         }
                     }
                     signOutButton

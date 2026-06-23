@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Match result card — the densest feed type. Two team rows (winner
-/// highlighted), per-game score cells, optional tournament line, and read-only
-/// engagement counts. Kudos/comment interaction is deferred past Phase 2.
+/// Match result card — the densest feed type. Serif player names (winner
+/// highlighted), large lime/gray per-game score numerals, optional tournament
+/// line, status badge, and read-only engagement. Mirrors the web FeedMatchCard.
 struct FeedMatchCard: View {
     let match: FeedMatch
     let publishedAt: Date?
@@ -26,12 +26,12 @@ struct FeedMatchCard: View {
 
             if match.isTournament, let tournamentLine {
                 Text(tournamentLine)
-                    .font(.caption.weight(.semibold))
+                    .font(TLFont.sans(13, .medium))
                     .foregroundStyle(TLColor.fg2)
                     .lineLimit(2)
             }
 
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 teamRow(players: teams.teamA, scores: match.teamAScore, isWinner: winnerIsA)
                 Rectangle().fill(TLColor.border).frame(height: 1)
                 teamRow(players: teams.teamB, scores: match.teamBScore, isWinner: !winnerIsA)
@@ -46,15 +46,16 @@ struct FeedMatchCard: View {
 
     private var statusBadge: some View {
         let badge = FeedFormat.status(match.verificationStatus)
-        let tint: Color = badge.isVerified ? TLColor.green : (badge.isDisputed ? TLColor.gold : TLColor.fg3)
+        let tint: Color = badge.isVerified ? TLColor.accentText : (badge.isDisputed ? TLColor.gold : TLColor.fg3)
         return HStack(spacing: 5) {
             if badge.isVerified {
-                Circle().fill(TLColor.green).frame(width: 6, height: 6)
+                Circle().fill(TLColor.accentText).frame(width: 6, height: 6)
             } else if badge.isDisputed {
                 Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 9))
             }
-            Text(badge.label).font(.caption2.weight(.bold)).tracking(1)
+            Text(badge.label).font(TLFont.mono(10, .semibold)).tracking(0.8)
         }
+        .textCase(.uppercase)
         .foregroundStyle(tint)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -76,39 +77,54 @@ struct FeedMatchCard: View {
 
     private func teamRow(players: [FeedParticipant], scores: [Int], isWinner: Bool) -> some View {
         HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                if players.isEmpty {
-                    Text("—").foregroundStyle(TLColor.fg3)
-                }
-                ForEach(players) { player in
-                    HStack(spacing: 6) {
-                        Text(player.resolvedName)
-                            .font(.subheadline.weight(isWinner ? .bold : .medium))
-                            .foregroundStyle(isWinner ? TLColor.fg : TLColor.fg2)
-                            .lineLimit(1)
-                        if let dupr = player.duprDoubles {
-                            Text(String(format: "%.2f", dupr))
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(TLColor.fg4)
-                        }
-                    }
-                }
+            VStack(alignment: .leading, spacing: 3) {
+                names(players, isWinner: isWinner)
+                handles(players)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 6) {
-                ForEach(Array(scores.enumerated()), id: \.offset) { _, value in
-                    Text("\(value)")
-                        .font(.system(.body, design: .monospaced).weight(.bold))
-                        .monospacedDigit()
-                        .foregroundStyle(isWinner ? TLColor.green : TLColor.fg3)
-                        .frame(minWidth: 26)
-                        .padding(.vertical, 4)
-                        .background(
-                            (isWinner ? TLColor.green.opacity(0.14) : TLColor.surface2),
-                            in: RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        )
+            scoreboard(scores, isWinner: isWinner)
+        }
+    }
+
+    @ViewBuilder
+    private func names(_ players: [FeedParticipant], isWinner: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 7) {
+            if players.isEmpty {
+                Text("—").font(TLFont.serif(20)).foregroundStyle(TLColor.fg3)
+            }
+            ForEach(Array(players.enumerated()), id: \.offset) { index, player in
+                if index > 0 {
+                    Text("+").font(TLFont.serif(17)).foregroundStyle(TLColor.accentText)
                 }
+                Text(player.resolvedName)
+                    .font(TLFont.serif(20))
+                    .foregroundStyle(isWinner ? TLColor.fg : TLColor.fg2)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func handles(_ players: [FeedParticipant]) -> some View {
+        let handles = players.compactMap { p in p.username?.nonEmpty.map { "@\($0)" } }
+        if !handles.isEmpty {
+            Text(handles.joined(separator: "  ·  "))
+                .font(TLFont.mono(10))
+                .foregroundStyle(TLColor.fg4)
+                .lineLimit(1)
+        }
+    }
+
+    private func scoreboard(_ scores: [Int], isWinner: Bool) -> some View {
+        HStack(spacing: 12) {
+            ForEach(Array(scores.enumerated()), id: \.offset) { index, value in
+                if index > 0 {
+                    Rectangle().fill(TLColor.border).frame(width: 1, height: 26)
+                }
+                Text("\(value)")
+                    .font(TLFont.mono(30, .semibold))
+                    .foregroundStyle(isWinner ? TLColor.accentText : TLColor.fg3)
             }
         }
     }
@@ -119,7 +135,7 @@ struct FeedMatchCard: View {
         HStack(spacing: 14) {
             if let venue = match.venueName?.nonEmpty {
                 Label(venue, systemImage: "mappin.and.ellipse")
-                    .font(.caption2)
+                    .font(TLFont.mono(10))
                     .foregroundStyle(TLColor.fg3)
                     .lineLimit(1)
             }
@@ -132,7 +148,7 @@ struct FeedMatchCard: View {
     private func engagement(icon: String, count: Int) -> some View {
         HStack(spacing: 4) {
             Image(systemName: icon).font(.system(size: 11))
-            Text("\(count)").font(.caption2.weight(.semibold))
+            Text("\(count)").font(TLFont.mono(10, .medium))
         }
         .foregroundStyle(TLColor.fg3)
         .opacity(count > 0 ? 1 : 0.5)
