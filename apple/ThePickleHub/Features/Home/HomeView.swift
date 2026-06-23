@@ -71,8 +71,33 @@ struct HomeView: View {
             }
             Text("GLOBAL STANDARD · 2018 → 2026")
                 .font(TLFont.mono(9)).tracking(0.6).foregroundStyle(TLColor.fg4)
+
+            HStack(spacing: 8) {
+                Button { openURL = IdentifiedURL(url: WebRoutes.base.appending(path: "match")) } label: {
+                    partnerButton("Log trận", systemImage: "plus", filled: true)
+                }
+                .buttonStyle(.plain)
+                Button { openURL = IdentifiedURL(url: WebRoutes.base.appending(path: "vi/blog")) } label: {
+                    partnerButton("Hướng dẫn", systemImage: "arrow.right", filled: false)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 4)
         }
         .feedCard()
+    }
+
+    private func partnerButton(_ title: String, systemImage: String, filled: Bool) -> some View {
+        HStack(spacing: 5) {
+            if !filled { Text(title) }
+            Image(systemName: systemImage).font(.system(size: 11, weight: .bold))
+            if filled { Text(title) }
+        }
+        .font(TLFont.mono(11, .semibold))
+        .foregroundStyle(filled ? TLColor.accentInk : TLColor.fg2)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(filled ? TLColor.accent : .clear, in: Capsule())
+        .overlay(Capsule().strokeBorder(filled ? .clear : TLColor.border2, lineWidth: 1))
     }
 
     // MARK: Stats

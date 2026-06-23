@@ -65,6 +65,9 @@ private struct VideoHighlightCard: View {
     private var poster: some View {
         if let url = video.thumbURL {
             FeedThumbnail(url: url, aspect: 16.0 / 9.0, overlay: playBadge)
+        } else if let fileURL = video.videoFileURL {
+            VideoPosterView(url: fileURL)
+                .overlay { playBadge }
         } else {
             Rectangle()
                 .fill(TLColor.surface2)

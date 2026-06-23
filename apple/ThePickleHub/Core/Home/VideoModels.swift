@@ -6,6 +6,7 @@ struct VideoSummary: Decodable, Identifiable, Equatable {
     let title: String
     let thumbnailPath: String?
     let muxPlaybackID: String?
+    let storagePath: String?
     let durationSeconds: Int?
     let publishedAt: String?
     let type: String?
@@ -29,10 +30,18 @@ struct VideoSummary: Decodable, Identifiable, Equatable {
 
     var durationText: String? { FeedFormat.duration(durationSeconds) }
 
+    /// Public storage URL of the video file — used to derive a poster frame when
+    /// there's no thumbnail or Mux playback id (web renders a muted <video>).
+    var videoFileURL: URL? {
+        guard let path = storagePath?.nonEmpty else { return nil }
+        return AppConfig.supabaseURL.appending(path: "storage/v1/object/public/videos/\(path)")
+    }
+
     enum CodingKeys: String, CodingKey {
         case id, title, type, organization
         case thumbnailPath = "thumbnail_url"
         case muxPlaybackID = "mux_playback_id"
+        case storagePath = "storage_path"
         case durationSeconds = "duration_seconds"
         case publishedAt = "published_at"
     }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Gold results ticker bar. A horizontally-scrollable strip of recent match
+/// Gold results ticker bar — a horizontally-scrollable strip of recent match
 /// results (auto-scroll animation is a future polish).
 struct HomeTicker: View {
     let items: [TickerItem]
