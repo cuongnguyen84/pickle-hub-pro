@@ -257,12 +257,35 @@ struct FeedMatchCard: View {
 
     @ViewBuilder
     private func handles(_ players: [FeedParticipant]) -> some View {
-        let handles = players.compactMap { p in p.username?.nonEmpty.map { "@\($0)" } }
-        if !handles.isEmpty {
-            Text(handles.joined(separator: "  ·  "))
-                .font(TLFont.mono(10))
-                .foregroundStyle(TLColor.fg4)
-                .lineLimit(1)
+        let withHandle = players.filter { $0.username?.nonEmpty != nil }
+        if !withHandle.isEmpty {
+            HStack(spacing: 0) {
+                ForEach(Array(withHandle.enumerated()), id: \.element.id) { index, player in
+                    if index > 0 {
+                        Text("  ·  ").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
+                    }
+                    handleView(player)
+                }
+            }
+            .lineLimit(1)
+        }
+    }
+
+    /// Real users get a tappable lime handle that pushes their native profile;
+    /// ghost rows (imported pros, MLP team logos) stay dim and inert since they
+    /// have no public profile to open.
+    @ViewBuilder
+    private func handleView(_ player: FeedParticipant) -> some View {
+        let username = player.username ?? ""
+        if player.isGhost == true {
+            Text("@\(username)").font(TLFont.mono(10)).foregroundStyle(TLColor.fg4)
+        } else {
+            NavigationLink {
+                PlayerProfileView(username: username)
+            } label: {
+                Text("@\(username)").font(TLFont.mono(10)).foregroundStyle(TLColor.accentText)
+            }
+            .buttonStyle(.plain)
         }
     }
 

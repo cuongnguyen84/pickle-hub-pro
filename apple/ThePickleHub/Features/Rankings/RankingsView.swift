@@ -1,11 +1,10 @@
 import SwiftUI
 
 /// Native Vietnam DUPR leaderboard with a Đôi/Đơn toggle. Tapping a player
-/// opens their web profile until a native player screen ships.
+/// pushes their native profile (gated to public profiles).
 struct RankingsView: View {
     @State private var model = RankingsViewModel()
     @State private var format: RankingsRepository.Format = .doubles
-    @State private var openURL: IdentifiedURL?
 
     var body: some View {
         ScrollView {
@@ -23,7 +22,6 @@ struct RankingsView: View {
         .navigationTitle("Xếp hạng")
         .navigationBarTitleDisplayMode(.large)
         .task(id: format) { await model.load(format: format) }
-        .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
     }
 
     private var formatToggle: some View {
@@ -61,7 +59,9 @@ struct RankingsView: View {
         case .loaded:
             LazyVStack(spacing: 0) {
                 ForEach(model.rows) { row in
-                    Button { openURL = IdentifiedURL(url: WebRoutes.player(username: row.username)) } label: {
+                    NavigationLink {
+                        PlayerProfileView(username: row.username)
+                    } label: {
                         RankingRowView(row: row)
                     }
                     .buttonStyle(.plain)
