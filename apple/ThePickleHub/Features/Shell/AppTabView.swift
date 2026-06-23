@@ -16,7 +16,7 @@ struct AppTabView: View {
                 .tag(Tab.home)
                 .tabItem { Label("Trang chủ", systemImage: "house.fill") }
 
-            PlaceholderTab(title: "Trực tiếp", phase: "Phase 6", systemImage: "dot.radiowaves.up.forward")
+            LiveView()
                 .tag(Tab.live)
                 .tabItem { Label("Trực tiếp", systemImage: "dot.radiowaves.up.forward") }
 

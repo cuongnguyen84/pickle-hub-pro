@@ -37,6 +37,14 @@ struct VideoSummary: Decodable, Identifiable, Equatable {
         return AppConfig.supabaseURL.appending(path: "storage/v1/object/public/videos/\(path)")
     }
 
+    /// AVPlayer-playable URL: Mux HLS when available, else the storage file.
+    var playbackURL: URL? {
+        if let mux = muxPlaybackID?.nonEmpty {
+            return URL(string: "https://stream.mux.com/\(mux).m3u8")
+        }
+        return videoFileURL
+    }
+
     enum CodingKeys: String, CodingKey {
         case id, title, type, organization
         case thumbnailPath = "thumbnail_url"
