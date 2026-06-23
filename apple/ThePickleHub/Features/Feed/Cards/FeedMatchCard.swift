@@ -129,21 +129,8 @@ struct FeedMatchCard: View {
 
     private func mlpBreakdown(_ mlp: MlpMatchupNotes) -> some View {
         VStack(spacing: 0) {
-            HStack(alignment: .top, spacing: 12) {
-                Text(mlp.teamA.name)
-                    .foregroundStyle(winnerIsA ? TLColor.accentText : TLColor.fg2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text(mlp.teamB.name)
-                    .foregroundStyle(winnerIsA ? TLColor.fg2 : TLColor.accentText)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .multilineTextAlignment(.trailing)
-            }
-            .font(TLFont.mono(10, .semibold))
-            .padding(.vertical, 9)
-            Rectangle().fill(TLColor.border).frame(height: 1)
-
             ForEach(Array(mlp.games.enumerated()), id: \.offset) { index, game in
-                mlpGameRow(game)
+                mlpGameRow(game, index: index)
                 if index < mlp.games.count - 1 {
                     Rectangle().fill(TLColor.border).frame(height: 1)
                 }
@@ -154,17 +141,20 @@ struct FeedMatchCard: View {
         .background(TLColor.bg, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
     }
 
-    private func mlpGameRow(_ game: MlpMatchupNotes.Game) -> some View {
-        let aWon = game.winner == "a"
-        let bWon = game.winner == "b"
+    /// Per-game scores live in the flat `team_a_score`/`team_b_score` arrays
+    /// (same order as `games`); the notes JSON carries the lineups but stale 0
+    /// scores, so read tallies from the score arrays by index.
+    private func mlpGameRow(_ game: MlpMatchupNotes.Game, index: Int) -> some View {
+        let a = score(match.teamAScore, index)
+        let b = score(match.teamBScore, index)
         let label = Self.mlpGameLabels[game.label] ?? game.label
         return VStack(alignment: .leading, spacing: 6) {
             Text("\(game.label) · \(label)")
                 .font(TLFont.mono(9, .medium)).tracking(0.6).textCase(.uppercase)
                 .foregroundStyle(TLColor.fg4)
 
-            mlpSide(players: game.playersA, score: game.scoreA, isWinner: aWon)
-            mlpSide(players: game.playersB, score: game.scoreB, isWinner: bWon)
+            mlpSide(players: game.playersA, score: a, isWinner: a > b)
+            mlpSide(players: game.playersB, score: b, isWinner: b > a)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 9)
