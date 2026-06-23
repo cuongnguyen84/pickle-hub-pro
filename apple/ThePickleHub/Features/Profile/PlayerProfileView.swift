@@ -77,7 +77,7 @@ struct PlayerProfileView: View {
         .background(TLColor.bg)
         .navigationTitle("@\(username)")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await model.load(username: username) }
+        .task(id: username) { await model.load(username: username) }
     }
 
     // MARK: Stats strip
