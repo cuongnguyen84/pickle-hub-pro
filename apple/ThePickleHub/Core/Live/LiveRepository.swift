@@ -7,7 +7,7 @@ struct LiveRepository {
     private var client: SupabaseClient { SupabaseManager.shared.client }
 
     private static let streamColumns =
-        "id, title, thumbnail_url, mux_playback_id, scheduled_start_at, ended_at, status, vod_url, hls_url, organization:organizations(name)"
+        "id, title, thumbnail_url, mux_playback_id, mux_asset_playback_id, scheduled_start_at, ended_at, status, vod_url, hls_url, organization:organizations(name)"
     private static let videoColumns =
         "id, title, thumbnail_url, mux_playback_id, storage_path, duration_seconds, published_at, type, organization:organizations(name)"
 

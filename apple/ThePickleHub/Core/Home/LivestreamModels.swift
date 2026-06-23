@@ -6,6 +6,7 @@ struct LivestreamSummary: Decodable, Identifiable, Equatable {
     let title: String?
     let thumbnailPath: String?
     let muxPlaybackID: String?
+    let muxAssetPlaybackID: String?
     let scheduledStartAt: String?
     let endedAt: String?
     let status: String?
@@ -30,12 +31,14 @@ struct LivestreamSummary: Decodable, Identifiable, Equatable {
         return nil
     }
 
-    /// HLS/VOD URL playable directly by AVPlayer. A Mux playback id maps to the
-    /// standard HLS endpoint; otherwise fall back to the stored hls/vod URL.
+    /// HLS URL playable directly by AVPlayer. While live, use the live-edge
+    /// playback id; once ended, the live id 412s ("live_stream_inactive") so we
+    /// must use the recorded ASSET playback id instead.
     var playbackURL: URL? {
-        if let mux = muxPlaybackID?.nonEmpty {
-            return URL(string: "https://stream.mux.com/\(mux).m3u8")
-        }
+        func muxHLS(_ id: String) -> URL? { URL(string: "https://stream.mux.com/\(id).m3u8") }
+        if isLive, let mux = muxPlaybackID?.nonEmpty { return muxHLS(mux) }
+        if let asset = muxAssetPlaybackID?.nonEmpty { return muxHLS(asset) }
+        if let mux = muxPlaybackID?.nonEmpty { return muxHLS(mux) }
         if let hls = hlsURL?.nonEmpty { return URL(string: hls) }
         if let vod = vodURL?.nonEmpty { return URL(string: vod) }
         return nil
@@ -45,6 +48,7 @@ struct LivestreamSummary: Decodable, Identifiable, Equatable {
         case id, title, status, organization
         case thumbnailPath = "thumbnail_url"
         case muxPlaybackID = "mux_playback_id"
+        case muxAssetPlaybackID = "mux_asset_playback_id"
         case scheduledStartAt = "scheduled_start_at"
         case endedAt = "ended_at"
         case vodURL = "vod_url"
