@@ -26,4 +26,17 @@ struct HomeRepository {
             .value
         return rows.first
     }
+
+    /// "Sân đấu" highlight videos — newest published.
+    func highlightVideos(limit: Int = 6) async throws -> [VideoSummary] {
+        try await client
+            .from("videos")
+            .select("id, title, thumbnail_url, mux_playback_id, duration_seconds, published_at, type, organization:organizations(name)")
+            .eq("status", value: "published")
+            .order("published_at", ascending: false)
+            .limit(limit)
+            .execute()
+            .value
+    }
 }
+

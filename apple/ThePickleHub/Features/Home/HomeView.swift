@@ -5,6 +5,7 @@ import SwiftUI
 /// pull-quote. (Videos, upcoming, live, ticker, newsletter follow.)
 struct HomeView: View {
     @State private var model = HomeViewModel()
+    @State private var openURL: IdentifiedURL?
 
     var body: some View {
         ScrollView {
@@ -22,7 +23,15 @@ struct HomeView: View {
                 }
 
                 manifesto
+
+                HomeUpcomingSection(tournaments: model.upcoming)
+
+                if !model.videos.isEmpty {
+                    HomeVideosSection(videos: model.videos) { openURL = IdentifiedURL(url: $0) }
+                }
+
                 pullQuote
+                HomeNewsletter()
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
@@ -31,6 +40,7 @@ struct HomeView: View {
         .background(TLColor.bg)
         .task { await model.load() }
         .refreshable { await model.load() }
+        .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
     }
 
     // MARK: Partnership
