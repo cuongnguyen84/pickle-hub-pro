@@ -20,7 +20,7 @@ struct AppTabView: View {
                 .tag(Tab.live)
                 .tabItem { Label("Trực tiếp", systemImage: "dot.radiowaves.up.forward") }
 
-            PlaceholderTab(title: "Social", phase: "Phase 5", systemImage: "calendar.badge.plus")
+            SocialListView()
                 .tag(Tab.social)
                 .tabItem { Label("Social", systemImage: "calendar.badge.plus") }
 

@@ -17,6 +17,7 @@ enum WebRoutes {
     }
     static func tournament(slug: String) -> URL { base.appending(path: "vi/tournament/\(slug)") }
     static func live(id: UUID) -> URL { base.appending(path: "live/\(id.uuidString.lowercased())") }
+    static func social(slug: String) -> URL { base.appending(path: "vi/social/\(slug)") }
 
     /// Resolves an image path that may be relative (e.g. blog covers like
     /// "/images/blog/x.webp") against the site origin; absolute URLs pass through.
