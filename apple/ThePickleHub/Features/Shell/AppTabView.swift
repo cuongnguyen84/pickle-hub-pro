@@ -43,7 +43,7 @@ struct AppTabView: View {
 
     private var homeTab: some View {
         NavigationStack {
-            PlaceholderTab(title: "Trang chủ", phase: "Phase 1", systemImage: "house.fill")
+            HomeHub()
                 .navigationTitle("ThePickleHub")
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
