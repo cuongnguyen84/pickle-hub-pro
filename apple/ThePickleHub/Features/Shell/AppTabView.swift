@@ -4,24 +4,41 @@ import SwiftUI
 /// Tools). Profile is reached from the Home toolbar, like the web header —
 /// it is not a bottom tab. Non-Home tabs are Phase 2+ placeholders.
 struct AppTabView: View {
+    enum Tab: String, Hashable {
+        case home, live, social, feed, tools
+    }
+
+    @State private var selection: Tab = Self.launchTab
+
     var body: some View {
-        TabView {
+        TabView(selection: $selection) {
             homeTab
+                .tag(Tab.home)
                 .tabItem { Label("Trang chủ", systemImage: "house.fill") }
 
             PlaceholderTab(title: "Trực tiếp", phase: "Phase 6", systemImage: "dot.radiowaves.up.forward")
+                .tag(Tab.live)
                 .tabItem { Label("Trực tiếp", systemImage: "dot.radiowaves.up.forward") }
 
             PlaceholderTab(title: "Social", phase: "Phase 5", systemImage: "calendar.badge.plus")
+                .tag(Tab.social)
                 .tabItem { Label("Social", systemImage: "calendar.badge.plus") }
 
-            PlaceholderTab(title: "Bảng tin", phase: "Phase 2", systemImage: "newspaper.fill")
+            NavigationStack { FeedView() }
+                .tag(Tab.feed)
                 .tabItem { Label("Bảng tin", systemImage: "newspaper.fill") }
 
             PlaceholderTab(title: "Công cụ", phase: "Phase 4", systemImage: "wrench.adjustable.fill")
+                .tag(Tab.tools)
                 .tabItem { Label("Công cụ", systemImage: "wrench.adjustable.fill") }
         }
         .tint(TLColor.green)
+    }
+
+    /// Initial tab, overridable via the `-startTab <tab>` launch argument
+    /// (lands in the UserDefaults argument domain). Foundation for deep links.
+    private static var launchTab: Tab {
+        UserDefaults.standard.string(forKey: "startTab").flatMap(Tab.init) ?? .home
     }
 
     private var homeTab: some View {
