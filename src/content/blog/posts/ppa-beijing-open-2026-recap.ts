@@ -20,9 +20,10 @@ const post: BlogPost = {
     en: "Next Vietnam stop: Ho Chi Minh City Open, Aug 6–9 — full schedule & prize money",
     vi: "Chặng Việt Nam tiếp theo: Ho Chi Minh City Open 6–9/8 — lịch & tiền thưởng",
   },
-  // heroImage intentionally omitted at publish time — hero .webp not generated yet.
-  // og:image falls back to DEFAULT_OG_IMAGE (valid). Wire heroImage + BLOG_POST_META
-  // image once the hero is generated (same pattern as V-P1 san-pickleball-tphcm, commit fa4a43f).
+  heroImage: {
+    src: "/images/blog/ppa-beijing-open-2026-recap-hero.webp",
+    alt: "Truong Vinh Hien and Do Minh Quan of Vietnam celebrating their men's doubles gold medal at the PPA Asia 500 Beijing Open 2026, holding the Vietnamese flag on an indoor court",
+  },
   content: {
     en: {
       title: "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold",

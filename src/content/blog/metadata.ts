@@ -17,6 +17,7 @@ export const blogMetadata: BlogPostMetadata[] = [
     tags: ["ppa beijing open 2026", "beijing open pickleball", "truong vinh hien", "do minh quan", "ppa tour asia 2026", "ly hoang nam pickleball", "pickleball vietnam", "vietnamese pickleball champions"],
     ctaPath: "/blog/ppa-tour-asia-2026-complete-guide",
     ctaLabel: { en: "Next Vietnam stop: Ho Chi Minh City Open, Aug 6–9 — full schedule & prize money", vi: "Chặng Việt Nam tiếp theo: Ho Chi Minh City Open 6–9/8 — lịch & tiền thưởng" },
+    heroImage: { src: "/images/blog/ppa-beijing-open-2026-recap-hero.webp", alt: "Truong Vinh Hien and Do Minh Quan of Vietnam celebrating their men's doubles gold medal at the PPA Asia 500 Beijing Open 2026, holding the Vietnamese flag on an indoor court" },
     titleEn: "PPA Beijing Open 2026 Recap: Vietnam's Hien & Quan Win Men's Doubles Gold",
     titleVi: "PPA Beijing Open 2026: Vinh Hiển & Minh Quân vô địch đôi nam",
     metaTitleEn: "PPA Beijing Open 2026 Recap | Vietnam Wins Men's Doubles",
