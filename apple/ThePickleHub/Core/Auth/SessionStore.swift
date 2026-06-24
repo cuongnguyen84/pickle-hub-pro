@@ -20,10 +20,13 @@ final class SessionStore {
 
     @MainActor
     func bootstrap() async {
-        do {
-            let session = try await client.auth.session
+        // Use the locally-stored session (synchronous, NO network) so a slow or
+        // dead network can't hang the launch on a token refresh — which would
+        // leave RootView stuck on `.unknown` (black screen). supabase-swift
+        // auto-refreshes the token in the background once connectivity returns.
+        if let session = client.auth.currentSession {
             state = .signedIn(email: session.user.email ?? "—")
-        } catch {
+        } else {
             state = .signedOut
         }
     }
