@@ -122,6 +122,9 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     let state: TournamentState
     let createdAt: Date?
     var format: BracketFormat = .quickTable
+    /// Creator's display name — only populated in the admin "Tất cả" scope so an
+    /// admin can see who owns each tournament. nil for the user's own list.
+    var creatorName: String? = nil
 
     var displayName: String { name.nonEmpty ?? "Giải đấu" }
 

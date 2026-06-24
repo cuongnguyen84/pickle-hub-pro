@@ -35,6 +35,144 @@ struct ToolsRepository {
         return all.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
     }
 
+    // MARK: Admin scope
+
+    /// True when the signed-in user holds the `admin` role. Mirrors the web
+    /// `useAdminAuth` check (user_roles WHERE user_id = uid AND role = 'admin').
+    /// Non-throwing — any failure (signed out / RLS / network) reads as not-admin.
+    func isCurrentUserAdmin() async -> Bool {
+        guard let uid = try? await client.auth.session.user.id.uuidString.lowercased() else { return false }
+        struct RoleRow: Decodable { let role: String }
+        do {
+            let rows: [RoleRow] = try await client
+                .from("user_roles")
+                .select("role")
+                .eq("user_id", value: uid)
+                .eq("role", value: "admin")
+                .limit(1)
+                .execute().value
+            return !rows.isEmpty
+        } catch { return false }
+    }
+
+    /// Admin-only: every tournament across all 4 formats, newest first. Lightweight
+    /// on purpose — NO per-row registration counts (that would be 100+ queries on
+    /// prod). Creator display names are batch-resolved from public_profiles so the
+    /// admin can see who owns each. Returns [] on failure. Caller gates on admin.
+    func allTournaments(limit: Int = 200) async -> [MyTournament] {
+        async let quick = allRows(
+            table: "quick_tables",
+            select: "id, share_id, name, is_doubles, player_count, status, created_at, creator_user_id",
+            format: .quickTable, owner: { $0.creatorUserID }, limit: limit)
+        async let doubles = allRows(
+            table: "doubles_elimination_tournaments",
+            select: "id, share_id, name, team_count, status, created_at, creator_user_id",
+            format: .doublesElim, owner: { $0.creatorUserID }, limit: limit)
+        async let team = allRows(
+            table: "team_match_tournaments",
+            select: "id, share_id, name, status, created_at, created_by",
+            format: .teamMatch, owner: { $0.createdBy }, limit: limit)
+        async let flex = allRows(
+            table: "flex_tournaments",
+            select: "id, share_id, name, status, created_at, creator_user_id",
+            format: .flex, owner: { $0.creatorUserID }, limit: limit)
+
+        let pairs = await quick + doubles + team + flex
+        let ownerIDs = Set(pairs.compactMap { $0.1?.lowercased() })
+        let names = await displayNames(ids: ownerIDs)
+
+        let merged = pairs.map { pair -> MyTournament in
+            var tournament = pair.0
+            if let oid = pair.1?.lowercased(), let name = names[oid] {
+                tournament.creatorName = name
+            }
+            return tournament
+        }
+        return merged.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+    }
+
+    /// Generic light fetch for the admin scope. Owner column differs per table, so
+    /// the caller supplies the select list + an owner-id extractor.
+    private func allRows(
+        table: String, select: String, format: BracketFormat,
+        owner: @escaping (AllToolRow) -> String?, limit: Int
+    ) async -> [(MyTournament, String?)] {
+        do {
+            let rows: [AllToolRow] = try await client
+                .from(table)
+                .select(select)
+                .order("created_at", ascending: false)
+                .limit(limit)
+                .execute().value
+            return rows.map { (Self.lightMap($0, format: format), owner($0)) }
+        } catch { return [] }
+    }
+
+    /// Batch-resolve display names for a set of owner ids (lower-cased keys).
+    private func displayNames(ids: Set<String>) async -> [String: String] {
+        guard !ids.isEmpty else { return [:] }
+        struct ProfileRow: Decodable {
+            let id: String
+            let displayName: String?
+            enum CodingKeys: String, CodingKey { case id; case displayName = "display_name" }
+        }
+        do {
+            let rows: [ProfileRow] = try await client
+                .from("public_profiles")
+                .select("id, display_name")
+                .in("id", values: Array(ids))
+                .execute().value
+            var map: [String: String] = [:]
+            for row in rows {
+                if let name = row.displayName?.nonEmpty { map[row.id.lowercased()] = name }
+            }
+            return map
+        } catch { return [:] }
+    }
+
+    /// Row shape covering all 4 tables in the admin scope — unselected columns
+    /// decode to nil (synthesized Decodable uses decodeIfPresent for optionals).
+    private struct AllToolRow: Decodable {
+        let id: UUID
+        let shareID: String
+        let name: String?
+        let status: String?
+        let createdAt: String?
+        let isDoubles: Bool?
+        let playerCount: Int?
+        let teamCount: Int?
+        let creatorUserID: String?
+        let createdBy: String?
+        enum CodingKeys: String, CodingKey {
+            case id, name, status
+            case shareID = "share_id"
+            case createdAt = "created_at"
+            case isDoubles = "is_doubles"
+            case playerCount = "player_count"
+            case teamCount = "team_count"
+            case creatorUserID = "creator_user_id"
+            case createdBy = "created_by"
+        }
+    }
+
+    /// Map without registration enrichment — capacity from the row, registered 0.
+    private static func lightMap(_ r: AllToolRow, format: BracketFormat) -> MyTournament {
+        let state: TournamentState
+        switch r.status {
+        case "completed": state = .completed
+        case "setup", "draft": state = .draft
+        case "registration_open": state = .open
+        case "group_stage", "playoff", "ongoing": state = .ongoing
+        default: state = .ongoing
+        }
+        let capacity = r.teamCount ?? r.playerCount ?? 0
+        return MyTournament(
+            id: r.id, shareID: r.shareID, name: r.name ?? "",
+            isDoubles: r.isDoubles ?? true, capacity: capacity, registered: 0,
+            state: state, createdAt: Self.parseDate(r.createdAt), format: format
+        )
+    }
+
     private func quickTournaments(uid: String, limit: Int) async -> [MyTournament] {
         do {
             let rows: [QuickTableRow] = try await client

@@ -4,13 +4,29 @@ import SwiftUI
 final class ToolsViewModel {
     enum Phase: Equatable { case loading, loaded, failed(String) }
 
+    /// Which set of tournaments the list shows. `.all` is admin-only — every
+    /// tournament on the platform, not just the ones the user created.
+    enum Scope: String, CaseIterable, Identifiable {
+        case mine, all
+        var id: String { rawValue }
+        var label: String { self == .mine ? "Của tôi" : "Tất cả" }
+    }
+
     var phase: Phase = .loading
-    var tournaments: [MyTournament] = []
+    var mine: [MyTournament] = []
+    var all: [MyTournament] = []
+    var isAdmin = false
+    var scope: Scope = .mine
+    var loadingAll = false
     var filter: ToolsFilter = .all
     var search = ""
 
     private let repo = ToolsRepository()
     private var loaded = false
+    private var allLoaded = false
+
+    /// Active dataset for the current scope.
+    var tournaments: [MyTournament] { scope == .all ? all : mine }
 
     var showSearch: Bool { tournaments.count > 6 }
 
@@ -26,13 +42,33 @@ final class ToolsViewModel {
     func load() async {
         if loaded { return }
         phase = .loading
-        tournaments = await repo.myTournaments()
+        async let mineTask = repo.myTournaments()
+        async let adminTask = repo.isCurrentUserAdmin()
+        mine = await mineTask
+        isAdmin = await adminTask
         loaded = true
         phase = .loaded
     }
 
     @MainActor
-    func reload() async { loaded = false; await load() }
+    func reload() async {
+        loaded = false
+        allLoaded = false
+        all = []
+        await load()
+        if scope == .all { await selectScope(.all) }
+    }
+
+    /// Switch scope. The admin "Tất cả" set is fetched lazily on first use, then cached.
+    @MainActor
+    func selectScope(_ next: Scope) async {
+        scope = next
+        guard next == .all, !allLoaded, !loadingAll else { return }
+        loadingAll = true
+        all = await repo.allTournaments()
+        allLoaded = true
+        loadingAll = false
+    }
 }
 
 /// Tools tab — Bracket Lab. Design: "Phương Án 2 / luồng" — hero, format picker
@@ -43,8 +79,10 @@ struct ToolsView: View {
     @State private var openURL: IdentifiedURL?
     @State private var showFinder = false
     @State private var showCreate = false
+    @State private var showCreateTeamMatch = false
     @State private var navTarget: MyTournament?
     @State private var createdTarget: CreatedRef?
+    @State private var createdTeamMatch: CreatedRef?
     @State private var recentExpanded = false
 
     private let recentCap = 8
@@ -89,8 +127,17 @@ struct ToolsView: View {
                     QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
                 }
             }
+            .sheet(isPresented: $showCreateTeamMatch) {
+                CreateTeamMatchView { shareID, name in
+                    Task { await model.reload() }
+                    createdTeamMatch = CreatedRef(id: shareID, name: name)
+                }
+            }
             .navigationDestination(item: $createdTarget) { ref in
                 QuickTableDetailView(shareID: ref.id, fallbackName: ref.name)
+            }
+            .navigationDestination(item: $createdTeamMatch) { ref in
+                TeamMatchDetailView(shareID: ref.id, fallbackName: ref.name)
             }
         }
     }
@@ -126,7 +173,8 @@ struct ToolsView: View {
                 compactFormatRow(icon: "slider.horizontal.3", title: "Giải linh hoạt",
                                  meta: "Tùy biến hoàn toàn", url: WebRoutes.toolsFlexTournament)
                 compactFormatRow(icon: "person.3.fill", title: "Đấu đồng đội",
-                                 meta: "Thể thức MLP · đội 4–8", url: WebRoutes.toolsTeamMatch)
+                                 meta: "Thể thức MLP · đội 4–8", url: WebRoutes.toolsTeamMatch,
+                                 action: { Haptics.light(); showCreateTeamMatch = true })
             }
             .padding(.horizontal, 22).padding(.top, 11)
 
@@ -191,8 +239,9 @@ struct ToolsView: View {
         .accessibilityLabel("Tạo Bảng đấu nhanh, thể thức phổ biến nhất")
     }
 
-    private func compactFormatRow(icon: String, title: String, meta: String, url: URL) -> some View {
-        Button { open(url) } label: {
+    private func compactFormatRow(icon: String, title: String, meta: String, url: URL,
+                                  action: (() -> Void)? = nil) -> some View {
+        Button { if let action { action() } else { open(url) } } label: {
             HStack(spacing: 14) {
                 iconChip(icon)
                 VStack(alignment: .leading, spacing: 4) {
@@ -231,9 +280,13 @@ struct ToolsView: View {
                 skeletonCards.padding(.horizontal, 22)
             case .failed(let message):
                 Text(message).font(TLFont.sans(12)).foregroundStyle(TLColor.fg3).padding(.horizontal, 22)
-            case .loaded where model.tournaments.isEmpty:
-                emptyState.padding(.horizontal, 22)
             case .loaded:
+                if model.isAdmin { scopeToggle }
+                if model.loadingAll {
+                    skeletonCards.padding(.horizontal, 22)
+                } else if model.tournaments.isEmpty {
+                    emptyState.padding(.horizontal, 22)
+                } else {
                 filterChips
                 if model.showSearch { searchField.padding(.horizontal, 22) }
                 let items = model.filtered
@@ -265,8 +318,31 @@ struct ToolsView: View {
                         .padding(.horizontal, 22)
                     }
                 }
+                }
             }
         }
+    }
+
+    private var scopeToggle: some View {
+        HStack(spacing: 8) {
+            ForEach(ToolsViewModel.Scope.allCases) { s in
+                let selected = model.scope == s
+                Button {
+                    Haptics.light()
+                    Task { await model.selectScope(s) }
+                } label: {
+                    Text(s.label)
+                        .font(TLFont.mono(11, selected ? .semibold : .medium)).tracking(0.4)
+                        .foregroundStyle(selected ? TLColor.accentInk : TLColor.fg3)
+                        .padding(.horizontal, 14).padding(.vertical, 7)
+                        .background(selected ? TLColor.accent : Color.clear, in: Capsule())
+                        .overlay(Capsule().strokeBorder(selected ? Color.clear : TLColor.border, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 22)
     }
 
     private var filterChips: some View {
@@ -379,6 +455,10 @@ private struct TournamentCard: View {
                         .font(TLFont.sans(16, .semibold)).foregroundStyle(TLColor.fg).lineLimit(1)
                     Text(tournament.metaLine)
                         .font(TLFont.mono(10.5)).foregroundStyle(TLColor.fg3)
+                    if let creator = tournament.creatorName {
+                        Text("bởi \(creator)")
+                            .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4).lineLimit(1)
+                    }
                 }
                 Spacer(minLength: 8)
                 statusBadge
