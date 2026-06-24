@@ -319,6 +319,14 @@ struct QuickTableDetailView: View {
 
     // MARK: Playoff tab
 
+    // Bracket geometry.
+    private var cardW: CGFloat { 190 }
+    private var cardH: CGFloat { 76 }
+    private var gap0: CGFloat { 16 }
+    private var pitch: CGFloat { cardH + gap0 }
+    private var connW: CGFloat { 26 }
+    private var headerBlock: CGFloat { 30 } // round header height + spacing
+
     @ViewBuilder
     private func playoffTab(_ detail: QuickTableDetail) -> some View {
         let rounds = detail.playoffByRound
@@ -329,24 +337,105 @@ struct QuickTableDetailView: View {
             if rounds.isEmpty {
                 note("Chưa tạo nhánh playoff.")
             } else {
-                ForEach(rounds, id: \.round) { r in
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(spacing: 8) {
-                            RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
-                            Text(roundLabel(r.matches.count).uppercased())
-                                .font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
-                            Spacer()
-                            Text("\(r.matches.filter { $0.isCompleted }.count)/\(r.matches.count)")
-                                .font(TLFont.mono(10)).foregroundStyle(TLColor.fg2).monospacedDigit()
-                                .padding(.horizontal, 8).padding(.vertical, 3)
-                                .background(TLColor.surface, in: Capsule())
-                        }
-                        ForEach(r.matches) { m in matchRow(detail, m) }
-                    }
-                }
+                bracket(detail, rounds)
             }
         }
     }
+
+    /// Horizontal single-elimination bracket: one column per round, matches
+    /// vertically centered between their feeders, elbow connectors between rounds.
+    private func bracket(_ detail: QuickTableDetail, _ rounds: [(round: Int, matches: [QTMatch])]) -> some View {
+        let firstCount = rounds.first?.matches.count ?? 1
+        let totalH = headerBlock + CGFloat(firstCount) * pitch
+        return ScrollView(.horizontal, showsIndicators: true) {
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(Array(rounds.enumerated()), id: \.element.round) { r, round in
+                    roundColumn(detail, round: round, index: r)
+                    if r < rounds.count - 1 {
+                        connector(leftCount: round.matches.count, index: r)
+                    }
+                }
+            }
+            .frame(height: totalH, alignment: .top)
+            .padding(.horizontal, 16)
+        }
+        .padding(.horizontal, -16) // scroll edge-to-edge inside the 16pt content inset
+    }
+
+    private func roundColumn(_ detail: QuickTableDetail, round: (round: Int, matches: [QTMatch]), index r: Int) -> some View {
+        let unit = pitch * p2(r)
+        return VStack(spacing: 0) {
+            HStack(spacing: 6) {
+                Text(roundLabel(round.matches.count).uppercased())
+                    .font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg2)
+                Text("\(round.matches.filter { $0.isCompleted }.count)/\(round.matches.count)")
+                    .font(TLFont.mono(9)).foregroundStyle(TLColor.fg4).monospacedDigit()
+            }
+            .frame(height: headerBlock, alignment: .center)
+
+            VStack(spacing: unit - cardH) {
+                ForEach(round.matches) { m in bracketCard(detail, m) }
+            }
+            .padding(.top, unit / 2 - cardH / 2)
+            Spacer(minLength: 0)
+        }
+        .frame(width: cardW)
+    }
+
+    /// Elbow connectors linking each pair of feeder matches to the next round.
+    private func connector(leftCount: Int, index r: Int) -> some View {
+        let unit = pitch * p2(r)
+        let pairs = max(0, leftCount / 2)
+        return VStack(spacing: 0) {
+            Color.clear.frame(height: headerBlock + unit * 0.5)
+            ForEach(0..<pairs, id: \.self) { i in
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(TLColor.border2).frame(width: 1.5)
+                    Rectangle().fill(TLColor.border2).frame(height: 1.5)
+                }
+                .frame(width: connW, height: unit)
+                if i < pairs - 1 { Color.clear.frame(height: unit) }
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(width: connW)
+    }
+
+    private func bracketCard(_ detail: QuickTableDetail, _ m: QTMatch) -> some View {
+        let canScore = model.editable && m.hasBothPlayers
+        return Button {
+            if canScore { Haptics.light(); model.scoringMatch = m }
+        } label: {
+            VStack(spacing: 0) {
+                bracketRow(detail.name(for: m.player1ID), score: m.score1, won: m.isCompleted && m.winnerID == m.player1ID, completed: m.isCompleted)
+                Rectangle().fill(TLColor.border).frame(height: 1)
+                bracketRow(detail.name(for: m.player2ID), score: m.score2, won: m.isCompleted && m.winnerID == m.player2ID, completed: m.isCompleted)
+            }
+            .frame(width: cardW, height: cardH)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!canScore)
+    }
+
+    private func bracketRow(_ name: String, score: Int?, won: Bool, completed: Bool) -> some View {
+        HStack(spacing: 8) {
+            Rectangle().fill(won ? TLColor.accent : Color.clear).frame(width: 2)
+            Text(name).font(TLFont.sans(13, won ? .semibold : .regular))
+                .foregroundStyle(won ? TLColor.fg : TLColor.fg2).lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(completed ? "\(score ?? 0)" : "–")
+                .font(TLFont.mono(13, .semibold)).monospacedDigit()
+                .foregroundStyle(won ? TLColor.accentText : TLColor.fg4)
+                .padding(.trailing, 10)
+        }
+        .frame(maxHeight: .infinity)
+        .background(won ? TLColor.accent.opacity(0.08) : Color.clear)
+    }
+
+    private func p2(_ r: Int) -> CGFloat { pow(2, CGFloat(r)) }
 
     private func championBanner(_ name: String) -> some View {
         HStack(spacing: 14) {
