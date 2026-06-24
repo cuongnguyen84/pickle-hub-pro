@@ -49,6 +49,9 @@ struct ToolsView: View {
     @State private var showCreate = false
     @State private var navTarget: MyTournament?
     @State private var createdTarget: CreatedRef?
+    @State private var recentExpanded = false
+
+    private let recentCap = 8
 
     struct CreatedRef: Identifiable, Hashable { let id: String; let name: String } // id = share_id
 
@@ -82,10 +85,10 @@ struct ToolsView: View {
             }
             .navigationDestination(item: $navTarget) { t in
                 switch t.format {
-                case .quickTable:
-                    QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
                 case .doublesElim:
                     DoublesElimDetailView(shareID: t.shareID, fallbackName: t.displayName)
+                default:
+                    QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
                 }
             }
             .navigationDestination(item: $createdTarget) { ref in
@@ -240,12 +243,29 @@ struct ToolsView: View {
                     Text("Không có giải nào khớp bộ lọc.")
                         .font(TLFont.sans(13)).foregroundStyle(TLColor.fg3).padding(.horizontal, 22)
                 } else {
+                    let shown = recentExpanded ? items : Array(items.prefix(recentCap))
                     VStack(spacing: 12) {
-                        ForEach(items) { t in
-                            TournamentCard(tournament: t) { Haptics.light(); navTarget = t }
+                        ForEach(shown) { t in
+                            TournamentCard(tournament: t) { manage(t) }
                         }
                     }
                     .padding(.horizontal, 22)
+                    if !recentExpanded && items.count > recentCap {
+                        Button {
+                            Haptics.light()
+                            withAnimation(.easeOut(duration: 0.2)) { recentExpanded = true }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text("Xem thêm \(items.count - recentCap) giải").font(TLFont.sans(13, .semibold))
+                                Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
+                            }
+                            .foregroundStyle(TLColor.accentText)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 22)
+                    }
                 }
             }
         }
@@ -333,6 +353,16 @@ struct ToolsView: View {
         Haptics.light()
         openURL = IdentifiedURL(url: url)
     }
+
+    /// Native formats push their detail view; the rest open the web.
+    private func manage(_ t: MyTournament) {
+        Haptics.light()
+        if t.format.hasNativeView {
+            navTarget = t
+        } else {
+            openURL = IdentifiedURL(url: t.format.webURL(shareID: t.shareID))
+        }
+    }
 }
 
 /// Rich card for a managed tournament: status badge, registration progress +
@@ -341,12 +371,7 @@ private struct TournamentCard: View {
     let tournament: MyTournament
     let onManage: () -> Void
 
-    private var shareURL: URL {
-        switch tournament.format {
-        case .quickTable: return WebRoutes.quickTable(shareID: tournament.shareID)
-        case .doublesElim: return WebRoutes.toolsDoublesEliminationView(shareID: tournament.shareID)
-        }
-    }
+    private var shareURL: URL { tournament.format.webURL(shareID: tournament.shareID) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

@@ -72,6 +72,20 @@ enum ToolsFilter: String, CaseIterable, Identifiable {
 enum BracketFormat: String, Equatable, Hashable {
     case quickTable
     case doublesElim
+    case teamMatch
+    case flex
+
+    /// Whether a native detail (view+score) screen exists; others open the web.
+    var hasNativeView: Bool { self == .quickTable || self == .doublesElim }
+
+    func webURL(shareID: String) -> URL {
+        switch self {
+        case .quickTable: return WebRoutes.quickTable(shareID: shareID)
+        case .doublesElim: return WebRoutes.toolsDoublesEliminationView(shareID: shareID)
+        case .teamMatch: return WebRoutes.toolsTeamMatchView(shareID: shareID)
+        case .flex: return WebRoutes.toolsFlexView(shareID: shareID)
+        }
+    }
 }
 
 /// Raw `quick_tables` row owned by the current user.
@@ -115,6 +129,10 @@ struct MyTournament: Identifiable, Equatable, Hashable {
         switch format {
         case .doublesElim:
             return capacity > 0 ? "Loại kép · \(capacity) đội" : "Loại kép"
+        case .teamMatch:
+            return "Đồng đội · MLP"
+        case .flex:
+            return "Giải linh hoạt"
         case .quickTable:
             let mode = isDoubles ? "Đôi" : "Đơn"
             return capacity > 0 ? "\(mode) · \(capacity) người" : mode

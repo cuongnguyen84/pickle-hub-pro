@@ -36,19 +36,67 @@ struct ToolsRepository {
             .order("created_at", ascending: false)
             .limit(limit)
             .execute().value
+        // Team Match owner column is `created_by` (NOT creator_user_id) — see web
+        // MyTournaments.tsx. Flex uses creator_user_id. Neither has a native view
+        // yet, so cards open the web on tap.
+        async let teamRows: [SimpleToolRow] = client
+            .from("team_match_tournaments")
+            .select("id, share_id, name, status, created_at")
+            .eq("created_by", value: uid)
+            .order("created_at", ascending: false)
+            .limit(limit)
+            .execute().value
+        async let flexRows: [SimpleToolRow] = client
+            .from("flex_tournaments")
+            .select("id, share_id, name, status, created_at")
+            .eq("creator_user_id", value: uid)
+            .order("created_at", ascending: false)
+            .limit(limit)
+            .execute().value
 
         let quick = try await quickRows
         let doubles = try await doublesRows
+        let team = try await teamRows
+        let flex = try await flexRows
 
-        // Enrich every row with its registration/roster count in parallel.
-        return try await withThrowingTaskGroup(of: MyTournament.self) { group in
+        // Enrich the registration-aware formats in parallel; team/flex map directly.
+        let enriched: [MyTournament] = try await withThrowingTaskGroup(of: MyTournament.self) { group in
             for row in quick { group.addTask { try await enrich(row) } }
             for row in doubles { group.addTask { try await enrich(row) } }
             var result: [MyTournament] = []
             for try await item in group { result.append(item) }
-            // Preserve newest-first order (task group completes out of order).
-            return result.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+            return result
         }
+        let simple = team.map { Self.map($0, format: .teamMatch) } + flex.map { Self.map($0, format: .flex) }
+        return (enriched + simple).sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+    }
+
+    /// Minimal row shared by Team Match + Flex (no capacity/registration surfaced).
+    private struct SimpleToolRow: Decodable {
+        let id: UUID
+        let shareID: String
+        let name: String?
+        let status: String?
+        let createdAt: String?
+        enum CodingKeys: String, CodingKey {
+            case id, name, status
+            case shareID = "share_id"
+            case createdAt = "created_at"
+        }
+    }
+
+    private static func map(_ row: SimpleToolRow, format: BracketFormat) -> MyTournament {
+        let state: TournamentState
+        switch row.status {
+        case "completed": state = .completed
+        case "setup", "draft": state = .draft
+        default: state = .ongoing   // active / ongoing / registration_*
+        }
+        return MyTournament(
+            id: row.id, shareID: row.shareID, name: row.name ?? "",
+            isDoubles: true, capacity: 0, registered: 0,
+            state: state, createdAt: Self.parseDate(row.createdAt), format: format
+        )
     }
 
     private func enrich(_ row: QuickTableRow) async throws -> MyTournament {
