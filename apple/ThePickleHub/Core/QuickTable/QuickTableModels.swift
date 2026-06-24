@@ -10,6 +10,7 @@ struct QTTable: Decodable, Equatable {
     let isDoubles: Bool?
     let creatorUserID: UUID?
     let topPerGroup: Int?
+    let requiresRegistration: Bool?
 
     var displayName: String { name?.nonEmpty ?? "Giải đấu" }
     var isPlayoffStage: Bool { status == "playoff" || status == "completed" }
@@ -30,6 +31,30 @@ struct QTTable: Decodable, Equatable {
         case isDoubles = "is_doubles"
         case creatorUserID = "creator_user_id"
         case topPerGroup = "top_per_group"
+        case requiresRegistration = "requires_registration"
+    }
+}
+
+/// A `quick_table_registrations` row (self-signup awaiting BTC approval).
+struct QTRegistration: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let userID: UUID
+    let displayName: String
+    let team: String?
+    let ratingSystem: String?     // DUPR | other | none
+    let skillLevel: Double?
+    let profileLink: String?
+    let status: String            // pending | approved | rejected
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, team, status
+        case userID = "user_id"
+        case displayName = "display_name"
+        case ratingSystem = "rating_system"
+        case skillLevel = "skill_level"
+        case profileLink = "profile_link"
+        case createdAt = "created_at"
     }
 }
 
@@ -144,6 +169,106 @@ struct GroupSuggestion: Identifiable, Equatable {
                                        reason: reason, wildcardNeeded: wildcard, totalPlayoffSpots: ideal))
         }
         return out
+    }
+}
+
+/// One first-round playoff pairing produced by `QTPlayoff.bracket`.
+struct QTBracketMatch: Equatable {
+    let player1: UUID?
+    let player2: UUID?
+    let position: String   // upper | lower
+    let matchNumber: Int
+}
+
+/// Pure playoff logic — 1:1 port of useQuickTable getQualifiedPlayers /
+/// getWildcardCount / generatePlayoffBracket. No DB.
+enum QTPlayoff {
+    /// Wildcards needed to pad to the bracket size (web getWildcardCount).
+    static func wildcardCount(groupCount: Int) -> Int {
+        switch groupCount { case 3: return 2; case 6: return 4; default: return 0 }
+    }
+
+    /// Top-`topPerGroup` per group (playoff_seed 1..N) + the 3rd-placers.
+    static func qualify(groups: [QTGroup], players: [QTPlayer], topPerGroup: Int = 2)
+        -> (qualified: [(player: QTPlayer, seed: Int)], thirdPlace: [QTPlayer]) {
+        var qualified: [(QTPlayer, Int)] = []
+        var thirdPlace: [QTPlayer] = []
+        for g in groups {
+            let gp = players.filter { $0.groupID == g.id }.sorted {
+                if $0.matchesWon != $1.matchesWon { return $0.matchesWon > $1.matchesWon }
+                return $0.pointDiff > $1.pointDiff
+            }
+            for (idx, p) in gp.prefix(topPerGroup).enumerated() { qualified.append((p, idx + 1)) }
+            if gp.count > topPerGroup { thirdPlace.append(gp[topPerGroup]) }
+        }
+        return (qualified, thirdPlace)
+    }
+
+    /// Third-placers ranked for the wildcard picker (wins → diff → points for).
+    static func rankThirdPlace(_ players: [QTPlayer]) -> [QTPlayer] {
+        players.sorted {
+            if $0.matchesWon != $1.matchesWon { return $0.matchesWon > $1.matchesWon }
+            if $0.pointDiff != $1.pointDiff { return $0.pointDiff > $1.pointDiff }
+            return $0.pointsFor > $1.pointsFor
+        }
+    }
+
+    /// First-round pairings per group count (exact web tables).
+    static func bracket(groupCount: Int, qualified: [(player: QTPlayer, seed: Int)],
+                        wildcards: [QTPlayer], groups: [QTGroup]) -> [QTBracketMatch] {
+        var wc = wildcards
+        var wcIndex = 0
+        func player(_ gname: String, _ seed: Int) -> UUID? {
+            guard let g = groups.first(where: { $0.name == gname }) else { return nil }
+            return qualified.first(where: { $0.player.groupID == g.id && $0.seed == seed })?.player.id
+        }
+        func nextWildcard(_ exclude: UUID?) -> UUID? {
+            guard wcIndex < wc.count else { return nil }
+            if let pref = wc.indices.first(where: { $0 >= wcIndex && wc[$0].groupID != exclude }) {
+                wc.swapAt(wcIndex, pref)
+            }
+            let p = wc[wcIndex]; wcIndex += 1; return p.id
+        }
+        func m(_ p1: UUID?, _ p2: UUID?, _ pos: String, _ n: Int) -> QTBracketMatch {
+            QTBracketMatch(player1: p1, player2: p2, position: pos, matchNumber: n)
+        }
+        let groupE = groups.first { $0.name == "E" }?.id
+        let groupF = groups.first { $0.name == "F" }?.id
+        switch groupCount {
+        case 2:
+            return [m(player("A", 1), player("B", 2), "upper", 1),
+                    m(player("B", 1), player("A", 2), "lower", 2)]
+        case 3:
+            return [m(player("A", 1), player("B", 2), "upper", 1),
+                    m(player("C", 1), nextWildcard(nil), "upper", 2),
+                    m(player("B", 1), player("A", 2), "lower", 3),
+                    m(player("C", 2), nextWildcard(nil), "lower", 4)]
+        case 4:
+            return [m(player("A", 1), player("B", 2), "upper", 1),
+                    m(player("C", 1), player("D", 2), "upper", 2),
+                    m(player("B", 1), player("A", 2), "lower", 3),
+                    m(player("D", 1), player("C", 2), "lower", 4)]
+        case 6:
+            return [m(player("A", 1), player("B", 2), "upper", 1),
+                    m(player("C", 1), player("D", 2), "upper", 2),
+                    m(player("E", 1), nextWildcard(groupE), "upper", 3),
+                    m(player("F", 1), nextWildcard(groupF), "upper", 4),
+                    m(player("B", 1), player("A", 2), "lower", 5),
+                    m(player("D", 1), player("C", 2), "lower", 6),
+                    m(player("E", 2), nextWildcard(groupE), "lower", 7),
+                    m(player("F", 2), nextWildcard(groupF), "lower", 8)]
+        case 8:
+            return [m(player("A", 1), player("B", 2), "upper", 1),
+                    m(player("C", 1), player("D", 2), "upper", 2),
+                    m(player("E", 1), player("F", 2), "upper", 3),
+                    m(player("G", 1), player("H", 2), "upper", 4),
+                    m(player("B", 1), player("A", 2), "lower", 5),
+                    m(player("D", 1), player("C", 2), "lower", 6),
+                    m(player("F", 1), player("E", 2), "lower", 7),
+                    m(player("H", 1), player("G", 2), "lower", 8)]
+        default:
+            return []
+        }
     }
 }
 

@@ -9,7 +9,7 @@ final class QuickTableViewModel {
     }
 
     enum Tab: String, CaseIterable, Identifiable {
-        case groups, playoff
+        case groups, playoff, courts
         var id: String { rawValue }
     }
 
@@ -18,6 +18,23 @@ final class QuickTableViewModel {
     var tab: Tab = .groups
     var selectedGroupID: UUID?
     var scoringMatch: QTMatch?
+
+    // Registration
+    var currentUID: UUID?
+    var registrations: [QTRegistration] = []
+    var myRegistration: QTRegistration?
+    var showRegistrations = false
+    var showSelfRegister = false
+    var regBusy = false
+    var regError: String?
+
+    // Playoff generation
+    var generatingPlayoff = false
+    var playoffError: String?
+    var showWildcard = false
+    var wildcardNeed = 0
+    var wildcardCandidates: [QTPlayer] = []
+    private var pendingQualified: [(player: QTPlayer, seed: Int)] = []
 
     private let repo = QuickTableRepository()
 
@@ -29,7 +46,18 @@ final class QuickTableViewModel {
         do {
             let detail = try await repo.load(shareID: shareID)
             let uid = await repo.currentUserID()
-            editable = detail.table.creatorUserID != nil && detail.table.creatorUserID == uid
+            if detail.table.creatorUserID != nil && detail.table.creatorUserID == uid {
+                editable = true
+            } else if let uid {
+                editable = await repo.isReferee(tableID: detail.table.id, userID: uid)
+            } else {
+                editable = false
+            }
+            currentUID = uid
+            if detail.table.requiresRegistration == true {
+                if let uid { myRegistration = await repo.userRegistration(tableID: detail.table.id, userID: uid) }
+                if editable { registrations = await repo.fetchRegistrations(tableID: detail.table.id) }
+            }
             if selectedGroupID == nil || !detail.groups.contains(where: { $0.id == selectedGroupID }) {
                 selectedGroupID = detail.groups.first?.id
             }
@@ -41,6 +69,103 @@ final class QuickTableViewModel {
         } catch {
             phase = .failed(error.localizedDescription)
         }
+    }
+
+    @MainActor
+    func startPlayoff(shareID: String) async {
+        guard let d = detail else { return }
+        let need = QTPlayoff.wildcardCount(groupCount: d.groups.count)
+        let q = QTPlayoff.qualify(groups: d.groups, players: d.players, topPerGroup: d.table.topPerGroup ?? 2)
+        pendingQualified = q.qualified
+        if need > 0 {
+            wildcardNeed = need
+            wildcardCandidates = QTPlayoff.rankThirdPlace(q.thirdPlace)
+            showWildcard = true
+        } else {
+            await runPlayoff(shareID: shareID, wildcards: [])
+        }
+    }
+
+    @MainActor
+    func confirmWildcards(shareID: String, selectedIDs: [UUID]) async {
+        showWildcard = false
+        // Preserve ranked candidate order (markQualified seeds 100+i by this order).
+        let selected = wildcardCandidates.filter { selectedIDs.contains($0.id) }
+        await runPlayoff(shareID: shareID, wildcards: selected)
+    }
+
+    @MainActor
+    private func runPlayoff(shareID: String, wildcards: [QTPlayer]) async {
+        guard let d = detail else { return }
+        let bracket = QTPlayoff.bracket(groupCount: d.groups.count, qualified: pendingQualified,
+                                        wildcards: wildcards, groups: d.groups)
+        guard !bracket.isEmpty else {
+            playoffError = "Số bảng (\(d.groups.count)) chưa hỗ trợ sinh playoff native."
+            return
+        }
+        generatingPlayoff = true; playoffError = nil
+        do {
+            try await repo.markPlayersQualified(
+                qualified: pendingQualified.map { ($0.player.id, $0.seed) },
+                wildcards: wildcards.map { $0.id })
+            try await repo.createPlayoff(tableID: d.table.id, firstRound: bracket)
+            await load(shareID: shareID)
+            tab = .playoff
+        } catch { playoffError = error.localizedDescription }
+        generatingPlayoff = false
+    }
+
+    // MARK: Registration actions
+
+    @MainActor func reloadRegistrations() async {
+        guard let d = detail else { return }
+        registrations = await repo.fetchRegistrations(tableID: d.table.id)
+        if let uid = currentUID { myRegistration = await repo.userRegistration(tableID: d.table.id, userID: uid) }
+    }
+
+    @MainActor func approve(_ id: UUID) async {
+        regBusy = true; regError = nil
+        do { try await repo.setRegistrationStatus(id: id, status: "approved"); await reloadRegistrations() }
+        catch { regError = error.localizedDescription }
+        regBusy = false
+    }
+    @MainActor func reject(_ id: UUID) async {
+        regBusy = true; regError = nil
+        do { try await repo.setRegistrationStatus(id: id, status: "rejected"); await reloadRegistrations() }
+        catch { regError = error.localizedDescription }
+        regBusy = false
+    }
+    @MainActor func bulkApprovePending() async {
+        let pending = registrations.filter { $0.status == "pending" }.map { $0.id }
+        guard !pending.isEmpty else { return }
+        regBusy = true; regError = nil
+        do { try await repo.bulkApprove(ids: pending); await reloadRegistrations() }
+        catch { regError = error.localizedDescription }
+        regBusy = false
+    }
+
+    @MainActor func submitSelfRegistration(displayName: String, team: String, ratingSystem: String,
+                                           skillLevel: Double?, profileLink: String) async {
+        guard let d = detail else { return }
+        regBusy = true; regError = nil
+        let result = await repo.submitRegistration(
+            tableID: d.table.id, displayName: displayName, team: team,
+            ratingSystem: ratingSystem, skillLevel: skillLevel, profileLink: profileLink)
+        switch result {
+        case .ok: showSelfRegister = false; await reloadRegistrations()
+        case .duplicate: regError = "Bạn đã đăng ký giải này rồi."
+        case .notAuthed: regError = "Cần đăng nhập để đăng ký."
+        case .error(let m): regError = m
+        }
+        regBusy = false
+    }
+
+    @MainActor func cancelMyRegistration() async {
+        guard let reg = myRegistration else { return }
+        regBusy = true; regError = nil
+        do { try await repo.cancelRegistration(id: reg.id); myRegistration = nil; await reloadRegistrations() }
+        catch { regError = error.localizedDescription }
+        regBusy = false
     }
 
     @MainActor
@@ -81,6 +206,15 @@ struct QuickTableDetailView: View {
             }
         }
         .task { await model.load(shareID: shareID) }
+        .task(id: shareID) {
+            // Live polling (web parity: refetchInterval 15s). Skip while the
+            // score sheet is open so the list can't shift under the user.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(15))
+                if Task.isCancelled { break }
+                if model.scoringMatch == nil { await model.load(shareID: shareID) }
+            }
+        }
         .refreshable { await model.load(shareID: shareID) }
         .sheet(isPresented: $openWeb) {
             SafariView(url: WebRoutes.quickTable(shareID: shareID)).ignoresSafeArea()
@@ -92,6 +226,87 @@ struct QuickTableDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: Binding(get: { model.showWildcard }, set: { model.showWildcard = $0 })) {
+            WildcardSelectionSheet(candidates: model.wildcardCandidates, need: model.wildcardNeed) { selected in
+                Task { await model.confirmWildcards(shareID: shareID, selectedIDs: selected) }
+            }
+        }
+        .sheet(isPresented: Binding(get: { model.showRegistrations }, set: { model.showRegistrations = $0 })) {
+            QuickTableRegistrationsSheet(model: model)
+        }
+        .sheet(isPresented: Binding(get: { model.showSelfRegister }, set: { model.showSelfRegister = $0 })) {
+            QuickTableSelfRegisterSheet(isDoubles: model.detail?.table.isDoubles ?? false, busy: model.regBusy, error: model.regError) {
+                name, team, rating, skill, link in
+                Task { await model.submitSelfRegistration(displayName: name, team: team, ratingSystem: rating, skillLevel: skill, profileLink: link) }
+            }
+        }
+    }
+
+    // MARK: Registration UI
+
+    @ViewBuilder
+    private func registrationSection(_ detail: QuickTableDetail) -> some View {
+        if model.editable {
+            let pending = model.registrations.filter { $0.status == "pending" }.count
+            Button { Haptics.light(); model.showRegistrations = true } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "person.crop.circle.badge.checkmark").font(.system(size: 16)).foregroundStyle(TLColor.accentText)
+                    Text("Quản lý đăng ký").font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.fg)
+                    Spacer()
+                    if pending > 0 {
+                        Text("\(pending) chờ").font(TLFont.mono(10, .bold)).foregroundStyle(TLColor.accentInk)
+                            .padding(.horizontal, 8).padding(.vertical, 3).background(TLColor.accent, in: Capsule())
+                    } else {
+                        Text("\(model.registrations.count)").font(TLFont.mono(11)).foregroundStyle(TLColor.fg3)
+                    }
+                    Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(TLColor.fg4)
+                }
+                .padding(14)
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+            }.buttonStyle(.plain)
+        } else if model.currentUID != nil {
+            if let reg = model.myRegistration {
+                myRegistrationBanner(reg)
+            } else {
+                Button { Haptics.light(); model.showSelfRegister = true } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.pencil").font(.system(size: 14))
+                        Text("Đăng ký tham gia").font(TLFont.sans(14, .semibold))
+                    }
+                    .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 12)
+                    .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                }.buttonStyle(.plain)
+            }
+        } else {
+            note("Đăng nhập để đăng ký tham gia.")
+        }
+    }
+
+    private func myRegistrationBanner(_ reg: QTRegistration) -> some View {
+        let (label, color): (String, Color) = {
+            switch reg.status {
+            case "approved": return ("Đã được duyệt", TLColor.accentText)
+            case "rejected": return ("Bị từ chối", TLColor.live)
+            default: return ("Đang chờ duyệt", TLColor.gold)
+            }
+        }()
+        return HStack(spacing: 10) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Đăng ký của bạn: \(label)").font(TLFont.sans(13.5, .semibold)).foregroundStyle(TLColor.fg)
+                Text(reg.displayName).font(TLFont.mono(10.5)).foregroundStyle(TLColor.fg3)
+            }
+            Spacer()
+            if reg.status == "pending" {
+                Button { Haptics.light(); Task { await model.cancelMyRegistration() } } label: {
+                    Text("Hủy").font(TLFont.mono(10.5, .semibold)).foregroundStyle(TLColor.live)
+                }.buttonStyle(.plain)
+            }
+        }
+        .padding(14)
+        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(color.opacity(0.4), lineWidth: 1))
     }
 
     @ViewBuilder
@@ -104,6 +319,7 @@ struct QuickTableDetailView: View {
         case .loaded(let detail):
             VStack(alignment: .leading, spacing: 18) {
                 header(detail.table)
+                if detail.table.requiresRegistration == true { registrationSection(detail) }
                 if model.editable && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" {
                     advanceBanner
                 }
@@ -111,6 +327,7 @@ struct QuickTableDetailView: View {
                 switch model.tab {
                 case .groups: groupsTab(detail)
                 case .playoff: playoffTab(detail)
+                case .courts: courtsTab(detail)
                 }
             }
             .padding(.horizontal, 16).padding(.top, 8)
@@ -136,29 +353,37 @@ struct QuickTableDetailView: View {
     }
 
     private var advanceBanner: some View {
-        Button { openWeb = true } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "flag.checkered").font(.system(size: 18)).foregroundStyle(TLColor.accentText)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Vòng bảng đã hoàn tất!").font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg)
-                    Text("Mở web để bắt đầu Playoff.").font(TLFont.sans(12.5)).foregroundStyle(TLColor.fg2)
+        VStack(alignment: .leading, spacing: 8) {
+            Button { Haptics.success(); Task { await model.startPlayoff(shareID: shareID) } } label: {
+                HStack(spacing: 12) {
+                    if model.generatingPlayoff { ProgressView().tint(TLColor.accentText) }
+                    else { Image(systemName: "flag.checkered").font(.system(size: 18)).foregroundStyle(TLColor.accentText) }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Vòng bảng đã hoàn tất!").font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg)
+                        Text("Sinh vòng Playoff").font(TLFont.sans(12.5)).foregroundStyle(TLColor.fg2)
+                    }
+                    Spacer()
+                    Image(systemName: "arrow.right.circle.fill").font(.system(size: 18)).foregroundStyle(TLColor.accentText)
                 }
-                Spacer()
-                Image(systemName: "arrow.up.right.square").foregroundStyle(TLColor.accentText)
+                .padding(14)
+                .background(TLColor.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.accent.opacity(0.4), lineWidth: 1))
             }
-            .padding(14)
-            .background(TLColor.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.accent.opacity(0.4), lineWidth: 1))
+            .buttonStyle(.plain).disabled(model.generatingPlayoff)
+            if let err = model.playoffError {
+                Text(err).font(TLFont.sans(12)).foregroundStyle(TLColor.live)
+            }
         }
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder
     private func tabPicker(_ detail: QuickTableDetail) -> some View {
-        if detail.hasPlayoff {
+        let hasCourts = detail.matches.contains { $0.status != "completed" }
+        if detail.hasPlayoff || hasCourts {
             Picker("", selection: Binding(get: { model.tab }, set: { model.tab = $0 })) {
                 Text("Vòng bảng").tag(QuickTableViewModel.Tab.groups)
-                Text("Playoff").tag(QuickTableViewModel.Tab.playoff)
+                if detail.hasPlayoff { Text("Playoff").tag(QuickTableViewModel.Tab.playoff) }
+                if hasCourts { Text("Sân").tag(QuickTableViewModel.Tab.courts) }
             }
             .pickerStyle(.segmented)
         }
@@ -464,6 +689,70 @@ struct QuickTableDetailView: View {
         case 5...8: return "Vòng 16"
         default: return "Vòng loại"
         }
+    }
+
+    // MARK: Courts (queue board — port of dashboard CourtData)
+
+    @ViewBuilder
+    private func courtsTab(_ detail: QuickTableDetail) -> some View {
+        let upcoming = detail.matches
+            .filter { $0.status != "completed" && $0.hasBothPlayers }
+            .sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }
+        if upcoming.isEmpty {
+            note("Không còn trận nào trong hàng đợi.")
+        } else {
+            let grouped = Dictionary(grouping: upcoming) { $0.courtName?.nonEmpty ?? "Chưa gán sân" }
+            VStack(alignment: .leading, spacing: 14) {
+                ForEach(grouped.keys.sorted(), id: \.self) { court in
+                    courtColumn(detail, court: court, matches: grouped[court] ?? [])
+                }
+            }
+        }
+    }
+
+    private func courtColumn(_ detail: QuickTableDetail, court: String, matches: [QTMatch]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "sportscourt").font(.system(size: 13)).foregroundStyle(TLColor.accentText)
+                Text(court.uppercased()).font(TLFont.mono(11, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg)
+                Spacer()
+                Text("\(matches.count) trận").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+            }
+            ForEach(Array(matches.enumerated()), id: \.element.id) { i, m in
+                courtMatchRow(detail, m, next: i == 0)
+            }
+        }
+        .padding(14)
+        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    private func courtMatchRow(_ detail: QuickTableDetail, _ m: QTMatch, next: Bool) -> some View {
+        let canScore = model.editable && m.hasBothPlayers
+        return Button {
+            if canScore { Haptics.light(); model.scoringMatch = m }
+        } label: {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(detail.name(for: m.player1ID)).font(TLFont.sans(13.5, next ? .semibold : .regular)).foregroundStyle(TLColor.fg).lineLimit(1)
+                    Text(detail.name(for: m.player2ID)).font(TLFont.sans(13.5, next ? .semibold : .regular)).foregroundStyle(TLColor.fg2).lineLimit(1)
+                }
+                Spacer(minLength: 6)
+                if next {
+                    Text("TIẾP THEO").font(TLFont.mono(8.5, .bold)).tracking(0.5).foregroundStyle(TLColor.accentInk)
+                        .padding(.horizontal, 7).padding(.vertical, 3).background(TLColor.accent, in: Capsule())
+                } else {
+                    Text("chờ").font(TLFont.mono(9)).foregroundStyle(TLColor.fg4)
+                }
+                if canScore {
+                    Image(systemName: "square.and.pencil").font(.system(size: 12)).foregroundStyle(TLColor.accentText)
+                }
+            }
+            .padding(.vertical, 9).padding(.horizontal, 12)
+            .background(next ? TLColor.accent.opacity(0.06) : TLColor.bg, in: RoundedRectangle(cornerRadius: 10))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain).disabled(!canScore)
     }
 
     // MARK: Helpers

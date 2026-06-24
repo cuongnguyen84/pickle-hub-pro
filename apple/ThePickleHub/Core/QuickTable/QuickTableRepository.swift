@@ -11,12 +11,26 @@ struct QuickTableRepository {
         try? await client.auth.session.user.id
     }
 
+    /// True when the user is a referee on this table — they may enter scores
+    /// (web parity: canEditScores = isCreator || isReferee). Non-throwing.
+    func isReferee(tableID: UUID, userID: UUID) async -> Bool {
+        struct R: Decodable { let id: UUID }
+        let rows: [R]? = try? await client
+            .from("quick_table_referees")
+            .select("id")
+            .eq("table_id", value: tableID)
+            .eq("user_id", value: userID)
+            .limit(1)
+            .execute().value
+        return rows?.isEmpty == false
+    }
+
     // MARK: Load
 
     func load(shareID: String) async throws -> QuickTableDetail {
         let table: QTTable = try await client
             .from("quick_tables")
-            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group")
+            .select("id, share_id, name, status, format, is_doubles, creator_user_id, top_per_group, requires_registration")
             .eq("share_id", value: shareID)
             .single()
             .execute()
@@ -285,6 +299,141 @@ struct QuickTableRepository {
             rotating.insert(rotating.removeLast(), at: 0)
         }
         return pairs
+    }
+
+    // MARK: Registration (port of useRegistration)
+
+    /// All registrations for a table (BTC view), oldest first.
+    func fetchRegistrations(tableID: UUID) async -> [QTRegistration] {
+        (try? await client.from("quick_table_registrations")
+            .select("id, user_id, display_name, team, rating_system, skill_level, profile_link, status, created_at")
+            .eq("table_id", value: tableID).order("created_at", ascending: true)
+            .execute().value) ?? []
+    }
+
+    /// The signed-in user's own registration, if any.
+    func userRegistration(tableID: UUID, userID: UUID) async -> QTRegistration? {
+        let rows: [QTRegistration]? = try? await client.from("quick_table_registrations")
+            .select("id, user_id, display_name, team, rating_system, skill_level, profile_link, status, created_at")
+            .eq("table_id", value: tableID).eq("user_id", value: userID).limit(1)
+            .execute().value
+        return rows?.first
+    }
+
+    enum SubmitRegistrationResult: Equatable { case ok, duplicate, notAuthed, error(String) }
+
+    private struct RegistrationInsert: Encodable {
+        let table_id: String; let user_id: String; let display_name: String
+        let team: String?; let rating_system: String; let skill_level: Double?; let profile_link: String?
+    }
+    func submitRegistration(tableID: UUID, displayName: String, team: String?,
+                            ratingSystem: String, skillLevel: Double?, profileLink: String?) async -> SubmitRegistrationResult {
+        guard let uid = await currentUserID() else { return .notAuthed }
+        let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return .error("Tên không được để trống") }
+        do {
+            try await client.from("quick_table_registrations").insert(RegistrationInsert(
+                table_id: tableID.uuidString.lowercased(), user_id: uid.uuidString.lowercased(),
+                display_name: name, team: team?.nonEmpty, rating_system: ratingSystem,
+                skill_level: skillLevel, profile_link: profileLink?.nonEmpty)).execute()
+            return .ok
+        } catch {
+            // Postgres unique_violation (already registered).
+            if "\(error)".contains("23505") { return .duplicate }
+            return .error(error.localizedDescription)
+        }
+    }
+
+    func cancelRegistration(id: UUID) async throws {
+        try await client.from("quick_table_registrations").delete().eq("id", value: id).execute()
+    }
+
+    private struct RegStatusUpdate: Encodable { let status: String }
+    func setRegistrationStatus(id: UUID, status: String) async throws {
+        try await client.from("quick_table_registrations").update(RegStatusUpdate(status: status)).eq("id", value: id).execute()
+    }
+    func bulkApprove(ids: [UUID]) async throws {
+        guard !ids.isEmpty else { return }
+        try await client.from("quick_table_registrations")
+            .update(RegStatusUpdate(status: "approved"))
+            .in("id", values: ids.map { $0.uuidString.lowercased() }).execute()
+    }
+
+    // MARK: Playoff generation (port of useQuickTable createPlayoffMatches + markPlayersQualified)
+
+    private struct QualifyUpdate: Encodable {
+        let is_qualified = true
+        let is_wildcard: Bool
+        let playoff_seed: Int
+    }
+    /// Mark qualified (seed 1..N) + wildcards (seed 100+i) — web markPlayersQualified.
+    func markPlayersQualified(qualified: [(playerID: UUID, seed: Int)], wildcards: [UUID]) async throws {
+        for q in qualified {
+            try await client.from("quick_table_players")
+                .update(QualifyUpdate(is_wildcard: false, playoff_seed: q.seed))
+                .eq("id", value: q.playerID).execute()
+        }
+        for (i, id) in wildcards.enumerated() {
+            try await client.from("quick_table_players")
+                .update(QualifyUpdate(is_wildcard: true, playoff_seed: 100 + i))
+                .eq("id", value: id).execute()
+        }
+    }
+
+    private struct PlayoffMatchInsert: Encodable {
+        let table_id: String
+        let playoff_round: Int
+        let playoff_match_number: Int
+        let bracket_position: String
+        let player1_id: String?
+        let player2_id: String?
+        let display_order: Int
+        func encode(to e: Encoder) throws {
+            var c = e.container(keyedBy: K.self)
+            try c.encode(table_id, forKey: .table_id)
+            try c.encode(true, forKey: .is_playoff)
+            try c.encode(playoff_round, forKey: .playoff_round)
+            try c.encode(playoff_match_number, forKey: .playoff_match_number)
+            try c.encode(bracket_position, forKey: .bracket_position)
+            try c.encode(player1_id, forKey: .player1_id)   // null when nil
+            try c.encode(player2_id, forKey: .player2_id)
+            try c.encode(display_order, forKey: .display_order)
+        }
+        enum K: String, CodingKey {
+            case table_id, is_playoff, playoff_round, playoff_match_number
+            case bracket_position, player1_id, player2_id, display_order
+        }
+    }
+
+    /// Pre-create ALL playoff rounds (first round seeded, later rounds empty with
+    /// sequential round/match numbers so the existing positional advance fills them),
+    /// then flip the table to 'playoff'. Bracket result matches web.
+    func createPlayoff(tableID: UUID, firstRound: [QTBracketMatch]) async throws {
+        let tID = tableID.uuidString.lowercased()
+        let n = firstRound.count
+        guard n >= 1 else { return }
+        let round0 = n <= 2 ? 2 : n <= 4 ? 1 : 0
+
+        var inserts: [PlayoffMatchInsert] = firstRound.enumerated().map { i, b in
+            PlayoffMatchInsert(table_id: tID, playoff_round: round0, playoff_match_number: b.matchNumber,
+                               bracket_position: b.position,
+                               player1_id: b.player1?.uuidString.lowercased(),
+                               player2_id: b.player2?.uuidString.lowercased(), display_order: i)
+        }
+        var count = n, round = round0, maxMN = n, disp = 100
+        while count > 1 {
+            let nextCount = count / 2
+            round += 1
+            for j in 0..<nextCount {
+                let pos = nextCount == 1 ? "final" : (j < (nextCount + 1) / 2 ? "upper" : "lower")
+                inserts.append(PlayoffMatchInsert(table_id: tID, playoff_round: round,
+                                                  playoff_match_number: maxMN + 1 + j, bracket_position: pos,
+                                                  player1_id: nil, player2_id: nil, display_order: disp + j))
+            }
+            maxMN += nextCount; count = nextCount; disp += 100
+        }
+        try await client.from("quick_table_matches").insert(inserts).execute()
+        try await client.from("quick_tables").update(TableStatusUpdate(status: "playoff")).eq("id", value: tableID).execute()
     }
 
     // MARK: Score
