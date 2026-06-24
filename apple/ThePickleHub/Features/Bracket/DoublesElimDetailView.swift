@@ -9,21 +9,26 @@ final class DoublesElimViewModel {
     }
 
     enum Tab: String, CaseIterable, Identifiable {
-        case preliminary, playoff, teams
+        case preliminary, playoff, courts, teams
         var id: String { rawValue }
         var label: String {
             switch self {
             case .preliminary: return "Sơ loại"
             case .playoff: return "Playoff"
+            case .courts: return "Sân"
             case .teams: return "Đội"
             }
         }
     }
 
     var phase: Phase = .loading
-    var editable = false
+    var editable = false          // creator OR referee → can score
+    var isCreator = false         // creator only → registration management + settings
+    var currentUserID: UUID?
     var tab: Tab = .preliminary
     var scoringMatch: DEMatch?
+    var regBusy = false
+    var regMessage: String?
 
     private let repo = DoublesElimRepository()
 
@@ -41,7 +46,10 @@ final class DoublesElimViewModel {
         do {
             let detail = try await repo.load(shareID: shareID)
             let uid = await repo.currentUserID()
-            editable = detail.tournament.creatorUserID != nil && detail.tournament.creatorUserID == uid
+            currentUserID = uid
+            isCreator = detail.tournament.creatorUserID != nil && detail.tournament.creatorUserID == uid
+            let referee = uid != nil ? await repo.isReferee(tournamentID: detail.tournament.id, userID: uid!) : false
+            editable = isCreator || referee
             phase = .loaded(detail)
         } catch {
             phase = .failed(error.localizedDescription)
@@ -72,6 +80,70 @@ final class DoublesElimViewModel {
             phase = .failed(error.localizedDescription)
         }
     }
+
+    // MARK: Registration actions (registration_open mode)
+
+    @MainActor
+    func register(partnerUserID: UUID, teamName: String?, shareID: String) async {
+        guard let id = detail?.tournament.id else { return }
+        regBusy = true; regMessage = nil
+        switch await repo.registerTeam(tournamentID: id, partnerUserID: partnerUserID, teamName: teamName) {
+        case .ok(let avg):
+            regMessage = "Đăng ký thành công" + (avg.map { String(format: " · DUPR %.2f", $0) } ?? "")
+            await fetch(shareID: shareID)
+        case .failed(let m): regMessage = m
+        }
+        regBusy = false
+    }
+
+    @MainActor
+    func cancelRegistration(shareID: String) async {
+        guard let id = detail?.tournament.id else { return }
+        regBusy = true; regMessage = nil
+        switch await repo.cancelTeamRegistration(tournamentID: id) {
+        case .ok: regMessage = "Đã huỷ đăng ký"; await fetch(shareID: shareID)
+        case .failed(let m): regMessage = m
+        }
+        regBusy = false
+    }
+
+    @MainActor
+    func organizerAdd(player1: UUID, player2: UUID, teamName: String?, shareID: String) async -> Bool {
+        guard let id = detail?.tournament.id else { return false }
+        regBusy = true; regMessage = nil
+        let ok: Bool
+        switch await repo.organizerAddTeam(tournamentID: id, player1: player1, player2: player2, teamName: teamName) {
+        case .ok(let avg): regMessage = "Đã thêm đội" + (avg.map { String(format: " · DUPR %.2f", $0) } ?? ""); await fetch(shareID: shareID); ok = true
+        case .failed(let m): regMessage = m; ok = false
+        }
+        regBusy = false
+        return ok
+    }
+
+    @MainActor
+    func organizerRemove(team: DETeam, shareID: String) async {
+        guard let id = detail?.tournament.id else { return }
+        regBusy = true; regMessage = nil
+        switch await repo.organizerRemoveTeam(tournamentID: id, teamID: team.id) {
+        case .ok: regMessage = "Đã xoá đội"; await fetch(shareID: shareID)
+        case .failed(let m): regMessage = m
+        }
+        regBusy = false
+    }
+
+    @MainActor
+    func closeRegistration(shareID: String) async {
+        guard let id = detail?.tournament.id else { return }
+        regBusy = true; regMessage = nil
+        do {
+            _ = try await repo.closeRegistrationAndGenerate(tournamentID: id)
+            regMessage = nil
+            await load(shareID: shareID)
+        } catch {
+            regMessage = error.localizedDescription
+        }
+        regBusy = false
+    }
 }
 
 /// Native Doubles Elimination view — preliminary (R1/R2/R3) + playoff round lists,
@@ -83,6 +155,7 @@ struct DoublesElimDetailView: View {
 
     @State private var model = DoublesElimViewModel()
     @State private var openWeb = false
+    @State private var showSettings = false
 
     var body: some View {
         ScrollView {
@@ -93,16 +166,41 @@ struct DoublesElimDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { openWeb = true } label: {
-                    Image(systemName: "safari").foregroundStyle(TLColor.accentText)
+                HStack(spacing: 14) {
+                    if model.isCreator {
+                        Button { Haptics.light(); showSettings = true } label: {
+                            Image(systemName: "gearshape").foregroundStyle(TLColor.accentText)
+                        }
+                        .accessibilityLabel("Cài đặt giải")
+                    }
+                    Button { openWeb = true } label: {
+                        Image(systemName: "safari").foregroundStyle(TLColor.accentText)
+                    }
+                    .accessibilityLabel("Mở trên web")
                 }
-                .accessibilityLabel("Mở trên web")
             }
         }
         .task { await model.load(shareID: shareID) }
+        .task(id: shareID) {
+            // Live polling (web parity: refetchInterval 15s). Skip while a sheet
+            // is open so the list can't shift under the user.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(15))
+                if Task.isCancelled { break }
+                if model.scoringMatch == nil && !showSettings { await model.load(shareID: shareID) }
+            }
+        }
         .refreshable { await model.load(shareID: shareID) }
         .sheet(isPresented: $openWeb) {
             SafariView(url: WebRoutes.toolsDoublesEliminationView(shareID: shareID)).ignoresSafeArea()
+        }
+        .sheet(isPresented: $showSettings) {
+            if let detail = model.detail {
+                DoublesElimSettingsSheet(
+                    tournament: detail.tournament,
+                    onChanged: { Task { await model.load(shareID: shareID) } },
+                    onDeleted: { dismiss() })
+            }
         }
         .sheet(item: Binding(get: { model.scoringMatch }, set: { model.scoringMatch = $0 })) { match in
             if let detail = model.detail {
@@ -112,6 +210,8 @@ struct DoublesElimDetailView: View {
             }
         }
     }
+
+    @Environment(\.dismiss) private var dismiss
 
     @ViewBuilder
     private var content: some View {
@@ -123,11 +223,16 @@ struct DoublesElimDetailView: View {
         case .loaded(let detail):
             VStack(alignment: .leading, spacing: 18) {
                 header(detail.tournament)
-                tabPicker
-                switch model.tab {
-                case .preliminary: preliminary(detail)
-                case .playoff: playoff(detail)
-                case .teams: teamsTab(detail)
+                if detail.isRegistrationOpen {
+                    DoublesElimRegistrationView(detail: detail, model: model, shareID: shareID)
+                } else {
+                    tabPicker(detail)
+                    switch model.tab {
+                    case .preliminary: preliminary(detail)
+                    case .playoff: playoff(detail)
+                    case .courts: courtsTab(detail)
+                    case .teams: teamsTab(detail)
+                    }
                 }
             }
             .padding(.horizontal, 16).padding(.top, 8)
@@ -154,9 +259,14 @@ struct DoublesElimDetailView: View {
         }
     }
 
-    private var tabPicker: some View {
+    private func tabPicker(_ detail: DEDetail) -> some View {
         Picker("", selection: Binding(get: { model.tab }, set: { model.tab = $0 })) {
-            ForEach(DoublesElimViewModel.Tab.allCases) { Text($0.label).tag($0) }
+            Text(DoublesElimViewModel.Tab.preliminary.label).tag(DoublesElimViewModel.Tab.preliminary)
+            Text(DoublesElimViewModel.Tab.playoff.label).tag(DoublesElimViewModel.Tab.playoff)
+            if detail.hasUpcomingCourtMatches {
+                Text(DoublesElimViewModel.Tab.courts.label).tag(DoublesElimViewModel.Tab.courts)
+            }
+            Text(DoublesElimViewModel.Tab.teams.label).tag(DoublesElimViewModel.Tab.teams)
         }
         .pickerStyle(.segmented)
     }
@@ -200,15 +310,103 @@ struct DoublesElimDetailView: View {
             if !detail.hasPlayoff {
                 note("Vòng playoff sẽ bắt đầu sau khi hoàn thành vòng sơ loại.")
             } else {
-                ForEach(detail.playoffRounds, id: \.round) { r in
-                    roundSection(title: roundLabel(r.type, r.matches.count), subtitle: "", detail: detail, matches: r.matches)
-                }
+                roundHeader(title: "Sơ đồ playoff", subtitle: "")
+                BracketTreeView(rounds: playoffBracketRounds(detail))
                 if let tp = detail.thirdPlaceMatch {
                     roundHeader(title: "Tranh hạng 3", subtitle: "")
                     matchCard(detail, tp)
                 }
             }
         }
+    }
+
+    /// Map the playoff rounds (R4+, clean single-elimination) to BracketTreeView.
+    private func playoffBracketRounds(_ detail: DEDetail) -> [BracketRound] {
+        detail.playoffRounds.map { r in
+            let slots = r.matches.map { m -> BracketSlot in
+                let canScore = model.editable && m.hasBothTeams && !m.isCompleted
+                let showScore = m.isCompleted || m.isLive
+                let a = m.isBestOf ? m.gamesWonA : m.scoreA
+                let b = m.isBestOf ? m.gamesWonB : m.scoreB
+                return BracketSlot(
+                    id: m.id,
+                    topName: detail.teamLabel(m.teamAID),
+                    botName: detail.teamLabel(m.teamBID),
+                    topScore: showScore ? String(a) : "",
+                    botScore: showScore ? String(b) : "",
+                    topWon: m.isCompleted && m.winnerID == m.teamAID,
+                    botWon: m.isCompleted && m.winnerID == m.teamBID,
+                    completed: m.isCompleted,
+                    onTap: canScore ? { Haptics.light(); model.scoringMatch = m } : nil)
+            }
+            return BracketRound(id: r.round, title: roundLabel(r.type, r.matches.count),
+                                doneCount: r.matches.filter { $0.isCompleted }.count, slots: slots)
+        }
+    }
+
+    // MARK: Courts (queue board grouped by court_number)
+
+    @ViewBuilder
+    private func courtsTab(_ detail: DEDetail) -> some View {
+        let upcoming = detail.upcomingCourtMatches
+        if upcoming.isEmpty {
+            note("Không còn trận nào trong hàng đợi.")
+        } else {
+            let grouped = Dictionary(grouping: upcoming) { $0.courtNumber.map { "Sân \($0)" } ?? "Chưa gán sân" }
+            VStack(alignment: .leading, spacing: 14) {
+                ForEach(grouped.keys.sorted(), id: \.self) { court in
+                    courtColumn(detail, court: court, matches: grouped[court] ?? [])
+                }
+            }
+        }
+    }
+
+    private func courtColumn(_ detail: DEDetail, court: String, matches: [DEMatch]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "sportscourt").font(.system(size: 13)).foregroundStyle(TLColor.accentText)
+                Text(court.uppercased()).font(TLFont.mono(11, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg)
+                Spacer()
+                Text("\(matches.count) trận").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+            }
+            ForEach(Array(matches.enumerated()), id: \.element.id) { i, m in
+                courtMatchRow(detail, m, next: i == 0)
+            }
+        }
+        .padding(14)
+        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    private func courtMatchRow(_ detail: DEDetail, _ m: DEMatch, next: Bool) -> some View {
+        let canScore = model.editable && m.hasBothTeams
+        return Button {
+            if canScore { Haptics.light(); model.scoringMatch = m }
+        } label: {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(detail.teamLabel(m.teamAID)).font(TLFont.sans(13.5, next ? .semibold : .regular)).foregroundStyle(TLColor.fg).lineLimit(1)
+                    Text(detail.teamLabel(m.teamBID)).font(TLFont.sans(13.5, next ? .semibold : .regular)).foregroundStyle(TLColor.fg2).lineLimit(1)
+                }
+                Spacer(minLength: 6)
+                if let time = m.startTime?.nonEmpty {
+                    Text(time).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                }
+                if next {
+                    Text("TIẾP THEO").font(TLFont.mono(8.5, .bold)).tracking(0.5).foregroundStyle(TLColor.accentInk)
+                        .padding(.horizontal, 7).padding(.vertical, 3).background(TLColor.accent, in: Capsule())
+                } else {
+                    Text("chờ").font(TLFont.mono(9)).foregroundStyle(TLColor.fg4)
+                }
+                if canScore {
+                    Image(systemName: "square.and.pencil").font(.system(size: 12)).foregroundStyle(TLColor.accentText)
+                }
+            }
+            .padding(.vertical, 9).padding(.horizontal, 12)
+            .background(next ? TLColor.accent.opacity(0.06) : TLColor.bg, in: RoundedRectangle(cornerRadius: 10))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain).disabled(!canScore)
     }
 
     private func championBanner(_ team: DETeam) -> some View {

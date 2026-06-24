@@ -16,7 +16,8 @@ struct DoublesElimRepository {
     """
     private static let teamSelect = """
     id, team_name, player1_name, player2_name, seed, total_points_for, \
-    total_points_against, point_diff, status, eliminated_at_round
+    total_points_against, point_diff, status, eliminated_at_round, \
+    player1_user_id, player2_user_id, dupr_avg_rating, dupr_seed_source
     """
 
     func currentUserID() async -> UUID? { try? await client.auth.session.user.id }
@@ -600,6 +601,228 @@ struct DoublesElimRepository {
     private static func randomShareID() -> String {
         let chars = Array("abcdefghijklmnopqrstuvwxyz0123456789")
         return String((0..<8).map { _ in chars.randomElement()! })
+    }
+
+    // MARK: Open registration (Sprint E.3 — port of useDoublesElimination RPCs)
+
+    /// Decoded shape shared by the register/add-team RPCs.
+    private struct RegRPCResult: Decodable {
+        let success: Bool
+        let error: String?
+        let teamID: String?
+        let duprAvg: Double?
+        let count: Int?
+        let capacity: Int?
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: K.self)
+            success = (try? c.decode(Bool.self, forKey: .success)) ?? false
+            error = try? c.decodeIfPresent(String.self, forKey: .error)
+            teamID = try? c.decodeIfPresent(String.self, forKey: .teamID)
+            if let d = try? c.decodeIfPresent(Double.self, forKey: .duprAvg) { duprAvg = d }
+            else if let s = try? c.decodeIfPresent(String.self, forKey: .duprAvg) { duprAvg = Double(s) }
+            else { duprAvg = nil }
+            count = try? c.decodeIfPresent(Int.self, forKey: .count)
+            capacity = try? c.decodeIfPresent(Int.self, forKey: .capacity)
+        }
+        enum K: String, CodingKey {
+            case success, error, count, capacity
+            case teamID = "team_id"
+            case duprAvg = "dupr_avg"
+        }
+    }
+
+    /// Outcome surfaced to the UI — on failure carries a localized message.
+    enum DERegisterOutcome: Equatable {
+        case ok(duprAvg: Double?)
+        case failed(String)
+    }
+
+    private struct RegisterParams: Encodable {
+        let p_tournament_id: String
+        let p_partner_user_id: String
+        let p_team_name: String?
+        func encode(to e: Encoder) throws {
+            var c = e.container(keyedBy: K.self)
+            try c.encode(p_tournament_id, forKey: .p_tournament_id)
+            try c.encode(p_partner_user_id, forKey: .p_partner_user_id)
+            if let p_team_name { try c.encode(p_team_name, forKey: .p_team_name) }
+        }
+        enum K: String, CodingKey { case p_tournament_id, p_partner_user_id, p_team_name }
+    }
+
+    /// Viewer self-registers with a partner (both must be app users with DUPR).
+    func registerTeam(tournamentID: UUID, partnerUserID: UUID, teamName: String?) async -> DERegisterOutcome {
+        do {
+            let r: RegRPCResult = try await client.rpc("register_team_for_doubles_elimination", params: RegisterParams(
+                p_tournament_id: tournamentID.uuidString.lowercased(),
+                p_partner_user_id: partnerUserID.uuidString.lowercased(),
+                p_team_name: teamName?.nonEmpty)).execute().value
+            return r.success ? .ok(duprAvg: r.duprAvg) : .failed(Self.localizeRegError(r.error))
+        } catch { return .failed(error.localizedDescription) }
+    }
+
+    func cancelTeamRegistration(tournamentID: UUID) async -> DERegisterOutcome {
+        do {
+            let r: RegRPCResult = try await client.rpc("cancel_doubles_elimination_team_registration",
+                params: ["p_tournament_id": tournamentID.uuidString.lowercased()]).execute().value
+            return r.success ? .ok(duprAvg: nil) : .failed(Self.localizeRegError(r.error))
+        } catch { return .failed(error.localizedDescription) }
+    }
+
+    private struct OrganizerAddParams: Encodable {
+        let p_tournament_id: String
+        let p_player1_user_id: String
+        let p_player2_user_id: String
+        let p_team_name: String?
+        func encode(to e: Encoder) throws {
+            var c = e.container(keyedBy: K.self)
+            try c.encode(p_tournament_id, forKey: .p_tournament_id)
+            try c.encode(p_player1_user_id, forKey: .p_player1_user_id)
+            try c.encode(p_player2_user_id, forKey: .p_player2_user_id)
+            if let p_team_name { try c.encode(p_team_name, forKey: .p_team_name) }
+        }
+        enum K: String, CodingKey { case p_tournament_id, p_player1_user_id, p_player2_user_id, p_team_name }
+    }
+
+    /// Organizer manually adds a team (two app users with DUPR).
+    func organizerAddTeam(tournamentID: UUID, player1: UUID, player2: UUID, teamName: String?) async -> DERegisterOutcome {
+        do {
+            let r: RegRPCResult = try await client.rpc("organizer_add_team_to_doubles_elimination", params: OrganizerAddParams(
+                p_tournament_id: tournamentID.uuidString.lowercased(),
+                p_player1_user_id: player1.uuidString.lowercased(),
+                p_player2_user_id: player2.uuidString.lowercased(),
+                p_team_name: teamName?.nonEmpty)).execute().value
+            return r.success ? .ok(duprAvg: r.duprAvg) : .failed(Self.localizeRegError(r.error))
+        } catch { return .failed(error.localizedDescription) }
+    }
+
+    private struct OrganizerRemoveParams: Encodable { let p_tournament_id: String; let p_team_id: String }
+    func organizerRemoveTeam(tournamentID: UUID, teamID: UUID) async -> DERegisterOutcome {
+        do {
+            let r: RegRPCResult = try await client.rpc("organizer_remove_team_from_doubles_elimination", params: OrganizerRemoveParams(
+                p_tournament_id: tournamentID.uuidString.lowercased(),
+                p_team_id: teamID.uuidString.lowercased())).execute().value
+            return r.success ? .ok(duprAvg: nil) : .failed(Self.localizeRegError(r.error))
+        } catch { return .failed(error.localizedDescription) }
+    }
+
+    /// Close registration (RPC seeds teams by DUPR + flips status 'ongoing') then
+    /// build R1/R2/R3 from the freshly written seeds — mirrors web closeRegistration
+    /// followed by generateBracket(..., 'manual'). Returns team count on success.
+    @discardableResult
+    func closeRegistrationAndGenerate(tournamentID: UUID) async throws -> Int {
+        let r: RegRPCResult = try await client.rpc("close_doubles_elimination_registration",
+            params: ["p_tournament_id": tournamentID.uuidString.lowercased()]).execute().value
+        guard r.success else { throw DECreateError.failed(Self.localizeRegError(r.error)) }
+
+        let t: DETournament = try await client.from("doubles_elimination_tournaments")
+            .select("*").eq("id", value: tournamentID).single().execute().value
+        let teams: [DETeam] = try await client.from("doubles_elimination_teams")
+            .select(Self.teamSelect).eq("tournament_id", value: tournamentID)
+            .order("seed", ascending: true).execute().value
+        let courts = Array(1...max(1, t.courtCount))
+        let opts = DECreateOptions(
+            name: t.name, teamCount: t.teamCount, courts: courts, startTime: t.startTime,
+            ratingSource: t.ratingSource ?? "dupr", minDupr: t.minDuprRating, maxDupr: t.maxDuprRating,
+            earlyFormat: t.earlyRoundsFormat, semiFormat: t.semifinalsFormat ?? "bo3",
+            finalsFormat: t.finalsFormat, hasThirdPlace: t.hasThirdPlaceMatch)
+        try await generateInitialBracket(tournamentID: tournamentID, teams: teams, opts: opts)
+        return r.count ?? teams.count
+    }
+
+    /// Localized copy of the RPC error codes (port of localizeError, VN only).
+    static func localizeRegError(_ code: String?) -> String {
+        switch code {
+        case "AUTH_REQUIRED": return "Cần đăng nhập"
+        case "INVALID_PARTNER": return "Đồng đội không hợp lệ"
+        case "TOURNAMENT_NOT_FOUND": return "Không tìm thấy giải"
+        case "REGISTRATION_CLOSED": return "Đăng ký đã đóng"
+        case "NOT_DUPR_TOURNAMENT": return "Giải này không dùng DUPR"
+        case "TOURNAMENT_FULL": return "Giải đã đủ đội"
+        case "ALREADY_REGISTERED": return "Bạn hoặc đồng đội đã đăng ký rồi"
+        case "MISSING_DUPR": return "Thiếu DUPR ở ít nhất 1 VĐV"
+        case "OUT_OF_RANGE": return "DUPR trung bình ngoài khoảng cho phép"
+        case "NOT_OWNER": return "Không có quyền"
+        case "NOT_REGISTRATION_OPEN": return "Giải không ở trạng thái mở đăng ký"
+        case "NOT_FULL": return "Chưa đủ đội"
+        case "INVALID_PLAYERS": return "Thiếu VĐV"
+        case "SAME_PLAYER": return "Hai VĐV trùng nhau"
+        case "TEAM_NOT_FOUND": return "Không tìm thấy đội"
+        case .some(let c): return c
+        case .none: return "Lỗi không xác định"
+        }
+    }
+
+    // MARK: Referees (port of referee-helpers — table doubles_elimination_referees)
+
+    func fetchReferees(tournamentID: UUID) async -> [DEReferee] {
+        struct Row: Decodable { let id: UUID; let userID: UUID
+            enum CodingKeys: String, CodingKey { case id; case userID = "user_id" } }
+        guard let rows: [Row] = try? await client
+            .from("doubles_elimination_referees").select("id, user_id")
+            .eq("tournament_id", value: tournamentID).execute().value, !rows.isEmpty else { return [] }
+        let names = await displayNames(ids: Set(rows.map { $0.userID.uuidString.lowercased() }))
+        return rows.map { DEReferee(id: $0.id, userID: $0.userID,
+                                    displayName: names[$0.userID.uuidString.lowercased()]) }
+    }
+
+    /// True if the user is a referee of this tournament (scoring auth).
+    func isReferee(tournamentID: UUID, userID: UUID) async -> Bool {
+        struct R: Decodable { let id: UUID }
+        let rows: [R]? = try? await client
+            .from("doubles_elimination_referees").select("id")
+            .eq("tournament_id", value: tournamentID).eq("user_id", value: userID)
+            .limit(1).execute().value
+        return !(rows?.isEmpty ?? true)
+    }
+
+    enum AddRefereeOutcome: Equatable { case ok(String?), notFound, alreadyExists, error }
+
+    func addReferee(tournamentID: UUID, email: String) async -> AddRefereeOutcome {
+        struct LookupRow: Decodable { let id: UUID; let displayName: String?
+            enum CodingKeys: String, CodingKey { case id; case displayName = "display_name" } }
+        let trimmed = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return .error }
+        do {
+            let rows: [LookupRow] = try await client
+                .rpc("lookup_user_by_email", params: ["lookup_email": trimmed]).execute().value
+            guard let profile = rows.first else { return .notFound }
+            struct R: Decodable { let id: UUID }
+            let existing: [R] = try await client
+                .from("doubles_elimination_referees").select("id")
+                .eq("tournament_id", value: tournamentID).eq("user_id", value: profile.id)
+                .limit(1).execute().value
+            if !existing.isEmpty { return .alreadyExists }
+            struct Ins: Encodable { let tournament_id: String; let user_id: String }
+            try await client.from("doubles_elimination_referees")
+                .insert(Ins(tournament_id: tournamentID.uuidString.lowercased(),
+                            user_id: profile.id.uuidString.lowercased())).execute()
+            return .ok(profile.displayName)
+        } catch { return .error }
+    }
+
+    func removeReferee(refereeID: UUID) async throws {
+        try await client.from("doubles_elimination_referees").delete().eq("id", value: refereeID).execute()
+    }
+
+    private func displayNames(ids: Set<String>) async -> [String: String] {
+        guard !ids.isEmpty else { return [:] }
+        struct ProfileRow: Decodable { let id: String; let displayName: String?
+            enum CodingKeys: String, CodingKey { case id; case displayName = "display_name" } }
+        guard let rows: [ProfileRow] = try? await client
+            .from("public_profiles").select("id, display_name")
+            .in("id", values: Array(ids)).execute().value else { return [:] }
+        var map: [String: String] = [:]
+        for r in rows { if let n = r.displayName?.nonEmpty { map[r.id.lowercased()] = n } }
+        return map
+    }
+
+    // MARK: Lifecycle (creator only — RLS enforces)
+
+    private struct DENameUpdate: Encodable { let name: String }
+    func rename(tournamentID: UUID, name: String) async throws {
+        try await client.from("doubles_elimination_tournaments")
+            .update(DENameUpdate(name: name)).eq("id", value: tournamentID).execute()
     }
 
     // MARK: Delete

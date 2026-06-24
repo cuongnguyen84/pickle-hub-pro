@@ -125,6 +125,8 @@ struct ToolsView: View {
                     DoublesElimDetailView(shareID: t.shareID, fallbackName: t.displayName)
                 case .teamMatch:
                     TeamMatchDetailView(shareID: t.shareID, fallbackName: t.displayName)
+                case .flex:
+                    FlexDetailView(shareID: t.shareID, fallbackName: t.displayName)
                 default:
                     QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
                 }

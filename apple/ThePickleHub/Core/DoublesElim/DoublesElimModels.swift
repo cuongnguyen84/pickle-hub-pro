@@ -67,8 +67,19 @@ struct DETeam: Decodable, Identifiable, Equatable {
     let pointDiff: Int
     let status: String
     let eliminatedAtRound: Int?
+    // Open-registration (Sprint E.3/E.4) — populated only for DUPR-flow teams.
+    let player1UserID: UUID?
+    let player2UserID: UUID?
+    let duprAvgRating: Double?
+    let duprSeedSource: String?   // exact | approx | none
 
     var isEliminated: Bool { status == "eliminated" }
+
+    /// The current user owns this registration if they sit in either slot.
+    func belongsTo(_ userID: UUID?) -> Bool {
+        guard let userID else { return false }
+        return player1UserID == userID || player2UserID == userID
+    }
 
     /// "name (seed)" like web formatTeamName.
     var displayLabel: String {
@@ -91,7 +102,19 @@ struct DETeam: Decodable, Identifiable, Equatable {
         case totalPointsAgainst = "total_points_against"
         case pointDiff = "point_diff"
         case eliminatedAtRound = "eliminated_at_round"
+        case player1UserID = "player1_user_id"
+        case player2UserID = "player2_user_id"
+        case duprAvgRating = "dupr_avg_rating"
+        case duprSeedSource = "dupr_seed_source"
     }
+}
+
+// MARK: Referee (doubles_elimination_referees + public_profiles display name)
+
+struct DEReferee: Identifiable, Equatable {
+    let id: UUID
+    let userID: UUID
+    let displayName: String?
 }
 
 // MARK: Game (one game inside a BO3/BO5 match)
@@ -263,6 +286,19 @@ struct DEDetail: Equatable {
     var champion: DETeam? { team(finalMatch?.winnerID) }
 
     var hasPlayoff: Bool { matches.contains { $0.roundNumber >= 4 } }
+
+    // Open-registration helpers (status == registration_open).
+    var isRegistrationOpen: Bool { tournament.status == "registration_open" }
+    var isFull: Bool { teams.count >= tournament.teamCount }
+    func myTeam(_ userID: UUID?) -> DETeam? { teams.first { $0.belongsTo(userID) } }
+
+    /// Court queue board source — playable matches (both teams, not done) ordered
+    /// by display_order. Court assignment lives on R1/R2 + playoff R4 matches.
+    var upcomingCourtMatches: [DEMatch] {
+        matches.filter { $0.status != "completed" && $0.hasBothTeams }
+            .sorted { $0.displayOrder < $1.displayOrder }
+    }
+    var hasUpcomingCourtMatches: Bool { !upcomingCourtMatches.isEmpty }
 
     var r1Completed: Bool { !r1Matches.isEmpty && r1Matches.allSatisfy { $0.isCompleted } }
     var r2Completed: Bool { !r2Matches.isEmpty && r2Matches.allSatisfy { $0.isCompleted } }
