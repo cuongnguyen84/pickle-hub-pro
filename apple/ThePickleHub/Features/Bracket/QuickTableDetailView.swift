@@ -359,7 +359,8 @@ struct QuickTableDetailView: View {
             .frame(height: totalH, alignment: .top)
             .padding(.horizontal, 16)
         }
-        .padding(.horizontal, -16) // scroll edge-to-edge inside the 16pt content inset
+        .frame(height: totalH)              // explicit height so the nested
+        .padding(.horizontal, -16)          // h-scroll never collapses inside the v-scroll
     }
 
     private func roundColumn(_ detail: QuickTableDetail, round: (round: Int, matches: [QTMatch]), index r: Int) -> some View {
