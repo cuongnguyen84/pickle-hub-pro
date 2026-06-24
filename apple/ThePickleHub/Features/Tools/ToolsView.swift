@@ -83,6 +83,8 @@ struct ToolsView: View {
                 switch t.format {
                 case .doublesElim:
                     DoublesElimDetailView(shareID: t.shareID, fallbackName: t.displayName)
+                case .teamMatch:
+                    TeamMatchDetailView(shareID: t.shareID, fallbackName: t.displayName)
                 default:
                     QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
                 }

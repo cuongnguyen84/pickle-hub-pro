@@ -75,8 +75,8 @@ enum BracketFormat: String, Equatable, Hashable {
     case teamMatch
     case flex
 
-    /// Whether a native detail (view+score) screen exists; others open the web.
-    var hasNativeView: Bool { self == .quickTable || self == .doublesElim }
+    /// Whether a native detail screen exists; others open the web. (Flex still web.)
+    var hasNativeView: Bool { self == .quickTable || self == .doublesElim || self == .teamMatch }
 
     func webURL(shareID: String) -> URL {
         switch self {
