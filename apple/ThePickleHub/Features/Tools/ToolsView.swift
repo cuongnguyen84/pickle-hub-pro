@@ -26,13 +26,9 @@ final class ToolsViewModel {
     func load() async {
         if loaded { return }
         phase = .loading
-        do {
-            tournaments = try await repo.myTournaments()
-            loaded = true
-            phase = .loaded
-        } catch {
-            phase = .failed(error.localizedDescription)
-        }
+        tournaments = await repo.myTournaments()
+        loaded = true
+        phase = .loaded
     }
 
     @MainActor

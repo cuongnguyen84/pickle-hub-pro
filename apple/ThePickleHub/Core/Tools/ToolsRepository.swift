@@ -16,59 +16,72 @@ struct ToolsRepository {
         return iso.date(from: s) ?? ISO8601DateFormatter().date(from: s)
     }
 
-    /// Quick tables created by the signed-in user, newest first, enriched with a
-    /// registration/roster count so cards can show progress + status. Returns []
-    /// when signed out.
-    func myTournaments(limit: Int = 20) async throws -> [MyTournament] {
+    /// All Bracket Lab tournaments the signed-in user owns, across the 4 formats,
+    /// newest first. Each format is fetched independently and tolerant of failure
+    /// (RLS/cancellation/missing rows) so one bad query never blanks the list.
+    /// Returns [] when signed out. Non-throwing on purpose.
+    func myTournaments(limit: Int = 20) async -> [MyTournament] {
         guard let uid = try? await client.auth.session.user.id.uuidString.lowercased() else { return [] }
 
-        async let quickRows: [QuickTableRow] = client
-            .from("quick_tables")
-            .select("id, share_id, name, is_doubles, player_count, status, requires_registration, start_time, created_at")
-            .eq("creator_user_id", value: uid)
-            .order("created_at", ascending: false)
-            .limit(limit)
-            .execute().value
-        async let doublesRows: [DEListRow] = client
-            .from("doubles_elimination_tournaments")
-            .select("id, share_id, name, team_count, status, created_at")
-            .eq("creator_user_id", value: uid)
-            .order("created_at", ascending: false)
-            .limit(limit)
-            .execute().value
+        async let quick = quickTournaments(uid: uid, limit: limit)
+        async let doubles = doublesTournaments(uid: uid, limit: limit)
         // Team Match owner column is `created_by` (NOT creator_user_id) — see web
         // MyTournaments.tsx. Flex uses creator_user_id. Neither has a native view
         // yet, so cards open the web on tap.
-        async let teamRows: [SimpleToolRow] = client
-            .from("team_match_tournaments")
-            .select("id, share_id, name, status, created_at")
-            .eq("created_by", value: uid)
-            .order("created_at", ascending: false)
-            .limit(limit)
-            .execute().value
-        async let flexRows: [SimpleToolRow] = client
-            .from("flex_tournaments")
-            .select("id, share_id, name, status, created_at")
-            .eq("creator_user_id", value: uid)
-            .order("created_at", ascending: false)
-            .limit(limit)
-            .execute().value
+        async let team = simpleTournaments(table: "team_match_tournaments", ownerColumn: "created_by", uid: uid, limit: limit, format: .teamMatch)
+        async let flex = simpleTournaments(table: "flex_tournaments", ownerColumn: "creator_user_id", uid: uid, limit: limit, format: .flex)
 
-        let quick = try await quickRows
-        let doubles = try await doublesRows
-        let team = try await teamRows
-        let flex = try await flexRows
+        let all = await quick + doubles + team + flex
+        return all.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+    }
 
-        // Enrich the registration-aware formats in parallel; team/flex map directly.
-        let enriched: [MyTournament] = try await withThrowingTaskGroup(of: MyTournament.self) { group in
-            for row in quick { group.addTask { try await enrich(row) } }
-            for row in doubles { group.addTask { try await enrich(row) } }
-            var result: [MyTournament] = []
-            for try await item in group { result.append(item) }
-            return result
-        }
-        let simple = team.map { Self.map($0, format: .teamMatch) } + flex.map { Self.map($0, format: .flex) }
-        return (enriched + simple).sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+    private func quickTournaments(uid: String, limit: Int) async -> [MyTournament] {
+        do {
+            let rows: [QuickTableRow] = try await client
+                .from("quick_tables")
+                .select("id, share_id, name, is_doubles, player_count, status, requires_registration, start_time, created_at")
+                .eq("creator_user_id", value: uid)
+                .order("created_at", ascending: false)
+                .limit(limit)
+                .execute().value
+            return await withTaskGroup(of: MyTournament.self) { group in
+                for row in rows { group.addTask { await enrich(row) } }
+                var result: [MyTournament] = []
+                for await item in group { result.append(item) }
+                return result
+            }
+        } catch { return [] }
+    }
+
+    private func doublesTournaments(uid: String, limit: Int) async -> [MyTournament] {
+        do {
+            let rows: [DEListRow] = try await client
+                .from("doubles_elimination_tournaments")
+                .select("id, share_id, name, team_count, status, created_at")
+                .eq("creator_user_id", value: uid)
+                .order("created_at", ascending: false)
+                .limit(limit)
+                .execute().value
+            return await withTaskGroup(of: MyTournament.self) { group in
+                for row in rows { group.addTask { await enrich(row) } }
+                var result: [MyTournament] = []
+                for await item in group { result.append(item) }
+                return result
+            }
+        } catch { return [] }
+    }
+
+    private func simpleTournaments(table: String, ownerColumn: String, uid: String, limit: Int, format: BracketFormat) async -> [MyTournament] {
+        do {
+            let rows: [SimpleToolRow] = try await client
+                .from(table)
+                .select("id, share_id, name, status, created_at")
+                .eq(ownerColumn, value: uid)
+                .order("created_at", ascending: false)
+                .limit(limit)
+                .execute().value
+            return rows.map { Self.map($0, format: format) }
+        } catch { return [] }
     }
 
     /// Minimal row shared by Team Match + Flex (no capacity/registration surfaced).
@@ -99,7 +112,7 @@ struct ToolsRepository {
         )
     }
 
-    private func enrich(_ row: QuickTableRow) async throws -> MyTournament {
+    private func enrich(_ row: QuickTableRow) async -> MyTournament {
         let requiresReg = row.requiresRegistration ?? false
         let capacity = row.playerCount ?? 0
         let registered = (try? await count(row: row, requiresReg: requiresReg)) ?? 0
@@ -133,7 +146,7 @@ struct ToolsRepository {
         }
     }
 
-    private func enrich(_ row: DEListRow) async throws -> MyTournament {
+    private func enrich(_ row: DEListRow) async -> MyTournament {
         let capacity = row.teamCount ?? 0
         let registered = (try? await client
             .from("doubles_elimination_teams")
