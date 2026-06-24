@@ -43,17 +43,35 @@ struct QuickTableRepository {
                                 players: try await players, matches: try await matches)
     }
 
-    // MARK: Create (direct-roster round-robin → group stage)
+    // MARK: Create (faithful port of the web 3-step wizard + setup)
+
+    /// All wizard inputs. Mirrors `create_quick_table_with_quota` params +
+    /// the post-create PATCH (default_sets / rating_source / DUPR range).
+    struct CreateOptions {
+        var name: String
+        var playerCount: Int
+        var format: String            // round_robin | large_playoff
+        var groupCount: Int?          // round_robin only
+        var requiresRegistration: Bool
+        var isDoubles: Bool
+        var defaultSets: Int          // 1 | 3 | 5
+        var requiresSkillLevel: Bool
+        var ratingSource: String      // self | dupr | either
+        var minDupr: Double?
+        var maxDupr: Double?
+        var autoApprove: Bool
+        var registrationMessage: String?
+    }
 
     private struct CreateParams: Encodable {
         let _name: String
         let _player_count: Int
-        let _format = "round_robin"
+        let _format: String
         let _group_count: Int?
-        let _requires_registration = false
-        let _requires_skill_level = false
-        let _auto_approve_registrations = false
-        let _registration_message: String? = nil
+        let _requires_registration: Bool
+        let _requires_skill_level: Bool
+        let _auto_approve_registrations: Bool
+        let _registration_message: String?
         let _is_doubles: Bool
     }
     private struct CreateResult: Decodable {
@@ -61,7 +79,13 @@ struct QuickTableRepository {
         let error: String?
         let table: QTTable?
     }
-    private struct PlayerInsert: Encodable { let table_id: String; let name: String; let display_order: Int }
+    private struct PostCreatePatch: Encodable {
+        let default_sets: Int?
+        let rating_source: String?
+        let min_skill_level: Double?
+        let max_skill_level: Double?
+    }
+    private struct PlayerInsert: Encodable { let table_id: String; let name: String; let team: String?; let display_order: Int }
     private struct GroupInsert: Encodable { let table_id: String; let name: String; let display_order: Int }
     private struct InsertedRow: Decodable { let id: UUID; let displayOrder: Int
         enum CodingKeys: String, CodingKey { case id; case displayOrder = "display_order" } }
@@ -72,43 +96,63 @@ struct QuickTableRepository {
         let display_order: Int; let rr_round_number: Int; let rr_match_index: Int
     }
 
-    /// Creates a round-robin quick table from a plain roster: RPC create →
-    /// add players → create groups → distribute → generate circle-method
-    /// matches → status=group_stage. Returns the new share_id. Mirrors the web
-    /// QuickTableSetup "no registration" path.
-    func create(name: String, isDoubles: Bool, playerNames: [String], groupCount: Int) async throws -> String {
-        let names = playerNames.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-        let groups = max(1, groupCount)
+    /// Step 1–3 of the wizard: creates the `quick_tables` row via the quota RPC
+    /// (status stays `setup`). Roster is entered separately (web parity).
+    /// Returns the created table (need id + share_id + requires_registration).
+    func createTable(_ o: CreateOptions) async throws -> QTTable {
         let result: CreateResult = try await client
             .rpc("create_quick_table_with_quota", params: CreateParams(
-                _name: String(name.prefix(100)),
-                _player_count: max(2, min(200, names.count)),
-                _group_count: groups,
-                _is_doubles: isDoubles
+                _name: String(o.name.prefix(100)),
+                _player_count: max(2, min(200, o.playerCount)),
+                _format: o.format,
+                _group_count: o.format == "round_robin" ? o.groupCount : nil,
+                _requires_registration: o.requiresRegistration,
+                _requires_skill_level: o.requiresRegistration ? (o.requiresSkillLevel || o.ratingSource != "self") : false,
+                _auto_approve_registrations: o.requiresRegistration ? o.autoApprove : false,
+                _registration_message: o.requiresRegistration ? o.registrationMessage?.nonEmpty : nil,
+                _is_doubles: o.requiresRegistration ? o.isDoubles : true
             ))
             .execute().value
         guard result.success, let table = result.table else {
             throw NSError(domain: "quicktable", code: 1, userInfo: [NSLocalizedDescriptionKey: errorMessage(result.error)])
         }
-        let tableID = table.id.uuidString.lowercased()
+        // Post-create PATCH for fields the RPC doesn't know (web Sprint B1.3).
+        let wantsDupr = o.requiresRegistration && o.requiresSkillLevel && o.ratingSource != "self"
+        if o.defaultSets > 1 || wantsDupr {
+            try await client.from("quick_tables").update(PostCreatePatch(
+                default_sets: o.defaultSets > 1 ? o.defaultSets : nil,
+                rating_source: wantsDupr ? o.ratingSource : nil,
+                min_skill_level: wantsDupr ? o.minDupr : nil,
+                max_skill_level: wantsDupr ? o.maxDupr : nil
+            )).eq("id", value: table.id).execute()
+        }
+        return table
+    }
 
-        // Players
-        let players: [InsertedRow] = try await client
+    /// The setup step (non-registration path): add the roster → create groups →
+    /// distribute → generate circle-method matches → status=group_stage. Mirrors
+    /// web QuickTableSetup. `groupCount` comes from the table.
+    func setupRoster(tableID: UUID, players: [(name: String, team: String?)], groupCount: Int) async throws {
+        let tid = tableID.uuidString.lowercased()
+        let roster = players
+            .map { (name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines), team: $0.team?.nonEmpty) }
+            .filter { !$0.name.isEmpty }
+        let groups = max(1, groupCount)
+
+        let inserted: [InsertedRow] = try await client
             .from("quick_table_players")
-            .insert(names.enumerated().map { PlayerInsert(table_id: tableID, name: $1, display_order: $0) })
+            .insert(roster.enumerated().map { PlayerInsert(table_id: tid, name: $1.name, team: $1.team, display_order: $0) })
             .select("id, display_order")
             .execute().value
-        let orderedPlayers = players.sorted { $0.displayOrder < $1.displayOrder }
+        let orderedPlayers = inserted.sorted { $0.displayOrder < $1.displayOrder }
 
-        // Groups (A, B, C…)
         let groupRows: [InsertedRow] = try await client
             .from("quick_table_groups")
-            .insert((0..<groups).map { GroupInsert(table_id: tableID, name: groupLetter($0), display_order: $0) })
+            .insert((0..<groups).map { GroupInsert(table_id: tid, name: groupLetter($0), display_order: $0) })
             .select("id, display_order")
             .execute().value
         let orderedGroups = groupRows.sorted { $0.displayOrder < $1.displayOrder }
 
-        // Distribute round-robin (player i → group i % groupCount) → balanced groups.
         var buckets: [[UUID]] = Array(repeating: [], count: orderedGroups.count)
         for (i, p) in orderedPlayers.enumerated() {
             let g = i % orderedGroups.count
@@ -118,20 +162,18 @@ struct QuickTableRepository {
                 .eq("id", value: p.id).execute()
         }
 
-        // Generate circle-method matches per group.
         for (gIdx, group) in orderedGroups.enumerated() {
             let pairs = Self.circleMethod(buckets[gIdx])
             guard !pairs.isEmpty else { continue }
             let inserts = pairs.enumerated().map { i, pair in
-                MatchInsert(table_id: tableID, group_id: group.id.uuidString.lowercased(),
+                MatchInsert(table_id: tid, group_id: group.id.uuidString.lowercased(),
                             player1_id: pair.p1.uuidString.lowercased(), player2_id: pair.p2.uuidString.lowercased(),
                             display_order: i, rr_round_number: pair.round, rr_match_index: pair.index)
             }
             try await client.from("quick_table_matches").insert(inserts).execute()
         }
 
-        try await client.from("quick_tables").update(TableStatusUpdate(status: "group_stage")).eq("id", value: table.id).execute()
-        return table.shareID
+        try await client.from("quick_tables").update(TableStatusUpdate(status: "group_stage")).eq("id", value: tableID).execute()
     }
 
     private func errorMessage(_ code: String?) -> String {

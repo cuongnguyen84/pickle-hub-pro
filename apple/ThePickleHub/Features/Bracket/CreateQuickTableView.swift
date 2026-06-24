@@ -1,52 +1,65 @@
 import SwiftUI
 
-/// Native creation wizard for a round-robin Quick Table (direct roster, no
-/// registration). P2 of the Bracket Lab native port. On success it hands back
-/// the new share_id so the caller can push the native detail view.
+/// Native Quick Table creation — a faithful port of the web 3-step wizard
+/// (Bước 1 Thông tin → Bước 2 Thể thức → Bước 3 Chia bảng) plus the roster
+/// setup step. Round-robin + no-registration is handled fully natively; other
+/// paths (registration mode, large_playoff) create the table then hand off to
+/// the web for the next step.
 struct CreateQuickTableView: View {
     let onCreated: (_ shareID: String, _ name: String) -> Void
+    let onOpenWeb: (URL) -> Void
 
     @Environment(\.dismiss) private var dismiss
+
+    enum Step { case count, format, groups, roster }
+    @State private var step: Step = .count
+
+    // Step 1
     @State private var name = ""
-    @State private var isDoubles = true
-    @State private var players: [PlayerField] = [PlayerField(), PlayerField(), PlayerField(), PlayerField()]
-    @State private var groupCount = 1
-    @State private var creating = false
+    @State private var playerCountText = ""
+    @State private var requiresRegistration = false
+    @State private var isDoubles = false
+    @State private var defaultSets = 1
+    @State private var requiresSkillLevel = false
+    @State private var ratingSource = "self"   // self | dupr | either
+    @State private var minDupr = ""
+    @State private var maxDupr = ""
+    @State private var autoApprove = false
+    @State private var registrationMessage = ""
+    @State private var showAdvanced = false
+
+    // Step 2/3
+    @State private var suggestedFormat: String?   // round_robin | large_playoff | nil
+    @State private var selectedFormat = ""
+    @State private var suggestions: [GroupSuggestion] = []
+    @State private var selectedGroupCount: Int?
+
+    // After RPC
+    @State private var createdTable: QTTable?
+    @State private var roster: [PlayerField] = []
+
+    @State private var working = false
     @State private var errorMessage: String?
 
     private let repo = QuickTableRepository()
 
-    struct PlayerField: Identifiable, Equatable { let id = UUID(); var name = "" }
+    struct PlayerField: Identifiable, Equatable { let id = UUID(); var name = ""; var team = "" }
 
-    private var filledNames: [String] {
-        players.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-    }
-    private var canCreate: Bool { !name.trimmingCharacters(in: .whitespaces).isEmpty && filledNames.count >= 2 }
-    private var maxGroups: Int { max(1, filledNames.count / 2) }
+    private var playerCount: Int { Int(playerCountText) ?? 0 }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    field(label: "TÊN GIẢI") {
-                        TextField("VD: Giao hữu Quận 7", text: $name)
-                            .font(TLFont.sans(16)).foregroundStyle(TLColor.fg)
-                            .padding(12)
-                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+                    switch step {
+                    case .count: stepCount
+                    case .format: stepFormat
+                    case .groups: stepGroups
+                    case .roster: stepRoster
                     }
-
-                    field(label: "THỂ LOẠI") { formatToggle }
-
-                    field(label: "NGƯỜI CHƠI · \(filledNames.count)") { rosterEditor }
-
-                    field(label: "SỐ BẢNG · \(groupCount)") { groupStepper }
-
                     if let errorMessage {
                         Text(errorMessage).font(TLFont.sans(13)).foregroundStyle(TLColor.live)
                     }
-
-                    createButton
                 }
                 .padding(20)
             }
@@ -58,113 +71,388 @@ struct CreateQuickTableView: View {
                     Button("Hủy") { dismiss() }.foregroundStyle(TLColor.fg3)
                 }
             }
-            .onChange(of: filledNames.count) { _, _ in
-                if groupCount > maxGroups { groupCount = maxGroups }
+        }
+    }
+
+    // MARK: Step header
+
+    private func stepHeader(_ kicker: String, _ title: String, _ desc: String) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("◆ \(kicker)").font(TLFont.mono(10, .semibold)).tracking(0.6).foregroundStyle(TLColor.accentText)
+            Text(title).font(TLFont.serif(24)).foregroundStyle(TLColor.fg).fixedSize(horizontal: false, vertical: true)
+            Text(desc).font(TLFont.sans(13)).foregroundStyle(TLColor.fg3).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: Step 1 — count
+
+    private var stepCount: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            stepHeader("Bước 1 / 3", "Bước 1: Thông tin giải đấu", "Nhập thông tin cơ bản về giải đấu")
+
+            labeled("Tên giải / bảng đấu") {
+                inputField("VD: Giải Pickleball Mùa Hè 2024", text: $name)
+            }
+            labeled("Số người chơi (dự kiến)") {
+                inputField("VD: 16", text: $playerCountText, keyboard: .numberPad)
+            }
+
+            Rectangle().fill(TLColor.border).frame(height: 1)
+
+            checkRow(isOn: $requiresRegistration, icon: "checklist",
+                     title: "Yêu cầu VĐV đăng ký trước",
+                     desc: "VĐV phải đăng ký và được BTC duyệt trước khi vào danh sách thi đấu")
+
+            if requiresRegistration { registrationOptions }
+
+            primaryButton("Tiếp tục", enabled: playerCount >= 2) {
+                Haptics.light()
+                suggestedFormat = playerCount > 48 ? "large_playoff" : (playerCount > 32 ? nil : "round_robin")
+                step = .format
             }
         }
     }
 
-    private var formatToggle: some View {
-        HStack(spacing: 4) {
-            ForEach([true, false], id: \.self) { doubles in
-                let selected = isDoubles == doubles
-                Button { isDoubles = doubles } label: {
-                    Text(doubles ? "Đôi" : "Đơn")
-                        .font(TLFont.sans(14, selected ? .semibold : .medium))
-                        .foregroundStyle(selected ? TLColor.accentInk : TLColor.fg2)
-                        .frame(maxWidth: .infinity).padding(.vertical, 9)
-                        .background(selected ? TLColor.accent : .clear, in: Capsule())
+    private var registrationOptions: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            checkRow(isOn: $isDoubles, icon: "person.2",
+                     title: "Thi đấu đôi",
+                     desc: "VĐV đăng ký theo cặp đôi, có thể mời partner qua link")
+
+            labeled("Số ván mặc định") {
+                Picker("", selection: $defaultSets) {
+                    Text("Best of 1").tag(1); Text("Best of 3").tag(3); Text("Best of 5").tag(5)
+                }
+                .pickerStyle(.segmented)
+            }
+
+            checkRow(isOn: $requiresSkillLevel, icon: nil,
+                     title: "Bắt buộc khai trình độ",
+                     desc: "VĐV phải khai trình độ (DUPR hoặc tự mô tả)")
+
+            if requiresSkillLevel { ratingSourcePicker }
+
+            DisclosureGroup(isExpanded: $showAdvanced) {
+                VStack(alignment: .leading, spacing: 14) {
+                    checkRow(isOn: $autoApprove, icon: nil,
+                             title: "Tự động duyệt đăng ký",
+                             desc: "VĐV được duyệt ngay khi đăng ký (không khuyến nghị)")
+                    labeled("Thông báo cho VĐV khi đăng ký") {
+                        TextField("VD: BTC sẽ xác nhận trình độ…", text: $registrationMessage, axis: .vertical)
+                            .lineLimit(2...4)
+                            .font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
+                            .padding(10)
+                            .background(TLColor.bg, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+                    }
+                }
+                .padding(.top, 12)
+            } label: {
+                Text("Cài đặt nâng cao").font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg2)
+            }
+            .tint(TLColor.fg3)
+        }
+        .padding(16)
+        .background(TLColor.bg, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+        .padding(.leading, 4)
+    }
+
+    private var ratingSourcePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Nguồn rating").font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.fg)
+            radioRow("self", "Tự kê khai", "Người chơi nhập rating tự do (như cũ)")
+            radioRow("dupr", "Bắt buộc DUPR", "Người chơi phải kết nối DUPR — rating tự fill từ profile")
+            radioRow("either", "Cả hai (ưu tiên DUPR)", "Auto-fill nếu user đã DUPR, nếu chưa thì tự kê khai")
+            if ratingSource != "self" {
+                Rectangle().fill(TLColor.border).frame(height: 1)
+                Text("GIỚI HẠN DUPR (TÙY CHỌN)").font(TLFont.mono(9, .medium)).tracking(0.6).foregroundStyle(TLColor.fg3)
+                HStack(spacing: 8) {
+                    inputField("Tối thiểu", text: $minDupr, keyboard: .decimalPad)
+                    Text("–").foregroundStyle(TLColor.fg4)
+                    inputField("Tối đa", text: $maxDupr, keyboard: .decimalPad)
+                }
+                Text("Để trống = không giới hạn. VD: 3.0 – 4.5 chỉ nhận VĐV trong khoảng này.")
+                    .font(TLFont.sans(11)).foregroundStyle(TLColor.fg4)
+            }
+        }
+        .padding(12)
+        .background(TLColor.surface2, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+    }
+
+    private func radioRow(_ value: String, _ title: String, _ desc: String) -> some View {
+        Button { ratingSource = value } label: {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: ratingSource == value ? "largecircle.fill.circle" : "circle")
+                    .foregroundStyle(ratingSource == value ? TLColor.accentText : TLColor.fg4).font(.system(size: 16))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(TLFont.sans(14)).foregroundStyle(TLColor.fg)
+                    Text(desc).font(TLFont.sans(11)).foregroundStyle(TLColor.fg3).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Step 2 — format
+
+    private var stepFormat: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            stepHeader("Bước 2 / 3", "Bước 2: Chọn thể thức",
+                       "\(playerCount) người — " + (suggestedFormat == "large_playoff"
+                        ? "Thể thức dành cho giải đông người."
+                        : "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng."))
+
+            formatOption(value: "round_robin", icon: "trophy",
+                         title: "Chia bảng (Round Robin)",
+                         desc: "Chia người chơi thành các bảng, mỗi người đấu với tất cả người khác trong bảng. Top của mỗi bảng sẽ vào vòng Playoff.",
+                         disabled: playerCount > 48, disabledMsg: "Không khả dụng với >48 người")
+            formatOption(value: "large_playoff", icon: "bolt",
+                         title: "Playoff đông người",
+                         desc: "Thể thức dành cho giải đông người. Lượt 1-2 ghi nhận thắng/thua và hiệu số, từ lượt 3 trở đi là single elimination.",
+                         disabled: playerCount < 32, disabledMsg: "Chỉ khả dụng với ≥32 người")
+
+            backButton { step = .count }
+        }
+    }
+
+    private func formatOption(value: String, icon: String, title: String, desc: String, disabled: Bool, disabledMsg: String) -> some View {
+        Button {
+            guard !disabled else { return }
+            Haptics.light()
+            selectedFormat = value
+            if value == "round_robin" {
+                suggestions = GroupSuggestion.suggest(playerCount: playerCount)
+                selectedGroupCount = suggestions.first(where: \.isRecommended)?.groupCount ?? suggestions.first?.groupCount
+                step = .groups
+            } else {
+                Task { await createTable() }   // large_playoff → create now (hand off after)
+            }
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: icon).font(.system(size: 18)).foregroundStyle(TLColor.accentText).frame(width: 26)
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 8) {
+                        Text(title).font(TLFont.sans(15, .semibold)).foregroundStyle(TLColor.fg)
+                        if suggestedFormat == value {
+                            Text("KHUYẾN NGHỊ").font(TLFont.mono(8, .bold)).tracking(0.6)
+                                .foregroundStyle(TLColor.accentText)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(TLColor.accent.opacity(0.1), in: Capsule())
+                        }
+                    }
+                    Text(disabled ? disabledMsg : desc)
+                        .font(TLFont.sans(12)).foregroundStyle(disabled ? TLColor.fg4 : TLColor.fg3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.lg).strokeBorder(suggestedFormat == value ? TLColor.accent.opacity(0.4) : TLColor.border, lineWidth: 1))
+            .opacity(disabled ? 0.5 : 1)
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+    }
+
+    // MARK: Step 3 — groups
+
+    private var stepGroups: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader("Bước 3 / 3", "Bước 3: Chia bảng", "\(playerCount) người")
+
+            if suggestions.isEmpty {
+                Text("Không có cấu hình bảng phù hợp cho \(playerCount) người. Thử số người khác.")
+                    .font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
+            }
+            ForEach(suggestions) { s in groupSuggestionRow(s) }
+
+            HStack(spacing: 12) {
+                backButton { step = .format }
+                primaryButton("Tạo", enabled: selectedGroupCount != nil && !working) {
+                    Task { await createTable() }
+                }
+            }
+        }
+    }
+
+    private func groupSuggestionRow(_ s: GroupSuggestion) -> some View {
+        let selected = selectedGroupCount == s.groupCount
+        return Button { selectedGroupCount = s.groupCount } label: {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Text("\(s.groupCount) bảng").font(TLFont.sans(15, .semibold)).foregroundStyle(TLColor.fg)
+                        if s.isRecommended {
+                            Text("KHUYẾN NGHỊ").font(TLFont.mono(8, .bold)).tracking(0.6).foregroundStyle(TLColor.accentText)
+                                .padding(.horizontal, 6).padding(.vertical, 2).background(TLColor.accent.opacity(0.1), in: Capsule())
+                        }
+                    }
+                    Text("\(s.playersPerGroup.map(String.init).joined(separator: ", ")) người mỗi bảng")
+                        .font(TLFont.sans(13)).foregroundStyle(TLColor.fg2)
+                    Text("\(s.reason) → \(s.totalPlayoffSpots) suất vào playoff")
+                        .font(TLFont.sans(12)).foregroundStyle(TLColor.fg3)
+                }
+                Spacer(minLength: 0)
+                if selected { Image(systemName: "checkmark").foregroundStyle(TLColor.accentText) }
+            }
+            .padding(16)
+            .background((selected ? TLColor.accent.opacity(0.08) : TLColor.surface), in: RoundedRectangle(cornerRadius: TLRadius.lg))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.lg).strokeBorder(selected ? TLColor.accent : TLColor.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Step 4 — roster (setup, non-registration)
+
+    private var stepRoster: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                stepHeader("VĐV", "Nhập danh sách VĐV", "Nhập tên từng VĐV. Có thể bỏ trống ô không dùng.")
+                Spacer()
+                Button { roster.shuffle() } label: {
+                    Label("Trộn", systemImage: "shuffle").font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.accentText)
                 }
                 .buttonStyle(.plain)
             }
-        }
-        .padding(4)
-        .background(TLColor.surface, in: Capsule())
-        .overlay(Capsule().strokeBorder(TLColor.border, lineWidth: 1))
-    }
 
-    private var rosterEditor: some View {
-        VStack(spacing: 8) {
-            ForEach($players) { $player in
-                HStack(spacing: 10) {
-                    TextField("Tên người chơi", text: $player.name)
-                        .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
-                    if players.count > 2 {
-                        Button {
-                            players.removeAll { $0.id == player.id }
-                        } label: {
-                            Image(systemName: "minus.circle.fill").foregroundStyle(TLColor.fg4)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Xóa người chơi")
+            VStack(spacing: 8) {
+                ForEach(Array($roster.enumerated()), id: \.element.id) { index, $p in
+                    HStack(spacing: 8) {
+                        Text("\(index + 1)").font(TLFont.mono(12)).foregroundStyle(TLColor.fg3).frame(width: 22)
+                        TextField("Tên VĐV", text: $p.name)
+                            .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+                            .padding(.horizontal, 10).padding(.vertical, 9)
+                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+                        TextField("Đội", text: $p.team)
+                            .font(TLFont.sans(14)).foregroundStyle(TLColor.fg2)
+                            .frame(width: 84)
+                            .padding(.horizontal, 10).padding(.vertical, 9)
+                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
                     }
                 }
-                .padding(.horizontal, 12).padding(.vertical, 10)
-                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
             }
-            Button { players.append(PlayerField()) } label: {
-                Label("Thêm người chơi", systemImage: "plus")
-                    .font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.accentText)
-                    .frame(maxWidth: .infinity).padding(.vertical, 10)
-                    .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border2, lineWidth: 1))
+
+            primaryButton(working ? "Đang tạo…" : "Bắt đầu giải", enabled: filledRoster.count >= 2 && !working) {
+                Task { await finishSetup() }
             }
-            .buttonStyle(.plain)
         }
     }
 
-    private var groupStepper: some View {
-        HStack {
-            Text(groupCount == 1 ? "Vòng tròn 1 bảng" : "\(groupCount) bảng")
-                .font(TLFont.sans(14)).foregroundStyle(TLColor.fg2)
-            Spacer()
-            Stepper("", value: $groupCount, in: 1...maxGroups).labelsHidden()
-        }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+    private var filledRoster: [(name: String, team: String?)] {
+        roster.map { (name: $0.name.trimmingCharacters(in: .whitespaces), team: $0.team.nonEmpty) }
+            .filter { !$0.name.isEmpty }
     }
 
-    private var createButton: some View {
-        Button {
-            Task { await create() }
-        } label: {
-            HStack(spacing: 8) {
-                if creating { ProgressView().tint(TLColor.accentInk) }
-                Text(creating ? "Đang tạo…" : "Tạo giải")
-                    .font(TLFont.sans(16, .semibold))
-            }
-            .foregroundStyle(TLColor.accentInk)
-            .frame(maxWidth: .infinity).padding(.vertical, 14)
-            .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .opacity(canCreate && !creating ? 1 : 0.4)
-        .disabled(!canCreate || creating)
-    }
+    // MARK: Actions
 
     @MainActor
-    private func create() async {
-        creating = true
-        errorMessage = nil
+    private func createTable() async {
+        working = true; errorMessage = nil
         do {
-            let shareID = try await repo.create(
-                name: name, isDoubles: isDoubles,
-                playerNames: filledNames, groupCount: groupCount
+            let opts = QuickTableRepository.CreateOptions(
+                name: name, playerCount: playerCount, format: selectedFormat,
+                groupCount: selectedGroupCount, requiresRegistration: requiresRegistration,
+                isDoubles: isDoubles, defaultSets: defaultSets, requiresSkillLevel: requiresSkillLevel,
+                ratingSource: ratingSource, minDupr: Double(minDupr), maxDupr: Double(maxDupr),
+                autoApprove: autoApprove, registrationMessage: registrationMessage
             )
-            Haptics.success()
-            dismiss()
-            onCreated(shareID, name.trimmingCharacters(in: .whitespaces))
+            let table = try await repo.createTable(opts)
+            createdTable = table
+            // Non-registration round-robin → native roster setup. Else hand off to web.
+            if !requiresRegistration && selectedFormat == "round_robin" {
+                roster = (0..<max(2, playerCount)).map { _ in PlayerField() }
+                step = .roster
+            } else {
+                Haptics.success()
+                dismiss()
+                onOpenWeb(WebRoutes.quickTable(shareID: table.shareID))
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
-        creating = false
+        working = false
     }
 
-    private func field<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 9) {
-            Text(label).font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
+    @MainActor
+    private func finishSetup() async {
+        guard let table = createdTable else { return }
+        working = true; errorMessage = nil
+        do {
+            try await repo.setupRoster(tableID: table.id, players: filledRoster,
+                                       groupCount: selectedGroupCount ?? 1)
+            Haptics.success()
+            dismiss()
+            onCreated(table.shareID, name.trimmingCharacters(in: .whitespaces))
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        working = false
+    }
+
+    // MARK: Reusable bits
+
+    private func labeled<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label).font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.fg2)
             content()
         }
+    }
+
+    private func inputField(_ placeholder: String, text: Binding<String>, keyboard: UIKeyboardType = .default) -> some View {
+        TextField(placeholder, text: text)
+            .keyboardType(keyboard)
+            .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
+            .padding(.horizontal, 12).padding(.vertical, 11)
+            .frame(maxWidth: .infinity)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    private func checkRow(isOn: Binding<Bool>, icon: String?, title: String, desc: String) -> some View {
+        Button { isOn.wrappedValue.toggle() } label: {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: isOn.wrappedValue ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(isOn.wrappedValue ? TLColor.accentText : TLColor.fg4).font(.system(size: 18))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        if let icon { Image(systemName: icon).font(.system(size: 12)).foregroundStyle(TLColor.accentText) }
+                        Text(title).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)
+                    }
+                    Text(desc).font(TLFont.sans(12)).foregroundStyle(TLColor.fg3).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func primaryButton(_ title: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if working { ProgressView().tint(TLColor.accentInk) }
+                Text(title).font(TLFont.sans(15, .semibold))
+                if !working { Image(systemName: "arrow.right").font(.system(size: 12, weight: .bold)) }
+            }
+            .foregroundStyle(TLColor.accentInk)
+            .frame(maxWidth: .infinity).padding(.vertical, 13)
+            .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+        }
+        .buttonStyle(.plain)
+        .opacity(enabled ? 1 : 0.4)
+        .disabled(!enabled)
+    }
+
+    private func backButton(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text("← Quay lại").font(TLFont.sans(15, .medium)).foregroundStyle(TLColor.fg2)
+                .padding(.vertical, 13).padding(.horizontal, 18)
+                .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border2, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 }

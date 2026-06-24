@@ -72,10 +72,13 @@ struct ToolsView: View {
                 FormatFinderSheet { url in openURL = IdentifiedURL(url: url) }
             }
             .sheet(isPresented: $showCreate) {
-                CreateQuickTableView { shareID, name in
+                CreateQuickTableView(onCreated: { shareID, name in
                     Task { await model.reload() }
                     createdTarget = CreatedRef(id: shareID, name: name)
-                }
+                }, onOpenWeb: { url in
+                    Task { await model.reload() }
+                    openURL = IdentifiedURL(url: url)
+                })
             }
             .navigationDestination(item: $navTarget) { t in
                 QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)

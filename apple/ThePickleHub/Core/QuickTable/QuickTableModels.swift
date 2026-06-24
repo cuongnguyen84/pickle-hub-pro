@@ -103,6 +103,48 @@ struct QTMatch: Decodable, Identifiable, Equatable {
     }
 }
 
+/// A group-config suggestion for wizard step 3. Port of web suggestGroupConfigs.
+struct GroupSuggestion: Identifiable, Equatable {
+    let groupCount: Int
+    let playersPerGroup: [Int]
+    let isRecommended: Bool
+    let reason: String
+    let wildcardNeeded: Int
+    let totalPlayoffSpots: Int
+    var id: Int { groupCount }
+
+    static func suggest(playerCount: Int) -> [GroupSuggestion] {
+        let valid = [2, 3, 4, 6, 8]
+        var out: [GroupSuggestion] = []
+        for k in valid {
+            if k > playerCount { continue }
+            let base = playerCount / k
+            let rem = playerCount % k
+            let minSize = base
+            let maxSize = rem > 0 ? base + 1 : base
+            if minSize < 3 || maxSize > 6 { continue }
+            if maxSize - minSize > 1 { continue }
+            // Deterministic: the first `rem` groups are the larger ones.
+            let ppg = (0..<k).map { $0 < rem ? base + 1 : base }
+            let directSpots = k * 2
+            var ideal = 4
+            if directSpots >= 6 { ideal = 8 }
+            if directSpots >= 12 { ideal = 16 }
+            if directSpots >= 24 { ideal = 32 }
+            let wildcard = max(0, ideal - directSpots)
+            var recommended = false
+            let reason: String
+            if wildcard == 0 { recommended = true; reason = "Không cần wildcard, vào thẳng playoff" }
+            else if wildcard <= 4 { reason = "Cần \(wildcard) wildcard" }
+            else { reason = "Cần \(wildcard) wildcard (không khuyến nghị)" }
+            if (k == 4 || k == 8) && wildcard == 0 { recommended = true }
+            out.append(GroupSuggestion(groupCount: k, playersPerGroup: ppg, isRecommended: recommended,
+                                       reason: reason, wildcardNeeded: wildcard, totalPlayoffSpots: ideal))
+        }
+        return out
+    }
+}
+
 /// Composed snapshot of a quick table for the native detail view.
 struct QuickTableDetail: Equatable {
     let table: QTTable
