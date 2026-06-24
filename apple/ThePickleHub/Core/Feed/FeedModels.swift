@@ -194,7 +194,8 @@ struct FeedNews: Equatable {
     let summary: String
     let imageURL: String?
     let source: String?
-    let language: String   // "vi" | "en"
+    let sourceURL: String?   // external original article (copyright "read full at source")
+    let language: String     // "vi" | "en"
     let aiTranslated: Bool
 }
 
@@ -206,6 +207,7 @@ struct FeedNewsRow: Decodable {
     let title: String
     let summary: String
     let source: String?
+    let sourceURL: String?
     let imageURL: String?
     let language: String
     let slug: String?
@@ -214,6 +216,7 @@ struct FeedNewsRow: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case id, title, summary, source, language, slug
+        case sourceURL = "source_url"
         case imageURL = "image_url"
         case publishedAt = "published_at"
         case aiTranslated = "ai_translated"
@@ -308,6 +311,7 @@ struct FeedItem: Identifiable, Equatable {
             summary: row.summary,
             imageURL: row.imageURL,
             source: row.source,
+            sourceURL: row.sourceURL,
             language: row.language,
             aiTranslated: row.aiTranslated
         )

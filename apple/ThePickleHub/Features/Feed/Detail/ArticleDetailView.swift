@@ -71,6 +71,11 @@ struct NewsDetailView: View {
     let publishedAt: Date?
 
     var body: some View {
+        // The article body IS rendered natively (summary). The CTA links out to
+        // the ORIGINAL source for the full read (copyright/fair-use), mirroring
+        // the web "Đọc toàn bộ bài viết tại {source}" button. Falls back to the
+        // app's own news page if no external source_url.
+        let external = news.sourceURL?.nonEmpty.flatMap { URL(string: $0) }
         ArticleDetailView(
             imageURL: news.imageURL,
             eyebrow: .init(
@@ -81,8 +86,8 @@ struct NewsDetailView: View {
             ),
             title: news.title,
             bodyText: news.summary,
-            readURL: WebRoutes.news(slug: news.slug, language: news.language),
-            readLabel: "Đọc bài gốc"
+            readURL: external ?? WebRoutes.news(slug: news.slug, language: news.language),
+            readLabel: news.source?.nonEmpty.map { "Đọc toàn bộ tại \($0)" } ?? "Đọc bài gốc"
         )
     }
 }

@@ -193,4 +193,6 @@ struct HomeView: View {
 enum HomeRoute: Hashable {
     case tournaments
     case rankings
+    case notifications
+    case search
 }

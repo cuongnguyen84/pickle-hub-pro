@@ -112,8 +112,8 @@ private struct FeedTimelineRow: View {
             }
             .buttonStyle(.plain)
         case .video(let video):
-            Button {
-                onOpenWeb(WebRoutes.video(id: video.videoID))
+            NavigationLink {
+                FeedVideoPlayerView(video: video)
             } label: {
                 FeedVideoCard(video: video, publishedAt: item.publishedAt)
             }

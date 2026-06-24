@@ -52,4 +52,31 @@ struct FeedRepository {
         let now = Date()
         return rows.compactMap { FeedItem(news: $0, now: now) }
     }
+
+    /// Fetch a single video's playable URL (Mux HLS or storage file) so a feed
+    /// video card can play natively via AVPlayer instead of opening the web page.
+    func videoPlayback(id: UUID) async -> (url: URL, title: String)? {
+        struct Row: Decodable {
+            let title: String?
+            let muxPlaybackID: String?
+            let storagePath: String?
+            enum CodingKeys: String, CodingKey {
+                case title
+                case muxPlaybackID = "mux_playback_id"
+                case storagePath = "storage_path"
+            }
+            var playbackURL: URL? {
+                if let mux = muxPlaybackID?.nonEmpty { return URL(string: "https://stream.mux.com/\(mux).m3u8") }
+                if let path = storagePath?.nonEmpty {
+                    return AppConfig.supabaseURL.appending(path: "storage/v1/object/public/videos/\(path)")
+                }
+                return nil
+            }
+        }
+        guard let row: Row = try? await client
+            .from("videos").select("title, mux_playback_id, storage_path")
+            .eq("id", value: id).single().execute().value,
+              let url = row.playbackURL else { return nil }
+        return (url, row.title?.nonEmpty ?? "Video")
+    }
 }

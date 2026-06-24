@@ -42,6 +42,7 @@ struct AppTabView: View {
     }
 
     @State private var homePath = NavigationPath()
+    @State private var unreadCount = 0
 
     private var homeTab: some View {
         NavigationStack(path: $homePath) {
@@ -51,6 +52,8 @@ struct AppTabView: View {
                     switch route {
                     case .tournaments: TournamentsView()
                     case .rankings: RankingsView()
+                    case .notifications: NotificationsView()
+                    case .search: SearchView()
                     }
                 }
                 .toolbar {
@@ -67,15 +70,25 @@ struct AppTabView: View {
                                 .foregroundStyle(TLColor.fg)
                         }
                     }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink {
-                            ProfileView()
-                        } label: {
-                            Image(systemName: "person.crop.circle")
-                                .foregroundStyle(TLColor.accentText)
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Button { homePath.append(HomeRoute.search) } label: {
+                            Image(systemName: "magnifyingglass").foregroundStyle(TLColor.fg)
+                        }
+                        Button { homePath.append(HomeRoute.notifications) } label: {
+                            Image(systemName: "bell")
+                                .foregroundStyle(TLColor.fg)
+                                .overlay(alignment: .topTrailing) {
+                                    if unreadCount > 0 {
+                                        Circle().fill(TLColor.live).frame(width: 8, height: 8).offset(x: 4, y: -3)
+                                    }
+                                }
+                        }
+                        NavigationLink { ProfileView() } label: {
+                            Image(systemName: "person.crop.circle").foregroundStyle(TLColor.accentText)
                         }
                     }
                 }
+                .task { unreadCount = await NotificationRepository().unreadCount() }
         }
     }
 }
