@@ -297,8 +297,8 @@ struct DoublesElimRepository {
         let is_bye = false
         let display_order: Int
         let status = "pending"
-        let court_number: Int?
-        let start_time: String?
+        var court_number: Int?
+        var start_time: String?
     }
 
     /// If R3 is complete and no playoff exists, generate the single-elimination
@@ -403,6 +403,203 @@ struct DoublesElimRepository {
 
         try await client.from("doubles_elimination_matches").insert(inserts).execute()
         return true
+    }
+
+    // MARK: Create (port of DoublesEliminationSetup + generateBracket)
+
+    struct DECreateOptions {
+        let name: String
+        let teamCount: Int
+        let courts: [Int]
+        let startTime: String?       // "HH:mm" or nil
+        let ratingSource: String     // self | either | dupr
+        let minDupr: Double?
+        let maxDupr: Double?
+        let earlyFormat: String      // bo1 | bo3 | bo5
+        let semiFormat: String
+        let finalsFormat: String
+        let hasThirdPlace: Bool
+    }
+    struct DETeamInput { let teamName: String; let p1: String; let p2: String; let seed: Int? }
+
+    enum DECreateError: Error, LocalizedError {
+        case limitReached, authRequired, failed(String)
+        var errorDescription: String? {
+            switch self {
+            case .limitReached: return "Đã đạt giới hạn: mỗi tài khoản tối đa 3 giải."
+            case .authRequired: return "Bạn cần đăng nhập để tạo giải."
+            case .failed(let m): return m
+            }
+        }
+    }
+
+    private struct DECreateParams: Encodable {
+        let _name: String, _share_id: String, _team_count: Int, _has_third_place_match: Bool
+        let _early_rounds_format: String, _semifinals_format: String, _finals_format: String
+        let _court_count: Int
+        let _start_time: String?
+        func encode(to e: Encoder) throws {
+            var c = e.container(keyedBy: K.self)
+            try c.encode(_name, forKey: ._name); try c.encode(_share_id, forKey: ._share_id)
+            try c.encode(_team_count, forKey: ._team_count)
+            try c.encode(_has_third_place_match, forKey: ._has_third_place_match)
+            try c.encode(_early_rounds_format, forKey: ._early_rounds_format)
+            try c.encode(_semifinals_format, forKey: ._semifinals_format)
+            try c.encode(_finals_format, forKey: ._finals_format)
+            try c.encode(_court_count, forKey: ._court_count)
+            try c.encode(_start_time, forKey: ._start_time)   // null ok
+        }
+        enum K: String, CodingKey {
+            case _name, _share_id, _team_count, _has_third_place_match
+            case _early_rounds_format, _semifinals_format, _finals_format, _court_count, _start_time
+        }
+    }
+    private struct DERatingPatch: Encodable {
+        let rating_source: String; let min_dupr_rating: Double?; let max_dupr_rating: Double?; let status: String
+    }
+    private struct DETeamInsertRow: Encodable {
+        let tournament_id: String; let team_name: String; let player1_name: String
+        let player2_name: String?; let seed: Int?; let status: String
+    }
+
+    /// Manual flow → create + insert teams + generate R1/R2/R3 bracket + status
+    /// 'ongoing'. DUPR flow → create + patch registration_open (teams register).
+    func createDoublesElim(_ o: DECreateOptions, teams: [DETeamInput]) async throws -> String {
+        let shareID = Self.randomShareID()
+        let isDupr = o.ratingSource == "dupr"
+        let teamCount = isDupr ? o.teamCount : max(teams.count, 2)
+
+        struct Result: Decodable {
+            let success: Bool; let error: String?
+            let tournament: T?
+            struct T: Decodable { let id: UUID }
+        }
+        let result: Result = try await client.rpc("create_doubles_elimination_with_quota", params: DECreateParams(
+            _name: o.name, _share_id: shareID, _team_count: teamCount, _has_third_place_match: o.hasThirdPlace,
+            _early_rounds_format: o.earlyFormat, _semifinals_format: o.semiFormat, _finals_format: o.finalsFormat,
+            _court_count: max(1, o.courts.count), _start_time: o.startTime)).execute().value
+        guard result.success, let t = result.tournament else {
+            switch result.error {
+            case "LIMIT_REACHED": throw DECreateError.limitReached
+            case "AUTH_REQUIRED": throw DECreateError.authRequired
+            default: throw DECreateError.failed(result.error ?? "Không tạo được giải")
+            }
+        }
+
+        if isDupr {
+            try await client.from("doubles_elimination_tournaments").update(DERatingPatch(
+                rating_source: "dupr", min_dupr_rating: o.minDupr, max_dupr_rating: o.maxDupr,
+                status: "registration_open")).eq("id", value: t.id).execute()
+            return shareID
+        }
+
+        // self / either → patch rating_source, insert teams, generate bracket.
+        try await client.from("doubles_elimination_tournaments").update(DERatingPatch(
+            rating_source: o.ratingSource, min_dupr_rating: o.minDupr, max_dupr_rating: o.maxDupr,
+            status: "setup")).eq("id", value: t.id).execute()
+
+        let rows = teams.map { team -> DETeamInsertRow in
+            let p1 = team.p1.trimmingCharacters(in: .whitespaces)
+            let p2 = team.p2.trimmingCharacters(in: .whitespaces)
+            let derived = team.teamName.trimmingCharacters(in: .whitespaces).nonEmpty
+                ?? (!p1.isEmpty && !p2.isEmpty ? "\(p1) / \(p2)" : (p1.nonEmpty ?? p2.nonEmpty ?? "Đội"))
+            return DETeamInsertRow(tournament_id: t.id.uuidString.lowercased(), team_name: derived,
+                                   player1_name: p1.nonEmpty ?? derived, player2_name: p2.nonEmpty,
+                                   seed: team.seed, status: "active")
+        }
+        let inserted: [DETeam] = try await client.from("doubles_elimination_teams")
+            .insert(rows).select(Self.teamSelect).execute().value
+        try await generateInitialBracket(tournamentID: t.id, teams: inserted, opts: o)
+        try await client.from("doubles_elimination_tournaments")
+            .update(TournamentStatusUpdate(status: "ongoing")).eq("id", value: t.id).execute()
+        return shareID
+    }
+
+    /// Build R1 (winner pairings) + R2 (loser skeleton) + R3 (merge skeleton) with
+    /// source pointers + court/time for R1/R2. Faithful port of generateBracket.
+    private func generateInitialBracket(tournamentID: UUID, teams: [DETeam], opts o: DECreateOptions) async throws {
+        // Manual seeding: seed asc (nil last), tie by name.
+        let shuffled = teams.sorted {
+            let sa = $0.seed ?? Int.max, sb = $1.seed ?? Int.max
+            if sa != sb { return sa < sb }
+            return $0.teamName.localizedCompare($1.teamName) == .orderedAscending
+        }
+        let n = shuffled.count
+        let tID = tournamentID.uuidString.lowercased()
+        let early = o.earlyFormat
+        func bo(_ rt: String) -> Int { DEBracket.getBestOf(roundType: rt, early: early, semifinals: o.semiFormat, finals: o.finalsFormat) }
+
+        var inserts: [DEMatchInsert] = []
+        var order = 0
+
+        // R1 — winner bracket.
+        let r1Count = n / 2
+        for i in 0..<r1Count {
+            let a = shuffled[i * 2], b = shuffled[i * 2 + 1]
+            inserts.append(DEMatchInsert(
+                tournament_id: tID, round_number: 1, round_type: "winner_r1", bracket_type: "winner",
+                match_number: i + 1, team_a_id: a.id.uuidString.lowercased(), team_b_id: b.id.uuidString.lowercased(),
+                best_of: bo("winner_r1"),
+                source_a: DEJSON(type: "team", position: nil, round: nil, matchIndex: nil, roundType: nil, teamID: a.id.uuidString.lowercased()),
+                source_b: DEJSON(type: "team", position: nil, round: nil, matchIndex: nil, roundType: nil, teamID: b.id.uuidString.lowercased()),
+                dest_winner: nil, dest_loser: nil, display_order: order, court_number: nil, start_time: nil))
+            order += 1
+        }
+
+        // R2 — loser bracket skeleton (random loser pairing).
+        let r2Count = r1Count / 2
+        let loserOrder = Array(0..<r1Count).shuffled()
+        for i in 0..<r2Count {
+            inserts.append(DEMatchInsert(
+                tournament_id: tID, round_number: 2, round_type: "loser_r2", bracket_type: "loser",
+                match_number: i + 1, team_a_id: nil, team_b_id: nil, best_of: bo("loser_r2"),
+                source_a: DEJSON(type: "loser_of", matchIndex: loserOrder[i * 2]),
+                source_b: DEJSON(type: "loser_of", matchIndex: loserOrder[i * 2 + 1]),
+                dest_winner: nil, dest_loser: DEJSON(type: "ELIMINATED"),
+                display_order: order, court_number: nil, start_time: nil))
+            order += 1
+        }
+
+        // R3 — merge skeleton.
+        let byeFromR2 = r1Count % 2 == 1
+        let byeTeamFromR1 = n % 2 == 1
+        let winnersFromR1 = r1Count + (byeTeamFromR1 ? 1 : 0)
+        let winnersFromR2 = r2Count + (byeFromR2 ? 1 : 0)
+        let t3 = winnersFromR1 + winnersFromR2
+        if t3 >= 2 {
+            let r4 = Int(pow(2.0, floor(log2(Double(t3)))))
+            let byesToR4 = 2 * r4 - t3
+            let teamsPlayingR3 = t3 - byesToR4
+            let r3Count = max(0, teamsPlayingR3 / 2)
+            for i in 0..<r3Count {
+                inserts.append(DEMatchInsert(
+                    tournament_id: tID, round_number: 3, round_type: "merge_r3", bracket_type: "merged",
+                    match_number: i + 1, team_a_id: nil, team_b_id: nil, best_of: bo("merge_r3"),
+                    source_a: DEJSON(type: "winner_of", round: 1, matchIndex: i),
+                    source_b: DEJSON(type: "winner_of", round: 2, matchIndex: i),
+                    dest_winner: nil, dest_loser: DEJSON(type: "ELIMINATED"),
+                    display_order: order, court_number: nil, start_time: nil))
+                order += 1
+            }
+        }
+
+        // Court + time for R1/R2 only.
+        if !o.courts.isEmpty, let st = o.startTime,
+           let h = Int(st.prefix(2)), let m = Int(st.suffix(2)) {
+            var slots: [Int: Int] = [:]; o.courts.forEach { slots[$0] = 0 }
+            for idx in inserts.indices where inserts[idx].round_number == 1 || inserts[idx].round_number == 2 {
+                let (court, time) = DEBracket.assignCourtAndTime(&slots, courts: o.courts, startHour: h, startMinute: m, duration: 20)
+                inserts[idx].court_number = court
+                inserts[idx].start_time = time
+            }
+        }
+
+        try await client.from("doubles_elimination_matches").insert(inserts).execute()
+    }
+
+    private static func randomShareID() -> String {
+        let chars = Array("abcdefghijklmnopqrstuvwxyz0123456789")
+        return String((0..<8).map { _ in chars.randomElement()! })
     }
 
     // MARK: Delete

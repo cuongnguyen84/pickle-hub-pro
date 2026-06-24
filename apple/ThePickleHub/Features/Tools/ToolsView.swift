@@ -80,9 +80,11 @@ struct ToolsView: View {
     @State private var showFinder = false
     @State private var showCreate = false
     @State private var showCreateTeamMatch = false
+    @State private var showCreateDoubles = false
     @State private var navTarget: MyTournament?
     @State private var createdTarget: CreatedRef?
     @State private var createdTeamMatch: CreatedRef?
+    @State private var createdDoubles: CreatedRef?
     @State private var recentExpanded = false
 
     private let recentCap = 8
@@ -139,6 +141,15 @@ struct ToolsView: View {
             .navigationDestination(item: $createdTeamMatch) { ref in
                 TeamMatchDetailView(shareID: ref.id, fallbackName: ref.name)
             }
+            .sheet(isPresented: $showCreateDoubles) {
+                CreateDoublesElimView { shareID, name in
+                    Task { await model.reload() }
+                    createdDoubles = CreatedRef(id: shareID, name: name)
+                }
+            }
+            .navigationDestination(item: $createdDoubles) { ref in
+                DoublesElimDetailView(shareID: ref.id, fallbackName: ref.name)
+            }
         }
     }
 
@@ -169,7 +180,8 @@ struct ToolsView: View {
 
             VStack(spacing: 10) {
                 compactFormatRow(icon: "arrow.triangle.branch", title: "Loại trực tiếp",
-                                 meta: "Nhánh đơn / đôi · ≥16 đội", url: WebRoutes.toolsDoublesElimination)
+                                 meta: "Nhánh đơn / đôi · ≥16 đội", url: WebRoutes.toolsDoublesElimination,
+                                 action: { Haptics.light(); showCreateDoubles = true })
                 compactFormatRow(icon: "slider.horizontal.3", title: "Giải linh hoạt",
                                  meta: "Tùy biến hoàn toàn", url: WebRoutes.toolsFlexTournament)
                 compactFormatRow(icon: "person.3.fill", title: "Đấu đồng đội",
