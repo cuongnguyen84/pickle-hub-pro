@@ -46,6 +46,7 @@ struct ToolsView: View {
     @State private var model = ToolsViewModel()
     @State private var openURL: IdentifiedURL?
     @State private var showFinder = false
+    @State private var navTarget: MyTournament?
 
     var body: some View {
         NavigationStack {
@@ -65,6 +66,9 @@ struct ToolsView: View {
             .sheet(item: $openURL) { SafariView(url: $0.url).ignoresSafeArea() }
             .sheet(isPresented: $showFinder) {
                 FormatFinderSheet { url in openURL = IdentifiedURL(url: url) }
+            }
+            .navigationDestination(item: $navTarget) { t in
+                QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
             }
         }
     }
@@ -216,7 +220,9 @@ struct ToolsView: View {
                         .font(TLFont.sans(13)).foregroundStyle(TLColor.fg3).padding(.horizontal, 22)
                 } else {
                     VStack(spacing: 12) {
-                        ForEach(items) { t in TournamentCard(tournament: t, open: open) }
+                        ForEach(items) { t in
+                            TournamentCard(tournament: t) { Haptics.light(); navTarget = t }
+                        }
                     }
                     .padding(.horizontal, 22)
                 }
@@ -312,9 +318,9 @@ struct ToolsView: View {
 /// urgency, status-driven primary action (Share when open).
 private struct TournamentCard: View {
     let tournament: MyTournament
-    let open: (URL) -> Void
+    let onManage: () -> Void
 
-    private var manageURL: URL { WebRoutes.quickTable(shareID: tournament.shareID) }
+    private var shareURL: URL { WebRoutes.quickTable(shareID: tournament.shareID) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -339,7 +345,7 @@ private struct TournamentCard: View {
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
         .contentShape(Rectangle())
-        .onTapGesture { open(manageURL) }
+        .onTapGesture { onManage() }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(tournament.displayName), \(tournament.state.label)")
     }
@@ -392,12 +398,12 @@ private struct TournamentCard: View {
     @ViewBuilder
     private var primaryAction: some View {
         if tournament.state.primaryIsShare {
-            ShareLink(item: manageURL) {
+            ShareLink(item: shareURL) {
                 actionLabel("Chia sẻ", icon: "square.and.arrow.up")
             }
             .accessibilityLabel("Chia sẻ link đăng ký \(tournament.displayName)")
         } else {
-            Button { open(manageURL) } label: {
+            Button { onManage() } label: {
                 actionLabel(tournament.state.primaryCTA, icon: "arrow.right")
             }
             .buttonStyle(.plain)

@@ -1,0 +1,139 @@
+import Foundation
+
+/// A `quick_tables` row (the tournament itself).
+struct QTTable: Decodable, Equatable {
+    let id: UUID
+    let shareID: String
+    let name: String?
+    let status: String?       // setup | group_stage | playoff | completed
+    let format: String?       // round_robin | large_playoff
+    let isDoubles: Bool?
+    let creatorUserID: UUID?
+    let topPerGroup: Int?
+
+    var displayName: String { name?.nonEmpty ?? "Giải đấu" }
+    var isPlayoffStage: Bool { status == "playoff" || status == "completed" }
+
+    var statusLabel: String {
+        switch status {
+        case "setup": return "Đang chuẩn bị"
+        case "group_stage": return "Vòng bảng"
+        case "playoff": return "Playoff"
+        case "completed": return "Đã kết thúc"
+        default: return status ?? "—"
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, status, format
+        case shareID = "share_id"
+        case isDoubles = "is_doubles"
+        case creatorUserID = "creator_user_id"
+        case topPerGroup = "top_per_group"
+    }
+}
+
+struct QTGroup: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let name: String
+    let displayOrder: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case displayOrder = "display_order"
+    }
+}
+
+struct QTPlayer: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let groupID: UUID?
+    let name: String
+    let team: String?
+    let seed: Int?
+    let matchesPlayed: Int
+    let matchesWon: Int
+    let pointsFor: Int
+    let pointsAgainst: Int
+    let pointDiff: Int
+    let isQualified: Bool?
+    let playoffSeed: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, team, seed
+        case groupID = "group_id"
+        case matchesPlayed = "matches_played"
+        case matchesWon = "matches_won"
+        case pointsFor = "points_for"
+        case pointsAgainst = "points_against"
+        case pointDiff = "point_diff"
+        case isQualified = "is_qualified"
+        case playoffSeed = "playoff_seed"
+    }
+}
+
+struct QTMatch: Decodable, Identifiable, Equatable {
+    let id: UUID
+    let groupID: UUID?
+    let isPlayoff: Bool
+    let playoffRound: Int?
+    let playoffMatchNumber: Int?
+    let player1ID: UUID?
+    let player2ID: UUID?
+    let score1: Int?
+    let score2: Int?
+    let winnerID: UUID?
+    let status: String
+    let courtName: String?
+    let displayOrder: Int?
+
+    var isCompleted: Bool { status == "completed" }
+    var hasBothPlayers: Bool { player1ID != nil && player2ID != nil }
+
+    enum CodingKeys: String, CodingKey {
+        case id, status, score1, score2
+        case groupID = "group_id"
+        case isPlayoff = "is_playoff"
+        case playoffRound = "playoff_round"
+        case playoffMatchNumber = "playoff_match_number"
+        case player1ID = "player1_id"
+        case player2ID = "player2_id"
+        case winnerID = "winner_id"
+        case courtName = "court_name"
+        case displayOrder = "display_order"
+    }
+}
+
+/// Composed snapshot of a quick table for the native detail view.
+struct QuickTableDetail: Equatable {
+    let table: QTTable
+    let groups: [QTGroup]
+    let players: [QTPlayer]
+    let matches: [QTMatch]
+
+    func name(for playerID: UUID?) -> String {
+        guard let playerID, let p = players.first(where: { $0.id == playerID }) else { return "—" }
+        return p.name
+    }
+
+    /// Players in a group, sorted by wins → point diff → points for (web order).
+    func standings(groupID: UUID) -> [QTPlayer] {
+        players.filter { $0.groupID == groupID }.sorted {
+            if $0.matchesWon != $1.matchesWon { return $0.matchesWon > $1.matchesWon }
+            if $0.pointDiff != $1.pointDiff { return $0.pointDiff > $1.pointDiff }
+            return $0.pointsFor > $1.pointsFor
+        }
+    }
+
+    func matches(groupID: UUID) -> [QTMatch] {
+        matches.filter { $0.groupID == groupID && !$0.isPlayoff }
+            .sorted { ($0.displayOrder ?? 0) < ($1.displayOrder ?? 0) }
+    }
+
+    var playoffMatches: [QTMatch] {
+        matches.filter { $0.isPlayoff }
+            .sorted {
+                if ($0.playoffRound ?? 0) != ($1.playoffRound ?? 0) { return ($0.playoffRound ?? 0) < ($1.playoffRound ?? 0) }
+                return ($0.playoffMatchNumber ?? 0) < ($1.playoffMatchNumber ?? 0)
+            }
+    }
+}

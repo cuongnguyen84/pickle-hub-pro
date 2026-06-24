@@ -2,7 +2,7 @@ import Foundation
 
 /// Derived lifecycle state for a tournament the user manages, mapped to the
 /// design's badge + CTA states.
-enum TournamentState: Equatable {
+enum TournamentState: Equatable, Hashable {
     case draft        // setup, no registration yet
     case open         // accepting registrations
     case full         // capacity reached
@@ -90,7 +90,7 @@ struct QuickTableRow: Decodable, Equatable {
 }
 
 /// View-model for a managed tournament card (row + enriched registration count).
-struct MyTournament: Identifiable, Equatable {
+struct MyTournament: Identifiable, Equatable, Hashable {
     let id: UUID
     let shareID: String
     let name: String
