@@ -37,13 +37,22 @@ struct CreateQuickTableView: View {
     // After RPC
     @State private var createdTable: QTTable?
     @State private var roster: [PlayerField] = []
+    @State private var assignmentMode = "auto"   // auto | manual
+    @State private var courts = ""
+    @State private var startTime = ""
 
     @State private var working = false
     @State private var errorMessage: String?
 
     private let repo = QuickTableRepository()
 
-    struct PlayerField: Identifiable, Equatable { let id = UUID(); var name = ""; var team = "" }
+    struct PlayerField: Identifiable, Equatable { let id = UUID(); var name = ""; var team = ""; var seed = "" }
+
+    /// Manual group assignment (round-robin, >1 group) is a heavy separate screen
+    /// on web — offered here but handed off to the web for the assignment step.
+    private var manualAvailable: Bool {
+        selectedFormat == "round_robin" && (selectedGroupCount ?? 1) > 1
+    }
 
     private var playerCount: Int { Int(playerCountText) ?? 0 }
 
@@ -308,43 +317,125 @@ struct CreateQuickTableView: View {
     // MARK: Step 4 — roster (setup, non-registration)
 
     private var stepRoster: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
-                stepHeader("VĐV", "Nhập danh sách VĐV", "Nhập tên từng VĐV. Có thể bỏ trống ô không dùng.")
+                stepHeader("VĐV", "Nhập danh sách người chơi", "Nhập tên và hạt giống (tùy chọn)")
                 Spacer()
                 Button { roster.shuffle() } label: {
-                    Label("Trộn", systemImage: "shuffle").font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.accentText)
+                    Label("Xáo trộn", systemImage: "shuffle").font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.accentText)
                 }
                 .buttonStyle(.plain)
             }
 
             VStack(spacing: 8) {
                 ForEach(Array($roster.enumerated()), id: \.element.id) { index, $p in
-                    HStack(spacing: 8) {
-                        Text("\(index + 1)").font(TLFont.mono(12)).foregroundStyle(TLColor.fg3).frame(width: 22)
-                        TextField("Tên VĐV", text: $p.name)
+                    HStack(spacing: 6) {
+                        Text("\(index + 1)").font(TLFont.mono(12)).foregroundStyle(TLColor.fg3).frame(width: 20)
+                        TextField("Tên VĐV *", text: $p.name)
                             .font(TLFont.sans(15)).foregroundStyle(TLColor.fg)
                             .padding(.horizontal, 10).padding(.vertical, 9)
                             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
                             .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
-                        TextField("Đội", text: $p.team)
-                            .font(TLFont.sans(14)).foregroundStyle(TLColor.fg2)
-                            .frame(width: 84)
-                            .padding(.horizontal, 10).padding(.vertical, 9)
+                        TextField("Team", text: $p.team)
+                            .font(TLFont.sans(13)).foregroundStyle(TLColor.fg2).frame(width: 60)
+                            .padding(.horizontal, 8).padding(.vertical, 9)
                             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
                             .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+                        TextField("Seed", text: $p.seed)
+                            .keyboardType(.numberPad).multilineTextAlignment(.center)
+                            .font(TLFont.mono(13)).foregroundStyle(TLColor.fg2).frame(width: 46)
+                            .padding(.horizontal, 6).padding(.vertical, 9)
+                            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+                            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+                        Button { if roster.count > 2 { roster.removeAll { $0.id == p.id } } } label: {
+                            Image(systemName: "trash").font(.system(size: 13)).foregroundStyle(TLColor.fg4)
+                        }
+                        .buttonStyle(.plain).disabled(roster.count <= 2)
+                        .accessibilityLabel("Xóa VĐV")
                     }
                 }
             }
 
-            primaryButton(working ? "Đang tạo…" : "Bắt đầu giải", enabled: filledRoster.count >= 2 && !working) {
+            Button { roster.append(PlayerField()) } label: {
+                Label("Thêm người chơi", systemImage: "plus")
+                    .font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.accentText)
+                    .frame(maxWidth: .infinity).padding(.vertical, 11)
+                    .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border2, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+
+            if manualAvailable {
+                labeled("Phương thức chia bảng") {
+                    HStack(spacing: 10) {
+                        assignmentOption("auto", icon: "wand.and.stars", title: "Tự động", desc: "Hệ thống chia đều, tránh cùng team, rải seed")
+                        assignmentOption("manual", icon: "hand.point.up.left", title: "Thủ công", desc: "Tự chọn VĐV vào từng bảng")
+                    }
+                }
+            }
+
+            // Court + time (round_robin only)
+            if selectedFormat == "round_robin" {
+                HStack(spacing: 10) {
+                    labeled("Số sân (tùy chọn)") {
+                        inputField("VD: 2, 3, 8", text: $courts)
+                    }
+                    labeled("Giờ bắt đầu (tùy chọn)") {
+                        inputField("--:--", text: $startTime)
+                    }
+                }
+            }
+
+            tipsBox
+
+            primaryButton(
+                working ? "Đang xử lý…"
+                    : (assignmentMode == "manual" && manualAvailable ? "Tiếp tục chia bảng" : "Tạo bảng đấu và chia bảng"),
+                enabled: filledRoster.count >= 2 && !working
+            ) {
                 Task { await finishSetup() }
             }
         }
     }
 
-    private var filledRoster: [(name: String, team: String?)] {
-        roster.map { (name: $0.name.trimmingCharacters(in: .whitespaces), team: $0.team.nonEmpty) }
+    private func assignmentOption(_ value: String, icon: String, title: String, desc: String) -> some View {
+        let selected = assignmentMode == value
+        return Button { assignmentMode = value } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                Image(systemName: icon).font(.system(size: 17)).foregroundStyle(selected ? TLColor.accentText : TLColor.fg2)
+                Text(title).font(TLFont.sans(13, .semibold)).foregroundStyle(TLColor.fg)
+                Text(desc).font(TLFont.sans(11)).foregroundStyle(TLColor.fg3).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background((selected ? TLColor.accent.opacity(0.08) : TLColor.surface), in: RoundedRectangle(cornerRadius: TLRadius.sm))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(selected ? TLColor.accent : TLColor.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var tipsBox: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "person.2").font(.system(size: 13)).foregroundStyle(TLColor.accentText).padding(.top, 2)
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Mẹo chia bảng tốt:").font(TLFont.sans(13, .medium)).foregroundStyle(TLColor.fg)
+                tip("Nhập Team để tránh cùng team vào cùng bảng")
+                tip("Đánh số Seed (1 = mạnh nhất) để rải hạt giống đều các bảng")
+                if assignmentMode == "auto" { tip("Hệ thống sẽ tự động chia người chơi vào các bảng đều nhau") }
+                else { tip("Bạn sẽ tự phân VĐV vào từng bảng ở bước tiếp theo") }
+            }
+        }
+        .padding(14)
+        .background(TLColor.bg, in: RoundedRectangle(cornerRadius: TLRadius.sm))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.sm).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    private func tip(_ text: String) -> some View {
+        Text("· \(text)").font(TLFont.sans(12)).foregroundStyle(TLColor.fg2).fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var filledRoster: [QuickTableRepository.RosterEntry] {
+        roster.map { QuickTableRepository.RosterEntry(name: $0.name.trimmingCharacters(in: .whitespaces),
+                                                      team: $0.team.nonEmpty, seed: Int($0.seed)) }
             .filter { !$0.name.isEmpty }
     }
 
@@ -381,10 +472,20 @@ struct CreateQuickTableView: View {
     @MainActor
     private func finishSetup() async {
         guard let table = createdTable else { return }
+        // Manual group assignment is a separate web screen — hand off.
+        if assignmentMode == "manual" && manualAvailable {
+            Haptics.success()
+            dismiss()
+            onOpenWeb(WebRoutes.base.appending(path: "tools/quick-tables/\(table.shareID)/setup"))
+            return
+        }
         working = true; errorMessage = nil
         do {
+            let courtList = courts.split(whereSeparator: { $0 == "," || $0 == " " })
+                .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
             try await repo.setupRoster(tableID: table.id, players: filledRoster,
-                                       groupCount: selectedGroupCount ?? 1)
+                                       groupCount: selectedGroupCount ?? 1,
+                                       courts: courtList, startTime: startTime)
             Haptics.success()
             dismiss()
             onCreated(table.shareID, name.trimmingCharacters(in: .whitespaces))

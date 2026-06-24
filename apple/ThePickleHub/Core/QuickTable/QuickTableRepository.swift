@@ -85,7 +85,8 @@ struct QuickTableRepository {
         let min_skill_level: Double?
         let max_skill_level: Double?
     }
-    private struct PlayerInsert: Encodable { let table_id: String; let name: String; let team: String?; let display_order: Int }
+    private struct PlayerInsert: Encodable { let table_id: String; let name: String; let team: String?; let seed: Int?; let display_order: Int }
+    private struct CourtSettingsUpdate: Encodable { let courts: [String]; let start_time: String? }
     private struct GroupInsert: Encodable { let table_id: String; let name: String; let display_order: Int }
     private struct InsertedRow: Decodable { let id: UUID; let displayOrder: Int
         enum CodingKeys: String, CodingKey { case id; case displayOrder = "display_order" } }
@@ -129,22 +130,36 @@ struct QuickTableRepository {
         return table
     }
 
-    /// The setup step (non-registration path): add the roster → create groups →
-    /// distribute → generate circle-method matches → status=group_stage. Mirrors
-    /// web QuickTableSetup. `groupCount` comes from the table.
-    func setupRoster(tableID: UUID, players: [(name: String, team: String?)], groupCount: Int) async throws {
+    struct RosterEntry { let name: String; let team: String?; let seed: Int? }
+
+    /// The setup step (auto, non-registration): add roster (name/team/seed) →
+    /// save court+time settings → create groups → snake-draft distribute →
+    /// circle-method matches → status=group_stage. Mirrors web handleAutoSubmit.
+    func setupRoster(tableID: UUID, players: [RosterEntry], groupCount: Int,
+                     courts: [String], startTime: String?) async throws {
         let tid = tableID.uuidString.lowercased()
         let roster = players
-            .map { (name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines), team: $0.team?.nonEmpty) }
+            .map { RosterEntry(name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines), team: $0.team?.nonEmpty, seed: $0.seed) }
             .filter { !$0.name.isEmpty }
         let groups = max(1, groupCount)
 
         let inserted: [InsertedRow] = try await client
             .from("quick_table_players")
-            .insert(roster.enumerated().map { PlayerInsert(table_id: tid, name: $1.name, team: $1.team, display_order: $0) })
+            .insert(roster.enumerated().map { PlayerInsert(table_id: tid, name: $1.name, team: $1.team, seed: $1.seed, display_order: $0) })
             .select("id, display_order")
             .execute().value
-        let orderedPlayers = inserted.sorted { $0.displayOrder < $1.displayOrder }
+        let ordered = inserted.sorted { $0.displayOrder < $1.displayOrder }
+        // Pair inserted ids back to their roster entry (same display_order order).
+        let records = ordered.map { row -> (id: UUID, team: String?, seed: Int?) in
+            let r = roster[row.displayOrder]
+            return (id: row.id, team: r.team, seed: r.seed)
+        }
+
+        if !courts.isEmpty || startTime?.nonEmpty != nil {
+            try await client.from("quick_tables")
+                .update(CourtSettingsUpdate(courts: courts, start_time: startTime?.nonEmpty))
+                .eq("id", value: tableID).execute()
+        }
 
         let groupRows: [InsertedRow] = try await client
             .from("quick_table_groups")
@@ -153,13 +168,13 @@ struct QuickTableRepository {
             .execute().value
         let orderedGroups = groupRows.sorted { $0.displayOrder < $1.displayOrder }
 
-        var buckets: [[UUID]] = Array(repeating: [], count: orderedGroups.count)
-        for (i, p) in orderedPlayers.enumerated() {
-            let g = i % orderedGroups.count
-            buckets[g].append(p.id)
-            try await client.from("quick_table_players")
-                .update(GroupIDUpdate(group_id: orderedGroups[g].id.uuidString.lowercased()))
-                .eq("id", value: p.id).execute()
+        let buckets = Self.distribute(records, groupCount: orderedGroups.count)
+        for (g, ids) in buckets.enumerated() {
+            for id in ids {
+                try await client.from("quick_table_players")
+                    .update(GroupIDUpdate(group_id: orderedGroups[g].id.uuidString.lowercased()))
+                    .eq("id", value: id).execute()
+            }
         }
 
         for (gIdx, group) in orderedGroups.enumerated() {
@@ -174,6 +189,63 @@ struct QuickTableRepository {
         }
 
         try await client.from("quick_tables").update(TableStatusUpdate(status: "group_stage")).eq("id", value: tableID).execute()
+    }
+
+    /// Snake-draft distribution (seed-aware + team-spread). Port of web
+    /// distributePlayersToGroups: seeded players snake across groups avoiding
+    /// teammates; unseeded fill by most-room, also team-spread.
+    static func distribute(_ players: [(id: UUID, team: String?, seed: Int?)], groupCount k: Int) -> [[UUID]] {
+        guard k > 0 else { return [] }
+        let total = players.count
+        let base = total / k
+        let rem = total % k
+        let targetSizes = (0..<k).map { base + ($0 < rem ? 1 : 0) }
+
+        var groups: [[(id: UUID, team: String?, seed: Int?)]] = Array(repeating: [], count: k)
+        func teamCount(_ g: Int, _ team: String?) -> Int {
+            guard let team else { return 0 }
+            return groups[g].filter { $0.team == team }.count
+        }
+        func isFull(_ g: Int) -> Bool { groups[g].count >= targetSizes[g] }
+        func bestGroup(team: String?, preferred: [Int]?) -> Int {
+            let available = (0..<k).filter { !isFull($0) }
+            if available.isEmpty { return 0 }
+            let pref = preferred?.filter { !isFull($0) } ?? available
+            let cands = pref.isEmpty ? available : pref
+            guard let team else { return cands[0] }
+            let noMate = cands.filter { teamCount($0, team) == 0 }
+            if !noMate.isEmpty { return noMate[0] }
+            return cands.sorted { teamCount($0, team) < teamCount($1, team) }[0]
+        }
+
+        let seeded = players.filter { ($0.seed ?? 0) > 0 }.sorted { ($0.seed ?? 0) < ($1.seed ?? 0) }
+        let unseeded = players.filter { ($0.seed ?? 0) <= 0 }
+
+        var dir = 1, idx = 0
+        for p in seeded {
+            var pref: [Int] = []
+            if dir == 1 {
+                pref.append(contentsOf: idx..<k)
+                if idx - 1 >= 0 { pref.append(contentsOf: stride(from: idx - 1, through: 0, by: -1)) }
+            } else {
+                pref.append(contentsOf: stride(from: idx, through: 0, by: -1))
+                if idx + 1 < k { pref.append(contentsOf: (idx + 1)..<k) }
+            }
+            groups[bestGroup(team: p.team, preferred: pref)].append(p)
+            idx += dir
+            if idx >= k { idx = k - 1; dir = -1 } else if idx < 0 { idx = 0; dir = 1 }
+        }
+
+        var freq: [String: Int] = [:]
+        for p in unseeded { if let t = p.team { freq[t, default: 0] += 1 } }
+        let sortedUnseeded = unseeded.sorted { (freq[$0.team ?? ""] ?? 0) > (freq[$1.team ?? ""] ?? 0) }
+        for p in sortedUnseeded {
+            let byRoom = (0..<k).filter { !isFull($0) }
+                .sorted { (targetSizes[$0] - groups[$0].count) > (targetSizes[$1] - groups[$1].count) }
+            groups[bestGroup(team: p.team, preferred: byRoom.isEmpty ? nil : byRoom)].append(p)
+        }
+
+        return groups.map { $0.map(\.id) }
     }
 
     private func errorMessage(_ code: String?) -> String {
