@@ -8,30 +8,97 @@ final class TeamMatchViewModel {
         case failed(String)
     }
     enum Tab: String, CaseIterable, Identifiable {
-        case matches, teams
+        case matches, standings, teams
         var id: String { rawValue }
-        var label: String { self == .matches ? "Trận đấu" : "Đội" }
+        var label: String {
+            switch self {
+            case .matches: return "Trận đấu"
+            case .standings: return "Xếp hạng"
+            case .teams: return "Đội"
+            }
+        }
     }
 
     var phase: Phase = .loading
-    var editable = false
+    var auth = TMScoreAuth(canScore: false, isOwner: false, isCreator: false, captainTeamID: nil)
     var tab: Tab = .matches
     var expanded: Set<UUID> = []
+    var working = false
+    var actionError: String?
+    var myTeam: TMTeam?          // captain's own team (registration mode)
+    var currentUID: UUID?
 
     private let repo = TeamMatchRepository()
     var detail: TMDetail? { if case .loaded(let d) = phase { return d } ; return nil }
+
+    /// Tabs available for this tournament — standings only for round-robin formats.
+    func tabs(for detail: TMDetail) -> [Tab] {
+        detail.hasStandings ? [.matches, .standings, .teams] : [.matches, .teams]
+    }
 
     @MainActor
     func load(shareID: String) async {
         if case .loaded = phase {} else { phase = .loading }
         do {
             let detail = try await repo.load(shareID: shareID)
-            let uid = await repo.currentUserID()
-            editable = detail.tournament.createdBy != nil && detail.tournament.createdBy == uid
+            auth = await repo.scoreAuth(detail: detail)
+            currentUID = await repo.currentUserID()
+            if detail.tournament.requireRegistration == true && !auth.isCreator {
+                myTeam = await repo.userTeam(tournamentID: detail.tournament.id)
+            }
+            if tab == .standings && !detail.hasStandings { tab = .matches }
             phase = .loaded(detail)
         } catch {
             phase = .failed(error.localizedDescription)
         }
+    }
+
+    @MainActor
+    func generateSchedule(shareID: String) async {
+        guard let d = detail else { return }
+        working = true; actionError = nil
+        do {
+            let t = d.tournament
+            if t.format == "single_elimination" {
+                try await repo.generateSingleElimination(
+                    tournamentID: t.id, hasThirdPlace: t.hasThirdPlaceMatch ?? false,
+                    hasDreambreaker: t.hasDreambreaker ?? false)
+            } else {
+                try await repo.generateRoundRobin(
+                    tournamentID: t.id, hasDreambreaker: t.hasDreambreaker ?? false)
+            }
+            await load(shareID: shareID)
+        } catch { actionError = error.localizedDescription }
+        working = false
+    }
+
+    @MainActor
+    func generatePlayoff(shareID: String) async {
+        guard let d = detail else { return }
+        let target = d.tournament.playoffTeamCount ?? 4
+        let ranked = d.standings.map { $0.team.id.uuidString.lowercased() }
+        let seeded = Array(ranked.prefix(target))
+        guard seeded.count >= 2, seeded.count & (seeded.count - 1) == 0 else {
+            actionError = "Số đội vào playoff phải là 2/4/8 và đủ đội đã xếp hạng."
+            return
+        }
+        working = true; actionError = nil
+        do {
+            try await repo.generatePlayoffFromSeeds(
+                tournamentID: d.tournament.id, seededTeamIDs: seeded,
+                hasDreambreaker: d.tournament.hasDreambreaker ?? false)
+            await load(shareID: shareID)
+        } catch { actionError = error.localizedDescription }
+        working = false
+    }
+
+    @MainActor
+    func deleteSchedule(shareID: String) async {
+        guard let d = detail else { return }
+        working = true; actionError = nil
+        do { try await repo.deleteMatches(tournamentID: d.tournament.id); await load(shareID: shareID) }
+        catch { actionError = error.localizedDescription }
+        working = false
     }
 }
 
@@ -42,8 +109,14 @@ struct TeamMatchDetailView: View {
     let shareID: String
     let fallbackName: String
 
+    @Environment(\.dismiss) private var dismiss
     @State private var model = TeamMatchViewModel()
     @State private var openWeb = false
+    @State private var showSettings = false
+    @State private var showManageTeams = false
+    @State private var showRegister = false
+    @State private var scoringMatch: TMMatch?
+    @State private var lineupMatch: TMMatch?
 
     var body: some View {
         ScrollView {
@@ -53,7 +126,13 @@ struct TeamMatchDetailView: View {
         .navigationTitle(fallbackName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                if model.auth.isCreator {
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape").foregroundStyle(TLColor.accentText)
+                    }
+                    .accessibilityLabel("Cài đặt giải")
+                }
                 Button { openWeb = true } label: {
                     Image(systemName: "safari").foregroundStyle(TLColor.accentText)
                 }
@@ -61,10 +140,101 @@ struct TeamMatchDetailView: View {
             }
         }
         .task { await model.load(shareID: shareID) }
+        .task(id: shareID) {
+            // Live polling (web parity: refetchInterval 15s). Skip while a
+            // scoring/lineup sheet is open to avoid the list shifting underneath.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(15))
+                if Task.isCancelled { break }
+                if scoringMatch == nil && lineupMatch == nil { await model.load(shareID: shareID) }
+            }
+        }
         .refreshable { await model.load(shareID: shareID) }
         .sheet(isPresented: $openWeb) {
             SafariView(url: WebRoutes.toolsTeamMatchView(shareID: shareID)).ignoresSafeArea()
         }
+        .sheet(item: $scoringMatch) { m in
+            if let detail = model.detail {
+                TeamMatchScoringSheet(detail: detail, match: m) {
+                    Task { await model.load(shareID: shareID) }
+                }
+            }
+        }
+        .sheet(item: $lineupMatch) { m in
+            if let detail = model.detail {
+                TeamMatchLineupSheet(detail: detail, match: m, auth: model.auth) {
+                    Task { await model.load(shareID: shareID) }
+                }
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            if let detail = model.detail {
+                TeamMatchSettingsSheet(
+                    detail: detail,
+                    onChanged: { Task { await model.load(shareID: shareID) } },
+                    onDeleted: { dismiss() })
+            }
+        }
+        .sheet(isPresented: $showManageTeams) {
+            if let detail = model.detail {
+                TeamMatchManageTeamsView(detail: detail) {
+                    Task { await model.load(shareID: shareID) }
+                }
+            }
+        }
+        .sheet(isPresented: $showRegister) {
+            if let detail = model.detail {
+                TeamMatchRegisterSheet(tournamentID: detail.tournament.id,
+                                       rosterSize: detail.tournament.teamRosterSize ?? 4) {
+                    Task { await model.load(shareID: shareID) }
+                }
+            }
+        }
+    }
+
+    /// Captain self-registration (registration-mode, non-organizer). Shows their
+    /// team status if registered, else a register CTA.
+    @ViewBuilder
+    private func registrationSection(_ detail: TMDetail) -> some View {
+        if detail.tournament.requireRegistration == true && !model.auth.isCreator {
+            if model.currentUID == nil {
+                note("Đăng nhập để đăng ký đội.")
+            } else if let team = model.myTeam {
+                HStack(spacing: 10) {
+                    let color: Color = team.status == "approved" ? TLColor.accentText
+                        : team.status == "rejected" ? TLColor.live : TLColor.gold
+                    Circle().fill(color).frame(width: 8, height: 8)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Đội của bạn: \(team.teamName)").font(TLFont.sans(13.5, .semibold)).foregroundStyle(TLColor.fg)
+                        Text(team.status == "approved" ? "Đã được duyệt" : team.status == "rejected" ? "Bị từ chối" : "Đang chờ duyệt")
+                            .font(TLFont.mono(10)).foregroundStyle(TLColor.fg3)
+                    }
+                    Spacer()
+                }
+                .padding(14)
+                .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+            } else {
+                Button { Haptics.light(); showRegister = true } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.3.sequence.fill").font(.system(size: 14))
+                        Text("Đăng ký đội").font(TLFont.sans(14, .semibold))
+                    }
+                    .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 12)
+                    .background(TLColor.accent, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+                }.buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func actionFooterLabel(_ title: String, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 11))
+            Text(title).font(TLFont.mono(10.5, .semibold))
+        }
+        .foregroundStyle(TLColor.accentText)
+        .frame(maxWidth: .infinity).padding(.vertical, 11)
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder
@@ -77,12 +247,14 @@ struct TeamMatchDetailView: View {
         case .loaded(let detail):
             VStack(alignment: .leading, spacing: 18) {
                 header(detail.tournament)
+                registrationSection(detail)
                 Picker("", selection: Binding(get: { model.tab }, set: { model.tab = $0 })) {
-                    ForEach(TeamMatchViewModel.Tab.allCases) { Text($0.label).tag($0) }
+                    ForEach(model.tabs(for: detail)) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 switch model.tab {
                 case .matches: matchesTab(detail)
+                case .standings: standingsTab(detail)
                 case .teams: teamsTab(detail)
                 }
             }
@@ -111,18 +283,133 @@ struct TeamMatchDetailView: View {
 
     @ViewBuilder
     private func matchesTab(_ detail: TMDetail) -> some View {
-        let sections = detail.sections
-        if sections.isEmpty {
-            note("Chưa có trận đấu. BTC tạo lịch trên web.")
-        } else {
-            ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
-                VStack(alignment: .leading, spacing: 10) {
+        let hasAny = !detail.matches.isEmpty
+        VStack(alignment: .leading, spacing: 14) {
+            if model.auth.isCreator { scheduleControls(detail, hasMatches: hasAny) }
+            if !hasAny {
+                if !model.auth.isCreator { note("Chưa có lịch thi đấu.") }
+            } else {
+                // Round-robin rounds as lists.
+                ForEach(Array(detail.rrSections.enumerated()), id: \.offset) { _, section in
+                    roundSection(detail, title: section.title, matches: section.matches)
+                }
+                // Playoff as a horizontal bracket tree.
+                if !detail.mlpPlayoffRounds.isEmpty {
+                    if let champ = detail.champion { mlpChampionBanner(detail.teamName(champ)) }
                     HStack(spacing: 8) {
                         RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
-                        Text(section.title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+                        Text("PLAYOFF").font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
                     }
-                    ForEach(section.matches) { m in matchCard(detail, m) }
+                    BracketTreeView(rounds: mlpBracketRounds(detail))
+                    if let tp = detail.thirdPlaceMatch { thirdPlaceCard(detail, tp) }
                 }
+            }
+        }
+    }
+
+    private func roundSection(_ detail: TMDetail, title: String, matches: [TMMatch]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
+                Text(title.uppercased()).font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+            }
+            ForEach(matches) { m in matchCard(detail, m) }
+        }
+    }
+
+    private func mlpBracketRounds(_ detail: TMDetail) -> [BracketRound] {
+        detail.mlpPlayoffRounds.map { round in
+            let slots = round.matches.map { m -> BracketSlot in
+                let aWon = m.isCompleted && m.winnerTeamID == m.teamAID
+                let bWon = m.isCompleted && m.winnerTeamID == m.teamBID
+                let canScore = model.auth.canScore && m.hasBothTeams && !detail.games(for: m.id).isEmpty
+                return BracketSlot(
+                    id: m.id,
+                    topName: detail.teamName(m.teamAID), botName: detail.teamName(m.teamBID),
+                    topScore: m.isCompleted ? "\(m.gamesWonA)" : "", botScore: m.isCompleted ? "\(m.gamesWonB)" : "",
+                    topWon: aWon, botWon: bWon, completed: m.isCompleted,
+                    onTap: canScore ? { scoringMatch = m } : nil)
+            }
+            return BracketRound(id: round.round, title: mlpRoundTitle(round.matches.count),
+                                doneCount: round.matches.filter { $0.isCompleted }.count, slots: slots)
+        }
+    }
+
+    private func mlpRoundTitle(_ count: Int) -> String {
+        switch count {
+        case 1: return "Chung kết"
+        case 2: return "Bán kết"
+        case 3...4: return "Tứ kết"
+        default: return "Vòng \(count * 2)"
+        }
+    }
+
+    private func mlpChampionBanner(_ name: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "trophy.fill").font(.system(size: 22)).foregroundStyle(TLColor.accentText)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("NHÀ VÔ ĐỊCH").font(TLFont.mono(10, .bold)).tracking(1.5).foregroundStyle(TLColor.accentText)
+                Text(name).font(TLFont.serif(24)).foregroundStyle(TLColor.fg)
+            }
+            Spacer()
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(LinearGradient(colors: [TLColor.accent.opacity(0.16), TLColor.surface], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+    }
+
+    private func thirdPlaceCard(_ detail: TMDetail, _ m: TMMatch) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("TRANH HẠNG 3").font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
+            matchCard(detail, m)
+        }
+    }
+
+    /// Creator-only generate / regenerate schedule. Round-robin & single-
+    /// elimination generate fully native; rr_playoff generates the group stage
+    /// (playoff seeding still happens on web).
+    @ViewBuilder
+    private func scheduleControls(_ detail: TMDetail, hasMatches: Bool) -> some View {
+        let approved = detail.teams.filter { $0.status == "approved" }.count
+        VStack(alignment: .leading, spacing: 8) {
+            if !hasMatches {
+                Button {
+                    Haptics.success(); Task { await model.generateSchedule(shareID: shareID) }
+                } label: {
+                    HStack(spacing: 6) {
+                        if model.working { ProgressView().tint(TLColor.accentInk) }
+                        else { Image(systemName: "calendar.badge.plus").font(.system(size: 12)) }
+                        Text("Sinh lịch thi đấu").font(TLFont.sans(14, .semibold))
+                    }
+                    .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 12)
+                    .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain).disabled(model.working || approved < 2)
+                Text(approved < 2 ? "Cần ≥ 2 đội đã duyệt — thêm đội ở tab Đội."
+                                  : "\(approved) đội · \(detail.tournament.formatLabel)")
+                    .font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+            } else {
+                if detail.tournament.format == "rr_playoff" && detail.groupStageComplete && !detail.hasPlayoff {
+                    Button {
+                        Haptics.success(); Task { await model.generatePlayoff(shareID: shareID) }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if model.working { ProgressView().tint(TLColor.accentInk) }
+                            else { Image(systemName: "trophy").font(.system(size: 12)) }
+                            Text("Sinh vòng Playoff").font(TLFont.sans(14, .semibold))
+                        }
+                        .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 12)
+                        .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
+                    }.buttonStyle(.plain).disabled(model.working)
+                    Text("Vòng bảng đã xong · lấy \(detail.tournament.playoffTeamCount ?? 4) đội đầu BXH").font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg4)
+                }
+                Button { Haptics.light(); Task { await model.deleteSchedule(shareID: shareID) } } label: {
+                    HStack(spacing: 5) { Image(systemName: "arrow.clockwise").font(.system(size: 10)); Text("Xóa & tạo lại lịch").font(TLFont.mono(10, .semibold)) }
+                        .foregroundStyle(TLColor.fg3)
+                }.buttonStyle(.plain).disabled(model.working)
+            }
+            if let err = model.actionError {
+                Text(err).font(TLFont.sans(12)).foregroundStyle(TLColor.live)
             }
         }
     }
@@ -175,16 +462,17 @@ struct TeamMatchDetailView: View {
                     gameRow(detail, g, m)
                 }
             }
-            if model.editable {
-                Button { openWeb = true } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "square.and.pencil").font(.system(size: 11))
-                        Text("Chấm điểm trên web").font(TLFont.mono(10.5, .semibold))
+            if model.auth.canScore && m.hasBothTeams && !games.isEmpty {
+                HStack(spacing: 1) {
+                    Button { Haptics.light(); lineupMatch = m } label: {
+                        actionFooterLabel("Đội hình", icon: "person.2")
                     }
-                    .foregroundStyle(TLColor.accentText)
-                    .frame(maxWidth: .infinity).padding(.vertical, 11)
+                    .buttonStyle(.plain)
+                    Button { Haptics.light(); scoringMatch = m } label: {
+                        actionFooterLabel(m.isCompleted ? "Sửa điểm" : "Chấm điểm", icon: "square.and.pencil")
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 .background(TLColor.surface2.opacity(0.5))
             }
         }
@@ -247,12 +535,81 @@ struct TeamMatchDetailView: View {
             .background(win ? TLColor.accent : TLColor.surface2, in: RoundedRectangle(cornerRadius: 6))
     }
 
+    // MARK: Standings
+
+    @ViewBuilder
+    private func standingsTab(_ detail: TMDetail) -> some View {
+        let rows = detail.standings
+        VStack(spacing: 0) {
+            // Header row
+            HStack(spacing: 0) {
+                Text("#").font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3).frame(width: 26, alignment: .leading)
+                Text("ĐỘI").font(TLFont.mono(10, .semibold)).foregroundStyle(TLColor.fg3).frame(maxWidth: .infinity, alignment: .leading)
+                 forEachStat(["Tr", "T", "B", "Ván", "+/-"])
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            Rectangle().fill(TLColor.border).frame(height: 1)
+
+            if rows.isEmpty {
+                Text("Chưa có kết quả vòng tròn.").font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(14)
+            } else {
+                ForEach(Array(rows.enumerated()), id: \.element.id) { index, s in
+                    if index > 0 { Rectangle().fill(TLColor.border).frame(height: 1) }
+                    HStack(spacing: 0) {
+                        Text("\(index + 1)").font(TLFont.mono(11, .semibold))
+                            .foregroundStyle(index < 4 ? TLColor.accentText : TLColor.fg3)
+                            .frame(width: 26, alignment: .leading)
+                        Text(s.team.teamName).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)
+                            .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                        forEachStat([
+                            "\(s.played)", "\(s.won)", "\(s.lost)",
+                            "\(s.gameDiff >= 0 ? "+" : "")\(s.gameDiff)",
+                            "\(s.pointsDiff >= 0 ? "+" : "")\(s.pointsDiff)",
+                        ], emphasizeFirst: true)
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 12)
+                }
+            }
+        }
+        .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.border, lineWidth: 1))
+    }
+
+    /// Fixed-width numeric stat columns: Tr (played), T (won), B (lost), game diff, point diff.
+    private func forEachStat(_ values: [String], emphasizeFirst: Bool = false) -> some View {
+        HStack(spacing: 0) {
+            ForEach(Array(values.enumerated()), id: \.offset) { i, v in
+                Text(v)
+                    .font(TLFont.mono(11, i == 1 ? .semibold : .medium)).monospacedDigit()
+                    .foregroundStyle(i == 1 && emphasizeFirst ? TLColor.fg : TLColor.fg3)
+                    .frame(width: 34, alignment: .trailing)
+            }
+        }
+    }
+
     // MARK: Teams
 
     private func teamsTab(_ detail: TMDetail) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if model.auth.isCreator {
+                Button { Haptics.light(); showManageTeams = true } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.2.badge.gearshape").font(.system(size: 12))
+                        Text("Quản lý đội & VĐV").font(TLFont.sans(13, .semibold))
+                    }
+                    .foregroundStyle(TLColor.accentInk).frame(maxWidth: .infinity).padding(.vertical, 11)
+                    .background(TLColor.accent, in: RoundedRectangle(cornerRadius: 12))
+                }.buttonStyle(.plain)
+            }
+            teamsList(detail)
+        }
+    }
+
+    private func teamsList(_ detail: TMDetail) -> some View {
         VStack(spacing: 0) {
             if detail.teams.isEmpty {
-                note("Chưa có đội.")
+                note(model.auth.isCreator ? "Chưa có đội — bấm “Quản lý đội” để thêm." : "Chưa có đội.")
             } else {
                 ForEach(Array(detail.teamsBySeed.enumerated()), id: \.element.id) { index, team in
                     if index > 0 { Rectangle().fill(TLColor.border).frame(height: 1) }
