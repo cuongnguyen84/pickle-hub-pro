@@ -56,6 +56,7 @@ struct QTPlayer: Decodable, Identifiable, Equatable {
     let pointsAgainst: Int
     let pointDiff: Int
     let isQualified: Bool?
+    let isWildcard: Bool?
     let playoffSeed: Int?
 
     enum CodingKeys: String, CodingKey {
@@ -67,6 +68,7 @@ struct QTPlayer: Decodable, Identifiable, Equatable {
         case pointsAgainst = "points_against"
         case pointDiff = "point_diff"
         case isQualified = "is_qualified"
+        case isWildcard = "is_wildcard"
         case playoffSeed = "playoff_seed"
     }
 }
@@ -177,5 +179,28 @@ struct QuickTableDetail: Equatable {
                 if ($0.playoffRound ?? 0) != ($1.playoffRound ?? 0) { return ($0.playoffRound ?? 0) < ($1.playoffRound ?? 0) }
                 return ($0.playoffMatchNumber ?? 0) < ($1.playoffMatchNumber ?? 0)
             }
+    }
+
+    /// Playoff matches grouped by round (ascending), matches ordered within round.
+    var playoffByRound: [(round: Int, matches: [QTMatch])] {
+        let grouped = Dictionary(grouping: matches.filter { $0.isPlayoff }) { $0.playoffRound ?? 0 }
+        return grouped.keys.sorted().map { r in
+            (r, (grouped[r] ?? []).sorted { ($0.playoffMatchNumber ?? 0) < ($1.playoffMatchNumber ?? 0) })
+        }
+    }
+
+    /// The final-round single match winner once it's completed.
+    var championID: UUID? {
+        guard let last = playoffByRound.last, last.matches.count == 1,
+              let f = last.matches.first, f.isCompleted else { return nil }
+        return f.winnerID
+    }
+
+    var hasPlayoff: Bool { matches.contains { $0.isPlayoff } }
+
+    /// All group-stage matches done (drives the "advance to playoff" CTA).
+    var groupStageComplete: Bool {
+        let gm = matches.filter { !$0.isPlayoff }
+        return !gm.isEmpty && gm.allSatisfy { $0.isCompleted }
     }
 }

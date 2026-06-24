@@ -8,12 +8,20 @@ final class QuickTableViewModel {
         case failed(String)
     }
 
+    enum Tab: String, CaseIterable, Identifiable {
+        case groups, playoff
+        var id: String { rawValue }
+    }
+
     var phase: Phase = .loading
     var editable = false
+    var tab: Tab = .groups
     var selectedGroupID: UUID?
     var scoringMatch: QTMatch?
 
     private let repo = QuickTableRepository()
+
+    var detail: QuickTableDetail? { if case .loaded(let d) = phase { return d } ; return nil }
 
     @MainActor
     func load(shareID: String) async {
@@ -24,6 +32,10 @@ final class QuickTableViewModel {
             editable = detail.table.creatorUserID != nil && detail.table.creatorUserID == uid
             if selectedGroupID == nil || !detail.groups.contains(where: { $0.id == selectedGroupID }) {
                 selectedGroupID = detail.groups.first?.id
+            }
+            // Default to playoff tab once it exists and group stage is done.
+            if detail.hasPlayoff && detail.table.isPlayoffStage && tab == .groups && detail.groups.isEmpty == false {
+                // keep current tab; don't force-switch so the user can browse groups
             }
             phase = .loaded(detail)
         } catch {
@@ -43,8 +55,9 @@ final class QuickTableViewModel {
     }
 }
 
-/// Native Quick Table view — standings + matches per group, playoff list, and
-/// inline score entry (creator only). P1 of the Bracket Lab native port.
+/// Native Quick Table view — group standings + matches, playoff bracket with
+/// champion, inline score entry (creator only). Mirrors web QuickTableView read
+/// surfaces; roster/registration management + playoff generation stay on web.
 struct QuickTableDetailView: View {
     let shareID: String
     let fallbackName: String
@@ -89,22 +102,22 @@ struct QuickTableDetailView: View {
         case .failed(let message):
             errorState(message)
         case .loaded(let detail):
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 18) {
                 header(detail.table)
-                if !detail.groups.isEmpty {
-                    groupPicker(detail.groups)
-                    if let gid = model.selectedGroupID {
-                        standingsCard(detail, groupID: gid)
-                        matchesSection(detail, groupID: gid)
-                    }
+                if model.editable && detail.groupStageComplete && !detail.hasPlayoff && detail.table.status == "group_stage" {
+                    advanceBanner
                 }
-                if detail.table.isPlayoffStage {
-                    playoffSection(detail)
+                tabPicker(detail)
+                switch model.tab {
+                case .groups: groupsTab(detail)
+                case .playoff: playoffTab(detail)
                 }
             }
             .padding(.horizontal, 16).padding(.top, 8)
         }
     }
+
+    // MARK: Header
 
     private func header(_ table: QTTable) -> some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -113,11 +126,57 @@ struct QuickTableDetailView: View {
             HStack(spacing: 8) {
                 Text(table.statusLabel.uppercased())
                     .font(TLFont.mono(9, .bold)).tracking(1)
-                    .foregroundStyle(TLColor.accentText)
+                    .foregroundStyle(table.status == "completed" ? TLColor.fg3 : TLColor.accentText)
                     .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(TLColor.accent.opacity(0.1), in: Capsule())
+                    .background((table.status == "completed" ? TLColor.surface : TLColor.accent.opacity(0.1)), in: Capsule())
                 Text((table.isDoubles ?? true) ? "ĐÔI" : "ĐƠN")
                     .font(TLFont.mono(9, .medium)).tracking(1).foregroundStyle(TLColor.fg3)
+            }
+        }
+    }
+
+    private var advanceBanner: some View {
+        Button { openWeb = true } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "flag.checkered").font(.system(size: 18)).foregroundStyle(TLColor.accentText)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Vòng bảng đã hoàn tất!").font(TLFont.sans(14.5, .semibold)).foregroundStyle(TLColor.fg)
+                    Text("Mở web để bắt đầu Playoff.").font(TLFont.sans(12.5)).foregroundStyle(TLColor.fg2)
+                }
+                Spacer()
+                Image(systemName: "arrow.up.right.square").foregroundStyle(TLColor.accentText)
+            }
+            .padding(14)
+            .background(TLColor.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.accent.opacity(0.4), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func tabPicker(_ detail: QuickTableDetail) -> some View {
+        if detail.hasPlayoff {
+            Picker("", selection: Binding(get: { model.tab }, set: { model.tab = $0 })) {
+                Text("Vòng bảng").tag(QuickTableViewModel.Tab.groups)
+                Text("Playoff").tag(QuickTableViewModel.Tab.playoff)
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    // MARK: Groups tab
+
+    @ViewBuilder
+    private func groupsTab(_ detail: QuickTableDetail) -> some View {
+        if detail.groups.isEmpty {
+            note("Chưa chia bảng.")
+        } else {
+            VStack(alignment: .leading, spacing: 18) {
+                groupPicker(detail.groups)
+                if let gid = model.selectedGroupID {
+                    standingsCard(detail, groupID: gid)
+                    matchesSection(detail, groupID: gid)
+                }
             }
         }
     }
@@ -145,9 +204,10 @@ struct QuickTableDetailView: View {
 
     private func standingsCard(_ detail: QuickTableDetail, groupID: UUID) -> some View {
         let rows = detail.standings(groupID: groupID)
+        let topN = detail.table.topPerGroup ?? 2
         return VStack(spacing: 0) {
             HStack(spacing: 0) {
-                Text("#").frame(width: 24, alignment: .leading)
+                Text("#").frame(width: 28, alignment: .leading)
                 Text("VĐV").frame(maxWidth: .infinity, alignment: .leading)
                 Text("T").frame(width: 30, alignment: .trailing)
                 Text("TR").frame(width: 30, alignment: .trailing)
@@ -158,19 +218,32 @@ struct QuickTableDetailView: View {
 
             ForEach(Array(rows.enumerated()), id: \.element.id) { index, p in
                 Rectangle().fill(TLColor.border).frame(height: 1)
+                let qualified = detail.hasPlayoff && index < topN
                 HStack(spacing: 0) {
-                    Text("\(index + 1)")
-                        .font(TLFont.mono(12, .semibold))
-                        .foregroundStyle(index < (detail.table.topPerGroup ?? 2) ? TLColor.accentText : TLColor.fg4)
-                        .frame(width: 24, alignment: .leading)
-                    Text(p.name).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg)
-                        .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(spacing: 3) {
+                        Text("\(index + 1)").font(TLFont.mono(12, .semibold))
+                            .foregroundStyle(qualified ? TLColor.accentText : TLColor.fg4)
+                        if qualified { Image(systemName: "chevron.right").font(.system(size: 8, weight: .bold)).foregroundStyle(TLColor.accentText) }
+                    }
+                    .frame(width: 28, alignment: .leading)
+                    HStack(spacing: 6) {
+                        Text(p.name).font(TLFont.sans(14, .medium)).foregroundStyle(TLColor.fg).lineLimit(1)
+                        if p.isWildcard == true {
+                            Text("WC").font(TLFont.mono(8, .medium)).foregroundStyle(TLColor.fg3)
+                                .padding(.horizontal, 4).padding(.vertical, 1)
+                                .background(TLColor.surface2, in: RoundedRectangle(cornerRadius: 3))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     Text("\(p.matchesWon)").font(TLFont.mono(13, .semibold)).foregroundStyle(TLColor.fg).frame(width: 30, alignment: .trailing)
                     Text("\(p.matchesPlayed)").font(TLFont.mono(13)).foregroundStyle(TLColor.fg3).frame(width: 30, alignment: .trailing)
                     Text(p.pointDiff >= 0 ? "+\(p.pointDiff)" : "\(p.pointDiff)")
-                        .font(TLFont.mono(13)).foregroundStyle(TLColor.fg2).frame(width: 44, alignment: .trailing)
+                        .font(TLFont.mono(13))
+                        .foregroundStyle(p.pointDiff > 0 ? TLColor.accentText : p.pointDiff < 0 ? TLColor.live : TLColor.fg2)
+                        .frame(width: 44, alignment: .trailing)
                 }
                 .padding(.horizontal, 14).padding(.vertical, 11)
+                .background(qualified ? TLColor.accent.opacity(0.05) : Color.clear)
             }
         }
         .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous))
@@ -196,10 +269,19 @@ struct QuickTableDetailView: View {
         return Button {
             if canScore { Haptics.light(); model.scoringMatch = m }
         } label: {
-            HStack(spacing: 10) {
-                playerName(detail.name(for: m.player1ID), won: m.isCompleted && m.winnerID == m.player1ID)
-                scoreBlock(m)
-                playerName(detail.name(for: m.player2ID), won: m.isCompleted && m.winnerID == m.player2ID, trailing: true)
+            VStack(spacing: 6) {
+                if let court = m.courtName?.nonEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "mappin.and.ellipse").font(.system(size: 9)).foregroundStyle(TLColor.fg4)
+                        Text(court).font(TLFont.mono(9.5)).foregroundStyle(TLColor.fg3)
+                        Spacer()
+                    }
+                }
+                HStack(spacing: 10) {
+                    playerName(detail.name(for: m.player1ID), won: m.isCompleted && m.winnerID == m.player1ID)
+                    scoreBlock(m)
+                    playerName(detail.name(for: m.player2ID), won: m.isCompleted && m.winnerID == m.player2ID, trailing: true)
+                }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
             .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
@@ -235,18 +317,73 @@ struct QuickTableDetailView: View {
         }
     }
 
-    // MARK: Playoff
+    // MARK: Playoff tab
 
-    private func playoffSection(_ detail: QuickTableDetail) -> some View {
-        let matches = detail.playoffMatches
-        return VStack(alignment: .leading, spacing: 10) {
-            Text("PLAYOFF").font(TLFont.mono(10, .semibold)).tracking(0.8).foregroundStyle(TLColor.fg3)
-            if matches.isEmpty {
-                Text("Chưa tạo nhánh playoff.").font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
+    @ViewBuilder
+    private func playoffTab(_ detail: QuickTableDetail) -> some View {
+        let rounds = detail.playoffByRound
+        VStack(alignment: .leading, spacing: 18) {
+            if let champID = detail.championID {
+                championBanner(detail.name(for: champID))
+            }
+            if rounds.isEmpty {
+                note("Chưa tạo nhánh playoff.")
             } else {
-                ForEach(matches) { m in matchRow(detail, m) }
+                ForEach(rounds, id: \.round) { r in
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 8) {
+                            RoundedRectangle(cornerRadius: 1).fill(TLColor.accent).frame(width: 3, height: 15)
+                            Text(roundLabel(r.matches.count).uppercased())
+                                .font(TLFont.mono(11, .semibold)).tracking(1).foregroundStyle(TLColor.fg)
+                            Spacer()
+                            Text("\(r.matches.filter { $0.isCompleted }.count)/\(r.matches.count)")
+                                .font(TLFont.mono(10)).foregroundStyle(TLColor.fg2).monospacedDigit()
+                                .padding(.horizontal, 8).padding(.vertical, 3)
+                                .background(TLColor.surface, in: Capsule())
+                        }
+                        ForEach(r.matches) { m in matchRow(detail, m) }
+                    }
+                }
             }
         }
+    }
+
+    private func championBanner(_ name: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "trophy.fill").font(.system(size: 22)).foregroundStyle(TLColor.accentText)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("NHÀ VÔ ĐỊCH").font(TLFont.mono(10, .bold)).tracking(1.5).foregroundStyle(TLColor.accentText)
+                Text(name).font(TLFont.serif(24)).foregroundStyle(TLColor.fg)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(colors: [TLColor.accent.opacity(0.16), TLColor.surface], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous)
+        )
+        .overlay(RoundedRectangle(cornerRadius: TLRadius.lg, style: .continuous).strokeBorder(TLColor.accent.opacity(0.35), lineWidth: 1))
+    }
+
+    private func roundLabel(_ count: Int) -> String {
+        switch count {
+        case 1: return "Chung kết"
+        case 2: return "Bán kết"
+        case 3...4: return "Tứ kết"
+        case 5...8: return "Vòng 16"
+        default: return "Vòng loại"
+        }
+    }
+
+    // MARK: Helpers
+
+    private func note(_ text: String) -> some View {
+        Text(text).font(TLFont.sans(13)).foregroundStyle(TLColor.fg3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(TLColor.surface, in: RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: TLRadius.sm, style: .continuous).strokeBorder(TLColor.border, style: StrokeStyle(lineWidth: 1, dash: [4])))
     }
 
     private func errorState(_ message: String) -> some View {

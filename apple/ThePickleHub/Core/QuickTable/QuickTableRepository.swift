@@ -30,7 +30,7 @@ struct QuickTableRepository {
             .execute().value
         async let players: [QTPlayer] = client
             .from("quick_table_players")
-            .select("id, group_id, name, team, seed, matches_played, matches_won, points_for, points_against, point_diff, is_qualified, playoff_seed")
+            .select("id, group_id, name, team, seed, matches_played, matches_won, points_for, points_against, point_diff, is_qualified, is_wildcard, playoff_seed")
             .eq("table_id", value: table.id)
             .execute().value
         async let matches: [QTMatch] = client
