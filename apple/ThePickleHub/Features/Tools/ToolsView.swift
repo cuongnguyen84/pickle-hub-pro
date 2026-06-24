@@ -46,7 +46,11 @@ struct ToolsView: View {
     @State private var model = ToolsViewModel()
     @State private var openURL: IdentifiedURL?
     @State private var showFinder = false
+    @State private var showCreate = false
     @State private var navTarget: MyTournament?
+    @State private var createdTarget: CreatedRef?
+
+    struct CreatedRef: Identifiable, Hashable { let id: String; let name: String } // id = share_id
 
     var body: some View {
         NavigationStack {
@@ -67,8 +71,17 @@ struct ToolsView: View {
             .sheet(isPresented: $showFinder) {
                 FormatFinderSheet { url in openURL = IdentifiedURL(url: url) }
             }
+            .sheet(isPresented: $showCreate) {
+                CreateQuickTableView { shareID, name in
+                    Task { await model.reload() }
+                    createdTarget = CreatedRef(id: shareID, name: name)
+                }
+            }
             .navigationDestination(item: $navTarget) { t in
                 QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
+            }
+            .navigationDestination(item: $createdTarget) { ref in
+                QuickTableDetailView(shareID: ref.id, fallbackName: ref.name)
             }
         }
     }
@@ -123,7 +136,7 @@ struct ToolsView: View {
     }
 
     private var featuredCard: some View {
-        Button { open(WebRoutes.toolsQuickTables) } label: {
+        Button { Haptics.light(); showCreate = true } label: {
             ZStack(alignment: .topTrailing) {
                 Image(systemName: "tablecells")
                     .font(.system(size: 120, weight: .ultraLight))
@@ -285,7 +298,7 @@ struct ToolsView: View {
             Image(systemName: "trophy").font(.system(size: 34)).foregroundStyle(TLColor.fg4)
             Text("Bạn chưa tạo giải nào")
                 .font(TLFont.sans(16, .semibold)).foregroundStyle(TLColor.fg)
-            Button { open(WebRoutes.toolsQuickTables) } label: {
+            Button { Haptics.light(); showCreate = true } label: {
                 Text("Bắt đầu với Bảng đấu nhanh")
                     .font(TLFont.sans(14, .semibold)).foregroundStyle(TLColor.accentInk)
                     .padding(.horizontal, 16).padding(.vertical, 11)
@@ -419,10 +432,12 @@ private struct TournamentCard: View {
     }
 }
 
-/// Light haptic helper (prompt §8).
+/// Haptic helpers (prompt §8).
 enum Haptics {
     static func light() {
-        let g = UIImpactFeedbackGenerator(style: .light)
-        g.impactOccurred()
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+    static func success() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 }

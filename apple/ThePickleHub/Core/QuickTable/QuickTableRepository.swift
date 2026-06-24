@@ -43,6 +43,136 @@ struct QuickTableRepository {
                                 players: try await players, matches: try await matches)
     }
 
+    // MARK: Create (direct-roster round-robin → group stage)
+
+    private struct CreateParams: Encodable {
+        let _name: String
+        let _player_count: Int
+        let _format = "round_robin"
+        let _group_count: Int?
+        let _requires_registration = false
+        let _requires_skill_level = false
+        let _auto_approve_registrations = false
+        let _registration_message: String? = nil
+        let _is_doubles: Bool
+    }
+    private struct CreateResult: Decodable {
+        let success: Bool
+        let error: String?
+        let table: QTTable?
+    }
+    private struct PlayerInsert: Encodable { let table_id: String; let name: String; let display_order: Int }
+    private struct GroupInsert: Encodable { let table_id: String; let name: String; let display_order: Int }
+    private struct InsertedRow: Decodable { let id: UUID; let displayOrder: Int
+        enum CodingKeys: String, CodingKey { case id; case displayOrder = "display_order" } }
+    private struct GroupIDUpdate: Encodable { let group_id: String }
+    private struct MatchInsert: Encodable {
+        let table_id: String; let group_id: String; let is_playoff = false
+        let player1_id: String; let player2_id: String
+        let display_order: Int; let rr_round_number: Int; let rr_match_index: Int
+    }
+
+    /// Creates a round-robin quick table from a plain roster: RPC create →
+    /// add players → create groups → distribute → generate circle-method
+    /// matches → status=group_stage. Returns the new share_id. Mirrors the web
+    /// QuickTableSetup "no registration" path.
+    func create(name: String, isDoubles: Bool, playerNames: [String], groupCount: Int) async throws -> String {
+        let names = playerNames.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        let groups = max(1, groupCount)
+        let result: CreateResult = try await client
+            .rpc("create_quick_table_with_quota", params: CreateParams(
+                _name: String(name.prefix(100)),
+                _player_count: max(2, min(200, names.count)),
+                _group_count: groups,
+                _is_doubles: isDoubles
+            ))
+            .execute().value
+        guard result.success, let table = result.table else {
+            throw NSError(domain: "quicktable", code: 1, userInfo: [NSLocalizedDescriptionKey: errorMessage(result.error)])
+        }
+        let tableID = table.id.uuidString.lowercased()
+
+        // Players
+        let players: [InsertedRow] = try await client
+            .from("quick_table_players")
+            .insert(names.enumerated().map { PlayerInsert(table_id: tableID, name: $1, display_order: $0) })
+            .select("id, display_order")
+            .execute().value
+        let orderedPlayers = players.sorted { $0.displayOrder < $1.displayOrder }
+
+        // Groups (A, B, C…)
+        let groupRows: [InsertedRow] = try await client
+            .from("quick_table_groups")
+            .insert((0..<groups).map { GroupInsert(table_id: tableID, name: groupLetter($0), display_order: $0) })
+            .select("id, display_order")
+            .execute().value
+        let orderedGroups = groupRows.sorted { $0.displayOrder < $1.displayOrder }
+
+        // Distribute round-robin (player i → group i % groupCount) → balanced groups.
+        var buckets: [[UUID]] = Array(repeating: [], count: orderedGroups.count)
+        for (i, p) in orderedPlayers.enumerated() {
+            let g = i % orderedGroups.count
+            buckets[g].append(p.id)
+            try await client.from("quick_table_players")
+                .update(GroupIDUpdate(group_id: orderedGroups[g].id.uuidString.lowercased()))
+                .eq("id", value: p.id).execute()
+        }
+
+        // Generate circle-method matches per group.
+        for (gIdx, group) in orderedGroups.enumerated() {
+            let pairs = Self.circleMethod(buckets[gIdx])
+            guard !pairs.isEmpty else { continue }
+            let inserts = pairs.enumerated().map { i, pair in
+                MatchInsert(table_id: tableID, group_id: group.id.uuidString.lowercased(),
+                            player1_id: pair.p1.uuidString.lowercased(), player2_id: pair.p2.uuidString.lowercased(),
+                            display_order: i, rr_round_number: pair.round, rr_match_index: pair.index)
+            }
+            try await client.from("quick_table_matches").insert(inserts).execute()
+        }
+
+        try await client.from("quick_tables").update(TableStatusUpdate(status: "group_stage")).eq("id", value: table.id).execute()
+        return table.shareID
+    }
+
+    private func errorMessage(_ code: String?) -> String {
+        switch code {
+        case "LIMIT_REACHED": return "Bạn đã đạt giới hạn số giải. Hãy xóa bớt giải cũ."
+        case "AUTH_REQUIRED": return "Cần đăng nhập để tạo giải."
+        default: return code ?? "Không tạo được giải."
+        }
+    }
+
+    private func groupLetter(_ i: Int) -> String {
+        String(UnicodeScalar(65 + UInt8(i % 26)))
+    }
+
+    /// Circle-method (Berger) round-robin pairings. Port of web round-robin.ts.
+    struct RRPair { let p1: UUID; let p2: UUID; let round: Int; let index: Int }
+    static func circleMethod(_ playerIDs: [UUID]) -> [RRPair] {
+        guard playerIDs.count >= 2 else { return [] }
+        var players = playerIDs.map { Optional($0) }
+        if players.count % 2 == 1 { players.append(nil) } // BYE
+        let n = players.count
+        let rounds = n - 1
+        let perRound = n / 2
+        var rotating = Array(players[1...])
+        var pairs: [RRPair] = []
+        for round in 0..<rounds {
+            let order = [players[0]] + rotating
+            var indexInRound = 0
+            for i in 0..<perRound {
+                let a = order[i]
+                let b = order[n - 1 - i]
+                if let a, let b {
+                    pairs.append(RRPair(p1: a, p2: b, round: round + 1, index: indexInRound))
+                    indexInRound += 1
+                }
+            }
+            rotating.insert(rotating.removeLast(), at: 0)
+        }
+        return pairs
+    }
+
     // MARK: Score
 
     private struct MatchScoreUpdate: Encodable {
