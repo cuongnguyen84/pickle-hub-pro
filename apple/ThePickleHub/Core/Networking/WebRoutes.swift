@@ -25,6 +25,7 @@ enum WebRoutes {
     static let toolsFlexTournament = base.appending(path: "tools/flex-tournament")
     static let toolsTeamMatch = base.appending(path: "tools/team-match")
     static func quickTable(shareID: String) -> URL { base.appending(path: "tools/quick-tables/\(shareID)") }
+    static func toolsDoublesEliminationView(shareID: String) -> URL { base.appending(path: "tools/doubles-elimination/\(shareID)") }
 
     /// Resolves an image path that may be relative (e.g. blog covers like
     /// "/images/blog/x.webp") against the site origin; absolute URLs pass through.

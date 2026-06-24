@@ -21,20 +21,29 @@ struct ToolsRepository {
     /// when signed out.
     func myTournaments(limit: Int = 20) async throws -> [MyTournament] {
         guard let uid = try? await client.auth.session.user.id.uuidString.lowercased() else { return [] }
-        let rows: [QuickTableRow] = try await client
+
+        async let quickRows: [QuickTableRow] = client
             .from("quick_tables")
             .select("id, share_id, name, is_doubles, player_count, status, requires_registration, start_time, created_at")
             .eq("creator_user_id", value: uid)
             .order("created_at", ascending: false)
             .limit(limit)
-            .execute()
-            .value
+            .execute().value
+        async let doublesRows: [DEListRow] = client
+            .from("doubles_elimination_tournaments")
+            .select("id, share_id, name, team_count, status, created_at")
+            .eq("creator_user_id", value: uid)
+            .order("created_at", ascending: false)
+            .limit(limit)
+            .execute().value
 
-        // Enrich each row with its registration/roster count in parallel.
+        let quick = try await quickRows
+        let doubles = try await doublesRows
+
+        // Enrich every row with its registration/roster count in parallel.
         return try await withThrowingTaskGroup(of: MyTournament.self) { group in
-            for row in rows {
-                group.addTask { try await enrich(row) }
-            }
+            for row in quick { group.addTask { try await enrich(row) } }
+            for row in doubles { group.addTask { try await enrich(row) } }
             var result: [MyTournament] = []
             for try await item in group { result.append(item) }
             // Preserve newest-first order (task group completes out of order).
@@ -57,6 +66,43 @@ struct ToolsRepository {
             registered: registered,
             state: state,
             createdAt: Self.parseDate(row.createdAt)
+        )
+    }
+
+    /// Raw `doubles_elimination_tournaments` row owned by the current user.
+    private struct DEListRow: Decodable {
+        let id: UUID
+        let shareID: String
+        let name: String?
+        let teamCount: Int?
+        let status: String?
+        let createdAt: String?
+        enum CodingKeys: String, CodingKey {
+            case id, name, status
+            case shareID = "share_id"
+            case teamCount = "team_count"
+            case createdAt = "created_at"
+        }
+    }
+
+    private func enrich(_ row: DEListRow) async throws -> MyTournament {
+        let capacity = row.teamCount ?? 0
+        let registered = (try? await client
+            .from("doubles_elimination_teams")
+            .select("id", head: true, count: .exact)
+            .eq("tournament_id", value: row.id)
+            .execute().count) ?? 0
+        let state: TournamentState
+        switch row.status {
+        case "completed": state = .completed
+        case "ongoing": state = .ongoing
+        case "registration_open": state = (capacity > 0 && registered >= capacity) ? .full : .open
+        default: state = .draft   // setup
+        }
+        return MyTournament(
+            id: row.id, shareID: row.shareID, name: row.name ?? "",
+            isDoubles: true, capacity: capacity, registered: registered,
+            state: state, createdAt: Self.parseDate(row.createdAt), format: .doublesElim
         )
     }
 

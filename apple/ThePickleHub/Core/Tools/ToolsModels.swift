@@ -66,6 +66,14 @@ enum ToolsFilter: String, CaseIterable, Identifiable {
     }
 }
 
+/// Which Bracket Lab format a managed tournament belongs to (drives routing +
+/// share URL). Quick Tables and Doubles Elimination have native detail views;
+/// the rest still open the web.
+enum BracketFormat: String, Equatable, Hashable {
+    case quickTable
+    case doublesElim
+}
+
 /// Raw `quick_tables` row owned by the current user.
 struct QuickTableRow: Decodable, Equatable {
     let id: UUID
@@ -99,12 +107,18 @@ struct MyTournament: Identifiable, Equatable, Hashable {
     let registered: Int
     let state: TournamentState
     let createdAt: Date?
+    var format: BracketFormat = .quickTable
 
     var displayName: String { name.nonEmpty ?? "Giải đấu" }
 
     var metaLine: String {
-        let mode = isDoubles ? "Đôi" : "Đơn"
-        return capacity > 0 ? "\(mode) · \(capacity) người" : mode
+        switch format {
+        case .doublesElim:
+            return capacity > 0 ? "Loại kép · \(capacity) đội" : "Loại kép"
+        case .quickTable:
+            let mode = isDoubles ? "Đôi" : "Đơn"
+            return capacity > 0 ? "\(mode) · \(capacity) người" : mode
+        }
     }
 
     var hasProgress: Bool { capacity > 0 && (state == .open || state == .full) }

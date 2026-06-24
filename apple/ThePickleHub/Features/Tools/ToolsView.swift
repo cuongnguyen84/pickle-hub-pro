@@ -81,7 +81,12 @@ struct ToolsView: View {
                 })
             }
             .navigationDestination(item: $navTarget) { t in
-                QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
+                switch t.format {
+                case .quickTable:
+                    QuickTableDetailView(shareID: t.shareID, fallbackName: t.displayName)
+                case .doublesElim:
+                    DoublesElimDetailView(shareID: t.shareID, fallbackName: t.displayName)
+                }
             }
             .navigationDestination(item: $createdTarget) { ref in
                 QuickTableDetailView(shareID: ref.id, fallbackName: ref.name)
@@ -336,7 +341,12 @@ private struct TournamentCard: View {
     let tournament: MyTournament
     let onManage: () -> Void
 
-    private var shareURL: URL { WebRoutes.quickTable(shareID: tournament.shareID) }
+    private var shareURL: URL {
+        switch tournament.format {
+        case .quickTable: return WebRoutes.quickTable(shareID: tournament.shareID)
+        case .doublesElim: return WebRoutes.toolsDoublesEliminationView(shareID: tournament.shareID)
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
